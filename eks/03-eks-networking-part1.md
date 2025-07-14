@@ -165,26 +165,27 @@ flowchart LR
 3. **클러스터 내부와 외부 간 통신**: 클러스터 내부 리소스와 외부 리소스 간 통신
 4. **컨트롤 플레인과 노드 간 통신**: EKS 컨트롤 플레인과 워커 노드 간 통신
 
-```
-                                   +-------------------+
-                                   |                   |
-                                   |  인터넷 게이트웨이   |
-                                   |                   |
-                                   +--------+----------+
-                                            |
-                                            v
-+-------------------+             +-------------------+             +-------------------+
-|                   |             |                   |             |                   |
-|  NAT 게이트웨이     +<-----------+  퍼블릭 서브넷      |             |  EKS 컨트롤 플레인  |
-|                   |             |                   |             |                   |
-+--------+----------+             +-------------------+             +-------------------+
-         |                                                                   ^
-         v                                                                   |
-+-------------------+             +-------------------+                      |
-|                   |             |                   |                      |
-|  프라이빗 서브넷     +<-----------+  워커 노드         +----------------------+
-|                   |             |                   |
-+-------------------+             +-------------------+
+### EKS 네트워킹 구성 요소 간 관계
+
+```mermaid
+flowchart TD
+    Internet((인터넷)) --> IGW[인터넷 게이트웨이]
+    IGW --> PublicSubnet[퍼블릭 서브넷]
+    PublicSubnet --> NATGW[NAT 게이트웨이]
+    NATGW --> PrivateSubnet[프라이빗 서브넷]
+    PrivateSubnet --> WorkerNodes[워커 노드]
+    WorkerNodes --> EKS_CP[EKS 컨트롤 플레인]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class IGW,NATGW,PublicSubnet,PrivateSubnet awsService;
+    class WorkerNodes,EKS_CP k8sComponent;
+    class Internet default;
 ```
 
 ## VPC 요구 사항
@@ -218,6 +219,28 @@ flowchart TD
 ### VPC CIDR 계획
 
 VPC CIDR 블록을 계획할 때 고려해야 할 사항:
+
+```mermaid
+flowchart TD
+    A[VPC CIDR 계획 고려사항] --> B[클러스터 크기]
+    A --> C[IP 주소 요구 사항]
+    A --> D[향후 확장]
+    A --> E[기존 네트워크와의 통합]
+    
+    B --> F[소규모: /24 (256개 IP)]
+    B --> G[중간 규모: /20 (4,096개 IP)]
+    B --> H[대규모: /16 (65,536개 IP)]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A,B,C,D,E,F,G,H default;
+```
 
 1. **클러스터 크기**: 예상되는 노드 및 포드 수
 2. **IP 주소 요구 사항**: 각 노드 및 포드에 필요한 IP 주소 수
@@ -264,6 +287,7 @@ flowchart TB
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
@@ -324,6 +348,7 @@ flowchart LR
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
@@ -347,3 +372,52 @@ aws ec2 create-tags \
   --resources subnet-xxxxxxxxxxxxxxxxx \
   --tags Key=kubernetes.io/cluster/my-cluster,Value=shared Key=kubernetes.io/role/elb,Value=1
 ```
+
+### 보안 그룹 구성
+
+```mermaid
+flowchart TB
+    subgraph EKS_Cluster ["EKS 클러스터"]
+        subgraph Control_Plane_SG ["컨트롤 플레인 보안 그룹"]
+            CP_Inbound[인바운드 규칙:<br>- 443/TCP: 워커 노드 보안 그룹]
+            CP_Outbound[아웃바운드 규칙:<br>- 1025-65535/TCP: 워커 노드 보안 그룹]
+        end
+        
+        subgraph Worker_Node_SG ["워커 노드 보안 그룹"]
+            WN_Inbound[인바운드 규칙:<br>- 443/TCP: 컨트롤 플레인 보안 그룹<br>- 1025-65535/TCP: 컨트롤 플레인 보안 그룹<br>- ALL: 워커 노드 보안 그룹]
+            WN_Outbound[아웃바운드 규칙:<br>- ALL: 0.0.0.0/0]
+        end
+        
+        Control_Plane_SG <--> Worker_Node_SG
+    end
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class Control_Plane_SG,Worker_Node_SG,CP_Inbound,CP_Outbound,WN_Inbound,WN_Outbound awsService;
+```
+
+EKS 클러스터에는 두 가지 주요 보안 그룹이 있습니다:
+
+1. **클러스터 보안 그룹(컨트롤 플레인)**:
+   - 인바운드 규칙:
+     - 443/TCP: 워커 노드 보안 그룹에서 오는 트래픽 허용
+   - 아웃바운드 규칙:
+     - 1025-65535/TCP: 워커 노드 보안 그룹으로 가는 트래픽 허용
+
+2. **노드 보안 그룹(워커 노드)**:
+   - 인바운드 규칙:
+     - 443/TCP: 클러스터 보안 그룹에서 오는 트래픽 허용
+     - 1025-65535/TCP: 클러스터 보안 그룹에서 오는 트래픽 허용
+     - ALL: 동일한 보안 그룹 내의 트래픽 허용
+   - 아웃바운드 규칙:
+     - ALL: 모든 대상으로의 트래픽 허용
+
+## 결론
+
+이 문서에서는 EKS 네트워킹의 기본 개념과 VPC 구성에 대해 알아보았습니다. 다음 문서에서는 서비스 및 로드 밸런싱, 네트워크 정책 등 더 고급 네트워킹 주제를 다룰 예정입니다.
