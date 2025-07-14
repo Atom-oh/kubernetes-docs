@@ -165,13 +165,19 @@ graph TB
     CRI2 --- POD3
     CRI2 --- POD4
     
-    classDef controlplane fill:#326ce5,stroke:#fff,stroke-width:2px,color:#fff;
-    classDef node fill:#f9f9f9,stroke:#bbb,stroke-width:2px;
-    classDef pod fill:#d4e5ff,stroke:#326ce5,stroke-width:2px;
+    %% 스타일 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
-    class API,ETCD,SCHED,CM,CCM controlplane;
-    class KLET1,KPROXY1,CRI1,KLET2,KPROXY2,CRI2 node;
-    class POD1,POD2,POD3,POD4 pod;
+    %% 클래스 적용
+    class API,SCHED,CM,CCM k8sComponent;
+    class ETCD dataStore;
+    class KLET1,KPROXY1,KLET2,KPROXY2 k8sComponent;
+    class CRI1,CRI2 userApp;
+    class POD1,POD2,POD3,POD4 userApp;
 ```
 
 ## Kubernetes 주요 구성 요소
