@@ -23,23 +23,15 @@
 mermaid 다이어그램에 적용할 CSS 스타일 가이드라인:
 
 ```
+classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+classDef prometheusComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
+classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
 classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-classDef highlight fill:#ffecb3,stroke:#f9a825,stroke-width:2px,color:black;
-classDef primary fill:#bbdefb,stroke:#1976d2,stroke-width:1px,color:black;
-classDef secondary fill:#d1c4e9,stroke:#673ab7,stroke-width:1px,color:black;
-classDef success fill:#c8e6c9,stroke:#388e3c,stroke-width:1px,color:black;
-classDef danger fill:#ffcdd2,stroke:#d32f2f,stroke-width:1px,color:black;
-classDef warning fill:#ffe0b2,stroke:#f57c00,stroke-width:1px,color:black;
-classDef info fill:#b3e5fc,stroke:#0288d1,stroke-width:1px,color:black;
-classDef cluster fill:#e3f2fd,stroke:#1976d2,stroke-width:1px,stroke-dasharray:5 5,color:black;
-classDef eks fill:#fce4ec,stroke:#c2185b,stroke-width:1px,color:black;
-classDef aws fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px,color:black;
-classDef k8s fill:#e3f2fd,stroke:#1976d2,stroke-width:1px,color:black;
-classDef database fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px,color:black;
-classDef storage fill:#e0f7fa,stroke:#0097a7,stroke-width:1px,color:black;
-classDef network fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,color:black;
-classDef security fill:#fbe9e7,stroke:#d84315,stroke-width:1px,color:black;
-classDef dark fill:#263238,stroke:#000,stroke-width:1px,color:white;
 ```
 
 ## 작업 진행 상황
@@ -94,13 +86,13 @@ classDef dark fill:#263238,stroke:#000,stroke-width:1px,color:white;
 - [ ] 4. vLLM 배포 (`./advanced/04-vllm-deployment.md`)
 
 ### 도구 및 통합
-- [ ] 1. ArgoCD (`./tools/01-argocd.md`)
-- [ ] 2. Istio (`./tools/02-istio.md`)
-- [ ] 3. AWS Controllers for Kubernetes (ACK) (`./tools/03-ack.md`)
-- [ ] 4. Cilium (`./tools/04-cilium.md`)
+- [x] 1. ArgoCD (`./tools/01-argocd.md`) - 완료
+- [x] 2. Istio (`./tools/02-istio.md`) - 완료
+- [x] 3. AWS Controllers for Kubernetes (ACK) (`./tools/03-ack.md`) - 완료
+- [x] 4. Cilium (`./tools/04-cilium.md`) - 완료
 - [ ] 5. KEDA (`./tools/05-keda.md`)
 - [ ] 6. Karpenter (`./tools/06-karpenter.md`)
-- [ ] 7. 모니터링 스택 (VictoriaMetrics, Prometheus, Grafana) (`./tools/07-monitoring-stack.md`)
+- [x] 7. 모니터링 스택 (VictoriaMetrics, Prometheus, Grafana) (`./tools/07-monitoring-stack.md`) - 완료
 - [ ] 8. 로깅 스택 (Loki, Tempo) (`./tools/08-logging-stack.md`)
 - [ ] 9. VPC Lattice (`./tools/09-vpc-lattice.md`)
 
@@ -111,4 +103,4 @@ classDef dark fill:#263238,stroke:#000,stroke-width:1px,color:white;
 3. 나머지 문서의 다이어그램 개선
 
 ## 현재 작업 중인 문서
-- 클러스터 아키텍처 (`./core/01-cluster-architecture.md`)
+- 도구 및 통합 섹션 다이어그램 개선 중
