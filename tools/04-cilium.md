@@ -93,14 +93,14 @@ flowchart TD
     F -->|Visualizes| G
     
     %% 스타일 적용
-    classDef controlPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef dataPlane fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef observability fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
     
     %% 클래스 적용
-    class A,B controlPlane
-    class C,D dataPlane
-    class E,F,G observability
+    class A,B k8sComponent
+    class C,D userApp
+    class E,F,G dataStore
 ```
 
 ### 주요 구성 요소
