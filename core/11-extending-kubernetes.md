@@ -31,6 +31,44 @@ Kubernetes는 다양한 확장 지점을 제공하여 기본 기능을 확장하
 8. **CNI(Container Network Interface)**: 네트워킹 솔루션 통합
 9. **디바이스 플러그인**: 특수 하드웨어 통합
 
+다음 다이어그램은 Kubernetes의 주요 확장 지점을 보여줍니다:
+
+```mermaid
+flowchart TD
+    User[사용자/클라이언트] --> API[API 서버]
+    
+    subgraph "API 확장"
+        API --> CR[커스텀 리소스]
+        API --> AC[어드미션 컨트롤러]
+        API --> AE[API 서버 확장]
+    end
+    
+    subgraph "컨트롤러 확장"
+        CR --> OP[오퍼레이터]
+        API --> CCM[클라우드 컨트롤러 매니저]
+    end
+    
+    subgraph "스케줄링 확장"
+        API --> SCH[스케줄러 확장]
+    end
+    
+    subgraph "노드 확장"
+        Node[노드] --> CSI[CSI 드라이버]
+        Node --> CNI[CNI 플러그인]
+        Node --> DP[디바이스 플러그인]
+    end
+    
+    API --> Node
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class API,CR,AC,AE,OP,CCM,SCH,Node k8sComponent;
+    class User userApp;
+    class CSI,CNI,DP default;
+```
+
 ### 확장 방법 선택
 
 적절한 확장 방법을 선택하는 데 고려해야 할 사항:
@@ -44,6 +82,37 @@ Kubernetes는 다양한 확장 지점을 제공하여 기본 기능을 확장하
 ## 커스텀 리소스
 
 커스텀 리소스는 Kubernetes API를 확장하여 새로운 객체 유형을 정의하는 방법입니다.
+
+다음 다이어그램은 커스텀 리소스의 작동 방식을 보여줍니다:
+
+```mermaid
+flowchart TD
+    User[사용자] --> |1. 생성/수정| CRD[커스텀 리소스 정의]
+    User --> |2. 생성/수정| CR[커스텀 리소스 인스턴스]
+    
+    CRD --> |정의| CR
+    
+    subgraph "Kubernetes API 서버"
+        CRD
+        CR
+        API[API 등록]
+        VAL[검증]
+        STOR[(etcd 스토리지)]
+    end
+    
+    CRD --> |등록| API
+    CR --> |검증| VAL
+    CR --> |저장| STOR
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class CRD,CR,API,VAL k8sComponent;
+    class User userApp;
+    class STOR dataStore;
+```
 
 ### 커스텀 리소스 정의(CRD)
 
@@ -191,6 +260,39 @@ spec:
 
 오퍼레이터 패턴은 커스텀 리소스와 컨트롤러를 결합하여 복잡한 애플리케이션의 운영 지식을 자동화하는 방법입니다.
 
+다음 다이어그램은 오퍼레이터 패턴의 작동 방식을 보여줍니다:
+
+```mermaid
+flowchart TD
+    User[사용자] --> |1. 생성/수정| CR[커스텀 리소스]
+    
+    subgraph "Kubernetes API 서버"
+        CR
+        STOR[(etcd 스토리지)]
+    end
+    
+    CR --> |저장| STOR
+    
+    subgraph "오퍼레이터"
+        CTRL[컨트롤러] --> |2. 감시| CR
+        CTRL --> |3. 상태 확인| CR
+        CTRL --> |6. 상태 업데이트| CR
+    end
+    
+    CTRL --> |4. 조치 결정| ACT[액션]
+    ACT --> |5. 실행| K8S[Kubernetes 리소스]
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class CR,K8S k8sComponent;
+    class User userApp;
+    class STOR dataStore;
+    class CTRL,ACT default;
+```
+
 ### 오퍼레이터 개념
 
 오퍼레이터는 다음 구성 요소로 이루어집니다:
@@ -316,6 +418,30 @@ make deploy
 ## 어드미션 컨트롤러
 
 어드미션 컨트롤러는 Kubernetes API 서버에 대한 요청을 가로채고 수정하거나 검증하는 플러그인입니다.
+
+다음 다이어그램은 어드미션 컨트롤러의 작동 방식을 보여줍니다:
+
+```mermaid
+flowchart LR
+    User[사용자] --> |1. API 요청| Auth[인증/권한 부여]
+    Auth --> |2. 요청 통과| MAC[변형 어드미션 컨트롤러]
+    MAC --> |3. 변형된 요청| VAC[검증 어드미션 컨트롤러]
+    VAC --> |4. 검증된 요청| API[API 처리]
+    API --> |5. 저장| STOR[(etcd 스토리지)]
+    
+    MAC -.-> |웹훅 호출| MWH[변형 웹훅]
+    VAC -.-> |웹훅 호출| VWH[검증 웹훅]
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class Auth,MAC,VAC,API k8sComponent;
+    class User userApp;
+    class STOR dataStore;
+    class MWH,VWH default;
+```
 
 ### 어드미션 컨트롤러 유형
 
@@ -837,6 +963,42 @@ spec:
 
 CSI는 Kubernetes와 스토리지 시스템 간의 표준 인터페이스를 제공합니다.
 
+다음 다이어그램은 CSI의 아키텍처와 작동 방식을 보여줍니다:
+
+```mermaid
+flowchart TD
+    User[사용자] --> |1. 생성| PVC[PersistentVolumeClaim]
+    
+    subgraph "Kubernetes 컴포넌트"
+        PVC --> |참조| SC[StorageClass]
+        SC --> |지정| PROV[CSI 외부 프로비저너]
+        PROV --> |2. 볼륨 생성 요청| CSI[CSI 드라이버]
+        CSI --> |3. 볼륨 생성| PV[PersistentVolume]
+        PV --> |바인딩| PVC
+        
+        POD[Pod] --> |마운트 요청| PVC
+        CSI --> |4. 볼륨 마운트| POD
+    end
+    
+    subgraph "CSI 드라이버"
+        CSI --> CTRL[컨트롤러 서비스]
+        CSI --> NODE[노드 서비스]
+    end
+    
+    CTRL --> |5. 볼륨 관리| STOR[(스토리지 시스템)]
+    NODE --> |6. 볼륨 마운트| STOR
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class PVC,SC,PROV,PV,POD k8sComponent;
+    class User userApp;
+    class STOR dataStore;
+    class CSI,CTRL,NODE default;
+```
+
 ### CSI 아키텍처
 
 CSI는 다음과 같은 구성 요소로 이루어집니다:
@@ -1047,6 +1209,34 @@ spec:
 
 CNI는 Kubernetes와 네트워킹 솔루션 간의 표준 인터페이스를 제공합니다.
 
+다음 다이어그램은 CNI의 아키텍처와 작동 방식을 보여줍니다:
+
+```mermaid
+flowchart TD
+    subgraph "Kubernetes 컴포넌트"
+        API[API 서버] --> |포드 생성| KUB[kubelet]
+        KUB --> |1. 컨테이너 생성| CRI[컨테이너 런타임]
+        CRI --> |2. 네트워크 설정 요청| CNI[CNI 플러그인]
+    end
+    
+    subgraph "CNI 플러그인"
+        CNI --> |3. IP 할당 요청| IPAM[IPAM 플러그인]
+        CNI --> |5. 네트워크 설정| NET[네트워크 구성]
+    end
+    
+    IPAM --> |4. IP 할당| IPPOOL[(IP 풀)]
+    NET --> |6. 네트워크 구성 적용| POD[포드 네트워크]
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class API,KUB,CRI,POD k8sComponent;
+    class IPPOOL dataStore;
+    class CNI,IPAM,NET default;
+```
+
 ### CNI 아키텍처
 
 CNI는 다음과 같은 구성 요소로 이루어집니다:
@@ -1225,6 +1415,40 @@ spec:
 ## Amazon EKS에서의 확장 기능
 
 Amazon EKS는 다양한 확장 기능을 지원하여 Kubernetes 클러스터의 기능을 확장할 수 있습니다.
+
+다음 다이어그램은 Amazon EKS의 확장 기능 아키텍처를 보여줍니다:
+
+```mermaid
+flowchart TD
+    subgraph "Amazon EKS"
+        EKS[EKS 클러스터] --> |관리| CP[컨트롤 플레인]
+        EKS --> |관리| NG[노드 그룹]
+        
+        subgraph "EKS 추가 기능"
+            CP --> VCNI[Amazon VPC CNI]
+            CP --> CDNS[CoreDNS]
+            CP --> KP[kube-proxy]
+            CP --> EBSCSI[Amazon EBS CSI 드라이버]
+            CP --> ALBC[AWS Load Balancer Controller]
+        end
+    end
+    
+    subgraph "AWS 서비스"
+        VCNI --> VPC[Amazon VPC]
+        EBSCSI --> EBS[Amazon EBS]
+        ALBC --> ELB[Elastic Load Balancing]
+        
+        IAM[AWS IAM] --> |IRSA| NG
+        ACK[AWS Controllers for Kubernetes] --> AWS[AWS 서비스]
+    end
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class EKS,CP,NG,VCNI,CDNS,KP,EBSCSI,ALBC,ACK k8sComponent;
+    class VPC,EBS,ELB,IAM,AWS awsService;
+```
 
 ### EKS 추가 기능
 
