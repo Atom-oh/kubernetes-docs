@@ -8,6 +8,40 @@
 
 Kubernetes에서는 다음과 같은 서비스 유형을 제공합니다:
 
+```mermaid
+flowchart TD
+    subgraph Service_Types ["Kubernetes 서비스 유형"]
+        ClusterIP[ClusterIP<br>클러스터 내부에서만 액세스 가능]
+        NodePort[NodePort<br>모든 노드의 특정 포트를 통해 액세스 가능]
+        LoadBalancer[LoadBalancer<br>외부 로드 밸런서를 통해 액세스 가능]
+        ExternalName[ExternalName<br>외부 서비스에 대한 CNAME 레코드 제공]
+    end
+    
+    subgraph Access_Methods ["액세스 방법"]
+        Internal[클러스터 내부]
+        Node_Access[노드 IP:포트]
+        External_LB[외부 로드 밸런서]
+        DNS[DNS CNAME]
+    end
+    
+    ClusterIP --> Internal
+    NodePort --> Node_Access
+    LoadBalancer --> External_LB
+    ExternalName --> DNS
+    
+    %% 클래스 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class ClusterIP,NodePort,LoadBalancer,ExternalName k8sComponent;
+    class External_LB awsService;
+    class Internal,Node_Access,DNS default;
+```
+
 1. **ClusterIP**: 클러스터 내부에서만 액세스 가능한 서비스
 2. **NodePort**: 모든 노드의 특정 포트를 통해 액세스 가능한 서비스
 3. **LoadBalancer**: 외부 로드 밸런서를 통해 액세스 가능한 서비스
@@ -86,6 +120,59 @@ spec:
 
 EKS는 Kubernetes 서비스를 AWS 로드 밸런서와 통합하여 외부에서 애플리케이션에 액세스할 수 있게 합니다.
 
+```mermaid
+flowchart TD
+    subgraph Internet ["인터넷"]
+        Users((사용자))
+    end
+    
+    subgraph AWS_Cloud ["AWS 클라우드"]
+        subgraph Load_Balancers ["AWS 로드 밸런서"]
+            CLB[Classic Load Balancer]
+            NLB[Network Load Balancer]
+            ALB[Application Load Balancer]
+        end
+        
+        subgraph EKS_Cluster ["EKS 클러스터"]
+            subgraph Services ["Kubernetes 서비스"]
+                Service1[LoadBalancer 서비스]
+                Service2[NodePort 서비스]
+                Ingress[Ingress 리소스]
+            end
+            
+            subgraph Pods ["포드"]
+                Pod1[포드 1]
+                Pod2[포드 2]
+                Pod3[포드 3]
+            end
+        end
+    end
+    
+    Users --> CLB
+    Users --> NLB
+    Users --> ALB
+    CLB --> Service1
+    NLB --> Service1
+    ALB --> Ingress
+    Ingress --> Service2
+    Service1 --> Pod1
+    Service1 --> Pod2
+    Service2 --> Pod3
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class CLB,NLB,ALB awsService;
+    class Service1,Service2,Ingress k8sComponent;
+    class Pod1,Pod2,Pod3 userApp;
+    class Users default;
+```
+
 ### Classic Load Balancer(CLB)
 
 기본적으로 `type: LoadBalancer`로 설정된 서비스는 Classic Load Balancer를 생성합니다. 그러나 CLB는 더 이상 권장되지 않으며, NLB 또는 ALB를 사용하는 것이 좋습니다.
@@ -145,6 +232,49 @@ metadata:
 ### Application Load Balancer(ALB)
 
 ALB를 사용하려면 AWS Load Balancer Controller를 설치하고 Ingress 리소스를 사용해야 합니다:
+
+```mermaid
+flowchart TD
+    subgraph AWS_Cloud ["AWS 클라우드"]
+        subgraph VPC ["VPC"]
+            subgraph Public_Subnets ["퍼블릭 서브넷"]
+                ALB[Application Load Balancer]
+            end
+            
+            subgraph Private_Subnets ["프라이빗 서브넷"]
+                subgraph EKS_Cluster ["EKS 클러스터"]
+                    ALBIC[AWS Load Balancer Controller]
+                    Ingress[Ingress 리소스]
+                    Service1[서비스 1]
+                    Service2[서비스 2]
+                    Pod1[포드 1]
+                    Pod2[포드 2]
+                end
+            end
+        end
+    end
+    
+    Internet((인터넷)) --> ALB
+    ALB --> Ingress
+    ALBIC --> ALB
+    Ingress --> Service1
+    Ingress --> Service2
+    Service1 --> Pod1
+    Service2 --> Pod2
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class ALB,Public_Subnets,Private_Subnets awsService;
+    class ALBIC,Ingress,Service1,Service2 k8sComponent;
+    class Pod1,Pod2 userApp;
+    class Internet default;
+```
 
 1. AWS Load Balancer Controller 설치:
 
@@ -224,6 +354,27 @@ metadata:
 
 ### 서비스 및 로드 밸런서 모범 사례
 
+```mermaid
+flowchart TD
+    A[서비스 및 로드 밸런서 모범 사례] --> B[내부 서비스에는 ClusterIP 사용]
+    A --> C[외부 서비스에는 LoadBalancer 또는 Ingress 사용]
+    A --> D[경로 기반 라우팅, SSL 종료, 인증 등이 필요한 경우 ALB 사용]
+    A --> E[TCP/UDP 트래픽, 고성능, 정적 IP가 필요한 경우 NLB 사용]
+    A --> F[클러스터 내부에서만 액세스하는 서비스에는 내부 로드 밸런서 사용]
+    A --> G[고가용성을 위해 교차 영역 로드 밸런싱 활성화]
+    A --> H[적절한 대상 유형 선택]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A,B,C,D,E,F,G,H default;
+```
+
 1. **내부 서비스에는 ClusterIP 사용**: 클러스터 내부에서만 액세스하는 서비스에는 ClusterIP 유형을 사용합니다.
 2. **외부 서비스에는 LoadBalancer 또는 Ingress 사용**: 외부에서 액세스해야 하는 서비스에는 LoadBalancer 유형 또는 Ingress 리소스를 사용합니다.
 3. **ALB 사용**: 경로 기반 라우팅, SSL 종료, 인증 등의 기능이 필요한 경우 ALB를 사용합니다.
@@ -235,6 +386,53 @@ metadata:
 ## 네트워크 정책
 
 네트워크 정책은 포드 간 통신을 제어하는 데 사용됩니다. EKS에서 네트워크 정책을 사용하려면 네트워크 정책을 지원하는 CNI 플러그인(예: Calico, Cilium)을 설치해야 합니다.
+
+```mermaid
+flowchart TD
+    subgraph EKS_Cluster ["EKS 클러스터"]
+        subgraph Network_Policies ["네트워크 정책"]
+            NP1[네임스페이스 격리 정책]
+            NP2[특정 포드 간 통신 허용 정책]
+            NP3[외부 트래픽 제한 정책]
+            NP4[이그레스 트래픽 제한 정책]
+        end
+        
+        subgraph Namespaces ["네임스페이스"]
+            subgraph NS1 ["네임스페이스 1"]
+                Pod1[프론트엔드 포드]
+                Pod2[백엔드 포드]
+            end
+            
+            subgraph NS2 ["네임스페이스 2"]
+                Pod3[데이터베이스 포드]
+            end
+        end
+        
+        NP1 --> NS1
+        NP1 --> NS2
+        NP2 --> Pod1
+        NP2 --> Pod2
+        NP3 --> Pod1
+        NP4 --> Pod2
+        Pod1 --> Pod2
+        Pod2 --> Pod3
+    end
+    
+    External((외부 서비스)) --> Pod1
+    Pod2 --> External
+    
+    %% 클래스 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class NP1,NP2,NP3,NP4,NS1,NS2 k8sComponent;
+    class Pod1,Pod2 userApp;
+    class Pod3 dataStore;
+    class External default;
+```
 
 ### Calico 설치
 
@@ -362,140 +560,27 @@ spec:
 
 ### 네트워크 정책 모범 사례
 
+```mermaid
+flowchart TD
+    A[네트워크 정책 모범 사례] --> B[기본 거부 정책 적용]
+    A --> C[네임스페이스 격리]
+    A --> D[최소 권한 원칙 적용]
+    A --> E[이그레스 트래픽 제한]
+    A --> F[정책 테스트]
+    
+    %% 클래스 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A,B,C,D,E,F default;
+```
+
 1. **기본 거부 정책 적용**: 모든 트래픽을 기본적으로 거부하고 필요한 트래픽만 명시적으로 허용합니다.
 2. **네임스페이스 격리**: 네임스페이스 간 통신을 제한하여 보안을 강화합니다.
 3. **최소 권한 원칙 적용**: 필요한 최소한의 통신만 허용합니다.
 4. **이그레스 트래픽 제한**: 포드에서 나가는 트래픽도 제한하여 보안을 강화합니다.
 5. **정책 테스트**: 네트워크 정책을 적용하기 전에 테스트하여 의도하지 않은 통신 차단을 방지합니다.
-
-## AWS VPC CNI
-
-AWS VPC CNI(Container Network Interface)는 EKS의 기본 네트워킹 플러그인으로, 포드에 VPC IP 주소를 할당합니다.
-
-### AWS VPC CNI 작동 방식
-
-AWS VPC CNI는 다음과 같은 방식으로 작동합니다:
-
-1. 각 노드는 VPC의 보조 IP 주소를 할당받습니다.
-2. 포드가 생성되면 CNI는 이러한 보조 IP 주소 중 하나를 포드에 할당합니다.
-3. 포드는 VPC 내에서 고유한 IP 주소를 가지게 됩니다.
-4. 포드 간 통신은 VPC 네트워킹을 통해 이루어집니다.
-
-### AWS VPC CNI 구성
-
-AWS VPC CNI는 다음과 같은 구성 옵션을 제공합니다:
-
-1. **WARM_IP_TARGET**: 각 노드에 유지할 사용 가능한 IP 주소 수
-2. **WARM_ENI_TARGET**: 각 노드에 유지할 사용 가능한 ENI(Elastic Network Interface) 수
-3. **AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG**: 사용자 정의 네트워킹 활성화
-4. **ENI_CONFIG_LABEL_DEF**: ENI 구성에 사용할 노드 레이블
-5. **DISABLE_TCP_EARLY_DEMUX**: TCP 조기 역다중화 비활성화
-
-```bash
-# AWS VPC CNI 구성 확인
-kubectl describe daemonset aws-node -n kube-system
-
-# AWS VPC CNI 구성 업데이트
-kubectl set env daemonset aws-node -n kube-system WARM_IP_TARGET=5
-```
-
-### 사용자 정의 네트워킹
-
-AWS VPC CNI는 사용자 정의 네트워킹을 지원하여 포드에 특정 서브넷의 IP 주소를 할당할 수 있습니다:
-
-1. 사용자 정의 네트워킹 활성화:
-
-```bash
-kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true
-```
-
-2. ENIConfig 생성:
-
-```yaml
-apiVersion: crd.k8s.amazonaws.com/v1alpha1
-kind: ENIConfig
-metadata:
-  name: us-west-2a
-spec:
-  subnet: subnet-xxxxxxxxxxxxxxxxx
-  securityGroups:
-  - sg-xxxxxxxxxxxxxxxxx
----
-apiVersion: crd.k8s.amazonaws.com/v1alpha1
-kind: ENIConfig
-metadata:
-  name: us-west-2b
-spec:
-  subnet: subnet-yyyyyyyyyyyyyyyyy
-  securityGroups:
-  - sg-yyyyyyyyyyyyyyyyy
-```
-
-3. 노드에 레이블 지정:
-
-```bash
-kubectl label node ip-192-168-1-100.us-west-2.compute.internal k8s.amazonaws.com/eniConfig=us-west-2a
-kubectl label node ip-192-168-2-200.us-west-2.compute.internal k8s.amazonaws.com/eniConfig=us-west-2b
-```
-
-### 보조 CIDR 블록
-
-VPC에 보조 CIDR 블록을 추가하여 포드 IP 주소 공간을 확장할 수 있습니다:
-
-1. VPC에 보조 CIDR 블록 추가:
-
-```bash
-aws ec2 associate-vpc-cidr-block \
-  --vpc-id vpc-xxxxxxxxxxxxxxxxx \
-  --cidr-block 100.64.0.0/16
-```
-
-2. 보조 CIDR 블록에 서브넷 생성:
-
-```bash
-aws ec2 create-subnet \
-  --vpc-id vpc-xxxxxxxxxxxxxxxxx \
-  --cidr-block 100.64.0.0/19 \
-  --availability-zone us-west-2a \
-  --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=EKS-Pod-Subnet-1}]'
-
-aws ec2 create-subnet \
-  --vpc-id vpc-xxxxxxxxxxxxxxxxx \
-  --cidr-block 100.64.32.0/19 \
-  --availability-zone us-west-2b \
-  --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=EKS-Pod-Subnet-2}]'
-```
-
-3. 사용자 정의 네트워킹 구성:
-
-```yaml
-apiVersion: crd.k8s.amazonaws.com/v1alpha1
-kind: ENIConfig
-metadata:
-  name: us-west-2a
-spec:
-  subnet: subnet-xxxxxxxxxxxxxxxxx  # 100.64.0.0/19 서브넷
-  securityGroups:
-  - sg-xxxxxxxxxxxxxxxxx
----
-apiVersion: crd.k8s.amazonaws.com/v1alpha1
-kind: ENIConfig
-metadata:
-  name: us-west-2b
-spec:
-  subnet: subnet-yyyyyyyyyyyyyyyyy  # 100.64.32.0/19 서브넷
-  securityGroups:
-  - sg-yyyyyyyyyyyyyyyyy
-```
-
-### AWS VPC CNI 모범 사례
-
-1. **IP 주소 계획**: 노드 및 포드 수에 맞게 충분한 IP 주소 공간을 계획합니다.
-2. **보조 CIDR 블록 사용**: 포드 IP 주소 공간을 확장하기 위해 보조 CIDR 블록을 사용합니다.
-3. **사용자 정의 네트워킹**: 포드를 특정 서브넷에 배치하기 위해 사용자 정의 네트워킹을 구성합니다.
-4. **WARM_IP_TARGET 최적화**: 노드당 유지할 사용 가능한 IP 주소 수를 최적화합니다.
-5. **보안 그룹**: 포드에 적절한 보안 그룹을 할당합니다.
-
-## 결론
-
-이 문서에서는 EKS에서의 서비스 및 로드 밸런싱, 네트워크 정책에 대해 알아보았습니다. Kubernetes 서비스를 통해 애플리케이션을 노출하는 방법, AWS 로드 밸런서와의 통합, 그리고 네트워크 정책을 사용하여 포드 간 통신을 제어하는 방법을 다루었습니다. 다음 부분에서는 EKS 네트워킹의 성능 최적화, 문제 해결, 고급 사용 사례에 대해 알아보겠습니다.
