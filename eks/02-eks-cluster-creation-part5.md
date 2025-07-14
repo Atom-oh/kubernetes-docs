@@ -4,6 +4,30 @@
 
 EKS 클러스터를 생성한 후에는 클러스터에 액세스하기 위한 구성이 필요합니다. 이 섹션에서는 클러스터 액세스를 구성하는 방법을 알아보겠습니다.
 
+### 클러스터 액세스 구성 프로세스
+
+```mermaid
+flowchart TD
+    A[EKS 클러스터 생성 완료] --> B[kubeconfig 구성]
+    B --> C[IAM 사용자/역할 액세스 구성]
+    C --> D[aws-auth ConfigMap 업데이트]
+    D --> E[RBAC 구성]
+    E --> F[네임스페이스 생성]
+    F --> G[역할 생성]
+    G --> H[역할 바인딩 생성]
+    H --> I[클러스터 액세스 테스트]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A,B,C awsService;
+    class D,E,F,G,H,I k8sComponent;
+```
+
 ### kubeconfig 구성
 
 EKS 클러스터에 액세스하려면 kubeconfig 파일을 구성해야 합니다. AWS CLI를 사용하여 kubeconfig를 구성할 수 있습니다:
@@ -19,6 +43,33 @@ aws eks update-kubeconfig \
 ### IAM 사용자 및 역할 액세스 구성
 
 기본적으로 EKS 클러스터를 생성한 IAM 엔터티(사용자 또는 역할)만 클러스터에 액세스할 수 있습니다. 다른 IAM 사용자 또는 역할에 클러스터 액세스 권한을 부여하려면 `aws-auth` ConfigMap을 업데이트해야 합니다.
+
+```mermaid
+flowchart LR
+    A[IAM 사용자/역할] --> B[aws-auth ConfigMap]
+    B --> C[Kubernetes API]
+    C --> D[EKS 클러스터]
+    
+    subgraph AWS
+    A
+    end
+    
+    subgraph Kubernetes
+    B
+    C
+    D
+    end
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A awsService;
+    class B,C,D k8sComponent;
+```
 
 1. 현재 `aws-auth` ConfigMap 가져오기:
 
@@ -119,6 +170,29 @@ kubectl apply -f rolebinding.yaml
 
 EKS 클러스터를 생성한 후에는 클러스터가 올바르게 작동하는지 확인해야 합니다. 이 섹션에서는 클러스터를 검증하는 방법을 알아보겠습니다.
 
+### 클러스터 검증 프로세스
+
+```mermaid
+flowchart TD
+    A[클러스터 검증 시작] --> B[노드 상태 확인]
+    B --> C[시스템 포드 확인]
+    C --> D[테스트 애플리케이션 배포]
+    D --> E[서비스 접근성 확인]
+    E --> F[클러스터 로그 확인]
+    F --> G[클러스터 검증 완료]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A,G default;
+    class B,C,D,E k8sComponent;
+    class F awsService;
+```
+
 ### 노드 확인
 
 클러스터의 노드를 확인합니다:
@@ -209,6 +283,32 @@ aws logs describe-log-groups \
 
 EKS 클러스터를 최신 상태로 유지하려면 정기적으로 업그레이드해야 합니다. 이 섹션에서는 클러스터를 업그레이드하는 방법을 알아보겠습니다.
 
+### 클러스터 업그레이드 프로세스
+
+```mermaid
+flowchart TD
+    A[업그레이드 계획 수립] --> B[사용 가능한 버전 확인]
+    B --> C[컨트롤 플레인 업그레이드]
+    C --> D[업그레이드 상태 확인]
+    D --> E{업그레이드 완료?}
+    E -->|아니오| D
+    E -->|예| F[노드 그룹 업그레이드]
+    F --> G[애드온 업그레이드]
+    G --> H[클러스터 기능 테스트]
+    H --> I[업그레이드 완료]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A,B,I default;
+    class C,D,E,F,G awsService;
+    class H k8sComponent;
+```
+
 ### 컨트롤 플레인 업그레이드
 
 EKS 컨트롤 플레인을 업그레이드하려면 다음 단계를 따릅니다:
@@ -277,6 +377,32 @@ aws eks update-addon \
 ## 클러스터 삭제
 
 EKS 클러스터가 더 이상 필요하지 않은 경우 삭제하여 비용을 절약할 수 있습니다. 이 섹션에서는 클러스터를 삭제하는 방법을 알아보겠습니다.
+
+### 클러스터 삭제 프로세스
+
+```mermaid
+flowchart TD
+    A[클러스터 삭제 시작] --> B[LoadBalancer 서비스 삭제]
+    B --> C[PersistentVolumeClaim 삭제]
+    C --> D[노드 그룹 삭제]
+    D --> E[Fargate 프로필 삭제]
+    E --> F[클러스터 삭제]
+    F --> G[VPC 및 관련 리소스 삭제]
+    G --> H[IAM 역할 및 정책 삭제]
+    H --> I[CloudWatch 로그 그룹 삭제]
+    I --> J[클러스터 삭제 완료]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A,J default;
+    class B,C k8sComponent;
+    class D,E,F,G,H,I awsService;
+```
 
 ### 리소스 정리
 
