@@ -111,6 +111,18 @@ graph TD
         I
         J
     end
+    
+    %% 스타일 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A userApp;
+    class B,C,D,E awsService;
+    class F,G,H,I,J default;
 ```
 
 ### 서비스 네트워크 아키텍처
@@ -139,6 +151,19 @@ graph TD
     TG1 -->|대상| T1[EC2 인스턴스]
     TG2 -->|대상| T2[EKS 파드]
     TG3 -->|대상| T3[Lambda 함수]
+    
+    %% 스타일 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A,B,C default;
+    class SN,S1,S2,S3,TG1,TG2,TG3 awsService;
+    class T1,T3 awsService;
+    class T2 k8sComponent;
 ```
 
 ### 트래픽 흐름
@@ -167,6 +192,11 @@ sequenceDiagram
     TargetGroup->>Service: 응답 전달
     Service->>VPCLattice: 응답 처리
     VPCLattice->>Client: 응답 반환
+    
+    %% 스타일 정의
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
 ```
 
 ### 서비스 디스커버리
