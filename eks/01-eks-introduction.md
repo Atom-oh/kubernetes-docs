@@ -4,6 +4,53 @@ Amazon Elastic Kubernetes Service(EKS)는 AWS에서 Kubernetes를 실행하기 �
 
 ## EKS 아키텍처 및 구성 요소
 
+Amazon EKS의 전체 아키텍처는 다음과 같습니다:
+
+```mermaid
+flowchart TD
+    User[사용자] --> |관리| AWS[AWS Management Console/CLI/API]
+    AWS --> |관리| EKS[Amazon EKS]
+    
+    subgraph "AWS 클라우드"
+        subgraph "EKS 컨트롤 플레인"
+            EKS --> |관리| API[API 서버]
+            EKS --> |관리| ETCD[(etcd)]
+            EKS --> |관리| CM[컨트롤러 매니저]
+            EKS --> |관리| SCH[스케줄러]
+        end
+        
+        subgraph "데이터 플레인"
+            EKS --> |관리| MNG[관리형 노드 그룹]
+            EKS --> |연결| SMNG[자체 관리형 노드]
+            EKS --> |관리| FG[Fargate]
+            
+            MNG --> |실행| EC2MNG[EC2 인스턴스]
+            SMNG --> |실행| EC2SMNG[EC2 인스턴스]
+            FG --> |실행| PODS[Fargate 포드]
+        end
+        
+        subgraph "AWS 서비스"
+            EKS --> |사용| IAM[IAM]
+            EKS --> |사용| VPC[VPC]
+            EKS --> |사용| CW[CloudWatch]
+            EKS --> |사용| ECR[ECR]
+            EKS --> |사용| ELB[Elastic Load Balancing]
+            EKS --> |사용| STOR[EBS/EFS/FSx]
+        end
+    end
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class API,ETCD,CM,SCH,PODS k8sComponent;
+    class EKS,MNG,SMNG,FG,EC2MNG,EC2SMNG,IAM,VPC,CW,ECR,ELB,STOR,AWS awsService;
+    class ETCD dataStore;
+    class User userApp;
+```
+
 ### 컨트롤 플레인
 
 EKS는 고가용성 컨트롤 플레인을 제공합니다. 컨트롤 플레인은 여러 가용 영역에 걸쳐 실행되며, 다음과 같은 구성 요소로 이루어져 있습니다:
@@ -19,6 +66,35 @@ EKS에서는 이러한 컨트롤 플레인 구성 요소가 AWS에 의해 관리
 
 EKS 데이터 플레인은 다음과 같은 옵션으로 구성할 수 있습니다:
 
+```mermaid
+flowchart LR
+    subgraph "EKS 데이터 플레인 옵션"
+        MNG[관리형 노드 그룹]
+        SMNG[자체 관리형 노드]
+        FG[Fargate]
+    end
+    
+    subgraph "특징"
+        MNG --> |AWS 관리| LC[노드 수명 주기 관리]
+        MNG --> |지원| ASG[오토 스케일링]
+        MNG --> |지원| SPOT[Spot 인스턴스]
+        
+        SMNG --> |사용자 관리| ULC[사용자 정의 수명 주기]
+        SMNG --> |지원| CUST[사용자 정의 AMI]
+        SMNG --> |지원| BOOT[부트스트랩 스크립트]
+        
+        FG --> |서버리스| NM[노드 관리 불필요]
+        FG --> |지원| POD[포드 단위 과금]
+        FG --> |제한| NOLB[로드 밸런서 직접 연결 불가]
+    end
+    
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class MNG,SMNG,FG awsService;
+    class LC,ASG,SPOT,ULC,CUST,BOOT,NM,POD,NOLB default;
+```
+
 1. **관리형 노드 그룹**: EC2 인스턴스로 구성된 노드 그룹으로, AWS에서 노드 수명 주기를 관리합니다.
 2. **자체 관리형 노드**: 사용자가 직접 관리하는 EC2 인스턴스입니다.
 3. **AWS Fargate**: 서버리스 컴퓨팅 엔진으로, 컨테이너를 실행하기 위한 인프라를 관리할 필요가 없습니다.
@@ -26,6 +102,56 @@ EKS 데이터 플레인은 다음과 같은 옵션으로 구성할 수 있습니
 ### 네트워킹
 
 EKS는 Amazon VPC CNI 플러그인을 사용하여 포드 네트워킹을 제공합니다. 이 플러그인은 각 포드에 VPC IP 주소를 할당하여 AWS 네트워킹 기능을 활용할 수 있게 합니다.
+
+```mermaid
+flowchart TD
+    subgraph "VPC"
+        subgraph "가용 영역 A"
+            subgraph "퍼블릭 서브넷 A"
+                NLBA[NLB/ALB]
+            end
+            
+            subgraph "프라이빗 서브넷 A"
+                NodeA[EKS 노드 A]
+                NodeA --> |실행| PodA1[포드]
+                NodeA --> |실행| PodA2[포드]
+                NodeA --> |실행| PodA3[포드]
+            end
+        end
+        
+        subgraph "가용 영역 B"
+            subgraph "퍼블릭 서브넷 B"
+                NLBB[NLB/ALB]
+            end
+            
+            subgraph "프라이빗 서브넷 B"
+                NodeB[EKS 노드 B]
+                NodeB --> |실행| PodB1[포드]
+                NodeB --> |실행| PodB2[포드]
+                NodeB --> |실행| PodB3[포드]
+            end
+        end
+        
+        NLBA <--> NodeA
+        NLBB <--> NodeB
+        
+        PodA1 <--> PodB1
+        PodA2 <--> PodB2
+        PodA3 <--> PodB3
+    end
+    
+    Internet[인터넷] <--> NLBA
+    Internet <--> NLBB
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class PodA1,PodA2,PodA3,PodB1,PodB2,PodB3 k8sComponent;
+    class NodeA,NodeB,NLBA,NLBB awsService;
+    class Internet userApp;
+```
 
 ## 일반 Kubernetes와 EKS의 차이점
 
@@ -72,6 +198,57 @@ EKS 클러스터를 운영할 때 발생하는 비용은 다음과 같습니다:
 ## AWS 서비스와의 통합
 
 EKS는 다음과 같은 AWS 서비스와 통합됩니다:
+
+```mermaid
+flowchart TD
+    EKS[Amazon EKS] --> IAM[AWS IAM]
+    EKS --> VPC[Amazon VPC]
+    EKS --> CW[Amazon CloudWatch]
+    EKS --> LB[Elastic Load Balancing]
+    EKS --> ECR[Amazon ECR]
+    EKS --> STOR[EBS/EFS/FSx]
+    
+    subgraph "보안 및 인증"
+        IAM --> IRSA[IAM Roles for Service Accounts]
+        IAM --> RBAC[Kubernetes RBAC]
+        EKS --> ACM[AWS Certificate Manager]
+        EKS --> SM[AWS Secrets Manager]
+    end
+    
+    subgraph "네트워킹"
+        VPC --> VCNI[Amazon VPC CNI]
+        LB --> ALB[Application Load Balancer]
+        LB --> NLB[Network Load Balancer]
+        EKS --> AM[AWS App Mesh]
+        EKS --> VL[VPC Lattice]
+    end
+    
+    subgraph "모니터링 및 로깅"
+        CW --> CWL[CloudWatch Logs]
+        CW --> CWM[CloudWatch Metrics]
+        CW --> CI[Container Insights]
+        EKS --> XR[AWS X-Ray]
+    end
+    
+    subgraph "스토리지"
+        STOR --> EBS[Amazon EBS]
+        STOR --> EFS[Amazon EFS]
+        STOR --> FSX[Amazon FSx]
+        STOR --> S3[Amazon S3]
+    end
+    
+    subgraph "AI/ML"
+        EKS --> SM2[AWS SageMaker]
+        EKS --> BR[AWS Bedrock]
+    end
+    
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class EKS,IAM,VPC,CW,LB,ECR,STOR,ACM,SM,ALB,NLB,AM,VL,CWL,CWM,CI,XR,EBS,EFS,FSX,S3,SM2,BR awsService;
+    class IRSA,RBAC k8sComponent;
+```
 
 1. **IAM**: Kubernetes RBAC와 통합하여 인증 및 권한 부여를 관리합니다.
 2. **VPC**: 네트워킹 인프라를 제공합니다.
