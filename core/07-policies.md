@@ -2,6 +2,54 @@
 
 Kubernetes에서 정책은 클러스터와 워크로드의 동작을 제어하고 규제하는 규칙 집합입니다. 정책을 통해 보안, 리소스 사용, 네트워크 통신 등 다양한 측면을 관리할 수 있습니다. 이 장에서는 Kubernetes의 다양한 정책 유형과 이를 구현하는 방법, 그리고 Amazon EKS에서의 정책 관리에 대해 알아보겠습니다.
 
+```mermaid
+graph TD
+    subgraph "정책 유형"
+        Resource["리소스 정책<br>(ResourceQuota, LimitRange)"]
+        Security["보안 정책<br>(Pod Security Standards)"]
+        Network["네트워크 정책<br>(NetworkPolicy)"]
+        Custom["커스텀 정책<br>(OPA Gatekeeper, Kyverno)"]
+    end
+    
+    subgraph "정책 목적"
+        Sec["보안 강화"]
+        Res["리소스 관리"]
+        Comp["규정 준수"]
+        Stand["표준화"]
+    end
+    
+    Resource -->|구현| Res
+    Security -->|구현| Sec
+    Security -->|구현| Comp
+    Network -->|구현| Sec
+    Custom -->|구현| Sec
+    Custom -->|구현| Comp
+    Custom -->|구현| Stand
+    
+    subgraph "적용 대상"
+        Cluster["클러스터"]
+        NS["네임스페이스"]
+        Pod["포드"]
+    end
+    
+    Resource -->|적용| NS
+    Security -->|적용| Pod
+    Network -->|적용| Pod
+    Custom -->|적용| Cluster
+    Custom -->|적용| NS
+    Custom -->|적용| Pod
+    
+    %% 스타일 정의
+    classDef policyType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef policyPurpose fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class Resource,Security,Network,Custom policyType;
+    class Sec,Res,Comp,Stand policyPurpose;
+    class Cluster,NS,Pod k8sComponent;
+```
+
 ## 목차
 1. [정책 개요](#정책-개요)
 2. [리소스 할당 정책](#리소스-할당-정책)
@@ -28,6 +76,41 @@ Kubernetes에서는 다양한 유형의 정책을 구현할 수 있으며, 이�
 ## 리소스 할당 정책
 
 리소스 할당 정책은 포드와 컨테이너가 사용할 수 있는 CPU, 메모리 등의 리소스 양을 제어합니다.
+
+```mermaid
+graph TD
+    subgraph "리소스 할당 메커니즘"
+        Requests["리소스 요청<br>(requests)"]
+        Limits["리소스 제한<br>(limits)"]
+        QoS["QoS 클래스"]
+    end
+    
+    Requests -->|설정| Pod["포드/컨테이너"]
+    Limits -->|설정| Pod
+    Pod -->|결정| QoS
+    
+    QoS -->|유형| Guaranteed["Guaranteed<br>(requests = limits)"]
+    QoS -->|유형| Burstable["Burstable<br>(requests < limits)"]
+    QoS -->|유형| BestEffort["BestEffort<br>(requests/limits 없음)"]
+    
+    subgraph "리소스 부족 시 축출 순서"
+        BestEffort -->|1순위| Eviction["축출"]
+        Burstable -->|2순위| Eviction
+        Guaranteed -->|3순위| Eviction
+    end
+    
+    %% 스타일 정의
+    classDef resourceMechanism fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef qosClass fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef evictionComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class Requests,Limits,QoS resourceMechanism;
+    class Pod k8sComponent;
+    class Guaranteed,Burstable,BestEffort qosClass;
+    class Eviction evictionComponent;
+```
 
 ### 리소스 요청과 제한
 
@@ -77,6 +160,44 @@ QoS 클래스는 리소스 부족 시 포드 축출 순서를 결정합니다:
 
 포드 보안 정책(Pod Security Policy, PSP)은 Kubernetes 1.21 버전부터 사용 중단(deprecated)되었으며, 1.25 버전에서 완전히 제거되었습니다. 대신 포드 보안 표준(Pod Security Standards)과 포드 보안 어드미션(Pod Security Admission)이 도입되었습니다.
 
+```mermaid
+graph TD
+    subgraph "포드 보안 표준"
+        PSS["Pod Security Standards"]
+        PSS -->|수준| Privileged["Privileged<br>(제한 없음)"]
+        PSS -->|수준| Baseline["Baseline<br>(기본 보안)"]
+        PSS -->|수준| Restricted["Restricted<br>(강화된 보안)"]
+    end
+    
+    subgraph "포드 보안 어드미션"
+        PSA["Pod Security Admission"]
+        PSA -->|모드| Enforce["enforce<br>(위반 시 차단)"]
+        PSA -->|모드| Audit["audit<br>(위반 시 로깅)"]
+        PSA -->|모드| Warn["warn<br>(위반 시 경고)"]
+    end
+    
+    NS["네임스페이스"] -->|레이블 설정| PSA
+    PSA -->|참조| PSS
+    PSA -->|검증| Pod["포드 생성 요청"]
+    
+    Pod -->|준수| Allow["허용"]
+    Pod -->|위반| Deny["거부"]
+    
+    %% 스타일 정의
+    classDef securityStandard fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef securityLevel fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef admissionMode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class PSS securityStandard;
+    class Privileged,Baseline,Restricted securityLevel;
+    class NS,Pod k8sComponent;
+    class PSA,Enforce,Audit,Warn admissionMode;
+    class Allow,Deny resultComponent;
+```
+
 ### 포드 보안 표준(Pod Security Standards)
 
 포드 보안 표준은 세 가지 정책 수준을 정의합니다:
@@ -108,6 +229,50 @@ metadata:
 ## 네트워크 정책
 
 네트워크 정책(Network Policy)은 포드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 Kubernetes 클러스터의 모든 포드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다.
+
+```mermaid
+graph TD
+    subgraph "네트워크 정책 구성"
+        NP["NetworkPolicy"]
+        NP -->|선택| PodSelector["podSelector<br>(대상 포드)"]
+        NP -->|정의| PolicyTypes["policyTypes<br>(Ingress/Egress)"]
+        NP -->|규칙| Ingress["ingress<br>(인바운드 규칙)"]
+        NP -->|규칙| Egress["egress<br>(아웃바운드 규칙)"]
+    end
+    
+    subgraph "트래픽 흐름"
+        Frontend["프론트엔드<br>포드"]
+        API["API<br>포드"]
+        DB["데이터베이스<br>포드"]
+        
+        Frontend -->|인바운드 허용| API
+        API -->|아웃바운드 허용| DB
+        Frontend -.->|직접 통신 차단| DB
+    end
+    
+    NP -->|적용| API
+    
+    subgraph "선택자 유형"
+        Selectors["선택자"]
+        Selectors -->|유형| PodSel["podSelector<br>(포드 레이블)"]
+        Selectors -->|유형| NSSel["namespaceSelector<br>(네임스페이스 레이블)"]
+        Selectors -->|유형| IPBlock["ipBlock<br>(IP CIDR)"]
+    end
+    
+    %% 스타일 정의
+    classDef networkPolicy fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef policyConfig fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef selectorType fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class NP,PolicyTypes,Ingress,Egress networkPolicy;
+    class PodSelector,Selectors policyConfig;
+    class Frontend,API userApp;
+    class DB dataStore;
+    class PodSel,NSSel,IPBlock selectorType;
+```
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -180,6 +345,55 @@ ingress:
 ## 리소스 쿼터
 
 리소스 쿼터(ResourceQuota)는 네임스페이스 내에서 사용할 수 있는 리소스의 총량을 제한합니다. 이를 통해 여러 팀이나 프로젝트가 클러스터 리소스를 공유할 때 한 팀이 모든 리소스를 독점하는 것을 방지할 수 있습니다.
+
+```mermaid
+graph TD
+    subgraph "리소스 쿼터 유형"
+        RQ["ResourceQuota"]
+        RQ -->|유형| Compute["컴퓨팅 리소스 쿼터<br>(CPU, 메모리)"]
+        RQ -->|유형| Storage["스토리지 리소스 쿼터<br>(PVC)"]
+        RQ -->|유형| Object["오브젝트 수 쿼터<br>(Pod, Service 등)"]
+        RQ -->|유형| Priority["우선순위 클래스 쿼터"]
+    end
+    
+    subgraph "적용 범위"
+        NS["네임스페이스"]
+        NS -->|포함| Pod1["포드 1"]
+        NS -->|포함| Pod2["포드 2"]
+        NS -->|포함| Pod3["포드 3"]
+    end
+    
+    RQ -->|적용| NS
+    
+    subgraph "리소스 사용량"
+        Usage["네임스페이스 리소스 사용량"]
+        Usage -->|제한| Limit["쿼터 제한"]
+        Pod1 -->|기여| Usage
+        Pod2 -->|기여| Usage
+        Pod3 -->|기여| Usage
+        
+        NewPod["새 포드 생성 요청"]
+        NewPod -->|검증| Check{{"사용량 + 요청 <= 쿼터?"}}
+        Check -->|예| Allow["허용"]
+        Check -->|아니오| Deny["거부"]
+    end
+    
+    %% 스타일 정의
+    classDef quotaType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef quotaCategory fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef usageComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    classDef checkComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class RQ quotaType;
+    class Compute,Storage,Object,Priority quotaCategory;
+    class NS,Pod1,Pod2,Pod3,NewPod k8sComponent;
+    class Usage,Limit usageComponent;
+    class Check checkComponent;
+    class Allow,Deny resultComponent;
+```
 
 ```yaml
 apiVersion: v1
@@ -287,6 +501,63 @@ LimitRange는 다음과 같은 리소스 유형에 적용할 수 있습니다:
 ## 정책 엔진
 
 Kubernetes 생태계에는 더 복잡하고 유연한 정책을 구현할 수 있는 여러 정책 엔진이 있습니다.
+
+```mermaid
+graph TD
+    subgraph "정책 엔진"
+        OPA["OPA Gatekeeper"]
+        Kyverno["Kyverno"]
+        Kubewarden["Kubewarden"]
+    end
+    
+    subgraph "정책 정의"
+        OPATemplate["ConstraintTemplate<br>(Rego 언어)"]
+        OPAConstraint["Constraint<br>(정책 인스턴스)"]
+        KyvernoPolicy["ClusterPolicy/Policy<br>(YAML 기반)"]
+        KubewardenPolicy["ClusterAdmissionPolicy<br>(WebAssembly)"]
+    end
+    
+    OPA -->|사용| OPATemplate
+    OPA -->|사용| OPAConstraint
+    Kyverno -->|사용| KyvernoPolicy
+    Kubewarden -->|사용| KubewardenPolicy
+    
+    subgraph "정책 유형"
+        Validate["검증<br>(Validate)"]
+        Mutate["변경<br>(Mutate)"]
+        Generate["생성<br>(Generate)"]
+    end
+    
+    OPA -->|지원| Validate
+    OPA -->|지원| Mutate
+    Kyverno -->|지원| Validate
+    Kyverno -->|지원| Mutate
+    Kyverno -->|지원| Generate
+    Kubewarden -->|지원| Validate
+    Kubewarden -->|지원| Mutate
+    
+    subgraph "Kubernetes API"
+        API["API 서버"]
+        Webhook["어드미션 웹훅"]
+    end
+    
+    API -->|호출| Webhook
+    Webhook -->|처리| OPA
+    Webhook -->|처리| Kyverno
+    Webhook -->|처리| Kubewarden
+    
+    %% 스타일 정의
+    classDef policyEngine fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef policyDef fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef policyType fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class OPA,Kyverno,Kubewarden policyEngine;
+    class OPATemplate,OPAConstraint,KyvernoPolicy,KubewardenPolicy policyDef;
+    class Validate,Mutate,Generate policyType;
+    class API,Webhook k8sComponent;
+```
 
 ### OPA Gatekeeper
 
@@ -405,6 +676,65 @@ spec:
 ## Amazon EKS에서의 정책 관리
 
 Amazon EKS에서는 Kubernetes의 기본 정책 메커니즘과 함께 AWS의 다양한 서비스를 활용하여 정책을 관리할 수 있습니다.
+
+```mermaid
+graph TD
+    subgraph "AWS 서비스"
+        IAM["AWS IAM"]
+        SG["AWS Security Groups"]
+        Config["AWS Config"]
+        Org["AWS Organizations"]
+        FW["AWS Firewall Manager"]
+    end
+    
+    subgraph "EKS 정책 통합"
+        IRSA["IAM 역할 및 서비스 계정<br>(IRSA)"]
+        SGPods["포드용 보안 그룹"]
+        SCPs["서비스 제어 정책<br>(SCPs)"]
+        ConfigRules["Config 규칙"]
+        FWPolicies["방화벽 정책"]
+    end
+    
+    IAM -->|통합| IRSA
+    SG -->|통합| SGPods
+    Org -->|통합| SCPs
+    Config -->|통합| ConfigRules
+    FW -->|통합| FWPolicies
+    
+    subgraph "Kubernetes 정책"
+        K8sPolicies["Kubernetes 정책"]
+        K8sPolicies -->|유형| RQ["ResourceQuota"]
+        K8sPolicies -->|유형| LR["LimitRange"]
+        K8sPolicies -->|유형| NP["NetworkPolicy"]
+        K8sPolicies -->|유형| PSS["Pod Security Standards"]
+    end
+    
+    subgraph "EKS 클러스터"
+        Cluster["EKS 클러스터"]
+        Cluster -->|포함| NS["네임스페이스"]
+        NS -->|포함| Pod["포드"]
+    end
+    
+    IRSA -->|권한 부여| Pod
+    SGPods -->|네트워크 보안| Pod
+    SCPs -->|제한| Cluster
+    ConfigRules -->|감사| Cluster
+    FWPolicies -->|보호| Cluster
+    
+    K8sPolicies -->|적용| Cluster
+    
+    %% 스타일 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef eksIntegration fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef k8sPolicy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class IAM,SG,Config,Org,FW awsService;
+    class IRSA,SGPods,SCPs,ConfigRules,FWPolicies eksIntegration;
+    class K8sPolicies,RQ,LR,NP,PSS k8sPolicy;
+    class Cluster,NS,Pod k8sComponent;
+```
 
 ### AWS IAM과의 통합
 
