@@ -55,9 +55,9 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 - [x] 11. Kubernetes 확장 (`./core/11-extending-kubernetes.md`)
 
 ### Amazon EKS
-- [ ] 1. EKS 소개 (`./eks/01-eks-introduction.md`)
+- [x] 1. EKS 소개 (`./eks/01-eks-introduction.md`)
 - [ ] 2. EKS 클러스터 생성
-  - [ ] Part 1: 사전 요구 사항 (`./eks/02-eks-cluster-creation-part1.md`)
+  - [x] Part 1: 사전 요구 사항 (`./eks/02-eks-cluster-creation-part1.md`)
   - [ ] Part 2: eksctl을 사용한 클러스터 생성 (`./eks/02-eks-cluster-creation-part2.md`)
   - [ ] Part 3: AWS Management Console 및 CLI를 사용한 클러스터 생성 (`./eks/02-eks-cluster-creation-part3.md`)
   - [ ] Part 4: Terraform 및 CDK를 사용한 클러스터 생성 (`./eks/02-eks-cluster-creation-part4.md`)
