@@ -43,19 +43,19 @@ Istio는 데이터 플레인과 컨트롤 플레인으로 구성됩니다.
 ```mermaid
 flowchart TD
     subgraph "Control Plane"
-        A[istiod]:::controlPlane
+        A[istiod]
     end
     
     subgraph "Data Plane"
-        B[Envoy Proxy]:::dataPlane
-        C[Envoy Proxy]:::dataPlane
-        D[Envoy Proxy]:::dataPlane
+        B[Envoy Proxy]
+        C[Envoy Proxy]
+        D[Envoy Proxy]
     end
     
     subgraph "Services"
-        E[Service A]:::service
-        F[Service B]:::service
-        G[Service C]:::service
+        E[Service A]
+        F[Service B]
+        G[Service C]
     end
     
     A -->|구성 배포| B
@@ -67,14 +67,14 @@ flowchart TD
     D -->|사이드카| G
     
     %% 스타일 적용
-    classDef controlPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef dataPlane fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef service fill:#FF9900,stroke:#333,stroke-width:1px,color:black
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black
     
     %% 클래스 적용
-    class A controlPlane
-    class B,C,D dataPlane
-    class E,F,G service
+    class A k8sComponent
+    class B,C,D userApp
+    class E,F,G awsService
 ```
 
 ### 컨트롤 플레인 (istiod)
