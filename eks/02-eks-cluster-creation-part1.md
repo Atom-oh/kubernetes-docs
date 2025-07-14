@@ -14,6 +14,28 @@ Amazon EKS 클러스터를 생성하는 방법은 여러 가지가 있습니다.
 
 EKS 클러스터를 생성하기 전에 다음과 같은 사전 요구 사항이 필요합니다:
 
+```mermaid
+flowchart TD
+    subgraph "사전 요구 사항"
+        AWS[AWS 계정] --> IAM[IAM 권한]
+        IAM --> Tools[도구 설치]
+        Tools --> AWSCLI[AWS CLI]
+        Tools --> KUBECTL[kubectl]
+        Tools --> EKSCTL[eksctl]
+        IAM --> VPC[VPC 및 서브넷]
+        VPC --> SUBNET[최소 2개의 서브넷]
+        VPC --> TAGS[적절한 태그 지정]
+    end
+    
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class AWS,IAM,VPC,SUBNET,TAGS awsService;
+    class KUBECTL k8sComponent;
+    class Tools,AWSCLI,EKSCTL default;
+```
+
 ### 1. AWS 계정
 
 유효한 AWS 계정이 필요합니다. AWS 계정이 없는 경우 [AWS 웹사이트](https://aws.amazon.com/)에서 가입할 수 있습니다.
@@ -135,6 +157,48 @@ $env:PATH += ";$env:USERPROFILE\.eksctl\bin"
 ### 4. VPC 및 서브넷
 
 EKS 클러스터는 VPC와 서브넷이 필요합니다. 기존 VPC를 사용하거나 새 VPC를 생성할 수 있습니다. EKS 클러스터를 위한 VPC는 다음 요구 사항을 충족해야 합니다:
+
+```mermaid
+flowchart TD
+    subgraph "EKS VPC 아키텍처"
+        VPC[VPC] --> PUB1[퍼블릭 서브넷 AZ-a]
+        VPC --> PUB2[퍼블릭 서브넷 AZ-b]
+        VPC --> PRIV1[프라이빗 서브넷 AZ-a]
+        VPC --> PRIV2[프라이빗 서브넷 AZ-b]
+        
+        PUB1 --> IGW[인터넷 게이트웨이]
+        PUB2 --> IGW
+        
+        PRIV1 --> NAT1[NAT 게이트웨이 AZ-a]
+        PRIV2 --> NAT2[NAT 게이트웨이 AZ-b]
+        
+        NAT1 --> IGW
+        NAT2 --> IGW
+        
+        IGW --> INTERNET[인터넷]
+        
+        subgraph "EKS 노드 배치"
+            PRIV1 --> NODE1[EKS 워커 노드]
+            PRIV2 --> NODE2[EKS 워커 노드]
+        end
+        
+        subgraph "로드 밸런서"
+            PUB1 --> LB[로드 밸런서]
+            PUB2 --> LB
+            LB --> NODE1
+            LB --> NODE2
+        end
+    end
+    
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class VPC,PUB1,PUB2,PRIV1,PRIV2,IGW,NAT1,NAT2,LB awsService;
+    class NODE1,NODE2 k8sComponent;
+    class INTERNET userApp;
+```
 
 - 최소 2개의 서브넷이 서로 다른 가용 영역에 있어야 합니다.
 - 서브넷에는 인터넷 액세스가 필요합니다(NAT 게이트웨이 또는 인터넷 게이트웨이를 통해).
