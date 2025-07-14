@@ -60,7 +60,7 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
   - [x] Part 1: 사전 요구 사항 (`./eks/02-eks-cluster-creation-part1.md`)
   - [x] Part 2: eksctl을 사용한 클러스터 생성 (`./eks/02-eks-cluster-creation-part2.md`)
   - [x] Part 3: AWS Management Console 및 CLI를 사용한 클러스터 생성 (`./eks/02-eks-cluster-creation-part3.md`)
-  - [ ] Part 4: Terraform 및 CDK를 사용한 클러스터 생성 (`./eks/02-eks-cluster-creation-part4.md`)
+  - [x] Part 4: Terraform 및 CDK를 사용한 클러스터 생성 (`./eks/02-eks-cluster-creation-part4.md`)
   - [ ] Part 5: 클러스터 액세스, 검증, 업그레이드 및 삭제 (`./eks/02-eks-cluster-creation-part5.md`)
 - [ ] 3. EKS 네트워킹
   - [ ] Part 1: 기본 개념 및 VPC 구성 (`./eks/03-eks-networking-part1.md`)
@@ -103,5 +103,4 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 3. 나머지 문서의 다이어그램 개선
 
 ## 현재 작업 중인 문서
-- 기초 개념 섹션 다이어그램 개선 완료
-- Kubernetes 핵심 개념 섹션 다이어그램 개선 진행 예정
+- EKS 클러스터 생성 Part 5: 클러스터 액세스, 검증, 업그레이드 및 삭제 (`./eks/02-eks-cluster-creation-part5.md`)
