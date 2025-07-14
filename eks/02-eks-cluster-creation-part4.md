@@ -4,6 +4,58 @@
 
 Terraform은 인프라를 코드로 관리하는 도구로, EKS 클러스터를 생성하고 관리하는 데 사용할 수 있습니다. Terraform을 사용하면 인프라를 버전 관리하고 반복 가능한 방식으로 배포할 수 있습니다.
 
+### Terraform을 사용한 EKS 클러스터 생성 프로세스
+
+```mermaid
+flowchart TD
+    A[시작] --> B[Terraform 설치]
+    B --> C[프로젝트 디렉토리 생성]
+    C --> D[Terraform 구성 파일 작성]
+    D --> E[terraform init]
+    E --> F[terraform plan]
+    F --> G[terraform apply]
+    G --> H[kubeconfig 구성]
+    H --> I[클러스터 확인]
+    I --> J[클러스터 사용]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class G,H awsService;
+    class I,J k8sComponent;
+    class A,B,C,D,E,F userApp;
+```
+
+### Terraform 구성 요소 관계
+
+```mermaid
+flowchart LR
+    A[providers.tf] --> E[Terraform]
+    B[variables.tf] --> E
+    C[vpc.tf] --> E
+    D[eks.tf] --> E
+    E --> F[AWS API]
+    F --> G[VPC]
+    F --> H[EKS 클러스터]
+    F --> I[노드 그룹]
+    F --> J[Fargate 프로필]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class E,F awsService;
+    class G,H,I,J awsService;
+    class A,B,C,D userApp;
+```
+
 ### 1. Terraform 설치
 
 먼저 Terraform을 설치해야 합니다:
@@ -294,6 +346,57 @@ terraform destroy
 ## AWS CDK를 사용한 클러스터 생성
 
 AWS Cloud Development Kit(CDK)는 익숙한 프로그래밍 언어를 사용하여 클라우드 인프라를 정의하는 도구입니다. CDK를 사용하면 TypeScript, Python, Java 또는 C#과 같은 언어로 EKS 클러스터를 생성하고 관리할 수 있습니다.
+
+### AWS CDK를 사용한 EKS 클러스터 생성 프로세스
+
+```mermaid
+flowchart TD
+    A[시작] --> B[AWS CDK 설치]
+    B --> C[CDK 프로젝트 생성]
+    C --> D[필요한 패키지 설치]
+    D --> E[CDK 스택 정의]
+    E --> F[cdk bootstrap]
+    F --> G[cdk deploy]
+    G --> H[kubeconfig 구성]
+    H --> I[클러스터 확인]
+    I --> J[클러스터 사용]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class F,G,H awsService;
+    class I,J k8sComponent;
+    class A,B,C,D,E userApp;
+```
+
+### CDK 구성 요소 관계
+
+```mermaid
+flowchart LR
+    A[TypeScript 코드] --> B[CDK 앱]
+    B --> C[CDK 스택]
+    C --> D[AWS CloudFormation]
+    D --> E[AWS API]
+    E --> F[VPC]
+    E --> G[EKS 클러스터]
+    E --> H[관리형 노드 그룹]
+    E --> I[Fargate 프로필]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class B,C,D,E awsService;
+    class F,G,H,I awsService;
+    class A userApp;
+```
 
 ### 1. AWS CDK 설치
 
