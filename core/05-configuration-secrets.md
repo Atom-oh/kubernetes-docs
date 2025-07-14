@@ -2,6 +2,28 @@
 
 Kubernetes에서 구성 관리는 애플리케이션의 설정을 코드와 분리하여 관리하는 중요한 부분입니다. 이 장에서는 컨피그맵(ConfigMap), 시크릿(Secret), 환경 변수, 볼륨을 통한 구성 마운트 등 Kubernetes의 구성 관리 방법에 대해 자세히 알아보겠습니다.
 
+```mermaid
+graph TD
+    Admin[클러스터 관리자] -->|생성| CM[컨피그맵]
+    Admin -->|생성| Secret[시크릿]
+    CM -->|환경 변수로 제공| Pod1[파드]
+    Secret -->|환경 변수로 제공| Pod1
+    CM -->|볼륨으로 마운트| Pod2[파드]
+    Secret -->|볼륨으로 마운트| Pod2
+    Secret -->|이미지 풀 시크릿| Pod3[파드]
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class Admin user;
+    class CM,Secret k8sComponent;
+    class Pod1,Pod2,Pod3 userApp;
+```
+
 ## 목차
 
 1. [컨피그맵(ConfigMap)](#컨피그맵configmap)
@@ -14,6 +36,49 @@ Kubernetes에서 구성 관리는 애플리케이션의 설정을 코드와 분�
 ## 컨피그맵(ConfigMap)
 
 컨피그맵은 키-값 쌍의 형태로 구성 데이터를 저장하는 API 객체입니다. 컨피그맵을 사용하면 컨테이너 이미지에서 구성 데이터를 분리하여 애플리케이션을 더 쉽게 이식할 수 있습니다.
+
+```mermaid
+graph TD
+    CM[컨피그맵] -->|환경 변수| Pod1[파드]
+    CM -->|볼륨 마운트| Pod2[파드]
+    CM -->|명령줄 인수| Pod3[파드]
+    
+    subgraph "컨피그맵 데이터"
+        CMData1["key1: value1"]
+        CMData2["key2: value2"]
+        CMData3["config.properties: 파일 내용"]
+    end
+    
+    subgraph "환경 변수 사용"
+        Env1["env.key1 = value1"]
+        Env2["env.key2 = value2"]
+    end
+    
+    subgraph "볼륨 마운트 사용"
+        Vol1["/etc/config/key1"]
+        Vol2["/etc/config/key2"]
+        Vol3["/etc/config/config.properties"]
+    end
+    
+    CM --- CMData1
+    CM --- CMData2
+    CM --- CMData3
+    
+    Pod1 --- Env1
+    Pod1 --- Env2
+    
+    Pod2 --- Vol1
+    Pod2 --- Vol2
+    Pod2 --- Vol3
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class CM k8sComponent;
+    class Pod1,Pod2,Pod3 userApp;
+```
 
 ### 컨피그맵 생성
 
@@ -159,6 +224,43 @@ kubectl apply -f updated-configmap.yaml
 ## 시크릿(Secret)
 
 시크릿은 암호, OAuth 토큰, SSH 키와 같은 민감한 정보를 저장하는 API 객체입니다. 시크릿은 컨피그맵과 유사하지만, 민감한 데이터를 저장하기 위한 추가적인 보안 기능을 제공합니다.
+
+```mermaid
+graph TD
+    Secret[시크릿] -->|환경 변수| Pod1[파드]
+    Secret -->|볼륨 마운트| Pod2[파드]
+    Secret -->|이미지 풀 시크릿| Pod3[파드]
+    
+    subgraph "시크릿 유형"
+        ST1["Opaque (기본)"]
+        ST2["kubernetes.io/tls"]
+        ST3["kubernetes.io/dockerconfigjson"]
+        ST4["kubernetes.io/basic-auth"]
+    end
+    
+    subgraph "저장 방식"
+        Store1["base64 인코딩"]
+        Store2["etcd 암호화 (선택)"]
+    end
+    
+    Secret --- ST1
+    Secret --- ST2
+    Secret --- ST3
+    Secret --- ST4
+    
+    Secret --- Store1
+    Secret --- Store2
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class Secret k8sComponent;
+    class Pod1,Pod2,Pod3 userApp;
+    class Store1,Store2 dataStore;
+```
 
 ### 시크릿 유형
 
@@ -321,6 +423,35 @@ resources:
 
 환경 변수는 컨테이너에 구성 정보를 전달하는 간단한 방법입니다. Kubernetes는 여러 가지 방법으로 환경 변수를 설정할 수 있습니다.
 
+```mermaid
+graph TD
+    Pod[파드] -->|포함| Container[컨테이너]
+    
+    subgraph "환경 변수 소스"
+        Direct["직접 설정"]
+        CM["컨피그맵"]
+        Secret["시크릿"]
+        DownAPI["다운워드 API"]
+    end
+    
+    Direct -->|env| Container
+    CM -->|valueFrom.configMapKeyRef| Container
+    CM -->|envFrom.configMapRef| Container
+    Secret -->|valueFrom.secretKeyRef| Container
+    Secret -->|envFrom.secretRef| Container
+    DownAPI -->|valueFrom.fieldRef| Container
+    DownAPI -->|valueFrom.resourceFieldRef| Container
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class Pod,Container userApp;
+    class CM,Secret,DownAPI k8sComponent;
+    class Direct k8sComponent;
+```
+
 ### 직접 설정
 
 ```yaml
@@ -427,6 +558,42 @@ spec:
 ## 볼륨을 통한 구성 마운트
 
 볼륨을 통해 구성 파일을 컨테이너에 마운트하는 방법은 환경 변수보다 더 유연한 구성 관리 방법을 제공합니다.
+
+```mermaid
+graph TD
+    Pod[파드] -->|포함| Container[컨테이너]
+    Pod -->|정의| Volumes[볼륨]
+    Container -->|마운트| VolumeMounts[볼륨 마운트]
+    VolumeMounts -->|참조| Volumes
+    
+    subgraph "볼륨 소스"
+        CM["컨피그맵"]
+        Secret["시크릿"]
+    end
+    
+    Volumes -->|configMap| CM
+    Volumes -->|secret| Secret
+    
+    subgraph "마운트 옵션"
+        MO1["전체 볼륨 마운트"]
+        MO2["특정 키만 마운트"]
+        MO3["읽기 전용 마운트"]
+        MO4["서브패스 마운트"]
+    end
+    
+    VolumeMounts --- MO1
+    VolumeMounts --- MO2
+    VolumeMounts --- MO3
+    VolumeMounts --- MO4
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class Pod,Container userApp;
+    class Volumes,VolumeMounts,CM,Secret k8sComponent;
+```
 
 ### 컨피그맵 볼륨
 
@@ -618,6 +785,65 @@ kubectl rollout restart deployment/my-deployment
 ## Amazon EKS에서의 구성 관리
 
 Amazon EKS에서는 Kubernetes의 기본 구성 관리 기능 외에도 AWS의 다양한 서비스를 활용하여 구성과 시크릿을 관리할 수 있습니다. 이 섹션에서는 EKS에서 구성을 관리하는 다양한 방법과 AWS 서비스와의 통합에 대해 알아보겠습니다.
+
+```mermaid
+graph TD
+    EKS[Amazon EKS] -->|사용| K8s[Kubernetes 구성]
+    EKS -->|통합| AWS[AWS 서비스]
+    
+    subgraph "Kubernetes 구성"
+        CM["컨피그맵"]
+        Secret["시크릿"]
+    end
+    
+    subgraph "AWS 서비스"
+        SM["AWS Secrets Manager"]
+        PS["AWS Parameter Store"]
+        AC["AWS AppConfig"]
+        KMS["AWS KMS"]
+        IAM["AWS IAM"]
+    end
+    
+    subgraph "통합 도구"
+        ESO["External Secrets Operator"]
+        ASCP["AWS Secrets and Configuration Provider"]
+        IRSA["IAM Roles for Service Accounts"]
+        ACK["AWS Controllers for Kubernetes"]
+    end
+    
+    K8s --- CM
+    K8s --- Secret
+    
+    AWS --- SM
+    AWS --- PS
+    AWS --- AC
+    AWS --- KMS
+    AWS --- IAM
+    
+    SM -->|통합| ESO
+    PS -->|통합| ASCP
+    IAM -->|통합| IRSA
+    AWS -->|통합| ACK
+    
+    ESO -->|생성| Secret
+    ASCP -->|마운트| Secret
+    IRSA -->|권한 부여| Pod[파드]
+    ACK -->|관리| AWS
+    
+    KMS -->|암호화| Secret
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef integrationTool fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class EKS,K8s,CM,Secret k8sComponent;
+    class Pod userApp;
+    class AWS,SM,PS,AC,KMS,IAM awsService;
+    class ESO,ASCP,IRSA,ACK integrationTool;
+```
 
 ### AWS Secrets Manager 통합
 
