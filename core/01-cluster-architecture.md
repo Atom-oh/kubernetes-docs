@@ -4,11 +4,6 @@ Kubernetes 클러스터는 컨테이너화된 애플리케이션을 실행하기
 
 ```mermaid
 graph TD
-    classDef controlplane fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef workernodes fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef components fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px;
-    classDef storage fill:#e0f7fa,stroke:#0097a7,stroke-width:1px;
-    
     A[Kubernetes 클러스터] --> B[컨트롤 플레인]
     A --> C[워커 노드]
     
@@ -22,9 +17,19 @@ graph TD
     C --> J[kube-proxy]
     C --> K[컨테이너 런타임]
     
-    class B controlplane;
-    class C workernodes;
-    class D,E,F,G,H,I,J,K components;
+    %% 스타일 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A default;
+    class B,D,F,G,H,I,J k8sComponent;
+    class E dataStore;
+    class K userApp;
+    class C default;
 ```
 
 **컨트롤 플레인 구성 요소**:
