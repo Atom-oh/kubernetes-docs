@@ -75,13 +75,13 @@ flowchart TD
     
     %% 스타일 적용
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef awsComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef userComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
     
     %% 클래스 적용
     class A,B,C k8sComponent
-    class D,E awsComponent
-    class F userComponent
+    class D,E awsService
+    class F userApp
 ```
 
 ### 주요 구성 요소
