@@ -44,7 +44,7 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 ### Kubernetes 핵심 개념
 - [x] 1. 클러스터 아키텍처 (`./core/01-cluster-architecture.md`)
 - [x] 2. 파드와 워크로드 (`./core/02-pods-and-workloads.md`)
-- [ ] 3. 서비스와 네트워킹 (`./core/03-services-networking.md`)
+- [x] 3. 서비스와 네트워킹 (`./core/03-services-networking.md`)
 - [ ] 4. 스토리지 (`./core/04-storage.md`)
 - [ ] 5. 구성 (`./core/05-configuration-secrets.md`)
 - [ ] 6. 보안 (`./core/06-security.md`)
