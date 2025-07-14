@@ -66,6 +66,22 @@ graph TD
     G --> L{포드 삭제}
     L --> M[Terminating]
     M --> N[포드 제거]
+    
+    %% 스타일 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    classDef success fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
+    classDef failure fill:#F44336,stroke:#333,stroke-width:1px,color:white;
+    classDef process fill:#9C27B0,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class A,B,D,G,M,N k8sComponent;
+    class C,F,I,L process;
+    class J success;
+    class E,H,K failure;
 ```
 
 ### 컨테이너 프로브(Probe)
