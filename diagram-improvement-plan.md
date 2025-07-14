@@ -52,7 +52,7 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 - [x] 8. 스케줄링, 선점 및 축출 (`./core/08-scheduling-preemption-eviction.md`)
 - [x] 9. 클러스터 관리 (`./core/09-cluster-administration.md`)
 - [x] 10. Windows in Kubernetes (`./core/10-windows-in-kubernetes.md`)
-- [ ] 11. Kubernetes 확장 (`./core/11-extending-kubernetes.md`)
+- [x] 11. Kubernetes 확장 (`./core/11-extending-kubernetes.md`)
 
 ### Amazon EKS
 - [ ] 1. EKS 소개 (`./eks/01-eks-introduction.md`)
