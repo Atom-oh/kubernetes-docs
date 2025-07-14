@@ -28,6 +28,41 @@ Windows 컨테이너에는 두 가지 유형이 있습니다:
 
 2. **Hyper-V 격리 컨테이너**: 각 컨테이너가 경량 VM에서 실행되어 더 높은 수준의 격리를 제공합니다. 호스트와 다른 Windows 버전을 실행할 수 있지만, 더 많은 리소스를 사용합니다.
 
+다음 다이어그램은 두 가지 Windows 컨테이너 유형의 아키텍처 차이를 보여줍니다:
+
+```mermaid
+flowchart TD
+    subgraph "Windows Server 컨테이너"
+        WSC1[Windows 앱 1] --- WSC2[Windows 앱 2] --- WSC3[Windows 앱 3]
+        WSC1 --- WSCR[컨테이너 런타임]
+        WSC2 --- WSCR
+        WSC3 --- WSCR
+        WSCR --- WSOS[Windows Server OS]
+        WSOS --- WSHW[물리적 하드웨어]
+    end
+    
+    subgraph "Hyper-V 격리 컨테이너"
+        HVC1[Windows 앱 1] --- HVCR1[컨테이너 런타임]
+        HVCR1 --- HVOS1[Windows OS 커널]
+        
+        HVC2[Windows 앱 2] --- HVCR2[컨테이너 런타임]
+        HVCR2 --- HVOS2[Windows OS 커널]
+        
+        HVOS1 --- HV[Hyper-V 하이퍼바이저]
+        HVOS2 --- HV
+        HV --- HVHOS[Windows Server OS]
+        HVHOS --- HVHW[물리적 하드웨어]
+    end
+    
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class WSC1,WSC2,WSC3,HVC1,HVC2 userApp;
+    class WSCR,HVCR1,HVCR2,HVOS1,HVOS2,HV k8sComponent;
+    class WSOS,WSHW,HVHOS,HVHW default;
+```
+
 ### Windows 컨테이너 이미지
 
 Windows 컨테이너 이미지는 Microsoft에서 제공하는 기본 이미지를 기반으로 합니다:
@@ -59,25 +94,42 @@ Kubernetes의 Windows 지원 아키텍처는 다음과 같습니다:
 2. **Linux 워커 노드**: 시스템 구성 요소(CoreDNS, metrics-server 등)를 실행합니다.
 3. **Windows 워커 노드**: Windows 애플리케이션 워크로드를 실행합니다.
 
-```
-+---------------------+      +---------------------+
-|  Linux 컨트롤 플레인  |      |   Linux 워커 노드    |
-|                     |      |                     |
-| - kube-apiserver    |      | - CoreDNS           |
-| - kube-controller   |      | - metrics-server    |
-| - kube-scheduler    |      | - 기타 시스템 포드     |
-| - etcd              |      |                     |
-+---------------------+      +---------------------+
-          ^                            ^
-          |                            |
-          v                            v
-+---------------------+      +---------------------+
-|  Windows 워커 노드    |      |  Windows 워커 노드    |
-|                     |      |                     |
-| - kubelet           |      | - kubelet           |
-| - kube-proxy        |      | - kube-proxy        |
-| - Windows 컨테이너    |      | - Windows 컨테이너    |
-+---------------------+      +---------------------+
+```mermaid
+flowchart TD
+    subgraph "Linux 컨트롤 플레인"
+        API[kube-apiserver] --> CM[kube-controller-manager]
+        API --> SCH[kube-scheduler]
+        API --> ETCD[(etcd)]
+    end
+    
+    API --> LN[Linux 노드]
+    API --> WN1[Windows 노드 1]
+    API --> WN2[Windows 노드 2]
+    
+    subgraph "Linux 워커 노드"
+        LN --> CoreDNS[CoreDNS]
+        LN --> Metrics[metrics-server]
+        LN --> Other[기타 시스템 포드]
+    end
+    
+    subgraph "Windows 워커 노드"
+        WN1 --> WK1[kubelet]
+        WN1 --> WP1[kube-proxy]
+        WN1 --> WC1[Windows 컨테이너]
+        
+        WN2 --> WK2[kubelet]
+        WN2 --> WP2[kube-proxy]
+        WN2 --> WC2[Windows 컨테이너]
+    end
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class API,CM,SCH,LN,WN1,WN2,WK1,WK2,WP1,WP2,CoreDNS,Metrics,Other k8sComponent;
+    class ETCD dataStore;
+    class WC1,WC2 userApp;
 ```
 
 ### Windows 노드 구성 요소
@@ -310,6 +362,47 @@ spec:
 
 Windows 노드의 네트워킹은 Linux 노드와 다른 특성을 가집니다.
 
+다음 다이어그램은 Windows 노드와 Linux 노드가 혼합된 Kubernetes 클러스터의 네트워킹 아키텍처를 보여줍니다:
+
+```mermaid
+flowchart TD
+    subgraph "외부 네트워크"
+        Client[클라이언트] --> LB[로드 밸런서]
+    end
+    
+    LB --> SVC[Kubernetes 서비스]
+    
+    subgraph "Kubernetes 클러스터"
+        SVC --> LP1[Linux 포드]
+        SVC --> LP2[Linux 포드]
+        SVC --> WP1[Windows 포드]
+        SVC --> WP2[Windows 포드]
+        
+        subgraph "Linux 노드"
+            LP1
+            LP2
+        end
+        
+        subgraph "Windows 노드"
+            WP1
+            WP2
+        end
+        
+        LP1 <--> LP2
+        LP1 <--> WP1
+        LP2 <--> WP2
+        WP1 <--> WP2
+    end
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class SVC k8sComponent;
+    class LP1,LP2,WP1,WP2 userApp;
+    class Client,LB default;
+```
+
 ### 지원되는 네트워크 플러그인
 
 Windows 노드에서 지원되는 네트워크 플러그인:
@@ -435,6 +528,48 @@ spec:
 ## 스토리지
 
 Windows 노드에서 사용할 수 있는 스토리지 옵션을 알아보겠습니다.
+
+다음 다이어그램은 Windows 노드에서 사용 가능한 다양한 스토리지 옵션을 보여줍니다:
+
+```mermaid
+flowchart TD
+    subgraph "Windows 포드"
+        WC[Windows 컨테이너]
+    end
+    
+    WC --> ED[emptyDir 볼륨]
+    WC --> HP[hostPath 볼륨]
+    WC --> CM[ConfigMap 볼륨]
+    WC --> SC[Secret 볼륨]
+    WC --> PV[PersistentVolume]
+    
+    subgraph "Windows 노드"
+        ED
+        HP --> ND[노드 디스크]
+    end
+    
+    subgraph "Kubernetes API"
+        CM
+        SC
+    end
+    
+    PV --> CSI[CSI 드라이버]
+    CSI --> AZ[Azure Disk/File]
+    CSI --> AWS[AWS EBS]
+    CSI --> SMB[SMB 공유]
+    
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class WC userApp;
+    class ED,HP,CM,SC,PV,CSI k8sComponent;
+    class ND,SMB dataStore;
+    class AWS awsService;
+    class AZ default;
+```
 
 ### 지원되는 볼륨 유형
 
@@ -816,6 +951,54 @@ spec:
 ## Amazon EKS에서의 Windows 지원
 
 Amazon EKS에서 Windows 워크로드를 실행하는 방법을 알아보겠습니다.
+
+다음 다이어그램은 Amazon EKS에서의 Windows 지원 아키텍처를 보여줍니다:
+
+```mermaid
+flowchart TD
+    subgraph "AWS 클라우드"
+        subgraph "Amazon EKS"
+            CP[EKS 컨트롤 플레인] --> LNG[Linux 노드 그룹]
+            CP --> WNG[Windows 노드 그룹]
+            
+            subgraph "Linux 노드 그룹"
+                LNG --> LN1[Linux 노드 1]
+                LNG --> LN2[Linux 노드 2]
+                
+                LN1 --> LP1[CoreDNS]
+                LN1 --> LP2[VPC CNI]
+                LN2 --> LP3[kube-proxy]
+                LN2 --> LP4[기타 시스템 포드]
+            end
+            
+            subgraph "Windows 노드 그룹"
+                WNG --> WN1[Windows 노드 1]
+                WNG --> WN2[Windows 노드 2]
+                
+                WN1 --> WP1[Windows 애플리케이션 포드]
+                WN2 --> WP2[Windows 애플리케이션 포드]
+            end
+        end
+        
+        CP --> IAM[AWS IAM]
+        CP --> VPC[Amazon VPC]
+        CP --> CW[CloudWatch]
+        
+        WP1 --> ELB[Elastic Load Balancer]
+        WP2 --> ELB
+        ELB --> User[사용자]
+    end
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class CP,LNG,WNG,LN1,LN2,WN1,WN2,LP1,LP2,LP3,LP4 k8sComponent;
+    class WP1,WP2 userApp;
+    class IAM,VPC,CW,ELB awsService;
+    class User default;
+```
 
 ### EKS에서 Windows 지원 활성화
 
