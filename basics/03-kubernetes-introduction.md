@@ -64,18 +64,23 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 컨트롤 플레인 (마스터) 구성 요소
 
-```
-+---------------------------------------------------------------+
-|                     Control Plane (Master)                     |
-|                                                               |
-|  +----------------+  +---------------+  +------------------+  |
-|  |  kube-apiserver |  | etcd (저장소) |  | kube-scheduler   |  |
-|  +----------------+  +---------------+  +------------------+  |
-|                                                               |
-|  +------------------------+  +---------------------------+    |
-|  | kube-controller-manager |  | cloud-controller-manager |    |
-|  +------------------------+  +---------------------------+    |
-+---------------------------------------------------------------+
+```mermaid
+flowchart TB
+    subgraph "Control Plane (Master)"
+        API[kube-apiserver]
+        ETCD["etcd (저장소)"]
+        SCHED[kube-scheduler]
+        CM[kube-controller-manager]
+        CCM[cloud-controller-manager]
+    end
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class API,SCHED,CM,CCM k8sComponent;
+    class ETCD dataStore;
 ```
 
 1. **kube-apiserver**: Kubernetes API를 노출하는 컨트롤 플레인의 프론트엔드
@@ -94,21 +99,35 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 노드 구성 요소
 
-```
-+---------------------------------------------------------------+
-|                         Node (Worker)                          |
-|                                                               |
-|  +----------------+  +---------------+  +------------------+  |
-|  |     kubelet    |  |  kube-proxy   |  | Container Runtime|  |
-|  +----------------+  +---------------+  +------------------+  |
-|                                                               |
-|  +----------------------------------------------------------+  |
-|  |                       Pods                               |  |
-|  |  +-------------+  +-------------+  +-------------+       |  |
-|  |  | Container 1 |  | Container 2 |  | Container 3 |  ...  |  |
-|  |  +-------------+  +-------------+  +-------------+       |  |
-|  +----------------------------------------------------------+  |
-+---------------------------------------------------------------+
+```mermaid
+flowchart TB
+    subgraph "Node (Worker)"
+        KLET[kubelet]
+        KPROXY[kube-proxy]
+        CRI[Container Runtime]
+        
+        subgraph "Pods"
+            POD1[Container 1]
+            POD2[Container 2]
+            POD3[Container 3]
+            DOTS["..."]
+        end
+    end
+    
+    CRI --- POD1
+    CRI --- POD2
+    CRI --- POD3
+    CRI --- DOTS
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class KLET,KPROXY k8sComponent;
+    class CRI userApp;
+    class POD1,POD2,POD3 userApp;
 ```
 
 1. **kubelet**: 각 노드에서 실행되는 에이전트로, 파드 내 컨테이너가 실행되도록 관리
@@ -118,7 +137,7 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 ### 전체 아키텍처
 
 ```mermaid
-graph TB
+graph TD
     subgraph "Control Plane"
         API[kube-apiserver]
         ETCD[etcd]
@@ -669,6 +688,65 @@ Kubernetes의 네트워킹 모델은 모든 파드가 고유한 IP 주소를 가
 - **LoadBalancer**: 클라우드 제공자의 로드 밸런서를 사용하여 외부에서 접근 가능
 - **ExternalName**: 외부 서비스에 대한 CNAME 레코드 생성
 
+```mermaid
+flowchart TB
+    subgraph "Kubernetes Cluster"
+        subgraph "ClusterIP Service"
+            CLIP["ClusterIP\n10.100.10.10:80"]
+        end
+        
+        subgraph "NodePort Service"
+            NP["NodePort\n10.100.20.20:80"]
+        end
+        
+        subgraph "LoadBalancer Service"
+            LB["LoadBalancer\n10.100.30.30:80"]
+        end
+        
+        subgraph "Pods"
+            POD1["Pod 1\n10.0.1.1"]
+            POD2["Pod 2\n10.0.1.2"]
+            POD3["Pod 3\n10.0.1.3"]
+        end
+        
+        CLIP --> POD1
+        CLIP --> POD2
+        CLIP --> POD3
+        
+        NP --> POD1
+        NP --> POD2
+        NP --> POD3
+        
+        LB --> POD1
+        LB --> POD2
+        LB --> POD3
+        
+        NODE1["Node 1\n192.168.1.1:30080"] --> NP
+        NODE2["Node 2\n192.168.1.2:30080"] --> NP
+        
+        ELB["Cloud Load Balancer\nlb.example.com"] --> LB
+    end
+    
+    CLIENT1["Internal Client"] --> CLIP
+    CLIENT2["External Client"] --> NODE1
+    CLIENT2 --> NODE2
+    CLIENT3["External Client"] --> ELB
+    
+    EXTSERVICE["External Service\napi.external.com"] --> EXNAME["ExternalName Service\nexternal-api.default.svc.cluster.local"]
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class CLIP,NP,LB,EXNAME k8sComponent;
+    class POD1,POD2,POD3 userApp;
+    class ELB awsService;
+    class CLIENT1,CLIENT2,CLIENT3,EXTSERVICE client;
+```
+
 **서비스 예시**:
 ```yaml
 apiVersion: v1
@@ -764,6 +842,62 @@ spec:
 ### 네트워크 정책 (NetworkPolicy)
 
 네트워크 정책은 파드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 모든 파드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다.
+
+```mermaid
+flowchart TB
+    subgraph "Default Namespace"
+        subgraph "Frontend Pods"
+            FE1["frontend-1"]
+            FE2["frontend-2"]
+        end
+        
+        subgraph "API Pods"
+            API1["api-1"]
+            API2["api-2"]
+        end
+        
+        subgraph "Database Pods"
+            DB1["db-1"]
+            DB2["db-2"]
+        end
+        
+        FE1 & FE2 <--> API1 & API2
+        API1 & API2 <--> DB1 & DB2
+    end
+    
+    subgraph "Monitoring Namespace"
+        PROM["prometheus"]
+    end
+    
+    PROM --> FE1 & FE2 & API1 & API2 & DB1 & DB2
+    
+    INTERNET((Internet)) --> FE1 & FE2
+    
+    %% 네트워크 정책 표시
+    NP_DB["NetworkPolicy:\ndb-policy\n(allow only from api)"]
+    NP_API["NetworkPolicy:\napi-policy\n(allow from frontend & monitoring)"]
+    NP_FE["NetworkPolicy:\nfrontend-policy\n(allow from internet & monitoring)"]
+    
+    NP_DB -.-> DB1 & DB2
+    NP_API -.-> API1 & API2
+    NP_FE -.-> FE1 & FE2
+    
+    %% 스타일 정의
+    classDef frontend fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef api fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef db fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef monitoring fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef policy fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black,stroke-dasharray: 5 5;
+    classDef internet fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class FE1,FE2 frontend;
+    class API1,API2 api;
+    class DB1,DB2 db;
+    class PROM monitoring;
+    class NP_DB,NP_API,NP_FE policy;
+    class INTERNET internet;
+```
 
 **주요 기능**:
 - 파드 간 통신 제어
@@ -872,6 +1006,56 @@ spec:
 ## Kubernetes 스토리지
 
 Kubernetes는 컨테이너화된 애플리케이션에 다양한 스토리지 옵션을 제공합니다. 파드가 재시작되거나 재스케줄링되더라도 데이터를 유지할 수 있는 방법을 제공합니다.
+
+```mermaid
+flowchart TB
+    subgraph "Kubernetes Cluster"
+        subgraph "Storage Resources"
+            SC["StorageClass\n(standard)"]
+            PV1["PersistentVolume\n(pv-1, 10Gi)"]
+            PV2["PersistentVolume\n(pv-2, 20Gi)"]
+            PV3["PersistentVolume\n(pv-3, 5Gi)"]
+        end
+        
+        subgraph "User Namespace"
+            PVC1["PersistentVolumeClaim\n(pvc-1, 8Gi)"]
+            PVC2["PersistentVolumeClaim\n(pvc-2, 5Gi)"]
+            
+            POD1["Pod 1\n(uses pvc-1)"]
+            POD2["Pod 2\n(uses pvc-2)"]
+        end
+    end
+    
+    subgraph "External Storage"
+        EBS1["AWS EBS Volume\n(vol-1)"]
+        EBS2["AWS EBS Volume\n(vol-2)"]
+        EBS3["AWS EBS Volume\n(vol-3)"]
+    end
+    
+    SC --> PV1 & PV2 & PV3
+    PVC1 --> PV1
+    PVC2 --> PV3
+    POD1 --> PVC1
+    POD2 --> PVC2
+    
+    PV1 --> EBS1
+    PV2 --> EBS2
+    PV3 --> EBS3
+    
+    %% 스타일 정의
+    classDef storageClass fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef pv fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef pvc fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef pod fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef externalStorage fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class SC storageClass;
+    class PV1,PV2,PV3 pv;
+    class PVC1,PVC2 pvc;
+    class POD1,POD2 pod;
+    class EBS1,EBS2,EBS3 externalStorage;
+```
 
 ### 볼륨 (Volume)
 

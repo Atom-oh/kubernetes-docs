@@ -66,15 +66,17 @@ flowchart TD
     C -->|사이드카| F
     D -->|사이드카| G
     
-    %% 스타일 적용
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black
+    %% 스타일 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
     class A k8sComponent
     class B,C,D userApp
-    class E,F,G awsService
+    class E,F,G default
 ```
 
 ### 컨트롤 플레인 (istiod)

@@ -574,36 +574,36 @@ Amazon EKS에서는 다양한 스토리지 옵션을 사용할 수 있습니다.
 
 ```mermaid
 graph TD
-    EKS[Amazon EKS] --> EBS[Amazon EBS]
-    EKS --> EFS[Amazon EFS]
-    EKS --> FSx[Amazon FSx for Lustre]
+    EKS["Amazon EKS"] --> EBS["Amazon EBS"]
+    EKS --> EFS["Amazon EFS"]
+    EKS --> FSx["Amazon FSx for Lustre"]
     
-    EBS --> EBS_CSI[EBS CSI 드라이버]
-    EFS --> EFS_CSI[EFS CSI 드라이버]
-    FSx --> FSx_CSI[FSx CSI 드라이버]
+    EBS --> EBS_CSI["EBS CSI 드라이버"]
+    EFS --> EFS_CSI["EFS CSI 드라이버"]
+    FSx --> FSx_CSI["FSx CSI 드라이버"]
     
-    EBS_CSI --> EBS_SC[EBS 스토리지 클래스]
-    EFS_CSI --> EFS_SC[EFS 스토리지 클래스]
-    FSx_CSI --> FSx_SC[FSx 스토리지 클래스]
+    EBS_CSI --> EBS_SC["EBS 스토리지 클래스"]
+    EFS_CSI --> EFS_SC["EFS 스토리지 클래스"]
+    FSx_CSI --> FSx_SC["FSx 스토리지 클래스"]
     
-    EBS_SC --> EBS_PV[EBS 퍼시스턴트 볼륨]
-    EFS_SC --> EFS_PV[EFS 퍼시스턴트 볼륨]
-    FSx_SC --> FSx_PV[FSx 퍼시스턴트 볼륨]
+    EBS_SC --> EBS_PV["EBS 퍼시스턴트 볼륨"]
+    EFS_SC --> EFS_PV["EFS 퍼시스턴트 볼륨"]
+    FSx_SC --> FSx_PV["FSx 퍼시스턴트 볼륨"]
     
-    EBS_PV --> Pod1[파드 (RWO)]
-    EFS_PV --> Pod2[파드 (RWX)]
-    FSx_PV --> Pod3[파드 (RWX, 고성능)]
+    EBS_PV --> Pod1["파드 (RWO)"]
+    EFS_PV --> Pod2["파드 (RWX)"]
+    FSx_PV --> Pod3["파드 (RWX, 고성능)"]
     
     %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black
     
     %% 클래스 적용
-    class EKS,EBS_CSI,EFS_CSI,FSx_CSI,EBS_SC,EFS_SC,FSx_SC,EBS_PV,EFS_PV,FSx_PV k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
-    class EBS,EFS,FSx awsService;
+    class EKS,EBS_CSI,EFS_CSI,FSx_CSI,EBS_SC,EFS_SC,FSx_SC,EBS_PV,EFS_PV,FSx_PV k8sComponent
+    class Pod1,Pod2,Pod3 userApp
+    class EBS,EFS,FSx awsService
 ```
 
 ### Amazon EBS

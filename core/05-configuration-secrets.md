@@ -226,7 +226,7 @@ kubectl apply -f updated-configmap.yaml
 시크릿은 암호, OAuth 토큰, SSH 키와 같은 민감한 정보를 저장하는 API 객체입니다. 시크릿은 컨피그맵과 유사하지만, 민감한 데이터를 저장하기 위한 추가적인 보안 기능을 제공합니다.
 
 ```mermaid
-graph TD
+graph LR
     Secret[시크릿] -->|환경 변수| Pod1[파드]
     Secret -->|볼륨 마운트| Pod2[파드]
     Secret -->|이미지 풀 시크릿| Pod3[파드]

@@ -199,33 +199,19 @@ flowchart TD
 컨테이너 이미지는 여러 레이어의 스택으로 구성됩니다. 각 레이어는 이전 레이어에 대한 변경사항을 나타냅니다. 이 레이어 방식은 이미지 공유와 캐싱을 효율적으로 만듭니다.
 
 ```mermaid
-block-beta
-  columns 1
-  block:app["응용 프로그램 레이어"]
+flowchart TB
+    app["응용 프로그램 레이어<br/>애플리케이션 코드"]
+    dep["의존성 레이어<br/>npm 패키지, pip 패키지 등"]
+    runtime["런타임 레이어<br/>Node.js, Python 등"]
+    os["OS 레이어<br/>Ubuntu, Alpine 등"]
+
+    app --> dep --> runtime --> os
+
     style app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    "애플리케이션 코드"
-  end
-  
-  space
-  
-  block:dep["의존성 레이어"]
     style dep fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    "npm 패키지, pip 패키지 등"
-  end
-  
-  space
-  
-  block:runtime["런타임 레이어"]
     style runtime fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    "Node.js, Python 등"
-  end
-  
-  space
-  
-  block:os["OS 레이어"]
     style os fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-    "Ubuntu, Alpine 등"
-  end
+
 ```
 
 ### 이미지 레지스트리
