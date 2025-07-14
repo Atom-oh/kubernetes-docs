@@ -86,11 +86,11 @@ flowchart LR
     
     %% 스타일 적용
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef eventSource fill:#FF9900,stroke:#333,stroke-width:1px,color:black
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black
     
     %% 클래스 적용
     class A,B,C,D,E k8sComponent
-    class F,G,H,I eventSource
+    class F,G,H,I awsService
 ```
 
 
