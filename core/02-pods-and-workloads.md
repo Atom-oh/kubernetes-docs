@@ -40,19 +40,24 @@
 3. **네트워크**: 파드에 할당된 IP 주소와 포트
 4. **컨테이너 스펙**: 컨테이너 이미지, 환경 변수, 리소스 요구사항 등
 
-```
-+------------------------------------------+
-|                   Pod                    |
-|  +---------------+  +---------------+    |
-|  |  Container 1  |  |  Container 2  |    |
-|  +---------------+  +---------------+    |
-|                                          |
-|  +----------------------------------+    |
-|  |           Shared Volume          |    |
-|  +----------------------------------+    |
-|                                          |
-|  IP Address: 10.244.0.1                  |
-+------------------------------------------+
+```mermaid
+graph TD
+    Pod[Pod] --> Container1[Container 1]
+    Pod --> Container2[Container 2]
+    Pod --> Volume[Shared Volume]
+    Pod --> IP[IP Address: 10.244.0.1]
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class Pod default;
+    class Container1,Container2 userApp;
+    class Volume dataStore;
+    class IP default;
 ```
 
 ### 파드 정의
