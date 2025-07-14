@@ -49,7 +49,7 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 - [x] 5. 구성 (`./core/05-configuration-secrets.md`)
 - [x] 6. 보안 (`./core/06-security.md`)
 - [x] 7. 정책 (`./core/07-policies.md`)
-- [ ] 8. 스케줄링, 선점 및 축출 (`./core/08-scheduling-preemption-eviction.md`)
+- [x] 8. 스케줄링, 선점 및 축출 (`./core/08-scheduling-preemption-eviction.md`)
 - [ ] 9. 클러스터 관리 (`./core/09-cluster-administration.md`)
 - [ ] 10. Windows in Kubernetes (`./core/10-windows-in-kubernetes.md`)
 - [ ] 11. Kubernetes 확장 (`./core/11-extending-kubernetes.md`)
