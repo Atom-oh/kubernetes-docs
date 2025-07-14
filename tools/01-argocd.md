@@ -75,14 +75,14 @@ flowchart LR
     F --> D
     
     %% 스타일 적용
-    classDef gitRepo fill:#f9f7f7,stroke:#333,stroke-width:1px,color:black
+    classDef gitRepo fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black
     classDef argoComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white
-    classDef k8sCluster fill:#326CE5,stroke:#333,stroke-width:1px,color:white
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
     
     %% 클래스 적용
     class A,B,C gitRepo
     class D,E,F,G argoComponent
-    class H,I,J k8sCluster
+    class H,I,J k8sComponent
 ```
 
 ### 주요 구성 요소
@@ -420,12 +420,13 @@ sequenceDiagram
     participant ArgoCD as ArgoCD
     participant K8s as Kubernetes 클러스터
     
-    %% 스타일 적용
+    %% 개발자 작업
     rect rgb(240, 240, 240)
     note right of Dev: 개발자 작업
     Dev->>AppRepo: 코드 변경 커밋
     end
     
+    %% 자동화된 빌드 프로세스
     rect rgb(255, 245, 230)
     note right of AppRepo: 자동화된 빌드 프로세스
     AppRepo->>CI: 웹훅 트리거
@@ -434,6 +435,7 @@ sequenceDiagram
     CI->>ConfigRepo: 이미지 태그 업데이트
     end
     
+    %% GitOps 자동화
     rect rgb(235, 245, 255)
     note right of ConfigRepo: GitOps 자동화
     ConfigRepo->>ArgoCD: 변경 감지
@@ -441,6 +443,7 @@ sequenceDiagram
     ArgoCD->>ConfigRepo: 배포 상태 업데이트
     end
     
+    %% 지속적 동기화
     rect rgb(240, 255, 240)
     note right of ArgoCD: 지속적 동기화
     loop 지속적 모니터링
