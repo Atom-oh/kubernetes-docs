@@ -186,21 +186,21 @@ flowchart TD
     L -->|Displays| M
     N -->|Configures| L
     
-    %% 스타일 적용 (노드에만 적용)
+    %% 스타일 적용 - 표준화된 클래스 정의
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
     classDef prometheusComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef victoriaComponent fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef grafanaComponent fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef appComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef alertComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white
+    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white
+    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
+    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white
     
     %% 클래스 적용
     class A,B,C,D k8sComponent
     class E,F,G,H prometheusComponent
-    class I,J,K victoriaComponent
-    class L,M,N grafanaComponent
-    class O,P,Q appComponent
-    class R,S,T alertComponent
+    class I,J,K victoriaMetrics
+    class L,M,N grafana
+    class O,P,Q userApp
+    class R,S,T alerting
 ```
 
 ### 주요 구성 요소
@@ -321,14 +321,14 @@ flowchart LR
     I -->|쿼리| G
     
     %% 스타일 적용
-    classDef victoriaComponent fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef dataSource fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef client fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
+    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white
+    classDef prometheusComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white
+    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
     
     %% 클래스 적용
-    class A,B,D,E,F,G,I victoriaComponent
-    class C dataSource
-    class H client
+    class A,B,D,E,F,G,I victoriaMetrics
+    class C prometheusComponent
+    class H grafana
 ```
 
 ```yaml
@@ -447,18 +447,18 @@ flowchart TD
     I -->|Queries| A
     
     %% 스타일 적용
-    classDef prometheusCore fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef dataSource fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
+    classDef prometheusComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
     classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white
-    classDef client fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
+    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
     
     %% 클래스 적용
-    class A prometheusCore
-    class B,C dataSource
-    class D storage
+    class A prometheusComponent
+    class B,C userApp
+    class D dataStore
     class E,F,G alerting
-    class H,I client
+    class H,I grafana
 ```
 
 ### Prometheus Operator
@@ -723,17 +723,21 @@ flowchart TD
     A -->|알림 전송| I
     
     %% 스타일 적용
-    classDef grafanaCore fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef dataSource fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-    classDef user fill:#326CE5,stroke:#333,stroke-width:1px,color:white
+    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
+    classDef prometheusComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white
+    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
     classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white
     
     %% 클래스 적용
-    class A,G,H grafanaCore
-    class B storage
-    class C,D,E dataSource
-    class F user
+    class A,G,H grafana
+    class B dataStore
+    class C prometheusComponent
+    class D victoriaMetrics
+    class E userApp
+    class F k8sComponent
     class I alerting
 ```
 
