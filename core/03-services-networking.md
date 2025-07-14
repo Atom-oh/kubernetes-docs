@@ -24,6 +24,29 @@ Kubernetes에서 서비스는 포드 집합에 대한 단일 접점을 제공하
 
 Kubernetes는 다양한 유형의 서비스를 제공하여 애플리케이션을 노출하는 여러 방법을 지원합니다.
 
+```mermaid
+graph TD
+    Client[외부 클라이언트] --> LB[LoadBalancer]
+    Client --> NP[NodePort]
+    Client2[클러스터 내부 클라이언트] --> CIP[ClusterIP]
+    LB --> CIP
+    NP --> CIP
+    CIP --> Pod1[Pod 1]
+    CIP --> Pod2[Pod 2]
+    CIP --> Pod3[Pod 3]
+    
+    %% 스타일 정의
+    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class Client,Client2 client;
+    class LB,NP,CIP k8sComponent;
+    class Pod1,Pod2,Pod3 userApp;
+```
+
 ### ClusterIP
 
 ClusterIP는 기본 서비스 유형으로, 클러스터 내부에서만 접근 가능한 IP 주소를 제공합니다.
@@ -145,6 +168,32 @@ spec:
 ## 인그레스(Ingress)
 
 인그레스는 클러스터 외부에서 클러스터 내부 서비스로의 HTTP 및 HTTPS 경로를 노출하는 API 객체입니다. 인그레스는 로드 밸런싱, SSL 종료, 이름 기반 가상 호스팅을 제공합니다.
+
+```mermaid
+graph LR
+    Client[외부 클라이언트] --> LB[로드 밸런서]
+    LB --> IC[인그레스 컨트롤러]
+    IC --> Ingress[인그레스 리소스]
+    Ingress --> S1[서비스 A]
+    Ingress --> S2[서비스 B]
+    S1 --> P1[Pod A-1]
+    S1 --> P2[Pod A-2]
+    S2 --> P3[Pod B-1]
+    S2 --> P4[Pod B-2]
+    
+    %% 스타일 정의
+    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class Client client;
+    class LB awsService;
+    class IC,Ingress,S1,S2 k8sComponent;
+    class P1,P2,P3,P4 userApp;
+```
 
 ### 인그레스 컨트롤러
 
@@ -464,6 +513,43 @@ spec:
 
 네트워크 정책은 포드 간의 통신을 제어하는 방법을 제공합니다. 네트워크 정책을 사용하려면 네트워크 플러그인이 네트워크 정책을 지원해야 합니다(예: Calico, Cilium, Weave Net).
 
+```mermaid
+graph TD
+    subgraph "네임스페이스 A"
+        FE[Frontend Pod]
+        API[API Pod]
+        DB[Database Pod]
+        
+        NP1[Network Policy 1]
+        NP2[Network Policy 2]
+        
+        FE -- 허용 --> API
+        API -- 허용 --> DB
+        FE -. 차단 .-> DB
+    end
+    
+    subgraph "네임스페이스 B"
+        MON[Monitoring Pod]
+        
+        NP3[Network Policy 3]
+        
+        MON -- 허용 --> API
+        MON -. 차단 .-> DB
+    end
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef policy fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class FE,API userApp;
+    class DB dataStore;
+    class MON k8sComponent;
+    class NP1,NP2,NP3 policy;
+```
+
 ### 기본 네트워크 정책
 
 ```yaml
@@ -582,6 +668,50 @@ spec:
 
 서비스 메시는 마이크로서비스 간의 통신을 관리하는 인프라 계층입니다. 서비스 메시는 서비스 디스커버리, 로드 밸런싱, 암호화, 인증, 권한 부여, 관찰 가능성 등의 기능을 제공합니다.
 
+```mermaid
+graph TD
+    subgraph "컨트롤 플레인"
+        IC[Istio Control Plane]
+    end
+    
+    subgraph "서비스 A"
+        A[서비스 A]
+        SA[사이드카 프록시 A]
+        A <--> SA
+    end
+    
+    subgraph "서비스 B"
+        B[서비스 B]
+        SB[사이드카 프록시 B]
+        B <--> SB
+    end
+    
+    subgraph "서비스 C"
+        C[서비스 C]
+        SC[사이드카 프록시 C]
+        C <--> SC
+    end
+    
+    IC <-.-> SA
+    IC <-.-> SB
+    IC <-.-> SC
+    
+    SA <--> SB
+    SB <--> SC
+    SA <--> SC
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef proxy fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class IC k8sComponent;
+    class A,B,C userApp;
+    class SA,SB,SC proxy;
+```
+
 ### Istio
 
 Istio는 인기 있는 서비스 메시 구현 중 하나입니다. Istio는 사이드카 패턴을 사용하여 각 포드에 Envoy 프록시를 주입합니다.
@@ -672,6 +802,27 @@ spec:
 이 서비스 프로필은 `nginx` 서비스에 대한 경로와 재시도 정책을 정의합니다.
 
 ## Cilium
+
+```mermaid
+graph TD
+    K8S[Kubernetes] --> CNI[Container Network Interface]
+    CNI --> Cilium[Cilium]
+    Cilium --> EBPF[eBPF]
+    EBPF --> Kernel[Linux Kernel]
+    Cilium --> Hubble[Hubble]
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef cni fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef plugin fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef kernel fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class K8S k8sComponent;
+    class CNI cni;
+    class Cilium,Hubble plugin;
+    class EBPF,Kernel kernel;
+```
 
 [Cilium 세부](../cilium/README.md)
 ### Cilium 소개
