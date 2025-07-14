@@ -336,27 +336,35 @@ journalctl -u <서비스> # 서비스 로그 확인
 OverlayFS는 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현하는 유니온 마운트 파일 시스템입니다. Docker와 같은 컨테이너 런타임에서 이미지 레이어를 구현하는 데 사용됩니다.
 
 ```mermaid
-flowchart TD
-    %% 노드 정의
-    UL["Upper Layer (읽기/쓰기)"]
-    LL1["Lower Layer (읽기 전용)"]
-    LL2["Lower Layer (읽기 전용)"]
-    BL["Base Layer (읽기 전용)"]
-    
-    %% 연결 정의
-    UL --> LL1
-    LL1 --> LL2
-    LL2 --> BL
-    
-    %% 스타일 적용
-    classDef upperLayer fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lowerLayer fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef baseLayer fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class UL upperLayer
-    class LL1,LL2 lowerLayer
-    class BL baseLayer
+block-beta
+  columns 1
+  block:upper["Upper Layer"]
+    style upper fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
+    "읽기/쓰기 레이어"
+  end
+  
+  space
+  
+  block:lower1["Lower Layer 1"]
+    style lower1 fill:#326CE5,stroke:#333,stroke-width:1px,color:white
+    "읽기 전용 레이어"
+  end
+  
+  space
+  
+  block:lower2["Lower Layer 2"]
+    style lower2 fill:#326CE5,stroke:#333,stroke-width:1px,color:white
+    "읽기 전용 레이어"
+  end
+  
+  space:dots[...]
+  
+  space
+  
+  block:base["Base Layer"]
+    style base fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
+    "읽기 전용 레이어"
+  end
 ```
 
 ### 네트워크 브릿지와 NAT
