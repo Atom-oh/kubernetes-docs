@@ -152,6 +152,7 @@ flowchart LR
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
@@ -180,6 +181,7 @@ flowchart TD
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
@@ -204,6 +206,7 @@ flowchart TD
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
@@ -292,7 +295,7 @@ flowchart TB
     
     %% 클래스 적용
     class IGW,NATGW1,NATGW2 awsService;
-    class Public1,Public2,Private1,Private2 default;
+    class Public1,Public2,Private1,Private2 awsService;
 ```
 
 EKS 클러스터를 위한 서브넷 설계 모범 사례:
@@ -353,7 +356,7 @@ flowchart LR
     
     %% 클래스 적용
     class ELB,Internal_ELB awsService;
-    class Public1,Public2,Private1,Private2 default;
+    class Public1,Public2,Private1,Private2 awsService;
 ```
 
 EKS는 서브넷에 특정 태그를 사용하여 리소스를 자동으로 검색합니다:
