@@ -37,9 +37,9 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 ## 작업 진행 상황
 
 ### 기초 개념
-- [ ] 1. Linux 기초 (`./basics/01-linux-basics.md`)
-- [ ] 2. 컨테이너 기술 (`./basics/02-container-technology.md`)
-- [ ] 3. Kubernetes 소개 (`./basics/03-kubernetes-introduction.md`)
+- [x] 1. Linux 기초 (`./basics/01-linux-basics.md`)
+- [x] 2. 컨테이너 기술 (`./basics/02-container-technology.md`)
+- [x] 3. Kubernetes 소개 (`./basics/03-kubernetes-introduction.md`)
 
 ### Kubernetes 핵심 개념
 - [ ] 1. 클러스터 아키텍처 (`./core/01-cluster-architecture.md`)
@@ -103,4 +103,5 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 3. 나머지 문서의 다이어그램 개선
 
 ## 현재 작업 중인 문서
-- 도구 및 통합 섹션 다이어그램 개선 중
+- 기초 개념 섹션 다이어그램 개선 완료
+- Kubernetes 핵심 개념 섹션 다이어그램 개선 진행 예정
