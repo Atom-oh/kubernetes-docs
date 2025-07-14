@@ -47,7 +47,7 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 - [x] 3. 서비스와 네트워킹 (`./core/03-services-networking.md`)
 - [x] 4. 스토리지 (`./core/04-storage.md`)
 - [x] 5. 구성 (`./core/05-configuration-secrets.md`)
-- [ ] 6. 보안 (`./core/06-security.md`)
+- [x] 6. 보안 (`./core/06-security.md`)
 - [ ] 7. 정책 (`./core/07-policies.md`)
 - [ ] 8. 스케줄링, 선점 및 축출 (`./core/08-scheduling-preemption-eviction.md`)
 - [ ] 9. 클러스터 관리 (`./core/09-cluster-administration.md`)

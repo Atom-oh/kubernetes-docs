@@ -2,6 +2,44 @@
 
 Kubernetes에서 보안은 클러스터와 애플리케이션을 보호하기 위한 핵심 요소입니다. 이 장에서는 Kubernetes의 보안 개념, 인증 및 권한 부여 메커니즘, 네트워크 정책, 보안 컨텍스트, 그리고 Amazon EKS에서의 보안 강화 방법에 대해 알아보겠습니다.
 
+```mermaid
+graph TD
+    subgraph "Kubernetes 보안 계층"
+        Infra["인프라 보안<br>(호스트 OS, 컨테이너 런타임)"]
+        Cluster["클러스터 보안<br>(API 서버, etcd, kubelet)"]
+        App["애플리케이션 보안<br>(컨테이너, 워크로드)"]
+    end
+    
+    subgraph "보안 컴포넌트"
+        Auth["인증<br>(Authentication)"]
+        Authz["권한 부여<br>(Authorization)"]
+        SecCtx["보안 컨텍스트<br>(Security Context)"]
+        NetPol["네트워크 정책<br>(Network Policy)"]
+        Secret["시크릿 관리<br>(Secret Management)"]
+        Img["이미지 보안<br>(Image Security)"]
+        Audit["감사<br>(Audit)"]
+    end
+    
+    Infra --> Cluster
+    Cluster --> App
+    
+    Auth --> Cluster
+    Authz --> Cluster
+    SecCtx --> App
+    NetPol --> App
+    Secret --> App
+    Img --> App
+    Audit --> Cluster
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef securityComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class Infra,Cluster,App k8sComponent;
+    class Auth,Authz,SecCtx,NetPol,Secret,Img,Audit securityComponent;
+```
+
 ## 목차
 1. [보안 개요](#보안-개요)
 2. [인증(Authentication)](#인증authentication)
@@ -33,6 +71,46 @@ Kubernetes는 다음과 같은 보안 원칙을 따릅니다:
 ## 인증(Authentication)
 
 Kubernetes API 서버에 접근하기 위해서는 인증 과정을 거쳐야 합니다. Kubernetes는 다양한 인증 방법을 지원합니다:
+
+```mermaid
+graph TD
+    User["사용자/서비스"] -->|인증 요청| API["API 서버"]
+    
+    subgraph "인증 방법"
+        Cert["X.509 인증서"]
+        Token["서비스 계정 토큰"]
+        OIDC["OpenID Connect"]
+        Webhook["웹훅 토큰 인증"]
+        Proxy["인증 프록시"]
+    end
+    
+    API --> Cert
+    API --> Token
+    API --> OIDC
+    API --> Webhook
+    API --> Proxy
+    
+    Cert -->|성공/실패| Result["인증 결과"]
+    Token -->|성공/실패| Result
+    OIDC -->|성공/실패| Result
+    Webhook -->|성공/실패| Result
+    Proxy -->|성공/실패| Result
+    
+    Result -->|인증 성공| Authz["권한 부여 단계로 이동"]
+    Result -->|인증 실패| Reject["요청 거부"]
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef authMethod fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class API k8sComponent;
+    class User userComponent;
+    class Cert,Token,OIDC,Webhook,Proxy authMethod;
+    class Result,Authz,Reject resultComponent;
+```
 
 ### X.509 인증서
 
@@ -91,6 +169,53 @@ API 서버 앞에 인증 프록시를 배치하여 사용자 인증을 처리하
 ## 권한 부여(Authorization)
 
 인증이 "당신이 누구인가?"를 확인하는 과정이라면, 권한 부여는 "당신이 무엇을 할 수 있는가?"를 결정하는 과정입니다. Kubernetes는 다양한 권한 부여 모드를 지원합니다:
+
+```mermaid
+graph TD
+    User["인증된 사용자/서비스"] -->|권한 부여 요청| API["API 서버"]
+    
+    subgraph "권한 부여 모드"
+        RBAC["RBAC<br>(Role-Based Access Control)"]
+        ABAC["ABAC<br>(Attribute-Based Access Control)"]
+        Node["Node 권한 부여"]
+        WebhookAuthz["웹훅 권한 부여"]
+    end
+    
+    API --> RBAC
+    API --> ABAC
+    API --> Node
+    API --> WebhookAuthz
+    
+    RBAC -->|평가| Decision["권한 부여 결정"]
+    ABAC -->|평가| Decision
+    Node -->|평가| Decision
+    WebhookAuthz -->|평가| Decision
+    
+    Decision -->|허용| Allow["요청 처리"]
+    Decision -->|거부| Deny["요청 거부"]
+    
+    subgraph "RBAC 구성 요소"
+        Role["Role/ClusterRole<br>(권한 정의)"]
+        Binding["RoleBinding/ClusterRoleBinding<br>(권한 할당)"]
+    end
+    
+    RBAC --- Role
+    RBAC --- Binding
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef authzMode fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    classDef rbacComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class API k8sComponent;
+    class User userComponent;
+    class RBAC,ABAC,Node,WebhookAuthz authzMode;
+    class Decision,Allow,Deny resultComponent;
+    class Role,Binding rbacComponent;
+```
 
 ### RBAC(Role-Based Access Control)
 
@@ -178,6 +303,51 @@ Node 권한 부여는 kubelet이 API 서버에 접근할 때 사용되는 특수
 
 보안 컨텍스트는 포드나 컨테이너 수준에서 보안 설정을 정의합니다. 이를 통해 권한, 액세스 제어, 기능 등을 세밀하게 제어할 수 있습니다.
 
+```mermaid
+graph TD
+    subgraph "포드 보안 컨텍스트"
+        PSC["포드 보안 컨텍스트"]
+        PSC -->|설정| RunAsUser["runAsUser<br>(사용자 ID)"]
+        PSC -->|설정| RunAsGroup["runAsGroup<br>(그룹 ID)"]
+        PSC -->|설정| FSGroup["fsGroup<br>(파일시스템 그룹)"]
+        PSC -->|설정| SupGroups["supplementalGroups<br>(추가 그룹)"]
+    end
+    
+    subgraph "컨테이너 보안 컨텍스트"
+        CSC["컨테이너 보안 컨텍스트"]
+        CSC -->|설정| Privilege["privileged<br>(특권 모드)"]
+        CSC -->|설정| AllowPrivEsc["allowPrivilegeEscalation<br>(권한 상승 허용)"]
+        CSC -->|설정| ReadOnlyFS["readOnlyRootFilesystem<br>(읽기 전용 파일시스템)"]
+        CSC -->|설정| Capabilities["capabilities<br>(Linux 커널 기능)"]
+        CSC -->|설정| SELinux["seLinuxOptions<br>(SELinux 옵션)"]
+    end
+    
+    Pod["포드"] -->|포함| PSC
+    Pod -->|포함| Container["컨테이너"]
+    Container -->|포함| CSC
+    
+    subgraph "포드 보안 표준"
+        PSS["포드 보안 표준"]
+        PSS -->|수준| Privileged["Privileged<br>(제한 없음)"]
+        PSS -->|수준| Baseline["Baseline<br>(기본 보안)"]
+        PSS -->|수준| Restricted["Restricted<br>(강화된 보안)"]
+    end
+    
+    Pod -->|준수| PSS
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef securityComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef securitySetting fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class Pod,Container k8sComponent;
+    class PSC,CSC,PSS securityComponent;
+    class RunAsUser,RunAsGroup,FSGroup,SupGroups,Privilege,AllowPrivEsc,ReadOnlyFS,Capabilities,SELinux securitySetting;
+    class Privileged,Baseline,Restricted securitySetting;
+```
+
 ### 포드 보안 컨텍스트
 
 ```yaml
@@ -232,6 +402,53 @@ metadata:
 ## 네트워크 정책(Network Policy)
 
 네트워크 정책은 포드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 Kubernetes 클러스터의 모든 포드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다.
+
+```mermaid
+graph TD
+    subgraph "네트워크 정책 구성"
+        NP["NetworkPolicy"]
+        NP -->|선택| PodSelector["podSelector<br>(대상 포드)"]
+        NP -->|정의| PolicyTypes["policyTypes<br>(Ingress/Egress)"]
+        NP -->|규칙| Ingress["ingress<br>(인바운드 규칙)"]
+        NP -->|규칙| Egress["egress<br>(아웃바운드 규칙)"]
+    end
+    
+    subgraph "인바운드 규칙"
+        Ingress -->|소스| IngressFrom["from<br>(소스 선택자)"]
+        Ingress -->|포트| IngressPorts["ports<br>(허용 포트)"]
+        
+        IngressFrom -->|선택| IPodSelector["podSelector<br>(소스 포드)"]
+        IngressFrom -->|선택| INSSelector["namespaceSelector<br>(소스 네임스페이스)"]
+        IngressFrom -->|선택| IIPBlock["ipBlock<br>(소스 IP 범위)"]
+    end
+    
+    subgraph "아웃바운드 규칙"
+        Egress -->|대상| EgressTo["to<br>(대상 선택자)"]
+        Egress -->|포트| EgressPorts["ports<br>(허용 포트)"]
+        
+        EgressTo -->|선택| EPodSelector["podSelector<br>(대상 포드)"]
+        EgressTo -->|선택| ENSSelector["namespaceSelector<br>(대상 네임스페이스)"]
+        EgressTo -->|선택| EIPBlock["ipBlock<br>(대상 IP 범위)"]
+    end
+    
+    Frontend["프론트엔드 포드"] -->|통신| API["API 포드"]
+    API -->|통신| DB["데이터베이스 포드"]
+    
+    NP -->|적용| API
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef networkPolicy fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef policyConfig fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class NP,PodSelector,PolicyTypes,Ingress,Egress networkPolicy;
+    class IngressFrom,IngressPorts,IPodSelector,INSSelector,IIPBlock,EgressTo,EgressPorts,EPodSelector,ENSSelector,EIPBlock policyConfig;
+    class Frontend,API userApp;
+    class DB dataStore;
+```
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -388,6 +605,58 @@ rules:
 ## Amazon EKS 보안 강화
 
 Amazon EKS는 Kubernetes의 기본 보안 기능 외에도 AWS의 보안 서비스와 통합하여 보안을 강화할 수 있습니다.
+
+```mermaid
+graph TD
+    subgraph "AWS 보안 서비스"
+        IAM["AWS IAM<br>(자격 증명 및 액세스 관리)"]
+        KMS["AWS KMS<br>(키 관리 서비스)"]
+        SG["AWS Security Groups<br>(보안 그룹)"]
+        WAF["AWS WAF<br>(웹 애플리케이션 방화벽)"]
+        GD["AWS GuardDuty<br>(위협 탐지)"]
+        SM["AWS Secrets Manager<br>(시크릿 관리)"]
+    end
+    
+    subgraph "EKS 보안 통합"
+        IRSA["IAM Roles for Service Accounts<br>(IRSA)"]
+        SecEnc["Kubernetes 시크릿 암호화"]
+        PodSG["포드 보안 그룹"]
+        ALB["Application Load Balancer<br>(ALB) 통합"]
+        EKSDetect["EKS 위협 탐지"]
+        ExtSecrets["External Secrets Operator"]
+    end
+    
+    IAM -->|통합| IRSA
+    KMS -->|통합| SecEnc
+    SG -->|통합| PodSG
+    WAF -->|통합| ALB
+    GD -->|통합| EKSDetect
+    SM -->|통합| ExtSecrets
+    
+    subgraph "EKS 클러스터"
+        API["API 서버"]
+        Node["워커 노드"]
+        Pod["포드"]
+    end
+    
+    IRSA -->|권한 부여| Pod
+    SecEnc -->|암호화| API
+    PodSG -->|네트워크 보안| Pod
+    ALB -->|트래픽 보호| API
+    EKSDetect -->|모니터링| Node
+    ExtSecrets -->|시크릿 제공| Pod
+    
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef securityIntegration fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class API,Node,Pod k8sComponent;
+    class IAM,KMS,SG,WAF,GD,SM awsService;
+    class IRSA,SecEnc,PodSG,ALB,EKSDetect,ExtSecrets securityIntegration;
+```
 
 ### IAM 역할 및 서비스 계정(IRSA)
 
