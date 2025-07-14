@@ -26,6 +26,33 @@ Kubernetes 클러스터 관리는 클러스터의 전체 수명 주기를 관리
 4. **업그레이드 및 패치**: 클러스터 버전 업그레이드, 보안 패치 적용
 5. **백업 및 복구**: 클러스터 데이터 백업, 재해 복구 계획
 
+다음 다이어그램은 Kubernetes 클러스터 관리의 주요 영역과 관련 도구를 보여줍니다:
+
+```mermaid
+flowchart TD
+    Admin[클러스터 관리자] --> Setup[클러스터 설정 및 구성]
+    Admin --> Operations[운영 관리]
+    Admin --> Security[보안 관리]
+    Admin --> Upgrade[업그레이드 및 패치]
+    Admin --> Backup[백업 및 복구]
+    
+    Setup --> |도구| SetupTools[kubeadm, kops, eksctl]
+    Operations --> |도구| OpsTools[kubectl, Prometheus, Grafana]
+    Security --> |도구| SecTools[RBAC, NetworkPolicy, PodSecurityPolicy]
+    Upgrade --> |도구| UpgradeTools[kubeadm upgrade, EKS 업데이트]
+    Backup --> |도구| BackupTools[etcd snapshot, Velero]
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class Admin userApp;
+    class Setup,Operations,Security,Upgrade,Backup k8sComponent;
+    class SetupTools,OpsTools,SecTools,UpgradeTools,BackupTools default;
+```
+
 ### 클러스터 관리 도구
 
 Kubernetes 클러스터 관리를 위한 다양한 도구가 있습니다:
@@ -52,6 +79,41 @@ Kubernetes 클러스터는 여러 구성요소로 이루어져 있으며, 이러
 3. **kube-scheduler**: 포드를 노드에 스케줄링하는 컴포넌트
 4. **kube-controller-manager**: 컨트롤러를 실행하는 컴포넌트
 5. **cloud-controller-manager**: 클라우드 제공업체와 상호 작용하는 컴포넌트
+
+다음 다이어그램은 Kubernetes 컨트롤 플레인 구성요소와 그 상호작용을 보여줍니다:
+
+```mermaid
+flowchart TD
+    API[kube-apiserver] <--> ETCD[(etcd)]
+    API <--> SCH[kube-scheduler]
+    API <--> CM[kube-controller-manager]
+    API <--> CCM[cloud-controller-manager]
+    API <--> Kubelet[kubelet]
+    
+    subgraph "컨트롤 플레인"
+        API
+        ETCD
+        SCH
+        CM
+        CCM
+    end
+    
+    subgraph "워커 노드"
+        Kubelet
+        Proxy[kube-proxy]
+        CRI[컨테이너 런타임]
+    end
+    
+    Kubelet --> CRI
+    Kubelet --> Proxy
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class API,SCH,CM,CCM,Kubelet,Proxy,CRI k8sComponent;
+    class ETCD dataStore;
+```
 
 #### 컨트롤 플레인 구성요소 모니터링
 
@@ -268,6 +330,39 @@ Kubernetes 네트워크 모델의 기본 요구 사항:
 2. 노드의 에이전트(kubelet)는 해당 노드의 모든 포드와 통신할 수 있어야 함
 3. NAT 모드에서 실행되는 포드는 외부와 통신할 수 있어야 함
 
+다음 다이어그램은 Kubernetes 네트워킹 구성요소와 통신 흐름을 보여줍니다:
+
+```mermaid
+flowchart LR
+    Client[클라이언트] --> Ingress[인그레스]
+    Ingress --> SVC[서비스]
+    SVC --> Pod1[포드 1]
+    SVC --> Pod2[포드 2]
+    
+    subgraph "클러스터 내부"
+        Ingress
+        SVC
+        subgraph "노드 1"
+            Pod1
+        end
+        subgraph "노드 2"
+            Pod2
+        end
+    end
+    
+    Pod1 <--> Pod2
+    Pod1 --> ExtSvc[외부 서비스]
+    Pod2 --> ExtSvc
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class Ingress,SVC k8sComponent;
+    class Pod1,Pod2 userApp;
+    class Client,ExtSvc default;
+```
+
 ### CNI(Container Network Interface) 플러그인
 
 Kubernetes는 CNI 플러그인을 통해 네트워킹을 구현합니다. 일반적인 CNI 플러그인:
@@ -390,6 +485,48 @@ spec:
 ## 인증 및 권한 관리
 
 Kubernetes의 인증 및 권한 관리는 클러스터 보안의 핵심 요소입니다.
+
+다음 다이어그램은 Kubernetes의 인증 및 권한 부여 흐름을 보여줍니다:
+
+```mermaid
+flowchart TD
+    User[사용자/서비스 계정] --> Auth[인증]
+    Auth --> Authz[권한 부여]
+    Authz --> Admit[어드미션 컨트롤]
+    Admit --> API[API 서버]
+    
+    subgraph "인증 방법"
+        Cert[X.509 인증서]
+        Token[서비스 계정 토큰]
+        OIDC[OpenID Connect]
+        Webhook[웹훅 토큰 인증]
+    end
+    
+    subgraph "권한 부여 모드"
+        RBAC[RBAC]
+        ABAC[ABAC]
+        Node[Node]
+        WebhookAuthz[Webhook]
+    end
+    
+    Auth --> Cert
+    Auth --> Token
+    Auth --> OIDC
+    Auth --> Webhook
+    
+    Authz --> RBAC
+    Authz --> ABAC
+    Authz --> Node
+    Authz --> WebhookAuthz
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class Auth,Authz,Admit,API k8sComponent;
+    class User userApp;
+    class Cert,Token,OIDC,Webhook,RBAC,ABAC,Node,WebhookAuthz default;
+```
 
 ### 인증(Authentication)
 
@@ -586,6 +723,33 @@ spec:
 
 Kubernetes 클러스터 업그레이드는 새로운 기능, 성능 개선, 보안 패치를 적용하기 위해 필요합니다.
 
+다음 다이어그램은 Kubernetes 클러스터 업그레이드 프로세스를 보여줍니다:
+
+```mermaid
+flowchart TD
+    Start[업그레이드 계획] --> Plan[버전 호환성 확인]
+    Plan --> Backup[etcd 백업]
+    Backup --> CP1[첫 번째 컨트롤 플레인 노드 업그레이드]
+    CP1 --> CPTest[컨트롤 플레인 기능 테스트]
+    CPTest --> CP2[추가 컨트롤 플레인 노드 업그레이드]
+    CP2 --> Worker[워커 노드 업그레이드]
+    Worker --> Validate[클러스터 검증]
+    Validate --> End[업그레이드 완료]
+    
+    Validate -- 문제 발생 --> Rollback[롤백]
+    Rollback --> RestoreBackup[백업에서 복원]
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class CP1,CP2,Worker,Validate k8sComponent;
+    class Backup,RestoreBackup dataStore;
+    class Rollback alerting;
+    class Start,Plan,CPTest,End default;
+```
+
 ### 업그레이드 계획
 
 클러스터 업그레이드를 계획할 때 고려해야 할 사항:
@@ -669,6 +833,38 @@ kubectl get svc nginx
 ## 백업 및 복구
 
 Kubernetes 클러스터의 백업 및 복구는 재해 복구 계획의 중요한 부분입니다.
+
+다음 다이어그램은 Kubernetes 클러스터의 백업 및 복구 프로세스를 보여줍니다:
+
+```mermaid
+flowchart TD
+    subgraph "백업 프로세스"
+        Schedule[백업 일정 설정] --> ETCDBackup[etcd 스냅샷 생성]
+        Schedule --> ResourceBackup[리소스 YAML 백업]
+        ETCDBackup --> Store[백업 저장소]
+        ResourceBackup --> Store
+    end
+    
+    subgraph "복구 프로세스"
+        Disaster[재해 발생] --> RestoreETCD[etcd 복구]
+        RestoreETCD --> RestartServices[Kubernetes 서비스 재시작]
+        RestartServices --> ValidateCluster[클러스터 검증]
+        ValidateCluster --> RestoreResources[리소스 복구]
+    end
+    
+    Store -.-> RestoreETCD
+    Store -.-> RestoreResources
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class ETCDBackup,ResourceBackup,RestoreETCD,RestartServices,ValidateCluster,RestoreResources k8sComponent;
+    class Store dataStore;
+    class Disaster alerting;
+    class Schedule default;
+```
 
 ### etcd 백업
 
@@ -784,6 +980,44 @@ spec:
 ## 모니터링 및 로깅
 
 효과적인 모니터링 및 로깅은 클러스터 관리의 핵심 요소입니다.
+
+다음 다이어그램은 Kubernetes 클러스터의 모니터링 및 로깅 아키텍처를 보여줍니다:
+
+```mermaid
+flowchart LR
+    subgraph "모니터링 스택"
+        Prom[Prometheus] --> Alert[Alertmanager]
+        Prom --> Grafana[Grafana]
+        KSM[kube-state-metrics] --> Prom
+        NE[Node Exporter] --> Prom
+        Alert --> Notify[알림 채널]
+    end
+    
+    subgraph "로깅 스택"
+        Fluentd[Fluentd/Fluent Bit] --> ES[(Elasticsearch)]
+        ES --> Kibana[Kibana]
+        Fluentd --> Loki[(Loki)]
+        Loki --> Grafana
+    end
+    
+    subgraph "Kubernetes 클러스터"
+        API[API 서버] --> KSM
+        Node[노드] --> NE
+        Pod[포드] --> Fluentd
+    end
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef prometheusComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class API,Node,Pod k8sComponent;
+    class ES,Loki dataStore;
+    class Prom,Alert,KSM,NE prometheusComponent;
+    class Grafana,Kibana grafana;
+    class Fluentd,Notify default;
+```
 
 ### 모니터링 도구
 
@@ -989,6 +1223,42 @@ kubectl logs -n kube-system etcd-<node-name>
 ## Amazon EKS 클러스터 관리
 
 Amazon EKS는 관리형 Kubernetes 서비스로, 클러스터 관리의 많은 부분을 자동화합니다.
+
+다음 다이어그램은 Amazon EKS 클러스터 아키텍처와 관리 구성요소를 보여줍니다:
+
+```mermaid
+flowchart TD
+    User[사용자] --> |관리| AWS[AWS Management Console/CLI/API]
+    AWS --> |관리| EKS[Amazon EKS]
+    
+    subgraph "AWS 클라우드"
+        EKS --> CP[EKS 컨트롤 플레인]
+        EKS --> NG[EKS 노드 그룹]
+        EKS --> Fargate[EKS Fargate]
+        
+        CP --> |사용| AWSIAM[AWS IAM]
+        CP --> |사용| AWSVPC[AWS VPC]
+        CP --> |로깅| CW[CloudWatch]
+        
+        NG --> |사용| EC2[EC2 인스턴스]
+        Fargate --> |사용| FargateProfile[Fargate 프로필]
+    end
+    
+    subgraph "추가 기능"
+        EKS --> CNI[Amazon VPC CNI]
+        EKS --> CoreDNS[CoreDNS]
+        EKS --> KubeProxy[kube-proxy]
+    end
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class CP,NG,Fargate,CNI,CoreDNS,KubeProxy k8sComponent;
+    class AWS,EKS,AWSIAM,AWSVPC,CW,EC2,FargateProfile awsService;
+    class User userApp;
+```
 
 ### EKS 클러스터 구성
 
