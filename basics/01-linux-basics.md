@@ -26,26 +26,38 @@ Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 �
 ### 사용자 공간
 사용자 공간은 일반 응용 프로그램이 실행되는 메모리 영역입니다. 사용자 공간 프로그램은 시스템 호출을 통해 커널 서비스에 접근합니다.
 
-```
-+---------------------------+
-|     사용자 공간 (User Space)   |
-|  +---------------------+  |
-|  |     응용 프로그램      |  |
-|  +---------------------+  |
-|  |   시스템 라이브러리    |  |
-|  +---------------------+  |
-+---------------------------+
-|     커널 공간 (Kernel Space) |
-|  +---------------------+  |
-|  |    시스템 호출 인터페이스  |  |
-|  +---------------------+  |
-|  |      커널 서브시스템    |  |
-|  +---------------------+  |
-|  |     하드웨어 추상화 계층  |  |
-|  +---------------------+  |
-+---------------------------+
-|         하드웨어          |
-+---------------------------+
+```mermaid
+flowchart TD
+    %% 노드 정의
+    subgraph US["사용자 공간 (User Space)"]
+        AP["응용 프로그램"]
+        SL["시스템 라이브러리"]
+    end
+    
+    subgraph KS["커널 공간 (Kernel Space)"]
+        SCI["시스템 호출 인터페이스"]
+        KSS["커널 서브시스템"]
+        HAL["하드웨어 추상화 계층"]
+    end
+    
+    HW["하드웨어"]
+    
+    %% 연결 정의
+    AP --> SL
+    SL --> SCI
+    SCI --> KSS
+    KSS --> HAL
+    HAL --> HW
+    
+    %% 스타일 적용
+    classDef userSpace fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef kernelSpace fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef hardware fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class AP,SL userSpace
+    class SCI,KSS,HAL kernelSpace
+    class HW hardware
 ```
 
 ## 프로세스 관리
@@ -216,19 +228,48 @@ ip link set <veth2> netns <네임스페이스명>
 - **root (UID 0)**: 관리자 권한을 가진 특별한 사용자
 
 ### 파일 권한
-```
--rwxr-xr--
- ↑↑↑↑↑↑↑↑↑
- │││││││││
- ││││││││└─ 기타 사용자 실행 권한 (-)
- │││││││└── 기타 사용자 쓰기 권한 (-)
- ││││││└─── 기타 사용자 읽기 권한 (r)
- │││││└──── 그룹 실행 권한 (x)
- ││││└───── 그룹 쓰기 권한 (-)
- │││└────── 그룹 읽기 권한 (r)
- ││└─────── 소유자 실행 권한 (x)
- │└──────── 소유자 쓰기 권한 (w)
- └───────── 소유자 읽기 권한 (r)
+```mermaid
+flowchart LR
+    %% 노드 정의
+    F["파일 타입"]
+    U1["소유자 읽기"]
+    U2["소유자 쓰기"]
+    U3["소유자 실행"]
+    G1["그룹 읽기"]
+    G2["그룹 쓰기"]
+    G3["그룹 실행"]
+    O1["기타 읽기"]
+    O2["기타 쓰기"]
+    O3["기타 실행"]
+    
+    %% 연결 정의
+    F --- U1 --- U2 --- U3 --- G1 --- G2 --- G3 --- O1 --- O2 --- O3
+    
+    %% 레이블 추가
+    F -.- FL["d/l/-"]
+    U1 -.- U1L["r"]
+    U2 -.- U2L["w"]
+    U3 -.- U3L["x"]
+    G1 -.- G1L["r"]
+    G2 -.- G2L["w"]
+    G3 -.- G3L["x"]
+    O1 -.- O1L["r"]
+    O2 -.- O2L["w"]
+    O3 -.- O3L["x"]
+    
+    %% 스타일 적용
+    classDef fileType fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    classDef userPerm fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef groupPerm fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef otherPerm fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef label fill:none,stroke:none;
+    
+    %% 클래스 적용
+    class F fileType
+    class U1,U2,U3 userPerm
+    class G1,G2,G3 groupPerm
+    class O1,O2,O3 otherPerm
+    class FL,U1L,U2L,U3L,G1L,G2L,G3L,O1L,O2L,O3L label
 ```
 
 ### 권한 관련 명령어
@@ -294,38 +335,55 @@ journalctl -u <서비스> # 서비스 로그 확인
 ### OverlayFS
 OverlayFS는 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현하는 유니온 마운트 파일 시스템입니다. Docker와 같은 컨테이너 런타임에서 이미지 레이어를 구현하는 데 사용됩니다.
 
-```
-+------------------+
-|    Upper Layer   |  (읽기/쓰기)
-+------------------+
-|    Lower Layer   |  (읽기 전용)
-+------------------+
-|    Lower Layer   |  (읽기 전용)
-+------------------+
-        ...
-+------------------+
-|    Base Layer    |  (읽기 전용)
-+------------------+
+```mermaid
+flowchart TD
+    %% 노드 정의
+    UL["Upper Layer (읽기/쓰기)"]
+    LL1["Lower Layer (읽기 전용)"]
+    LL2["Lower Layer (읽기 전용)"]
+    BL["Base Layer (읽기 전용)"]
+    
+    %% 연결 정의
+    UL --> LL1
+    LL1 --> LL2
+    LL2 --> BL
+    
+    %% 스타일 적용
+    classDef upperLayer fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef lowerLayer fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef baseLayer fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    
+    %% 클래스 적용
+    class UL upperLayer
+    class LL1,LL2 lowerLayer
+    class BL baseLayer
 ```
 
 ### 네트워크 브릿지와 NAT
 컨테이너 네트워킹은 주로 브릿지 인터페이스와 NAT(Network Address Translation)를 사용하여 구현됩니다.
 
-```
-+-------------+    +-------------+
-| Container A |    | Container B |
-|  (eth0)     |    |  (eth0)     |
-+------+------+    +------+------+
-       |                  |
-       |                  |
-+------+------------------+------+
-|           Bridge (docker0)     |
-+---------------+----------------+
-                |
-                |
-+---------------+----------------+
-|    Host Network Interface      |
-+--------------------------------+
+```mermaid
+flowchart TD
+    %% 노드 정의
+    CA["Container A\n(eth0)"]
+    CB["Container B\n(eth0)"]
+    BR["Bridge (docker0)"]
+    HNI["Host Network Interface"]
+    
+    %% 연결 정의
+    CA --- BR
+    CB --- BR
+    BR --- HNI
+    
+    %% 스타일 적용
+    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef bridge fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef host fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class CA,CB container
+    class BR bridge
+    class HNI host
 ```
 
 ### 시스템 호출 필터링 (seccomp)
