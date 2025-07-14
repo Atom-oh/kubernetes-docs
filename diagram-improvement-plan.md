@@ -42,7 +42,7 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 - [x] 3. Kubernetes 소개 (`./basics/03-kubernetes-introduction.md`)
 
 ### Kubernetes 핵심 개념
-- [ ] 1. 클러스터 아키텍처 (`./core/01-cluster-architecture.md`)
+- [x] 1. 클러스터 아키텍처 (`./core/01-cluster-architecture.md`)
 - [ ] 2. 파드와 워크로드 (`./core/02-pods-and-workloads.md`)
 - [ ] 3. 서비스와 네트워킹 (`./core/03-services-networking.md`)
 - [ ] 4. 스토리지 (`./core/04-storage.md`)
