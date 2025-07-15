@@ -14,6 +14,46 @@ Amazon EKS에서 애플리케이션을 실행할 때 데이터를 저장하고 �
 
 Kubernetes에서 스토리지를 관리하기 위한 핵심 개념들을 먼저 이해해 보겠습니다.
 
+```mermaid
+flowchart TD
+    subgraph K8s_Storage_Concepts ["Kubernetes 스토리지 개념"]
+        Volume[볼륨]
+        PV[영구 볼륨\nPersistentVolume]
+        PVC[영구 볼륨 클레임\nPersistentVolumeClaim]
+        SC[스토리지 클래스\nStorageClass]
+    end
+    
+    subgraph Pod ["파드"]
+        Container1[컨테이너 1]
+        Container2[컨테이너 2]
+    end
+    
+    subgraph Storage_Backend ["스토리지 백엔드"]
+        EBS[Amazon EBS]
+        EFS[Amazon EFS]
+        FSx[Amazon FSx]
+        S3[Amazon S3]
+    end
+    
+    Container1 --> Volume
+    Container2 --> Volume
+    PVC --> PV
+    PV --> Storage_Backend
+    SC --> PV
+    Pod --> PVC
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class EBS,EFS,FSx,S3 awsService;
+    class Volume,PV,PVC,SC,Pod,Container1,Container2 k8sComponent;
+```
+
 ### 볼륨(Volume)
 
 볼륨은 파드 내의 컨테이너에 마운트할 수 있는 디렉토리로, 컨테이너가 재시작되더라도 데이터가 유지됩니다. 볼륨의 수명은 파드의 수명과 동일하며, 파드가 삭제되면 볼륨도 함께 삭제됩니다.
@@ -42,6 +82,56 @@ Kubernetes는 다음과 같은 액세스 모드를 지원합니다:
 ## Amazon EKS 스토리지 옵션 개요
 
 Amazon EKS에서는 다양한 AWS 스토리지 서비스를 활용하여 컨테이너화된 애플리케이션에 스토리지를 제공할 수 있습니다.
+
+```mermaid
+flowchart TD
+    subgraph EKS_Cluster ["Amazon EKS 클러스터"]
+        subgraph Storage_Options ["스토리지 옵션"]
+            EBS[Amazon EBS]
+            EFS[Amazon EFS]
+            FSx[Amazon FSx for Lustre]
+            S3[Amazon S3]
+        end
+        
+        subgraph Access_Modes ["액세스 모드"]
+            RWO[ReadWriteOnce]
+            ROX[ReadOnlyMany]
+            RWX[ReadWriteMany]
+            RWOP[ReadWriteOncePod]
+        end
+        
+        subgraph CSI_Drivers ["CSI 드라이버"]
+            EBS_CSI[EBS CSI 드라이버]
+            EFS_CSI[EFS CSI 드라이버]
+            FSx_CSI[FSx CSI 드라이버]
+        end
+    end
+    
+    EBS --> RWO
+    EBS --> RWOP
+    EFS --> RWO
+    EFS --> ROX
+    EFS --> RWX
+    FSx --> RWO
+    FSx --> ROX
+    FSx --> RWX
+    
+    EBS --> EBS_CSI
+    EFS --> EFS_CSI
+    FSx --> FSx_CSI
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class EBS,EFS,FSx,S3 awsService;
+    class EBS_CSI,EFS_CSI,FSx_CSI k8sComponent;
+    class RWO,ROX,RWX,RWOP k8sComponent;
+```
 
 ### 주요 스토리지 옵션
 
@@ -78,36 +168,57 @@ Amazon EKS에서는 다양한 AWS 스토리지 서비스를 활용하여 컨테�
 
 Amazon EBS는 EC2 인스턴스에 연결할 수 있는 블록 수준 스토리지 볼륨을 제공합니다. EKS에서는 EBS CSI(Container Storage Interface) 드라이버를 통해 EBS 볼륨을 Kubernetes 파드에 마운트할 수 있습니다.
 
-### EBS CSI 드라이버 설치
-
-EBS CSI 드라이버를 설치하기 위해 다음 단계를 따릅니다:
-
-1. IAM 역할 생성:
-
-```bash
-eksctl create iamserviceaccount \
-  --name ebs-csi-controller-sa \
-  --namespace kube-system \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
-  --approve \
-  --role-only \
-  --role-name AmazonEKS_EBS_CSI_DriverRole
+```mermaid
+flowchart TD
+    subgraph EKS_Cluster ["Amazon EKS 클러스터"]
+        subgraph Node1 ["노드 1"]
+            Pod1[파드 1]
+            EBS_CSI1[EBS CSI 드라이버]
+        end
+        
+        subgraph Node2 ["노드 2"]
+            Pod2[파드 2]
+            EBS_CSI2[EBS CSI 드라이버]
+        end
+    end
+    
+    subgraph AWS_Services ["AWS 서비스"]
+        EBS1[EBS 볼륨 1]
+        EBS2[EBS 볼륨 2]
+    end
+    
+    Pod1 --> EBS_CSI1
+    EBS_CSI1 --> EBS1
+    Pod2 --> EBS_CSI2
+    EBS_CSI2 --> EBS2
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class EBS1,EBS2 awsService;
+    class Pod1,Pod2,EBS_CSI1,EBS_CSI2 k8sComponent;
 ```
 
-2. 애드온 설치:
+### EBS CSI 드라이버 설치
+
+EKS에서 EBS 볼륨을 사용하기 위해서는 EBS CSI 드라이버를 설치해야 합니다. 이 드라이버는 Amazon EKS 애드온으로 제공됩니다.
 
 ```bash
-eksctl create addon \
-  --name aws-ebs-csi-driver \
-  --cluster my-cluster \
-  --service-account-role-arn arn:aws:iam::111122223333:role/AmazonEKS_EBS_CSI_DriverRole \
-  --force
+# EBS CSI 드라이버 설치
+eksctl create addon --name aws-ebs-csi-driver --cluster my-cluster --version latest
+
+# 또는 AWS CLI 사용
+aws eks create-addon --cluster-name my-cluster --addon-name aws-ebs-csi-driver --addon-version latest
 ```
 
 ### EBS 스토리지 클래스 생성
 
-EBS gp3 볼륨을 사용하는 스토리지 클래스를 생성합니다:
+EBS 볼륨을 동적으로 프로비저닝하기 위한 스토리지 클래스를 생성합니다. 여기서는 gp3 볼륨 타입을 사용합니다.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -120,14 +231,11 @@ parameters:
   type: gp3
   encrypted: "true"
   fsType: ext4
-  iops: "3000"
-  throughput: "125"
-allowVolumeExpansion: true
 ```
 
-### PVC 생성 및 파드에 마운트
+### 영구 볼륨 클레임(PVC) 생성
 
-1. PVC 생성:
+애플리케이션에서 사용할 PVC를 생성합니다.
 
 ```yaml
 apiVersion: v1
@@ -143,7 +251,9 @@ spec:
       storage: 10Gi
 ```
 
-2. 파드에 PVC 마운트:
+### 파드에서 PVC 사용
+
+생성한 PVC를 파드에 마운트하여 사용합니다.
 
 ```yaml
 apiVersion: v1
@@ -165,150 +275,157 @@ spec:
 
 ### EBS 볼륨 스냅샷
 
-EBS 볼륨의 스냅샷을 생성하여 데이터를 백업할 수 있습니다:
-
-1. 볼륨 스냅샷 클래스 생성:
-
-```yaml
-apiVersion: snapshot.storage.k8s.io/v1
-kind: VolumeSnapshotClass
-metadata:
-  name: ebs-snapshot-class
-driver: ebs.csi.aws.com
-deletionPolicy: Delete
-```
-
-2. 볼륨 스냅샷 생성:
+EBS 볼륨의 스냅샷을 생성하여 데이터를 백업할 수 있습니다.
 
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshot
 metadata:
-  name: ebs-volume-snapshot
+  name: ebs-snapshot
 spec:
-  volumeSnapshotClassName: ebs-snapshot-class
+  volumeSnapshotClassName: csi-aws-vsc
   source:
     persistentVolumeClaimName: ebs-claim
 ```
 
-3. 스냅샷에서 PVC 복원:
+### EBS 볼륨 확장
+
+필요에 따라 EBS 볼륨의 크기를 확장할 수 있습니다.
 
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: ebs-claim-restored
+  name: ebs-claim
 spec:
   accessModes:
     - ReadWriteOnce
   storageClassName: ebs-gp3
   resources:
     requests:
-      storage: 10Gi
-  dataSource:
-    name: ebs-volume-snapshot
-    kind: VolumeSnapshot
-    apiGroup: snapshot.storage.k8s.io
+      storage: 20Gi  # 10Gi에서 20Gi로 확장
 ```
 
-### EBS 볼륨 유형 및 성능 특성
+### EBS 볼륨 유형 및 성능
 
-Amazon EBS는 다양한 볼륨 유형을 제공하며, 각각 다른 성능 특성과 비용을 가집니다:
+Amazon EBS는 다양한 볼륨 유형을 제공합니다:
 
-| 볼륨 유형 | 설명 | IOPS | 처리량 | 사용 사례 |
-|----------|------|------|-------|----------|
-| gp3 | 범용 SSD | 3,000-16,000 | 125-1,000 MiB/s | 대부분의 워크로드 |
-| gp2 | 범용 SSD | 100-16,000 | 최대 250 MiB/s | 중소 규모 워크로드 |
-| io2 | 프로비저닝된 IOPS SSD | 최대 64,000 | 최대 1,000 MiB/s | 고성능 데이터베이스 |
-| io1 | 프로비저닝된 IOPS SSD | 최대 64,000 | 최대 1,000 MiB/s | 고성능 데이터베이스 |
-| st1 | 처리량 최적화 HDD | 최대 500 | 최대 500 MiB/s | 빅 데이터, 로그 처리 |
-| sc1 | 콜드 HDD | 최대 250 | 최대 250 MiB/s | 자주 액세스하지 않는 데이터 |
+| 볼륨 유형 | 설명 | 사용 사례 |
+|----------|------|----------|
+| gp3 | 범용 SSD | 대부분의 워크로드에 적합, 비용 효율적 |
+| io2 | 프로비저닝된 IOPS SSD | 고성능 데이터베이스 |
+| st1 | 처리량 최적화 HDD | 빅 데이터, 로그 처리 |
+| sc1 | 콜드 HDD | 자주 액세스하지 않는 데이터 |
 
-EKS에서는 gp3 볼륨 유형을 권장합니다. gp3는 gp2보다 비용 효율적이며, 기본 성능이 더 높습니다.
+EKS에서는 gp3 볼륨 타입을 권장합니다. gp3는 비용 효율적이면서도 일관된 성능을 제공합니다.
 
 ## Amazon EFS를 사용한 스토리지
 
-Amazon EFS는 여러 EC2 인스턴스에서 동시에 마운트할 수 있는 확장 가능한 파일 시스템을 제공합니다. EKS에서는 EFS CSI 드라이버를 통해 EFS 파일 시스템을 Kubernetes 파드에 마운트할 수 있습니다.
+Amazon EFS는 완전 관리형 NFS 파일 시스템으로, 여러 EC2 인스턴스에서 동시에 액세스할 수 있습니다. EKS에서는 EFS CSI 드라이버를 통해 EFS 파일 시스템을 여러 파드에 동시에 마운트할 수 있습니다.
+
+```mermaid
+flowchart TD
+    subgraph EKS_Cluster ["Amazon EKS 클러스터"]
+        subgraph Node1 ["노드 1"]
+            Pod1[파드 1]
+            Pod2[파드 2]
+            EFS_CSI1[EFS CSI 드라이버]
+        end
+        
+        subgraph Node2 ["노드 2"]
+            Pod3[파드 3]
+            Pod4[파드 4]
+            EFS_CSI2[EFS CSI 드라이버]
+        end
+    end
+    
+    subgraph AWS_Services ["AWS 서비스"]
+        EFS[Amazon EFS 파일 시스템]
+    end
+    
+    Pod1 --> EFS_CSI1
+    Pod2 --> EFS_CSI1
+    EFS_CSI1 --> EFS
+    Pod3 --> EFS_CSI2
+    Pod4 --> EFS_CSI2
+    EFS_CSI2 --> EFS
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class EFS awsService;
+    class Pod1,Pod2,Pod3,Pod4,EFS_CSI1,EFS_CSI2 k8sComponent;
+```
 
 ### EFS CSI 드라이버 설치
 
-EFS CSI 드라이버를 설치하기 위해 다음 단계를 따릅니다:
-
-1. IAM 역할 생성:
+EKS에서 EFS를 사용하기 위해서는 EFS CSI 드라이버를 설치해야 합니다.
 
 ```bash
-eksctl create iamserviceaccount \
-  --name efs-csi-controller-sa \
-  --namespace kube-system \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy \
-  --approve \
-  --role-only \
-  --role-name AmazonEKS_EFS_CSI_DriverRole
-```
+# EFS CSI 드라이버 설치
+eksctl create addon --name aws-efs-csi-driver --cluster my-cluster --version latest
 
-2. 애드온 설치:
-
-```bash
-eksctl create addon \
-  --name aws-efs-csi-driver \
-  --cluster my-cluster \
-  --service-account-role-arn arn:aws:iam::111122223333:role/AmazonEKS_EFS_CSI_DriverRole \
-  --force
+# 또는 AWS CLI 사용
+aws eks create-addon --cluster-name my-cluster --addon-name aws-efs-csi-driver --addon-version latest
 ```
 
 ### EFS 파일 시스템 생성
 
-EFS 파일 시스템을 생성하고 EKS 클러스터의 VPC에 마운트 타겟을 설정합니다:
+AWS Management Console, AWS CLI 또는 AWS CloudFormation을 사용하여 EFS 파일 시스템을 생성합니다.
 
 ```bash
-# EKS 클러스터의 VPC ID 가져오기
-VPC_ID=$(aws eks describe-cluster \
-  --name my-cluster \
-  --query "cluster.resourcesVpcConfig.vpcId" \
-  --output text)
-
-# 보안 그룹 생성
-SECURITY_GROUP_ID=$(aws ec2 create-security-group \
-  --group-name EfsSecurityGroup \
-  --description "Security group for EFS mount targets" \
-  --vpc-id $VPC_ID \
-  --output text)
-
-# NFS 트래픽 허용
-aws ec2 authorize-security-group-ingress \
-  --group-id $SECURITY_GROUP_ID \
-  --protocol tcp \
-  --port 2049 \
-  --cidr $VPC_CIDR
-
-# EFS 파일 시스템 생성
-FILE_SYSTEM_ID=$(aws efs create-file-system \
+# AWS CLI를 사용하여 EFS 파일 시스템 생성
+aws efs create-file-system \
   --performance-mode generalPurpose \
   --throughput-mode bursting \
   --encrypted \
-  --tags Key=Name,Value=MyEfsFileSystem \
-  --query "FileSystemId" \
-  --output text)
+  --tags Key=Name,Value=MyEFSFileSystem
+
+# 파일 시스템 ID 저장
+EFS_FS_ID=$(aws efs describe-file-systems --query "FileSystems[?Name=='MyEFSFileSystem'].FileSystemId" --output text)
+
+# EKS 클러스터의 VPC ID 가져오기
+VPC_ID=$(aws eks describe-cluster --name my-cluster --query "cluster.resourcesVpcConfig.vpcId" --output text)
+
+# 보안 그룹 생성
+aws ec2 create-security-group \
+  --group-name MyEFSSecurityGroup \
+  --description "Security group for EFS mount targets" \
+  --vpc-id $VPC_ID
+
+SG_ID=$(aws ec2 describe-security-groups \
+  --filters Name=group-name,Values=MyEFSSecurityGroup \
+  --query "SecurityGroups[0].GroupId" --output text)
+
+# NFS 트래픽 허용
+aws ec2 authorize-security-group-ingress \
+  --group-id $SG_ID \
+  --protocol tcp \
+  --port 2049 \
+  --cidr 10.0.0.0/16
 
 # 서브넷 ID 가져오기
 SUBNET_IDS=$(aws ec2 describe-subnets \
   --filters "Name=vpc-id,Values=$VPC_ID" \
-  --query "Subnets[*].SubnetId" \
-  --output text)
+  --query "Subnets[*].SubnetId" --output text)
 
 # 각 서브넷에 마운트 타겟 생성
 for SUBNET_ID in $SUBNET_IDS; do
   aws efs create-mount-target \
-    --file-system-id $FILE_SYSTEM_ID \
+    --file-system-id $EFS_FS_ID \
     --subnet-id $SUBNET_ID \
-    --security-groups $SECURITY_GROUP_ID
+    --security-groups $SG_ID
 done
 ```
 
 ### EFS 스토리지 클래스 생성
 
-EFS를 사용하는 스토리지 클래스를 생성합니다:
+EFS를 사용하기 위한 스토리지 클래스를 생성합니다.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -318,16 +435,13 @@ metadata:
 provisioner: efs.csi.aws.com
 parameters:
   provisioningMode: efs-ap
-  fileSystemId: fs-0123456789abcdef0
+  fileSystemId: fs-0123456789abcdef0  # 생성한 EFS 파일 시스템 ID
   directoryPerms: "700"
-  gidRangeStart: "1000"
-  gidRangeEnd: "2000"
-  basePath: "/dynamic_provisioning"
 ```
 
-### PVC 생성 및 파드에 마운트
+### 영구 볼륨 클레임(PVC) 생성
 
-1. PVC 생성:
+EFS를 사용하기 위한 PVC를 생성합니다.
 
 ```yaml
 apiVersion: v1
@@ -336,14 +450,16 @@ metadata:
   name: efs-claim
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteMany  # 여러 노드에서 동시에 읽기/쓰기 가능
   storageClassName: efs-sc
   resources:
     requests:
       storage: 5Gi
 ```
 
-2. 파드에 PVC 마운트:
+### 파드에서 EFS PVC 사용
+
+생성한 PVC를 파드에 마운트하여 사용합니다.
 
 ```yaml
 apiVersion: v1
@@ -355,7 +471,7 @@ spec:
   - name: app
     image: nginx
     volumeMounts:
-    - mountPath: "/data"
+    - mountPath: "/shared-data"
       name: efs-volume
   volumes:
   - name: efs-volume
@@ -363,11 +479,9 @@ spec:
       claimName: efs-claim
 ```
 
-### 정적 프로비저닝을 사용한 EFS 마운트
+### EFS 액세스 포인트
 
-이미 생성된 EFS 파일 시스템을 정적으로 마운트할 수도 있습니다:
-
-1. PV 생성:
+EFS 액세스 포인트를 사용하면 특정 디렉토리에 대한 액세스를 제한하고, 사용자 및 그룹 권한을 설정할 수 있습니다.
 
 ```yaml
 apiVersion: v1
@@ -384,72 +498,71 @@ spec:
   storageClassName: efs-sc
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: fs-0123456789abcdef0
-```
-
-2. PVC 생성:
-
-```yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: efs-claim-static
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: efs-sc
-  resources:
-    requests:
-      storage: 5Gi
+    volumeHandle: fs-0123456789abcdef0::fsap-0123456789abcdef0
+    # volumeHandle 형식: {EFS 파일 시스템 ID}::{EFS 액세스 포인트 ID}
 ```
 
 ### EFS 성능 모드 및 처리량 모드
 
-Amazon EFS는 다양한 성능 요구사항을 충족하기 위해 여러 성능 모드와 처리량 모드를 제공합니다:
+Amazon EFS는 두 가지 성능 모드와 세 가지 처리량 모드를 제공합니다:
 
-#### 성능 모드
+**성능 모드**:
+- **General Purpose**: 대부분의 워크로드에 권장
+- **Max I/O**: 높은 병렬 처리가 필요한 워크로드에 적합
 
-- **범용 모드(General Purpose)**: 대부분의 파일 시스템 워크로드에 권장되는 기본 모드입니다. 낮은 지연 시간과 높은 처리량을 제공합니다.
-- **최대 I/O 모드(Max I/O)**: 높은 집계 처리량과 초당 작업 수를 제공하지만, 지연 시간이 약간 더 높습니다. 수천 개의 EC2 인스턴스가 동시에 파일 시스템에 액세스하는 빅 데이터 분석, 미디어 처리, 게놈 분석과 같은 워크로드에 적합합니다.
-
-#### 처리량 모드
-
-- **버스팅 모드(Bursting)**: 파일 시스템 크기에 따라 기본 처리량이 결정되며, 필요에 따라 버스트할 수 있습니다. 작은 파일 시스템의 경우 100MiB/s까지 버스트할 수 있습니다.
-- **프로비저닝된 모드(Provisioned)**: 파일 시스템 크기와 관계없이 지정된 처리량 수준을 제공합니다. 1-3,072MiB/s 범위에서 처리량을 지정할 수 있습니다.
-- **탄력적 모드(Elastic)**: 워크로드에 따라 자동으로 처리량을 확장 및 축소합니다. 예측할 수 없거나 변동이 심한 워크로드에 적합합니다.
-
-### EFS 액세스 포인트
-
-EFS 액세스 포인트는 애플리케이션별 진입점을 생성하여 공유 파일 시스템에 대한 액세스를 관리하는 데 도움이 됩니다:
-
-```yaml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: efs-ap-sc
-provisioner: efs.csi.aws.com
-parameters:
-  provisioningMode: efs-ap
-  fileSystemId: fs-0123456789abcdef0
-  directoryPerms: "700"
-  gidRangeStart: "1000"
-  gidRangeEnd: "2000"
-  basePath: "/dynamic_provisioning"
-```
-
-액세스 포인트를 사용하면 다음과 같은 이점이 있습니다:
-
-- 애플리케이션별 루트 디렉토리 적용
-- 사용자 및 그룹 ID 적용
-- 파일 시스템 액세스 제한
+**처리량 모드**:
+- **Bursting**: 기본 모드, 파일 시스템 크기에 따라 버스트 크레딧 제공
+- **Provisioned**: 일관된 처리량이 필요한 경우 사용
+- **Elastic**: 워크로드에 따라 자동으로 처리량 조정 (권장)
 
 ## 스토리지 클래스 및 동적 프로비저닝
 
-Kubernetes의 스토리지 클래스를 사용하면 스토리지 리소스를 동적으로 프로비저닝할 수 있습니다. EKS에서는 다양한 AWS 스토리지 서비스에 대한 스토리지 클래스를 구성할 수 있습니다.
+Kubernetes의 스토리지 클래스를 사용하면 영구 볼륨을 동적으로 프로비저닝할 수 있습니다. EKS에서는 다양한 AWS 스토리지 서비스에 대한 스토리지 클래스를 구성할 수 있습니다.
+
+```mermaid
+flowchart TD
+    subgraph K8s_Storage_Flow ["Kubernetes 스토리지 워크플로우"]
+        SC[스토리지 클래스]
+        PVC[영구 볼륨 클레임]
+        PV[영구 볼륨]
+        Pod[파드]
+    end
+    
+    subgraph AWS_Storage ["AWS 스토리지"]
+        EBS[Amazon EBS]
+        EFS[Amazon EFS]
+        FSx[Amazon FSx]
+    end
+    
+    PVC --> SC
+    SC --> PV
+    PV --> AWS_Storage
+    Pod --> PVC
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class EBS,EFS,FSx awsService;
+    class SC,PVC,PV,Pod k8sComponent;
+```
+
+### 볼륨 바인딩 모드
+
+스토리지 클래스의 `volumeBindingMode` 필드는 PVC가 생성될 때 PV가 바인딩되는 방식을 결정합니다:
+
+- **Immediate**: PVC가 생성되는 즉시 PV를 프로비저닝하고 바인딩합니다.
+- **WaitForFirstConsumer**: 파드가 PVC를 사용하려고 할 때까지 PV 프로비저닝을 지연합니다.
+
+EBS와 같은 노드 로컬 스토리지의 경우 `WaitForFirstConsumer`를 사용하는 것이 좋습니다. 이렇게 하면 파드가 스케줄링되는 노드와 동일한 가용 영역에 볼륨이 생성됩니다.
 
 ### 기본 스토리지 클래스 설정
 
-특정 스토리지 클래스를 기본값으로 설정하려면 `storageclass.kubernetes.io/is-default-class: "true"` 주석을 추가합니다:
+특정 스토리지 클래스를 기본값으로 설정하면 PVC에서 스토리지 클래스를 지정하지 않아도 해당 스토리지 클래스가 사용됩니다.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -465,61 +578,79 @@ parameters:
   encrypted: "true"
 ```
 
-### 볼륨 바인딩 모드
+### 스토리지 클래스 예제
 
-스토리지 클래스의 `volumeBindingMode` 필드는 PVC가 생성될 때 PV가 바인딩되는 방식을 결정합니다:
-
-- **Immediate**: PVC가 생성되는 즉시 PV가 프로비저닝되고 바인딩됩니다.
-- **WaitForFirstConsumer**: PVC를 사용하는 파드가 생성될 때까지 PV 프로비저닝 및 바인딩이 지연됩니다. 이 모드는 특히 EBS와 같은 영역 제한 스토리지를 사용할 때 권장됩니다.
-
-### 재확보 정책
-
-PV의 `persistentVolumeReclaimPolicy` 필드는 PVC가 삭제될 때 PV에 어떤 일이 발생하는지 결정합니다:
-
-- **Delete**: PVC가 삭제되면 PV와 기본 스토리지 리소스가 자동으로 삭제됩니다.
-- **Retain**: PVC가 삭제되어도 PV와 기본 스토리지 리소스는 유지됩니다. 관리자가 수동으로 정리해야 합니다.
-- **Recycle**: 사용되지 않는 정책으로, 대신 동적 프로비저닝과 스토리지 클래스를 사용하는 것이 좋습니다.
-
-### 볼륨 확장
-
-스토리지 클래스에서 `allowVolumeExpansion: true`를 설정하면 PVC의 크기를 확장할 수 있습니다:
+**1. EBS gp3 스토리지 클래스**
 
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: ebs-gp3-expandable
+  name: ebs-gp3
 provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
 parameters:
   type: gp3
-allowVolumeExpansion: true
+  encrypted: "true"
+  iops: "3000"
+  throughput: "125"
 ```
 
-PVC 크기 확장:
+**2. EFS 스토리지 클래스**
 
 ```yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
 metadata:
-  name: ebs-claim
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: ebs-gp3-expandable
-  resources:
-    requests:
-      storage: 20Gi  # 원래 10Gi에서 20Gi로 확장
+  name: efs-sc
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-0123456789abcdef0
+  directoryPerms: "700"
+```
+
+**3. FSx for Lustre 스토리지 클래스**
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fsx-lustre
+provisioner: fsx.csi.aws.com
+parameters:
+  subnetId: subnet-0123456789abcdef0
+  securityGroupIds: sg-0123456789abcdef0
+  deploymentType: SCRATCH_2
+  automaticBackupRetentionDays: "0"
+  dailyAutomaticBackupStartTime: "00:00"
+  perUnitStorageThroughput: "200"
+  dataCompressionType: "NONE"
+```
+
+### 리클레임 정책
+
+영구 볼륨의 리클레임 정책은 PVC가 삭제될 때 PV와 해당 데이터를 어떻게 처리할지 결정합니다:
+
+- **Delete**: PVC가 삭제되면 PV와 해당 데이터도 삭제됩니다.
+- **Retain**: PVC가 삭제되어도 PV와 데이터는 유지됩니다. 관리자가 수동으로 정리해야 합니다.
+- **Recycle**: 사용되지 않는 정책으로, 대신 동적 프로비저닝과 스토리지 클래스를 사용하는 것이 좋습니다.
+
+스토리지 클래스에서 `persistentVolumeReclaimPolicy` 필드를 사용하여 리클레임 정책을 설정할 수 있습니다:
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-gp3-retain
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+parameters:
+  type: gp3
+  encrypted: "true"
 ```
 
 ## 결론
 
-이 문서에서는 Amazon EKS에서 스토리지의 기본 개념과 Amazon EBS 및 Amazon EFS를 사용하는 방법에 대해 알아보았습니다. 각 스토리지 옵션은 서로 다른 특성과 사용 사례를 가지고 있으므로, 애플리케이션의 요구사항에 맞는 적절한 스토리지 솔루션을 선택하는 것이 중요합니다.
-
-다음 파트에서는 Amazon FSx for Lustre, S3, 스냅샷, 볼륨 확장, 성능 최적화 등 더 고급 스토리지 주제에 대해 알아보겠습니다.
-
-## 참고 자료
-
-- [Kubernetes 스토리지 문서](https://kubernetes.io/docs/concepts/storage/)
-- [Amazon EBS CSI 드라이버](https://github.com/kubernetes-sigs/aws-ebs-csi-driver)
-- [Amazon EFS CSI 드라이버](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
-- [Amazon EKS 스토리지 모범 사례](https://aws.github.io/aws-eks-best-practices/storage/)
+Amazon EKS에서는 다양한 스토리지 옵션을 활용하여 애플리케이션의 요구 사항에 맞는 스토리지 솔루션을 구성할 수 있습니다. 이 문서에서는 EBS와 EFS를 중심으로 기본 개념과 구성 방법을 살펴보았습니다. 다음 문서에서는 FSx for Lustre와 S3를 활용한 고급 스토리지 구성에 대해 알아보겠습니다.
