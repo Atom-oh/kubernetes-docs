@@ -57,6 +57,63 @@ Amazon EKS는 다음과 같은 인증 메커니즘을 제공합니다:
 2. **OIDC 제공자 통합**: 외부 OIDC 제공자(예: Active Directory, Okta, Auth0)와 통합하여 사용자 인증을 관리합니다.
 3. **서비스 계정 IAM 역할**: Kubernetes 서비스 계정에 AWS IAM 역할을 연결하여 파드가 AWS 서비스에 안전하게 액세스할 수 있게 합니다.
 
+```mermaid
+flowchart TD
+    subgraph Authentication_Methods ["EKS 인증 메커니즘"]
+        IAM_Auth[AWS IAM 인증자]
+        OIDC[OIDC 제공자 통합]
+        IRSA[서비스 계정 IAM 역할\nIRSA]
+    end
+    
+    subgraph Users_and_Services ["사용자 및 서비스"]
+        DevOps[DevOps 팀]
+        Developers[개발자]
+        CI_CD[CI/CD 파이프라인]
+        Pods[Kubernetes 파드]
+    end
+    
+    subgraph AWS_Resources ["AWS 리소스"]
+        S3[Amazon S3]
+        DynamoDB[Amazon DynamoDB]
+        SQS[Amazon SQS]
+        SNS[Amazon SNS]
+    end
+    
+    subgraph K8s_Resources ["Kubernetes 리소스"]
+        API_Server[API 서버]
+        ServiceAccounts[서비스 계정]
+        RBAC[RBAC 권한]
+    end
+    
+    DevOps --> IAM_Auth
+    Developers --> IAM_Auth
+    Developers --> OIDC
+    CI_CD --> OIDC
+    Pods --> IRSA
+    
+    IAM_Auth --> API_Server
+    OIDC --> API_Server
+    IRSA --> ServiceAccounts
+    
+    ServiceAccounts --> RBAC
+    RBAC --> API_Server
+    
+    IRSA --> AWS_Resources
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class S3,DynamoDB,SQS,SNS,IAM_Auth awsService;
+    class API_Server,ServiceAccounts,RBAC k8sComponent;
+    class DevOps,Developers,CI_CD,Pods userApp;
+    class OIDC,IRSA default;
+```
+
 ### IAM 역할 및 정책 구성
 
 #### EKS 클러스터 역할
@@ -167,6 +224,88 @@ spec:
 
 EKS 클러스터의 노드와 파드에 대한 네트워크 트래픽을 제어하기 위해 AWS 보안 그룹을 사용할 수 있습니다.
 
+```mermaid
+flowchart TD
+    subgraph VPC ["Amazon VPC"]
+        subgraph Public_Subnets ["퍼블릭 서브넷"]
+            ALB[Application\nLoad Balancer]
+            NAT[NAT 게이트웨이]
+            Bastion[Bastion 호스트]
+        end
+        
+        subgraph Private_Subnets ["프라이빗 서브넷"]
+            subgraph EKS_Cluster ["EKS 클러스터"]
+                CP[EKS 컨트롤 플레인]
+                
+                subgraph Worker_Nodes ["워커 노드"]
+                    Node1[노드 1]
+                    Node2[노드 2]
+                    Node3[노드 3]
+                end
+                
+                subgraph Network_Policies ["네트워크 정책"]
+                    Default_Deny[기본 거부 정책]
+                    App_Allow[앱 허용 정책]
+                end
+            end
+        end
+        
+        subgraph Security_Groups ["보안 그룹"]
+            CP_SG[컨트롤 플레인\n보안 그룹]
+            Node_SG[노드\n보안 그룹]
+            ALB_SG[ALB\n보안 그룹]
+            Bastion_SG[Bastion\n보안 그룹]
+        end
+        
+        subgraph VPC_Endpoints ["VPC 엔드포인트"]
+            ECR_API[ECR API\n엔드포인트]
+            ECR_DKR[ECR DKR\n엔드포인트]
+            S3_EP[S3 엔드포인트]
+            STS_EP[STS 엔드포인트]
+        end
+    end
+    
+    Internet((인터넷)) --> ALB
+    Internet --> Bastion
+    
+    ALB --> Node1
+    ALB --> Node2
+    ALB --> Node3
+    
+    Bastion --> Node1
+    Bastion --> Node2
+    Bastion --> Node3
+    
+    CP --> Node1
+    CP --> Node2
+    CP --> Node3
+    
+    Node1 --> ECR_API
+    Node1 --> ECR_DKR
+    Node1 --> S3_EP
+    Node1 --> STS_EP
+    
+    CP_SG --> CP
+    Node_SG --> Worker_Nodes
+    ALB_SG --> ALB
+    Bastion_SG --> Bastion
+    
+    Network_Policies --> Node1
+    Network_Policies --> Node2
+    Network_Policies --> Node3
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class CP,ALB,NAT,Bastion,CP_SG,Node_SG,ALB_SG,Bastion_SG,ECR_API,ECR_DKR,S3_EP,STS_EP awsService;
+    class Node1,Node2,Node3,Default_Deny,App_Allow k8sComponent;
+```
+
 #### 클러스터 보안 그룹
 
 EKS 클러스터 보안 그룹은 컨트롤 플레인과 워커 노드 간의 통신을 허용합니다:
@@ -247,6 +386,70 @@ Kubernetes 1.23부터 도입된 포드 보안 표준은 파드의 보안 컨텍�
 - **Baseline**: 알려진 권한 에스컬레이션 방지
 - **Restricted**: 강력한 보안 제한 적용
 
+```mermaid
+flowchart TD
+    subgraph Pod_Security ["포드 보안 계층"]
+        subgraph PSS ["포드 보안 표준"]
+            Privileged[Privileged\n제한 없음]
+            Baseline[Baseline\n권한 에스컬레이션 방지]
+            Restricted[Restricted\n강력한 제한]
+        end
+        
+        subgraph Security_Context ["보안 컨텍스트"]
+            RunAsUser[비루트 사용자\nrunAsUser]
+            ReadOnlyFS[읽기 전용 파일 시스템\nreadOnlyRootFilesystem]
+            NoPrivEsc[권한 에스컬레이션 방지\nallowPrivilegeEscalation]
+            DropCaps[기능 제한\ncapabilities.drop]
+        end
+        
+        subgraph Policy_Engines ["정책 엔진"]
+            OPA[OPA Gatekeeper]
+            Kyverno[Kyverno]
+            AdmissionControllers[어드미션 컨트롤러]
+        end
+    end
+    
+    subgraph Enforcement ["적용 방법"]
+        NS_Labels[네임스페이스 레이블]
+        Webhook[웹훅]
+        Audit[감사]
+    end
+    
+    subgraph Pod_Types ["파드 유형별 보안"]
+        App_Pod[애플리케이션 파드]
+        System_Pod[시스템 파드]
+        Privileged_Pod[권한 있는 파드]
+    end
+    
+    Privileged --> Privileged_Pod
+    Baseline --> App_Pod
+    Restricted --> App_Pod
+    
+    Security_Context --> App_Pod
+    Security_Context --> System_Pod
+    
+    OPA --> Webhook
+    Kyverno --> Webhook
+    AdmissionControllers --> Webhook
+    
+    NS_Labels --> PSS
+    Webhook --> Policy_Engines
+    Audit --> PSS
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class Privileged,Baseline,Restricted,RunAsUser,ReadOnlyFS,NoPrivEsc,DropCaps k8sComponent;
+    class OPA,Kyverno,AdmissionControllers k8sComponent;
+    class NS_Labels,Webhook,Audit default;
+    class App_Pod,System_Pod,Privileged_Pod userApp;
+```
+
 네임스페이스에 PSS 적용 예시:
 
 ```yaml
@@ -321,6 +524,86 @@ spec:
 #### etcd 암호화
 
 EKS는 기본적으로 etcd에 저장된 Kubernetes 비밀을 암호화합니다. 추가적인 암호화 계층을 위해 AWS KMS를 사용할 수 있습니다:
+
+```mermaid
+flowchart TD
+    subgraph Encryption_Options ["EKS 암호화 옵션"]
+        subgraph ETCD_Encryption ["etcd 암호화"]
+            Default[기본 암호화]
+            KMS_Encryption[AWS KMS 암호화]
+        end
+        
+        subgraph Secret_Management ["비밀 관리 솔루션"]
+            K8s_Secrets[Kubernetes Secrets]
+            AWS_SM[AWS Secrets Manager]
+            AWS_PS[AWS Parameter Store]
+            Vault[HashiCorp Vault]
+            SOPS[Mozilla SOPS]
+        end
+        
+        subgraph Integration_Tools ["통합 도구"]
+            ESO[External Secrets\nOperator]
+            ASCP[AWS Secrets and\nConfiguration Provider]
+            CSI_Driver[Secrets Store\nCSI Driver]
+        end
+    end
+    
+    subgraph Usage_Patterns ["사용 패턴"]
+        subgraph Storage ["저장"]
+            Encrypted_Storage[암호화된 저장]
+            Version_Control[버전 관리]
+            Access_Control[액세스 제어]
+        end
+        
+        subgraph Retrieval ["검색"]
+            Pod_Mount[파드 마운트]
+            Env_Vars[환경 변수]
+            Init_Container[초기화 컨테이너]
+        end
+    end
+    
+    KMS_Encryption --> Default
+    
+    AWS_SM --> ESO
+    AWS_PS --> ESO
+    AWS_SM --> ASCP
+    AWS_PS --> ASCP
+    Vault --> CSI_Driver
+    
+    ESO --> K8s_Secrets
+    ASCP --> K8s_Secrets
+    CSI_Driver --> K8s_Secrets
+    
+    K8s_Secrets --> Encrypted_Storage
+    AWS_SM --> Encrypted_Storage
+    AWS_PS --> Encrypted_Storage
+    Vault --> Encrypted_Storage
+    SOPS --> Encrypted_Storage
+    
+    AWS_SM --> Version_Control
+    Vault --> Version_Control
+    
+    AWS_SM --> Access_Control
+    AWS_PS --> Access_Control
+    Vault --> Access_Control
+    
+    K8s_Secrets --> Pod_Mount
+    K8s_Secrets --> Env_Vars
+    K8s_Secrets --> Init_Container
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class KMS_Encryption,AWS_SM,AWS_PS,ASCP awsService;
+    class K8s_Secrets,ESO,CSI_Driver k8sComponent;
+    class Vault,SOPS userApp;
+    class Default,Encrypted_Storage,Version_Control,Access_Control,Pod_Mount,Env_Vars,Init_Container default;
+```
 
 ```bash
 eksctl create cluster --name my-cluster --region us-west-2 --encryption-provider-config-key arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
@@ -399,6 +682,78 @@ sops --decrypt secrets.enc.yaml
 
 EKS 컨트롤 플레인 감사 로그를 활성화하여 클러스터에서 수행된 모든 API 호출을 기록할 수 있습니다:
 
+```mermaid
+flowchart TD
+    subgraph Compliance_Audit ["컴플라이언스 및 감사"]
+        subgraph Logging ["로깅 및 모니터링"]
+            CP_Logs[컨트롤 플레인 로그]
+            Audit_Logs[감사 로그]
+            CloudTrail[AWS CloudTrail]
+            CloudWatch[Amazon CloudWatch]
+            FluentBit[Fluent Bit]
+        end
+        
+        subgraph Compliance_Tools ["컴플라이언스 도구"]
+            Config[AWS Config]
+            SecurityHub[AWS Security Hub]
+            Inspector[Amazon Inspector]
+            CIS_Benchmark[CIS Kubernetes\nBenchmark]
+        end
+        
+        subgraph Compliance_Standards ["컴플라이언스 표준"]
+            PCI_DSS[PCI DSS]
+            HIPAA[HIPAA]
+            GDPR[GDPR]
+            SOC2[SOC 2]
+            ISO27001[ISO 27001]
+        end
+    end
+    
+    subgraph Audit_Flow ["감사 워크플로우"]
+        Log_Collection[로그 수집]
+        Log_Storage[로그 저장]
+        Log_Analysis[로그 분석]
+        Alerting[알림]
+        Reporting[보고]
+    end
+    
+    CP_Logs --> Log_Collection
+    Audit_Logs --> Log_Collection
+    CloudTrail --> Log_Collection
+    FluentBit --> Log_Collection
+    
+    Log_Collection --> CloudWatch
+    CloudWatch --> Log_Storage
+    
+    Log_Storage --> Log_Analysis
+    Log_Analysis --> SecurityHub
+    
+    SecurityHub --> Alerting
+    SecurityHub --> Reporting
+    
+    Config --> CIS_Benchmark
+    Inspector --> CIS_Benchmark
+    
+    CIS_Benchmark --> PCI_DSS
+    CIS_Benchmark --> HIPAA
+    CIS_Benchmark --> GDPR
+    CIS_Benchmark --> SOC2
+    CIS_Benchmark --> ISO27001
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class CloudTrail,CloudWatch,Config,SecurityHub,Inspector awsService;
+    class CP_Logs,Audit_Logs k8sComponent;
+    class FluentBit,CIS_Benchmark userApp;
+    class PCI_DSS,HIPAA,GDPR,SOC2,ISO27001,Log_Collection,Log_Storage,Log_Analysis,Alerting,Reporting default;
+```
+
 ```bash
 aws eks update-cluster-config \
   --region us-west-2 \
@@ -424,6 +779,73 @@ AWS Security Hub를 사용하여 EKS 클러스터의 보안 상태를 중앙에�
 ### GuardDuty EKS Protection
 
 Amazon GuardDuty EKS Protection을 활성화하여 EKS 클러스터에서 잠재적인 보안 위협을 탐지할 수 있습니다:
+
+```mermaid
+flowchart TD
+    subgraph Security_Monitoring ["보안 모니터링 및 탐지"]
+        subgraph AWS_Services ["AWS 보안 서비스"]
+            GuardDuty[Amazon GuardDuty]
+            SecurityHub[AWS Security Hub]
+            Detective[Amazon Detective]
+            CloudWatch[Amazon CloudWatch]
+        end
+        
+        subgraph K8s_Tools ["Kubernetes 보안 도구"]
+            Falco[Falco]
+            KubeAudit[kube-audit]
+            TriageParty[Triage Party]
+            Starboard[Starboard]
+        end
+        
+        subgraph Detection_Types ["탐지 유형"]
+            Runtime[런타임 보안]
+            Network[네트워크 보안]
+            Config[구성 보안]
+            Identity[ID 및 액세스 보안]
+        end
+    end
+    
+    subgraph Threat_Detection ["위협 탐지 워크플로우"]
+        Collection[데이터 수집]
+        Analysis[데이터 분석]
+        Detection[위협 탐지]
+        Response[대응]
+        Remediation[문제 해결]
+    end
+    
+    GuardDuty --> Runtime
+    GuardDuty --> Network
+    GuardDuty --> Identity
+    
+    SecurityHub --> Config
+    SecurityHub --> Identity
+    
+    Falco --> Runtime
+    KubeAudit --> Config
+    
+    CloudWatch --> Collection
+    GuardDuty --> Collection
+    Falco --> Collection
+    
+    Collection --> Analysis
+    Analysis --> Detection
+    Detection --> Response
+    Response --> Remediation
+    
+    Detection --> SecurityHub
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class GuardDuty,SecurityHub,Detective,CloudWatch awsService;
+    class Falco,KubeAudit,TriageParty,Starboard k8sComponent;
+    class Runtime,Network,Config,Identity,Collection,Analysis,Detection,Response,Remediation default;
+```
 
 ```bash
 aws guardduty update-detector \
