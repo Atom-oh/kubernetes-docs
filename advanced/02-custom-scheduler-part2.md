@@ -4,6 +4,87 @@
 
 스케줄러 확장 접근 방식은 기본 스케줄러의 기능을 확장하는 방법입니다. 이 접근 방식에서는 기본 스케줄러가 HTTP 요청을 통해 외부 서비스(스케줄러 확장)를 호출하여 추가 필터링 및 우선순위 기능을 제공합니다.
 
+### 스케줄러 확장 아키텍처
+
+다음 다이어그램은 스케줄러 확장 접근 방식의 아키텍처를 보여줍니다:
+
+```mermaid
+flowchart TD
+    subgraph K8sCluster [Kubernetes 클러스터]
+        subgraph ControlPlane [컨트롤 플레인]
+            APIServer[API 서버]
+            DefaultScheduler[기본 스케줄러]
+        end
+        
+        subgraph SchedulerExtender [스케줄러 확장]
+            ExtenderService[확장 서비스]
+            subgraph ExtenderEndpoints [확장 엔드포인트]
+                FilterEndpoint[/filter]
+                PrioritizeEndpoint[/prioritize]
+                BindEndpoint[/bind]
+                PrefilterEndpoint[/prefilter]
+                PrescoreEndpoint[/prescore]
+            end
+        end
+        
+        subgraph Nodes [워커 노드]
+            Node1[노드 1]
+            Node2[노드 2]
+            Node3[노드 3]
+        end
+    end
+    
+    APIServer --> DefaultScheduler
+    DefaultScheduler -- HTTP 요청 --> ExtenderService
+    ExtenderService --> ExtenderEndpoints
+    DefaultScheduler --> Node1
+    DefaultScheduler --> Node2
+    DefaultScheduler --> Node3
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef extenderComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef endpointComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class APIServer,DefaultScheduler,Node1,Node2,Node3 k8sComponent;
+    class ExtenderService,SchedulerExtender extenderComponent;
+    class FilterEndpoint,PrioritizeEndpoint,BindEndpoint,PrefilterEndpoint,PrescoreEndpoint endpointComponent;
+    class K8sCluster,ControlPlane,Nodes,ExtenderEndpoints default;
+```
+
+### 스케줄러 확장 워크플로우
+
+스케줄러 확장의 워크플로우는 다음과 같습니다:
+
+```mermaid
+sequenceDiagram
+    participant API as API 서버
+    participant Scheduler as 기본 스케줄러
+    participant Extender as 스케줄러 확장
+    participant Node as 노드
+    
+    API->>Scheduler: 포드 생성 요청
+    Scheduler->>Scheduler: 내부 필터링
+    Scheduler->>Extender: 필터 요청 (HTTP POST /filter)
+    Extender->>Extender: 커스텀 필터링 로직 적용
+    Extender->>Scheduler: 필터링된 노드 목록 반환
+    Scheduler->>Scheduler: 내부 점수 매기기
+    Scheduler->>Extender: 우선순위 요청 (HTTP POST /prioritize)
+    Extender->>Extender: 커스텀 점수 매기기 로직 적용
+    Extender->>Scheduler: 노드 점수 반환
+    Scheduler->>Scheduler: 최종 노드 선택
+    Scheduler->>API: 바인딩 요청
+    API->>Node: 포드 스케줄링
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef extenderComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef nodeComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    
+    class API,Scheduler k8sComponent;
+    class Extender extenderComponent;
+    class Node nodeComponent;
+```
+
 ### 스케줄러 확장 구현
 
 스케줄러 확장은 다음과 같은 HTTP 엔드포인트를 제공해야 합니다:
@@ -275,6 +356,106 @@ spec:
 
 Kubernetes 1.15부터 도입된 스케줄러 프레임워크는 플러그인 기반 아키텍처를 제공합니다. 이 접근 방식을 사용하면 스케줄링 파이프라인의 다양한 단계에 플러그인을 구현할 수 있습니다.
 
+### 스케줄러 프레임워크 아키텍처
+
+다음 다이어그램은 스케줄러 프레임워크의 아키텍처를 보여줍니다:
+
+```mermaid
+flowchart TD
+    subgraph SchedulerFramework [스케줄러 프레임워크]
+        subgraph SchedulingQueue [스케줄링 큐]
+            QueueSort[QueueSort]
+        end
+        
+        subgraph SchedulingCycle [스케줄링 사이클]
+            PreFilter[PreFilter]
+            Filter[Filter]
+            PreScore[PreScore]
+            Score[Score]
+            NormalizeScore[NormalizeScore]
+            Reserve[Reserve]
+            Permit[Permit]
+        end
+        
+        subgraph BindingCycle [바인딩 사이클]
+            PreBind[PreBind]
+            Bind[Bind]
+            PostBind[PostBind]
+        end
+    end
+    
+    Pod([포드]) --> QueueSort
+    QueueSort --> PreFilter
+    PreFilter --> Filter
+    Filter --> PreScore
+    PreScore --> Score
+    Score --> NormalizeScore
+    NormalizeScore --> Reserve
+    Reserve --> Permit
+    Permit --> PreBind
+    PreBind --> Bind
+    Bind --> PostBind
+    PostBind --> Node([노드])
+    
+    classDef queuePhase fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef schedulingPhase fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef bindingPhase fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class QueueSort queuePhase;
+    class PreFilter,Filter,PreScore,Score,NormalizeScore,Reserve,Permit schedulingPhase;
+    class PreBind,Bind,PostBind bindingPhase;
+    class Pod,Node,SchedulerFramework,SchedulingQueue,SchedulingCycle,BindingCycle default;
+```
+
+### 스케줄러 프레임워크 플러그인 구성
+
+다음 다이어그램은 스케줄러 프레임워크 플러그인의 구성을 보여줍니다:
+
+```mermaid
+flowchart TD
+    subgraph K8sCluster [Kubernetes 클러스터]
+        subgraph ControlPlane [컨트롤 플레인]
+            APIServer[API 서버]
+            
+            subgraph Scheduler [스케줄러]
+                SchedulerCore[스케줄러 코어]
+                
+                subgraph SchedulerPlugins [스케줄러 플러그인]
+                    DefaultPlugins[기본 플러그인]
+                    CustomPlugins[커스텀 플러그인]
+                end
+                
+                subgraph SchedulerProfiles [스케줄러 프로필]
+                    DefaultProfile[기본 프로필]
+                    CustomProfile[커스텀 프로필]
+                end
+            end
+        end
+        
+        subgraph Nodes [워커 노드]
+            Node1[노드 1]
+            Node2[노드 2]
+            Node3[노드 3]
+        end
+    end
+    
+    APIServer --> SchedulerCore
+    SchedulerCore --> SchedulerPlugins
+    SchedulerPlugins --> SchedulerProfiles
+    SchedulerProfiles --> Nodes
+    
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef pluginComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef profileComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class APIServer,SchedulerCore,Node1,Node2,Node3 k8sComponent;
+    class DefaultPlugins,CustomPlugins,SchedulerPlugins pluginComponent;
+    class DefaultProfile,CustomProfile,SchedulerProfiles profileComponent;
+    class K8sCluster,ControlPlane,Scheduler,Nodes default;
+```
+
 ### 스케줄링 프레임워크 확장 포인트
 
 스케줄링 프레임워크는 다음과 같은 확장 포인트를 제공합니다:
@@ -432,3 +613,360 @@ profiles:
   - name: GPUScheduler
     args: {}
 ```
+
+## EKS에서의 스케줄러 프레임워크 구현
+
+Amazon EKS에서 스케줄러 프레임워크를 구현할 때는 다음과 같은 사항을 고려해야 합니다:
+
+1. **컨테이너 이미지 빌드**: 커스텀 스케줄러 플러그인을 컨테이너 이미지로 빌드하고 Amazon ECR과 같은 컨테이너 레지스트리에 푸시합니다.
+2. **스케줄러 구성**: 스케줄러 구성을 ConfigMap으로 생성하고 커스텀 스케줄러 파드에 마운트합니다.
+3. **RBAC 권한**: 커스텀 스케줄러가 필요한 리소스에 액세스할 수 있도록 적절한 RBAC 권한을 설정합니다.
+4. **노드 레이블링**: 특정 하드웨어 특성(예: GPU)에 따라 노드에 레이블을 지정합니다.
+
+### EKS 스케줄러 프레임워크 아키텍처
+
+다음 다이어그램은 EKS에서 스케줄러 프레임워크를 구현하는 방법을 보여줍니다:
+
+```mermaid
+flowchart TD
+    subgraph AWS [AWS 클라우드]
+        subgraph EKS [Amazon EKS]
+            APIServer[API 서버]
+            
+            subgraph ControlPlane [컨트롤 플레인]
+                DefaultScheduler[기본 스케줄러]
+            end
+            
+            subgraph CustomSchedulerPod [커스텀 스케줄러 파드]
+                CustomScheduler[커스텀 스케줄러]
+                
+                subgraph CustomPlugins [커스텀 플러그인]
+                    GPUPlugin[GPU 플러그인]
+                    SpotPlugin[스팟 인스턴스 플러그인]
+                    AZPlugin[가용 영역 플러그인]
+                end
+            end
+            
+            subgraph NodeGroups [노드 그룹]
+                subgraph GPUNodes [GPU 노드]
+                    GPUNode1[p3.2xlarge]
+                    GPUNode2[p3.8xlarge]
+                end
+                
+                subgraph StandardNodes [표준 노드]
+                    Node1[c5.large]
+                    Node2[m5.large]
+                end
+                
+                subgraph SpotNodes [스팟 노드]
+                    SpotNode1[c5.large 스팟]
+                    SpotNode2[m5.large 스팟]
+                end
+            end
+        end
+        
+        ECR[(Amazon ECR)]
+        CloudWatch[CloudWatch]
+    end
+    
+    ECR -- 이미지 제공 --> CustomSchedulerPod
+    APIServer --> DefaultScheduler
+    APIServer --> CustomScheduler
+    CustomScheduler --> CustomPlugins
+    CustomPlugins --> NodeGroups
+    CustomScheduler --> CloudWatch
+    
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef customComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class ECR,CloudWatch awsService;
+    class APIServer,DefaultScheduler,Node1,Node2,StandardNodes k8sComponent;
+    class CustomScheduler,CustomPlugins,GPUPlugin,SpotPlugin,AZPlugin,CustomSchedulerPod customComponent;
+    class GPUNode1,GPUNode2,GPUNodes gpuNode;
+    class AWS,EKS,ControlPlane,NodeGroups,SpotNodes,SpotNode1,SpotNode2 default;
+```
+
+### EKS 스케줄러 프레임워크 구현 단계
+
+1. **커스텀 스케줄러 플러그인 개발**:
+
+```go
+// main.go
+package main
+
+import (
+    "os"
+
+    "k8s.io/component-base/logs"
+    "k8s.io/kubernetes/cmd/kube-scheduler/app"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/defaultbinder"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/defaultpreemption"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/nodeaffinity"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/nodename"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/nodeports"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/noderesources"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/nodeunschedulable"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/podtopologyspread"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/queuesort"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/tainttoleration"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/volumebinding"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/volumerestrictions"
+    "k8s.io/kubernetes/pkg/scheduler/framework/plugins/volumezone"
+
+    // 커스텀 플러그인 가져오기
+    "example.com/gpu-scheduler/pkg/gpuplugin"
+    "example.com/gpu-scheduler/pkg/spotplugin"
+    "example.com/gpu-scheduler/pkg/azplugin"
+)
+
+func main() {
+    command := app.NewSchedulerCommand(
+        app.WithPlugin(gpuplugin.Name, gpuplugin.New),
+        app.WithPlugin(spotplugin.Name, spotplugin.New),
+        app.WithPlugin(azplugin.Name, azplugin.New),
+        // 기본 플러그인 포함
+        app.WithPlugin(defaultpreemption.Name, defaultpreemption.New),
+        app.WithPlugin(noderesources.FitName, noderesources.NewFit),
+        app.WithPlugin(noderesources.BalancedAllocationName, noderesources.NewBalancedAllocation),
+        app.WithPlugin(nodename.Name, nodename.New),
+        app.WithPlugin(nodeports.Name, nodeports.New),
+        app.WithPlugin(nodeaffinity.Name, nodeaffinity.New),
+        app.WithPlugin(nodeunschedulable.Name, nodeunschedulable.New),
+        app.WithPlugin(tainttoleration.Name, tainttoleration.New),
+        app.WithPlugin(volumerestrictions.Name, volumerestrictions.New),
+        app.WithPlugin(volumebinding.Name, volumebinding.New),
+        app.WithPlugin(volumezone.Name, volumezone.New),
+        app.WithPlugin(podtopologyspread.Name, podtopologyspread.New),
+        app.WithPlugin(defaultbinder.Name, defaultbinder.New),
+        app.WithPlugin(queuesort.Name, queuesort.New),
+    )
+
+    logs.InitLogs()
+    defer logs.FlushLogs()
+
+    if err := command.Execute(); err != nil {
+        os.Exit(1)
+    }
+}
+```
+
+2. **Dockerfile 생성**:
+
+```dockerfile
+FROM golang:1.17 as builder
+
+WORKDIR /go/src/example.com/gpu-scheduler
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o kube-scheduler .
+
+FROM alpine:3.14
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /
+COPY --from=builder /go/src/example.com/gpu-scheduler/kube-scheduler .
+
+ENTRYPOINT ["/kube-scheduler"]
+```
+
+3. **이미지 빌드 및 푸시**:
+
+```bash
+docker build -t your-registry/gpu-scheduler:latest .
+docker push your-registry/gpu-scheduler:latest
+```
+
+4. **스케줄러 구성 ConfigMap 생성**:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpu-scheduler-config
+  namespace: kube-system
+data:
+  scheduler-config.yaml: |
+    apiVersion: kubescheduler.config.k8s.io/v1beta1
+    kind: KubeSchedulerConfiguration
+    clientConnection:
+      kubeconfig: /etc/kubernetes/scheduler.conf
+    profiles:
+    - schedulerName: gpu-scheduler
+      plugins:
+        queueSort:
+          enabled:
+          - name: PrioritySort
+        preFilter:
+          enabled:
+          - name: NodeResourcesFit
+          - name: NodePorts
+          - name: PodTopologySpread
+          - name: InterPodAffinity
+          - name: VolumeBinding
+          - name: NodeAffinity
+          - name: GPUScheduler
+        filter:
+          enabled:
+          - name: NodeUnschedulable
+          - name: NodeName
+          - name: TaintToleration
+          - name: NodeAffinity
+          - name: NodePorts
+          - name: NodeResourcesFit
+          - name: VolumeRestrictions
+          - name: EBSLimits
+          - name: VolumeBinding
+          - name: VolumeZone
+          - name: PodTopologySpread
+          - name: InterPodAffinity
+          - name: GPUScheduler
+          - name: SpotScheduler
+          - name: AZScheduler
+        preScore:
+          enabled:
+          - name: InterPodAffinity
+          - name: PodTopologySpread
+          - name: TaintToleration
+          - name: NodeAffinity
+          - name: GPUScheduler
+        score:
+          enabled:
+          - name: NodeResourcesBalancedAllocation
+            weight: 1
+          - name: ImageLocality
+            weight: 1
+          - name: InterPodAffinity
+            weight: 1
+          - name: NodeResourcesFit
+            weight: 1
+          - name: NodeAffinity
+            weight: 1
+          - name: PodTopologySpread
+            weight: 2
+          - name: TaintToleration
+            weight: 1
+          - name: GPUScheduler
+            weight: 10
+          - name: SpotScheduler
+            weight: 5
+          - name: AZScheduler
+            weight: 3
+        reserve:
+          enabled:
+          - name: VolumeBinding
+        permit:
+          enabled: []
+        preBind:
+          enabled:
+          - name: VolumeBinding
+        bind:
+          enabled:
+          - name: DefaultBinder
+        postBind:
+          enabled: []
+      pluginConfig:
+      - name: GPUScheduler
+        args: {}
+      - name: SpotScheduler
+        args: {}
+      - name: AZScheduler
+        args: {}
+```
+
+5. **커스텀 스케줄러 배포**:
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gpu-scheduler
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gpu-scheduler
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch", "update", "patch"]
+- apiGroups: [""]
+  resources: ["pods/binding"]
+  verbs: ["create"]
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gpu-scheduler
+subjects:
+- kind: ServiceAccount
+  name: gpu-scheduler
+  namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: gpu-scheduler
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpu-scheduler
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gpu-scheduler
+  template:
+    metadata:
+      labels:
+        app: gpu-scheduler
+    spec:
+      serviceAccountName: gpu-scheduler
+      containers:
+      - name: gpu-scheduler
+        image: your-registry/gpu-scheduler:latest
+        args:
+        - --config=/etc/kubernetes/scheduler-config.yaml
+        - --v=3
+        volumeMounts:
+        - name: scheduler-config
+          mountPath: /etc/kubernetes/scheduler-config.yaml
+          subPath: scheduler-config.yaml
+      volumes:
+      - name: scheduler-config
+        configMap:
+          name: gpu-scheduler-config
+```
+
+6. **포드에 스케줄러 지정**:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu-pod
+spec:
+  schedulerName: gpu-scheduler
+  containers:
+  - name: cuda-container
+    image: nvidia/cuda:11.0-base
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+```
+
+## 결론
+
+이 장에서는 스케줄러 확장(Extender) 접근 방식과 스케줄러 프레임워크 플러그인을 사용하여 커스텀 스케줄러를 구현하는 방법을 알아보았습니다. 또한 EKS 클러스터에서 스케줄러 프레임워크를 구현하는 방법도 살펴보았습니다.
+
+다음 장에서는 EKS에서의 커스텀 스케줄러 구현 사례와 모니터링 방법을 알아보겠습니다.
