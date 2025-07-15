@@ -16,6 +16,40 @@ Amazon EKS(Elastic Kubernetes Service)를 사용하면 컨테이너화된 애플
 
 Amazon EKS를 사용할 때 발생하는 비용은 다음과 같은 구성 요소로 이루어집니다:
 
+```mermaid
+flowchart TD
+    EKSCost[EKS 총 비용] --> ControlPlane[EKS 컨트롤 플레인\n$0.10/시간]
+    EKSCost --> Compute[컴퓨팅 비용]
+    EKSCost --> Storage[스토리지 비용]
+    EKSCost --> Networking[네트워킹 비용]
+    EKSCost --> Others[기타 비용]
+    
+    Compute --> EC2[EC2 인스턴스]
+    Compute --> Fargate[Fargate]
+    
+    Storage --> EBS[EBS 볼륨]
+    Storage --> EFS[EFS]
+    Storage --> S3[S3]
+    
+    Networking --> DataTransfer[데이터 전송]
+    Networking --> LoadBalancer[로드 밸런서]
+    Networking --> NAT[NAT 게이트웨이]
+    
+    Others --> CloudWatch[CloudWatch]
+    Others --> ECR[ECR]
+    Others --> OtherServices[기타 AWS 서비스]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class ControlPlane,EC2,Fargate,EBS,EFS,S3,DataTransfer,LoadBalancer,NAT,CloudWatch,ECR,OtherServices awsService;
+    class EKSCost,Compute,Storage,Networking,Others default;
+```
+
 ### EKS 클러스터 비용
 
 EKS 클러스터 자체에 대한 비용:
@@ -55,6 +89,43 @@ EKS 클러스터의 네트워킹과 관련된 비용:
 ## 컴퓨팅 비용 최적화
 
 컴퓨팅 비용은 일반적으로 EKS 클러스터의 가장 큰 비용 구성 요소입니다. 다음과 같은 전략을 사용하여 컴퓨팅 비용을 최적화할 수 있습니다.
+
+```mermaid
+flowchart TD
+    ComputeCost[컴퓨팅 비용 최적화] --> InstanceType[인스턴스 유형 최적화]
+    ComputeCost --> SpotInstances[스팟 인스턴스 활용]
+    ComputeCost --> SavingsPlans[Savings Plans 및\n예약 인스턴스]
+    ComputeCost --> AutoScaling[자동 스케일링 최적화]
+    ComputeCost --> FargateVsEC2[Fargate vs EC2\n비용 비교]
+    
+    InstanceType --> Family[인스턴스 패밀리 선택]
+    InstanceType --> Size[인스턴스 크기 최적화]
+    InstanceType --> Generation[인스턴스 세대 고려]
+    
+    SpotInstances --> WorkloadTypes[적합한 워크로드 유형]
+    SpotInstances --> ManagedNodeGroups[관리형 노드 그룹]
+    SpotInstances --> Karpenter[Karpenter 활용]
+    SpotInstances --> InterruptionHandling[중단 처리]
+    
+    SavingsPlans --> ComputeSP[Compute Savings Plans]
+    SavingsPlans --> EC2SP[EC2 Instance Savings Plans]
+    SavingsPlans --> RI[예약 인스턴스]
+    
+    AutoScaling --> CA[Cluster Autoscaler]
+    AutoScaling --> KarpenterAS[Karpenter]
+    AutoScaling --> HPA[Horizontal Pod Autoscaler]
+    AutoScaling --> VPA[Vertical Pod Autoscaler]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class ComputeSP,EC2SP,RI,SpotInstances,ManagedNodeGroups awsService;
+    class CA,KarpenterAS,HPA,VPA,Karpenter k8sComponent;
+    class ComputeCost,InstanceType,Family,Size,Generation,WorkloadTypes,InterruptionHandling,SavingsPlans,AutoScaling,FargateVsEC2 default;
+```
 
 ### 적절한 인스턴스 유형 선택
 
@@ -350,6 +421,47 @@ VPA 모드:
 
 스토리지는 EKS 클러스터의 중요한 비용 구성 요소입니다. 다음과 같은 전략을 사용하여 스토리지 비용을 최적화할 수 있습니다.
 
+```mermaid
+flowchart TD
+    StorageCost[스토리지 비용 최적화] --> EBSOptimize[EBS 볼륨 최적화]
+    StorageCost --> EFSOptimize[EFS 비용 최적화]
+    StorageCost --> S3Optimize[S3 비용 최적화]
+    
+    EBSOptimize --> VolumeType[적절한 볼륨 유형 선택]
+    EBSOptimize --> GP3Migration[gp3로 마이그레이션]
+    EBSOptimize --> VolumeSize[볼륨 크기 최적화]
+    EBSOptimize --> LifecycleManagement[볼륨 수명 주기 관리]
+    
+    EFSOptimize --> ThroughputMode[적절한 처리량 모드 선택]
+    EFSOptimize --> EFSLifecycle[수명 주기 관리]
+    EFSOptimize --> AccessPatterns[액세스 패턴 최적화]
+    
+    S3Optimize --> StorageClass[스토리지 클래스 최적화]
+    S3Optimize --> LifecyclePolicy[수명 주기 정책]
+    S3Optimize --> RequestOptimize[S3 요청 최적화]
+    
+    VolumeType --> GP3[gp3: 범용 SSD]
+    VolumeType --> GP2[gp2: 이전 세대 범용 SSD]
+    VolumeType --> IO[io1/io2: 프로비저닝된 IOPS SSD]
+    VolumeType --> ST1[st1: 처리량 최적화 HDD]
+    VolumeType --> SC1[sc1: 콜드 HDD]
+    
+    StorageClass --> Standard[S3 Standard]
+    StorageClass --> IntelligentTiering[S3 Intelligent-Tiering]
+    StorageClass --> StandardIA[S3 Standard-IA]
+    StorageClass --> OneZoneIA[S3 One Zone-IA]
+    StorageClass --> Glacier[S3 Glacier]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class GP3,GP2,IO,ST1,SC1,Standard,IntelligentTiering,StandardIA,OneZoneIA,Glacier awsService;
+    class StorageCost,EBSOptimize,EFSOptimize,S3Optimize,VolumeType,GP3Migration,VolumeSize,LifecycleManagement,ThroughputMode,EFSLifecycle,AccessPatterns,StorageClass,LifecyclePolicy,RequestOptimize default;
+```
+
 ### EBS 볼륨 최적화
 
 EBS 볼륨은 EKS 클러스터의 영구 스토리지에 주로 사용됩니다:
@@ -495,6 +607,45 @@ S3 요청 비용을 최적화합니다:
 ## 네트워킹 비용 최적화
 
 네트워킹 비용은 특히 대규모 데이터 전송이 있는 경우 상당할 수 있습니다. 다음과 같은 전략을 사용하여 네트워킹 비용을 최적화할 수 있습니다.
+
+```mermaid
+flowchart TD
+    NetworkCost[네트워킹 비용 최적화] --> DataTransfer[데이터 전송 최적화]
+    NetworkCost --> LoadBalancer[로드 밸런서 최적화]
+    NetworkCost --> NATGateway[NAT 게이트웨이 최적화]
+    
+    DataTransfer --> RegionalComm[리전 내 통신 활용]
+    DataTransfer --> AZRouting[가용 영역 인식 라우팅]
+    DataTransfer --> Compression[압축 사용]
+    
+    LoadBalancer --> LBType[적절한 로드 밸런서 유형 선택]
+    LoadBalancer --> LBSharing[로드 밸런서 공유]
+    LoadBalancer --> IdleLB[유휴 로드 밸런서 제거]
+    
+    NATGateway --> NATSharing[NAT 게이트웨이 공유]
+    NATGateway --> VPCEndpoints[VPC 엔드포인트 사용]
+    NATGateway --> OutboundTraffic[아웃바운드 트래픽 최적화]
+    
+    LBType --> NLB[Network Load Balancer]
+    LBType --> ALB[Application Load Balancer]
+    LBType --> CLB[Classic Load Balancer]
+    
+    VPCEndpoints --> S3Endpoint[S3 VPC 엔드포인트]
+    VPCEndpoints --> DynamoDBEndpoint[DynamoDB VPC 엔드포인트]
+    VPCEndpoints --> ECREndpoint[ECR VPC 엔드포인트]
+    VPCEndpoints --> CloudWatchEndpoint[CloudWatch Logs VPC 엔드포인트]
+    VPCEndpoints --> STSEndpoint[STS VPC 엔드포인트]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class NLB,ALB,CLB,S3Endpoint,DynamoDBEndpoint,ECREndpoint,CloudWatchEndpoint,STSEndpoint awsService;
+    class AZRouting k8sComponent;
+    class NetworkCost,DataTransfer,LoadBalancer,NATGateway,RegionalComm,Compression,LBType,LBSharing,IdleLB,NATSharing,VPCEndpoints,OutboundTraffic default;
+```
 
 ### 데이터 전송 최적화
 
@@ -649,6 +800,39 @@ NAT 게이트웨이를 통과하는 아웃바운드 트래픽을 최적화합니
 ## 리소스 관리 및 거버넌스
 
 효과적인 리소스 관리 및 거버넌스는 EKS 클러스터의 비용을 제어하는 데 중요합니다. 다음과 같은 전략을 사용하여 리소스를 효과적으로 관리할 수 있습니다.
+
+```mermaid
+flowchart TD
+    ResourceGov[리소스 관리 및 거버넌스] --> ResourceReqLim[리소스 요청 및 제한 최적화]
+    ResourceGov --> NamespaceQuota[네임스페이스 및 리소스 쿼터]
+    ResourceGov --> CostAllocation[비용 할당 및 태깅]
+    
+    ResourceReqLim --> RequestSetting[적절한 리소스 요청 설정]
+    ResourceReqLim --> LimitSetting[리소스 제한 설정]
+    ResourceReqLim --> QoSClasses[QoS 클래스 이해]
+    
+    NamespaceQuota --> NamespaceSeparation[네임스페이스 기반 분리]
+    NamespaceQuota --> ResourceQuotas[리소스 쿼터 설정]
+    NamespaceQuota --> LimitRanges[LimitRange 설정]
+    
+    CostAllocation --> ResourceTagging[리소스 태깅]
+    CostAllocation --> K8sLabels[Kubernetes 레이블 및 주석]
+    CostAllocation --> Kubecost[Kubecost 사용]
+    
+    QoSClasses --> Guaranteed[Guaranteed\n요청 = 제한]
+    QoSClasses --> Burstable[Burstable\n요청 < 제한]
+    QoSClasses --> BestEffort[BestEffort\n요청 및 제한 없음]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class ResourceTagging awsService;
+    class NamespaceSeparation,ResourceQuotas,LimitRanges,K8sLabels,Guaranteed,Burstable,BestEffort,Kubecost k8sComponent;
+    class ResourceGov,ResourceReqLim,NamespaceQuota,CostAllocation,RequestSetting,LimitSetting,QoSClasses default;
+```
 
 ### 리소스 요청 및 제한 최적화
 
@@ -820,6 +1004,39 @@ Kubecost는 다음과 같은 기능을 제공합니다:
 ## 비용 모니터링 및 분석
 
 비용을 효과적으로 최적화하려면 비용을 지속적으로 모니터링하고 분석해야 합니다. 다음과 같은 도구와 전략을 사용하여 EKS 클러스터의 비용을 모니터링하고 분석할 수 있습니다.
+
+```mermaid
+flowchart TD
+    CostMonitoring[비용 모니터링 및 분석] --> CostExplorer[AWS Cost Explorer]
+    CostMonitoring --> KubecostTool[Kubecost]
+    CostMonitoring --> ContainerInsights[CloudWatch Container Insights]
+    CostMonitoring --> CustomDashboard[사용자 정의 비용 대시보드]
+    
+    CostExplorer --> CostAnalysis[비용 분석]
+    CostExplorer --> AnomalyDetection[비용 이상 탐지]
+    CostExplorer --> Budgets[비용 예산 설정]
+    
+    KubecostTool --> KubecostDashboard[Kubecost 대시보드]
+    KubecostTool --> KubecostAlerts[Kubecost 알림]
+    
+    ContainerInsights --> ResourceUsage[리소스 사용량 모니터링]
+    ContainerInsights --> CostInsights[비용 최적화 인사이트]
+    
+    CustomDashboard --> GrafanaDashboard[Grafana 대시보드]
+    CustomDashboard --> OptimizationScore[비용 최적화 점수]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class CostExplorer,AnomalyDetection,Budgets,ContainerInsights,ResourceUsage,CostInsights awsService;
+    class KubecostTool,KubecostDashboard,KubecostAlerts k8sComponent;
+    class GrafanaDashboard grafana;
+    class CostMonitoring,CostAnalysis,CustomDashboard,OptimizationScore default;
+```
 
 ### AWS Cost Explorer
 
@@ -1017,6 +1234,50 @@ Prometheus 및 Grafana를 사용하여 사용자 정의 비용 대시보드를 �
 ## 비용 최적화 모범 사례
 
 EKS 클러스터의 비용을 최적화하기 위한 모범 사례를 살펴보겠습니다.
+
+```mermaid
+flowchart TD
+    BestPractices[비용 최적화 모범 사례] --> GeneralPractices[일반적인 모범 사례]
+    BestPractices --> WorkloadSpecific[워크로드별 최적화]
+    BestPractices --> FinancialServices[금융 서비스를 위한 비용 최적화]
+    
+    GeneralPractices --> ContinuousOpt[지속적인 비용 최적화]
+    GeneralPractices --> CostCulture[비용 인식 문화 구축]
+    GeneralPractices --> Automation[자동화 활용]
+    
+    WorkloadSpecific --> DevTest[개발 및 테스트 환경]
+    WorkloadSpecific --> BatchWorkloads[배치 워크로드]
+    WorkloadSpecific --> WebApps[웹 애플리케이션]
+    WorkloadSpecific --> DBWorkloads[데이터베이스 워크로드]
+    
+    FinancialServices --> ComplianceCost[규제 준수 비용 관리]
+    FinancialServices --> HABalance[고가용성과 비용 균형]
+    FinancialServices --> SecurityBalance[보안 요구사항과 비용 균형]
+    
+    ContinuousOpt --> Measure[측정]
+    ContinuousOpt --> Analyze[분석]
+    ContinuousOpt --> Optimize[최적화]
+    ContinuousOpt --> Monitor[모니터링]
+    ContinuousOpt --> Iterate[반복]
+    
+    DevTest --> AutoShutdown[사용하지 않을 때 환경 자동 종료]
+    DevTest --> DevSpot[스팟 인스턴스 사용]
+    DevTest --> ResourceLimits[리소스 제한 설정]
+    
+    BatchWorkloads --> BatchSpot[스팟 인스턴스 사용]
+    BatchWorkloads --> OffPeak[오프 피크 시간에 실행 예약]
+    BatchWorkloads --> ResourceRelease[작업 완료 후 리소스 해제]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class DevSpot,BatchSpot awsService;
+    class ResourceLimits,ResourceRelease k8sComponent;
+    class BestPractices,GeneralPractices,WorkloadSpecific,FinancialServices,ContinuousOpt,CostCulture,Automation,DevTest,BatchWorkloads,WebApps,DBWorkloads,ComplianceCost,HABalance,SecurityBalance,Measure,Analyze,Optimize,Monitor,Iterate,AutoShutdown,OffPeak default;
+```
 
 ### 일반적인 모범 사례
 
