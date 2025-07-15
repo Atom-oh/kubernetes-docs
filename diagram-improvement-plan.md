@@ -83,7 +83,7 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
   - [x] Part 2: 스케줄러 확장 및 스케줄러 프레임워크 플러그인 (`./advanced/02-custom-scheduler-part2.md`)
   - [x] Part 3: EKS에서의 구현 사례 및 모니터링 (`./advanced/02-custom-scheduler-part3.md`)
 - [x] 3. AI/ML 워크로드 (`./advanced/03-ai-ml-workloads.md`)
-- [ ] 4. vLLM 배포 (`./advanced/04-vllm-deployment.md`)
+- [x] 4. vLLM 배포 (`./advanced/04-vllm-deployment.md`)
 
 ### 도구 및 통합
 - [x] 1. ArgoCD (`./tools/01-argocd.md`) - 완료
@@ -103,4 +103,4 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 3. 나머지 문서의 다이어그램 개선
 
 ## 현재 작업 중인 문서
-- vLLM 배포 (`./advanced/04-vllm-deployment.md`)
+- Karpenter (`./tools/06-karpenter.md`)
