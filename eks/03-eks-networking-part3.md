@@ -384,6 +384,50 @@ flowchart TD
 
 ### 포드 네트워킹 문제
 
+```mermaid
+flowchart TD
+    subgraph EKS_Cluster ["EKS 클러스터"]
+        subgraph Node ["노드"]
+            CNI[AWS VPC CNI]
+            ENI[Elastic Network Interface]
+            
+            subgraph Pods ["포드"]
+                Pod1[포드 1]
+                Pod2[포드 2]
+            end
+        end
+        
+        subgraph DNS ["DNS"]
+            CoreDNS[CoreDNS]
+        end
+        
+        subgraph NetworkPolicy ["네트워크 정책"]
+            Policy[네트워크 정책]
+        end
+    end
+    
+    CNI --> ENI
+    ENI --> Pod1
+    ENI --> Pod2
+    Pod1 <--> Pod2
+    Pod1 <--> CoreDNS
+    Pod2 <--> CoreDNS
+    Policy --> Pod1
+    Policy --> Pod2
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class ENI awsService;
+    class CNI,CoreDNS,Policy k8sComponent;
+    class Pod1,Pod2 userApp;
+```
+
 1. **포드 IP 할당 실패**:
    - 증상: 포드가 `ContainerCreating` 상태에 멈춰 있음
    - 원인: 노드에 사용 가능한 IP 주소가 부족함
