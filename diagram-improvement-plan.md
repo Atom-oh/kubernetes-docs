@@ -74,7 +74,7 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 - [x] 6. EKS 모니터링 및 로깅 (`./eks/06-eks-monitoring-logging.md`)
 - [x] 7. EKS 비용 최적화 (`./eks/07-eks-cost-optimization.md`)
 - [x] 8. EKS 업그레이드 (`./eks/08-eks-upgrades.md`)
-- [ ] 9. EKS 문제 해결 (`./eks/09-eks-troubleshooting.md`)
+- [x] 9. EKS 문제 해결 (`./eks/09-eks-troubleshooting.md`)
 
 ### 고급 주제
 - [ ] 1. Kyverno를 사용한 정책 관리 (`./advanced/01-kyverno-policy-management.md`)
@@ -103,4 +103,4 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 3. 나머지 문서의 다이어그램 개선
 
 ## 현재 작업 중인 문서
-- EKS 문제 해결 (`./eks/09-eks-troubleshooting.md`)
+- Kyverno를 사용한 정책 관리 (`./advanced/01-kyverno-policy-management.md`)
