@@ -72,7 +72,7 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
   - [x] Part 3: 모니터링, 문제 해결, 비용 최적화, 보안 (`./eks/04-eks-storage-part3.md`)
 - [x] 5. EKS 보안 (`./eks/05-eks-security.md`)
 - [x] 6. EKS 모니터링 및 로깅 (`./eks/06-eks-monitoring-logging.md`)
-- [ ] 7. EKS 비용 최적화 (`./eks/07-eks-cost-optimization.md`)
+- [x] 7. EKS 비용 최적화 (`./eks/07-eks-cost-optimization.md`)
 - [ ] 8. EKS 업그레이드 (`./eks/08-eks-upgrades.md`)
 - [ ] 9. EKS 문제 해결 (`./eks/09-eks-troubleshooting.md`)
 
@@ -103,4 +103,4 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 3. 나머지 문서의 다이어그램 개선
 
 ## 현재 작업 중인 문서
-- EKS 비용 최적화 (`./eks/07-eks-cost-optimization.md`)
+- EKS 업그레이드 (`./eks/08-eks-upgrades.md`)
