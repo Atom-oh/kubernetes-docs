@@ -78,16 +78,20 @@ flowchart TD
     F -->|데이터 검색| D
     G -->|압축 및 최적화| D
     
-    %% 스타일 적용
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lokiComponent fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
     classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
     classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
     class A userApp
-    class B,C,F,G lokiComponent
+    class B,C,F,G grafana
     class D dataStore
     class E grafana
 ```
@@ -121,16 +125,20 @@ flowchart TD
     F -->|데이터 검색| D
     G -->|압축 및 최적화| D
     
-    %% 스타일 적용
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef tempoComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
     classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
     classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
     class A userApp
-    class B,C,F,G tempoComponent
+    class B,C,F,G alerting
     class D dataStore
     class E grafana
 ```
@@ -197,21 +205,22 @@ flowchart TD
     D --> E
     E --> F
     
-    %% 스타일 적용
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lokiComponent fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef tempoComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheusComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
     classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
     classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
     classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
     class A1,A2,A3 userApp
-    class B1 lokiComponent
-    class B2 tempoComponent
-    class B3 prometheusComponent
+    class B1 grafana
+    class B2 alerting
+    class B3 prometheus
     class C1,C2,C3 dataStore
     class D grafana
     class E,F alerting
