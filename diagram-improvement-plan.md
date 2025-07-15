@@ -79,8 +79,8 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 ### 고급 주제
 - [x] 1. Kyverno를 사용한 정책 관리 (`./advanced/01-kyverno-policy-management.md`)
 - [ ] 2. 커스텀 스케줄러
-  - [ ] Part 1: 스케줄링 개요 및 다중 스케줄러 접근 방식 (`./advanced/02-custom-scheduler-part1.md`)
-  - [ ] Part 2: 스케줄러 확장 및 스케줄러 프레임워크 플러그인 (`./advanced/02-custom-scheduler-part2.md`)
+  - [x] Part 1: 스케줄링 개요 및 다중 스케줄러 접근 방식 (`./advanced/02-custom-scheduler-part1.md`)
+  - [x] Part 2: 스케줄러 확장 및 스케줄러 프레임워크 플러그인 (`./advanced/02-custom-scheduler-part2.md`)
   - [ ] Part 3: EKS에서의 구현 사례 및 모니터링 (`./advanced/02-custom-scheduler-part3.md`)
 - [ ] 3. AI/ML 워크로드 (`./advanced/03-ai-ml-workloads.md`)
 - [ ] 4. vLLM 배포 (`./advanced/04-vllm-deployment.md`)
@@ -103,4 +103,4 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 3. 나머지 문서의 다이어그램 개선
 
 ## 현재 작업 중인 문서
-- 커스텀 스케줄러 Part 1: 스케줄링 개요 및 다중 스케줄러 접근 방식 (`./advanced/02-custom-scheduler-part1.md`)
+- 커스텀 스케줄러 Part 3: EKS에서의 구현 사례 및 모니터링 (`./advanced/02-custom-scheduler-part3.md`)
