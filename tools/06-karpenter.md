@@ -87,6 +87,10 @@ flowchart TD
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
+    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
@@ -118,18 +122,6 @@ sequenceDiagram
     KA->>K: 노드 이벤트 알림
     K->>KA: 노드 레이블 및 테인트 설정
     KA->>P: Pod 스케줄링
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class P,KA,K k8sComponent
-    class EC2 awsService
-    class N default
 ```
 
 ### 주요 구성 요소
@@ -537,13 +529,19 @@ flowchart LR
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
+    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
     classDef process fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
     class N1,N2,N3,N4 k8sComponent
     class P1,P2,P3,P4,P5,P6 process
-```## 인터럽션 처리
+```
+
+## 인터럽션 처리
 
 Karpenter는 노드 인터럽션을 자동으로 처리하여 워크로드 가용성을 보장합니다.
 
@@ -813,6 +811,10 @@ flowchart TD
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
+    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
@@ -1064,6 +1066,10 @@ flowchart TD
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
+    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
     classDef strategy fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
     classDef result fill:#E91E63,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
@@ -1188,11 +1194,20 @@ flowchart TD
     S --> S1 & S2 & S3 & S4
     
     %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
+    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
     classDef category fill:#9C27B0,stroke:#333,stroke-width:1px,color:white;
     classDef performance fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
     classDef cost fill:#FF9800,stroke:#333,stroke-width:1px,color:white;
     classDef availability fill:#2196F3,stroke:#333,stroke-width:1px,color:white;
     classDef security fill:#F44336,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
     class P,C,A,S category
