@@ -194,9 +194,15 @@ sequenceDiagram
     VPCLattice->>Client: 응답 반환
     
     %% 스타일 정의
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
+    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
+    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 ```
 
 ### 서비스 디스커버리
