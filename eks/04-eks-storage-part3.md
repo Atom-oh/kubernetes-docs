@@ -14,6 +14,89 @@
 
 EKS 클러스터에서 스토리지 리소스를 효과적으로 모니터링하는 것은 성능 문제를 조기에 발견하고 용량 계획을 수립하는 데 중요합니다.
 
+```mermaid
+flowchart TD
+    subgraph Monitoring_Solutions ["스토리지 모니터링 솔루션"]
+        subgraph AWS_CloudWatch ["AWS CloudWatch"]
+            EBS_Metrics[EBS 볼륨 지표]
+            EFS_Metrics[EFS 파일 시스템 지표]
+            FSx_Metrics[FSx for Lustre 지표]
+            CW_Alarms[CloudWatch 경보]
+            CW_Dashboard[CloudWatch 대시보드]
+        end
+        
+        subgraph K8s_Monitoring ["Kubernetes 모니터링"]
+            Prometheus[Prometheus]
+            Grafana[Grafana 대시보드]
+            ServiceMonitor[ServiceMonitor]
+            PodMonitor[PodMonitor]
+            PrometheusRule[알림 규칙]
+        end
+        
+        subgraph Custom_Solutions ["사용자 정의 솔루션"]
+            Usage_Exporter[볼륨 사용량 익스포터]
+            Custom_Metrics[사용자 정의 지표]
+            Custom_Alerts[사용자 정의 알림]
+        end
+    end
+    
+    subgraph Key_Metrics ["주요 모니터링 지표"]
+        Volume_Usage[볼륨 사용량]
+        IOPS[IOPS 사용량]
+        Throughput[처리량]
+        Latency[지연 시간]
+        Queue_Length[대기열 길이]
+        Burst_Credits[버스트 크레딧]
+    end
+    
+    %% 연결 관계
+    EBS_Metrics --> Volume_Usage
+    EBS_Metrics --> IOPS
+    EBS_Metrics --> Throughput
+    EBS_Metrics --> Latency
+    EBS_Metrics --> Queue_Length
+    EBS_Metrics --> Burst_Credits
+    
+    EFS_Metrics --> Volume_Usage
+    EFS_Metrics --> Throughput
+    EFS_Metrics --> Burst_Credits
+    
+    FSx_Metrics --> Volume_Usage
+    FSx_Metrics --> IOPS
+    FSx_Metrics --> Throughput
+    
+    Volume_Usage --> CW_Alarms
+    IOPS --> CW_Alarms
+    Throughput --> CW_Alarms
+    Latency --> CW_Alarms
+    Queue_Length --> CW_Alarms
+    Burst_Credits --> CW_Alarms
+    
+    CW_Alarms --> CW_Dashboard
+    
+    Prometheus --> ServiceMonitor
+    Prometheus --> PodMonitor
+    ServiceMonitor --> Grafana
+    PodMonitor --> Grafana
+    Prometheus --> PrometheusRule
+    
+    Usage_Exporter --> Custom_Metrics
+    Custom_Metrics --> Custom_Alerts
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class EBS_Metrics,EFS_Metrics,FSx_Metrics,CW_Alarms,CW_Dashboard awsService;
+    class Prometheus,Grafana,ServiceMonitor,PodMonitor,PrometheusRule k8sComponent;
+    class Usage_Exporter,Custom_Metrics,Custom_Alerts userApp;
+    class Volume_Usage,IOPS,Throughput,Latency,Queue_Length,Burst_Credits default;
+```
+
 ### CloudWatch를 사용한 모니터링
 
 AWS CloudWatch를 사용하여 EBS, EFS 및 FSx for Lustre 볼륨의 성능 지표를 모니터링할 수 있습니다:
@@ -173,6 +256,81 @@ spec:
 ## 스토리지 문제 해결
 
 EKS 클러스터에서 발생할 수 있는 일반적인 스토리지 문제와 해결 방법을 살펴보겠습니다.
+
+```mermaid
+flowchart TD
+    subgraph Common_Issues ["일반적인 스토리지 문제"]
+        PVC_Pending[PVC가 Pending 상태]
+        Volume_Provisioning[볼륨 프로비저닝 실패]
+        Mount_Issues[볼륨 마운트 문제]
+        Performance_Issues[성능 문제]
+    end
+    
+    subgraph Troubleshooting_Steps ["문제 해결 단계"]
+        Check_PVC[PVC 상태 확인]
+        Check_SC[스토리지 클래스 확인]
+        Check_CSI[CSI 드라이버 로그 확인]
+        Check_IAM[IAM 권한 확인]
+        Check_Pod[파드 상태 확인]
+        Check_Node[노드 상태 확인]
+        Check_SG[보안 그룹 확인]
+        Check_Network[네트워크 연결 확인]
+        Check_Metrics[성능 지표 확인]
+        Check_FS[파일 시스템 테스트]
+    end
+    
+    subgraph Resolution_Actions ["해결 조치"]
+        Fix_SC[스토리지 클래스 수정]
+        Fix_CSI[CSI 드라이버 재설치]
+        Fix_IAM[IAM 권한 추가]
+        Fix_Pod[파드 재시작]
+        Fix_SG[보안 그룹 규칙 추가]
+        Fix_Volume[볼륨 유형 변경]
+        Fix_Instance[인스턴스 유형 변경]
+        Fix_FS[파일 시스템 최적화]
+    end
+    
+    %% 문제와 해결 단계 연결
+    PVC_Pending --> Check_PVC
+    PVC_Pending --> Check_SC
+    PVC_Pending --> Check_CSI
+    PVC_Pending --> Check_IAM
+    
+    Volume_Provisioning --> Check_CSI
+    Volume_Provisioning --> Check_IAM
+    Volume_Provisioning --> Check_SC
+    
+    Mount_Issues --> Check_Pod
+    Mount_Issues --> Check_Node
+    Mount_Issues --> Check_SG
+    Mount_Issues --> Check_Network
+    
+    Performance_Issues --> Check_Metrics
+    Performance_Issues --> Check_FS
+    Performance_Issues --> Check_Node
+    
+    %% 해결 단계와 조치 연결
+    Check_SC --> Fix_SC
+    Check_CSI --> Fix_CSI
+    Check_IAM --> Fix_IAM
+    Check_Pod --> Fix_Pod
+    Check_SG --> Fix_SG
+    Check_Metrics --> Fix_Volume
+    Check_Metrics --> Fix_Instance
+    Check_FS --> Fix_FS
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class PVC_Pending,Volume_Provisioning,Mount_Issues,Performance_Issues k8sComponent;
+    class Check_PVC,Check_SC,Check_CSI,Check_IAM,Check_Pod,Check_Node,Check_SG,Check_Network,Check_Metrics,Check_FS default;
+    class Fix_SC,Fix_CSI,Fix_IAM,Fix_Pod,Fix_SG,Fix_Volume,Fix_Instance,Fix_FS userApp;
+```
 
 ### 볼륨 프로비저닝 문제
 
@@ -342,6 +500,83 @@ mountOptions:
 
 EKS 클러스터의 스토리지 비용을 최적화하기 위한 전략을 살펴보겠습니다.
 
+```mermaid
+flowchart TD
+    subgraph Cost_Optimization_Strategies ["비용 최적화 전략"]
+        subgraph Volume_Optimization ["볼륨 최적화"]
+            Volume_Type[적절한 볼륨 유형 선택]
+            Volume_Size[볼륨 크기 최적화]
+            GP3_Migration[gp3 볼륨으로 마이그레이션]
+        end
+        
+        subgraph Lifecycle_Management ["수명 주기 관리"]
+            Data_Tiering[데이터 계층화]
+            Snapshot_Policy[자동 스냅샷 정책]
+            PV_Reclaim[PV 재확보 정책]
+        end
+        
+        subgraph EFS_Optimization ["EFS 최적화"]
+            Throughput_Mode[적절한 처리량 모드]
+            IA_Storage[IA 스토리지 클래스]
+            Access_Points[액세스 포인트]
+        end
+        
+        subgraph FSx_Optimization ["FSx 최적화"]
+            Deployment_Type[적절한 배포 유형]
+            Data_Compression[데이터 압축]
+            S3_Integration[S3 통합]
+        end
+        
+        subgraph Cost_Monitoring ["비용 모니터링"]
+            Cost_Explorer[AWS Cost Explorer]
+            K8s_Cost[Kubernetes 비용 할당]
+            Cost_Anomaly[비용 이상 탐지]
+        end
+    end
+    
+    subgraph Storage_Types ["스토리지 유형별 최적화"]
+        EBS[Amazon EBS]
+        EFS[Amazon EFS]
+        FSx[Amazon FSx for Lustre]
+        S3[Amazon S3]
+    end
+    
+    %% 연결 관계
+    EBS --> Volume_Type
+    EBS --> Volume_Size
+    EBS --> GP3_Migration
+    
+    EBS --> Snapshot_Policy
+    EBS --> PV_Reclaim
+    
+    EFS --> Throughput_Mode
+    EFS --> IA_Storage
+    EFS --> Access_Points
+    
+    FSx --> Deployment_Type
+    FSx --> Data_Compression
+    FSx --> S3_Integration
+    
+    S3 --> Data_Tiering
+    
+    Volume_Optimization --> Cost_Monitoring
+    Lifecycle_Management --> Cost_Monitoring
+    EFS_Optimization --> Cost_Monitoring
+    FSx_Optimization --> Cost_Monitoring
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class EBS,EFS,FSx,S3 awsService;
+    class Volume_Type,Volume_Size,GP3_Migration,Data_Tiering,Snapshot_Policy,PV_Reclaim,Throughput_Mode,IA_Storage,Access_Points,Deployment_Type,Data_Compression,S3_Integration default;
+    class Cost_Explorer,K8s_Cost,Cost_Anomaly userApp;
+```
+
 ### 볼륨 유형 및 크기 최적화
 
 1. **적절한 볼륨 유형 선택**:
@@ -441,6 +676,85 @@ aws efs put-lifecycle-configuration \
 ## 스토리지 보안
 
 EKS 클러스터에서 스토리지 리소스를 보호하기 위한 보안 모범 사례를 살펴보겠습니다.
+
+```mermaid
+flowchart TD
+    subgraph Security_Measures ["스토리지 보안 조치"]
+        subgraph Data_Encryption ["데이터 암호화"]
+            At_Rest[저장 데이터 암호화]
+            In_Transit[전송 중 데이터 암호화]
+            KMS[AWS KMS 키 관리]
+        end
+        
+        subgraph Access_Control ["액세스 제어"]
+            IAM[IAM 역할 및 정책]
+            Security_Groups[보안 그룹]
+            K8s_RBAC[Kubernetes RBAC]
+        end
+        
+        subgraph Pod_Security ["파드 보안"]
+            ReadOnly_FS[읽기 전용 루트 파일 시스템]
+            Limited_Privileges[권한 제한]
+            Security_Profiles[SELinux/AppArmor/Seccomp]
+        end
+        
+        subgraph Policy_Enforcement ["보안 정책 적용"]
+            OPA[OPA Gatekeeper]
+            Kyverno[Kyverno]
+            PSS[Pod Security Standards]
+        end
+    end
+    
+    subgraph Storage_Services ["스토리지 서비스"]
+        EBS_Security[EBS 보안]
+        EFS_Security[EFS 보안]
+        FSx_Security[FSx 보안]
+        S3_Security[S3 보안]
+    end
+    
+    %% 연결 관계
+    EBS_Security --> At_Rest
+    EBS_Security --> KMS
+    EBS_Security --> Security_Groups
+    
+    EFS_Security --> At_Rest
+    EFS_Security --> In_Transit
+    EFS_Security --> KMS
+    EFS_Security --> Security_Groups
+    EFS_Security --> IAM
+    
+    FSx_Security --> At_Rest
+    FSx_Security --> KMS
+    FSx_Security --> Security_Groups
+    
+    S3_Security --> At_Rest
+    S3_Security --> In_Transit
+    S3_Security --> IAM
+    
+    At_Rest --> KMS
+    In_Transit --> KMS
+    
+    IAM --> K8s_RBAC
+    
+    ReadOnly_FS --> PSS
+    Limited_Privileges --> PSS
+    Security_Profiles --> PSS
+    
+    K8s_RBAC --> OPA
+    K8s_RBAC --> Kyverno
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class EBS_Security,EFS_Security,FSx_Security,S3_Security,KMS,IAM,Security_Groups awsService;
+    class K8s_RBAC,PSS,OPA,Kyverno k8sComponent;
+    class At_Rest,In_Transit,ReadOnly_FS,Limited_Privileges,Security_Profiles default;
+```
 
 ### 데이터 암호화
 
@@ -631,6 +945,83 @@ metadata:
 ## 스토리지 관리 모범 사례
 
 EKS 클러스터에서 스토리지를 효과적으로 관리하기 위한 모범 사례를 살펴보겠습니다.
+
+```mermaid
+flowchart TD
+    subgraph Best_Practices ["스토리지 관리 모범 사례"]
+        subgraph Planning ["계획 및 설계"]
+            Requirements[요구사항 분석]
+            Storage_Selection[스토리지 유형 선택]
+            Capacity_Planning[용량 계획]
+        end
+        
+        subgraph Backup_DR ["백업 및 재해 복구"]
+            Regular_Backups[정기적인 백업]
+            DR_Plan[재해 복구 계획]
+            Velero[Velero 백업]
+        end
+        
+        subgraph Automation ["자동화 및 IaC"]
+            Terraform[Terraform/CloudFormation]
+            Helm[Helm 차트]
+            GitOps[GitOps 워크플로우]
+        end
+        
+        subgraph Optimization ["성능 및 비용 최적화"]
+            Performance_Review[성능 검토]
+            Cost_Review[비용 최적화 검토]
+            Auto_Scaling[자동 스케일링]
+        end
+    end
+    
+    subgraph Lifecycle ["스토리지 수명 주기"]
+        Planning_Phase[계획 단계]
+        Implementation[구현 단계]
+        Operation[운영 단계]
+        Optimization_Phase[최적화 단계]
+        Decommission[폐기 단계]
+    end
+    
+    %% 연결 관계
+    Planning_Phase --> Requirements
+    Planning_Phase --> Storage_Selection
+    Planning_Phase --> Capacity_Planning
+    
+    Implementation --> Terraform
+    Implementation --> Helm
+    Implementation --> GitOps
+    
+    Operation --> Regular_Backups
+    Operation --> DR_Plan
+    Operation --> Velero
+    
+    Optimization_Phase --> Performance_Review
+    Optimization_Phase --> Cost_Review
+    Optimization_Phase --> Auto_Scaling
+    
+    Requirements --> Storage_Selection
+    Storage_Selection --> Capacity_Planning
+    
+    Regular_Backups --> DR_Plan
+    DR_Plan --> Velero
+    
+    Terraform --> Helm
+    Helm --> GitOps
+    
+    Performance_Review --> Cost_Review
+    Cost_Review --> Auto_Scaling
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class Planning_Phase,Implementation,Operation,Optimization_Phase,Decommission userApp;
+    class Requirements,Storage_Selection,Capacity_Planning,Regular_Backups,DR_Plan,Velero,Terraform,Helm,GitOps,Performance_Review,Cost_Review,Auto_Scaling default;
+```
 
 ### 스토리지 계획 및 설계
 
