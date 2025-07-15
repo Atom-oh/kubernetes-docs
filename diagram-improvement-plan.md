@@ -93,7 +93,7 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 - [x] 5. KEDA (`./tools/05-keda.md`) - 완료
 - [x] 6. Karpenter (`./tools/06-karpenter.md`) - 완료
 - [x] 7. 모니터링 스택 (VictoriaMetrics, Prometheus, Grafana) (`./tools/07-monitoring-stack.md`) - 완료
-- [ ] 8. 로깅 스택 (Loki, Tempo) (`./tools/08-logging-stack.md`)
+- [x] 8. 로깅 스택 (Loki, Tempo) (`./tools/08-logging-stack.md`) - 완료
 - [ ] 9. VPC Lattice (`./tools/09-vpc-lattice.md`)
 
 ## 작업 우선순위
