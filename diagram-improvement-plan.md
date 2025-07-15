@@ -64,7 +64,7 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
   - [x] Part 5: 클러스터 액세스, 검증, 업그레이드 및 삭제 (`./eks/02-eks-cluster-creation-part5.md`)
 - [ ] 3. EKS 네트워킹
   - [x] Part 1: 기본 개념 및 VPC 구성 (`./eks/03-eks-networking-part1.md`)
-  - [ ] Part 2: 서비스 및 로드 밸런싱, 네트워크 정책 (`./eks/03-eks-networking-part2.md`)
+  - [x] Part 2: 서비스 및 로드 밸런싱, 네트워크 정책 (`./eks/03-eks-networking-part2.md`)
   - [ ] Part 3: 성능 최적화, 문제 해결, 고급 사용 사례 (`./eks/03-eks-networking-part3.md`)
 - [ ] 4. EKS 스토리지
   - [ ] Part 1: 기본 개념, EBS, EFS (`./eks/04-eks-storage-part1.md`)
@@ -103,4 +103,4 @@ classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 3. 나머지 문서의 다이어그램 개선
 
 ## 현재 작업 중인 문서
-- EKS 네트워킹 Part 2: 서비스 및 로드 밸런싱, 네트워크 정책 (`./eks/03-eks-networking-part2.md`)
+- EKS 네트워킹 Part 3: 성능 최적화, 문제 해결, 고급 사용 사례 (`./eks/03-eks-networking-part3.md`)
