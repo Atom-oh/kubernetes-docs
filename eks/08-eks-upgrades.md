@@ -15,6 +15,42 @@ Amazon EKS 클러스터를 최신 상태로 유지하는 것은 보안, 안정�
 
 ## EKS 업그레이드 개요
 
+```mermaid
+flowchart TD
+    UpgradeOverview[EKS 업그레이드 개요] --> VersionManagement[EKS 버전 관리]
+    UpgradeOverview --> UpgradeComponents[업그레이드 구성 요소]
+    UpgradeOverview --> UpgradePath[업그레이드 경로]
+    UpgradeOverview --> UpgradeOrder[업그레이드 순서]
+    
+    VersionManagement --> Support[버전 지원\n최소 4개 버전 동시 지원]
+    VersionManagement --> SupportPeriod[지원 기간\n약 14개월]
+    VersionManagement --> Deprecation[버전 사용 중단\n최소 60일 전 알림]
+    
+    UpgradeComponents --> ControlPlane[EKS 컨트롤 플레인]
+    UpgradeComponents --> NodeGroups[노드 그룹]
+    UpgradeComponents --> Addons[애드온]
+    UpgradeComponents --> SelfManaged[자체 관리형 구성 요소]
+    
+    UpgradePath --> CorrectPath[올바른 경로\n1.24 → 1.25 → 1.26 → 1.27]
+    UpgradePath --> InvalidPath[지원되지 않음\n1.24 → 1.26]
+    
+    UpgradeOrder --> Step1[1. 업그레이드 계획 및 준비]
+    UpgradeOrder --> Step2[2. EKS 컨트롤 플레인 업그레이드]
+    UpgradeOrder --> Step3[3. 애드온 업그레이드]
+    UpgradeOrder --> Step4[4. 노드 그룹 업그레이드]
+    UpgradeOrder --> Step5[5. 업그레이드 검증]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class ControlPlane,NodeGroups,Addons awsService;
+    class SelfManaged k8sComponent;
+    class UpgradeOverview,VersionManagement,UpgradeComponents,UpgradePath,UpgradeOrder,Support,SupportPeriod,Deprecation,CorrectPath,InvalidPath,Step1,Step2,Step3,Step4,Step5 default;
+```
+
 ### EKS 버전 관리
 
 Amazon EKS는 Kubernetes 버전 관리 정책을 따릅니다:
@@ -50,6 +86,43 @@ EKS 클러스터는 한 번에 한 마이너 버전씩 업그레이드해야 합
 5. 업그레이드 검증
 
 ## 업그레이드 계획 및 준비
+
+```mermaid
+flowchart TD
+    UpgradePlanning[업그레이드 계획 및 준비] --> Assessment[업그레이드 평가]
+    UpgradePlanning --> Preparation[업그레이드 전 준비]
+    
+    Assessment --> Compatibility[버전 호환성 확인]
+    Assessment --> ResourceReq[리소스 요구사항 평가]
+    Assessment --> Schedule[업그레이드 일정 계획]
+    
+    Compatibility --> DeprecatedAPI[사용 중단된 API 확인]
+    Compatibility --> FeatureChanges[기능 변경 사항 검토]
+    Compatibility --> AddonCompat[애드온 호환성 확인]
+    
+    ResourceReq --> ClusterCapacity[클러스터 용량 확인]
+    ResourceReq --> Downtime[다운타임 허용 여부]
+    ResourceReq --> RollbackPlan[롤백 계획]
+    
+    Schedule --> MaintenanceWindow[유지 관리 기간 설정]
+    Schedule --> PhaseApproach[단계적 접근 방식]
+    Schedule --> RollbackWindow[롤백 기간 계획]
+    
+    Preparation --> ClusterState[클러스터 상태 확인]
+    Preparation --> Backup[백업 생성]
+    Preparation --> TestUpgrade[업그레이드 테스트]
+    Preparation --> Documentation[업그레이드 문서 작성]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class ClusterCapacity,MaintenanceWindow awsService;
+    class DeprecatedAPI,AddonCompat,ClusterState k8sComponent;
+    class UpgradePlanning,Assessment,Preparation,Compatibility,ResourceReq,Schedule,FeatureChanges,Downtime,RollbackPlan,PhaseApproach,RollbackWindow,Backup,TestUpgrade,Documentation default;
+```
 
 ### 업그레이드 평가
 
@@ -139,6 +212,43 @@ velero backup create pre-upgrade-backup --include-namespaces=default,app-namespa
 - 문제 해결 가이드
 
 ## EKS 컨트롤 플레인 업그레이드
+
+```mermaid
+flowchart TD
+    ControlPlaneUpgrade[EKS 컨트롤 플레인 업그레이드] --> Preparation[컨트롤 플레인 업그레이드 준비]
+    ControlPlaneUpgrade --> Execution[컨트롤 플레인 업그레이드 수행]
+    ControlPlaneUpgrade --> Monitoring[컨트롤 플레인 업그레이드 모니터링]
+    ControlPlaneUpgrade --> Troubleshooting[컨트롤 플레인 업그레이드 문제 해결]
+    
+    Preparation --> CheckVersion[현재 버전 확인]
+    Preparation --> AvailableVersions[사용 가능한 버전 확인]
+    Preparation --> UpgradePlan[업그레이드 계획 수립]
+    
+    Execution --> Console[AWS Management Console 사용]
+    Execution --> CLI[AWS CLI 사용]
+    Execution --> Eksctl[eksctl 사용]
+    
+    Monitoring --> CheckStatus[업그레이드 상태 확인]
+    Monitoring --> ClusterState[클러스터 상태 모니터링]
+    Monitoring --> CloudWatchMetrics[CloudWatch 지표 모니터링]
+    
+    Troubleshooting --> CommonIssues[일반적인 문제]
+    Troubleshooting --> TroubleshootingSteps[문제 해결 단계]
+    
+    CommonIssues --> UpgradeFailure[업그레이드 실패]
+    CommonIssues --> APIAvailability[API 서버 가용성 문제]
+    CommonIssues --> CompatibilityIssues[호환성 문제]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class Console,CLI,CloudWatchMetrics awsService;
+    class Eksctl,ClusterState,APIAvailability k8sComponent;
+    class ControlPlaneUpgrade,Preparation,Execution,Monitoring,Troubleshooting,CheckVersion,AvailableVersions,UpgradePlan,CheckStatus,CommonIssues,TroubleshootingSteps,UpgradeFailure,CompatibilityIssues default;
+```
 
 ### 컨트롤 플레인 업그레이드 준비
 
@@ -254,6 +364,51 @@ CloudWatch에서 클러스터 지표를 모니터링합니다:
 ## 노드 그룹 업그레이드
 
 컨트롤 플레인을 업그레이드한 후에는 노드 그룹을 업그레이드해야 합니다. 노드 그룹 업그레이드에는 여러 전략이 있으며, 각 전략에는 장단점이 있습니다.
+
+```mermaid
+flowchart TD
+    NodeGroupUpgrade[노드 그룹 업그레이드] --> UpgradeStrategies[노드 그룹 업그레이드 전략]
+    NodeGroupUpgrade --> ManagedNG[관리형 노드 그룹 업그레이드]
+    NodeGroupUpgrade --> SelfManagedNG[자체 관리형 노드 그룹 업그레이드]
+    NodeGroupUpgrade --> FargateUpgrade[Fargate 노드 업그레이드]
+    NodeGroupUpgrade --> MonitoringValidation[노드 업그레이드 모니터링 및 검증]
+    
+    UpgradeStrategies --> ManagedStrategy[관리형 노드 그룹]
+    UpgradeStrategies --> SelfManagedStrategy[자체 관리형 노드 그룹]
+    UpgradeStrategies --> FargateStrategy[Fargate]
+    
+    ManagedStrategy --> RollingUpgrade[롤링 업그레이드]
+    ManagedStrategy --> AutoDraining[자동 드레이닝]
+    ManagedStrategy --> VersionTracking[버전 추적]
+    
+    SelfManagedStrategy --> BlueGreen[블루/그린 배포]
+    SelfManagedStrategy --> RollingManual[롤링 업그레이드]
+    SelfManagedStrategy --> InPlace[인플레이스 업그레이드]
+    
+    ManagedNG --> CheckManagedVersion[관리형 노드 그룹 버전 확인]
+    ManagedNG --> ConsoleManagedUpgrade[AWS Management Console 사용]
+    ManagedNG --> CLIManagedUpgrade[AWS CLI 사용]
+    ManagedNG --> EksctlManagedUpgrade[eksctl 사용]
+    ManagedNG --> ManagedConfig[관리형 노드 그룹 업그레이드 구성]
+    
+    SelfManagedNG --> BlueGreenDeploy[블루/그린 배포]
+    SelfManagedNG --> RollingUpgradeSelf[롤링 업그레이드]
+    SelfManagedNG --> InPlaceUpgrade[인플레이스 업그레이드]
+    
+    MonitoringValidation --> CheckNodeVersion[노드 버전 확인]
+    MonitoringValidation --> CheckNodeStatus[노드 상태 확인]
+    MonitoringValidation --> CheckPodDeployment[파드 배포 확인]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class ManagedNG,ConsoleManagedUpgrade,CLIManagedUpgrade,FargateUpgrade,FargateStrategy awsService;
+    class EksctlManagedUpgrade,RollingUpgrade,AutoDraining,BlueGreen,RollingManual,InPlace,CheckNodeVersion,CheckNodeStatus,CheckPodDeployment k8sComponent;
+    class NodeGroupUpgrade,UpgradeStrategies,SelfManagedNG,ManagedStrategy,SelfManagedStrategy,VersionTracking,CheckManagedVersion,ManagedConfig,BlueGreenDeploy,RollingUpgradeSelf,InPlaceUpgrade,MonitoringValidation default;
+```
 
 ### 노드 그룹 업그레이드 전략
 
@@ -476,6 +631,43 @@ kubectl get pods --all-namespaces -o wide | grep -v Running
 
 EKS 클러스터에는 여러 애드온이 포함되어 있으며, 이러한 애드온도 업그레이드해야 합니다.
 
+```mermaid
+flowchart TD
+    AddonUpgrade[애드온 업그레이드] --> ManagedAddons[AWS 관리형 애드온]
+    AddonUpgrade --> SelfManagedAddons[자체 관리형 애드온]
+    AddonUpgrade --> KeyAddonGuides[주요 애드온 업그레이드 가이드]
+    AddonUpgrade --> AddonTroubleshooting[애드온 업그레이드 문제 해결]
+    
+    ManagedAddons --> ListAddons[관리형 애드온 목록 확인]
+    ManagedAddons --> CheckAddonVersion[관리형 애드온 버전 확인]
+    ManagedAddons --> AvailableVersions[사용 가능한 애드온 버전 확인]
+    ManagedAddons --> UpgradeAddons[관리형 애드온 업그레이드]
+    
+    SelfManagedAddons --> HelmUpgrade[Helm을 사용한 업그레이드]
+    SelfManagedAddons --> KubectlUpgrade[kubectl을 사용한 업그레이드]
+    
+    KeyAddonGuides --> CoreDNSUpgrade[CoreDNS 업그레이드]
+    KeyAddonGuides --> KubeProxyUpgrade[kube-proxy 업그레이드]
+    KeyAddonGuides --> VPCCNIUpgrade[VPC CNI 업그레이드]
+    
+    AddonTroubleshooting --> CommonAddonIssues[일반적인 문제]
+    AddonTroubleshooting --> TroubleshootingSteps[문제 해결 단계]
+    
+    CommonAddonIssues --> ConfigConflicts[구성 충돌]
+    CommonAddonIssues --> CompatibilityIssues[호환성 문제]
+    CommonAddonIssues --> ResourceConstraints[리소스 제약]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class ManagedAddons,UpgradeAddons awsService;
+    class CoreDNSUpgrade,KubeProxyUpgrade,VPCCNIUpgrade,HelmUpgrade,KubectlUpgrade k8sComponent;
+    class AddonUpgrade,SelfManagedAddons,KeyAddonGuides,AddonTroubleshooting,ListAddons,CheckAddonVersion,AvailableVersions,CommonAddonIssues,TroubleshootingSteps,ConfigConflicts,CompatibilityIssues,ResourceConstraints default;
+```
+
 ### AWS 관리형 애드온
 
 #### 관리형 애드온 목록 확인
@@ -630,6 +822,55 @@ kubectl get events -n kube-system --sort-by='.lastTimestamp'
 ## 업그레이드 검증 및 문제 해결
 
 업그레이드가 완료된 후에는 클러스터가 정상적으로 작동하는지 검증하고 발생할 수 있는 문제를 해결해야 합니다.
+
+```mermaid
+flowchart TD
+    ValidationTroubleshooting[업그레이드 검증 및 문제 해결] --> Validation[업그레이드 검증]
+    ValidationTroubleshooting --> Troubleshooting[업그레이드 문제 해결]
+    
+    Validation --> VersionCheck[클러스터 버전 확인]
+    Validation --> ClusterStateCheck[클러스터 상태 확인]
+    Validation --> WorkloadValidation[워크로드 검증]
+    Validation --> FunctionalTesting[기능 테스트]
+    
+    ClusterStateCheck --> NodeStatus[노드 상태 확인]
+    ClusterStateCheck --> PodStatus[파드 상태 확인]
+    ClusterStateCheck --> NamespaceStatus[네임스페이스 상태 확인]
+    ClusterStateCheck --> ServiceStatus[서비스 상태 확인]
+    
+    WorkloadValidation --> DeploymentStatus[배포 상태 확인]
+    WorkloadValidation --> StatefulSetStatus[스테이트풀셋 상태 확인]
+    WorkloadValidation --> DaemonSetStatus[데몬셋 상태 확인]
+    WorkloadValidation --> EndpointStatus[서비스 엔드포인트 확인]
+    
+    FunctionalTesting --> PodCreation[파드 생성 테스트]
+    FunctionalTesting --> ServiceCreation[서비스 생성 테스트]
+    FunctionalTesting --> ScalingTest[스케일링 테스트]
+    
+    Troubleshooting --> CommonIssues[일반적인 업그레이드 문제]
+    Troubleshooting --> TroubleshootingSteps[문제 해결 단계]
+    Troubleshooting --> RollbackProcedure[롤백 절차]
+    
+    CommonIssues --> ControlPlaneIssues[컨트롤 플레인 업그레이드 실패]
+    CommonIssues --> NodeIssues[노드 업그레이드 문제]
+    CommonIssues --> AddonIssues[애드온 업그레이드 문제]
+    CommonIssues --> WorkloadIssues[워크로드 문제]
+    
+    TroubleshootingSteps --> CheckLogs[로그 확인]
+    TroubleshootingSteps --> CheckEvents[이벤트 확인]
+    TroubleshootingSteps --> CheckResourceStatus[리소스 상태 확인]
+    TroubleshootingSteps --> CheckAPIVersion[API 버전 확인]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class ControlPlaneIssues awsService;
+    class NodeStatus,PodStatus,NamespaceStatus,ServiceStatus,DeploymentStatus,StatefulSetStatus,DaemonSetStatus,EndpointStatus,PodCreation,ServiceCreation,ScalingTest,NodeIssues,AddonIssues,WorkloadIssues,CheckLogs,CheckEvents,CheckResourceStatus,CheckAPIVersion k8sComponent;
+    class ValidationTroubleshooting,Validation,Troubleshooting,VersionCheck,ClusterStateCheck,WorkloadValidation,FunctionalTesting,CommonIssues,TroubleshootingSteps,RollbackProcedure default;
+```
 
 ### 업그레이드 검증
 
@@ -818,6 +1059,41 @@ aws eks update-addon \
 
 대규모 환경에서는 업그레이드 프로세스를 자동화하는 것이 중요합니다. 다음과 같은 도구와 방법을 사용하여 EKS 업그레이드를 자동화할 수 있습니다.
 
+```mermaid
+flowchart TD
+    UpgradeAutomation[업그레이드 자동화] --> EksctlAutomation[eksctl을 사용한 자동화]
+    UpgradeAutomation --> CLIScriptAutomation[AWS CLI 및 스크립트를 사용한 자동화]
+    UpgradeAutomation --> GitOpsAutomation[GitOps를 사용한 자동화]
+    UpgradeAutomation --> BestPractices[자동화 모범 사례]
+    
+    EksctlAutomation --> ClusterUpgrade[클러스터 업그레이드]
+    EksctlAutomation --> NodegroupUpgrade[노드 그룹 업그레이드]
+    
+    CLIScriptAutomation --> VariableSetup[변수 설정]
+    CLIScriptAutomation --> ClusterUpgradeScript[클러스터 업그레이드 스크립트]
+    CLIScriptAutomation --> AddonUpgradeScript[애드온 업그레이드 스크립트]
+    CLIScriptAutomation --> NodegroupUpgradeScript[노드 그룹 업그레이드 스크립트]
+    
+    GitOpsAutomation --> GitConfig[클러스터 구성을 Git 저장소에 저장]
+    GitOpsAutomation --> CICDPipeline[CI/CD 파이프라인 구성]
+    
+    BestPractices --> GradualApproach[점진적 접근]
+    BestPractices --> RollbackPlan[롤백 계획]
+    BestPractices --> ValidationSteps[검증 단계]
+    BestPractices --> Notifications[알림]
+    BestPractices --> Documentation[문서화]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class CLIScriptAutomation,VariableSetup,ClusterUpgradeScript,AddonUpgradeScript,NodegroupUpgradeScript awsService;
+    class EksctlAutomation,ClusterUpgrade,NodegroupUpgrade,GitOpsAutomation,GitConfig,CICDPipeline k8sComponent;
+    class UpgradeAutomation,BestPractices,GradualApproach,RollbackPlan,ValidationSteps,Notifications,Documentation default;
+```
+
 ### eksctl을 사용한 자동화
 
 eksctl은 EKS 클러스터 관리를 위한 명령줄 도구로, 업그레이드 자동화에 사용할 수 있습니다:
@@ -980,6 +1256,60 @@ EKS 업그레이드 자동화를 위한 모범 사례:
 ## 업그레이드 모범 사례
 
 EKS 클러스터 업그레이드를 위한 모범 사례를 살펴보겠습니다.
+
+```mermaid
+flowchart TD
+    BestPractices[업그레이드 모범 사례] --> GeneralPractices[일반적인 모범 사례]
+    BestPractices --> LargeClusterPractices[대규모 클러스터를 위한 모범 사례]
+    BestPractices --> FinancialServicesPractices[금융 서비스를 위한 모범 사례]
+    
+    GeneralPractices --> UpgradePlanning[업그레이드 계획]
+    GeneralPractices --> UpgradePreparation[업그레이드 준비]
+    GeneralPractices --> UpgradeExecution[업그레이드 수행]
+    GeneralPractices --> PostUpgrade[업그레이드 후]
+    
+    UpgradePlanning --> VersionSelection[버전 선택]
+    UpgradePlanning --> UpgradeSchedule[업그레이드 일정]
+    UpgradePlanning --> PhaseApproach[단계적 접근]
+    UpgradePlanning --> RollbackPlanning[롤백 계획]
+    
+    UpgradePreparation --> Backup[백업]
+    UpgradePreparation --> ResourceAllocation[리소스 확보]
+    UpgradePreparation --> CompatibilityCheck[호환성 확인]
+    UpgradePreparation --> DeprecatedAPIIdentification[사용 중단된 API 식별]
+    
+    UpgradeExecution --> ControlPlaneFirst[컨트롤 플레인 먼저]
+    UpgradeExecution --> AddonsNext[애드온 다음]
+    UpgradeExecution --> NodesLast[노드 마지막]
+    UpgradeExecution --> GradualNodeUpgrade[점진적 노드 업그레이드]
+    
+    PostUpgrade --> Validation[검증]
+    PostUpgrade --> Monitoring[모니터링]
+    PostUpgrade --> Documentation[문서화]
+    PostUpgrade --> Learning[학습]
+    
+    LargeClusterPractices --> CanaryDeployment[카나리 배포]
+    LargeClusterPractices --> Automation[자동화]
+    LargeClusterPractices --> EnhancedMonitoring[모니터링 강화]
+    LargeClusterPractices --> CommunicationPlan[통신 계획]
+    LargeClusterPractices --> AutomatedRollback[롤백 자동화]
+    
+    FinancialServicesPractices --> ComplianceCheck[규제 준수]
+    FinancialServicesPractices --> RiskAssessment[위험 평가]
+    FinancialServicesPractices --> ChangeManagement[변경 관리]
+    FinancialServicesPractices --> EnhancedTesting[테스트 강화]
+    FinancialServicesPractices --> EnhancedDocumentation[문서화 강화]
+    
+    %% 클래스 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class ResourceAllocation,EnhancedMonitoring awsService;
+    class ControlPlaneFirst,AddonsNext,NodesLast,GradualNodeUpgrade,CanaryDeployment,Automation,AutomatedRollback k8sComponent;
+    class BestPractices,GeneralPractices,LargeClusterPractices,FinancialServicesPractices,UpgradePlanning,UpgradePreparation,UpgradeExecution,PostUpgrade,VersionSelection,UpgradeSchedule,PhaseApproach,RollbackPlanning,Backup,CompatibilityCheck,DeprecatedAPIIdentification,Validation,Monitoring,Documentation,Learning,CommunicationPlan,ComplianceCheck,RiskAssessment,ChangeManagement,EnhancedTesting,EnhancedDocumentation default;
+```
 
 ### 일반적인 모범 사례
 
