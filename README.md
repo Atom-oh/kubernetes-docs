@@ -39,6 +39,18 @@
 8. [EKS 업그레이드](./eks/08-eks-upgrades.md)
 9. [EKS 문제 해결](./eks/09-eks-troubleshooting.md)
 
+## Cilium
+* [Cilium 소개](cilium/README.md)
+* [Day 1: 소개](cilium/day1-introduction.md)
+* [Day 2: eBPF](cilium/day2-ebpf.md)
+* [Day 3: 네트워킹](cilium/day3-networking.md)
+* [Day 4: IPAM 및 정책](cilium/day4-ipam-policy.md)
+* [Day 5: L2-L7 네트워킹](cilium/day5-l2-l7-networking.md)
+* [Day 6: 보안 및 가시성](cilium/day6-security-visibility.md)
+* [Day 7: 고급 주제](cilium/day7-advanced-topics.md)
+* [네트워킹 개념](cilium/networking-concepts.md)
+* [용어집](cilium/glossary.md)
+
 ### 고급 주제
 1. [Kyverno를 사용한 정책 관리](./advanced/01-kyverno-policy-management.md)
 2. [커스텀 스케줄러](./advanced/02-custom-scheduler.md)

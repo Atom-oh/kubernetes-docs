@@ -28,20 +28,20 @@
 
 * [EKS 소개](eks/01-eks-introduction.md)
 * [EKS 클러스터 생성](eks/02-eks-cluster-creation.md)
-  * [Part 1: 사전 요구 사항](eks/02-eks-cluster-creation-part1.md)
-  * [Part 2: eksctl을 사용한 클러스터 생성](eks/02-eks-cluster-creation-part2.md)
-  * [Part 3: AWS Management Console 및 CLI를 사용한 클러스터 생성](eks/02-eks-cluster-creation-part3.md)
-  * [Part 4: Terraform 및 CDK를 사용한 클러스터 생성](eks/02-eks-cluster-creation-part4.md)
-  * [Part 5: 클러스터 액세스, 검증, 업그레이드 및 삭제](eks/02-eks-cluster-creation-part5.md)
-  * [결론](eks/02-eks-cluster-creation-conclusion.md)
+    * [Part 1: 사전 요구 사항](eks/02-eks-cluster-creation-part1.md)
+    * [Part 2: eksctl을 사용한 클러스터 생성](eks/02-eks-cluster-creation-part2.md)
+    * [Part 3: AWS Management Console 및 CLI를 사용한 클러스터 생성](eks/02-eks-cluster-creation-part3.md)
+    * [Part 4: Terraform 및 CDK를 사용한 클러스터 생성](eks/02-eks-cluster-creation-part4.md)
+    * [Part 5: 클러스터 액세스, 검증, 업그레이드 및 삭제](eks/02-eks-cluster-creation-part5.md)
+    * [결론](eks/02-eks-cluster-creation-conclusion.md)
 * [EKS 네트워킹](eks/03-eks-networking-part1.md)
-  *
-  * [Part 2: 고급 구성](eks/03-eks-networking-part2.md)
-  * [Part 3: 문제 해결](eks/03-eks-networking-part3.md)
+    * [Part 1: 기본 개념](eks/03-eks-networking-part1.md)
+    * [Part 2: 고급 구성](eks/03-eks-networking-part2.md)
+    * [Part 3: 문제 해결](eks/03-eks-networking-part3.md)
 * [EKS 스토리지](eks/04-eks-storage-part1.md)
-  *
-  * [Part 2: 스토리지 클래스](eks/04-eks-storage-part2.md)
-  * [Part 3: 고급 구성](eks/04-eks-storage-part3.md)
+    * [Part 1: 기본 개념](eks/04-eks-storage-part1.md)
+    * [Part 2: 스토리지 클래스](eks/04-eks-storage-part2.md)
+    * [Part 3: 고급 구성](eks/04-eks-storage-part3.md)
 * [EKS 보안](eks/05-eks-security.md)
 * [EKS 모니터링 및 로깅](eks/06-eks-monitoring-logging.md)
 * [EKS 비용 최적화](eks/07-eks-cost-optimization.md)
@@ -52,9 +52,9 @@
 
 * [Kyverno를 사용한 정책 관리](advanced/01-kyverno-policy-management.md)
 * [커스텀 스케줄러](advanced/02-custom-scheduler-part1.md)
-  *
-  * [Part 2: 구현](advanced/02-custom-scheduler-part2.md)
-  * [Part 3: 고급 기능](advanced/02-custom-scheduler-part3.md)
+    * [Part 1: 기본 개념](advanced/02-custom-scheduler-part1.md)
+    * [Part 2: 구현](advanced/02-custom-scheduler-part2.md)
+    * [Part 3: 고급 기능](advanced/02-custom-scheduler-part3.md)
 * [AI/ML 워크로드](advanced/03-ai-ml-workloads.md)
 * [vLLM 배포](advanced/04-vllm-deployment.md)
 
@@ -82,3 +82,4 @@
 * [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](tools/07-monitoring-stack.md)
 * [로깅 스택 (Loki, Tempo)](tools/08-logging-stack.md)
 * [VPC Lattice](tools/09-vpc-lattice.md)
+

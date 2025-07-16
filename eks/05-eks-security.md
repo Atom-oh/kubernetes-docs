@@ -148,37 +148,41 @@ EKS 클러스터를 생성할 때 필요한 최소 권한:
 }
 ```
 
-#### aws-auth ConfigMap
+#### EKS Access Entry
 
-EKS 클러스터에 대한 IAM 사용자 및 역할 액세스를 관리하기 위한 `aws-auth` ConfigMap 예시:
+EKS Access Entry는 aws-auth ConfigMap을 대체하는 새로운 방식으로, EKS 클러스터에 대한 IAM 사용자 및 역할 액세스를 관리합니다. Access Entry는 다음과 같은 장점을 제공합니다:
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: aws-auth
-  namespace: kube-system
-data:
-  mapRoles: |
-    - rolearn: arn:aws:iam::123456789012:role/EKSNodeRole
-      username: system:node:{{EC2PrivateDNSName}}
-      groups:
-        - system:bootstrappers
-        - system:nodes
-    - rolearn: arn:aws:iam::123456789012:role/DevTeamRole
-      username: dev-team
-      groups:
-        - dev-team
-  mapUsers: |
-    - userarn: arn:aws:iam::123456789012:user/admin
-      username: admin
-      groups:
-        - system:masters
-    - userarn: arn:aws:iam::123456789012:user/developer
-      username: developer
-      groups:
-        - dev-team
+- AWS 관리형 솔루션으로 안정성 향상
+- 선언적 API를 통한 관리
+- 버전 관리 및 감사 기능
+- 노드 IAM 역할과 사용자/역할 액세스 관리 분리
+
+```bash
+# 클러스터에 대한 Access Entry 활성화
+aws eks update-cluster-config \
+  --name my-cluster \
+  --region us-west-2 \
+  --access-config authenticationMode=API_AND_CONFIG_MAP
+
+# IAM 역할에 대한 Access Entry 생성
+aws eks create-access-entry \
+  --cluster-name my-cluster \
+  --principal-arn arn:aws:iam::123456789012:role/DevTeamRole \
+  --username dev-team \
+  --kubernetes-groups dev-team
+
+# IAM 사용자에 대한 Access Entry 생성
+aws eks create-access-entry \
+  --cluster-name my-cluster \
+  --principal-arn arn:aws:iam::123456789012:user/admin \
+  --username admin \
+  --kubernetes-groups system:masters
+
+# Access Entry 목록 조회
+aws eks list-access-entries --cluster-name my-cluster
 ```
+
+> **참고**: EKS Access Entry는 2023년에 도입된 기능으로, aws-auth ConfigMap보다 더 안정적이고 관리하기 쉬운 방법을 제공합니다. 기존 클러스터는 두 방식을 모두 지원하는 하이브리드 모드로 마이그레이션할 수 있습니다.
 
 ### IRSA(IAM Roles for Service Accounts)
 

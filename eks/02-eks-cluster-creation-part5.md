@@ -10,8 +10,10 @@ EKS 클러스터를 생성한 후에는 클러스터에 액세스하기 위한 �
 flowchart TD
     A[EKS 클러스터 생성 완료] --> B[kubeconfig 구성]
     B --> C[IAM 사용자/역할 액세스 구성]
-    C --> D[aws-auth ConfigMap 업데이트]
-    D --> E[RBAC 구성]
+    C --> D1[EKS Access Entry 구성]
+    C --> D2[aws-auth ConfigMap 업데이트]
+    D1 --> E[RBAC 구성]
+    D2 --> E
     E --> F[네임스페이스 생성]
     F --> G[역할 생성]
     G --> H[역할 바인딩 생성]
@@ -25,7 +27,7 @@ flowchart TD
     
     %% 클래스 적용
     class A,B,C awsService;
-    class D,E,F,G,H,I k8sComponent;
+    class D1,D2,E,F,G,H,I k8sComponent;
 ```
 
 ### kubeconfig 구성
@@ -42,12 +44,14 @@ aws eks update-kubeconfig \
 
 ### IAM 사용자 및 역할 액세스 구성
 
-기본적으로 EKS 클러스터를 생성한 IAM 엔터티(사용자 또는 역할)만 클러스터에 액세스할 수 있습니다. 다른 IAM 사용자 또는 역할에 클러스터 액세스 권한을 부여하려면 `aws-auth` ConfigMap을 업데이트해야 합니다.
+기본적으로 EKS 클러스터를 생성한 IAM 엔터티(사용자 또는 역할)만 클러스터에 액세스할 수 있습니다. 다른 IAM 사용자 또는 역할에 클러스터 액세스 권한을 부여하는 방법에는 두 가지가 있습니다: 전통적인 aws-auth ConfigMap 방식과 새로운 EKS Access Entry 방식입니다.
 
 ```mermaid
 flowchart LR
-    A[IAM 사용자/역할] --> B[aws-auth ConfigMap]
-    B --> C[Kubernetes API]
+    A[IAM 사용자/역할] --> B1[EKS Access Entry]
+    A --> B2[aws-auth ConfigMap]
+    B1 --> C[Kubernetes API]
+    B2 --> C
     C --> D[EKS 클러스터]
     
     subgraph AWS
@@ -55,7 +59,8 @@ flowchart LR
     end
     
     subgraph Kubernetes
-    B
+    B1
+    B2
     C
     D
     end
@@ -68,8 +73,59 @@ flowchart LR
     
     %% 클래스 적용
     class A awsService;
-    class B,C,D k8sComponent;
+    class B1,B2,C,D k8sComponent;
 ```
+
+#### 방법 1: EKS Access Entry (권장)
+
+EKS Access Entry는 aws-auth ConfigMap을 대체하는 새로운 방식으로, 더 안정적이고 관리하기 쉬운 방법을 제공합니다.
+
+1. 클러스터에 대한 Access Entry 활성화:
+
+```bash
+aws eks update-cluster-config \
+  --name my-cluster \
+  --region us-west-2 \
+  --access-config authenticationMode=API_AND_CONFIG_MAP
+```
+
+2. IAM 역할에 대한 Access Entry 생성:
+
+```bash
+aws eks create-access-entry \
+  --cluster-name my-cluster \
+  --principal-arn arn:aws:iam::123456789012:role/MyRole \
+  --username my-role \
+  --kubernetes-groups system:masters
+```
+
+3. IAM 사용자에 대한 Access Entry 생성:
+
+```bash
+aws eks create-access-entry \
+  --cluster-name my-cluster \
+  --principal-arn arn:aws:iam::123456789012:user/my-user \
+  --username my-user \
+  --kubernetes-groups system:masters
+```
+
+4. Access Entry 목록 조회:
+
+```bash
+aws eks list-access-entries --cluster-name my-cluster
+```
+
+5. Access Entry 세부 정보 조회:
+
+```bash
+aws eks describe-access-entry \
+  --cluster-name my-cluster \
+  --principal-arn arn:aws:iam::123456789012:user/my-user
+```
+
+#### 방법 2: aws-auth ConfigMap (레거시)
+
+aws-auth ConfigMap은 전통적인 방식으로, 여전히 지원되지만 새로운 클러스터에서는 Access Entry 사용을 권장합니다.
 
 1. 현재 `aws-auth` ConfigMap 가져오기:
 
@@ -110,6 +166,8 @@ data:
 ```bash
 kubectl apply -f aws-auth.yaml
 ```
+
+> **참고**: EKS Access Entry는 2023년에 도입된 기능으로, 새로운 클러스터에서는 Access Entry 사용을 권장합니다. 기존 클러스터는 두 방식을 모두 지원하는 하이브리드 모드로 마이그레이션할 수 있습니다.
 
 ### RBAC 구성
 
