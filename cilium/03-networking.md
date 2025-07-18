@@ -1,4 +1,4 @@
-# 3일차: 네트워킹 모델 및 VXLAN
+# 네트워킹 모델 및 VXLAN
 
 ## 컨테이너 네트워킹 모델 비교
 
@@ -48,16 +48,17 @@ VXLAN(Virtual Extensible LAN)은 레이어 2 네트워크를 레이어 3 네트�
 
 ### VXLAN 패킷 구조:
 
-```
-+-------------------------------+
-| 외부 이더넷 헤더              |
-+-------------------------------+
-| 외부 IP 헤더 (보통 UDP)       |
-+-------------------------------+
-| VXLAN 헤더 (VNI 포함)         |
-+-------------------------------+
-| 원래 이더넷 프레임            |
-+-------------------------------+
+```mermaid
+flowchart TD
+    subgraph "VXLAN 패킷 구조"
+        direction TB
+        A["외부 이더넷 헤더"] --> B["외부 IP 헤더 (보통 UDP)"]
+        B --> C["VXLAN 헤더 (VNI 포함)"]
+        C --> D["원래 이더넷 프레임"]
+    end
+    
+    classDef header fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    class A,B,C,D header;
 ```
 
 ### VXLAN 작동 방식:
@@ -82,29 +83,31 @@ Cilium은 기본적으로 VXLAN을 사용하여 오버레이 네트워킹을 구
 
 ### Cilium 오버레이 네트워크 아키텍처:
 
-```
-+-------------------+        +-------------------+
-| 호스트 A          |        | 호스트 B          |
-|                   |        |                   |
-| +---------------+ |        | +---------------+ |
-| | 컨테이너 A    | |        | | 컨테이너 B    | |
-| | 10.0.0.1      | |        | | 10.0.0.2      | |
-| +-------+-------+ |        | +-------+-------+ |
-|         |         |        |         |         |
-|     +---v---+     |        |     +---v---+     |
-|     | eBPF  |     |        |     | eBPF  |     |
-|     +---+---+     |        |     +---+---+     |
-|         |         |        |         |         |
-| +-------v-------+ |        | +-------v-------+ |
-| | VTEP          | |        | | VTEP          | |
-| | 192.168.1.1   | |        | | 192.168.1.2   | |
-| +-------+-------+ |        | +-------+-------+ |
-|         |         |        |         |         |
-+---------|---------+        +---------|---------+
-          |                            |
-          |                            |
-          +----------------------------+
-                  물리적 네트워크
+```mermaid
+flowchart TD
+    subgraph "호스트 A"
+        direction TB
+        A1["컨테이너 A\n10.0.0.1"] --> B1["eBPF"]
+        B1 --> C1["VTEP\n192.168.1.1"]
+    end
+    
+    subgraph "호스트 B"
+        direction TB
+        A2["컨테이너 B\n10.0.0.2"] --> B2["eBPF"]
+        B2 --> C2["VTEP\n192.168.1.2"]
+    end
+    
+    C1 <--> D["물리적 네트워크"] <--> C2
+    
+    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef ebpf fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef vtep fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef network fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class A1,A2 container;
+    class B1,B2 ebpf;
+    class C1,C2 vtep;
+    class D network;
 ```
 
 ### Cilium 오버레이 네트워킹 작동 방식:

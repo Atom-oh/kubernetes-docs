@@ -285,7 +285,7 @@ graph TD
     outerEth[Outer Ethernet]
     outerIP[Outer IP]
     outerUDP[Outer UDP]
-    vxlanHeader[VXLAN Header<br>VNI(VXLAN Network Identifier)]
+    vxlanHeader["VXLAN Header<br>VNI(VXLAN Network Identifier)"]
     origEth[Original Ethernet]
     origIP[Original IP]
     origTCP[Original TCP/UDP]
