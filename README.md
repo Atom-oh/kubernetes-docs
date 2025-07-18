@@ -38,8 +38,14 @@
    - [Part 3: AWS Management Console 및 CLI를 사용한 클러스터 생성](./eks/02-eks-cluster-creation-part3.md)
    - [Part 4: Terraform 및 CDK를 사용한 클러스터 생성](./eks/02-eks-cluster-creation-part4.md)
    - [Part 5: 클러스터 액세스, 검증, 업그레이드 및 삭제](./eks/02-eks-cluster-creation-part5.md)
-3. [EKS 네트워킹](./eks/03-eks-networking.md)
-4. [EKS 스토리지](./eks/04-eks-storage.md)
+3. EKS 네트워킹
+   - [Part 1: 기본 개념 및 VPC 구성](./eks/03-eks-networking-part1.md)
+   - [Part 2: 서비스 및 로드 밸런싱, 네트워크 정책](./eks/03-eks-networking-part2.md)
+   - [Part 3: 성능 최적화, 문제 해결, 고급 사용 사례](./eks/03-eks-networking-part3.md)
+4. EKS 스토리지
+   - [Part 1: 기본 개념, EBS, EFS](./eks/04-eks-storage-part1.md)
+   - [Part 2: FSx for Lustre, S3, 스냅샷, 볼륨 확장, 성능 최적화](./eks/04-eks-storage-part2.md)
+   - [Part 3: 모니터링, 문제 해결, 비용 최적화, 보안](./eks/04-eks-storage-part3.md)
 5. [EKS 보안](./eks/05-eks-security.md)
 6. [EKS 모니터링 및 로깅](./eks/06-eks-monitoring-logging.md)
 7. [EKS 비용 최적화](./eks/07-eks-cost-optimization.md)
