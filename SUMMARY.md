@@ -94,7 +94,7 @@
 ### Kubernetes 핵심 개념
 * [클러스터 아키텍처 퀴즈](quizzes/core/01-cluster-architecture-quiz.md)
 * [파드와 워크로드 퀴즈](quizzes/core/02-pods-and-workloads-quiz.md)
-* [서비스와 네트워킹 퀴즈](quizzes/core/03-services-and-networking-quiz.md)
+* [서비스와 네트워킹 퀴즈](quizzes/core/03-services-networking-quiz.md)
 * [스토리지 퀴즈](quizzes/core/04-storage-quiz.md)
 * [구성 퀴즈](quizzes/core/05-configuration-secrets-quiz.md)
 * [보안 퀴즈](quizzes/core/06-security-quiz.md)
