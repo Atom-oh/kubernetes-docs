@@ -261,17 +261,18 @@ ETCDCTL_API=3 etcdctl snapshot save /backup/etcd-snapshot-$(date +%Y%m%d).db \
 apiVersion: kubescheduler.config.k8s.io/v1
 kind: KubeSchedulerConfiguration
 leaderElection:
-leaderElect: true
+  leaderElect: true
+
 profiles:
-- schedulerName: custom-scheduler
-plugins:
-score:
-enabled:
-- name: NodeResourcesBalancedAllocation
-weight: 2
-filter:
-disabled:
-- name: NodeUnschedulable
+  - schedulerName: custom-scheduler
+    plugins:
+      score:
+        enabled:
+          - name: NodeResourcesBalancedAllocation
+        disabled: []
+      filter:
+        disabled:
+          - name: NodeUnschedulable
 ```
 
 **설명:**
@@ -327,47 +328,47 @@ etcd \
 **고가용성 Kubernetes 클러스터 아키텍처 설계**
 
 1. **컨트롤 플레인 구성 요소 배포**:
-- 최소 3개의 컨트롤 플레인 노드를 여러 가용 영역에 분산 배치
-- 각 노드에 kube-apiserver, kube-scheduler, kube-controller-manager 배포
-- kube-scheduler와 kube-controller-manager는 리더 선출 모드로 실행 (한 번에 하나의 인스턴스만 활성)
-- kube-apiserver는 수평적으로 확장 가능 (모든 인스턴스가 동시에 활성)
+  - 최소 3개의 컨트롤 플레인 노드를 여러 가용 영역에 분산 배치
+  - 각 노드에 kube-apiserver, kube-scheduler, kube-controller-manager 배포
+  - kube-scheduler와 kube-controller-manager는 리더 선출 모드로 실행 (한 번에 하나의 인스턴스만 활성)
+  - kube-apiserver는 수평적으로 확장 가능 (모든 인스턴스가 동시에 활성)
 
 2. **etcd 배포 방식**:
-- 스택형 토폴로지: etcd를 컨트롤 플레인 노드와 함께 배포
-- 외부 토폴로지: etcd를 별도의 노드에 배포 (더 높은 격리성과 확장성)
-- 최소 3개의 etcd 노드를 여러 가용 영역에 분산 배치 (5개 권장)
-- etcd 클러스터는 Raft 합의 알고리즘을 사용하여 데이터 일관성 보장
+  - 스택형 토폴로지: etcd를 컨트롤 플레인 노드와 함께 배포
+  - 외부 토폴로지: etcd를 별도의 노드에 배포 (더 높은 격리성과 확장성)
+  - 최소 3개의 etcd 노드를 여러 가용 영역에 분산 배치 (5개 권장)
+  - etcd 클러스터는 Raft 합의 알고리즘을 사용하여 데이터 일관성 보장
 
 3. **로드 밸런서 구성**:
-- kube-apiserver 앞에 로드 밸런서 배치
-- 로드 밸런서는 L4(TCP) 또는 L7(HTTP/HTTPS) 레벨에서 작동 가능
-- 헬스 체크를 통해 비정상 kube-apiserver 인스턴스 감지 및 트래픽 제외
-- 클라우드 환경에서는 클라우드 제공업체의 관리형 로드 밸런서 사용 (AWS ELB, GCP Cloud Load Balancer 등)
-- 온프레미스 환경에서는 HAProxy, NGINX, keepalived 등 사용
+  - kube-apiserver 앞에 로드 밸런서 배치
+  - 로드 밸런서는 L4(TCP) 또는 L7(HTTP/HTTPS) 레벨에서 작동 가능
+  - 헬스 체크를 통해 비정상 kube-apiserver 인스턴스 감지 및 트래픽 제외
+  - 클라우드 환경에서는 클라우드 제공업체의 관리형 로드 밸런서 사용 (AWS ELB, GCP Cloud Load Balancer 등)
+  - 온프레미스 환경에서는 HAProxy, NGINX, keepalived 등 사용
 
 4. **장애 시나리오 및 대응 방안**:
-- **단일 컨트롤 플레인 노드 장애**:
-- kube-apiserver: 로드 밸런서가 트래픽을 정상 노드로 라우팅
-- kube-scheduler/kube-controller-manager: 리더 선출을 통해 다른 노드의 인스턴스가 활성화
-- etcd: 과반수가 정상이면 클러스터 계속 작동 (3노드 중 2개, 5노드 중 3개)
+  - **단일 컨트롤 플레인 노드 장애**:
+  - kube-apiserver: 로드 밸런서가 트래픽을 정상 노드로 라우팅
+  - kube-scheduler/kube-controller-manager: 리더 선출을 통해 다른 노드의 인스턴스가 활성화
+  - etcd: 과반수가 정상이면 클러스터 계속 작동 (3노드 중 2개, 5노드 중 3개)
 
-- **가용 영역 장애**:
-- 여러 가용 영역에 노드 분산 배치로 단일 가용 영역 장애 대응
-- 워커 노드도 여러 가용 영역에 분산 배치
+  - **가용 영역 장애**:
+  - 여러 가용 영역에 노드 분산 배치로 단일 가용 영역 장애 대응
+  - 워커 노드도 여러 가용 영역에 분산 배치
 
-- **네트워크 파티션**:
-- etcd는 과반수 기반으로 작동하여 네트워크 파티션 시 "스플릿 브레인" 방지
-- 소수 파티션의 etcd 노드는 읽기 전용 모드로 전환
+  - **네트워크 파티션**:
+  - etcd는 과반수 기반으로 작동하여 네트워크 파티션 시 "스플릿 브레인" 방지
+  - 소수 파티션의 etcd 노드는 읽기 전용 모드로 전환
 
-- **etcd 데이터 손상/손실**:
-- 정기적인 etcd 백업 수행
-- 백업에서 복구 절차 문서화 및 테스트
+  - **etcd 데이터 손상/손실**:
+  - 정기적인 etcd 백업 수행
+  - 백업에서 복구 절차 문서화 및 테스트
 
 5. **추가 고려사항**:
-- **인증서 관리**: 인증서 만료 모니터링 및 자동 갱신
-- **감사 로깅**: 중요 작업에 대한 감사 로그 활성화 및 외부 저장
-- **모니터링 및 알림**: 컨트롤 플레인 구성 요소 상태 모니터링 및 알림 설정
-- **자동화된 복구**: 자동 복구 메커니즘 구현 (예: systemd 서비스 자동 재시작)
+  - **인증서 관리**: 인증서 만료 모니터링 및 자동 갱신
+  - **감사 로깅**: 중요 작업에 대한 감사 로그 활성화 및 외부 저장
+  - **모니터링 및 알림**: 컨트롤 플레인 구성 요소 상태 모니터링 및 알림 설정
+  - **자동화된 복구**: 자동 복구 메커니즘 구현 (예: systemd 서비스 자동 재시작)
 
 이러한 고가용성 아키텍처를 통해 단일 노드, 단일 가용 영역, 또는 일부 구성 요소의 장애가 발생해도 Kubernetes 클러스터는 계속 작동할 수 있습니다.
 </details>
@@ -383,112 +384,112 @@ etcd \
 **Kubernetes 네트워킹 아키텍처**
 
 1. **Kubernetes 네트워킹 모델**:
-- 모든 파드는 고유한 IP 주소를 가짐
-- 파드 간 NAT 없이 통신 가능
-- 노드와 파드 간 NAT 없이 통신 가능
-- 파드 내부의 컨테이너는 localhost를 통해 통신
+  - 모든 파드는 고유한 IP 주소를 가짐
+  - 파드 간 NAT 없이 통신 가능
+  - 노드와 파드 간 NAT 없이 통신 가능
+  - 파드 내부의 컨테이너는 localhost를 통해 통신
 
 2. **파드 간 통신**:
-- **같은 노드의 파드 간 통신**: 노드의 로컬 브리지 네트워크를 통해 통신
-- **다른 노드의 파드 간 통신**: 오버레이 네트워크 또는 라우팅 테이블을 통해 통신
-- CNI 플러그인이 파드 IP 주소 할당 및 라우팅 담당
+  - **같은 노드의 파드 간 통신**: 노드의 로컬 브리지 네트워크를 통해 통신
+  - **다른 노드의 파드 간 통신**: 오버레이 네트워크 또는 라우팅 테이블을 통해 통신
+  - CNI 플러그인이 파드 IP 주소 할당 및 라우팅 담당
 
 3. **서비스 네트워킹**:
-- **ClusterIP**: 클러스터 내부에서만 접근 가능한 가상 IP
-- **kube-proxy**: 서비스 IP에 대한 트래픽을 파드로 라우팅
-- iptables 모드: 리눅스 iptables 규칙을 사용하여 NAT 구현
-- IPVS 모드: 리눅스 커널의 IP Virtual Server를 사용하여 고성능 로드 밸런싱 제공
-- **CoreDNS**: 서비스 이름을 ClusterIP로 해석하는 DNS 서비스
-- **서비스 디스커버리**: 환경 변수 또는 DNS를 통해 서비스 발견
+  - **ClusterIP**: 클러스터 내부에서만 접근 가능한 가상 IP
+  - **kube-proxy**: 서비스 IP에 대한 트래픽을 파드로 라우팅
+  - iptables 모드: 리눅스 iptables 규칙을 사용하여 NAT 구현
+  - IPVS 모드: 리눅스 커널의 IP Virtual Server를 사용하여 고성능 로드 밸런싱 제공
+  - **CoreDNS**: 서비스 이름을 ClusterIP로 해석하는 DNS 서비스
+  - **서비스 디스커버리**: 환경 변수 또는 DNS를 통해 서비스 발견
 
 4. **외부 통신**:
-- **인그레스(Ingress)**: HTTP/HTTPS 트래픽을 서비스로 라우팅
-- **NodePort**: 노드의 특정 포트를 통해 서비스 노출
-- **LoadBalancer**: 클라우드 제공업체의 로드 밸런서를 통해 서비스 노출
-- **ExternalName**: 외부 서비스에 대한 CNAME 레코드 생성
+  - **인그레스(Ingress)**: HTTP/HTTPS 트래픽을 서비스로 라우팅
+  - **NodePort**: 노드의 특정 포트를 통해 서비스 노출
+  - **LoadBalancer**: 클라우드 제공업체의 로드 밸런서를 통해 서비스 노출
+  - **ExternalName**: 외부 서비스에 대한 CNAME 레코드 생성
 
 5. **CNI(Container Network Interface) 플러그인의 역할**:
-- 파드에 네트워크 인터페이스 연결
-- IP 주소 할당 및 관리
-- 라우팅 테이블 구성
-- 네트워크 정책 구현
-- 주요 CNI 플러그인:
-- **Calico**: BGP 기반 네트워킹, 네트워크 정책 지원, 고성능
-- **Cilium**: eBPF 기반 네트워킹 및 보안, L3-L7 보안 정책, 고성능
-- **Flannel**: 간단한 오버레이 네트워크, 설정 간단
-- **Weave Net**: 멀티 호스트 컨테이너 네트워킹, 암호화 지원
+  - 파드에 네트워크 인터페이스 연결
+  - IP 주소 할당 및 관리
+  - 라우팅 테이블 구성
+  - 네트워크 정책 구현
+  - 주요 CNI 플러그인:
+  - **Calico**: BGP 기반 네트워킹, 네트워크 정책 지원, 고성능
+  - **Cilium**: eBPF 기반 네트워킹 및 보안, L3-L7 보안 정책, 고성능
+  - **Flannel**: 간단한 오버레이 네트워크, 설정 간단
+  - **Weave Net**: 멀티 호스트 컨테이너 네트워킹, 암호화 지원
 
 6. **네트워크 정책을 사용한 파드 간 통신 제한**:
-- NetworkPolicy 리소스를 사용하여 파드 간 통신 제어
-- 기본적으로 모든 파드는 서로 통신 가능 (정책이 없는 경우)
-- 네트워크 정책 구성 요소:
-- **podSelector**: 정책이 적용될 파드 선택
-- **policyTypes**: Ingress(수신), Egress(송신) 또는 둘 다
-- **ingress**: 수신 트래픽 규칙
-- **egress**: 송신 트래픽 규칙
+  - NetworkPolicy 리소스를 사용하여 파드 간 통신 제어
+  - 기본적으로 모든 파드는 서로 통신 가능 (정책이 없는 경우)
+  - 네트워크 정책 구성 요소:
+  - **podSelector**: 정책이 적용될 파드 선택
+  - **policyTypes**: Ingress(수신), Egress(송신) 또는 둘 다
+  - **ingress**: 수신 트래픽 규칙
+  - **egress**: 송신 트래픽 규칙
 
-- **기본 거부 정책 예시**:
+  - **기본 거부 정책 예시**:
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-name: default-deny-all
+  name: default-deny-all
 spec:
-podSelector: {}
-policyTypes:
-- Ingress
-- Egress
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
 ```
 
-- **특정 파드 간 통신만 허용하는 정책 예시**:
+  - **특정 파드 간 통신만 허용하는 정책 예시**:
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-name: allow-frontend-to-backend
+  name: allow-frontend-to-backend
 spec:
-podSelector:
-matchLabels:
-app: backend
-policyTypes:
-- Ingress
-ingress:
-- from:
-- podSelector:
-matchLabels:
-app: frontend
-ports:
-- protocol: TCP
-port: 8080
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: frontend
+      ports:
+        - protocol: TCP
+          port: 8080
 ```
 
-- **네임스페이스 간 통신 제어 예시**:
+  - **네임스페이스 간 통신 제어 예시**:
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-name: allow-monitoring
+  name: allow-monitoring
 spec:
-podSelector:
-matchLabels:
-app: backend
-policyTypes:
-- Ingress
-ingress:
-- from:
-- namespaceSelector:
-matchLabels:
-purpose: monitoring
-ports:
-- protocol: TCP
-port: 9090
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            purpose: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
 ```
 
 7. **네트워크 정책 구현 고려사항**:
-- 네트워크 정책은 CNI 플러그인에 의해 구현됨
-- 모든 CNI 플러그인이 네트워크 정책을 지원하는 것은 아님
-- 정책 적용 전 테스트 환경에서 검증 필요
-- 기본 거부 정책부터 시작하여 필요한 통신만 허용하는 방식 권장
+  - 네트워크 정책은 CNI 플러그인에 의해 구현됨
+  - 모든 CNI 플러그인이 네트워크 정책을 지원하는 것은 아님
+  - 정책 적용 전 테스트 환경에서 검증 필요
+  - 기본 거부 정책부터 시작하여 필요한 통신만 허용하는 방식 권장
 
 Kubernetes 네트워킹 아키텍처는 유연하고 확장 가능한 방식으로 컨테이너 간 통신을 가능하게 하며, 네트워크 정책을 통해 세분화된 보안 제어를 제공합니다.
 </details>

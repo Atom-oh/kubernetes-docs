@@ -20,7 +20,7 @@
 ### Kubernetes 핵심 개념
 1. [클러스터 아키텍처](./core/01-cluster-architecture.md)
 2. [파드와 워크로드](./core/02-pods-and-workloads.md)
-3. [서비스와 네트워킹](./core/03-services-and-networking.md)
+3. [서비스와 네트워킹](./core/03-services-networking.md)
 4. [스토리지](./core/04-storage.md)
 5. [구성](./core/05-configuration-secrets.md)
 6. [보안](./core/06-security.md)
@@ -66,7 +66,10 @@
 
 ### 고급 주제
 1. [Kyverno를 사용한 정책 관리](./advanced/01-kyverno-policy-management.md)
-2. [커스텀 스케줄러](./advanced/02-custom-scheduler.md)
+2. Custom Scheduler
+   * [Part 1: Custom Scheduler 기초](./advanced/02-custom-scheduler-part1.md)
+   * [Part 2: 스케줄러 확장 및 프레임워크](./advanced/02-custom-scheduler-part2.md)
+   * [Part 3: 커스텀 스케줄러 구현 사례 및 모니터링](./advanced/02-custom-scheduler-part3.md)
 3. [AI/ML 워크로드](./advanced/03-ai-ml-workloads.md)
 4. [vLLM 배포](./advanced/04-vllm-deployment.md)
 

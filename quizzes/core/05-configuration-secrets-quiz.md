@@ -179,15 +179,15 @@ ConfigMap이나 Secret이 볼륨으로 마운트된 경우, Kubernetes는 주기
 apiVersion: v1
 kind: ConfigMap
 metadata:
-name: app-config
+   name: app-config
 data:
-app.properties: |
-app.name=MyApp
-app.version=1.0.0
-database.properties: |
-db.host=mysql
-db.port=3306
-db.name=mydb
+  app.properties: |
+    app.name=MyApp
+    app.version=1.0.0
+  database.properties: |
+    db.host=mysql
+    db.port=3306
+    db.name=mydb
 ```
 
 2. Secret 생성:
@@ -195,11 +195,11 @@ db.name=mydb
 apiVersion: v1
 kind: Secret
 metadata:
-name: app-secrets
+  name: app-secrets
 type: Opaque
 data:
-db.user: YWRtaW4=  # admin (base64 인코딩)
-db.password: cGFzc3dvcmQxMjM=  # password123 (base64 인코딩)
+  db.user: YWRtaW4=  # admin (base64 인코딩)
+  db.password: cGFzc3dvcmQxMjM=  # password123 (base64 인코딩)
 ```
 
 3. 환경 변수와 볼륨으로 마운트하는 포드 생성:
@@ -207,47 +207,47 @@ db.password: cGFzc3dvcmQxMjM=  # password123 (base64 인코딩)
 apiVersion: v1
 kind: Pod
 metadata:
-name: app-pod
+  name: app-pod
 spec:
-containers:
-- name: app
-image: myapp:1.0
-env:
-# ConfigMap에서 환경 변수 가져오기
-- name: APP_NAME
-valueFrom:
-configMapKeyRef:
-name: app-config
-key: app.properties
-subPath: app.name
-# Secret에서 환경 변수 가져오기
-- name: DB_USER
-valueFrom:
-secretKeyRef:
-name: app-secrets
-key: db.user
-- name: DB_PASSWORD
-valueFrom:
-secretKeyRef:
-name: app-secrets
-key: db.password
-volumeMounts:
-# ConfigMap을 볼륨으로 마운트
-- name: config-volume
-mountPath: /etc/config
-# Secret을 볼륨으로 마운트
-- name: secret-volume
-mountPath: /etc/secrets
-readOnly: true
-volumes:
-# ConfigMap 볼륨 정의
-- name: config-volume
-configMap:
-name: app-config
-# Secret 볼륨 정의
-- name: secret-volume
-secret:
-secretName: app-secrets
+  containers:
+    - name: app
+      image: myapp:1.0
+      env:
+        # ConfigMap에서 환경 변수 가져오기
+        - name: APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: app.properties
+              subPath: app.name
+        # Secret에서 환경 변수 가져오기
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: db.user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: db.password
+      volumeMounts:
+        # ConfigMap을 볼륨으로 마운트
+        - name: config-volume
+          mountPath: /etc/config
+        # Secret을 볼륨으로 마운트
+        - name: secret-volume
+          mountPath: /etc/secrets
+          readOnly: true
+  volumes:
+    # ConfigMap 볼륨 정의
+    - name: config-volume
+      configMap:
+        name: app-config
+    # Secret 볼륨 정의
+    - name: secret-volume
+      secret:
+        secretName: app-secrets
 ```
 
 4. 리소스 적용:
@@ -290,18 +290,18 @@ kubectl exec app-pod -- cat /etc/secrets/db.user
 apiVersion: v1
 kind: Pod
 metadata:
-name: guaranteed-pod
+  name: guaranteed-pod
 spec:
-containers:
-- name: nginx
-image: nginx
-resources:
-requests:
-memory: "100Mi"
-cpu: "100m"
-limits:
-memory: "100Mi"
-cpu: "100m"
+  containers:
+    - name: nginx
+      image: nginx
+      resources:
+        requests:
+          memory: "100Mi"
+          cpu: "100m"
+        limits:
+          memory: "100Mi"
+          cpu: "100m"
 ```
 
 **Burstable QoS 포드**:
@@ -309,18 +309,18 @@ cpu: "100m"
 apiVersion: v1
 kind: Pod
 metadata:
-name: burstable-pod
+  name: burstable-pod
 spec:
-containers:
-- name: nginx
-image: nginx
-resources:
-requests:
-memory: "100Mi"
-cpu: "100m"
-limits:
-memory: "200Mi"
-cpu: "200m"
+  containers:
+    - name: nginx
+      image: nginx
+      resources:
+        requests:
+          memory: "100Mi"
+          cpu: "100m"
+        limits:
+          memory: "200Mi"
+          cpu: "200m"
 ```
 
 **BestEffort QoS 포드**:
@@ -328,11 +328,11 @@ cpu: "200m"
 apiVersion: v1
 kind: Pod
 metadata:
-name: besteffort-pod
+  name: besteffort-pod
 spec:
-containers:
-- name: nginx
-image: nginx
+  containers:
+    - name: nginx
+      image: nginx
 # 리소스 요청과 제한이 없음
 ```
 
@@ -370,9 +370,9 @@ kubectl top pod besteffort-pod
 ```
 
 **QoS 클래스 결정 규칙**:
-- **Guaranteed**: 모든 컨테이너에 리소스 요청과 제한이 설정되어 있고, 요청과 제한이 동일한 경우
-- **Burstable**: 적어도 하나의 컨테이너에 리소스 요청이 설정되어 있지만, Guaranteed 조건을 충족하지 않는 경우
-- **BestEffort**: 모든 컨테이너에 리소스 요청과 제한이 설정되지 않은 경우
+  - **Guaranteed**: 모든 컨테이너에 리소스 요청과 제한이 설정되어 있고, 요청과 제한이 동일한 경우
+  - **Burstable**: 적어도 하나의 컨테이너에 리소스 요청이 설정되어 있지만, Guaranteed 조건을 충족하지 않는 경우
+  - **BestEffort**: 모든 컨테이너에 리소스 요청과 제한이 설정되지 않은 경우
 </details>
 
 3. Downward API를 사용하여 포드의 메타데이터와 리소스 정보를 컨테이너에 제공하는 방법을 설명하세요.
@@ -388,93 +388,93 @@ kubectl top pod besteffort-pod
 apiVersion: v1
 kind: Pod
 metadata:
-name: downward-api-pod
-labels:
-app: myapp
-environment: production
+  name: downward-api-pod
+  labels:
+    app: myapp
+    environment: production
 spec:
-containers:
-- name: main
-image: busybox
-command: ["sh", "-c", "while true; do echo Downward API Demo; sleep 10; done"]
-resources:
-requests:
-memory: "64Mi"
-cpu: "250m"
-limits:
-memory: "128Mi"
-cpu: "500m"
-env:
-# 포드 메타데이터를 환경 변수로 제공
-- name: POD_NAME
-valueFrom:
-fieldRef:
-fieldPath: metadata.name
-- name: POD_NAMESPACE
-valueFrom:
-fieldRef:
-fieldPath: metadata.namespace
-- name: POD_IP
-valueFrom:
-fieldRef:
-fieldPath: status.podIP
-- name: NODE_NAME
-valueFrom:
-fieldRef:
-fieldPath: spec.nodeName
-- name: POD_SERVICE_ACCOUNT
-valueFrom:
-fieldRef:
-fieldPath: spec.serviceAccountName
-- name: POD_LABEL_APP
-valueFrom:
-fieldRef:
-fieldPath: metadata.labels['app']
-# 컨테이너 리소스 정보를 환경 변수로 제공
-- name: CPU_REQUEST
-valueFrom:
-resourceFieldRef:
-containerName: main
-resource: requests.cpu
-- name: CPU_LIMIT
-valueFrom:
-resourceFieldRef:
-containerName: main
-resource: limits.cpu
-- name: MEM_REQUEST
-valueFrom:
-resourceFieldRef:
-containerName: main
-resource: requests.memory
-divisor: "1Mi"
-- name: MEM_LIMIT
-valueFrom:
-resourceFieldRef:
-containerName: main
-resource: limits.memory
-divisor: "1Mi"
-volumeMounts:
-- name: podinfo
-mountPath: /etc/podinfo
-volumes:
-# Downward API를 볼륨으로 제공
-- name: podinfo
-downwardAPI:
-items:
-- path: "labels"
-fieldRef:
-fieldPath: metadata.labels
-- path: "annotations"
-fieldRef:
-fieldPath: metadata.annotations
-- path: "cpu-request"
-resourceFieldRef:
-containerName: main
-resource: requests.cpu
-- path: "cpu-limit"
-resourceFieldRef:
-containerName: main
-resource: limits.cpu
+  containers:
+    - name: main
+      image: busybox
+      command: ["sh", "-c", "while true; do echo Downward API Demo; sleep 10; done"]
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "250m"
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+      env:
+        # 포드 메타데이터를 환경 변수로 제공
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_SERVICE_ACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+        - name: POD_LABEL_APP
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['app']
+        # 컨테이너 리소스 정보를 환경 변수로 제공
+        - name: CPU_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              containerName: main
+              resource: requests.cpu
+        - name: CPU_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              containerName: main
+              resource: limits.cpu
+        - name: MEM_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              containerName: main
+              resource: requests.memory
+              divisor: "1Mi"
+        - name: MEM_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              containerName: main
+              resource: limits.memory
+              divisor: "1Mi"
+      volumeMounts:
+        - name: podinfo
+          mountPath: /etc/podinfo
+  volumes:
+    # Downward API를 볼륨으로 제공
+    - name: podinfo
+      downwardAPI:
+        items:
+          - path: "labels"
+            fieldRef:
+              fieldPath: metadata.labels
+          - path: "annotations"
+            fieldRef:
+              fieldPath: metadata.annotations
+          - path: "cpu-request"
+            resourceFieldRef:
+              containerName: main
+              resource: requests.cpu
+          - path: "cpu-limit"
+            resourceFieldRef:
+              containerName: main
+              resource: limits.cpu
 ```
 
 2. 포드 생성:
@@ -497,19 +497,19 @@ kubectl exec downward-api-pod -- cat /etc/podinfo/cpu-request
 **Downward API 사용 가능한 필드**:
 
 **환경 변수로 사용 가능한 필드**:
-- `metadata.name` - 포드 이름
-- `metadata.namespace` - 포드 네임스페이스
-- `metadata.uid` - 포드 UID
-- `metadata.labels['<KEY>']` - 포드 레이블 값
-- `metadata.annotations['<KEY>']` - 포드 어노테이션 값
-- `status.podIP` - 포드 IP 주소
-- `spec.nodeName` - 포드가 실행 중인 노드 이름
-- `spec.serviceAccountName` - 포드의 서비스 계정 이름
-- `status.hostIP` - 포드가 실행 중인 노드 IP 주소
+  - `metadata.name` - 포드 이름
+  - `metadata.namespace` - 포드 네임스페이스
+  - `metadata.uid` - 포드 UID
+  - `metadata.labels['<KEY>']` - 포드 레이블 값
+  - `metadata.annotations['<KEY>']` - 포드 어노테이션 값
+  - `status.podIP` - 포드 IP 주소
+  - `spec.nodeName` - 포드가 실행 중인 노드 이름
+  - `spec.serviceAccountName` - 포드의 서비스 계정 이름
+  - `status.hostIP` - 포드가 실행 중인 노드 IP 주소
 
 **리소스 필드**:
-- `requests.cpu` - CPU 요청
-- `limits.cpu` - CPU 제한
-- `requests.memory` - 메모리 요청
-- `limits.memory` - 메모리 제한
+  - `requests.cpu` - CPU 요청
+  - `limits.cpu` - CPU 제한
+  - `requests.memory` - 메모리 요청
+  - `limits.memory` - 메모리 제한
 </details>

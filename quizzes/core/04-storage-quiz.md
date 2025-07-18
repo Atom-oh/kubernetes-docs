@@ -177,21 +177,21 @@ CSI(Container Storage Interface)는 컨테이너 오케스트레이션 시스템
 **CSI 드라이버 통합 방법:**
 
 1. **CSI 드라이버 배포**: CSI 드라이버는 일반적으로 다음 구성 요소로 구성됩니다:
-- **노드 플러그인 DaemonSet**: 각 노드에서 실행되며 볼륨 마운트/언마운트 작업 수행
-- **컨트롤러 플러그인 Deployment/StatefulSet**: 볼륨 생성/삭제/스냅샷 등의 작업 수행
-- **RBAC 리소스**: 필요한 권한 설정
+  - **노드 플러그인 DaemonSet**: 각 노드에서 실행되며 볼륨 마운트/언마운트 작업 수행
+  - **컨트롤러 플러그인 Deployment/StatefulSet**: 볼륨 생성/삭제/스냅샷 등의 작업 수행
+  - **RBAC 리소스**: 필요한 권한 설정
 
 2. **StorageClass 생성**: CSI 드라이버를 사용하는 StorageClass 정의:
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-name: csi-storage
+  name: csi-storage
 provisioner: example.csi.k8s.io  # CSI 드라이버 이름
 parameters:
-# 드라이버별 파라미터
-type: ssd
-fsType: ext4
+  # 드라이버별 파라미터
+  type: ssd
+  fsType: ext4
 ```
 
 3. **CSI 볼륨 스냅샷 지원 설정** (선택 사항):
@@ -199,7 +199,7 @@ fsType: ext4
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
 metadata:
-name: csi-snapshot-class
+  name: csi-snapshot-class
 driver: example.csi.k8s.io
 deletionPolicy: Delete
 ```
@@ -226,22 +226,22 @@ deletionPolicy: Delete
 # AWS EBS CSI 드라이버 설치 (Helm 사용)
 helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
 helm install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver \
---namespace kube-system \
---set enableVolumeScheduling=true \
---set enableVolumeResizing=true \
---set enableVolumeSnapshot=true
+  --namespace kube-system \
+  --set enableVolumeScheduling=true \
+  --set enableVolumeResizing=true \
+  --set enableVolumeSnapshot=true
 
 # StorageClass 생성
 kubectl apply -f - <<EOF
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-name: ebs-sc
+  name: ebs-sc
 provisioner: ebs.csi.aws.com
 volumeBindingMode: WaitForFirstConsumer
 parameters:
-type: gp3
-encrypted: "true"
+  type: gp3
+  encrypted: "true"
 EOF
 ```
 
@@ -259,22 +259,22 @@ CSI는 Kubernetes 스토리지 에코시스템의 핵심 부분으로, 다양한
 **고가용성 데이터베이스 클러스터 설계:**
 
 1. **아키텍처 개요**:
-- 3개 이상의 복제본을 가진 StatefulSet으로 데이터베이스 클러스터 구성
-- 각 포드에 고유한 PersistentVolume 할당
-- 헤드리스 서비스를 통한 안정적인 네트워크 식별자 제공
-- 리더 선출 메커니즘을 통한 마스터-슬레이브 구성
+  - 3개 이상의 복제본을 가진 StatefulSet으로 데이터베이스 클러스터 구성
+  - 각 포드에 고유한 PersistentVolume 할당
+  - 헤드리스 서비스를 통한 안정적인 네트워크 식별자 제공
+  - 리더 선출 메커니즘을 통한 마스터-슬레이브 구성
 
 2. **StorageClass 설정**:
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-name: fast-storage
+  name: fast-storage
 provisioner: kubernetes.io/aws-ebs
 parameters:
-type: gp3
-iopsPerGB: "3000"
-encrypted: "true"
+  type: gp3
+  iopsPerGB: "3000"
+  encrypted: "true"
 reclaimPolicy: Retain
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
@@ -285,14 +285,14 @@ volumeBindingMode: WaitForFirstConsumer
 apiVersion: v1
 kind: Service
 metadata:
-name: db-cluster
+  name: db-cluster
 spec:
-clusterIP: None
-selector:
-app: database
-ports:
-- port: 3306
-name: db
+  clusterIP: None
+  selector:
+    app: database
+    ports:
+      - port: 3306
+    name: db
 ```
 
 4. **ConfigMap으로 구성 관리**:
@@ -300,15 +300,15 @@ name: db
 apiVersion: v1
 kind: ConfigMap
 metadata:
-name: db-config
+  name: db-config
 data:
-my.cnf: |
-[mysqld]
-server-id = ${HOSTNAME##*-}
-log_bin = /var/lib/mysql/mysql-bin.log
-binlog_format = ROW
-sync_binlog = 1
-innodb_flush_log_at_trx_commit = 1
+  my.cnf: |
+    [mysqld]
+    server-id = ${HOSTNAME##*-}
+    log_bin = /var/lib/mysql/mysql-bin.log
+    binlog_format = ROW
+    sync_binlog = 1
+    innodb_flush_log_at_trx_commit = 1
 ```
 
 5. **StatefulSet 정의**:
@@ -316,133 +316,133 @@ innodb_flush_log_at_trx_commit = 1
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-name: db-cluster
+  name: db-cluster
 spec:
-serviceName: db-cluster
-replicas: 3
-selector:
-matchLabels:
-app: database
-template:
-metadata:
-labels:
-app: database
-spec:
-initContainers:
-- name: init-config
-image: busybox
-command: ['sh', '-c', 'cp /config-map/my.cnf /etc/mysql/conf.d/']
-volumeMounts:
-- name: config-map
-mountPath: /config-map
-- name: config-dir
-mountPath: /etc/mysql/conf.d/
-containers:
-- name: mysql
-image: mysql:8.0
-env:
-- name: MYSQL_ROOT_PASSWORD
-valueFrom:
-secretKeyRef:
-name: mysql-secret
-key: password
-ports:
-- containerPort: 3306
-name: db
-volumeMounts:
-- name: data
-mountPath: /var/lib/mysql
-- name: config-dir
-mountPath: /etc/mysql/conf.d/
-readinessProbe:
-exec:
-command: ["mysql", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}", "-e", "SELECT 1"]
-initialDelaySeconds: 30
-periodSeconds: 10
-volumes:
-- name: config-map
-configMap:
-name: db-config
-- name: config-dir
-emptyDir: {}
-volumeClaimTemplates:
-- metadata:
-name: data
-spec:
-accessModes: [ "ReadWriteOnce" ]
-storageClassName: "fast-storage"
-resources:
-requests:
-storage: 50Gi
+  serviceName: db-cluster
+  replicas: 3
+  selector:
+    matchLabels:
+      app: database
+  template:
+    metadata:
+      labels:
+        app: database
+    spec:
+      initContainers:
+        - name: init-config
+          image: busybox
+          command: ['sh', '-c', 'cp /config-map/my.cnf /etc/mysql/conf.d/']
+          volumeMounts:
+            - name: config-map
+              mountPath: /config-map
+            - name: config-dir
+              mountPath: /etc/mysql/conf.d/
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password
+          ports:
+            - containerPort: 3306
+              name: db
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            - name: config-dir
+              mountPath: /etc/mysql/conf.d/
+          readinessProbe:
+            exec:
+              command: ["mysql", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}", "-e", "SELECT 1"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: config-map
+          configMap:
+            name: db-config
+        - name: config-dir
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "fast-storage"
+        resources:
+          requests:
+            storage: 50Gi
 ```
 
 **데이터 지속성 및 백업 전략:**
 
 1. **데이터 지속성 보장**:
-- `reclaimPolicy: Retain`을 사용하여 PV가 실수로 삭제되지 않도록 보호
-- 데이터베이스 엔진의 내구성 설정 활성화 (예: MySQL의 `sync_binlog=1`, `innodb_flush_log_at_trx_commit=1`)
-- 복제를 통한 데이터 중복성 확보
+  - `reclaimPolicy: Retain`을 사용하여 PV가 실수로 삭제되지 않도록 보호
+  - 데이터베이스 엔진의 내구성 설정 활성화 (예: MySQL의 `sync_binlog=1`, `innodb_flush_log_at_trx_commit=1`)
+  - 복제를 통한 데이터 중복성 확보
 
 2. **백업 전략**:
-- **정기적인 VolumeSnapshot 생성**:
+  - **정기적인 VolumeSnapshot 생성**:
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshot
 metadata:
-name: db-snapshot-{{date}}
+  name: db-snapshot-{{date}}
 spec:
-volumeSnapshotClassName: csi-snapshot-class
-source:
-persistentVolumeClaimName: data-db-cluster-0
+  volumeSnapshotClassName: csi-snapshot-class
+  source:
+    persistentVolumeClaimName: data-db-cluster-0
 ```
 
-- **데이터베이스 논리적 백업**:
+  - **데이터베이스 논리적 백업**:
 ```yaml
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-name: db-backup
+  name: db-backup
 spec:
-schedule: "0 2 * * *"  # 매일 02:00에 실행
-jobTemplate:
-spec:
-template:
-spec:
-containers:
-- name: backup
-image: mysql:8.0
-command:
-- /bin/sh
-- -c
-- |
-mysqldump -h db-cluster-0.db-cluster -u root -p"${MYSQL_ROOT_PASSWORD}" --all-databases > /backup/full-backup-$(date +%Y%m%d).sql
-aws s3 cp /backup/full-backup-$(date +%Y%m%d).sql s3://my-backup-bucket/
-env:
-- name: MYSQL_ROOT_PASSWORD
-valueFrom:
-secretKeyRef:
-name: mysql-secret
-key: password
-volumeMounts:
-- name: backup-volume
-mountPath: /backup
-volumes:
-- name: backup-volume
-emptyDir: {}
-restartPolicy: OnFailure
+  schedule: "0 2 * * *"  # 매일 02:00에 실행
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: mysql:8.0
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  mysqldump -h db-cluster-0.db-cluster -u root -p"${MYSQL_ROOT_PASSWORD}" --all-databases > /backup/full-backup-$(date +%Y%m%d).sql
+                  aws s3 cp /backup/full-backup-$(date +%Y%m%d).sql s3://my-backup-bucket/
+              env:
+                - name: MYSQL_ROOT_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: mysql-secret
+                      key: password
+              volumeMounts:
+                - name: backup-volume
+                  mountPath: /backup
+          volumes:
+            - name: backup-volume
+              emptyDir: {}
+          restartPolicy: OnFailure
 ```
 
-- **백업 검증 및 복원 테스트**: 정기적으로 백업에서 복원 테스트를 수행하여 백업의 유효성 검증
+  - **백업 검증 및 복원 테스트**: 정기적으로 백업에서 복원 테스트를 수행하여 백업의 유효성 검증
 
 3. **재해 복구 전략**:
-- 다중 가용 영역에 포드 분산 배치
-- 지역 간 백업 복제
-- 자동화된 복구 절차 구현
+  - 다중 가용 영역에 포드 분산 배치
+  - 지역 간 백업 복제
+  - 자동화된 복구 절차 구현
 
 4. **모니터링 및 알림**:
-- 백업 작업 성공/실패 알림 설정
-- 스토리지 사용량 모니터링
-- 복제 지연 모니터링
+  - 백업 작업 성공/실패 알림 설정
+  - 스토리지 사용량 모니터링
+  - 복제 지연 모니터링
 
 이 설계는 StatefulSet의 안정적인 네트워크 식별자와 PersistentVolume의 데이터 지속성을 결합하여 고가용성 데이터베이스 클러스터를 제공합니다. 다중 계층의 백업 전략은 다양한 장애 시나리오에서 데이터 손실을 방지합니다.
 </details>

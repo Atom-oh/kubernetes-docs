@@ -10,47 +10,49 @@
 
 ```mermaid
 flowchart TD
-    subgraph K8sCluster [Kubernetes 클러스터]
-        subgraph ControlPlane [컨트롤 플레인]
-            APIServer[API 서버]
-            DefaultScheduler[기본 스케줄러]
+    subgraph K8sCluster["Kubernetes 클러스터"]
+        subgraph ControlPlane["컨트롤 플레인"]
+            APIServer["API 서버"]
+            DefaultScheduler["기본 스케줄러"]
         end
-        
-        subgraph SchedulerExtender [스케줄러 확장]
-            ExtenderService[확장 서비스]
-            subgraph ExtenderEndpoints [확장 엔드포인트]
-                FilterEndpoint[/filter]
-                PrioritizeEndpoint[/prioritize]
-                BindEndpoint[/bind]
-                PrefilterEndpoint[/prefilter]
-                PrescoreEndpoint[/prescore]
+
+        subgraph SchedulerExtender["스케줄러 확장"]
+            ExtenderService["확장 서비스"]
+            subgraph ExtenderEndpoints["확장 엔드포인트"]
+                FilterEndpoint["/filter"]
+                PrioritizeEndpoint["/prioritize"]
+                BindEndpoint["/bind"]
+                PrefilterEndpoint["/prefilter"]
+                PrescoreEndpoint["/prescore"]
             end
         end
-        
-        subgraph Nodes [워커 노드]
-            Node1[노드 1]
-            Node2[노드 2]
-            Node3[노드 3]
+
+        subgraph Nodes["워커 노드"]
+            Node1["노드 1"]
+            Node2["노드 2"]
+            Node3["노드 3"]
         end
     end
-    
+
     APIServer --> DefaultScheduler
-    DefaultScheduler -- HTTP 요청 --> ExtenderService
-    ExtenderService --> ExtenderEndpoints
+    DefaultScheduler -- "HTTP 요청" --> ExtenderService
+    ExtenderService --> FilterEndpoint
+    ExtenderService --> PrioritizeEndpoint
+    ExtenderService --> BindEndpoint
+    ExtenderService --> PrefilterEndpoint
+    ExtenderService --> PrescoreEndpoint
     DefaultScheduler --> Node1
     DefaultScheduler --> Node2
     DefaultScheduler --> Node3
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef extenderComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef endpointComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    class APIServer,DefaultScheduler,Node1,Node2,Node3 k8sComponent;
-    class ExtenderService extenderComponent;
-    class FilterEndpoint,PrioritizeEndpoint,BindEndpoint,PrefilterEndpoint,PrescoreEndpoint endpointComponent;
-```
-    class FilterEndpoint,PrioritizeEndpoint,BindEndpoint,PrefilterEndpoint,PrescoreEndpoint endpointComponent;
-    class K8sCluster,ControlPlane,Nodes,ExtenderEndpoints default;
+
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
+    classDef extenderComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
+    classDef endpointComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black
+
+    class APIServer,DefaultScheduler,Node1,Node2,Node3 k8sComponent
+    class ExtenderService extenderComponent
+    class FilterEndpoint,PrioritizeEndpoint,BindEndpoint,PrefilterEndpoint,PrescoreEndpoint endpointComponent
+
 ```
 
 ### 스케줄러 확장 워크플로우
@@ -63,7 +65,7 @@ sequenceDiagram
     participant Scheduler as 기본 스케줄러
     participant Extender as 스케줄러 확장
     participant Node as 노드
-    
+
     API->>Scheduler: 포드 생성 요청
     Scheduler->>Scheduler: 내부 필터링
     Scheduler->>Extender: 필터 요청 (HTTP POST /filter)
@@ -76,14 +78,7 @@ sequenceDiagram
     Scheduler->>Scheduler: 최종 노드 선택
     Scheduler->>API: 바인딩 요청
     API->>Node: 포드 스케줄링
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef extenderComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    class API,Scheduler k8sComponent;
-    class Extender extenderComponent;
-    class Node nodeComponent;
+
 ```
 
 ### 스케줄러 확장 구현

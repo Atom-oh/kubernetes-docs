@@ -260,10 +260,10 @@ labels:
 app: nginx
 spec:
 containers:
-- name: nginx
+  - name: nginx
 image: nginx:1.21
 ports:
-- containerPort: 80
+  - containerPort: 80
 resources:
 requests:
 cpu: 100m
@@ -297,7 +297,7 @@ name: nginx-service
 spec:
 type: LoadBalancer
 ports:
-- port: 80
+  - port: 80
 targetPort: 80
 selector:
 app: nginx
@@ -347,10 +347,10 @@ LOG_LEVEL: "INFO"
 RBAC(Role-Based Access Control)는 Kubernetes API에 대한 접근을 제어하는 메커니즘입니다. 역할(Role)과 역할 바인딩(RoleBinding)을 사용하여 사용자나 서비스 계정에 특정 권한을 부여합니다.
 
 RBAC의 주요 구성 요소:
-- **Role**: 네임스페이스 내에서 권한 집합을 정의
-- **ClusterRole**: 클러스터 전체에서 권한 집합을 정의
-- **RoleBinding**: 역할을 사용자, 그룹 또는 서비스 계정에 바인딩
-- **ClusterRoleBinding**: 클러스터 역할을 사용자, 그룹 또는 서비스 계정에 바인딩
+  - **Role**: 네임스페이스 내에서 권한 집합을 정의
+  - **ClusterRole**: 클러스터 전체에서 권한 집합을 정의
+  - **RoleBinding**: 역할을 사용자, 그룹 또는 서비스 계정에 바인딩
+  - **ClusterRoleBinding**: 클러스터 역할을 사용자, 그룹 또는 서비스 계정에 바인딩
 
 특정 네임스페이스에서 파드를 조회하고 로그를 볼 수 있는 Role:
 ```yaml
@@ -360,7 +360,7 @@ metadata:
 namespace: development
 name: pod-reader
 rules:
-- apiGroups: [""]
+  - apiGroups: [""]
 resources: ["pods", "pods/log"]
 verbs: ["get", "watch", "list"]
 ```
@@ -373,7 +373,7 @@ metadata:
 name: read-pods
 namespace: development
 subjects:
-- kind: User
+  - kind: User
 name: jane
 apiGroup: rbac.authorization.k8s.io
 roleRef:
@@ -396,10 +396,10 @@ apiGroup: rbac.authorization.k8s.io
 네트워크 정책(NetworkPolicy)은 파드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 모든 파드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다.
 
 네트워크 정책의 주요 기능:
-- 파드 간 통신 제어
-- 네임스페이스 간 통신 제어
-- 인그레스(수신) 및 이그레스(송신) 트래픽 제어
-- 포트 및 프로토콜 기반 필터링
+  - 파드 간 통신 제어
+  - 네임스페이스 간 통신 제어
+  - 인그레스(수신) 및 이그레스(송신) 트래픽 제어
+  - 포트 및 프로토콜 기반 필터링
 
 특정 네임스페이스의 데이터베이스 파드가 같은 네임스페이스의 백엔드 파드로부터만 트래픽을 받을 수 있도록 하는 NetworkPolicy:
 ```yaml
@@ -413,14 +413,14 @@ podSelector:
 matchLabels:
 role: database
 policyTypes:
-- Ingress
+  - Ingress
 ingress:
-- from:
-- podSelector:
+  - from:
+  - podSelector:
 matchLabels:
 role: backend
 ports:
-- protocol: TCP
+  - protocol: TCP
 port: 3306
 ```
 

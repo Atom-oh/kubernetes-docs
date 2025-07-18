@@ -247,23 +247,23 @@ EndpointSlice는 엔드포인트의 확장 가능한 대안으로, 대규모 클
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-name: reviews
+  name: reviews
 spec:
-hosts:
-- reviews
-http:
-- match:
-- headers:
-end-user:
-exact: jason
-route:
-- destination:
-host: reviews
-subset: v2
-- route:
-- destination:
-host: reviews
-subset: v1
+  hosts:
+    - reviews
+  http:
+    - match:
+      - headers:
+          end-user:
+            exact: jason
+      route:
+        - destination:
+            host: reviews
+            subset: v2
+    - route:
+      - destination:
+          host: reviews
+          subset: v1
 ```
 
 4. **보안 정책**:
@@ -271,21 +271,21 @@ subset: v1
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-name: httpbin
-namespace: foo
+  name: httpbin
+  namespace: foo
 spec:
-selector:
-matchLabels:
-app: httpbin
-action: ALLOW
-rules:
-- from:
-- source:
-principals: ["cluster.local/ns/default/sa/sleep"]
-to:
-- operation:
-methods: ["GET"]
-paths: ["/info*"]
+  selector:
+    matchLabels:
+      app: httpbin
+  action: ALLOW
+  rules:
+    - from:
+      - source:
+          principals: ["cluster.local/ns/default/sa/sleep"]
+      to:
+        - operation:
+            methods: ["GET"]
+            paths: ["/info*"]
 ```
 
 **이점**:
@@ -330,40 +330,40 @@ paths: ["/info*"]
 1. **AWS ENI 모드 활성화**:
 ```bash
 helm install cilium cilium/cilium \
---namespace kube-system \
---set eni.enabled=true \
---set ipam.mode=eni \
---set egressMasqueradeInterfaces=eth0 \
---set tunnel=disabled
+   --namespace kube-system \
+   --set eni.enabled=true \
+   --set ipam.mode=eni \
+   --set egressMasqueradeInterfaces=eth0 \
+   --set tunnel=disabled
 ```
 이 구성은 AWS의 Elastic Network Interface(ENI)를 활용하여 포드에 VPC 네이티브 IP 주소를 할당하고, 오버레이 네트워크 없이 VPC 네이티브 네트워킹을 제공합니다.
 
 2. **노드 그룹 최적화**:
-- 충분한 ENI와 IP 주소를 제공하는 인스턴스 유형 선택(예: m5.large 이상)
-- 적절한 최대 포드 수 구성(인스턴스 유형에 따라 다름)
+  - 충분한 ENI와 IP 주소를 제공하는 인스턴스 유형 선택(예: m5.large 이상)
+  - 적절한 최대 포드 수 구성(인스턴스 유형에 따라 다름)
 
 3. **성능 최적화**:
 ```bash
 helm install cilium cilium/cilium \
---namespace kube-system \
---set eni.enabled=true \
---set ipam.mode=eni \
---set tunnel=disabled \
---set bpf.masquerade=true \
---set kubeProxyReplacement=strict \
---set loadBalancer.mode=dsr \
---set loadBalancer.acceleration=native
+   --namespace kube-system \
+   --set eni.enabled=true \
+   --set ipam.mode=eni \
+   --set tunnel=disabled \
+   --set bpf.masquerade=true \
+   --set kubeProxyReplacement=strict \
+   --set loadBalancer.mode=dsr \
+   --set loadBalancer.acceleration=native
 ```
 이 구성은 kube-proxy를 대체하고, 직접 서버 반환(DSR) 모드와 네이티브 로드 밸런싱 가속을 활성화합니다.
 
 4. **Hubble 활성화**:
 ```bash
 helm upgrade cilium cilium/cilium \
---namespace kube-system \
---reuse-values \
---set hubble.enabled=true \
---set hubble.relay.enabled=true \
---set hubble.ui.enabled=true
+   --namespace kube-system \
+   --reuse-values \
+   --set hubble.enabled=true \
+   --set hubble.relay.enabled=true \
+   --set hubble.ui.enabled=true
 ```
 Hubble을 활성화하여 네트워크 흐름 모니터링 및 문제 해결 기능을 제공합니다.
 

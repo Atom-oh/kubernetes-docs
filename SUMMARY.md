@@ -51,7 +51,7 @@
 ## 고급 주제
 
 * [Kyverno를 사용한 정책 관리](advanced/01-kyverno-policy-management.md)
-* [커스텀 스케줄러](advanced/02-custom-scheduler-part1.md)
+* [Custom Scheduler](advanced/02-custom-scheduler-part1.md)
     * [Part 1: 기본 개념](advanced/02-custom-scheduler-part1.md)
     * [Part 2: 구현](advanced/02-custom-scheduler-part2.md)
     * [Part 3: 고급 기능](advanced/02-custom-scheduler-part3.md)
@@ -126,7 +126,7 @@
 
 * 고급 주제
     * [Kyverno를 사용한 정책 관리 퀴즈](quizzes/advanced/01-kyverno-policy-management-quiz.md)
-    * [커스텀 스케줄러 퀴즈](quizzes/advanced/02-custom-scheduler-quiz.md)
+    * [Custom Scheduler 퀴즈](quizzes/advanced/02-custom-scheduler-quiz.md)
     * [AI/ML 워크로드 퀴즈](quizzes/advanced/03-ai-ml-workloads-quiz.md)
     * [vLLM 배포 퀴즈](quizzes/advanced/04-vllm-deployment-quiz.md)
 

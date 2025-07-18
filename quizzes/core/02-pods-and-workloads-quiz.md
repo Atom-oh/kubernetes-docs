@@ -243,24 +243,24 @@ Kubernetes 디플로이먼트는 기본적으로 RollingUpdate와 Recreate 두 �
 apiVersion: v1
 kind: Pod
 metadata:
-name: web-app
+  name: web-app
 spec:
-containers:
-- name: nginx
-image: nginx:1.21
-ports:
-- containerPort: 80
-volumeMounts:
-- name: log-volume
-mountPath: /var/log/nginx
-- name: log-collector
-image: fluentd:v1.14
-volumeMounts:
-- name: log-volume
-mountPath: /fluentd/log
-volumes:
-- name: log-volume
-emptyDir: {}
+  containers:
+    - name: nginx
+      image: nginx:1.21
+      ports:
+        - containerPort: 80
+      volumeMounts:
+        - name: log-volume
+          mountPath: /var/log/nginx
+    - name: log-collector
+      image: fluentd:v1.14
+      volumeMounts:
+        - name: log-volume
+          mountPath: /fluentd/log
+  volumes:
+    - name: log-volume
+      emptyDir: {}
 ```
 
 **설명:**
@@ -288,50 +288,50 @@ emptyDir: {}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-name: nginx-deployment
-labels:
-app: nginx
-tier: frontend
+  name: nginx-deployment
+  labels:
+    app: nginx
+    tier: frontend
 spec:
-replicas: 3
-selector:
-matchLabels:
-app: nginx
-strategy:
-type: RollingUpdate
-rollingUpdate:
-maxSurge: 1
-maxUnavailable: 0
-template:
-metadata:
-labels:
-app: nginx
-tier: frontend
-spec:
-containers:
-- name: nginx
-image: nginx:1.21
-ports:
-- containerPort: 80
-resources:
-requests:
-cpu: 100m
-memory: 128Mi
-limits:
-cpu: 200m
-memory: 256Mi
-livenessProbe:
-httpGet:
-path: /
-port: 80
-initialDelaySeconds: 30
-periodSeconds: 10
-readinessProbe:
-httpGet:
-path: /
-port: 80
-initialDelaySeconds: 5
-periodSeconds: 5
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: nginx
+        tier: frontend
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.21
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
 ```
 
 **설명:**
@@ -359,44 +359,44 @@ periodSeconds: 5
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-name: database-backup
+  name: database-backup
 spec:
-schedule: "0 2 * * *"
-concurrencyPolicy: Forbid
-successfulJobsHistoryLimit: 3
-failedJobsHistoryLimit: 1
-jobTemplate:
-spec:
-template:
-spec:
-containers:
-- name: backup
-image: postgres:14
-env:
-- name: PGHOST
-value: postgres-service
-- name: PGUSER
-valueFrom:
-secretKeyRef:
-name: postgres-secret
-key: username
-- name: PGPASSWORD
-valueFrom:
-secretKeyRef:
-name: postgres-secret
-key: password
-command:
-- /bin/sh
-- -c
-- pg_dump -Fc > /backup/db-$(date +%Y%m%d-%H%M%S).dump
-volumeMounts:
-- name: backup-volume
-mountPath: /backup
-restartPolicy: OnFailure
-volumes:
-- name: backup-volume
-persistentVolumeClaim:
-claimName: backup-pvc
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: postgres:14
+              env:
+                - name: PGHOST
+                  value: postgres-service
+                - name: PGUSER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-secret
+                      key: username
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-secret
+                      key: password
+              command:
+                - /bin/sh
+                - -c
+                - pg_dump -Fc > /backup/db-$(date +%Y%m%d-%H%M%S).dump
+              volumeMounts:
+                - name: backup-volume
+                  mountPath: /backup
+          restartPolicy: OnFailure
+          volumes:
+            - name: backup-volume
+              persistentVolumeClaim:
+                claimName: backup-pvc
 ```
 
 **설명:**
@@ -434,174 +434,174 @@ claimName: backup-pvc
 apiVersion: v1
 kind: Service
 metadata:
-name: mysql
-labels:
-app: mysql
+  name: mysql
+  labels:
+    app: mysql
 spec:
-ports:
-- port: 3306
-name: mysql
-clusterIP: None
-selector:
-app: mysql
+  ports:
+    - port: 3306
+      name: mysql
+  clusterIP: None
+  selector:
+    app: mysql
 ---
 # 구성을 위한 ConfigMap
 apiVersion: v1
 kind: ConfigMap
 metadata:
-name: mysql-config
+  name: mysql-config
 data:
-master.cnf: |
-[mysqld]
-log-bin=mysql-bin
-binlog-format=ROW
-server-id=1
-slave.cnf: |
-[mysqld]
-server-id=100
-log_bin=mysql-bin
-relay_log=mysql-relay-bin
-read_only=1
-init.sql: |
-CREATE DATABASE IF NOT EXISTS mydb;
-GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%' IDENTIFIED BY 'replpass';
-FLUSH PRIVILEGES;
+  master.cnf: |
+    [mysqld]
+    log-bin=mysql-bin
+    binlog-format=ROW
+    server-id=1
+  slave.cnf: |
+    [mysqld]
+    server-id=100
+    log_bin=mysql-bin
+    relay_log=mysql-relay-bin
+    read_only=1
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS mydb;
+    GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%' IDENTIFIED BY 'replpass';
+    FLUSH PRIVILEGES;
 ---
 # MySQL 스테이트풀셋
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-name: mysql
+  name: mysql
 spec:
-selector:
-matchLabels:
-app: mysql
-serviceName: mysql
-replicas: 3
-updateStrategy:
-type: RollingUpdate
-podManagementPolicy: OrderedReady
-template:
-metadata:
-labels:
-app: mysql
-spec:
-initContainers:
-- name: init-mysql
-image: mysql:8.0
-command:
-- bash
-- "-c"
-- |
-set -ex
-# 파드 인덱스에 따라 마스터 또는 슬레이브 구성
-[[ `hostname` =~ -([0-9]+)$ ]] || exit 1
-ordinal=${BASH_REMATCH[1]}
-if [[ $ordinal -eq 0 ]]; then
-# 마스터 구성
-cp /mnt/config-map/master.cnf /etc/mysql/conf.d/
-# 초기화 SQL 스크립트 복사
-cp /mnt/config-map/init.sql /docker-entrypoint-initdb.d/
-else
-# 슬레이브 구성
-cp /mnt/config-map/slave.cnf /etc/mysql/conf.d/
-fi
-volumeMounts:
-- name: conf
-mountPath: /etc/mysql/conf.d
-- name: config-map
-mountPath: /mnt/config-map
-- name: initdb
-mountPath: /docker-entrypoint-initdb.d
-- name: clone-mysql
-image: mysql:8.0
-command:
-- bash
-- "-c"
-- |
-set -ex
-# 슬레이브만 복제 설정
-[[ `hostname` =~ -([0-9]+)$ ]] || exit 1
-ordinal=${BASH_REMATCH[1]}
-if [[ $ordinal -eq 0 ]]; then
-# 마스터는 아무것도 하지 않음
-exit 0
-fi
+  selector:
+    matchLabels:
+      app: mysql
+  serviceName: mysql
+  replicas: 3
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: OrderedReady
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      initContainers:
+        - name: init-mysql
+          image: mysql:8.0
+          command:
+            - bash
+            - "-c"
+            - |
+              set -ex
+              # 파드 인덱스에 따라 마스터 또는 슬레이브 구성
+              [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
+              ordinal=${BASH_REMATCH[1]}
+              if [[ $ordinal -eq 0 ]]; then
+                # 마스터 구성
+                cp /mnt/config-map/master.cnf /etc/mysql/conf.d/
+                # 초기화 SQL 스크립트 복사
+                cp /mnt/config-map/init.sql /docker-entrypoint-initdb.d/
+              else
+                # 슬레이브 구성
+                cp /mnt/config-map/slave.cnf /etc/mysql/conf.d/
+              fi
+          volumeMounts:
+            - name: conf
+              mountPath: /etc/mysql/conf.d
+            - name: config-map
+              mountPath: /mnt/config-map
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+        - name: clone-mysql
+          image: mysql:8.0
+          command:
+            - bash
+            - "-c"
+            - |
+              set -ex
+              # 슬레이브만 복제 설정
+              [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
+              ordinal=${BASH_REMATCH[1]}
+              if [[ $ordinal -eq 0 ]]; then
+                # 마스터는 아무것도 하지 않음
+                exit 0
+              fi
 
-# 마스터가 준비될 때까지 대기
-until mysql -h mysql-0.mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1"; do
-echo "Waiting for mysql-0.mysql to be ready..."
-sleep 2
-done
+              # 마스터가 준비될 때까지 대기
+              until mysql -h mysql-0.mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1"; do
+                echo "Waiting for mysql-0.mysql to be ready..."
+                sleep 2
+              done
 
-# 마스터 상태 확인
-master_status=$(mysql -h mysql-0.mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "SHOW MASTER STATUS\G")
-file=$(echo "$master_status" | grep File | awk '{print $2}')
-position=$(echo "$master_status" | grep Position | awk '{print $2}')
+              # 마스터 상태 확인
+              master_status=$(mysql -h mysql-0.mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "SHOW MASTER STATUS\G")
+              file=$(echo "$master_status" | grep File | awk '{print $2}')
+              position=$(echo "$master_status" | grep Position | awk '{print $2}')
 
-# 슬레이브 설정
-mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "CHANGE MASTER TO MASTER_HOST='mysql-0.mysql', MASTER_USER='repl', MASTER_PASSWORD='replpass', MASTER_LOG_FILE='$file', MASTER_LOG_POS=$position; START SLAVE;"
-env:
-- name: MYSQL_ROOT_PASSWORD
-valueFrom:
-secretKeyRef:
-name: mysql-secret
-key: password
-containers:
-- name: mysql
-image: mysql:8.0
-env:
-- name: MYSQL_ROOT_PASSWORD
-valueFrom:
-secretKeyRef:
-name: mysql-secret
-key: password
-ports:
-- name: mysql
-containerPort: 3306
-volumeMounts:
-- name: data
-mountPath: /var/lib/mysql
-- name: conf
-mountPath: /etc/mysql/conf.d
-- name: initdb
-mountPath: /docker-entrypoint-initdb.d
-resources:
-requests:
-cpu: 500m
-memory: 1Gi
-limits:
-cpu: 1
-memory: 2Gi
-livenessProbe:
-exec:
-command: ["mysqladmin", "ping", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-initialDelaySeconds: 30
-periodSeconds: 10
-timeoutSeconds: 5
-readinessProbe:
-exec:
-command: ["mysql", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}", "-e", "SELECT 1"]
-initialDelaySeconds: 5
-periodSeconds: 2
-timeoutSeconds: 1
-volumes:
-- name: conf
-emptyDir: {}
-- name: config-map
-configMap:
-name: mysql-config
-- name: initdb
-emptyDir: {}
-volumeClaimTemplates:
-- metadata:
-name: data
-spec:
-accessModes: ["ReadWriteOnce"]
-storageClassName: "standard"
-resources:
-requests:
-storage: 10Gi
+              # 슬레이브 설정
+              mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "CHANGE MASTER TO MASTER_HOST='mysql-0.mysql', MASTER_USER='repl', MASTER_PASSWORD='replpass', MASTER_LOG_FILE='$file', MASTER_LOG_POS=$position; START SLAVE;"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password
+          ports:
+            - name: mysql
+              containerPort: 3306
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            - name: conf
+              mountPath: /etc/mysql/conf.d
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 2Gi
+          livenessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command: ["mysql", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}", "-e", "SELECT 1"]
+            initialDelaySeconds: 5
+            periodSeconds: 2
+            timeoutSeconds: 1
+      volumes:
+        - name: conf
+          emptyDir: {}
+        - name: config-map
+          configMap:
+            name: mysql-config
+        - name: initdb
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: "standard"
+        resources:
+          requests:
+            storage: 10Gi
 ```
 
 **설명:**
@@ -613,17 +613,17 @@ storage: 10Gi
 2. **ConfigMap**: MySQL 구성을 위한 ConfigMap을 정의합니다. 마스터 노드와 슬레이브 노드에 대한 별도의 구성과 초기화 SQL 스크립트를 포함합니다.
 
 3. **스테이트풀셋**: 3개의 복제본을 가진 MySQL 스테이트풀셋을 정의합니다.
-- `podManagementPolicy: OrderedReady`: 파드를 순서대로 생성 및 삭제합니다.
-- `updateStrategy: RollingUpdate`: 롤링 업데이트 전략을 사용합니다.
-- 초기화 컨테이너: 파드 인덱스에 따라 마스터 또는 슬레이브 구성을 적용하고, 슬레이브 노드는 마스터 노드에서 복제를 설정합니다.
-- 영구 스토리지: `volumeClaimTemplates`를 통해 각 파드에 대한 영구 볼륨 클레임을 생성합니다.
-- 리소스 요청 및 제한: 각 MySQL 인스턴스에 대한 리소스 요청 및 제한을 설정합니다.
-- 활성 프로브 및 준비성 프로브: MySQL 인스턴스의 상태를 확인합니다.
+  - `podManagementPolicy: OrderedReady`: 파드를 순서대로 생성 및 삭제합니다.
+  - `updateStrategy: RollingUpdate`: 롤링 업데이트 전략을 사용합니다.
+  - 초기화 컨테이너: 파드 인덱스에 따라 마스터 또는 슬레이브 구성을 적용하고, 슬레이브 노드는 마스터 노드에서 복제를 설정합니다.
+  - 영구 스토리지: `volumeClaimTemplates`를 통해 각 파드에 대한 영구 볼륨 클레임을 생성합니다.
+  - 리소스 요청 및 제한: 각 MySQL 인스턴스에 대한 리소스 요청 및 제한을 설정합니다.
+  - 활성 프로브 및 준비성 프로브: MySQL 인스턴스의 상태를 확인합니다.
 
 4. **자동 복구 메커니즘**:
-- 파드가 실패하면 스테이트풀셋이 자동으로 새 파드를 생성합니다.
-- 새 파드는 동일한 네트워크 식별자와 영구 스토리지를 사용합니다.
-- 슬레이브 노드는 마스터 노드에서 복제를 설정하여 데이터 일관성을 유지합니다.
+  - 파드가 실패하면 스테이트풀셋이 자동으로 새 파드를 생성합니다.
+  - 새 파드는 동일한 네트워크 식별자와 영구 스토리지를 사용합니다.
+  - 슬레이브 노드는 마스터 노드에서 복제를 설정하여 데이터 일관성을 유지합니다.
 
 이 설계는 고가용성 MySQL 클러스터를 제공하며, 마스터 노드 장애 시에도 슬레이브 노드 중 하나를 새로운 마스터로 승격시키는 메커니즘을 구현할 수 있습니다(이 예시에서는 자동 승격 메커니즘은 포함되어 있지 않으며, 일반적으로 MySQL 운영자 또는 추가 컨트롤러를 통해 구현됩니다).
 </details>
@@ -654,24 +654,24 @@ storage: 10Gi
 **시나리오별 적합한 워크로드 리소스**
 
 1. **웹 애플리케이션 프론트엔드**
-- **적합한 리소스: 디플로이먼트(Deployment)**
-- **이유**: 웹 애플리케이션 프론트엔드는 일반적으로 상태가 없는(stateless) 애플리케이션입니다. 디플로이먼트는 롤링 업데이트를 통해 다운타임 없이 새 버전을 배포할 수 있고, 수평적 확장이 용이하며, 자동 복구 기능을 제공합니다. 또한 HorizontalPodAutoscaler와 함께 사용하여 트래픽에 따라 자동으로 스케일링할 수 있습니다.
+  - **적합한 리소스: 디플로이먼트(Deployment)**
+  - **이유**: 웹 애플리케이션 프론트엔드는 일반적으로 상태가 없는(stateless) 애플리케이션입니다. 디플로이먼트는 롤링 업데이트를 통해 다운타임 없이 새 버전을 배포할 수 있고, 수평적 확장이 용이하며, 자동 복구 기능을 제공합니다. 또한 HorizontalPodAutoscaler와 함께 사용하여 트래픽에 따라 자동으로 스케일링할 수 있습니다.
 
 2. **분산 데이터베이스 클러스터**
-- **적합한 리소스: 스테이트풀셋(StatefulSet)**
-- **이유**: 분산 데이터베이스는 상태 유지가 필요하고, 각 인스턴스가 고유한 식별자와 영구 스토리지를 필요로 합니다. 스테이트풀셋은 안정적인 네트워크 식별자(`<파드 이름>-<순서 인덱스>`)와 영구 스토리지를 제공하며, 순차적인 배포 및 스케일링을 통해 데이터 일관성을 유지할 수 있습니다. 예를 들어, MySQL, PostgreSQL, MongoDB, Cassandra 등의 분산 데이터베이스 클러스터에 적합합니다.
+  - **적합한 리소스: 스테이트풀셋(StatefulSet)**
+  - **이유**: 분산 데이터베이스는 상태 유지가 필요하고, 각 인스턴스가 고유한 식별자와 영구 스토리지를 필요로 합니다. 스테이트풀셋은 안정적인 네트워크 식별자(`<파드 이름>-<순서 인덱스>`)와 영구 스토리지를 제공하며, 순차적인 배포 및 스케일링을 통해 데이터 일관성을 유지할 수 있습니다. 예를 들어, MySQL, PostgreSQL, MongoDB, Cassandra 등의 분산 데이터베이스 클러스터에 적합합니다.
 
 3. **로그 수집 에이전트**
-- **적합한 리소스: 데몬셋(DaemonSet)**
-- **이유**: 로그 수집 에이전트는 클러스터의 모든 노드에서 실행되어야 합니다. 데몬셋은 모든 노드(또는 특정 노드)에서 파드의 복사본을 실행하도록 보장하며, 새 노드가 클러스터에 추가되면 자동으로 로그 수집 에이전트를 배포합니다. Fluentd, Logstash, Filebeat 등의 로그 수집 에이전트를 배포하는 데 적합합니다.
+  - **적합한 리소스: 데몬셋(DaemonSet)**
+  - **이유**: 로그 수집 에이전트는 클러스터의 모든 노드에서 실행되어야 합니다. 데몬셋은 모든 노드(또는 특정 노드)에서 파드의 복사본을 실행하도록 보장하며, 새 노드가 클러스터에 추가되면 자동으로 로그 수집 에이전트를 배포합니다. Fluentd, Logstash, Filebeat 등의 로그 수집 에이전트를 배포하는 데 적합합니다.
 
 4. **일일 데이터 백업**
-- **적합한 리소스: 크론잡(CronJob)**
-- **이유**: 일일 데이터 백업은 정해진 일정에 따라 주기적으로 실행되어야 하는 작업입니다. 크론잡은 cron 표현식을 사용하여 실행 일정을 지정할 수 있으며, 매일 특정 시간에 백업 작업을 실행하도록 설정할 수 있습니다. 또한 `concurrencyPolicy`를 통해 이전 백업이 아직 실행 중일 때의 동작을 정의할 수 있고, 백업 이력을 제한할 수 있습니다.
+  - **적합한 리소스: 크론잡(CronJob)**
+  - **이유**: 일일 데이터 백업은 정해진 일정에 따라 주기적으로 실행되어야 하는 작업입니다. 크론잡은 cron 표현식을 사용하여 실행 일정을 지정할 수 있으며, 매일 특정 시간에 백업 작업을 실행하도록 설정할 수 있습니다. 또한 `concurrencyPolicy`를 통해 이전 백업이 아직 실행 중일 때의 동작을 정의할 수 있고, 백업 이력을 제한할 수 있습니다.
 
 5. **일회성 데이터 마이그레이션**
-- **적합한 리소스: 잡(Job)**
-- **이유**: 데이터 마이그레이션은 일회성 작업으로, 성공적으로 완료되어야 합니다. 잡은 지정된 수의 파드가 성공적으로 종료될 때까지 실행을 계속하며, 실패 시 재시도 메커니즘을 제공합니다. 또한 `parallelism` 설정을 통해 여러 파드를 병렬로 실행하여 대규모 데이터 마이그레이션을 더 빠르게 처리할 수 있습니다.
+  - **적합한 리소스: 잡(Job)**
+  - **이유**: 데이터 마이그레이션은 일회성 작업으로, 성공적으로 완료되어야 합니다. 잡은 지정된 수의 파드가 성공적으로 종료될 때까지 실행을 계속하며, 실패 시 재시도 메커니즘을 제공합니다. 또한 `parallelism` 설정을 통해 여러 파드를 병렬로 실행하여 대규모 데이터 마이그레이션을 더 빠르게 처리할 수 있습니다.
 
 **결론**
 
