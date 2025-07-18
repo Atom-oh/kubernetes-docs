@@ -83,3 +83,5 @@
 * [로깅 스택 (Loki, Tempo)](tools/08-logging-stack.md)
 * [VPC Lattice](tools/09-vpc-lattice.md)
 
+# Quiz 모음
+* [퀴즈 모음 - 주제별 퀴즈](quizzes/README.md)
