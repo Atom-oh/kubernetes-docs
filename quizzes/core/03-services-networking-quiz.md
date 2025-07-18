@@ -11,7 +11,7 @@
    - D) ExternalName
    
    <details>
-   <summary>정답 보기</summary>
+   <summary>정답 보기</summary> 
    
    **정답: C) ClusterIP**
    
