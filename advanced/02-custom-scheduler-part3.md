@@ -1,12 +1,12 @@
 # Part 3: 커스텀 스케줄러 구현 사례 및 모니터링
 
-## EKS에서의 Custom Scheduler 구현 사례
+## EKS에서의 커스텀 스케줄러 구현 사례
 
-이 섹션에서는 EKS에서 Custom Scheduler를 구현하는 실제 사례를 살펴보겠습니다.
+이 섹션에서는 EKS에서 커스텀 스케줄러를 구현하는 실제 사례를 살펴보겠습니다.
 
 ### 사례 1: GPU 워크로드 최적화 스케줄러
 
-AI/ML 워크로드를 실행하는 EKS 클러스터에서는 GPU 리소스를 효율적으로 활용하는 것이 중요합니다. 다음은 GPU 워크로드를 최적화하는 Custom Scheduler의 구현 사례입니다.
+AI/ML 워크로드를 실행하는 EKS 클러스터에서는 GPU 리소스를 효율적으로 활용하는 것이 중요합니다. 다음은 GPU 워크로드를 최적화하는 커스텀 스케줄러의 구현 사례입니다.
 
 #### GPU 워크로드 최적화 스케줄러 아키텍처
 
@@ -80,40 +80,6 @@ flowchart TD
     class SchedulerCore,GPUTopologyPlugin,GPUUtilizationPlugin,GPUMemoryPlugin,DCGMExporter,NodeExporter gpuComponent;
     class P3_2xl,P3_8xl,P3_16xl,G4dn_xl,G4dn_2xl,G4dn_4xl,G5_xl,G5_2xl,G5_4xl gpuNode;
 ```
-                end
-                
-                subgraph G5Instances [G5 인스턴스]
-                    G5_xl[g5.xlarge]
-                    G5_2xl[g5.2xlarge]
-                    G5_4xl[g5.4xlarge]
-                end
-            end
-        end
-        
-        CloudWatch[CloudWatch]
-        Prometheus[(Prometheus)]
-    end
-    
-    APIServer --> DefaultScheduler
-    APIServer --> SchedulerCore
-    SchedulerCore --> Plugins
-    
-    Plugins --> NodeGroups
-    Metrics --> Prometheus
-    Prometheus --> CloudWatch
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class CloudWatch,Prometheus awsService;
-    class APIServer,DefaultScheduler k8sComponent;
-    class SchedulerCore,Plugins,GPUTopologyPlugin,GPUUtilizationPlugin,GPUMemoryPlugin,Metrics,DCGMExporter,NodeExporter,GPUScheduler gpuComponent;
-    class P3_2xl,P3_8xl,P3_16xl,G4dn_xl,G4dn_2xl,G4dn_4xl,G5_xl,G5_2xl,G5_4xl,P3Instances,G4Instances,G5Instances gpuNode;
-    class AWS,EKS,ControlPlane,NodeGroups default;
-```
 
 #### GPU 워크로드 스케줄링 워크플로우
 
@@ -180,7 +146,7 @@ kubectl label node <node-name> gpu.nvidia.com/memory=40960
 kubectl label node <node-name> gpu.nvidia.com/count=8
 ```
 
-2. **Custom Scheduler 플러그인 구현**:
+2. **커스텀 스케줄러 플러그인 구현**:
 
 ```go
 // GPUTopologyPlugin은 GPU 토폴로지를 고려하는 스케줄러 플러그인입니다.
@@ -299,7 +265,7 @@ spec:
 
 ### 사례 2: 네트워크 지역성 최적화 스케줄러
 
-EKS 클러스터에서 네트워크 비용을 최적화하기 위해 네트워크 지역성을 고려하는 Custom Scheduler를 구현할 수 있습니다.
+EKS 클러스터에서 네트워크 비용을 최적화하기 위해 네트워크 지역성을 고려하는 커스텀 스케줄러를 구현할 수 있습니다.
 
 #### 네트워크 지역성 최적화 스케줄러 아키텍처
 
@@ -367,13 +333,11 @@ flowchart TD
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef extenderComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef azNodes fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     class CloudWatch,CostExplorer awsService;
     class APIServer,DefaultScheduler k8sComponent;
-    class ExtenderService,Components,TopologyAware,LatencyAware,CostAware,DataSources,ServiceMap,LatencyMetrics,CostMetrics,SchedulerExtender extenderComponent;
-    class AZ1_Node1,AZ1_Node2,AZ2_Node1,AZ2_Node2,AZ3_Node1,AZ3_Node2,AZ1,AZ2,AZ3 azNodes;
-    class AWS,EKS,ControlPlane,Nodes default;
+    class ExtenderService,TopologyAware,LatencyAware,CostAware,ServiceMap,LatencyMetrics,CostMetrics extenderComponent;
+    class AZ1_Node1,AZ1_Node2,AZ2_Node1,AZ2_Node2,AZ3_Node1,AZ3_Node2 azNodes;
 ```
 
 #### 네트워크 지역성 최적화 워크플로우
@@ -423,147 +387,20 @@ sequenceDiagram
     class Node node;
 ```
 
-#### 요구 사항
+## 커스텀 스케줄러 모니터링 및 디버깅
 
-1. 동일한 가용 영역 내에서 관련 포드 배치
-2. 네트워크 지연 시간 최소화
-3. 가용 영역 간 데이터 전송 비용 최소화
-4. 서비스 간 의존성을 고려한 배치
-
-#### 구현 접근 방식
-
-이 사례에서는 스케줄러 확장(Extender) 접근 방식을 사용합니다.
-
-1. **포드 어피니티 및 안티-어피니티 설정**:
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-server
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: web-server
-  template:
-    metadata:
-      labels:
-        app: web-server
-    spec:
-      affinity:
-        podAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - cache
-              topologyKey: topology.kubernetes.io/zone
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - web-server
-            topologyKey: kubernetes.io/hostname
-      containers:
-      - name: web-server
-        image: nginx:latest
-```
-
-2. **스케줄러 확장 구현**:
-
-```go
-// 우선순위 핸들러
-func prioritizeHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-    var extenderArgs extenderv1.ExtenderArgs
-    var hostPriorityList extenderv1.HostPriorityList
-
-    if err := json.NewDecoder(r.Body).Decode(&extenderArgs); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    pod := extenderArgs.Pod
-    nodes := extenderArgs.Nodes.Items
-
-    // 포드의 서비스 의존성 확인
-    dependencies := getDependencies(pod)
-    
-    // 각 노드에 점수 할당
-    hostPriorityList = make(extenderv1.HostPriorityList, len(nodes))
-    for i, node := range nodes {
-        // 기본 점수
-        hostPriorityList[i] = extenderv1.HostPriority{
-            Host:  node.Name,
-            Score: 0,
-        }
-        
-        // 노드의 가용 영역 확인
-        zone := node.Labels["topology.kubernetes.io/zone"]
-        
-        // 의존성이 있는 서비스의 포드가 같은 가용 영역에 있는지 확인
-        for _, dep := range dependencies {
-            if podsInSameZone(dep, zone) {
-                hostPriorityList[i].Score += 10
-            }
-        }
-        
-        // 네트워크 지연 시간 고려
-        latency := getNetworkLatency(node.Name)
-        hostPriorityList[i].Score += int64(100 - latency)
-    }
-
-    if err := json.NewEncoder(w).Encode(hostPriorityList); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-}
-
-// 포드의 서비스 의존성 확인 함수
-func getDependencies(pod *extenderv1.Pod) []string {
-    // 포드 어노테이션에서 의존성 확인
-    if deps, ok := pod.Annotations["scheduler.alpha.kubernetes.io/dependencies"]; ok {
-        return strings.Split(deps, ",")
-    }
-    return []string{}
-}
-
-// 서비스의 포드가 같은 가용 영역에 있는지 확인하는 함수
-func podsInSameZone(service string, zone string) bool {
-    // 실제 구현에서는 Kubernetes API를 호출하여 확인
-    // 여기서는 간단한 예제로 대체
-    return true
-}
-
-// 네트워크 지연 시간 확인 함수
-func getNetworkLatency(nodeName string) float64 {
-    // 실제 구현에서는 모니터링 시스템에서 데이터 가져오기
-    // 여기서는 간단한 예제로 대체
-    return 10.0
-}
-```
-
-## Custom Scheduler 모니터링 및 디버깅
-
-Custom Scheduler를 구현한 후에는 모니터링 및 디버깅이 중요합니다. 이 섹션에서는 Custom Scheduler를 모니터링하고 디버깅하는 방법을 알아보겠습니다.
+커스텀 스케줄러를 구현한 후에는 모니터링 및 디버깅이 중요합니다. 이 섹션에서는 커스텀 스케줄러를 모니터링하고 디버깅하는 방법을 알아보겠습니다.
 
 ### 모니터링 아키텍처
 
-다음 다이어그램은 EKS에서 Custom Scheduler를 모니터링하기 위한 아키텍처를 보여줍니다:
+다음 다이어그램은 EKS에서 커스텀 스케줄러를 모니터링하기 위한 아키텍처를 보여줍니다:
 
 ```mermaid
 flowchart TD
     subgraph AWS [AWS 클라우드]
         subgraph EKS [Amazon EKS]
             subgraph SchedulerPods [스케줄러 파드]
-                CustomScheduler[Custom Scheduler]
+                CustomScheduler[커스텀 스케줄러]
                 SchedulerSidecar[사이드카 컨테이너]
             end
             
@@ -600,18 +437,16 @@ flowchart TD
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef monitoringComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef loggingComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     class CloudWatch,SNS,Lambda awsService;
-    class CustomScheduler,SchedulerSidecar,SchedulerPods k8sComponent;
-    class Prometheus,AlertManager,Grafana,MonitoringStack monitoringComponent;
-    class Fluentd,ElasticSearch,Kibana,LoggingStack loggingComponent;
-    class AWS,EKS default;
+    class CustomScheduler,SchedulerSidecar k8sComponent;
+    class Prometheus,AlertManager,Grafana monitoringComponent;
+    class Fluentd,ElasticSearch,Kibana loggingComponent;
 ```
 
 ### 주요 모니터링 메트릭
 
-다음 다이어그램은 Custom Scheduler의 주요 모니터링 메트릭과 그 관계를 보여줍니다:
+다음 다이어그램은 커스텀 스케줄러의 주요 모니터링 메트릭과 그 관계를 보여줍니다:
 
 ```mermaid
 flowchart LR
@@ -658,17 +493,15 @@ flowchart LR
     classDef metricsGroup fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef dashboardGroup fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef alertGroup fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
-    class PerformanceMetrics,DecisionMetrics,ErrorMetrics,SchedulingLatency,QueueLength,ThroughputMetrics,FilteringMetrics,ScoringMetrics,BindingMetrics,SchedulingErrors,BindingErrors,ExtenderErrors metricsGroup;
+    class SchedulingLatency,QueueLength,ThroughputMetrics,FilteringMetrics,ScoringMetrics,BindingMetrics,SchedulingErrors,BindingErrors,ExtenderErrors metricsGroup;
     class PerformanceDashboard,DecisionDashboard,ErrorDashboard dashboardGroup;
     class HighLatencyAlert,ErrorRateAlert,QueueBacklogAlert alertGroup;
-    class SchedulerMetrics,Dashboards,Alerts default;
 ```
 
 ### 로깅
 
-Custom Scheduler의 로그를 확인하여 스케줄링 결정을 이해할 수 있습니다:
+커스텀 스케줄러의 로그를 확인하여 스케줄링 결정을 이해할 수 있습니다:
 
 ```bash
 kubectl logs -n kube-system -l app=custom-scheduler
@@ -684,7 +517,7 @@ kubectl get events --field-selector involvedObject.name=<pod-name>
 
 ### 메트릭 수집
 
-Prometheus를 사용하여 Custom Scheduler의 메트릭을 수집할 수 있습니다:
+Prometheus를 사용하여 커스텀 스케줄러의 메트릭을 수집할 수 있습니다:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -703,7 +536,7 @@ spec:
 
 ### 대시보드 구성
 
-Grafana를 사용하여 Custom Scheduler의 메트릭을 시각화할 수 있습니다:
+Grafana를 사용하여 커스텀 스케줄러의 메트릭을 시각화할 수 있습니다:
 
 ```yaml
 apiVersion: v1
@@ -849,6 +682,6 @@ data:
 
 ## 결론
 
-Custom Scheduler는 특정 요구 사항에 맞게 Kubernetes 스케줄링 동작을 조정할 수 있는 강력한 방법입니다. EKS에서는 다중 스케줄러 접근 방식, 스케줄러 확장 접근 방식, 스케줄러 프레임워크 플러그인 접근 방식 등 다양한 방법으로 Custom Scheduler를 구현할 수 있습니다.
+커스텀 스케줄러는 특정 요구 사항에 맞게 Kubernetes 스케줄링 동작을 조정할 수 있는 강력한 방법입니다. EKS에서는 다중 스케줄러 접근 방식, 스케줄러 확장 접근 방식, 스케줄러 프레임워크 플러그인 접근 방식 등 다양한 방법으로 커스텀 스케줄러를 구현할 수 있습니다.
 
-GPU 워크로드 최적화, 네트워크 지역성 최적화 등 다양한 사례에서 Custom Scheduler를 활용할 수 있습니다. Custom Scheduler를 구현할 때는 모니터링 및 디버깅을 위한 도구를 함께 구성하는 것이 중요합니다.
+GPU 워크로드 최적화, 네트워크 지역성 최적화 등 다양한 사례에서 커스텀 스케줄러를 활용할 수 있습니다. 커스텀 스케줄러를 구현할 때는 모니터링 및 디버깅을 위한 도구를 함께 구성하는 것이 중요합니다.
