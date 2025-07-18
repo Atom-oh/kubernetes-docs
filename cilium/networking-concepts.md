@@ -128,17 +128,17 @@ CNI(Container Network Interface)는 컨테이너 런타임과 네트워크 플�
 ```mermaid
 graph TD
     subgraph "Container A"
-        A[Container A<br>IP: 172.17.0.2]
+        A["Container A<br>IP: 172.17.0.2"]
         vethA[veth0]
     end
     
     subgraph "Container B"
-        B[Container B<br>IP: 172.17.0.3]
+        B["Container B<br>IP: 172.17.0.3"]
         vethB[veth1]
     end
     
-    bridge[docker0<br>Bridge (172.17.0.1/24)]
-    host[Host Network<br>eth0, 192.168.1.10]
+    bridge["docker0<br>Bridge (172.17.0.1/24)"]
+    host["Host Network<br>eth0, 192.168.1.10"]
     
     vethA --> bridge
     vethB --> bridge
