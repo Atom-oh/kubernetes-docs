@@ -60,7 +60,7 @@
 
 ### 고급 주제
 - [Kyverno를 사용한 정책 관리 퀴즈](./advanced/01-kyverno-policy-management-quiz.md)
-- [커스텀 스케줄러 퀴즈](./advanced/02-custom-scheduler-quiz.md)
+- [Custom Scheduler 퀴즈](./advanced/02-custom-scheduler-quiz.md)
 - [AI/ML 워크로드 퀴즈](./advanced/03-ai-ml-workloads-quiz.md)
 - [vLLM 배포 퀴즈](./advanced/04-vllm-deployment-quiz.md)
 
