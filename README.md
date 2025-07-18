@@ -14,7 +14,7 @@
 
 ### 기초 개념
 1. [Linux 기초](./basics/01-linux-basics.md) | [퀴즈](./quizzes/basics/01-linux-basics-quiz.md)
-2. [컨테이너 기술](./basics/02-container-technology.md)
+2. [컨테이너 기술](./basics/02-container-technology.md) | [퀴즈](./quizzes/basics/02-container-technology-quiz.md)
 3. [Kubernetes 소개](./basics/03-kubernetes-introduction.md)
 
 ### Kubernetes 핵심 개념
