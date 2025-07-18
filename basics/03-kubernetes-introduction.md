@@ -692,21 +692,27 @@ Kubernetes의 네트워킹 모델은 모든 파드가 고유한 IP 주소를 가
 flowchart TB
     subgraph "Kubernetes Cluster"
         subgraph "ClusterIP Service"
-            CLIP["ClusterIP\n10.100.10.10:80"]
+            CLIP["ClusterIP
+                10.100.10.10:80"]
         end
         
         subgraph "NodePort Service"
-            NP["NodePort\n10.100.20.20:80"]
+            NP["NodePort
+                10.100.20.20:80"]
         end
         
         subgraph "LoadBalancer Service"
-            LB["LoadBalancer\n10.100.30.30:80"]
+            LB["LoadBalancer
+                10.100.30.30:80"]
         end
         
         subgraph "Pods"
-            POD1["Pod 1\n10.0.1.1"]
-            POD2["Pod 2\n10.0.1.2"]
-            POD3["Pod 3\n10.0.1.3"]
+            POD1["Pod 1
+                10.0.1.1"]
+            POD2["Pod 2
+                10.0.1.2"]
+            POD3["Pod 3
+                10.0.1.3"]
         end
         
         CLIP --> POD1
@@ -721,10 +727,13 @@ flowchart TB
         LB --> POD2
         LB --> POD3
         
-        NODE1["Node 1\n192.168.1.1:30080"] --> NP
-        NODE2["Node 2\n192.168.1.2:30080"] --> NP
+        NODE1["Node 1
+                192.168.1.1:30080"] --> NP
+        NODE2["Node 2
+                192.168.1.2:30080"] --> NP
         
-        ELB["Cloud Load Balancer\nlb.example.com"] --> LB
+        ELB["Cloud Load Balancer
+                lb.example.com"] --> LB
     end
     
     CLIENT1["Internal Client"] --> CLIP
@@ -732,7 +741,9 @@ flowchart TB
     CLIENT2 --> NODE2
     CLIENT3["External Client"] --> ELB
     
-    EXTSERVICE["External Service\napi.external.com"] --> EXNAME["ExternalName Service\nexternal-api.default.svc.cluster.local"]
+    EXTSERVICE["External Service
+                api.external.com"] --> EXNAME["ExternalName Service
+                external-api.default.svc.cluster.local"]
     
     %% 스타일 정의
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
@@ -874,9 +885,15 @@ flowchart TB
     INTERNET((Internet)) --> FE1 & FE2
     
     %% 네트워크 정책 표시
-    NP_DB["NetworkPolicy:\ndb-policy\n(allow only from api)"]
-    NP_API["NetworkPolicy:\napi-policy\n(allow from frontend & monitoring)"]
-    NP_FE["NetworkPolicy:\nfrontend-policy\n(allow from internet & monitoring)"]
+    NP_DB["NetworkPolicy:
+                db-policy
+                (allow only from api)"]
+    NP_API["NetworkPolicy:
+                api-policy
+                (allow from frontend & monitoring)"]
+    NP_FE["NetworkPolicy:
+                frontend-policy
+                (allow from internet & monitoring)"]
     
     NP_DB -.-> DB1 & DB2
     NP_API -.-> API1 & API2
@@ -1011,25 +1028,36 @@ Kubernetes는 컨테이너화된 애플리케이션에 다양한 스토리지 �
 flowchart TB
     subgraph "Kubernetes Cluster"
         subgraph "Storage Resources"
-            SC["StorageClass\n(standard)"]
-            PV1["PersistentVolume\n(pv-1, 10Gi)"]
-            PV2["PersistentVolume\n(pv-2, 20Gi)"]
-            PV3["PersistentVolume\n(pv-3, 5Gi)"]
+            SC["StorageClass
+                (standard)"]
+            PV1["PersistentVolume
+                (pv-1, 10Gi)"]
+            PV2["PersistentVolume
+                (pv-2, 20Gi)"]
+            PV3["PersistentVolume
+                (pv-3, 5Gi)"]
         end
         
         subgraph "User Namespace"
-            PVC1["PersistentVolumeClaim\n(pvc-1, 8Gi)"]
-            PVC2["PersistentVolumeClaim\n(pvc-2, 5Gi)"]
+            PVC1["PersistentVolumeClaim
+                (pvc-1, 8Gi)"]
+            PVC2["PersistentVolumeClaim
+                (pvc-2, 5Gi)"]
             
-            POD1["Pod 1\n(uses pvc-1)"]
-            POD2["Pod 2\n(uses pvc-2)"]
+            POD1["Pod 1
+                (uses pvc-1)"]
+            POD2["Pod 2
+                (uses pvc-2)"]
         end
     end
     
     subgraph "External Storage"
-        EBS1["AWS EBS Volume\n(vol-1)"]
-        EBS2["AWS EBS Volume\n(vol-2)"]
-        EBS3["AWS EBS Volume\n(vol-3)"]
+        EBS1["AWS EBS Volume
+                (vol-1)"]
+        EBS2["AWS EBS Volume
+                (vol-2)"]
+        EBS3["AWS EBS Volume
+                (vol-3)"]
     end
     
     SC --> PV1 & PV2 & PV3

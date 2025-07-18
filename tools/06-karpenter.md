@@ -499,10 +499,14 @@ userData: |
 ```mermaid
 flowchart LR
     %% 노드 정의
-    N1[Node 1\n50% 사용]
-    N2[Node 2\n30% 사용]
-    N3[Node 3\n20% 사용]
-    N4[New Node\n100% 사용]
+    N1["Node 1
+                50% 사용"]
+    N2["Node 2
+                30% 사용"]
+    N3["Node 3
+                20% 사용"]
+    N4["New Node
+                100% 사용"]
     
     %% 프로세스 정의
     P1[노드 사용률 분석]

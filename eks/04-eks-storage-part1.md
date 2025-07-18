@@ -18,9 +18,12 @@ Kubernetes에서 스토리지를 관리하기 위한 핵심 개념들을 먼저 
 flowchart TD
     subgraph K8s_Storage_Concepts ["Kubernetes 스토리지 개념"]
         Volume[볼륨]
-        PV[영구 볼륨\nPersistentVolume]
-        PVC[영구 볼륨 클레임\nPersistentVolumeClaim]
-        SC[스토리지 클래스\nStorageClass]
+        PV["영구 볼륨
+                PersistentVolume"]
+        PVC["영구 볼륨 클레임
+                PersistentVolumeClaim"]
+        SC["스토리지 클래스
+                StorageClass"]
     end
     
     subgraph Pod ["파드"]

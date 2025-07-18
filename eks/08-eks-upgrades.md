@@ -22,17 +22,22 @@ flowchart TD
     UpgradeOverview --> UpgradePath[업그레이드 경로]
     UpgradeOverview --> UpgradeOrder[업그레이드 순서]
     
-    VersionManagement --> Support[버전 지원\n최소 4개 버전 동시 지원]
-    VersionManagement --> SupportPeriod[지원 기간\n약 14개월]
-    VersionManagement --> Deprecation[버전 사용 중단\n최소 60일 전 알림]
+    VersionManagement --> Support["버전 지원
+                최소 4개 버전 동시 지원"]
+    VersionManagement --> SupportPeriod["지원 기간
+                약 14개월"]
+    VersionManagement --> Deprecation["버전 사용 중단
+                최소 60일 전 알림"]
     
     UpgradeComponents --> ControlPlane[EKS 컨트롤 플레인]
     UpgradeComponents --> NodeGroups[노드 그룹]
     UpgradeComponents --> Addons[애드온]
     UpgradeComponents --> SelfManaged[자체 관리형 구성 요소]
     
-    UpgradePath --> CorrectPath[올바른 경로\n1.24 → 1.25 → 1.26 → 1.27]
-    UpgradePath --> InvalidPath[지원되지 않음\n1.24 → 1.26]
+    UpgradePath --> CorrectPath["올바른 경로
+                1.24 → 1.25 → 1.26 → 1.27"]
+    UpgradePath --> InvalidPath["지원되지 않음
+                1.24 → 1.26"]
     
     UpgradeOrder --> Step1[1. 업그레이드 계획 및 준비]
     UpgradeOrder --> Step2[2. EKS 컨트롤 플레인 업그레이드]

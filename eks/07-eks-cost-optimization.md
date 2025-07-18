@@ -18,7 +18,8 @@ Amazon EKS를 사용할 때 발생하는 비용은 다음과 같은 구성 요�
 
 ```mermaid
 flowchart TD
-    EKSCost[EKS 총 비용] --> ControlPlane[EKS 컨트롤 플레인\n$0.10/시간]
+    EKSCost[EKS 총 비용] --> ControlPlane["EKS 컨트롤 플레인
+                $0.10/시간"]
     EKSCost --> Compute[컴퓨팅 비용]
     EKSCost --> Storage[스토리지 비용]
     EKSCost --> Networking[네트워킹 비용]
@@ -94,9 +95,11 @@ EKS 클러스터의 네트워킹과 관련된 비용:
 flowchart TD
     ComputeCost[컴퓨팅 비용 최적화] --> InstanceType[인스턴스 유형 최적화]
     ComputeCost --> SpotInstances[스팟 인스턴스 활용]
-    ComputeCost --> SavingsPlans[Savings Plans 및\n예약 인스턴스]
+    ComputeCost --> SavingsPlans["Savings Plans 및
+                예약 인스턴스"]
     ComputeCost --> AutoScaling[자동 스케일링 최적화]
-    ComputeCost --> FargateVsEC2[Fargate vs EC2\n비용 비교]
+    ComputeCost --> FargateVsEC2["Fargate vs EC2
+                비용 비교"]
     
     InstanceType --> Family[인스턴스 패밀리 선택]
     InstanceType --> Size[인스턴스 크기 최적화]
@@ -819,9 +822,12 @@ flowchart TD
     CostAllocation --> K8sLabels[Kubernetes 레이블 및 주석]
     CostAllocation --> Kubecost[Kubecost 사용]
     
-    QoSClasses --> Guaranteed[Guaranteed\n요청 = 제한]
-    QoSClasses --> Burstable[Burstable\n요청 < 제한]
-    QoSClasses --> BestEffort[BestEffort\n요청 및 제한 없음]
+    QoSClasses --> Guaranteed["Guaranteed
+                요청 = 제한"]
+    QoSClasses --> Burstable["Burstable
+                요청 < 제한"]
+    QoSClasses --> BestEffort["BestEffort
+                요청 및 제한 없음"]
     
     %% 클래스 정의
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;

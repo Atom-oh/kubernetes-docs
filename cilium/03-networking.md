@@ -87,14 +87,18 @@ Cilium은 기본적으로 VXLAN을 사용하여 오버레이 네트워킹을 구
 flowchart TD
     subgraph "호스트 A"
         direction TB
-        A1["컨테이너 A\n10.0.0.1"] --> B1["eBPF"]
-        B1 --> C1["VTEP\n192.168.1.1"]
+        A1["컨테이너 A
+        10.0.0.1"] --> B1["eBPF"]
+        B1 --> C1["VTEP
+        192.168.1.1"]
     end
     
     subgraph "호스트 B"
         direction TB
-        A2["컨테이너 B\n10.0.0.2"] --> B2["eBPF"]
-        B2 --> C2["VTEP\n192.168.1.2"]
+        A2["컨테이너 B
+        10.0.0.2"] --> B2["eBPF"]
+        B2 --> C2["VTEP
+        192.168.1.2"]
     end
     
     C1 <--> D["물리적 네트워크"] <--> C2

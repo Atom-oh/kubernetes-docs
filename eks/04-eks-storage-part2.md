@@ -255,9 +255,11 @@ Amazon S3는 객체 스토리지 서비스로, 무제한 양의 데이터를 저
 flowchart TD
     subgraph EKS_Cluster ["Amazon EKS 클러스터"]
         subgraph Integration_Methods ["S3 통합 방법"]
-            IRSA[IAM Roles for\nService Accounts]
+            IRSA[IAM Roles for
+                Service Accounts]
             S3_CSI[S3 CSI 드라이버]
-            S3A[Hadoop S3A\n파일 시스템]
+            S3A[Hadoop S3A
+                파일 시스템]
             SDK[AWS SDK 직접 사용]
         end
         
@@ -466,17 +468,25 @@ Kubernetes에서는 볼륨 스냅샷을 사용하여 PV의 데이터를 백업�
 ```mermaid
 flowchart TD
     subgraph K8s_Snapshot_System ["Kubernetes 스냅샷 시스템"]
-        VSC[볼륨 스냅샷 클래스\nVolumeSnapshotClass]
-        VS[볼륨 스냅샷\nVolumeSnapshot]
-        VSContent[볼륨 스냅샷 컨텐츠\nVolumeSnapshotContent]
-        SC[스토리지 클래스\nStorageClass]
+        VSC[볼륨 스냅샷 클래스
+                VolumeSnapshotClass]
+        VS[볼륨 스냅샷
+                VolumeSnapshot]
+        VSContent[볼륨 스냅샷 컨텐츠
+                VolumeSnapshotContent]
+        SC[스토리지 클래스
+                StorageClass]
     end
     
     subgraph K8s_Resources ["Kubernetes 리소스"]
-        PVC1[영구 볼륨 클레임\n(원본)]
-        PVC2[영구 볼륨 클레임\n(복원)]
-        PV1[영구 볼륨\n(원본)]
-        PV2[영구 볼륨\n(복원)]
+        PVC1[영구 볼륨 클레임
+                (원본)]
+        PVC2[영구 볼륨 클레임
+                (복원)]
+        PV1[영구 볼륨
+                (원본)]
+        PV2[영구 볼륨
+                (복원)]
     end
     
     subgraph AWS_Services ["AWS 서비스"]
@@ -631,23 +641,34 @@ Kubernetes에서는 PVC의 크기를 확장하여 스토리지 용량을 늘릴 
 ```mermaid
 flowchart TD
     subgraph Volume_Expansion_Process ["볼륨 확장 프로세스"]
-        SC[스토리지 클래스\nallowVolumeExpansion: true]
-        PVC1[PVC\nstorage: 10Gi]
-        PVC2[PVC\nstorage: 20Gi]
-        PV1[PV\ncapacity: 10Gi]
-        PV2[PV\ncapacity: 20Gi]
-        FS1[파일 시스템\n10Gi]
-        FS2[파일 시스템\n20Gi]
+        SC[스토리지 클래스
+                allowVolumeExpansion: true]
+        PVC1[PVC
+                storage: 10Gi]
+        PVC2[PVC
+                storage: 20Gi]
+        PV1[PV
+                capacity: 10Gi]
+        PV2[PV
+                capacity: 20Gi]
+        FS1[파일 시스템
+                10Gi]
+        FS2[파일 시스템
+                20Gi]
     end
     
     subgraph AWS_Services ["AWS 서비스"]
-        EBS1[EBS 볼륨\n10Gi]
-        EBS2[EBS 볼륨\n20Gi]
+        EBS1[EBS 볼륨
+                10Gi]
+        EBS2[EBS 볼륨
+                20Gi]
     end
     
     subgraph Expansion_Types ["확장 유형"]
-        Online[온라인 확장\n(파드 실행 중)]
-        Offline[오프라인 확장\n(파드 재시작 필요)]
+        Online[온라인 확장
+                (파드 실행 중)]
+        Offline[오프라인 확장
+                (파드 재시작 필요)]
     end
     
     subgraph Best_Practices ["모범 사례"]
@@ -761,7 +782,8 @@ flowchart TD
     subgraph Storage_Optimization ["스토리지 성능 최적화"]
         subgraph EBS_Optimization ["EBS 최적화"]
             EBS_Type[볼륨 유형 선택]
-            EBS_Perf[성능 조정\niops & throughput]
+            EBS_Perf[성능 조정
+                iops & throughput]
             EBS_Instance[인스턴스 유형 고려]
             EBS_Init[볼륨 초기화]
         end

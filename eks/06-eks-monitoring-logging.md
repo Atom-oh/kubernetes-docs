@@ -379,11 +379,16 @@ Fluent Bit에서 로그 파싱을 위한 구성:
 flowchart TD
     subgraph Monitoring_Solutions ["모니터링 솔루션"]
         subgraph AWS_Solutions ["AWS 솔루션"]
-            CW_CI[CloudWatch\nContainer Insights]
-            CW_LA[CloudWatch\nLogs Insights]
-            CW_Alarms[CloudWatch\n경보]
-            AMP[Amazon Managed\nPrometheus]
-            AMG[Amazon Managed\nGrafana]
+            CW_CI["CloudWatch
+                Container Insights"]
+            CW_LA["CloudWatch
+                Logs Insights"]
+            CW_Alarms["CloudWatch
+                경보"]
+            AMP["Amazon Managed
+                Prometheus"]
+            AMG["Amazon Managed
+                Grafana"]
         end
         
         subgraph K8s_Solutions ["Kubernetes 솔루션"]
@@ -391,7 +396,8 @@ flowchart TD
             Grafana[Grafana]
             Kube_State[kube-state-metrics]
             Node_Exporter[Node Exporter]
-            K8s_Dashboard[Kubernetes\n대시보드]
+            K8s_Dashboard["Kubernetes
+                대시보드"]
         end
         
         subgraph Tracing_Solutions ["추적 솔루션"]
@@ -854,7 +860,8 @@ flowchart TD
     
     subgraph Alert_Processing ["알림 처리"]
         CW_Alarms[CloudWatch 경보]
-        Prom_AM[Prometheus\nAlertmanager]
+        Prom_AM["Prometheus
+                Alertmanager"]
         EventBridge[Amazon EventBridge]
         Event_Router[이벤트 라우터]
     end

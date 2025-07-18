@@ -36,7 +36,8 @@ flowchart TB
         APP2["데이터베이스"]
         'APP3["컨테이너 런타임"]
         SHELL["셸 (bash, zsh)"]
-        LIBS["시스템 라이브러리\n(glibc, libcap)"]
+        LIBS["시스템 라이브러리
+            (glibc, libcap)"]
     end
     
     subgraph "커널 공간 (Kernel Space)"
@@ -280,7 +281,11 @@ flowchart LR
         F["파일 타입"] --- U["소유자 권한"] --- G["그룹 권한"] --- O["기타 사용자 권한"]
         
         subgraph "파일 타입"
-            FT["-: 일반 파일\nd: 디렉토리\nl: 심볼릭 링크\nc: 문자 장치\nb: 블록 장치"]
+            FT["-: 일반 파일
+                d: 디렉토리
+                l: 심볼릭 링크
+                c: 문자 장치
+                b: 블록 장치"]
         end
         
         subgraph "소유자 권한"
@@ -423,18 +428,23 @@ flowchart TB
 flowchart TB
     subgraph "Host"
         subgraph "Container A"
-            CA["eth0\n172.17.0.2"]
+            CA["eth0
+172.17.0.2"]
         end
         
         subgraph "Container B"
-            CB["eth0\n172.17.0.3"]
+            CB["eth0
+172.17.0.3"]
         end
         
-        BR["Bridge (docker0)\n172.17.0.1/16"]
+        BR["Bridge (docker0)
+172.17.0.1/16"]
         
-        ETH["eth0\n192.168.1.10"]
+        ETH["eth0
+192.168.1.10"]
         
-        IPTABLES["iptables\nNAT Rules"]
+        IPTABLES["iptables
+NAT Rules"]
         
         CA -- "veth pair" --> BR
         CB -- "veth pair" --> BR
@@ -442,7 +452,8 @@ flowchart TB
         IPTABLES --> ETH
     end
     
-    INTERNET["External Network\nInternet"]
+    INTERNET["External Network
+    Internet"]
     
     ETH <--> INTERNET
     

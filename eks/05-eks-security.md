@@ -62,7 +62,8 @@ flowchart TD
     subgraph Authentication_Methods ["EKS 인증 메커니즘"]
         IAM_Auth[AWS IAM 인증자]
         OIDC[OIDC 제공자 통합]
-        IRSA[서비스 계정 IAM 역할\nIRSA]
+        IRSA["서비스 계정 IAM 역할
+                IRSA"]
     end
     
     subgraph Users_and_Services ["사용자 및 서비스"]
@@ -232,7 +233,8 @@ EKS 클러스터의 노드와 파드에 대한 네트워크 트래픽을 제어�
 flowchart TD
     subgraph VPC ["Amazon VPC"]
         subgraph Public_Subnets ["퍼블릭 서브넷"]
-            ALB[Application\nLoad Balancer]
+            ALB["Application
+                Load Balancer"]
             NAT[NAT 게이트웨이]
             Bastion[Bastion 호스트]
         end
@@ -255,15 +257,21 @@ flowchart TD
         end
         
         subgraph Security_Groups ["보안 그룹"]
-            CP_SG[컨트롤 플레인\n보안 그룹]
-            Node_SG[노드\n보안 그룹]
-            ALB_SG[ALB\n보안 그룹]
-            Bastion_SG[Bastion\n보안 그룹]
+            CP_SG["컨트롤 플레인
+                보안 그룹"]
+            Node_SG["노드
+                보안 그룹"]
+            ALB_SG["ALB
+                보안 그룹"]
+            Bastion_SG["Bastion
+                보안 그룹"]
         end
         
         subgraph VPC_Endpoints ["VPC 엔드포인트"]
-            ECR_API[ECR API\n엔드포인트]
-            ECR_DKR[ECR DKR\n엔드포인트]
+            ECR_API["ECR API
+                엔드포인트"]
+            ECR_DKR["ECR DKR
+                엔드포인트"]
             S3_EP[S3 엔드포인트]
             STS_EP[STS 엔드포인트]
         end
@@ -394,16 +402,23 @@ Kubernetes 1.23부터 도입된 포드 보안 표준은 파드의 보안 컨텍�
 flowchart TD
     subgraph Pod_Security ["포드 보안 계층"]
         subgraph PSS ["포드 보안 표준"]
-            Privileged[Privileged\n제한 없음]
-            Baseline[Baseline\n권한 에스컬레이션 방지]
-            Restricted[Restricted\n강력한 제한]
+            Privileged["Privileged
+                제한 없음"]
+            Baseline["Baseline
+                권한 에스컬레이션 방지"]
+            Restricted["Restricted
+                강력한 제한"]
         end
         
         subgraph Security_Context ["보안 컨텍스트"]
-            RunAsUser[비루트 사용자\nrunAsUser]
-            ReadOnlyFS[읽기 전용 파일 시스템\nreadOnlyRootFilesystem]
-            NoPrivEsc[권한 에스컬레이션 방지\nallowPrivilegeEscalation]
-            DropCaps[기능 제한\ncapabilities.drop]
+            RunAsUser["비루트 사용자
+                runAsUser"]
+            ReadOnlyFS["읽기 전용 파일 시스템
+                readOnlyRootFilesystem"]
+            NoPrivEsc["권한 에스컬레이션 방지
+                allowPrivilegeEscalation"]
+            DropCaps["기능 제한
+                capabilities.drop"]
         end
         
         subgraph Policy_Engines ["정책 엔진"]
@@ -546,9 +561,12 @@ flowchart TD
         end
         
         subgraph Integration_Tools ["통합 도구"]
-            ESO[External Secrets\nOperator]
-            ASCP[AWS Secrets and\nConfiguration Provider]
-            CSI_Driver[Secrets Store\nCSI Driver]
+            ESO["External Secrets
+                Operator"]
+            ASCP["AWS Secrets and
+                Configuration Provider"]
+            CSI_Driver["Secrets Store
+                CSI Driver"]
         end
     end
     
@@ -701,7 +719,8 @@ flowchart TD
             Config[AWS Config]
             SecurityHub[AWS Security Hub]
             Inspector[Amazon Inspector]
-            CIS_Benchmark[CIS Kubernetes\nBenchmark]
+            CIS_Benchmark["CIS Kubernetes
+                Benchmark"]
         end
         
         subgraph Compliance_Standards ["컴플라이언스 표준"]
@@ -954,14 +973,18 @@ flowchart TD
         end
         
         subgraph DataServices["데이터 서비스"]
-            RDS[(Amazon RDS\n암호화됨)]
-            S3[(S3 버킷\n암호화됨)]
-            DynamoDB[(DynamoDB\n암호화됨)]
+            RDS["(Amazon RDS
+                암호화됨)"]
+            S3["(S3 버킷
+                암호화됨)"]
+            DynamoDB["(DynamoDB
+                암호화됨)"]
         end
     end
     
     Internet((인터넷)) --> WAF
-    WAF --> ALB[Application\nLoad Balancer]
+    WAF --> ALB["Application
+                Load Balancer"]
     ALB --> AppPods
     
     AppPods --> RDS
