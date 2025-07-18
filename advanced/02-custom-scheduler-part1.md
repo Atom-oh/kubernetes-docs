@@ -41,12 +41,12 @@ flowchart TD
     classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     classDef process fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef decision fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef phase fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     
     class Start,End start;
     class PodQueue,Filtering,Scoring,SelectBestNode,Binding,UnschedulablePod,Retry process;
     class FeasibleNodes decision;
-    class FilteringPhase,ScoringPhase phase;
+    class NodeResourcesFit,NodeName,NodeUnschedulable,NodeAffinity,PodAffinity,TaintToleration process;
+    class NodeResourcesBalancedAllocation,ImageLocality,InterPodAffinity,NodeAffinity2 process;
 ```
 
 1. **필터링(Filtering)**: 포드를 실행할 수 있는 노드를 식별합니다. 이 단계에서는 리소스 요구 사항, 노드 선택기, 노드 어피니티, 테인트 및 톨러레이션 등을 고려합니다.
@@ -80,8 +80,8 @@ flowchart TD
         subgraph ControlPlane [컨트롤 플레인]
             APIServer[API 서버]
             DefaultScheduler[기본 스케줄러]
-            CustomScheduler1[Custom Scheduler 1]
-            CustomScheduler2[Custom Scheduler 2]
+            CustomScheduler1[커스텀 스케줄러 1]
+            CustomScheduler2[커스텀 스케줄러 2]
         end
         
         subgraph Nodes [워커 노드]
@@ -114,10 +114,11 @@ flowchart TD
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef customComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef podComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     class APIServer,DefaultScheduler,Node1,Node2,Node3 k8sComponent;
     class CustomScheduler1,CustomScheduler2 customComponent;
+    class Pod1,Pod2,Pod3,PodQueue podComponent;
+```
     class Pod1,Pod2,Pod3,PodQueue podComponent;
     class K8sCluster,ControlPlane,Nodes,Pods default;
 ```
@@ -330,8 +331,8 @@ flowchart TD
                 DefaultScheduler[기본 스케줄러]
             end
             
-            subgraph CustomSchedulerPod [Custom Scheduler 파드]
-                CustomScheduler[Custom Scheduler]
+            subgraph CustomSchedulerPod [커스텀 스케줄러 파드]
+                CustomScheduler[커스텀 스케줄러]
                 MetricsCollector[메트릭 수집기]
             end
             
@@ -367,6 +368,14 @@ flowchart TD
     MetricsCollector --> CloudWatch
     CustomScheduler --> EC2API
     
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef customComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    
+    class CloudWatch,EC2API awsService;
+    class APIServer,DefaultScheduler,MNode1,MNode2,SNode1,SNode2,SpNode1,SpNode2 k8sComponent;
+    class CustomScheduler,MetricsCollector customComponent;
+```
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef customComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;

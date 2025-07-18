@@ -1,4 +1,4 @@
-# Custom Scheduler커스텀 스케줄러 구현 사례 및 모니터링
+# Part 3: 커스텀 스케줄러 구현 사례 및 모니터링
 
 ## EKS에서의 Custom Scheduler 구현 사례
 
@@ -48,6 +48,38 @@ flowchart TD
                     G4dn_xl[g4dn.xlarge]
                     G4dn_2xl[g4dn.2xlarge]
                     G4dn_4xl[g4dn.4xlarge]
+                end
+                
+                subgraph G5Instances [G5 인스턴스]
+                    G5_xl[g5.xlarge]
+                    G5_2xl[g5.2xlarge]
+                    G5_4xl[g5.4xlarge]
+                end
+            end
+        end
+        
+        CloudWatch[CloudWatch]
+        Prometheus[(Prometheus)]
+    end
+    
+    APIServer --> DefaultScheduler
+    APIServer --> SchedulerCore
+    SchedulerCore --> Plugins
+    
+    Plugins --> NodeGroups
+    Metrics --> Prometheus
+    Prometheus --> CloudWatch
+    
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef gpuComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    
+    class CloudWatch,Prometheus awsService;
+    class APIServer,DefaultScheduler k8sComponent;
+    class SchedulerCore,GPUTopologyPlugin,GPUUtilizationPlugin,GPUMemoryPlugin,DCGMExporter,NodeExporter gpuComponent;
+    class P3_2xl,P3_8xl,P3_16xl,G4dn_xl,G4dn_2xl,G4dn_4xl,G5_xl,G5_2xl,G5_4xl gpuNode;
+```
                 end
                 
                 subgraph G5Instances [G5 인스턴스]

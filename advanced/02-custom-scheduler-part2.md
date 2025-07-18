@@ -1,4 +1,4 @@
-# Custom Scheduler스케줄러 확장 및 프레임워크
+# Part 2: 스케줄러 확장 및 프레임워크
 
 ## 스케줄러 확장(Extender) 접근 방식
 
@@ -44,10 +44,11 @@ flowchart TD
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef extenderComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef endpointComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     class APIServer,DefaultScheduler,Node1,Node2,Node3 k8sComponent;
-    class ExtenderService,SchedulerExtender extenderComponent;
+    class ExtenderService extenderComponent;
+    class FilterEndpoint,PrioritizeEndpoint,BindEndpoint,PrefilterEndpoint,PrescoreEndpoint endpointComponent;
+```
     class FilterEndpoint,PrioritizeEndpoint,BindEndpoint,PrefilterEndpoint,PrescoreEndpoint endpointComponent;
     class K8sCluster,ControlPlane,Nodes,ExtenderEndpoints default;
 ```
