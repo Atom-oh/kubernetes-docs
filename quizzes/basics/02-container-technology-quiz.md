@@ -11,6 +11,7 @@
    - D) 격리된 실행 환경
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) 완전한 하드웨어 가상화**
@@ -26,6 +27,7 @@
    - D) 가상 머신은 컨테이너보다 더 적은 리소스를 사용한다
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) 컨테이너는 호스트 OS 커널을 공유한다**
@@ -41,6 +43,7 @@
    - D) gVisor
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) containerd**
@@ -56,6 +59,7 @@
    - D) 모든 컨테이너는 자신만의 고유한 레이어 세트를 가진다
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) 레이어는 이전 레이어에 대한 변경사항을 나타낸다**
@@ -71,6 +75,7 @@
    - D) 여러 운영체제 지원
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) 최종 이미지 크기 감소**
@@ -85,6 +90,7 @@
    - D) macvlan
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) bridge**
@@ -100,6 +106,7 @@
    - D) tmpfs 마운트
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) 볼륨**
@@ -115,6 +122,7 @@
    - D) 읽기 전용 파일 시스템 사용
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) 모든 컨테이너에 관리자 권한 부여**
@@ -130,6 +138,7 @@
    - D) Amazon ECR
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) Amazon Fargate**
@@ -145,6 +154,7 @@
     - D) 자동 확장
     
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: C) 컨테이너 이미지 빌드**
@@ -158,6 +168,7 @@
 11. 컨테이너 이미지의 내용을 기반으로 한 고유한 식별자로, SHA256 해시 형태로 표현되는 것은 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: 다이제스트(Digest)**
@@ -169,6 +180,7 @@
 12. Dockerfile에서 컨테이너 시작 시 실행할 명령을 지정하는 지시문은 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: CMD**
@@ -180,6 +192,7 @@
 13. 컨테이너 간 통신을 위해 Docker가 생성하는 가상 네트워크 인터페이스의 이름은 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: docker0**
@@ -191,6 +204,7 @@
 14. 컨테이너 내에서 실행되는 프로세스가 사용할 수 있는 시스템 호출을 제한하는 Linux 보안 기능은 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: seccomp (Secure Computing Mode)**
@@ -202,6 +216,7 @@
 15. AWS에서 컨테이너 이미지를 저장하고 관리하는 서비스의 이름은 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: Amazon ECR (Elastic Container Registry)**
@@ -222,6 +237,7 @@
     - 컨테이너 시작 시 "node server.js" 명령 실행
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -251,6 +267,7 @@
     ```
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -268,6 +285,7 @@
 18. 다단계 빌드를 사용하여 React 애플리케이션을 위한 최적화된 Dockerfile을 작성하세요.
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -311,6 +329,7 @@
 19. 컨테이너 기술의 핵심 구성 요소인 네임스페이스와 cgroups의 역할을 비교하고, 각각이 컨테이너 격리에 어떻게 기여하는지 설명하세요.
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -350,6 +369,7 @@
 20. 컨테이너 이미지 레이어링 시스템의 작동 방식과 Copy-on-Write(CoW) 전략이 컨테이너의 효율성에 어떻게 기여하는지 설명하세요.
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**

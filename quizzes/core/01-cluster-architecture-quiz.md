@@ -11,6 +11,7 @@
    - D) kube-scheduler
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) kube-proxy**
@@ -26,6 +27,7 @@
    - D) kubelet
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) etcd**
@@ -41,6 +43,7 @@
    - D) kube-controller-manager
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: D) kube-controller-manager**
@@ -56,6 +59,7 @@
    - D) kube-controller-manager
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) kube-scheduler**
@@ -71,6 +75,7 @@
    - D) kubelet
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) cloud-controller-manager**
@@ -86,6 +91,7 @@
    - D) kube-scheduler
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) kubelet**
@@ -101,6 +107,7 @@
    - D) containerd
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) kube-proxy**
@@ -116,6 +123,7 @@
    - D) CPI (Container Platform Interface)
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: A) CRI (Container Runtime Interface)**
@@ -131,6 +139,7 @@
    - D) API (Application Programming Interface)
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) CNI (Container Network Interface)**
@@ -146,6 +155,7 @@
     - D) CPI (Cloud Provider Interface)
     
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: C) CSI (Container Storage Interface)**
@@ -159,6 +169,7 @@
 11. Kubernetes 컨트롤 플레인에서 여러 컨트롤러 프로세스를 실행하는 구성 요소의 이름은 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: kube-controller-manager**
@@ -170,6 +181,7 @@
 12. Kubernetes에서 etcd 데이터의 일관성을 보장하기 위해 사용하는 합의 알고리즘은 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: Raft**
@@ -181,6 +193,7 @@
 13. Kubernetes에서 kube-proxy의 기본 작동 모드는 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: iptables**
@@ -192,6 +205,7 @@
 14. Kubernetes 클러스터에서 API 서버와 통신하기 위한 구성 파일의 이름은 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: kubeconfig**
@@ -203,6 +217,7 @@
 15. Kubernetes에서 고가용성 클러스터를 구성할 때 일반적으로 권장되는 최소 컨트롤 플레인 노드 수는 몇 개인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: 3**
@@ -215,6 +230,7 @@
 16. etcd 데이터베이스의 백업을 생성하는 명령어를 작성하세요. 백업 파일은 `/backup/etcd-snapshot-$(date +%Y%m%d).db`에 저장하고, etcd 엔드포인트는 `https://127.0.0.1:2379`이며, 인증서 파일은 `/etc/kubernetes/pki/etcd/` 디렉토리에 있습니다.
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -237,6 +253,7 @@
     - 필터링 플러그인: NodeUnschedulable 비활성화
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -271,6 +288,7 @@
     - 인증서 파일은 /etc/kubernetes/pki/etcd/ 디렉토리에 있음
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -301,6 +319,7 @@
 19. Kubernetes 클러스터의 고가용성 아키텍처를 설계하고, 컨트롤 플레인 구성 요소와 etcd의 배포 방식, 로드 밸런서 구성, 그리고 장애 시나리오에 대한 대응 방안을 설명하세요.
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -356,6 +375,7 @@
 20. Kubernetes 클러스터의 네트워킹 아키텍처를 설명하고, 파드 간 통신, 서비스 네트워킹, 외부 통신의 작동 방식과 CNI 플러그인의 역할을 설명하세요. 또한, 네트워크 정책을 사용하여 파드 간 통신을 제한하는 방법에 대해 설명하세요.
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**

@@ -11,6 +11,7 @@
    - D) ExternalName
    
    <details>
+
    <summary>정답 보기</summary> 
    
    **정답: C) ClusterIP**
@@ -26,6 +27,7 @@
    - D) NetworkPolicy
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) Ingress**
@@ -41,6 +43,7 @@
    - D) ConfigMap
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: D) ConfigMap**
@@ -56,6 +59,7 @@
    - D) ExternalName
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) NodePort**
@@ -71,6 +75,7 @@
    - D) ExternalName 서비스
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) 헤드리스 서비스**
@@ -86,6 +91,7 @@
    - D) EndpointSlice
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) NetworkPolicy**
@@ -101,6 +107,7 @@
    - D) ClusterDNS
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) CoreDNS**
@@ -116,6 +123,7 @@
    - D) nftables
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) eBPF**
@@ -131,6 +139,7 @@
    - D) 암호화된 통신
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) 영구 스토리지 제공**
@@ -146,6 +155,7 @@
     - D) ExternalName
     
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: D) ExternalName**
@@ -159,6 +169,7 @@
 1. Kubernetes에서 서비스가 가리키는 포드의 IP 주소와 포트를 저장하는 리소스의 이름은 무엇인가요?
 
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: Endpoints**
@@ -170,6 +181,7 @@
 2. AWS EKS에서 Application Load Balancer를 프로비저닝하기 위해 사용하는 인그레스 컨트롤러의 이름은 무엇인가요?
 
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: AWS ALB Ingress Controller**
@@ -181,6 +193,7 @@
 3. Kubernetes에서 포드의 DNS 정책 중, 포드가 실행 중인 노드의 DNS 설정을 상속받는 정책의 이름은 무엇인가요?
 
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: Default**
@@ -192,6 +205,7 @@
 4. Cilium의 관찰 가능성 계층으로, eBPF를 활용하여 네트워크 흐름을 모니터링하고 문제를 해결하는 도구의 이름은 무엇인가요?
 
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: Hubble**
@@ -203,6 +217,7 @@
 5. Kubernetes에서 엔드포인트의 확장 가능한 대안으로, 대규모 클러스터에서 더 나은 성능을 제공하는 리소스의 이름은 무엇인가요?
 
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: EndpointSlice**
@@ -216,6 +231,7 @@
 1. Kubernetes에서 서비스 메시(예: Istio)를 사용하여 마이크로서비스 간의 통신을 관리하는 방법과 그 이점을 설명하세요.
 
    <details>
+
    <summary>정답 보기</summary>
    
    **정답:**
@@ -292,6 +308,7 @@
 2. Cilium의 eBPF 기술이 기존 네트워킹 접근 방식(예: iptables)과 비교하여 어떤 이점을 제공하는지 설명하고, AWS EKS에서 Cilium을 최적화하는 방법을 제안하세요.
 
    <details>
+
    <summary>정답 보기</summary>
    
    **정답:**

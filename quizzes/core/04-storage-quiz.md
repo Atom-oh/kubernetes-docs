@@ -11,6 +11,7 @@
    - D) emptyDir
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) PersistentVolume**
@@ -26,6 +27,7 @@
    - D) VolumeBinding
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) PersistentVolumeClaim**
@@ -41,6 +43,7 @@
    - D) AutoProvisioner
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) StorageClass**
@@ -56,6 +59,7 @@
    - D) 이러한 기능은 제공되지 않음
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: D) 이러한 기능은 제공되지 않음**
@@ -71,6 +75,7 @@
    - D) WriteOnlyMany
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: D) WriteOnlyMany**
@@ -86,6 +91,7 @@
    - D) Release
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) Retain**
@@ -101,6 +107,7 @@
    - D) awsElasticBlockStore
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) emptyDir**
@@ -116,6 +123,7 @@
    - D) kubernetes.io/nfs
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: A) kubernetes.io/aws-ebs**
@@ -131,6 +139,7 @@
    - D) persistentVolumeClaimTemplates
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) volumeClaimTemplates**
@@ -146,6 +155,7 @@
     - D) 클라우드 제공업체 간 스토리지 마이그레이션을 자동화하기 위함
     
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: B) 스토리지 드라이버를 Kubernetes 코드 외부에서 개발할 수 있게 하기 위함**
@@ -159,6 +169,7 @@
 1. Kubernetes에서 CSI(Container Storage Interface) 드라이버를 사용하여 새로운 스토리지 유형을 통합하는 방법과 그 이점을 설명하세요.
 
    <details>
+
    <summary>정답 보기</summary>
    
    **정답:**
@@ -240,6 +251,7 @@
 2. StatefulSet과 PersistentVolume을 사용하여 고가용성 데이터베이스 클러스터를 설계하고, 데이터 지속성과 백업 전략을 설명하세요.
 
    <details>
+
    <summary>정답 보기</summary>
    
    **정답:**

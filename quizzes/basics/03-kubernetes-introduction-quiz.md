@@ -11,6 +11,7 @@
    - D) 관리자
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) 조타수 또는 파일럿**
@@ -26,6 +27,7 @@
    - D) kube-scheduler
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) kubelet**
@@ -41,6 +43,7 @@
    - D) 서비스(Service)
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) 파드(Pod)**
@@ -56,6 +59,7 @@
    - D) ExternalProxy
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: D) ExternalProxy**
@@ -71,6 +75,7 @@
    - D) Namespace
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) ReplicaSet**
@@ -86,6 +91,7 @@
    - D) Job
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) StatefulSet**
@@ -101,6 +107,7 @@
    - D) CronJob
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) DaemonSet**
@@ -116,6 +123,7 @@
    - D) ReplicaSet
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) CronJob**
@@ -131,6 +139,7 @@
    - D) ConfigMap
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) Namespace**
@@ -146,6 +155,7 @@
     - D) 보안 패치 적용
     
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: B) 기본 Kubernetes API**
@@ -159,6 +169,7 @@
 11. Kubernetes에서 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소는 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: etcd**
@@ -170,6 +181,7 @@
 12. Kubernetes에서 새로 생성된 파드를 실행할 노드를 선택하는 컨트롤 플레인 구성 요소는 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: kube-scheduler**
@@ -181,6 +193,7 @@
 13. Kubernetes에서 파드 내의 컨테이너에 마운트할 수 있는 디렉토리로, 파드가 삭제되면 함께 삭제되는 임시 볼륨 유형은 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: emptyDir**
@@ -192,6 +205,7 @@
 14. Kubernetes에서 키-값 쌍의 형태로 구성 데이터를 저장하는 API 객체는 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: ConfigMap**
@@ -203,6 +217,7 @@
 15. Kubernetes에서 암호, 토큰, 키와 같은 민감한 정보를 저장하는 API 객체는 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: Secret**
@@ -223,6 +238,7 @@
     - 리소스 제한: CPU 200m, 메모리 256Mi
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -269,6 +285,7 @@
     - 셀렉터: app=nginx
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -298,6 +315,7 @@
       - LOG_LEVEL: "INFO"
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -321,6 +339,7 @@
 19. Kubernetes의 RBAC(Role-Based Access Control) 시스템에 대해 설명하고, 특정 네임스페이스에서 파드를 조회하고 로그를 볼 수 있는 권한을 가진 Role과 이를 사용자에게 바인딩하는 RoleBinding YAML을 작성하세요.
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -369,6 +388,7 @@
 20. Kubernetes의 네트워크 정책(NetworkPolicy)에 대해 설명하고, 특정 네임스페이스의 데이터베이스 파드가 같은 네임스페이스의 백엔드 파드로부터만 트래픽을 받을 수 있도록 하는 NetworkPolicy YAML을 작성하세요.
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**

@@ -11,6 +11,7 @@
    - D) 노드(Node)
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) 파드(Pod)**
@@ -26,6 +27,7 @@
    - D) 파드는 고유한 IP 주소를 가진다
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) 파드는 여러 노드에 걸쳐 실행될 수 있다**
@@ -41,6 +43,7 @@
    - D) 초기화(Init) 패턴
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) 사이드카(Sidecar) 패턴**
@@ -56,6 +59,7 @@
    - D) healthProbe
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) readinessProbe**
@@ -71,6 +75,7 @@
    - D) 레이블 셀렉터를 통해 관리할 파드 식별
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) 롤링 업데이트 수행**
@@ -86,6 +91,7 @@
    - D) Canary
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) BlueGreen**
@@ -101,6 +107,7 @@
    - D) 데몬셋(DaemonSet)
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: C) 스테이트풀셋(StatefulSet)**
@@ -116,6 +123,7 @@
    - D) 데몬셋(DaemonSet)
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: D) 데몬셋(DaemonSet)**
@@ -131,6 +139,7 @@
    - D) 데몬셋(DaemonSet)
    
    <details>
+
    <summary>정답 보기</summary>
    
    **정답: B) 잡(Job)**
@@ -146,6 +155,7 @@
     - D) 스테이트풀셋(StatefulSet)
     
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: C) 크론잡(CronJob)**
@@ -158,6 +168,7 @@
 11. 파드 내의 컨테이너가 시작되기 전에 실행되는 특수한 컨테이너의 이름은 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: 초기화 컨테이너(Init Container)**
@@ -169,6 +180,7 @@
 12. 파드가 종료될 때 컨테이너에 처음으로 전송되는 신호는 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: SIGTERM**
@@ -180,6 +192,7 @@
 13. 디플로이먼트(Deployment)가 관리하는 리소스의 이름은 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: 레플리카셋(ReplicaSet)**
@@ -191,6 +204,7 @@
 14. 스테이트풀셋(StatefulSet)에서 파드에 부여되는 고유한 식별자의 형식은 무엇인가요? (예: 스테이트풀셋 이름이 'web'인 경우)
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: \<스테이트풀셋 이름\>-\<순서 인덱스\> (예: web-0, web-1, web-2)**
@@ -202,6 +216,7 @@
 15. 크론잡(CronJob)에서 이전 잡이 아직 실행 중일 때 새 잡을 건너뛰는 동시성 정책은 무엇인가요?
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답: Forbid**
@@ -220,6 +235,7 @@
     - 로그 볼륨은 nginx 컨테이너에서는 /var/log/nginx에, fluentd 컨테이너에서는 /fluentd/log에 마운트
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -264,6 +280,7 @@
     - 준비성 프로브: HTTP GET /, 초기 지연 5초, 주기 5초
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -334,6 +351,7 @@
     - 재시작 정책: OnFailure
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -394,6 +412,7 @@
     - 마스터 노드 장애 시 자동 복구 메커니즘
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
@@ -617,6 +636,7 @@
     - 일회성 데이터 마이그레이션
 
     <details>
+
     <summary>정답 보기</summary>
     
     **정답:**
