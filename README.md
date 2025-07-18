@@ -3,10 +3,18 @@
 
 이 저장소는 Kubernetes와 Amazon EKS에 대한 포괄적인 교육 자료를 제공합니다. Linux 기초부터 컨테이너화, Kubernetes 오케스트레이션, 그리고 Amazon EKS의 고급 기능까지 다룹니다.
 
+## 학습 자료 및 퀴즈
+
+이 교육 컨텐츠는 학습 자료와 함께 각 주제에 대한 퀴즈를 제공합니다. 퀴즈를 통해 학습한 내용을 테스트하고 강화할 수 있습니다.
+
+- [학습 자료 목차](#목차) - 주제별 학습 자료
+- [퀴즈 모음](./quizzes/README.md) - 주제별 퀴즈
+- [퀴즈 답변](./answers/README.md) - 퀴즈 답변 및 설명
+
 ## 목차
 
 ### 기초 개념
-1. [Linux 기초](./basics/01-linux-basics.md)
+1. [Linux 기초](./basics/01-linux-basics.md) | [퀴즈](./quizzes/basics/01-linux-basics-quiz.md)
 2. [컨테이너 기술](./basics/02-container-technology.md)
 3. [Kubernetes 소개](./basics/03-kubernetes-introduction.md)
 
