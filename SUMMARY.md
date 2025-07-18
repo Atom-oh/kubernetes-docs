@@ -61,13 +61,13 @@
 ## Cilium
 
 * [Cilium 소개](cilium/README.md)
-    * [1: 소개](cilium/01-introduction.md)
-    * [2: eBPF](cilium/02-ebpf.md)
-    * [3: 네트워킹](cilium/03-networking.md)
-    * [4: IPAM 및 정책](cilium/04-ipam-policy.md)
-    * [5: L2-L7 네트워킹](cilium/05-l2-l7-networking.md)
-    * [6: 보안 및 가시성](cilium/06-security-visibility.md)
-    * [7: 고급 주제](cilium/07-advanced-topics.md)
+    * [Part 1: 소개](cilium/01-introduction.md)
+    * [Part 2: eBPF](cilium/02-ebpf.md)
+    * [Part 3: 네트워킹](cilium/03-networking.md)
+    * [Part 4: IPAM 및 정책](cilium/04-ipam-policy.md)
+    * [Part 5: L2-L7 네트워킹](cilium/05-l2-l7-networking.md)
+    * [Part 6: 보안 및 가시성](cilium/06-security-visibility.md)
+    * [Part 7: 고급 주제](cilium/07-advanced-topics.md)
     * [네트워킹 개념](cilium/networking-concepts.md)
 * [용어집](cilium/glossary.md)
 

@@ -13,8 +13,8 @@
 ## 목차
 
 ### 기초 개념
-1. [Linux 기초](./basics/01-linux-basics.md) | [퀴즈](./quizzes/basics/01-linux-basics-quiz.md)
-2. [컨테이너 기술](./basics/02-container-technology.md) | [퀴즈](./quizzes/basics/02-container-technology-quiz.md)
+1. [Linux 기초](./basics/01-linux-basics.md)
+2. [컨테이너 기술](./basics/02-container-technology.md)
 3. [Kubernetes 소개](./basics/03-kubernetes-introduction.md)
 
 ### Kubernetes 핵심 개념
@@ -47,16 +47,16 @@
 9. [EKS 문제 해결](./eks/09-eks-troubleshooting.md)
 
 ## Cilium
-* [Cilium 소개](cilium/README.md)
-* [Day 1: 소개](cilium/day1-introduction.md)
-* [Day 2: eBPF](cilium/day2-ebpf.md)
-* [Day 3: 네트워킹](cilium/day3-networking.md)
-* [Day 4: IPAM 및 정책](cilium/day4-ipam-policy.md)
-* [Day 5: L2-L7 네트워킹](cilium/day5-l2-l7-networking.md)
-* [Day 6: 보안 및 가시성](cilium/day6-security-visibility.md)
-* [Day 7: 고급 주제](cilium/day7-advanced-topics.md)
-* [네트워킹 개념](cilium/networking-concepts.md)
-* [용어집](cilium/glossary.md)
+* [Cilium 소개](./cilium/README.md)
+   * [Part 1: 소개](./cilium/01-introduction.md)
+   * [Part 2: eBPF](./cilium/02-ebpf.md)
+   * [Part 3: 네트워킹](./cilium/03-networking.md)
+   * [Part 4: IPAM 및 정책](./cilium/04-ipam-policy.md)
+   * [Part 5: L2-L7 네트워킹](./cilium/05-l2-l7-networking.md)
+   * [Part 6: 보안 및 가시성](./cilium/06-security-visibility.md)
+   * [Part 7: 고급 주제](./cilium/07-advanced-topics.md)
+* [네트워킹 개념](./cilium/networking-concepts.md)
+* [용어집](./cilium/glossary.md)
 
 ### 고급 주제
 1. [Kyverno를 사용한 정책 관리](./advanced/01-kyverno-policy-management.md)
