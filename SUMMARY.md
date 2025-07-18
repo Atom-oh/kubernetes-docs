@@ -61,14 +61,14 @@
 ## Cilium
 
 * [Cilium 소개](cilium/README.md)
-* [Day 1: 소개](cilium/day1-introduction.md)
-* [Day 2: eBPF](cilium/day2-ebpf.md)
-* [Day 3: 네트워킹](cilium/day3-networking.md)
-* [Day 4: IPAM 및 정책](cilium/day4-ipam-policy.md)
-* [Day 5: L2-L7 네트워킹](cilium/day5-l2-l7-networking.md)
-* [Day 6: 보안 및 가시성](cilium/day6-security-visibility.md)
-* [Day 7: 고급 주제](cilium/day7-advanced-topics.md)
-* [네트워킹 개념](cilium/networking-concepts.md)
+    * [1: 소개](cilium/01-introduction.md)
+    * [2: eBPF](cilium/02-ebpf.md)
+    * [3: 네트워킹](cilium/03-networking.md)
+    * [4: IPAM 및 정책](cilium/04-ipam-policy.md)
+    * [5: L2-L7 네트워킹](cilium/05-l2-l7-networking.md)
+    * [6: 보안 및 가시성](cilium/06-security-visibility.md)
+    * [7: 고급 주제](cilium/07-advanced-topics.md)
+    * [네트워킹 개념](cilium/networking-concepts.md)
 * [용어집](cilium/glossary.md)
 
 ## 도구 및 통합
@@ -121,13 +121,13 @@
 
 ### Cilium
 * [Cilium 소개 퀴즈](quizzes/cilium/00-cilium-introduction-quiz.md)
-* [Day 1: 소개 퀴즈](quizzes/cilium/01-day1-introduction-quiz.md)
-* [Day 2: eBPF 퀴즈](quizzes/cilium/02-day2-ebpf-quiz.md)
-* [Day 3: 네트워킹 퀴즈](quizzes/cilium/03-day3-networking-quiz.md)
-* [Day 4: IPAM 및 정책 퀴즈](quizzes/cilium/04-day4-ipam-policy-quiz.md)
-* [Day 5: L2-L7 네트워킹 퀴즈](quizzes/cilium/05-day5-l2-l7-networking-quiz.md)
-* [Day 6: 보안 및 가시성 퀴즈](quizzes/cilium/06-day6-security-visibility-quiz.md)
-* [Day 7: 고급 주제 퀴즈](quizzes/cilium/07-day7-advanced-topics-quiz.md)
+* [0 1: 소개 퀴즈](quizzes/cilium/01-01-introduction-quiz.md)
+* [0 2: eBPF 퀴즈](quizzes/cilium/02-02-ebpf-quiz.md)
+* [0 3: 네트워킹 퀴즈](quizzes/cilium/03-03-networking-quiz.md)
+* [0 4: IPAM 및 정책 퀴즈](quizzes/cilium/04-04-ipam-policy-quiz.md)
+* [0 5: L2-L7 네트워킹 퀴즈](quizzes/cilium/05-05-l2-l7-networking-quiz.md)
+* [0 6: 보안 및 가시성 퀴즈](quizzes/cilium/06-06-security-visibility-quiz.md)
+* [0 7: 고급 주제 퀴즈](quizzes/cilium/07-07-advanced-topics-quiz.md)
 * [네트워킹 개념 퀴즈](quizzes/cilium/08-networking-concepts-quiz.md)
 
 ### 고급 주제
