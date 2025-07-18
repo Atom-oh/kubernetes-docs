@@ -1,6 +1,6 @@
-# 커스텀 스케줄러 - 1부
+# Part 1: Custom Scheduler 기초
 
-Kubernetes 스케줄러는 포드를 어떤 노드에 배치할지 결정하는 중요한 구성 요소입니다. 기본 스케줄러는 대부분의 경우 잘 작동하지만, 특정 요구 사항이 있는 경우 커스텀 스케줄러를 구현할 수 있습니다. 이 장에서는 EKS에서 커스텀 스케줄러를 구현하는 방법을 알아보겠습니다.
+Kubernetes 스케줄러는 포드를 어떤 노드에 배치할지 결정하는 중요한 구성 요소입니다. 기본 스케줄러는 대부분의 경우 잘 작동하지만, 특정 요구 사항이 있는 경우 Custom Scheduler를 구현할 수 있습니다. 이 장에서는 EKS에서 Custom Scheduler를 구현하는 방법을 알아보겠습니다.
 
 ## 스케줄링 개요
 
@@ -22,7 +22,7 @@ flowchart TD
     SelectBestNode --> Binding[바인딩 단계]
     Binding --> End([스케줄링 완료])
     
-    subgraph Filtering Phase [필터링 단계]
+    subgraph FilteringPhase[필터링 단계]
         NodeResourcesFit[노드 리소스 적합성]
         NodeName[노드 이름]
         NodeUnschedulable[노드 스케줄 가능 여부]
@@ -31,7 +31,7 @@ flowchart TD
         TaintToleration[테인트 톨러레이션]
     end
     
-    subgraph Scoring Phase [점수 매기기 단계]
+    subgraph ScoringPhase[점수 매기기 단계]
         NodeResourcesBalancedAllocation[리소스 균형 할당]
         ImageLocality[이미지 지역성]
         InterPodAffinity[포드 간 어피니티]
@@ -46,7 +46,7 @@ flowchart TD
     class Start,End start;
     class PodQueue,Filtering,Scoring,SelectBestNode,Binding,UnschedulablePod,Retry process;
     class FeasibleNodes decision;
-    class Filtering Phase,Scoring Phase,NodeResourcesFit,NodeName,NodeUnschedulable,NodeAffinity,PodAffinity,TaintToleration,NodeResourcesBalancedAllocation,ImageLocality,InterPodAffinity,NodeAffinity2 phase;
+    class FilteringPhase,ScoringPhase phase;
 ```
 
 1. **필터링(Filtering)**: 포드를 실행할 수 있는 노드를 식별합니다. 이 단계에서는 리소스 요구 사항, 노드 선택기, 노드 어피니티, 테인트 및 톨러레이션 등을 고려합니다.
@@ -62,17 +62,17 @@ flowchart TD
 3. **사용자 정의 메트릭**: 기본 스케줄러가 고려하지 않는 사용자 정의 메트릭을 기반으로 스케줄링해야 할 수 있습니다.
 4. **특정 도메인 지식**: 특정 애플리케이션 도메인에 특화된 스케줄링 로직이 필요할 수 있습니다.
 
-## 커스텀 스케줄러 구현 방법
+## Custom Scheduler 구현 방법
 
-커스텀 스케줄러를 구현하는 방법은 크게 세 가지가 있습니다:
+Custom Scheduler를 구현하는 방법은 크게 세 가지가 있습니다:
 
-1. **다중 스케줄러 접근 방식**: 기본 스케줄러와 함께 커스텀 스케줄러를 실행합니다.
+1. **다중 스케줄러 접근 방식**: 기본 스케줄러와 함께 Custom Scheduler를 실행합니다.
 2. **스케줄러 확장(Extender) 접근 방식**: 기본 스케줄러를 확장하여 추가 필터링 및 우선순위 기능을 제공합니다.
 3. **스케줄러 프레임워크 플러그인**: Kubernetes 1.15부터 도입된 스케줄러 프레임워크를 사용하여 플러그인을 개발합니다.
 
 ### 다중 스케줄러 접근 방식
 
-다중 스케줄러 접근 방식에서는 기본 스케줄러와 함께 커스텀 스케줄러를 실행합니다. 포드를 생성할 때 `schedulerName` 필드를 사용하여 어떤 스케줄러를 사용할지 지정할 수 있습니다.
+다중 스케줄러 접근 방식에서는 기본 스케줄러와 함께 Custom Scheduler를 실행합니다. 포드를 생성할 때 `schedulerName` 필드를 사용하여 어떤 스케줄러를 사용할지 지정할 수 있습니다.
 
 ```mermaid
 flowchart TD
@@ -80,8 +80,8 @@ flowchart TD
         subgraph ControlPlane [컨트롤 플레인]
             APIServer[API 서버]
             DefaultScheduler[기본 스케줄러]
-            CustomScheduler1[커스텀 스케줄러 1]
-            CustomScheduler2[커스텀 스케줄러 2]
+            CustomScheduler1[Custom Scheduler 1]
+            CustomScheduler2[Custom Scheduler 2]
         end
         
         subgraph Nodes [워커 노드]
@@ -122,9 +122,9 @@ flowchart TD
     class K8sCluster,ControlPlane,Nodes,Pods default;
 ```
 
-#### 커스텀 스케줄러 구현
+#### Custom Scheduler 구현
 
-Go 언어를 사용하여 커스텀 스케줄러를 구현할 수 있습니다. 다음은 간단한 예제입니다:
+Go 언어를 사용하여 Custom Scheduler를 구현할 수 있습니다. 다음은 간단한 예제입니다:
 
 ```go
 package main
@@ -224,9 +224,9 @@ func bindPod(clientset *kubernetes.Clientset, pod *v1.Pod, node string) error {
 }
 ```
 
-#### 커스텀 스케줄러 배포
+#### Custom Scheduler 배포
 
-커스텀 스케줄러를 컨테이너 이미지로 빌드하고 Kubernetes에 배포합니다:
+Custom Scheduler를 컨테이너 이미지로 빌드하고 Kubernetes에 배포합니다:
 
 ```yaml
 apiVersion: apps/v1
@@ -291,9 +291,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-#### 커스텀 스케줄러 사용
+#### Custom Scheduler 사용
 
-포드를 생성할 때 `schedulerName` 필드를 사용하여 커스텀 스케줄러를 지정합니다:
+포드를 생성할 때 `schedulerName` 필드를 사용하여 Custom Scheduler를 지정합니다:
 
 ```yaml
 apiVersion: v1
@@ -307,18 +307,18 @@ spec:
     image: nginx:latest
 ```
 
-## EKS에서의 커스텀 스케줄러 구현
+## EKS에서의 Custom Scheduler 구현
 
-Amazon EKS에서 커스텀 스케줄러를 구현할 때는 다음과 같은 사항을 고려해야 합니다:
+Amazon EKS에서 Custom Scheduler를 구현할 때는 다음과 같은 사항을 고려해야 합니다:
 
-1. **IAM 권한**: 커스텀 스케줄러가 EKS 클러스터와 상호 작용하기 위한 적절한 IAM 권한이 필요합니다.
+1. **IAM 권한**: Custom Scheduler가 EKS 클러스터와 상호 작용하기 위한 적절한 IAM 권한이 필요합니다.
 2. **노드 그룹 관리**: 다양한 노드 그룹(관리형, 자체 관리형, Fargate)에 대한 스케줄링 로직을 고려해야 합니다.
 3. **가용 영역 인식**: 가용 영역 간의 균형을 유지하기 위한 스케줄링 로직이 필요할 수 있습니다.
 4. **인스턴스 유형 인식**: 다양한 인스턴스 유형에 대한 스케줄링 로직이 필요할 수 있습니다.
 
-### EKS 커스텀 스케줄러 아키텍처
+### EKS Custom Scheduler 아키텍처
 
-다음 다이어그램은 EKS 클러스터에서 커스텀 스케줄러를 구현하는 방법을 보여줍니다:
+다음 다이어그램은 EKS 클러스터에서 Custom Scheduler를 구현하는 방법을 보여줍니다:
 
 ```mermaid
 flowchart TD
@@ -330,8 +330,8 @@ flowchart TD
                 DefaultScheduler[기본 스케줄러]
             end
             
-            subgraph CustomSchedulerPod [커스텀 스케줄러 파드]
-                CustomScheduler[커스텀 스케줄러]
+            subgraph CustomSchedulerPod [Custom Scheduler 파드]
+                CustomScheduler[Custom Scheduler]
                 MetricsCollector[메트릭 수집기]
             end
             
@@ -382,7 +382,7 @@ flowchart TD
 
 #### 1. 인스턴스 유형 인식 스케줄링
 
-EKS 클러스터에서는 다양한 인스턴스 유형을 사용할 수 있습니다. 커스텀 스케줄러는 워크로드 특성에 맞는 인스턴스 유형을 선택할 수 있습니다.
+EKS 클러스터에서는 다양한 인스턴스 유형을 사용할 수 있습니다. Custom Scheduler는 워크로드 특성에 맞는 인스턴스 유형을 선택할 수 있습니다.
 
 ```go
 // 인스턴스 유형에 따른 점수 계산 함수
@@ -545,6 +545,6 @@ func scoreNodeByGPU(node *v1.Node, pod *v1.Pod) int {
 
 ## 결론
 
-이 장에서는 Kubernetes 스케줄링 프로세스의 개요와 다중 스케줄러 접근 방식을 사용하여 커스텀 스케줄러를 구현하는 방법을 알아보았습니다. 또한 EKS 클러스터에서 커스텀 스케줄러를 구현할 때 고려해야 할 사항들을 살펴보았습니다.
+이 장에서는 Kubernetes 스케줄링 프로세스의 개요와 다중 스케줄러 접근 방식을 사용하여 Custom Scheduler를 구현하는 방법을 알아보았습니다. 또한 EKS 클러스터에서 Custom Scheduler를 구현할 때 고려해야 할 사항들을 살펴보았습니다.
 
-다음 장에서는 스케줄러 확장(Extender) 접근 방식과 스케줄러 프레임워크 플러그인을 사용하여 커스텀 스케줄러를 구현하는 방법을 알아보겠습니다.
+다음 장에서는 스케줄러 확장(Extender) 접근 방식과 스케줄러 프레임워크 플러그인을 사용하여 Custom Scheduler를 구현하는 방법을 알아보겠습니다.

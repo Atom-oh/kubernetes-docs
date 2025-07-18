@@ -1,12 +1,12 @@
-# 커스텀 스케줄러 - 3부
+# Custom Scheduler커스텀 스케줄러 구현 사례 및 모니터링
 
-## EKS에서의 커스텀 스케줄러 구현 사례
+## EKS에서의 Custom Scheduler 구현 사례
 
-이 섹션에서는 EKS에서 커스텀 스케줄러를 구현하는 실제 사례를 살펴보겠습니다.
+이 섹션에서는 EKS에서 Custom Scheduler를 구현하는 실제 사례를 살펴보겠습니다.
 
 ### 사례 1: GPU 워크로드 최적화 스케줄러
 
-AI/ML 워크로드를 실행하는 EKS 클러스터에서는 GPU 리소스를 효율적으로 활용하는 것이 중요합니다. 다음은 GPU 워크로드를 최적화하는 커스텀 스케줄러의 구현 사례입니다.
+AI/ML 워크로드를 실행하는 EKS 클러스터에서는 GPU 리소스를 효율적으로 활용하는 것이 중요합니다. 다음은 GPU 워크로드를 최적화하는 Custom Scheduler의 구현 사례입니다.
 
 #### GPU 워크로드 최적화 스케줄러 아키텍처
 
@@ -148,7 +148,7 @@ kubectl label node <node-name> gpu.nvidia.com/memory=40960
 kubectl label node <node-name> gpu.nvidia.com/count=8
 ```
 
-2. **커스텀 스케줄러 플러그인 구현**:
+2. **Custom Scheduler 플러그인 구현**:
 
 ```go
 // GPUTopologyPlugin은 GPU 토폴로지를 고려하는 스케줄러 플러그인입니다.
@@ -267,7 +267,7 @@ spec:
 
 ### 사례 2: 네트워크 지역성 최적화 스케줄러
 
-EKS 클러스터에서 네트워크 비용을 최적화하기 위해 네트워크 지역성을 고려하는 커스텀 스케줄러를 구현할 수 있습니다.
+EKS 클러스터에서 네트워크 비용을 최적화하기 위해 네트워크 지역성을 고려하는 Custom Scheduler를 구현할 수 있습니다.
 
 #### 네트워크 지역성 최적화 스케줄러 아키텍처
 
@@ -518,20 +518,20 @@ func getNetworkLatency(nodeName string) float64 {
 }
 ```
 
-## 커스텀 스케줄러 모니터링 및 디버깅
+## Custom Scheduler 모니터링 및 디버깅
 
-커스텀 스케줄러를 구현한 후에는 모니터링 및 디버깅이 중요합니다. 이 섹션에서는 커스텀 스케줄러를 모니터링하고 디버깅하는 방법을 알아보겠습니다.
+Custom Scheduler를 구현한 후에는 모니터링 및 디버깅이 중요합니다. 이 섹션에서는 Custom Scheduler를 모니터링하고 디버깅하는 방법을 알아보겠습니다.
 
 ### 모니터링 아키텍처
 
-다음 다이어그램은 EKS에서 커스텀 스케줄러를 모니터링하기 위한 아키텍처를 보여줍니다:
+다음 다이어그램은 EKS에서 Custom Scheduler를 모니터링하기 위한 아키텍처를 보여줍니다:
 
 ```mermaid
 flowchart TD
     subgraph AWS [AWS 클라우드]
         subgraph EKS [Amazon EKS]
             subgraph SchedulerPods [스케줄러 파드]
-                CustomScheduler[커스텀 스케줄러]
+                CustomScheduler[Custom Scheduler]
                 SchedulerSidecar[사이드카 컨테이너]
             end
             
@@ -579,7 +579,7 @@ flowchart TD
 
 ### 주요 모니터링 메트릭
 
-다음 다이어그램은 커스텀 스케줄러의 주요 모니터링 메트릭과 그 관계를 보여줍니다:
+다음 다이어그램은 Custom Scheduler의 주요 모니터링 메트릭과 그 관계를 보여줍니다:
 
 ```mermaid
 flowchart LR
@@ -636,7 +636,7 @@ flowchart LR
 
 ### 로깅
 
-커스텀 스케줄러의 로그를 확인하여 스케줄링 결정을 이해할 수 있습니다:
+Custom Scheduler의 로그를 확인하여 스케줄링 결정을 이해할 수 있습니다:
 
 ```bash
 kubectl logs -n kube-system -l app=custom-scheduler
@@ -652,7 +652,7 @@ kubectl get events --field-selector involvedObject.name=<pod-name>
 
 ### 메트릭 수집
 
-Prometheus를 사용하여 커스텀 스케줄러의 메트릭을 수집할 수 있습니다:
+Prometheus를 사용하여 Custom Scheduler의 메트릭을 수집할 수 있습니다:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -671,7 +671,7 @@ spec:
 
 ### 대시보드 구성
 
-Grafana를 사용하여 커스텀 스케줄러의 메트릭을 시각화할 수 있습니다:
+Grafana를 사용하여 Custom Scheduler의 메트릭을 시각화할 수 있습니다:
 
 ```yaml
 apiVersion: v1
@@ -817,6 +817,6 @@ data:
 
 ## 결론
 
-커스텀 스케줄러는 특정 요구 사항에 맞게 Kubernetes 스케줄링 동작을 조정할 수 있는 강력한 방법입니다. EKS에서는 다중 스케줄러 접근 방식, 스케줄러 확장 접근 방식, 스케줄러 프레임워크 플러그인 접근 방식 등 다양한 방법으로 커스텀 스케줄러를 구현할 수 있습니다.
+Custom Scheduler는 특정 요구 사항에 맞게 Kubernetes 스케줄링 동작을 조정할 수 있는 강력한 방법입니다. EKS에서는 다중 스케줄러 접근 방식, 스케줄러 확장 접근 방식, 스케줄러 프레임워크 플러그인 접근 방식 등 다양한 방법으로 Custom Scheduler를 구현할 수 있습니다.
 
-GPU 워크로드 최적화, 네트워크 지역성 최적화 등 다양한 사례에서 커스텀 스케줄러를 활용할 수 있습니다. 커스텀 스케줄러를 구현할 때는 모니터링 및 디버깅을 위한 도구를 함께 구성하는 것이 중요합니다.
+GPU 워크로드 최적화, 네트워크 지역성 최적화 등 다양한 사례에서 Custom Scheduler를 활용할 수 있습니다. Custom Scheduler를 구현할 때는 모니터링 및 디버깅을 위한 도구를 함께 구성하는 것이 중요합니다.

@@ -1,4 +1,4 @@
-# 커스텀 스케줄러 - 2부
+# Custom Scheduler스케줄러 확장 및 프레임워크
 
 ## 스케줄러 확장(Extender) 접근 방식
 
@@ -309,7 +309,7 @@ data:
       nodeCacheCapable: false
 ```
 
-3. 커스텀 스케줄러 배포:
+3. Custom Scheduler 배포:
 
 ```yaml
 apiVersion: apps/v1
@@ -618,9 +618,9 @@ profiles:
 
 Amazon EKS에서 스케줄러 프레임워크를 구현할 때는 다음과 같은 사항을 고려해야 합니다:
 
-1. **컨테이너 이미지 빌드**: 커스텀 스케줄러 플러그인을 컨테이너 이미지로 빌드하고 Amazon ECR과 같은 컨테이너 레지스트리에 푸시합니다.
-2. **스케줄러 구성**: 스케줄러 구성을 ConfigMap으로 생성하고 커스텀 스케줄러 파드에 마운트합니다.
-3. **RBAC 권한**: 커스텀 스케줄러가 필요한 리소스에 액세스할 수 있도록 적절한 RBAC 권한을 설정합니다.
+1. **컨테이너 이미지 빌드**: Custom Scheduler 플러그인을 컨테이너 이미지로 빌드하고 Amazon ECR과 같은 컨테이너 레지스트리에 푸시합니다.
+2. **스케줄러 구성**: 스케줄러 구성을 ConfigMap으로 생성하고 Custom Scheduler 파드에 마운트합니다.
+3. **RBAC 권한**: Custom Scheduler가 필요한 리소스에 액세스할 수 있도록 적절한 RBAC 권한을 설정합니다.
 4. **노드 레이블링**: 특정 하드웨어 특성(예: GPU)에 따라 노드에 레이블을 지정합니다.
 
 ### EKS 스케줄러 프레임워크 아키텍처
@@ -637,8 +637,8 @@ flowchart TD
                 DefaultScheduler[기본 스케줄러]
             end
             
-            subgraph CustomSchedulerPod [커스텀 스케줄러 파드]
-                CustomScheduler[커스텀 스케줄러]
+            subgraph CustomSchedulerPod [Custom Scheduler 파드]
+                CustomScheduler[Custom Scheduler]
                 
                 subgraph CustomPlugins [커스텀 플러그인]
                     GPUPlugin[GPU 플러그인]
@@ -691,7 +691,7 @@ flowchart TD
 
 ### EKS 스케줄러 프레임워크 구현 단계
 
-1. **커스텀 스케줄러 플러그인 개발**:
+1. **Custom Scheduler 플러그인 개발**:
 
 ```go
 // main.go
@@ -876,7 +876,7 @@ data:
         args: {}
 ```
 
-5. **커스텀 스케줄러 배포**:
+5. **Custom Scheduler 배포**:
 
 ```yaml
 apiVersion: v1
@@ -967,6 +967,6 @@ spec:
 
 ## 결론
 
-이 장에서는 스케줄러 확장(Extender) 접근 방식과 스케줄러 프레임워크 플러그인을 사용하여 커스텀 스케줄러를 구현하는 방법을 알아보았습니다. 또한 EKS 클러스터에서 스케줄러 프레임워크를 구현하는 방법도 살펴보았습니다.
+이 장에서는 스케줄러 확장(Extender) 접근 방식과 스케줄러 프레임워크 플러그인을 사용하여 Custom Scheduler를 구현하는 방법을 알아보았습니다. 또한 EKS 클러스터에서 스케줄러 프레임워크를 구현하는 방법도 살펴보았습니다.
 
-다음 장에서는 EKS에서의 커스텀 스케줄러 구현 사례와 모니터링 방법을 알아보겠습니다.
+다음 장에서는 EKS에서의 Custom Scheduler 구현 사례와 모니터링 방법을 알아보겠습니다.
