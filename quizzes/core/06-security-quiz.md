@@ -92,9 +92,9 @@ Kubernetes RBAC의 주요 구성 요소는 Role, ClusterRole, RoleBinding, Clust
 
 **설명:**
 포드 보안 표준은 세 가지 정책 수준을 정의합니다:
-- Privileged: 제한 없음, 모든 권한 허용
-- Baseline: 알려진 권한 상승 경로 방지
-- Restricted: 가장 제한적인 정책으로, 강화된 보안 설정 적용
+  - Privileged: 제한 없음, 모든 권한 허용
+  - Baseline: 알려진 권한 상승 경로 방지
+  - Restricted: 가장 제한적인 정책으로, 강화된 보안 설정 적용
 
 Restricted 정책은 가장 제한적이며, 최소 권한 원칙을 따르고 보안 모범 사례를 적용합니다. 이 정책은 권한 있는 컨테이너, 호스트 네임스페이스 공유, 호스트 경로 마운트 등을 금지합니다.
 </details>
@@ -240,7 +240,7 @@ metadata:
   namespace: monitoring
   name: pod-reader
 rules:
-- apiGroups: [""]
+  - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "watch", "list"]
 ---
@@ -814,11 +814,11 @@ Kubernetes에서 런타임 보안을 위한 주요 도구와 기술은 다음과
      ```
 
 **비교 및 선택 기준**:
-- **보안 수준**: Kata Containers와 gVisor는 가장 강력한 격리 제공
-- **성능 영향**: Seccomp는 최소한의 오버헤드, Kata Containers는 가장 큰 오버헤드
-- **구현 복잡성**: Seccomp와 AppArmor는 비교적 쉬움, SELinux는 복잡함
-- **모니터링 vs 방지**: Falco는 주로 모니터링, 다른 도구들은 예방적 보호 제공
-- **통합 용이성**: OPA Gatekeeper는 Kubernetes와 긴밀하게 통합
+  - **보안 수준**: Kata Containers와 gVisor는 가장 강력한 격리 제공
+  - **성능 영향**: Seccomp는 최소한의 오버헤드, Kata Containers는 가장 큰 오버헤드
+  - **구현 복잡성**: Seccomp와 AppArmor는 비교적 쉬움, SELinux는 복잡함
+  - **모니터링 vs 방지**: Falco는 주로 모니터링, 다른 도구들은 예방적 보호 제공
+  - **통합 용이성**: OPA Gatekeeper는 Kubernetes와 긴밀하게 통합
 
 조직의 보안 요구 사항, 성능 목표, 운영 복잡성 허용 수준에 따라 적절한 도구 조합을 선택해야 합니다.
 </details>
