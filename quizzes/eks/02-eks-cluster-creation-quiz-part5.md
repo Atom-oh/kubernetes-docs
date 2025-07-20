@@ -376,3 +376,285 @@ EKS 클러스터에서 파드 보안 정책(Pod Security Policy, PSP)은 Kuberne
 
 EKS 1.25 이상으로 업그레이드하기 전에 PSP에서 대체 솔루션으로 마이그레이션하는 것이 중요합니다.
 </details>
+
+## 실습 문제
+
+### 9. EKS 클러스터에서 비용 최적화를 위한 스팟 인스턴스와 온디맨드 인스턴스를 혼합하여 사용하는 노드 그룹 구성을 작성하세요. 다음 요구 사항을 충족해야 합니다:
+- 중요한 워크로드용 온디맨드 노드 그룹 (2-5개 노드)
+- 일반 워크로드용 스팟 노드 그룹 (2-10개 노드)
+- 적절한 노드 레이블과 테인트 설정
+- 워크로드 배치를 위한 노드 선호도 및 허용 오차 예시
+
+<details>
+<summary>정답 및 설명</summary>
+
+EKS 클러스터에서 비용 최적화를 위한 스팟 인스턴스와 온디맨드 인스턴스를 혼합하여 사용하는 노드 그룹 구성은 다음과 같습니다:
+
+### 1. 온디맨드 노드 그룹 구성 (중요 워크로드용)
+
+**eksctl을 사용한 구성:**
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+nodeGroups:
+  - name: critical-workloads
+    instanceType: m5.xlarge
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 5
+    capacityType: ON_DEMAND
+    labels:
+      workload-type: critical
+      node-lifecycle: on-demand
+    tags:
+      k8s.io/cluster-autoscaler/enabled: "true"
+      k8s.io/cluster-autoscaler/my-cluster: "owned"
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+    ssh:
+      allow: false
+```
+
+**AWS CLI를 사용한 구성:**
+```bash
+aws eks create-nodegroup \
+  --cluster-name my-cluster \
+  --nodegroup-name critical-workloads \
+  --scaling-config minSize=2,maxSize=5,desiredSize=2 \
+  --instance-types m5.xlarge \
+  --capacity-type ON_DEMAND \
+  --subnets subnet-0a1b2c3d4e5f6g7h8 subnet-0a1b2c3d4e5f6g7h9 \
+  --node-role arn:aws:iam::123456789012:role/EKS-NodeInstanceRole \
+  --labels workload-type=critical,node-lifecycle=on-demand \
+  --tags "k8s.io/cluster-autoscaler/enabled=true,k8s.io/cluster-autoscaler/my-cluster=owned"
+```
+
+### 2. 스팟 노드 그룹 구성 (일반 워크로드용)
+
+**eksctl을 사용한 구성:**
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+nodeGroups:
+  - name: general-workloads
+    instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5ad.large"]
+    desiredCapacity: 3
+    minSize: 2
+    maxSize: 10
+    capacityType: SPOT
+    labels:
+      workload-type: general
+      node-lifecycle: spot
+    taints:
+      - key: spot
+        value: "true"
+        effect: PreferNoSchedule
+    tags:
+      k8s.io/cluster-autoscaler/enabled: "true"
+      k8s.io/cluster-autoscaler/my-cluster: "owned"
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+    ssh:
+      allow: false
+```
+
+**AWS CLI를 사용한 구성:**
+```bash
+aws eks create-nodegroup \
+  --cluster-name my-cluster \
+  --nodegroup-name general-workloads \
+  --scaling-config minSize=2,maxSize=10,desiredSize=3 \
+  --instance-types m5.large m5a.large m5d.large m5ad.large \
+  --capacity-type SPOT \
+  --subnets subnet-0a1b2c3d4e5f6g7h8 subnet-0a1b2c3d4e5f6g7h9 \
+  --node-role arn:aws:iam::123456789012:role/EKS-NodeInstanceRole \
+  --labels workload-type=general,node-lifecycle=spot \
+  --taints "spot=true:PreferNoSchedule" \
+  --tags "k8s.io/cluster-autoscaler/enabled=true,k8s.io/cluster-autoscaler/my-cluster=owned"
+```
+
+### 3. 워크로드 배치를 위한 노드 선호도 및 허용 오차 예시
+
+**중요 워크로드 배포 예시 (온디맨드 노드 선호):**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: critical-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: critical-app
+  template:
+    metadata:
+      labels:
+        app: critical-app
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: workload-type
+                operator: In
+                values:
+                - critical
+              - key: node-lifecycle
+                operator: In
+                values:
+                - on-demand
+      containers:
+      - name: critical-app
+        image: my-critical-app:latest
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+```
+
+**일반 워크로드 배포 예시 (스팟 노드 허용):**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: general-app
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: general-app
+  template:
+    metadata:
+      labels:
+        app: general-app
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: node-lifecycle
+                operator: In
+                values:
+                - spot
+      tolerations:
+      - key: "spot"
+        operator: "Equal"
+        value: "true"
+        effect: "PreferNoSchedule"
+      containers:
+      - name: general-app
+        image: my-general-app:latest
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+```
+
+### 4. 추가 최적화 설정
+
+**Cluster Autoscaler 배포:**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-autoscaler
+  namespace: kube-system
+  labels:
+    app: cluster-autoscaler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-autoscaler
+  template:
+    metadata:
+      labels:
+        app: cluster-autoscaler
+    spec:
+      serviceAccountName: cluster-autoscaler
+      containers:
+      - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.23.0
+        name: cluster-autoscaler
+        command:
+        - ./cluster-autoscaler
+        - --v=4
+        - --stderrthreshold=info
+        - --cloud-provider=aws
+        - --skip-nodes-with-local-storage=false
+        - --expander=least-waste
+        - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster
+        - --balance-similar-node-groups
+        - --skip-nodes-with-system-pods=false
+```
+
+**AWS Node Termination Handler (스팟 인스턴스 중단 처리):**
+```bash
+helm repo add eks https://aws.github.io/eks-charts
+helm install aws-node-termination-handler \
+  --namespace kube-system \
+  --set enableSpotInterruptionDraining=true \
+  --set enableRebalanceMonitoring=true \
+  --set enableRebalanceDraining=true \
+  eks/aws-node-termination-handler
+```
+
+### 5. 모범 사례 및 고려 사항
+
+1. **다양한 인스턴스 유형 사용**: 스팟 노드 그룹에서 여러 인스턴스 유형을 사용하면 중단 위험을 분산할 수 있습니다.
+
+2. **파드 중단 예산(PDB) 설정**: 중요한 애플리케이션에 대해 PDB를 설정하여 동시에 중단되는 파드 수를 제한합니다.
+   ```yaml
+   apiVersion: policy/v1
+   kind: PodDisruptionBudget
+   metadata:
+     name: critical-app-pdb
+   spec:
+     minAvailable: 2
+     selector:
+       matchLabels:
+         app: critical-app
+   ```
+
+3. **적절한 리소스 요청 및 제한 설정**: 노드 리소스를 효율적으로 활용하기 위해 컨테이너의 리소스 요청과 제한을 적절히 설정합니다.
+
+4. **Horizontal Pod Autoscaler 활용**: 워크로드 수요에 따라 파드 수를 자동으로 조정합니다.
+   ```yaml
+   apiVersion: autoscaling/v2
+   kind: HorizontalPodAutoscaler
+   metadata:
+     name: general-app-hpa
+   spec:
+     scaleTargetRef:
+       apiVersion: apps/v1
+       kind: Deployment
+       name: general-app
+     minReplicas: 3
+     maxReplicas: 10
+     metrics:
+     - type: Resource
+       resource:
+         name: cpu
+         target:
+           type: Utilization
+           averageUtilization: 70
+   ```
+
+5. **비용 모니터링 및 최적화**: AWS Cost Explorer와 Kubecost 같은 도구를 사용하여 클러스터 비용을 모니터링하고 최적화합니다.
+</details>
