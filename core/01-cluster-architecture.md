@@ -1,35 +1,105 @@
+# 클러스터 아키텍처
+
+> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
+
+## 실습 환경 설정
+
+이 문서의 개념을 실습하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+
+### 로컬 개발 환경 설정
+
+```bash
+# minikube 설치 (로컬 개발용)
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+# 클러스터 시작
+minikube start
+
+# 클러스터 상태 확인
+kubectl cluster-info
+
+# 컨트롤 플레인 구성 요소 확인
+kubectl get pods -n kube-system
+```
+
 ## 클러스터 아키텍처 개요
+
+> **핵심 개념**: Kubernetes 클러스터는 컨트롤 플레인과 워커 노드로 구성되며, 각각 특정 역할을 담당하는 여러 구성 요소로 이루어져 있습니다.
 
 Kubernetes 클러스터는 컨테이너화된 애플리케이션을 실행하기 위한 일련의 노드(가상 또는 물리적 머신)로 구성됩니다. 클러스터는 크게 컨트롤 플레인과 워커 노드로 나뉩니다.
 
+### 클러스터 아키텍처 다이어그램
+
 ```mermaid
 graph TD
-    A[Kubernetes 클러스터] --> B[컨트롤 플레인]
-    A --> C[워커 노드]
-    
-    B --> D[kube-apiserver]
-    B --> E[etcd]
-    B --> F[kube-scheduler]
-    B --> G[kube-controller-manager]
-    B --> H[cloud-controller-manager]
-    
-    C --> I[kubelet]
-    C --> J[kube-proxy]
-    C --> K[컨테이너 런타임]
+    subgraph "Kubernetes 클러스터"
+        subgraph "컨트롤 플레인"
+            API[kube-apiserver]
+            ETCD[etcd]
+            SCHED[kube-scheduler]
+            CM[kube-controller-manager]
+            CCM[cloud-controller-manager]
+            
+            API <--> ETCD
+            API <--> SCHED
+            API <--> CM
+            API <--> CCM
+        end
+        
+        subgraph "워커 노드 1"
+            KUBELET1[kubelet]
+            PROXY1[kube-proxy]
+            CRI1[컨테이너 런타임]
+            
+            POD1A[Pod A]
+            POD1B[Pod B]
+            
+            KUBELET1 --> CRI1
+            CRI1 --> POD1A
+            CRI1 --> POD1B
+            PROXY1 --> POD1A
+            PROXY1 --> POD1B
+        end
+        
+        subgraph "워커 노드 2"
+            KUBELET2[kubelet]
+            PROXY2[kube-proxy]
+            CRI2[컨테이너 런타임]
+            
+            POD2A[Pod C]
+            POD2B[Pod D]
+            
+            KUBELET2 --> CRI2
+            CRI2 --> POD2A
+            CRI2 --> POD2B
+            PROXY2 --> POD2A
+            PROXY2 --> POD2B
+        end
+        
+        API <--> KUBELET1
+        API <--> KUBELET2
+        API <--> PROXY1
+        API <--> PROXY2
+    end
     
     %% 스타일 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef controlPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef dataStore fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef nodeComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef pod fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
-    class A default;
-    class B,D,F,G,H,I,J k8sComponent;
-    class E dataStore;
-    class K userApp;
-    class C default;
+    class API,SCHED,CM,CCM controlPlane;
+    class ETCD dataStore;
+    class KUBELET1,KUBELET2,PROXY1,PROXY2,CRI1,CRI2 nodeComponent;
+    class POD1A,POD1B,POD2A,POD2B pod;
 ```
 
 **컨트롤 플레인 구성 요소**:
@@ -47,6 +117,24 @@ graph TD
 ## 컨트롤 플레인 구성 요소
 
 컨트롤 플레인은 Kubernetes 클러스터의 "두뇌" 역할을 하며, 클러스터의 전반적인 상태를 관리하고 제어합니다. 컨트롤 플레인 구성 요소는 일반적으로 전용 머신에서 실행되며, 고가용성을 위해 여러 인스턴스로 복제될 수 있습니다.
+
+### 컨트롤 플레인 구성 요소 상세 설명
+
+| 구성 요소 | 주요 기능 | 통신 대상 | 고가용성 구성 |
+|----------|----------|----------|-------------|
+| **kube-apiserver** | - Kubernetes API 제공<br>- 인증 및 권한 부여<br>- API 요청 처리 | - 모든 구성 요소<br>- etcd | 여러 인스턴스로 수평 확장 |
+| **etcd** | - 클러스터 데이터 저장<br>- 분산 키-값 저장소<br>- 일관성 보장 | - kube-apiserver | 다중 노드 클러스터 |
+| **kube-scheduler** | - 파드 배치 결정<br>- 노드 리소스 평가<br>- 어피니티/안티-어피니티 적용 | - kube-apiserver | 액티브-스탠바이 구성 |
+| **kube-controller-manager** | - 노드 컨트롤러<br>- 레플리케이션 컨트롤러<br>- 엔드포인트 컨트롤러<br>- 서비스 어카운트 컨트롤러 | - kube-apiserver | 액티브-스탠바이 구성 |
+| **cloud-controller-manager** | - 클라우드 제공업체 통합<br>- 노드 라이프사이클<br>- 라우팅 및 로드 밸런싱 | - kube-apiserver<br>- 클라우드 API | 액티브-스탠바이 구성 |
+
+### 컨트롤 플레인 통신 흐름
+
+1. 사용자 또는 컨트롤러가 kube-apiserver에 요청 전송
+2. kube-apiserver가 인증, 권한 부여 및 승인 수행
+3. kube-apiserver가 etcd에서 데이터 읽기/쓰기
+4. 컨트롤러와 스케줄러가 kube-apiserver를 통해 클러스터 상태 감시
+5. kubelet이 kube-apiserver에 노드 상태 보고
 
 ### kube-apiserver
 
