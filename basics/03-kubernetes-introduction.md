@@ -1,6 +1,54 @@
 # Kubernetes 소개
 
+> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
+
 Kubernetes(K8s)는 컨테이너화된 애플리케이션의 배포, 확장 및 관리를 자동화하는 오픈소스 컨테이너 오케스트레이션 플랫폼입니다. 이 문서에서는 Kubernetes의 기본 개념, 아키텍처, 주요 구성 요소 및 기능에 대해 설명합니다.
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- **kubectl**: Kubernetes 클러스터와 상호 작용하는 명령줄 도구
+- **컨테이너 런타임**: Docker, containerd, CRI-O 등
+- **minikube** 또는 **kind**: 로컬 Kubernetes 클러스터 (개발 및 학습용)
+
+### 설치 방법
+
+**kubectl 설치**:
+```bash
+# macOS
+brew install kubectl
+
+# Linux
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+# Windows (PowerShell)
+curl -LO "https://dl.k8s.io/release/v1.28.0/bin/windows/amd64/kubectl.exe"
+```
+
+**minikube 설치**:
+```bash
+# macOS
+brew install minikube
+
+# Linux
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+chmod +x minikube-linux-amd64
+sudo mv minikube-linux-amd64 /usr/local/bin/minikube
+
+# Windows (PowerShell)
+New-Item -Path 'c:\' -Name 'minikube' -ItemType Directory
+Invoke-WebRequest -OutFile 'c:\minikube\minikube.exe' -Uri 'https://github.com/kubernetes/minikube/releases/latest/download/minikube-windows-amd64.exe'
+```
+
+### 로컬 클러스터 시작
+```bash
+minikube start
+```
 
 ## 목차
 - [Kubernetes란?](#kubernetes란)
