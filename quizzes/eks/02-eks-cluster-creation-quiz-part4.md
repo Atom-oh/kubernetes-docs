@@ -311,3 +311,115 @@ fargateProfiles:
    - 마이크로서비스
    - 개발/테스트 환경
 </details>
+
+4. Amazon EKS 클러스터에서 노드 그룹을 업데이트할 때 "업데이트 구성(update configuration)"에서 설정할 수 있는 항목이 아닌 것은?
+   - A) 최대 사용 불가능(maxUnavailable) 노드 수
+   - B) 최대 사용 불가능(maxUnavailable) 노드 비율
+   - C) 노드 교체 전략(replacement strategy)
+   - D) 노드 그룹 업데이트 타임아웃
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) 노드 교체 전략(replacement strategy)**
+
+**설명:**
+Amazon EKS 노드 그룹 업데이트 구성에서 "노드 교체 전략(replacement strategy)"은 공식적인 설정 항목이 아닙니다. EKS 관리형 노드 그룹은 기본적으로 롤링 업데이트 방식을 사용하며, 이 전략을 직접 변경할 수 있는 옵션은 제공하지 않습니다.
+
+#### EKS 노드 그룹 업데이트 구성에서 설정할 수 있는 항목:
+
+1. **maxUnavailable**:
+   - 업데이트 중 동시에 사용할 수 없는 최대 노드 수
+   - 절대 수치(예: 1, 2, 3) 또는 비율(예: 20%)로 지정 가능
+   - 기본값: 1
+
+2. **maxUnavailablePercentage**:
+   - 업데이트 중 동시에 사용할 수 없는 최대 노드 비율
+   - 1에서 100 사이의 값으로 지정
+   - `maxUnavailable`과 함께 사용할 수 없음
+
+3. **force**:
+   - 노드 그룹 업데이트를 강제로 진행할지 여부
+   - 기본값: false
+
+4. **타임아웃**:
+   - 노드 그룹 업데이트 작업의 최대 대기 시간
+   - 기본값: 60분
+
+#### 노드 그룹 업데이트 구성 예시:
+
+AWS CLI를 사용한 예시:
+```bash
+aws eks update-nodegroup-config \
+  --cluster-name my-cluster \
+  --nodegroup-name my-nodegroup \
+  --update-config maxUnavailable=2
+```
+
+또는 비율로 지정:
+```bash
+aws eks update-nodegroup-config \
+  --cluster-name my-cluster \
+  --nodegroup-name my-nodegroup \
+  --update-config maxUnavailablePercentage=20
+```
+
+eksctl을 사용한 예시:
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+  - name: my-nodegroup
+    updateConfig:
+      maxUnavailable: 2
+```
+
+#### 노드 그룹 업데이트 프로세스:
+
+1. **업데이트 시작**: AWS는 노드 그룹의 업데이트를 시작합니다.
+2. **노드 드레이닝**: `maxUnavailable` 설정에 따라 지정된 수의 노드를 코든(cordon)하고 드레인(drain)합니다.
+3. **노드 종료**: 드레인된 노드를 종료합니다.
+4. **새 노드 생성**: 새로운 구성으로 노드를 생성합니다.
+5. **반복**: 모든 노드가 업데이트될 때까지 2-4단계를 반복합니다.
+
+#### 다른 옵션들의 설명:
+
+- **최대 사용 불가능(maxUnavailable) 노드 수**: 업데이트 중 동시에 사용할 수 없는 최대 노드 수를 지정하는 유효한 설정입니다.
+
+- **최대 사용 불가능(maxUnavailable) 노드 비율**: 업데이트 중 동시에 사용할 수 없는 최대 노드 비율을 지정하는 유효한 설정입니다.
+
+- **노드 그룹 업데이트 타임아웃**: 노드 그룹 업데이트 작업의 최대 대기 시간을 지정하는 유효한 설정입니다.
+
+#### 노드 그룹 업데이트 모범 사례:
+
+1. **적절한 maxUnavailable 값 설정**:
+   - 너무 작으면 업데이트 시간이 길어집니다.
+   - 너무 크면 애플리케이션 가용성에 영향을 줄 수 있습니다.
+   - 워크로드 특성과 노드 그룹 크기를 고려하여 설정합니다.
+
+2. **파드 중단 예산(PDB) 구성**:
+   - 중요한 워크로드에 대해 PDB를 설정하여 최소한의 가용성을 보장합니다.
+   - 예시:
+     ```yaml
+     apiVersion: policy/v1
+     kind: PodDisruptionBudget
+     metadata:
+       name: app-pdb
+     spec:
+       minAvailable: 2  # 또는 maxUnavailable: 1
+       selector:
+         matchLabels:
+           app: my-app
+     ```
+
+3. **업데이트 전 테스트**:
+   - 중요한 업데이트 전에 테스트 환경에서 먼저 검증합니다.
+   - 롤백 계획을 준비합니다.
+
+4. **모니터링**:
+   - 업데이트 중 애플리케이션 상태를 모니터링합니다.
+   - 문제가 발생하면 업데이트를 일시 중지하거나 롤백합니다.
+</details>
