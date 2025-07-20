@@ -194,3 +194,85 @@ eksctl utils update-cluster-logging \
 - 감사 로그는 특히 많은 양의 데이터를 생성할 수 있으므로 비용 관리에 주의해야 합니다.
 - 로그 보존 기간을 설정하여 비용을 관리할 수 있습니다.
 </details>
+
+### 7. EKS 클러스터에서 워커 노드의 kubelet 로그를 CloudWatch Logs로 전송하는 방법은 무엇인가요?
+
+<details>
+<summary>정답 및 설명</summary>
+
+EKS 클러스터에서 워커 노드의 kubelet 로그를 CloudWatch Logs로 전송하려면 CloudWatch 에이전트를 설치하고 구성해야 합니다. 컨트롤 플레인 로그와 달리, 워커 노드의 로그는 자동으로 CloudWatch로 전송되지 않습니다.
+
+**구현 단계:**
+
+1. **CloudWatch 에이전트 설치**: Kubernetes에 CloudWatch 에이전트를 DaemonSet으로 배포합니다.
+
+2. **Fluentd 또는 Fluent Bit 설정**: 로그 수집기를 구성하여 kubelet 로그를 CloudWatch Logs로 전송합니다.
+
+3. **권장 방법: Amazon EKS 애드온 사용**:
+   ```bash
+   # CloudWatch 로그 수집을 위한 네임스페이스 생성
+   kubectl create namespace amazon-cloudwatch
+   
+   # AWS 관찰성 액세스를 위한 서비스 계정 생성
+   eksctl create iamserviceaccount \
+       --name cloudwatch-agent \
+       --namespace amazon-cloudwatch \
+       --cluster my-cluster \
+       --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy \
+       --approve \
+       --override-existing-serviceaccounts
+   
+   # Fluent Bit를 위한 서비스 계정 생성
+   eksctl create iamserviceaccount \
+       --name fluent-bit \
+       --namespace amazon-cloudwatch \
+       --cluster my-cluster \
+       --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy \
+       --approve \
+       --override-existing-serviceaccounts
+   
+   # CloudWatch 에이전트 및 Fluent Bit 설치
+   kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluent-bit-quickstart.yaml
+   ```
+
+4. **구성 사용자 지정**: 특정 로그 경로 및 형식을 수집하도록 ConfigMap을 수정합니다.
+   ```yaml
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: fluent-bit-config
+     namespace: amazon-cloudwatch
+   data:
+     fluent-bit.conf: |
+       [INPUT]
+           Name tail
+           Path /var/log/kubelet.log
+           Tag kubelet
+       [OUTPUT]
+           Name cloudwatch
+           Match kubelet
+           region region-name
+           log_group_name /aws/eks/my-cluster/nodes
+           log_stream_prefix kubelet-
+           auto_create_group true
+   ```
+
+5. **로그 확인**: CloudWatch Logs 콘솔에서 로그 그룹 `/aws/eks/my-cluster/nodes`를 확인합니다.
+
+**주요 수집 대상 로그:**
+- `/var/log/kubelet.log`: kubelet 로그
+- `/var/log/kube-proxy.log`: kube-proxy 로그
+- `/var/log/aws-routed-eni/ipamd.log`: VPC CNI 로그
+- `/var/log/containers/*.log`: 컨테이너 로그
+
+**대안적 방법:**
+- AWS Distro for OpenTelemetry(ADOT) 사용
+- Amazon OpenSearch와 Fluent Bit 조합 사용
+- 사용자 지정 로깅 솔루션 구축 (예: ELK 스택)
+
+**모범 사례:**
+- 로그 보존 기간 설정으로 비용 관리
+- 필요한 로그만 선택적으로 수집
+- 로그 필터링을 통한 중요 정보만 수집
+- 로그 그룹에 태그 지정으로 비용 추적
+</details>
