@@ -276,3 +276,103 @@ EKS 클러스터에서 워커 노드의 kubelet 로그를 CloudWatch Logs로 전
 - 로그 필터링을 통한 중요 정보만 수집
 - 로그 그룹에 태그 지정으로 비용 추적
 </details>
+
+### 8. EKS 클러스터에서 파드 보안 정책(Pod Security Policy)이 더 이상 사용되지 않는 이유와 대안은 무엇인가요?
+
+<details>
+<summary>정답 및 설명</summary>
+
+EKS 클러스터에서 파드 보안 정책(Pod Security Policy, PSP)은 Kubernetes 1.21 버전부터 더 이상 사용되지 않으며(deprecated), Kubernetes 1.25에서 완전히 제거되었습니다. 이에 따라 EKS에서도 PSP를 더 이상 지원하지 않습니다.
+
+**사용 중단 이유:**
+1. **복잡성**: PSP는 구성이 복잡하고 이해하기 어려웠습니다.
+2. **디버깅 어려움**: PSP 위반 시 명확한 오류 메시지를 제공하지 않아 문제 해결이 어려웠습니다.
+3. **제한된 유연성**: 특정 시나리오에서 세밀한 제어가 어려웠습니다.
+4. **일관성 부족**: 다른 Kubernetes 보안 메커니즘과의 통합이 원활하지 않았습니다.
+
+**대안:**
+
+1. **Pod Security Standards (PSS) / Pod Security Admission (PSA)**:
+   - Kubernetes 1.22부터 도입된 공식 대안
+   - 세 가지 보안 수준 제공: Privileged, Baseline, Restricted
+   - 네임스페이스 레이블을 통해 적용
+   - 예시:
+     ```yaml
+     apiVersion: v1
+     kind: Namespace
+     metadata:
+       name: my-namespace
+       labels:
+         pod-security.kubernetes.io/enforce: restricted
+         pod-security.kubernetes.io/audit: restricted
+         pod-security.kubernetes.io/warn: restricted
+     ```
+
+2. **Kyverno**:
+   - 정책 엔진으로, YAML 기반 정책 정의
+   - PSP보다 더 유연하고 강력한 기능 제공
+   - 검증, 변형, 생성, 정리 정책 지원
+   - 예시:
+     ```yaml
+     apiVersion: kyverno.io/v1
+     kind: ClusterPolicy
+     metadata:
+       name: restrict-privileged
+     spec:
+       validationFailureAction: enforce
+       rules:
+       - name: privileged-containers
+         match:
+           resources:
+             kinds:
+             - Pod
+         validate:
+           message: "Privileged containers are not allowed"
+           pattern:
+             spec:
+               containers:
+                 - name: "*"
+                   securityContext:
+                     privileged: false
+     ```
+
+3. **OPA Gatekeeper**:
+   - Open Policy Agent 기반의 정책 컨트롤러
+   - Rego 언어를 사용한 정책 정의
+   - 제약 템플릿(ConstraintTemplate)과 제약(Constraint) 개념 사용
+   - 예시:
+     ```yaml
+     apiVersion: templates.gatekeeper.sh/v1beta1
+     kind: ConstraintTemplate
+     metadata:
+       name: k8spsprivilegedcontainer
+     spec:
+       crd:
+         spec:
+           names:
+             kind: K8sPSPPrivilegedContainer
+       targets:
+         - target: admission.k8s.gatekeeper.sh
+           rego: |
+             package k8spsprivilegedcontainer
+             violation[{"msg": msg}] {
+               c := input.review.object.spec.containers[_]
+               c.securityContext.privileged
+               msg := "Privileged containers are not allowed"
+             }
+     ```
+
+4. **AWS 기본 제공 보안 기능**:
+   - Amazon GuardDuty for EKS Protection
+   - AWS Security Hub의 EKS 보안 표준
+   - Amazon Inspector for EKS
+
+**마이그레이션 전략:**
+1. 현재 PSP 정책 분석 및 문서화
+2. 대체 솔루션 선택 (PSA, Kyverno, OPA Gatekeeper 등)
+3. 새 정책을 감사(audit) 모드로 배포하여 영향 평가
+4. 점진적으로 정책 적용 (enforce 모드로 전환)
+5. 모니터링 및 로깅 설정으로 정책 위반 추적
+
+EKS 1.25 이상으로 업그레이드하기 전에 PSP에서 대체 솔루션으로 마이그레이션하는 것이 중요합니다.
+</details>
