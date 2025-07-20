@@ -1,6 +1,64 @@
 # 서비스와 네트워킹
 
+> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
+
 Kubernetes에서 서비스는 포드 집합에 대한 단일 접점을 제공하는 추상화 계층입니다. 이 장에서는 다양한 서비스 유형, 인그레스, 네트워크 정책 등 Kubernetes의 네트워킹 개념에 대해 자세히 알아보겠습니다.
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+
+### 예제 애플리케이션 배포
+
+```bash
+# 네임스페이스 생성
+kubectl create namespace networking-demo
+
+# 간단한 애플리케이션 배포
+kubectl -n networking-demo apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  labels:
+    app: web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+spec:
+  selector:
+    app: web
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
+EOF
+
+# 서비스 확인
+kubectl -n networking-demo get svc,pods
+```
 
 ## 목차
 
@@ -22,32 +80,113 @@ Kubernetes에서 서비스는 포드 집합에 대한 단일 접점을 제공하
 
 ## 서비스 유형
 
+> **핵심 개념**: Kubernetes 서비스는 포드 집합에 대한 안정적인 네트워크 엔드포인트를 제공하며, 다양한 유형을 통해 내부 및 외부 접근을 제어합니다.
+
 Kubernetes는 다양한 유형의 서비스를 제공하여 애플리케이션을 노출하는 여러 방법을 지원합니다.
+
+### 서비스 아키텍처
 
 ```mermaid
 graph TD
-    Client[외부 클라이언트] --> LB[LoadBalancer]
-    Client --> NP[NodePort]
-    Client2[클러스터 내부 클라이언트] --> CIP[ClusterIP]
-    LB --> CIP
-    NP --> CIP
-    CIP --> Pod1[Pod 1]
-    CIP --> Pod2[Pod 2]
-    CIP --> Pod3[Pod 3]
+    subgraph "Kubernetes 클러스터"
+        subgraph "서비스 유형"
+            LB[LoadBalancer]
+            NP[NodePort]
+            CIP[ClusterIP]
+            EXT[ExternalName]
+            
+            LB --> NP
+            NP --> CIP
+        end
+        
+        subgraph "서비스 디스커버리"
+            DNS[CoreDNS]
+            EP[Endpoints]
+            
+            CIP --> DNS
+            CIP --> EP
+        end
+        
+        subgraph "백엔드 포드"
+            Pod1[Pod 1]
+            Pod2[Pod 2]
+            Pod3[Pod 3]
+            
+            EP --> Pod1
+            EP --> Pod2
+            EP --> Pod3
+        end
+    end
+    
+    ExtClient[외부 클라이언트] --> LB
+    ExtClient --> NP
+    IntClient[클러스터 내부 클라이언트] --> CIP
+    IntClient --> DNS
+    EXT --> ExtService[외부 서비스]
     
     %% 스타일 정의
     classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef discovery fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef external fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
     
     %% 클래스 적용
-    class Client,Client2 client;
-    class LB,NP,CIP k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
+    class ExtClient,IntClient client;
+    class LB,NP,CIP,EXT service;
+    class DNS,EP discovery;
+    class Pod1,Pod2,Pod3 pod;
+    class ExtService external;
 ```
 
+### 서비스 유형 비교
+
+| 서비스 유형 | 접근 범위 | 외부 IP | 사용 사례 | 특징 |
+|------------|----------|---------|----------|------|
+| **ClusterIP** | 클러스터 내부 | 아니오 | 내부 마이크로서비스 통신 | 기본 서비스 유형, 클러스터 내부에서만 접근 가능 |
+| **NodePort** | 클러스터 외부 | 아니오 | 개발 및 테스트 환경 | 모든 노드의 특정 포트(30000-32767)를 통해 접근 |
+| **LoadBalancer** | 클러스터 외부 | 예 | 프로덕션 환경의 외부 서비스 | 클라우드 제공업체의 로드 밸런서 프로비저닝 |
+| **ExternalName** | 클러스터 내부 | 아니오 | 외부 서비스에 대한 내부 별칭 | DNS CNAME 레코드를 통한 리디렉션 |
+| **Headless** | 클러스터 내부 | 아니오 | 직접 포드 IP 접근이 필요한 경우 | ClusterIP가 없는 특수 서비스 |
+
 ### ClusterIP
+
+ClusterIP는 가장 기본적인 서비스 유형으로, 클러스터 내부에서만 접근 가능한 고정 IP 주소를 제공합니다.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 9376
+  type: ClusterIP  # 기본값이므로 생략 가능
+```
+
+### NodePort
+
+NodePort 서비스는 모든 노드의 특정 포트를 통해 서비스에 접근할 수 있게 합니다.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+  - protocol: TCP
+    port: 80        # 클러스터 내부에서 사용하는 포트
+    targetPort: 9376 # 포드의 포트
+    nodePort: 30007  # 노드에 노출되는 포트 (30000-32767)
+  type: NodePort
+```
 
 ClusterIP는 기본 서비스 유형으로, 클러스터 내부에서만 접근 가능한 IP 주소를 제공합니다.
 
