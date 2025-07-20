@@ -658,3 +658,257 @@ helm install aws-node-termination-handler \
 
 5. **비용 모니터링 및 최적화**: AWS Cost Explorer와 Kubecost 같은 도구를 사용하여 클러스터 비용을 모니터링하고 최적화합니다.
 </details>
+
+## 고급 문제
+
+### 10. EKS 클러스터에서 멀티 테넌시(Multi-tenancy)를 구현하기 위한 전략을 설명하고, 각 접근 방식의 장단점을 비교하세요.
+
+<details>
+<summary>정답 및 설명</summary>
+
+EKS 클러스터에서 멀티 테넌시(Multi-tenancy)를 구현하는 것은 여러 팀, 애플리케이션 또는 고객이 동일한 Kubernetes 인프라를 공유하면서도 적절한 격리와 리소스 관리를 보장하는 것을 의미합니다. 다음은 EKS에서 멀티 테넌시를 구현하기 위한 주요 전략과 각 접근 방식의 장단점입니다.
+
+## 1. 클러스터 수준 분리 (Hard Multi-tenancy)
+
+**설명**: 테넌트별로 별도의 EKS 클러스터를 프로비저닝하는 방식입니다.
+
+**구현 방법**:
+```bash
+# 테넌트 A를 위한 클러스터 생성
+eksctl create cluster --name tenant-a-cluster --region us-west-2
+
+# 테넌트 B를 위한 클러스터 생성
+eksctl create cluster --name tenant-b-cluster --region us-west-2
+```
+
+**장점**:
+- 완전한 격리 보장 (보안, 네트워킹, 리소스)
+- 테넌트별 클러스터 버전 및 구성 사용자 지정 가능
+- 한 테넌트의 문제가 다른 테넌트에 영향을 미치지 않음
+- 규제 요구 사항이 엄격한 환경에 적합
+
+**단점**:
+- 높은 운영 오버헤드 (여러 클러스터 관리)
+- 리소스 활용도 저하 (클러스터별 컨트롤 플레인 및 시스템 구성 요소 중복)
+- 비용 증가 (클러스터당 컨트롤 플레인 비용 발생)
+- 중앙 집중식 관리 및 정책 적용의 어려움
+
+## 2. 네임스페이스 수준 분리 (Soft Multi-tenancy)
+
+**설명**: 단일 EKS 클러스터 내에서 Kubernetes 네임스페이스를 사용하여 테넌트를 분리하는 방식입니다.
+
+**구현 방법**:
+```yaml
+# 테넌트 A를 위한 네임스페이스 생성
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-a
+  labels:
+    tenant: a
+
+# 테넌트 B를 위한 네임스페이스 생성
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-b
+  labels:
+    tenant: b
+```
+
+**장점**:
+- 단일 클러스터로 관리 간소화
+- 리소스 활용도 향상
+- 비용 효율성 (컨트롤 플레인 공유)
+- 중앙 집중식 관리 및 정책 적용 용이
+
+**단점**:
+- 완전한 격리 보장이 어려움
+- 클러스터 수준 리소스 공유로 인한 보안 위험
+- 한 테넌트의 과도한 리소스 사용이 다른 테넌트에 영향을 줄 수 있음
+- 클러스터 업그레이드 시 모든 테넌트에 영향
+
+## 3. 네임스페이스 수준 분리 + 추가 보안 제어
+
+**설명**: 네임스페이스 분리에 추가적인 보안 및 리소스 제어 메커니즘을 적용하는 방식입니다.
+
+**구현 방법**:
+
+1. **네트워크 정책**:
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-cross-tenant-traffic
+  namespace: tenant-a
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          tenant: a
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          tenant: a
+```
+
+2. **리소스 할당량**:
+```yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tenant-quota
+  namespace: tenant-a
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20"
+    limits.memory: 40Gi
+    pods: "50"
+```
+
+3. **RBAC 권한 제어**:
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-admin
+  namespace: tenant-a
+subjects:
+- kind: Group
+  name: tenant-a-admins
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: tenant-admin-role
+  apiGroup: rbac.authorization.k8s.io
+```
+
+**장점**:
+- 네임스페이스 분리의 장점 유지
+- 향상된 보안 및 리소스 격리
+- 테넌트별 액세스 제어 및 리소스 할당
+- 비용 효율성 유지
+
+**단점**:
+- 구성 및 관리 복잡성 증가
+- 여전히 클러스터 수준 리소스에 대한 완전한 격리 부재
+- 정책 설정 및 유지 관리에 추가 노력 필요
+
+## 4. 가상 클러스터 (Virtual Clusters)
+
+**설명**: 단일 물리적 EKS 클러스터 내에서 가상 Kubernetes 컨트롤 플레인을 생성하여 각 테넌트에게 자체 "클러스터"를 제공하는 방식입니다.
+
+**구현 방법**:
+```bash
+# vcluster 설치
+helm repo add vcluster https://charts.loft.sh
+helm repo update
+
+# 테넌트 A를 위한 가상 클러스터 생성
+helm install vcluster-tenant-a vcluster/vcluster \
+  --namespace tenant-a \
+  --create-namespace \
+  --set sync.nodes.enabled=true
+
+# 테넌트 B를 위한 가상 클러스터 생성
+helm install vcluster-tenant-b vcluster/vcluster \
+  --namespace tenant-b \
+  --create-namespace \
+  --set sync.nodes.enabled=true
+```
+
+**장점**:
+- 클러스터 수준 분리와 네임스페이스 수준 분리의 장점 결합
+- 테넌트별 Kubernetes API 서버 및 컨트롤 플레인 제공
+- 리소스 활용도 향상 및 비용 효율성
+- 테넌트별 클러스터 버전 및 구성 가능
+
+**단점**:
+- 추가 오버헤드 및 복잡성
+- 가상 클러스터 기술의 성숙도 및 지원 제한
+- 일부 Kubernetes 기능의 제한적 지원
+- 디버깅 및 문제 해결의 복잡성
+
+## 5. AWS 서비스 통합을 활용한 멀티 테넌시
+
+**설명**: AWS IAM, AWS Organizations, AWS Resource Access Manager 등의 AWS 서비스를 활용하여 EKS 클러스터의 멀티 테넌시를 강화하는 방식입니다.
+
+**구현 방법**:
+
+1. **IAM Roles for Service Accounts (IRSA)**:
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tenant-a-sa
+  namespace: tenant-a
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/tenant-a-role
+```
+
+2. **AWS Organizations 및 SCP (Service Control Policies)**:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyAccessToOtherTenantsResources",
+      "Effect": "Deny",
+      "Action": ["s3:*"],
+      "Resource": ["arn:aws:s3:::tenant-b-*"]
+    }
+  ]
+}
+```
+
+**장점**:
+- AWS 서비스에 대한 세밀한 액세스 제어
+- 조직 구조와 정책을 활용한 강화된 거버넌스
+- AWS 서비스 수준에서의 추가 격리 계층
+- 기존 AWS 보안 모델과의 통합
+
+**단점**:
+- AWS 서비스에 대한 의존성 증가
+- 구성 및 관리 복잡성 증가
+- AWS 특화 솔루션으로 이식성 제한
+- 추가 AWS 서비스 비용 발생 가능
+
+## 멀티 테넌시 구현을 위한 모범 사례
+
+1. **요구 사항 분석**:
+   - 테넌트 간 필요한 격리 수준 평가
+   - 규제 및 컴플라이언스 요구 사항 고려
+   - 운영 오버헤드와 비용 제약 고려
+
+2. **하이브리드 접근 방식 고려**:
+   - 중요한 테넌트에는 전용 클러스터 제공
+   - 덜 중요한 테넌트는 네임스페이스 수준 분리로 그룹화
+
+3. **자동화 및 IaC (Infrastructure as Code)**:
+   - Terraform, AWS CDK 또는 eksctl을 사용한 클러스터 및 네임스페이스 프로비저닝 자동화
+   - GitOps 워크플로우를 통한 구성 관리
+
+4. **모니터링 및 비용 할당**:
+   - 테넌트별 리소스 사용량 모니터링
+   - 비용 할당 태그를 사용한 테넌트별 비용 추적
+   - Kubecost 또는 AWS Cost Explorer를 활용한 비용 분석
+
+5. **보안 강화**:
+   - 정기적인 보안 감사 및 취약점 스캔
+   - 최소 권한 원칙 적용
+   - 네트워크 정책 및 서비스 메시 활용
+
+## 결론
+
+EKS에서 멀티 테넌시를 구현하는 최적의 전략은 조직의 특정 요구 사항, 보안 요구 사항, 운영 역량 및 비용 제약에 따라 달라집니다. 많은 조직에서는 단일 접근 방식보다 여러 전략을 결합한 하이브리드 접근 방식을 채택하고 있습니다. 예를 들어, 중요한 워크로드나 규제 대상 워크로드에는 전용 클러스터를 사용하고, 개발 및 테스트 환경에는 네임스페이스 수준 분리를 적용하는 방식입니다.
+
+멀티 테넌시 전략을 선택할 때는 보안, 격리, 리소스 활용도, 운영 오버헤드, 비용 등의 요소를 균형 있게 고려해야 합니다. 또한 선택한 전략이 시간이 지남에 따라 조직의 요구 사항 변화에 적응할 수 있는지 평가하는 것이 중요합니다.
+</details>
