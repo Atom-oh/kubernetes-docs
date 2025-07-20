@@ -5,6 +5,56 @@
 
 이 문서에서는 Kubernetes의 기본 실행 단위인 파드(Pod)와 이를 관리하는 다양한 워크로드 리소스에 대해 자세히 설명합니다. 파드의 개념부터 시작하여 디플로이먼트, 스테이트풀셋, 데몬셋 등 다양한 워크로드 리소스의 특징과 사용 사례를 다룹니다.
 
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+
+### 예제 애플리케이션 배포
+
+```bash
+# 네임스페이스 생성
+kubectl create namespace workloads-demo
+
+# 간단한 디플로이먼트 생성
+kubectl -n workloads-demo apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+EOF
+
+# 배포 상태 확인
+kubectl -n workloads-demo get deployments,pods
+```
+
 ## 목차
 - [파드 개념](#파드-개념)
 - [파드 라이프사이클](#파드-라이프사이클)
@@ -23,6 +73,8 @@
 - [Amazon EKS 워크로드 고려사항](#amazon-eks-워크로드-고려사항)
 
 ## 파드 개념
+
+> **핵심 개념**: 파드(Pod)는 Kubernetes의 가장 작은 배포 가능한 컴퓨팅 단위로, 하나 이상의 컨테이너 그룹으로 구성되며 스토리지와 네트워크를 공유합니다.
 
 파드(Pod)는 Kubernetes의 가장 작은 배포 가능한 컴퓨팅 단위입니다. 파드는 하나 이상의 컨테이너 그룹으로, 스토리지와 네트워크를 공유하며 함께 스케줄링됩니다.
 
@@ -45,9 +97,79 @@
 
 ```mermaid
 graph TD
-    Pod[Pod] --> Container1[Container 1]
-    Pod --> Container2[Container 2]
-    Pod --> Volume[Shared Volume]
+    subgraph "파드 구조"
+        Pod[Pod] --> PodIP[Pod IP 주소]
+        Pod --> NS[네트워크 네임스페이스]
+        
+        subgraph "컨테이너"
+            C1[애플리케이션 컨테이너]
+            C2[사이드카 컨테이너]
+            C3[초기화 컨테이너]
+        end
+        
+        subgraph "스토리지"
+            V1[emptyDir 볼륨]
+            V2[configMap 볼륨]
+            V3[secret 볼륨]
+            V4[persistentVolumeClaim]
+        end
+        
+        Pod --> C1
+        Pod --> C2
+        Pod --> C3
+        Pod --> V1
+        Pod --> V2
+        Pod --> V3
+        Pod --> V4
+        
+        C1 --> Port1[포트 8080]
+        C2 --> Port2[포트 9090]
+    end
+    
+    classDef pod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef volume fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef network fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
+    
+    class Pod,PodIP,NS pod;
+    class C1,C2,C3,Port1,Port2 container;
+    class V1,V2,V3,V4 volume;
+    class PodIP,NS network;
+```
+
+### 파드 예제
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: multi-container-pod
+  labels:
+    app: web
+spec:
+  containers:
+  - name: web
+    image: nginx:1.21
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: shared-data
+      mountPath: /usr/share/nginx/html
+  - name: content-updater
+    image: alpine
+    command: ["/bin/sh", "-c"]
+    args:
+    - while true; do
+        echo "현재 시간: $(date)" > /content/index.html;
+        sleep 10;
+      done
+    volumeMounts:
+    - name: shared-data
+      mountPath: /content
+  volumes:
+  - name: shared-data
+    emptyDir: {}
+```
     Pod --> IP[IP Address: 10.244.0.1]
     
     %% 스타일 정의
