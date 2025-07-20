@@ -1,18 +1,22 @@
 # Amazon EKS 보안
 
+> **지원 버전**: Amazon EKS 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
+
 Amazon EKS(Elastic Kubernetes Service)에서 워크로드를 안전하게 실행하기 위해서는 다양한 보안 계층과 모범 사례를 이해하고 구현해야 합니다. 이 문서에서는 EKS 클러스터의 보안을 강화하기 위한 주요 개념, 구성 요소 및 모범 사례를 다룹니다.
 
 ## 목차
 
 1. [EKS 보안 개요](#eks-보안-개요)
-2. [IAM 및 인증](#iam-및-인증)
-3. [네트워크 보안](#네트워크-보안)
-4. [포드 보안](#포드-보안)
-5. [암호화 및 비밀 관리](#암호화-및-비밀-관리)
-6. [컴플라이언스 및 감사](#컴플라이언스-및-감사)
-7. [보안 모니터링 및 탐지](#보안-모니터링-및-탐지)
-8. [EKS 보안 모범 사례](#eks-보안-모범-사례)
-9. [금융 서비스를 위한 EKS 보안 고려사항](#금융-서비스를-위한-eks-보안-고려사항)
+2. [최신 보안 트렌드 (2023)](#최신-보안-트렌드-2023)
+3. [IAM 및 인증](#iam-및-인증)
+4. [네트워크 보안](#네트워크-보안)
+5. [포드 보안](#포드-보안)
+6. [암호화 및 비밀 관리](#암호화-및-비밀-관리)
+7. [컴플라이언스 및 감사](#컴플라이언스-및-감사)
+8. [보안 모니터링 및 탐지](#보안-모니터링-및-탐지)
+9. [EKS 보안 모범 사례](#eks-보안-모범-사례)
+10. [금융 서비스를 위한 EKS 보안 고려사항](#금융-서비스를-위한-eks-보안-고려사항)
 
 ## EKS 보안 개요
 
@@ -46,6 +50,85 @@ flowchart TD
     style AWS fill:#FFCC99,stroke:#FF9900,stroke-width:2px
     style Customer fill:#CCFFCC,stroke:#009900,stroke-width:2px
 ```
+
+## 최신 보안 트렌드 (2023)
+
+Kubernetes 및 EKS 보안 영역에서의 최신 트렌드와 권장사항은 다음과 같습니다:
+
+### 1. 제로 트러스트 아키텍처 (Zero Trust Architecture)
+
+전통적인 경계 기반 보안 모델에서 벗어나, 모든 접근을 기본적으로 신뢰하지 않고 지속적으로 검증하는 접근 방식입니다.
+
+```mermaid
+flowchart LR
+    subgraph ZTA["제로 트러스트 원칙"]
+        P1["모든 통신 암호화"]
+        P2["최소 권한 원칙"]
+        P3["지속적인 검증"]
+        P4["세분화된 접근 제어"]
+        P5["모든 트래픽 검사"]
+    end
+    
+    subgraph Implementation["EKS 구현 방법"]
+        I1["서비스 메시 (Istio)"]
+        I2["IAM Roles for Service Accounts"]
+        I3["네트워크 정책"]
+        I4["OPA/Gatekeeper"]
+        I5["AWS Security Hub"]
+    end
+    
+    P1 --> I1
+    P2 --> I2
+    P3 --> I5
+    P4 --> I4
+    P5 --> I3
+    
+    classDef principle fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef implementation fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class P1,P2,P3,P4,P5 principle;
+    class I1,I2,I3,I4,I5 implementation;
+    class ZTA,Implementation default;
+```
+
+EKS에서 제로 트러스트 구현:
+- **서비스 메시**: Istio 또는 AWS App Mesh를 사용한 서비스 간 mTLS 통신
+- **IAM Roles for Service Accounts (IRSA)**: 세분화된 권한 관리
+- **네트워크 정책**: 필요한 통신만 허용하는 기본 거부 정책
+- **OPA/Gatekeeper**: 정책 기반 접근 제어
+- **AWS Security Hub**: 지속적인 보안 상태 모니터링
+
+### 2. 공급망 보안 (Supply Chain Security)
+
+소프트웨어 공급망 공격이 증가함에 따라, 컨테이너 이미지부터 배포까지 전체 파이프라인의 보안이 중요해졌습니다.
+
+주요 구현 방법:
+- **SLSA (Supply-chain Levels for Software Artifacts)** 프레임워크 채택
+- **이미지 서명 및 검증**: Cosign, Notary v2
+- **SBOM (Software Bill of Materials)** 생성 및 관리: Syft, Grype
+- **이미지 스캐닝**: Amazon ECR 이미지 스캐닝, Trivy, Clair
+- **GitOps 보안**: 서명된 커밋, 보안 파이프라인
+
+### 3. 런타임 보안 및 위협 탐지
+
+컨테이너 런타임 보안이 중요해지면서 다음과 같은 기술이 주목받고 있습니다:
+
+- **eBPF 기반 보안 모니터링**: Cilium, Falco
+- **AWS GuardDuty EKS Protection**: 런타임 위협 탐지
+- **Kubernetes Audit 로그 분석**: CloudWatch Logs Insights
+- **이상 행동 탐지**: Amazon Detective
+- **컨테이너 이스케이프 방지**: gVisor, Kata Containers
+
+### 4. 정책 기반 보안 (Policy as Code)
+
+보안 정책을 코드로 관리하여 일관성과 자동화를 향상시키는 접근 방식입니다:
+
+- **OPA (Open Policy Agent)**: 범용 정책 엔진
+- **Kyverno**: Kubernetes 네이티브 정책 관리
+- **AWS Config**: 규정 준수 모니터링
+- **Terraform Sentinel**: IaC 정책 적용
+- **AWS CloudFormation Guard**: IaC 정책 검증
 
 ## IAM 및 인증
 
