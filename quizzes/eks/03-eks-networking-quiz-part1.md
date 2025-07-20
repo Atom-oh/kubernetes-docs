@@ -335,3 +335,301 @@ cache {
 - **C. kube-dns**: kube-dns는 이전 버전의 Kubernetes에서 사용되었지만, EKS에서는 CoreDNS로 대체되었습니다.
 - **D. AWS Cloud Map**: Cloud Map은 AWS의 서비스 디스커버리 서비스이지만, EKS 클러스터 내부의 기본 DNS 서비스로 사용되지 않습니다.
 </details>
+## 단답형 문제
+
+### 6. Amazon EKS 클러스터에서 노드당 최대 파드 수를 제한하는 주요 요소는 무엇이며, 이를 늘리기 위한 방법은 무엇인가요?
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답:**
+Amazon EKS 클러스터에서 노드당 최대 파드 수를 제한하는 주요 요소는 **EC2 인스턴스 유형별 ENI(탄력적 네트워크 인터페이스) 수와 ENI당 할당 가능한 IP 주소 수**입니다. 이를 늘리기 위한 주요 방법은 **프리픽스 위임(Prefix Delegation) 기능을 활성화**하는 것입니다.
+
+**상세 설명:**
+
+1. **노드당 최대 파드 수 계산 공식**:
+   ```
+   최대 파드 수 = (ENI 수 × (ENI당 IP 주소 수 - 1)) + 2
+   ```
+   - 각 ENI의 첫 번째 IP 주소는 노드 자체를 위해 예약됩니다.
+   - 추가 2개는 kube-proxy와 aws-node 파드를 위한 것입니다.
+
+2. **인스턴스 유형별 제한 예시**:
+   - **t3.small**: (3 ENI × (4 IP - 1)) + 2 = 11 파드
+   - **m5.large**: (3 ENI × (10 IP - 1)) + 2 = 29 파드
+   - **c5.4xlarge**: (8 ENI × (30 IP - 1)) + 2 = 234 파드
+
+3. **프리픽스 위임(Prefix Delegation)을 통한 확장**:
+   프리픽스 위임은 각 ENI에 개별 IP 주소 대신 /28 CIDR 블록(16개 IP)을 할당하는 기능입니다.
+
+   **활성화 방법**:
+   ```bash
+   # ConfigMap 수정
+   kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
+   
+   # 선택적으로 프리픽스 할당 모드 설정
+   kubectl set env daemonset aws-node -n kube-system WARM_PREFIX_TARGET=1
+   ```
+
+   **프리픽스 위임 활성화 후 계산 공식**:
+   ```
+   최대 파드 수 = (ENI 수 × (ENI당 프리픽스 수 × 프리픽스당 IP 수 - 1)) + 2
+   ```
+
+   예: m5.large에서 프리픽스 위임 활성화 시
+   - 프리픽스 위임 없이: 29 파드
+   - 프리픽스 위임 활성화: (3 ENI × (1 프리픽스 × 16 IP - 1)) + 2 = 47 파드
+
+4. **기타 최대 파드 수를 늘리는 방법**:
+   - **더 큰 인스턴스 유형 사용**: 더 많은 ENI와 IP 주소를 지원하는 인스턴스 유형으로 변경
+   - **사용자 지정 CNI 구성**: `--max-pods` 플래그를 사용하여 kubelet 구성 조정 (권장하지 않음)
+   - **대체 CNI 플러그인 사용**: Calico, Cilium 등 오버레이 네트워크를 사용하는 CNI 플러그인으로 전환
+
+5. **고려 사항**:
+   - 프리픽스 위임은 EC2 Nitro 기반 인스턴스에서만 지원됩니다.
+   - 프리픽스 위임을 활성화하면 보안 그룹을 파드에 직접 할당하는 기능(SecurityGroupsForPods)을 사용할 수 없습니다.
+   - 노드당 파드 수가 많아지면 노드 리소스(CPU, 메모리) 경합이 발생할 수 있으므로 적절한 인스턴스 크기 선택이 중요합니다.
+
+6. **모니터링 및 최적화**:
+   ```bash
+   # 현재 IP 주소 사용량 확인
+   kubectl exec -n kube-system ds/aws-node -- curl -s http://localhost:61679/v1/enis | jq
+   
+   # 프리픽스 위임 상태 확인
+   kubectl describe daemonset aws-node -n kube-system | grep PREFIX
+   ```
+
+프리픽스 위임을 활성화하면 노드당 최대 파드 수를 크게 늘릴 수 있지만, 클러스터의 요구 사항과 워크로드 특성에 따라 적절한 구성을 선택하는 것이 중요합니다.
+</details>
+
+### 7. Amazon EKS에서 파드에 특정 AWS 보안 그룹을 할당하는 기능의 이름은 무엇이며, 이를 구성하는 방법을 설명하세요.
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답:**
+Amazon EKS에서 파드에 특정 AWS 보안 그룹을 할당하는 기능의 이름은 **Security Groups for Pods** 또는 **Pod ENI(Elastic Network Interface)**입니다. 이 기능은 VPC CNI의 **ENABLE_POD_ENI** 옵션을 활성화하여 구성할 수 있습니다.
+
+**상세 설명:**
+
+1. **Security Groups for Pods 개요**:
+   이 기능은 특정 파드에 대해 별도의 ENI(트렁크 ENI라고도 함)를 생성하고, 이 ENI에 보안 그룹을 연결하여 파드 수준에서 세밀한 네트워크 보안 제어를 가능하게 합니다.
+
+2. **사전 요구 사항**:
+   - Amazon VPC CNI 플러그인 버전 1.7.7 이상
+   - Kubernetes 버전 1.17 이상
+   - EC2 Nitro 기반 인스턴스
+   - 프리픽스 위임 기능이 비활성화되어 있어야 함
+
+3. **구성 단계**:
+
+   a. **VPC CNI에서 Pod ENI 기능 활성화**:
+   ```bash
+   kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=true
+   ```
+
+   b. **SecurityGroupPolicy 리소스 생성**:
+   ```yaml
+   apiVersion: vpcresources.k8s.aws/v1beta1
+   kind: SecurityGroupPolicy
+   metadata:
+     name: allow-db-access
+     namespace: app
+   spec:
+     podSelector:
+       matchLabels:
+         role: db-client
+     securityGroups:
+       groupIds:
+         - sg-0123456789abcdef0
+   ```
+
+   c. **서비스 계정에 IAM 권한 부여**:
+   VPC CNI의 서비스 계정에 다음 권한이 필요합니다:
+   - ec2:CreateNetworkInterface
+   - ec2:DeleteNetworkInterface
+   - ec2:DescribeNetworkInterfaces
+   - ec2:DescribeSecurityGroups
+   - ec2:ModifyNetworkInterfaceAttribute
+   - ec2:CreateTags
+
+4. **파드 구성 예시**:
+   ```yaml
+   apiVersion: v1
+   kind: Pod
+   metadata:
+     name: db-client
+     namespace: app
+     labels:
+       role: db-client
+   spec:
+     containers:
+     - name: app
+       image: amazonlinux:2
+       command: ['sleep', '3600']
+   ```
+
+5. **작동 방식**:
+   - SecurityGroupPolicy와 일치하는 레이블을 가진 파드가 생성되면, VPC CNI는 해당 파드를 위한 브랜치 ENI를 생성합니다.
+   - 이 브랜치 ENI에 지정된 보안 그룹이 연결됩니다.
+   - 파드의 트래픽은 이 브랜치 ENI를 통해 라우팅되며, 연결된 보안 그룹 규칙이 적용됩니다.
+
+6. **확인 방법**:
+   ```bash
+   # 파드의 ENI 정보 확인
+   kubectl describe pod db-client -n app
+   
+   # SecurityGroupPolicy 확인
+   kubectl get securitygrouppolicy -n app
+   
+   # VPC CNI 로그 확인
+   kubectl logs -n kube-system -l k8s-app=aws-node
+   ```
+
+7. **제한 사항**:
+   - 노드당 브랜치 ENI 수에 제한이 있습니다 (인스턴스 유형에 따라 다름).
+   - 프리픽스 위임 기능과 함께 사용할 수 없습니다.
+   - 파드가 생성된 후에는 보안 그룹을 변경할 수 없습니다.
+   - 파드 시작 시간이 약간 증가할 수 있습니다.
+
+8. **사용 사례**:
+   - RDS, ElastiCache 등 보안 그룹으로 액세스를 제어하는 AWS 서비스에 접근하는 파드
+   - 특정 파드에 대한 인바운드/아웃바운드 트래픽을 세밀하게 제어해야 하는 경우
+   - 규제 요구 사항에 따라 네트워크 격리가 필요한 워크로드
+
+Security Groups for Pods 기능은 EKS의 네트워킹 보안을 강화하는 강력한 도구이지만, 추가 ENI 사용으로 인한 리소스 오버헤드와 제한 사항을 고려하여 적절히 사용해야 합니다.
+</details>
+
+### 8. Amazon EKS에서 서비스 타입 LoadBalancer를 사용할 때, AWS Load Balancer Controller가 기본적으로 생성하는 로드 밸런서 유형은 무엇이며, 이를 변경하는 방법은 무엇인가요?
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답:**
+Amazon EKS에서 서비스 타입 LoadBalancer를 사용할 때, AWS Load Balancer Controller는 기본적으로 **Classic Load Balancer(CLB)**를 생성합니다. 이를 **Network Load Balancer(NLB)**로 변경하려면 서비스에 특정 **어노테이션(annotation)**을 추가해야 합니다.
+
+**상세 설명:**
+
+1. **기본 동작**:
+   Kubernetes의 `LoadBalancer` 타입 서비스를 생성하면, AWS 클라우드 컨트롤러 매니저는 기본적으로 Classic Load Balancer를 프로비저닝합니다.
+
+2. **Network Load Balancer로 변경하는 방법**:
+   서비스에 다음 어노테이션을 추가합니다:
+   ```yaml
+   service.beta.kubernetes.io/aws-load-balancer-type: nlb
+   ```
+
+3. **완전한 서비스 예시 (NLB 사용)**:
+   ```yaml
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: my-service
+     annotations:
+       service.beta.kubernetes.io/aws-load-balancer-type: nlb
+   spec:
+     type: LoadBalancer
+     ports:
+     - port: 80
+       targetPort: 8080
+     selector:
+       app: my-app
+   ```
+
+4. **내부 로드 밸런서 구성**:
+   기본적으로 생성되는 로드 밸런서는 인터넷 연결이 가능합니다. 내부 로드 밸런서로 구성하려면:
+   ```yaml
+   service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+   ```
+
+5. **추가 구성 옵션**:
+
+   a. **대상 유형 설정 (IP 모드)**:
+   ```yaml
+   service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+   ```
+
+   b. **보안 그룹 지정**:
+   ```yaml
+   service.beta.kubernetes.io/aws-load-balancer-security-groups: sg-0123456789abcdef0
+   ```
+
+   c. **서브넷 지정**:
+   ```yaml
+   service.beta.kubernetes.io/aws-load-balancer-subnets: subnet-0123456789abcdef0,subnet-0123456789abcdef1
+   ```
+
+   d. **교차 영역 로드 밸런싱 비활성화**:
+   ```yaml
+   service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "false"
+   ```
+
+   e. **액세스 로그 활성화**:
+   ```yaml
+   service.beta.kubernetes.io/aws-load-balancer-access-log-enabled: "true"
+   service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-name: "my-elb-logs"
+   service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-prefix: "my-app"
+   ```
+
+   f. **SSL 인증서 구성 (HTTPS)**:
+   ```yaml
+   service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:region:account-id:certificate/certificate-id
+   service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+   ```
+
+6. **AWS Load Balancer Controller 사용**:
+   최신 EKS 클러스터에서는 AWS Load Balancer Controller를 사용하여 더 많은 기능을 활용할 수 있습니다:
+
+   a. **설치**:
+   ```bash
+   helm repo add eks https://aws.github.io/eks-charts
+   helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+     -n kube-system \
+     --set clusterName=my-cluster \
+     --set serviceAccount.create=false \
+     --set serviceAccount.name=aws-load-balancer-controller
+   ```
+
+   b. **Application Load Balancer (ALB) 사용 (Ingress)**:
+   ```yaml
+   apiVersion: networking.k8s.io/v1
+   kind: Ingress
+   metadata:
+     name: my-ingress
+     annotations:
+       kubernetes.io/ingress.class: alb
+       alb.ingress.kubernetes.io/scheme: internet-facing
+   spec:
+     rules:
+     - http:
+         paths:
+         - path: /
+           pathType: Prefix
+           backend:
+             service:
+               name: my-service
+               port:
+                 number: 80
+   ```
+
+7. **로드 밸런서 유형 비교**:
+
+   | 특성 | Classic Load Balancer | Network Load Balancer | Application Load Balancer |
+   |------|----------------------|----------------------|--------------------------|
+   | 프로토콜 | TCP, SSL, HTTP, HTTPS | TCP, UDP, TLS | HTTP, HTTPS |
+   | 레이어 | 4 & 7 | 4 | 7 |
+   | 성능 | 좋음 | 매우 좋음 | 좋음 |
+   | 지연 시간 | 중간 | 매우 낮음 | 낮음 |
+   | 정적 IP | 아니오 | 예 | 아니오 |
+   | 경로 기반 라우팅 | 아니오 | 아니오 | 예 |
+   | WebSockets | 제한적 | 예 | 예 |
+   | 컨테이너 기반 대상 | 아니오 | 예 (IP 모드) | 예 (IP 모드) |
+
+8. **모범 사례**:
+   - 대부분의 HTTP/HTTPS 트래픽은 Ingress와 ALB 사용
+   - TCP/UDP 트래픽이나 매우 높은 처리량이 필요한 경우 NLB 사용
+   - 레거시 애플리케이션이나 특별한 요구 사항이 없는 경우 CLB 대신 NLB 또는 ALB 사용 권장
+   - 프로덕션 환경에서는 항상 교차 영역 로드 밸런싱 활성화
+
+AWS Load Balancer Controller를 사용하면 Kubernetes 서비스와 Ingress 리소스를 통해 AWS 로드 밸런서를 더 효과적으로 관리할 수 있으며, 다양한 어노테이션을 통해 세밀한 구성이 가능합니다.
+</details>
