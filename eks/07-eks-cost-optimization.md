@@ -1,16 +1,20 @@
 # Amazon EKS 비용 최적화
 
+> **지원 버전**: Amazon EKS 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
+
 Amazon EKS(Elastic Kubernetes Service)를 사용하면 컨테이너화된 애플리케이션을 쉽게 배포, 관리 및 확장할 수 있지만, 비용을 효과적으로 관리하는 것이 중요합니다. 이 문서에서는 EKS 클러스터의 비용을 최적화하기 위한 다양한 전략과 모범 사례를 다룹니다.
 
 ## 목차
 
 1. [EKS 비용 구성 요소](#eks-비용-구성-요소)
-2. [컴퓨팅 비용 최적화](#컴퓨팅-비용-최적화)
-3. [스토리지 비용 최적화](#스토리지-비용-최적화)
-4. [네트워킹 비용 최적화](#네트워킹-비용-최적화)
-5. [리소스 관리 및 거버넌스](#리소스-관리-및-거버넌스)
-6. [비용 모니터링 및 분석](#비용-모니터링-및-분석)
-7. [비용 최적화 모범 사례](#비용-최적화-모범-사례)
+2. [FinOps 원칙과 EKS](#finops-원칙과-eks)
+3. [컴퓨팅 비용 최적화](#컴퓨팅-비용-최적화)
+4. [스토리지 비용 최적화](#스토리지-비용-최적화)
+5. [네트워킹 비용 최적화](#네트워킹-비용-최적화)
+6. [리소스 관리 및 거버넌스](#리소스-관리-및-거버넌스)
+7. [비용 모니터링 및 분석](#비용-모니터링-및-분석)
+8. [비용 최적화 모범 사례](#비용-최적화-모범-사례)
 
 ## EKS 비용 구성 요소
 
@@ -48,6 +52,78 @@ flowchart TD
     
     %% 클래스 적용
     class ControlPlane,EC2,Fargate,EBS,EFS,S3,DataTransfer,LoadBalancer,NAT,CloudWatch,ECR,OtherServices awsService;
+```
+
+## FinOps 원칙과 EKS
+
+FinOps(Financial Operations)는 클라우드 비용 관리를 위한 운영 모델로, 재무, 기술 및 비즈니스 팀이 협력하여 클라우드 지출에 대한 책임을 공유하고 비용 최적화 결정을 내리는 방식입니다.
+
+### FinOps 프레임워크의 핵심 원칙
+
+```mermaid
+flowchart TD
+    subgraph FinOps [FinOps 핵심 원칙]
+        Visibility[가시성 및 투명성]
+        Accountability[책임 공유]
+        Optimization[지속적인 최적화]
+        Forecasting[예측 및 계획]
+        RealTime[실시간 의사 결정]
+        Culture[비용 인식 문화]
+    end
+    
+    subgraph Implementation [EKS 구현 방법]
+        Tagging[리소스 태깅 전략]
+        Allocation[비용 할당]
+        Monitoring[비용 모니터링 도구]
+        Governance[거버넌스 정책]
+        Automation[자동화된 최적화]
+    end
+    
+    Visibility --> Tagging
+    Accountability --> Allocation
+    Optimization --> Automation
+    Forecasting --> Monitoring
+    RealTime --> Monitoring
+    Culture --> Governance
+    
+    classDef finopsPrinciple fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef implementation fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    class Visibility,Accountability,Optimization,Forecasting,RealTime,Culture finopsPrinciple;
+    class Tagging,Allocation,Monitoring,Governance,Automation implementation;
+    class FinOps,Implementation default;
+```
+
+### EKS에 FinOps 적용하기
+
+1. **비용 가시성 확보**
+   - Kubernetes 네임스페이스, 레이블, 어노테이션을 사용한 비용 할당
+   - AWS Cost Explorer와 Kubecost 같은 도구를 통합하여 세부적인 비용 분석
+   - 팀별, 애플리케이션별, 환경별 비용 분석
+
+2. **책임 공유 모델 구현**
+   - 팀별 비용 할당 및 보고
+   - 비용 최적화 목표 설정 및 추적
+   - 비용 절감 인센티브 제공
+
+3. **지속적인 최적화 자동화**
+   - 자동 스케일링 정책 구현
+   - 스팟 인스턴스 활용 자동화
+   - 유휴 리소스 감지 및 제거
+
+4. **비용 예측 및 계획**
+   - 워크로드 패턴 분석을 통한 비용 예측
+   - 예약 인스턴스 및 Savings Plans 활용
+   - 비용 이상 탐지 및 알림
+
+### 최신 FinOps 도구 및 기술
+
+1. **Kubecost**: Kubernetes 비용 모니터링 및 최적화 도구
+2. **AWS Cost Anomaly Detection**: 비정상적인 비용 증가 감지
+3. **Karpenter**: 효율적인 노드 프로비저닝 및 비용 최적화
+4. **Goldilocks**: 리소스 요청 및 제한 최적화
+5. **Vertical Pod Autoscaler**: 파드 리소스 요청 자동 조정
     class EKSCost,Compute,Storage,Networking,Others default;
 ```
 
