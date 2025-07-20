@@ -1,8 +1,36 @@
 # Kubernetes Resource Operator (KRO)를 활용한 Helm 차트 마이그레이션
 
+> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
+
 ## 개요
 
 Kubernetes Resource Operator(KRO)는 Kubernetes 리소스를 선언적으로 관리하는 새로운 접근 방식입니다. 이 문서에서는 기존 Helm 차트를 KRO로 마이그레이션하는 방법을 설명하고, 이를 통해 얻을 수 있는 이점을 살펴봅니다.
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- Helm v3.10 이상
+- kro CLI v0.5.0 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+
+### KRO 설치
+
+```bash
+# KRO 컨트롤러 설치
+kubectl apply -f https://github.com/kro-project/kro/releases/download/v0.5.0/kro-controller.yaml
+
+# KRO CLI 설치
+curl -L https://github.com/kro-project/kro/releases/download/v0.5.0/kro-cli-$(uname -s)-$(uname -m) -o kro
+chmod +x kro
+sudo mv kro /usr/local/bin/
+
+# 설치 확인
+kubectl get pods -n kro-system
+```
 
 ## Helm과 KRO 비교
 
@@ -23,6 +51,21 @@ KRO는 Kubernetes 커스텀 리소스를 사용하여 애플리케이션을 관�
 - **상태 기반**: 원하는 상태를 선언하고 컨트롤러가 실제 상태를 조정
 - **GitOps 친화적**: 버전 제어 시스템과 통합이 용이
 - **확장성**: 커스텀 리소스 정의(CRD)를 통한 확장
+
+### 비교 표
+
+| 기능 | Helm | KRO |
+|------|------|-----|
+| **패키징 방식** | 차트 (tgz 아카이브) | 커스텀 리소스 |
+| **템플릿 엔진** | Go 템플릿 | 없음 (순수 YAML) |
+| **버전 관리** | 릴리스 기록 | Git 기반 |
+| **롤백 메커니즘** | helm rollback | GitOps 기반 롤백 |
+| **의존성 관리** | requirements.yaml | ResourceGraphDefinition |
+| **사용자 정의** | values.yaml | CR 스펙 |
+| **설치 방법** | helm install | kubectl apply |
+| **업그레이드 방법** | helm upgrade | kubectl apply |
+| **삭제 방법** | helm uninstall | kubectl delete |
+| **후크** | 설치/업그레이드/삭제 후크 | Kubernetes 이벤트 기반 |
 
 ## Helm에서 KRO로 마이그레이션하는 이유
 
@@ -48,6 +91,86 @@ helm template my-chart | kubectl api-resources --verbs=create -o name | xargs -n
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: applications.kro.example.com
+spec:
+  group: kro.example.com
+  names:
+    kind: Application
+    plural: applications
+    singular: application
+    shortNames:
+      - app
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                # 애플리케이션 구성 스키마 정의
+                replicas:
+                  type: integer
+                  minimum: 1
+                image:
+                  type: string
+                port:
+                  type: integer
+              required: ["replicas", "image"]
+```
+
+### 3. ResourceGraphDefinition 생성
+
+ResourceGraphDefinition(RGD)은 KRO의 핵심 개념으로, 커스텀 리소스와 Kubernetes 네이티브 리소스 간의 관계를 정의합니다.
+
+```yaml
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: application-graph
+spec:
+  resourceKind:
+    group: kro.example.com
+    kind: Application
+    version: v1
+  childResources:
+    - apiVersion: apps/v1
+      kind: Deployment
+      nameTemplate: "{{.parent.metadata.name}}"
+      template: |
+        spec:
+          replicas: {{.parent.spec.replicas}}
+          selector:
+            matchLabels:
+              app: {{.parent.metadata.name}}
+          template:
+            metadata:
+              labels:
+                app: {{.parent.metadata.name}}
+            spec:
+              containers:
+              - name: {{.parent.metadata.name}}
+                image: {{.parent.spec.image}}
+                ports:
+                - containerPort: {{.parent.spec.port}}
+    - apiVersion: v1
+      kind: Service
+      nameTemplate: "{{.parent.metadata.name}}"
+      template: |
+        spec:
+          selector:
+            app: {{.parent.metadata.name}}
+          ports:
+          - port: {{.parent.spec.port}}
+            targetPort: {{.parent.spec.port}}
+          type: ClusterIP
+```
 kind: CustomResourceDefinition
 metadata:
   name: applications.kro.example.com
