@@ -3,6 +3,36 @@
 > **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
 > **마지막 업데이트**: 2023년 7월 20일
 
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- AWS CLI v2.0 이상
+- Terraform v1.0.0 이상 (Terraform 예제용)
+- AWS CDK v2.0 이상 (CDK 예제용)
+- kubectl v1.26 이상
+- Node.js v14 이상 (CDK 사용 시)
+
+### AWS 계정 설정
+1. AWS 계정이 필요합니다. 계정이 없는 경우 [AWS 계정 생성](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/)을 참조하세요.
+2. 다음 IAM 권한이 필요합니다:
+   - AmazonEKSClusterPolicy
+   - AmazonEKSServicePolicy
+   - AmazonVPCFullAccess
+   - IAMFullAccess
+
+### AWS CLI 구성
+```bash
+aws configure
+# AWS Access Key ID, Secret Access Key, 리전, 출력 형식을 입력합니다.
+```
+
+### 로컬 개발 환경 (선택 사항)
+로컬에서 Kubernetes를 테스트하려면 다음 도구 중 하나를 사용할 수 있습니다:
+- **minikube**: `brew install minikube` (macOS) 또는 [minikube 설치 가이드](https://minikube.sigs.k8s.io/docs/start/) 참조
+- **kind**: `brew install kind` (macOS) 또는 [kind 설치 가이드](https://kind.sigs.k8s.io/docs/user/quick-start/) 참조
+
 ## Terraform을 사용한 클러스터 생성
 
 Terraform은 인프라를 코드로 관리하는 도구로, EKS 클러스터를 생성하고 관리하는 데 사용할 수 있습니다. Terraform을 사용하면 인프라를 버전 관리하고 반복 가능한 방식으로 배포할 수 있습니다.
