@@ -1,8 +1,111 @@
 # 고급 주제 및 실제 사례
 
+> **지원 버전**: Cilium 1.13, 1.14  
+> **마지막 업데이트**: 2023년 7월 20일
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+- Cilium CLI
+- Helm v3.10 이상
+- 시스템 모니터링 도구 (sysstat, htop, bpftool)
+
+### 성능 테스트 환경 설정
+
+```bash
+# 성능 테스트 네임스페이스 생성
+kubectl create namespace perf-test
+
+# 테스트 애플리케이션 배포
+kubectl -n perf-test apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-generator
+  namespace: perf-test
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: load-generator
+  template:
+    metadata:
+      labels:
+        app: load-generator
+    spec:
+      containers:
+      - name: wrk
+        image: skandyla/wrk
+        command: ["sleep", "infinity"]
+EOF
+
+# 시스템 상태 모니터링
+kubectl -n kube-system exec -it $(kubectl -n kube-system get pods -l k8s-app=cilium -o jsonpath='{.items[0].metadata.name}') -- cilium status --verbose
+```
+
 ## 성능 튜닝 및 문제 해결
 
+> **핵심 개념**: Cilium의 성능을 최적화하려면 커널 매개변수, eBPF 맵 크기, 리소스 할당 및 네트워킹 모드를 적절히 조정해야 합니다.
+
 Cilium의 성능을 최적화하고 일반적인 문제를 해결하는 방법을 이해하는 것은 프로덕션 환경에서 Cilium을 효과적으로 운영하는 데 중요합니다.
+
+### 성능 튜닝 아키텍처
+
+```mermaid
+flowchart TD
+    subgraph "Cilium 성능 튜닝 영역"
+        direction TB
+        
+        subgraph "커널 매개변수"
+            TCP[TCP 매개변수]
+            Conntrack[연결 추적]
+            ARP[ARP 캐시]
+            Memory[메모리 관리]
+        end
+        
+        subgraph "eBPF 맵"
+            CTMap[연결 추적 맵]
+            NATMap[NAT 맵]
+            PolicyMap[정책 맵]
+            EndpointMap[엔드포인트 맵]
+        end
+        
+        subgraph "리소스 할당"
+            CPULimit[CPU 제한]
+            MemLimit[메모리 제한]
+            PodPriority[Pod 우선순위]
+            NodeAffinity[노드 어피니티]
+        end
+        
+        subgraph "네트워킹 모드"
+            DirectRouting[직접 라우팅]
+            Overlay[오버레이]
+            KubeProxy[kube-proxy 대체]
+            XDP[XDP 가속화]
+        end
+    end
+    
+    Performance[성능 최적화] --> TCP & Conntrack & ARP & Memory
+    Performance --> CTMap & NATMap & PolicyMap & EndpointMap
+    Performance --> CPULimit & MemLimit & PodPriority & NodeAffinity
+    Performance --> DirectRouting & Overlay & KubeProxy & XDP
+    
+    classDef kernel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef ebpf fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef resource fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef network fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
+    classDef perf fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
+    
+    class TCP,Conntrack,ARP,Memory kernel;
+    class CTMap,NATMap,PolicyMap,EndpointMap ebpf;
+    class CPULimit,MemLimit,PodPriority,NodeAffinity resource;
+    class DirectRouting,Overlay,KubeProxy,XDP network;
+    class Performance perf;
+```
 
 ### 성능 튜닝 영역:
 
@@ -48,6 +151,30 @@ data:
   # 프록시 구성
   proxy-max-memory-percentage: "30"
   proxy-max-threads: "8"
+  
+  # 네트워킹 모드
+  tunnel: "disabled"
+  enable-ipv4: "true"
+  enable-ipv6: "false"
+  auto-direct-node-routes: "true"
+  
+  # kube-proxy 대체
+  kube-proxy-replacement: "strict"
+  enable-node-port: "true"
+  node-port-algorithm: "maglev"
+  
+  # XDP 가속화
+  enable-xdp: "true"
+```
+
+### 일반적인 문제 해결 시나리오:
+
+| 문제 | 증상 | 진단 명령어 | 해결 방법 |
+|------|------|------------|----------|
+| 연결 추적 맵 가득 참 | 연결 실패, 패킷 손실 | `cilium bpf ct list global` | 연결 추적 맵 크기 증가 |
+| 메모리 부족 | OOM 종료, 재시작 | `kubectl top pods -n kube-system` | 메모리 제한 증가 |
+| 정책 적용 실패 | 예상치 못한 연결 차단 | `cilium policy get` | 정책 디버깅, 로그 확인 |
+| 노드 간 통신 문제 | 포드 간 연결 실패 | `cilium connectivity test` | 라우팅 테이블, 방화벽 규칙 확인 |
   
   # 모니터링 구성
   monitor-aggregation: "medium"
