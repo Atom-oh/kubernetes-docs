@@ -223,3 +223,91 @@ nodeGroups:
    - Graviton(ARM) 인스턴스 고려
    - 적절한 인스턴스 크기 선택
 </details>
+
+3. Amazon EKS 클러스터에서 Fargate 프로필을 구성할 때 필수적으로 지정해야 하는 항목은 무엇인가요?
+   - A) 인스턴스 유형과 용량 유형
+   - B) 네임스페이스와 레이블 선택기
+   - C) 서브넷 ID와 보안 그룹
+   - D) 오토스케일링 설정과 최대 파드 수
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) 네임스페이스와 레이블 선택기**
+
+**설명:**
+Amazon EKS Fargate 프로필을 구성할 때 필수적으로 지정해야 하는 항목은 네임스페이스와 선택적으로 레이블 선택기입니다. 이 정보를 통해 EKS는 어떤 파드가 Fargate에서 실행되어야 하는지 결정합니다.
+
+#### Fargate 프로필의 구성 요소:
+
+1. **필수 구성 요소**:
+   - **프로필 이름**: Fargate 프로필의 고유 식별자
+   - **파드 실행 역할(Pod execution role)**: Fargate 인프라에서 파드를 실행하는 데 필요한 IAM 역할
+   - **서브넷**: Fargate 파드가 실행될 프라이빗 서브넷 (기본적으로 클러스터의 서브넷 사용)
+   - **선택기**: 네임스페이스와 선택적 레이블로 구성된 배열
+
+2. **선택기 구성**:
+   - **네임스페이스**: 파드가 속한 Kubernetes 네임스페이스 (필수)
+   - **레이블**: 키-값 쌍의 Kubernetes 레이블 (선택 사항)
+
+#### Fargate 프로필 생성 예시:
+
+AWS CLI를 사용한 예시:
+```bash
+aws eks create-fargate-profile \
+  --cluster-name my-cluster \
+  --fargate-profile-name my-fargate-profile \
+  --pod-execution-role-arn arn:aws:iam::123456789012:role/AmazonEKSFargatePodExecutionRole \
+  --subnets subnet-0a1b2c3d4e5f6g7h8 subnet-0a1b2c3d4e5f6g7h9 \
+  --selectors namespace=default,labels={app=nginx} namespace=kube-system,labels={k8s-app=kube-dns}
+```
+
+eksctl을 사용한 예시:
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+fargateProfiles:
+  - name: fp-default
+    selectors:
+      - namespace: default
+        labels:
+          app: nginx
+      - namespace: kube-system
+        labels:
+          k8s-app: kube-dns
+```
+
+#### Fargate 프로필 작동 방식:
+
+1. 파드가 생성되면 EKS는 파드의 네임스페이스와 레이블을 확인합니다.
+2. 파드의 네임스페이스와 레이블이 Fargate 프로필의 선택기와 일치하면, 해당 파드는 Fargate 인프라에서 실행됩니다.
+3. 일치하는 Fargate 프로필이 없으면, 파드는 EC2 노드에 스케줄링되거나 (EC2 노드가 있는 경우) 스케줄링되지 않고 Pending 상태로 남습니다.
+
+#### 다른 옵션들의 문제점:
+
+- **인스턴스 유형과 용량 유형**: Fargate는 서버리스 컴퓨팅 서비스이므로 인스턴스 유형이나 용량 유형을 지정할 필요가 없습니다. AWS가 자동으로 필요한 컴퓨팅 리소스를 프로비저닝합니다.
+
+- **서브넷 ID와 보안 그룹**: 서브넷 ID는 필요하지만, 클러스터의 서브넷을 기본값으로 사용할 수 있습니다. 보안 그룹은 선택 사항이며, 지정하지 않으면 클러스터의 보안 그룹이 사용됩니다.
+
+- **오토스케일링 설정과 최대 파드 수**: Fargate는 파드 단위로 자동으로 확장되므로 별도의 오토스케일링 설정이 필요하지 않습니다. 파드 수는 Kubernetes Deployment나 HPA(Horizontal Pod Autoscaler)를 통해 관리됩니다.
+
+#### Fargate 사용 시 고려사항:
+
+1. **비용**: Fargate는 실제 사용한 vCPU와 메모리 리소스에 대해서만 비용을 지불합니다. 유휴 노드에 대한 비용이 없습니다.
+
+2. **제한 사항**:
+   - DaemonSet 파드는 Fargate에서 지원되지 않습니다.
+   - 특권(privileged) 컨테이너는 지원되지 않습니다.
+   - HostNetwork, HostPort 등 호스트 네트워크 모드는 지원되지 않습니다.
+   - 영구 볼륨은 Amazon EFS만 지원됩니다.
+
+3. **사용 사례**:
+   - 배치 처리 작업
+   - 웹 애플리케이션
+   - API 서버
+   - 마이크로서비스
+   - 개발/테스트 환경
+</details>
