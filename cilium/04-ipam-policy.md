@@ -1,8 +1,89 @@
 # IPAM 및 네트워크 정책
 
+> **지원 버전**: Cilium 1.13, 1.14  
+> **마지막 업데이트**: 2023년 7월 20일
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+- Cilium CLI
+
+### IPAM 및 네트워크 정책 실습 설정
+
+```bash
+# Cilium 상태 확인
+cilium status --wait
+
+# 현재 IPAM 구성 확인
+kubectl -n kube-system get configmap cilium-config -o yaml | grep -E 'ipam|allocator'
+
+# 네트워크 정책 테스트를 위한 네임스페이스 생성
+kubectl create namespace policy-test
+
+# 테스트 애플리케이션 배포
+kubectl -n policy-test apply -f https://raw.githubusercontent.com/cilium/cilium/v1.14/examples/minikube/http-sw-app.yaml
+```
+
 ## IP 주소 관리(IPAM) 전략
 
-IPAM(IP Address Management)은 IP 주소의 할당, 추적 및 관리를 담당하는 시스템입니다. Cilium은 다양한 IPAM 모드를 지원하여 다양한 환경과 요구 사항에 맞게 유연하게 구성할 수 있습니다.
+> **핵심 개념**: IPAM(IP Address Management)은 IP 주소의 할당, 추적 및 관리를 담당하는 시스템입니다.
+
+IPAM은 IP 주소의 할당, 추적 및 관리를 담당하는 시스템입니다. Cilium은 다양한 IPAM 모드를 지원하여 다양한 환경과 요구 사항에 맞게 유연하게 구성할 수 있습니다.
+
+### Cilium IPAM 아키텍처
+
+```mermaid
+flowchart TD
+    subgraph "Cilium IPAM 모드"
+        direction TB
+        
+        subgraph "클러스터 범위 IPAM"
+            ClusterPool[클러스터 풀]
+            MultiPool[다중 풀]
+        end
+        
+        subgraph "노드 범위 IPAM"
+            HostScope[쿠버네티스 호스트 범위]
+        end
+        
+        subgraph "클라우드 제공업체 IPAM"
+            AWS_ENI[AWS ENI]
+            Azure_IPAM[Azure IPAM]
+            GKE_IPAM[GKE IPAM]
+        end
+        
+        subgraph "사용자 정의 IPAM"
+            CRD_IPAM[CRD 기반 IPAM]
+        end
+    end
+    
+    ClusterPool -->|"단일 풀에서 할당"| Central[중앙 집중식 할당]
+    MultiPool -->|"여러 풀에서 할당"| Central
+    
+    HostScope -->|"노드별 할당"| Distributed[분산 할당]
+    
+    AWS_ENI -->|"AWS VPC IP 할당"| Cloud[클라우드 네이티브 할당]
+    Azure_IPAM -->|"Azure VNET IP 할당"| Cloud
+    GKE_IPAM -->|"GCP VPC IP 할당"| Cloud
+    
+    CRD_IPAM -->|"사용자 정의 할당"| Custom[사용자 정의 할당]
+    
+    classDef cluster fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef node fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef cloud fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef custom fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
+    classDef alloc fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
+    
+    class ClusterPool,MultiPool cluster;
+    class HostScope node;
+    class AWS_ENI,Azure_IPAM,GKE_IPAM cloud;
+    class CRD_IPAM custom;
+    class Central,Distributed,Cloud,Custom alloc;
+```
 
 ### Cilium IPAM 모드:
 
@@ -48,6 +129,38 @@ IPAM(IP Address Management)은 IP 주소의 할당, 추적 및 관리를 담당�
 - **주소 공간 크기**: 필요한 IP 주소 수
 - **네트워크 분할**: 서브넷 및 CIDR 블록 설계
 - **확장성**: 향후 성장 고려
+
+### IPAM 구성 예제
+
+클러스터 풀 IPAM 구성:
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cilium-config
+  namespace: kube-system
+data:
+  ipam: "cluster-pool"
+  cluster-pool-ipv4-cidr: "10.0.0.0/16"
+  cluster-pool-ipv4-mask-size: "24"
+  enable-ipv4: "true"
+  enable-ipv6: "false"
+```
+
+AWS ENI IPAM 구성:
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cilium-config
+  namespace: kube-system
+data:
+  ipam: "eni"
+  enable-ipv4: "true"
+  enable-ipv6: "false"
+  eni-tags: "{\"cluster\": \"eks-cluster\"}"
+  ec2-api-endpoint: "ec2.us-west-2.amazonaws.com"
+```
 - **클라우드 통합**: 클라우드 제공업체 네트워킹과의 통합
 - **IPv4 vs IPv6**: 단일 또는 이중 스택 구성
 
