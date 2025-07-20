@@ -1,5 +1,34 @@
 # eBPF 기술 심층 분석
 
+> **지원 버전**: Linux 커널 4.19+  
+> **마지막 업데이트**: 2023년 7월 20일
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- Linux 커널 4.19 이상 (5.10+ 권장)
+- bpftool, libbpf-dev, clang, llvm
+- bcc (BPF Compiler Collection)
+
+### 환경 설정
+
+```bash
+# Ubuntu/Debian 시스템에서 필요한 패키지 설치
+sudo apt-get update
+sudo apt-get install -y build-essential clang llvm libelf-dev libbpf-dev bpftool linux-tools-common linux-tools-generic
+
+# BCC 설치
+sudo apt-get install -y bpfcc-tools python3-bpfcc
+
+# 커널 버전 확인
+uname -r
+
+# eBPF 기능 지원 확인
+bpftool feature
+```
+
 ## eBPF 기술 소개 및 역사
 
 eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 안전하게 프로그램을 실행할 수 있는 혁신적인 기술입니다. 원래 네트워크 패킷 필터링을 위해 설계되었지만, 현재는 추적, 모니터링, 네트워킹, 보안 등 다양한 용도로 확장되었습니다.
@@ -26,7 +55,53 @@ eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 안전하게 프
 
 ## 커널 내 eBPF 작동 방식
 
+> **핵심 개념**: eBPF는 Linux 커널 내에서 샌드박스 가상 머신으로 작동하며, 커널 코드를 수정하지 않고도 커널 동작을 확장할 수 있습니다.
+
 eBPF는 Linux 커널 내에서 샌드박스 가상 머신으로 작동합니다. 이 가상 머신은 eBPF 바이트코드를 실행하며, 이 바이트코드는 커널 내 다양한 이벤트에 연결될 수 있습니다.
+
+### eBPF 아키텍처
+
+```mermaid
+flowchart TD
+    subgraph "사용자 공간"
+        App[애플리케이션]
+        Tools[eBPF 도구 \n bpftrace, bcc, libbpf]
+        App --> Tools
+    end
+    
+    subgraph "커널 공간"
+        Verifier[eBPF 검증기]
+        JIT[JIT 컴파일러]
+        VM[eBPF 가상 머신]
+        Maps[eBPF 맵]
+        
+        Tools -->|로드 프로그램| Verifier
+        Verifier -->|검증 통과| JIT
+        JIT -->|최적화| VM
+        VM <-->|데이터 저장/조회| Maps
+        App <-->|데이터 교환| Maps
+        
+        subgraph "훅 포인트"
+            XDP[XDP]
+            TC[Traffic Control]
+            Kprobes[Kprobes/Uprobes]
+            Tracepoints[Tracepoints]
+            Perf[Perf Events]
+            LSM[보안 모듈]
+        end
+        
+        VM --> XDP & TC & Kprobes & Tracepoints & Perf & LSM
+    end
+    
+    classDef userspace fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef kernelspace fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef ebpfcomp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef hookpoint fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
+    
+    class App,Tools userspace;
+    class Verifier,JIT,VM,Maps ebpfcomp;
+    class XDP,TC,Kprobes,Tracepoints,Perf,LSM hookpoint;
+```
 
 ### eBPF 프로그램 라이프사이클:
 
@@ -48,6 +123,35 @@ eBPF는 Linux 커널 내에서 샌드박스 가상 머신으로 작동합니다.
 - **tracepoint**: 커널 내 정적 추적점
 - **perf_event**: 성능 모니터링 이벤트
 - **cgroup**: 컨테이너 리소스 제어
+
+### 간단한 eBPF 프로그램 예제
+
+```c
+// hello_world.c
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
+
+SEC("tracepoint/syscalls/sys_enter_execve")
+int hello_execve(void *ctx) {
+    char msg[] = "Hello, eBPF!";
+    bpf_trace_printk(msg, sizeof(msg));
+    return 0;
+}
+
+char LICENSE[] SEC("license") = "GPL";
+```
+
+컴파일 및 실행:
+```bash
+# 컴파일
+clang -O2 -target bpf -c hello_world.c -o hello_world.o
+
+# 로드 및 실행
+bpftool prog load hello_world.o /sys/fs/bpf/hello_world
+
+# 출력 확인
+cat /sys/kernel/debug/tracing/trace_pipe
+```
 - **LSM (Linux Security Module)**: 보안 정책 적용
 
 ### eBPF 맵:
