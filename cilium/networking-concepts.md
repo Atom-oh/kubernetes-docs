@@ -1,6 +1,16 @@
 # 네트워킹 개념 심층 분석
 
+> **마지막 업데이트**: 2023년 7월 20일
+
 이 문서는 Cilium을 이해하는 데 필요한 핵심 네트워킹 개념에 대한 심층적인 설명을 제공합니다. 컨테이너 네트워킹, 오버레이 네트워크, 라우팅 프로토콜 등 Cilium의 기반이 되는 기술적 개념을 탐구합니다.
+
+## 학습 목표
+
+이 문서를 통해 다음을 이해할 수 있습니다:
+- OSI 모델과 TCP/IP 스택의 기본 구조와 각 계층의 역할
+- 컨테이너 네트워킹의 기본 원리와 구현 방식
+- 오버레이 네트워크와 언더레이 네트워크의 차이점
+- NAT, 라우팅, DNS 등 핵심 네트워킹 개념이 Cilium에서 어떻게 활용되는지
 
 ## 목차
 
@@ -15,7 +25,66 @@
 
 ## OSI 모델 및 TCP/IP 스택
 
+> **핵심 개념**: OSI 모델은 네트워크 통신을 7개의 추상 계층으로 분류하여 복잡한 네트워킹 프로세스를 이해하기 쉽게 분해합니다.
+
 OSI(Open Systems Interconnection) 모델은 네트워크 통신을 7개의 추상 계층으로 분류한 개념적 프레임워크입니다. 각 계층은 특정 네트워킹 기능을 담당하며, 이를 통해 복잡한 네트워킹 프로세스를 이해하기 쉽게 분해할 수 있습니다.
+
+### OSI 모델과 TCP/IP 모델 비교
+
+```mermaid
+flowchart LR
+    subgraph "OSI 모델"
+        OSI7[7. 응용 계층]
+        OSI6[6. 표현 계층]
+        OSI5[5. 세션 계층]
+        OSI4[4. 전송 계층]
+        OSI3[3. 네트워크 계층]
+        OSI2[2. 데이터 링크 계층]
+        OSI1[1. 물리 계층]
+    end
+    
+    subgraph "TCP/IP 모델"
+        TCP4[4. 응용 계층]
+        TCP3[3. 전송 계층]
+        TCP2[2. 인터넷 계층]
+        TCP1[1. 네트워크 액세스 계층]
+    end
+    
+    OSI7 & OSI6 & OSI5 --- TCP4
+    OSI4 --- TCP3
+    OSI3 --- TCP2
+    OSI2 & OSI1 --- TCP1
+    
+    subgraph "프로토콜 예시"
+        P7[HTTP, FTP, SMTP, DNS]
+        P6[SSL/TLS, JPEG, ASCII]
+        P5[NetBIOS, RPC]
+        P4[TCP, UDP]
+        P3[IP, ICMP, IGMP]
+        P2[Ethernet, PPP, ARP]
+        P1[RS-232, Ethernet]
+    end
+    
+    OSI7 --- P7
+    OSI6 --- P6
+    OSI5 --- P5
+    OSI4 --- P4
+    OSI3 --- P3
+    OSI2 --- P2
+    OSI1 --- P1
+    
+    classDef app fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
+    classDef transport fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef network fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef link fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef physical fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
+    
+    class OSI7,OSI6,OSI5,TCP4,P7,P6,P5 app;
+    class OSI4,TCP3,P4 transport;
+    class OSI3,TCP2,P3 network;
+    class OSI2,P2 link;
+    class OSI1,TCP1,P1 physical;
+```
 
 ### OSI 7계층 모델
 
@@ -48,6 +117,29 @@ OSI(Open Systems Interconnection) 모델은 네트워크 통신을 7개의 추�
 5. **세션 계층(Session Layer)**
    - 통신 세션 설정, 유지 및 종료
    - 동기화 및 대화 제어
+   - 체크포인트 설정 및 복구
+   - NetBIOS, RPC(Remote Procedure Call)가 이 계층의 예
+
+6. **표현 계층(Presentation Layer)**
+   - 데이터 형식 변환 및 암호화
+   - 문자 인코딩, 데이터 압축, 암호화/복호화
+   - SSL/TLS, JPEG, ASCII가 이 계층의 예
+
+7. **응용 계층(Application Layer)**
+   - 사용자 인터페이스 및 애플리케이션 서비스 제공
+   - 이메일, 파일 전송, 웹 브라우징 등의 서비스
+   - HTTP, FTP, SMTP, DNS가 이 계층의 예
+
+### Cilium과 OSI 모델의 관계
+
+Cilium은 여러 OSI 계층에서 작동합니다:
+
+| OSI 계층 | Cilium 기능 | 예시 |
+|---------|------------|------|
+| L2 (데이터 링크) | ARP 처리, MAC 필터링 | 노드 간 MAC 주소 확인 |
+| L3 (네트워크) | IP 라우팅, CIDR 기반 정책 | 포드 간 IP 라우팅 |
+| L4 (전송) | 포트 기반 필터링, 연결 추적 | 서비스 포트 접근 제어 |
+| L7 (응용) | HTTP, gRPC, Kafka 필터링 | API 경로 기반 접근 제어 |
    - 체크포인트 설정 및 복구
 
 6. **표현 계층(Presentation Layer)**
