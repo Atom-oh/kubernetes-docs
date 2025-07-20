@@ -1,5 +1,32 @@
 # 네트워킹 모델 및 VXLAN
 
+> **지원 버전**: Cilium 1.13, 1.14  
+> **마지막 업데이트**: 2023년 7월 20일
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+- Cilium CLI
+- tcpdump, wireshark (네트워크 패킷 분석용)
+
+### 네트워크 분석 도구 설치
+
+```bash
+# tcpdump 설치
+sudo apt-get update
+sudo apt-get install -y tcpdump
+
+# Cilium 네트워크 패킷 캡처
+kubectl exec -n kube-system -it $(kubectl get pods -n kube-system -l k8s-app=cilium -o jsonpath='{.items[0].metadata.name}') -- cilium monitor -v
+
+# VXLAN 트래픽 분석
+sudo tcpdump -i any udp port 8472 -vv
+```
+
 ## 컨테이너 네트워킹 모델 비교
 
 컨테이너 네트워킹 모델은 컨테이너 간 통신 방식을 정의합니다. 각 모델은 성능, 확장성, 보안 및 구현 복잡성 측면에서 장단점이 있습니다.
@@ -35,9 +62,56 @@
 | 오버레이 | 중간 | 높음 | 높음 | 높음 | 멀티 호스트 클러스터 |
 | 언더레이 | 높음 | 중간 | 중간 | 매우 높음 | 성능 중심 프로덕션 환경 |
 
+### Cilium 네트워킹 모드
+
+```mermaid
+flowchart TD
+    subgraph "Cilium 네트워킹 모드"
+        direction LR
+        
+        subgraph "오버레이 모드"
+            VXLAN[VXLAN]
+            Geneve[Geneve]
+        end
+        
+        subgraph "네이티브 라우팅 모드"
+            Direct[직접 라우팅]
+            BGP[BGP]
+        end
+        
+        subgraph "클라우드 통합 모드"
+            AWS_ENI[AWS ENI]
+            Azure_IPAM[Azure IPAM]
+            GKE[GKE]
+        end
+    end
+    
+    VXLAN -->|"캡슐화 (UDP 8472)"| Encap[캡슐화 오버헤드\n성능 영향 약간]
+    Geneve -->|"캡슐화 (UDP 6081)"| Encap
+    
+    Direct -->|"직접 라우팅\n(캡슐화 없음)"| NoEncap[캡슐화 없음\n최고 성능]
+    BGP -->|"BGP 라우팅\n(캡슐화 없음)"| NoEncap
+    
+    AWS_ENI -->|"AWS VPC 통합"| Cloud[클라우드 네이티브\n성능 최적화]
+    Azure_IPAM -->|"Azure VNET 통합"| Cloud
+    GKE -->|"Google Cloud VPC 통합"| Cloud
+    
+    classDef overlay fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef native fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef cloud fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef perf fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
+    
+    class VXLAN,Geneve overlay;
+    class Direct,BGP native;
+    class AWS_ENI,Azure_IPAM,GKE cloud;
+    class Encap,NoEncap,Cloud perf;
+```
+
 ## VXLAN 기술 심층 분석
 
-VXLAN(Virtual Extensible LAN)은 레이어 2 네트워크를 레이어 3 네트워크 위에 오버레이하는 네트워크 가상화 기술입니다. 이는 클라우드 환경에서 네트워크 세그먼트 수를 확장하고 멀티 테넌트 환경을 지원하는 데 널리 사용됩니다.
+> **핵심 개념**: VXLAN(Virtual Extensible LAN)은 레이어 2 네트워크를 레이어 3 네트워크 위에 오버레이하는 네트워크 가상화 기술입니다.
+
+VXLAN은 레이어 2 네트워크를 레이어 3 네트워크 위에 오버레이하는 네트워크 가상화 기술입니다. 이는 클라우드 환경에서 네트워크 세그먼트 수를 확장하고 멀티 테넌트 환경을 지원하는 데 널리 사용됩니다.
 
 ### VXLAN 기본 개념:
 
@@ -47,6 +121,39 @@ VXLAN(Virtual Extensible LAN)은 레이어 2 네트워크를 레이어 3 네트�
 - **캡슐화**: 원래 L2 프레임을 UDP 패킷으로 캡슐화
 
 ### VXLAN 패킷 구조:
+
+```
++-------------------------------+
+| 외부 이더넷 헤더              |
++-------------------------------+
+| 외부 IP 헤더 (보통 IPv4)      |
++-------------------------------+
+| 외부 UDP 헤더 (포트 8472)     |
++-------------------------------+
+| VXLAN 헤더 (VNI 포함)         |
++-------------------------------+
+| 원래 이더넷 프레임            |
+| (내부 이더넷 헤더 + 페이로드) |
++-------------------------------+
+```
+
+### Cilium에서 VXLAN 구성 예제
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cilium-config
+  namespace: kube-system
+data:
+  tunnel: "vxlan"
+  enable-ipv4: "true"
+  enable-ipv6: "false"
+  ipv4-range: "10.0.0.0/16"
+  ipv4-service-range: "10.96.0.0/12"
+```
+
+이 구성은 Cilium이 VXLAN 터널링을 사용하여 클러스터 내 포드 간 통신을 설정하도록 지시합니다. 각 노드는 VTEP 역할을 하며 포드 트래픽을 VXLAN 패킷으로 캡슐화하여 다른 노드로 전송합니다.
 
 ```mermaid
 flowchart TD
