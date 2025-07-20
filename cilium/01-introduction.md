@@ -1,5 +1,33 @@
 # Cilium 소개 및 기본 개념
 
+> **지원 버전**: Cilium 1.13, 1.14  
+> **마지막 업데이트**: 2023년 7월 20일
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- Helm v3.10 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+- Linux 커널 4.19 이상 (eBPF 기능 지원)
+
+### Cilium 설치
+
+```bash
+# Cilium CLI 설치
+curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
+sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
+rm cilium-linux-amd64.tar.gz
+
+# Cilium 설치
+cilium install --version 1.14.0
+
+# 설치 상태 확인
+cilium status
+```
+
 ## Cilium이란 무엇인가?
 
 Cilium은 Linux 커널의 강력한 eBPF 기술을 활용하여 컨테이너화된 애플리케이션 간의 네트워크 연결, 보안, 관찰 가능성을 제공하는 오픈 소스 소프트웨어입니다. Kubernetes, Docker, Mesos와 같은 컨테이너 오케스트레이션 플랫폼에서 네트워킹, 보안, 관찰 가능성을 제공하기 위해 설계되었습니다.
@@ -12,6 +40,57 @@ Cilium은 Linux 커널의 강력한 eBPF 기술을 활용하여 컨테이너화�
 - **분산 로드 밸런싱**: 효율적인 서비스 간 통신을 위한 분산 로드 밸런싱
 - **네트워크 가시성**: Hubble을 통한 네트워크 흐름 모니터링 및 문제 해결
 - **멀티 클러스터 지원**: 클러스터 간 네트워킹 및 보안 정책 지원
+
+### Cilium 아키텍처
+
+```mermaid
+flowchart TD
+    subgraph "Kubernetes 클러스터"
+        API[kube-apiserver]
+        
+        subgraph "컨트롤 플레인"
+            Operator[Cilium Operator]
+            API --> Operator
+        end
+        
+        subgraph "노드 1"
+            Agent1[Cilium Agent]
+            eBPF1[eBPF 프로그램]
+            Pod1A[Pod A]
+            Pod1B[Pod B]
+            
+            Agent1 --> eBPF1
+            eBPF1 --> Pod1A
+            eBPF1 --> Pod1B
+        end
+        
+        subgraph "노드 2"
+            Agent2[Cilium Agent]
+            eBPF2[eBPF 프로그램]
+            Pod2A[Pod C]
+            Pod2B[Pod D]
+            
+            Agent2 --> eBPF2
+            eBPF2 --> Pod2A
+            eBPF2 --> Pod2B
+        end
+        
+        Operator --> Agent1
+        Operator --> Agent2
+        
+        Hubble[Hubble]
+        Hubble --> Agent1
+        Hubble --> Agent2
+    end
+    
+    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef cilium fill:#F05E16,stroke:#333,stroke-width:1px,color:white;
+    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    
+    class API k8s;
+    class Operator,Agent1,Agent2,eBPF1,eBPF2,Hubble cilium;
+    class Pod1A,Pod1B,Pod2A,Pod2B pod;
+```
 
 ## 컨테이너 네트워킹 기초
 
@@ -34,7 +113,7 @@ Cilium은 Linux 커널의 강력한 eBPF 기술을 활용하여 컨테이너화�
 
 ## CNI(Container Network Interface) 이해하기
 
-CNI(Container Network Interface)는 컨테이너 런타임과 네트워크 플러그인 간의 표준 인터페이스를 정의하는 CNCF 프로젝트입니다.
+> **핵심 개념**: CNI(Container Network Interface)는 컨테이너 런타임과 네트워크 플러그인 간의 표준 인터페이스를 정의하는 CNCF 프로젝트입니다.
 
 ### CNI의 주요 구성 요소:
 
@@ -43,11 +122,17 @@ CNI(Container Network Interface)는 컨테이너 런타임과 네트워크 플�
 - **IPAM(IP Address Management)**: IP 주소 할당 및 관리
 - **표준 API**: 컨테이너 추가/제거 시 네트워크 설정을 위한 표준 API
 
-### 주요 CNI 플러그인:
+### 주요 CNI 플러그인 비교:
 
-- **Cilium**: eBPF 기반 고성능 네트워킹 및 보안
-- **Calico**: 정책 기반 네트워킹 및 네트워크 보안
-- **Flannel**: 간단한 오버레이 네트워크
+| 기능 | Cilium | Calico | Flannel | AWS VPC CNI |
+|------|--------|--------|---------|-------------|
+| **기반 기술** | eBPF | iptables/IPVS | VXLAN/host-gw | AWS ENI |
+| **네트워크 정책** | L3-L7 | L3-L4 | 제한적 | AWS 보안 그룹 |
+| **암호화** | IPsec/WireGuard | IPsec | 없음 | 없음 |
+| **관찰 가능성** | Hubble | Flow Logs | 제한적 | VPC Flow Logs |
+| **서비스 메시** | 내장 | Istio 필요 | Istio 필요 | Istio/AppMesh 필요 |
+| **성능** | 매우 높음 | 높음 | 중간 | 높음 |
+| **IPAM** | 클러스터 풀, CRD | IPAM 플러그인 | 호스트 서브넷 | AWS IPAM |
 - **Weave Net**: 멀티 호스트 컨테이너 네트워킹
 - **AWS VPC CNI**: AWS VPC와 직접 통합
 
