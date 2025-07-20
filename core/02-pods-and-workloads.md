@@ -1,5 +1,8 @@
 # Kubernetes 파드와 워크로드
 
+> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
+
 이 문서에서는 Kubernetes의 기본 실행 단위인 파드(Pod)와 이를 관리하는 다양한 워크로드 리소스에 대해 자세히 설명합니다. 파드의 개념부터 시작하여 디플로이먼트, 스테이트풀셋, 데몬셋 등 다양한 워크로드 리소스의 특징과 사용 사례를 다룹니다.
 
 ## 목차
@@ -48,6 +51,57 @@ graph TD
     Pod --> IP[IP Address: 10.244.0.1]
     
     %% 스타일 정의
+```
+
+### 실제 사용 예제: 웹 애플리케이션 파드
+
+다음은 웹 애플리케이션과 사이드카 컨테이너를 포함하는 파드의 예제입니다:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-app
+  labels:
+    app: web
+    environment: production
+spec:
+  containers:
+  - name: web-application
+    image: nginx:1.21
+    ports:
+    - containerPort: 80
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "500m"
+  - name: log-collector
+    image: fluentd:v1.14
+    volumeMounts:
+    - name: log-volume
+      mountPath: /var/log/nginx
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "50m"
+      limits:
+        memory: "128Mi"
+        cpu: "100m"
+  volumes:
+  - name: log-volume
+    emptyDir: {}
+```
+
+이 예제는 다음과 같은 실제 시나리오를 보여줍니다:
+- 주 컨테이너로 Nginx 웹 서버 실행
+- 사이드카 컨테이너로 Fluentd 로그 수집기 실행
+- 두 컨테이너 간에 로그 볼륨 공유
+- 각 컨테이너에 대한 리소스 요청 및 제한 설정
+
+이러한 구성은 마이크로서비스 아키텍처에서 로깅, 모니터링, 프록시 등의 기능을 분리하면서도 밀접하게 연결된 컨테이너를 실행하는 데 적합합니다.
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
