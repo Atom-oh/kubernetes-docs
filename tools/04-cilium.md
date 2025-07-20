@@ -1,5 +1,8 @@
 # Cilium
 
+> **지원 버전**: Cilium 1.13, 1.14  
+> **마지막 업데이트**: 2023년 7월 20일
+
 ## 목차
 - [소개](#소개)
 - [아키텍처](#아키텍처)
@@ -16,6 +19,8 @@
 ## 소개
 
 Cilium은 Kubernetes, Docker, Mesos와 같은 Linux 컨테이너 관리 플랫폼을 위한 오픈 소스 네트워킹, 보안 및 관찰성 솔루션입니다. Cilium은 eBPF(extended Berkeley Packet Filter) 기술을 기반으로 하여 전통적인 Linux 네트워킹 접근 방식보다 더 강력하고 효율적인 네트워킹 및 보안 기능을 제공합니다.
+
+> **참고**: Cilium에 대한 더 자세한 내용은 [Cilium 딥다이브 섹션](../cilium/README.md)을 참조하세요. 이 문서에서는 EKS와의 통합 및 실제 운영 관점에서 Cilium을 다룹니다.
 
 ### eBPF란?
 
@@ -48,6 +53,70 @@ eBPF의 주요 특징:
 | 관찰성 | Hubble | Flow Logs | 제한적 | VPC Flow Logs |
 | 서비스 메시 | 내장 | Istio 필요 | Istio 필요 | Istio/AppMesh 필요 |
 | 성능 | 매우 높음 | 높음 | 중간 | 높음 |
+
+## Amazon EKS와의 통합
+
+Amazon EKS에서 Cilium을 사용하는 방법은 크게 두 가지가 있습니다:
+
+1. **Amazon EKS 추가 기능으로 설치**: Amazon EKS는 Cilium을 관리형 추가 기능으로 제공합니다.
+2. **수동 설치**: Helm 차트를 사용하여 직접 설치합니다.
+
+### Amazon EKS 추가 기능으로 설치
+
+```bash
+# Cilium 추가 기능 설치
+aws eks create-addon \
+  --cluster-name my-cluster \
+  --addon-name cilium \
+  --addon-version v1.14.0-eksbuild.1 \
+  --service-account-role-arn arn:aws:iam::123456789012:role/AmazonEKSCiliumAddonRole
+
+# 추가 기능 상태 확인
+aws eks describe-addon \
+  --cluster-name my-cluster \
+  --addon-name cilium
+```
+
+### Helm을 사용한 수동 설치
+
+```bash
+# Cilium Helm 리포지토리 추가
+helm repo add cilium https://helm.cilium.io/
+
+# Helm 리포지토리 업데이트
+helm repo update
+
+# Cilium 설치
+helm install cilium cilium/cilium \
+  --version 1.14.0 \
+  --namespace kube-system \
+  --set eni.enabled=true \
+  --set ipam.mode=eni \
+  --set egressMasqueradeInterfaces=eth0 \
+  --set tunnel=disabled
+```
+
+### EKS 특화 구성 옵션
+
+EKS에서 Cilium을 사용할 때 고려해야 할 주요 구성 옵션:
+
+1. **ENI 모드**: AWS Elastic Network Interface를 활용하여 네이티브 AWS 네트워킹 성능 활용
+2. **IPAM 모드**: AWS VPC IP 주소 관리와 통합
+3. **암호화**: 노드 간 트래픽 암호화 (WireGuard 또는 IPsec)
+4. **NodeLocal DNSCache**: DNS 성능 향상
+5. **Hubble**: 네트워크 관찰성 활성화
+
+## 더 알아보기
+
+Cilium에 대한 더 자세한 내용은 다음 문서를 참조하세요:
+
+- [Cilium 소개 및 기본 개념](../cilium/01-introduction.md)
+- [eBPF 기술 심층 분석](../cilium/02-ebpf.md)
+- [네트워킹 모델 및 VXLAN](../cilium/03-networking.md)
+- [IPAM 및 네트워크 정책](../cilium/04-ipam-policy.md)
+- [L2-L7 네트워킹 및 로드 밸런싱](../cilium/05-l2-l7-networking.md)
+- [보안 및 가시성](../cilium/06-security-visibility.md)
+- [고급 주제](../cilium/07-advanced-topics.md)
 | 멀티 클러스터 | 내장 | 제한적 | 없음 | Transit Gateway 필요 |
 
 ## 아키텍처
