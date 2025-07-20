@@ -1,6 +1,22 @@
 # Amazon EKS 소개
 
+> **지원 버전**: Amazon EKS 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
+
 Amazon Elastic Kubernetes Service(EKS)는 AWS에서 Kubernetes를 실행하기 위한 관리형 서비스입니다. 이 장에서는 EKS의 기본 개념, 아키텍처, 그리고 일반 Kubernetes와의 차이점을 살펴보겠습니다.
+
+## EKS와 Kubernetes
+
+EKS는 표준 Kubernetes API를 제공하는 관리형 서비스입니다. Kubernetes의 기본 개념과 작동 방식에 대한 자세한 내용은 [Kubernetes 소개](../basics/03-kubernetes-introduction.md) 문서를 참조하세요.
+
+### EKS의 주요 이점
+
+1. **관리형 컨트롤 플레인**: AWS가 Kubernetes 컨트롤 플레인의 가용성과 확장성을 관리
+2. **보안 강화**: AWS IAM과의 통합을 통한 인증 및 권한 부여
+3. **AWS 서비스 통합**: 다른 AWS 서비스(ELB, ECR, IAM 등)와의 원활한 통합
+4. **다양한 컴퓨팅 옵션**: EC2, Fargate, Bottlerocket 등 다양한 컴퓨팅 옵션 지원
+5. **자동 확장**: 클러스터 오토스케일러, Karpenter 등을 통한 자동 확장 지원
+6. **관리형 노드 그룹**: 노드 수명 주기 관리 자동화
 
 ## EKS 아키텍처 및 구성 요소
 
