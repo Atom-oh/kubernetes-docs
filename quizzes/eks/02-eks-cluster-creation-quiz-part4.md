@@ -711,3 +711,111 @@ memory-policy.json:
 
 실제 환경에서는 Cluster Autoscaler를 사용하는 것이 Kubernetes 워크로드에 더 적합합니다. Cluster Autoscaler는 파드의 리소스 요청을 기반으로 노드를 스케일링하므로 더 효율적인 스케일링이 가능합니다.
 </details>
+
+## 고급 문제
+
+10. EKS 클러스터에서 블루/그린 방식으로 노드 그룹을 업그레이드하는 전략을 설명하고, 이 과정에서 발생할 수 있는 잠재적 문제와 해결 방법을 제시하세요.
+
+<details>
+<summary>정답 및 설명</summary>
+
+### EKS 노드 그룹 블루/그린 업그레이드 전략
+
+블루/그린 배포는 새로운 환경(그린)을 기존 환경(블루) 옆에 구축한 다음, 트래픽을 새 환경으로 전환하는 방식입니다. EKS 노드 그룹에 적용하면 다음과 같은 단계로 진행됩니다:
+
+#### 블루/그린 업그레이드 단계:
+
+1. **준비 단계**:
+   - 현재 노드 그룹 구성 문서화 (레이블, 테인트, 태그 등)
+   - 현재 워크로드 상태 및 리소스 요구사항 파악
+
+2. **그린 환경 생성**:
+   - 새로운 노드 그룹 생성 (업그레이드된 AMI, Kubernetes 버전, 인스턴스 유형 등)
+   - 기존 노드 그룹과 동일한 레이블 및 테인트 적용
+   - 필요한 추가 구성 적용 (태그, IAM 역할 등)
+
+3. **테스트**:
+   - 새 노드 그룹에 테스트 워크로드 배포
+   - 기능 및 성능 검증
+
+4. **트래픽 전환**:
+   - 파드 중단 예산(PDB) 설정 확인
+   - 기존 노드에 cordon 적용 (새 파드 스케줄링 방지)
+   - 점진적으로 기존 노드 drain (워크로드를 새 노드로 마이그레이션)
+   - 워크로드 상태 모니터링
+
+5. **완료 및 정리**:
+   - 모든 워크로드가 새 노드로 이동했는지 확인
+   - 기존 노드 그룹 삭제
+   - 필요한 경우 모니터링 및 알림 업데이트
+
+#### 잠재적 문제 및 해결 방법:
+
+1. **리소스 부족 문제**:
+   - **문제**: 새 노드 그룹이 생성되는 동안 두 배의 리소스가 필요하여 서비스 할당량 초과 가능
+   - **해결**: 사전에 서비스 할당량 확인 및 필요시 증가 요청, 또는 점진적으로 작은 배치로 업그레이드
+
+2. **스테이트풀 워크로드 마이그레이션**:
+   - **문제**: 영구 볼륨을 사용하는 스테이트풀 워크로드는 노드 간 이동 시 문제 발생 가능
+   - **해결**: PVC/PV 설정 확인, StatefulSet 사용, 적절한 스토리지 클래스 사용, 백업 수행
+
+3. **노드 선호도 및 파드 중단**:
+   - **문제**: 노드 선호도 또는 파드 안티어피니티로 인해 일부 워크로드가 새 노드로 이동하지 않을 수 있음
+   - **해결**: 파드 스펙의 노드 선호도 및 안티어피니티 규칙 검토 및 필요시 조정
+
+4. **네트워크 정책 및 보안 그룹**:
+   - **문제**: 새 노드 그룹에 필요한 네트워크 정책이나 보안 그룹이 적용되지 않을 수 있음
+   - **해결**: 보안 그룹, 네트워크 정책, CIDR 범위 등 네트워크 구성 검토 및 복제
+
+5. **DNS 및 서비스 디스커버리 지연**:
+   - **문제**: 노드 전환 중 일시적인 DNS 해결 지연 또는 서비스 디스커버리 문제 발생 가능
+   - **해결**: CoreDNS 설정 최적화, TTL 값 조정, 서비스 메시 사용 고려
+
+6. **모니터링 및 알림 갭**:
+   - **문제**: 새 노드 그룹에 모니터링 에이전트나 로그 수집기가 자동으로 설치되지 않을 수 있음
+   - **해결**: DaemonSet 기반 모니터링 도구 사용, 노드 그룹 시작 템플릿에 에이전트 설치 스크립트 포함
+
+7. **롤백 계획 부재**:
+   - **문제**: 업그레이드 실패 시 롤백 방법이 없을 수 있음
+   - **해결**: 기존 노드 그룹을 즉시 삭제하지 않고 일정 기간 유지, 상태 스냅샷 생성, 롤백 절차 문서화
+
+#### 구현 예시 (AWS CLI):
+
+```bash
+# 1. 현재 노드 그룹 정보 확인
+aws eks describe-nodegroup --cluster-name my-cluster --nodegroup-name blue-nodegroup
+
+# 2. 새 노드 그룹 생성 (그린)
+aws eks create-nodegroup \
+    --cluster-name my-cluster \
+    --nodegroup-name green-nodegroup \
+    --scaling-config minSize=3,maxSize=10,desiredSize=5 \
+    --subnets subnet-xxxx subnet-yyyy \
+    --instance-types t3.large \
+    --ami-type AL2_x86_64 \
+    --node-role arn:aws:iam::123456789012:role/EKS-NodeInstanceRole \
+    --labels environment=prod,app=myapp \
+    --tags "k8s.io/cluster-autoscaler/enabled=true,k8s.io/cluster-autoscaler/my-cluster=owned"
+
+# 3. 노드 그룹 상태 확인
+aws eks describe-nodegroup --cluster-name my-cluster --nodegroup-name green-nodegroup
+
+# 4. 기존 노드에 cordon 적용 (kubectl 사용)
+# 노드 목록 가져오기
+kubectl get nodes -l eks.amazonaws.com/nodegroup=blue-nodegroup
+
+# 각 노드에 cordon 적용
+kubectl cordon <node-name>
+
+# 5. 기존 노드에 drain 적용
+kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
+
+# 6. 모든 파드가 새 노드로 이동했는지 확인
+kubectl get pods -o wide
+
+# 7. 기존 노드 그룹 삭제
+aws eks delete-nodegroup --cluster-name my-cluster --nodegroup-name blue-nodegroup
+```
+
+블루/그린 업그레이드는 다운타임을 최소화하고 롤백 가능성을 제공하지만, 추가 리소스가 필요하고 복잡성이 증가합니다. 철저한 계획과 테스트가 필요하며, 특히 대규모 프로덕션 환경에서는 점진적인 접근 방식이 권장됩니다.
+</details>
