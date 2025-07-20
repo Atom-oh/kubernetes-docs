@@ -906,3 +906,21 @@ AWS 계정에는 다음과 같은 IAM 권한이 필요합니다:
 - IAMFullAccess
 
 로컬 개발 환경에서 테스트하려면 [minikube](https://minikube.sigs.k8s.io/) 또는 [kind](https://kind.sigs.k8s.io/)를 사용할 수 있습니다.
+
+## 용어집
+
+이 문서에서 사용된 주요 용어와 약어는 다음과 같습니다:
+
+| 용어 | 설명 |
+|------|------|
+| **EKS** | Amazon Elastic Kubernetes Service의 약자로, AWS에서 제공하는 관리형 Kubernetes 서비스입니다. |
+| **Kubernetes** | 컨테이너화된 애플리케이션의 배포, 확장 및 관리를 자동화하는 오픈소스 컨테이너 오케스트레이션 플랫폼입니다. |
+| **클러스터** | Kubernetes의 기본 단위로, 컨트롤 플레인과 노드로 구성됩니다. |
+| **노드** | Kubernetes 클러스터의 워커 머신으로, 컨테이너화된 애플리케이션을 실행합니다. |
+| **파드(Pod)** | Kubernetes의 가장 작은 배포 단위로, 하나 이상의 컨테이너를 포함합니다. |
+| **Terraform** | HashiCorp에서 개발한 인프라를 코드로 관리하는 도구입니다. |
+| **CDK** | AWS Cloud Development Kit의 약자로, 익숙한 프로그래밍 언어를 사용하여 클라우드 인프라를 정의하는 도구입니다. |
+| **Operator** | Kubernetes API를 확장하여 애플리케이션별 운영 지식을 소프트웨어에 인코딩하는 소프트웨어 확장입니다. |
+| **CRD** | Custom Resource Definition의 약자로, Kubernetes API를 확장하여 사용자 정의 리소스를 정의할 수 있게 해주는 기능입니다. |
+| **IAM** | Identity and Access Management의 약자로, AWS 리소스에 대한 액세스를 안전하게 제어하는 서비스입니다. |
+| **VPC** | Virtual Private Cloud의 약자로, AWS 클라우드 내에서 논리적으로 격리된 가상 네트워크입니다. |
