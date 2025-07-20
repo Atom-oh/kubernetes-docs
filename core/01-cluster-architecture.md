@@ -1886,6 +1886,24 @@ managedNodeGroups:
     maxSize: 10
 ```
 
+## 더 알아보기
+
+이 문서에서 다룬 클러스터 아키텍처에 대한 이해를 더욱 깊게 하려면 다음 주제들을 참조하세요:
+
+- [Kubernetes 소개](../basics/03-kubernetes-introduction.md) - Kubernetes의 기본 개념과 역사
+- [파드와 워크로드](./02-pods-and-workloads.md) - 클러스터에서 실행되는 워크로드 관리
+- [서비스와 네트워킹](./03-services-networking.md) - 클러스터 내 네트워킹 구성
+- [스케줄링, 선점 및 축출](./08-scheduling-preemption-eviction.md) - 노드에 파드를 배치하는 방법
+- [클러스터 관리](./09-cluster-administration.md) - 클러스터 운영 및 관리
+- [EKS 소개](../eks/01-eks-introduction.md) - Amazon EKS 서비스 개요
+- [EKS 클러스터 생성](../eks/02-eks-cluster-creation-part1.md) - EKS 클러스터 생성 방법
+
+### 실습 및 심화 학습
+
+- [Kubernetes 공식 튜토리얼](https://kubernetes.io/docs/tutorials/) - 실습을 통한 학습
+- [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way) - 수동으로 Kubernetes 클러스터 구축하기
+- [Cilium 네트워킹](../cilium/01-introduction.md) - 고급 네트워킹 및 보안 기능
+
 ## 결론
 
 이 문서에서는 Kubernetes 클러스터의 아키텍처, 주요 구성 요소, 그리고 이들이 어떻게 함께 작동하는지에 대해 자세히 살펴보았습니다. 또한 클러스터의 네트워킹, 스토리지, 확장성, 보안, 업그레이드 등 중요한 측면들을 다루었으며, Amazon EKS 클러스터의 아키텍처에 대해서도 알아보았습니다.
