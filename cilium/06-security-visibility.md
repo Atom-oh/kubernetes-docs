@@ -1,8 +1,97 @@
 # 보안 및 가시성
 
+> **지원 버전**: Cilium 1.13, 1.14  
+> **마지막 업데이트**: 2023년 7월 20일
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+- Cilium CLI
+- Hubble CLI
+
+### Hubble 설치 및 설정
+
+```bash
+# Hubble 활성화
+cilium hubble enable --ui
+
+# Hubble CLI 설치
+export HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
+curl -L --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-amd64.tar.gz
+tar xzvfC hubble-linux-amd64.tar.gz /usr/local/bin
+rm hubble-linux-amd64.tar.gz
+
+# Hubble 포트 포워딩 설정
+cilium hubble port-forward &
+
+# Hubble 연결 확인
+hubble status
+```
+
 ## Cilium의 보안 기능
 
 Cilium은 eBPF를 활용하여 컨테이너화된 환경을 위한 강력한 보안 기능을 제공합니다. 이러한 기능은 네트워크 계층부터 애플리케이션 계층까지 포괄적인 보안을 제공합니다.
+
+### Cilium 보안 아키텍처
+
+```mermaid
+flowchart TD
+    subgraph "Cilium 보안 계층"
+        direction TB
+        
+        subgraph "네트워크 보안"
+            L3L4[L3/L4 정책]
+            Encrypt[암호화]
+            Segment[마이크로세그멘테이션]
+        end
+        
+        subgraph "애플리케이션 보안"
+            L7[L7 정책]
+            API[API 인식 필터링]
+            Identity[ID 기반 정책]
+        end
+        
+        subgraph "위협 탐지"
+            Hubble[Hubble 관찰성]
+            Intrusion[침입 탐지]
+            Anomaly[이상 탐지]
+        end
+        
+        subgraph "런타임 보안"
+            Process[프로세스 모니터링]
+            Syscall[시스템 콜 필터링]
+            Container[컨테이너 보안]
+        end
+    end
+    
+    Traffic[트래픽] --> L3L4
+    L3L4 --> Encrypt
+    Encrypt --> Segment
+    Segment --> L7
+    L7 --> API
+    API --> Identity
+    
+    L3L4 & L7 & API --> Hubble
+    Hubble --> Intrusion & Anomaly
+    
+    Identity --> Process & Syscall & Container
+    
+    classDef network fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef threat fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef runtime fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
+    classDef traffic fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
+    
+    class L3L4,Encrypt,Segment network;
+    class L7,API,Identity app;
+    class Hubble,Intrusion,Anomaly threat;
+    class Process,Syscall,Container runtime;
+    class Traffic traffic;
+```
 
 ### 네트워크 보안 기능:
 
@@ -48,6 +137,47 @@ Cilium은 eBPF를 활용하여 컨테이너화된 환경을 위한 강력한 보
 ```yaml
 # comprehensive-security-policy.yaml
 apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: "comprehensive-security"
+  namespace: app
+spec:
+  endpointSelector:
+    matchLabels:
+      app: backend
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: frontend
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP
+      rules:
+        http:
+        - method: "GET"
+          path: "/api/v1/data"
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        app: database
+    toPorts:
+    - ports:
+      - port: "3306"
+        protocol: TCP
+  - toFQDNs:
+    - matchName: "api.example.com"
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+```
+
+## Hubble을 통한 네트워크 가시성
+
+> **핵심 개념**: Hubble은 Cilium의 관찰성 계층으로, eBPF를 활용하여 네트워크 흐름을 실시간으로 모니터링하고 분석합니다.
+
+Hubble은 Cilium의 관찰성 계층으로, eBPF를 활용하여 네트워크 흐름을 실시간으로 모니터링하고 분석합니다. 이를 통해 네트워크 문제 해결, 보안 모니터링, 성능 분석 등 다양한 용도로 활용할 수 있습니다.
 kind: CiliumNetworkPolicy
 metadata:
   name: "comprehensive-security"
