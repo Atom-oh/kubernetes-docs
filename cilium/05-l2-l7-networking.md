@@ -1,8 +1,109 @@
 # L2-L7 네트워킹 및 로드 밸런싱
 
+> **지원 버전**: Cilium 1.13, 1.14  
+> **마지막 업데이트**: 2023년 7월 20일
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+- Cilium CLI
+- curl, jq (API 테스트용)
+
+### L7 정책 테스트 환경 설정
+
+```bash
+# 테스트 네임스페이스 생성
+kubectl create namespace l7-test
+
+# 샘플 애플리케이션 배포
+kubectl -n l7-test apply -f https://raw.githubusercontent.com/cilium/cilium/v1.14/examples/kubernetes/l7-policy/l7-application.yaml
+
+# 배포 확인
+kubectl -n l7-test get pods,svc
+
+# 테스트 클라이언트 배포
+kubectl -n l7-test run client --image=curlimages/curl --restart=Never -- sleep 3600
+
+# 기본 연결 테스트
+kubectl -n l7-test exec client -- curl -s app1-service/public
+```
+
 ## OSI 모델 계층 이해 (L2, L3, L4, L7)
 
-OSI(Open Systems Interconnection) 모델은 네트워크 통신을 7개의 추상화 계층으로 분류한 개념적 모델입니다. Cilium은 이러한 다양한 계층에서 네트워킹 및 보안 기능을 제공합니다.
+> **핵심 개념**: OSI(Open Systems Interconnection) 모델은 네트워크 통신을 7개의 추상화 계층으로 분류한 개념적 모델입니다.
+
+OSI 모델은 네트워크 통신을 7개의 추상화 계층으로 분류한 개념적 모델입니다. Cilium은 이러한 다양한 계층에서 네트워킹 및 보안 기능을 제공합니다.
+
+### OSI 모델 계층 다이어그램
+
+```mermaid
+flowchart TD
+    subgraph "OSI 모델 계층"
+        L7[7. 응용 계층\nApplication]
+        L6[6. 표현 계층\nPresentation]
+        L5[5. 세션 계층\nSession]
+        L4[4. 전송 계층\nTransport]
+        L3[3. 네트워크 계층\nNetwork]
+        L2[2. 데이터 링크 계층\nData Link]
+        L1[1. 물리 계층\nPhysical]
+        
+        L7 --> L6 --> L5 --> L4 --> L3 --> L2 --> L1
+    end
+    
+    subgraph "Cilium 기능"
+        CL7[L7 정책\nHTTP, gRPC, Kafka]
+        CL4[L4 정책\n포트, 프로토콜]
+        CL3[L3 정책\nIP, CIDR]
+        
+        CL7 --> CL4 --> CL3
+    end
+    
+    subgraph "데이터 단위"
+        D7[데이터]
+        D6[데이터]
+        D5[데이터]
+        D4[세그먼트]
+        D3[패킷]
+        D2[프레임]
+        D1[비트]
+    end
+    
+    subgraph "주소 지정"
+        A7[URL, URI]
+        A4[포트]
+        A3[IP 주소]
+        A2[MAC 주소]
+    end
+    
+    L7 --- D7 --- A7
+    L6 --- D6
+    L5 --- D5
+    L4 --- D4 --- A4
+    L3 --- D3 --- A3
+    L2 --- D2 --- A2
+    L1 --- D1
+    
+    L7 -.- CL7
+    L4 -.- CL4
+    L3 -.- CL3
+    
+    classDef l7 fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
+    classDef l4 fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef l3 fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef l2 fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef l1 fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
+    
+    class L7,D7,A7,CL7 l7;
+    class L4,D4,A4,CL4 l4;
+    class L3,D3,A3,CL3 l3;
+    class L2,D2,A2 l2;
+    class L1,D1 l1;
+    class L6,D6,L5,D5 l1;
+```
 
 ### OSI 모델 계층:
 
@@ -48,6 +149,45 @@ OSI(Open Systems Interconnection) 모델은 네트워크 통신을 7개의 추�
 | L2 | MAC 주소 | 프레임 | 스위치, 브리지 | ARP 처리, MAC 필터링 |
 | L3 | IP 주소 | 패킷 | 라우터, IP | IP 라우팅, CIDR 기반 정책 |
 | L4 | 포트 | 세그먼트 | TCP, UDP | 포트 기반 필터링, 연결 추적 |
+| L7 | URL, 메서드 | 메시지 | HTTP, gRPC, Kafka | API 인식 필터링, 헤더 기반 라우팅 |
+
+### L7 정책 예제
+
+다음은 HTTP 메서드와 경로를 기반으로 트래픽을 필터링하는 Cilium L7 정책의 예입니다:
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: l7-policy
+  namespace: l7-test
+spec:
+  endpointSelector:
+    matchLabels:
+      app: app1
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: client
+    toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP
+      rules:
+        http:
+        - method: "GET"
+          path: "/public"
+        - method: "POST"
+          path: "/api/v1"
+          headers:
+          - "X-Auth-Token: ^[a-zA-Z0-9]{32}$"
+```
+
+이 정책은 다음을 허용합니다:
+1. `/public` 경로에 대한 GET 요청
+2. `/api/v1` 경로에 대한 POST 요청 (유효한 X-Auth-Token 헤더가 있는 경우)
+
+다른 모든 요청은 차단됩니다.
 | L7 | URI, 메서드 | 메시지 | HTTP, gRPC, Kafka | API 인식 필터링, 헤더 검사 |
 
 ## Cilium의 계층별 기능
