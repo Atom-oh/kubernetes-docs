@@ -1,0 +1,225 @@
+# Amazon EKS 클러스터 생성 퀴즈 (Part 4)
+
+이 퀴즈는 Amazon EKS 클러스터 생성과 관련된 고급 구성, 확장성, 그리고 운영 관련 주제에 대한 이해를 테스트합니다. 클러스터 확장, 자동화, 비용 최적화, 그리고 운영 모범 사례 등의 주제를 다룹니다.
+
+## 기본 개념 문제
+
+1. Amazon EKS 클러스터에서 Cluster Autoscaler와 Karpenter의 주요 차이점은 무엇인가요?
+   - A) Cluster Autoscaler는 AWS 서비스이고, Karpenter는 오픈 소스 도구이다
+   - B) Cluster Autoscaler는 노드 그룹 단위로 확장하고, Karpenter는 워크로드 요구 사항에 맞는 개별 노드를 프로비저닝한다
+   - C) Cluster Autoscaler는 CPU/메모리 사용량에 기반하여 확장하고, Karpenter는 포드 수에 기반하여 확장한다
+   - D) Cluster Autoscaler는 수평적 확장만 지원하고, Karpenter는 수직적 확장도 지원한다
+   
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) Cluster Autoscaler는 노드 그룹 단위로 확장하고, Karpenter는 워크로드 요구 사항에 맞는 개별 노드를 프로비저닝한다**
+
+**설명:**
+Amazon EKS 클러스터에서 Cluster Autoscaler와 Karpenter의 주요 차이점은 확장 방식에 있습니다. Cluster Autoscaler는 기존 Auto Scaling 그룹(ASG)을 기반으로 노드 그룹 단위로 확장하는 반면, Karpenter는 워크로드 요구 사항에 맞는 개별 노드를 직접 프로비저닝합니다.
+
+#### Cluster Autoscaler의 특징:
+
+1. **노드 그룹 기반 확장**:
+   - 미리 정의된 Auto Scaling 그룹을 사용하여 확장
+   - 노드 그룹 내에서 동일한 인스턴스 유형 또는 혼합 인스턴스 유형 사용
+   - 예시:
+     ```yaml
+     # Cluster Autoscaler 배포
+     apiVersion: apps/v1
+     kind: Deployment
+     metadata:
+       name: cluster-autoscaler
+       namespace: kube-system
+     spec:
+       replicas: 1
+       selector:
+         matchLabels:
+           app: cluster-autoscaler
+       template:
+         metadata:
+           labels:
+             app: cluster-autoscaler
+         spec:
+           containers:
+           - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.23.0
+             name: cluster-autoscaler
+             command:
+             - ./cluster-autoscaler
+             - --v=4
+             - --stderrthreshold=info
+             - --cloud-provider=aws
+             - --skip-nodes-with-local-storage=false
+             - --expander=least-waste
+             - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster
+     ```
+
+2. **작동 방식**:
+   - 스케줄링할 수 없는 포드가 있을 때 노드 그룹 확장
+   - 노드 활용도가 낮을 때 노드 그룹 축소
+   - ASG의 최소/최대 크기 내에서 작동
+
+3. **제한 사항**:
+   - 확장 속도가 상대적으로 느림 (2-10분)
+   - 미리 정의된 인스턴스 유형으로 제한
+   - 노드 그룹 단위로만 확장 가능
+
+#### Karpenter의 특징:
+
+1. **워크로드 기반 프로비저닝**:
+   - 워크로드 요구 사항에 맞는 최적의 인스턴스 유형 선택
+   - ASG 없이 EC2 인스턴스를 직접 프로비저닝
+   - 예시:
+     ```yaml
+     # Karpenter Provisioner
+     apiVersion: karpenter.sh/v1alpha5
+     kind: Provisioner
+     metadata:
+       name: default
+     spec:
+       requirements:
+         - key: karpenter.sh/capacity-type
+           operator: In
+           values: ["spot", "on-demand"]
+         - key: kubernetes.io/arch
+           operator: In
+           values: ["amd64", "arm64"]
+         - key: node.kubernetes.io/instance-type
+           operator: In
+           values: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m6g.large"]
+       limits:
+         resources:
+           cpu: 1000
+           memory: 1000Gi
+       provider:
+         subnetSelector:
+           karpenter.sh/discovery: "true"
+         securityGroupSelector:
+           karpenter.sh/discovery: "true"
+       ttlSecondsAfterEmpty: 30
+     ```
+
+2. **작동 방식**:
+   - 스케줄링할 수 없는 포드의 요구 사항을 분석
+   - 요구 사항에 맞는 최적의 인스턴스 유형 선택
+   - 인스턴스를 직접 프로비저닝하고 포드 스케줄링
+   - 노드가 비어 있으면 자동으로 종료
+
+3. **장점**:
+   - 빠른 확장 속도 (1분 이내)
+   - 워크로드에 최적화된 인스턴스 유형 선택
+   - 비용 최적화 (Spot 인스턴스 활용, 적절한 크기 선택)
+   - 간소화된 구성 (ASG 관리 불필요)
+
+#### 두 도구의 비교:
+
+| 특성 | Cluster Autoscaler | Karpenter |
+|------|-------------------|-----------|
+| 확장 단위 | 노드 그룹 (ASG) | 개별 노드 |
+| 인스턴스 선택 | 미리 정의된 인스턴스 유형 | 워크로드 요구 사항에 맞는 최적의 인스턴스 |
+| 확장 속도 | 느림 (2-10분) | 빠름 (1분 이내) |
+| 구성 복잡성 | 중간 (ASG 구성 필요) | 낮음 (Provisioner 정의만 필요) |
+| 비용 최적화 | 제한적 | 높음 (워크로드에 최적화된 인스턴스 선택) |
+| 성숙도 | 높음 (오래된 프로젝트) | 중간 (비교적 새로운 프로젝트) |
+
+#### 다른 옵션들의 문제점:
+
+- **Cluster Autoscaler는 AWS 서비스이고, Karpenter는 오픈 소스 도구이다**: 둘 다 오픈 소스 도구입니다. Cluster Autoscaler는 Kubernetes SIG Autoscaling에서 관리하고, Karpenter는 AWS에서 시작했지만 오픈 소스 프로젝트입니다.
+
+- **Cluster Autoscaler는 CPU/메모리 사용량에 기반하여 확장하고, Karpenter는 포드 수에 기반하여 확장한다**: 둘 다 기본적으로 스케줄링할 수 없는 포드(Pending 상태)를 기반으로 확장합니다. CPU/메모리 사용량 기반 확장은 Horizontal Pod Autoscaler(HPA)의 역할입니다.
+
+- **Cluster Autoscaler는 수평적 확장만 지원하고, Karpenter는 수직적 확장도 지원한다**: 둘 다 수평적 확장(노드 수 증가)만 지원합니다. 수직적 확장(노드의 리소스 증가)은 지원하지 않습니다. 포드 수준의 수직적 확장은 Vertical Pod Autoscaler(VPA)의 역할입니다.
+
+Cluster Autoscaler와 Karpenter는 모두 EKS 클러스터의 자동 확장을 위한 도구이지만, Karpenter는 더 빠르고 유연한 확장을 제공하며 워크로드 요구 사항에 맞는 최적의 인스턴스를 선택할 수 있는 장점이 있습니다.
+</details>
+
+2. Amazon EKS 클러스터에서 노드 그룹을 생성할 때 사용할 수 있는 용량 유형(capacity type)으로 올바른 것은 무엇인가요?
+   - A) Reserved, On-Demand, Spot
+   - B) On-Demand, Spot, Dedicated
+   - C) On-Demand, Spot
+   - D) Standard, Burstable, Compute-Optimized
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) On-Demand, Spot**
+
+**설명:**
+Amazon EKS 노드 그룹을 생성할 때 사용할 수 있는 용량 유형은 On-Demand와 Spot 두 가지입니다.
+
+#### On-Demand 용량 유형:
+- **특징**: 중단 없이 안정적으로 사용 가능한 인스턴스
+- **가격**: 정해진 시간당 요금 지불
+- **적합한 워크로드**: 
+  - 중단에 민감한 프로덕션 애플리케이션
+  - 상태 저장(stateful) 워크로드
+  - 데이터베이스
+  - 중요한 비즈니스 애플리케이션
+
+#### Spot 용량 유형:
+- **특징**: AWS의 여유 용량을 활용하며, AWS가 용량을 회수할 때 중단될 수 있음
+- **가격**: On-Demand 대비 최대 90% 할인된 가격
+- **적합한 워크로드**:
+  - 내결함성이 있는 애플리케이션
+  - 상태 비저장(stateless) 워크로드
+  - 배치 처리 작업
+  - 개발/테스트 환경
+
+#### EKS 노드 그룹 생성 시 용량 유형 지정 예시:
+
+AWS CLI를 사용한 예시:
+```bash
+aws eks create-nodegroup \
+  --cluster-name my-cluster \
+  --nodegroup-name my-spot-nodegroup \
+  --scaling-config minSize=3,maxSize=10,desiredSize=5 \
+  --subnets subnet-0a1b2c3d4e5f6g7h8 subnet-0a1b2c3d4e5f6g7h9 \
+  --instance-types t3.medium t3a.medium \
+  --capacity-type SPOT \
+  --node-role arn:aws:iam::123456789012:role/EKS-NodeInstanceRole
+```
+
+eksctl을 사용한 예시:
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+nodeGroups:
+  - name: ng-on-demand
+    instanceType: m5.large
+    desiredCapacity: 3
+    capacityType: ON_DEMAND
+  - name: ng-spot
+    instanceType: m5.large
+    desiredCapacity: 2
+    capacityType: SPOT
+    spotInstancePools: 3
+```
+
+#### 다른 옵션들의 문제점:
+
+- **Reserved, On-Demand, Spot**: "Reserved"는 EC2 예약 인스턴스를 의미하지만, EKS 노드 그룹 생성 시 직접적인 용량 유형으로 지정할 수 없습니다. 예약 인스턴스는 결제 할인 모델이며, 노드 그룹의 용량 유형으로 직접 선택할 수 없습니다.
+
+- **On-Demand, Spot, Dedicated**: "Dedicated"는 EC2 전용 인스턴스를 의미하지만, EKS 노드 그룹의 용량 유형으로 직접 지정할 수 없습니다. 전용 인스턴스는 별도의 테넌시 설정을 통해 구성할 수 있습니다.
+
+- **Standard, Burstable, Compute-Optimized**: 이는 EC2 인스턴스 패밀리 유형을 나타내며, 용량 유형이 아닙니다. 인스턴스 유형(예: t3.medium, m5.large, c5.xlarge 등)을 선택할 때 고려하는 특성입니다.
+
+#### 모범 사례:
+
+1. **혼합 용량 전략 사용**:
+   - 중요한 워크로드는 On-Demand 노드 그룹에 배치
+   - 내결함성이 있는 워크로드는 Spot 노드 그룹에 배치
+   - 노드 선호도와 허용 오차(tolerations)를 사용하여 워크로드 배치 제어
+
+2. **Spot 인스턴스 사용 시 고려사항**:
+   - 다양한 인스턴스 유형 지정 (중단 위험 분산)
+   - 적절한 중단 처리 메커니즘 구현 (Pod Disruption Budgets, 정상 종료 훅)
+   - AWS Node Termination Handler 배포
+
+3. **비용 최적화**:
+   - Savings Plans 또는 예약 인스턴스를 On-Demand 노드에 적용
+   - Graviton(ARM) 인스턴스 고려
+   - 적절한 인스턴스 크기 선택
+</details>
