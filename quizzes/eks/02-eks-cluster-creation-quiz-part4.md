@@ -589,3 +589,125 @@ EKS의 버전 지원 주기는 다음과 같습니다:
 
 AWS는 Kubernetes 커뮤니티 릴리스보다 약간 늦게 새 버전을 지원하기 시작하지만, 지원 기간은 일반적으로 더 깁니다. 업스트림 Kubernetes 프로젝트는 약 9개월 동안 각 버전을 지원하는 반면, EKS는 약 14개월 동안 지원합니다.
 </details>
+
+## 실습 문제
+
+9. EKS 클러스터에서 노드 그룹의 Auto Scaling 설정을 구성하는 방법을 설명하고, 다음 요구 사항을 충족하는 구성을 작성하세요:
+- 최소 노드 수: 2
+- 최대 노드 수: 10
+- 원하는 노드 수: 3
+- CPU 사용률 기반 스케일 아웃 (CPU 사용률 75% 초과 시)
+- 메모리 사용률 기반 스케일 아웃 (메모리 사용률 80% 초과 시)
+
+<details>
+<summary>정답 및 설명</summary>
+
+EKS 노드 그룹의 Auto Scaling 설정을 구성하려면 다음과 같은 단계를 따릅니다:
+
+1. 먼저 노드 그룹 생성 시 또는 기존 노드 그룹의 Auto Scaling 그룹 설정에서 기본 크기를 구성합니다:
+```bash
+aws eks create-nodegroup \
+    --cluster-name my-cluster \
+    --nodegroup-name my-nodegroup \
+    --scaling-config minSize=2,maxSize=10,desiredSize=3 \
+    # 기타 필요한 파라미터...
+```
+
+2. CPU 및 메모리 사용률 기반 스케일링을 위해 Cluster Autoscaler 또는 Karpenter를 설정하거나, Auto Scaling 그룹에 직접 CloudWatch 경보 기반 정책을 추가할 수 있습니다.
+
+**Cluster Autoscaler 방식:**
+
+Cluster Autoscaler 배포 YAML:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-autoscaler
+  namespace: kube-system
+  labels:
+    app: cluster-autoscaler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-autoscaler
+  template:
+    metadata:
+      labels:
+        app: cluster-autoscaler
+    spec:
+      serviceAccountName: cluster-autoscaler
+      containers:
+      - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.23.0
+        name: cluster-autoscaler
+        resources:
+          limits:
+            cpu: 100m
+            memory: 300Mi
+          requests:
+            cpu: 100m
+            memory: 300Mi
+        command:
+        - ./cluster-autoscaler
+        - --v=4
+        - --stderrthreshold=info
+        - --cloud-provider=aws
+        - --skip-nodes-with-local-storage=false
+        - --expander=least-waste
+        - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster
+        - --balance-similar-node-groups
+        - --skip-nodes-with-system-pods=false
+```
+
+**CloudWatch 경보 기반 Auto Scaling 정책:**
+
+CPU 사용률 기반 스케일 아웃 정책:
+```bash
+aws autoscaling put-scaling-policy \
+    --auto-scaling-group-name my-nodegroup-xxx \
+    --policy-name cpu-scale-out \
+    --policy-type TargetTrackingScaling \
+    --target-tracking-configuration file://cpu-policy.json
+```
+
+cpu-policy.json:
+```json
+{
+  "TargetValue": 75.0,
+  "PredefinedMetricSpecification": {
+    "PredefinedMetricType": "ASGAverageCPUUtilization"
+  }
+}
+```
+
+메모리 사용률 기반 스케일 아웃 정책(CloudWatch 사용자 지정 지표 필요):
+```bash
+# 먼저 메모리 사용률을 CloudWatch 사용자 지정 지표로 게시하는 에이전트 설정 필요
+aws autoscaling put-scaling-policy \
+    --auto-scaling-group-name my-nodegroup-xxx \
+    --policy-name memory-scale-out \
+    --policy-type TargetTrackingScaling \
+    --target-tracking-configuration file://memory-policy.json
+```
+
+memory-policy.json:
+```json
+{
+  "TargetValue": 80.0,
+  "CustomizedMetricSpecification": {
+    "MetricName": "MemoryUtilization",
+    "Namespace": "AWS/EC2",
+    "Dimensions": [
+      {
+        "Name": "AutoScalingGroupName",
+        "Value": "my-nodegroup-xxx"
+      }
+    ],
+    "Statistic": "Average",
+    "Unit": "Percent"
+  }
+}
+```
+
+실제 환경에서는 Cluster Autoscaler를 사용하는 것이 Kubernetes 워크로드에 더 적합합니다. Cluster Autoscaler는 파드의 리소스 요청을 기반으로 노드를 스케일링하므로 더 효율적인 스케일링이 가능합니다.
+</details>
