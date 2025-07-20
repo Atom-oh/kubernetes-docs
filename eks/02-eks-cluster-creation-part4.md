@@ -1,4 +1,7 @@
-# EKS 클러스터 생성 - 4부
+# EKS 클러스터 생성 - 4부: Terraform 및 CDK를 사용한 클러스터 생성
+
+> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
 
 ## Terraform을 사용한 클러스터 생성
 
@@ -546,3 +549,330 @@ kubectl get nodes
 ```bash
 cdk destroy
 ```
+
+## Kubernetes Operator와 CRD를 사용한 EKS 확장
+
+Kubernetes Operator와 Custom Resource Definition(CRD)은 Kubernetes의 기능을 확장하는 강력한 메커니즘입니다. 이를 통해 EKS 클러스터에서 사용자 정의 리소스를 생성하고 관리할 수 있습니다.
+
+### Kubernetes Operator 개요
+
+```mermaid
+flowchart TD
+    A[Kubernetes API Server] --> B[Controller Manager]
+    A --> C[Operator Controller]
+    C --> D[Custom Resource Definition]
+    C --> E[Custom Resources]
+    C --> F[Reconciliation Loop]
+    F --> G[Desired State]
+    F --> H[Current State]
+    F --> I[Actions]
+    
+    %% 클래스 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef operatorComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A,B k8sComponent;
+    class C,D,E,F,G,H,I operatorComponent;
+```
+
+### Operator와 CRD의 관계
+
+```mermaid
+flowchart LR
+    A[CRD 정의] --> B[Custom Resource 생성]
+    C[Operator 배포] --> D[Controller 실행]
+    B --> E[Operator가 CR 감시]
+    D --> E
+    E --> F[Reconciliation Loop]
+    F --> G[리소스 생성/수정/삭제]
+    
+    %% 클래스 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef operatorComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    
+    %% 클래스 적용
+    class A,B k8sComponent;
+    class C,D,E,F,G operatorComponent;
+```
+
+### 1. Operator란 무엇인가?
+
+Kubernetes Operator는 애플리케이션별 운영 지식을 소프트웨어에 인코딩하여 Kubernetes API를 통해 서비스를 관리하는 소프트웨어 확장입니다. Operator는 복잡한 애플리케이션의 설치, 업데이트, 백업, 복구 등과 같은 작업을 자동화합니다.
+
+Operator는 다음과 같은 구성 요소로 이루어집니다:
+
+1. **Custom Resource Definition (CRD)**: 사용자 정의 리소스의 스키마를 정의합니다.
+2. **Custom Resource (CR)**: CRD에 따라 생성된 리소스 인스턴스입니다.
+3. **Controller**: CR의 상태를 모니터링하고 원하는 상태로 조정하는 컨트롤러입니다.
+
+### 2. Custom Resource Definition (CRD)
+
+CRD는 Kubernetes API를 확장하여 사용자 정의 리소스를 정의할 수 있게 해줍니다. CRD를 생성하면 새로운 리소스 유형이 Kubernetes API에 추가되며, 이를 통해 사용자 정의 리소스를 생성하고 관리할 수 있습니다.
+
+CRD 예시:
+
+```yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: databases.example.com
+spec:
+  group: example.com
+  names:
+    kind: Database
+    listKind: DatabaseList
+    plural: databases
+    singular: database
+    shortNames:
+    - db
+  scope: Namespaced
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              engine:
+                type: string
+              version:
+                type: string
+              storageSize:
+                type: string
+              replicas:
+                type: integer
+                minimum: 1
+            required:
+            - engine
+            - version
+            - storageSize
+          status:
+            type: object
+            properties:
+              phase:
+                type: string
+              message:
+                type: string
+```
+
+### 3. EKS에서 Operator 사용하기
+
+EKS에서 Operator를 사용하는 방법은 다음과 같습니다:
+
+1. **Operator 설치**: Helm, YAML 매니페스트 또는 Operator Lifecycle Manager(OLM)를 사용하여 Operator를 설치합니다.
+2. **CRD 생성**: Operator가 사용할 CRD를 생성합니다.
+3. **Custom Resource 생성**: CRD에 따라 Custom Resource를 생성합니다.
+4. **Operator 동작 확인**: Operator가 Custom Resource를 감지하고 필요한 작업을 수행하는지 확인합니다.
+
+### 4. 인기 있는 Kubernetes Operator
+
+EKS에서 사용할 수 있는 인기 있는 Operator는 다음과 같습니다:
+
+1. **Prometheus Operator**: Prometheus 모니터링 스택을 관리합니다.
+2. **Elasticsearch Operator**: Elasticsearch 클러스터를 관리합니다.
+3. **PostgreSQL Operator**: PostgreSQL 데이터베이스를 관리합니다.
+4. **Kafka Operator**: Kafka 클러스터를 관리합니다.
+5. **Istio Operator**: Istio 서비스 메시를 관리합니다.
+
+### 5. Operator 개발 도구
+
+Operator를 개발하는 데 사용할 수 있는 도구는 다음과 같습니다:
+
+1. **Operator SDK**: Operator를 빠르게 개발하고 배포하기 위한 프레임워크입니다.
+2. **Kubebuilder**: Kubernetes API를 확장하는 프레임워크입니다.
+3. **KUDO (Kubernetes Universal Declarative Operator)**: 선언적 방식으로 Operator를 생성하는 도구입니다.
+
+### 6. Terraform과 CDK에서 CRD 및 Operator 관리
+
+Terraform과 AWS CDK를 사용하여 EKS 클러스터에 CRD와 Operator를 배포할 수 있습니다.
+
+**Terraform을 사용한 CRD 배포**:
+
+```hcl
+resource "kubernetes_manifest" "database_crd" {
+  manifest = {
+    apiVersion = "apiextensions.k8s.io/v1"
+    kind       = "CustomResourceDefinition"
+    metadata = {
+      name = "databases.example.com"
+    }
+    spec = {
+      group = "example.com"
+      names = {
+        kind     = "Database"
+        listKind = "DatabaseList"
+        plural   = "databases"
+        singular = "database"
+        shortNames = ["db"]
+      }
+      scope = "Namespaced"
+      versions = [{
+        name    = "v1"
+        served  = true
+        storage = true
+        schema = {
+          openAPIV3Schema = {
+            type = "object"
+            properties = {
+              spec = {
+                type = "object"
+                properties = {
+                  engine = {
+                    type = "string"
+                  }
+                  version = {
+                    type = "string"
+                  }
+                  storageSize = {
+                    type = "string"
+                  }
+                  replicas = {
+                    type = "integer"
+                    minimum = 1
+                  }
+                }
+                required = ["engine", "version", "storageSize"]
+              }
+              status = {
+                type = "object"
+                properties = {
+                  phase = {
+                    type = "string"
+                  }
+                  message = {
+                    type = "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }]
+    }
+  }
+}
+```
+
+**AWS CDK를 사용한 CRD 배포**:
+
+```typescript
+import * as cdk from '@aws-cdk/core';
+import * as eks from '@aws-cdk/aws-eks';
+
+export class EksCrdStack extends cdk.Stack {
+  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    // 기존 EKS 클러스터 참조
+    const cluster = eks.Cluster.fromClusterAttributes(this, 'ImportedCluster', {
+      clusterName: 'my-eks-cluster',
+      kubectlRoleArn: 'arn:aws:iam::account:role/role-name',
+    });
+
+    // CRD 매니페스트 적용
+    cluster.addManifest('DatabaseCRD', {
+      apiVersion: 'apiextensions.k8s.io/v1',
+      kind: 'CustomResourceDefinition',
+      metadata: {
+        name: 'databases.example.com',
+      },
+      spec: {
+        group: 'example.com',
+        names: {
+          kind: 'Database',
+          listKind: 'DatabaseList',
+          plural: 'databases',
+          singular: 'database',
+          shortNames: ['db'],
+        },
+        scope: 'Namespaced',
+        versions: [{
+          name: 'v1',
+          served: true,
+          storage: true,
+          schema: {
+            openAPIV3Schema: {
+              type: 'object',
+              properties: {
+                spec: {
+                  type: 'object',
+                  properties: {
+                    engine: {
+                      type: 'string',
+                    },
+                    version: {
+                      type: 'string',
+                    },
+                    storageSize: {
+                      type: 'string',
+                    },
+                    replicas: {
+                      type: 'integer',
+                      minimum: 1,
+                    },
+                  },
+                  required: ['engine', 'version', 'storageSize'],
+                },
+                status: {
+                  type: 'object',
+                  properties: {
+                    phase: {
+                      type: 'string',
+                    },
+                    message: {
+                      type: 'string',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }],
+      },
+    });
+  }
+}
+```
+
+## 더 알아보기
+
+이 문서에서는 Terraform과 AWS CDK를 사용하여 EKS 클러스터를 생성하는 방법과 Kubernetes Operator 및 CRD를 사용하여 EKS를 확장하는 방법에 대해 알아보았습니다. 다음 주제들을 통해 EKS에 대한 이해를 더욱 깊게 할 수 있습니다:
+
+- [EKS 클러스터 생성 - 1부: 사전 요구 사항](./02-eks-cluster-creation-part1.md) - EKS 클러스터 생성을 위한 사전 준비 사항
+- [EKS 클러스터 생성 - 2부: eksctl을 사용한 클러스터 생성](./02-eks-cluster-creation-part2.md) - eksctl을 사용한 EKS 클러스터 생성 방법
+- [EKS 클러스터 생성 - 3부: AWS Management Console 및 CLI를 사용한 클러스터 생성](./02-eks-cluster-creation-part3.md) - AWS Management Console과 CLI를 사용한 EKS 클러스터 생성 방법
+- [EKS 클러스터 생성 - 5부: 클러스터 액세스, 검증, 업그레이드 및 삭제](./02-eks-cluster-creation-part5.md) - EKS 클러스터 관리 방법
+- [EKS 네트워킹 - 1부: 기본 개념 및 VPC 구성](./03-eks-networking-part1.md) - EKS 네트워킹의 기본 개념
+- [EKS 보안](./05-eks-security.md) - EKS 클러스터의 보안 구성
+- [Kubernetes 확장](../core/11-extending-kubernetes.md) - Kubernetes API 확장에 대한 자세한 내용
+
+### 관련 도구 및 통합
+
+- [ArgoCD](../tools/01-argocd.md) - GitOps를 위한 선언적 연속 배포 도구
+- [AWS Controllers for Kubernetes (ACK)](../tools/03-ack.md) - Kubernetes에서 AWS 리소스 관리
+- [Karpenter](../tools/06-karpenter.md) - Kubernetes 클러스터의 노드 프로비저닝 자동화
+
+### 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구가 필요합니다:
+
+- AWS CLI v2.0 이상
+- Terraform v1.0.0 이상
+- AWS CDK v2.0 이상
+- kubectl v1.26 이상
+- Node.js v14 이상 (CDK 사용 시)
+
+AWS 계정에는 다음과 같은 IAM 권한이 필요합니다:
+- AmazonEKSClusterPolicy
+- AmazonEKSServicePolicy
+- AmazonVPCFullAccess
+- IAMFullAccess
+
+로컬 개발 환경에서 테스트하려면 [minikube](https://minikube.sigs.k8s.io/) 또는 [kind](https://kind.sigs.k8s.io/)를 사용할 수 있습니다.
