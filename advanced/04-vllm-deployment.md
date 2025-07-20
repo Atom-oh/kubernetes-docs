@@ -1,6 +1,30 @@
 # vLLM 배포
 
+> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
+
 vLLM은 대규모 언어 모델(LLM)을 위한 고성능 추론 엔진입니다. 이 장에서는 EKS에서 vLLM을 배포하고 최적화하는 방법을 알아보겠습니다.
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구 및 리소스
+- kubectl v1.26 이상
+- Helm v3.10 이상
+- NVIDIA GPU가 있는 EKS 클러스터 (최소 권장: g5.2xlarge 인스턴스)
+- NVIDIA 드라이버 및 NVIDIA Device Plugin 설치
+- 최소 50GB 이상의 디스크 공간
+
+### GPU 노드 설정
+
+```bash
+# NVIDIA Device Plugin 설치
+kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.14.0/nvidia-device-plugin.yml
+
+# GPU 노드 확인
+kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu"
+```
 
 ## vLLM 소개
 
@@ -47,6 +71,45 @@ flowchart TD
     classDef componentNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef benefitNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+```
+
+### vLLM의 주요 기능
+
+1. **PagedAttention**: 
+   - KV 캐시를 효율적으로 관리하는 메모리 관리 기술
+   - 운영 체제의 가상 메모리 관리에서 영감을 받은 기술
+   - 최대 10배 더 많은 동시 요청 처리 가능
+
+2. **연속 배치 처리**:
+   - 동적으로 요청을 배치 처리하여 GPU 활용도 최대화
+   - 새로운 요청이 도착하면 즉시 처리 시작
+   - 처리량 최대 2배 향상
+
+3. **분산 추론**:
+   - 텐서 병렬화를 통한 대규모 모델 지원
+   - 여러 GPU에 걸쳐 모델 샤딩
+   - 175B+ 파라미터 모델 지원
+
+4. **양자화**:
+   - INT8, FP16 등 다양한 정밀도 지원
+   - 메모리 사용량 감소 및 추론 속도 향상
+   - 최소한의 정확도 손실로 최대 2배 메모리 효율성 향상
+
+## 지원 모델
+
+vLLM은 다음과 같은 모델을 지원합니다:
+
+| 모델 계열 | 지원 모델 | 양자화 옵션 |
+|----------|----------|------------|
+| **LLaMA/LLaMA 2** | 7B, 13B, 70B | FP16, INT8, INT4 |
+| **Mistral** | 7B | FP16, INT8 |
+| **Vicuna** | 7B, 13B, 33B | FP16, INT8 |
+| **Falcon** | 7B, 40B | FP16, INT8 |
+| **MPT** | 7B, 30B | FP16 |
+| **Baichuan** | 7B, 13B | FP16 |
+| **StarCoder** | 15.5B | FP16 |
+| **BLOOM** | 모든 크기 | FP16 |
+| **GPT-NeoX** | 모든 크기 | FP16 |
     
     class PagedAttention,ContinuousBatching,DistributedInference,Quantization,OpenAIAPI,Features featureNode;
     class Engine,Scheduler,KVCache,ModelLoader,APIServer,Components componentNode;
