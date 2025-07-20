@@ -1,6 +1,31 @@
 # Kyverno를 사용한 정책 관리
 
+> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
+
 Kyverno는 Kubernetes 네이티브 정책 엔진으로, 클러스터 내에서 정책을 관리하고 적용하는 데 사용됩니다. 이 장에서는 Kyverno를 사용하여 EKS 클러스터에서 정책을 관리하는 방법을 알아보겠습니다.
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- Helm v3.10 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+
+### Kyverno 설치
+
+```bash
+# Helm 리포지토리 추가
+helm repo add kyverno https://kyverno.github.io/kyverno/
+
+# Helm 리포지토리 업데이트
+helm repo update
+
+# Kyverno 설치
+helm install kyverno kyverno/kyverno -n kyverno --create-namespace
+```
 
 ## Kyverno 소개
 
@@ -11,7 +36,7 @@ Kyverno는 Kubernetes 리소스로 정책을 정의하고 관리할 수 있는 �
 3. **생성(Generate)**: 관련 리소스를 자동으로 생성합니다.
 4. **정리(Clean up)**: 더 이상 필요하지 않은 리소스를 자동으로 삭제합니다.
 
-Kyverno는 Kubernetes 네이티브 접근 방식을 사용하므로 별도의 언어나 도구를 배울 필요가 없습니다. 정책은 Kubernetes 리소스로 정의되며, kubectl을 사용하여 관리할 수 있습니다.
+> **핵심 개념**: Kyverno는 Kubernetes 네이티브 접근 방식을 사용하므로 별도의 언어나 도구를 배울 필요가 없습니다. 정책은 Kubernetes 리소스로 정의되며, kubectl을 사용하여 관리할 수 있습니다.
 
 ### Kyverno 아키텍처 및 작동 방식
 
@@ -48,6 +73,20 @@ flowchart LR
     class Validate,Mutate,Generate,Cleanup policyType;
     class Reports,ExistingResources default;
 ```
+
+### Kyverno vs OPA Gatekeeper
+
+Kyverno와 OPA Gatekeeper는 모두 Kubernetes 정책 관리를 위한 도구이지만, 몇 가지 중요한 차이점이 있습니다:
+
+| 기능 | Kyverno | OPA Gatekeeper |
+|------|---------|----------------|
+| 정책 언어 | Kubernetes YAML | Rego (전용 언어) |
+| 학습 곡선 | 낮음 (Kubernetes 사용자에게 친숙) | 높음 (Rego 학습 필요) |
+| 변형 정책 | 기본 지원 | 제한적 지원 |
+| 리소스 생성 | 지원 | 미지원 |
+| 이미지 검증 | 기본 지원 | 사용자 정의 필요 |
+| 정책 예외 처리 | 간단함 | 복잡함 |
+| 성능 | 좋음 | 매우 좋음 (대규모 클러스터) |
 
 Kyverno는 Kubernetes의 Admission Controller로 작동하여 API 서버로 들어오는 모든 요청을 가로채고 정의된 정책에 따라 검증, 변형, 생성 또는 정리 작업을 수행합니다. 또한 백그라운드 스캐너를 통해 기존 리소스에 대한 정책 준수 여부를 확인하고, 보고서 컨트롤러를 통해 정책 위반 사항을 보고합니다.
 
