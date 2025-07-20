@@ -1,22 +1,57 @@
 # Linux 기초
 
+> **지원 버전**: 모든 주요 Linux 배포판 (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+)  
+> **마지막 업데이트**: 2023년 7월 20일
+
 Kubernetes와 컨테이너 기술을 이해하기 위해서는 Linux에 대한 기본적인 이해가 필수적입니다. 이 문서에서는 Kubernetes 환경에서 특히 중요한 Linux의 핵심 개념들을 다룹니다.
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 환경이 필요합니다:
+
+### 필수 환경
+- Linux 운영체제 (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+ 권장)
+- 터미널 액세스
+- sudo 권한
+
+### 클라우드 환경 설정 (선택 사항)
+AWS EC2 인스턴스를 사용하는 경우:
+```bash
+# Amazon Linux 2 인스턴스 시작
+aws ec2 run-instances \
+  --image-id ami-0c55b159cbfafe1f0 \
+  --instance-type t3.micro \
+  --key-name your-key-pair \
+  --security-group-ids sg-12345678 \
+  --subnet-id subnet-12345678
+
+# SSH 접속
+ssh -i your-key.pem ec2-user@your-instance-public-ip
+```
+
+### 로컬 환경 설정 (선택 사항)
+로컬 환경에서 실습하려면 다음 중 하나를 사용할 수 있습니다:
+- **VirtualBox + Vagrant**: 가상 머신 환경 구성
+- **WSL2**: Windows에서 Linux 환경 사용
+- **Docker**: 컨테이너 환경에서 실습
 
 ## 목차
 
-* [Linux 커널과 사용자 공간](01-linux-basics.md#linux-커널과-사용자-공간)
-* [프로세스 관리](01-linux-basics.md#프로세스-관리)
-* [네임스페이스](01-linux-basics.md#네임스페이스)
-* [cgroups (Control Groups)](01-linux-basics.md#cgroups-control-groups)
-* [파일 시스템](01-linux-basics.md#파일-시스템)
-* [네트워킹 기초](01-linux-basics.md#네트워킹-기초)
-* [보안 컨텍스트](01-linux-basics.md#보안-컨텍스트)
-* [주요 Linux 명령어](01-linux-basics.md#주요-linux-명령어)
-* [컨테이너 관련 Linux 기능](01-linux-basics.md#컨테이너-관련-linux-기능)
+* [Linux 커널과 사용자 공간](#linux-커널과-사용자-공간)
+* [프로세스 관리](#프로세스-관리)
+* [네임스페이스](#네임스페이스)
+* [cgroups (Control Groups)](#cgroups-control-groups)
+* [파일 시스템](#파일-시스템)
+* [네트워킹 기초](#네트워킹-기초)
+* [보안 컨텍스트](#보안-컨텍스트)
+* [주요 Linux 명령어](#주요-linux-명령어)
+* [컨테이너 관련 Linux 기능](#컨테이너-관련-linux-기능)
 
 ## Linux 커널과 사용자 공간
 
 ### 커널의 역할
+
+> **핵심 개념**: Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 사이의 중개자 역할을 합니다.
 
 Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 사이의 중개자 역할을 합니다. 주요 기능은 다음과 같습니다:
 
@@ -34,7 +69,7 @@ flowchart TB
     subgraph "사용자 공간 (User Space)"
         APP1["웹 서버"]
         APP2["데이터베이스"]
-        'APP3["컨테이너 런타임"]
+        APP3["컨테이너 런타임"]
         SHELL["셸 (bash, zsh)"]
         LIBS["시스템 라이브러리
             (glibc, libcap)"]
@@ -48,6 +83,44 @@ flowchart TB
             MEM["메모리 관리"]
             FS["파일 시스템"]
             NET["네트워킹"]
+            CGROUPS["cgroups"]
+            NS["네임스페이스"]
+            SEC["보안 모듈"]
+        end
+        
+        subgraph "하드웨어 추상화 계층"
+            CPU["CPU"]
+            RAM["메모리"]
+            DISK["디스크"]
+            NIC["네트워크 인터페이스"]
+        end
+    end
+    
+    APP1 & APP2 & APP3 & SHELL --> LIBS
+    LIBS --> SYSCALL
+    SYSCALL --> PROC & MEM & FS & NET & CGROUPS & NS & SEC
+    PROC & MEM & FS & NET & CGROUPS & NS & SEC --> CPU & RAM & DISK & NIC
+    
+    classDef userSpace fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef kernelSpace fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef hardware fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    
+    class APP1,APP2,APP3,SHELL,LIBS userSpace;
+    class SYSCALL,PROC,MEM,FS,NET,CGROUPS,NS,SEC kernelSpace;
+    class CPU,RAM,DISK,NIC hardware;
+```
+
+### 시스템 호출 예시
+
+| 시스템 호출 | 설명 | 관련 명령어 |
+|------------|------|------------|
+| `fork()` | 새 프로세스 생성 | `ps`, `top` |
+| `exec()` | 프로그램 실행 | `bash`, `sh` |
+| `open()` | 파일 열기 | `cat`, `less` |
+| `read()` | 파일에서 데이터 읽기 | `cat`, `grep` |
+| `write()` | 파일에 데이터 쓰기 | `echo`, `tee` |
+| `socket()` | 네트워크 소켓 생성 | `netstat`, `ss` |
+| `clone()` | 네임스페이스 생성 | `unshare`, `docker` |
             SEC["보안 (SELinux, AppArmor)"]
         end
         
