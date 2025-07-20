@@ -147,3 +147,50 @@ Horizontal Pod Autoscaler(HPA)는 파드 수를 자동으로 조정하고, Verti
 
 참고로, AWS에서는 Cluster Autoscaler 외에도 Karpenter라는 새로운 노드 프로비저닝 도구를 제공하며, 이는 더 빠르고 유연한 노드 프로비저닝 기능을 제공합니다.
 </details>
+
+## 단답형 문제
+
+### 6. EKS 클러스터에서 Kubernetes 컨트롤 플레인 로그를 활성화하고 CloudWatch Logs로 전송하려면 어떤 구성이 필요한가요?
+
+<details>
+<summary>정답 및 설명</summary>
+
+EKS 클러스터에서 Kubernetes 컨트롤 플레인 로그를 CloudWatch Logs로 전송하려면 클러스터 생성 시 또는 기존 클러스터에서 특정 로그 유형을 활성화해야 합니다.
+
+**필요한 구성:**
+
+1. **로그 유형 활성화**: 다음 로그 유형 중 하나 이상을 활성화해야 합니다:
+   - `api`: Kubernetes API 서버 로그
+   - `audit`: Kubernetes 감사 로그
+   - `authenticator`: AWS IAM 인증기 로그
+   - `controllerManager`: 컨트롤러 매니저 로그
+   - `scheduler`: 스케줄러 로그
+
+2. **AWS Management Console을 통한 활성화**:
+   - EKS 콘솔에서 클러스터 선택
+   - "로깅" 탭 선택
+   - 원하는 로그 유형 활성화
+
+3. **AWS CLI를 통한 활성화**:
+```bash
+aws eks update-cluster-config \
+    --region region-code \
+    --name cluster-name \
+    --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
+```
+
+4. **eksctl을 통한 활성화**:
+```bash
+eksctl utils update-cluster-logging \
+    --region=region-code \
+    --cluster=cluster-name \
+    --enable-types=api,audit,authenticator,controllerManager,scheduler
+```
+
+활성화된 로그는 자동으로 CloudWatch Logs의 `/aws/eks/cluster-name/cluster` 로그 그룹으로 전송됩니다. 각 로그 유형은 별도의 로그 스트림으로 저장됩니다.
+
+**주의사항:**
+- 로그 활성화는 추가 비용이 발생합니다 (CloudWatch Logs 요금 적용).
+- 감사 로그는 특히 많은 양의 데이터를 생성할 수 있으므로 비용 관리에 주의해야 합니다.
+- 로그 보존 기간을 설정하여 비용을 관리할 수 있습니다.
+</details>
