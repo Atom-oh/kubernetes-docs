@@ -548,3 +548,28 @@ EKS 관리형 노드 그룹의 인스턴스 유형을 변경하려면 새로운 
 
 자체 관리형 노드 그룹을 사용하는 경우 Auto Scaling 그룹의 시작 템플릿을 업데이트하고 인스턴스 새로 고침을 수행할 수 있습니다.
 </details>
+
+7. EKS 클러스터에서 Kubernetes API 서버에 대한 퍼블릭 액세스를 비활성화하고 프라이빗 액세스만 허용하려면 어떤 설정을 변경해야 하나요?
+
+<details>
+<summary>정답 및 설명</summary>
+
+EKS 클러스터의 API 서버에 대한 퍼블릭 액세스를 비활성화하고 프라이빗 액세스만 허용하려면 클러스터의 엔드포인트 액세스 설정을 변경해야 합니다:
+
+1. AWS Management Console에서:
+   - EKS 콘솔로 이동
+   - 해당 클러스터 선택
+   - "네트워킹" 탭 선택
+   - "클러스터 엔드포인트 액세스" 섹션에서 "편집" 클릭
+   - "프라이빗"으로 설정 (퍼블릭 액세스 비활성화, 프라이빗 액세스 활성화)
+
+2. AWS CLI를 사용하는 경우:
+```bash
+aws eks update-cluster-config \
+    --region region-code \
+    --name cluster-name \
+    --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true
+```
+
+이 설정을 변경하면 VPC 내부에서만 Kubernetes API 서버에 액세스할 수 있게 됩니다. 따라서 VPC 내에 있는 시스템이나 VPC와 연결된 네트워크에서만 클러스터를 관리할 수 있습니다.
+</details>
