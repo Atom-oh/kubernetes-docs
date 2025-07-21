@@ -38,91 +38,8 @@
 
 ## 컨테이너 vs 가상 머신
 
-### 가상 머신 아키텍처
-```mermaid
-flowchart TD
-    %% 노드 정의
-    subgraph VM1["가상 머신 1"]
-        APP1["애플리케이션 A"]
-        BIN1["Bins/Libs"]
-        GOS1["게스트 OS (전체)"]
-    end
-    
-    subgraph VM2["가상 머신 2"]
-        APP2["애플리케이션 B"]
-        BIN2["Bins/Libs"]
-        GOS2["게스트 OS (전체)"]
-    end
-    
-    HYP["하이퍼바이저"]
-    HOS["호스트 OS"]
-    HW["하드웨어"]
-    
-    %% 연결 정의
-    VM1 --- HYP
-    VM2 --- HYP
-    HYP --- HOS
-    HOS --- HW
-    
-    %% 스타일 적용
-    classDef vm fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef os fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef hypervisor fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef hardware fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class VM1,VM2 vm
-    class APP1,APP2,BIN1,BIN2 app
-    class GOS1,GOS2,HOS os
-    class HYP hypervisor
-    class HW hardware
-```
-
-### 컨테이너 아키텍처
-```mermaid
-flowchart TD
-    %% 노드 정의
-    subgraph C1["컨테이너 1"]
-        APP1["애플리케이션 A"]
-        BIN1["Bins/Libs"]
-    end
-    
-    subgraph C2["컨테이너 2"]
-        APP2["애플리케이션 B"]
-        BIN2["Bins/Libs"]
-    end
-    
-    subgraph C3["컨테이너 3"]
-        APP3["애플리케이션 C"]
-        BIN3["Bins/Libs"]
-    end
-    
-    CR["컨테이너 런타임 (Docker, containerd 등)"]
-    HOS["호스트 OS"]
-    HW["하드웨어"]
-    
-    %% 연결 정의
-    C1 --- CR
-    C2 --- CR
-    C3 --- CR
-    CR --- HOS
-    HOS --- HW
-    
-    %% 스타일 적용
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef runtime fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef os fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef hardware fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class C1,C2,C3 container
-    class APP1,APP2,APP3,BIN1,BIN2,BIN3 app
-    class CR runtime
-    class HOS os
-    class HW hardware
-```
+### 가상 머신 아키텍처 vs 컨테이너 아키텍쳐
+![](../assets/container-vs-vm.avif)
 
 ### 주요 차이점
 
@@ -158,37 +75,7 @@ flowchart TD
 
 Kubernetes는 CRI(Container Runtime Interface)를 통해 다양한 컨테이너 런타임과 통합됩니다. CRI는 Kubernetes와 컨테이너 런타임 사이의 표준화된 인터페이스를 제공합니다.
 
-```mermaid
-flowchart TD
-    %% 노드 정의
-    K8S["Kubernetes"]
-    CRI["Container Runtime Interface (CRI)"]
-    CR1["containerd"]
-    CR2["CRI-O"]
-    R1["runc"]
-    R2["crun"]
-    
-    %% 연결 정의
-    K8S --> CRI
-    CRI --> CR1
-    CRI --> CR2
-    CR1 --> R1
-    CR1 --> R2
-    CR2 --> R1
-    CR2 --> R2
-    
-    %% 스타일 적용
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef interface fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef runtime fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef lowRuntime fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class K8S k8s
-    class CRI interface
-    class CR1,CR2 runtime
-    class R1,R2 lowRuntime
-```
+![](../assets/kubernetes-cri.webp)
 
 ## 컨테이너 이미지
 
@@ -198,6 +85,7 @@ flowchart TD
 
 컨테이너 이미지는 여러 레이어의 스택으로 구성됩니다. 각 레이어는 이전 레이어에 대한 변경사항을 나타냅니다. 이 레이어 방식은 이미지 공유와 캐싱을 효율적으로 만듭니다.
 
+![](../assets/container-layers.webp)
 ```mermaid
 flowchart TB
     app["응용 프로그램 레이어<br/>애플리케이션 코드"]
