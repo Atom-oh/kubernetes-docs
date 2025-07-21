@@ -1,43 +1,134 @@
 # Kubernetes 보안
 
+> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
+
 Kubernetes에서 보안은 클러스터와 애플리케이션을 보호하기 위한 핵심 요소입니다. 이 장에서는 Kubernetes의 보안 개념, 인증 및 권한 부여 메커니즘, 네트워크 정책, 보안 컨텍스트, 그리고 Amazon EKS에서의 보안 강화 방법에 대해 알아보겠습니다.
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+- OpenSSL (인증서 생성용)
+
+### 보안 예제 설정
+
+```bash
+# 네임스페이스 생성
+kubectl create namespace security-demo
+
+# 서비스 계정 생성
+kubectl -n security-demo create serviceaccount demo-sa
+
+# 역할 생성
+kubectl -n security-demo apply -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+EOF
+
+# 역할 바인딩 생성
+kubectl -n security-demo apply -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods
+subjects:
+- kind: ServiceAccount
+  name: demo-sa
+  namespace: security-demo
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+EOF
+
+# 보안 컨텍스트가 적용된 파드 생성
+kubectl -n security-demo apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: security-context-demo
+spec:
+  serviceAccountName: demo-sa
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
+  containers:
+  - name: sec-ctx-demo
+    image: busybox
+    command: ["sh", "-c", "sleep 3600"]
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+EOF
+```
+
+## Kubernetes 보안 아키텍처
 
 ```mermaid
 graph TD
-    subgraph "Kubernetes 보안 계층"
-        Infra["인프라 보안<br>(호스트 OS, 컨테이너 런타임)"]
-        Cluster["클러스터 보안<br>(API 서버, etcd, kubelet)"]
-        App["애플리케이션 보안<br>(컨테이너, 워크로드)"]
+    subgraph "Kubernetes 보안 아키텍처"
+        subgraph "인프라 보안"
+            Host["호스트 보안"]
+            Network["네트워크 보안"]
+            Container["컨테이너 런타임 보안"]
+        end
+        
+        subgraph "클러스터 보안"
+            API["API 서버 보안"]
+            Auth["인증 (Authentication)"]
+            Authz["권한 부여 (Authorization)"]
+            Admission["어드미션 컨트롤"]
+            Audit["감사 로깅"]
+            Encrypt["데이터 암호화"]
+        end
+        
+        subgraph "워크로드 보안"
+            SecCtx["보안 컨텍스트"]
+            NetPol["네트워크 정책"]
+            PodSec["Pod 보안 표준"]
+            Secret["시크릿 관리"]
+            ImgSec["이미지 보안"]
+            RBAC["RBAC"]
+        end
     end
     
-    subgraph "보안 컴포넌트"
-        Auth["인증<br>(Authentication)"]
-        Authz["권한 부여<br>(Authorization)"]
-        SecCtx["보안 컨텍스트<br>(Security Context)"]
-        NetPol["네트워크 정책<br>(Network Policy)"]
-        Secret["시크릿 관리<br>(Secret Management)"]
-        Img["이미지 보안<br>(Image Security)"]
-        Audit["감사<br>(Audit)"]
-    end
+    Host --> API
+    Network --> API
+    Container --> API
     
-    Infra --> Cluster
-    Cluster --> App
+    API --> Auth
+    Auth --> Authz
+    Authz --> Admission
+    Admission --> Audit
+    API --> Encrypt
     
-    Auth --> Cluster
-    Authz --> Cluster
-    SecCtx --> App
-    NetPol --> App
-    Secret --> App
-    Img --> App
-    Audit --> Cluster
+    Authz --> RBAC
+    Admission --> PodSec
+    Admission --> SecCtx
+    Network --> NetPol
+    API --> Secret
+    Container --> ImgSec
     
     %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef securityComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef infra fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef cluster fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef workload fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     
     %% 클래스 적용
-    class Infra,Cluster,App k8sComponent;
-    class Auth,Authz,SecCtx,NetPol,Secret,Img,Audit securityComponent;
+    class Host,Network,Container infra;
+    class API,Auth,Authz,Admission,Audit,Encrypt cluster;
+    class SecCtx,NetPol,PodSec,Secret,ImgSec,RBAC workload;
 ```
 
 ## 목차
@@ -48,6 +139,61 @@ graph TD
 5. [네트워크 정책(Network Policy)](#네트워크-정책network-policy)
 6. [시크릿 관리](#시크릿-관리)
 7. [이미지 보안](#이미지-보안)
+8. [Pod 보안 표준](#pod-보안-표준)
+9. [감사 로깅](#감사-로깅)
+10. [EKS 보안 모범 사례](#eks-보안-모범-사례)
+
+## 보안 개요
+
+> **핵심 개념**: Kubernetes 보안은 다층 방어(Defense in Depth) 접근 방식을 따르며, 인프라, 클러스터, 워크로드 수준에서 여러 보안 메커니즘을 제공합니다.
+
+Kubernetes 보안은 다음과 같은 주요 영역으로 구성됩니다:
+
+### 보안 영역 비교
+
+| 보안 영역 | 주요 구성 요소 | 책임자 | 보안 메커니즘 |
+|----------|--------------|-------|-------------|
+| **인프라 보안** | 호스트 OS, 컨테이너 런타임, 네트워크 | 클러스터 관리자 | 방화벽, OS 강화, 컨테이너 런타임 보안 |
+| **클러스터 보안** | API 서버, etcd, kubelet | 클러스터 관리자 | 인증, 권한 부여, 어드미션 컨트롤, 암호화 |
+| **워크로드 보안** | 파드, 컨테이너, 서비스 | 애플리케이션 개발자 | 보안 컨텍스트, 네트워크 정책, RBAC |
+
+### 보안 원칙
+
+1. **최소 권한 원칙**: 필요한 최소한의 권한만 부여
+2. **심층 방어**: 여러 보안 계층을 통한 방어
+3. **기본 거부**: 명시적으로 허용되지 않은 모든 것을 거부
+4. **보안 강화**: 기본 설정보다 더 강력한 보안 설정 적용
+5. **지속적인 모니터링**: 보안 이벤트 감지 및 대응
+
+## 인증(Authentication)
+
+인증은 사용자 또는 서비스 계정이 누구인지 확인하는 프로세스입니다. Kubernetes는 다양한 인증 방법을 지원합니다:
+
+### 인증 방법
+
+1. **X.509 인증서**: TLS 클라이언트 인증서를 사용한 인증
+2. **서비스 계정 토큰**: JWT 토큰을 사용한 서비스 계정 인증
+3. **OpenID Connect (OIDC)**: 외부 ID 제공자를 통한 인증
+4. **웹훅 토큰 인증**: 외부 인증 서비스를 통한 인증
+5. **인증 프록시**: 프록시를 통한 인증
+
+### 서비스 계정 예제
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service-account
+  namespace: default
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-service-account-token
+  annotations:
+    kubernetes.io/service-account.name: my-service-account
+type: kubernetes.io/service-account-token
+```
 8. [감사(Audit)](#감사audit)
 9. [Amazon EKS 보안 강화](#amazon-eks-보안-강화)
 10. [보안 모범 사례](#보안-모범-사례)
