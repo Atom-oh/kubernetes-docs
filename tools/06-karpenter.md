@@ -212,31 +212,34 @@ karpenter-6f4f46d855-5lqx7   1/1     Running   0          1m
 ### 기본 프로비저너 구성
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: default
 spec:
-  requirements:
-    - key: karpenter.sh/capacity-type
-      operator: In
-      values: ["on-demand"]
-    - key: kubernetes.io/arch
-      operator: In
-      values: ["amd64"]
-    - key: node.kubernetes.io/instance-type
-      operator: In
-      values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
   limits:
-    resources:
-      cpu: 1000
-      memory: 1000Gi
-  providerRef:
-    name: default
-  ttlSecondsAfterEmpty: 30
+    cpu: 1000
+    memory: 1000Gi
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
+      nodeClassRef:
+        name: default
 ---
-apiVersion: karpenter.k8s.aws/v1alpha1
-kind: AWSNodeTemplate
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
 metadata:
   name: default
 spec:
@@ -254,57 +257,66 @@ spec:
         deleteOnTermination: true
 ```
 
-## 프로비저너
+## NodePool
 
-프로비저너는 Karpenter가 노드를 프로비저닝하는 방법을 정의하는 Kubernetes 사용자 정의 리소스입니다.
+NodePool은 Karpenter가 노드를 프로비저닝하는 방법을 정의하는 Kubernetes 사용자 정의 리소스입니다. 이전의 Provisioner를 대체합니다.
 
-### 기본 프로비저너 구성
+### 기본 NodePool 구성
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: default
 spec:
   # 노드 요구 사항
-  requirements:
-    - key: karpenter.sh/capacity-type
-      operator: In
-      values: ["on-demand"]
-    - key: kubernetes.io/arch
-      operator: In
-      values: ["amd64"]
-    - key: node.kubernetes.io/instance-type
-      operator: In
-      values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
   
   # 리소스 제한
   limits:
-    resources:
-      cpu: 1000
-      memory: 1000Gi
+    cpu: 1000
+    memory: 1000Gi
   
-  # 노드 템플릿 참조
-  providerRef:
-    name: default
+  # 노드 클래스 참조
+  template:
+    spec:
+      nodeClassRef:
+        name: default
   
   # 노드 만료 설정
-  ttlSecondsAfterEmpty: 30
-  ttlSecondsUntilExpired: 2592000  # 30일
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+    expireAfter: 720h  # 30일
   
   # 테인트 및 레이블
-  taints:
-    - key: example.com/special-taint
-      value: "true"
-      effect: NoSchedule
-  labels:
-    environment: production
-    app: web
+  template:
+    spec:
+      taints:
+        - key: example.com/special-taint
+          value: "true"
+          effect: NoSchedule
+      labels:
+        environment: production
+        app: web
   
   # 시작 템플릿
-  startupTaints:
-    - key: node.kubernetes.io/not-ready
-      effect: NoSchedule
+  template:
+    spec:
+      startupTaints:
+        - key: node.kubernetes.io/not-ready
+          effect: NoSchedule
 ```
 
 ### 요구 사항 구성
@@ -312,31 +324,33 @@ spec:
 요구 사항은 Karpenter가 프로비저닝할 노드의 특성을 정의합니다:
 
 ```yaml
-requirements:
-  # 용량 유형 (온디맨드 또는 스팟)
-  - key: karpenter.sh/capacity-type
-    operator: In
-    values: ["on-demand", "spot"]
-  
-  # 아키텍처
-  - key: kubernetes.io/arch
-    operator: In
-    values: ["amd64", "arm64"]
-  
-  # 인스턴스 유형
-  - key: node.kubernetes.io/instance-type
-    operator: In
-    values: ["m5.large", "m5.xlarge", "c5.large"]
-  
-  # 가용 영역
-  - key: topology.kubernetes.io/zone
-    operator: In
-    values: ["us-west-2a", "us-west-2b", "us-west-2c"]
-  
-  # 운영 체제
-  - key: kubernetes.io/os
-    operator: In
-    values: ["linux"]
+template:
+  spec:
+    requirements:
+      # 용량 유형 (온디맨드 또는 스팟)
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values: ["on-demand", "spot"]
+      
+      # 아키텍처
+      - key: kubernetes.io/arch
+        operator: In
+        values: ["amd64", "arm64"]
+      
+      # 인스턴스 유형
+      - key: node.kubernetes.io/instance-type
+        operator: In
+        values: ["m5.large", "m5.xlarge", "c5.large"]
+      
+      # 가용 영역
+      - key: topology.kubernetes.io/zone
+        operator: In
+        values: ["us-west-2a", "us-west-2b", "us-west-2c"]
+      
+      # 운영 체제
+      - key: kubernetes.io/os
+        operator: In
+        values: ["linux"]
 ```
 
 ### 제한 구성
@@ -345,10 +359,9 @@ requirements:
 
 ```yaml
 limits:
-  resources:
-    cpu: 1000
-    memory: 1000Gi
-    nvidia.com/gpu: 10
+  cpu: 1000
+  memory: 1000Gi
+  nvidia.com/gpu: 10
 ```
 
 ### 노드 만료 구성
@@ -356,21 +369,25 @@ limits:
 노드 만료 설정은 Karpenter가 노드를 제거하는 시기를 정의합니다:
 
 ```yaml
-# 노드가 비어 있을 때 제거하기까지의 시간(초)
-ttlSecondsAfterEmpty: 30
-
-# 노드 생성 후 제거하기까지의 최대 시간(초)
-ttlSecondsUntilExpired: 2592000  # 30일
+disruption:
+  # 노드가 비어 있을 때 통합(제거)
+  consolidationPolicy: WhenEmpty
+  
+  # 노드가 비어 있은 후 통합(제거)까지의 시간
+  consolidateAfter: 30s
+  
+  # 노드 생성 후 제거하기까지의 최대 시간
+  expireAfter: 720h  # 30일
 ```
-## 노드 템플릿
+## 노드 클래스
 
-노드 템플릿은 Karpenter가 프로비저닝하는 노드의 구성을 정의합니다. AWS에서는 AWSNodeTemplate CRD를 사용합니다.
+노드 클래스는 Karpenter가 프로비저닝하는 노드의 구성을 정의합니다. AWS에서는 EC2NodeClass CRD를 사용합니다.
 
-### AWS 노드 템플릿 구성
+### AWS EC2NodeClass 구성
 
 ```yaml
-apiVersion: karpenter.k8s.aws/v1alpha1
-kind: AWSNodeTemplate
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
 metadata:
   name: default
 spec:
@@ -561,20 +578,18 @@ Karpenter는 다음과 같은 인터럽션 이벤트를 처리합니다:
 ### 인터럽션 처리 구성
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: default
 spec:
   # 기타 구성...
   
   # 노드 만료 설정
-  ttlSecondsAfterEmpty: 30
-  ttlSecondsUntilExpired: 2592000  # 30일
-  
-  # 통합 설정
-  consolidation:
-    enabled: true
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+    expireAfter: 720h  # 30일
 ```
 
 ### 드레이닝 구성
@@ -1006,22 +1021,26 @@ aws eks create-fargate-profile \
   --pod-execution-role-arn arn:aws:iam::${ACCOUNT_ID}:role/AmazonEKSFargatePodExecutionRole \
   --selectors namespace=default,namespace=kube-system
 
-# Karpenter 프로비저너 구성
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+# Karpenter NodePool 구성
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: ec2
 spec:
-  requirements:
-    - key: karpenter.sh/capacity-type
-      operator: In
-      values: ["on-demand"]
-  providerRef:
-    name: ec2
-  ttlSecondsAfterEmpty: 30
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+      nodeClassRef:
+        name: ec2
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
 ---
-apiVersion: karpenter.k8s.aws/v1alpha1
-kind: AWSNodeTemplate
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
 metadata:
   name: ec2
 spec:
@@ -1229,28 +1248,30 @@ flowchart TD
 4. **노드 통합 활성화**: 리소스 활용도 최적화를 위한 노드 통합 활성화
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: optimized
 spec:
   # 다양한 인스턴스 유형 허용
-  requirements:
-    - key: node.kubernetes.io/instance-type
-      operator: In
-      values: [
-        "m5.large", "m5.xlarge", "m5.2xlarge",
-        "c5.large", "c5.xlarge", "c5.2xlarge",
-        "r5.large", "r5.xlarge", "r5.2xlarge"
-      ]
+  template:
+    spec:
+      requirements:
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: [
+            "m5.large", "m5.xlarge", "m5.2xlarge",
+            "c5.large", "c5.xlarge", "c5.2xlarge",
+            "r5.large", "r5.xlarge", "r5.2xlarge"
+          ]
+      nodeClassRef:
+        name: optimized
   
   # 적절한 TTL 설정
-  ttlSecondsAfterEmpty: 30
-  ttlSecondsUntilExpired: 2592000  # 30일
-  
-  # 노드 통합 활성화
-  consolidation:
-    enabled: true
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+    expireAfter: 720h  # 30일
 ```
 
 ### 비용 최적화
@@ -1261,26 +1282,26 @@ spec:
 4. **노드 만료 설정**: 정기적인 노드 교체를 통한 최신 인스턴스 유형 활용
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: cost-optimized
 spec:
   # 스팟 인스턴스 사용
-  requirements:
-    - key: karpenter.sh/capacity-type
-      operator: In
-      values: ["spot"]
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]
+      nodeClassRef:
+        name: cost-optimized
   
-  # 제로 스케일링 활성화
-  ttlSecondsAfterEmpty: 30
-  
-  # 노드 만료 설정
-  ttlSecondsUntilExpired: 604800  # 7일
-  
-  # 노드 통합 활성화
-  consolidation:
-    enabled: true
+  # 제로 스케일링 및 노드 만료 설정
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+    expireAfter: 168h  # 7일
 ```
 
 ### 가용성 향상
@@ -1291,22 +1312,28 @@ spec:
 4. **인터럽션 처리 최적화**: 노드 인터럽션 시 워크로드 가용성 보장
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: high-availability
 spec:
   # 다중 가용 영역 사용
-  requirements:
-    - key: topology.kubernetes.io/zone
-      operator: In
-      values: ["us-west-2a", "us-west-2b", "us-west-2c"]
-    - key: karpenter.sh/capacity-type
-      operator: In
-      values: ["on-demand", "spot"]
+  template:
+    spec:
+      requirements:
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values: ["us-west-2a", "us-west-2b", "us-west-2c"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand", "spot"]
+      nodeClassRef:
+        name: high-availability
   
   # 인터럽션 처리 최적화
-  ttlSecondsAfterEmpty: 60
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 60s
   ttlSecondsUntilExpired: 2592000  # 30일
   
   # 노드 통합 설정

@@ -1176,28 +1176,38 @@ spec:
 Amazon EKS에서는 Karpenter를 사용하여 워크로드에 맞는 노드를 자동으로 프로비저닝할 수 있습니다:
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: default
 spec:
-  requirements:
-    - key: karpenter.sh/capacity-type
-      operator: In
-      values: ["spot", "on-demand"]
-    - key: kubernetes.io/arch
-      operator: In
-      values: ["amd64", "arm64"]
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64", "arm64"]
+      nodeClassRef:
+        name: default-class
   limits:
-    resources:
-      cpu: 1000
-      memory: 1000Gi
-  provider:
-    subnetSelector:
-      karpenter.sh/discovery: my-cluster
-    securityGroupSelector:
-      karpenter.sh/discovery: my-cluster
-  ttlSecondsAfterEmpty: 30
+    cpu: 1000
+    memory: 1000Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+---
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: default-class
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: my-cluster
+  securityGroupSelector:
+    karpenter.sh/discovery: my-cluster
 ```
 
 Karpenter는 포드의 리소스 요구 사항에 맞는 최적의 인스턴스 유형을 선택하여 비용을 최적화합니다.

@@ -1,14 +1,14 @@
 # 클러스터 아키텍처
 
-> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
-> **마지막 업데이트**: 2023년 7월 20일
+> **지원 버전**: Kubernetes 1.31, 1.32, 1.33  
+> **마지막 업데이트**: 2025년 7월 25일
 
 ## 실습 환경 설정
 
 이 문서의 개념을 실습하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
 
 ### 필수 도구
-- kubectl v1.26 이상
+- kubectl v1.31 이상
 - 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
 
 ### 로컬 개발 환경 설정
@@ -1416,25 +1416,32 @@ spec:
 Karpenter는 AWS에서 개발한 새로운 노드 자동 확장 도구로, 더 빠르고 효율적인 노드 프로비저닝을 제공합니다.
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: default
 spec:
-  requirements:
-    - key: karpenter.sh/capacity-type
-      operator: In
-      values: ["spot", "on-demand"]
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"]
+      nodeClassRef:
+        name: default-class
   limits:
-    resources:
-      cpu: 1000
-      memory: 1000Gi
-  provider:
-    instanceProfile: KarpenterNodeInstanceProfile
-    subnetSelector:
-      karpenter.sh/discovery: my-cluster
-    securityGroupSelector:
-      karpenter.sh/discovery: my-cluster
+    cpu: 1000
+    memory: 1000Gi
+---
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: default-class
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: my-cluster
+  securityGroupSelector:
+    karpenter.sh/discovery: my-cluster
 ```
 
 ### 수직적 확장

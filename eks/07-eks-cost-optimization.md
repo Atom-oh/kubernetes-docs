@@ -1,7 +1,7 @@
 # Amazon EKS 비용 최적화
 
-> **지원 버전**: Amazon EKS 1.26, 1.27, 1.28  
-> **마지막 업데이트**: 2023년 7월 20일
+> **지원 버전**: Amazon EKS 1.31, 1.32, 1.33  
+> **마지막 업데이트**: 2025년 7월 25일
 
 Amazon EKS(Elastic Kubernetes Service)를 사용하면 컨테이너화된 애플리케이션을 쉽게 배포, 관리 및 확장할 수 있지만, 비용을 효과적으로 관리하는 것이 중요합니다. 이 문서에서는 EKS 클러스터의 비용을 최적화하기 위한 다양한 전략과 모범 사례를 다룹니다.
 
@@ -262,31 +262,41 @@ eksctl create nodegroup \
 #### Karpenter를 사용한 스팟 인스턴스 프로비저닝
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: spot
 spec:
-  requirements:
-  - key: karpenter.sh/capacity-type
-    operator: In
-    values: ["spot"]
-  - key: kubernetes.io/arch
-    operator: In
-    values: ["amd64"]
-  - key: node.kubernetes.io/instance-type
-    operator: In
-    values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
+  template:
+    spec:
+      requirements:
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values: ["spot"]
+      - key: kubernetes.io/arch
+        operator: In
+        values: ["amd64"]
+      - key: node.kubernetes.io/instance-type
+        operator: In
+        values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
+      nodeClassRef:
+        name: spot-class
   limits:
-    resources:
-      cpu: 1000
-      memory: 1000Gi
-  provider:
-    subnetSelector:
-      karpenter.sh/discovery: my-cluster
-    securityGroupSelector:
-      karpenter.sh/discovery: my-cluster
-  ttlSecondsAfterEmpty: 30
+    cpu: 1000
+    memory: 1000Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+---
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: spot-class
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: my-cluster
+  securityGroupSelector:
+    karpenter.sh/discovery: my-cluster
 ```
 
 #### 스팟 인스턴스 중단 처리
@@ -397,28 +407,38 @@ kubectl -n kube-system set env deployment.apps/cluster-autoscaler \
 Karpenter는 Cluster Autoscaler의 대안으로, 더 빠르고 유연한 노드 프로비저닝을 제공합니다:
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: default
 spec:
-  requirements:
-  - key: kubernetes.io/arch
-    operator: In
-    values: ["amd64"]
-  - key: node.kubernetes.io/instance-type
-    operator: In
-    values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
+  template:
+    spec:
+      requirements:
+      - key: kubernetes.io/arch
+        operator: In
+        values: ["amd64"]
+      - key: node.kubernetes.io/instance-type
+        operator: In
+        values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
+      nodeClassRef:
+        name: default-class
   limits:
-    resources:
-      cpu: 1000
-      memory: 1000Gi
-  provider:
-    subnetSelector:
-      karpenter.sh/discovery: my-cluster
-    securityGroupSelector:
-      karpenter.sh/discovery: my-cluster
-  ttlSecondsAfterEmpty: 30
+    cpu: 1000
+    memory: 1000Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+---
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: default-class
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: my-cluster
+  securityGroupSelector:
+    karpenter.sh/discovery: my-cluster
 ```
 
 Karpenter 비용 최적화 설정:

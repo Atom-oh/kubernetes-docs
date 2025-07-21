@@ -1,7 +1,7 @@
 # vLLM 배포
 
-> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
-> **마지막 업데이트**: 2023년 7월 20일
+> **지원 버전**: Kubernetes 1.31, 1.32, 1.33  
+> **마지막 업데이트**: 2025년 7월 25일
 
 vLLM은 대규모 언어 모델(LLM)을 위한 고성능 추론 엔진입니다. 이 장에서는 EKS에서 vLLM을 배포하고 최적화하는 방법을 알아보겠습니다.
 
@@ -10,7 +10,7 @@ vLLM은 대규모 언어 모델(LLM)을 위한 고성능 추론 엔진입니다.
 이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
 
 ### 필수 도구 및 리소스
-- kubectl v1.26 이상
+- kubectl v1.31 이상
 - Helm v3.10 이상
 - NVIDIA GPU가 있는 EKS 클러스터 (최소 권장: g5.2xlarge 인스턴스)
 - NVIDIA 드라이버 및 NVIDIA Device Plugin 설치
@@ -986,38 +986,45 @@ spec:
 GPU 노드를 자동으로 프로비저닝하는 방법:
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: vllm-gpu
 spec:
-  requirements:
-  - key: node.kubernetes.io/instance-type
-    operator: In
-    values:
-    - p3.16xlarge
-    - g5.12xlarge
-  - key: karpenter.sh/capacity-type
-    operator: In
-    values:
-    - on-demand
-  - key: kubernetes.io/arch
-    operator: In
-    values:
-    - amd64
-  - key: vpc.amazonaws.com/efa
-    operator: In
-    values:
-    - "true"
+  template:
+    spec:
+      requirements:
+      - key: node.kubernetes.io/instance-type
+        operator: In
+        values:
+        - p3.16xlarge
+        - g5.12xlarge
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+      - key: vpc.amazonaws.com/efa
+        operator: In
+        values:
+        - "true"
+      nodeClassRef:
+        name: vllm-gpu-class
   limits:
-    resources:
-      nvidia.com/gpu: 32
-  provider:
-    instanceProfile: KarpenterNodeInstanceProfile
-    subnetSelector:
-      karpenter.sh/discovery: vllm-cluster
-    securityGroupSelector:
-      karpenter.sh/discovery: vllm-cluster
+    nvidia.com/gpu: 32
+---
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: vllm-gpu-class
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: vllm-cluster
+  securityGroupSelector:
+    karpenter.sh/discovery: vllm-cluster
   ttlSecondsAfterEmpty: 30
 ```
 

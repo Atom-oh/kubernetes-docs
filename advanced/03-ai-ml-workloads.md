@@ -1,7 +1,7 @@
 # AI/ML 워크로드
 
-> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
-> **마지막 업데이트**: 2023년 7월 20일
+> **지원 버전**: Kubernetes 1.31, 1.32, 1.33  
+> **마지막 업데이트**: 2025년 7월 25일
 
 Kubernetes는 AI/ML 워크로드를 실행하기 위한 강력한 플랫폼입니다. 이 장에서는 EKS에서 AI/ML 워크로드를 실행하는 방법과 모범 사례를 알아보겠습니다.
 
@@ -1131,36 +1131,45 @@ data:
 ### Spot 인스턴스 활용
 
 ```yaml
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: gpu-spot
 spec:
-  requirements:
-  - key: node.kubernetes.io/instance-type
-    operator: In
-    values:
-    - g4dn.xlarge
-    - g4dn.2xlarge
-    - g4dn.4xlarge
-  - key: karpenter.sh/capacity-type
-    operator: In
-    values:
-    - spot
-  - key: kubernetes.io/arch
-    operator: In
-    values:
-    - amd64
+  template:
+    spec:
+      requirements:
+      - key: node.kubernetes.io/instance-type
+        operator: In
+        values:
+        - g4dn.xlarge
+        - g4dn.2xlarge
+        - g4dn.4xlarge
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - spot
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+      nodeClassRef:
+        name: gpu-spot-class
   limits:
-    resources:
-      nvidia.com/gpu: 10
-  provider:
-    instanceProfile: KarpenterNodeInstanceProfile
-    subnetSelector:
-      karpenter.sh/discovery: gpu-cluster
-    securityGroupSelector:
-      karpenter.sh/discovery: gpu-cluster
-  ttlSecondsAfterEmpty: 30
+    nvidia.com/gpu: 10
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+---
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: gpu-spot-class
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: gpu-cluster
+  securityGroupSelector:
+    karpenter.sh/discovery: gpu-cluster
 ```
 
 ### 자동 스케일링

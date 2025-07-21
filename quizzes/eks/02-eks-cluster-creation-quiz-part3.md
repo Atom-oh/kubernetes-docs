@@ -1442,17 +1442,20 @@ Amazon EKS 클러스터에서 노드 그룹의 Auto Scaling 동작을 제어하�
    ```yaml
    # Karpenter Provisioner
    apiVersion: karpenter.sh/v1alpha5
-   kind: Provisioner
+   kind: NodePool
    metadata:
      name: default
    spec:
-     requirements:
-       - key: karpenter.sh/capacity-type
-         operator: In
-         values: ["spot", "on-demand"]
+     template:
+       spec:
+         requirements:
+           - key: karpenter.sh/capacity-type
+             operator: In
+             values: ["spot", "on-demand"]
+         nodeClassRef:
+           name: default-class
      limits:
-       resources:
-         cpu: 1000
+       cpu: 1000
          memory: 1000Gi
      provider:
        subnetSelector:
@@ -2701,17 +2704,19 @@ Amazon EKS 클러스터에서 노드 그룹의 Auto Scaling을 최적화하기 �
      ```yaml
      # Karpenter Provisioner
      apiVersion: karpenter.sh/v1alpha5
-     kind: Provisioner
+     kind: NodePool
      metadata:
        name: default
      spec:
-       requirements:
-         - key: karpenter.sh/capacity-type
-           operator: In
-           values: ["spot", "on-demand"]
-         - key: node.kubernetes.io/instance-type
-           operator: In
-           values: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
+       template:
+         spec:
+           requirements:
+             - key: karpenter.sh/capacity-type
+               operator: In
+               values: ["spot", "on-demand"]
+             - key: node.kubernetes.io/instance-type
+               operator: In
+               values: ["m5.large", "m5a.large", "m5d.large", "m5n.large"]
        limits:
          resources:
            cpu: 1000

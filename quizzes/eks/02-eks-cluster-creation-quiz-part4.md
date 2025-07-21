@@ -73,17 +73,19 @@ Amazon EKS 클러스터에서 Cluster Autoscaler와 Karpenter의 주요 차이�
      ```yaml
      # Karpenter Provisioner
      apiVersion: karpenter.sh/v1alpha5
-     kind: Provisioner
+     kind: NodePool
      metadata:
        name: default
      spec:
-       requirements:
-         - key: karpenter.sh/capacity-type
-           operator: In
-           values: ["spot", "on-demand"]
-         - key: kubernetes.io/arch
-           operator: In
-           values: ["amd64", "arm64"]
+       template:
+         spec:
+           requirements:
+             - key: karpenter.sh/capacity-type
+               operator: In
+               values: ["spot", "on-demand"]
+             - key: kubernetes.io/arch
+               operator: In
+               values: ["amd64", "arm64"]
          - key: node.kubernetes.io/instance-type
            operator: In
            values: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m6g.large"]
