@@ -1,6 +1,59 @@
 # 스토리지
 
+> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
+> **마지막 업데이트**: 2023년 7월 20일
+
 Kubernetes에서 스토리지는 컨테이너화된 애플리케이션의 데이터를 저장하고 관리하는 중요한 부분입니다. 이 장에서는 볼륨, 퍼시스턴트 볼륨, 퍼시스턴트 볼륨 클레임, 스토리지 클래스 등 Kubernetes의 스토리지 개념에 대해 자세히 알아보겠습니다.
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+- 스토리지 프로비저너 (EKS의 경우 EBS CSI 드라이버)
+
+### 스토리지 예제 설정
+
+```bash
+# 네임스페이스 생성
+kubectl create namespace storage-demo
+
+# 간단한 PVC 및 Pod 생성
+kubectl -n storage-demo apply -f - <<EOF
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: data-pod
+spec:
+  containers:
+  - name: data-container
+    image: busybox
+    command: ["sh", "-c", "while true; do echo \$(date) >> /data/output.txt; sleep 5; done"]
+    volumeMounts:
+    - name: data-volume
+      mountPath: /data
+  volumes:
+  - name: data-volume
+    persistentVolumeClaim:
+      claimName: data-pvc
+EOF
+
+# 스토리지 리소스 확인
+kubectl -n storage-demo get pvc,pod
+```
 
 ## 목차
 
@@ -15,16 +68,77 @@ Kubernetes에서 스토리지는 컨테이너화된 애플리케이션의 데이
 
 ## 볼륨(Volume)
 
+> **핵심 개념**: Kubernetes 볼륨은 포드 내의 컨테이너가 데이터를 저장하고 공유할 수 있는 디렉토리로, 컨테이너의 재시작과 관계없이 데이터를 유지할 수 있습니다.
+
 Kubernetes 볼륨은 포드 내의 컨테이너가 데이터를 저장하고 공유할 수 있는 디렉토리입니다. 볼륨은 포드의 수명 주기와 연결되어 있으며, 포드가 삭제되면 볼륨도 삭제됩니다(일부 볼륨 유형 제외).
+
+### Kubernetes 스토리지 아키텍처
+
+```mermaid
+flowchart TD
+    subgraph "Kubernetes 스토리지 아키텍처"
+        subgraph "애플리케이션 계층"
+            Pod1[Pod]
+            Pod2[Pod]
+            Pod3[Pod]
+            
+            Pod1 --> PVC1[PersistentVolumeClaim]
+            Pod2 --> PVC2[PersistentVolumeClaim]
+            Pod3 --> PVC3[PersistentVolumeClaim]
+        end
+        
+        subgraph "스토리지 추상화 계층"
+            PVC1 --> PV1[PersistentVolume]
+            PVC2 --> PV2[PersistentVolume]
+            PVC3 --> PV3[PersistentVolume]
+            
+            SC[StorageClass] --> PV1
+            SC --> PV2
+            SC --> PV3
+        end
+        
+        subgraph "물리적 스토리지 계층"
+            PV1 --> CSI[CSI 드라이버]
+            PV2 --> CSI
+            PV3 --> CSI
+            
+            CSI --> Cloud[클라우드 스토리지\nEBS, EFS, Azure Disk 등]
+            CSI --> Local[로컬 스토리지]
+            CSI --> NFS[NFS 서버]
+        end
+    end
+    
+    classDef pod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef pvc fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef pv fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef sc fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
+    classDef driver fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
+    classDef storage fill:#28a745,stroke:#333,stroke-width:1px,color:white;
+    
+    class Pod1,Pod2,Pod3 pod;
+    class PVC1,PVC2,PVC3 pvc;
+    class PV1,PV2,PV3 pv;
+    class SC sc;
+    class CSI driver;
+    class Cloud,Local,NFS storage;
+```
 
 ### 볼륨의 필요성
 
 1. **컨테이너 재시작 시 데이터 유지**: 컨테이너가 재시작되면 파일 시스템이 초기화되지만, 볼륨을 사용하면 데이터를 유지할 수 있습니다.
 2. **컨테이너 간 데이터 공유**: 같은 포드 내의 여러 컨테이너가 볼륨을 통해 데이터를 공유할 수 있습니다.
 
-### 주요 볼륨 유형
+### 주요 볼륨 유형 비교
 
-#### emptyDir
+| 볼륨 유형 | 수명 주기 | 데이터 지속성 | 사용 사례 | 특징 |
+|----------|----------|-------------|----------|------|
+| **emptyDir** | 포드 | 임시 | 임시 데이터, 캐시, 체크포인트 | 포드가 삭제되면 데이터도 삭제됨 |
+| **hostPath** | 노드 | 노드 수준 | 노드 파일 시스템 접근, 모니터링 | 보안 위험이 있으므로 주의 필요 |
+| **configMap** | 구성 | 구성 데이터 | 애플리케이션 구성 | 구성 데이터를 볼륨으로 마운트 |
+| **secret** | 구성 | 민감 데이터 | 인증서, 비밀번호 | 민감 데이터를 볼륨으로 마운트 |
+| **persistentVolumeClaim** | 클러스터 | 영구적 | 데이터베이스, 파일 저장소 | 포드 재시작 및 재스케줄링 후에도 데이터 유지 |
+
+### emptyDir
 
 `emptyDir` 볼륨은 포드가 노드에 할당될 때 생성되고, 포드가 해당 노드에서 실행되는 동안 유지됩니다. 포드가 노드에서 제거되면 `emptyDir`의 데이터는 영구적으로 삭제됩니다.
 
@@ -45,9 +159,28 @@ spec:
     emptyDir: {}
 ```
 
-#### hostPath
+### hostPath
 
 `hostPath` 볼륨은 노드의 파일 시스템에서 파일이나 디렉토리를 포드에 마운트합니다. 이는 노드의 파일 시스템에 접근해야 하는 포드에 유용하지만, 보안 위험이 있으므로 주의해서 사용해야 합니다.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-hostpath
+spec:
+  containers:
+  - image: nginx
+    name: test-container
+    volumeMounts:
+    - mountPath: /test-pd
+      name: test-volume
+  volumes:
+  - name: test-volume
+    hostPath:
+      path: /data
+      type: Directory  # DirectoryOrCreate, Directory, FileOrCreate, File, Socket, CharDevice, BlockDevice
+```
 
 ```yaml
 apiVersion: v1
