@@ -1,7 +1,7 @@
 # Kubernetes Resource Operator (KRO)를 활용한 Helm 차트 마이그레이션
 
-> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
-> **마지막 업데이트**: 2023년 7월 20일
+> **지원 버전**: Kubernetes 1.31, 1.32, 1.33  
+> **마지막 업데이트**: 2025년 7월 25일
 
 ## 개요
 
@@ -12,7 +12,7 @@ Kubernetes Resource Operator(KRO)는 Kubernetes 리소스를 선언적으로 관
 이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
 
 ### 필수 도구
-- kubectl v1.26 이상
+- kubectl v1.31 이상
 - Helm v3.10 이상
 - kro CLI v0.5.0 이상
 - 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)

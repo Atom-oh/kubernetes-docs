@@ -1,7 +1,7 @@
 # EKS 클러스터 생성 - 4부: Terraform 및 CDK를 사용한 클러스터 생성
 
-> **지원 버전**: Kubernetes 1.26, 1.27, 1.28  
-> **마지막 업데이트**: 2023년 7월 20일
+> **지원 버전**: Kubernetes 1.31, 1.32, 1.33  
+> **마지막 업데이트**: 2025년 7월 25일
 
 ## 실습 환경 설정
 
@@ -11,7 +11,7 @@
 - AWS CLI v2.0 이상
 - Terraform v1.0.0 이상 (Terraform 예제용)
 - AWS CDK v2.0 이상 (CDK 예제용)
-- kubectl v1.26 이상
+- kubectl v1.31 이상
 - Node.js v14 이상 (CDK 사용 시)
 
 ### AWS 계정 설정
@@ -917,7 +917,7 @@ export class EksCrdStack extends cdk.Stack {
 - AWS CLI v2.0 이상
 - Terraform v1.0.0 이상
 - AWS CDK v2.0 이상
-- kubectl v1.26 이상
+- kubectl v1.31 이상
 - Node.js v14 이상 (CDK 사용 시)
 
 AWS 계정에는 다음과 같은 IAM 권한이 필요합니다:

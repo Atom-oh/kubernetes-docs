@@ -64,51 +64,8 @@ Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 �
 
 사용자 공간은 일반 응용 프로그램이 실행되는 메모리 영역입니다. 사용자 공간 프로그램은 시스템 호출을 통해 커널 서비스에 접근합니다.
 
-```mermaid
-flowchart TB
-    subgraph "사용자 공간 (User Space)"
-        APP1["웹 서버"]
-        APP2["데이터베이스"]
-        APP3["컨테이너 런타임"]
-        SHELL["셸 (bash, zsh)"]
-        LIBS["시스템 라이브러리
-            (glibc, libcap)"]
-    end
-    
-    subgraph "커널 공간 (Kernel Space)"
-        SYSCALL["시스템 호출 인터페이스"]
-        
-        subgraph "커널 서브시스템"
-            PROC["프로세스 관리"]
-            MEM["메모리 관리"]
-            FS["파일 시스템"]
-            NET["네트워킹"]
-            CGROUPS["cgroups"]
-            NS["네임스페이스"]
-            SEC["보안 모듈"]
-        end
-        
-        subgraph "하드웨어 추상화 계층"
-            CPU["CPU"]
-            RAM["메모리"]
-            DISK["디스크"]
-            NIC["네트워크 인터페이스"]
-        end
-    end
-    
-    APP1 & APP2 & APP3 & SHELL --> LIBS
-    LIBS --> SYSCALL
-    SYSCALL --> PROC & MEM & FS & NET & CGROUPS & NS & SEC
-    PROC & MEM & FS & NET & CGROUPS & NS & SEC --> CPU & RAM & DISK & NIC
-    
-    classDef userSpace fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef kernelSpace fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef hardware fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    class APP1,APP2,APP3,SHELL,LIBS userSpace;
-    class SYSCALL,PROC,MEM,FS,NET,CGROUPS,NS,SEC kernelSpace;
-    class CPU,RAM,DISK,NIC hardware;
-```
+<style>.linux-arch-container{font-family:Arial,sans-serif;margin:20px 0;display:flex;flex-direction:column;align-items:center;width:100%}.linux-arch-user-space{background-color:#326CE5;border:2px solid #2A5CAD;border-radius:10px;padding:10px;margin-bottom:20px;color:white;width:800px;text-align:center}.linux-arch-kernel-space{background-color:#FF9900;border:2px solid #D68000;border-radius:10px;padding:10px;color:black;width:800px;text-align:center}.linux-arch-syscall{background-color:#FFD966;border:2px solid #D6B656;border-radius:5px;padding:10px;margin:10px auto;text-align:center;color:#7F6000;font-weight:bold;width:60%}.linux-arch-kernel-subsystems{background-color:#FFC266;border:2px solid #D6A656;border-radius:10px;padding:10px;margin:10px 0;text-align:center}.linux-arch-hal{background-color:#00C7B7;border:2px solid #00A697;border-radius:10px;padding:10px;margin:10px 0;color:white;text-align:center}.linux-arch-component{background-color:#4F8CEA;border:2px solid #3A77D5;border-radius:5px;padding:5px;margin:5px;display:inline-block;width:170px;text-align:center;color:white;font-weight:bold}.linux-arch-kernel-component{background-color:#FFAA33;border:2px solid #D68C23;color:black;border-radius:5px;padding:5px;margin:5px;display:inline-block;width:170px;text-align:center;font-weight:bold}.linux-arch-hardware-component{background-color:#33DFD1;border:2px solid #23BFAF;color:white;border-radius:5px;padding:5px;margin:5px;display:inline-block;width:170px;text-align:center;font-weight:bold}.linux-arch-section-title{font-weight:bold;margin-bottom:10px;font-size:18px;text-shadow:1px 1px 1px rgba(0,0,0,0.3);text-align:center}.linux-arch-arrow{text-align:center;font-size:24px;margin:5px 0;color:#333}.linux-arch-components-row{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;padding:5px}</style><div class="linux-arch-container"><div class="linux-arch-user-space"><div class="linux-arch-section-title">사용자 공간 (User Space)</div><div class="linux-arch-components-row"><div class="linux-arch-component">웹 서버</div><div class="linux-arch-component">데이터베이스</div><div class="linux-arch-component">컨테이너 런타임</div><div class="linux-arch-component">셸 (bash, zsh)</div></div><div class="linux-arch-components-row"><div class="linux-arch-component" style="width:350px">시스템 라이브러리 (glibc, libcap)</div></div></div><div class="linux-arch-arrow">↓</div><div class="linux-arch-kernel-space"><div class="linux-arch-section-title">커널 공간 (Kernel Space)</div><div class="linux-arch-syscall">시스템 호출 인터페이스</div><div class="linux-arch-arrow">↓</div><div class="linux-arch-kernel-subsystems"><div class="linux-arch-section-title">커널 서브시스템</div><div class="linux-arch-components-row"><div class="linux-arch-kernel-component">프로세스 관리</div><div class="linux-arch-kernel-component">메모리 관리</div><div class="linux-arch-kernel-component">파일 시스템</div><div class="linux-arch-kernel-component">네트워킹</div></div><div class="linux-arch-components-row"><div class="linux-arch-kernel-component">cgroups</div><div class="linux-arch-kernel-component">네임스페이스</div><div class="linux-arch-kernel-component">보안 모듈</div></div></div><div class="linux-arch-arrow">↓</div><div class="linux-arch-hal"><div class="linux-arch-section-title">하드웨어 추상화 계층</div><div class="linux-arch-components-row"><div class="linux-arch-hardware-component">CPU</div><div class="linux-arch-hardware-component">메모리</div><div class="linux-arch-hardware-component">디스크</div><div class="linux-arch-hardware-component">네트워크 인터페이스</div></div></div></div></div>
+
 
 ### 시스템 호출 예시
 
@@ -124,63 +81,9 @@ flowchart TB
 
 ### 리눅스 커널 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph "사용자 공간"
-        APP1["애플리케이션 1"]
-        APP2["애플리케이션 2"]
-        APP3["애플리케이션 3"]
-        SHELL["셸 (Bash, Zsh)"]
-        LIBS["시스템 라이브러리"]
-    end
-    
-    subgraph "커널 공간"
-        SYSCALL["시스템 호출 인터페이스"]
-        
-        subgraph "커널 서브시스템"
-            PROC["프로세스 관리"]
-            MEM["메모리 관리"]
-            FS["파일 시스템"]
-            NET["네트워킹"]
-            SEC["보안 (SELinux, AppArmor)"]
-        end
-        
-        DRIVERS["장치 드라이버"]
-    end
-    
-    subgraph "하드웨어"
-        CPU["CPU"]
-        RAM["메모리"]
-        DISK["스토리지"]
-        NIC["네트워크 카드"]
-    end
-    
-    %% 연결 정의
-    APP1 & APP2 & APP3 & SHELL --> LIBS
-    LIBS --> SYSCALL
-    
-    SYSCALL --> PROC & MEM & FS & NET & SEC
-    PROC & MEM & FS & NET & SEC --> DRIVERS
-    
-    DRIVERS --> CPU & RAM & DISK & NIC
-    
-    %% 스타일 정의
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef userLib fill:#4DB6AC,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef kernelSub fill:#5C6BC0,stroke:#333,stroke-width:1px,color:white;
-    classDef drivers fill:#7986CB,stroke:#333,stroke-width:1px,color:white;
-    classDef hardware fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class APP1,APP2,APP3,SHELL userApp;
-    class LIBS userLib;
-    class SYSCALL k8sComponent;
-    class PROC,MEM,FS,NET,SEC kernelSub;
-    class DRIVERS drivers;
-    class CPU,RAM,DISK,NIC hardware;
-```
-```
+
+<style>.linux-kernel-container{font-family:Arial,sans-serif;margin:20px 0;display:flex;flex-direction:column;align-items:center;width:100%}.linux-kernel-section{border-radius:10px;padding:15px;margin-bottom:15px;width:800px;text-align:center}.linux-kernel-user-space{background-color:#00C7B7;border:2px solid #009688;color:white}.linux-kernel-kernel-space{background-color:#5C6BC0;border:2px solid #3F51B5;color:white}.linux-kernel-hardware{background-color:#f9f9f9;border:2px solid #e0e0e0;color:black}.linux-kernel-syscall{background-color:#326CE5;border:2px solid #1A56D6;border-radius:5px;padding:10px;margin:10px auto;text-align:center;color:white;font-weight:bold;width:60%}.linux-kernel-subsystems{background-color:#7986CB;border:2px solid #5C6BC0;border-radius:10px;padding:10px;margin:15px 0;text-align:center;color:white}.linux-kernel-drivers{background-color:#7986CB;border:2px solid #5C6BC0;border-radius:5px;padding:10px;margin:15px auto;text-align:center;color:white;font-weight:bold;width:60%}.linux-kernel-app{background-color:#00C7B7;border:2px solid #009688;border-radius:5px;padding:8px;margin:5px;display:inline-block;width:170px;text-align:center;color:white;font-weight:bold}.linux-kernel-lib{background-color:#4DB6AC;border:2px solid #00897B;border-radius:5px;padding:8px;margin:10px;display:inline-block;width:350px;text-align:center;color:white;font-weight:bold}.linux-kernel-subsystem-component{background-color:#5C6BC0;border:2px solid #3F51B5;border-radius:5px;padding:8px;margin:5px;display:inline-block;width:170px;text-align:center;color:white;font-weight:bold}.linux-kernel-hardware-component{background-color:#f9f9f9;border:2px solid #e0e0e0;border-radius:5px;padding:8px;margin:5px;display:inline-block;width:170px;text-align:center;color:black;font-weight:bold}.linux-kernel-section-title{font-weight:bold;margin-bottom:10px;font-size:18px;text-shadow:1px 1px 1px rgba(0,0,0,0.3)}.linux-kernel-arrow{text-align:center;font-size:24px;margin:5px 0;color:#333}.linux-kernel-components-row{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;padding:5px}</style><div class="linux-kernel-container"><div class="linux-kernel-section linux-kernel-user-space"><div class="linux-kernel-section-title">사용자 공간</div><div class="linux-kernel-components-row"><div class="linux-kernel-app">애플리케이션 1</div><div class="linux-kernel-app">애플리케이션 2</div><div class="linux-kernel-app">애플리케이션 3</div><div class="linux-kernel-app">셸 (Bash, Zsh)</div></div><div class="linux-kernel-components-row"><div class="linux-kernel-lib">시스템 라이브러리</div></div></div><div class="linux-kernel-arrow">↓</div><div class="linux-kernel-section linux-kernel-kernel-space"><div class="linux-kernel-section-title">커널 공간</div><div class="linux-kernel-syscall">시스템 호출 인터페이스</div><div class="linux-kernel-arrow">↓</div><div class="linux-kernel-subsystems"><div class="linux-kernel-section-title">커널 서브시스템</div><div class="linux-kernel-components-row"><div class="linux-kernel-subsystem-component">프로세스 관리</div><div class="linux-kernel-subsystem-component">메모리 관리</div><div class="linux-kernel-subsystem-component">파일 시스템</div><div class="linux-kernel-subsystem-component">네트워킹</div><div class="linux-kernel-subsystem-component">보안 (SELinux, AppArmor)</div></div></div><div class="linux-kernel-arrow">↓</div><div class="linux-kernel-drivers">장치 드라이버</div></div><div class="linux-kernel-arrow">↓</div><div class="linux-kernel-section linux-kernel-hardware"><div class="linux-kernel-section-title">하드웨어</div><div class="linux-kernel-components-row"><div class="linux-kernel-hardware-component">CPU</div><div class="linux-kernel-hardware-component">메모리</div><div class="linux-kernel-hardware-component">스토리지</div><div class="linux-kernel-hardware-component">네트워크 카드</div></div></div></div>
+
 
 ## 프로세스 관리
 
@@ -369,60 +272,7 @@ ip link set <veth2> netns <네임스페이스명>
 
 Linux 파일 권한은 소유자, 그룹, 기타 사용자에 대한 읽기(r), 쓰기(w), 실행(x) 권한으로 구성됩니다.
 
-```mermaid
-flowchart LR
-    subgraph "파일 권한 구조"
-        direction LR
-        F["파일 타입"] --- U["소유자 권한"] --- G["그룹 권한"] --- O["기타 사용자 권한"]
-        
-        subgraph "파일 타입"
-            FT["-: 일반 파일
-                d: 디렉토리
-                l: 심볼릭 링크
-                c: 문자 장치
-                b: 블록 장치"]
-        end
-        
-        subgraph "소유자 권한"
-            UR["r: 읽기"]
-            UW["w: 쓰기"]
-            UX["x: 실행"]
-        end
-        
-        subgraph "그룹 권한"
-            GR["r: 읽기"]
-            GW["w: 쓰기"]
-            GX["x: 실행"]
-        end
-        
-        subgraph "기타 사용자 권한"
-            OR["r: 읽기"]
-            OW["w: 쓰기"]
-            OX["x: 실행"]
-        end
-    end
-    
-    %% 예시
-    subgraph "예시"
-        EX1["drwxr-xr--"]
-        EX2["d | rwx | r-x | r--"]
-        EX3["디렉토리 | 소유자(모든 권한) | 그룹(읽기,실행) | 기타(읽기만)"]
-    end
-    
-    %% 스타일 적용
-    classDef fileType fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef userPerm fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef groupPerm fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef otherPerm fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef example fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class F,FT fileType
-    class U,UR,UW,UX userPerm
-    class G,GR,GW,GX groupPerm
-    class O,OR,OW,OX otherPerm
-    class EX1,EX2,EX3 example
-```
+<style>.file-perm-container{font-family:Arial,sans-serif;margin:20px 0;display:flex;flex-direction:column;align-items:center;width:100%}.file-perm-main{display:flex;flex-direction:column;width:900px;border:2px solid #333;border-radius:10px;padding:15px;margin-bottom:20px;background-color:#f8f9fa}.file-perm-title{font-size:20px;font-weight:bold;text-align:center;margin-bottom:15px;color:#333}.file-perm-structure{display:flex;justify-content:space-between;margin-bottom:20px;text-align:center}.file-perm-section{flex:1;padding:10px;margin:0 5px;border-radius:8px;font-weight:bold}.file-perm-type{background-color:#f9f9f9;border:2px solid #333;color:black}.file-perm-owner{background-color:#00C7B7;border:2px solid #009688;color:white}.file-perm-group{background-color:#326CE5;border:2px solid #1A56D6;color:white}.file-perm-other{background-color:#3B48CC;border:2px solid #2A37BB;color:white}.file-perm-details{display:flex;flex-wrap:wrap;justify-content:space-between;margin-top:10px}.file-perm-detail-section{width:22%;margin-bottom:15px;border-radius:8px;padding:10px;box-sizing:border-box}.file-perm-detail-title{font-weight:bold;margin-bottom:8px;text-align:center}.file-perm-detail-content{background-color:rgba(255,255,255,0.7);border-radius:5px;padding:8px;font-size:14px;color:#333}.file-perm-examples{background-color:#FF9900;border:2px solid #E68A00;border-radius:10px;padding:15px;width:900px;color:black}.file-perm-example-row{display:flex;align-items:center;margin:10px 0;font-weight:bold}.file-perm-example-item{padding:8px 15px;margin:0;background-color:rgba(255,255,255,0.7);border-radius:5px;text-align:center}.file-perm-example-table{width:100%;border-collapse:separate;border-spacing:5px}.file-perm-example-table td{padding:8px;background-color:rgba(255,255,255,0.7);border-radius:5px;text-align:center;font-weight:bold;width:25%}.file-perm-arrow{text-align:center;font-size:24px;margin:10px 0;color:#333}</style><div class="file-perm-container"><div class="file-perm-main"><div class="file-perm-title">파일 권한 구조</div><div class="file-perm-structure"><div class="file-perm-section file-perm-type">파일 타입</div><div class="file-perm-section file-perm-owner">소유자 권한</div><div class="file-perm-section file-perm-group">그룹 권한</div><div class="file-perm-section file-perm-other">기타 사용자 권한</div></div><div class="file-perm-details"><div class="file-perm-detail-section file-perm-type"><div class="file-perm-detail-title">파일 타입</div><div class="file-perm-detail-content">-: 일반 파일<br>d: 디렉토리<br>l: 심볼릭 링크<br>c: 문자 장치<br>b: 블록 장치</div></div><div class="file-perm-detail-section file-perm-owner"><div class="file-perm-detail-title">소유자 권한</div><div class="file-perm-detail-content">r: 읽기<br>w: 쓰기<br>x: 실행</div></div><div class="file-perm-detail-section file-perm-group"><div class="file-perm-detail-title">그룹 권한</div><div class="file-perm-detail-content">r: 읽기<br>w: 쓰기<br>x: 실행</div></div><div class="file-perm-detail-section file-perm-other"><div class="file-perm-detail-title">기타 사용자 권한</div><div class="file-perm-detail-content">r: 읽기<br>w: 쓰기<br>x: 실행</div></div></div></div><div class="file-perm-arrow">↓</div><div class="file-perm-examples"><div class="file-perm-title">예시</div><div style="text-align:center;margin-bottom:15px;font-weight:bold;font-size:16px">drwxr-xr--</div><table class="file-perm-example-table"><tr><td>d</td><td>rwx</td><td>r-x</td><td>r--</td></tr><tr><td>디렉토리</td><td>소유자(모든 권한)</td><td>그룹(읽기,실행)</td><td>기타(읽기만)</td></tr></table></div></div>
 
 ### 권한 관련 명령어
 
