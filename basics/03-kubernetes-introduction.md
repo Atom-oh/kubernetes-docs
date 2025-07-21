@@ -112,24 +112,7 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 컨트롤 플레인 (마스터) 구성 요소
 
-```mermaid
-flowchart TB
-    subgraph "Control Plane (Master)"
-        API[kube-apiserver]
-        ETCD["etcd (저장소)"]
-        SCHED[kube-scheduler]
-        CM[kube-controller-manager]
-        CCM[cloud-controller-manager]
-    end
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class API,SCHED,CM,CCM k8sComponent;
-    class ETCD dataStore;
-```
+![](../assets/kubernetes_control_plane.png)
 
 1. **kube-apiserver**: Kubernetes API를 노출하는 컨트롤 플레인의 프론트엔드
 2. **etcd**: 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소
@@ -147,36 +130,7 @@ flowchart TB
 
 ### 노드 구성 요소
 
-```mermaid
-flowchart TB
-    subgraph "Node (Worker)"
-        KLET[kubelet]
-        KPROXY[kube-proxy]
-        CRI[Container Runtime]
-        
-        subgraph "Pods"
-            POD1[Container 1]
-            POD2[Container 2]
-            POD3[Container 3]
-            DOTS["..."]
-        end
-    end
-    
-    CRI --- POD1
-    CRI --- POD2
-    CRI --- POD3
-    CRI --- DOTS
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class KLET,KPROXY k8sComponent;
-    class CRI userApp;
-    class POD1,POD2,POD3 userApp;
-```
+![](../assets/kubernetes_worker_node.png)
 
 1. **kubelet**: 각 노드에서 실행되는 에이전트로, 파드 내 컨테이너가 실행되도록 관리
 2. **kube-proxy**: 각 노드에서 실행되는 네트워크 프록시로, Kubernetes 서비스 개념의 구현을 담당
@@ -184,68 +138,7 @@ flowchart TB
 
 ### 전체 아키텍처
 
-```mermaid
-graph TD
-    subgraph "Control Plane"
-        API[kube-apiserver]
-        ETCD[etcd]
-        SCHED[kube-scheduler]
-        CM[kube-controller-manager]
-        CCM[cloud-controller-manager]
-    end
-    
-    subgraph "Node 1"
-        KLET1[kubelet]
-        KPROXY1[kube-proxy]
-        CRI1[Container Runtime]
-        subgraph "Pods"
-            POD1[Pod 1]
-            POD2[Pod 2]
-        end
-    end
-    
-    subgraph "Node 2"
-        KLET2[kubelet]
-        KPROXY2[kube-proxy]
-        CRI2[Container Runtime]
-        subgraph "Pods"
-            POD3[Pod 3]
-            POD4[Pod 4]
-        end
-    end
-    
-    API --- ETCD
-    API --- SCHED
-    API --- CM
-    API --- CCM
-    
-    API --- KLET1
-    API --- KLET2
-    
-    KLET1 --- CRI1
-    KPROXY1 --- CRI1
-    CRI1 --- POD1
-    CRI1 --- POD2
-    
-    KLET2 --- CRI2
-    KPROXY2 --- CRI2
-    CRI2 --- POD3
-    CRI2 --- POD4
-    
-    %% 스타일 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class API,SCHED,CM,CCM k8sComponent;
-    class ETCD dataStore;
-    class KLET1,KPROXY1,KLET2,KPROXY2 k8sComponent;
-    class CRI1,CRI2 userApp;
-    class POD1,POD2,POD3,POD4 userApp;
-```
+![](../assets/kubernetes_architecture.png)
 
 ## Kubernetes 주요 구성 요소
 
