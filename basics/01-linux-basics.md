@@ -64,7 +64,7 @@ Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 �
 
 사용자 공간은 일반 응용 프로그램이 실행되는 메모리 영역입니다. 사용자 공간 프로그램은 시스템 호출을 통해 커널 서비스에 접근합니다.
 
-<![Linux 아키텍처](../assets/linux_architecture.png)
+![Linux 아키텍처](../assets/linux_architecture.png)
 
 
 ### 시스템 호출 예시
