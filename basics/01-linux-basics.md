@@ -1,7 +1,7 @@
 # Linux 기초
 
 > **지원 버전**: 모든 주요 Linux 배포판 (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+)  
-> **마지막 업데이트**: 2023년 7월 20일
+> **마지막 업데이트**: 2025년 7월 25일
 
 Kubernetes와 컨테이너 기술을 이해하기 위해서는 Linux에 대한 기본적인 이해가 필수적입니다. 이 문서에서는 Kubernetes 환경에서 특히 중요한 Linux의 핵심 개념들을 다룹니다.
 
@@ -121,6 +121,27 @@ flowchart TB
 | `write()` | 파일에 데이터 쓰기 | `echo`, `tee` |
 | `socket()` | 네트워크 소켓 생성 | `netstat`, `ss` |
 | `clone()` | 네임스페이스 생성 | `unshare`, `docker` |
+
+### 리눅스 커널 아키텍처
+
+```mermaid
+flowchart TD
+    subgraph "사용자 공간"
+        APP1["애플리케이션 1"]
+        APP2["애플리케이션 2"]
+        APP3["애플리케이션 3"]
+        SHELL["셸 (Bash, Zsh)"]
+        LIBS["시스템 라이브러리"]
+    end
+    
+    subgraph "커널 공간"
+        SYSCALL["시스템 호출 인터페이스"]
+        
+        subgraph "커널 서브시스템"
+            PROC["프로세스 관리"]
+            MEM["메모리 관리"]
+            FS["파일 시스템"]
+            NET["네트워킹"]
             SEC["보안 (SELinux, AppArmor)"]
         end
         
@@ -152,12 +173,13 @@ flowchart TB
     classDef hardware fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
     
     %% 클래스 적용
-    class APP1,APP2,APP3,SHELL userApp
-    class LIBS userLib
-    class SYSCALL k8sComponent
-    class PROC,MEM,FS,NET,SEC kernelSub
-    class DRIVERS drivers
-    class CPU,RAM,DISK,NIC hardware
+    class APP1,APP2,APP3,SHELL userApp;
+    class LIBS userLib;
+    class SYSCALL k8sComponent;
+    class PROC,MEM,FS,NET,SEC kernelSub;
+    class DRIVERS drivers;
+    class CPU,RAM,DISK,NIC hardware;
+```
 ```
 
 ## 프로세스 관리
