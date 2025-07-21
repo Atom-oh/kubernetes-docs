@@ -1,53 +1,180 @@
 # Kubernetes 정책
 
+> **지원 버전**: Kubernetes 1.26 - 1.33.3  
+> **마지막 업데이트**: 2025년 7월 20일
+
 Kubernetes에서 정책은 클러스터와 워크로드의 동작을 제어하고 규제하는 규칙 집합입니다. 정책을 통해 보안, 리소스 사용, 네트워크 통신 등 다양한 측면을 관리할 수 있습니다. 이 장에서는 Kubernetes의 다양한 정책 유형과 이를 구현하는 방법, 그리고 Amazon EKS에서의 정책 관리에 대해 알아보겠습니다.
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+- Kyverno CLI (선택 사항)
+- OPA Gatekeeper (선택 사항)
+
+### 정책 예제 설정
+
+```bash
+# 네임스페이스 생성
+kubectl create namespace policy-demo
+
+# 리소스 쿼터 생성
+kubectl -n policy-demo apply -f - <<EOF
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: demo-quota
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi
+    pods: "10"
+EOF
+
+# 네트워크 정책 생성
+kubectl -n policy-demo apply -f - <<EOF
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+EOF
+
+# 정책 확인
+kubectl -n policy-demo get resourcequota,networkpolicy
+```
+
+## Kubernetes 정책 아키텍처
 
 ```mermaid
 graph TD
-    subgraph "정책 유형"
-        Resource["리소스 정책<br>(ResourceQuota, LimitRange)"]
-        Security["보안 정책<br>(Pod Security Standards)"]
-        Network["네트워크 정책<br>(NetworkPolicy)"]
-        Custom["커스텀 정책<br>(OPA Gatekeeper, Kyverno)"]
+    subgraph "Kubernetes 정책 아키텍처"
+        subgraph "정책 유형"
+            Resource["리소스 정책"]
+            Security["보안 정책"]
+            Network["네트워크 정책"]
+            Custom["커스텀 정책"]
+        end
+        
+        subgraph "정책 구현 메커니즘"
+            Quota["ResourceQuota"]
+            Limit["LimitRange"]
+            PSS["Pod Security Standards"]
+            NetPol["NetworkPolicy"]
+            OPA["OPA Gatekeeper"]
+            Kyverno["Kyverno"]
+            AdmCtrl["Admission Controllers"]
+        end
+        
+        subgraph "정책 적용 계층"
+            Cluster["클러스터 수준"]
+            NS["네임스페이스 수준"]
+            Pod["포드 수준"]
+        end
+        
+        Resource --> Quota
+        Resource --> Limit
+        Security --> PSS
+        Security --> AdmCtrl
+        Network --> NetPol
+        Custom --> OPA
+        Custom --> Kyverno
+        
+        Quota --> NS
+        Limit --> NS
+        PSS --> Pod
+        NetPol --> Pod
+        OPA --> Cluster
+        OPA --> NS
+        OPA --> Pod
+        Kyverno --> Cluster
+        Kyverno --> NS
+        Kyverno --> Pod
+        AdmCtrl --> Pod
     end
-    
-    subgraph "정책 목적"
-        Sec["보안 강화"]
-        Res["리소스 관리"]
-        Comp["규정 준수"]
-        Stand["표준화"]
-    end
-    
-    Resource -->|구현| Res
-    Security -->|구현| Sec
-    Security -->|구현| Comp
-    Network -->|구현| Sec
-    Custom -->|구현| Sec
-    Custom -->|구현| Comp
-    Custom -->|구현| Stand
-    
-    subgraph "적용 대상"
-        Cluster["클러스터"]
-        NS["네임스페이스"]
-        Pod["포드"]
-    end
-    
-    Resource -->|적용| NS
-    Security -->|적용| Pod
-    Network -->|적용| Pod
-    Custom -->|적용| Cluster
-    Custom -->|적용| NS
-    Custom -->|적용| Pod
     
     %% 스타일 정의
     classDef policyType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef policyPurpose fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef mechanism fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef level fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     
     %% 클래스 적용
     class Resource,Security,Network,Custom policyType;
-    class Sec,Res,Comp,Stand policyPurpose;
-    class Cluster,NS,Pod k8sComponent;
+    class Quota,Limit,PSS,NetPol,OPA,Kyverno,AdmCtrl mechanism;
+    class Cluster,NS,Pod level;
+```
+
+## 정책 유형 비교
+
+| 정책 유형 | 구현 메커니즘 | 적용 수준 | 주요 목적 | Kubernetes 버전 지원 |
+|----------|--------------|----------|----------|-------------------|
+| **리소스 정책** | ResourceQuota, LimitRange | 네임스페이스 | 리소스 사용 제한 및 관리 | 모든 버전 |
+| **보안 정책** | Pod Security Standards, PodSecurityPolicy(deprecated) | 포드, 네임스페이스 | 보안 컨텍스트 제한 | PSP: ~1.24, PSS: 1.22+ |
+| **네트워크 정책** | NetworkPolicy | 포드 | 네트워크 트래픽 제어 | 1.8+ |
+| **커스텀 정책** | OPA Gatekeeper, Kyverno | 클러스터, 네임스페이스, 포드 | 사용자 정의 정책 적용 | 모든 버전(애드온) |
+
+## 리소스 정책
+
+리소스 정책은 Kubernetes 클러스터 내의 컴퓨팅 리소스(CPU, 메모리 등)와 오브젝트 수(포드, 서비스 등)를 제한하고 관리하는 메커니즘입니다.
+
+### ResourceQuota
+
+ResourceQuota는 네임스페이스 내에서 사용할 수 있는 리소스의 총량을 제한합니다.
+
+```yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-resources
+  namespace: dev
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi
+    pods: "10"
+    services: "5"
+    persistentvolumeclaims: "5"
+    secrets: "10"
+    configmaps: "10"
+```
+
+### LimitRange
+
+LimitRange는 네임스페이스 내의 개별 컨테이너나 포드에 대한 기본 리소스 제한과 요청을 설정합니다.
+
+```yaml
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: limit-mem-cpu-per-container
+  namespace: dev
+spec:
+  limits:
+  - default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 256Mi
+    max:
+      cpu: "1"
+      memory: 1Gi
+    min:
+      cpu: 50m
+      memory: 128Mi
+    type: Container
+```
 ```
 
 ## 목차
