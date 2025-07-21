@@ -1,53 +1,189 @@
 # Kubernetes 스케줄링, 선점 및 축출
 
+> **지원 버전**: Kubernetes 1.26 - 1.33.3  
+> **마지막 업데이트**: 2025년 7월 20일
+
 Kubernetes에서 스케줄링은 포드를 적절한 노드에 배치하는 과정입니다. 선점은 우선순위가 높은 포드를 위해 우선순위가 낮은 포드를 제거하는 과정이며, 축출은 노드 문제 발생 시 포드를 안전하게 이동시키는 과정입니다. 이 장에서는 Kubernetes의 스케줄링 메커니즘, 노드 선택, 선점, 축출 등의 개념과 Amazon EKS에서의 스케줄링 최적화 방법에 대해 알아보겠습니다.
+
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+- 여러 노드가 있는 클러스터 (스케줄링 테스트용)
+
+### 스케줄링 예제 설정
+
+```bash
+# 네임스페이스 생성
+kubectl create namespace scheduling-demo
+
+# 노드에 레이블 추가 (여러 노드가 있는 경우)
+kubectl label nodes <node-name> disktype=ssd
+kubectl label nodes <node-name> gpu=true
+
+# 노드 어피니티를 사용하는 파드 생성
+kubectl -n scheduling-demo apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-ssd
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: disktype
+            operator: In
+            values:
+            - ssd
+  containers:
+  - name: nginx
+    image: nginx
+EOF
+
+# 우선순위 클래스 생성
+kubectl apply -f - <<EOF
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 1000000
+globalDefault: false
+description: "This priority class should be used for critical service pods only."
+EOF
+
+# 포드 중단 예산(PDB) 생성
+kubectl -n scheduling-demo apply -f - <<EOF
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: nginx-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: nginx
+EOF
+```
+
+## Kubernetes 스케줄링 아키텍처
 
 ```mermaid
 graph TD
-    subgraph "스케줄링 프로세스"
-        Pod["포드 생성"] -->|스케줄링 요청| Scheduler["kube-scheduler"]
-        Scheduler -->|1. 필터링| Filter["노드 필터링<br>(Predicates)"]
-        Filter -->|2. 스코어링| Score["노드 스코어링<br>(Priorities)"]
-        Score -->|3. 선택| Select["최적 노드 선택"]
-        Select -->|4. 바인딩| Bind["노드에 포드 바인딩"]
+    subgraph "Kubernetes 스케줄링 시스템"
+        subgraph "스케줄링 컴포넌트"
+            Scheduler["kube-scheduler"]
+            Queue["스케줄링 큐"]
+            Cache["노드 & 포드 캐시"]
+            Plugins["스케줄링 플러그인"]
+        end
+        
+        subgraph "스케줄링 단계"
+            QueueSort["큐 정렬"]
+            PreFilter["사전 필터링"]
+            Filter["필터링"]
+            PreScore["사전 스코어링"]
+            Score["스코어링"]
+            Bind["바인딩"]
+            Reserve["예약"]
+            Permit["허가"]
+        end
+        
+        subgraph "스케줄링 제약 조건"
+            NodeSelector["노드 셀렉터"]
+            NodeAffinity["노드 어피니티"]
+            PodAffinity["포드 어피니티"]
+            PodAntiAffinity["포드 안티-어피니티"]
+            Taints["테인트"]
+            Tolerations["톨러레이션"]
+            TopologySpread["토폴로지 분배"]
+        end
+        
+        subgraph "선점 및 축출"
+            Priority["우선순위 & 선점"]
+            PDB["포드 중단 예산"]
+            Descheduler["디스케줄러"]
+            TaintManager["테인트 매니저"]
+        end
     end
     
-    subgraph "스케줄링 제약 조건"
-        NodeSelector["노드 셀렉터"]
-        NodeAffinity["노드 어피니티"]
-        PodAffinity["포드 어피니티"]
-        PodAntiAffinity["포드 안티-어피니티"]
-        Taints["테인트"]
-        Tolerations["톨러레이션"]
-    end
+    API[API 서버] --> Queue
+    Queue --> Scheduler
+    Scheduler --> Cache
+    Scheduler --> Plugins
     
-    subgraph "선점 및 축출"
-        Priority["포드 우선순위"]
-        Preemption["선점<br>(Preemption)"]
-        Eviction["축출<br>(Eviction)"]
-        PDB["포드 중단 예산<br>(PDB)"]
-    end
+    Plugins --> QueueSort
+    QueueSort --> PreFilter
+    PreFilter --> Filter
+    Filter --> PreScore
+    PreScore --> Score
+    Score --> Reserve
+    Reserve --> Permit
+    Permit --> Bind
     
-    NodeSelector -->|영향| Filter
-    NodeAffinity -->|영향| Filter
-    PodAffinity -->|영향| Filter
-    PodAntiAffinity -->|영향| Filter
-    Taints -->|영향| Filter
-    Tolerations -->|영향| Filter
+    NodeSelector --> Filter
+    NodeAffinity --> Filter
+    PodAffinity --> Filter
+    PodAntiAffinity --> Filter
+    Taints --> Filter
+    Tolerations --> Filter
+    TopologySpread --> Filter & Score
     
-    Priority -->|영향| Preemption
-    Preemption -->|트리거| Eviction
-    PDB -->|제한| Eviction
+    Priority --> Scheduler
+    PDB --> TaintManager
+    Descheduler --> API
     
     %% 스타일 정의
-    classDef schedulingProcess fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef schedulingConstraint fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef preemptionEviction fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef component fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef stage fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef constraint fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef disruption fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
+    classDef api fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
     
     %% 클래스 적용
-    class Pod,Scheduler,Filter,Score,Select,Bind schedulingProcess;
-    class NodeSelector,NodeAffinity,PodAffinity,PodAntiAffinity,Taints,Tolerations schedulingConstraint;
-    class Priority,Preemption,Eviction,PDB preemptionEviction;
+    class Scheduler,Queue,Cache,Plugins component;
+    class QueueSort,PreFilter,Filter,PreScore,Score,Reserve,Permit,Bind stage;
+    class NodeSelector,NodeAffinity,PodAffinity,PodAntiAffinity,Taints,Tolerations,TopologySpread constraint;
+    class Priority,PDB,Descheduler,TaintManager disruption;
+    class API api;
+```
+
+## 스케줄링 개념 비교
+
+| 개념 | 목적 | 사용 사례 | Kubernetes 버전 |
+|------|------|----------|----------------|
+| **노드 셀렉터** | 특정 레이블이 있는 노드에 포드 배치 | 간단한 노드 선택 | 모든 버전 |
+| **노드 어피니티** | 복잡한 노드 선택 규칙 정의 | 고급 노드 선택 | 1.6+ |
+| **포드 어피니티** | 다른 포드와 가까이 배치 | 관련 서비스 공동 배치 | 1.6+ |
+| **포드 안티-어피니티** | 다른 포드와 멀리 배치 | 고가용성 보장 | 1.6+ |
+| **테인트와 톨러레이션** | 특정 포드만 노드에 배치 허용 | 전용 노드, 노드 격리 | 1.6+ |
+| **토폴로지 분배 제약** | 토폴로지 도메인 간 포드 분산 | 가용 영역 간 분산 | 1.16+ (1.19에서 GA) |
+| **우선순위 및 선점** | 중요 워크로드 우선 배치 | 중요 서비스 보장 | 1.8+ (1.11에서 GA) |
+| **포드 중단 예산** | 동시에 중단되는 포드 수 제한 | 고가용성 보장 | 1.4+ (1.21에서 GA) |
+
+## 스케줄링 기본 개념
+
+> **핵심 개념**: Kubernetes 스케줄러는 포드를 실행할 최적의 노드를 선택하는 컨트롤 플레인 컴포넌트로, 필터링과 스코어링 두 단계로 작동합니다.
+
+### 스케줄링 프로세스
+
+1. **필터링 단계 (Predicates)**
+   - 포드를 실행할 수 있는 적합한 노드 집합 식별
+   - 리소스 요구사항, 노드 셀렉터, 어피니티 규칙, 테인트/톨러레이션 등 고려
+   - 하나의 조건이라도 충족하지 못하면 노드 제외
+
+2. **스코어링 단계 (Priorities)**
+   - 필터링을 통과한 노드에 점수 부여
+   - 리소스 사용률, 포드 간 분산, 어피니티 선호도 등 고려
+   - 가장 높은 점수를 받은 노드 선택
+
+3. **바인딩 단계**
+   - 선택된 노드에 포드 할당
+   - API 서버에 바인딩 정보 업데이트
 ```
 
 ## 목차
