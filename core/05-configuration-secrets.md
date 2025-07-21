@@ -5,28 +5,109 @@
 
 Kubernetes에서 구성 관리는 애플리케이션의 설정을 코드와 분리하여 관리하는 중요한 부분입니다. 이 장에서는 컨피그맵(ConfigMap), 시크릿(Secret), 환경 변수, 볼륨을 통한 구성 마운트 등 Kubernetes의 구성 관리 방법에 대해 자세히 알아보겠습니다.
 
+## 실습 환경 설정
+
+이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+
+### 필수 도구
+- kubectl v1.26 이상
+- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+
+### 구성 예제 설정
+
+```bash
+# 네임스페이스 생성
+kubectl create namespace config-demo
+
+# ConfigMap 생성
+kubectl -n config-demo create configmap app-config \
+  --from-literal=APP_ENV=production \
+  --from-literal=APP_DEBUG=false \
+  --from-literal=APP_PORT=8080
+
+# Secret 생성
+kubectl -n config-demo create secret generic app-secrets \
+  --from-literal=DB_USER=admin \
+  --from-literal=DB_PASSWORD=s3cr3t \
+  --from-literal=API_KEY=abcdef123456
+
+# ConfigMap과 Secret을 사용하는 Pod 생성
+kubectl -n config-demo apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: config-test-pod
+spec:
+  containers:
+  - name: test-container
+    image: busybox
+    command: ["sh", "-c", "env | sort && sleep 3600"]
+    env:
+    - name: APP_ENV
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: APP_ENV
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: app-secrets
+          key: DB_PASSWORD
+  restartPolicy: Never
+EOF
+
+# Pod 로그 확인
+kubectl -n config-demo logs config-test-pod
+```
+
 ## 한 눈에 보는 구성 관리
 
 ```mermaid
 graph TD
-    Admin[클러스터 관리자] -->|생성| CM[컨피그맵]
-    Admin -->|생성| Secret[시크릿]
-    CM -->|환경 변수로 제공| Pod1[파드]
-    Secret -->|환경 변수로 제공| Pod1
-    CM -->|볼륨으로 마운트| Pod2[파드]
-    Secret -->|볼륨으로 마운트| Pod2
-    Secret -->|이미지 풀 시크릿| Pod3[파드]
+    subgraph "Kubernetes 구성 관리"
+        subgraph "구성 소스"
+            Admin[클러스터 관리자]
+            GitOps[GitOps 파이프라인]
+            ExtSys[외부 시스템]
+            
+            Admin -->|생성| CM[ConfigMap]
+            Admin -->|생성| Secret[Secret]
+            GitOps -->|자동화| CM
+            GitOps -->|자동화| Secret
+            ExtSys -->|통합| CM
+            ExtSys -->|통합| Secret
+        end
+        
+        subgraph "구성 소비"
+            CM -->|환경 변수| EnvPod[Pod]
+            Secret -->|환경 변수| EnvPod
+            
+            CM -->|볼륨 마운트| VolPod[Pod]
+            Secret -->|볼륨 마운트| VolPod
+            
+            Secret -->|이미지 풀 시크릿| ImgPod[Pod]
+            
+            subgraph "고급 기능"
+                CM -->|자동 리로드| Sidecar[사이드카]
+                Secret -->|암호화| KSOPS[KSOPS]
+                Secret -->|동적 주입| Vault[Vault Injector]
+            end
+        end
+    end
     
     %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    classDef admin fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    classDef config fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef advanced fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef integration fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
     
     %% 클래스 적용
-    class Admin user;
-    class CM,Secret k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
+    class Admin,GitOps,ExtSys admin;
+    class CM,Secret config;
+    class EnvPod,VolPod,ImgPod pod;
+    class Sidecar,KSOPS,Vault advanced;
+    class GitOps,ExtSys integration;
 ```
 
 ## 목차
@@ -44,10 +125,84 @@ graph TD
 
 컨피그맵은 키-값 쌍의 형태로 구성 데이터를 저장하는 API 객체입니다. 컨피그맵을 사용하면 컨테이너 이미지에서 구성 데이터를 분리하여 애플리케이션을 더 쉽게 이식할 수 있습니다.
 
+### ConfigMap과 Secret 비교
+
+| 특성 | ConfigMap | Secret |
+|------|-----------|--------|
+| **용도** | 일반 구성 데이터 | 민감한 구성 데이터 |
+| **저장 형식** | 일반 텍스트 | Base64 인코딩 (기본) |
+| **크기 제한** | 1MB | 1MB |
+| **암호화** | 기본적으로 없음 | etcd 암호화 지원 |
+| **볼륨 타입** | configMap | secret |
+| **사용 사례** | 환경 변수, 설정 파일 | 비밀번호, 토큰, 인증서 |
+| **자동 업데이트** | 볼륨 마운트 시 지연 가능 | 볼륨 마운트 시 지연 가능 |
+
+### 컨피그맵 생성 방법
+
+컨피그맵은 다양한 방법으로 생성할 수 있습니다:
+
+1. **명령형 방식으로 생성**:
+
+```bash
+# 리터럴 값으로 생성
+kubectl create configmap my-config --from-literal=key1=value1 --from-literal=key2=value2
+
+# 파일에서 생성
+kubectl create configmap my-config --from-file=config.properties
+
+# 디렉토리에서 생성
+kubectl create configmap my-config --from-file=config-dir/
+```
+
+2. **선언형 방식으로 생성**:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  # 단순 키-값 쌍
+  database.host: "mysql"
+  database.port: "3306"
+  
+  # 파일 형태의 구성
+  config.yaml: |
+    server:
+      port: 8080
+    logging:
+      level: INFO
+    features:
+      enabled: true
+```
+
 ### 컨피그맵 사용 방법
 
-```mermaid
-graph TD
+컨피그맵은 다음과 같은 방법으로 사용할 수 있습니다:
+
+1. **환경 변수로 사용**:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: config-env-pod
+spec:
+  containers:
+  - name: app
+    image: nginx
+    env:
+    # 단일 키-값 참조
+    - name: DB_HOST
+      valueFrom:
+        configMapKeyRef:
+          name: my-config
+          key: database.host
+    # 모든 키-값 참조
+    envFrom:
+    - configMapRef:
+        name: my-config
+```
     CM[컨피그맵] -->|환경 변수| Pod1[파드]
     CM -->|볼륨 마운트| Pod2[파드]
     CM -->|명령줄 인수| Pod3[파드]
