@@ -1219,3 +1219,370 @@ spec:
 - B. 서비스 간 트래픽 라우팅 규칙 정의: 이는 VirtualService의 역할입니다.
 - D. 서비스 메시 외부 서비스와의 통합: 이는 ServiceEntry의 역할입니다.
 </details>
+### 9. Istio에서 'Gateway'의 주요 목적은 무엇인가요?
+
+A. 서비스 메시 내부 서비스 간 통신 관리  
+B. 서비스 메시 외부에서 내부로의 트래픽 진입점 정의  
+C. 서비스 메시 내부에서 외부로의 트래픽 출구점 정의  
+D. 서비스 버전 간 트래픽 분할  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 서비스 메시 외부에서 내부로의 트래픽 진입점 정의**
+
+**설명:**
+Istio에서 'Gateway'의 주요 목적은 서비스 메시 외부에서 내부로의 트래픽 진입점을 정의하는 것입니다. Gateway는 메시 가장자리에서 작동하는 로드 밸런서로, HTTP/HTTPS, TCP, TLS 등의 트래픽을 수신하고 이를 메시 내부 서비스로 라우팅하는 역할을 합니다. Gateway는 인그레스 트래픽을 처리하기 위한 Istio의 방식으로, Kubernetes의 Ingress 리소스보다 더 강력하고 유연한 기능을 제공합니다.
+
+**Gateway의 주요 기능:**
+
+1. **프로토콜 지원**: HTTP, HTTPS, TCP, TLS 등 다양한 프로토콜 지원
+2. **포트 구성**: 다양한 포트에서 트래픽 수신
+3. **호스트 기반 라우팅**: 여러 호스트 이름에 대한 트래픽 처리
+4. **TLS 설정**: SNI 기반 라우팅, TLS 종료, 인증서 구성
+5. **VirtualService 연결**: Gateway와 VirtualService를 연결하여 세부적인 라우팅 규칙 정의
+
+**Gateway 예시:**
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: bookinfo-gateway
+spec:
+  selector:
+    istio: ingressgateway  # Istio 기본 인그레스 게이트웨이 사용
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "bookinfo.example.com"
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    hosts:
+    - "secure.bookinfo.example.com"
+    tls:
+      mode: SIMPLE
+      credentialName: bookinfo-cert
+```
+
+이 예시에서:
+- `istio: ingressgateway` 레이블이 있는 게이트웨이 워크로드에 적용됩니다.
+- HTTP 트래픽은 포트 80에서 `bookinfo.example.com` 호스트에 대해 수신합니다.
+- HTTPS 트래픽은 포트 443에서 `secure.bookinfo.example.com` 호스트에 대해 수신하며, TLS 종료를 수행합니다.
+- `bookinfo-cert`라는 이름의 인증서를 사용합니다.
+
+**Gateway와 VirtualService 연결:**
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: bookinfo
+spec:
+  hosts:
+  - "bookinfo.example.com"
+  gateways:
+  - bookinfo-gateway  # Gateway 이름 참조
+  http:
+  - match:
+    - uri:
+        prefix: /productpage
+    - uri:
+        prefix: /login
+    - uri:
+        prefix: /logout
+    route:
+    - destination:
+        host: productpage
+        port:
+          number: 9080
+  - match:
+    - uri:
+        prefix: /api/v1/products
+    route:
+    - destination:
+        host: product-api
+        port:
+          number: 9080
+```
+
+이 예시에서:
+- `bookinfo-gateway`를 통해 들어오는 트래픽에 대한 라우팅 규칙을 정의합니다.
+- `/productpage`, `/login`, `/logout` 경로로 들어오는 요청은 `productpage` 서비스로 라우팅됩니다.
+- `/api/v1/products` 경로로 들어오는 요청은 `product-api` 서비스로 라우팅됩니다.
+
+**TLS 모드:**
+
+1. **PASSTHROUGH**: TLS 트래픽을 종료하지 않고 그대로 전달합니다.
+```yaml
+tls:
+  mode: PASSTHROUGH
+```
+
+2. **SIMPLE**: 서버 측 TLS 종료를 수행합니다.
+```yaml
+tls:
+  mode: SIMPLE
+  credentialName: my-cert
+```
+
+3. **MUTUAL**: 상호 TLS(mTLS)를 사용하여 클라이언트 인증을 요구합니다.
+```yaml
+tls:
+  mode: MUTUAL
+  credentialName: my-cert
+  caCertificates: /etc/certs/ca.crt
+```
+
+4. **AUTO_PASSTHROUGH**: SNI 값을 기반으로 트래픽을 라우팅합니다.
+```yaml
+tls:
+  mode: AUTO_PASSTHROUGH
+```
+
+**인그레스 게이트웨이 vs 이그레스 게이트웨이:**
+
+1. **인그레스 게이트웨이(Ingress Gateway)**:
+   - 서비스 메시 외부에서 내부로의 트래픽 진입점
+   - 외부 클라이언트의 요청을 메시 내부 서비스로 라우팅
+
+2. **이그레스 게이트웨이(Egress Gateway)**:
+   - 서비스 메시 내부에서 외부로의 트래픽 출구점
+   - 메시 내부 서비스의 외부 요청을 제어하고 모니터링
+
+**이그레스 게이트웨이 예시:**
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: istio-egressgateway
+spec:
+  selector:
+    istio: egressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "external-service.example.com"
+```
+
+**Gateway와 Kubernetes Ingress의 차이점:**
+
+1. **프로토콜 지원**: Gateway는 HTTP, HTTPS, TCP, TLS 등 다양한 프로토콜을 지원하지만, Ingress는 주로 HTTP와 HTTPS에 중점을 둡니다.
+2. **라우팅 기능**: Gateway는 VirtualService와 함께 사용하여 더 강력한 라우팅 기능을 제공합니다.
+3. **TLS 구성**: Gateway는 더 유연한 TLS 구성 옵션을 제공합니다.
+4. **다중 포트**: Gateway는 단일 리소스에서 여러 포트를 구성할 수 있습니다.
+5. **트래픽 관리**: Gateway는 Istio의 다른 트래픽 관리 기능과 통합됩니다.
+
+**Gateway 사용 시나리오:**
+
+1. **다중 호스트 라우팅**: 여러 도메인 이름에 대한 트래픽을 처리합니다.
+2. **TLS 종료**: HTTPS 트래픽을 종료하고 내부적으로 HTTP로 라우팅합니다.
+3. **경로 기반 라우팅**: URL 경로에 따라 다른 서비스로 트래픽을 라우팅합니다.
+4. **카나리 배포**: 새 버전의 서비스로 일부 트래픽을 라우팅합니다.
+5. **A/B 테스팅**: 사용자 그룹에 따라 다른 서비스 버전으로 트래픽을 라우팅합니다.
+
+**다른 옵션들의 문제점:**
+- A. 서비스 메시 내부 서비스 간 통신 관리: 이는 주로 VirtualService와 DestinationRule의 역할입니다.
+- C. 서비스 메시 내부에서 외부로의 트래픽 출구점 정의: 이는 이그레스 게이트웨이의 역할이지만, Gateway 자체는 주로 인그레스 트래픽을 처리합니다.
+- D. 서비스 버전 간 트래픽 분할: 이는 VirtualService의 주요 기능입니다.
+</details>
+
+### 10. Istio에서 'PeerAuthentication'의 주요 목적은 무엇인가요?
+
+A. 사용자 인증 관리  
+B. 서비스 간 트래픽 라우팅 규칙 정의  
+C. 서비스 간 통신의 인증 방법(mTLS 등) 정의  
+D. 서비스에 대한 접근 제어 정책 정의  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. 서비스 간 통신의 인증 방법(mTLS 등) 정의**
+
+**설명:**
+Istio에서 'PeerAuthentication'의 주요 목적은 서비스 간 통신의 인증 방법(mTLS 등)을 정의하는 것입니다. PeerAuthentication은 워크로드 간 통신에 사용되는 상호 TLS(mTLS) 모드를 지정하여 서비스 간 통신의 보안을 강화합니다. 이를 통해 서비스 간 통신이 암호화되고 인증되어 중간자 공격, 도청 등으로부터 보호됩니다.
+
+**PeerAuthentication의 주요 기능:**
+
+1. **mTLS 모드 설정**: STRICT, PERMISSIVE, DISABLE 등의 mTLS 모드 지정
+2. **워크로드 선택**: 특정 워크로드에 대한 인증 정책 적용
+3. **포트별 설정**: 특정 포트에 대해 다른 mTLS 모드 적용
+4. **네임스페이스 및 메시 수준 정책**: 네임스페이스 또는 전체 메시에 대한 기본 정책 설정
+
+**PeerAuthentication 예시:**
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: istio-system
+spec:
+  mtls:
+    mode: STRICT
+```
+
+이 예시에서:
+- `istio-system` 네임스페이스에 정의된 정책이므로 메시 전체에 적용됩니다.
+- `STRICT` 모드를 사용하여 모든 워크로드 간 통신에 mTLS를 요구합니다.
+
+**mTLS 모드:**
+
+1. **STRICT**: mTLS가 필수입니다. 암호화되지 않은 연결은 거부됩니다.
+2. **PERMISSIVE**: mTLS와 일반 텍스트 트래픽을 모두 허용합니다. 주로 마이그레이션 시나리오에서 사용됩니다.
+3. **DISABLE**: mTLS를 비활성화합니다. 모든 트래픽은 암호화되지 않습니다.
+
+**네임스페이스 수준 정책:**
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: my-namespace
+spec:
+  mtls:
+    mode: STRICT
+```
+
+이 예시에서:
+- `my-namespace` 네임스페이스의 모든 워크로드에 대해 STRICT mTLS 모드를 적용합니다.
+
+**워크로드 수준 정책:**
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: frontend
+  namespace: my-namespace
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+  mtls:
+    mode: STRICT
+```
+
+이 예시에서:
+- `my-namespace` 네임스페이스에서 `app: frontend` 레이블이 있는 워크로드에만 STRICT mTLS 모드를 적용합니다.
+
+**포트별 mTLS 설정:**
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: api-server
+  namespace: my-namespace
+spec:
+  selector:
+    matchLabels:
+      app: api-server
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    8080:
+      mode: DISABLE
+```
+
+이 예시에서:
+- `app: api-server` 레이블이 있는 워크로드에 대해 기본적으로 STRICT mTLS 모드를 적용합니다.
+- 포트 8080에 대해서는 mTLS를 비활성화합니다.
+
+**정책 우선순위:**
+
+1. 가장 구체적인 정책이 우선 적용됩니다:
+   - 워크로드의 특정 포트에 대한 정책
+   - 워크로드에 대한 정책
+   - 네임스페이스에 대한 정책
+   - 메시 전체에 대한 정책
+
+**mTLS 마이그레이션 시나리오:**
+
+1. **PERMISSIVE 모드로 시작**:
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: istio-system
+spec:
+  mtls:
+    mode: PERMISSIVE
+```
+
+2. **서비스별로 STRICT 모드로 전환**:
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: service-a
+  namespace: my-namespace
+spec:
+  selector:
+    matchLabels:
+      app: service-a
+  mtls:
+    mode: STRICT
+```
+
+3. **네임스페이스 전체를 STRICT 모드로 전환**:
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: my-namespace
+spec:
+  mtls:
+    mode: STRICT
+```
+
+4. **메시 전체를 STRICT 모드로 전환**:
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: istio-system
+spec:
+  mtls:
+    mode: STRICT
+```
+
+**DestinationRule과의 관계:**
+
+PeerAuthentication은 서버 측에서 mTLS 요구 사항을 설정하지만, 클라이언트 측에서도 mTLS를 사용하도록 DestinationRule을 구성해야 합니다:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: api-server
+spec:
+  host: api-server.my-namespace.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+```
+
+**PeerAuthentication과 AuthorizationPolicy의 차이:**
+
+- **PeerAuthentication**: 서비스 간 통신의 인증 방법(mTLS 등)을 정의합니다.
+- **AuthorizationPolicy**: 인증된 클라이언트가 서비스에 접근할 수 있는 권한을 정의합니다.
+
+**mTLS의 이점:**
+
+1. **암호화**: 서비스 간 통신이 암호화되어 도청을 방지합니다.
+2. **인증**: 통신하는 서비스의 ID를 확인합니다.
+3. **무결성**: 전송 중인 데이터가 변조되지 않았음을 보장합니다.
+4. **비 부인 방지**: 통신 당사자가 통신 사실을 부인할 수 없습니다.
+
+**다른 옵션들의 문제점:**
+- A. 사용자 인증 관리: 이는 RequestAuthentication의 역할입니다.
+- B. 서비스 간 트래픽 라우팅 규칙 정의: 이는 VirtualService의 역할입니다.
+- D. 서비스에 대한 접근 제어 정책 정의: 이는 AuthorizationPolicy의 역할입니다.
+</details>
