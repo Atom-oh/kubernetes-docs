@@ -216,3 +216,310 @@ spec:
 - B. 배치 작업(Job)의 스케일링 동작 정의: 이는 ScaledJob의 역할입니다.
 - D. 외부 이벤트 소스와의 연결 정의: 이는 ScaledObject의 일부 기능이지만, 주요 목적은 아닙니다.
 </details>
+### 3. KEDA에서 'ScaledJob'의 주요 목적은 무엇인가요?
+
+A. 장기 실행 워크로드의 스케일링 동작 정의  
+B. 이벤트 기반으로 Kubernetes Job을 생성하고 스케일링  
+C. 클러스터 노드의 스케일링 일정 정의  
+D. 주기적인 백업 작업 자동화  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 이벤트 기반으로 Kubernetes Job을 생성하고 스케일링**
+
+**설명:**
+KEDA에서 'ScaledJob'의 주요 목적은 이벤트 기반으로 Kubernetes Job을 생성하고 스케일링하는 것입니다. ScaledJob은 외부 이벤트 소스(예: 메시지 큐, 데이터베이스 쿼리 등)에서 이벤트가 발생할 때마다 새로운 Kubernetes Job을 생성하여 해당 이벤트를 처리합니다. 이는 배치 처리 워크로드에 특히 유용하며, 각 이벤트나 메시지를 독립적인 Job으로 처리할 수 있게 합니다.
+
+**ScaledJob의 주요 구성 요소:**
+
+1. **jobTargetRef**: 생성할 Job의 템플릿을 지정합니다.
+2. **triggers**: 스케일링 결정을 위한 하나 이상의 트리거(이벤트 소스)를 정의합니다.
+3. **maxReplicaCount**: 동시에 실행할 수 있는 최대 Job 수를 지정합니다.
+4. **pollingInterval**: 메트릭을 폴링하는 간격을 지정합니다.
+5. **successfulJobsHistoryLimit**: 유지할 성공한 Job의 수를 지정합니다.
+6. **failedJobsHistoryLimit**: 유지할 실패한 Job의 수를 지정합니다.
+7. **scalingStrategy**: Job 생성 전략을 지정합니다.
+
+**ScaledJob 예시:**
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: rabbitmq-consumer-job
+  namespace: default
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+        - name: rabbitmq-consumer
+          image: rabbitmq-consumer:latest
+          imagePullPolicy: Always
+        restartPolicy: Never
+  pollingInterval: 30
+  maxReplicaCount: 30
+  successfulJobsHistoryLimit: 10
+  failedJobsHistoryLimit: 10
+  triggers:
+  - type: rabbitmq
+    metadata:
+      queueName: hello
+      host: amqp://guest:guest@rabbitmq:5672/
+      queueLength: "5"
+```
+
+**ScaledJob vs ScaledObject:**
+
+1. **ScaledJob**:
+   - 각 이벤트/메시지에 대해 새로운 Job을 생성합니다.
+   - 작업이 완료되면 Job이 종료됩니다.
+   - 배치 처리 워크로드에 적합합니다.
+   - 각 Job은 독립적으로 실행되며 완료 후 종료됩니다.
+
+2. **ScaledObject**:
+   - 기존 워크로드(Deployment, StatefulSet 등)의 레플리카 수를 조정합니다.
+   - 워크로드는 계속 실행됩니다.
+   - 장기 실행 서비스에 적합합니다.
+   - 파드는 계속 실행되며 여러 이벤트/메시지를 처리할 수 있습니다.
+
+**ScaledJob 작동 방식:**
+
+1. ScaledJob이 생성되면 KEDA 컨트롤러가 이를 감지합니다.
+2. 컨트롤러는 지정된 트리거에서 메트릭을 주기적으로 폴링합니다.
+3. 이벤트(예: 메시지 큐에 메시지 도착)가 감지되면 컨트롤러는 새로운 Job을 생성합니다.
+4. 여러 이벤트가 감지되면 maxReplicaCount까지 여러 Job을 병렬로 생성할 수 있습니다.
+5. 각 Job은 완료 후 종료되며, 성공/실패 이력이 지정된 한도까지 유지됩니다.
+
+**스케일링 전략:**
+
+ScaledJob은 다양한 스케일링 전략을 지원합니다:
+
+```yaml
+spec:
+  scalingStrategy:
+    strategy: "custom"  # 또는 "default", "accurate"
+    customScalingQueueLengthDeduction: 1
+    customScalingRunningJobPercentage: "0.5"
+    pendingPodConditions:
+      - "Ready"
+      - "PodScheduled"
+      - "ContainersReady"
+```
+
+1. **default**: 기본 전략으로, 큐 길이에 따라 Job을 생성합니다.
+2. **accurate**: 더 정확한 스케일링을 위해 실행 중인 Job 수를 고려합니다.
+3. **custom**: 사용자 정의 스케일링 로직을 적용합니다.
+
+**ScaledJob 사용 사례:**
+
+1. **메시지 큐 처리**: 각 메시지를 독립적인 Job으로 처리합니다.
+2. **배치 데이터 처리**: 데이터 배치를 개별 Job으로 처리합니다.
+3. **이벤트 기반 워크플로우**: 외부 이벤트에 반응하여 워크플로우를 실행합니다.
+4. **분산 작업 처리**: 작업을 여러 Job으로 분산하여 병렬 처리합니다.
+
+**다양한 트리거 유형 예시:**
+
+1. **Azure Queue Storage 트리거**:
+```yaml
+triggers:
+- type: azure-queue
+  metadata:
+    queueName: myqueue
+    connectionFromEnv: AzureWebJobsStorage
+    queueLength: "5"
+```
+
+2. **Kafka 트리거**:
+```yaml
+triggers:
+- type: kafka
+  metadata:
+    bootstrapServers: kafka.svc:9092
+    consumerGroup: my-group
+    topic: my-topic
+    lagThreshold: "10"
+```
+
+**다른 옵션들의 문제점:**
+- A. 장기 실행 워크로드의 스케일링 동작 정의: 이는 ScaledObject의 역할입니다.
+- C. 클러스터 노드의 스케일링 일정 정의: 이는 Cluster Autoscaler의 역할입니다.
+- D. 주기적인 백업 작업 자동화: 이는 CronJob의 역할이며, ScaledJob은 이벤트 기반 작업에 중점을 둡니다.
+</details>
+
+### 4. KEDA에서 'TriggerAuthentication'의 주요 목적은 무엇인가요?
+
+A. 사용자가 KEDA API에 접근하기 위한 인증 관리  
+B. 외부 이벤트 소스에 접근하기 위한 인증 정보 관리  
+C. Kubernetes 클러스터에 대한 인증 자동화  
+D. 트리거 이벤트의 유효성 검증  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 외부 이벤트 소스에 접근하기 위한 인증 정보 관리**
+
+**설명:**
+KEDA에서 'TriggerAuthentication'의 주요 목적은 외부 이벤트 소스에 접근하기 위한 인증 정보를 관리하는 것입니다. TriggerAuthentication은 ScaledObject나 ScaledJob이 외부 서비스(예: 메시지 큐, 데이터베이스, 클라우드 서비스 등)에 연결하여 메트릭을 수집할 때 필요한 인증 정보를 안전하게 저장하고 참조할 수 있게 해주는 커스텀 리소스입니다.
+
+**TriggerAuthentication의 주요 특징:**
+
+1. **인증 정보 분리**: 스케일링 정의(ScaledObject/ScaledJob)와 인증 정보를 분리하여 보안을 강화합니다.
+2. **재사용성**: 동일한 인증 정보를 여러 스케일링 정의에서 재사용할 수 있습니다.
+3. **다양한 인증 방법 지원**: 시크릿, 환경 변수, 파드 ID, 인증 정보 맵 등 다양한 방법으로 인증 정보를 제공할 수 있습니다.
+4. **네임스페이스 범위**: TriggerAuthentication은 네임스페이스 범위의 리소스입니다.
+
+**TriggerAuthentication 예시:**
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: rabbitmq-auth
+  namespace: default
+spec:
+  secretTargetRef:
+  - parameter: host
+    name: rabbitmq-secret
+    key: host
+  - parameter: username
+    name: rabbitmq-secret
+    key: username
+  - parameter: password
+    name: rabbitmq-secret
+    key: password
+```
+
+**TriggerAuthentication 사용 예시:**
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: rabbitmq-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rabbitmq-consumer
+  triggers:
+  - type: rabbitmq
+    metadata:
+      queueName: hello
+      queueLength: "5"
+    authenticationRef:
+      name: rabbitmq-auth
+```
+
+**인증 정보 제공 방법:**
+
+1. **Secret 참조**:
+```yaml
+spec:
+  secretTargetRef:
+  - parameter: connectionString
+    name: my-secret
+    key: connectionString
+```
+
+2. **환경 변수 참조**:
+```yaml
+spec:
+  env:
+  - parameter: connectionString
+    name: CONNECTION_STRING
+    containerName: my-container
+```
+
+3. **파드 ID 참조** (AWS IAM Role for Service Account 등):
+```yaml
+spec:
+  podIdentity:
+    provider: aws-eks
+```
+
+4. **인증 정보 맵 참조**:
+```yaml
+spec:
+  hashiCorpVault:
+    address: https://vault.example.com
+    authentication: kubernetes
+    role: keda
+    mount: kubernetes
+    secrets:
+    - parameter: connectionString
+      key: secret/data/keda/redis
+      path: connectionString
+```
+
+**ClusterTriggerAuthentication:**
+
+네임스페이스 범위를 넘어 클러스터 전체에서 사용할 수 있는 인증 정보를 정의하려면 ClusterTriggerAuthentication을 사용할 수 있습니다:
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ClusterTriggerAuthentication
+metadata:
+  name: cluster-rabbitmq-auth
+spec:
+  secretTargetRef:
+  - parameter: host
+    name: rabbitmq-secret
+    key: host
+    namespace: keda
+```
+
+**다양한 인증 시나리오:**
+
+1. **Azure Service Bus 인증**:
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: azure-servicebus-auth
+spec:
+  podIdentity:
+    provider: azure-workload-identity
+```
+
+2. **AWS SQS 인증**:
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: aws-sqs-auth
+spec:
+  podIdentity:
+    provider: aws-eks
+```
+
+3. **Kafka SASL 인증**:
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: kafka-auth
+spec:
+  secretTargetRef:
+  - parameter: sasl
+    name: kafka-secret
+    key: sasl
+  - parameter: username
+    name: kafka-secret
+    key: username
+  - parameter: password
+    name: kafka-secret
+    key: password
+```
+
+**인증 정보 보안 모범 사례:**
+
+1. **최소 권한 원칙**: 외부 서비스에 접근하는 데 필요한 최소한의 권한만 부여합니다.
+2. **Secret 교체**: 정기적으로 인증 정보를 교체합니다.
+3. **네임스페이스 분리**: 중요한 인증 정보는 별도의 네임스페이스에 저장합니다.
+4. **RBAC 제한**: TriggerAuthentication에 대한 접근을 제한합니다.
+5. **클라우드 제공자 IAM 통합**: 가능한 경우 Secret 대신 클라우드 제공자의 IAM 통합(예: AWS IRSA, Azure Workload Identity)을 사용합니다.
+
+**다른 옵션들의 문제점:**
+- A. 사용자가 KEDA API에 접근하기 위한 인증 관리: KEDA API 접근은 Kubernetes RBAC로 관리되며, TriggerAuthentication의 역할이 아닙니다.
+- C. Kubernetes 클러스터에 대한 인증 자동화: 이는 Kubernetes 인증 메커니즘의 역할이며, TriggerAuthentication의 역할이 아닙니다.
+- D. 트리거 이벤트의 유효성 검증: TriggerAuthentication은 인증에 중점을 두며, 이벤트 유효성 검증은 다른 메커니즘을 통해 처리됩니다.
+</details>
