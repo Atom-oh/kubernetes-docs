@@ -532,3 +532,333 @@ spec:
 - C. 여러 클러스터에 동시에 동기화하기 위한 병렬 처리 메커니즘: Sync Wave는 여러 클러스터에 대한 병렬 처리가 아닌 단일 애플리케이션 내의 리소스 동기화 순서를 제어합니다.
 - D. 동기화 실패 시 자동으로 재시도하는 메커니즘: Sync Wave는 재시도 메커니즘이 아닌 동기화 순서 제어를 위한 것입니다.
 </details>
+### 7. ArgoCD에서 'ApplicationSet'의 주요 목적은 무엇인가요?
+
+A. 여러 애플리케이션을 하나의 배포 단위로 그룹화  
+B. 템플릿과 제너레이터를 사용하여 여러 ArgoCD Application을 동적으로 생성  
+C. 애플리케이션의 여러 버전을 동시에 배포  
+D. 애플리케이션의 배포 기록을 저장  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 템플릿과 제너레이터를 사용하여 여러 ArgoCD Application을 동적으로 생성**
+
+**설명:**
+ArgoCD에서 'ApplicationSet'의 주요 목적은 템플릿과 제너레이터를 사용하여 여러 ArgoCD Application을 동적으로 생성하는 것입니다. ApplicationSet은 다양한 소스(Git 저장소, 클러스터 목록 등)에서 정보를 가져와 이를 기반으로 Application 리소스를 생성하는 템플릿 엔진을 제공합니다. 이를 통해 여러 환경, 클러스터, 팀에 걸쳐 애플리케이션을 효율적으로 관리할 수 있습니다.
+
+**ApplicationSet의 주요 구성 요소:**
+
+1. **템플릿(Template)**: Application 리소스의 기본 구조를 정의하며, 제너레이터에서 제공하는 값으로 채워집니다.
+2. **제너레이터(Generator)**: 템플릿에 주입할 값을 생성하는 소스입니다. 여러 제너레이터를 조합하여 사용할 수 있습니다.
+
+**주요 제너레이터 유형:**
+
+1. **List Generator**: 정적 목록에서 값을 생성합니다.
+2. **Cluster Generator**: 등록된 클러스터 목록에서 값을 생성합니다.
+3. **Git Generator**: Git 저장소의 디렉토리나 파일에서 값을 생성합니다.
+4. **Matrix Generator**: 두 개 이상의 제너레이터를 조합하여 카테시안 곱을 생성합니다.
+5. **Merge Generator**: 두 개 이상의 제너레이터 결과를 병합합니다.
+6. **SCM Provider Generator**: GitHub, GitLab 등의 SCM 제공자에서 저장소 목록을 가져옵니다.
+7. **Pull Request Generator**: GitHub, GitLab 등의 풀 리퀘스트/머지 리퀘스트에서 값을 생성합니다.
+8. **Cluster Decision Resource Generator**: 클러스터의 사용자 정의 리소스에서 값을 생성합니다.
+
+**ApplicationSet 예시:**
+
+1. **List Generator를 사용한 여러 환경 배포**:
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: guestbook
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - name: dev
+        namespace: guestbook-dev
+        replicas: 1
+      - name: staging
+        namespace: guestbook-staging
+        replicas: 2
+      - name: prod
+        namespace: guestbook-prod
+        replicas: 3
+  template:
+    metadata:
+      name: '{{name}}-guestbook'
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/argoproj/argocd-example-apps.git
+        targetRevision: HEAD
+        path: guestbook
+        helm:
+          parameters:
+          - name: replicaCount
+            value: '{{replicas}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+```
+
+2. **Cluster Generator를 사용한 여러 클러스터 배포**:
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: guestbook-cluster
+  namespace: argocd
+spec:
+  generators:
+  - clusters: {}  # 모든 등록된 클러스터를 사용
+  template:
+    metadata:
+      name: '{{name}}-guestbook'
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/argoproj/argocd-example-apps.git
+        targetRevision: HEAD
+        path: guestbook
+      destination:
+        server: '{{server}}'
+        namespace: guestbook
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+```
+
+3. **Git Generator를 사용한 모노레포 배포**:
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: monorepo-apps
+  namespace: argocd
+spec:
+  generators:
+  - git:
+      repoURL: https://github.com/my-org/monorepo.git
+      revision: HEAD
+      directories:
+      - path: apps/*
+  template:
+    metadata:
+      name: '{{path.basename}}'
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/my-org/monorepo.git
+        targetRevision: HEAD
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{path.basename}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+```
+
+4. **Matrix Generator를 사용한 복합 배포**:
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: matrix-apps
+  namespace: argocd
+spec:
+  generators:
+  - matrix:
+      generators:
+      - clusters:
+          selector:
+            matchLabels:
+              environment: production
+      - list:
+          elements:
+          - component: frontend
+            path: apps/frontend
+          - component: backend
+            path: apps/backend
+  template:
+    metadata:
+      name: '{{name}}-{{component}}'
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/my-org/monorepo.git
+        targetRevision: HEAD
+        path: '{{path}}'
+      destination:
+        server: '{{server}}'
+        namespace: '{{component}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+```
+
+**ApplicationSet의 장점:**
+
+1. **자동화**: 여러 Application을 수동으로 생성하고 관리할 필요가 없습니다.
+2. **일관성**: 모든 Application이 동일한 템플릿에서 생성되므로 일관성이 보장됩니다.
+3. **확장성**: 새로운 환경, 클러스터, 애플리케이션을 쉽게 추가할 수 있습니다.
+4. **유지 관리 용이성**: 템플릿을 변경하면 모든 Application에 변경 사항이 적용됩니다.
+5. **GitOps 준수**: ApplicationSet 자체가 Git에서 관리되므로 GitOps 원칙을 준수합니다.
+
+**ApplicationSet vs App of Apps 패턴:**
+
+- **ApplicationSet**: 템플릿과 제너레이터를 사용하여 Application을 동적으로 생성합니다. 소스 변경(새 클러스터 추가, 새 저장소 추가 등)에 자동으로 대응합니다.
+- **App of Apps**: 하나의 Application이 다른 여러 Application을 정의합니다. 정적이며, 새로운 Application을 추가하려면 Git 저장소를 수동으로 업데이트해야 합니다.
+
+**ApplicationSet 사용 시 고려 사항:**
+
+1. **권한 관리**: ApplicationSet이 생성하는 Application에 적절한 권한이 있는지 확인해야 합니다.
+2. **리소스 제한**: 많은 수의 Application을 생성할 경우 ArgoCD 서버의 리소스 사용량을 모니터링해야 합니다.
+3. **동기화 전략**: 모든 Application에 적용되는 동기화 정책을 신중하게 설정해야 합니다.
+4. **오류 처리**: 일부 Application 생성이 실패할 경우의 처리 방법을 고려해야 합니다.
+
+**다른 옵션들의 문제점:**
+- A. 여러 애플리케이션을 하나의 배포 단위로 그룹화: ApplicationSet은 애플리케이션을 그룹화하는 것이 아니라, 여러 Application 리소스를 동적으로 생성합니다.
+- C. 애플리케이션의 여러 버전을 동시에 배포: ApplicationSet은 여러 버전을 동시에 배포하는 것이 아니라, 템플릿을 기반으로 여러 Application을 생성합니다.
+- D. 애플리케이션의 배포 기록을 저장: 배포 기록 저장은 ArgoCD의 다른 기능이며, ApplicationSet의 주요 목적이 아닙니다.
+</details>
+
+### 8. ArgoCD에서 'Health Status'가 나타내는 것은 무엇인가요?
+
+A. 클러스터의 리소스 사용량  
+B. Git 저장소의 상태  
+C. 배포된 애플리케이션의 실행 상태  
+D. ArgoCD 서버의 성능  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. 배포된 애플리케이션의 실행 상태**
+
+**설명:**
+ArgoCD에서 'Health Status'는 배포된 애플리케이션의 실행 상태를 나타냅니다. 이는 단순히 리소스가 클러스터에 존재하는지 여부를 넘어, 해당 리소스가 실제로 정상적으로 작동하고 있는지를 보여줍니다. ArgoCD는 다양한 Kubernetes 리소스 유형에 대한 상태 확인 로직을 내장하고 있으며, 이를 통해 애플리케이션의 전반적인 건강 상태를 평가합니다.
+
+**Health Status의 종류:**
+
+1. **Healthy**: 애플리케이션이 정상적으로 작동하고 있습니다.
+2. **Progressing**: 애플리케이션이 아직 완전히 배포되지 않았거나 업데이트 중입니다.
+3. **Degraded**: 애플리케이션에 문제가 있어 정상적으로 작동하지 않습니다.
+4. **Suspended**: 애플리케이션이 일시 중단되었습니다.
+5. **Missing**: 애플리케이션 리소스가 클러스터에 존재하지 않습니다.
+6. **Unknown**: 애플리케이션의 상태를 확인할 수 없습니다.
+
+**리소스 유형별 Health Status 평가 방법:**
+
+1. **Deployment**:
+   - **Healthy**: 원하는 레플리카 수와 사용 가능한 레플리카 수가 일치합니다.
+   - **Progressing**: 배포가 진행 중이거나 롤아웃 중입니다.
+   - **Degraded**: 배포에 실패했거나 타임아웃이 발생했습니다.
+
+2. **StatefulSet**:
+   - **Healthy**: 원하는 레플리카 수와 사용 가능한 레플리카 수가 일치합니다.
+   - **Progressing**: 업데이트가 진행 중입니다.
+   - **Degraded**: 일부 파드가 준비되지 않았습니다.
+
+3. **Service**:
+   - **Healthy**: 서비스가 존재하고 셀렉터가 있는 경우 매칭되는 파드가 있습니다.
+   - **Degraded**: 서비스 셀렉터에 매칭되는 파드가 없습니다.
+
+4. **Ingress**:
+   - **Healthy**: 인그레스가 존재하고 모든 백엔드 서비스가 존재합니다.
+   - **Degraded**: 일부 백엔드 서비스가 존재하지 않습니다.
+
+5. **PersistentVolumeClaim**:
+   - **Healthy**: PVC가 바인딩되었습니다.
+   - **Progressing**: PVC가 대기 중입니다.
+   - **Degraded**: PVC가 실패했거나 분실되었습니다.
+
+6. **Job**:
+   - **Healthy**: 작업이 성공적으로 완료되었습니다.
+   - **Progressing**: 작업이 아직 실행 중입니다.
+   - **Degraded**: 작업이 실패했습니다.
+
+7. **CronJob**:
+   - **Healthy**: 마지막 작업이 성공적으로 완료되었거나 아직 실행되지 않았습니다.
+   - **Progressing**: 작업이 아직 실행 중입니다.
+   - **Degraded**: 마지막 작업이 실패했습니다.
+
+**Health Status의 중요성:**
+
+1. **문제 감지**: 배포된 애플리케이션의 문제를 빠르게 감지할 수 있습니다.
+2. **자동화된 롤백**: Health Status가 Degraded로 변경되면 자동 롤백을 트리거할 수 있습니다.
+3. **배포 진행 상황 모니터링**: Progressing 상태를 통해 배포 진행 상황을 모니터링할 수 있습니다.
+4. **종합적인 상태 확인**: 애플리케이션을 구성하는 모든 리소스의 상태를 종합적으로 확인할 수 있습니다.
+
+**사용자 정의 Health Check:**
+
+ArgoCD는 기본 Health Check 로직 외에도 사용자 정의 Health Check를 지원합니다:
+
+1. **리소스 커스터마이저(Resource Customization)**:
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-app
+  namespace: argocd
+spec:
+  # ... 다른 필드 생략 ...
+  ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    jsonPointers:
+    - /spec/replicas
+  - group: apps
+    kind: StatefulSet
+    jsonPointers:
+    - /spec/replicas
+```
+
+2. **ConfigMap을 통한 전역 설정**:
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+data:
+  resource.customizations: |
+    apps/Deployment:
+      health.lua: |
+        health_status = {}
+        if obj.status ~= nil then
+          if obj.status.availableReplicas ~= nil and obj.status.availableReplicas > 0 then
+            health_status.status = "Healthy"
+            health_status.message = "Application is healthy"
+            return health_status
+          end
+        end
+        health_status.status = "Degraded"
+        health_status.message = "No available replicas"
+        return health_status
+```
+
+**Health Status 모니터링 방법:**
+
+1. **ArgoCD UI**: 애플리케이션 대시보드에서 Health Status를 시각적으로 확인할 수 있습니다.
+2. **ArgoCD CLI**: `argocd app get` 명령을 사용하여 애플리케이션의 Health Status를 확인할 수 있습니다.
+3. **API**: ArgoCD API를 통해 Health Status 정보를 가져올 수 있습니다.
+4. **Notifications**: Health Status 변경 시 알림을 설정할 수 있습니다.
+
+**다른 옵션들의 문제점:**
+- A. 클러스터의 리소스 사용량: Health Status는 클러스터의 리소스 사용량이 아닌 애플리케이션의 실행 상태를 나타냅니다.
+- B. Git 저장소의 상태: Health Status는 Git 저장소의 상태가 아닌 배포된 애플리케이션의 상태를 나타냅니다.
+- D. ArgoCD 서버의 성능: Health Status는 ArgoCD 서버의 성능이 아닌 배포된 애플리케이션의 상태를 나타냅니다.
+</details>
