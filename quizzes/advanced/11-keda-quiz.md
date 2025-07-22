@@ -841,3 +841,299 @@ spec:
 - C. 사용자 정의 알림 생성: 알림은 주로 Prometheus Alertmanager와 같은 도구를 통해 처리됩니다.
 - D. 클러스터 노드의 리소스 사용량 최적화: 이는 Cluster Autoscaler나 Kubernetes Scheduler의 역할입니다.
 </details>
+### 7. KEDA에서 'Istio metrics'를 활용한 스케일링의 주요 이점은 무엇인가요?
+
+A. Istio 서비스 메시의 보안 기능 활용  
+B. 트래픽 라우팅 자동화  
+C. 요청 속도(requests/sec)와 같은 네트워크 수준 메트릭에 기반한 스케일링  
+D. 서비스 메시 구성 자동화  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. 요청 속도(requests/sec)와 같은 네트워크 수준 메트릭에 기반한 스케일링**
+
+**설명:**
+KEDA에서 'Istio metrics'를 활용한 스케일링의 주요 이점은 요청 속도(requests/sec)와 같은 네트워크 수준 메트릭에 기반하여 스케일링할 수 있다는 것입니다. Istio는 서비스 메시 내의 모든 트래픽에 대한 상세한 메트릭을 수집하며, KEDA는 이러한 메트릭을 활용하여 애플리케이션의 실제 트래픽 패턴에 따라 스케일링 결정을 내릴 수 있습니다. 이는 CPU나 메모리 사용량과 같은 리소스 메트릭보다 애플리케이션의 실제 부하를 더 정확하게 반영할 수 있습니다.
+
+**Istio 메트릭 기반 스케일링의 작동 방식:**
+
+1. **Istio 설치**: Kubernetes 클러스터에 Istio 서비스 메시를 설치합니다.
+2. **Prometheus 통합**: Istio는 기본적으로 Prometheus와 통합되어 메트릭을 저장합니다.
+3. **KEDA 설정**: KEDA의 Prometheus 스케일러를 사용하여 Istio 메트릭에 기반한 스케일링을 구성합니다.
+4. **메트릭 쿼리**: Prometheus 쿼리를 통해 Istio가 수집한 메트릭(예: 요청 속도, 오류율 등)을 가져옵니다.
+5. **스케일링 결정**: 메트릭 값에 따라 KEDA가 워크로드를 스케일링합니다.
+
+**Istio 메트릭 기반 스케일링 예시:**
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: istio-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-service
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus.istio-system:9090
+      metricName: istio_requests_per_second
+      threshold: "10"
+      query: sum(rate(istio_requests_total{destination_service="my-service.default.svc.cluster.local"}[2m]))
+```
+
+이 예시에서:
+- Istio가 수집한 `istio_requests_total` 메트릭을 사용합니다.
+- 지난 2분 동안의 초당 요청 수(rate)를 계산합니다.
+- 초당 요청 수가 10을 초과하면 스케일 업합니다.
+
+**Istio 메트릭의 종류:**
+
+1. **요청 관련 메트릭**:
+   - `istio_requests_total`: 총 요청 수
+   - `istio_request_duration_milliseconds`: 요청 처리 시간
+   - `istio_request_size`: 요청 크기
+
+2. **응답 관련 메트릭**:
+   - `istio_response_size`: 응답 크기
+   - `istio_request_messages_total`: 요청 메시지 수 (gRPC)
+   - `istio_response_messages_total`: 응답 메시지 수 (gRPC)
+
+3. **오류 관련 메트릭**:
+   - `istio_requests_total{response_code=~"5.*"}`: 5xx 오류 수
+   - `istio_requests_total{response_code=~"4.*"}`: 4xx 오류 수
+
+**다양한 스케일링 시나리오:**
+
+1. **요청 속도 기반 스케일링**:
+```yaml
+triggers:
+- type: prometheus
+  metadata:
+    serverAddress: http://prometheus.istio-system:9090
+    metricName: requests_per_second
+    threshold: "50"
+    query: sum(rate(istio_requests_total{destination_service="my-service.default.svc.cluster.local"}[1m]))
+```
+
+2. **오류율 기반 스케일링**:
+```yaml
+triggers:
+- type: prometheus
+  metadata:
+    serverAddress: http://prometheus.istio-system:9090
+    metricName: error_rate
+    threshold: "0.05"  # 5% 오류율
+    query: sum(rate(istio_requests_total{destination_service="my-service.default.svc.cluster.local",response_code=~"5.*"}[1m])) / sum(rate(istio_requests_total{destination_service="my-service.default.svc.cluster.local"}[1m]))
+```
+
+3. **지연 시간 기반 스케일링**:
+```yaml
+triggers:
+- type: prometheus
+  metadata:
+    serverAddress: http://prometheus.istio-system:9090
+    metricName: p95_latency
+    threshold: "500"  # 500ms
+    query: histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket{destination_service="my-service.default.svc.cluster.local"}[1m])) by (le))
+```
+
+4. **특정 경로에 대한 요청 기반 스케일링**:
+```yaml
+triggers:
+- type: prometheus
+  metadata:
+    serverAddress: http://prometheus.istio-system:9090
+    metricName: api_requests
+    threshold: "20"
+    query: sum(rate(istio_requests_total{destination_service="my-service.default.svc.cluster.local",request_path=~"/api/.*"}[1m]))
+```
+
+**Istio 메트릭 기반 스케일링의 이점:**
+
+1. **애플리케이션 중심 스케일링**: CPU나 메모리 사용량이 아닌 실제 애플리케이션 트래픽에 기반한 스케일링이 가능합니다.
+2. **세분화된 메트릭**: 서비스, 경로, 메서드, 응답 코드 등 다양한 차원으로 메트릭을 필터링할 수 있습니다.
+3. **선제적 스케일링**: 리소스 사용량이 증가하기 전에 트래픽 패턴에 기반하여 선제적으로 스케일링할 수 있습니다.
+4. **비즈니스 메트릭 연계**: 트래픽 패턴은 종종 비즈니스 활동과 직접적으로 연관되어 있어, 비즈니스 요구에 더 잘 부합하는 스케일링이 가능합니다.
+
+**Istio와 KEDA 통합 시 고려 사항:**
+
+1. **메트릭 정확성**: Istio 메트릭이 정확하게 수집되고 있는지 확인해야 합니다.
+2. **쿼리 최적화**: Prometheus 쿼리가 효율적이고 정확한지 확인해야 합니다.
+3. **지연 시간**: 메트릭 수집과 스케일링 결정 사이에 지연이 있을 수 있습니다.
+4. **리소스 사용량**: Istio와 Prometheus는 추가적인 리소스를 사용합니다.
+5. **임계값 조정**: 적절한 스케일링 임계값을 찾기 위해 실험과 조정이 필요할 수 있습니다.
+
+**다른 옵션들의 문제점:**
+- A. Istio 서비스 메시의 보안 기능 활용: KEDA는 Istio의 보안 기능을 활용하는 것이 아니라 메트릭을 활용합니다.
+- B. 트래픽 라우팅 자동화: 트래픽 라우팅은 Istio의 기능이며, KEDA는 스케일링에 중점을 둡니다.
+- D. 서비스 메시 구성 자동화: 서비스 메시 구성은 Istio의 역할이며, KEDA는 이에 관여하지 않습니다.
+</details>
+
+### 8. KEDA에서 'cron' 스케일러의 주요 목적은 무엇인가요?
+
+A. 주기적인 백업 작업 실행  
+B. 시간 기반 스케일링 일정 정의  
+C. 클러스터 유지 관리 자동화  
+D. 워크로드의 자동 재시작 일정 설정  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 시간 기반 스케일링 일정 정의**
+
+**설명:**
+KEDA에서 'cron' 스케일러의 주요 목적은 시간 기반 스케일링 일정을 정의하는 것입니다. cron 스케일러를 사용하면 특정 시간이나 주기에 따라 워크로드를 자동으로 스케일 업하거나 스케일 다운할 수 있습니다. 이는 예측 가능한 트래픽 패턴이 있는 워크로드(예: 업무 시간 중에만 활성화되는 서비스, 특정 시간에 배치 작업을 처리하는 워크로드 등)에 특히 유용합니다.
+
+**cron 스케일러의 작동 방식:**
+
+1. **cron 표현식 정의**: 표준 cron 표현식을 사용하여 스케일링 일정을 정의합니다.
+2. **시간 기반 활성화**: 지정된 시간에 도달하면 스케일러가 활성화됩니다.
+3. **레플리카 수 설정**: 활성화되면 지정된 레플리카 수로 워크로드를 스케일링합니다.
+4. **비활성화**: 지정된 시간이 지나면 스케일러가 비활성화되고, 다른 트리거가 없으면 워크로드가 스케일 다운됩니다.
+
+**cron 스케일러 예시:**
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: cron-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-service
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  triggers:
+  - type: cron
+    metadata:
+      timezone: Asia/Seoul  # 타임존 지정
+      start: 30 * * * *     # 매시간 30분에 스케일 업
+      end: 45 * * * *       # 매시간 45분에 스케일 다운
+      desiredReplicas: "5"  # 활성화 시 5개의 레플리카로 스케일링
+```
+
+이 예시에서:
+- 매시간 30분에 워크로드가 5개의 레플리카로 스케일 업됩니다.
+- 매시간 45분에 워크로드가 스케일 다운됩니다(다른 트리거가 없으면 minReplicaCount로).
+
+**cron 표현식:**
+
+cron 표현식은 다음과 같은 형식을 따릅니다:
+```
+┌───────────── 분 (0 - 59)
+│ ┌───────────── 시 (0 - 23)
+│ │ ┌───────────── 일 (1 - 31)
+│ │ │ ┌───────────── 월 (1 - 12)
+│ │ │ │ ┌───────────── 요일 (0 - 6) (일요일부터 토요일까지)
+│ │ │ │ │
+│ │ │ │ │
+* * * * *
+```
+
+**다양한 cron 스케일링 시나리오:**
+
+1. **업무 시간 중 스케일 업**:
+```yaml
+triggers:
+- type: cron
+  metadata:
+    timezone: Asia/Seoul
+    start: 0 9 * * 1-5    # 평일 오전 9시에 스케일 업
+    end: 0 18 * * 1-5     # 평일 오후 6시에 스케일 다운
+    desiredReplicas: "5"
+```
+
+2. **야간 배치 작업을 위한 스케일 업**:
+```yaml
+triggers:
+- type: cron
+  metadata:
+    timezone: Asia/Seoul
+    start: 0 1 * * *      # 매일 오전 1시에 스케일 업
+    end: 30 1 * * *       # 매일 오전 1시 30분에 스케일 다운
+    desiredReplicas: "3"
+```
+
+3. **주말 트래픽 증가 대비**:
+```yaml
+triggers:
+- type: cron
+  metadata:
+    timezone: Asia/Seoul
+    start: 0 9 * * 6,0    # 토요일과 일요일 오전 9시에 스케일 업
+    end: 0 22 * * 6,0     # 토요일과 일요일 오후 10시에 스케일 다운
+    desiredReplicas: "8"
+```
+
+4. **월말 처리를 위한 스케일 업**:
+```yaml
+triggers:
+- type: cron
+  metadata:
+    timezone: Asia/Seoul
+    start: 0 0 28-31 * *  # 매월 28-31일 자정에 스케일 업
+    end: 0 6 28-31 * *    # 매월 28-31일 오전 6시에 스케일 다운
+    desiredReplicas: "10"
+```
+
+**여러 트리거 조합:**
+
+cron 스케일러는 다른 트리거와 함께 사용할 수 있습니다:
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: combined-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-service
+  minReplicaCount: 0
+  maxReplicaCount: 20
+  triggers:
+  - type: cron
+    metadata:
+      timezone: Asia/Seoul
+      start: 0 9 * * 1-5
+      end: 0 18 * * 1-5
+      desiredReplicas: "5"
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-server
+      metricName: http_requests_per_second
+      threshold: "10"
+      query: sum(rate(http_requests_total{service="my-service"}[2m]))
+```
+
+이 예시에서:
+- 평일 업무 시간 중에는 기본적으로 5개의 레플리카가 유지됩니다.
+- 트래픽이 증가하면 Prometheus 메트릭에 따라 최대 20개까지 스케일 업될 수 있습니다.
+- 업무 시간 외에는 트래픽이 없으면 0으로 스케일 다운됩니다.
+
+**cron 스케일러의 이점:**
+
+1. **예측 가능한 패턴 대응**: 알려진 트래픽 패턴에 맞춰 사전에 스케일링할 수 있습니다.
+2. **비용 최적화**: 필요한 시간에만 리소스를 사용하여 비용을 절약할 수 있습니다.
+3. **피크 시간 준비**: 트래픽이 증가하기 전에 미리 스케일 업하여 성능 저하를 방지할 수 있습니다.
+4. **정기적인 작업 처리**: 정기적으로 실행되는 배치 작업을 위한 리소스를 효율적으로 관리할 수 있습니다.
+
+**cron 스케일러 사용 시 고려 사항:**
+
+1. **타임존 설정**: 올바른 타임존을 지정하여 예상한 시간에 스케일링이 발생하도록 해야 합니다.
+2. **중복 트리거**: 여러 cron 트리거가 겹치는 경우 동작을 이해하고 관리해야 합니다.
+3. **다른 트리거와의 상호 작용**: cron 트리거와 다른 트리거(예: CPU, 메모리 등)가 함께 사용될 때의 동작을 이해해야 합니다.
+4. **일정 변경**: 트래픽 패턴이 변경되면 cron 일정도 업데이트해야 합니다.
+
+**다른 옵션들의 문제점:**
+- A. 주기적인 백업 작업 실행: 백업 작업 실행은 Kubernetes CronJob의 역할이며, KEDA의 cron 스케일러는 스케일링에 중점을 둡니다.
+- C. 클러스터 유지 관리 자동화: 클러스터 유지 관리는 별도의 도구나 프로세스를 통해 관리됩니다.
+- D. 워크로드의 자동 재시작 일정 설정: 워크로드 재시작은 Kubernetes Deployment의 롤링 업데이트나 CronJob을 통해 관리됩니다.
+</details>
