@@ -875,3 +875,351 @@ nodes:
 - B. 네트워크 토폴로지의 연결 지점: KRO의 노드는 네트워크 토폴로지가 아닌 리소스 그래프의 구성 요소입니다.
 - D. KRO 컨트롤러의 인스턴스: 노드는 KRO 컨트롤러의 인스턴스가 아니라 컨트롤러가 관리하는 리소스를 나타냅니다.
 </details>
+### 7. KRO에서 리소스 간의 'owns' 관계가 의미하는 것은 무엇인가요?
+
+A. 한 리소스가 다른 리소스의 구성을 상속받음  
+B. 한 리소스가 다른 리소스의 생명주기를 제어함  
+C. 한 리소스가 다른 리소스의 메트릭을 수집함  
+D. 한 리소스가 다른 리소스의 네트워크 트래픽을 제어함  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 한 리소스가 다른 리소스의 생명주기를 제어함**
+
+**설명:**
+KRO에서 리소스 간의 'owns' 관계는 한 리소스(소유자)가 다른 리소스(종속 리소스)의 생명주기를 제어함을 의미합니다. 이는 소유자 리소스가 삭제될 때 종속 리소스도 함께 삭제되는 등의 생명주기 관리를 포함합니다. 'owns' 관계는 Kubernetes의 OwnerReference와 유사한 개념으로, 부모-자식 관계를 표현합니다.
+
+**'owns' 관계의 주요 특징:**
+
+1. **생명주기 연결**: 소유자 리소스가 삭제되면 종속 리소스도 함께 삭제됩니다.
+2. **계층 구조**: 소유자-종속 관계를 통해 리소스 간의 계층 구조를 형성합니다.
+3. **가비지 컬렉션**: 소유자 리소스가 삭제될 때 고아가 된 종속 리소스를 자동으로 정리합니다.
+4. **권한 위임**: 소유자 리소스는 종속 리소스에 대한 특정 작업을 수행할 권한을 가집니다.
+
+**'owns' 관계 예시:**
+```yaml
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: database-with-storage
+spec:
+  nodes:
+    - name: database
+      template:
+        ref:
+          name: statefulset-template
+        values:
+          image: postgres:13
+          storage:
+            size: 10Gi
+    
+    - name: database-pvc
+      template:
+        ref:
+          name: pvc-template
+        values:
+          size: 10Gi
+          storageClass: standard
+    
+    - name: database-config
+      template:
+        ref:
+          name: configmap-template
+        values:
+          data:
+            postgresql.conf: |
+              max_connections = 100
+              shared_buffers = 1GB
+  
+  edges:
+    # 데이터베이스가 PVC를 소유
+    - from: database
+      to: database-pvc
+      relationship: owns
+      attributes:
+        deleteWithParent: true
+    
+    # 데이터베이스가 ConfigMap을 소유
+    - from: database
+      to: database-config
+      relationship: owns
+      attributes:
+        deleteWithParent: true
+```
+
+**'owns' 관계의 속성:**
+```yaml
+edges:
+  - from: parent-resource
+    to: child-resource
+    relationship: owns
+    attributes:
+      # 부모 리소스가 삭제될 때 자식 리소스도 삭제
+      deleteWithParent: true
+      # 부모 리소스가 업데이트될 때 자식 리소스도 업데이트
+      updateWithParent: true
+      # 자식 리소스 삭제 전략
+      deletionPolicy: Foreground  # 또는 Background
+```
+
+**'owns' vs 'depends-on' 관계:**
+- **'owns'**: 소유권과 생명주기 관리를 나타냅니다. 소유자가 삭제되면 종속 리소스도 삭제됩니다.
+- **'depends-on'**: 종속성을 나타내지만 생명주기는 독립적입니다. 종속 리소스가 먼저 생성되고 준비되어야 하지만, 소유자가 삭제되어도 종속 리소스는 유지됩니다.
+
+**복잡한 소유권 구조 예시:**
+```yaml
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: web-application
+spec:
+  nodes:
+    - name: frontend
+      template:
+        ref:
+          name: deployment-template
+    
+    - name: frontend-service
+      template:
+        ref:
+          name: service-template
+    
+    - name: frontend-config
+      template:
+        ref:
+          name: configmap-template
+    
+    - name: frontend-secret
+      template:
+        ref:
+          name: secret-template
+  
+  edges:
+    # 프론트엔드가 서비스를 소유
+    - from: frontend
+      to: frontend-service
+      relationship: owns
+    
+    # 프론트엔드가 ConfigMap을 소유
+    - from: frontend
+      to: frontend-config
+      relationship: owns
+    
+    # 프론트엔드가 Secret을 소유
+    - from: frontend
+      to: frontend-secret
+      relationship: owns
+```
+
+**'owns' 관계의 실제 적용:**
+1. **애플리케이션 스택**: 애플리케이션과 그 구성 요소(서비스, 구성, 시크릿 등) 간의 관계를 정의합니다.
+2. **데이터베이스와 스토리지**: 데이터베이스와 그 영구 볼륨 클레임 간의 관계를 정의합니다.
+3. **마이크로서비스**: 마이크로서비스와 그 종속 리소스 간의 관계를 정의합니다.
+4. **운영자 패턴**: 사용자 정의 리소스와 그 구현 리소스 간의 관계를 정의합니다.
+
+**다른 옵션들의 문제점:**
+- A. 한 리소스가 다른 리소스의 구성을 상속받음: 'owns' 관계는 구성 상속이 아닌 생명주기 관리를 나타냅니다.
+- C. 한 리소스가 다른 리소스의 메트릭을 수집함: 'owns' 관계는 메트릭 수집과 관련이 없습니다.
+- D. 한 리소스가 다른 리소스의 네트워크 트래픽을 제어함: 'owns' 관계는 네트워크 트래픽 제어와 관련이 없습니다.
+</details>
+
+### 8. KRO에서 리소스 그래프 정의(RGD)를 사용하는 주요 이점은 무엇인가요?
+
+A. 클러스터 리소스 사용량 감소  
+B. 리소스 간의 관계를 시각적으로 표현  
+C. 리소스 간의 관계와 종속성을 선언적으로 정의하고 관리  
+D. 배포 속도 향상  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. 리소스 간의 관계와 종속성을 선언적으로 정의하고 관리**
+
+**설명:**
+KRO에서 리소스 그래프 정의(Resource Graph Definition, RGD)를 사용하는 주요 이점은 리소스 간의 관계와 종속성을 선언적으로 정의하고 관리하는 것입니다. RGD는 Kubernetes 리소스 간의 복잡한 관계를 그래프 형태로 모델링하여, 리소스의 생성, 업데이트, 삭제 순서를 자동으로 관리하고 리소스 간의 종속성을 명시적으로 표현할 수 있게 합니다.
+
+**RGD의 주요 이점:**
+
+1. **선언적 관계 정의**: 리소스 간의 관계를 YAML 형식으로 명시적이고 선언적으로 정의할 수 있습니다.
+2. **종속성 자동 해결**: 리소스 간의 종속성을 자동으로 해결하여 올바른 순서로 리소스를 생성, 업데이트, 삭제합니다.
+3. **재사용 가능한 패턴**: 템플릿과 그래프 구조를 재사용하여 일관된 애플리케이션 배포를 보장합니다.
+4. **상태 전파**: 한 리소스의 상태 변경이 종속 리소스에 자동으로 전파됩니다.
+5. **복잡한 애플리케이션 모델링**: 복잡한 마이크로서비스 아키텍처와 그 종속성을 효과적으로 모델링할 수 있습니다.
+
+**RGD 사용 예시:**
+```yaml
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: three-tier-application
+spec:
+  nodes:
+    # 데이터베이스 계층
+    - name: database
+      template:
+        ref:
+          name: postgres-template
+        values:
+          dbName: myapp
+          dbUser: admin
+    
+    # 백엔드 계층
+    - name: backend
+      template:
+        ref:
+          name: deployment-template
+        values:
+          image: myapp-backend:v1
+          replicas: 3
+          env:
+            - name: DB_HOST
+              value: database
+            - name: DB_NAME
+              value: myapp
+    
+    - name: backend-service
+      template:
+        ref:
+          name: service-template
+        values:
+          port: 8080
+          targetPort: 8080
+    
+    # 프론트엔드 계층
+    - name: frontend
+      template:
+        ref:
+          name: deployment-template
+        values:
+          image: myapp-frontend:v1
+          replicas: 2
+          env:
+            - name: API_URL
+              value: http://backend-service:8080
+    
+    - name: frontend-service
+      template:
+        ref:
+          name: service-template
+        values:
+          port: 80
+          targetPort: 80
+          type: LoadBalancer
+  
+  edges:
+    # 백엔드가 데이터베이스에 의존
+    - from: backend
+      to: database
+      relationship: depends-on
+      attributes:
+        waitForReady: true
+    
+    # 백엔드 서비스가 백엔드에 의존
+    - from: backend-service
+      to: backend
+      relationship: depends-on
+    
+    # 프론트엔드가 백엔드 서비스에 의존
+    - from: frontend
+      to: backend-service
+      relationship: depends-on
+    
+    # 프론트엔드 서비스가 프론트엔드에 의존
+    - from: frontend-service
+      to: frontend
+      relationship: depends-on
+```
+
+**RGD를 통한 복잡한 시나리오 관리:**
+
+1. **블루-그린 배포**:
+```yaml
+nodes:
+  - name: blue-deployment
+    template:
+      ref:
+        name: deployment-template
+      values:
+        image: myapp:v1
+  
+  - name: green-deployment
+    template:
+      ref:
+        name: deployment-template
+      values:
+        image: myapp:v2
+  
+  - name: service
+    template:
+      ref:
+        name: service-template
+      values:
+        selector:
+          app: "{{ .values.activeDeployment }}"
+
+edges:
+  - from: service
+    to: "{{ .values.activeDeployment }}"
+    relationship: references
+```
+
+2. **데이터베이스 마이그레이션**:
+```yaml
+nodes:
+  - name: old-database
+    template:
+      ref:
+        name: database-template
+      values:
+        version: "12"
+  
+  - name: new-database
+    template:
+      ref:
+        name: database-template
+      values:
+        version: "13"
+  
+  - name: migration-job
+    template:
+      ref:
+        name: job-template
+      values:
+        image: migration-tool:v1
+
+edges:
+  - from: migration-job
+    to: old-database
+    relationship: depends-on
+  
+  - from: migration-job
+    to: new-database
+    relationship: depends-on
+  
+  - from: new-database
+    to: migration-job
+    relationship: depends-on
+    attributes:
+      waitForCompletion: true
+```
+
+**RGD와 다른 접근 방식 비교:**
+
+1. **Helm**:
+   - **Helm**: 패키지 관리자로, 리소스 간의 관계를 암시적으로 처리합니다.
+   - **RGD**: 리소스 간의 관계를 명시적으로 정의하고 관리합니다.
+
+2. **Kustomize**:
+   - **Kustomize**: 리소스 사용자 정의에 중점을 두며, 종속성 관리 기능이 제한적입니다.
+   - **RGD**: 리소스 간의 종속성을 명시적으로 정의하고 관리합니다.
+
+3. **Kubernetes 매니페스트**:
+   - **매니페스트**: 개별 리소스를 정의하지만 리소스 간의 관계는 암시적입니다.
+   - **RGD**: 리소스와 그 관계를 함께 정의합니다.
+
+**다른 옵션들의 문제점:**
+- A. 클러스터 리소스 사용량 감소: RGD는 리소스 사용량 감소보다는 리소스 관계 관리에 중점을 둡니다.
+- B. 리소스 간의 관계를 시각적으로 표현: RGD는 시각적 표현보다는 선언적 정의에 중점을 둡니다. 시각화는 별도의 도구를 통해 가능합니다.
+- D. 배포 속도 향상: RGD의 주요 목적은 배포 속도 향상보다는 복잡한 관계 관리입니다. 실제로 종속성 해결로 인해 배포 시간이 더 길어질 수 있습니다.
+</details>
