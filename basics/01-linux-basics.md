@@ -64,8 +64,7 @@ Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 �
 
 사용자 공간은 일반 응용 프로그램이 실행되는 메모리 영역입니다. 사용자 공간 프로그램은 시스템 호출을 통해 커널 서비스에 접근합니다.
 
-![Linux 아키텍처](../assets/linux_architecture.png)
-
+![Linux 아키텍처](../assets/linux_architecture.svg)
 
 ### 시스템 호출 예시
 
@@ -81,7 +80,7 @@ Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 �
 
 ### 리눅스 커널 아키텍처
 
-![리눅스 커널 아키텍처](../assets/linux_kernel_architecture.png)
+![리눅스 커널 아키텍처](../assets/linux_kernel_architecture.svg)
 
 
 ## 프로세스 관리
@@ -130,13 +129,14 @@ bg %<작업번호>
 
 ### 주요 네임스페이스 유형
 
-* **PID 네임스페이스**: 프로세스 ID 격리
-* **네트워크 네임스페이스**: 네트워크 스택 격리 (인터페이스, 라우팅 테이블, 방화벽 등)
-* **마운트 네임스페이스**: 파일 시스템 마운트 포인트 격리
-* **UTS 네임스페이스**: 호스트명과 도메인명 격리
-* **IPC 네임스페이스**: 프로세스 간 통신 자원 격리
-* **사용자 네임스페이스**: 사용자 및 그룹 ID 격리
-* **cgroup 네임스페이스**: cgroup 루트 디렉토리 격리
+* **PID 네임스페이스**: 프로세스 ID 격리, 컨테이너가 자체 PID 1(init)을 가질 수 있게 함
+* **네트워크 네임스페이스**: 네트워크 스택 격리 (인터페이스, IP 주소, 라우팅 테이블, 방화벽 등), 컨테이너 네트워킹의 기반
+* **마운트 네임스페이스**: 파일 시스템 마운트 포인트 격리, 컨테이너별 독립적인 파일 시스템 제공
+* **UTS 네임스페이스**: 호스트명과 도메인명 격리, 각 컨테이너에 고유한 호스트 식별자 부여
+* **IPC 네임스페이스**: 프로세스 간 통신 자원 격리 (공유 메모리, 세마포어, 메시지 큐 등), 마이크로서비스 아키텍처에서 서비스 간 격리에 중요
+* **사용자 네임스페이스**: 사용자 및 그룹 ID 격리, 루트리스(rootless) 컨테이너 실행 지원으로 보안 강화
+* **cgroup 네임스페이스**: cgroup 루트 디렉토리 격리, 컨테이너 내부에서 리소스 제한 가시성 제공
+* **시간 네임스페이스**: 시스템 클록 격리, 컨테이너별 독립적인 시간 설정 가능 (Linux 5.6+)
 
 ### 네임스페이스 관련 명령어
 
@@ -149,34 +149,62 @@ unshare --net --pid --fork --mount-proc bash
 
 # 기존 프로세스의 네임스페이스에 진입
 nsenter --target <PID> --net --pid bash
+
+# 네트워크 네임스페이스 생성 및 관리
+ip netns add <name>
+ip netns exec <name> <command>
+
+# 루트리스(rootless) 컨테이너 실행을 위한 사용자 네임스페이스 활용
+unshare --user --map-root-user --mount --net bash
+
+# 시간 네임스페이스 사용 (Linux 5.6+)
+unshare --time bash
 ```
 
 ## cgroups (Control Groups)
 
-cgroups는 프로세스 그룹의 자원 사용을 제한하고 격리하는 Linux 커널 기능입니다. 컨테이너의 자원 제한을 구현하는 데 사용됩니다.
+cgroups는 프로세스 그룹의 자원 사용을 제한하고 격리하는 Linux 커널 기능입니다. 컨테이너의 자원 제한을 구현하는 데 사용됩니다. 클라우드 네이티브 환경과 Kubernetes에서 리소스 관리의 핵심 기술입니다.
 
 ### cgroups의 주요 기능
 
-* **CPU 시간 제한**: 프로세스 그룹이 사용할 수 있는 CPU 시간 제한
-* **메모리 제한**: 프로세스 그룹이 사용할 수 있는 메모리 양 제한
-* **블록 I/O 제한**: 디스크 I/O 대역폭 제한
-* **네트워크 대역폭 제한**: 네트워크 트래픽 제한
-* **장치 접근 제어**: 특정 장치에 대한 접근 제어
+* **CPU 시간 제한**: 프로세스 그룹이 사용할 수 있는 CPU 시간 제한 및 CPU 코어 할당
+* **메모리 제한**: 프로세스 그룹이 사용할 수 있는 메모리 양 제한 및 OOM(Out of Memory) 동작 제어
+* **블록 I/O 제한**: 디스크 I/O 대역폭 제한 및 우선순위 설정
+* **네트워크 대역폭 제한**: 네트워크 트래픽 제한 (tc와 결합)
+* **장치 접근 제어**: 특정 장치에 대한 접근 제어 및 권한 관리
+* **pids 제어**: 프로세스 생성 수 제한으로 fork 폭탄 방지
+* **freezer**: 프로세스 그룹 일시 중지 및 재개 (컨테이너 일시 중지에 활용)
+* **cpuset**: 특정 CPU 코어와 NUMA 노드에 프로세스 바인딩
 
 ### cgroups v1과 v2
 
-* **cgroups v1**: 각 자원 유형별로 별도의 계층 구조
-* **cgroups v2**: 통합된 단일 계층 구조로 더 일관된 관리 제공
+* **cgroups v1**: 각 자원 유형별로 별도의 계층 구조, 레거시 시스템에서 여전히 사용
+* **cgroups v2**: 통합된 단일 계층 구조로 더 일관된 관리 제공, 최신 배포판의 기본값
+* **하이브리드 모드**: v1과 v2를 함께 사용하여 호환성 유지하면서 새 기능 활용
 
 ### cgroups 관련 명령어
 
 ```bash
 # cgroups 확인
-ls -la /sys/fs/cgroup/
+ls -la /sys/fs/cgroup/                     # cgroups v2
+ls -la /sys/fs/cgroup/cpu /sys/fs/cgroup/memory  # cgroups v1
 
-# systemd를 통한 cgroups 관리
+# systemd를 통한 cgroups 관리 (현대적인 방식)
 systemctl set-property <서비스명> CPUQuota=20%
 systemctl set-property <서비스명> MemoryLimit=1G
+systemctl set-property <서비스명> IOWeight=500
+
+# 프로세스의 cgroup 확인
+cat /proc/<PID>/cgroup
+
+# cgroups v2 직접 조작 (고급)
+echo $$ > /sys/fs/cgroup/user.slice/cgroup.procs
+echo "max 100000" > /sys/fs/cgroup/user.slice/memory.max
+echo "100000 500000" > /sys/fs/cgroup/user.slice/memory.high
+
+# 컨테이너 런타임과 cgroups
+podman stats  # 컨테이너 리소스 사용량 모니터링
+docker run --cpus=0.5 --memory=512m nginx  # 리소스 제한 설정
 ```
 
 ## 파일 시스템
@@ -271,7 +299,7 @@ ip link set <veth2> netns <네임스페이스명>
 
 Linux 파일 권한은 소유자, 그룹, 기타 사용자에 대한 읽기(r), 쓰기(w), 실행(x) 권한으로 구성됩니다.
 
-![파일 권한 구조](../assets/file_permissions.png)
+![파일 권한 구조](../assets/file_permissions.svg)
 
 ### 권한 관련 명령어
 
