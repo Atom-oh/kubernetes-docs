@@ -1299,3 +1299,367 @@ groups:
 - C. 컨테이너 수준 메트릭 수집: 이는 cAdvisor(kubelet에 내장)의 역할입니다.
 - D. 애플리케이션 수준 메트릭 수집: 이는 애플리케이션 자체 또는 애플리케이션별 익스포터의 역할입니다.
 </details>
+### 9. Prometheus의 메트릭 유형 중 'Counter'의 특징은 무엇인가요?
+
+A. 시간에 따라 증가만 하고 감소하지 않는 누적 값  
+B. 현재 상태를 나타내는 값으로 증가하거나 감소할 수 있음  
+C. 여러 이벤트의 분포를 버킷으로 나타내는 값  
+D. 특정 시점의 타임스탬프를 나타내는 값  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: A. 시간에 따라 증가만 하고 감소하지 않는 누적 값**
+
+**설명:**
+Prometheus의 메트릭 유형 중 'Counter'의 특징은 시간에 따라 증가만 하고 감소하지 않는 누적 값입니다. Counter는 총 요청 수, 오류 수, 처리된 작업 수와 같이 계속해서 증가하는 값을 측정하는 데 사용됩니다. Counter는 시스템이 재시작되거나 Counter가 리셋될 때만 값이 0으로 돌아갈 수 있습니다.
+
+**Counter의 주요 특징:**
+
+1. **단조 증가**: 값은 항상 증가하거나 리셋 시 0으로 돌아갑니다.
+2. **누적 값**: 시간이 지남에 따라 누적되는 값을 나타냅니다.
+3. **변화율 분석**: rate() 또는 irate() 함수를 사용하여 변화율을 계산하는 데 주로 사용됩니다.
+4. **리셋 처리**: Prometheus는 Counter가 리셋된 경우에도 올바른 변화율을 계산할 수 있습니다.
+
+**Counter 사용 예시:**
+
+1. **HTTP 요청 수**:
+```
+http_requests_total{method="GET", endpoint="/api/users"}
+```
+
+2. **오류 수**:
+```
+http_errors_total{status="500"}
+```
+
+3. **처리된 작업 수**:
+```
+jobs_processed_total{type="email"}
+```
+
+4. **네트워크 트래픽**:
+```
+network_transmit_bytes_total{device="eth0"}
+```
+
+**Counter 값 변화 예시:**
+
+시간에 따른 Counter 값 변화:
+- t=0: 100
+- t=60: 150 (50개 증가)
+- t=120: 200 (50개 증가)
+- t=180: 250 (50개 증가)
+- t=240: 0 (리셋 발생)
+- t=300: 60 (60개 증가)
+
+**Counter 쿼리 예시:**
+
+1. **변화율 계산 (rate)**:
+```
+rate(http_requests_total[5m])
+```
+이 쿼리는 지난 5분 동안의 초당 평균 HTTP 요청 수를 계산합니다.
+
+2. **순간 변화율 계산 (irate)**:
+```
+irate(http_requests_total[5m])
+```
+이 쿼리는 지난 5분 내의 마지막 두 데이터 포인트를 기반으로 초당 순간 HTTP 요청 수를 계산합니다.
+
+3. **증가량 계산 (increase)**:
+```
+increase(http_requests_total[1h])
+```
+이 쿼리는 지난 1시간 동안의 HTTP 요청 증가량을 계산합니다.
+
+**Counter vs 다른 메트릭 유형:**
+
+1. **Counter vs Gauge**:
+   - **Counter**: 시간에 따라 증가만 하는 누적 값입니다.
+   - **Gauge**: 현재 상태를 나타내는 값으로 증가하거나 감소할 수 있습니다.
+
+2. **Counter vs Histogram**:
+   - **Counter**: 단일 누적 값을 측정합니다.
+   - **Histogram**: 값의 분포를 버킷으로 나누어 측정합니다.
+
+3. **Counter vs Summary**:
+   - **Counter**: 단일 누적 값을 측정합니다.
+   - **Summary**: 값의 분포와 분위수를 계산합니다.
+
+**Counter 사용 시 고려 사항:**
+
+1. **변화율 계산**: Counter 값 자체보다는 rate() 또는 increase() 함수를 사용하여 변화율을 계산하는 것이 더 유용합니다.
+2. **시간 범위 선택**: rate() 함수 사용 시 적절한 시간 범위를 선택해야 합니다. 너무 짧으면 노이즈가 많고, 너무 길면 변화를 놓칠 수 있습니다.
+3. **리셋 처리**: Prometheus는 Counter 리셋을 자동으로 처리하지만, 너무 자주 리셋되면 정확도가 떨어질 수 있습니다.
+4. **레이블 사용**: 레이블을 사용하여 다양한 차원으로 Counter를 분류하는 것이 좋습니다.
+
+**Counter 구현 예시 (Go):**
+
+```go
+package main
+
+import (
+    "net/http"
+    
+    "github.com/prometheus/client_golang/prometheus"
+    "github.com/prometheus/client_golang/prometheus/promauto"
+    "github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+var (
+    httpRequestsTotal = promauto.NewCounterVec(
+        prometheus.CounterOpts{
+            Name: "http_requests_total",
+            Help: "Total number of HTTP requests",
+        },
+        []string{"method", "endpoint", "status"},
+    )
+)
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    // 요청 처리
+    httpRequestsTotal.WithLabelValues(r.Method, r.URL.Path, "200").Inc()
+    w.Write([]byte("Hello, World!"))
+}
+
+func main() {
+    http.HandleFunc("/", handler)
+    http.Handle("/metrics", promhttp.Handler())
+    http.ListenAndServe(":8080", nil)
+}
+```
+
+**Counter 알림 규칙 예시:**
+
+```yaml
+groups:
+- name: example
+  rules:
+  - alert: HighErrorRate
+    expr: rate(http_errors_total[5m]) / rate(http_requests_total[5m]) > 0.1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High error rate detected"
+      description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
+```
+
+**다른 옵션들의 문제점:**
+- B. 현재 상태를 나타내는 값으로 증가하거나 감소할 수 있음: 이는 Gauge의 특징입니다.
+- C. 여러 이벤트의 분포를 버킷으로 나타내는 값: 이는 Histogram의 특징입니다.
+- D. 특정 시점의 타임스탬프를 나타내는 값: 이는 Prometheus의 기본 메트릭 유형이 아닙니다.
+</details>
+
+### 10. Kubernetes 모니터링에서 'ServiceMonitor'의 주요 목적은 무엇인가요?
+
+A. 서비스 간 통신을 모니터링  
+B. 서비스 가용성 확인  
+C. 레이블 기반으로 Prometheus가 스크래핑할 서비스 자동 검색 및 구성  
+D. 서비스 로그 수집  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. 레이블 기반으로 Prometheus가 스크래핑할 서비스 자동 검색 및 구성**
+
+**설명:**
+Kubernetes 모니터링에서 'ServiceMonitor'의 주요 목적은 레이블 기반으로 Prometheus가 스크래핑할 서비스를 자동으로 검색하고 구성하는 것입니다. ServiceMonitor는 Prometheus Operator에서 제공하는 커스텀 리소스로, Kubernetes 서비스를 대상으로 Prometheus 스크래핑 구성을 선언적으로 정의할 수 있게 해줍니다. 이를 통해 서비스가 추가되거나 제거될 때 Prometheus 구성을 수동으로 업데이트할 필요 없이 자동으로 모니터링 대상이 조정됩니다.
+
+**ServiceMonitor의 주요 특징:**
+
+1. **레이블 기반 선택**: 특정 레이블을 가진 서비스를 자동으로 선택합니다.
+2. **동적 구성**: 서비스가 추가되거나 제거될 때 Prometheus 구성이 자동으로 업데이트됩니다.
+3. **선언적 정의**: Kubernetes 매니페스트를 통해 모니터링 구성을 선언적으로 정의합니다.
+4. **세분화된 구성**: 엔드포인트, 간격, 경로 등을 세밀하게 구성할 수 있습니다.
+5. **네임스페이스 범위**: 특정 네임스페이스 또는 여러 네임스페이스의 서비스를 선택할 수 있습니다.
+
+**ServiceMonitor 작동 방식:**
+
+1. **ServiceMonitor 생성**: 모니터링할 서비스의 레이블 선택기와 스크래핑 구성을 정의합니다.
+2. **Prometheus 구성**: Prometheus 리소스에서 ServiceMonitor 선택기를 정의합니다.
+3. **자동 검색**: Prometheus Operator가 ServiceMonitor를 감시하고 Prometheus 구성을 업데이트합니다.
+4. **스크래핑**: Prometheus가 구성된 서비스 엔드포인트에서 메트릭을 스크래핑합니다.
+
+**ServiceMonitor 예시:**
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: example-app
+  namespace: monitoring
+  labels:
+    team: frontend
+spec:
+  selector:
+    matchLabels:
+      app: example-app
+  namespaceSelector:
+    matchNames:
+    - default
+    - prod
+  endpoints:
+  - port: web
+    interval: 30s
+    path: /metrics
+    scheme: http
+    tlsConfig:
+      insecureSkipVerify: true
+    basicAuth:
+      username:
+        name: basic-auth
+        key: username
+      password:
+        name: basic-auth
+        key: password
+  - port: metrics
+    interval: 15s
+    honorLabels: true
+    metricRelabelings:
+    - sourceLabels: [__name__]
+      regex: 'container_.*'
+      action: keep
+```
+
+이 예시에서:
+- `app: example-app` 레이블이 있는 서비스를 선택합니다.
+- `default`와 `prod` 네임스페이스에서 서비스를 찾습니다.
+- `web` 포트에서 30초마다 `/metrics` 경로를 스크래핑합니다.
+- `metrics` 포트에서 15초마다 스크래핑하고, `container_`로 시작하는 메트릭만 유지합니다.
+
+**Prometheus 구성:**
+
+ServiceMonitor를 사용하려면 Prometheus 리소스에서 ServiceMonitor 선택기를 정의해야 합니다:
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  serviceAccountName: prometheus
+  serviceMonitorSelector:
+    matchLabels:
+      team: frontend
+  serviceMonitorNamespaceSelector:
+    matchLabels:
+      monitoring: enabled
+  # ... 기타 구성 ...
+```
+
+이 예시에서:
+- `team: frontend` 레이블이 있는 ServiceMonitor를 선택합니다.
+- `monitoring: enabled` 레이블이 있는 네임스페이스의 ServiceMonitor만 선택합니다.
+
+**서비스 구성:**
+
+ServiceMonitor가 선택할 서비스는 다음과 같이 구성됩니다:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-app
+  namespace: default
+  labels:
+    app: example-app
+spec:
+  selector:
+    app: example-app
+  ports:
+  - name: web
+    port: 8080
+    targetPort: 8080
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+```
+
+**ServiceMonitor vs PodMonitor:**
+
+Prometheus Operator는 ServiceMonitor 외에도 PodMonitor라는 유사한 리소스를 제공합니다:
+
+- **ServiceMonitor**: 서비스를 통해 메트릭을 스크래핑합니다. 서비스가 있는 워크로드에 적합합니다.
+- **PodMonitor**: 서비스 없이 직접 파드를 스크래핑합니다. 서비스가 없는 워크로드(예: 배치 작업)에 적합합니다.
+
+**PodMonitor 예시:**
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: example-pods
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: example-app
+  namespaceSelector:
+    matchNames:
+    - default
+  podMetricsEndpoints:
+  - port: metrics
+    interval: 30s
+```
+
+**ServiceMonitor 고급 기능:**
+
+1. **릴레이블링**: 메트릭 레이블을 추가, 수정 또는 삭제할 수 있습니다.
+```yaml
+endpoints:
+- port: web
+  metricRelabelings:
+  - sourceLabels: [__name__]
+    regex: 'http_requests_total'
+    targetLabel: job
+    replacement: 'http_requests'
+```
+
+2. **스크래핑 제한**: 스크래핑 제한 시간 및 샘플 제한을 설정할 수 있습니다.
+```yaml
+endpoints:
+- port: web
+  scrapeTimeout: 10s
+  sampleLimit: 10000
+```
+
+3. **프록시 사용**: 프록시를 통해 메트릭을 스크래핑할 수 있습니다.
+```yaml
+endpoints:
+- port: web
+  proxyUrl: http://proxy:8080
+```
+
+4. **필터링**: 특정 메트릭만 수집하도록 필터링할 수 있습니다.
+```yaml
+endpoints:
+- port: web
+  metricRelabelings:
+  - sourceLabels: [__name__]
+    regex: 'http_.*'
+    action: keep
+```
+
+**ServiceMonitor 사용 사례:**
+
+1. **마이크로서비스 모니터링**: 여러 마이크로서비스의 메트릭을 자동으로 수집합니다.
+2. **다중 환경 모니터링**: 개발, 스테이징, 프로덕션 환경의 서비스를 별도로 모니터링합니다.
+3. **팀별 모니터링**: 팀별로 서비스를 그룹화하여 모니터링합니다.
+4. **동적 환경**: 서비스가 자주 추가되거나 제거되는 환경에서 모니터링 구성을 자동화합니다.
+
+**ServiceMonitor 모범 사례:**
+
+1. **일관된 레이블링**: 서비스와 ServiceMonitor에 일관된 레이블링 체계를 사용합니다.
+2. **네임스페이스 분리**: 모니터링 리소스를 별도의 네임스페이스에 유지합니다.
+3. **적절한 스크래핑 간격**: 서비스의 중요도와 변경 빈도에 따라 적절한 스크래핑 간격을 설정합니다.
+4. **리소스 제한**: 스크래핑 제한 시간 및 샘플 제한을 설정하여 Prometheus 과부하를 방지합니다.
+5. **메트릭 필터링**: 필요한 메트릭만 수집하여 스토리지 사용량을 최적화합니다.
+
+**다른 옵션들의 문제점:**
+- A. 서비스 간 통신을 모니터링: ServiceMonitor는 서비스 간 통신 자체를 모니터링하는 것이 아니라, 서비스가 노출하는 메트릭 엔드포인트를 스크래핑하는 구성을 제공합니다.
+- B. 서비스 가용성 확인: 이는 블랙박스 모니터링이나 프로브의 역할이며, ServiceMonitor는 주로 화이트박스 모니터링을 위한 것입니다.
+- D. 서비스 로그 수집: 로그 수집은 Fluentd, Fluent Bit, Loki 등의 로깅 도구의 역할입니다.
+</details>
