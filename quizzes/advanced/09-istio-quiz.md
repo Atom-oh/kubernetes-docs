@@ -161,3 +161,268 @@ spec:
 - C. 백업 컨테이너가 메인 컨테이너의 장애를 대비하는 패턴: 이는 사이드카 패턴이 아니라 고가용성을 위한 다른 패턴입니다.
 - D. 두 개의 클러스터가 서로 백업하는 패턴: 이는 멀티 클러스터 배포 전략이며, 사이드카 패턴과는 관련이 없습니다.
 </details>
+### 3. Istio의 'Virtual Service'의 주요 목적은 무엇인가요?
+
+A. 가상 머신 생성 및 관리  
+B. 트래픽 라우팅 규칙 정의  
+C. 서비스 메시 외부 서비스와의 통합  
+D. 서비스 간 인증 관리  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 트래픽 라우팅 규칙 정의**
+
+**설명:**
+Istio의 'Virtual Service'의 주요 목적은 트래픽 라우팅 규칙을 정의하는 것입니다. Virtual Service는 Kubernetes 서비스로 들어오는 트래픽을 어떻게 라우팅할지 정의하는 Istio의 커스텀 리소스입니다. 이를 통해 A/B 테스팅, 카나리 배포, 블루-그린 배포 등 다양한 고급 트래픽 라우팅 시나리오를 구현할 수 있습니다.
+
+**Virtual Service의 주요 기능:**
+
+1. **트래픽 분할**: 여러 서비스 버전 간에 트래픽을 백분율로 분할할 수 있습니다.
+2. **HTTP 경로 기반 라우팅**: URL 경로에 따라 다른 서비스로 트래픽을 라우팅할 수 있습니다.
+3. **헤더 기반 라우팅**: HTTP 헤더 값에 따라 트래픽을 라우팅할 수 있습니다.
+4. **재시도 및 타임아웃**: 서비스 호출에 대한 재시도 횟수와 타임아웃을 설정할 수 있습니다.
+5. **장애 주입**: 테스트 목적으로 지연이나 오류를 주입할 수 있습니다.
+
+**Virtual Service 예시:**
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: reviews
+spec:
+  hosts:
+  - reviews
+  http:
+  - match:
+    - headers:
+        end-user:
+          exact: jason
+    route:
+    - destination:
+        host: reviews
+        subset: v2
+  - route:
+    - destination:
+        host: reviews
+        subset: v1
+```
+
+이 예시에서:
+- `end-user` 헤더가 `jason`인 요청은 `reviews` 서비스의 `v2` 버전으로 라우팅됩니다.
+- 다른 모든 요청은 `reviews` 서비스의 `v1` 버전으로 라우팅됩니다.
+
+**트래픽 분할 예시:**
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: reviews
+spec:
+  hosts:
+  - reviews
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: v1
+      weight: 80
+    - destination:
+        host: reviews
+        subset: v2
+      weight: 20
+```
+
+이 예시에서:
+- 트래픽의 80%는 `reviews` 서비스의 `v1` 버전으로 라우팅됩니다.
+- 트래픽의 20%는 `reviews` 서비스의 `v2` 버전으로 라우팅됩니다.
+
+**경로 기반 라우팅 예시:**
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: bookinfo
+spec:
+  hosts:
+  - bookinfo.com
+  http:
+  - match:
+    - uri:
+        prefix: /reviews
+    route:
+    - destination:
+        host: reviews
+  - match:
+    - uri:
+        prefix: /ratings
+    route:
+    - destination:
+        host: ratings
+  - route:
+    - destination:
+        host: details
+```
+
+이 예시에서:
+- `/reviews` 경로로 시작하는 요청은 `reviews` 서비스로 라우팅됩니다.
+- `/ratings` 경로로 시작하는 요청은 `ratings` 서비스로 라우팅됩니다.
+- 다른 모든 요청은 `details` 서비스로 라우팅됩니다.
+
+**Virtual Service와 함께 사용되는 다른 리소스:**
+
+1. **DestinationRule**: 서비스의 서브셋(버전)을 정의하고 로드 밸런싱 정책을 설정합니다.
+   ```yaml
+   apiVersion: networking.istio.io/v1beta1
+   kind: DestinationRule
+   metadata:
+     name: reviews
+   spec:
+     host: reviews
+     subsets:
+     - name: v1
+       labels:
+         version: v1
+     - name: v2
+       labels:
+         version: v2
+     - name: v3
+       labels:
+         version: v3
+   ```
+
+2. **Gateway**: 메시 외부에서 들어오는 트래픽을 처리하는 로드 밸런서를 구성합니다.
+   ```yaml
+   apiVersion: networking.istio.io/v1beta1
+   kind: Gateway
+   metadata:
+     name: bookinfo-gateway
+   spec:
+     selector:
+       istio: ingressgateway
+     servers:
+     - port:
+         number: 80
+         name: http
+         protocol: HTTP
+       hosts:
+       - bookinfo.com
+   ```
+
+**Virtual Service의 장점:**
+
+1. **세분화된 트래픽 제어**: 다양한 조건에 따라 트래픽을 정밀하게 제어할 수 있습니다.
+2. **점진적 배포**: 카나리 배포나 블루-그린 배포를 쉽게 구현할 수 있습니다.
+3. **A/B 테스팅**: 다양한 서비스 버전을 테스트하고 비교할 수 있습니다.
+4. **장애 복원력**: 재시도, 타임아웃, 서킷 브레이킹 등을 통해 장애 복원력을 향상시킬 수 있습니다.
+
+**다른 옵션들의 문제점:**
+- A. 가상 머신 생성 및 관리: Virtual Service는 가상 머신과 관련이 없으며, 트래픽 라우팅을 위한 것입니다.
+- C. 서비스 메시 외부 서비스와의 통합: 이는 ServiceEntry의 주요 목적입니다.
+- D. 서비스 간 인증 관리: 이는 주로 AuthorizationPolicy와 PeerAuthentication의 역할입니다.
+</details>
+
+### 4. Istio에서 'Locality Load Balancing'의 주요 목적은 무엇인가요?
+
+A. 여러 클라우드 제공자 간에 트래픽을 분산  
+B. 지리적으로 가까운 서비스 인스턴스로 트래픽을 우선 라우팅하여 지연 시간 최소화  
+C. 클러스터 내의 모든 노드에 균등하게 트래픽 분산  
+D. 서비스 메시 외부 서비스로의 트래픽 관리  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 지리적으로 가까운 서비스 인스턴스로 트래픽을 우선 라우팅하여 지연 시간 최소화**
+
+**설명:**
+Istio에서 'Locality Load Balancing'의 주요 목적은 지리적으로 가까운 서비스 인스턴스로 트래픽을 우선 라우팅하여 지연 시간을 최소화하는 것입니다. 이 기능은 여러 지역이나 영역에 걸쳐 배포된 서비스에서 네트워크 지연 시간을 줄이고 비용을 절감하는 데 도움이 됩니다.
+
+**Locality Load Balancing의 작동 방식:**
+
+1. **로컬리티 정의**: 각 서비스 인스턴스는 리전(region), 영역(zone), 서브영역(sub-zone)으로 구성된 로컬리티 정보를 가집니다.
+2. **우선순위 결정**: 클라이언트와 같은 로컬리티에 있는 서비스 인스턴스가 우선적으로 선택됩니다.
+3. **장애 대응**: 로컬 인스턴스에 장애가 발생하면 다른 로컬리티의 인스턴스로 트래픽이 전환됩니다.
+4. **분배 비율 설정**: 로컬리티 간 트래픽 분배 비율을 구성할 수 있습니다.
+
+**Locality Load Balancing 구성 예시:**
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: my-service
+spec:
+  host: my-service
+  trafficPolicy:
+    loadBalancer:
+      localityLbSetting:
+        enabled: true
+        distribute:
+        - from: us-west/zone1/*
+          to:
+            "us-west/zone1/*": 80
+            "us-west/zone2/*": 20
+        - from: us-east/zone1/*
+          to:
+            "us-east/zone1/*": 80
+            "us-east/zone2/*": 20
+        failover:
+        - from: us-west
+          to: us-east
+        - from: us-east
+          to: us-west
+```
+
+이 예시에서:
+- `us-west/zone1`의 트래픽은 80%는 같은 영역에, 20%는 `us-west/zone2`로 분배됩니다.
+- `us-east/zone1`의 트래픽은 80%는 같은 영역에, 20%는 `us-east/zone2`로 분배됩니다.
+- `us-west` 리전에 장애가 발생하면 트래픽은 `us-east`로 페일오버됩니다.
+- `us-east` 리전에 장애가 발생하면 트래픽은 `us-west`로 페일오버됩니다.
+
+**Locality Load Balancing의 이점:**
+
+1. **지연 시간 감소**: 지리적으로 가까운 서비스 인스턴스로 트래픽을 라우팅하여 지연 시간을 최소화합니다.
+2. **네트워크 비용 절감**: 리전 간 트래픽을 줄여 네트워크 비용을 절감합니다.
+3. **장애 복원력 향상**: 한 로컬리티에 장애가 발생해도 다른 로컬리티로 자동 페일오버됩니다.
+4. **리소스 활용도 최적화**: 로컬리티 간 트래픽 분배를 통해 리소스 활용도를 최적화할 수 있습니다.
+
+**Locality Load Balancing 구성 옵션:**
+
+1. **enabled**: Locality Load Balancing을 활성화 또는 비활성화합니다.
+2. **distribute**: 특정 로컬리티에서 다른 로컬리티로의 트래픽 분배 비율을 정의합니다.
+3. **failover**: 한 로컬리티에 장애가 발생했을 때 트래픽을 전환할 로컬리티를 정의합니다.
+4. **failoverPriority**: 페일오버 우선순위를 설정합니다(리전 > 영역 > 서브영역).
+
+**Locality Load Balancing과 관련된 개념:**
+
+1. **Outlier Detection**: 비정상적인 서비스 인스턴스를 감지하고 로드 밸런싱에서 제외합니다.
+   ```yaml
+   outlierDetection:
+     consecutive5xxErrors: 5
+     interval: 30s
+     baseEjectionTime: 30s
+   ```
+
+2. **Circuit Breaking**: 서비스 과부하를 방지하기 위해 연결 수, 요청 수 등을 제한합니다.
+   ```yaml
+   connectionPool:
+     tcp:
+       maxConnections: 100
+     http:
+       http1MaxPendingRequests: 1024
+       maxRequestsPerConnection: 10
+   ```
+
+3. **Connection Pooling**: 서비스 인스턴스에 대한 연결을 재사용하여 성능을 향상시킵니다.
+
+**Locality Load Balancing 사용 시나리오:**
+
+1. **글로벌 서비스 배포**: 여러 지역에 배포된 서비스에서 사용자에게 가장 가까운 인스턴스로 트래픽을 라우팅합니다.
+2. **재해 복구**: 한 리전에 장애가 발생했을 때 다른 리전으로 자동 페일오버합니다.
+3. **비용 최적화**: 리전 간 트래픽을 최소화하여 네트워크 비용을 절감합니다.
+4. **하이브리드 클라우드**: 온프레미스와 클라우드 환경 간의 트래픽을 최적화합니다.
+
+**다른 옵션들의 문제점:**
+- A. 여러 클라우드 제공자 간에 트래픽을 분산: Locality Load Balancing은 클라우드 제공자보다는 지리적 위치에 중점을 둡니다.
+- C. 클러스터 내의 모든 노드에 균등하게 트래픽 분산: 이는 일반적인 로드 밸런싱의 목적이며, Locality Load Balancing은 지리적 근접성에 따라 우선순위를 부여합니다.
+- D. 서비스 메시 외부 서비스로의 트래픽 관리: 이는 ServiceEntry의 주요 목적입니다.
+</details>
