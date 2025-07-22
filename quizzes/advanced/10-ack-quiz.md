@@ -1025,3 +1025,280 @@ status:
 - C. Kubernetes 클러스터 시작 후 ACK 컨트롤러를 지연 시작하는 기능: 이는 late initialization의 의미가 아닙니다.
 - D. AWS 리소스 업데이트를 일정 시간 지연시키는 기능: Late initialization은 업데이트를 지연시키지 않습니다.
 </details>
+### 9. ACK와 AWS CloudFormation의 주요 차이점은 무엇인가요?
+
+A. ACK는 AWS 리소스만 관리하지만 CloudFormation은 타사 리소스도 관리할 수 있음  
+B. ACK는 선언적 API를 사용하지만 CloudFormation은 명령형 API를 사용함  
+C. ACK는 Kubernetes 네이티브 방식으로 AWS 리소스를 관리하지만 CloudFormation은 AWS 네이티브 방식을 사용함  
+D. ACK는 무료지만 CloudFormation은 유료 서비스임  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. ACK는 Kubernetes 네이티브 방식으로 AWS 리소스를 관리하지만 CloudFormation은 AWS 네이티브 방식을 사용함**
+
+**설명:**
+ACK와 AWS CloudFormation의 주요 차이점은 ACK는 Kubernetes 네이티브 방식으로 AWS 리소스를 관리하지만 CloudFormation은 AWS 네이티브 방식을 사용한다는 것입니다. ACK는 Kubernetes의 커스텀 리소스 정의(CRD)와 컨트롤러를 사용하여 AWS 리소스를 관리하므로, Kubernetes 사용자는 익숙한 도구와 워크플로우를 사용하여 AWS 리소스를 관리할 수 있습니다. 반면 CloudFormation은 AWS의 자체 템플릿 형식과 API를 사용하여 AWS 리소스를 관리합니다.
+
+**ACK와 CloudFormation의 주요 차이점:**
+
+1. **관리 방식**:
+   - **ACK**: Kubernetes API, kubectl, YAML 매니페스트 등 Kubernetes 네이티브 도구를 사용합니다.
+   - **CloudFormation**: AWS 콘솔, AWS CLI, CloudFormation 템플릿(JSON/YAML) 등 AWS 네이티브 도구를 사용합니다.
+
+2. **리소스 정의**:
+   - **ACK**: Kubernetes 커스텀 리소스(CR)로 AWS 리소스를 정의합니다.
+   - **CloudFormation**: CloudFormation 템플릿으로 AWS 리소스를 정의합니다.
+
+3. **상태 관리**:
+   - **ACK**: Kubernetes etcd에 리소스 상태를 저장하고 Kubernetes 컨트롤러 패턴을 사용하여 조정합니다.
+   - **CloudFormation**: CloudFormation 서비스가 스택 상태를 관리하고 변경 세트를 통해 업데이트를 처리합니다.
+
+4. **실행 환경**:
+   - **ACK**: Kubernetes 클러스터 내에서 실행됩니다.
+   - **CloudFormation**: AWS 클라우드에서 관리형 서비스로 실행됩니다.
+
+5. **통합 환경**:
+   - **ACK**: Kubernetes 에코시스템(Helm, Kustomize, GitOps 도구 등)과 통합됩니다.
+   - **CloudFormation**: AWS 에코시스템(AWS CDK, AWS CLI, AWS 콘솔 등)과 통합됩니다.
+
+**ACK 예시:**
+```yaml
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  name: my-bucket
+spec:
+  name: my-unique-bucket-name
+  versioning:
+    status: Enabled
+  publicAccessBlock:
+    blockPublicAcls: true
+    blockPublicPolicy: true
+    ignorePublicAcls: true
+    restrictPublicBuckets: true
+```
+
+**CloudFormation 예시:**
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  MyBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-unique-bucket-name
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+```
+
+**ACK의 장점 (CloudFormation 대비):**
+
+1. **Kubernetes 통합**: Kubernetes 사용자에게 익숙한 도구와 워크플로우를 제공합니다.
+2. **실시간 조정**: Kubernetes 컨트롤러는 지속적으로 실행되어 리소스 상태를 조정합니다.
+3. **세분화된 리소스 관리**: 개별 리소스 수준에서 관리가 가능합니다.
+4. **Kubernetes 리소스와 함께 관리**: AWS 리소스와 Kubernetes 리소스를 동일한 방식으로 관리할 수 있습니다.
+5. **GitOps 호환성**: Kubernetes 기반 GitOps 워크플로우와 쉽게 통합됩니다.
+
+**CloudFormation의 장점 (ACK 대비):**
+
+1. **AWS 네이티브 통합**: AWS 서비스와 더 깊게 통합되어 있습니다.
+2. **스택 기반 관리**: 관련 리소스를 스택으로 그룹화하여 관리합니다.
+3. **변경 세트**: 변경 사항을 미리 확인하고 적용할 수 있습니다.
+4. **롤백 기능**: 오류 발생 시 자동 롤백을 지원합니다.
+5. **더 넓은 리소스 지원**: 더 많은 AWS 리소스 유형을 지원합니다.
+
+**사용 시나리오 비교:**
+
+1. **Kubernetes 중심 환경**:
+   - **ACK 선호**: Kubernetes를 주요 플랫폼으로 사용하고 AWS 리소스도 동일한 방식으로 관리하려는 경우
+   - **CloudFormation 선호**: Kubernetes와 AWS 리소스를 별도로 관리하려는 경우
+
+2. **하이브리드 클라우드**:
+   - **ACK 선호**: Kubernetes를 여러 클라우드 환경에서 일관되게 사용하려는 경우
+   - **CloudFormation 선호**: AWS 리소스만 관리하는 경우
+
+3. **기존 투자**:
+   - **ACK 선호**: 이미 Kubernetes 도구와 워크플로우에 투자한 경우
+   - **CloudFormation 선호**: 이미 AWS 도구와 워크플로우에 투자한 경우
+
+**다른 옵션들의 문제점:**
+- A. ACK는 AWS 리소스만 관리하지만 CloudFormation은 타사 리소스도 관리할 수 있음: CloudFormation도 기본적으로 AWS 리소스만 관리하며, 타사 리소스는 커스텀 리소스를 통해 제한적으로 지원합니다.
+- B. ACK는 선언적 API를 사용하지만 CloudFormation은 명령형 API를 사용함: 둘 다 선언적 접근 방식을 사용합니다.
+- D. ACK는 무료지만 CloudFormation은 유료 서비스임: CloudFormation 자체는 무료 서비스이며, 생성한 리소스에 대해서만 비용이 발생합니다.
+</details>
+
+### 10. ACK를 사용하여 S3 버킷과 IAM 역할을 생성하는 가장 좋은 방법은 무엇인가요?
+
+A. 단일 YAML 파일에 모든 리소스 정의  
+B. 각 리소스 유형에 대한 별도의 컨트롤러를 설치하고 별도의 YAML 파일로 리소스 정의  
+C. AWS CLI를 사용하여 리소스를 생성한 다음 ACK로 가져오기  
+D. CloudFormation 템플릿을 사용하여 리소스 생성  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 각 리소스 유형에 대한 별도의 컨트롤러를 설치하고 별도의 YAML 파일로 리소스 정의**
+
+**설명:**
+ACK를 사용하여 S3 버킷과 IAM 역할을 생성하는 가장 좋은 방법은 각 리소스 유형에 대한 별도의 컨트롤러를 설치하고 별도의 YAML 파일로 리소스를 정의하는 것입니다. ACK는 AWS 서비스별로 별도의 컨트롤러를 제공하므로, S3 리소스를 관리하려면 S3 컨트롤러를, IAM 리소스를 관리하려면 IAM 컨트롤러를 설치해야 합니다. 각 컨트롤러는 해당 서비스의 리소스를 관리하기 위한 CRD를 설치하고, 이러한 CRD를 사용하여 리소스를 정의할 수 있습니다.
+
+**ACK 컨트롤러 설치 단계:**
+
+1. **S3 컨트롤러 설치**:
+```bash
+helm install --namespace ack-system ack-s3-controller \
+  oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
+  --set aws.region=us-west-2
+```
+
+2. **IAM 컨트롤러 설치**:
+```bash
+helm install --namespace ack-system ack-iam-controller \
+  oci://public.ecr.aws/aws-controllers-k8s/iam-chart \
+  --set aws.region=us-west-2
+```
+
+**S3 버킷 정의 (bucket.yaml):**
+```yaml
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  name: my-app-bucket
+spec:
+  name: my-unique-app-bucket-name
+  versioning:
+    status: Enabled
+  publicAccessBlock:
+    blockPublicAcls: true
+    blockPublicPolicy: true
+    ignorePublicAcls: true
+    restrictPublicBuckets: true
+```
+
+**IAM 역할 정의 (role.yaml):**
+```yaml
+apiVersion: iam.services.k8s.aws/v1alpha1
+kind: Role
+metadata:
+  name: my-app-role
+spec:
+  name: my-app-role
+  description: "Role for my application"
+  assumeRolePolicyDocument: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "ec2.amazonaws.com"
+          },
+          "Action": "sts:AssumeRole"
+        }
+      ]
+    }
+```
+
+**IAM 정책 정의 (policy.yaml):**
+```yaml
+apiVersion: iam.services.k8s.aws/v1alpha1
+kind: Policy
+metadata:
+  name: my-app-policy
+spec:
+  name: my-app-policy
+  description: "Policy for my application"
+  policyDocument: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:PutObject"
+          ],
+          "Resource": "arn:aws:s3:::my-unique-app-bucket-name/*"
+        }
+      ]
+    }
+```
+
+**IAM 역할에 정책 연결 (role-policy-attachment.yaml):**
+```yaml
+apiVersion: iam.services.k8s.aws/v1alpha1
+kind: RolePolicyAttachment
+metadata:
+  name: my-app-role-policy-attachment
+spec:
+  roleName: my-app-role
+  policyARN: "arn:aws:iam::ACCOUNT_ID:policy/my-app-policy"
+```
+
+**리소스 생성:**
+```bash
+kubectl apply -f bucket.yaml
+kubectl apply -f role.yaml
+kubectl apply -f policy.yaml
+kubectl apply -f role-policy-attachment.yaml
+```
+
+**이 접근 방식의 장점:**
+
+1. **모듈성**: 각 리소스를 별도로 관리할 수 있어 유지 관리가 용이합니다.
+2. **컨트롤러 분리**: 각 서비스에 대한 컨트롤러가 분리되어 있어 문제 격리가 용이합니다.
+3. **리소스 종속성 관리**: 리소스 간의 종속성을 명시적으로 관리할 수 있습니다.
+4. **선택적 설치**: 필요한 컨트롤러만 설치하여 리소스 사용을 최적화할 수 있습니다.
+5. **버전 관리**: 각 컨트롤러를 독립적으로 업그레이드할 수 있습니다.
+
+**리소스 간 종속성 처리:**
+
+ACK는 리소스 간 종속성을 자동으로 관리하지 않으므로, 종속성이 있는 리소스를 생성할 때는 적절한 순서를 고려해야 합니다. 예를 들어, RolePolicyAttachment는 Role과 Policy가 먼저 생성되어야 합니다.
+
+이를 관리하는 방법:
+
+1. **Kubernetes Job 사용**:
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-role-policy-attachment
+spec:
+  template:
+    spec:
+      containers:
+      - name: kubectl
+        image: bitnami/kubectl
+        command:
+        - /bin/sh
+        - -c
+        - |
+          kubectl wait --for=condition=ACK.ResourceSynced=True role.iam.services.k8s.aws/my-app-role --timeout=300s
+          kubectl wait --for=condition=ACK.ResourceSynced=True policy.iam.services.k8s.aws/my-app-policy --timeout=300s
+          kubectl apply -f /manifests/role-policy-attachment.yaml
+        volumeMounts:
+        - name: manifests
+          mountPath: /manifests
+      volumes:
+      - name: manifests
+        configMap:
+          name: aws-resource-manifests
+      restartPolicy: OnFailure
+```
+
+2. **Helm 차트 사용**:
+Helm의 hooks를 사용하여 리소스 생성 순서를 제어할 수 있습니다.
+
+3. **GitOps 도구 사용**:
+ArgoCD나 Flux와 같은 GitOps 도구는 종속성 관리 기능을 제공합니다.
+
+**다른 옵션들의 문제점:**
+- A. 단일 YAML 파일에 모든 리소스 정의: 서로 다른 컨트롤러가 관리하는 리소스를 단일 파일에 정의하는 것은 가능하지만, 관리와 문제 해결이 어려워질 수 있습니다.
+- C. AWS CLI를 사용하여 리소스를 생성한 다음 ACK로 가져오기: 이 방법은 가능하지만(AdoptedResource 사용), 처음부터 ACK로 리소스를 생성하는 것이 더 일관된 관리를 제공합니다.
+- D. CloudFormation 템플릿을 사용하여 리소스 생성: 이는 ACK를 사용하는 방법이 아니라 완전히 다른 접근 방식입니다.
+</details>
