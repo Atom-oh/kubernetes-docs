@@ -820,3 +820,243 @@ spec:
 - C. Spot은 자동 스케일링을 지원하지만 On-Demand는 지원하지 않음: 둘 다 Karpenter의 자동 스케일링을 지원합니다.
 - D. Spot은 프라이빗 서브넷에서만 사용 가능하고 On-Demand는 퍼블릭 서브넷에서만 사용 가능함: 둘 다 프라이빗 및 퍼블릭 서브넷에서 사용 가능합니다.
 </details>
+### 7. Karpenter에서 'Drift'의 의미는 무엇인가요?
+
+A. 노드가 다른 가용 영역으로 이동하는 현상  
+B. 노드의 실제 상태가 원하는 구성과 달라지는 현상  
+C. 클러스터의 노드 수가 시간에 따라 자연스럽게 증가하는 현상  
+D. 노드의 성능이 시간에 따라 저하되는 현상  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 노드의 실제 상태가 원하는 구성과 달라지는 현상**
+
+**설명:**
+Karpenter에서 'Drift'의 의미는 노드의 실제 상태가 원하는 구성과 달라지는 현상을 말합니다. 드리프트는 노드가 Karpenter의 현재 구성(NodePool, NodeClass 등)과 일치하지 않게 되었을 때 발생합니다. 이러한 불일치는 구성 변경, 소프트웨어 업데이트, 보안 패치 등 다양한 이유로 발생할 수 있습니다. Karpenter는 드리프트를 감지하고 노드를 교체하여 클러스터가 항상 원하는 상태를 유지하도록 합니다.
+
+**드리프트가 발생하는 상황:**
+
+1. **NodePool 구성 변경**: NodePool의 요구 사항이나 템플릿이 변경된 경우
+2. **NodeClass 구성 변경**: AMI, 보안 그룹, 서브넷 등의 구성이 변경된 경우
+3. **소프트웨어 업데이트**: 새로운 Kubernetes 버전이나 AMI 버전이 필요한 경우
+4. **보안 패치**: 보안 업데이트가 필요한 경우
+5. **인스턴스 유형 변경**: 더 이상 사용하지 않는 인스턴스 유형을 사용 중인 경우
+
+**드리프트 감지 및 처리:**
+
+Karpenter는 다음과 같은 방식으로 드리프트를 감지하고 처리합니다:
+
+1. **드리프트 감지**: Karpenter는 정기적으로 노드의 실제 상태와 원하는 구성을 비교합니다.
+2. **드리프트 표시**: 드리프트가 감지되면 NodeClaim에 `Drifted` 조건을 설정합니다.
+3. **노드 교체**: 드리프트된 노드를 새로운 노드로 교체합니다.
+   - 새 노드 프로비저닝
+   - 드리프트된 노드에서 파드 코데인
+   - 드리프트된 노드 종료
+
+**드리프트 구성:**
+
+NodePool에서 드리프트 처리 방법을 구성할 수 있습니다:
+
+```yaml
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  # ... 다른 구성 ...
+  disruption:
+    consolidationPolicy: WhenEmpty
+    expireAfter: 720h  # 30일 후 노드 만료
+```
+
+**드리프트 예시 시나리오:**
+
+1. **AMI 업데이트**:
+   - 초기 상태: NodeClass에서 AMI 패밀리 `AL2`를 사용
+   - 변경: NodeClass를 업데이트하여 AMI 패밀리 `AL2023`으로 변경
+   - 결과: 기존 `AL2` 노드가 드리프트된 것으로 표시되고 새로운 `AL2023` 노드로 교체됨
+
+2. **인스턴스 유형 변경**:
+   - 초기 상태: NodePool에서 `m5.large` 인스턴스 유형을 사용
+   - 변경: NodePool을 업데이트하여 `m6i.large` 인스턴스 유형만 사용하도록 변경
+   - 결과: 기존 `m5.large` 노드가 드리프트된 것으로 표시되고 새로운 `m6i.large` 노드로 교체됨
+
+3. **보안 그룹 변경**:
+   - 초기 상태: NodeClass에서 보안 그룹 `sg-123`을 사용
+   - 변경: NodeClass를 업데이트하여 보안 그룹 `sg-456`을 사용하도록 변경
+   - 결과: 기존 `sg-123` 노드가 드리프트된 것으로 표시되고 새로운 `sg-456` 노드로 교체됨
+
+**드리프트 관련 명령어:**
+
+1. **드리프트된 노드 확인**:
+```bash
+kubectl get nodeclaims -o json | jq '.items[] | select(.status.conditions[] | select(.type == "Drifted" and .status == "True"))'
+```
+
+2. **드리프트 이유 확인**:
+```bash
+kubectl describe nodeclaim <nodeclaim-name>
+```
+
+출력 예시:
+```
+Status:
+  Conditions:
+    Last Transition Time:  2023-07-22T12:34:56Z
+    Message:               NodePool 'default' requirements have changed
+    Reason:                RequirementsDrifted
+    Status:                True
+    Type:                  Drifted
+```
+
+**드리프트와 만료(Expiry)의 차이:**
+
+- **드리프트**: 노드의 실제 상태가 원하는 구성과 달라졌을 때 발생합니다.
+- **만료**: 노드가 지정된 시간(expireAfter) 동안 실행된 후 교체가 필요할 때 발생합니다.
+
+두 메커니즘 모두 노드를 교체하는 데 사용되지만, 트리거 조건이 다릅니다.
+
+**드리프트 관리 모범 사례:**
+
+1. **점진적 변경**: 대규모 구성 변경은 점진적으로 적용하여 많은 노드가 동시에 교체되는 것을 방지합니다.
+2. **PodDisruptionBudget 설정**: 노드 교체 중에도 서비스 가용성을 보장합니다.
+3. **유지 관리 기간 설정**: 중요하지 않은 시간에 드리프트 처리가 이루어지도록 합니다.
+4. **모니터링**: 드리프트 이벤트를 모니터링하여 예상치 못한 변경을 감지합니다.
+
+**다른 옵션들의 문제점:**
+- A. 노드가 다른 가용 영역으로 이동하는 현상: 노드는 일반적으로 생성된 가용 영역에서 이동하지 않습니다.
+- C. 클러스터의 노드 수가 시간에 따라 자연스럽게 증가하는 현상: 이는 드리프트가 아니라 스케일링입니다.
+- D. 노드의 성능이 시간에 따라 저하되는 현상: 이는 성능 저하(degradation)에 가까우며, Karpenter의 드리프트 개념과는 다릅니다.
+</details>
+
+### 8. Karpenter에서 'Provisioning'과 'Deprovisioning'의 차이점은 무엇인가요?
+
+A. Provisioning은 노드 생성을 의미하고, Deprovisioning은 노드 삭제를 의미함  
+B. Provisioning은 노드 구성을 의미하고, Deprovisioning은 노드 모니터링을 의미함  
+C. Provisioning은 노드 스케일 업을 의미하고, Deprovisioning은 노드 스케일 다운을 의미함  
+D. Provisioning은 노드 업그레이드를 의미하고, Deprovisioning은 노드 다운그레이드를 의미함  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: A. Provisioning은 노드 생성을 의미하고, Deprovisioning은 노드 삭제를 의미함**
+
+**설명:**
+Karpenter에서 'Provisioning'과 'Deprovisioning'의 차이점은 Provisioning은 노드 생성을 의미하고, Deprovisioning은 노드 삭제를 의미한다는 것입니다. 이 두 프로세스는 Karpenter의 핵심 기능으로, 워크로드 요구 사항에 따라 노드를 동적으로 생성하고 더 이상 필요하지 않을 때 노드를 제거하는 역할을 합니다.
+
+**Provisioning(프로비저닝):**
+
+Provisioning은 다음과 같은 상황에서 발생합니다:
+
+1. **스케줄링 불가능한 파드 감지**: Karpenter가 스케줄링할 수 없는 파드를 감지합니다.
+2. **요구 사항 분석**: 파드의 리소스 요청, 노드 선택기, 어피니티, 톨러레이션 등을 분석합니다.
+3. **NodePool 선택**: 파드 요구 사항을 충족하는 NodePool을 선택합니다.
+4. **노드 사양 결정**: NodePool과 NodeClass의 구성에 따라 노드 사양을 결정합니다.
+5. **노드 생성**: 클라우드 제공자 API를 호출하여 새 노드를 생성합니다.
+6. **NodeClaim 생성**: 프로비저닝된 노드를 추적하기 위한 NodeClaim을 생성합니다.
+7. **파드 스케줄링**: 새 노드가 준비되면 파드가 자동으로 스케줄링됩니다.
+
+**Deprovisioning(디프로비저닝):**
+
+Deprovisioning은 다음과 같은 상황에서 발생합니다:
+
+1. **빈 노드 감지**: Karpenter가 워크로드가 없는 노드를 감지합니다(통합).
+2. **만료된 노드 감지**: 노드가 지정된 수명(expireAfter)을 초과했습니다.
+3. **드리프트된 노드 감지**: 노드의 실제 상태가 원하는 구성과 달라졌습니다.
+4. **중단된 노드 감지**: 스팟 인스턴스가 중단되었습니다.
+5. **노드 코데인**: 노드에서 파드를 제거하고 다른 노드로 이동시킵니다.
+6. **노드 종료**: 클라우드 제공자 API를 호출하여 노드를 종료합니다.
+7. **NodeClaim 삭제**: 해당 NodeClaim을 삭제합니다.
+
+**Provisioning 예시:**
+
+```yaml
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    metadata:
+      labels:
+        app: karpenter
+  requirements:
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: ["on-demand"]
+    - key: kubernetes.io/arch
+      operator: In
+      values: ["amd64"]
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
+  limits:
+    cpu: 1000
+    memory: 1000Gi
+  nodeClassRef:
+    name: default
+    kind: EC2NodeClass
+    apiVersion: karpenter.k8s.aws/v1
+```
+
+이 NodePool 구성에 따라 Karpenter는 다음과 같은 노드를 프로비저닝할 수 있습니다:
+- 용량 유형: on-demand
+- 아키텍처: amd64
+- 인스턴스 유형: m5.large, m5.xlarge, m5.2xlarge 중 하나
+- 최대 CPU 제한: 1000 CPU
+- 최대 메모리 제한: 1000Gi
+
+**Deprovisioning 예시:**
+
+```yaml
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  # ... 다른 구성 ...
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+    expireAfter: 720h  # 30일 후 노드 만료
+```
+
+이 구성에 따라 Karpenter는 다음과 같은 상황에서 노드를 디프로비저닝합니다:
+- 노드가 비어 있고 30초가 지난 경우(통합)
+- 노드가 생성된 지 30일(720시간)이 지난 경우(만료)
+
+**Provisioning과 Deprovisioning의 상호 작용:**
+
+Karpenter의 Provisioning과 Deprovisioning은 함께 작동하여 클러스터의 효율성을 최적화합니다:
+
+1. **동적 확장**: 워크로드가 증가하면 Provisioning을 통해 새 노드를 추가합니다.
+2. **동적 축소**: 워크로드가 감소하면 Deprovisioning을 통해 불필요한 노드를 제거합니다.
+3. **노드 교체**: 만료되거나 드리프트된 노드를 새 노드로 교체합니다.
+4. **비용 최적화**: 필요한 노드만 유지하여 비용을 최적화합니다.
+
+**Provisioning 메트릭:**
+
+- `karpenter_provisioner_scheduling_duration_seconds`: 스케줄링 시간
+- `karpenter_nodes_provisioned`: 프로비저닝된 노드 수
+- `karpenter_pods_provisioned`: 프로비저닝으로 인해 스케줄링된 파드 수
+
+**Deprovisioning 메트릭:**
+
+- `karpenter_nodes_terminated`: 종료된 노드 수
+- `karpenter_deprovisioning_duration_seconds`: 디프로비저닝 시간
+- `karpenter_disruption_nodes_disrupted`: 중단된 노드 수
+
+**Provisioning과 Deprovisioning 모범 사례:**
+
+1. **적절한 제한 설정**: NodePool에 적절한 리소스 제한을 설정하여 과도한 프로비저닝을 방지합니다.
+2. **다양한 인스턴스 유형 허용**: 다양한 인스턴스 유형을 허용하여 가용성과 비용 효율성을 높입니다.
+3. **PodDisruptionBudget 설정**: 디프로비저닝 중에도 서비스 가용성을 보장합니다.
+4. **적절한 만료 시간 설정**: 워크로드 특성에 맞는 적절한 노드 만료 시간을 설정합니다.
+5. **모니터링**: Provisioning과 Deprovisioning 활동을 모니터링하여 문제를 조기에 감지합니다.
+
+**다른 옵션들의 문제점:**
+- B. Provisioning은 노드 구성을 의미하고, Deprovisioning은 노드 모니터링을 의미함: 이는 정확하지 않은 정의입니다.
+- C. Provisioning은 노드 스케일 업을 의미하고, Deprovisioning은 노드 스케일 다운을 의미함: 스케일 업/다운은 일반적으로 노드 크기 조정을 의미하며, Provisioning/Deprovisioning은 노드 수 조정을 의미합니다.
+- D. Provisioning은 노드 업그레이드를 의미하고, Deprovisioning은 노드 다운그레이드를 의미함: 이는 정확하지 않은 정의입니다.
+</details>
