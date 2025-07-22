@@ -862,3 +862,243 @@ data:
 - B. Git 저장소의 상태: Health Status는 Git 저장소의 상태가 아닌 배포된 애플리케이션의 상태를 나타냅니다.
 - D. ArgoCD 서버의 성능: Health Status는 ArgoCD 서버의 성능이 아닌 배포된 애플리케이션의 상태를 나타냅니다.
 </details>
+### 9. ArgoCD에서 'Rollback'을 수행하는 올바른 방법은 무엇인가요?
+
+A. ArgoCD UI에서 '롤백' 버튼을 클릭  
+B. Git 저장소에서 이전 버전으로 되돌린 후 동기화  
+C. 클러스터에서 직접 리소스를 수정  
+D. ArgoCD 서버를 재시작  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. Git 저장소에서 이전 버전으로 되돌린 후 동기화**
+
+**설명:**
+ArgoCD에서 'Rollback'을 수행하는 올바른 방법은 Git 저장소에서 이전 버전으로 되돌린 후 동기화하는 것입니다. 이는 GitOps의 핵심 원칙인 "Git을 단일 진실 공급원(single source of truth)으로 사용"하는 것과 일치합니다. ArgoCD는 Git 저장소의 상태를 클러스터에 반영하므로, 롤백을 위해서는 Git 저장소를 이전 상태로 되돌려야 합니다.
+
+**GitOps 기반 롤백 프로세스:**
+
+1. **Git 저장소에서 롤백**:
+   - 이전 커밋으로 되돌리기: `git revert <commit-hash>` 또는 `git reset --hard <commit-hash>`
+   - 변경 사항을 원격 저장소에 푸시: `git push origin <branch-name>`
+
+2. **ArgoCD에서 동기화**:
+   - UI에서 동기화 버튼 클릭
+   - CLI 사용: `argocd app sync <app-name>`
+   - 자동 동기화가 설정된 경우 자동으로 동기화됨
+
+**롤백 방법 예시:**
+
+1. **Git 커밋 히스토리 확인**:
+```bash
+git log --oneline
+```
+
+2. **특정 커밋으로 롤백**:
+```bash
+# 새 커밋을 생성하여 특정 커밋의 변경 사항을 되돌림 (권장)
+git revert <commit-hash>
+
+# 또는 브랜치를 특정 커밋으로 강제 이동 (주의 필요)
+git reset --hard <commit-hash>
+```
+
+3. **변경 사항 푸시**:
+```bash
+git push origin <branch-name>
+```
+
+4. **ArgoCD에서 동기화**:
+```bash
+argocd app sync <app-name>
+```
+
+**롤백 전략 유형:**
+
+1. **Git 기반 롤백 (권장)**:
+   - Git 저장소를 이전 상태로 되돌립니다.
+   - GitOps 원칙을 준수하며 모든 변경 사항이 추적됩니다.
+   - 롤백 자체가 새로운 커밋으로 기록됩니다.
+
+2. **ArgoCD 히스토리 기반 롤백**:
+   - ArgoCD는 이전 배포 버전의 히스토리를 유지합니다.
+   - UI 또는 CLI를 통해 이전 버전으로 롤백할 수 있습니다.
+   - 이 방법은 긴급 상황에서 사용할 수 있지만, Git 저장소와 클러스터 상태가 불일치하게 됩니다.
+   - 롤백 후에는 Git 저장소를 현재 클러스터 상태와 일치하도록 업데이트해야 합니다.
+
+3. **하이브리드 접근 방식**:
+   - 긴급 상황에서는 ArgoCD 히스토리를 사용하여 빠르게 롤백합니다.
+   - 그 후 Git 저장소를 업데이트하여 클러스터 상태와 일치시킵니다.
+
+**롤백 관련 모범 사례:**
+
+1. **Git 기반 롤백 우선**: 가능한 한 Git 저장소를 통해 롤백을 수행합니다.
+2. **롤백 테스트**: 중요한 환경에 적용하기 전에 롤백 절차를 테스트합니다.
+3. **점진적 배포**: 카나리 배포나 블루-그린 배포를 사용하여 롤백 필요성을 줄입니다.
+4. **자동화된 테스트**: 배포 전에 자동화된 테스트를 실행하여 문제를 조기에 발견합니다.
+5. **롤백 계획**: 각 배포에 대한 롤백 계획을 미리 수립합니다.
+
+**롤백 시 고려 사항:**
+
+1. **데이터베이스 변경**: 스키마 변경이 포함된 경우 롤백이 복잡할 수 있습니다.
+2. **종속성**: 다른 서비스와의 종속성을 고려해야 합니다.
+3. **상태 관리**: 상태를 가진 애플리케이션의 경우 롤백 시 상태 처리 방법을 고려해야 합니다.
+4. **사용자 영향**: 롤백이 사용자에게 미치는 영향을 최소화해야 합니다.
+
+**다른 옵션들의 문제점:**
+- A. ArgoCD UI에서 '롤백' 버튼을 클릭: ArgoCD UI에는 이전 버전으로 직접 롤백하는 버튼이 있지만, 이는 Git 저장소와 클러스터 상태가 불일치하게 만들 수 있으므로 GitOps 원칙에 맞지 않습니다.
+- C. 클러스터에서 직접 리소스를 수정: 클러스터에서 직접 리소스를 수정하는 것은 GitOps 원칙에 위배되며, ArgoCD가 다음 동기화 시 이러한 변경 사항을 덮어쓸 수 있습니다.
+- D. ArgoCD 서버를 재시작: ArgoCD 서버를 재시작하는 것은 롤백과 관련이 없습니다.
+</details>
+
+### 10. ArgoCD에서 다중 클러스터 배포를 관리하는 가장 효과적인 방법은 무엇인가요?
+
+A. 각 클러스터마다 별도의 ArgoCD 인스턴스 실행  
+B. 하나의 ArgoCD 인스턴스에 여러 클러스터를 등록하고 ApplicationSet 사용  
+C. 각 클러스터마다 별도의 Git 저장소 사용  
+D. 클러스터 간 직접 리소스 복제  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 하나의 ArgoCD 인스턴스에 여러 클러스터를 등록하고 ApplicationSet 사용**
+
+**설명:**
+ArgoCD에서 다중 클러스터 배포를 관리하는 가장 효과적인 방법은 하나의 ArgoCD 인스턴스에 여러 클러스터를 등록하고 ApplicationSet을 사용하는 것입니다. 이 접근 방식은 중앙 집중식 관리를 제공하면서 여러 클러스터에 일관된 애플리케이션 배포를 자동화할 수 있습니다. ApplicationSet은 템플릿과 제너레이터를 사용하여 여러 클러스터에 대한 Application 리소스를 동적으로 생성합니다.
+
+**다중 클러스터 관리 프로세스:**
+
+1. **클러스터 등록**:
+   - ArgoCD CLI를 사용하여 클러스터 등록:
+     ```bash
+     argocd cluster add <context-name>
+     ```
+   - 또는 Secret을 직접 생성하여 클러스터 등록:
+     ```yaml
+     apiVersion: v1
+     kind: Secret
+     metadata:
+       name: cluster-credentials
+       namespace: argocd
+       labels:
+         argocd.argoproj.io/secret-type: cluster
+     stringData:
+       name: production-cluster
+       server: https://kubernetes.production.svc
+       config: |
+         {
+           "bearerToken": "<token>",
+           "tlsClientConfig": {
+             "insecure": false,
+             "caData": "<base64-encoded-ca-cert>"
+           }
+         }
+     ```
+
+2. **ApplicationSet 생성**:
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: multi-cluster-apps
+  namespace: argocd
+spec:
+  generators:
+  - clusters:
+      selector:
+        matchLabels:
+          environment: production
+  template:
+    metadata:
+      name: '{{name}}-guestbook'
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/argoproj/argocd-example-apps.git
+        targetRevision: HEAD
+        path: guestbook
+      destination:
+        server: '{{server}}'
+        namespace: guestbook
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+```
+
+**다중 클러스터 배포 전략:**
+
+1. **환경별 클러스터**:
+   - 개발, 스테이징, 프로덕션 환경을 위한 별도의 클러스터
+   - 각 환경에 맞는 구성으로 동일한 애플리케이션 배포
+
+2. **지역별 클러스터**:
+   - 지리적으로 분산된 클러스터
+   - 지역별 특성에 맞게 구성을 조정하여 배포
+
+3. **하이브리드 클러스터**:
+   - 온프레미스와 클라우드 클러스터 조합
+   - 다양한 인프라에 일관된 애플리케이션 배포
+
+4. **멀티 클라우드 클러스터**:
+   - AWS, GCP, Azure 등 여러 클라우드 제공자의 클러스터
+   - 클라우드 제공자 간 일관된 애플리케이션 배포
+
+**다중 클러스터 배포를 위한 ApplicationSet 제너레이터 조합:**
+
+1. **Cluster + List Generator**:
+```yaml
+generators:
+- matrix:
+    generators:
+    - clusters:
+        selector:
+          matchLabels:
+            environment: production
+    - list:
+        elements:
+        - component: frontend
+          path: apps/frontend
+        - component: backend
+          path: apps/backend
+```
+
+2. **Cluster + Git Generator**:
+```yaml
+generators:
+- matrix:
+    generators:
+    - clusters:
+        selector:
+          matchLabels:
+            environment: production
+    - git:
+        repoURL: https://github.com/my-org/monorepo.git
+        revision: HEAD
+        directories:
+        - path: apps/*
+```
+
+**다중 클러스터 관리의 장점:**
+
+1. **중앙 집중식 관리**: 하나의 ArgoCD 인스턴스에서 모든 클러스터를 관리합니다.
+2. **일관성**: 모든 클러스터에 동일한 애플리케이션 구성을 적용할 수 있습니다.
+3. **자동화**: ApplicationSet을 통해 클러스터 추가 시 자동으로 애플리케이션이 배포됩니다.
+4. **확장성**: 새로운 클러스터를 쉽게 추가하고 관리할 수 있습니다.
+5. **가시성**: 모든 클러스터의 애플리케이션 상태를 한 곳에서 확인할 수 있습니다.
+
+**다중 클러스터 관리 시 고려 사항:**
+
+1. **네트워크 연결**: ArgoCD 서버가 모든 클러스터에 접근할 수 있어야 합니다.
+2. **인증 및 권한**: 각 클러스터에 대한 적절한 인증 정보와 권한이 필요합니다.
+3. **클러스터별 구성**: 클러스터별로 다른 구성이 필요한 경우 이를 관리하는 방법을 고려해야 합니다.
+4. **장애 격리**: 한 클러스터의 문제가 다른 클러스터에 영향을 미치지 않도록 해야 합니다.
+5. **백업 및 복구**: 다중 클러스터 설정에 대한 백업 및 복구 전략이 필요합니다.
+
+**다른 옵션들의 문제점:**
+- A. 각 클러스터마다 별도의 ArgoCD 인스턴스 실행: 이 방법은 관리 오버헤드가 크고, 클러스터 간 일관성을 유지하기 어렵습니다.
+- C. 각 클러스터마다 별도의 Git 저장소 사용: 이 방법은 코드 중복을 초래하고 여러 저장소를 동기화하기 어렵게 만듭니다.
+- D. 클러스터 간 직접 리소스 복제: 이 방법은 GitOps 원칙에 위배되며, 리소스 상태 추적이 어렵습니다.
+</details>
