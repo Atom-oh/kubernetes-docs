@@ -732,3 +732,296 @@ spec:
 - B. 다중 계정 자격 증명을 단일 Secret에 저장: 이 방법은 보안 위험이 있으며, 권한 분리 원칙에 위배됩니다.
 - D. AWS Organizations를 통해 단일 자격 증명으로 모든 계정 관리: ACK는 AWS Organizations를 통한 단일 자격 증명 관리를 직접 지원하지 않으며, 이 방법은 최소 권한 원칙에 위배될 수 있습니다.
 </details>
+### 7. ACK에서 AWS 리소스 삭제 시 'deletion policy'의 역할은 무엇인가요?
+
+A. AWS 리소스 삭제 순서 결정  
+B. AWS 리소스 삭제 시 종속 리소스 처리 방법 지정  
+C. Kubernetes CR 삭제 시 실제 AWS 리소스 처리 방법 지정  
+D. AWS 리소스 삭제 권한 관리  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. Kubernetes CR 삭제 시 실제 AWS 리소스 처리 방법 지정**
+
+**설명:**
+ACK에서 'deletion policy'의 역할은 Kubernetes CR(Custom Resource) 삭제 시 실제 AWS 리소스 처리 방법을 지정하는 것입니다. 이 정책을 통해 Kubernetes에서 리소스를 삭제할 때 해당하는 AWS 리소스를 실제로 삭제할지, 유지할지, 또는 스냅샷을 생성한 후 삭제할지 등을 제어할 수 있습니다. 이는 데이터 손실 방지와 리소스 관리 유연성을 제공하는 중요한 기능입니다.
+
+**삭제 정책 유형:**
+
+1. **Delete (기본값)**: Kubernetes CR이 삭제되면 해당 AWS 리소스도 삭제됩니다.
+2. **Orphan**: Kubernetes CR이 삭제되어도 AWS 리소스는 유지됩니다.
+3. **Snapshot (일부 리소스만 지원)**: 리소스의 스냅샷을 생성한 후 삭제합니다.
+
+**삭제 정책 설정 방법:**
+
+1. **어노테이션 사용**:
+```yaml
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  name: my-bucket
+  annotations:
+    services.k8s.aws/deletion-policy: "orphan"
+spec:
+  name: my-unique-bucket-name
+```
+
+2. **컨트롤러 기본값 설정**:
+Helm 차트 설치 시 기본 삭제 정책을 설정할 수 있습니다:
+```bash
+helm install --namespace ack-system ack-s3-controller \
+  oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
+  --set aws.region=us-west-2 \
+  --set deletionPolicy=ORPHAN
+```
+
+**삭제 정책 사용 예시:**
+
+1. **Delete 정책 (기본값)**:
+```yaml
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBInstance
+metadata:
+  name: my-db-instance
+  # 어노테이션이 없으면 기본값인 'delete' 정책이 적용됩니다
+spec:
+  dbInstanceIdentifier: my-db-instance
+  engine: mysql
+  dbInstanceClass: db.t3.micro
+  masterUsername: admin
+  masterUserPassword:
+    namespace: default
+    name: my-db-password
+    key: password
+  allocatedStorage: 20
+```
+
+2. **Orphan 정책**:
+```yaml
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  name: my-important-bucket
+  annotations:
+    services.k8s.aws/deletion-policy: "orphan"
+spec:
+  name: my-important-bucket-name
+```
+
+3. **Snapshot 정책 (RDS와 같은 일부 리소스만 지원)**:
+```yaml
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBInstance
+metadata:
+  name: my-db-instance
+  annotations:
+    services.k8s.aws/deletion-policy: "snapshot"
+spec:
+  dbInstanceIdentifier: my-db-instance
+  engine: mysql
+  dbInstanceClass: db.t3.micro
+  # ... 기타 설정 ...
+```
+
+**삭제 정책 사용 시나리오:**
+
+1. **Delete 정책**:
+   - 개발/테스트 환경의 임시 리소스
+   - 자동화된 CI/CD 파이프라인의 일부로 생성/삭제되는 리소스
+   - 데이터가 중요하지 않은 리소스
+
+2. **Orphan 정책**:
+   - 중요한 프로덕션 데이터를 포함하는 리소스
+   - 실수로 인한 삭제를 방지해야 하는 리소스
+   - ACK 관리에서 제외하려는 리소스
+   - 다른 시스템에서 참조하는 공유 리소스
+
+3. **Snapshot 정책**:
+   - 삭제 전 백업이 필요한 데이터베이스
+   - 롤백 가능성을 유지해야 하는 리소스
+   - 규정 준수를 위해 데이터 보존이 필요한 리소스
+
+**삭제 정책 변경:**
+
+리소스가 생성된 후에도 어노테이션을 수정하여 삭제 정책을 변경할 수 있습니다:
+```bash
+kubectl annotate bucket my-bucket services.k8s.aws/deletion-policy=orphan --overwrite
+```
+
+**삭제 정책과 AdoptedResource:**
+
+AdoptedResource를 사용하여 기존 AWS 리소스를 입양한 경우, 해당 리소스에 대한 삭제 정책을 신중하게 설정하는 것이 중요합니다. 기본적으로 AdoptedResource는 Orphan 정책을 사용하지만, 명시적으로 설정하는 것이 좋습니다:
+
+```yaml
+apiVersion: services.k8s.aws/v1alpha1
+kind: AdoptedResource
+metadata:
+  name: my-adopted-bucket
+spec:
+  aws:
+    region: us-west-2
+  kubernetes:
+    group: s3.services.k8s.aws
+    kind: Bucket
+    metadata:
+      name: my-existing-bucket
+      annotations:
+        services.k8s.aws/deletion-policy: "orphan"
+  aws_resource_name: my-existing-bucket
+```
+
+**삭제 정책 제한 사항:**
+
+1. **서비스 지원**: 모든 ACK 컨트롤러가 모든 삭제 정책을 지원하는 것은 아닙니다.
+2. **Snapshot 제한**: Snapshot 정책은 스냅샷을 지원하는 리소스(예: RDS, EBS)에서만 사용할 수 있습니다.
+3. **정책 변경 시점**: 리소스 삭제 요청 시점의 정책이 적용됩니다.
+
+**다른 옵션들의 문제점:**
+- A. AWS 리소스 삭제 순서 결정: 삭제 정책은 삭제 순서가 아닌 삭제 여부와 방법을 결정합니다.
+- B. AWS 리소스 삭제 시 종속 리소스 처리 방법 지정: 이는 AWS 서비스 자체의 동작에 따라 결정되며, ACK 삭제 정책의 역할이 아닙니다.
+- D. AWS 리소스 삭제 권한 관리: 삭제 권한은 IAM 정책을 통해 관리되며, ACK 삭제 정책의 역할이 아닙니다.
+</details>
+
+### 8. ACK에서 'late initialization'이란 무엇인가요?
+
+A. AWS 리소스 생성을 지연시키는 기능  
+B. AWS에서 자동 생성된 필드 값을 Kubernetes CR에 다시 채우는 기능  
+C. Kubernetes 클러스터 시작 후 ACK 컨트롤러를 지연 시작하는 기능  
+D. AWS 리소스 업데이트를 일정 시간 지연시키는 기능  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. AWS에서 자동 생성된 필드 값을 Kubernetes CR에 다시 채우는 기능**
+
+**설명:**
+ACK에서 'late initialization'이란 AWS에서 자동 생성된 필드 값을 Kubernetes CR(Custom Resource)에 다시 채우는 기능입니다. 많은 AWS 리소스는 생성 시 AWS에서 자동으로 생성되는 필드(예: 리소스 ARN, 생성 시간, 기본 구성 값 등)를 가지고 있습니다. Late initialization은 이러한 자동 생성된 값을 AWS에서 가져와 Kubernetes CR의 spec 필드에 다시 채워 넣어, CR이 실제 AWS 리소스의 완전한 상태를 반영하도록 합니다.
+
+**Late Initialization의 작동 방식:**
+
+1. **리소스 생성**: 사용자가 필수 필드만 포함된 CR을 생성합니다.
+2. **AWS 리소스 생성**: ACK 컨트롤러가 AWS API를 호출하여 리소스를 생성합니다.
+3. **자동 생성 필드**: AWS는 리소스를 생성하면서 추가 필드와 기본값을 설정합니다.
+4. **필드 동기화**: ACK 컨트롤러는 AWS에서 리소스 상태를 가져와 누락된 필드를 CR의 spec에 채웁니다.
+5. **상태 업데이트**: 리소스의 전체 상태는 CR의 status 필드에도 반영됩니다.
+
+**Late Initialization 예시:**
+
+사용자가 생성한 원래 CR:
+```yaml
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  name: my-bucket
+spec:
+  name: my-unique-bucket-name
+```
+
+Late initialization 후 CR:
+```yaml
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  name: my-bucket
+spec:
+  name: my-unique-bucket-name
+  versioning:
+    status: Suspended  # AWS의 기본값으로 채워짐
+  publicAccessBlock:
+    blockPublicAcls: true  # AWS의 기본값으로 채워짐
+    blockPublicPolicy: true  # AWS의 기본값으로 채워짐
+    ignorePublicAcls: true  # AWS의 기본값으로 채워짐
+    restrictPublicBuckets: true  # AWS의 기본값으로 채워짐
+status:
+  ackResourceMetadata:
+    arn: arn:aws:s3:::my-unique-bucket-name
+    ownerAccountID: "123456789012"
+    region: us-west-2
+  conditions:
+  - status: "True"
+    type: ACK.ResourceSynced
+  creationTimestamp: "2023-07-22T12:34:56Z"
+```
+
+**Late Initialization의 이점:**
+
+1. **간소화된 CR 정의**: 사용자는 필수 필드만 지정하고 나머지는 AWS 기본값을 사용할 수 있습니다.
+2. **완전한 리소스 상태**: CR이 AWS 리소스의 실제 상태를 완전히 반영합니다.
+3. **선언적 구성 유지**: 자동 생성된 필드도 CR의 spec에 포함되어 선언적 구성을 유지합니다.
+4. **드리프트 감지 개선**: 모든 필드가 spec에 포함되므로 드리프트 감지가 더 정확해집니다.
+
+**Late Initialization과 Status 필드의 차이:**
+
+- **Late Initialization**: AWS에서 자동 생성된 값을 CR의 **spec** 필드에 채웁니다. 이는 리소스의 원하는 상태(desired state)의 일부가 됩니다.
+- **Status 필드**: 리소스의 현재 상태(current state)를 반영하며, 읽기 전용입니다. 여기에는 ARN, 생성 시간, 리소스 상태 등이 포함됩니다.
+
+**Late Initialization 예시 (RDS):**
+
+사용자가 생성한 원래 CR:
+```yaml
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBInstance
+metadata:
+  name: my-db-instance
+spec:
+  dbInstanceIdentifier: my-db-instance
+  engine: mysql
+  dbInstanceClass: db.t3.micro
+  masterUsername: admin
+  masterUserPassword:
+    namespace: default
+    name: my-db-password
+    key: password
+  allocatedStorage: 20
+```
+
+Late initialization 후 CR:
+```yaml
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBInstance
+metadata:
+  name: my-db-instance
+spec:
+  dbInstanceIdentifier: my-db-instance
+  engine: mysql
+  dbInstanceClass: db.t3.micro
+  masterUsername: admin
+  masterUserPassword:
+    namespace: default
+    name: my-db-password
+    key: password
+  allocatedStorage: 20
+  backupRetentionPeriod: 7  # AWS의 기본값으로 채워짐
+  autoMinorVersionUpgrade: true  # AWS의 기본값으로 채워짐
+  copyTagsToSnapshot: true  # AWS의 기본값으로 채워짐
+  publiclyAccessible: false  # AWS의 기본값으로 채워짐
+  storageType: gp2  # AWS의 기본값으로 채워짐
+status:
+  ackResourceMetadata:
+    arn: arn:aws:rds:us-west-2:123456789012:db:my-db-instance
+    ownerAccountID: "123456789012"
+    region: us-west-2
+  conditions:
+  - status: "True"
+    type: ACK.ResourceSynced
+  dbInstanceStatus: available
+  endpoint:
+    address: my-db-instance.abcdefghijkl.us-west-2.rds.amazonaws.com
+    port: 3306
+  engineVersion: 8.0.28
+  dbInstanceArn: arn:aws:rds:us-west-2:123456789012:db:my-db-instance
+  creationTimestamp: "2023-07-22T12:34:56Z"
+```
+
+**Late Initialization 제한 사항:**
+
+1. **변경 불가능한 필드**: 일부 필드는 생성 후 변경할 수 없으므로, late initialization 후에도 수정할 수 없습니다.
+2. **컨트롤러 지원**: 모든 ACK 컨트롤러가 late initialization을 동일하게 구현하는 것은 아닙니다.
+3. **타이밍**: Late initialization은 리소스 생성 후 발생하므로, 초기 생성 시에는 이러한 값을 사용할 수 없습니다.
+
+**다른 옵션들의 문제점:**
+- A. AWS 리소스 생성을 지연시키는 기능: Late initialization은 리소스 생성을 지연시키지 않습니다.
+- C. Kubernetes 클러스터 시작 후 ACK 컨트롤러를 지연 시작하는 기능: 이는 late initialization의 의미가 아닙니다.
+- D. AWS 리소스 업데이트를 일정 시간 지연시키는 기능: Late initialization은 업데이트를 지연시키지 않습니다.
+</details>
