@@ -607,3 +607,265 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
 - B. Prometheus 쿼리 언어(PromQL) 확장: Prometheus Operator는 PromQL을 확장하지 않습니다.
 - D. Prometheus와 Grafana 간의 통합 개선: Prometheus Operator는 두 시스템 간의 통합보다는 Kubernetes에서의 관리에 중점을 둡니다.
 </details>
+### 5. Prometheus의 'PromQL'에서 'rate()' 함수의 주요 목적은 무엇인가요?
+
+A. 메트릭의 절대값 계산  
+B. 메트릭의 평균값 계산  
+C. 카운터 메트릭의 초당 평균 증가율 계산  
+D. 메트릭의 최대값 계산  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. 카운터 메트릭의 초당 평균 증가율 계산**
+
+**설명:**
+Prometheus의 'PromQL'에서 'rate()' 함수의 주요 목적은 카운터 메트릭의 초당 평균 증가율을 계산하는 것입니다. 카운터 메트릭은 시간이 지남에 따라 단조롭게 증가하는 값(예: 총 요청 수, 총 오류 수 등)을 나타내며, rate() 함수는 이러한 카운터 메트릭의 변화율을 계산하여 초당 평균 증가량을 반환합니다. 이는 시스템의 현재 활동 수준을 이해하는 데 매우 유용합니다.
+
+**rate() 함수의 작동 방식:**
+
+1. **시간 범위 지정**: rate() 함수는 시간 범위 벡터를 인자로 받습니다(예: `rate(http_requests_total[5m])`).
+2. **증가량 계산**: 지정된 시간 범위 내에서 각 시계열의 증가량을 계산합니다.
+3. **초당 평균 계산**: 증가량을 시간 범위의 초 수로 나누어 초당 평균 증가율을 계산합니다.
+4. **카운터 리셋 처리**: 카운터가 리셋된 경우(예: 서비스 재시작)에도 올바른 결과를 제공합니다.
+
+**rate() 함수 사용 예시:**
+
+1. **HTTP 요청 속도 계산**:
+```
+rate(http_requests_total[5m])
+```
+이 쿼리는 지난 5분 동안의 초당 평균 HTTP 요청 수를 계산합니다.
+
+2. **오류율 계산**:
+```
+rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])
+```
+이 쿼리는 지난 5분 동안의 HTTP 5xx 오류 비율을 계산합니다.
+
+3. **CPU 사용률 계산**:
+```
+rate(node_cpu_seconds_total{mode!="idle"}[5m])
+```
+이 쿼리는 지난 5분 동안의 초당 평균 CPU 사용 시간을 계산합니다.
+
+4. **네트워크 트래픽 계산**:
+```
+rate(node_network_receive_bytes_total[5m])
+```
+이 쿼리는 지난 5분 동안의 초당 평균 네트워크 수신 바이트를 계산합니다.
+
+**rate() vs irate():**
+
+Prometheus는 rate() 외에도 유사한 함수인 irate()를 제공합니다:
+
+- **rate()**: 지정된 시간 범위 내의 모든 데이터 포인트를 사용하여 평균 증가율을 계산합니다. 더 부드러운 그래프를 제공하며, 일반적인 트렌드를 파악하는 데 유용합니다.
+- **irate()**: 지정된 시간 범위 내의 마지막 두 데이터 포인트만 사용하여 순간 증가율을 계산합니다. 급격한 변화를 더 잘 포착하며, 실시간 모니터링에 유용합니다.
+
+```
+# 지난 5분 동안의 평균 증가율
+rate(http_requests_total[5m])
+
+# 지난 5분 내 마지막 두 데이터 포인트 기반 순간 증가율
+irate(http_requests_total[5m])
+```
+
+**rate() 함수 사용 시 고려 사항:**
+
+1. **시간 범위 선택**: 너무 짧은 시간 범위는 노이즈가 많을 수 있고, 너무 긴 시간 범위는 급격한 변화를 놓칠 수 있습니다.
+2. **스크래핑 간격**: rate() 함수는 최소한 두 개의 데이터 포인트가 필요하므로, 시간 범위는 스크래핑 간격의 최소 2배 이상이어야 합니다.
+3. **카운터 리셋**: rate() 함수는 카운터 리셋을 자동으로 처리하지만, 너무 자주 리셋되는 경우 정확도가 떨어질 수 있습니다.
+4. **집계**: rate() 함수를 먼저 적용한 후 sum()과 같은 집계 함수를 적용해야 합니다(예: `sum(rate(http_requests_total[5m]))`).
+
+**rate() 함수를 사용한 알림 규칙 예시:**
+
+```yaml
+groups:
+- name: example
+  rules:
+  - alert: HighRequestRate
+    expr: sum(rate(http_requests_total[5m])) by (instance) > 100
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High request rate on {{ $labels.instance }}"
+      description: "{{ $labels.instance }} is receiving more than 100 requests per second for the last 5 minutes."
+```
+
+**rate() 함수와 함께 사용되는 다른 PromQL 함수:**
+
+1. **sum()**: 여러 시계열의 값을 합산합니다.
+   ```
+   sum(rate(http_requests_total[5m])) by (instance)
+   ```
+
+2. **avg()**: 여러 시계열의 평균을 계산합니다.
+   ```
+   avg(rate(http_requests_total[5m])) by (job)
+   ```
+
+3. **max()**: 여러 시계열 중 최대값을 찾습니다.
+   ```
+   max(rate(http_requests_total[5m])) by (instance)
+   ```
+
+4. **topk()**: 상위 k개의 시계열을 선택합니다.
+   ```
+   topk(3, rate(http_requests_total[5m]))
+   ```
+
+**다른 옵션들의 문제점:**
+- A. 메트릭의 절대값 계산: 이는 abs() 함수의 역할입니다.
+- B. 메트릭의 평균값 계산: 이는 avg() 함수의 역할입니다.
+- D. 메트릭의 최대값 계산: 이는 max() 함수의 역할입니다.
+</details>
+
+### 6. Kubernetes 모니터링에서 'kube-state-metrics'의 주요 목적은 무엇인가요?
+
+A. 노드 수준 시스템 메트릭 수집  
+B. Kubernetes API 객체 상태에 대한 메트릭 생성  
+C. 컨테이너 리소스 사용량 메트릭 수집  
+D. 클러스터 네트워크 트래픽 모니터링  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. Kubernetes API 객체 상태에 대한 메트릭 생성**
+
+**설명:**
+Kubernetes 모니터링에서 'kube-state-metrics'의 주요 목적은 Kubernetes API 객체 상태에 대한 메트릭을 생성하는 것입니다. kube-state-metrics는 Kubernetes API 서버를 감시하고 Deployment, Node, Pod, Service 등과 같은 다양한 Kubernetes 객체의 상태 정보를 메트릭으로 변환합니다. 이러한 메트릭은 클러스터의 전반적인 상태와 건강 상태를 모니터링하는 데 중요한 정보를 제공합니다.
+
+**kube-state-metrics의 주요 특징:**
+
+1. **객체 상태 메트릭**: Kubernetes 객체의 상태 정보를 메트릭으로 변환합니다.
+2. **리소스 중심**: 리소스 사용량이 아닌 객체 상태에 중점을 둡니다.
+3. **읽기 전용**: Kubernetes API 서버에서 정보를 읽기만 하고 변경하지 않습니다.
+4. **상태 기반**: 현재 상태를 반영하는 게이지 메트릭을 주로 생성합니다.
+5. **Prometheus 호환**: Prometheus 형식의 메트릭을 노출합니다.
+
+**kube-state-metrics vs node-exporter:**
+
+kube-state-metrics와 node-exporter는 서로 다른 유형의 메트릭을 수집합니다:
+
+- **kube-state-metrics**: Kubernetes API 객체 상태에 대한 메트릭을 생성합니다.
+- **node-exporter**: 노드 수준의 시스템 메트릭(CPU, 메모리, 디스크, 네트워크 등)을 수집합니다.
+
+**kube-state-metrics vs metrics-server:**
+
+kube-state-metrics와 metrics-server도 서로 다른 목적을 가지고 있습니다:
+
+- **kube-state-metrics**: 모니터링 및 알림을 위한 다양한 Kubernetes 객체 상태 메트릭을 제공합니다.
+- **metrics-server**: HPA(Horizontal Pod Autoscaler)와 같은 Kubernetes 자동 스케일링 기능을 위한 리소스 메트릭(CPU, 메모리 사용량)을 제공합니다.
+
+**kube-state-metrics가 제공하는 주요 메트릭:**
+
+1. **Pod 관련 메트릭**:
+   - `kube_pod_status_phase`: 파드의 현재 단계(Running, Pending, Failed 등)
+   - `kube_pod_container_status_waiting_reason`: 컨테이너가 대기 중인 이유
+   - `kube_pod_container_status_restarts_total`: 컨테이너 재시작 횟수
+
+2. **Deployment 관련 메트릭**:
+   - `kube_deployment_status_replicas`: 디플로이먼트의 현재 레플리카 수
+   - `kube_deployment_status_replicas_available`: 사용 가능한 레플리카 수
+   - `kube_deployment_spec_replicas`: 원하는 레플리카 수
+
+3. **Node 관련 메트릭**:
+   - `kube_node_status_condition`: 노드 상태 조건(Ready, DiskPressure 등)
+   - `kube_node_spec_unschedulable`: 노드가 스케줄 불가능으로 표시되었는지 여부
+   - `kube_node_status_capacity`: 노드의 리소스 용량
+
+4. **PersistentVolume 관련 메트릭**:
+   - `kube_persistentvolume_status_phase`: 영구 볼륨의 현재 단계
+   - `kube_persistentvolumeclaim_status_phase`: 영구 볼륨 클레임의 현재 단계
+
+5. **기타 리소스 메트릭**:
+   - `kube_service_info`: 서비스 정보
+   - `kube_namespace_status_phase`: 네임스페이스 상태
+   - `kube_job_status_succeeded`: 작업 성공 여부
+   - `kube_cronjob_status_active`: 활성 크론잡 수
+
+**kube-state-metrics 배포:**
+
+kube-state-metrics는 일반적으로 Kubernetes 클러스터에 다음과 같이 배포됩니다:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-state-metrics
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-state-metrics
+  template:
+    metadata:
+      labels:
+        app: kube-state-metrics
+    spec:
+      serviceAccountName: kube-state-metrics
+      containers:
+      - name: kube-state-metrics
+        image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.7.0
+        ports:
+        - name: http-metrics
+          containerPort: 8080
+        - name: telemetry
+          containerPort: 8081
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+```
+
+**kube-state-metrics 사용 사례:**
+
+1. **클러스터 상태 모니터링**: 노드, 파드, 디플로이먼트 등의 상태를 모니터링합니다.
+2. **리소스 할당 모니터링**: 요청된 리소스와 할당된 리소스를 비교합니다.
+3. **워크로드 상태 모니터링**: 디플로이먼트, 스테이트풀셋, 데몬셋 등의 상태를 모니터링합니다.
+4. **스토리지 상태 모니터링**: 영구 볼륨 및 영구 볼륨 클레임의 상태를 모니터링합니다.
+5. **작업 성공 여부 모니터링**: 작업 및 크론잡의 성공 여부를 모니터링합니다.
+
+**kube-state-metrics를 사용한 알림 규칙 예시:**
+
+```yaml
+groups:
+- name: kubernetes-state
+  rules:
+  - alert: KubePodCrashLooping
+    expr: rate(kube_pod_container_status_restarts_total{job="kube-state-metrics"}[5m]) * 60 * 5 > 0
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+      description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is restarting {{ $value }} times / 5 minutes"
+
+  - alert: KubeDeploymentReplicasMismatch
+    expr: kube_deployment_spec_replicas{job="kube-state-metrics"} != kube_deployment_status_replicas_available{job="kube-state-metrics"}
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has replica mismatch"
+      description: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has {{ $value }} unavailable replicas"
+```
+
+**kube-state-metrics 대시보드:**
+
+Grafana에서는 kube-state-metrics 데이터를 시각화하는 다양한 대시보드 템플릿을 제공합니다:
+
+1. **Kubernetes Cluster Status**: 클러스터 전반적인 상태를 보여주는 대시보드
+2. **Kubernetes Deployment Status**: 디플로이먼트 상태를 보여주는 대시보드
+3. **Kubernetes Pod Status**: 파드 상태를 보여주는 대시보드
+4. **Kubernetes Capacity Planning**: 리소스 용량 계획을 위한 대시보드
+
+**다른 옵션들의 문제점:**
+- A. 노드 수준 시스템 메트릭 수집: 이는 node-exporter의 역할입니다.
+- C. 컨테이너 리소스 사용량 메트릭 수집: 이는 cAdvisor(kubelet에 내장) 또는 metrics-server의 역할입니다.
+- D. 클러스터 네트워크 트래픽 모니터링: 이는 네트워크 모니터링 도구(예: Cilium Hubble, Calico)의 역할입니다.
+</details>
