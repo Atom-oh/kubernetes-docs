@@ -523,3 +523,321 @@ spec:
 - C. Kubernetes 클러스터에 대한 인증 자동화: 이는 Kubernetes 인증 메커니즘의 역할이며, TriggerAuthentication의 역할이 아닙니다.
 - D. 트리거 이벤트의 유효성 검증: TriggerAuthentication은 인증에 중점을 두며, 이벤트 유효성 검증은 다른 메커니즘을 통해 처리됩니다.
 </details>
+### 5. KEDA에서 'zero to one' 스케일링이란 무엇인가요?
+
+A. 워크로드를 0개에서 1개의 레플리카로 스케일 업하는 기능  
+B. 첫 번째 이벤트가 발생할 때만 스케일링하는 기능  
+C. 스케일링 시작 시 1초 이내에 스케일 업하는 기능  
+D. 하나의 이벤트에 대해 하나의 파드만 생성하는 기능  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: A. 워크로드를 0개에서 1개의 레플리카로 스케일 업하는 기능**
+
+**설명:**
+KEDA에서 'zero to one' 스케일링이란 워크로드를 0개에서 1개의 레플리카로 스케일 업하는 기능을 의미합니다. 이는 KEDA의 핵심 기능 중 하나로, 이벤트나 메트릭이 없을 때는 워크로드를 완전히 0으로 스케일 다운하여 리소스를 절약하고, 이벤트가 발생하면 신속하게 1개 이상의 레플리카로 스케일 업하여 이벤트를 처리할 수 있게 합니다. 이 기능은 Kubernetes의 기본 HPA(Horizontal Pod Autoscaler)가 제공하지 않는 기능으로, KEDA가 서버리스와 유사한 경험을 Kubernetes에서 제공할 수 있게 하는 중요한 요소입니다.
+
+**'Zero to One' 스케일링의 작동 방식:**
+
+1. **초기 상태**: ScaledObject의 minReplicaCount가 0으로 설정되어 있으면, 이벤트가 없을 때 워크로드는 0개의 레플리카로 유지됩니다.
+2. **이벤트 감지**: KEDA가 외부 이벤트 소스에서 이벤트(예: 메시지 큐에 메시지 도착)를 감지합니다.
+3. **활성화**: KEDA는 HPA를 통해 워크로드를 1개 이상의 레플리카로 스케일 업합니다.
+4. **이벤트 처리**: 워크로드가 이벤트를 처리합니다.
+5. **비활성화**: 이벤트가 모두 처리되고 일정 시간(cooldownPeriod) 동안 새 이벤트가 없으면, KEDA는 워크로드를 다시 0으로 스케일 다운합니다.
+
+**ScaledObject 예시:**
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: rabbitmq-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rabbitmq-consumer
+  minReplicaCount: 0  # 0으로 설정하여 zero to one 스케일링 활성화
+  maxReplicaCount: 10
+  cooldownPeriod: 300  # 스케일 다운 전 대기 시간(초)
+  pollingInterval: 30  # 메트릭 폴링 간격(초)
+  triggers:
+  - type: rabbitmq
+    metadata:
+      queueName: hello
+      host: rabbitmq
+      queueLength: "1"  # 큐에 메시지가 1개 이상이면 스케일 업
+```
+
+**'Zero to One' 스케일링의 이점:**
+
+1. **비용 효율성**: 이벤트가 없을 때는 리소스를 전혀 사용하지 않아 비용을 절약할 수 있습니다.
+2. **서버리스 경험**: Kubernetes에서 서버리스와 유사한 경험을 제공합니다.
+3. **자동 활성화**: 이벤트가 발생하면 자동으로 워크로드가 활성화됩니다.
+4. **리소스 최적화**: 필요할 때만 리소스를 사용합니다.
+
+**'Zero to One' 스케일링 고려 사항:**
+
+1. **콜드 스타트**: 0에서 1로 스케일 업할 때 파드 시작 시간으로 인한 지연이 발생할 수 있습니다.
+2. **초기화 시간**: 애플리케이션이 시작되고 요청을 처리할 준비가 되기까지 시간이 걸릴 수 있습니다.
+3. **상태 유지**: 0으로 스케일 다운되면 메모리 내 상태가 손실됩니다.
+4. **연결 관리**: 데이터베이스 연결 등의 리소스를 효율적으로 관리해야 합니다.
+
+**'Zero to One' 스케일링 최적화:**
+
+1. **이미지 최적화**: 작은 이미지와 빠른 시작 시간을 가진 애플리케이션을 사용합니다.
+2. **리소스 요청 조정**: 적절한 CPU/메모리 요청을 설정하여 빠른 스케줄링을 보장합니다.
+3. **노드 준비**: 워크로드를 실행할 노드가 항상 준비되어 있도록 합니다.
+4. **초기화 최적화**: 애플리케이션 초기화 시간을 최소화합니다.
+
+**'Zero to One' 스케일링 사용 사례:**
+
+1. **이벤트 처리기**: 간헐적으로 발생하는 이벤트를 처리하는 워크로드
+2. **배치 작업**: 주기적으로 실행되는 배치 처리 작업
+3. **API 백엔드**: 트래픽이 간헐적인 API 서비스
+4. **데이터 처리 파이프라인**: 데이터가 도착할 때만 활성화되는 처리 파이프라인
+
+**'Zero to One' vs 'Scale to Zero':**
+
+- **'Zero to One'**: 0에서 1 이상으로 스케일 업하는 과정을 강조합니다.
+- **'Scale to Zero'**: 1 이상에서 0으로 스케일 다운하는 과정을 강조합니다.
+
+두 용어는 동일한 기능의 다른 측면을 설명하며, KEDA는 두 기능을 모두 제공합니다.
+
+**다른 옵션들의 문제점:**
+- B. 첫 번째 이벤트가 발생할 때만 스케일링하는 기능: KEDA는 이벤트가 발생할 때마다 필요에 따라 스케일링합니다.
+- C. 스케일링 시작 시 1초 이내에 스케일 업하는 기능: 스케일링 속도는 Kubernetes 클러스터와 워크로드 특성에 따라 다르며, 1초 이내를 보장하지 않습니다.
+- D. 하나의 이벤트에 대해 하나의 파드만 생성하는 기능: KEDA는 이벤트 수나 메트릭 값에 따라 여러 파드를 생성할 수 있습니다.
+</details>
+
+### 6. KEDA에서 'custom metrics'를 사용하는 주요 목적은 무엇인가요?
+
+A. Kubernetes 클러스터의 성능 모니터링  
+B. 기본 제공되지 않는 외부 시스템의 메트릭에 기반한 스케일링  
+C. 사용자 정의 알림 생성  
+D. 클러스터 노드의 리소스 사용량 최적화  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 기본 제공되지 않는 외부 시스템의 메트릭에 기반한 스케일링**
+
+**설명:**
+KEDA에서 'custom metrics'를 사용하는 주요 목적은 기본 제공되지 않는 외부 시스템의 메트릭에 기반하여 스케일링하는 것입니다. KEDA는 다양한 내장 스케일러(RabbitMQ, Kafka, Prometheus 등)를 제공하지만, 모든 시스템이나 사용 사례를 커버할 수는 없습니다. 커스텀 메트릭 스케일러를 사용하면 KEDA가 기본적으로 지원하지 않는 외부 시스템이나 사용자 정의 메트릭 소스에서 메트릭을 가져와 스케일링 결정에 사용할 수 있습니다.
+
+**커스텀 메트릭 스케일러 유형:**
+
+KEDA는 다음과 같은 방법으로 커스텀 메트릭을 사용할 수 있습니다:
+
+1. **외부 스케일러(External Scaler)**: gRPC 서버를 구현하여 KEDA에 메트릭을 제공합니다.
+2. **Prometheus 스케일러**: Prometheus 쿼리를 사용하여 커스텀 메트릭을 가져옵니다.
+3. **Metrics API 스케일러**: Kubernetes Metrics API를 통해 제공되는 커스텀 메트릭을 사용합니다.
+
+**외부 스케일러(External Scaler) 예시:**
+
+1. **외부 스케일러 서버 구현**:
+외부 스케일러는 KEDA의 gRPC 프로토콜을 구현한 서버로, 다음과 같은 메서드를 제공해야 합니다:
+- `IsActive`: 스케일링이 필요한지 여부를 결정합니다.
+- `GetMetricSpec`: 메트릭 사양을 제공합니다.
+- `GetMetrics`: 현재 메트릭 값을 제공합니다.
+
+2. **ScaledObject에서 외부 스케일러 참조**:
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: custom-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-deployment
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  triggers:
+  - type: external
+    metadata:
+      scalerAddress: my-custom-scaler.default:6000
+      metricName: custom_metric
+      metricThreshold: "10"
+```
+
+**Prometheus를 사용한 커스텀 메트릭 예시:**
+
+Prometheus는 커스텀 메트릭을 수집하고 쿼리하는 데 널리 사용되는 도구입니다. KEDA는 Prometheus 쿼리 결과를 기반으로 스케일링할 수 있습니다:
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: prometheus-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-deployment
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-server.monitoring.svc.cluster.local
+      metricName: custom_metric_total
+      threshold: '10'
+      query: sum(rate(custom_metric_total{job="my-service"}[2m]))
+```
+
+**Twitter API를 사용한 커스텀 메트릭 예시:**
+
+Twitter API를 사용하여 특정 해시태그의 트윗 수에 따라 스케일링하는 외부 스케일러를 구현할 수 있습니다:
+
+1. **외부 스케일러 서비스 배포**:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: twitter-scaler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: twitter-scaler
+  template:
+    metadata:
+      labels:
+        app: twitter-scaler
+    spec:
+      containers:
+      - name: twitter-scaler
+        image: twitter-scaler:latest
+        env:
+        - name: TWITTER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: twitter-api-secret
+              key: api-key
+        - name: TWITTER_API_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: twitter-api-secret
+              key: api-secret
+        ports:
+        - containerPort: 6000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: twitter-scaler
+spec:
+  selector:
+    app: twitter-scaler
+  ports:
+  - port: 6000
+    targetPort: 6000
+```
+
+2. **ScaledObject 정의**:
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: twitter-hashtag-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hashtag-processor
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  triggers:
+  - type: external
+    metadata:
+      scalerAddress: twitter-scaler:6000
+      hashtag: kubernetes
+      tweetsPerReplica: "10"
+```
+
+**Google Calendar API를 사용한 커스텀 메트릭 예시:**
+
+Google Calendar API를 사용하여 예정된 이벤트 수에 따라 스케일링하는 외부 스케일러를 구현할 수 있습니다:
+
+1. **외부 스케일러 서비스 배포**:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar-scaler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: calendar-scaler
+  template:
+    metadata:
+      labels:
+        app: calendar-scaler
+    spec:
+      containers:
+      - name: calendar-scaler
+        image: calendar-scaler:latest
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /secrets/google-credentials.json
+        volumeMounts:
+        - name: google-credentials
+          mountPath: /secrets
+          readOnly: true
+        ports:
+        - containerPort: 6000
+      volumes:
+      - name: google-credentials
+        secret:
+          secretName: google-calendar-credentials
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: calendar-scaler
+spec:
+  selector:
+    app: calendar-scaler
+  ports:
+  - port: 6000
+    targetPort: 6000
+```
+
+2. **ScaledObject 정의**:
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: calendar-event-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: event-processor
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  triggers:
+  - type: external
+    metadata:
+      scalerAddress: calendar-scaler:6000
+      calendarId: primary
+      lookAheadMinutes: "60"
+      eventsPerReplica: "5"
+```
+
+**커스텀 메트릭 스케일러 개발 고려 사항:**
+
+1. **성능**: 스케일러는 효율적이어야 하며, KEDA의 폴링 간격마다 호출됩니다.
+2. **신뢰성**: 스케일러는 안정적이어야 하며, 오류 처리 메커니즘을 포함해야 합니다.
+3. **보안**: 외부 시스템에 접근하기 위한 인증 정보를 안전하게 관리해야 합니다.
+4. **확장성**: 스케일러는 여러 인스턴스의 ScaledObject에서 사용될 수 있어야 합니다.
+5. **모니터링**: 스케일러 자체의 성능과 동작을 모니터링해야 합니다.
+
+**다른 옵션들의 문제점:**
+- A. Kubernetes 클러스터의 성능 모니터링: 커스텀 메트릭은 주로 스케일링 결정을 위한 것이며, 일반적인 모니터링 목적으로는 Prometheus와 같은 도구를 직접 사용하는 것이 더 적합합니다.
+- C. 사용자 정의 알림 생성: 알림은 주로 Prometheus Alertmanager와 같은 도구를 통해 처리됩니다.
+- D. 클러스터 노드의 리소스 사용량 최적화: 이는 Cluster Autoscaler나 Kubernetes Scheduler의 역할입니다.
+</details>
