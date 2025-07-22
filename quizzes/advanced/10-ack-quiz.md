@@ -179,3 +179,242 @@ spec:
 - C. AWS 서비스 메시를 관리하는 컨트롤러: AWS App Mesh와 같은 서비스 메시는 별도의 컨트롤러로 관리되며, ACK 서비스 컨트롤러의 주요 목적이 아닙니다.
 - D. Kubernetes 서비스와 AWS 서비스 간의 통신을 관리하는 컨트롤러: ACK 서비스 컨트롤러는 통신 관리가 아닌 AWS 리소스 생성 및 관리에 중점을 둡니다.
 </details>
+### 3. ACK에서 리소스 생성 시 AWS 자격 증명(Credentials)을 관리하는 가장 일반적인 방법은 무엇인가요?
+
+A. Kubernetes Secret에 AWS 액세스 키 저장  
+B. 서비스 컨트롤러에 IAM 역할 연결  
+C. AWS IAM 역할을 Kubernetes 서비스 계정에 연결(IRSA)  
+D. 환경 변수로 AWS 자격 증명 전달  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. AWS IAM 역할을 Kubernetes 서비스 계정에 연결(IRSA)**
+
+**설명:**
+ACK에서 리소스 생성 시 AWS 자격 증명(Credentials)을 관리하는 가장 일반적인 방법은 AWS IAM 역할을 Kubernetes 서비스 계정에 연결(IAM Roles for Service Accounts, IRSA)하는 것입니다. 이 방법은 EKS에서 제공하는 기능으로, Kubernetes 서비스 계정과 AWS IAM 역할 간의 신뢰 관계를 설정하여 파드가 특정 AWS 리소스에 접근할 수 있는 권한을 안전하게 부여합니다.
+
+**IRSA 작동 방식:**
+
+1. **OIDC 제공자 설정**: EKS 클러스터에 대한 OIDC(OpenID Connect) 제공자를 AWS IAM에 설정합니다.
+2. **IAM 역할 생성**: 필요한 AWS 권한을 가진 IAM 역할을 생성하고, 신뢰 정책에 Kubernetes 서비스 계정을 지정합니다.
+3. **서비스 계정 생성**: 특정 어노테이션을 포함한 Kubernetes 서비스 계정을 생성합니다.
+4. **파드 연결**: 해당 서비스 계정을 사용하는 파드는 자동으로 AWS 자격 증명을 받습니다.
+
+**IRSA 설정 단계:**
+
+1. **EKS 클러스터의 OIDC 제공자 ID 가져오기**:
+```bash
+aws eks describe-cluster --name my-cluster --query "cluster.identity.oidc.issuer" --output text
+```
+
+2. **OIDC 제공자 생성**:
+```bash
+eksctl utils associate-iam-oidc-provider --cluster my-cluster --approve
+```
+
+3. **IAM 역할 및 정책 생성**:
+```bash
+# IAM 정책 생성
+aws iam create-policy --policy-name ACKPolicy --policy-document file://ack-policy.json
+
+# IAM 역할 생성 및 서비스 계정 연결
+eksctl create iamserviceaccount \
+  --name ack-controller \
+  --namespace ack-system \
+  --cluster my-cluster \
+  --attach-policy-arn arn:aws:iam::ACCOUNT_ID:policy/ACKPolicy \
+  --approve
+```
+
+4. **서비스 계정 어노테이션 확인**:
+```bash
+kubectl describe serviceaccount ack-controller -n ack-system
+```
+출력에서 다음과 같은 어노테이션을 확인할 수 있습니다:
+```
+Annotations:  eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/eksctl-my-cluster-addon-iamserviceaccount-Role1-XXXX
+```
+
+**ACK 컨트롤러 설치 시 IRSA 사용 예시:**
+
+Helm을 사용한 S3 컨트롤러 설치:
+```bash
+helm install --namespace ack-system ack-s3-controller \
+  oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
+  --set aws.region=us-west-2 \
+  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::ACCOUNT_ID:role/ACKRole
+```
+
+**필요한 IAM 권한:**
+
+ACK 컨트롤러가 AWS 리소스를 관리하기 위해서는 해당 AWS 서비스에 대한 적절한 IAM 권한이 필요합니다. 예를 들어, S3 컨트롤러에는 다음과 같은 권한이 필요할 수 있습니다:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:DeleteBucket",
+        "s3:PutBucketPolicy",
+        "s3:GetBucketPolicy",
+        "s3:ListBucket",
+        "s3:GetBucketVersioning",
+        "s3:PutBucketVersioning",
+        "s3:GetBucketPublicAccessBlock",
+        "s3:PutBucketPublicAccessBlock"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+**IRSA의 장점:**
+
+1. **보안 강화**: AWS 자격 증명을 코드나 구성 파일에 저장할 필요가 없습니다.
+2. **세분화된 권한**: 각 서비스 계정에 필요한 최소한의 권한만 부여할 수 있습니다.
+3. **자격 증명 순환**: AWS STS(Security Token Service)를 통해 자격 증명이 자동으로 순환됩니다.
+4. **감사 용이성**: AWS CloudTrail을 통해 서비스 계정의 AWS API 호출을 추적할 수 있습니다.
+
+**다른 자격 증명 관리 방법:**
+
+1. **Kubernetes Secret에 AWS 액세스 키 저장**:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-credentials
+  namespace: ack-system
+type: Opaque
+stringData:
+  AWS_ACCESS_KEY_ID: AKIAXXXXXXXXXXXXXXXX
+  AWS_SECRET_ACCESS_KEY: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+이 방법은 보안 위험이 있으므로 권장되지 않습니다.
+
+2. **환경 변수로 AWS 자격 증명 전달**:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ack-controller
+spec:
+  template:
+    spec:
+      containers:
+      - name: controller
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          value: AKIAXXXXXXXXXXXXXXXX
+        - name: AWS_SECRET_ACCESS_KEY
+          value: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+이 방법도 보안 위험이 있으므로 권장되지 않습니다.
+
+**다른 옵션들의 문제점:**
+- A. Kubernetes Secret에 AWS 액세스 키 저장: 이 방법은 액세스 키가 노출될 위험이 있고, 키 순환이 어렵습니다.
+- B. 서비스 컨트롤러에 IAM 역할 연결: 이 표현은 정확하지 않습니다. IAM 역할은 EC2 인스턴스나 Kubernetes 서비스 계정에 연결됩니다.
+- D. 환경 변수로 AWS 자격 증명 전달: 이 방법은 자격 증명이 로그나 디버그 출력에 노출될 위험이 있습니다.
+</details>
+
+### 4. ACK에서 'Adopted Resource'는 무엇을 의미하나요?
+
+A. 다른 Kubernetes 클러스터에서 가져온 리소스  
+B. 이미 존재하는 AWS 리소스를 ACK 관리 하에 가져오는 것  
+C. ACK에서 자동으로 생성한 종속 리소스  
+D. 다른 컨트롤러에서 ACK로 마이그레이션된 리소스  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 이미 존재하는 AWS 리소스를 ACK 관리 하에 가져오는 것**
+
+**설명:**
+ACK에서 'Adopted Resource'는 이미 존재하는 AWS 리소스를 ACK 관리 하에 가져오는 것을 의미합니다. 이 기능을 통해 ACK를 도입하기 전에 생성된 AWS 리소스를 Kubernetes를 통해 관리할 수 있게 됩니다. 리소스 입양(Adoption)은 기존 인프라를 Kubernetes 기반 GitOps 워크플로우로 통합하는 데 유용합니다.
+
+**리소스 입양 과정:**
+
+1. **AdoptedResource CR 생성**: 입양하려는 AWS 리소스의 정보를 포함한 AdoptedResource 커스텀 리소스를 생성합니다.
+2. **리소스 검색**: ACK 컨트롤러는 지정된 AWS 리소스를 찾습니다.
+3. **CR 생성**: 컨트롤러는 해당 AWS 리소스를 나타내는 Kubernetes CR을 생성합니다.
+4. **관리 전환**: 이후 해당 리소스는 ACK를 통해 관리됩니다.
+
+**AdoptedResource 예시:**
+```yaml
+apiVersion: services.k8s.aws/v1alpha1
+kind: AdoptedResource
+metadata:
+  name: my-adopted-bucket
+spec:
+  aws:
+    # AWS 리소스가 있는 리전
+    region: us-west-2
+    # 리소스의 AWS 계정 ID (선택 사항)
+    accountID: "123456789012"
+  kubernetes:
+    # 생성할 CR의 그룹
+    group: s3.services.k8s.aws
+    # 생성할 CR의 종류
+    kind: Bucket
+    # 생성할 CR의 메타데이터
+    metadata:
+      # 생성할 CR의 이름
+      name: my-existing-bucket
+  # 입양할 AWS 리소스의 고유 식별자
+  aws_resource_name: my-existing-bucket
+```
+
+**리소스 입양 상태 확인:**
+```bash
+kubectl get adoptedresources my-adopted-bucket
+```
+
+출력 예시:
+```
+NAME                STATUS   AGE
+my-adopted-bucket   ACTIVE   30s
+```
+
+**입양된 리소스 확인:**
+```bash
+kubectl get buckets my-existing-bucket
+```
+
+**리소스 입양 시 고려 사항:**
+
+1. **읽기 전용 필드**: 일부 AWS 리소스 필드는 생성 시에만 설정할 수 있고 나중에 수정할 수 없습니다. 이러한 필드는 입양 후에도 수정할 수 없습니다.
+2. **리소스 드리프트**: 입양 후 AWS 콘솔이나 CLI를 통해 리소스를 직접 수정하면 ACK와 실제 상태 간에 불일치가 발생할 수 있습니다.
+3. **권한**: 리소스를 입양하려면 해당 리소스를 설명하고 수정할 수 있는 IAM 권한이 필요합니다.
+4. **리소스 지원**: 모든 ACK 컨트롤러가 리소스 입양을 지원하는 것은 아닙니다.
+
+**리소스 입양 사용 사례:**
+
+1. **기존 인프라 통합**: 기존 AWS 인프라를 Kubernetes 기반 관리로 통합합니다.
+2. **점진적 마이그레이션**: 수동으로 관리되던 리소스를 점진적으로 ACK로 마이그레이션합니다.
+3. **하이브리드 관리**: 일부 리소스는 ACK로, 일부는 기존 방식으로 관리합니다.
+4. **GitOps 도입**: 기존 리소스를 GitOps 워크플로우에 통합합니다.
+
+**리소스 입양 제한 사항:**
+
+1. **복잡한 리소스**: 복잡한 구성이나 관계를 가진 리소스는 입양이 어려울 수 있습니다.
+2. **부분 입양**: 리소스의 일부만 입양하는 것은 불가능합니다.
+3. **리소스 종속성**: 종속 리소스를 자동으로 입양하지 않으므로, 종속 리소스도 별도로 입양해야 합니다.
+
+**리소스 입양 해제:**
+
+리소스 입양을 해제하려면 AdoptedResource CR을 삭제하면 됩니다:
+```bash
+kubectl delete adoptedresource my-adopted-bucket
+```
+
+이렇게 하면 ACK가 해당 리소스의 관리를 중단하지만, AWS 리소스 자체는 삭제되지 않습니다.
+
+**다른 옵션들의 문제점:**
+- A. 다른 Kubernetes 클러스터에서 가져온 리소스: ACK는 AWS 리소스를 관리하며, 다른 Kubernetes 클러스터의 리소스를 가져오는 것은 아닙니다.
+- C. ACK에서 자동으로 생성한 종속 리소스: 이는 'Adopted Resource'의 정의가 아닙니다.
+- D. 다른 컨트롤러에서 ACK로 마이그레이션된 리소스: 이는 컨트롤러 간의 마이그레이션을 의미하며, 'Adopted Resource'의 정의가 아닙니다.
+</details>
