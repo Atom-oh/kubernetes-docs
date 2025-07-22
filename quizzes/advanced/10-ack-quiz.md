@@ -418,3 +418,317 @@ kubectl delete adoptedresource my-adopted-bucket
 - C. ACK에서 자동으로 생성한 종속 리소스: 이는 'Adopted Resource'의 정의가 아닙니다.
 - D. 다른 컨트롤러에서 ACK로 마이그레이션된 리소스: 이는 컨트롤러 간의 마이그레이션을 의미하며, 'Adopted Resource'의 정의가 아닙니다.
 </details>
+### 5. ACK에서 'FieldExport'의 주요 목적은 무엇인가요?
+
+A. AWS 리소스의 필드 값을 Kubernetes Secret이나 ConfigMap으로 내보내기  
+B. Kubernetes 리소스의 필드를 AWS 리소스로 내보내기  
+C. AWS 리소스의 필드를 다른 AWS 리소스로 복사  
+D. Kubernetes 리소스의 필드를 로그로 내보내기  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: A. AWS 리소스의 필드 값을 Kubernetes Secret이나 ConfigMap으로 내보내기**
+
+**설명:**
+ACK에서 'FieldExport'의 주요 목적은 AWS 리소스의 필드 값을 Kubernetes Secret이나 ConfigMap으로 내보내는 것입니다. 이 기능을 통해 AWS 리소스에서 생성된 값(예: 데이터베이스 엔드포인트, 버킷 이름, 큐 URL 등)을 Kubernetes 애플리케이션에서 쉽게 참조할 수 있게 됩니다. FieldExport는 AWS 리소스와 Kubernetes 애플리케이션 간의 통합을 간소화하는 중요한 기능입니다.
+
+**FieldExport 작동 방식:**
+
+1. **FieldExport CR 생성**: 내보낼 AWS 리소스 필드와 대상 Kubernetes 리소스(Secret 또는 ConfigMap)를 지정하는 FieldExport CR을 생성합니다.
+2. **필드 값 추출**: ACK 컨트롤러는 지정된 AWS 리소스에서 필드 값을 추출합니다.
+3. **대상 리소스 생성/업데이트**: 추출된 값으로 Secret 또는 ConfigMap을 생성하거나 업데이트합니다.
+4. **값 동기화**: AWS 리소스의 필드 값이 변경되면 대상 리소스도 자동으로 업데이트됩니다.
+
+**FieldExport 예시:**
+```yaml
+apiVersion: services.k8s.aws/v1alpha1
+kind: FieldExport
+metadata:
+  name: export-db-endpoint
+spec:
+  from:
+    path: "status.endpoint"
+    resource:
+      group: rds.services.k8s.aws
+      kind: DBInstance
+      name: my-db-instance
+  to:
+    kind: Secret
+    name: db-connection
+    namespace: default
+    key: endpoint
+```
+
+이 예시에서:
+- RDS DBInstance `my-db-instance`의 `status.endpoint` 필드 값을 추출합니다.
+- 추출된 값을 `default` 네임스페이스의 `db-connection` Secret의 `endpoint` 키로 저장합니다.
+
+**ConfigMap으로 내보내기 예시:**
+```yaml
+apiVersion: services.k8s.aws/v1alpha1
+kind: FieldExport
+metadata:
+  name: export-bucket-name
+spec:
+  from:
+    path: "spec.name"
+    resource:
+      group: s3.services.k8s.aws
+      kind: Bucket
+      name: my-bucket
+  to:
+    kind: ConfigMap
+    name: app-config
+    namespace: default
+    key: bucket_name
+```
+
+**내보낸 값 사용 예시:**
+
+Secret에서 값 사용:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: app
+        env:
+        - name: DB_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: db-connection
+              key: endpoint
+```
+
+ConfigMap에서 값 사용:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: app
+        env:
+        - name: BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: bucket_name
+```
+
+**FieldExport의 장점:**
+
+1. **자동화된 구성**: AWS 리소스 생성 후 수동으로 값을 복사할 필요가 없습니다.
+2. **동적 업데이트**: AWS 리소스의 값이 변경되면 자동으로 Kubernetes 리소스가 업데이트됩니다.
+3. **GitOps 호환**: 구성 값을 코드로 관리할 수 있습니다.
+4. **보안 강화**: 민감한 값을 Secret으로 안전하게 저장할 수 있습니다.
+
+**FieldExport 사용 사례:**
+
+1. **데이터베이스 연결 정보**: RDS 데이터베이스의 엔드포인트, 포트 등을 애플리케이션에 제공합니다.
+2. **스토리지 정보**: S3 버킷 이름, ElastiCache 엔드포인트 등을 애플리케이션에 제공합니다.
+3. **메시징 정보**: SQS 큐 URL, SNS 주제 ARN 등을 애플리케이션에 제공합니다.
+4. **인증 정보**: IAM 역할 ARN, Cognito 사용자 풀 ID 등을 애플리케이션에 제공합니다.
+
+**FieldExport 상태 확인:**
+```bash
+kubectl get fieldexports export-db-endpoint
+```
+
+출력 예시:
+```
+NAME                STATUS   AGE
+export-db-endpoint  ACTIVE   30s
+```
+
+**내보낸 Secret 확인:**
+```bash
+kubectl get secret db-connection -o yaml
+```
+
+**내보낸 ConfigMap 확인:**
+```bash
+kubectl get configmap app-config -o yaml
+```
+
+**FieldExport 제한 사항:**
+
+1. **단방향 동기화**: AWS 리소스에서 Kubernetes 리소스로의 단방향 동기화만 지원합니다.
+2. **단일 필드**: 하나의 FieldExport는 하나의 필드만 내보낼 수 있습니다.
+3. **지원 리소스**: Secret과 ConfigMap만 대상 리소스로 지원됩니다.
+4. **컨트롤러 지원**: 모든 ACK 컨트롤러가 FieldExport를 지원하는 것은 아닙니다.
+
+**다른 옵션들의 문제점:**
+- B. Kubernetes 리소스의 필드를 AWS 리소스로 내보내기: FieldExport는 반대 방향으로 작동합니다.
+- C. AWS 리소스의 필드를 다른 AWS 리소스로 복사: FieldExport는 AWS 리소스 간이 아닌 AWS에서 Kubernetes로의 내보내기를 담당합니다.
+- D. Kubernetes 리소스의 필드를 로그로 내보내기: 이는 FieldExport의 기능이 아닙니다.
+</details>
+
+### 6. ACK에서 여러 AWS 계정의 리소스를 관리하는 방법으로 가장 적절한 것은 무엇인가요?
+
+A. 각 AWS 계정마다 별도의 ACK 컨트롤러 설치  
+B. 다중 계정 자격 증명을 단일 Secret에 저장  
+C. 각 AWS 계정에 대한 별도의 서비스 계정과 IAM 역할 설정  
+D. AWS Organizations를 통해 단일 자격 증명으로 모든 계정 관리  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. 각 AWS 계정에 대한 별도의 서비스 계정과 IAM 역할 설정**
+
+**설명:**
+ACK에서 여러 AWS 계정의 리소스를 관리하는 가장 적절한 방법은 각 AWS 계정에 대한 별도의 서비스 계정과 IAM 역할을 설정하는 것입니다. 이 접근 방식을 통해 각 계정에 대한 권한을 명확하게 분리하고, 최소 권한 원칙을 준수하며, 여러 AWS 계정의 리소스를 동일한 Kubernetes 클러스터에서 관리할 수 있습니다.
+
+**다중 계정 설정 단계:**
+
+1. **각 AWS 계정에 IAM 역할 생성**:
+   각 AWS 계정에 필요한 권한을 가진 IAM 역할을 생성하고, EKS 클러스터의 OIDC 제공자를 신뢰하도록 설정합니다.
+
+2. **각 계정에 대한 Kubernetes 서비스 계정 생성**:
+   각 AWS 계정에 대해 별도의 Kubernetes 서비스 계정을 생성하고, 해당 계정의 IAM 역할을 어노테이션으로 지정합니다.
+
+3. **계정별 ACK 컨트롤러 배포**:
+   각 AWS 계정에 대해 별도의 ACK 컨트롤러 인스턴스를 배포하고, 해당 계정의 서비스 계정을 사용하도록 구성합니다.
+
+**AWS 계정별 IAM 역할 생성 예시:**
+
+계정 A(123456789012)의 IAM 역할:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.region.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.region.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE:sub": "system:serviceaccount:ack-system:ack-account-a"
+        }
+      }
+    }
+  ]
+}
+```
+
+계정 B(987654321098)의 IAM 역할:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.region.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.region.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE:sub": "system:serviceaccount:ack-system:ack-account-b"
+        }
+      }
+    }
+  ]
+}
+```
+
+**계정별 Kubernetes 서비스 계정 생성:**
+
+계정 A의 서비스 계정:
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ack-account-a
+  namespace: ack-system
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ACKRoleAccountA
+```
+
+계정 B의 서비스 계정:
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ack-account-b
+  namespace: ack-system
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::987654321098:role/ACKRoleAccountB
+```
+
+**계정별 ACK 컨트롤러 배포:**
+
+계정 A의 S3 컨트롤러:
+```bash
+helm install --namespace ack-system ack-s3-controller-a \
+  oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
+  --set aws.region=us-west-2 \
+  --set serviceAccount.name=ack-account-a \
+  --set serviceAccount.create=false \
+  --set resourceTags.ack-account=account-a
+```
+
+계정 B의 S3 컨트롤러:
+```bash
+helm install --namespace ack-system ack-s3-controller-b \
+  oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
+  --set aws.region=us-west-2 \
+  --set serviceAccount.name=ack-account-b \
+  --set serviceAccount.create=false \
+  --set resourceTags.ack-account=account-b
+```
+
+**리소스 생성 시 계정 지정:**
+
+계정 A의 S3 버킷:
+```yaml
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  name: my-bucket-account-a
+  annotations:
+    services.k8s.aws/controller-account: account-a
+spec:
+  name: my-unique-bucket-account-a
+```
+
+계정 B의 S3 버킷:
+```yaml
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  name: my-bucket-account-b
+  annotations:
+    services.k8s.aws/controller-account: account-b
+spec:
+  name: my-unique-bucket-account-b
+```
+
+**다중 계정 관리의 장점:**
+
+1. **권한 분리**: 각 AWS 계정에 대한 권한을 명확하게 분리하여 보안을 강화합니다.
+2. **최소 권한**: 각 서비스 계정에 필요한 최소한의 권한만 부여할 수 있습니다.
+3. **계정 격리**: 한 계정의 문제가 다른 계정에 영향을 미치지 않습니다.
+4. **감사 용이성**: 각 계정의 활동을 별도로 추적하고 감사할 수 있습니다.
+
+**다중 계정 관리의 단점:**
+
+1. **복잡성 증가**: 여러 컨트롤러와 서비스 계정을 관리해야 하므로 복잡성이 증가합니다.
+2. **리소스 사용량**: 각 계정마다 별도의 컨트롤러를 실행하므로 리소스 사용량이 증가합니다.
+3. **구성 중복**: 여러 컨트롤러에 대한 구성이 중복될 수 있습니다.
+
+**다른 옵션들의 문제점:**
+- A. 각 AWS 계정마다 별도의 ACK 컨트롤러 설치: 이 방법은 가능하지만, 일반적으로 각 계정마다 별도의 컨트롤러 인스턴스를 동일한 Kubernetes 클러스터에 배포하는 것이 더 효율적입니다.
+- B. 다중 계정 자격 증명을 단일 Secret에 저장: 이 방법은 보안 위험이 있으며, 권한 분리 원칙에 위배됩니다.
+- D. AWS Organizations를 통해 단일 자격 증명으로 모든 계정 관리: ACK는 AWS Organizations를 통한 단일 자격 증명 관리를 직접 지원하지 않으며, 이 방법은 최소 권한 원칙에 위배될 수 있습니다.
+</details>
