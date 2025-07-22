@@ -798,3 +798,424 @@ spec:
 - C. 인그레스 트래픽 라우팅 규칙 정의: 이는 Gateway와 VirtualService의 조합으로 처리됩니다.
 - D. 서비스 간 인증 정책 설정: 이는 PeerAuthentication과 AuthorizationPolicy의 역할입니다.
 </details>
+### 7. Istio에서 'ServiceEntry'의 주요 목적은 무엇인가요?
+
+A. 서비스 메시 내부에 새로운 서비스 생성  
+B. 서비스 메시 외부 서비스를 서비스 메시 레지스트리에 추가하여 접근 관리  
+C. 서비스 간 인증 정책 설정  
+D. 서비스 버전 간 트래픽 분할  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 서비스 메시 외부 서비스를 서비스 메시 레지스트리에 추가하여 접근 관리**
+
+**설명:**
+Istio에서 'ServiceEntry'의 주요 목적은 서비스 메시 외부 서비스를 서비스 메시 레지스트리에 추가하여 접근을 관리하는 것입니다. ServiceEntry를 사용하면 Istio 서비스 메시 외부에 있는 서비스(예: 외부 API, 레거시 시스템, 다른 클러스터의 서비스 등)를 Istio의 서비스 레지스트리에 추가하여 마치 메시 내부 서비스처럼 관리할 수 있습니다.
+
+**ServiceEntry의 주요 기능:**
+
+1. **외부 서비스 등록**: 메시 외부 서비스를 Istio 서비스 레지스트리에 추가합니다.
+2. **트래픽 관리**: 외부 서비스에 대한 트래픽을 VirtualService와 DestinationRule을 사용하여 관리할 수 있습니다.
+3. **보안 정책 적용**: 외부 서비스에 대한 인증, 권한 부여, mTLS 등의 보안 정책을 적용할 수 있습니다.
+4. **관찰성 확장**: 외부 서비스와의 통신에 대한 메트릭, 로그, 추적을 수집할 수 있습니다.
+
+**ServiceEntry 예시:**
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: external-api
+spec:
+  hosts:
+  - api.example.com
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS
+```
+
+이 예시에서:
+- `api.example.com`이라는 외부 서비스를 Istio 서비스 레지스트리에 추가합니다.
+- 포트 443을 통해 HTTPS 프로토콜로 접근합니다.
+- `location: MESH_EXTERNAL`은 서비스가 메시 외부에 있음을 나타냅니다.
+- `resolution: DNS`는 서비스 이름을 DNS를 통해 해석함을 나타냅니다.
+
+**ServiceEntry 위치 유형:**
+
+1. **MESH_EXTERNAL**: 서비스가 메시 외부에 있음을 나타냅니다. 이 경우 사이드카 프록시는 외부 서비스로 직접 요청을 전달합니다.
+2. **MESH_INTERNAL**: 서비스가 메시 내부에 있지만 서비스 레지스트리에 등록되지 않았음을 나타냅니다. 이는 주로 멀티 클러스터 시나리오에서 사용됩니다.
+
+**ServiceEntry 해석 유형:**
+
+1. **DNS**: 서비스 이름을 DNS를 통해 해석합니다.
+2. **STATIC**: 서비스 엔드포인트를 정적으로 지정합니다.
+3. **NONE**: 서비스 이름 해석을 수행하지 않습니다.
+
+**정적 엔드포인트 예시:**
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: external-service
+spec:
+  hosts:
+  - service.example.com
+  ports:
+  - number: 80
+    name: http
+    protocol: HTTP
+  location: MESH_EXTERNAL
+  resolution: STATIC
+  endpoints:
+  - address: 192.168.1.1
+  - address: 192.168.1.2
+```
+
+**외부 서비스에 대한 트래픽 관리:**
+
+ServiceEntry를 정의한 후, VirtualService와 DestinationRule을 사용하여 외부 서비스에 대한 트래픽을 관리할 수 있습니다:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: external-api-vs
+spec:
+  hosts:
+  - api.example.com
+  http:
+  - timeout: 3s
+    retries:
+      attempts: 3
+      perTryTimeout: 1s
+    route:
+    - destination:
+        host: api.example.com
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: external-api-dr
+spec:
+  host: api.example.com
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 1024
+        maxRequestsPerConnection: 10
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+```
+
+**TLS 설정 예시:**
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: external-api-tls
+spec:
+  hosts:
+  - api.example.com
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: external-api-tls-dr
+spec:
+  host: api.example.com
+  trafficPolicy:
+    tls:
+      mode: SIMPLE  # TLS 연결 사용
+      sni: api.example.com  # SNI 설정
+```
+
+**ServiceEntry 사용 사례:**
+
+1. **외부 API 접근**: 외부 API(예: 결제 게이트웨이, 소셜 미디어 API 등)에 대한 접근을 관리합니다.
+2. **레거시 시스템 통합**: 메시 외부의 레거시 시스템을 서비스 메시와 통합합니다.
+3. **멀티 클러스터 통신**: 다른 클러스터의 서비스와 통신합니다.
+4. **클라우드 서비스 접근**: AWS S3, Google Cloud Storage 등의 클라우드 서비스에 대한 접근을 관리합니다.
+5. **데이터베이스 접근**: 외부 데이터베이스에 대한 접근을 관리합니다.
+
+**ServiceEntry와 Egress Gateway:**
+
+ServiceEntry는 종종 Egress Gateway와 함께 사용되어 외부 서비스에 대한 트래픽을 더 세밀하게 제어합니다:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: istio-egressgateway
+spec:
+  selector:
+    istio: egressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - api.example.com
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: direct-api-through-egress-gateway
+spec:
+  hosts:
+  - api.example.com
+  gateways:
+  - istio-egressgateway
+  - mesh
+  http:
+  - match:
+    - gateways:
+      - mesh
+      port: 80
+    route:
+    - destination:
+        host: istio-egressgateway.istio-system.svc.cluster.local
+        port:
+          number: 80
+  - match:
+    - gateways:
+      - istio-egressgateway
+      port: 80
+    route:
+    - destination:
+        host: api.example.com
+        port:
+          number: 80
+```
+
+**다른 옵션들의 문제점:**
+- A. 서비스 메시 내부에 새로운 서비스 생성: ServiceEntry는 새로운 서비스를 생성하는 것이 아니라 외부 서비스를 레지스트리에 추가합니다.
+- C. 서비스 간 인증 정책 설정: 이는 PeerAuthentication과 AuthorizationPolicy의 역할입니다.
+- D. 서비스 버전 간 트래픽 분할: 이는 VirtualService의 주요 기능입니다.
+</details>
+
+### 8. Istio에서 'AuthorizationPolicy'의 주요 목적은 무엇인가요?
+
+A. 사용자 인증 관리  
+B. 서비스 간 트래픽 라우팅 규칙 정의  
+C. 서비스에 대한 접근 제어 정책 정의  
+D. 서비스 메시 외부 서비스와의 통합  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. 서비스에 대한 접근 제어 정책 정의**
+
+**설명:**
+Istio에서 'AuthorizationPolicy'의 주요 목적은 서비스에 대한 접근 제어 정책을 정의하는 것입니다. AuthorizationPolicy는 어떤 소스(사용자, 서비스 등)가 어떤 조건에서 어떤 작업(HTTP 메서드, gRPC 작업 등)을 수행할 수 있는지 세밀하게 제어할 수 있게 해줍니다. 이를 통해 최소 권한 원칙을 적용하고 서비스 간 통신의 보안을 강화할 수 있습니다.
+
+**AuthorizationPolicy의 주요 구성 요소:**
+
+1. **selector**: 정책이 적용될 워크로드를 선택합니다.
+2. **action**: ALLOW, DENY, CUSTOM 중 하나를 지정합니다.
+3. **rules**: 정책 규칙을 정의합니다.
+   - **from**: 소스 규칙(principals, namespaces, ip blocks 등)
+   - **to**: 대상 규칙(operations, ports 등)
+   - **when**: 조건 규칙(headers, request attributes 등)
+
+**AuthorizationPolicy 예시:**
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: httpbin-policy
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/default/sa/sleep"]
+    - source:
+        namespaces: ["test"]
+    to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/info*"]
+    when:
+    - key: request.headers[X-Custom-Header]
+      values: ["value1", "value2"]
+```
+
+이 예시에서:
+- `httpbin` 앱에 대한 정책을 정의합니다.
+- `default` 네임스페이스의 `sleep` 서비스 계정 또는 `test` 네임스페이스의 소스만 허용합니다.
+- `GET` 메서드와 `/info`로 시작하는 경로에 대한 요청만 허용합니다.
+- 요청 헤더 `X-Custom-Header`가 `value1` 또는 `value2` 값을 가질 때만 허용합니다.
+
+**ALLOW vs DENY 정책:**
+
+1. **ALLOW 정책**: 명시적으로 허용된 트래픽만 허용하고 나머지는 모두 거부합니다.
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-policy
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["default"]
+    to:
+    - operation:
+        methods: ["GET"]
+```
+
+2. **DENY 정책**: 명시적으로 거부된 트래픽만 거부하고 나머지는 모두 허용합니다.
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-policy
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+  action: DENY
+  rules:
+  - from:
+    - source:
+        namespaces: ["untrusted"]
+    to:
+    - operation:
+        methods: ["POST"]
+```
+
+**정책 평가 순서:**
+
+1. CUSTOM 정책이 있으면 먼저 평가됩니다.
+2. DENY 정책이 있으면 다음으로 평가됩니다.
+3. ALLOW 정책이 있으면 마지막으로 평가됩니다.
+4. 일치하는 정책이 없으면 기본적으로 허용됩니다.
+
+**네임스페이스 수준 및 메시 수준 정책:**
+
+1. **네임스페이스 수준 정책**: 특정 네임스페이스의 모든 워크로드에 적용됩니다.
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: ns-level-policy
+  namespace: default
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["trusted"]
+```
+
+2. **메시 수준 정책**: 루트 네임스페이스(일반적으로 istio-system)에 정의되고 selector가 없는 정책은 메시의 모든 워크로드에 적용됩니다.
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: mesh-level-policy
+  namespace: istio-system
+spec:
+  action: DENY
+  rules:
+  - from:
+    - source:
+        namespaces: ["untrusted"]
+```
+
+**고급 접근 제어 시나리오:**
+
+1. **JWT 클레임 기반 접근 제어**:
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: jwt-based-policy
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        requestPrincipals: ["*"]
+    when:
+    - key: request.auth.claims[groups]
+      values: ["admin", "developer"]
+```
+
+2. **IP 기반 접근 제어**:
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: ip-based-policy
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        ipBlocks: ["10.0.0.0/24", "192.168.1.0/24"]
+```
+
+3. **경로 및 메서드 기반 접근 제어**:
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: path-method-policy
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/public/*"]
+  - from:
+    - source:
+        principals: ["cluster.local/ns/default/sa/admin"]
+    to:
+    - operation:
+        methods: ["*"]
+        paths: ["*"]
+```
+
+**AuthorizationPolicy와 PeerAuthentication의 차이:**
+
+- **PeerAuthentication**: 서비스 간 통신의 인증 방법(mTLS 등)을 정의합니다.
+- **AuthorizationPolicy**: 인증된 클라이언트가 서비스에 접근할 수 있는 권한을 정의합니다.
+
+**다른 옵션들의 문제점:**
+- A. 사용자 인증 관리: 이는 RequestAuthentication의 역할입니다.
+- B. 서비스 간 트래픽 라우팅 규칙 정의: 이는 VirtualService의 역할입니다.
+- D. 서비스 메시 외부 서비스와의 통합: 이는 ServiceEntry의 역할입니다.
+</details>
