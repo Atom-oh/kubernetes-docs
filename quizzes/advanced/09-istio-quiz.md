@@ -426,3 +426,375 @@ spec:
 - C. 클러스터 내의 모든 노드에 균등하게 트래픽 분산: 이는 일반적인 로드 밸런싱의 목적이며, Locality Load Balancing은 지리적 근접성에 따라 우선순위를 부여합니다.
 - D. 서비스 메시 외부 서비스로의 트래픽 관리: 이는 ServiceEntry의 주요 목적입니다.
 </details>
+### 5. Istio에서 'Global Rate Limit'의 주요 목적은 무엇인가요?
+
+A. 클러스터의 전체 리소스 사용량 제한  
+B. 서비스 메시 전체에 걸쳐 API 호출 빈도 제한  
+C. 글로벌 네트워크 대역폭 제한  
+D. 전체 사용자 세션 수 제한  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 서비스 메시 전체에 걸쳐 API 호출 빈도 제한**
+
+**설명:**
+Istio에서 'Global Rate Limit'의 주요 목적은 서비스 메시 전체에 걸쳐 API 호출 빈도를 제한하는 것입니다. 이는 서비스를 과부하로부터 보호하고, 공정한 리소스 사용을 보장하며, DDoS 공격을 방어하는 데 도움이 됩니다. 로컬 속도 제한과 달리, 글로벌 속도 제한은 중앙 집중식 속도 제한 서비스를 사용하여 모든 프록시 인스턴스에 걸쳐 속도 제한을 조정합니다.
+
+**Global Rate Limit의 작동 방식:**
+
+1. **중앙 집중식 서비스**: Istio는 외부 속도 제한 서비스(예: Envoy의 Rate Limit Service)와 통합됩니다.
+2. **속도 제한 구성**: EnvoyFilter를 사용하여 속도 제한 규칙을 정의합니다.
+3. **토큰 버킷 알고리즘**: 일반적으로 토큰 버킷 알고리즘을 사용하여 요청 속도를 제한합니다.
+4. **분산 카운터**: 중앙 서비스는 분산된 프록시 인스턴스에서 오는 요청을 집계합니다.
+
+**Global Rate Limit 구성 예시:**
+
+1. **속도 제한 서비스 배포**:
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ratelimit
+  namespace: istio-system
+spec:
+  ports:
+  - port: 8081
+    name: grpc
+  selector:
+    app: ratelimit
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ratelimit
+  namespace: istio-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ratelimit
+  template:
+    metadata:
+      labels:
+        app: ratelimit
+    spec:
+      containers:
+      - name: ratelimit
+        image: envoyproxy/ratelimit:1.4.0
+        env:
+        - name: RUNTIME_ROOT
+          value: /data
+        - name: RUNTIME_SUBDIRECTORY
+          value: config
+        - name: RUNTIME_WATCH_ROOT
+          value: "true"
+        - name: RUNTIME_IGNOREDOTFILES
+          value: "true"
+        - name: USE_STATSD
+          value: "false"
+        - name: LOG_LEVEL
+          value: debug
+        - name: REDIS_SOCKET_TYPE
+          value: tcp
+        - name: REDIS_URL
+          value: redis:6379
+        volumeMounts:
+        - name: config-volume
+          mountPath: /data/config
+      volumes:
+      - name: config-volume
+        configMap:
+          name: ratelimit-config
+```
+
+2. **속도 제한 구성**:
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ratelimit-config
+  namespace: istio-system
+data:
+  config.yaml: |
+    domain: productpage-ratelimit
+    descriptors:
+      - key: path
+        value: "/productpage"
+        rate_limit:
+          unit: minute
+          requests_per_unit: 100
+      - key: user
+        rate_limit:
+          unit: minute
+          requests_per_unit: 10
+```
+
+3. **EnvoyFilter 구성**:
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: filter-ratelimit
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      istio: ingressgateway
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: GATEWAY
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: "envoy.filters.http.router"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.ratelimit
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+          domain: productpage-ratelimit
+          failure_mode_deny: false
+          timeout: 10s
+          rate_limit_service:
+            grpc_service:
+              envoy_grpc:
+                cluster_name: outbound|8081||ratelimit.istio-system.svc.cluster.local
+              timeout: 10s
+```
+
+**Global Rate Limit vs Local Rate Limit:**
+
+1. **Global Rate Limit**:
+   - 중앙 집중식 서비스를 사용하여 모든 프록시 인스턴스에 걸쳐 속도 제한을 조정
+   - 분산 환경에서 정확한 속도 제한 적용 가능
+   - Redis와 같은 외부 저장소를 사용하여 카운터 유지
+   - 구성 및 유지 관리가 더 복잡함
+
+2. **Local Rate Limit**:
+   - 각 프록시 인스턴스가 독립적으로 속도 제한 적용
+   - 프록시 간 조정 없음
+   - 메모리 내 카운터 사용
+   - 구성이 더 간단함
+   - 분산 환경에서는 정확한 속도 제한이 어려움
+
+**Local Rate Limit 예시**:
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: filter-local-ratelimit
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      app: productpage
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.local_ratelimit
+        typed_config:
+          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+          type_url: type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          value:
+            stat_prefix: http_local_rate_limiter
+            token_bucket:
+              max_tokens: 100
+              tokens_per_fill: 100
+              fill_interval: 60s
+            filter_enabled:
+              runtime_key: local_rate_limit_enabled
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
+```
+
+**Global Rate Limit의 사용 사례:**
+
+1. **API 보호**: 과도한 API 호출로부터 백엔드 서비스 보호
+2. **공정한 사용**: 사용자 간 공정한 리소스 사용 보장
+3. **DDoS 방어**: 분산 서비스 거부 공격 방어
+4. **비용 제어**: API 호출 비용 제어
+5. **서비스 계층**: 다양한 서비스 계층(무료, 프리미엄 등)에 따른 차별화된 속도 제한 적용
+
+**속도 제한 기준:**
+
+1. **IP 주소**: 클라이언트 IP 주소별 제한
+2. **사용자 ID**: 인증된 사용자별 제한
+3. **API 경로**: 특정 API 엔드포인트별 제한
+4. **HTTP 메서드**: GET, POST 등 HTTP 메서드별 제한
+5. **사용자 정의 헤더**: 특정 헤더 값에 따른 제한
+
+**다른 옵션들의 문제점:**
+- A. 클러스터의 전체 리소스 사용량 제한: 이는 Kubernetes의 ResourceQuota와 같은 기능의 역할입니다.
+- C. 글로벌 네트워크 대역폭 제한: Istio의 Global Rate Limit은 네트워크 대역폭보다는 요청 수에 중점을 둡니다.
+- D. 전체 사용자 세션 수 제한: 이는 인증 시스템이나 세션 관리 시스템의 역할입니다.
+</details>
+
+### 6. Istio에서 'DestinationRule'의 주요 목적은 무엇인가요?
+
+A. 외부 서비스와의 통신 설정  
+B. 서비스 버전(subset) 정의 및 로드 밸런싱 정책 구성  
+C. 인그레스 트래픽 라우팅 규칙 정의  
+D. 서비스 간 인증 정책 설정  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 서비스 버전(subset) 정의 및 로드 밸런싱 정책 구성**
+
+**설명:**
+Istio에서 'DestinationRule'의 주요 목적은 서비스 버전(subset)을 정의하고 로드 밸런싱 정책을 구성하는 것입니다. DestinationRule은 VirtualService가 트래픽을 어디로 라우팅할지 결정한 후, 해당 트래픽이 어떻게 처리될지를 정의합니다. 이는 서비스의 다양한 버전을 정의하고, 각 버전에 대한 로드 밸런싱, 연결 풀, 이상치 탐지 등의 정책을 설정하는 데 사용됩니다.
+
+**DestinationRule의 주요 기능:**
+
+1. **서비스 서브셋 정의**: 서비스의 다양한 버전(v1, v2 등)을 레이블을 기반으로 정의합니다.
+2. **로드 밸런싱 정책 설정**: 라운드 로빈, 최소 연결, 랜덤 등의 로드 밸런싱 알고리즘을 지정합니다.
+3. **연결 풀 구성**: 서비스에 대한 최대 연결 수, HTTP/2 최대 요청 수 등을 설정합니다.
+4. **이상치 탐지 설정**: 비정상적인 서비스 인스턴스를 감지하고 로드 밸런싱에서 제외하는 규칙을 정의합니다.
+5. **TLS 설정**: 서비스 간 통신을 위한 TLS 설정을 구성합니다.
+
+**DestinationRule 예시:**
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: reviews
+spec:
+  host: reviews
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 1024
+        maxRequestsPerConnection: 10
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+    trafficPolicy:
+      loadBalancer:
+        simple: LEAST_CONN
+  - name: v3
+    labels:
+      version: v3
+```
+
+이 예시에서:
+- `reviews` 서비스에 대한 기본 트래픽 정책은 라운드 로빈 로드 밸런싱을 사용합니다.
+- 연결 풀은 TCP 연결을 100개로 제한하고, HTTP/1.1 연결당 최대 10개의 요청을 허용합니다.
+- 이상치 탐지는 30초 간격으로 연속 5번의 5xx 오류가 발생하면 해당 인스턴스를 30초 동안 로드 밸런싱에서 제외합니다.
+- 서비스는 v1, v2, v3 세 가지 서브셋으로 정의됩니다.
+- v2 서브셋은 최소 연결 로드 밸런싱을 사용하도록 오버라이드됩니다.
+
+**로드 밸런싱 알고리즘:**
+
+1. **ROUND_ROBIN**: 요청을 순차적으로 각 서비스 인스턴스에 분배합니다.
+2. **LEAST_CONN**: 현재 연결 수가 가장 적은 서비스 인스턴스로 요청을 라우팅합니다.
+3. **RANDOM**: 무작위로 서비스 인스턴스를 선택합니다.
+4. **PASSTHROUGH**: 원래 연결 정보를 유지하여 클라이언트가 선택한 인스턴스로 요청을 전달합니다.
+5. **LOCALITY_WEIGHTED_LEAST_REQUEST**: 로컬리티와 현재 요청 수를 고려하여 인스턴스를 선택합니다.
+
+**연결 풀 설정:**
+```yaml
+connectionPool:
+  tcp:
+    maxConnections: 100           # 최대 TCP 연결 수
+    connectTimeout: 30ms          # 연결 타임아웃
+  http:
+    http1MaxPendingRequests: 1024 # HTTP/1.1 최대 대기 요청 수
+    http2MaxRequests: 1024        # HTTP/2 최대 요청 수
+    maxRequestsPerConnection: 10  # 연결당 최대 요청 수
+    maxRetries: 3                 # 최대 재시도 횟수
+```
+
+**이상치 탐지 설정:**
+```yaml
+outlierDetection:
+  consecutive5xxErrors: 5         # 연속 5xx 오류 횟수
+  interval: 30s                   # 검사 간격
+  baseEjectionTime: 30s           # 기본 제외 시간
+  maxEjectionPercent: 100         # 최대 제외 비율
+  minHealthPercent: 0             # 최소 정상 비율
+```
+
+**TLS 설정:**
+```yaml
+tls:
+  mode: ISTIO_MUTUAL              # Istio mTLS 사용
+  clientCertificate: /etc/certs/cert-chain.pem
+  privateKey: /etc/certs/key.pem
+  caCertificates: /etc/certs/root-cert.pem
+  subjectAltNames:
+  - spiffe://cluster.local/ns/default/sa/default
+```
+
+**VirtualService와 DestinationRule의 관계:**
+
+- **VirtualService**: 트래픽을 어디로 라우팅할지 결정합니다.
+- **DestinationRule**: 트래픽이 목적지에 도달한 후 어떻게 처리될지 정의합니다.
+
+예를 들어:
+```yaml
+# VirtualService: 트래픽을 reviews 서비스의 v1 또는 v2 서브셋으로 라우팅
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: reviews
+spec:
+  hosts:
+  - reviews
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: v1
+      weight: 80
+    - destination:
+        host: reviews
+        subset: v2
+      weight: 20
+
+# DestinationRule: reviews 서비스의 서브셋 정의 및 로드 밸런싱 정책 설정
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: reviews
+spec:
+  host: reviews
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+```
+
+**다른 옵션들의 문제점:**
+- A. 외부 서비스와의 통신 설정: 이는 ServiceEntry의 주요 목적입니다.
+- C. 인그레스 트래픽 라우팅 규칙 정의: 이는 Gateway와 VirtualService의 조합으로 처리됩니다.
+- D. 서비스 간 인증 정책 설정: 이는 PeerAuthentication과 AuthorizationPolicy의 역할입니다.
+</details>
