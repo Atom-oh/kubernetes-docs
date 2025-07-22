@@ -869,3 +869,433 @@ Grafana에서는 kube-state-metrics 데이터를 시각화하는 다양한 대�
 - C. 컨테이너 리소스 사용량 메트릭 수집: 이는 cAdvisor(kubelet에 내장) 또는 metrics-server의 역할입니다.
 - D. 클러스터 네트워크 트래픽 모니터링: 이는 네트워크 모니터링 도구(예: Cilium Hubble, Calico)의 역할입니다.
 </details>
+### 7. Prometheus Alertmanager의 주요 목적은 무엇인가요?
+
+A. 메트릭 수집 및 저장  
+B. 알림 중복 제거, 그룹화, 라우팅 및 알림 전송  
+C. 메트릭 시각화 및 대시보드 생성  
+D. 메트릭 쿼리 및 분석  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 알림 중복 제거, 그룹화, 라우팅 및 알림 전송**
+
+**설명:**
+Prometheus Alertmanager의 주요 목적은 알림 중복 제거, 그룹화, 라우팅 및 알림 전송입니다. Alertmanager는 Prometheus 서버에서 생성된 알림을 처리하고, 중복 알림을 제거하며, 관련 알림을 그룹화하고, 다양한 알림 채널(이메일, Slack, PagerDuty 등)로 라우팅하는 역할을 담당합니다. 이를 통해 알림 피로를 줄이고 효과적인 알림 관리를 가능하게 합니다.
+
+**Alertmanager의 주요 특징:**
+
+1. **알림 중복 제거**: 동일한 알림이 여러 번 발생하는 경우 중복을 제거합니다.
+2. **알림 그룹화**: 관련된 알림을 하나의 그룹으로 묶어 알림 폭주를 방지합니다.
+3. **알림 라우팅**: 알림의 특성에 따라 다양한 수신자에게 라우팅합니다.
+4. **알림 억제**: 특정 알림이 발생하면 관련된 다른 알림을 억제합니다.
+5. **알림 사일런싱**: 특정 기간 동안 알림을 일시적으로 중지합니다.
+6. **다양한 알림 채널**: 이메일, Slack, PagerDuty, WebHook 등 다양한 알림 채널을 지원합니다.
+7. **고가용성**: 여러 Alertmanager 인스턴스를 클러스터링하여 고가용성을 제공합니다.
+
+**Alertmanager 아키텍처:**
+
+```
+┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
+│   Prometheus    │─────▶│  Alertmanager   │─────▶│  알림 채널      │
+│   (알림 규칙)    │      │  (알림 처리)    │      │  (이메일, Slack 등)│
+└─────────────────┘      └─────────────────┘      └─────────────────┘
+```
+
+**Alertmanager 구성 예시:**
+
+```yaml
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.example.org:587'
+  smtp_from: 'alertmanager@example.org'
+  smtp_auth_username: 'alertmanager'
+  smtp_auth_password: 'password'
+
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: 'team-emails'
+  routes:
+  - match:
+      severity: critical
+    receiver: 'pagerduty'
+  - match:
+      severity: warning
+    receiver: 'slack'
+
+receivers:
+- name: 'team-emails'
+  email_configs:
+  - to: 'team@example.org'
+
+- name: 'pagerduty'
+  pagerduty_configs:
+  - service_key: '<pagerduty-service-key>'
+
+- name: 'slack'
+  slack_configs:
+  - api_url: '<slack-webhook-url>'
+    channel: '#alerts'
+    text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
+
+inhibit_rules:
+- source_match:
+    severity: 'critical'
+  target_match:
+    severity: 'warning'
+  equal: ['alertname', 'cluster', 'service']
+```
+
+**Alertmanager 주요 구성 요소:**
+
+1. **global**: 전역 설정(SMTP 서버, Slack API URL 등)을 정의합니다.
+2. **route**: 알림 라우팅 트리를 정의합니다.
+   - **group_by**: 알림을 그룹화하는 레이블을 지정합니다.
+   - **group_wait**: 첫 번째 알림 발생 후 그룹의 초기 알림을 보내기 전 대기 시간입니다.
+   - **group_interval**: 동일한 그룹에 대한 후속 알림 간의 간격입니다.
+   - **repeat_interval**: 동일한 알림을 반복하는 간격입니다.
+   - **receiver**: 기본 수신자를 지정합니다.
+   - **routes**: 하위 라우팅 규칙을 정의합니다.
+3. **receivers**: 알림을 수신할 채널(이메일, Slack, PagerDuty 등)을 정의합니다.
+4. **inhibit_rules**: 알림 억제 규칙을 정의합니다.
+5. **time_intervals**: 알림 사일런싱을 위한 시간 간격을 정의합니다.
+
+**알림 라우팅 예시:**
+
+```yaml
+route:
+  receiver: 'default-receiver'
+  group_by: ['alertname', 'job']
+  routes:
+  - match:
+      service: 'frontend'
+    receiver: 'frontend-team'
+  - match:
+      service: 'backend'
+    receiver: 'backend-team'
+  - match_re:
+      service: 'database|cache'
+    receiver: 'db-team'
+  - match:
+      severity: 'critical'
+    receiver: 'pagerduty'
+    continue: true
+```
+
+이 예시에서:
+- 'service=frontend' 레이블이 있는 알림은 'frontend-team' 수신자에게 라우팅됩니다.
+- 'service=backend' 레이블이 있는 알림은 'backend-team' 수신자에게 라우팅됩니다.
+- 'service=database' 또는 'service=cache' 레이블이 있는 알림은 'db-team' 수신자에게 라우팅됩니다.
+- 'severity=critical' 레이블이 있는 알림은 'pagerduty' 수신자에게 라우팅되며, 'continue=true'로 인해 다른 라우팅 규칙도 계속 평가됩니다.
+
+**알림 그룹화 예시:**
+
+```yaml
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+```
+
+이 예시에서:
+- 'alertname', 'cluster', 'service' 레이블이 동일한 알림은 하나의 그룹으로 묶입니다.
+- 첫 번째 알림 발생 후 30초 동안 대기한 후 그룹의 초기 알림을 보냅니다.
+- 동일한 그룹에 대한 후속 알림은 5분 간격으로 보냅니다.
+- 동일한 알림은 4시간마다 반복해서 보냅니다.
+
+**알림 억제 예시:**
+
+```yaml
+inhibit_rules:
+- source_match:
+    alertname: 'NodeDown'
+    severity: 'critical'
+  target_match:
+    alertname: 'PodNotScheduled'
+  equal: ['cluster', 'namespace']
+```
+
+이 예시에서:
+- 'NodeDown' 알림이 'critical' 심각도로 발생하면, 동일한 'cluster'와 'namespace' 레이블을 가진 'PodNotScheduled' 알림은 억제됩니다.
+
+**알림 사일런싱 예시:**
+
+Alertmanager UI 또는 API를 통해 특정 알림을 일시적으로 중지할 수 있습니다:
+
+```json
+{
+  "matchers": [
+    {
+      "name": "service",
+      "value": "database",
+      "isRegex": false
+    }
+  ],
+  "startsAt": "2023-07-22T10:00:00Z",
+  "endsAt": "2023-07-22T12:00:00Z",
+  "createdBy": "admin",
+  "comment": "Database maintenance"
+}
+```
+
+**Alertmanager 고가용성:**
+
+Alertmanager는 여러 인스턴스를 클러스터링하여 고가용성을 제공할 수 있습니다:
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: Alertmanager
+metadata:
+  name: alertmanager
+  namespace: monitoring
+spec:
+  replicas: 3
+  version: v0.24.0
+  configSecret: alertmanager-config
+```
+
+**Prometheus 알림 규칙 예시:**
+
+```yaml
+groups:
+- name: example
+  rules:
+  - alert: HighRequestLatency
+    expr: http_request_duration_seconds{quantile="0.9"} > 1
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High request latency on {{ $labels.instance }}"
+      description: "{{ $labels.instance }} has a 90th percentile latency of {{ $value }} seconds"
+```
+
+**다른 옵션들의 문제점:**
+- A. 메트릭 수집 및 저장: 이는 Prometheus 서버의 역할입니다.
+- C. 메트릭 시각화 및 대시보드 생성: 이는 Grafana의 역할입니다.
+- D. 메트릭 쿼리 및 분석: 이는 Prometheus 서버의 PromQL 기능의 역할입니다.
+</details>
+
+### 8. Kubernetes 모니터링에서 'node-exporter'의 주요 목적은 무엇인가요?
+
+A. 노드 수준 시스템 메트릭(CPU, 메모리, 디스크 등) 수집  
+B. Kubernetes API 객체 상태에 대한 메트릭 생성  
+C. 컨테이너 수준 메트릭 수집  
+D. 애플리케이션 수준 메트릭 수집  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: A. 노드 수준 시스템 메트릭(CPU, 메모리, 디스크 등) 수집**
+
+**설명:**
+Kubernetes 모니터링에서 'node-exporter'의 주요 목적은 노드 수준 시스템 메트릭(CPU, 메모리, 디스크 등)을 수집하는 것입니다. node-exporter는 Prometheus 에코시스템의 일부로, Linux 시스템의 하드웨어 및 OS 수준 메트릭을 노출하는 데 특화된 익스포터입니다. Kubernetes 클러스터에서는 일반적으로 DaemonSet으로 배포되어 모든 노드에서 실행되며, 각 노드의 시스템 메트릭을 수집합니다.
+
+**node-exporter의 주요 특징:**
+
+1. **하드웨어 메트릭**: CPU, 메모리, 디스크, 네트워크 등의 하드웨어 메트릭을 수집합니다.
+2. **OS 메트릭**: 파일 시스템, 네트워크 스택, 시스템 로드 등의 OS 수준 메트릭을 수집합니다.
+3. **확장성**: 다양한 수집기(collector)를 통해 수집할 메트릭을 선택할 수 있습니다.
+4. **플랫폼 독립성**: Linux 시스템에서 실행되며, Kubernetes 외부에서도 사용할 수 있습니다.
+5. **Prometheus 호환성**: Prometheus 형식의 메트릭을 노출합니다.
+
+**node-exporter가 수집하는 주요 메트릭:**
+
+1. **CPU 메트릭**:
+   - `node_cpu_seconds_total`: CPU 모드별(user, system, idle 등) 사용 시간
+   - `node_load1`, `node_load5`, `node_load15`: 1분, 5분, 15분 평균 시스템 로드
+
+2. **메모리 메트릭**:
+   - `node_memory_MemTotal_bytes`: 총 메모리 크기
+   - `node_memory_MemFree_bytes`: 사용 가능한 메모리
+   - `node_memory_MemAvailable_bytes`: 실제로 사용 가능한 메모리
+   - `node_memory_Buffers_bytes`, `node_memory_Cached_bytes`: 버퍼 및 캐시 메모리
+
+3. **디스크 메트릭**:
+   - `node_filesystem_size_bytes`: 파일 시스템 크기
+   - `node_filesystem_free_bytes`: 파일 시스템 여유 공간
+   - `node_disk_io_time_seconds_total`: 디스크 I/O 시간
+   - `node_disk_read_bytes_total`, `node_disk_written_bytes_total`: 디스크 읽기/쓰기 바이트
+
+4. **네트워크 메트릭**:
+   - `node_network_receive_bytes_total`, `node_network_transmit_bytes_total`: 네트워크 수신/전송 바이트
+   - `node_network_receive_packets_total`, `node_network_transmit_packets_total`: 네트워크 수신/전송 패킷
+   - `node_network_receive_errs_total`, `node_network_transmit_errs_total`: 네트워크 수신/전송 오류
+
+5. **기타 시스템 메트릭**:
+   - `node_time_seconds`: 시스템 시간
+   - `node_boot_time_seconds`: 시스템 부팅 시간
+   - `node_filefd_allocated`: 할당된 파일 디스크립터 수
+   - `node_filesystem_files`: 파일 시스템의 총 inode 수
+
+**node-exporter 배포:**
+
+Kubernetes에서 node-exporter는 일반적으로 DaemonSet으로 배포됩니다:
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: monitoring
+  labels:
+    app: node-exporter
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      hostNetwork: true
+      hostPID: true
+      containers:
+      - name: node-exporter
+        image: prom/node-exporter:v1.3.1
+        args:
+        - --path.procfs=/host/proc
+        - --path.sysfs=/host/sys
+        - --path.rootfs=/host/root
+        - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+)($|/)
+        - --collector.filesystem.ignored-fs-types=^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$
+        ports:
+        - name: metrics
+          containerPort: 9100
+        volumeMounts:
+        - name: proc
+          mountPath: /host/proc
+          readOnly: true
+        - name: sys
+          mountPath: /host/sys
+          readOnly: true
+        - name: root
+          mountPath: /host/root
+          readOnly: true
+      volumes:
+      - name: proc
+        hostPath:
+          path: /proc
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: root
+        hostPath:
+          path: /
+```
+
+**node-exporter 서비스:**
+
+node-exporter를 Prometheus가 스크래핑할 수 있도록 서비스를 생성합니다:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-exporter
+  namespace: monitoring
+  labels:
+    app: node-exporter
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9100"
+spec:
+  ports:
+  - name: metrics
+    port: 9100
+    targetPort: metrics
+  selector:
+    app: node-exporter
+  clusterIP: None
+```
+
+**Prometheus 스크래핑 구성:**
+
+```yaml
+scrape_configs:
+  - job_name: 'node-exporter'
+    kubernetes_sd_configs:
+    - role: endpoints
+    relabel_configs:
+    - source_labels: [__meta_kubernetes_service_label_app]
+      regex: node-exporter
+      action: keep
+    - source_labels: [__meta_kubernetes_endpoint_node_name]
+      target_label: instance
+```
+
+**node-exporter 메트릭을 사용한 PromQL 쿼리 예시:**
+
+1. **CPU 사용률**:
+```
+100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+```
+
+2. **메모리 사용률**:
+```
+100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+```
+
+3. **디스크 사용률**:
+```
+100 * (1 - node_filesystem_free_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})
+```
+
+4. **네트워크 트래픽**:
+```
+rate(node_network_receive_bytes_total{device="eth0"}[5m])
+```
+
+**node-exporter 대시보드:**
+
+Grafana에서는 node-exporter 데이터를 시각화하는 다양한 대시보드 템플릿을 제공합니다:
+
+1. **Node Exporter Full**: 노드의 모든 메트릭을 포괄적으로 보여주는 대시보드
+2. **Node Exporter Dashboard**: 주요 시스템 메트릭을 보여주는 간결한 대시보드
+3. **Kubernetes Nodes**: Kubernetes 노드 메트릭을 보여주는 대시보드
+
+**node-exporter 알림 규칙 예시:**
+
+```yaml
+groups:
+- name: node-alerts
+  rules:
+  - alert: HighCPULoad
+    expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU load on {{ $labels.instance }}"
+      description: "{{ $labels.instance }} has a CPU load of {{ $value }}%"
+  
+  - alert: HighMemoryUsage
+    expr: 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 90
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage on {{ $labels.instance }}"
+      description: "{{ $labels.instance }} has memory usage of {{ $value }}%"
+  
+  - alert: DiskSpaceFilling
+    expr: 100 * (1 - node_filesystem_free_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) > 85
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Disk space filling on {{ $labels.instance }}"
+      description: "{{ $labels.instance }} has {{ $value }}% disk usage"
+```
+
+**다른 옵션들의 문제점:**
+- B. Kubernetes API 객체 상태에 대한 메트릭 생성: 이는 kube-state-metrics의 역할입니다.
+- C. 컨테이너 수준 메트릭 수집: 이는 cAdvisor(kubelet에 내장)의 역할입니다.
+- D. 애플리케이션 수준 메트릭 수집: 이는 애플리케이션 자체 또는 애플리케이션별 익스포터의 역할입니다.
+</details>
