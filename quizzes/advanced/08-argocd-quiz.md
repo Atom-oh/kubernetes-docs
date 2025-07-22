@@ -278,3 +278,257 @@ spec:
 - C. 정해진 일정에 따라 자동으로 동기화: 이는 동기화 윈도우(Sync Window)의 기능이며, 'automated' 설정 자체는 Git 저장소의 변경 사항을 감지하여 동기화합니다.
 - D. 클러스터 리소스 사용량에 따라 자동으로 스케일링: 이는 Horizontal Pod Autoscaler(HPA)와 같은 쿠버네티스 스케일링 메커니즘의 기능이며, ArgoCD의 동기화 정책과는 관련이 없습니다.
 </details>
+### 5. ArgoCD에서 'App of Apps' 패턴이란 무엇인가요?
+
+A. 여러 마이크로서비스 애플리케이션을 하나의 애플리케이션으로 통합하는 방법  
+B. 하나의 ArgoCD Application이 다른 여러 ArgoCD Application을 관리하는 패턴  
+C. 여러 Git 저장소의 애플리케이션을 하나의 저장소로 통합하는 방법  
+D. 여러 클러스터에 동일한 애플리케이션을 배포하는 방법  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 하나의 ArgoCD Application이 다른 여러 ArgoCD Application을 관리하는 패턴**
+
+**설명:**
+ArgoCD에서 'App of Apps' 패턴은 하나의 ArgoCD Application이 다른 여러 ArgoCD Application을 관리하는 패턴입니다. 이 패턴을 사용하면 여러 애플리케이션의 배포를 중앙에서 조정하고 관리할 수 있으며, 복잡한 시스템을 구성하는 여러 구성 요소를 효과적으로 관리할 수 있습니다.
+
+**'App of Apps' 패턴의 작동 방식:**
+
+1. **루트 애플리케이션(Root Application)**: 다른 애플리케이션을 정의하는 Application 매니페스트를 포함하는 Git 저장소를 가리키는 ArgoCD Application을 생성합니다.
+2. **자식 애플리케이션(Child Applications)**: 루트 애플리케이션이 가리키는 Git 저장소에는 여러 Application 매니페스트가 포함되어 있으며, 이들은 각각 다른 애플리케이션을 정의합니다.
+3. **동기화 프로세스**: 루트 애플리케이션이 동기화되면 자식 애플리케이션들이 생성되고, 각 자식 애플리케이션은 자신의 소스 저장소와 동기화됩니다.
+
+**'App of Apps' 패턴 예시:**
+
+1. **루트 애플리케이션 정의**:
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/my-org/my-apps.git
+    targetRevision: HEAD
+    path: apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
+
+2. **자식 애플리케이션 매니페스트** (apps/frontend.yaml):
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/my-org/frontend.git
+    targetRevision: HEAD
+    path: kubernetes
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frontend
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
+
+3. **자식 애플리케이션 매니페스트** (apps/backend.yaml):
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backend
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/my-org/backend.git
+    targetRevision: HEAD
+    path: kubernetes
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: backend
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
+
+**'App of Apps' 패턴의 장점:**
+
+1. **중앙 집중식 관리**: 여러 애플리케이션을 하나의 루트 애플리케이션을 통해 관리할 수 있습니다.
+2. **일관된 배포**: 모든 애플리케이션이 동일한 방식으로 배포되도록 보장합니다.
+3. **환경 복제**: 개발, 스테이징, 프로덕션과 같은 여러 환경에 동일한 애플리케이션 세트를 쉽게 배포할 수 있습니다.
+4. **확장성**: 새로운 애플리케이션을 추가하거나 기존 애플리케이션을 제거하기 쉽습니다.
+5. **버전 관리**: 모든 애플리케이션의 구성이 Git 저장소에서 버전 관리됩니다.
+
+**'App of Apps' 패턴의 변형:**
+
+1. **클러스터 부트스트래핑**: 새 클러스터를 설정하고 필요한 모든 기본 서비스(모니터링, 로깅, 인그레스 컨트롤러 등)를 배포합니다.
+2. **환경별 구성**: 환경별로 다른 구성을 적용하면서 동일한 애플리케이션 세트를 여러 환경에 배포합니다.
+3. **다중 클러스터 배포**: 여러 클러스터에 애플리케이션을 배포하고 관리합니다.
+
+**'App of Apps' 패턴 구현 시 고려 사항:**
+
+1. **종속성 관리**: 애플리케이션 간의 종속성을 관리하기 위해 동기화 웨이브(Sync Waves)나 후크(Hooks)를 사용할 수 있습니다.
+2. **프로젝트 구성**: 적절한 RBAC와 제약 조건을 설정하기 위해 Project 리소스를 사용합니다.
+3. **템플릿화**: Helm, Kustomize 등을 사용하여 애플리케이션 매니페스트를 템플릿화할 수 있습니다.
+4. **비밀 관리**: Sealed Secrets, Vault 등을 사용하여 민감한 정보를 안전하게 관리합니다.
+
+**다른 옵션들의 문제점:**
+- A. 여러 마이크로서비스 애플리케이션을 하나의 애플리케이션으로 통합하는 방법: 'App of Apps' 패턴은 마이크로서비스를 통합하는 것이 아니라, ArgoCD Application 리소스 간의 관계를 정의합니다.
+- C. 여러 Git 저장소의 애플리케이션을 하나의 저장소로 통합하는 방법: 'App of Apps' 패턴은 Git 저장소를 통합하는 것이 아니라, 여러 저장소를 가리키는 Application 리소스를 관리합니다.
+- D. 여러 클러스터에 동일한 애플리케이션을 배포하는 방법: 'App of Apps' 패턴은 여러 클러스터에 배포하는 것에 중점을 두지 않지만, 이 패턴을 사용하여 여러 클러스터에 배포하는 것도 가능합니다.
+</details>
+
+### 6. ArgoCD에서 'Sync Wave'의 목적은 무엇인가요?
+
+A. 네트워크 트래픽을 분산하기 위해 동기화 요청을 시간에 따라 분배  
+B. 리소스 간의 종속성을 관리하기 위해 동기화 순서를 제어  
+C. 여러 클러스터에 동시에 동기화하기 위한 병렬 처리 메커니즘  
+D. 동기화 실패 시 자동으로 재시도하는 메커니즘  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. 리소스 간의 종속성을 관리하기 위해 동기화 순서를 제어**
+
+**설명:**
+ArgoCD에서 'Sync Wave'의 목적은 리소스 간의 종속성을 관리하기 위해 동기화 순서를 제어하는 것입니다. Sync Wave는 애플리케이션 내의 리소스가 동기화되는 순서를 정의하여, 종속성이 있는 리소스가 올바른 순서로 생성, 업데이트 또는 삭제되도록 합니다.
+
+**Sync Wave의 작동 방식:**
+
+1. **웨이브 번호 할당**: 각 리소스에 `argocd.argoproj.io/sync-wave` 어노테이션을 사용하여 웨이브 번호를 할당합니다.
+2. **순서 결정**: 낮은 번호의 웨이브가 먼저 동기화되고, 같은 웨이브 내의 리소스는 병렬로 동기화됩니다.
+3. **웨이브 완료 대기**: 한 웨이브의 모든 리소스가 성공적으로 동기화된 후에만 다음 웨이브가 시작됩니다.
+4. **음수 웨이브**: 음수 웨이브는 양수 웨이브보다 먼저 동기화됩니다.
+
+**Sync Wave 예시:**
+
+1. **네임스페이스 생성** (웨이브 -1):
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-app
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+```
+
+2. **ConfigMap 및 Secret 생성** (웨이브 0):
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: my-app
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+data:
+  config.json: |
+    {
+      "key": "value"
+    }
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+  namespace: my-app
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+type: Opaque
+data:
+  password: cGFzc3dvcmQ=
+```
+
+3. **Deployment 생성** (웨이브 1):
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+  namespace: my-app
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: app
+        image: my-app:v1
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+        - name: secret
+          mountPath: /app/secret
+      volumes:
+      - name: config
+        configMap:
+          name: app-config
+      - name: secret
+        secret:
+          secretName: app-secret
+```
+
+4. **Service 생성** (웨이브 2):
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app
+  namespace: my-app
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  selector:
+    app: my-app
+  ports:
+  - port: 80
+    targetPort: 8080
+```
+
+**Sync Wave의 장점:**
+
+1. **종속성 관리**: 리소스 간의 종속성을 명시적으로 관리할 수 있습니다.
+2. **순서 제어**: 리소스가 생성, 업데이트 또는 삭제되는 순서를 제어할 수 있습니다.
+3. **오류 방지**: 종속 리소스가 준비되기 전에 리소스가 생성되는 것을 방지합니다.
+4. **복잡한 배포 관리**: 데이터베이스 마이그레이션, 초기화 작업 등 복잡한 배포 시나리오를 관리할 수 있습니다.
+
+**Sync Wave와 Hook의 차이:**
+
+- **Sync Wave**: 리소스 간의 동기화 순서를 제어합니다. 모든 리소스는 클러스터에 적용되고 ArgoCD에 의해 관리됩니다.
+- **Hook**: 특정 시점(PreSync, Sync, PostSync, SyncFail)에 실행되는 작업을 정의합니다. Hook 리소스는 작업이 완료된 후 삭제될 수 있으며(DeleteOnCompletion), ArgoCD에 의해 관리되지 않을 수 있습니다.
+
+**Sync Wave 사용 시 고려 사항:**
+
+1. **웨이브 번호 범위**: 웨이브 번호는 음수부터 양수까지 가능하며, 낮은 번호가 먼저 동기화됩니다.
+2. **웨이브 간격**: 웨이브 번호 사이에 간격을 두어 나중에 중간에 새 웨이브를 삽입할 수 있도록 합니다 (예: -10, 0, 10, 20).
+3. **동일 웨이브 내 순서**: 같은 웨이브 내의 리소스는 병렬로 동기화되므로, 순서가 중요한 경우 다른 웨이브 번호를 사용해야 합니다.
+4. **웨이브와 Hook 조합**: 복잡한 배포 시나리오에서는 Sync Wave와 Hook을 함께 사용할 수 있습니다.
+
+**다른 옵션들의 문제점:**
+- A. 네트워크 트래픽을 분산하기 위해 동기화 요청을 시간에 따라 분배: Sync Wave는 네트워크 트래픽 분산이 아닌 리소스 동기화 순서 제어를 위한 것입니다.
+- C. 여러 클러스터에 동시에 동기화하기 위한 병렬 처리 메커니즘: Sync Wave는 여러 클러스터에 대한 병렬 처리가 아닌 단일 애플리케이션 내의 리소스 동기화 순서를 제어합니다.
+- D. 동기화 실패 시 자동으로 재시도하는 메커니즘: Sync Wave는 재시도 메커니즘이 아닌 동기화 순서 제어를 위한 것입니다.
+</details>
