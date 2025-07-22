@@ -1137,3 +1137,438 @@ spec:
 - C. 클러스터 유지 관리 자동화: 클러스터 유지 관리는 별도의 도구나 프로세스를 통해 관리됩니다.
 - D. 워크로드의 자동 재시작 일정 설정: 워크로드 재시작은 Kubernetes Deployment의 롤링 업데이트나 CronJob을 통해 관리됩니다.
 </details>
+### 9. KEDA와 Kubernetes HPA(Horizontal Pod Autoscaler)의 주요 차이점은 무엇인가요?
+
+A. KEDA는 CPU와 메모리 메트릭만 지원하지만 HPA는 더 다양한 메트릭을 지원함  
+B. KEDA는 외부 이벤트 소스 및 메트릭을 지원하고 0으로 스케일링이 가능하지만 HPA는 CPU/메모리 중심이며 0으로 스케일링이 불가능함  
+C. KEDA는 수직 스케일링을 지원하지만 HPA는 수평 스케일링만 지원함  
+D. KEDA는 클러스터 수준 스케일링을 지원하지만 HPA는 네임스페이스 수준 스케일링만 지원함  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. KEDA는 외부 이벤트 소스 및 메트릭을 지원하고 0으로 스케일링이 가능하지만 HPA는 CPU/메모리 중심이며 0으로 스케일링이 불가능함**
+
+**설명:**
+KEDA와 Kubernetes HPA(Horizontal Pod Autoscaler)의 주요 차이점은 KEDA는 외부 이벤트 소스 및 메트릭을 지원하고 0으로 스케일링이 가능한 반면, HPA는 주로 CPU/메모리 메트릭에 중점을 두며 0으로 스케일링이 불가능하다는 것입니다. 이러한 차이점으로 인해 KEDA는 이벤트 기반 워크로드와 서버리스 시나리오에 더 적합하며, HPA는 일반적인 리소스 기반 스케일링에 적합합니다.
+
+**KEDA와 HPA의 주요 차이점:**
+
+1. **메트릭 소스**:
+   - **KEDA**: 다양한 외부 이벤트 소스(메시지 큐, 데이터베이스, 클라우드 서비스 등)와 커스텀 메트릭을 지원합니다.
+   - **HPA**: 기본적으로 CPU/메모리 메트릭을 지원하며, 메트릭 서버를 통해 일부 커스텀 메트릭을 지원할 수 있습니다.
+
+2. **스케일 투 제로**:
+   - **KEDA**: 워크로드를 0개의 레플리카로 스케일 다운할 수 있습니다(스케일 투 제로).
+   - **HPA**: 최소 1개의 레플리카를 유지해야 하며, 0으로 스케일 다운할 수 없습니다.
+
+3. **아키텍처**:
+   - **KEDA**: 자체 컨트롤러와 메트릭 어댑터를 사용하며, HPA를 내부적으로 생성하고 관리합니다.
+   - **HPA**: Kubernetes의 기본 컴포넌트로, 메트릭 서버에서 제공하는 메트릭을 사용합니다.
+
+4. **사용 사례**:
+   - **KEDA**: 이벤트 기반 워크로드, 서버리스 시나리오, 외부 시스템과의 통합에 적합합니다.
+   - **HPA**: 리소스 사용량에 기반한 일반적인 애플리케이션 스케일링에 적합합니다.
+
+**KEDA와 HPA 비교 예시:**
+
+1. **HPA 예시** (CPU 사용량 기반):
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-deployment
+  minReplicas: 1  # 최소 1개 (0으로 설정 불가)
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+```
+
+2. **KEDA 예시** (RabbitMQ 큐 길이 기반):
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: rabbitmq-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-deployment
+  minReplicaCount: 0  # 0으로 스케일 다운 가능
+  maxReplicaCount: 10
+  triggers:
+  - type: rabbitmq
+    metadata:
+      protocol: amqp
+      queueName: hello
+      host: rabbitmq
+      queueLength: "5"
+```
+
+**KEDA가 HPA를 사용하는 방식:**
+
+KEDA는 내부적으로 HPA를 생성하고 관리합니다:
+
+1. **ScaledObject 생성**: 사용자가 ScaledObject를 생성합니다.
+2. **HPA 생성**: KEDA 컨트롤러가 해당 ScaledObject에 대한 HPA를 생성합니다.
+3. **메트릭 제공**: KEDA 메트릭 서버가 외부 메트릭을 HPA에 제공합니다.
+4. **스케일링 결정**: HPA가 메트릭에 기반하여 스케일링 결정을 내립니다.
+5. **스케일 투 제로**: KEDA 컨트롤러가 필요한 경우 워크로드를 0으로 스케일 다운합니다.
+
+**KEDA와 HPA 함께 사용하기:**
+
+KEDA와 HPA를 함께 사용하여 다양한 메트릭에 기반한 스케일링을 구현할 수 있습니다:
+
+```yaml
+# HPA로 CPU/메모리 기반 스케일링
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: resource-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-deployment
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+
+---
+# KEDA로 외부 메트릭 기반 스케일링
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: external-scaler
+  annotations:
+    autoscaling.keda.sh/paused: "true"  # HPA와 충돌 방지를 위해 일시 중지
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-deployment
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  triggers:
+  - type: rabbitmq
+    metadata:
+      protocol: amqp
+      queueName: hello
+      host: rabbitmq
+      queueLength: "5"
+```
+
+**KEDA의 추가 기능:**
+
+1. **ScaledJob**: 이벤트 기반으로 Kubernetes Job을 생성합니다.
+2. **TriggerAuthentication**: 외부 시스템에 대한 인증 정보를 관리합니다.
+3. **다양한 스케일러**: 50개 이상의 내장 스케일러를 제공합니다.
+4. **외부 스케일러**: gRPC를 통한 커스텀 스케일러 구현을 지원합니다.
+
+**HPA의 추가 기능:**
+
+1. **다중 메트릭**: 여러 메트릭에 기반한 스케일링을 지원합니다.
+2. **스케일링 동작 구성**: 스케일 업/다운 동작을 세밀하게 구성할 수 있습니다.
+3. **컨테이너 리소스 메트릭**: 특정 컨테이너의 리소스 메트릭에 기반한 스케일링을 지원합니다.
+
+**어떤 것을 선택해야 할까?**
+
+1. **KEDA 선택 시나리오**:
+   - 외부 이벤트 소스에 기반한 스케일링이 필요한 경우
+   - 0으로 스케일 다운이 필요한 경우
+   - 이벤트 기반 워크로드나 서버리스 시나리오
+   - 다양한 외부 시스템과의 통합이 필요한 경우
+
+2. **HPA 선택 시나리오**:
+   - CPU/메모리와 같은 기본 리소스 메트릭에 기반한 스케일링이 충분한 경우
+   - 최소 1개의 레플리카를 항상 유지해야 하는 경우
+   - 간단한 스케일링 요구 사항이 있는 경우
+   - Kubernetes 기본 기능만 사용하고 싶은 경우
+
+**다른 옵션들의 문제점:**
+- A. KEDA는 CPU와 메모리 메트릭만 지원하지만 HPA는 더 다양한 메트릭을 지원함: 실제로는 반대입니다. KEDA가 더 다양한 메트릭을 지원합니다.
+- C. KEDA는 수직 스케일링을 지원하지만 HPA는 수평 스케일링만 지원함: 둘 다 수평 스케일링만 지원합니다. 수직 스케일링은 Vertical Pod Autoscaler(VPA)의 역할입니다.
+- D. KEDA는 클러스터 수준 스케일링을 지원하지만 HPA는 네임스페이스 수준 스케일링만 지원함: 둘 다 워크로드 수준의 스케일링을 지원하며, 클러스터 수준 스케일링은 Cluster Autoscaler의 역할입니다.
+</details>
+
+### 10. KEDA를 사용하여 AWS SQS 큐 기반 스케일링을 구현할 때 가장 적절한 방법은 무엇인가요?
+
+A. AWS Lambda 함수를 트리거하여 Kubernetes 워크로드 스케일링  
+B. CloudWatch 메트릭을 사용하여 큐 길이 모니터링  
+C. KEDA의 aws-sqs-queue 스케일러와 적절한 IAM 권한 사용  
+D. SQS 큐에 폴링 서비스 배포  
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. KEDA의 aws-sqs-queue 스케일러와 적절한 IAM 권한 사용**
+
+**설명:**
+KEDA를 사용하여 AWS SQS 큐 기반 스케일링을 구현할 때 가장 적절한 방법은 KEDA의 aws-sqs-queue 스케일러와 적절한 IAM 권한을 사용하는 것입니다. KEDA는 AWS SQS 큐의 메시지 수에 기반하여 Kubernetes 워크로드를 자동으로 스케일링할 수 있는 내장 스케일러를 제공합니다. 이 스케일러는 SQS API를 직접 호출하여 큐 길이를 확인하고, 이에 따라 워크로드를 스케일링합니다.
+
+**AWS SQS 스케일러 구현 단계:**
+
+1. **IAM 권한 설정**: SQS 큐에 접근하기 위한 적절한 IAM 권한을 설정합니다.
+2. **인증 구성**: AWS 자격 증명을 KEDA에 제공하기 위한 TriggerAuthentication을 구성합니다.
+3. **ScaledObject 정의**: SQS 큐를 모니터링하고 워크로드를 스케일링하기 위한 ScaledObject를 정의합니다.
+
+**필요한 IAM 권한:**
+
+SQS 큐 길이를 확인하기 위해 최소한 다음 권한이 필요합니다:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl"
+      ],
+      "Resource": "arn:aws:sqs:*:*:*"
+    }
+  ]
+}
+```
+
+**AWS 자격 증명 제공 방법:**
+
+1. **AWS IAM Role for Service Account (IRSA)**:
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: aws-credentials
+spec:
+  podIdentity:
+    provider: aws-eks
+```
+
+2. **환경 변수**:
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: aws-credentials
+spec:
+  env:
+  - parameter: awsAccessKeyID
+    name: AWS_ACCESS_KEY_ID
+    containerName: my-container
+  - parameter: awsSecretAccessKey
+    name: AWS_SECRET_ACCESS_KEY
+    containerName: my-container
+```
+
+3. **Secret**:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-secrets
+type: Opaque
+stringData:
+  AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
+  AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: aws-credentials
+spec:
+  secretTargetRef:
+  - parameter: awsAccessKeyID
+    name: aws-secrets
+    key: AWS_ACCESS_KEY_ID
+  - parameter: awsSecretAccessKey
+    name: aws-secrets
+    key: AWS_SECRET_ACCESS_KEY
+```
+
+**ScaledObject 예시:**
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: aws-sqs-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sqs-consumer
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  pollingInterval: 15
+  cooldownPeriod: 30
+  triggers:
+  - type: aws-sqs-queue
+    metadata:
+      queueURL: https://sqs.us-east-1.amazonaws.com/123456789012/my-queue
+      queueLength: "5"  # 메시지 5개당 1개의 레플리카
+      awsRegion: us-east-1
+      identityOwner: pod  # 또는 "operator"
+    authenticationRef:
+      name: aws-credentials
+```
+
+**전체 예시 (IRSA 사용):**
+
+1. **Deployment 정의**:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sqs-consumer
+spec:
+  replicas: 0  # KEDA가 관리
+  selector:
+    matchLabels:
+      app: sqs-consumer
+  template:
+    metadata:
+      labels:
+        app: sqs-consumer
+    spec:
+      serviceAccountName: sqs-consumer-sa  # IRSA 구성된 서비스 계정
+      containers:
+      - name: consumer
+        image: sqs-consumer:latest
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 1
+            memory: 512Mi
+```
+
+2. **서비스 계정 정의**:
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sqs-consumer-sa
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/sqs-consumer-role
+```
+
+3. **TriggerAuthentication 정의**:
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: aws-credentials
+spec:
+  podIdentity:
+    provider: aws-eks
+```
+
+4. **ScaledObject 정의**:
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: aws-sqs-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sqs-consumer
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  triggers:
+  - type: aws-sqs-queue
+    metadata:
+      queueURL: https://sqs.us-east-1.amazonaws.com/123456789012/my-queue
+      queueLength: "5"
+      awsRegion: us-east-1
+      identityOwner: pod
+    authenticationRef:
+      name: aws-credentials
+```
+
+**고급 구성 옵션:**
+
+1. **여러 큐 모니터링**:
+```yaml
+triggers:
+- type: aws-sqs-queue
+  metadata:
+    queueURL: https://sqs.us-east-1.amazonaws.com/123456789012/high-priority-queue
+    queueLength: "1"  # 높은 우선순위 큐는 메시지당 1개의 레플리카
+    awsRegion: us-east-1
+- type: aws-sqs-queue
+  metadata:
+    queueURL: https://sqs.us-east-1.amazonaws.com/123456789012/low-priority-queue
+    queueLength: "10"  # 낮은 우선순위 큐는 메시지 10개당 1개의 레플리카
+    awsRegion: us-east-1
+```
+
+2. **대기 중인 메시지만 고려**:
+```yaml
+triggers:
+- type: aws-sqs-queue
+  metadata:
+    queueURL: https://sqs.us-east-1.amazonaws.com/123456789012/my-queue
+    queueLength: "5"
+    awsRegion: us-east-1
+    scaleOnInFlight: "false"  # 처리 중인 메시지는 제외
+```
+
+3. **ScaledJob 사용**:
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: aws-sqs-job-scaler
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+        - name: sqs-job-processor
+          image: sqs-processor:latest
+        restartPolicy: Never
+  pollingInterval: 30
+  maxReplicaCount: 30
+  triggers:
+  - type: aws-sqs-queue
+    metadata:
+      queueURL: https://sqs.us-east-1.amazonaws.com/123456789012/my-queue
+      queueLength: "1"  # 메시지당 1개의 Job
+      awsRegion: us-east-1
+    authenticationRef:
+      name: aws-credentials
+```
+
+**AWS SQS 스케일러 사용 시 고려 사항:**
+
+1. **IAM 권한**: 최소 권한 원칙에 따라 필요한 최소한의 권한만 부여합니다.
+2. **지역 설정**: 올바른 AWS 지역을 지정해야 합니다.
+3. **폴링 간격**: 적절한 폴링 간격을 설정하여 API 호출 비용과 응답성 사이의 균형을 맞춥니다.
+4. **큐 길이 임계값**: 워크로드 특성에 맞는 적절한 큐 길이 임계값을 설정합니다.
+5. **비용 고려**: SQS API 호출과 Kubernetes 워크로드 실행 비용을 모두 고려합니다.
+
+**다른 옵션들의 문제점:**
+- A. AWS Lambda 함수를 트리거하여 Kubernetes 워크로드 스케일링: 이는 불필요하게 복잡하며, KEDA가 직접 SQS 큐를 모니터링하는 것이 더 효율적입니다.
+- B. CloudWatch 메트릭을 사용하여 큐 길이 모니터링: CloudWatch를 통한 간접적인 모니터링보다 KEDA의 직접적인 SQS 스케일러를 사용하는 것이 더 간단하고 효율적입니다.
+- D. SQS 큐에 폴링 서비스 배포: 별도의 폴링 서비스는 불필요한 복잡성을 추가하며, KEDA가 이미 폴링 기능을 제공합니다.
+</details>
