@@ -112,7 +112,7 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 컨트롤 플레인 (마스터) 구성 요소
 
-![](../assets/kubernetes_control_plane.png)
+![Kubernetes 컨트롤 플레인](../assets/kubernetes_control_plane.png)
 
 1. **kube-apiserver**: Kubernetes API를 노출하는 컨트롤 플레인의 프론트엔드
 2. **etcd**: 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소
@@ -130,7 +130,7 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 노드 구성 요소
 
-![](../assets/kubernetes_worker_node.png)
+![Kubernetes 워커 노드](../assets/kubernetes_worker_node.png)
 
 1. **kubelet**: 각 노드에서 실행되는 에이전트로, 파드 내 컨테이너가 실행되도록 관리
 2. **kube-proxy**: 각 노드에서 실행되는 네트워크 프록시로, Kubernetes 서비스 개념의 구현을 담당
@@ -138,7 +138,7 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 전체 아키텍처
 
-![](../assets/kubernetes_architecture.png)
+![Kubernetes 아키텍처](../assets/kubernetes_architecture.png)
 
 ## Kubernetes 주요 구성 요소
 

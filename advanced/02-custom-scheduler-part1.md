@@ -299,7 +299,7 @@ Amazon EKS에서 커스텀 스케줄러를 구현할 때는 다음과 같은 사
 
 다음 다이어그램은 EKS 클러스터에서 커스텀 스케줄러를 구현하는 방법을 보여줍니다:
 
-![](../assets/eks_custom_scheduler_architecture.svg)
+![EKS 커스텀 스케줄러 아키텍처](../assets/eks_custom_scheduler_architecture.svg)
 
 ### EKS 특화 스케줄링 고려 사항
 

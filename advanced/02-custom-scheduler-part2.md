@@ -8,7 +8,7 @@
 
 다음 다이어그램은 스케줄러 확장 접근 방식의 아키텍처를 보여줍니다:
 
-![](../assets/scheduler_extender_architecture.svg)
+![스케줄러 확장 아키텍처](../assets/scheduler_extender_architecture.svg)
 
 ### 스케줄러 확장 워크플로우
 
