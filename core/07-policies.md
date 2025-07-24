@@ -962,6 +962,10 @@ Amazon EKS를 사용하는 경우, AWS의 다양한 서비스(IAM, Security Grou
 
 정책은 지속적으로 발전하는 영역이므로, 새로운 위협과 요구 사항에 대응하기 위해 정기적으로 정책을 검토하고 업데이트하는 것이 중요합니다. 또한, 정책을 코드로 관리하고 자동화하여 일관성과 효율성을 높이는 것이 좋습니다.
 
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [정책 퀴즈](../../quizzes/core/07-policies-quiz.md)를 풀어보세요.
+
 ## 참고 자료
 
 - [Kubernetes 공식 문서 - 리소스 쿼터](https://kubernetes.io/docs/concepts/policy/resource-quotas/)

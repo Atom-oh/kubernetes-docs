@@ -1336,6 +1336,10 @@ Kubernetes의 네트워킹 기능을 이해하고 활용하면 안전하고 확�
 
 다음 장에서는 Kubernetes의 스토리지 옵션에 대해 알아보겠습니다.
 
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [서비스와 네트워킹 퀴즈](../../quizzes/core/03-services-networking-quiz.md)를 풀어보세요.
+
 ## 참고 자료
 
 - [Kubernetes 공식 문서 - 서비스](https://kubernetes.io/docs/concepts/services-networking/service/)

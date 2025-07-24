@@ -1103,6 +1103,10 @@ EKS에서는 Amazon EBS, Amazon EFS, Amazon FSx for Lustre 등 다양한 스토�
 
 다음 장에서는 Kubernetes의 구성 및 시크릿에 대해 알아보겠습니다.
 
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [스토리지 퀴즈](../../quizzes/core/04-storage-quiz.md)를 풀어보세요.
+
 ## 참고 자료
 
 - [Kubernetes 공식 문서 - 볼륨](https://kubernetes.io/docs/concepts/storage/volumes/)

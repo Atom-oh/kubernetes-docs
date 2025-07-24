@@ -1376,6 +1376,10 @@ Amazon EKS 환경에서는 Kubernetes의 기본 구성 관리 기능과 함께 A
 
 다음 장에서는 Kubernetes의 보안에 대해 알아보겠습니다.
 
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [구성 및 시크릿 퀴즈](../../quizzes/core/05-configuration-secrets-quiz.md)를 풀어보세요.
+
 ## 참고 자료
 
 - [Kubernetes 공식 문서 - ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/)

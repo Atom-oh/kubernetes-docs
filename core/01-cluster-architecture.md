@@ -2005,6 +2005,10 @@ managedNodeGroups:
 
 Kubernetes 클러스터의 아키텍처를 이해하는 것은 효과적인 클러스터 설계, 배포, 운영을 위한 기반이 됩니다. 이 지식을 바탕으로 안정적이고 확장 가능하며 보안이 강화된 Kubernetes 환경을 구축할 수 있습니다.
 
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [클러스터 아키텍처 퀴즈](../../quizzes/core/01-cluster-architecture-quiz.md)를 풀어보세요.
+
 ## 참고 자료
 
 - [Kubernetes 공식 문서](https://kubernetes.io/docs/)

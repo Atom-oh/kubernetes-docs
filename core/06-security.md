@@ -920,6 +920,10 @@ Amazon EKS를 사용하는 경우, AWS의 다양한 보안 서비스와 통합�
 
 보안은 지속적인 과정이므로, 정기적인 보안 평가와 업데이트를 통해 클러스터와 워크로드의 보안 상태를 유지하는 것이 중요합니다.
 
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [보안 퀴즈](../../quizzes/core/06-security-quiz.md)를 풀어보세요.
+
 ## 참고 자료
 
 - [Kubernetes 공식 문서 - 보안](https://kubernetes.io/docs/concepts/security/)

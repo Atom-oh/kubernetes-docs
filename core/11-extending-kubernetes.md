@@ -1616,3 +1616,7 @@ Kubernetes는 다양한 확장 지점을 제공하여 기본 기능을 확장하
 Amazon EKS는 이러한 확장 기능을 지원하고, 추가적으로 EKS 추가 기능, ACK, AWS Load Balancer Controller, IRSA 등의 AWS 특화 기능을 제공하여 Kubernetes와 AWS 서비스 간의 통합을 간소화합니다.
 
 Kubernetes 확장 기능을 구현할 때는 표준 인터페이스 사용, 선언적 API 설계, 최소 권한 원칙 등의 모범 사례를 따르는 것이 중요합니다. 이를 통해 안정적이고 확장 가능한 Kubernetes 환경을 구축할 수 있습니다.
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [Kubernetes 확장 퀴즈](../../quizzes/core/11-extending-kubernetes-quiz.md)를 풀어보세요.

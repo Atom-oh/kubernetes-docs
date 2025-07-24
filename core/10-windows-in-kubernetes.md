@@ -1181,3 +1181,7 @@ Windows 컨테이너는 .NET Framework 애플리케이션, Windows 서비스, �
 Amazon EKS는 Windows 노드에 대한 관리형 서비스를 제공하여 Windows 워크로드를 쉽게 배포하고 관리할 수 있게 해줍니다. EKS의 Windows 지원을 활용하면 Windows 애플리케이션을 현대적인 컨테이너 환경으로 마이그레이션하는 과정을 간소화할 수 있습니다.
 
 Windows in Kubernetes를 성공적으로 구현하려면 적절한 계획, 설계, 운영 모범 사례를 따르는 것이 중요합니다. 이를 통해 Windows 및 Linux 워크로드를 효율적으로 관리하고 Kubernetes의 모든 이점을 활용할 수 있습니다.
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [Windows in Kubernetes 퀴즈](../../quizzes/core/10-windows-in-kubernetes-quiz.md)를 풀어보세요.
