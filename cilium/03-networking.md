@@ -420,3 +420,7 @@ kubectl exec -it pod/netperf-client -- netperf -H netperf-server -t TCP_CRR
 ```
 
 [메인 페이지로 돌아가기](README.md)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/cilium/03-networking-quiz.md)를 풀어보세요.

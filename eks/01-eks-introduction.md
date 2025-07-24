@@ -305,3 +305,7 @@ flowchart TD
    - 정기적인 업그레이드 계획
    - 블루/그린 배포 전략 고려
    - 업그레이드 전 테스트 수행
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [Amazon EKS 소개 퀴즈](../../quizzes/eks/01-eks-introduction-quiz.md)를 풀어보세요.

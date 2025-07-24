@@ -546,3 +546,7 @@ flowchart TD
      - Ingress 컨트롤러 로그 확인: `kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller`
      - ALB 상태 확인: AWS 콘솔 또는 AWS CLI 사용
      - 대상 그룹 상태 확인: 대상이 정상인지 확인
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/eks/03-eks-networking-part3-quiz.md)를 풀어보세요.

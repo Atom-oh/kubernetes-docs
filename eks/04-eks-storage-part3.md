@@ -1128,3 +1128,7 @@ storage:
 - [Kubernetes 스토리지 문제 해결](https://kubernetes.io/docs/tasks/debug-application-cluster/debug-application/#debugging-pods)
 - [AWS 스토리지 비용 최적화](https://aws.amazon.com/blogs/storage/cost-optimization-for-amazon-ebs-and-amazon-efs/)
 - [Kubernetes 스토리지 보안](https://kubernetes.io/docs/concepts/security/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/eks/04-eks-storage-part3-quiz.md)를 풀어보세요.

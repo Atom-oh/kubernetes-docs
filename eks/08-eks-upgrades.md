@@ -1391,3 +1391,7 @@ EKS 클러스터를 최신 상태로 유지하면 보안 패치, 버그 수정 �
 - [EKS 애드온 업그레이드](https://docs.aws.amazon.com/eks/latest/userguide/managing-add-ons.html)
 - [eksctl 문서](https://eksctl.io/usage/cluster-upgrade/)
 - [Kubernetes 업그레이드 모범 사례](https://kubernetes.io/docs/tasks/administer-cluster/cluster-upgrade/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/eks/08-eks-upgrades-quiz.md)를 풀어보세요.

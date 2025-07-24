@@ -288,3 +288,7 @@
 
 **XDP(eXpress Data Path)**
 - 네트워크 패킷을 매우 빠르게 처리하기 위한 eBPF 기반 기술
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/cilium/glossary-quiz.md)를 풀어보세요.

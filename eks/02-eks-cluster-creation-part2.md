@@ -292,3 +292,7 @@ eksctl을 사용하여 클러스터를 삭제할 수 있습니다:
 ```bash
 eksctl delete cluster --name=my-cluster --region=us-west-2
 ```
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [EKS 클러스터 생성 - 2부 퀴즈](../../quizzes/eks/02-eks-cluster-creation-part2-quiz.md)를 풀어보세요.

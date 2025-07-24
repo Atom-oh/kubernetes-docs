@@ -1097,3 +1097,7 @@ Amazon EKS의 보안은 여러 계층에 걸친 방어 전략을 통해 구현�
 - [CIS Kubernetes Benchmark](https://www.cisecurity.org/benchmark/kubernetes)
 - [AWS Security Hub](https://aws.amazon.com/security-hub/)
 - [Amazon GuardDuty](https://aws.amazon.com/guardduty/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/eks/05-eks-security-quiz.md)를 풀어보세요.

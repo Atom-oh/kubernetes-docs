@@ -945,3 +945,7 @@ AWS 계정에는 다음과 같은 IAM 권한이 필요합니다:
 | **CRD** | Custom Resource Definition의 약자로, Kubernetes API를 확장하여 사용자 정의 리소스를 정의할 수 있게 해주는 기능입니다. |
 | **IAM** | Identity and Access Management의 약자로, AWS 리소스에 대한 액세스를 안전하게 제어하는 서비스입니다. |
 | **VPC** | Virtual Private Cloud의 약자로, AWS 클라우드 내에서 논리적으로 격리된 가상 네트워크입니다. |
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [EKS 클러스터 생성 - 4부 퀴즈](../../quizzes/eks/02-eks-cluster-creation-part4-quiz.md)를 풀어보세요.

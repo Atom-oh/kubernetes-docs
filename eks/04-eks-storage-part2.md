@@ -1006,3 +1006,7 @@ parameters:
 - [Kubernetes 볼륨 스냅샷](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
 - [Velero 백업 및 복원](https://velero.io/docs/)
 - [Amazon EKS 스토리지 모범 사례](https://aws.github.io/aws-eks-best-practices/storage/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/eks/04-eks-storage-part2-quiz.md)를 풀어보세요.
