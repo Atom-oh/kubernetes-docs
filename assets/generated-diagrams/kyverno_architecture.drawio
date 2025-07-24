@@ -1,0 +1,163 @@
+<mxfile host="65bd71144e">
+    <diagram id="kyverno_architecture" name="Kyverno Architecture">
+        <mxGraphModel dx="1066" dy="619" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                
+                <!-- User -->
+                <mxCell id="2" value="사용자" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="1">
+                    <mxGeometry x="80" y="200" width="30" height="60" as="geometry"/>
+                </mxCell>
+                
+                <!-- Kubernetes API Server -->
+                <mxCell id="3" value="Kubernetes API 서버" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="210" width="120" height="60" as="geometry"/>
+                </mxCell>
+                
+                <!-- Kyverno Group -->
+                <mxCell id="4" value="Kyverno" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="1">
+                    <mxGeometry x="360" y="120" width="240" height="240" as="geometry"/>
+                </mxCell>
+                
+                <!-- Kyverno Components -->
+                <mxCell id="5" value="Admission Controller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="4">
+                    <mxGeometry x="20" y="40" width="120" height="40" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="6" value="정책 엔진" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="4">
+                    <mxGeometry x="20" y="110" width="120" height="40" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="7" value="정책 저장소" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="4">
+                    <mxGeometry x="160" y="100" width="60" height="60" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="8" value="백그라운드 스캐너" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="4">
+                    <mxGeometry x="20" y="180" width="120" height="40" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="9" value="보고서 컨트롤러" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="4">
+                    <mxGeometry x="160" y="180" width="60" height="40" as="geometry"/>
+                </mxCell>
+                
+                <!-- Policies Group -->
+                <mxCell id="10" value="정책 유형" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="1">
+                    <mxGeometry x="640" y="120" width="120" height="160" as="geometry"/>
+                </mxCell>
+                
+                <!-- Policy Types -->
+                <mxCell id="11" value="검증 정책" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1;fontColor=#000000;" vertex="1" parent="10">
+                    <mxGeometry x="10" y="30" width="100" height="30" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="12" value="변형 정책" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1;fontColor=#000000;" vertex="1" parent="10">
+                    <mxGeometry x="10" y="70" width="100" height="30" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="13" value="생성 정책" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1;fontColor=#000000;" vertex="1" parent="10">
+                    <mxGeometry x="10" y="110" width="100" height="30" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="14" value="정리 정책" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="650" y="250" width="100" height="30" as="geometry"/>
+                </mxCell>
+                
+                <!-- Reports -->
+                <mxCell id="15" value="정책 보고서" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="640" y="300" width="120" height="60" as="geometry"/>
+                </mxCell>
+                
+                <!-- Existing Resources -->
+                <mxCell id="16" value="기존 리소스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="380" y="380" width="120" height="40" as="geometry"/>
+                </mxCell>
+                
+                <!-- Connections -->
+                <mxCell id="17" value="" style="endArrow=classic;startArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="2" target="3">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="340" as="sourcePoint"/>
+                        <mxPoint x="450" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="18" value="" style="endArrow=classic;startArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="3" target="5">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="340" as="sourcePoint"/>
+                        <mxPoint x="450" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="19" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="5" target="6">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="340" as="sourcePoint"/>
+                        <mxPoint x="450" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="20" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="6" target="7">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="340" as="sourcePoint"/>
+                        <mxPoint x="450" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="21" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="6" target="8">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="340" as="sourcePoint"/>
+                        <mxPoint x="450" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="22" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="6" target="9">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="340" as="sourcePoint"/>
+                        <mxPoint x="450" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="23" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="6" target="11">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="340" as="sourcePoint"/>
+                        <mxPoint x="450" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="24" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="6" target="12">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="340" as="sourcePoint"/>
+                        <mxPoint x="450" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="25" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="6" target="13">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="340" as="sourcePoint"/>
+                        <mxPoint x="450" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="26" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="6" target="14">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="340" as="sourcePoint"/>
+                        <mxPoint x="450" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="27" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="9" target="15">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="340" as="sourcePoint"/>
+                        <mxPoint x="450" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="28" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="8" target="16">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="340" as="sourcePoint"/>
+                        <mxPoint x="450" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

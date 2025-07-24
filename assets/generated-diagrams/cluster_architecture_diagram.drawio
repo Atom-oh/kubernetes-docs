@@ -1,0 +1,230 @@
+<mxfile host="app.diagrams.net" modified="2025-07-22T04:45:00.000Z" agent="Mozilla/5.0" version="22.0.0" etag="your-etag">
+  <diagram id="cluster-architecture-diagram" name="Kubernetes Cluster Architecture">
+    <mxGraphModel dx="1000" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Kubernetes Cluster -->
+        <mxCell id="kubernetes_cluster" value="Kubernetes 클러스터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="120" y="80" width="600" height="520" as="geometry" />
+        </mxCell>
+        
+        <!-- Control Plane -->
+        <mxCell id="control_plane" value="컨트롤 플레인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;" vertex="1" parent="1">
+          <mxGeometry x="160" y="120" width="240" height="200" as="geometry" />
+        </mxCell>
+        
+        <!-- Control Plane Components -->
+        <mxCell id="api_server" value="kube-apiserver" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="180" y="160" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="etcd" value="etcd" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+          <mxGeometry x="180" y="220" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="scheduler" value="kube-scheduler" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="180" y="280" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="controller_manager" value="kube-controller-manager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="320" y="160" width="60" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cloud_controller" value="cloud-controller-manager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="320" y="260" width="60" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Worker Node 1 -->
+        <mxCell id="worker_node_1" value="워커 노드 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;" vertex="1" parent="1">
+          <mxGeometry x="160" y="340" width="240" height="240" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kubelet_1" value="kubelet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="180" y="380" width="80" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kube_proxy_1" value="kube-proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="280" y="380" width="80" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="container_runtime_1" value="컨테이너 런타임" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="180" y="440" width="180" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pod_1a" value="Pod A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E83E8C;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="180" y="500" width="80" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pod_1b" value="Pod B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E83E8C;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="280" y="500" width="80" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Worker Node 2 -->
+        <mxCell id="worker_node_2" value="워커 노드 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;" vertex="1" parent="1">
+          <mxGeometry x="440" y="340" width="240" height="240" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kubelet_2" value="kubelet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="460" y="380" width="80" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kube_proxy_2" value="kube-proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="560" y="380" width="80" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="container_runtime_2" value="컨테이너 런타임" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="460" y="440" width="180" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pod_2a" value="Pod C" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E83E8C;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="460" y="500" width="80" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pod_2b" value="Pod D" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E83E8C;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="560" y="500" width="80" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections -->
+        <mxCell id="api_to_etcd" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="api_server" target="etcd">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="scheduler_to_api" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="scheduler" target="etcd">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="controller_to_api" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="controller_manager" target="api_server">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="cloud_controller_to_api" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="cloud_controller" target="scheduler">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- API to Kubelets -->
+        <mxCell id="api_to_kubelet1" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="kubelet_1" target="scheduler">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="api_to_kubelet2" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="kubelet_2" target="scheduler">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- API to Kube-Proxies -->
+        <mxCell id="api_to_proxy1" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="kube_proxy_1" target="api_server">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="api_to_proxy2" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="kube_proxy_2" target="api_server">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Node 1 Connections -->
+        <mxCell id="kubelet1_to_runtime1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="kubelet_1" target="container_runtime_1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="runtime1_to_pod1a" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="container_runtime_1" target="pod_1a">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="runtime1_to_pod1b" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="container_runtime_1" target="pod_1b">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="proxy1_to_pod1a" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="kube_proxy_1" target="pod_1a">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="300" y="480" />
+              <mxPoint x="240" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="proxy1_to_pod1b" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="kube_proxy_1" target="pod_1b">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Node 2 Connections -->
+        <mxCell id="kubelet2_to_runtime2" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="kubelet_2" target="container_runtime_2">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="runtime2_to_pod2a" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="container_runtime_2" target="pod_2a">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="runtime2_to_pod2b" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="container_runtime_2" target="pod_2b">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="proxy2_to_pod2a" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="kube_proxy_2" target="pod_2a">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="580" y="480" />
+              <mxPoint x="520" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="proxy2_to_pod2b" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="kube_proxy_2" target="pod_2b">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

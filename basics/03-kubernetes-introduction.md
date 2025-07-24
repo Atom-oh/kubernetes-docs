@@ -1480,6 +1480,10 @@ Kubernetes는 컨테이너화된 애플리케이션의 배포, 확장 및 관리
 
 Kubernetes는 계속 발전하고 있으며, 클라우드 네이티브 애플리케이션 개발 및 운영의 핵심 요소가 되었습니다. 이 문서가 Kubernetes 여정을 시작하는 데 도움이 되기를 바랍니다.
 
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [Kubernetes 소개 퀴즈](../../quizzes/basics/03-kubernetes-introduction-quiz.md)를 풀어보세요.
+
 ## 참고 자료
 
 - [Kubernetes 공식 문서](https://kubernetes.io/docs/)

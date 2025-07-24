@@ -36,46 +36,7 @@ go get k8s.io/klog/v2
 
 Kubernetes 스케줄링 프로세스는 다음과 같은 단계로 이루어집니다:
 
-```mermaid
-flowchart TD
-    Start([스케줄링 시작]) --> PodQueue[스케줄링 큐에 포드 추가]
-    PodQueue --> Filtering[필터링 단계]
-    Filtering --> FeasibleNodes{적합한 노드 있음?}
-    FeasibleNodes -->|아니오| UnschedulablePod[스케줄링 불가능으로 표시]
-    UnschedulablePod --> Retry[재시도 큐에 추가]
-    Retry -.-> PodQueue
-    
-    FeasibleNodes -->|예| Scoring[점수 매기기 단계]
-    Scoring --> SelectBestNode[최고 점수 노드 선택]
-    SelectBestNode --> Binding[바인딩 단계]
-    Binding --> End([스케줄링 완료])
-    
-    subgraph FilteringPhase[필터링 단계]
-        NodeResourcesFit[노드 리소스 적합성]
-        NodeName[노드 이름]
-        NodeUnschedulable[노드 스케줄 가능 여부]
-        NodeAffinity[노드 어피니티]
-        PodAffinity[포드 어피니티]
-        TaintToleration[테인트 톨러레이션]
-    end
-    
-    subgraph ScoringPhase[점수 매기기 단계]
-        NodeResourcesBalancedAllocation[리소스 균형 할당]
-        ImageLocality[이미지 지역성]
-        InterPodAffinity[포드 간 어피니티]
-        NodeAffinity2[노드 어피니티]
-    end
-    
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef process fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    
-    class Start,End start;
-    class PodQueue,Filtering,Scoring,SelectBestNode,Binding,UnschedulablePod,Retry process;
-    class FeasibleNodes decision;
-    class NodeResourcesFit,NodeName,NodeUnschedulable,NodeAffinity,PodAffinity,TaintToleration process;
-    class NodeResourcesBalancedAllocation,ImageLocality,InterPodAffinity,NodeAffinity2 process;
-```
+![kubernetes_scheduling_process](../assets/kubernetes_scheduling_process.svg)
 
 ### 스케줄링 단계 상세 설명
 
@@ -138,51 +99,7 @@ flowchart TD
 
 다중 스케줄러 접근 방식에서는 기본 스케줄러와 함께 커스텀 스케줄러를 실행합니다. 포드를 생성할 때 `schedulerName` 필드를 사용하여 어떤 스케줄러를 사용할지 지정할 수 있습니다.
 
-```mermaid
-flowchart TD
-    subgraph K8sCluster [Kubernetes 클러스터]
-        subgraph ControlPlane [컨트롤 플레인]
-            APIServer[API 서버]
-            DefaultScheduler[기본 스케줄러]
-            CustomScheduler1[커스텀 스케줄러 1]
-            CustomScheduler2[커스텀 스케줄러 2]
-        end
-        
-        subgraph Nodes [워커 노드]
-            Node1[노드 1]
-            Node2[노드 2]
-            Node3[노드 3]
-        end
-        
-        subgraph Pods [포드]
-            Pod1[schedulerName: default-scheduler]
-            Pod2[schedulerName: custom-scheduler-1]
-            Pod3[schedulerName: custom-scheduler-2]
-            PodQueue[스케줄링 큐]
-        end
-    end
-    
-    APIServer --> PodQueue
-    PodQueue --> DefaultScheduler
-    PodQueue --> CustomScheduler1
-    PodQueue --> CustomScheduler2
-    
-    DefaultScheduler --> Pod1
-    CustomScheduler1 --> Pod2
-    CustomScheduler2 --> Pod3
-    
-    Pod1 --> Node1
-    Pod2 --> Node2
-    Pod3 --> Node3
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef customComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef podComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    class APIServer,DefaultScheduler,Node1,Node2,Node3 k8sComponent;
-    class CustomScheduler1,CustomScheduler2 customComponent;
-    class Pod1,Pod2,Pod3,PodQueue podComponent;
-```
+![multi_scheduler_approach](../assets/multi_scheduler_approach.svg)
 
 #### 커스텀 스케줄러 구현
 
@@ -382,61 +299,7 @@ Amazon EKS에서 커스텀 스케줄러를 구현할 때는 다음과 같은 사
 
 다음 다이어그램은 EKS 클러스터에서 커스텀 스케줄러를 구현하는 방법을 보여줍니다:
 
-```mermaid
-flowchart TD
-    subgraph AWS [AWS 클라우드]
-        subgraph EKS [Amazon EKS]
-            APIServer[API 서버]
-            
-            subgraph ControlPlane [컨트롤 플레인]
-                DefaultScheduler[기본 스케줄러]
-            end
-            
-            subgraph CustomSchedulerPod [커스텀 스케줄러 파드]
-                CustomScheduler[커스텀 스케줄러]
-                MetricsCollector[메트릭 수집기]
-            end
-            
-            subgraph NodeGroups [노드 그룹]
-                subgraph ManagedNG [관리형 노드 그룹]
-                    MNode1[c5.large]
-                    MNode2[c5.large]
-                end
-                
-                subgraph SelfManagedNG [자체 관리형 노드 그룹]
-                    SNode1[m5.large]
-                    SNode2[r5.large]
-                end
-                
-                subgraph SpotNG [스팟 노드 그룹]
-                    SpNode1[c5.large 스팟]
-                    SpNode2[m5.large 스팟]
-                end
-            end
-        end
-        
-        CloudWatch[CloudWatch]
-        EC2API[EC2 API]
-    end
-    
-    APIServer --> DefaultScheduler
-    APIServer --> CustomScheduler
-    
-    CustomScheduler --> ManagedNG
-    CustomScheduler --> SelfManagedNG
-    CustomScheduler --> SpotNG
-    
-    MetricsCollector --> CloudWatch
-    CustomScheduler --> EC2API
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef customComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    class CloudWatch,EC2API awsService;
-    class APIServer,DefaultScheduler,MNode1,MNode2,SNode1,SNode2,SpNode1,SpNode2 k8sComponent;
-    class CustomScheduler,MetricsCollector customComponent;
-```
+![](../assets/eks_custom_scheduler_architecture.svg)
 
 ### EKS 특화 스케줄링 고려 사항
 

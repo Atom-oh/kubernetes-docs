@@ -1,0 +1,191 @@
+<mxfile host="65bd71144e">
+    <diagram id="gpu_workload_optimizer_architecture" name="GPU Workload Optimizer Architecture">
+        <mxGraphModel dx="1066" dy="619" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                
+                <!-- AWS Cloud Container -->
+                <mxCell id="2" value="AWS 클라우드" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="1">
+                    <mxGeometry x="120" y="80" width="600" height="520" as="geometry"/>
+                </mxCell>
+                
+                <!-- EKS Container -->
+                <mxCell id="3" value="Amazon EKS" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="2">
+                    <mxGeometry x="40" y="40" width="520" height="400" as="geometry"/>
+                </mxCell>
+                
+                <!-- API Server -->
+                <mxCell id="4" value="API 서버" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="3">
+                    <mxGeometry x="40" y="40" width="120" height="40" as="geometry"/>
+                </mxCell>
+                
+                <!-- Control Plane Container -->
+                <mxCell id="5" value="컨트롤 플레인" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="3">
+                    <mxGeometry x="40" y="100" width="120" height="80" as="geometry"/>
+                </mxCell>
+                
+                <!-- Default Scheduler -->
+                <mxCell id="6" value="기본 스케줄러" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="5">
+                    <mxGeometry x="10" y="30" width="100" height="40" as="geometry"/>
+                </mxCell>
+                
+                <!-- GPU Scheduler Container -->
+                <mxCell id="7" value="GPU 스케줄러" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="3">
+                    <mxGeometry x="180" y="100" width="320" height="160" as="geometry"/>
+                </mxCell>
+                
+                <!-- Scheduler Core -->
+                <mxCell id="8" value="스케줄러 코어" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="7">
+                    <mxGeometry x="20" y="40" width="280" height="30" as="geometry"/>
+                </mxCell>
+                
+                <!-- Plugins Container -->
+                <mxCell id="9" value="플러그인" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="7">
+                    <mxGeometry x="20" y="80" width="280" height="40" as="geometry"/>
+                </mxCell>
+                
+                <!-- Plugin Components -->
+                <mxCell id="10" value="GPU 토폴로지 플러그인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="9">
+                    <mxGeometry x="10" y="20" width="80" height="30" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="11" value="GPU 사용률 플러그인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="9">
+                    <mxGeometry x="100" y="20" width="80" height="30" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="12" value="GPU 메모리 플러그인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="9">
+                    <mxGeometry x="190" y="20" width="80" height="30" as="geometry"/>
+                </mxCell>
+                
+                <!-- Metrics Container -->
+                <mxCell id="13" value="메트릭 수집" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="7">
+                    <mxGeometry x="20" y="130" width="280" height="40" as="geometry"/>
+                </mxCell>
+                
+                <!-- Metrics Components -->
+                <mxCell id="14" value="DCGM Exporter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="13">
+                    <mxGeometry x="40" y="20" width="90" height="30" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="15" value="Node Exporter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="13">
+                    <mxGeometry x="150" y="20" width="90" height="30" as="geometry"/>
+                </mxCell>
+                
+                <!-- Node Groups Container -->
+                <mxCell id="16" value="노드 그룹" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="3">
+                    <mxGeometry x="40" y="280" width="460" height="100" as="geometry"/>
+                </mxCell>
+                
+                <!-- P3 Instances Container -->
+                <mxCell id="17" value="P3 인스턴스" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="16">
+                    <mxGeometry x="10" y="30" width="140" height="60" as="geometry"/>
+                </mxCell>
+                
+                <!-- P3 Instance Components -->
+                <mxCell id="18" value="p3.2xlarge" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="17">
+                    <mxGeometry x="10" y="25" width="60" height="30" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="19" value="p3.8xlarge" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="17">
+                    <mxGeometry x="80" y="25" width="50" height="30" as="geometry"/>
+                </mxCell>
+                
+                <!-- G4 Instances Container -->
+                <mxCell id="20" value="G4 인스턴스" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="16">
+                    <mxGeometry x="160" y="30" width="140" height="60" as="geometry"/>
+                </mxCell>
+                
+                <!-- G4 Instance Components -->
+                <mxCell id="21" value="g4dn.xlarge" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="20">
+                    <mxGeometry x="10" y="25" width="60" height="30" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="22" value="g4dn.2xlarge" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="20">
+                    <mxGeometry x="80" y="25" width="50" height="30" as="geometry"/>
+                </mxCell>
+                
+                <!-- G5 Instances Container -->
+                <mxCell id="23" value="G5 인스턴스" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;" vertex="1" parent="16">
+                    <mxGeometry x="310" y="30" width="140" height="60" as="geometry"/>
+                </mxCell>
+                
+                <!-- G5 Instance Components -->
+                <mxCell id="24" value="g5.xlarge" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="23">
+                    <mxGeometry x="10" y="25" width="60" height="30" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="25" value="g5.2xlarge" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;" vertex="1" parent="23">
+                    <mxGeometry x="80" y="25" width="50" height="30" as="geometry"/>
+                </mxCell>
+                
+                <!-- AWS Services -->
+                <mxCell id="26" value="CloudWatch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1;fontColor=#000000;" vertex="1" parent="2">
+                    <mxGeometry x="180" y="460" width="120" height="40" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="27" value="Prometheus" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1;fontColor=#000000;" vertex="1" parent="2">
+                    <mxGeometry x="360" y="460" width="120" height="40" as="geometry"/>
+                </mxCell>
+                
+                <!-- Connections -->
+                <mxCell id="28" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="2" source="4" target="6">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="300" y="260" as="sourcePoint"/>
+                        <mxPoint x="350" y="210" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="29" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="2" source="4" target="8">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="300" y="260" as="sourcePoint"/>
+                        <mxPoint x="350" y="210" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="340" y="80"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="30" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="2" source="8" target="9">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="300" y="260" as="sourcePoint"/>
+                        <mxPoint x="350" y="210" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="31" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="2" source="9" target="16">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="300" y="260" as="sourcePoint"/>
+                        <mxPoint x="350" y="210" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="340" y="260"/>
+                            <mxPoint x="270" y="260"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="32" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="2" source="13" target="27">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="300" y="260" as="sourcePoint"/>
+                        <mxPoint x="350" y="210" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="340" y="260"/>
+                            <mxPoint x="420" y="260"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="33" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="2" source="27" target="26">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="300" y="260" as="sourcePoint"/>
+                        <mxPoint x="350" y="210" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="420" y="440"/>
+                            <mxPoint x="240" y="440"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

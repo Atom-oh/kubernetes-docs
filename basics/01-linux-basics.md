@@ -463,6 +463,10 @@ Linux 기능은 전통적인 root 권한을 더 작은 권한 단위로 나눈 �
 
 Linux의 기본 개념과 기능은 Kubernetes와 컨테이너 기술을 이해하는 데 필수적입니다. 특히 네임스페이스, cgroups, OverlayFS와 같은 기능은 컨테이너 격리와 자원 관리의 기반이 됩니다. 이러한 개념을 이해함으로써 Kubernetes 환경에서 발생하는 문제를 더 효과적으로 해결하고 최적화할 수 있습니다.
 
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [Linux 기초 퀴즈](../../quizzes/basics/01-linux-basics-quiz.md)를 풀어보세요.
+
 ## 참고 자료
 
 * [The Linux Documentation Project](https://tldp.org/)

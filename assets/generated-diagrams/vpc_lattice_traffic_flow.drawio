@@ -1,0 +1,112 @@
+<mxfile host="65bd71144e">
+    <diagram id="vpc_lattice_traffic_flow" name="VPC Lattice 트래픽 흐름">
+        <mxGraphModel dx="1066" dy="619" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                
+                <!-- Actors -->
+                <mxCell id="2" value="클라이언트" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#f9f9f9;strokeColor=#333333;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="120" y="80" width="100" height="500" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="3" value="VPC Lattice" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FF9900;strokeColor=#333333;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="280" y="80" width="100" height="500" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="4" value="서비스" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FF9900;strokeColor=#333333;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="440" y="80" width="100" height="500" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="5" value="대상 그룹" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FF9900;strokeColor=#333333;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="600" y="80" width="100" height="500" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="6" value="대상(EKS 파드)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="760" y="80" width="100" height="500" as="geometry"/>
+                </mxCell>
+                
+                <!-- Messages -->
+                <mxCell id="7" value="요청 (service-name.vpc-lattice-svcs.region.on.aws)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="2" target="3">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="170" y="160" as="sourcePoint"/>
+                        <mxPoint x="250" y="160" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="230" y="160"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="8" value="요청 처리 및 리스너 규칙 적용" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="3" target="4">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="330" y="200" as="sourcePoint"/>
+                        <mxPoint x="410" y="200" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="380" y="200"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="9" value="적절한 대상 그룹으로 라우팅" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="4" target="5">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="490" y="240" as="sourcePoint"/>
+                        <mxPoint x="570" y="240" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="540" y="240"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="10" value="요청을 대상으로 전달" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="5" target="6">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="650" y="280" as="sourcePoint"/>
+                        <mxPoint x="730" y="280" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="700" y="280"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="11" value="응답 반환" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;" edge="1" parent="1" source="6" target="5">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="730" y="320" as="sourcePoint"/>
+                        <mxPoint x="650" y="320" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="700" y="320"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="12" value="응답 전달" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;" edge="1" parent="1" source="5" target="4">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="570" y="360" as="sourcePoint"/>
+                        <mxPoint x="490" y="360" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="540" y="360"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="13" value="응답 처리" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;" edge="1" parent="1" source="4" target="3">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="410" y="400" as="sourcePoint"/>
+                        <mxPoint x="330" y="400" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="380" y="400"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="14" value="응답 반환" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;" edge="1" parent="1" source="3" target="2">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="250" y="440" as="sourcePoint"/>
+                        <mxPoint x="170" y="440" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="230" y="440"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

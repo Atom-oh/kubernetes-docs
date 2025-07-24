@@ -40,39 +40,7 @@ Kyverno는 Kubernetes 리소스로 정책을 정의하고 관리할 수 있는 �
 
 ### Kyverno 아키텍처 및 작동 방식
 
-```mermaid
-flowchart LR
-    User([사용자]) --> K8sAPI[Kubernetes API 서버]
-    
-    subgraph Kyverno [Kyverno]
-        KyvernoAdmission[Admission Controller] --> KyvernoEngine[정책 엔진]
-        KyvernoEngine --> PolicyStore[(정책 저장소)]
-        KyvernoEngine --> BackgroundScanner[백그라운드 스캐너]
-        KyvernoEngine --> ReportController[보고서 컨트롤러]
-    end
-    
-    subgraph Policies [정책 유형]
-        Validate[검증 정책]
-        Mutate[변형 정책]
-        Generate[생성 정책]
-        Cleanup[정리 정책]
-    end
-    
-    K8sAPI <--> KyvernoAdmission
-    KyvernoEngine --> Policies
-    ReportController --> Reports[정책 보고서]
-    BackgroundScanner --> ExistingResources[기존 리소스]
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef kyvernoComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef policyType fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class K8sAPI k8sComponent;
-    class KyvernoAdmission,KyvernoEngine,PolicyStore,BackgroundScanner,ReportController kyvernoComponent;
-    class Validate,Mutate,Generate,Cleanup policyType;
-    class Reports,ExistingResources default;
-```
+![kyverno_architecture](../assets/kyverno_architecture.svg)
 
 ### Kyverno vs OPA Gatekeeper
 
@@ -215,54 +183,7 @@ EKS 클러스터에서 Kyverno를 활용하면 보안, 비용 최적화, 규정 
 
 다음 다이어그램은 EKS 클러스터에서 Kyverno가 어떻게 통합되어 작동하는지 보여줍니다:
 
-```mermaid
-flowchart LR
-    subgraph AWS [AWS 클라우드]
-        subgraph EKS [Amazon EKS]
-            APIServer[API 서버]
-            
-            subgraph ControlPlane [컨트롤 플레인]
-                Controller[컨트롤러 매니저]
-                Scheduler[스케줄러]
-                ETCD[(etcd)]
-            end
-            
-            subgraph DataPlane [데이터 플레인]
-                Node1[워커 노드 1]
-                Node2[워커 노드 2]
-                Node3[워커 노드 3]
-            end
-            
-            subgraph Kyverno [Kyverno]
-                KyvernoAdmission[Admission Webhook]
-                KyvernoController[Kyverno 컨트롤러]
-                PolicyReporter[정책 리포터]
-            end
-        end
-        
-        IAM[IAM]
-        CloudWatch[CloudWatch]
-    end
-    
-    User([사용자/CI/CD]) --> APIServer
-    APIServer <--> ControlPlane
-    APIServer <--> KyvernoAdmission
-    KyvernoAdmission <--> KyvernoController
-    KyvernoController --> PolicyReporter
-    PolicyReporter --> CloudWatch
-    ControlPlane <--> DataPlane
-    EKS <--> IAM
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef kyvernoComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class IAM,CloudWatch awsService;
-    class APIServer,ControlPlane,Controller,Scheduler,ETCD,DataPlane,Node1,Node2,Node3 k8sComponent;
-    class KyvernoAdmission,KyvernoController,PolicyReporter,Kyverno kyvernoComponent;
-    class User,AWS,EKS default;
-```
+![eks_kyverno_integration](../assets/eks_kyverno_integration.svg)
 
 이 아키텍처에서 Kyverno는 EKS 클러스터 내에서 Admission Webhook으로 작동하여 API 서버로 들어오는 모든 요청을 가로채고 정의된 정책에 따라 처리합니다. 정책 위반 사항은 CloudWatch로 전송되어 모니터링 및 알림에 활용될 수 있습니다.
 
@@ -447,35 +368,7 @@ Kyverno는 정책을 테스트하고 검증하기 위한 도구를 제공합니�
 
 다음 다이어그램은 Kyverno 정책의 일반적인 개발 및 적용 워크플로우를 보여줍니다:
 
-```mermaid
-flowchart TD
-    Start([시작]) --> CreatePolicy[정책 작성]
-    CreatePolicy --> TestPolicy[정책 테스트]
-    TestPolicy --> ValidatePolicy{정책 검증}
-    ValidatePolicy -->|실패| RevisePolicy[정책 수정]
-    RevisePolicy --> TestPolicy
-    ValidatePolicy -->|성공| DeployAudit[Audit 모드로 배포]
-    DeployAudit --> MonitorViolations[위반 사항 모니터링]
-    MonitorViolations --> EvaluateImpact{영향 평가}
-    EvaluateImpact -->|조정 필요| AdjustPolicy[정책 조정]
-    AdjustPolicy --> DeployAudit
-    EvaluateImpact -->|준비 완료| DeployEnforce[Enforce 모드로 전환]
-    DeployEnforce --> MonitorMetrics[메트릭 모니터링]
-    MonitorMetrics --> ReviewPolicy[정기적인 정책 검토]
-    ReviewPolicy --> UpdatePolicy{업데이트 필요?}
-    UpdatePolicy -->|예| CreatePolicy
-    UpdatePolicy -->|아니오| MonitorMetrics
-    
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef process fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef deploy fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    class Start start;
-    class CreatePolicy,TestPolicy,RevisePolicy,MonitorViolations,AdjustPolicy,MonitorMetrics,ReviewPolicy process;
-    class ValidatePolicy,EvaluateImpact,UpdatePolicy decision;
-    class DeployAudit,DeployEnforce deploy;
-```
+![kyverno_policy_workflow](../assets/kyverno_policy_workflow.svg)
 
 ### 정책 시뮬레이션
 
@@ -641,3 +534,8 @@ policies/
 ## 결론
 
 Kyverno는 Kubernetes 네이티브 접근 방식을 사용하여 정책을 관리하는 강력한 도구입니다. EKS 클러스터에서 Kyverno를 사용하면 보안, 비용 최적화, 규정 준수 등 다양한 측면에서 정책을 적용할 수 있습니다. 정책을 점진적으로 도입하고, 예외를 처리하며, 잘 조직화하는 것이 중요합니다.
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [Kyverno 정책 관리 퀴즈](../../quizzes/advanced/01-kyverno-policy-management-quiz.md)를 풀어보세요.
+

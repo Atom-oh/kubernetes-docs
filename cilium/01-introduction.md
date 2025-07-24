@@ -44,54 +44,7 @@ Cilium은 Linux 커널의 강력한 eBPF 기술을 활용하여 컨테이너화�
 
 ### Cilium 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph "Kubernetes 클러스터"
-        API[kube-apiserver]
-        
-        subgraph "컨트롤 플레인"
-            Operator[Cilium Operator]
-            API --> Operator
-        end
-        
-        subgraph "노드 1"
-            Agent1[Cilium Agent]
-            eBPF1[eBPF 프로그램]
-            Pod1A[Pod A]
-            Pod1B[Pod B]
-            
-            Agent1 --> eBPF1
-            eBPF1 --> Pod1A
-            eBPF1 --> Pod1B
-        end
-        
-        subgraph "노드 2"
-            Agent2[Cilium Agent]
-            eBPF2[eBPF 프로그램]
-            Pod2A[Pod C]
-            Pod2B[Pod D]
-            
-            Agent2 --> eBPF2
-            eBPF2 --> Pod2A
-            eBPF2 --> Pod2B
-        end
-        
-        Operator --> Agent1
-        Operator --> Agent2
-        
-        Hubble[Hubble]
-        Hubble --> Agent1
-        Hubble --> Agent2
-    end
-    
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef cilium fill:#F05E16,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    class API k8s;
-    class Operator,Agent1,Agent2,eBPF1,eBPF2,Hubble cilium;
-    class Pod1A,Pod1B,Pod2A,Pod2B pod;
-```
+![cilium-architecture](../assets/cilium_arch.png)
 
 ## 컨테이너 네트워킹 기초
 
