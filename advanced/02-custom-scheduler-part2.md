@@ -8,52 +8,7 @@
 
 다음 다이어그램은 스케줄러 확장 접근 방식의 아키텍처를 보여줍니다:
 
-```mermaid
-flowchart TD
-    subgraph K8sCluster["Kubernetes 클러스터"]
-        subgraph ControlPlane["컨트롤 플레인"]
-            APIServer["API 서버"]
-            DefaultScheduler["기본 스케줄러"]
-        end
-
-        subgraph SchedulerExtender["스케줄러 확장"]
-            ExtenderService["확장 서비스"]
-            subgraph ExtenderEndpoints["확장 엔드포인트"]
-                FilterEndpoint["/filter"]
-                PrioritizeEndpoint["/prioritize"]
-                BindEndpoint["/bind"]
-                PrefilterEndpoint["/prefilter"]
-                PrescoreEndpoint["/prescore"]
-            end
-        end
-
-        subgraph Nodes["워커 노드"]
-            Node1["노드 1"]
-            Node2["노드 2"]
-            Node3["노드 3"]
-        end
-    end
-
-    APIServer --> DefaultScheduler
-    DefaultScheduler -- "HTTP 요청" --> ExtenderService
-    ExtenderService --> FilterEndpoint
-    ExtenderService --> PrioritizeEndpoint
-    ExtenderService --> BindEndpoint
-    ExtenderService --> PrefilterEndpoint
-    ExtenderService --> PrescoreEndpoint
-    DefaultScheduler --> Node1
-    DefaultScheduler --> Node2
-    DefaultScheduler --> Node3
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef extenderComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef endpointComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-
-    class APIServer,DefaultScheduler,Node1,Node2,Node3 k8sComponent
-    class ExtenderService extenderComponent
-    class FilterEndpoint,PrioritizeEndpoint,BindEndpoint,PrefilterEndpoint,PrescoreEndpoint endpointComponent
-
-```
+![](../assets/scheduler_extender_architecture.svg)
 
 ### 스케줄러 확장 워크플로우
 
