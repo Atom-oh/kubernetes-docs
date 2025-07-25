@@ -1482,7 +1482,7 @@ Kubernetes는 계속 발전하고 있으며, 클라우드 네이티브 애플리
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [Kubernetes 소개 퀴즈](../../quizzes/basics/03-kubernetes-introduction-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [Kubernetes 소개 퀴즈](../quizzes/basics/03-kubernetes-introduction-quiz.md)를 풀어보세요.
 
 ## 참고 자료
 

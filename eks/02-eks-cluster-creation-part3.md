@@ -331,4 +331,4 @@ kubectl get nodes
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [EKS 클러스터 생성 - 3부 퀴즈](../../quizzes/eks/02-eks-cluster-creation-part3-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [EKS 클러스터 생성 - 3부 퀴즈](../quizzes/eks/02-eks-cluster-creation-part3-quiz.md)를 풀어보세요.

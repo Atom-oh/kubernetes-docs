@@ -1581,4 +1581,4 @@ VPC Lattice를 효과적으로 구현하고 관리하면 마이크로서비스 �
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/tools/09-vpc-lattice-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/tools/09-vpc-lattice-quiz.md)를 풀어보세요.

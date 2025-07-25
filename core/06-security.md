@@ -922,7 +922,7 @@ Amazon EKS를 사용하는 경우, AWS의 다양한 보안 서비스와 통합�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [보안 퀴즈](../../quizzes/core/06-security-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [보안 퀴즈](../quizzes/core/06-security-quiz.md)를 풀어보세요.
 
 ## 참고 자료
 

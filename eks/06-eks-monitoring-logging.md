@@ -2247,4 +2247,4 @@ EKS 클러스터의 모니터링 및 로깅은 지속적인 프로세스로, 클
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/eks/06-eks-monitoring-logging-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/eks/06-eks-monitoring-logging-quiz.md)를 풀어보세요.

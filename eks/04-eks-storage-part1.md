@@ -660,4 +660,4 @@ Amazon EKS에서는 다양한 스토리지 옵션을 활용하여 애플리케�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/eks/04-eks-storage-part1-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/eks/04-eks-storage-part1-quiz.md)를 풀어보세요.

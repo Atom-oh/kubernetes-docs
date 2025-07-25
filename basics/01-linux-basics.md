@@ -465,7 +465,7 @@ Linux의 기본 개념과 기능은 Kubernetes와 컨테이너 기술을 이해�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [Linux 기초 퀴즈](../../quizzes/basics/01-linux-basics-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [Linux 기초 퀴즈](../quizzes/basics/01-linux-basics-quiz.md)를 풀어보세요.
 
 ## 참고 자료
 

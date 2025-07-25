@@ -1378,7 +1378,7 @@ Amazon EKS 환경에서는 Kubernetes의 기본 구성 관리 기능과 함께 A
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [구성 및 시크릿 퀴즈](../../quizzes/core/05-configuration-secrets-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [구성 및 시크릿 퀴즈](../quizzes/core/05-configuration-secrets-quiz.md)를 풀어보세요.
 
 ## 참고 자료
 

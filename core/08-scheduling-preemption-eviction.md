@@ -1277,4 +1277,4 @@ Kubernetes의 스케줄링, 선점 및 축출 메커니즘은 클러스터 리�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [스케줄링, 선점 및 축출 퀴즈](../../quizzes/core/08-scheduling-preemption-eviction-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [스케줄링, 선점 및 축출 퀴즈](../quizzes/core/08-scheduling-preemption-eviction-quiz.md)를 풀어보세요.

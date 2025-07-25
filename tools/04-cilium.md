@@ -998,4 +998,4 @@ Cilium은 지속적으로 발전하고 있으며, eBPF 기술의 발전과 함�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/tools/04-cilium-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/tools/04-cilium-quiz.md)를 풀어보세요.

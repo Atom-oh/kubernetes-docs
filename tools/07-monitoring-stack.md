@@ -2096,4 +2096,4 @@ Kubernetes 환경에서 모니터링 스택을 구축하는 것은 시스템의 
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/tools/07-monitoring-stack-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/tools/07-monitoring-stack-quiz.md)를 풀어보세요.

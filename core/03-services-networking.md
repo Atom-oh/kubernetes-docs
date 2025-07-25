@@ -1338,7 +1338,7 @@ Kubernetes의 네트워킹 기능을 이해하고 활용하면 안전하고 확�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [서비스와 네트워킹 퀴즈](../../quizzes/core/03-services-networking-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [서비스와 네트워킹 퀴즈](../quizzes/core/03-services-networking-quiz.md)를 풀어보세요.
 
 ## 참고 자료
 

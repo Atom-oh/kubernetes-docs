@@ -594,4 +594,4 @@ Cilium은 지속적으로 발전하고 있으며, 미래 로드맵은 새로운 
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/cilium/07-advanced-topics-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/cilium/07-advanced-topics-quiz.md)를 풀어보세요.

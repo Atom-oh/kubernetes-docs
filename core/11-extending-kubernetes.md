@@ -1619,4 +1619,4 @@ Kubernetes 확장 기능을 구현할 때는 표준 인터페이스 사용, 선�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [Kubernetes 확장 퀴즈](../../quizzes/core/11-extending-kubernetes-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [Kubernetes 확장 퀴즈](../quizzes/core/11-extending-kubernetes-quiz.md)를 풀어보세요.

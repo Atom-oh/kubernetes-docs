@@ -1184,4 +1184,4 @@ Windows in Kubernetes를 성공적으로 구현하려면 적절한 계획, 설�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [Windows in Kubernetes 퀴즈](../../quizzes/core/10-windows-in-kubernetes-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [Windows in Kubernetes 퀴즈](../quizzes/core/10-windows-in-kubernetes-quiz.md)를 풀어보세요.

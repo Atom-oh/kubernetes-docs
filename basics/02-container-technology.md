@@ -359,7 +359,7 @@ AWS의 관리형 컨테이너 이미지 레지스트리 서비스입니다.
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [컨테이너 기술 퀴즈](../../quizzes/basics/02-container-technology-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [컨테이너 기술 퀴즈](../quizzes/basics/02-container-technology-quiz.md)를 풀어보세요.
 
 ## 참고 자료
 

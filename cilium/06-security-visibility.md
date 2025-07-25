@@ -582,4 +582,4 @@ hubble observe --verdict DROPPED --output json | jq -c '.verdict.reason' | sort 
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/cilium/06-security-visibility-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/cilium/06-security-visibility-quiz.md)를 풀어보세요.

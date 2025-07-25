@@ -481,7 +481,7 @@ KRO는 아직 발전 중인 기술이지만, Kubernetes 생태계의 미래 방�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [KRO Helm 마이그레이션 퀴즈](../../quizzes/advanced/07-kro-rgd-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [KRO Helm 마이그레이션 퀴즈](../quizzes/advanced/07-kro-rgd-quiz.md)를 풀어보세요.
 
 ## Helm과 KRO 비교
 

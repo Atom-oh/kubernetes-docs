@@ -1581,4 +1581,4 @@ Amazon EKS 클러스터의 비용을 효과적으로 최적화하려면 컴퓨�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/eks/07-eks-cost-optimization-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/eks/07-eks-cost-optimization-quiz.md)를 풀어보세요.

@@ -2007,7 +2007,7 @@ Kubernetes 클러스터의 아키텍처를 이해하는 것은 효과적인 클�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [클러스터 아키텍처 퀴즈](../../quizzes/core/01-cluster-architecture-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [클러스터 아키텍처 퀴즈](../quizzes/core/01-cluster-architecture-quiz.md)를 풀어보세요.
 
 ## 참고 자료
 

@@ -2440,4 +2440,4 @@ Kubernetes 클러스터 관리는 다양한 측면을 포함하는 복잡한 작
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [클러스터 관리 퀴즈](../../quizzes/core/09-cluster-administration-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [클러스터 관리 퀴즈](../quizzes/core/09-cluster-administration-quiz.md)를 풀어보세요.
