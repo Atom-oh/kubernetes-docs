@@ -474,4 +474,4 @@ func scoreNodeByGPU(node *v1.Node, pod *v1.Pod) int {
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/advanced/02-custom-scheduler-part1-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/advanced/02-custom-scheduler-part1-quiz.md)를 풀어보세요.

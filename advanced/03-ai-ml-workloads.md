@@ -1246,4 +1246,4 @@ EKS에서 AI/ML 워크로드를 실행하는 것은 강력한 인프라, 유연�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/advanced/03-ai-ml-workloads-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/advanced/03-ai-ml-workloads-quiz.md)를 풀어보세요.

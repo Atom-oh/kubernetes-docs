@@ -12,115 +12,13 @@ AI/ML 워크로드를 실행하는 EKS 클러스터에서는 GPU 리소스를 �
 
 다음 다이어그램은 GPU 워크로드 최적화 스케줄러의 아키텍처를 보여줍니다:
 
-```mermaid
-flowchart TD
-    subgraph AWS [AWS 클라우드]
-        subgraph EKS [Amazon EKS]
-            APIServer[API 서버]
-            
-            subgraph ControlPlane [컨트롤 플레인]
-                DefaultScheduler[기본 스케줄러]
-            end
-            
-            subgraph GPUScheduler [GPU 스케줄러]
-                SchedulerCore[스케줄러 코어]
-                
-                subgraph Plugins [플러그인]
-                    GPUTopologyPlugin[GPU 토폴로지 플러그인]
-                    GPUUtilizationPlugin[GPU 사용률 플러그인]
-                    GPUMemoryPlugin[GPU 메모리 플러그인]
-                end
-                
-                subgraph Metrics [메트릭 수집]
-                    DCGMExporter[DCGM Exporter]
-                    NodeExporter[Node Exporter]
-                end
-            end
-            
-            subgraph NodeGroups [노드 그룹]
-                subgraph P3Instances [P3 인스턴스]
-                    P3_2xl[p3.2xlarge]
-                    P3_8xl[p3.8xlarge]
-                    P3_16xl[p3.16xlarge]
-                end
-                
-                subgraph G4Instances [G4 인스턴스]
-                    G4dn_xl[g4dn.xlarge]
-                    G4dn_2xl[g4dn.2xlarge]
-                    G4dn_4xl[g4dn.4xlarge]
-                end
-                
-                subgraph G5Instances [G5 인스턴스]
-                    G5_xl[g5.xlarge]
-                    G5_2xl[g5.2xlarge]
-                    G5_4xl[g5.4xlarge]
-                end
-            end
-        end
-        
-        CloudWatch[CloudWatch]
-        Prometheus[(Prometheus)]
-    end
-    
-    APIServer --> DefaultScheduler
-    APIServer --> SchedulerCore
-    SchedulerCore --> Plugins
-    
-    Plugins --> NodeGroups
-    Metrics --> Prometheus
-    Prometheus --> CloudWatch
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    
-    class CloudWatch,Prometheus awsService;
-    class APIServer,DefaultScheduler k8sComponent;
-    class SchedulerCore,GPUTopologyPlugin,GPUUtilizationPlugin,GPUMemoryPlugin,DCGMExporter,NodeExporter gpuComponent;
-    class P3_2xl,P3_8xl,P3_16xl,G4dn_xl,G4dn_2xl,G4dn_4xl,G5_xl,G5_2xl,G5_4xl gpuNode;
-```
+![](../assets/gpu_scheduler_architecture.svg)
 
 #### GPU 워크로드 스케줄링 워크플로우
 
 다음 다이어그램은 GPU 워크로드 스케줄링 워크플로우를 보여줍니다:
 
-```mermaid
-sequenceDiagram
-    participant User as 사용자
-    participant API as API 서버
-    participant GPUSched as GPU 스케줄러
-    participant Plugins as 스케줄러 플러그인
-    participant Metrics as 메트릭 시스템
-    participant Node as GPU 노드
-    
-    User->>API: GPU 포드 생성 요청
-    API->>GPUSched: 스케줄링 요청
-    GPUSched->>Plugins: 필터링 요청
-    Plugins->>Metrics: GPU 사용률 조회
-    Metrics->>Plugins: GPU 사용률 데이터
-    Plugins->>GPUSched: 필터링된 노드 목록
-    GPUSched->>Plugins: 점수 매기기 요청
-    Plugins->>Metrics: GPU 토폴로지 조회
-    Metrics->>Plugins: GPU 토폴로지 데이터
-    Plugins->>GPUSched: 노드 점수
-    GPUSched->>API: 선택된 노드
-    API->>Node: 포드 스케줄링
-    Node->>API: 스케줄링 결과
-    API->>User: 포드 생성 완료
-    
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef scheduler fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef metrics fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef node fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    
-    class User user;
-    class API k8s;
-    class GPUSched,Plugins scheduler;
-    class Metrics metrics;
-    class Node node;
-```
+![](../assets/gpu_workload_scheduling_workflow.svg)
 
 #### 요구 사항
 
@@ -688,4 +586,4 @@ GPU 워크로드 최적화, 네트워크 지역성 최적화 등 다양한 사�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/advanced/02-custom-scheduler-part3-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/advanced/02-custom-scheduler-part3-quiz.md)를 풀어보세요.

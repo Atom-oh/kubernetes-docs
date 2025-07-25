@@ -537,5 +537,4 @@ Kyverno는 Kubernetes 네이티브 접근 방식을 사용하여 정책을 관�
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [Kyverno 정책 관리 퀴즈](../../quizzes/advanced/01-kyverno-policy-management-quiz.md)를 풀어보세요.
-
+이 장에서 배운 내용을 테스트하려면 [Kyverno 정책 관리 퀴즈](../quizzes/advanced/01-kyverno-policy-management-quiz.md)를 풀어보세요.

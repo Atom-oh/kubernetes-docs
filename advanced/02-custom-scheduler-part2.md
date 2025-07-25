@@ -311,101 +311,13 @@ Kubernetes 1.15부터 도입된 스케줄러 프레임워크는 플러그인 기
 
 다음 다이어그램은 스케줄러 프레임워크의 아키텍처를 보여줍니다:
 
-```mermaid
-flowchart TD
-    subgraph SchedulerFramework [스케줄러 프레임워크]
-        subgraph SchedulingQueue [스케줄링 큐]
-            QueueSort[QueueSort]
-        end
-        
-        subgraph SchedulingCycle [스케줄링 사이클]
-            PreFilter[PreFilter]
-            Filter[Filter]
-            PreScore[PreScore]
-            Score[Score]
-            NormalizeScore[NormalizeScore]
-            Reserve[Reserve]
-            Permit[Permit]
-        end
-        
-        subgraph BindingCycle [바인딩 사이클]
-            PreBind[PreBind]
-            Bind[Bind]
-            PostBind[PostBind]
-        end
-    end
-    
-    Pod([포드]) --> QueueSort
-    QueueSort --> PreFilter
-    PreFilter --> Filter
-    Filter --> PreScore
-    PreScore --> Score
-    Score --> NormalizeScore
-    NormalizeScore --> Reserve
-    Reserve --> Permit
-    Permit --> PreBind
-    PreBind --> Bind
-    Bind --> PostBind
-    PostBind --> Node([노드])
-    
-    classDef queuePhase fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef schedulingPhase fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef bindingPhase fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class QueueSort queuePhase;
-    class PreFilter,Filter,PreScore,Score,NormalizeScore,Reserve,Permit schedulingPhase;
-    class PreBind,Bind,PostBind bindingPhase;
-    class Pod,Node,SchedulerFramework,SchedulingQueue,SchedulingCycle,BindingCycle default;
-```
+![스케줄러 프레임워크 아키텍처](../assets/custom-scheduler-framework-architecture.svg)
 
 ### 스케줄러 프레임워크 플러그인 구성
 
 다음 다이어그램은 스케줄러 프레임워크 플러그인의 구성을 보여줍니다:
 
-```mermaid
-flowchart TD
-    subgraph K8sCluster [Kubernetes 클러스터]
-        subgraph ControlPlane [컨트롤 플레인]
-            APIServer[API 서버]
-            
-            subgraph Scheduler [스케줄러]
-                SchedulerCore[스케줄러 코어]
-                
-                subgraph SchedulerPlugins [스케줄러 플러그인]
-                    DefaultPlugins[기본 플러그인]
-                    CustomPlugins[커스텀 플러그인]
-                end
-                
-                subgraph SchedulerProfiles [스케줄러 프로필]
-                    DefaultProfile[기본 프로필]
-                    CustomProfile[커스텀 프로필]
-                end
-            end
-        end
-        
-        subgraph Nodes [워커 노드]
-            Node1[노드 1]
-            Node2[노드 2]
-            Node3[노드 3]
-        end
-    end
-    
-    APIServer --> SchedulerCore
-    SchedulerCore --> SchedulerPlugins
-    SchedulerPlugins --> SchedulerProfiles
-    SchedulerProfiles --> Nodes
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pluginComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef profileComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class APIServer,SchedulerCore,Node1,Node2,Node3 k8sComponent;
-    class DefaultPlugins,CustomPlugins,SchedulerPlugins pluginComponent;
-    class DefaultProfile,CustomProfile,SchedulerProfiles profileComponent;
-    class K8sCluster,ControlPlane,Scheduler,Nodes default;
-```
+![](../assets/kubernetes-scheduler-architecture.svg)
 
 ### 스케줄링 프레임워크 확장 포인트
 
@@ -577,68 +489,7 @@ Amazon EKS에서 스케줄러 프레임워크를 구현할 때는 다음과 같�
 ### EKS 스케줄러 프레임워크 아키텍처
 
 다음 다이어그램은 EKS에서 스케줄러 프레임워크를 구현하는 방법을 보여줍니다:
-
-```mermaid
-flowchart TD
-    subgraph AWS [AWS 클라우드]
-        subgraph EKS [Amazon EKS]
-            APIServer[API 서버]
-            
-            subgraph ControlPlane [컨트롤 플레인]
-                DefaultScheduler[기본 스케줄러]
-            end
-            
-            subgraph CustomSchedulerPod [Custom Scheduler 파드]
-                CustomScheduler[Custom Scheduler]
-                
-                subgraph CustomPlugins [커스텀 플러그인]
-                    GPUPlugin[GPU 플러그인]
-                    SpotPlugin[스팟 인스턴스 플러그인]
-                    AZPlugin[가용 영역 플러그인]
-                end
-            end
-            
-            subgraph NodeGroups [노드 그룹]
-                subgraph GPUNodes [GPU 노드]
-                    GPUNode1[p3.2xlarge]
-                    GPUNode2[p3.8xlarge]
-                end
-                
-                subgraph StandardNodes [표준 노드]
-                    Node1[c5.large]
-                    Node2[m5.large]
-                end
-                
-                subgraph SpotNodes [스팟 노드]
-                    SpotNode1[c5.large 스팟]
-                    SpotNode2[m5.large 스팟]
-                end
-            end
-        end
-        
-        ECR[(Amazon ECR)]
-        CloudWatch[CloudWatch]
-    end
-    
-    ECR -- 이미지 제공 --> CustomSchedulerPod
-    APIServer --> DefaultScheduler
-    APIServer --> CustomScheduler
-    CustomScheduler --> CustomPlugins
-    CustomPlugins --> NodeGroups
-    CustomScheduler --> CloudWatch
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef customComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class ECR,CloudWatch awsService;
-    class APIServer,DefaultScheduler,Node1,Node2,StandardNodes k8sComponent;
-    class CustomScheduler,CustomPlugins,GPUPlugin,SpotPlugin,AZPlugin,CustomSchedulerPod customComponent;
-    class GPUNode1,GPUNode2,GPUNodes gpuNode;
-    class AWS,EKS,ControlPlane,NodeGroups,SpotNodes,SpotNode1,SpotNode2 default;
-```
+![](../assets/eks_scheduler_framework_architecture.svg)
 
 ### EKS 스케줄러 프레임워크 구현 단계
 
@@ -924,4 +775,4 @@ spec:
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/advanced/02-custom-scheduler-part2-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/advanced/02-custom-scheduler-part2-quiz.md)를 풀어보세요.

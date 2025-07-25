@@ -1287,4 +1287,4 @@ EKS에서 vLLM을 배포하는 것은 대규모 언어 모델을 효율적으로
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/advanced/04-vllm-deployment-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/advanced/04-vllm-deployment-quiz.md)를 풀어보세요.
