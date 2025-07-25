@@ -921,3 +921,7 @@ spec:
 이 장에서는 스케줄러 확장(Extender) 접근 방식과 스케줄러 프레임워크 플러그인을 사용하여 Custom Scheduler를 구현하는 방법을 알아보았습니다. 또한 EKS 클러스터에서 스케줄러 프레임워크를 구현하는 방법도 살펴보았습니다.
 
 다음 장에서는 EKS에서의 Custom Scheduler 구현 사례와 모니터링 방법을 알아보겠습니다.
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/advanced/02-custom-scheduler-part2-quiz.md)를 풀어보세요.

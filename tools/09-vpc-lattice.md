@@ -1578,3 +1578,7 @@ VPC Lattice를 효과적으로 구현하고 관리하면 마이크로서비스 �
 - [AWS 블로그 - EKS와 VPC Lattice 통합](https://aws.amazon.com/blogs/containers/amazon-eks-and-vpc-lattice-integration/)
 - [AWS re:Invent 2022 - VPC Lattice 세션](https://www.youtube.com/watch?v=bGHZlJGQl1I)
 - [AWS 샘플 - VPC Lattice 예제](https://github.com/aws-samples/aws-vpc-lattice-examples)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/tools/09-vpc-lattice-quiz.md)를 풀어보세요.

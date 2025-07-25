@@ -1453,3 +1453,7 @@ Karpenter를 사용하면 클러스터 관리를 간소화하고, 리소스 활�
 - [Amazon EKS 워크숍 - Karpenter](https://www.eksworkshop.com/docs/autoscaling/compute/karpenter/)
 - [AWS 블로그 - Karpenter](https://aws.amazon.com/blogs/containers/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
 - [Karpenter 모범 사례](https://aws.github.io/aws-eks-best-practices/karpenter/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/tools/06-karpenter-quiz.md)를 풀어보세요.

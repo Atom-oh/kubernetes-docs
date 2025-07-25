@@ -791,3 +791,7 @@ ACK는 지속적으로 발전하고 있으며, 더 많은 AWS 서비스에 대�
 - [AWS 서비스 컨트롤러 목록](https://aws-controllers-k8s.github.io/community/docs/community/services/)
 - [ACK 설계 원칙](https://aws-controllers-k8s.github.io/community/docs/community/design/)
 - [EKS 워크숍 - ACK](https://www.eksworkshop.com/intermediate/290_ack/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/tools/03-ack-quiz.md)를 풀어보세요.

@@ -2093,3 +2093,7 @@ Kubernetes 환경에서 모니터링 스택을 구축하는 것은 시스템의 
 - [kube-prometheus-stack 차트](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
 - [AWS Managed Prometheus 문서](https://docs.aws.amazon.com/prometheus/latest/userguide/what-is-Amazon-Managed-Service-Prometheus.html)
 - [Amazon EKS 모니터링 모범 사례](https://aws.amazon.com/blogs/containers/amazon-eks-cluster-multi-zone-auto-scaling-groups-and-spot-best-practices/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/tools/07-monitoring-stack-quiz.md)를 풀어보세요.

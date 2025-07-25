@@ -1287,3 +1287,7 @@ KEDA를 사용하면 애플리케이션을 더 효율적으로 스케일링하�
 - [KEDA 스케일러 목록](https://keda.sh/docs/latest/scalers/)
 - [KEDA Operator Hub](https://operatorhub.io/operator/keda)
 - [AWS EKS 워크숍 - KEDA](https://www.eksworkshop.com/advanced/autoscaling/keda/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/tools/05-keda-quiz.md)를 풀어보세요.

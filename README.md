@@ -13,74 +13,102 @@
 ## 목차
 
 ### 기초 개념
-1. [Linux 기초](./basics/01-linux-basics.md)
-2. [컨테이너 기술](./basics/02-container-technology.md)
-3. [Kubernetes 소개](./basics/03-kubernetes-introduction.md)
+1. [Linux 기초](./basics/01-linux-basics.md) | [퀴즈](./quizzes/basics/01-linux-basics-quiz.md)
+2. [컨테이너 기술](./basics/02-container-technology.md) | [퀴즈](./quizzes/basics/02-container-technology-quiz.md)
+3. [Kubernetes 소개](./basics/03-kubernetes-introduction.md) | [퀴즈](./quizzes/basics/03-kubernetes-introduction-quiz.md)
 
 ### Kubernetes 핵심 개념
-1. [클러스터 아키텍처](./core/01-cluster-architecture.md)
-2. [파드와 워크로드](./core/02-pods-and-workloads.md)
-3. [서비스와 네트워킹](./core/03-services-networking.md)
-4. [스토리지](./core/04-storage.md)
-5. [구성](./core/05-configuration-secrets.md)
-6. [보안](./core/06-security.md)
-7. [정책](./core/07-policies.md)
-8. [스케줄링, 선점 및 축출](./core/08-scheduling-preemption-eviction.md)
-9. [클러스터 관리](./core/09-cluster-administration.md)
-10. [Windows in Kubernetes](./core/10-windows-in-kubernetes.md)
-11. [Kubernetes 확장](./core/11-extending-kubernetes.md)
+1. [클러스터 아키텍처](./core/01-cluster-architecture.md) | [퀴즈](./quizzes/core/01-cluster-architecture-quiz.md)
+2. [파드와 워크로드](./core/02-pods-and-workloads.md) | [퀴즈](./quizzes/core/02-pods-and-workloads-quiz.md)
+3. [서비스와 네트워킹](./core/03-services-networking.md) | [퀴즈](./quizzes/core/03-services-networking-quiz.md)
+4. [스토리지](./core/04-storage.md) | [퀴즈](./quizzes/core/04-storage-quiz.md)
+5. [구성](./core/05-configuration-secrets.md) | [퀴즈](./quizzes/core/05-configuration-secrets-quiz.md)
+6. [보안](./core/06-security.md) | [퀴즈](./quizzes/core/06-security-quiz.md)
+7. [정책](./core/07-policies.md) | [퀴즈](./quizzes/core/07-policies-quiz.md)
+8. [스케줄링, 선점 및 축출](./core/08-scheduling-preemption-eviction.md) | [퀴즈](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+9. [클러스터 관리](./core/09-cluster-administration.md) | [퀴즈](./quizzes/core/09-cluster-administration-quiz.md)
+10. [Windows in Kubernetes](./core/10-windows-in-kubernetes.md) | [퀴즈](./quizzes/core/10-windows-in-kubernetes-quiz.md)
+11. [Kubernetes 확장](./core/11-extending-kubernetes.md) | [퀴즈](./quizzes/core/11-extending-kubernetes-quiz.md)
 
 ### Amazon EKS
-1. [EKS 소개](./eks/01-eks-introduction.md)
-2. [EKS 클러스터 생성](./eks/02-eks-cluster-creation-part1.md)
-   - [Part 1: 사전 요구 사항](./eks/02-eks-cluster-creation-part1.md)
-   - [Part 2: eksctl을 사용한 클러스터 생성](./eks/02-eks-cluster-creation-part2.md)
-   - [Part 3: AWS Management Console 및 CLI를 사용한 클러스터 생성](./eks/02-eks-cluster-creation-part3.md)
-   - [Part 4: Terraform 및 CDK를 사용한 클러스터 생성](./eks/02-eks-cluster-creation-part4.md)
-   - [Part 5: 클러스터 액세스, 검증, 업그레이드 및 삭제](./eks/02-eks-cluster-creation-part5.md)
+1. [EKS 소개](./eks/01-eks-introduction.md) | [퀴즈](./quizzes/eks/01-eks-introduction-quiz.md)
+2. EKS 클러스터 생성
+   - [Part 1: 사전 요구 사항](./eks/02-eks-cluster-creation-part1.md) | [퀴즈](./quizzes/eks/02-eks-cluster-creation-part1-quiz.md)
+   - [Part 2: eksctl을 사용한 클러스터 생성](./eks/02-eks-cluster-creation-part2.md) | [퀴즈](./quizzes/eks/02-eks-cluster-creation-part2-quiz.md)
+   - [Part 3: AWS Management Console 및 CLI를 사용한 클러스터 생성](./eks/02-eks-cluster-creation-part3.md) | [퀴즈](./quizzes/eks/02-eks-cluster-creation-part3-quiz.md)
+   - [Part 4: Terraform 및 CDK를 사용한 클러스터 생성](./eks/02-eks-cluster-creation-part4.md) | [퀴즈](./quizzes/eks/02-eks-cluster-creation-part4-quiz.md)
+   - [Part 5: 클러스터 액세스, 검증, 업그레이드 및 삭제](./eks/02-eks-cluster-creation-part5.md) | [퀴즈](./quizzes/eks/02-eks-cluster-creation-part5-quiz.md)
 3. EKS 네트워킹
-   - [Part 1: 기본 개념 및 VPC 구성](./eks/03-eks-networking-part1.md)
-   - [Part 2: 서비스 및 로드 밸런싱, 네트워크 정책](./eks/03-eks-networking-part2.md)
-   - [Part 3: 성능 최적화, 문제 해결, 고급 사용 사례](./eks/03-eks-networking-part3.md)
+   - [Part 1: 기본 개념 및 VPC 구성](./eks/03-eks-networking-part1.md) | [퀴즈](./quizzes/eks/03-eks-networking-part1-quiz.md)
+   - [Part 2: 서비스 및 로드 밸런싱, 네트워크 정책](./eks/03-eks-networking-part2.md) | [퀴즈](./quizzes/eks/03-eks-networking-part2-quiz.md)
+   - [Part 3: 성능 최적화, 문제 해결, 고급 사용 사례](./eks/03-eks-networking-part3.md) | [퀴즈](./quizzes/eks/03-eks-networking-part3-quiz.md)
 4. EKS 스토리지
-   - [Part 1: 기본 개념, EBS, EFS](./eks/04-eks-storage-part1.md)
-   - [Part 2: FSx for Lustre, S3, 스냅샷, 볼륨 확장, 성능 최적화](./eks/04-eks-storage-part2.md)
-   - [Part 3: 모니터링, 문제 해결, 비용 최적화, 보안](./eks/04-eks-storage-part3.md)
-5. [EKS 보안](./eks/05-eks-security.md)
-6. [EKS 모니터링 및 로깅](./eks/06-eks-monitoring-logging.md)
-7. [EKS 비용 최적화](./eks/07-eks-cost-optimization.md)
-8. [EKS 업그레이드](./eks/08-eks-upgrades.md)
-9. [EKS 문제 해결](./eks/09-eks-troubleshooting.md)
+   - [Part 1: 기본 개념, EBS, EFS](./eks/04-eks-storage-part1.md) | [퀴즈](./quizzes/eks/04-eks-storage-part1-quiz.md)
+   - [Part 2: FSx for Lustre, S3, 스냅샷, 볼륨 확장, 성능 최적화](./eks/04-eks-storage-part2.md) | [퀴즈](./quizzes/eks/04-eks-storage-part2-quiz.md)
+   - [Part 3: 모니터링, 문제 해결, 비용 최적화, 보안](./eks/04-eks-storage-part3.md) | [퀴즈](./quizzes/eks/04-eks-storage-part3-quiz.md)
+5. [EKS 보안](./eks/05-eks-security.md) | [퀴즈](./quizzes/eks/05-eks-security-quiz.md)
+6. [EKS 모니터링 및 로깅](./eks/06-eks-monitoring-logging.md) | [퀴즈](./quizzes/eks/06-eks-monitoring-logging-quiz.md)
+7. [EKS 비용 최적화](./eks/07-eks-cost-optimization.md) | [퀴즈](./quizzes/eks/07-eks-cost-optimization-quiz.md)
+8. [EKS 업그레이드](./eks/08-eks-upgrades.md) | [퀴즈](./quizzes/eks/08-eks-upgrades-quiz.md)
+9. [EKS 문제 해결](./eks/09-eks-troubleshooting.md) | [퀴즈](./quizzes/eks/09-eks-troubleshooting-quiz.md)
 
-## Cilium
-* [Cilium 소개](./cilium/README.md)
-   * [Part 1: 소개](./cilium/01-introduction.md)
-   * [Part 2: eBPF](./cilium/02-ebpf.md)
-   * [Part 3: 네트워킹](./cilium/03-networking.md)
-   * [Part 4: IPAM 및 정책](./cilium/04-ipam-policy.md)
-   * [Part 5: L2-L7 네트워킹](./cilium/05-l2-l7-networking.md)
-   * [Part 6: 보안 및 가시성](./cilium/06-security-visibility.md)
-   * [Part 7: 고급 주제](./cilium/07-advanced-topics.md)
-* [네트워킹 개념](./cilium/networking-concepts.md)
-* [용어집](./cilium/glossary.md)
+### Cilium
+1. [Cilium 소개](./cilium/README.md)
+2. [Part 1: 소개](./cilium/01-introduction.md) | [퀴즈](./quizzes/cilium/01-introduction-quiz.md)
+3. [Part 2: eBPF](./cilium/02-ebpf.md) | [퀴즈](./quizzes/cilium/02-ebpf-quiz.md)
+4. [Part 3: 네트워킹](./cilium/03-networking.md) | [퀴즈](./quizzes/cilium/03-networking-quiz.md)
+5. [Part 4: IPAM 및 정책](./cilium/04-ipam-policy.md) | [퀴즈](./quizzes/cilium/04-ipam-policy-quiz.md)
+6. [Part 5: L2-L7 네트워킹](./cilium/05-l2-l7-networking.md) | [퀴즈](./quizzes/cilium/05-l2-l7-networking-quiz.md)
+7. [Part 6: 보안 및 가시성](./cilium/06-security-visibility.md) | [퀴즈](./quizzes/cilium/06-security-visibility-quiz.md)
+8. [Part 7: 고급 주제](./cilium/07-advanced-topics.md) | [퀴즈](./quizzes/cilium/07-advanced-topics-quiz.md)
+9. [네트워킹 개념](./cilium/networking-concepts.md) | [퀴즈](./quizzes/cilium/networking-concepts-quiz.md)
+10. [용어집](./cilium/glossary.md) | [퀴즈](./quizzes/cilium/glossary-quiz.md)
 
 ### 고급 주제
-1. [Kyverno를 사용한 정책 관리](./advanced/01-kyverno-policy-management.md)
+1. [Kyverno를 사용한 정책 관리](./advanced/01-kyverno-policy-management.md) | [퀴즈](./quizzes/advanced/01-kyverno-policy-management-quiz.md)
 2. Custom Scheduler
-   * [Part 1: Custom Scheduler 기초](./advanced/02-custom-scheduler-part1.md)
-   * [Part 2: 스케줄러 확장 및 프레임워크](./advanced/02-custom-scheduler-part2.md)
-   * [Part 3: 커스텀 스케줄러 구현 사례 및 모니터링](./advanced/02-custom-scheduler-part3.md)
-3. [AI/ML 워크로드](./advanced/03-ai-ml-workloads.md)
-4. [vLLM 배포](./advanced/04-vllm-deployment.md)
+   - [Part 1: Custom Scheduler 기초](./advanced/02-custom-scheduler-part1.md) | [퀴즈](./quizzes/advanced/02-custom-scheduler-part1-quiz.md)
+   - [Part 2: 스케줄러 확장 및 프레임워크](./advanced/02-custom-scheduler-part2.md) | [퀴즈](./quizzes/advanced/02-custom-scheduler-part2-quiz.md)
+   - [Part 3: 커스텀 스케줄러 구현 사례 및 모니터링](./advanced/02-custom-scheduler-part3.md) | [퀴즈](./quizzes/advanced/02-custom-scheduler-part3-quiz.md)
+3. [AI/ML 워크로드](./advanced/03-ai-ml-workloads.md) | [퀴즈](./quizzes/advanced/03-ai-ml-workloads-quiz.md)
+4. [vLLM 배포](./advanced/04-vllm-deployment.md) | [퀴즈](./quizzes/advanced/04-vllm-deployment-quiz.md)
 
 ### 도구 및 통합
-1. [ArgoCD](./tools/01-argocd.md)
-2. [Istio](./tools/02-istio.md)
-3. [AWS Controllers for Kubernetes (ACK)](./tools/03-ack.md)
-4. [Cilium](./tools/04-cilium.md)
-5. [KEDA](./tools/05-keda.md)
-6. [Karpenter](./tools/06-karpenter.md)
-7. [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](./tools/07-monitoring-stack.md)
-8. [로깅 스택 (Loki, Tempo)](./tools/08-logging-stack.md)
-9. [VPC Lattice](./tools/09-vpc-lattice.md)
+1. [ArgoCD](./tools/01-argocd.md) | [퀴즈](./quizzes/tools/01-argocd-quiz.md)
+2. [Istio](./tools/02-istio.md) | [퀴즈](./quizzes/tools/02-istio-quiz.md)
+3. [AWS Controllers for Kubernetes (ACK)](./tools/03-ack.md) | [퀴즈](./quizzes/tools/03-ack-quiz.md)
+4. [Cilium](./tools/04-cilium.md) | [퀴즈](./quizzes/tools/04-cilium-quiz.md)
+5. [KEDA](./tools/05-keda.md) | [퀴즈](./quizzes/tools/05-keda-quiz.md)
+6. [Karpenter](./tools/06-karpenter.md) | [퀴즈](./quizzes/tools/06-karpenter-quiz.md)
+7. [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](./tools/07-monitoring-stack.md) | [퀴즈](./quizzes/tools/07-monitoring-stack-quiz.md)
+8. [로깅 스택 (Loki, Tempo)](./tools/08-logging-stack.md) | [퀴즈](./quizzes/tools/08-logging-stack-quiz.md)
+9. [VPC Lattice](./tools/09-vpc-lattice.md) | [퀴즈](./quizzes/tools/09-vpc-lattice-quiz.md)
+
+## 학습 가이드
+
+### 초보자를 위한 학습 순서
+1. **기초 개념** → **Kubernetes 핵심 개념** → **Amazon EKS** 순서로 학습
+2. 각 장을 읽은 후 해당 퀴즈를 풀어 이해도 확인
+3. 실습 환경에서 직접 명령어와 예제 코드 실행
+
+### 고급 사용자를 위한 학습 순서
+1. **Amazon EKS** → **고급 주제** → **도구 및 통합** 순서로 학습
+2. **Cilium** 섹션으로 네트워킹 심화 학습
+3. 특정 도구나 기술에 집중하여 심화 학습
+
+### 퀴즈 활용법
+- 각 문서 마지막에 있는 퀴즈 링크를 클릭하여 학습 내용 확인
+- 토글 형태로 구성된 답변을 먼저 생각해본 후 확인
+- 틀린 문제는 해당 문서를 다시 읽어 복습
+
+## 기여하기
+
+이 프로젝트에 기여하고 싶으시다면:
+1. 오타나 내용 오류 발견 시 이슈 등록
+2. 새로운 주제나 개선사항 제안
+3. 퀴즈 문제 추가나 개선 제안
+
+## 라이선스
+
+이 교육 자료는 학습 목적으로 자유롭게 사용할 수 있습니다.
 

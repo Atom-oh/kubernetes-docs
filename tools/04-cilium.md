@@ -995,3 +995,7 @@ Cilium은 지속적으로 발전하고 있으며, eBPF 기술의 발전과 함�
 - [Hubble 문서](https://github.com/cilium/hubble)
 - [Cilium 네트워크 정책 에디터](https://editor.cilium.io/)
 - [AWS EKS 워크숍 - Cilium](https://www.eksworkshop.com/beginner/115_cilium/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/tools/04-cilium-quiz.md)를 풀어보세요.

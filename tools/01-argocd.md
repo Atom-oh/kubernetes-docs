@@ -756,3 +756,7 @@ GitOps 방법론을 채택하면 배포 프로세스의 투명성, 감사 가능
 - [GitOps 원칙](https://www.gitops.tech/)
 - [ArgoCD 사용자 가이드](https://argo-cd.readthedocs.io/en/stable/user-guide/)
 - [ArgoCD 운영자 매뉴얼](https://argo-cd.readthedocs.io/en/stable/operator-manual/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/tools/01-argocd-quiz.md)를 풀어보세요.

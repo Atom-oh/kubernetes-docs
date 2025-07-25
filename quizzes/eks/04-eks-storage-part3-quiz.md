@@ -1,3 +1,246 @@
+# EKS 스토리지 Part 3 퀴즈
+
+이 퀴즈는 Amazon EKS 스토리지의 모니터링, 문제 해결, 비용 최적화 및 보안에 대한 이해도를 테스트합니다.
+
+## 문제 1: 스토리지 모니터링 메트릭
+
+<details>
+<summary>EKS에서 스토리지 성능을 모니터링하기 위한 주요 메트릭은 무엇인가요?</summary>
+
+**답변:**
+**EBS 메트릭:**
+- VolumeReadOps/VolumeWriteOps: IOPS 사용량
+- VolumeReadBytes/VolumeWriteBytes: 처리량
+- VolumeTotalReadTime/VolumeTotalWriteTime: 지연 시간
+- VolumeQueueLength: 대기 중인 I/O 요청 수
+- BurstBalance: 버스트 크레딧 잔액
+
+**EFS 메트릭:**
+- DataReadIOBytes/DataWriteIOBytes: 데이터 전송량
+- MetadataIOBytes: 메타데이터 작업량
+- ClientConnections: 클라이언트 연결 수
+- PercentIOLimit: I/O 제한 사용률
+
+**Kubernetes 메트릭:**
+- kubelet_volume_stats_used_bytes: 볼륨 사용량
+- kubelet_volume_stats_capacity_bytes: 볼륨 용량
+- container_fs_usage_bytes: 컨테이너 파일시스템 사용량
+</details>
+
+## 문제 2: 스토리지 문제 진단
+
+<details>
+<summary>EKS에서 포드가 "Pending" 상태에서 PVC를 마운트하지 못할 때 확인해야 할 사항은?</summary>
+
+**답변:**
+1. **PVC 상태 확인**:
+   ```bash
+   kubectl get pvc
+   kubectl describe pvc <pvc-name>
+   ```
+
+2. **스토리지 클래스 확인**:
+   ```bash
+   kubectl get storageclass
+   kubectl describe storageclass <storage-class-name>
+   ```
+
+3. **CSI 드라이버 상태 확인**:
+   ```bash
+   kubectl get pods -n kube-system -l app=ebs-csi-controller
+   kubectl logs -n kube-system -l app=ebs-csi-controller
+   ```
+
+4. **노드 권한 확인**:
+   - EC2 인스턴스 프로필에 필요한 IAM 권한 확인
+   - EBS CSI 드라이버 서비스 계정 권한 확인
+
+5. **가용 영역 호환성**:
+   - 포드와 EBS 볼륨이 같은 AZ에 있는지 확인
+
+6. **리소스 제한**:
+   - EBS 볼륨 제한 (인스턴스당 최대 볼륨 수)
+   - 볼륨 크기 제한 확인
+</details>
+
+## 문제 3: 성능 최적화
+
+<details>
+<summary>EKS에서 데이터베이스 워크로드의 스토리지 성능을 최적화하는 방법은?</summary>
+
+**답변:**
+1. **적절한 볼륨 유형 선택**:
+   ```yaml
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: fast-ssd
+   provisioner: ebs.csi.aws.com
+   parameters:
+     type: io2
+     iops: "10000"
+     encrypted: "true"
+   volumeBindingMode: WaitForFirstConsumer
+   ```
+
+2. **Multi-Attach 볼륨 사용** (읽기 전용 워크로드):
+   ```yaml
+   parameters:
+     type: io2
+     multiAttach: "true"
+   ```
+
+3. **인스턴스 스토어 활용**:
+   ```yaml
+   # 임시 데이터용 인스턴스 스토어
+   volumeMounts:
+   - name: instance-store
+     mountPath: /tmp
+   volumes:
+   - name: instance-store
+     hostPath:
+       path: /mnt/instance-store
+   ```
+
+4. **적절한 파일시스템 선택**:
+   - XFS: 대용량 파일 및 높은 동시성
+   - ext4: 일반적인 용도
+   - 적절한 마운트 옵션 설정
+
+5. **I/O 스케줄러 최적화**:
+   ```bash
+   # SSD용 noop 또는 deadline 스케줄러
+   echo noop > /sys/block/nvme0n1/queue/scheduler
+   ```
+</details>
+
+## 문제 4: 비용 최적화 전략
+
+<details>
+<summary>EKS 스토리지 비용을 최적화하는 전략은?</summary>
+
+**답변:**
+1. **적절한 볼륨 유형 선택**:
+   - gp3: 대부분의 워크로드에 비용 효율적
+   - gp2에서 gp3로 마이그레이션
+   - 필요시에만 프로비저닝된 IOPS 사용
+
+2. **볼륨 크기 최적화**:
+   ```bash
+   # 사용량 모니터링
+   kubectl top pods --containers
+   df -h # 포드 내부에서
+   ```
+
+3. **수명 주기 관리**:
+   ```yaml
+   # 스냅샷 자동화
+   apiVersion: snapshot.storage.k8s.io/v1
+   kind: VolumeSnapshotClass
+   metadata:
+     name: csi-aws-vsc
+   driver: ebs.csi.aws.com
+   deletionPolicy: Delete
+   ```
+
+4. **EFS 스토리지 클래스 활용**:
+   ```yaml
+   # Infrequent Access 스토리지 클래스
+   parameters:
+     performanceMode: generalPurpose
+     throughputMode: provisioned
+     provisionedThroughputInMibps: "100"
+   ```
+
+5. **사용하지 않는 볼륨 정리**:
+   ```bash
+   # 미사용 PV 확인
+   kubectl get pv | grep Available
+   
+   # 오래된 스냅샷 정리
+   aws ec2 describe-snapshots --owner-ids self \
+     --query 'Snapshots[?StartTime<=`2023-01-01`]'
+   ```
+</details>
+
+## 문제 5: 보안 모범 사례
+
+<details>
+<summary>EKS 스토리지 보안을 강화하는 방법은?</summary>
+
+**답변:**
+1. **암호화 활성화**:
+   ```yaml
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: encrypted-gp3
+   provisioner: ebs.csi.aws.com
+   parameters:
+     type: gp3
+     encrypted: "true"
+     kmsKeyId: "arn:aws:kms:region:account:key/key-id"
+   ```
+
+2. **IAM 권한 최소화**:
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Action": [
+           "ec2:CreateVolume",
+           "ec2:AttachVolume",
+           "ec2:DetachVolume",
+           "ec2:DeleteVolume",
+           "ec2:DescribeVolumes",
+           "ec2:CreateSnapshot",
+           "ec2:DeleteSnapshot",
+           "ec2:DescribeSnapshots"
+         ],
+         "Resource": "*",
+         "Condition": {
+           "StringEquals": {
+             "aws:RequestedRegion": "us-west-2"
+           }
+         }
+       }
+     ]
+   }
+   ```
+
+3. **네트워크 보안**:
+   ```yaml
+   # EFS 마운트 타겟 보안 그룹
+   securityGroupSelector:
+     matchLabels:
+       Name: "efs-mount-target-sg"
+   ```
+
+4. **접근 제어**:
+   ```yaml
+   # RBAC 설정
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: Role
+   metadata:
+     name: storage-admin
+   rules:
+   - apiGroups: [""]
+     resources: ["persistentvolumes", "persistentvolumeclaims"]
+     verbs: ["get", "list", "create", "delete"]
+   ```
+
+5. **감사 로깅**:
+   ```yaml
+   # 스토리지 관련 감사 정책
+   - level: Metadata
+     resources:
+     - group: ""
+       resources: ["persistentvolumes", "persistentvolumeclaims"]
+   ```
+</details>
+
 ### 6. Amazon EKS에서 스토리지 모니터링 및 관리를 위한 가장 효과적인 도구 조합은 무엇인가요?
 
 A. CloudWatch와 AWS Console만 사용  
@@ -18,6 +261,31 @@ Amazon EKS에서 스토리지 모니터링 및 관리를 위한 가장 효과적
 1. **CloudWatch**:
    - AWS 인프라 수준 메트릭 수집
    - EBS, EFS, FSx 스토리지 성능 메트릭
+   - 알람 및 이벤트 관리
+
+2. **Prometheus**:
+   - Kubernetes 수준의 상세 메트릭 수집
+   - 사용자 정의 스토리지 메트릭 수집
+   - 장기 데이터 보존 및 쿼리
+
+3. **Grafana**:
+   - 통합 대시보드 및 시각화
+   - CloudWatch 및 Prometheus 데이터 소스 통합
+   - 커스텀 알림 및 보고서
+
+4. **자동화된 관리 도구**:
+   - 스토리지 프로비저닝 자동화
+   - 용량 계획 및 확장
+   - 문제 감지 및 해결
+</details>
+
+---
+
+**점수 계산:**
+- 5-6개 정답: 우수 (EKS 스토리지 전문가 수준)
+- 3-4개 정답: 양호 (추가 학습 권장)
+- 1-2개 정답: 보통 (기본 개념 복습 필요)
+- 0개 정답: 미흡 (전체 내용 재학습 필요)
    - 알람 및 이벤트 관리
 
 2. **Prometheus**:

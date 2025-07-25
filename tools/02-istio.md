@@ -1388,3 +1388,7 @@ Istio를 효과적으로 활용하려면 서비스 메시 아키텍처에 대한
 - [Envoy 프록시 문서](https://www.envoyproxy.io/docs/envoy/latest/)
 - [AWS EKS 워크숍 - Istio](https://www.eksworkshop.com/advanced/310_servicemesh_with_istio/)
 - [Istio 성능 최적화 가이드](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../../quizzes/tools/02-istio-quiz.md)를 풀어보세요.
