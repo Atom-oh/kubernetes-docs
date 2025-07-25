@@ -479,6 +479,10 @@ ResourceGraphDefinition(RGD)은 KRO의 핵심 개념으로, 리소스 간의 관
 
 KRO는 아직 발전 중인 기술이지만, Kubernetes 생태계의 미래 방향성을 보여주는 중요한 접근 방식입니다. 선언적 API, 리소스 관계 모델링, 상태 전파와 같은 개념은 클라우드 네이티브 애플리케이션 관리의 핵심 원칙이 되고 있습니다.
 
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [KRO Helm 마이그레이션 퀴즈](../../quizzes/advanced/07-kro-rgd-quiz.md)를 풀어보세요.
+
 ## Helm과 KRO 비교
 
 ### Helm
