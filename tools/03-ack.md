@@ -42,49 +42,7 @@ AWS Controllers for Kubernetes(ACK)는 Kubernetes 사용자가 Kubernetes API를
 
 ACK는 Kubernetes 운영자 패턴을 기반으로 하며, 각 AWS 서비스에 대한 컨트롤러를 제공합니다.
 
-```mermaid
-flowchart TD
-    %% 노드 정의
-    A[ACK Controller]
-    B[Custom Resource Definitions]
-    C[Custom Resources]
-    
-    D[AWS API]
-    E[AWS Resources]
-    
-    F[Kubernetes User/Operator]
-    
-    %% 서브그래프 정의
-    subgraph K8S["Kubernetes Cluster"]
-        A
-        B
-        C
-    end
-    
-    subgraph AWS["AWS Cloud"]
-        D
-        E
-    end
-    
-    %% 연결 정의
-    F -->|Apply YAML| C
-    C -->|Watch| A
-    A -->|Reconcile| B
-    A -->|Create/Update/Delete| D
-    D -->|Manage| E
-    
-    %% 스타일 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class A,B,C k8sComponent
-    class D,E awsService
-    class F userApp
-```
+![](../assets/ack_architecture.svg)
 
 ### 주요 구성 요소
 

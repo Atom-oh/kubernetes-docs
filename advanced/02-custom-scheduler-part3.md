@@ -167,123 +167,15 @@ EKS 클러스터에서 네트워크 비용을 최적화하기 위해 네트워�
 
 #### 네트워크 지역성 최적화 스케줄러 아키텍처
 
-다음 다이어그램은 네트워크 지역성 최적화 스케줄러의 아키텍처를 보여줍니다:
+다음 다이어그램은 네트워크 지역성 최적화 스케줄러의 아키텍처를 보여줍니다.
 
-```mermaid
-flowchart TD
-    subgraph AWS [AWS 클라우드]
-        subgraph EKS [Amazon EKS]
-            APIServer[API 서버]
-            
-            subgraph ControlPlane [컨트롤 플레인]
-                DefaultScheduler[기본 스케줄러]
-            end
-            
-            subgraph SchedulerExtender [스케줄러 확장]
-                ExtenderService[확장 서비스]
-                
-                subgraph Components [구성 요소]
-                    TopologyAware[토폴로지 인식 컴포넌트]
-                    LatencyAware[지연 시간 인식 컴포넌트]
-                    CostAware[비용 인식 컴포넌트]
-                end
-                
-                subgraph DataSources [데이터 소스]
-                    ServiceMap[서비스 맵]
-                    LatencyMetrics[지연 시간 메트릭]
-                    CostMetrics[비용 메트릭]
-                end
-            end
-            
-            subgraph Nodes [노드]
-                subgraph AZ1 [가용 영역 1]
-                    AZ1_Node1[노드 1]
-                    AZ1_Node2[노드 2]
-                end
-                
-                subgraph AZ2 [가용 영역 2]
-                    AZ2_Node1[노드 1]
-                    AZ2_Node2[노드 2]
-                end
-                
-                subgraph AZ3 [가용 영역 3]
-                    AZ3_Node1[노드 1]
-                    AZ3_Node2[노드 2]
-                end
-            end
-        end
-        
-        CloudWatch[CloudWatch]
-        CostExplorer[Cost Explorer]
-    end
-    
-    APIServer --> DefaultScheduler
-    DefaultScheduler -- HTTP 요청 --> ExtenderService
-    ExtenderService --> Components
-    Components --> DataSources
-    ServiceMap --> TopologyAware
-    LatencyMetrics --> LatencyAware
-    CostMetrics --> CostAware
-    LatencyMetrics --> CloudWatch
-    CostMetrics --> CostExplorer
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef extenderComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef azNodes fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    
-    class CloudWatch,CostExplorer awsService;
-    class APIServer,DefaultScheduler k8sComponent;
-    class ExtenderService,TopologyAware,LatencyAware,CostAware,ServiceMap,LatencyMetrics,CostMetrics extenderComponent;
-    class AZ1_Node1,AZ1_Node2,AZ2_Node1,AZ2_Node2,AZ3_Node1,AZ3_Node2 azNodes;
-```
+![](../assets/network_locality_scheduler_architecture.svg)
 
 #### 네트워크 지역성 최적화 워크플로우
 
-다음 다이어그램은 네트워크 지역성 최적화 스케줄러의 워크플로우를 보여줍니다:
+다음 다이어그램은 네트워크 지역성 최적화 스케줄러의 워크플로우를 보여줍니다.
 
-```mermaid
-sequenceDiagram
-    participant User as 사용자
-    participant API as API 서버
-    participant Scheduler as 기본 스케줄러
-    participant Extender as 스케줄러 확장
-    participant ServiceMap as 서비스 맵
-    participant Metrics as 메트릭 시스템
-    participant Node as 노드
-    
-    User->>API: 포드 생성 요청
-    API->>Scheduler: 스케줄링 요청
-    Scheduler->>Scheduler: 내부 필터링
-    Scheduler->>Extender: 필터 요청
-    Extender->>ServiceMap: 서비스 의존성 조회
-    ServiceMap->>Extender: 의존성 데이터
-    Extender->>Metrics: 네트워크 지연 시간 조회
-    Metrics->>Extender: 지연 시간 데이터
-    Extender->>Scheduler: 필터링된 노드 목록
-    Scheduler->>Extender: 우선순위 요청
-    Extender->>ServiceMap: 서비스 배치 조회
-    ServiceMap->>Extender: 배치 데이터
-    Extender->>Metrics: 네트워크 비용 조회
-    Metrics->>Extender: 비용 데이터
-    Extender->>Scheduler: 노드 점수
-    Scheduler->>API: 선택된 노드
-    API->>Node: 포드 스케줄링
-    Node->>API: 스케줄링 결과
-    API->>User: 포드 생성 완료
-    
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef extender fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef metrics fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef node fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    
-    class User user;
-    class API,Scheduler k8s;
-    class Extender,ServiceMap extender;
-    class Metrics metrics;
-    class Node node;
-```
+![](../assets/network_locality_workflow.svg)
 
 ## 커스텀 스케줄러 모니터링 및 디버깅
 
@@ -291,111 +183,15 @@ sequenceDiagram
 
 ### 모니터링 아키텍처
 
-다음 다이어그램은 EKS에서 커스텀 스케줄러를 모니터링하기 위한 아키텍처를 보여줍니다:
+다음 다이어그램은 EKS에서 커스텀 스케줄러를 모니터링하기 위한 아키텍처를 보여줍니다.
 
-```mermaid
-flowchart TD
-    subgraph AWS [AWS 클라우드]
-        subgraph EKS [Amazon EKS]
-            subgraph SchedulerPods [스케줄러 파드]
-                CustomScheduler[커스텀 스케줄러]
-                SchedulerSidecar[사이드카 컨테이너]
-            end
-            
-            subgraph MonitoringStack [모니터링 스택]
-                Prometheus[(Prometheus)]
-                AlertManager[Alert Manager]
-                Grafana[Grafana]
-            end
-            
-            subgraph LoggingStack [로깅 스택]
-                Fluentd[Fluentd]
-                ElasticSearch[(ElasticSearch)]
-                Kibana[Kibana]
-            end
-        end
-        
-        CloudWatch[CloudWatch]
-        SNS[SNS]
-        Lambda[Lambda]
-    end
-    
-    CustomScheduler -- 메트릭 노출 --> SchedulerSidecar
-    SchedulerSidecar -- 메트릭 스크래핑 --> Prometheus
-    CustomScheduler -- 로그 --> Fluentd
-    Fluentd --> ElasticSearch
-    ElasticSearch --> Kibana
-    Prometheus --> AlertManager
-    AlertManager --> SNS
-    Prometheus --> Grafana
-    Prometheus --> CloudWatch
-    SNS --> Lambda
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoringComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef loggingComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    
-    class CloudWatch,SNS,Lambda awsService;
-    class CustomScheduler,SchedulerSidecar k8sComponent;
-    class Prometheus,AlertManager,Grafana monitoringComponent;
-    class Fluentd,ElasticSearch,Kibana loggingComponent;
-```
+![](../assets/custom_scheduler_monitoring_architecture.svg)
 
 ### 주요 모니터링 메트릭
 
 다음 다이어그램은 커스텀 스케줄러의 주요 모니터링 메트릭과 그 관계를 보여줍니다:
 
-```mermaid
-flowchart LR
-    subgraph SchedulerMetrics [스케줄러 메트릭]
-        subgraph PerformanceMetrics [성능 메트릭]
-            SchedulingLatency[스케줄링 지연 시간]
-            QueueLength[큐 길이]
-            ThroughputMetrics[처리량]
-        end
-        
-        subgraph DecisionMetrics [결정 메트릭]
-            FilteringMetrics[필터링 메트릭]
-            ScoringMetrics[점수 매기기 메트릭]
-            BindingMetrics[바인딩 메트릭]
-        end
-        
-        subgraph ErrorMetrics [오류 메트릭]
-            SchedulingErrors[스케줄링 오류]
-            BindingErrors[바인딩 오류]
-            ExtenderErrors[확장 오류]
-        end
-    end
-    
-    subgraph Dashboards [대시보드]
-        PerformanceDashboard[성능 대시보드]
-        DecisionDashboard[결정 대시보드]
-        ErrorDashboard[오류 대시보드]
-    end
-    
-    subgraph Alerts [알림]
-        HighLatencyAlert[높은 지연 시간 알림]
-        ErrorRateAlert[오류율 알림]
-        QueueBacklogAlert[큐 백로그 알림]
-    end
-    
-    PerformanceMetrics --> PerformanceDashboard
-    DecisionMetrics --> DecisionDashboard
-    ErrorMetrics --> ErrorDashboard
-    
-    SchedulingLatency --> HighLatencyAlert
-    SchedulingErrors --> ErrorRateAlert
-    QueueLength --> QueueBacklogAlert
-    
-    classDef metricsGroup fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dashboardGroup fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef alertGroup fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    class SchedulingLatency,QueueLength,ThroughputMetrics,FilteringMetrics,ScoringMetrics,BindingMetrics,SchedulingErrors,BindingErrors,ExtenderErrors metricsGroup;
-    class PerformanceDashboard,DecisionDashboard,ErrorDashboard dashboardGroup;
-    class HighLatencyAlert,ErrorRateAlert,QueueBacklogAlert alertGroup;
-```
+![](../assets/custom_scheduler_monitoring_metrics.svg)
 
 ### 로깅
 
