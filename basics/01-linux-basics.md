@@ -371,26 +371,7 @@ journalctl -u <서비스> # 서비스 로그 확인
 
 OverlayFS는 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현하는 유니온 마운트 파일 시스템입니다. Docker와 같은 컨테이너 런타임에서 이미지 레이어를 구현하는 데 사용됩니다.
 
-```mermaid
-flowchart TB
-    client["Client (app)"] --> overlay["OverlayFS (merged view)"]
-    overlay --> upper["upperdir (writable layer)"]
-    upper --> work["workdir (scratch space)"]
-    work --> lower["lowerdir (read-only layer)"]
-
-    classDef c fill:#00C7B7,color:#fff,stroke:#333
-    classDef o fill:#FFB74D,color:#000,stroke:#333
-    classDef u fill:#4CAF50,color:#fff,stroke:#333
-    classDef w fill:#8BC34A,color:#fff,stroke:#333
-    classDef l fill:#90A4AE,color:#fff,stroke:#333
-
-    class client c
-    class overlay o
-    class upper u
-    class work w
-    class lower l
-
-```
+![](../assets/linux_basics_overlayfs.svg)
 
 ### 네트워크 브릿지와 NAT
 
