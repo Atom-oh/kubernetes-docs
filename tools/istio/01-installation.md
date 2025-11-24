@@ -21,7 +21,7 @@ Istio를 설치하기 전에 다음 요구 사항을 충족해야 합니다:
 
 ### 1. Amazon EKS 클러스터
 
-- **Kubernetes 버전**: 1.24 이상
+- **Kubernetes 버전**: 1.28 이상 (권장: 1.34)
 - **노드 유형**: 최소 2개의 워커 노드 (권장: 3개 이상)
 - **노드 크기**: 최소 2 vCPU, 4GB RAM (권장: t3.medium 이상)
 
@@ -68,10 +68,10 @@ istioctl은 Istio의 공식 CLI 도구로, 가장 간단한 설치 방법입니�
 curl -L https://istio.io/downloadIstio | sh -
 
 # 또는 특정 버전 다운로드
-curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.20.0 sh -
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.28.0 sh -
 
 # istioctl을 PATH에 추가
-cd istio-1.20.0
+cd istio-1.28.0
 export PATH=$PWD/bin:$PATH
 
 # 설치 확인
@@ -128,7 +128,7 @@ kubectl create namespace istio-system
 # istio-base 차트 설치
 helm install istio-base istio/base \
   -n istio-system \
-  --version 1.20.0
+  --version 1.28.0
 ```
 
 ### 3. istiod 설치
@@ -139,7 +139,7 @@ istiod는 Istio Control Plane입니다.
 # istiod 차트 설치
 helm install istiod istio/istiod \
   -n istio-system \
-  --version 1.20.0 \
+  --version 1.28.0 \
   --wait
 ```
 
@@ -152,7 +152,7 @@ kubectl create namespace istio-ingress
 # Istio Ingress Gateway 설치
 helm install istio-ingress istio/gateway \
   -n istio-ingress \
-  --version 1.20.0 \
+  --version 1.28.0 \
   --wait
 ```
 
@@ -162,7 +162,7 @@ helm install istio-ingress istio/gateway \
 # values.yaml
 global:
   hub: docker.io/istio
-  tag: 1.20.0
+  tag: 1.28.0
 
 pilot:
   autoscaleEnabled: true
@@ -186,7 +186,7 @@ meshConfig:
 # values.yaml 파일을 사용하여 설치
 helm install istiod istio/istiod \
   -n istio-system \
-  --version 1.20.0 \
+  --version 1.28.0 \
   -f values.yaml \
   --wait
 ```
