@@ -1,5 +1,8 @@
 # Windows in Kubernetes
 
+> **지원 버전**: Kubernetes 1.32, 1.33, 1.34
+> **마지막 업데이트**: 2025년 11월 24일
+
 Kubernetes는 원래 Linux 컨테이너를 위해 설계되었지만, 버전 1.14부터 Windows 컨테이너에 대한 프로덕션 지원이 추가되었습니다. 이 장에서는 Kubernetes에서 Windows 워크로드를 실행하는 방법, 아키텍처, 제한 사항, 그리고 Amazon EKS에서의 Windows 지원에 대해 알아보겠습니다.
 
 ## 목차

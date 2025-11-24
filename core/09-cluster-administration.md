@@ -1,7 +1,7 @@
 # Kubernetes 클러스터 관리
 
-> **버전 정보**: Kubernetes 1.33.3 (2025-07-15 릴리스)  
-> **마지막 업데이트**: 2025-07-21
+> **버전 정보**: Kubernetes 1.34 (2025-11-24 릴리스)  
+> **마지막 업데이트**: 2025-11-24
 
 Kubernetes 클러스터 관리는 클러스터의 설정, 유지 관리, 모니터링, 문제 해결 및 업그레이드를 포함하는 중요한 작업입니다. 이 장에서는 Kubernetes 클러스터 관리의 다양한 측면과 Amazon EKS에서의 클러스터 관리 모범 사례에 대해 알아보겠습니다.
 
@@ -1941,7 +1941,7 @@ sudo docker stop $(docker ps -q)
 
 # 2. etcd 데이터 복구
 ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
-  snapshot restore /backup/etcd-snapshot-2025-07-15.db \
+  snapshot restore /backup/etcd-snapshot-2025-11-24.db \
   --data-dir=/var/lib/etcd-restore \
   --name=master \
   --initial-cluster=master=https://127.0.0.1:2380 \

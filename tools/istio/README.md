@@ -177,4 +177,3 @@ spec:
 - [Observability 퀴즈](../../quizzes/tools/istio/observability.md)
 - [Resilience 퀴즈](../../quizzes/tools/istio/resilience.md)
 - [Advanced 퀴즈](../../quizzes/tools/istio/advanced.md)
-- [통합 퀴즈](../../quizzes/tools/istio/all-topics.md)
