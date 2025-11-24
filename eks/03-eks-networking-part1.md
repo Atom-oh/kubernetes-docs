@@ -8,46 +8,7 @@ Amazon EKS의 네트워킹은 Kubernetes 클러스터의 통신을 관리하는 
 
 EKS 네트워킹 아키텍처는 다음과 같은 구성 요소로 이루어져 있습니다:
 
-```mermaid
-flowchart TB
-    subgraph AWS_Cloud ["AWS 클라우드"]
-        subgraph VPC ["VPC"]
-            subgraph Public_Subnets ["퍼블릭 서브넷"]
-                IGW[인터넷 게이트웨이]
-                NATGW[NAT 게이트웨이]
-                ALB[Application Load Balancer]
-            end
-            
-            subgraph Private_Subnets ["프라이빗 서브넷"]
-                subgraph Worker_Nodes ["워커 노드"]
-                    Node1[노드 1]
-                    Node2[노드 2]
-                    subgraph Pods ["포드"]
-                        Pod1[포드 1]
-                        Pod2[포드 2]
-                        Pod3[포드 3]
-                    end
-                end
-                NLB[Network Load Balancer]
-            end
-            
-            subgraph Endpoints ["VPC 엔드포인트"]
-                S3_EP[S3 엔드포인트]
-                ECR_EP[ECR 엔드포인트]
-                EKS_EP[EKS 엔드포인트]
-            end
-        end
-        
-        EKS_CP[EKS 컨트롤 플레인]
-        S3[S3]
-        ECR[ECR]
-    end
-    
-    Internet((인터넷)) <--> IGW
-    IGW <--> ALB
-    IGW <--> NATGW
-    NATGW --> Node1
-    NATGW --> Node2
+![EKS 네트워킹 아키텍처 개요](../assets/generated-diagrams/eks_networking_architecture_overview.drawio)
     Node1 --- Pod1
     Node1 --- Pod2
     Node2 --- Pod3
@@ -90,44 +51,7 @@ flowchart TB
 
 EKS 클러스터에서 네트워크 트래픽은 다음과 같이 흐릅니다:
 
-```mermaid
-flowchart LR
-    subgraph External ["외부"]
-        Internet((인터넷))
-        External_Services[외부 서비스]
-    end
-    
-    subgraph EKS_Cluster ["EKS 클러스터"]
-        subgraph Control_Plane ["컨트롤 플레인"]
-            API[API 서버]
-            Controller[컨트롤러 매니저]
-            Scheduler[스케줄러]
-        end
-        
-        subgraph Data_Plane ["데이터 플레인"]
-            subgraph Node1 ["노드 1"]
-                Kubelet1[Kubelet]
-                Pod1[포드 1]
-                Pod2[포드 2]
-            end
-            
-            subgraph Node2 ["노드 2"]
-                Kubelet2[Kubelet]
-                Pod3[포드 3]
-                Pod4[포드 4]
-            end
-        end
-        
-        subgraph Services ["서비스"]
-            ClusterIP[ClusterIP]
-            NodePort[NodePort]
-            LoadBalancer[LoadBalancer]
-        end
-    end
-    
-    %% 포드 간 통신
-    Pod1 <--> Pod2
-    Pod1 <--> Pod3
+![EKS 네트워크 트래픽 흐름](../assets/generated-diagrams/eks_network_traffic_flow.drawio)
     Pod2 <--> Pod4
     
     %% 포드와 서비스 간 통신
@@ -168,51 +92,13 @@ flowchart LR
 
 ### EKS 네트워킹 구성 요소 간 관계
 
-```mermaid
-flowchart TD
-    Internet((인터넷)) --> IGW[인터넷 게이트웨이]
-    IGW --> PublicSubnet[퍼블릭 서브넷]
-    PublicSubnet --> NATGW[NAT 게이트웨이]
-    NATGW --> PrivateSubnet[프라이빗 서브넷]
-    PrivateSubnet --> WorkerNodes[워커 노드]
-    WorkerNodes --> EKS_CP[EKS 컨트롤 플레인]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class IGW,NATGW,PublicSubnet,PrivateSubnet awsService;
-    class WorkerNodes,EKS_CP k8sComponent;
-    class Internet default;
-```
+![EKS 네트워킹 구성 요소 간 관계](../assets/generated-diagrams/eks_networking_components_relationship.drawio)
 
 ## VPC 요구 사항
 
 EKS 클러스터를 위한 VPC는 다음 요구 사항을 충족해야 합니다:
 
-```mermaid
-flowchart TD
-    A[EKS VPC 요구 사항] --> B[최소 2개 이상의 가용 영역에 서브넷 필요]
-    A --> C[충분한 IP 주소 제공]
-    A --> D[DNS 호스트 이름 및 DNS 확인 활성화]
-    A --> E[노드의 인터넷 액세스 필요]
-    E --> F[NAT 게이트웨이 또는 인터넷 게이트웨이]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class A,B,C,D,E default;
-    class F awsService;
-```
+![EKS VPC 요구 사항](../assets/generated-diagrams/eks_vpc_requirements.drawio)
 
 1. **서브넷**: 최소 2개 이상의 가용 영역에 서브넷이 있어야 함
 2. **IP 주소**: 충분한 수의 IP 주소를 제공해야 함
@@ -223,27 +109,7 @@ flowchart TD
 
 VPC CIDR 블록을 계획할 때 고려해야 할 사항:
 
-```mermaid
-flowchart TD
-    A[VPC CIDR 계획 고려사항] --> B[클러스터 크기]
-    A --> C[IP 주소 요구 사항]
-    A --> D[향후 확장]
-    A --> E[기존 네트워크와의 통합]
-    
-    B --> F[소규모: /24 (256개 IP)]
-    B --> G[중간 규모: /20 (4,096개 IP)]
-    B --> H[대규모: /16 (65,536개 IP)]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class A,B,C,D,E,F,G,H default;
-```
+![VPC CIDR 계획 고려사항](../assets/generated-diagrams/eks_vpc_cidr_planning.drawio)
 
 1. **클러스터 크기**: 예상되는 노드 및 포드 수
 2. **IP 주소 요구 사항**: 각 노드 및 포드에 필요한 IP 주소 수
@@ -257,46 +123,7 @@ flowchart TD
 
 ### 서브넷 설계
 
-```mermaid
-flowchart TB
-    subgraph VPC ["VPC (10.0.0.0/16)"]
-        subgraph AZ1 ["가용 영역 1 (us-west-2a)"]
-            Public1[퍼블릭 서브넷<br>10.0.0.0/24]
-            Private1[프라이빗 서브넷<br>10.0.2.0/22]
-            Public1 --> Private1
-        end
-        
-        subgraph AZ2 ["가용 영역 2 (us-west-2b)"]
-            Public2[퍼블릭 서브넷<br>10.0.1.0/24]
-            Private2[프라이빗 서브넷<br>10.0.6.0/22]
-            Public2 --> Private2
-        end
-        
-        IGW[인터넷 게이트웨이]
-        NATGW1[NAT 게이트웨이 1]
-        NATGW2[NAT 게이트웨이 2]
-        
-        IGW --> Public1
-        IGW --> Public2
-        Public1 --> NATGW1
-        Public2 --> NATGW2
-        NATGW1 --> Private1
-        NATGW2 --> Private2
-    end
-    
-    Internet((인터넷)) <--> IGW
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class IGW,NATGW1,NATGW2 awsService;
-    class Public1,Public2,Private1,Private2 awsService;
-```
+![EKS 서브넷 설계](../assets/generated-diagrams/eks_subnet_design.drawio)
 
 EKS 클러스터를 위한 서브넷 설계 모범 사례:
 
@@ -323,41 +150,7 @@ EKS 클러스터를 위한 서브넷 설계 모범 사례:
 
 ### 서브넷 태그
 
-```mermaid
-flowchart LR
-    subgraph VPC ["VPC"]
-        subgraph Public_Subnets ["퍼블릭 서브넷"]
-            Public1["퍼블릭 서브넷 1<br>kubernetes.io/role/elb: 1<br>kubernetes.io/cluster/my-cluster: shared"]
-            Public2["퍼블릭 서브넷 2<br>kubernetes.io/role/elb: 1<br>kubernetes.io/cluster/my-cluster: shared"]
-        end
-        
-        subgraph Private_Subnets ["프라이빗 서브넷"]
-            Private1["프라이빗 서브넷 1<br>kubernetes.io/role/internal-elb: 1<br>kubernetes.io/cluster/my-cluster: shared"]
-            Private2["프라이빗 서브넷 2<br>kubernetes.io/role/internal-elb: 1<br>kubernetes.io/cluster/my-cluster: shared"]
-        end
-        
-        subgraph Resources ["리소스"]
-            ELB[인터넷 연결 로드 밸런서]
-            Internal_ELB[내부 로드 밸런서]
-        end
-        
-        Public1 --> ELB
-        Public2 --> ELB
-        Private1 --> Internal_ELB
-        Private2 --> Internal_ELB
-    end
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class ELB,Internal_ELB awsService;
-    class Public1,Public2,Private1,Private2 awsService;
-```
+![EKS 서브넷 태그 구성](../assets/generated-diagrams/eks_subnet_tags.drawio)
 
 EKS는 서브넷에 특정 태그를 사용하여 리소스를 자동으로 검색합니다:
 
@@ -378,32 +171,7 @@ aws ec2 create-tags \
 
 ### 보안 그룹 구성
 
-```mermaid
-flowchart TB
-    subgraph EKS_Cluster ["EKS 클러스터"]
-        subgraph Control_Plane_SG ["컨트롤 플레인 보안 그룹"]
-            CP_Inbound[인바운드 규칙:<br>- 443/TCP: 워커 노드 보안 그룹]
-            CP_Outbound[아웃바운드 규칙:<br>- 1025-65535/TCP: 워커 노드 보안 그룹]
-        end
-        
-        subgraph Worker_Node_SG ["워커 노드 보안 그룹"]
-            WN_Inbound[인바운드 규칙:<br>- 443/TCP: 컨트롤 플레인 보안 그룹<br>- 1025-65535/TCP: 컨트롤 플레인 보안 그룹<br>- ALL: 워커 노드 보안 그룹]
-            WN_Outbound[아웃바운드 규칙:<br>- ALL: 0.0.0.0/0]
-        end
-        
-        Control_Plane_SG <--> Worker_Node_SG
-    end
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class Control_Plane_SG,Worker_Node_SG,CP_Inbound,CP_Outbound,WN_Inbound,WN_Outbound awsService;
-```
+![EKS 보안 그룹 구성](../assets/generated-diagrams/eks_security_groups.drawio)
 
 EKS 클러스터에는 두 가지 주요 보안 그룹이 있습니다:
 

@@ -1,0 +1,160 @@
+<mxfile host="app.diagrams.net" modified="2025-08-05T11:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
+  <diagram name="Kubernetes Service Types" id="kubernetes-service-types">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="Kubernetes 서비스 유형" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="40" width="250" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Service Types Container -->
+        <mxCell id="service-types" value="Kubernetes 서비스 유형" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="500" height="300" as="geometry" />
+        </mxCell>
+        
+        <!-- ClusterIP -->
+        <mxCell id="clusterip" value="ClusterIP" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=svc;" vertex="1" parent="1">
+          <mxGeometry x="120" y="150" width="60" height="58" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="clusterip-desc" value="클러스터 내부에서만&#xa;액세스 가능" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="220" width="100" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- NodePort -->
+        <mxCell id="nodeport" value="NodePort" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=svc;" vertex="1" parent="1">
+          <mxGeometry x="250" y="150" width="60" height="58" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="nodeport-desc" value="모든 노드의 특정 포트를&#xa;통해 액세스 가능" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="230" y="220" width="100" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- LoadBalancer -->
+        <mxCell id="loadbalancer" value="LoadBalancer" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=svc;" vertex="1" parent="1">
+          <mxGeometry x="380" y="150" width="60" height="58" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="loadbalancer-desc" value="외부 로드 밸런서를&#xa;통해 액세스 가능" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="360" y="220" width="100" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- ExternalName -->
+        <mxCell id="externalname" value="ExternalName" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=svc;" vertex="1" parent="1">
+          <mxGeometry x="510" y="150" width="60" height="58" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="externalname-desc" value="외부 서비스에 대한&#xa;CNAME 레코드 제공" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="490" y="220" width="100" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Access Methods Container -->
+        <mxCell id="access-methods" value="액세스 방법" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="620" y="100" width="460" height="300" as="geometry" />
+        </mxCell>
+        
+        <!-- Internal Access -->
+        <mxCell id="internal" value="클러스터 내부" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="660" y="150" width="100" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Node Access -->
+        <mxCell id="node-access" value="노드 IP:포트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="790" y="150" width="100" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- External LB -->
+        <mxCell id="external-lb" value="외부 로드 밸런서" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.application_load_balancer;" vertex="1" parent="1">
+          <mxGeometry x="920" y="150" width="60" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- DNS -->
+        <mxCell id="dns" value="DNS CNAME" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="920" y="250" width="100" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Service Details -->
+        <mxCell id="service-details" value="서비스 유형별 상세 정보" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="440" width="1000" height="300" as="geometry" />
+        </mxCell>
+        
+        <!-- ClusterIP Details -->
+        <mxCell id="clusterip-details" value="ClusterIP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="480" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="clusterip-info" value="• 기본 서비스 유형&#xa;• 클러스터 내부 통신용&#xa;• 가상 IP 주소 할당&#xa;• kube-proxy가 트래픽 라우팅&#xa;• 포드 간 로드 밸런싱&#xa;• 외부에서 직접 접근 불가&#xa;&#xa;사용 사례:&#xa;• 마이크로서비스 간 통신&#xa;• 데이터베이스 연결&#xa;• 내부 API 서비스" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="520" width="220" height="200" as="geometry" />
+        </mxCell>
+        
+        <!-- NodePort Details -->
+        <mxCell id="nodeport-details" value="NodePort" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="340" y="480" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="nodeport-info" value="• ClusterIP 기능 + 노드 포트&#xa;• 30000-32767 포트 범위&#xa;• 모든 노드에서 동일 포트 개방&#xa;• 외부에서 노드IP:포트로 접근&#xa;• 개발/테스트 환경에 적합&#xa;• 프로덕션에서는 권장하지 않음&#xa;&#xa;사용 사례:&#xa;• 개발 환경 테스트&#xa;• 임시 외부 접근&#xa;• 로드 밸런서 없는 환경" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="340" y="520" width="220" height="200" as="geometry" />
+        </mxCell>
+        
+        <!-- LoadBalancer Details -->
+        <mxCell id="lb-details" value="LoadBalancer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="580" y="480" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lb-info" value="• NodePort 기능 + 외부 LB&#xa;• 클라우드 제공자 LB 자동 생성&#xa;• 고정 외부 IP 주소 제공&#xa;• 고가용성 및 확장성&#xa;• 프로덕션 환경에 적합&#xa;• 비용 발생 (LB 요금)&#xa;&#xa;사용 사례:&#xa;• 웹 애플리케이션 서비스&#xa;• API 게이트웨이&#xa;• 프로덕션 워크로드" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="580" y="520" width="220" height="200" as="geometry" />
+        </mxCell>
+        
+        <!-- ExternalName Details -->
+        <mxCell id="en-details" value="ExternalName" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="820" y="480" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="en-info" value="• DNS CNAME 레코드 생성&#xa;• 외부 서비스 매핑&#xa;• IP 주소 할당 없음&#xa;• kube-proxy 처리 없음&#xa;• DNS 기반 서비스 검색&#xa;• 외부 의존성 추상화&#xa;&#xa;사용 사례:&#xa;• 외부 데이터베이스 연결&#xa;• 써드파티 API 서비스&#xa;• 레거시 시스템 통합" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="820" y="520" width="220" height="200" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections -->
+        <mxCell id="clusterip-to-internal" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="clusterip" target="internal">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="179" />
+              <mxPoint x="600" y="175" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="nodeport-to-node" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="nodeport" target="node-access">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="179" />
+              <mxPoint x="600" y="175" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="lb-to-external" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="loadbalancer" target="external-lb">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="179" />
+              <mxPoint x="600" y="180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="en-to-dns" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="externalname" target="dns">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="179" />
+              <mxPoint x="600" y="275" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

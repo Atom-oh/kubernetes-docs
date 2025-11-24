@@ -1,0 +1,115 @@
+<mxfile host="app.diagrams.net" modified="2025-08-05T12:30:00.000Z" agent="5.0" etag="generated" version="24.7.17">
+  <diagram name="Storage Workflow" id="storage-workflow">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="Kubernetes 스토리지 워크플로우" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="30" width="350" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Kubernetes Storage Flow Container -->
+        <mxCell id="k8s-flow" value="Kubernetes 스토리지 워크플로우" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="600" height="300" as="geometry" />
+        </mxCell>
+        
+        <!-- Pod -->
+        <mxCell id="pod" value="파드" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="120" y="150" width="60" height="58" as="geometry" />
+        </mxCell>
+        
+        <!-- PVC -->
+        <mxCell id="pvc" value="영구 볼륨 클레임&#xa;(PVC)" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pvc;" vertex="1" parent="1">
+          <mxGeometry x="280" y="150" width="60" height="58" as="geometry" />
+        </mxCell>
+        
+        <!-- StorageClass -->
+        <mxCell id="sc" value="스토리지 클래스&#xa;(StorageClass)" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=sc;" vertex="1" parent="1">
+          <mxGeometry x="440" y="150" width="60" height="58" as="geometry" />
+        </mxCell>
+        
+        <!-- PV -->
+        <mxCell id="pv" value="영구 볼륨&#xa;(PV)" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pv;" vertex="1" parent="1">
+          <mxGeometry x="580" y="150" width="60" height="58" as="geometry" />
+        </mxCell>
+        
+        <!-- AWS Storage Container -->
+        <mxCell id="aws-storage" value="AWS 스토리지" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="280" width="600" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Amazon EBS -->
+        <mxCell id="ebs" value="Amazon EBS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ebs_volume;" vertex="1" parent="1">
+          <mxGeometry x="180" y="310" width="50" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Amazon EFS -->
+        <mxCell id="efs" value="Amazon EFS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.efs_standard;" vertex="1" parent="1">
+          <mxGeometry x="360" y="310" width="50" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Amazon FSx -->
+        <mxCell id="fsx" value="Amazon FSx" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.fsx_for_lustre;" vertex="1" parent="1">
+          <mxGeometry x="540" y="310" width="50" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Workflow Connections -->
+        <!-- Pod to PVC -->
+        <mxCell id="pod-to-pvc" value="1. 스토리지 요청" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#00C7B7;fontSize=11;fontStyle=1;" edge="1" parent="1" source="pod" target="pvc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- PVC to StorageClass -->
+        <mxCell id="pvc-to-sc" value="2. 클래스 참조" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#326CE5;fontSize=11;fontStyle=1;" edge="1" parent="1" source="pvc" target="sc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- StorageClass to PV -->
+        <mxCell id="sc-to-pv" value="3. 동적 프로비저닝" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#326CE5;fontSize=11;fontStyle=1;" edge="1" parent="1" source="sc" target="pv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- PV to AWS Storage -->
+        <mxCell id="pv-to-aws" value="4. 백엔드 스토리지" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=3;strokeColor=#FF9900;fontSize=11;fontStyle=1;" edge="1" parent="1" source="pv" target="efs">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="610" y="250" />
+              <mxPoint x="385" y="250" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Workflow Steps -->
+        <mxCell id="workflow-steps" value="스토리지 프로비저닝 단계" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="400" width="1000" height="350" as="geometry" />
+        </mxCell>
+        
+        <!-- Step Details -->
+        <mxCell id="step-details" value="1. 파드 생성 및 스토리지 요청&#xa;   • 파드 매니페스트에서 PVC 참조&#xa;   • volumeMounts를 통해 컨테이너에 마운트&#xa;&#xa;2. PVC 생성 및 스토리지 클래스 참조&#xa;   • 필요한 스토리지 크기 및 액세스 모드 지정&#xa;   • storageClassName으로 스토리지 클래스 참조&#xa;&#xa;3. 스토리지 클래스를 통한 동적 프로비저닝&#xa;   • CSI 드라이버가 AWS API 호출&#xa;   • 지정된 매개변수로 스토리지 리소스 생성&#xa;   • PV 객체 자동 생성&#xa;&#xa;4. PVC와 PV 바인딩&#xa;   • 요구사항이 일치하는 PV와 PVC 자동 바인딩&#xa;   • 바인딩 후 파드에서 스토리지 사용 가능&#xa;&#xa;5. 백엔드 스토리지 연결&#xa;   • AWS 스토리지 서비스와 실제 연결&#xa;   • 데이터 읽기/쓰기 작업 수행" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="440" width="920" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- Volume Binding Modes -->
+        <mxCell id="binding-modes" value="볼륨 바인딩 모드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="640" width="400" height="90" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="binding-modes-content" value="• Immediate: PVC 생성 즉시 PV 프로비저닝&#xa;  - 빠른 바인딩, 토폴로지 고려 안 함&#xa;&#xa;• WaitForFirstConsumer: 파드 스케줄링 시 PV 프로비저닝&#xa;  - 토폴로지 인식, 노드와 같은 AZ에 볼륨 생성 (EBS 권장)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="670" width="380" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Reclaim Policies -->
+        <mxCell id="reclaim-policies" value="회수 정책" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="540" y="640" width="400" height="90" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reclaim-policies-content" value="• Delete: PVC 삭제 시 PV와 백엔드 스토리지도 자동 삭제&#xa;  - 기본값, 비용 절약&#xa;&#xa;• Retain: PVC 삭제 시 PV와 백엔드 스토리지 유지&#xa;  - 데이터 보존, 수동 정리 필요" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="550" y="670" width="380" height="50" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -84,45 +84,45 @@ VPC Lattice는 다음과 같은 주요 구성 요소로 이루어져 있습니�
 6. **VPC 연결(VPC Association)**: VPC를 서비스 네트워크에 연결
 
 ```mermaid
-graph TD
-    A[클라이언트] -->|요청| B[VPC Lattice 서비스 네트워크]
-    B -->|라우팅 규칙| C[서비스 1]
-    B -->|라우팅 규칙| D[서비스 2]
-    B -->|라우팅 규칙| E[서비스 3]
-    
-    C -->|대상 그룹| F[대상 1.1]
-    C -->|대상 그룹| G[대상 1.2]
-    
-    D -->|대상 그룹| H[대상 2.1]
-    
-    E -->|대상 그룹| I[대상 3.1]
-    E -->|대상 그룹| J[대상 3.2]
-    
-    subgraph "VPC 1"
-        F
-        G
+flowchart TD
+    Client[클라이언트] -->|요청| ServiceNetwork[VPC Lattice 서비스 네트워크]
+    ServiceNetwork -->|라우팅 규칙| Service1[서비스 1]
+    ServiceNetwork -->|라우팅 규칙| Service2[서비스 2]
+    ServiceNetwork -->|라우팅 규칙| Service3[서비스 3]
+
+    Service1 -->|대상 그룹| Target11[파드 1.1]
+    Service1 -->|대상 그룹| Target12[파드 1.2]
+
+    Service2 -->|대상 그룹| Target21[파드 2.1]
+
+    Service3 -->|대상 그룹| Target31[파드 3.1]
+    Service3 -->|대상 그룹| Target32[파드 3.2]
+
+    subgraph VPC1[VPC 1]
+        Target11
+        Target12
     end
-    
-    subgraph "VPC 2"
-        H
+
+    subgraph VPC2[VPC 2]
+        Target21
     end
-    
-    subgraph "VPC 3"
-        I
-        J
+
+    subgraph VPC3[VPC 3]
+        Target31
+        Target32
     end
-    
-    %% 스타일 정의
+
+    %% 클래스 정의
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
+
     %% 클래스 적용
-    class A userApp;
-    class B,C,D,E awsService;
-    class F,G,H,I,J default;
+    class Client userApp;
+    class ServiceNetwork,Service1,Service2,Service3 awsService;
+    class Target11,Target12,Target21,Target31,Target32 k8sComponent;
 ```
 
 ### 서비스 네트워크 아키텍처
@@ -130,39 +130,42 @@ graph TD
 서비스 네트워크는 VPC Lattice의 핵심 구성 요소로, 여러 VPC와 계정에 걸쳐 있는 서비스들을 연결합니다.
 
 ```mermaid
-graph TD
-    subgraph "계정 A"
-        A[VPC 1] -->|VPC 연결| SN[서비스 네트워크]
-        B[VPC 2] -->|VPC 연결| SN
+flowchart LR
+    subgraph AccountA["계정 A"]
+        A[VPC 1]
+        B[VPC 2]
     end
-    
-    subgraph "계정 B"
-        C[VPC 3] -->|VPC 연결| SN
+
+    subgraph AccountB["계정 B"]
+        C[VPC 3]
     end
-    
+
+    A -->|VPC 연결| SN[서비스 네트워크]
+    B -->|VPC 연결| SN
+    C -->|VPC 연결| SN
+
     SN -->|서비스 등록| S1[서비스 1]
     SN -->|서비스 등록| S2[서비스 2]
     SN -->|서비스 등록| S3[서비스 3]
-    
+
     S1 -->|대상 그룹| TG1[대상 그룹 1]
     S2 -->|대상 그룹| TG2[대상 그룹 2]
     S3 -->|대상 그룹| TG3[대상 그룹 3]
-    
+
     TG1 -->|대상| T1[EC2 인스턴스]
     TG2 -->|대상| T2[EKS 파드]
     TG3 -->|대상| T3[Lambda 함수]
-    
+
     %% 스타일 정의
     classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
+
     %% 클래스 적용
     class A,B,C default;
-    class SN,S1,S2,S3,TG1,TG2,TG3 awsService;
-    class T1,T3 awsService;
+    class SN,S1,S2,S3,TG1,TG2,TG3,T1,T3 awsService;
     class T2 k8sComponent;
 ```
 
@@ -183,7 +186,7 @@ sequenceDiagram
     participant Service as 서비스
     participant TargetGroup as 대상 그룹
     participant Target as 대상(EKS 파드)
-    
+
     Client->>VPCLattice: 요청 (service-name.vpc-lattice-svcs.region.on.aws)
     VPCLattice->>Service: 요청 처리 및 리스너 규칙 적용
     Service->>TargetGroup: 적절한 대상 그룹으로 라우팅
@@ -192,17 +195,6 @@ sequenceDiagram
     TargetGroup->>Service: 응답 전달
     Service->>VPCLattice: 응답 처리
     VPCLattice->>Client: 응답 반환
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 ```
 
 ### 서비스 디스커버리
@@ -237,22 +229,42 @@ Amazon EKS와 VPC Lattice의 통합은 다음과 같은 구성 요소로 이루�
 5. **VPC Lattice 대상 그룹**: Kubernetes 파드에 매핑되는 대상 그룹
 
 ```mermaid
-graph TD
-    subgraph "EKS 클러스터"
-        A[Gateway API Controller] -->|변환| B[Gateway API 리소스]
-        B -->|참조| C[Kubernetes 서비스]
-        C -->|선택| D[Kubernetes 파드]
+flowchart LR
+    subgraph EKS["EKS 클러스터"]
+        A[Gateway API Controller]
+        B[Gateway API 리소스]
+        C[Kubernetes 서비스]
+        D[Kubernetes 파드]
+
+        A -->|변환| B
+        B -->|참조| C
+        C -->|선택| D
     end
-    
-    A -->|생성/관리| E[VPC Lattice 서비스]
-    E -->|라우팅| F[VPC Lattice 대상 그룹]
+
+    subgraph Client["다른 VPC의 클라이언트"]
+        H[애플리케이션]
+    end
+
+    G[VPC Lattice<br/>서비스 네트워크]
+    E[VPC Lattice 서비스]
+    F[VPC Lattice 대상 그룹]
+
+    A -->|생성/관리| E
+    E -->|라우팅| F
     F -->|등록| D
-    
-    G[VPC Lattice 서비스 네트워크] -->|포함| E
-    
-    subgraph "다른 VPC의 클라이언트"
-        H[애플리케이션] -->|요청| E
-    end
+    G -->|포함| E
+    H -->|요청| E
+
+    %% 스타일 정의
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    %% 클래스 적용
+    class A,B,C,D k8sComponent;
+    class G,E,F awsService;
+    class H userApp;
 ```
 
 ### 통합의 이점

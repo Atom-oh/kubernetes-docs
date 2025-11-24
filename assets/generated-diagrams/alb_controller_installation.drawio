@@ -1,0 +1,133 @@
+<mxfile host="app.diagrams.net" modified="2025-08-05T11:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
+  <diagram name="ALB Controller Installation" id="alb-controller-installation">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="AWS Load Balancer Controller 설치 과정" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="30" width="400" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Step 1: Prerequisites -->
+        <mxCell id="step1" value="1단계: 사전 요구사항" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="300" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="step1-content" value="• EKS 클러스터 생성 완료&#xa;• kubectl 설정 완료&#xa;• AWS CLI 설정&#xa;• 적절한 IAM 권한&#xa;• Helm 3.x 설치 (선택사항)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="90" y="120" width="280" height="70" as="geometry" />
+        </mxCell>
+        
+        <!-- Step 2: IAM Role -->
+        <mxCell id="step2" value="2단계: IAM 역할 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="420" y="80" width="300" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="step2-content" value="• IAM OIDC 공급자 생성&#xa;• 서비스 계정용 IAM 역할&#xa;• AWSLoadBalancerControllerIAMPolicy&#xa;• 신뢰 관계 설정" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="430" y="120" width="280" height="70" as="geometry" />
+        </mxCell>
+        
+        <!-- Step 3: Service Account -->
+        <mxCell id="step3" value="3단계: 서비스 계정 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="80" width="300" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="step3-content" value="• kube-system 네임스페이스&#xa;• aws-load-balancer-controller&#xa;• IAM 역할 어노테이션&#xa;• IRSA (IAM Roles for Service Accounts)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="770" y="120" width="280" height="70" as="geometry" />
+        </mxCell>
+        
+        <!-- Installation Methods -->
+        <mxCell id="methods" value="설치 방법" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="240" width="980" height="200" as="geometry" />
+        </mxCell>
+        
+        <!-- Method 1: Helm -->
+        <mxCell id="method1" value="방법 1: Helm 차트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="280" width="280" height="140" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="method1-content" value="# Helm 리포지토리 추가&#xa;helm repo add eks https://aws.github.io/eks-charts&#xa;&#xa;# 차트 업데이트&#xa;helm repo update&#xa;&#xa;# 설치&#xa;helm install aws-load-balancer-controller \\&#xa;  eks/aws-load-balancer-controller \\&#xa;  -n kube-system \\&#xa;  --set clusterName=my-cluster \\&#xa;  --set serviceAccount.create=false \\&#xa;  --set serviceAccount.name=aws-load-balancer-controller" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="310" width="260" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- Method 2: kubectl -->
+        <mxCell id="method2" value="방법 2: kubectl 매니페스트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="420" y="280" width="280" height="140" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="method2-content" value="# 매니페스트 다운로드&#xa;curl -O https://raw.githubusercontent.com/\\&#xa;kubernetes-sigs/aws-load-balancer-controller/\\&#xa;v2.7.2/docs/install/v2_7_2_full.yaml&#xa;&#xa;# 클러스터 이름 수정&#xa;sed -i.bak -e 's|your-cluster-name|my-cluster|' \\&#xa;  v2_7_2_full.yaml&#xa;&#xa;# 적용&#xa;kubectl apply -f v2_7_2_full.yaml" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="430" y="310" width="260" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- Method 3: eksctl -->
+        <mxCell id="method3" value="방법 3: eksctl" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D4EDDA;strokeColor=#28A745;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="720" y="280" width="280" height="140" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="method3-content" value="# OIDC 공급자 생성&#xa;eksctl utils associate-iam-oidc-provider \\&#xa;  --region=us-west-2 \\&#xa;  --cluster=my-cluster \\&#xa;  --approve&#xa;&#xa;# 서비스 계정 생성&#xa;eksctl create iamserviceaccount \\&#xa;  --cluster=my-cluster \\&#xa;  --namespace=kube-system \\&#xa;  --name=aws-load-balancer-controller \\&#xa;  --role-name AmazonEKSLoadBalancerControllerRole \\&#xa;  --attach-policy-arn=arn:aws:iam::ACCOUNT:policy/AWSLoadBalancerControllerIAMPolicy \\&#xa;  --approve" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=8;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="730" y="310" width="260" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- Verification -->
+        <mxCell id="verification" value="4단계: 설치 확인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="480" width="980" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="verification-content" value="# 포드 상태 확인&#xa;kubectl get deployment -n kube-system aws-load-balancer-controller&#xa;&#xa;# 로그 확인&#xa;kubectl logs -n kube-system deployment/aws-load-balancer-controller&#xa;&#xa;# 서비스 계정 확인&#xa;kubectl describe sa aws-load-balancer-controller -n kube-system" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="520" width="900" height="70" as="geometry" />
+        </mxCell>
+        
+        <!-- Configuration -->
+        <mxCell id="configuration" value="5단계: 구성 및 사용" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="620" width="980" height="160" as="geometry" />
+        </mxCell>
+        
+        <!-- Ingress Example -->
+        <mxCell id="ingress-example" value="Ingress 리소스 예제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#F57C00;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="660" width="400" height="100" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="ingress-yaml" value="apiVersion: networking.k8s.io/v1&#xa;kind: Ingress&#xa;metadata:&#xa;  name: my-ingress&#xa;  annotations:&#xa;    kubernetes.io/ingress.class: alb&#xa;    alb.ingress.kubernetes.io/scheme: internet-facing&#xa;    alb.ingress.kubernetes.io/target-type: ip&#xa;spec:&#xa;  rules:&#xa;  - http:&#xa;      paths:&#xa;      - path: /&#xa;        pathType: Prefix&#xa;        backend:&#xa;          service:&#xa;            name: my-service&#xa;            port:&#xa;              number: 80" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=8;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="690" width="380" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Common Issues -->
+        <mxCell id="troubleshooting" value="일반적인 문제 해결" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#D32F2F;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="540" y="660" width="400" height="100" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="troubleshooting-content" value="• IAM 권한 부족: 정책 확인&#xa;• OIDC 공급자 미설정: eksctl로 생성&#xa;• 서비스 계정 어노테이션 누락&#xa;• 클러스터 이름 불일치&#xa;• 네트워크 정책 충돌&#xa;• 서브넷 태그 누락 (kubernetes.io/role/elb)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="550" y="690" width="380" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Flow Arrows -->
+        <mxCell id="arrow1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="step1" target="step2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="step2" target="step3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="step3" target="methods">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="910" y="220" />
+              <mxPoint x="570" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="methods" target="verification">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="verification" target="configuration">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

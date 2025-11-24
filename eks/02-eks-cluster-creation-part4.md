@@ -39,49 +39,11 @@ Terraform은 인프라를 코드로 관리하는 도구로, EKS 클러스터를 
 
 ### Terraform을 사용한 EKS 클러스터 생성 프로세스
 
-```mermaid
-flowchart TD
-    A[시작] --> B[Terraform 설치]
-    B --> C[프로젝트 디렉토리 생성]
-    C --> D[Terraform 구성 파일 작성]
-    D --> E[terraform init]
-    E --> F[terraform plan]
-    F --> G[terraform apply]
-    G --> H[kubeconfig 구성]
-    H --> I[클러스터 확인]
-    I --> J[클러스터 사용]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class G,H awsService;
-    class I,J k8sComponent;
-    class A,B,C,D,E,F userApp;
-```
+![Terraform을 사용한 EKS 클러스터 생성 프로세스](../assets/generated-diagrams/terraform_eks_creation_process.drawio)
 
 ### Terraform 구성 요소 관계
 
-```mermaid
-flowchart LR
-    A[providers.tf] --> E[Terraform]
-    B[variables.tf] --> E
-    C[vpc.tf] --> E
-    D[eks.tf] --> E
-    E --> F[AWS API]
-    F --> G[VPC]
-    F --> H[EKS 클러스터]
-    F --> I[노드 그룹]
-    F --> J[Fargate 프로필]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+![Terraform 구성 요소 관계](../assets/generated-diagrams/terraform_components_relationship.drawio)
     
     %% 클래스 적용
     class E,F awsService;
@@ -403,51 +365,11 @@ AWS Cloud Development Kit(CDK)는 익숙한 프로그래밍 언어를 사용하�
 
 ### AWS CDK를 사용한 EKS 클러스터 생성 프로세스
 
-```mermaid
-flowchart TD
-    A[시작] --> B[AWS CDK 설치]
-    B --> C[CDK 프로젝트 생성]
-    C --> D[필요한 패키지 설치]
-    D --> E[CDK 스택 정의]
-    E --> F[cdk bootstrap]
-    F --> G[cdk deploy]
-    G --> H[kubeconfig 구성]
-    H --> I[클러스터 확인]
-    I --> J[클러스터 사용]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class F,G,H awsService;
-    class I,J k8sComponent;
-    class A,B,C,D,E userApp;
-```
+![AWS CDK를 사용한 EKS 클러스터 생성 프로세스](../assets/generated-diagrams/cdk_eks_creation_process.drawio)
 
 ### CDK 구성 요소 관계
 
-```mermaid
-flowchart LR
-    A[TypeScript 코드] --> B[CDK 앱]
-    B --> C[CDK 스택]
-    C --> D[AWS CloudFormation]
-    D --> E[AWS API]
-    E --> F[VPC]
-    E --> G[EKS 클러스터]
-    E --> H[관리형 노드 그룹]
-    E --> I[Fargate 프로필]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class B,C,D,E awsService;
+![CDK 구성 요소 관계](../assets/generated-diagrams/cdk_components_relationship.drawio)
     class F,G,H,I awsService;
     class A userApp;
 ```
@@ -607,47 +529,11 @@ Kubernetes Operator와 Custom Resource Definition(CRD)은 Kubernetes의 기능�
 
 ### Kubernetes Operator 개요
 
-```mermaid
-flowchart TD
-    A[Kubernetes API Server] --> B[Controller Manager]
-    A --> C[Operator Controller]
-    C --> D[Custom Resource Definition]
-    C --> E[Custom Resources]
-    C --> F[Reconciliation Loop]
-    F --> G[Desired State]
-    F --> H[Current State]
-    F --> I[Actions]
-    
-    %% 클래스 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef operatorComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class A,B k8sComponent;
-    class C,D,E,F,G,H,I operatorComponent;
-```
+![Kubernetes Operator 개요](../assets/generated-diagrams/kubernetes_operator_overview.drawio)
 
 ### Operator와 CRD의 관계
 
-```mermaid
-flowchart LR
-    A[CRD 정의] --> B[Custom Resource 생성]
-    C[Operator 배포] --> D[Controller 실행]
-    B --> E[Operator가 CR 감시]
-    D --> E
-    E --> F[Reconciliation Loop]
-    F --> G[리소스 생성/수정/삭제]
-    
-    %% 클래스 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef operatorComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class A,B k8sComponent;
-    class C,D,E,F,G operatorComponent;
-```
+![Operator와 CRD의 관계](../assets/generated-diagrams/operator_crd_relationship.drawio)
 
 ### 1. Operator란 무엇인가?
 

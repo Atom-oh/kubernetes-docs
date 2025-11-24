@@ -6,41 +6,7 @@ eksctl은 EKS 클러스터를 생성하고 관리하기 위한 가장 간단한 
 
 다음 다이어그램은 eksctl을 사용한 EKS 클러스터 생성 프로세스를 보여줍니다:
 
-```mermaid
-flowchart TD
-    User[사용자] --> |1. 실행| EKSCTL[eksctl create cluster]
-    
-    subgraph "eksctl 프로세스"
-        EKSCTL --> |2. 생성| CFN[CloudFormation 스택]
-        CFN --> |3. 생성| VPC[VPC 및 서브넷]
-        CFN --> |4. 생성| IAM[IAM 역할 및 정책]
-        CFN --> |5. 생성| SG[보안 그룹]
-        CFN --> |6. 생성| CP[EKS 컨트롤 플레인]
-        CFN --> |7. 생성| NG[노드 그룹]
-        
-        CP --> |8. 구성| KUBECONFIG[kubeconfig 업데이트]
-    end
-    
-    subgraph "AWS 리소스"
-        VPC
-        IAM
-        SG
-        CP
-        NG --> |실행| EC2[EC2 인스턴스]
-    end
-    
-    KUBECONFIG --> |9. 접근 가능| User
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class VPC,IAM,SG,CP,NG,EC2,CFN awsService;
-    class KUBECONFIG k8sComponent;
-    class User userApp;
-    class EKSCTL default;
-```
+![eksctl 클러스터 생성 프로세스](../assets/generated-diagrams/eksctl_cluster_creation_process.drawio)
 
 ### 기본 클러스터 생성
 
@@ -141,32 +107,7 @@ eksctl create cluster -f cluster.yaml
 
 다음 다이어그램은 EKS 클러스터의 관리형 노드 그룹 아키텍처를 보여줍니다:
 
-```mermaid
-flowchart TD
-    subgraph "EKS 클러스터"
-        CP[EKS 컨트롤 플레인]
-        
-        subgraph "관리형 노드 그룹"
-            NG[노드 그룹] --> ASG[Auto Scaling 그룹]
-            ASG --> EC2_1[EC2 인스턴스 1]
-            ASG --> EC2_2[EC2 인스턴스 2]
-            ASG --> EC2_3[EC2 인스턴스 3]
-            
-            EC2_1 --> |실행| POD1[포드]
-            EC2_2 --> |실행| POD2[포드]
-            EC2_3 --> |실행| POD3[포드]
-        end
-        
-        CP --> |관리| NG
-    end
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class CP,NG,ASG,EC2_1,EC2_2,EC2_3 awsService;
-    class POD1,POD2,POD3 k8sComponent;
-```
+![EKS 관리형 노드 그룹 아키텍처](../assets/generated-diagrams/eks_managed_node_group_detailed.drawio)
 
 기존 클러스터에 관리형 노드 그룹을 추가하려면 다음 명령을 실행합니다:
 
@@ -215,28 +156,7 @@ eksctl create nodegroup -f nodegroup.yaml
 
 다음 다이어그램은 EKS Fargate 프로필 아키텍처를 보여줍니다:
 
-```mermaid
-flowchart TD
-    subgraph "EKS 클러스터"
-        CP[EKS 컨트롤 플레인]
-        
-        subgraph "Fargate 프로필"
-            FP[Fargate 프로필]
-            FP --> |선택기: namespace=default,<br>labels=env:fargate| POD1[Fargate 포드 1]
-            FP --> |선택기: namespace=default,<br>labels=env:fargate| POD2[Fargate 포드 2]
-            FP --> |선택기: namespace=kube-system,<br>labels=k8s-app:kube-dns| POD3[Fargate 포드 3]
-        end
-        
-        CP --> |관리| FP
-    end
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class CP,FP awsService;
-    class POD1,POD2,POD3 k8sComponent;
-```
+![EKS Fargate 프로필 아키텍처](../assets/generated-diagrams/eks_fargate_profile_architecture.drawio)
 
 Fargate 프로필을 생성하려면 다음 명령을 실행합니다:
 
@@ -292,6 +212,12 @@ eksctl을 사용하여 클러스터를 삭제할 수 있습니다:
 ```bash
 eksctl delete cluster --name=my-cluster --region=us-west-2
 ```
+
+## EKS 클러스터 라이프사이클 관리
+
+다음 다이어그램은 EKS 클러스터의 전체 라이프사이클 관리 프로세스를 보여줍니다:
+
+![EKS 클러스터 라이프사이클 관리](../assets/generated-diagrams/eks_cluster_lifecycle_management.drawio)
 
 ## 퀴즈
 

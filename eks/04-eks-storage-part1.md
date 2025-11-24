@@ -14,48 +14,7 @@ Amazon EKS에서 애플리케이션을 실행할 때 데이터를 저장하고 �
 
 Kubernetes에서 스토리지를 관리하기 위한 핵심 개념들을 먼저 이해해 보겠습니다.
 
-```mermaid
-flowchart TD
-    subgraph K8s_Storage_Concepts ["Kubernetes 스토리지 개념"]
-        Volume[볼륨]
-        PV["영구 볼륨
-                PersistentVolume"]
-        PVC["영구 볼륨 클레임
-                PersistentVolumeClaim"]
-        SC["스토리지 클래스
-                StorageClass"]
-    end
-    
-    subgraph Pod ["파드"]
-        Container1[컨테이너 1]
-        Container2[컨테이너 2]
-    end
-    
-    subgraph Storage_Backend ["스토리지 백엔드"]
-        EBS[Amazon EBS]
-        EFS[Amazon EFS]
-        FSx[Amazon FSx]
-        S3[Amazon S3]
-    end
-    
-    Container1 --> Volume
-    Container2 --> Volume
-    PVC --> PV
-    PV --> Storage_Backend
-    SC --> PV
-    Pod --> PVC
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class EBS,EFS,FSx,S3 awsService;
-    class Volume,PV,PVC,SC,Pod,Container1,Container2 k8sComponent;
-```
+![Kubernetes 스토리지 개념](../assets/generated-diagrams/kubernetes_storage_concepts.drawio)
 
 ### 볼륨(Volume)
 
@@ -86,55 +45,7 @@ Kubernetes는 다음과 같은 액세스 모드를 지원합니다:
 
 Amazon EKS에서는 다양한 AWS 스토리지 서비스를 활용하여 컨테이너화된 애플리케이션에 스토리지를 제공할 수 있습니다.
 
-```mermaid
-flowchart TD
-    subgraph EKS_Cluster ["Amazon EKS 클러스터"]
-        subgraph Storage_Options ["스토리지 옵션"]
-            EBS[Amazon EBS]
-            EFS[Amazon EFS]
-            FSx[Amazon FSx for Lustre]
-            S3[Amazon S3]
-        end
-        
-        subgraph Access_Modes ["액세스 모드"]
-            RWO[ReadWriteOnce]
-            ROX[ReadOnlyMany]
-            RWX[ReadWriteMany]
-            RWOP[ReadWriteOncePod]
-        end
-        
-        subgraph CSI_Drivers ["CSI 드라이버"]
-            EBS_CSI[EBS CSI 드라이버]
-            EFS_CSI[EFS CSI 드라이버]
-            FSx_CSI[FSx CSI 드라이버]
-        end
-    end
-    
-    EBS --> RWO
-    EBS --> RWOP
-    EFS --> RWO
-    EFS --> ROX
-    EFS --> RWX
-    FSx --> RWO
-    FSx --> ROX
-    FSx --> RWX
-    
-    EBS --> EBS_CSI
-    EFS --> EFS_CSI
-    FSx --> FSx_CSI
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class EBS,EFS,FSx,S3 awsService;
-    class EBS_CSI,EFS_CSI,FSx_CSI k8sComponent;
-    class RWO,ROX,RWX,RWOP k8sComponent;
-```
+![EKS 스토리지 옵션](../assets/generated-diagrams/eks_storage_options.drawio)
 
 ### 주요 스토리지 옵션
 
@@ -171,41 +82,7 @@ flowchart TD
 
 Amazon EBS는 EC2 인스턴스에 연결할 수 있는 블록 수준 스토리지 볼륨을 제공합니다. EKS에서는 EBS CSI(Container Storage Interface) 드라이버를 통해 EBS 볼륨을 Kubernetes 파드에 마운트할 수 있습니다.
 
-```mermaid
-flowchart TD
-    subgraph EKS_Cluster ["Amazon EKS 클러스터"]
-        subgraph Node1 ["노드 1"]
-            Pod1[파드 1]
-            EBS_CSI1[EBS CSI 드라이버]
-        end
-        
-        subgraph Node2 ["노드 2"]
-            Pod2[파드 2]
-            EBS_CSI2[EBS CSI 드라이버]
-        end
-    end
-    
-    subgraph AWS_Services ["AWS 서비스"]
-        EBS1[EBS 볼륨 1]
-        EBS2[EBS 볼륨 2]
-    end
-    
-    Pod1 --> EBS_CSI1
-    EBS_CSI1 --> EBS1
-    Pod2 --> EBS_CSI2
-    EBS_CSI2 --> EBS2
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class EBS1,EBS2 awsService;
-    class Pod1,Pod2,EBS_CSI1,EBS_CSI2 k8sComponent;
-```
+![EBS CSI 드라이버 아키텍처](../assets/generated-diagrams/ebs_csi_architecture.drawio)
 
 ### EBS CSI 드라이버 설치
 
@@ -326,44 +203,7 @@ EKS에서는 gp3 볼륨 타입을 권장합니다. gp3는 비용 효율적이면
 
 Amazon EFS는 완전 관리형 NFS 파일 시스템으로, 여러 EC2 인스턴스에서 동시에 액세스할 수 있습니다. EKS에서는 EFS CSI 드라이버를 통해 EFS 파일 시스템을 여러 파드에 동시에 마운트할 수 있습니다.
 
-```mermaid
-flowchart TD
-    subgraph EKS_Cluster ["Amazon EKS 클러스터"]
-        subgraph Node1 ["노드 1"]
-            Pod1[파드 1]
-            Pod2[파드 2]
-            EFS_CSI1[EFS CSI 드라이버]
-        end
-        
-        subgraph Node2 ["노드 2"]
-            Pod3[파드 3]
-            Pod4[파드 4]
-            EFS_CSI2[EFS CSI 드라이버]
-        end
-    end
-    
-    subgraph AWS_Services ["AWS 서비스"]
-        EFS[Amazon EFS 파일 시스템]
-    end
-    
-    Pod1 --> EFS_CSI1
-    Pod2 --> EFS_CSI1
-    EFS_CSI1 --> EFS
-    Pod3 --> EFS_CSI2
-    Pod4 --> EFS_CSI2
-    EFS_CSI2 --> EFS
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class EFS awsService;
-    class Pod1,Pod2,Pod3,Pod4,EFS_CSI1,EFS_CSI2 k8sComponent;
-```
+![EFS CSI 드라이버 아키텍처](../assets/generated-diagrams/efs_csi_architecture.drawio)
 
 ### EFS CSI 드라이버 설치
 
@@ -522,37 +362,7 @@ Amazon EFS는 두 가지 성능 모드와 세 가지 처리량 모드를 제공�
 
 Kubernetes의 스토리지 클래스를 사용하면 영구 볼륨을 동적으로 프로비저닝할 수 있습니다. EKS에서는 다양한 AWS 스토리지 서비스에 대한 스토리지 클래스를 구성할 수 있습니다.
 
-```mermaid
-flowchart TD
-    subgraph K8s_Storage_Flow ["Kubernetes 스토리지 워크플로우"]
-        SC[스토리지 클래스]
-        PVC[영구 볼륨 클레임]
-        PV[영구 볼륨]
-        Pod[파드]
-    end
-    
-    subgraph AWS_Storage ["AWS 스토리지"]
-        EBS[Amazon EBS]
-        EFS[Amazon EFS]
-        FSx[Amazon FSx]
-    end
-    
-    PVC --> SC
-    SC --> PV
-    PV --> AWS_Storage
-    Pod --> PVC
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class EBS,EFS,FSx awsService;
-    class SC,PVC,PV,Pod k8sComponent;
-```
+![Kubernetes 스토리지 워크플로우](../assets/generated-diagrams/storage_workflow.drawio)
 
 ### 볼륨 바인딩 모드
 

@@ -4,42 +4,7 @@
 
 AWS Management Console을 사용하여 EKS 클러스터를 생성하는 단계는 다음과 같습니다:
 
-```mermaid
-flowchart TD
-    Start[시작] --> Login[AWS Management Console 로그인]
-    Login --> EKS[EKS 서비스 선택]
-    EKS --> Create[클러스터 생성 버튼 클릭]
-    
-    subgraph "클러스터 생성 단계"
-        Create --> Config[클러스터 구성]
-        Config --> Network[네트워킹 지정]
-        Network --> Logging[로깅 구성]
-        Logging --> Addons[애드온 선택]
-        Addons --> Review[검토 및 생성]
-        Review --> Wait[클러스터 생성 대기]
-    end
-    
-    Wait --> NodeGroup[노드 그룹 추가]
-    
-    subgraph "노드 그룹 생성 단계"
-        NodeGroup --> NGConfig[노드 그룹 구성]
-        NGConfig --> Compute[컴퓨팅 및 크기 조정 구성]
-        Compute --> NGNetwork[네트워킹 지정]
-        NGNetwork --> NGReview[검토 및 생성]
-        NGReview --> NGWait[노드 그룹 생성 대기]
-    end
-    
-    NGWait --> Connect[클러스터 연결]
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class EKS,Create,Config,Network,Logging,Addons,Review,Wait,NodeGroup,NGConfig,Compute,NGNetwork,NGReview,NGWait awsService;
-    class Connect k8sComponent;
-    class Start,Login userApp;
-```
+![AWS Management Console을 통한 EKS 클러스터 생성 워크플로우](../assets/generated-diagrams/eks_console_cluster_creation_workflow.drawio)
 
 1. [AWS Management Console](https://console.aws.amazon.com/)에 로그인합니다.
 2. "EKS"를 검색하거나 서비스 목록에서 "Elastic Kubernetes Service"를 선택합니다.
@@ -116,43 +81,7 @@ flowchart TD
 
 AWS CLI를 사용하여 EKS 클러스터를 생성하는 과정은 여러 단계로 이루어져 있습니다. 이 방법은 더 많은 제어가 필요한 경우에 유용합니다.
 
-```mermaid
-flowchart TD
-    Start[시작] --> IAMRole[1. 클러스터 IAM 역할 생성]
-    IAMRole --> VPC[2. VPC 및 서브넷 생성]
-    VPC --> SG[3. 클러스터 보안 그룹 생성]
-    SG --> Cluster[4. EKS 클러스터 생성]
-    Cluster --> NodeRole[5. 노드 IAM 역할 생성]
-    NodeRole --> NodeGroup[6. 노드 그룹 생성]
-    NodeGroup --> Kubeconfig[7. kubeconfig 구성]
-    Kubeconfig --> Verify[8. 클러스터 확인]
-    
-    subgraph "AWS 리소스 생성"
-        IAMRole --> |create-role| IAMPolicy[attach-role-policy]
-        VPC --> |create-vpc| Subnet[create-subnet]
-        SG --> |create-security-group| SGRule[authorize-security-group-ingress]
-    end
-    
-    subgraph "EKS 클러스터 생성"
-        Cluster --> |create-cluster| WaitCluster[describe-cluster]
-        NodeRole --> |create-role| NodePolicy[attach-role-policy]
-        NodeGroup --> |create-nodegroup| WaitNodeGroup[describe-nodegroup]
-    end
-    
-    subgraph "클러스터 접근"
-        Kubeconfig --> |update-kubeconfig| Kubectl[kubectl]
-        Verify --> |get nodes| Success[완료]
-    end
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class IAMRole,IAMPolicy,VPC,Subnet,SG,SGRule,Cluster,WaitCluster,NodeRole,NodePolicy,NodeGroup,WaitNodeGroup,Kubeconfig awsService;
-    class Kubectl,Verify k8sComponent;
-    class Start,Success userApp;
-```
+![AWS CLI를 통한 EKS 클러스터 생성 워크플로우](../assets/generated-diagrams/eks_cli_cluster_creation_workflow.drawio)
 
 ### 1. 클러스터 IAM 역할 생성
 

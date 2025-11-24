@@ -14,46 +14,7 @@
 
 Amazon FSx for Lustre는 고성능 컴퓨팅(HPC), 기계 학습, 빅 데이터 처리와 같은 컴퓨팅 집약적 워크로드를 위한 고성능 파일 시스템입니다. Lustre는 병렬 분산 파일 시스템으로, 수천 개의 클라이언트에서 동시에 액세스할 수 있는 높은 처리량과 낮은 지연 시간을 제공합니다.
 
-```mermaid
-flowchart TD
-    subgraph EKS_Cluster ["Amazon EKS 클러스터"]
-        subgraph Node1 ["노드 1"]
-            Pod1[ML 훈련 파드]
-            Pod2[데이터 처리 파드]
-            FSx_CSI1[FSx CSI 드라이버]
-        end
-        
-        subgraph Node2 ["노드 2"]
-            Pod3[ML 추론 파드]
-            Pod4[분석 파드]
-            FSx_CSI2[FSx CSI 드라이버]
-        end
-    end
-    
-    subgraph AWS_Services ["AWS 서비스"]
-        FSx[Amazon FSx for Lustre]
-        S3[Amazon S3]
-    end
-    
-    Pod1 --> FSx_CSI1
-    Pod2 --> FSx_CSI1
-    FSx_CSI1 --> FSx
-    Pod3 --> FSx_CSI2
-    Pod4 --> FSx_CSI2
-    FSx_CSI2 --> FSx
-    FSx <-.-> S3
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class FSx,S3 awsService;
-    class Pod1,Pod2,Pod3,Pod4,FSx_CSI1,FSx_CSI2 k8sComponent;
-```
+![FSx for Lustre CSI 아키텍처](../assets/generated-diagrams/fsx_lustre_csi_architecture.drawio)
 
 ### FSx for Lustre CSI 드라이버 설치
 
@@ -251,65 +212,7 @@ parameters:
 
 Amazon S3는 객체 스토리지 서비스로, 무제한 양의 데이터를 저장하고 검색할 수 있습니다. Kubernetes에서는 S3를 직접 볼륨으로 마운트할 수는 없지만, 다양한 방법으로 S3와 통합할 수 있습니다.
 
-```mermaid
-flowchart TD
-    subgraph EKS_Cluster ["Amazon EKS 클러스터"]
-        subgraph Integration_Methods ["S3 통합 방법"]
-            IRSA[IAM Roles for
-                Service Accounts]
-            S3_CSI[S3 CSI 드라이버]
-            S3A[Hadoop S3A
-                파일 시스템]
-            SDK[AWS SDK 직접 사용]
-        end
-        
-        subgraph Pods ["애플리케이션 파드"]
-            App1[웹 애플리케이션]
-            App2[데이터 처리 앱]
-            App3[ML 모델 훈련]
-            App4[로그 수집기]
-        end
-    end
-    
-    subgraph AWS_Services ["AWS 서비스"]
-        S3[Amazon S3]
-        subgraph S3_Use_Cases ["S3 사용 사례"]
-            DataLake[데이터 레이크]
-            Backup[백업 및 아카이브]
-            StaticContent[정적 웹 콘텐츠]
-            ModelStorage[ML 모델 저장소]
-            LogStorage[로그 저장소]
-        end
-    end
-    
-    App1 --> IRSA
-    App2 --> S3_CSI
-    App3 --> S3A
-    App4 --> SDK
-    
-    IRSA --> S3
-    S3_CSI --> S3
-    S3A --> S3
-    SDK --> S3
-    
-    S3 --> DataLake
-    S3 --> Backup
-    S3 --> StaticContent
-    S3 --> ModelStorage
-    S3 --> LogStorage
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class S3,DataLake,Backup,StaticContent,ModelStorage,LogStorage awsService;
-    class IRSA,S3_CSI,S3A,SDK k8sComponent;
-    class App1,App2,App3,App4 userApp;
-```
+![S3 통합 방법](../assets/generated-diagrams/s3_integration_methods.drawio)
 
 ### S3 액세스를 위한 IRSA 설정
 
@@ -465,74 +368,7 @@ Amazon S3는 다음과 같은 사용 사례에 적합합니다:
 
 Kubernetes에서는 볼륨 스냅샷을 사용하여 PV의 데이터를 백업하고 복원할 수 있습니다.
 
-```mermaid
-flowchart TD
-    subgraph K8s_Snapshot_System ["Kubernetes 스냅샷 시스템"]
-        VSC[볼륨 스냅샷 클래스
-                VolumeSnapshotClass]
-        VS[볼륨 스냅샷
-                VolumeSnapshot]
-        VSContent[볼륨 스냅샷 컨텐츠
-                VolumeSnapshotContent]
-        SC[스토리지 클래스
-                StorageClass]
-    end
-    
-    subgraph K8s_Resources ["Kubernetes 리소스"]
-        PVC1[영구 볼륨 클레임
-                (원본)]
-        PVC2[영구 볼륨 클레임
-                (복원)]
-        PV1[영구 볼륨
-                (원본)]
-        PV2[영구 볼륨
-                (복원)]
-    end
-    
-    subgraph AWS_Services ["AWS 서비스"]
-        EBS_Vol[EBS 볼륨]
-        EBS_Snap[EBS 스냅샷]
-    end
-    
-    subgraph Backup_Tools ["백업 도구"]
-        Velero[Velero]
-        Schedule[백업 스케줄]
-        Restore[복원 작업]
-    end
-    
-    %% 스냅샷 워크플로우
-    PVC1 --> PV1
-    PV1 --> EBS_Vol
-    VS --> VSC
-    VS --> PVC1
-    VS --> VSContent
-    VSContent --> EBS_Snap
-    EBS_Vol --> EBS_Snap
-    
-    %% 복원 워크플로우
-    PVC2 --> VS
-    PVC2 --> SC
-    PVC2 --> PV2
-    PV2 --> EBS_Vol
-    
-    %% Velero 워크플로우
-    Velero --> Schedule
-    Schedule --> VS
-    Velero --> Restore
-    Restore --> PVC2
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class EBS_Vol,EBS_Snap awsService;
-    class VSC,VS,VSContent,SC,PVC1,PVC2,PV1,PV2 k8sComponent;
-    class Velero,Schedule,Restore userApp;
-```
+![볼륨 스냅샷 시스템](../assets/generated-diagrams/volume_snapshot_system.drawio)
 
 ### 볼륨 스냅샷 컨트롤러 설치
 
@@ -638,81 +474,7 @@ velero restore create --from-backup daily-backup-20250710010000
 
 Kubernetes에서는 PVC의 크기를 확장하여 스토리지 용량을 늘릴 수 있습니다.
 
-```mermaid
-flowchart TD
-    subgraph Volume_Expansion_Process ["볼륨 확장 프로세스"]
-        SC[스토리지 클래스
-                allowVolumeExpansion: true]
-        PVC1[PVC
-                storage: 10Gi]
-        PVC2[PVC
-                storage: 20Gi]
-        PV1[PV
-                capacity: 10Gi]
-        PV2[PV
-                capacity: 20Gi]
-        FS1[파일 시스템
-                10Gi]
-        FS2[파일 시스템
-                20Gi]
-    end
-    
-    subgraph AWS_Services ["AWS 서비스"]
-        EBS1[EBS 볼륨
-                10Gi]
-        EBS2[EBS 볼륨
-                20Gi]
-    end
-    
-    subgraph Expansion_Types ["확장 유형"]
-        Online[온라인 확장
-                (파드 실행 중)]
-        Offline[오프라인 확장
-                (파드 재시작 필요)]
-    end
-    
-    subgraph Best_Practices ["모범 사례"]
-        Monitoring[사용량 모니터링]
-        Alerts[경고 설정]
-        Incremental[점진적 확장]
-        Automation[자동화 구현]
-    end
-    
-    %% 확장 워크플로우
-    SC --> PVC1
-    PVC1 --> PV1
-    PV1 --> EBS1
-    EBS1 --> FS1
-    
-    PVC1 --> PVC2
-    PVC2 --> PV2
-    PV2 --> EBS2
-    EBS2 --> FS2
-    
-    %% 확장 유형
-    PVC2 --> Online
-    PVC2 --> Offline
-    
-    %% 모범 사례
-    PVC1 --> Monitoring
-    Monitoring --> Alerts
-    Alerts --> PVC2
-    PVC2 --> Incremental
-    Incremental --> Automation
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class EBS1,EBS2 awsService;
-    class SC,PVC1,PVC2,PV1,PV2 k8sComponent;
-    class FS1,FS2 dataStore;
-    class Online,Offline,Monitoring,Alerts,Incremental,Automation default;
-```
+![볼륨 확장 프로세스](../assets/generated-diagrams/volume_expansion_process.drawio)
 
 ### 볼륨 확장 활성화
 
@@ -777,90 +539,7 @@ xfs_growfs /data
 
 EKS에서 스토리지 성능을 최적화하기 위한 다양한 전략을 살펴보겠습니다.
 
-```mermaid
-flowchart TD
-    subgraph Storage_Optimization ["스토리지 성능 최적화"]
-        subgraph EBS_Optimization ["EBS 최적화"]
-            EBS_Type[볼륨 유형 선택]
-            EBS_Perf[성능 조정
-                iops & throughput]
-            EBS_Instance[인스턴스 유형 고려]
-            EBS_Init[볼륨 초기화]
-        end
-        
-        subgraph EFS_Optimization ["EFS 최적화"]
-            EFS_Mode[성능 모드 선택]
-            EFS_Throughput[처리량 모드 선택]
-            EFS_Access[액세스 패턴 최적화]
-            EFS_Mount[마운트 옵션 최적화]
-        end
-        
-        subgraph FSx_Optimization ["FSx for Lustre 최적화"]
-            FSx_Type[배포 유형 선택]
-            FSx_Throughput[처리량 선택]
-            FSx_Stripe[스트라이핑 최적화]
-            FSx_Mount[마운트 옵션 최적화]
-            FSx_Compress[데이터 압축 활성화]
-        end
-        
-        subgraph vLLM_Optimization ["vLLM 워크로드 최적화"]
-            vLLM_Storage[FSx for Lustre 사용]
-            vLLM_Config[최적의 구성]
-            vLLM_Model[모델 파일 최적화]
-            vLLM_Instance[노드 인스턴스 선택]
-        end
-    end
-    
-    subgraph Workload_Types ["워크로드 유형"]
-        DB[데이터베이스]
-        Web[웹 서버]
-        ML[기계 학습]
-        Analytics[데이터 분석]
-        LLM[대규모 언어 모델]
-    end
-    
-    %% 워크로드 연결
-    DB --> EBS_Type
-    DB --> EBS_Perf
-    Web --> EFS_Mode
-    Web --> EFS_Mount
-    ML --> FSx_Type
-    ML --> FSx_Throughput
-    Analytics --> FSx_Stripe
-    Analytics --> FSx_Compress
-    LLM --> vLLM_Storage
-    LLM --> vLLM_Config
-    LLM --> vLLM_Model
-    
-    %% 최적화 관계
-    EBS_Type --> EBS_Perf
-    EBS_Perf --> EBS_Instance
-    EBS_Instance --> EBS_Init
-    
-    EFS_Mode --> EFS_Throughput
-    EFS_Throughput --> EFS_Access
-    EFS_Access --> EFS_Mount
-    
-    FSx_Type --> FSx_Throughput
-    FSx_Throughput --> FSx_Stripe
-    FSx_Stripe --> FSx_Mount
-    FSx_Mount --> FSx_Compress
-    
-    vLLM_Storage --> vLLM_Config
-    vLLM_Config --> vLLM_Model
-    vLLM_Model --> vLLM_Instance
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class DB,Web,ML,Analytics,LLM userApp;
-    class EBS_Type,EBS_Perf,EBS_Instance,EBS_Init,EFS_Mode,EFS_Throughput,EFS_Access,EFS_Mount,FSx_Type,FSx_Throughput,FSx_Stripe,FSx_Mount,FSx_Compress,vLLM_Storage,vLLM_Config,vLLM_Model,vLLM_Instance default;
-```
+![스토리지 성능 최적화](../assets/generated-diagrams/storage_performance_optimization.drawio)
 
 ### EBS 성능 최적화
 

@@ -8,50 +8,7 @@
 
 EKS 클러스터의 네트워크 성능을 최적화하기 위한 여러 전략이 있습니다.
 
-```mermaid
-flowchart TD
-    A[네트워크 성능 최적화] --> B[인스턴스 유형 선택]
-    A --> C[클러스터 네트워킹 모드]
-    A --> D[MTU 최적화]
-    A --> E[TCP 최적화]
-    A --> F[노드 배치 및 지역성]
-    A --> G[네트워크 정책 최적화]
-    
-    B --> B1[향상된 네트워킹 지원 인스턴스]
-    B --> B2[네트워크 대역폭]
-    B --> B3[Elastic Network Adapter]
-    
-    C --> C1[AWS VPC CNI]
-    C --> C2[사용자 정의 네트워킹]
-    C --> C3[대체 CNI 플러그인]
-    
-    D --> D1[기본 MTU 설정]
-    D --> D2[MTU 조정]
-    D --> D3[점보 프레임]
-    
-    E --> E1[TCP 조기 역다중화]
-    E --> E2[TCP keepalive 설정]
-    E --> E3[TCP 버퍼 크기]
-    
-    F --> F1[가용 영역 지역성]
-    F --> F2[노드 지역성]
-    F --> F3[토폴로지 인식 힌트]
-    
-    G --> G1[정책 수 최소화]
-    G --> G2[정책 범위 최적화]
-    G --> G3[정책 평가 순서 고려]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class A,B,C,D,E,F,G default;
-    class B1,B2,B3,C1,C2,C3,D1,D2,D3,E1,E2,E3,F1,F2,F3,G1,G2,G3 default;
-```
+![EKS 네트워크 성능 최적화](../assets/generated-diagrams/network_performance_optimization.drawio)
 
 ### 인스턴스 유형 선택
 
@@ -73,59 +30,7 @@ flowchart TD
 
 EKS는 여러 네트워킹 모드를 지원하며, 각 모드는 성능 특성이 다릅니다.
 
-```mermaid
-flowchart LR
-    subgraph VPC ["AWS VPC"]
-        subgraph EKS_Cluster ["EKS 클러스터"]
-            subgraph CNI_Modes ["네트워킹 모드"]
-                VPC_CNI[AWS VPC CNI]
-                Custom_Net[사용자 정의 네트워킹]
-                Alt_CNI[대체 CNI 플러그인]
-            end
-            
-            subgraph Nodes ["노드"]
-                Node1[노드 1]
-                Node2[노드 2]
-            end
-            
-            subgraph Pods ["포드"]
-                Pod1[포드 1]
-                Pod2[포드 2]
-                Pod3[포드 3]
-            end
-        end
-        
-        ENI1[Elastic Network Interface 1]
-        ENI2[Elastic Network Interface 2]
-        SG1[보안 그룹 1]
-        SG2[보안 그룹 2]
-    end
-    
-    VPC_CNI --> ENI1
-    VPC_CNI --> ENI2
-    Custom_Net --> ENI1
-    Alt_CNI --> Node1
-    Alt_CNI --> Node2
-    
-    ENI1 --> Pod1
-    ENI1 --> Pod2
-    ENI2 --> Pod3
-    
-    ENI1 --> SG1
-    ENI2 --> SG2
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class VPC,ENI1,ENI2,SG1,SG2 awsService;
-    class EKS_Cluster,CNI_Modes,VPC_CNI,Custom_Net,Alt_CNI,Node1,Node2 k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
-```
+![EKS 네트워킹 모드](../assets/generated-diagrams/eks_networking_modes.drawio)
 
 1. **AWS VPC CNI(기본값)**:
    - 포드에 VPC IP 주소를 직접 할당합니다.
@@ -199,45 +104,7 @@ sysctl -w net.ipv4.tcp_wmem="4096 65536 16777216"
 
 노드 배치 및 지역성을 최적화하여 네트워크 성능을 향상시킬 수 있습니다.
 
-```mermaid
-flowchart TD
-    subgraph AWS_Cloud ["AWS 클라우드"]
-        subgraph AZ1 ["가용 영역 1"]
-            Node1[노드 1]
-            Node2[노드 2]
-            subgraph Pods1 ["포드"]
-                Pod1[웹 서버 포드]
-                Pod2[캐시 포드]
-            end
-        end
-        
-        subgraph AZ2 ["가용 영역 2"]
-            Node3[노드 3]
-            Node4[노드 4]
-            subgraph Pods2 ["포드"]
-                Pod3[웹 서버 포드]
-                Pod4[캐시 포드]
-            end
-        end
-    end
-    
-    Pod1 <--> Pod2
-    Pod3 <--> Pod4
-    Pod1 <-.-> Pod3
-    Pod2 <-.-> Pod4
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class AZ1,AZ2 awsService;
-    class Node1,Node2,Node3,Node4 k8sComponent;
-    class Pod1,Pod2,Pod3,Pod4 userApp;
-```
+![노드 배치 및 지역성 최적화](../assets/generated-diagrams/node_placement_locality.drawio)
 
 1. **가용 영역 지역성**:
    - 통신이 빈번한 포드를 같은 가용 영역에 배치하여 지연 시간을 줄입니다.
@@ -345,88 +212,11 @@ spec:
 
 EKS 클러스터에서 발생할 수 있는 일반적인 네트워킹 문제와 해결 방법을 알아보겠습니다.
 
-```mermaid
-flowchart TD
-    A[네트워킹 문제 해결] --> B[포드 네트워킹 문제]
-    A --> C[서비스 및 로드 밸런싱 문제]
-    A --> D[VPC 및 서브넷 문제]
-    A --> E[진단 도구 및 기법]
-    
-    B --> B1[포드 IP 할당 실패]
-    B --> B2[포드 간 통신 문제]
-    B --> B3[DNS 해결 문제]
-    
-    C --> C1[서비스 연결 문제]
-    C --> C2[로드 밸런서 문제]
-    C --> C3[Ingress 문제]
-    
-    D --> D1[IP 주소 부족]
-    D --> D2[라우팅 문제]
-    D --> D3[VPC 엔드포인트 문제]
-    
-    E --> E1[네트워크 진단 포드]
-    E --> E2[tcpdump를 사용한 패킷 캡처]
-    E --> E3[AWS VPC Flow Logs]
-    E --> E4[AWS X-Ray]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class A,B,C,D,E default;
-    class B1,B2,B3,C1,C2,C3,D1,D2,D3,E1,E2 default;
-    class E3,E4 awsService;
-```
+![EKS 네트워킹 문제 해결](../assets/generated-diagrams/networking_troubleshooting.drawio)
 
 ### 포드 네트워킹 문제
 
-```mermaid
-flowchart TD
-    subgraph EKS_Cluster ["EKS 클러스터"]
-        subgraph Node ["노드"]
-            CNI[AWS VPC CNI]
-            ENI[Elastic Network Interface]
-            
-            subgraph Pods ["포드"]
-                Pod1[포드 1]
-                Pod2[포드 2]
-            end
-        end
-        
-        subgraph DNS ["DNS"]
-            CoreDNS[CoreDNS]
-        end
-        
-        subgraph NetworkPolicy ["네트워크 정책"]
-            Policy[네트워크 정책]
-        end
-    end
-    
-    CNI --> ENI
-    ENI --> Pod1
-    ENI --> Pod2
-    Pod1 <--> Pod2
-    Pod1 <--> CoreDNS
-    Pod2 <--> CoreDNS
-    Policy --> Pod1
-    Policy --> Pod2
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class ENI awsService;
-    class CNI,CoreDNS,Policy k8sComponent;
-    class Pod1,Pod2 userApp;
-```
+![포드 네트워킹 문제](../assets/generated-diagrams/pod_networking_issues.drawio)
 
 1. **포드 IP 할당 실패**:
    - 증상: 포드가 `ContainerCreating` 상태에 멈춰 있음
@@ -467,58 +257,7 @@ kubectl exec -it <pod-name> -- dig kubernetes.default.svc.cluster.local
 
 ### 서비스 및 로드 밸런싱 문제
 
-```mermaid
-flowchart TD
-    subgraph EKS_Cluster ["EKS 클러스터"]
-        subgraph Services ["서비스"]
-            Service[서비스]
-            Endpoints[엔드포인트]
-        end
-        
-        subgraph Pods ["포드"]
-            Pod1[포드 1]
-            Pod2[포드 2]
-        end
-        
-        subgraph Ingress_Controller ["Ingress 컨트롤러"]
-            IC[AWS Load Balancer Controller]
-        end
-    end
-    
-    subgraph AWS_Resources ["AWS 리소스"]
-        LB[로드 밸런서]
-        TG[대상 그룹]
-        SG[보안 그룹]
-    end
-    
-    Client((클라이언트)) --> LB
-    LB --> TG
-    TG --> Pod1
-    TG --> Pod2
-    
-    Service --> Endpoints
-    Endpoints --> Pod1
-    Endpoints --> Pod2
-    
-    IC --> LB
-    
-    SG --> LB
-    SG --> Pod1
-    SG --> Pod2
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class LB,TG,SG awsService;
-    class Service,Endpoints,IC k8sComponent;
-    class Pod1,Pod2 userApp;
-    class Client default;
-```
+![서비스 및 로드 밸런서 문제](../assets/generated-diagrams/service_loadbalancer_issues.drawio)
 
 1. **서비스 연결 문제**:
    - 증상: 서비스를 통해 포드에 연결할 수 없음
