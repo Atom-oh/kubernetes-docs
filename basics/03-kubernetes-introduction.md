@@ -1,7 +1,7 @@
 # Kubernetes 소개
 
-> **지원 버전**: Kubernetes 1.31, 1.32, 1.33  
-> **마지막 업데이트**: 2025년 7월 25일
+> **지원 버전**: Kubernetes 1.31, 1.32, 1.33
+> **마지막 업데이트**: 2025년 11월 24일
 
 Kubernetes(K8s)는 컨테이너화된 애플리케이션의 배포, 확장 및 관리를 자동화하는 오픈소스 컨테이너 오케스트레이션 플랫폼입니다. 이 문서에서는 Kubernetes의 기본 개념, 아키텍처, 주요 구성 요소 및 기능에 대해 설명합니다.
 
@@ -1476,9 +1476,62 @@ kubectl proxy
 
 ## 결론
 
-Kubernetes는 컨테이너화된 애플리케이션의 배포, 확장 및 관리를 자동화하는 강력한 플랫폼입니다. 이 문서에서는 Kubernetes의 기본 개념, 아키텍처, 주요 구성 요소 및 기능에 대해 살펴보았습니다. 또한 Amazon EKS와의 차이점과 Kubernetes를 시작하는 방법에 대해서도 알아보았습니다.
+Kubernetes는 컨테이너화된 애플리케이션의 배포, 확장 및 관리를 자동화하는 강력한 플랫폼입니다. 이 문서에서 다룬 핵심 내용을 정리하면:
+
+### 핵심 아키텍처
+- **컨트롤 플레인**: 클러스터의 두뇌 역할 (API Server, etcd, Scheduler, Controller Manager)
+- **워커 노드**: 실제 애플리케이션을 실행하는 노드 (kubelet, kube-proxy, Container Runtime)
+- **선언적 구성**: 원하는 상태를 정의하면 Kubernetes가 현재 상태를 원하는 상태로 맞춤
+
+### 주요 객체 및 리소스
+- **기본 객체**: Pod, Service, Volume, Namespace
+- **워크로드 리소스**: Deployment, StatefulSet, DaemonSet, Job, CronJob
+- **구성 및 보안**: ConfigMap, Secret, RBAC, ServiceAccount
+- **네트워킹**: Service, Ingress, NetworkPolicy
+- **스토리지**: PersistentVolume, PersistentVolumeClaim, StorageClass
+
+### 학습 경로 권장사항
+
+**1단계: 로컬 환경 구축**
+- minikube 또는 kind로 로컬 클러스터 생성
+- kubectl 명령어 익히기
+- 기본 객체(Pod, Deployment, Service) 실습
+
+**2단계: 핵심 개념 마스터**
+- 워크로드 리소스 이해 및 실습
+- ConfigMap과 Secret으로 구성 관리
+- Service와 Ingress로 네트워킹 구성
+- PV와 PVC로 스토리지 관리
+
+**3단계: 고급 기능 학습**
+- RBAC와 보안 정책
+- 자동 확장 (HPA, VPA, Cluster Autoscaler)
+- 모니터링 및 로깅 (Prometheus, Grafana)
+- 서비스 메시 (Istio, Linkerd)
+
+**4단계: 프로덕션 운영**
+- Amazon EKS 또는 다른 관리형 Kubernetes 사용
+- CI/CD 파이프라인 통합
+- 재해 복구 및 백업 전략
+- 비용 최적화 및 리소스 관리
+
+### 다음 단계
+
+- **EKS 심화 학습**: EKS 특화 기능 (Fargate, VPC CNI, ALB Controller)
+- **고급 네트워킹**: CNI 플러그인 (Calico, Cilium)
+- **옵저버빌리티**: 메트릭, 로그, 트레이싱
+- **GitOps**: ArgoCD, Flux
+- **보안 강화**: Pod Security Standards, Network Policies, OPA/Gatekeeper
 
 Kubernetes는 계속 발전하고 있으며, 클라우드 네이티브 애플리케이션 개발 및 운영의 핵심 요소가 되었습니다. 이 문서가 Kubernetes 여정을 시작하는 데 도움이 되기를 바랍니다.
+
+### 추가 학습 리소스
+
+- **공식 문서**: [Kubernetes 공식 문서](https://kubernetes.io/docs/)는 가장 정확하고 최신의 정보를 제공합니다
+- **인터랙티브 튜토리얼**: [Kubernetes Tutorials](https://kubernetes.io/docs/tutorials/)에서 실습 가능
+- **커뮤니티**: [Kubernetes Slack](https://slack.k8s.io/), [Reddit r/kubernetes](https://reddit.com/r/kubernetes)
+- **인증**: CKA(Certified Kubernetes Administrator), CKAD(Certified Kubernetes Application Developer)
+- **한국 커뮤니티**: Kubernetes Korea User Group, AWS Korea User Group
 
 ## 퀴즈
 

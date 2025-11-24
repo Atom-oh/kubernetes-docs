@@ -109,10 +109,10 @@ Kubernetes CRD 검증 및 저장은 Control Plane(Istiod)의 역할입니다.
 
 Amazon EKS 프로덕션 환경에서 Istio를 설치할 때 **권장되는 프로파일**은?
 
-A. default
-B. demo
-C. minimal
-D. production
+A. default  
+B. demo  
+C. minimal  
+D. production  
 
 <details>
 <summary>정답 및 해설</summary>

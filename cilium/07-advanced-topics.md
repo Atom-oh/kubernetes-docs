@@ -1,7 +1,7 @@
 # 고급 주제 및 실제 사례
 
-> **지원 버전**: Cilium 1.13, 1.14  
-> **마지막 업데이트**: 2025년 7월 25일
+> **지원 버전**: Cilium 1.18  
+> **마지막 업데이트**: 2025년 11월 24일
 
 ## 실습 환경 설정
 
@@ -175,25 +175,6 @@ data:
 | 메모리 부족 | OOM 종료, 재시작 | `kubectl top pods -n kube-system` | 메모리 제한 증가 |
 | 정책 적용 실패 | 예상치 못한 연결 차단 | `cilium policy get` | 정책 디버깅, 로그 확인 |
 | 노드 간 통신 문제 | 포드 간 연결 실패 | `cilium connectivity test` | 라우팅 테이블, 방화벽 규칙 확인 |
-  
-  # 모니터링 구성
-  monitor-aggregation: "medium"
-  monitor-queue-size: "32768"
-  
-  # 네트워킹 최적화
-  enable-auto-direct-routing: "true"
-  enable-local-redirect-policy: "true"
-  enable-bandwidth-manager: "true"
-  enable-bbr: "true"
-  
-  # 커널 매개변수 설정
-  sysctl-config: |-
-    net.core.somaxconn=32768
-    net.ipv4.tcp_max_syn_backlog=32768
-    net.ipv4.neigh.default.gc_thresh1=1024
-    net.ipv4.neigh.default.gc_thresh2=4096
-    net.ipv4.neigh.default.gc_thresh3=8192
-```
 
 ### 일반적인 문제 및 해결 방법:
 
@@ -537,6 +518,120 @@ Cilium은 지속적으로 발전하고 있으며, 미래 로드맵은 새로운 
    - 네트워킹 및 보안 표준 기여
    - 상호 운용성 향상
    - 업계 모범 사례 정의
+
+## Cilium 1.18의 새로운 기능
+
+Cilium 1.18은 네트워킹, 보안, 관찰성 영역에서 중요한 개선사항을 도입했습니다.
+
+### BGP 컨트롤 플레인 개선
+
+Cilium 1.18은 BGP 컨트롤 플레인을 대폭 개선하여 더욱 유연하고 확장 가능한 라우팅 구성을 제공합니다:
+
+```yaml
+apiVersion: cilium.io/v2alpha1
+kind: CiliumBGPPeeringPolicy
+metadata:
+  name: bgp-peering-policy
+spec:
+  virtualRouters:
+  - localASN: 64512
+    exportPodCIDR: true
+    neighbors:
+    - peerAddress: "192.168.1.1/32"
+      peerASN: 64513
+      connectRetryTimeSeconds: 120
+      holdTimeSeconds: 90
+      keepAliveTimeSeconds: 30
+```
+
+**주요 개선사항**:
+- 더 세밀한 BGP 피어 구성
+- 향상된 라우트 필터링 옵션
+- 멀티 홉 BGP 지원 개선
+- BGP Graceful Restart 지원
+
+### 향상된 네트워크 관찰성
+
+Hubble의 새로운 기능으로 더 깊은 네트워크 인사이트를 제공합니다:
+
+**새로운 메트릭**:
+- 세분화된 레이턴시 메트릭
+- 향상된 드롭 이유 분석
+- DNS 쿼리 추적 개선
+- TCP 연결 상태 추적
+
+**실시간 플로우 분석**:
+```bash
+# 향상된 Hubble 쿼리
+hubble observe --protocol tcp --verdict DROPPED --since 1h
+hubble observe --dns --type A --from-label app=frontend
+hubble observe --http-status 5xx --from-namespace production
+```
+
+### 성능 최적화
+
+Cilium 1.18은 대규모 클러스터에서의 성능을 크게 개선했습니다:
+
+**메모리 최적화**:
+- eBPF 맵 메모리 사용량 20% 감소
+- 연결 추적 최적화로 메모리 효율성 향상
+- 더 효율적인 엔드포인트 관리
+
+**CPU 최적화**:
+- eBPF 프로그램 실행 속도 15% 향상
+- 네트워크 정책 평가 성능 개선
+- 더 빠른 서비스 로드 밸런싱
+
+### 보안 강화
+
+**네트워크 정책 개선**:
+```yaml
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: enhanced-l7-policy
+spec:
+  endpointSelector:
+    matchLabels:
+      app: backend
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: frontend
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP
+      rules:
+        http:
+        - method: "GET|POST"
+          path: "/api/v1/.*"
+          headers:
+          - "X-API-Version: 1.0"
+```
+
+**암호화 개선**:
+- WireGuard 암호화 성능 30% 향상
+- IPsec 암호화 스위트 확장
+- 더 빠른 키 로테이션
+
+### 멀티클러스터 네트워킹 개선
+
+Cilium 1.18은 멀티클러스터 시나리오에서의 성능과 안정성을 개선했습니다:
+
+**ClusterMesh 개선**:
+- 더 빠른 클러스터 간 서비스 디스커버리
+- 향상된 장애 복구 메커니즘
+- 더 나은 로드 밸런싱 알고리즘
+- 클러스터 간 네트워크 정책 전파 개선
+
+### Kubernetes 1.32 지원
+
+Cilium 1.18은 Kubernetes 1.32의 새로운 기능을 완전히 지원합니다:
+
+- Gateway API v1.0 지원
+- 향상된 서비스 API 지원
+- 새로운 Kubernetes 네트워킹 기능 통합
 
 ## 결론 및 다음 단계
 

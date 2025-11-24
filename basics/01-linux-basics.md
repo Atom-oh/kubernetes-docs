@@ -1,7 +1,7 @@
 # Linux 기초
 
-> **지원 버전**: 모든 주요 Linux 배포판 (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+)  
-> **마지막 업데이트**: 2025년 7월 25일
+> **지원 버전**: 모든 주요 Linux 배포판 (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+)
+> **마지막 업데이트**: 2025년 11월 24일
 
 Kubernetes와 컨테이너 기술을 이해하기 위해서는 Linux에 대한 기본적인 이해가 필수적입니다. 이 문서에서는 Kubernetes 환경에서 특히 중요한 Linux의 핵심 개념들을 다룹니다.
 
@@ -44,6 +44,13 @@ ssh -i your-key.pem ec2-user@your-instance-public-ip
 * [파일 시스템](#파일-시스템)
 * [네트워킹 기초](#네트워킹-기초)
 * [보안 컨텍스트](#보안-컨텍스트)
+* [systemd와 서비스 관리](#systemd와-서비스-관리)
+* [커널 파라미터와 모듈](#커널-파라미터와-모듈)
+* [시스템 리소스 제한](#시스템-리소스-제한)
+* [로그 관리](#로그-관리)
+* [DNS와 네트워크 설정](#dns와-네트워크-설정)
+* [시간 동기화](#시간-동기화)
+* [패키지 관리](#패키지-관리)
 * [주요 Linux 명령어](#주요-linux-명령어)
 * [컨테이너 관련 Linux 기능](#컨테이너-관련-linux-기능)
 
@@ -322,6 +329,629 @@ chmod 1755 <파일명>  # sticky bit 설정
 * **SELinux (Security-Enhanced Linux)**: NSA에서 개발한 강제적 접근 제어 시스템
 * **AppArmor**: 프로그램별 보안 프로필을 통한 접근 제어 시스템
 
+```bash
+# SELinux 상태 확인
+getenforce
+
+# SELinux 모드 변경
+setenforce 0  # Permissive 모드
+setenforce 1  # Enforcing 모드
+
+# AppArmor 상태 확인
+aa-status
+
+# AppArmor 프로필 관리
+aa-enforce /etc/apparmor.d/<프로필>
+aa-complain /etc/apparmor.d/<프로필>
+```
+
+## systemd와 서비스 관리
+
+systemd는 현대적인 Linux 시스템의 init 시스템이자 서비스 관리자입니다. Kubernetes 노드에서 kubelet, containerd 등 핵심 서비스를 관리하는 데 사용됩니다.
+
+### systemd의 주요 기능
+
+* **서비스 관리**: 시스템 서비스의 시작, 중지, 재시작, 활성화/비활성화
+* **의존성 관리**: 서비스 간 의존성 자동 관리 및 병렬 시작
+* **로깅**: journald를 통한 통합 로그 관리
+* **타이머**: cron 대신 사용할 수 있는 타이머 유닛
+* **리소스 관리**: cgroups를 통한 서비스별 리소스 제한
+
+### systemd 유닛 타입
+
+* **service**: 시스템 서비스 (예: kubelet.service, containerd.service)
+* **socket**: 소켓 기반 활성화
+* **target**: 유닛 그룹 (런레벨과 유사)
+* **timer**: 예약 작업
+* **mount**: 파일 시스템 마운트
+* **device**: 장치 유닛
+
+### systemd 명령어
+
+```bash
+# 서비스 상태 확인
+systemctl status kubelet
+systemctl status containerd
+
+# 서비스 제어
+systemctl start <서비스>
+systemctl stop <서비스>
+systemctl restart <서비스>
+systemctl reload <서비스>  # 설정 다시 읽기
+
+# 부팅 시 자동 시작 설정
+systemctl enable <서비스>
+systemctl disable <서비스>
+
+# 서비스 로그 확인
+journalctl -u kubelet -f  # 실시간 로그
+journalctl -u kubelet --since "1 hour ago"
+journalctl -u kubelet --no-pager
+
+# 모든 서비스 목록
+systemctl list-units --type=service
+systemctl list-unit-files --type=service
+
+# 실패한 서비스 확인
+systemctl --failed
+
+# systemd 설정 다시 읽기
+systemctl daemon-reload
+```
+
+### systemd 유닛 파일 작성
+
+Kubernetes 관련 서비스의 systemd 유닛 파일 예시:
+
+```ini
+# /etc/systemd/system/kubelet.service
+[Unit]
+Description=kubelet: The Kubernetes Node Agent
+Documentation=https://kubernetes.io/docs/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/kubelet
+Restart=always
+StartLimitInterval=0
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### systemd 리소스 제한
+
+```bash
+# CPU 제한 (20%)
+systemctl set-property kubelet CPUQuota=20%
+
+# 메모리 제한 (1GB)
+systemctl set-property kubelet MemoryLimit=1G
+
+# I/O 가중치 설정 (100-1000, 기본 100)
+systemctl set-property kubelet IOWeight=500
+
+# 설정 확인
+systemctl show kubelet | grep -E 'CPUQuota|MemoryLimit|IOWeight'
+```
+
+## 커널 파라미터와 모듈
+
+### sysctl을 통한 커널 파라미터 설정
+
+sysctl은 실행 중인 커널의 파라미터를 조회하고 변경하는 도구입니다. Kubernetes 클러스터 구성 시 네트워크 및 시스템 파라미터 튜닝에 필수적입니다.
+
+#### Kubernetes에 필요한 주요 sysctl 설정
+
+```bash
+# IP 포워딩 활성화 (컨테이너 네트워킹에 필수)
+sysctl -w net.ipv4.ip_forward=1
+sysctl -w net.ipv6.conf.all.forwarding=1
+
+# 브릿지 트래픽이 iptables를 통과하도록 설정 (CNI 플러그인에 필수)
+sysctl -w net.bridge.bridge-nf-call-iptables=1
+sysctl -w net.bridge.bridge-nf-call-ip6tables=1
+
+# 최대 파일 디스크립터 수 증가
+sysctl -w fs.file-max=2097152
+
+# 네트워크 성능 튜닝
+sysctl -w net.core.somaxconn=32768
+sysctl -w net.ipv4.tcp_max_syn_backlog=8192
+sysctl -w net.core.netdev_max_backlog=16384
+
+# ARP 캐시 설정 (대규모 클러스터)
+sysctl -w net.ipv4.neigh.default.gc_thresh1=80000
+sysctl -w net.ipv4.neigh.default.gc_thresh2=90000
+sysctl -w net.ipv4.neigh.default.gc_thresh3=100000
+
+# 현재 설정 확인
+sysctl net.ipv4.ip_forward
+sysctl -a | grep bridge-nf-call
+
+# 영구 설정 (/etc/sysctl.conf 또는 /etc/sysctl.d/*.conf)
+cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes.conf
+net.ipv4.ip_forward = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF
+
+# 설정 적용
+sysctl --system
+```
+
+### 커널 모듈 관리
+
+많은 CNI 플러그인과 스토리지 드라이버가 특정 커널 모듈을 필요로 합니다.
+
+```bash
+# 모듈 로드
+modprobe overlay  # OverlayFS (컨테이너 스토리지)
+modprobe br_netfilter  # 브릿지 네트워킹
+modprobe ip_vs  # IPVS 로드 밸런싱 (kube-proxy IPVS 모드)
+modprobe ip_vs_rr  # Round Robin 알고리즘
+modprobe ip_vs_wrr  # Weighted Round Robin
+modprobe ip_vs_sh  # Source Hashing
+
+# 로드된 모듈 확인
+lsmod | grep overlay
+lsmod | grep br_netfilter
+
+# 모듈 정보 확인
+modinfo overlay
+
+# 부팅 시 자동 로드 설정
+cat <<EOF | sudo tee /etc/modules-load.d/kubernetes.conf
+overlay
+br_netfilter
+ip_vs
+ip_vs_rr
+ip_vs_wrr
+ip_vs_sh
+EOF
+
+# 모듈 언로드
+modprobe -r <모듈명>
+```
+
+### 커널 버전 및 기능 확인
+
+```bash
+# 커널 버전 확인
+uname -r
+
+# 커널 컴파일 옵션 확인
+cat /boot/config-$(uname -r) | grep OVERLAY
+cat /boot/config-$(uname -r) | grep NETFILTER
+
+# 사용 가능한 커널 기능 확인
+cat /proc/filesystems  # 지원되는 파일 시스템
+cat /proc/sys/net/ipv4/ip_forward  # IP 포워딩 상태
+```
+
+## 시스템 리소스 제한
+
+### ulimit - 사용자별 리소스 제한
+
+ulimit은 프로세스가 사용할 수 있는 시스템 리소스를 제한합니다. Kubernetes 노드에서 충분한 리소스를 확보하기 위해 조정이 필요할 수 있습니다.
+
+```bash
+# 현재 제한 확인
+ulimit -a
+
+# 주요 제한 항목
+ulimit -n      # 열 수 있는 파일 디스크립터 수
+ulimit -u      # 최대 프로세스 수
+ulimit -m      # 최대 메모리 크기
+ulimit -v      # 가상 메모리 크기
+
+# 제한 변경 (현재 세션)
+ulimit -n 65536  # 파일 디스크립터를 65536으로 증가
+
+# 영구 설정 (/etc/security/limits.conf)
+sudo tee -a /etc/security/limits.conf <<EOF
+*               soft    nofile          65536
+*               hard    nofile          65536
+*               soft    nproc           32768
+*               hard    nproc           32768
+EOF
+
+# 특정 사용자/그룹 설정
+sudo tee -a /etc/security/limits.conf <<EOF
+root            soft    nofile          65536
+root            hard    nofile          65536
+@docker         soft    nofile          65536
+@docker         hard    nofile          65536
+EOF
+```
+
+### PAM 제한 설정
+
+```bash
+# PAM 설정 확인
+cat /etc/pam.d/common-session
+cat /etc/pam.d/common-session-noninteractive
+
+# limits.conf가 적용되도록 PAM 설정에 추가
+echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
+```
+
+### 프로세스별 리소스 확인
+
+```bash
+# 프로세스의 현재 리소스 제한 확인
+cat /proc/<PID>/limits
+
+# 특정 프로세스의 파일 디스크립터 확인
+ls -l /proc/<PID>/fd | wc -l
+```
+
+## 로그 관리
+
+### journald - systemd 통합 로깅
+
+journald는 systemd의 로깅 시스템으로, Kubernetes 노드의 시스템 서비스 로그를 관리합니다.
+
+```bash
+# 전체 시스템 로그
+journalctl
+
+# 특정 서비스 로그
+journalctl -u kubelet
+journalctl -u containerd
+journalctl -u docker
+
+# 실시간 로그 (tail -f와 유사)
+journalctl -u kubelet -f
+
+# 시간 범위 지정
+journalctl --since "2025-11-24 10:00:00"
+journalctl --since "1 hour ago"
+journalctl --since yesterday
+journalctl --until "2025-11-24 12:00:00"
+
+# 우선순위별 필터링
+journalctl -p err        # 에러만
+journalctl -p warning    # 경고 이상
+journalctl -p debug      # 디버그 포함 모두
+
+# 출력 형식 변경
+journalctl -u kubelet -o json        # JSON 형식
+journalctl -u kubelet -o json-pretty # Pretty JSON
+journalctl -u kubelet -o cat         # 메시지만
+
+# 부팅 로그
+journalctl -b           # 현재 부팅 로그
+journalctl -b -1        # 이전 부팅 로그
+journalctl --list-boots # 부팅 목록
+
+# 디스크 사용량 확인
+journalctl --disk-usage
+
+# 로그 정리
+journalctl --vacuum-time=7d   # 7일 이상된 로그 삭제
+journalctl --vacuum-size=1G   # 1GB 이상 로그 삭제
+```
+
+### journald 설정
+
+```bash
+# journald 설정 파일
+sudo vi /etc/systemd/journald.conf
+
+# 주요 설정 옵션
+# Storage=persistent        # 디스크에 영구 저장
+# SystemMaxUse=1G          # 최대 디스크 사용량
+# SystemKeepFree=500M      # 최소 여유 공간
+# MaxRetentionSec=1month   # 최대 보관 기간
+
+# 설정 적용
+sudo systemctl restart systemd-journald
+```
+
+### 전통적인 syslog
+
+일부 시스템에서는 여전히 syslog를 사용합니다.
+
+```bash
+# syslog 파일 위치
+/var/log/syslog         # Debian/Ubuntu
+/var/log/messages       # RHEL/CentOS
+
+# 실시간 로그 확인
+tail -f /var/log/syslog
+
+# 로그 검색
+grep "kubelet" /var/log/syslog
+grep -i "error" /var/log/syslog
+```
+
+### 로그 로테이션
+
+로그 파일이 무한정 커지지 않도록 로그 로테이션을 설정합니다.
+
+```bash
+# logrotate 설정
+sudo vi /etc/logrotate.d/kubernetes
+
+# 예시 설정
+/var/log/kubernetes/*.log {
+    daily
+    rotate 7
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+}
+
+# 수동으로 로테이션 실행
+sudo logrotate -f /etc/logrotate.d/kubernetes
+```
+
+## DNS와 네트워크 설정
+
+### DNS 설정
+
+DNS는 Kubernetes 클러스터 내부 서비스 디스커버리의 핵심입니다.
+
+```bash
+# DNS 설정 파일
+cat /etc/resolv.conf
+
+# 예시 설정
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+search cluster.local svc.cluster.local
+options ndots:5
+
+# DNS 조회 테스트
+nslookup kubernetes.default.svc.cluster.local
+dig kubernetes.default.svc.cluster.local
+
+# hosts 파일
+cat /etc/hosts
+```
+
+### systemd-resolved
+
+현대적인 Linux 배포판에서는 systemd-resolved를 사용합니다.
+
+```bash
+# systemd-resolved 상태 확인
+systemctl status systemd-resolved
+
+# DNS 서버 확인
+resolvectl status
+
+# DNS 캐시 통계
+resolvectl statistics
+
+# DNS 캐시 초기화
+resolvectl flush-caches
+```
+
+### 네트워크 설정 파일
+
+```bash
+# NetworkManager (RHEL/CentOS 8+, Ubuntu 18.04+)
+nmcli connection show
+nmcli device status
+
+# netplan (Ubuntu 18.04+)
+cat /etc/netplan/*.yaml
+
+# 예시 netplan 설정
+network:
+  version: 2
+  ethernets:
+    eth0:
+      dhcp4: true
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+
+# 설정 적용
+sudo netplan apply
+```
+
+## 시간 동기화
+
+시간 동기화는 분산 시스템에서 매우 중요합니다. Kubernetes 클러스터의 모든 노드는 정확한 시간을 유지해야 합니다.
+
+### chronyd (권장)
+
+chronyd는 현대적인 NTP 클라이언트로, ntpd보다 빠르게 시간을 동기화합니다.
+
+```bash
+# chronyd 설치 (RHEL/CentOS)
+sudo yum install chrony
+
+# chronyd 설치 (Ubuntu/Debian)
+sudo apt install chrony
+
+# 서비스 상태 확인
+systemctl status chronyd
+
+# 시간 동기화 상태 확인
+chronyc tracking
+
+# NTP 서버 목록
+chronyc sources
+
+# 상세 정보
+chronyc sourcestats
+
+# 수동 시간 동기화
+sudo chronyc makestep
+```
+
+### chronyd 설정
+
+```bash
+# 설정 파일
+sudo vi /etc/chrony.conf
+
+# 주요 설정
+# NTP 서버 설정
+server 0.pool.ntp.org iburst
+server 1.pool.ntp.org iburst
+server 2.pool.ntp.org iburst
+server 3.pool.ntp.org iburst
+
+# 빠른 동기화
+makestep 1.0 3
+
+# 설정 적용
+sudo systemctl restart chronyd
+```
+
+### timesyncd (Ubuntu 기본)
+
+Ubuntu는 기본적으로 systemd-timesyncd를 사용합니다.
+
+```bash
+# 상태 확인
+timedatectl status
+
+# NTP 동기화 상태
+timedatectl show-timesync --all
+
+# 설정 파일
+sudo vi /etc/systemd/timesyncd.conf
+
+# 예시 설정
+[Time]
+NTP=0.pool.ntp.org 1.pool.ntp.org
+FallbackNTP=time.google.com
+
+# 서비스 재시작
+sudo systemctl restart systemd-timesyncd
+```
+
+### 시간대 설정
+
+```bash
+# 현재 시간 및 시간대 확인
+timedatectl
+
+# 시간대 목록
+timedatectl list-timezones
+
+# 시간대 변경
+sudo timedatectl set-timezone Asia/Seoul
+
+# 시간 수동 설정 (NTP 비활성화 시)
+sudo timedatectl set-time "2025-11-24 12:00:00"
+
+# NTP 활성화/비활성화
+sudo timedatectl set-ntp true
+```
+
+## 패키지 관리
+
+Kubernetes와 관련 도구를 설치하고 관리하기 위한 패키지 관리자 사용법입니다.
+
+### apt (Debian/Ubuntu)
+
+```bash
+# 패키지 목록 업데이트
+sudo apt update
+
+# 패키지 업그레이드
+sudo apt upgrade
+
+# 패키지 설치
+sudo apt install <패키지명>
+
+# 패키지 제거
+sudo apt remove <패키지명>
+sudo apt purge <패키지명>  # 설정 파일도 함께 제거
+
+# 패키지 검색
+apt search <키워드>
+
+# 패키지 정보 확인
+apt show <패키지명>
+
+# 설치된 패키지 목록
+apt list --installed
+
+# 저장소 추가 (Kubernetes 예시)
+sudo apt install -y apt-transport-https ca-certificates curl
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | \
+  sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
+  https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | \
+  sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+# 불필요한 패키지 정리
+sudo apt autoremove
+sudo apt autoclean
+```
+
+### yum/dnf (RHEL/CentOS/Fedora)
+
+```bash
+# 패키지 설치
+sudo yum install <패키지명>
+sudo dnf install <패키지명>  # Fedora/RHEL 8+
+
+# 패키지 업데이트
+sudo yum update
+sudo dnf update
+
+# 패키지 제거
+sudo yum remove <패키지명>
+sudo dnf remove <패키지명>
+
+# 패키지 검색
+yum search <키워드>
+dnf search <키워드>
+
+# 패키지 정보
+yum info <패키지명>
+dnf info <패키지명>
+
+# 설치된 패키지 목록
+yum list installed
+dnf list installed
+
+# 저장소 추가 (Kubernetes 예시)
+cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+EOF
+
+# 캐시 정리
+sudo yum clean all
+sudo dnf clean all
+```
+
+### 패키지 버전 고정
+
+Kubernetes 구성 요소는 버전 호환성이 중요하므로 자동 업데이트를 방지해야 합니다.
+
+```bash
+# apt (Ubuntu/Debian)
+sudo apt-mark hold kubelet kubeadm kubectl
+
+# apt hold 해제
+sudo apt-mark unhold kubelet kubeadm kubectl
+
+# yum (RHEL/CentOS)
+sudo yum install yum-plugin-versionlock
+sudo yum versionlock add kubelet kubeadm kubectl
+
+# yum versionlock 해제
+sudo yum versionlock delete kubelet kubeadm kubectl
+```
+
 ## 주요 Linux 명령어
 
 ### 파일 및 디렉토리 관리
@@ -442,7 +1072,25 @@ Linux 기능은 전통적인 root 권한을 더 작은 권한 단위로 나눈 �
 
 ## 결론
 
-Linux의 기본 개념과 기능은 Kubernetes와 컨테이너 기술을 이해하는 데 필수적입니다. 특히 네임스페이스, cgroups, OverlayFS와 같은 기능은 컨테이너 격리와 자원 관리의 기반이 됩니다. 이러한 개념을 이해함으로써 Kubernetes 환경에서 발생하는 문제를 더 효과적으로 해결하고 최적화할 수 있습니다.
+Linux의 기본 개념과 기능은 Kubernetes와 컨테이너 기술을 이해하는 데 필수적입니다. 이 문서에서 다룬 주요 내용을 정리하면:
+
+### 핵심 기술
+* **네임스페이스와 cgroups**: 컨테이너 격리와 자원 관리의 기반
+* **OverlayFS**: 컨테이너 이미지 레이어링의 핵심
+* **systemd**: Kubernetes 노드 서비스 관리
+
+### 운영 필수 지식
+* **커널 파라미터 튜닝**: sysctl을 통한 네트워킹 및 시스템 최적화
+* **모듈 관리**: CNI 플러그인과 스토리지 드라이버 지원
+* **로그 관리**: journald를 통한 시스템 및 서비스 로그 분석
+* **시간 동기화**: 분산 시스템의 일관성 유지
+
+### 문제 해결
+* **리소스 제한**: ulimit과 cgroups를 통한 리소스 관리
+* **네트워킹**: DNS, 브릿지, iptables 설정
+* **패키지 관리**: Kubernetes 구성 요소의 버전 관리
+
+이러한 Linux 기초 지식을 바탕으로 Kubernetes 환경에서 발생하는 문제를 효과적으로 해결하고, 클러스터를 최적화하며, 안정적으로 운영할 수 있습니다.
 
 ## 퀴즈
 

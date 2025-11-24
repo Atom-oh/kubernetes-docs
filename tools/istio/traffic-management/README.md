@@ -460,3 +460,7 @@ istioctl proxy-config clusters <pod-name> -n <namespace>
 - [VirtualService Reference](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
 - [DestinationRule Reference](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
 - [Gateway Reference](https://istio.io/latest/docs/reference/config/networking/gateway/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [Istio Traffic Management 퀴즈](../../../quizzes/tools/istio/traffic-management.md)를 풀어보세요.

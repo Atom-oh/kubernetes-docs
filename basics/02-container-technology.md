@@ -1,16 +1,21 @@
 # 컨테이너 기술
 
+> **지원 버전**: Docker 20.10+, containerd 1.6+, CRI-O 1.24+
+> **마지막 업데이트**: 2025년 11월 24일
+
 컨테이너는 애플리케이션과 그 종속성을 함께 패키징하여 다양한 환경에서 일관되게 실행할 수 있게 해주는 기술입니다. 이 문서에서는 컨테이너의 기본 개념, 작동 원리, 그리고 Kubernetes와의 관계에 대해 설명합니다.
 
 ## 목차
 - [컨테이너란?](#컨테이너란)
 - [컨테이너 vs 가상 머신](#컨테이너-vs-가상-머신)
+- [컨테이너의 기술적 기반](#컨테이너의-기술적-기반)
 - [컨테이너 런타임](#컨테이너-런타임)
 - [컨테이너 이미지](#컨테이너-이미지)
 - [Dockerfile](#dockerfile)
 - [컨테이너 네트워킹](#컨테이너-네트워킹)
 - [컨테이너 스토리지](#컨테이너-스토리지)
 - [컨테이너 보안](#컨테이너-보안)
+- [컨테이너 라이프사이클 관리](#컨테이너-라이프사이클-관리)
 - [컨테이너 오케스트레이션](#컨테이너-오케스트레이션)
 - [AWS에서의 컨테이너](#aws에서의-컨테이너)
 
@@ -53,6 +58,105 @@
 | 보안 | 상대적으로 낮음 (공유 커널) | 상대적으로 높음 (완전 격리) |
 | 리소스 효율성 | 높음 | 중간 |
 | 사용 사례 | 마이크로서비스, CI/CD, 개발/테스트 | 레거시 앱, 다양한 OS 요구사항, 높은 보안 요구 |
+
+## 컨테이너의 기술적 기반
+
+컨테이너는 Linux 커널의 여러 기능을 활용하여 구현됩니다. 이러한 기술들은 01-linux-basics.md에서 상세히 다루었으며, 여기서는 컨테이너와의 관계를 중심으로 설명합니다.
+
+### 네임스페이스를 통한 격리
+
+컨테이너는 Linux 네임스페이스를 사용하여 프로세스를 격리합니다. 각 컨테이너는 고유한 네임스페이스 집합을 가지며, 이를 통해 독립적인 실행 환경을 제공받습니다.
+
+```bash
+# 컨테이너의 네임스페이스 확인
+docker inspect <container-id> | grep -A 10 "Pid"
+ls -la /proc/<pid>/ns/
+
+# 컨테이너 내부에서 프로세스 확인 (격리된 PID 네임스페이스)
+docker exec <container-id> ps aux
+
+# 호스트에서 같은 프로세스 확인 (실제 PID)
+ps aux | grep <process-name>
+```
+
+**컨테이너가 사용하는 네임스페이스**:
+- **PID**: 컨테이너는 자신만의 프로세스 트리를 가짐 (PID 1부터 시작)
+- **Network**: 독립적인 네트워크 스택 (IP 주소, 라우팅 테이블, 포트)
+- **Mount**: 독립적인 파일 시스템 뷰
+- **UTS**: 독립적인 호스트네임
+- **IPC**: 독립적인 프로세스 간 통신 공간
+- **User**: 독립적인 사용자 ID 매핑 (선택적)
+
+### cgroups를 통한 리소스 제한
+
+컨테이너는 cgroups를 사용하여 리소스 사용량을 제한하고 모니터링합니다.
+
+```bash
+# CPU 제한이 있는 컨테이너 실행
+docker run --cpus=0.5 --memory=512m nginx
+
+# 컨테이너의 리소스 사용량 확인
+docker stats <container-id>
+
+# 컨테이너의 cgroup 설정 확인
+docker inspect <container-id> | grep -A 20 "Cgroup"
+
+# 호스트에서 컨테이너의 cgroup 확인
+cat /sys/fs/cgroup/system.slice/docker-<container-id>.scope/cpu.max
+cat /sys/fs/cgroup/system.slice/docker-<container-id>.scope/memory.max
+```
+
+**컨테이너가 사용하는 cgroup 리소스 제어**:
+- **CPU**: CPU 시간 제한 및 CPU 코어 할당
+- **Memory**: 메모리 사용량 제한 및 OOM 동작 제어
+- **Block I/O**: 디스크 I/O 대역폭 제한
+- **Network**: 네트워크 대역폭 제한 (tc와 결합)
+- **PIDs**: 컨테이너 내 프로세스 수 제한
+
+### OverlayFS를 통한 레이어 관리
+
+컨테이너 이미지는 OverlayFS를 사용하여 여러 레이어를 효율적으로 관리합니다.
+
+```bash
+# 이미지 레이어 확인
+docker history <image-name>
+
+# 컨테이너의 파일 시스템 레이어 확인
+docker inspect <container-id> | grep -A 10 "GraphDriver"
+
+# OverlayFS 마운트 정보 확인
+mount | grep overlay
+```
+
+**OverlayFS 구조**:
+- **LowerDir**: 읽기 전용 이미지 레이어들 (하위 레이어 → 상위 레이어)
+- **UpperDir**: 읽기/쓰기 가능한 컨테이너 레이어
+- **WorkDir**: OverlayFS 작업 디렉토리
+- **MergedDir**: 통합된 뷰 (컨테이너가 보는 파일 시스템)
+
+### 실습: 컨테이너의 기술적 기반 이해하기
+
+```bash
+# 1. 간단한 컨테이너 실행
+docker run -d --name test-container nginx
+
+# 2. 컨테이너의 PID 확인
+CONTAINER_PID=$(docker inspect -f '{{.State.Pid}}' test-container)
+echo "Container PID: $CONTAINER_PID"
+
+# 3. 컨테이너의 네임스페이스 확인
+ls -la /proc/$CONTAINER_PID/ns/
+
+# 4. 컨테이너의 cgroup 확인
+cat /proc/$CONTAINER_PID/cgroup
+
+# 5. 컨테이너의 파일 시스템 레이어 확인
+docker inspect test-container | jq '.[0].GraphDriver'
+
+# 6. 정리
+docker stop test-container
+docker rm test-container
+```
 
 ## 컨테이너 런타임
 
@@ -267,6 +371,241 @@ docker run -v /host/path:/container/path:ro nginx
 3. **시크릿 관리**: 환경 변수 대신 Docker Secrets 또는 외부 시크릿 관리 도구 사용
 4. **리소스 제한**: CPU, 메모리 등 리소스 사용량 제한
 5. **모니터링 및 로깅**: 컨테이너 활동 모니터링 및 로그 중앙화
+
+## 컨테이너 라이프사이클 관리
+
+컨테이너의 전체 라이프사이클을 이해하는 것은 효과적인 컨테이너 운영에 필수적입니다.
+
+### 컨테이너 상태
+
+컨테이너는 여러 상태를 가질 수 있습니다:
+
+- **Created**: 컨테이너가 생성되었으나 아직 시작되지 않음
+- **Running**: 컨테이너가 실행 중
+- **Paused**: 컨테이너의 모든 프로세스가 일시 중지됨
+- **Restarting**: 컨테이너가 재시작 중
+- **Exited**: 컨테이너가 종료됨
+- **Dead**: 컨테이너 데몬이 제거하려 했지만 실패함
+
+```bash
+# 컨테이너 상태 확인
+docker ps -a
+
+# 특정 컨테이너 상태 상세 정보
+docker inspect <container-id> | jq '.[0].State'
+
+# 컨테이너 상태 전환
+docker create nginx  # Created 상태
+docker start <container-id>  # Running 상태로 전환
+docker pause <container-id>  # Paused 상태로 전환
+docker unpause <container-id>  # Running 상태로 복귀
+docker stop <container-id>  # Exited 상태로 전환
+docker rm <container-id>  # 컨테이너 제거
+```
+
+### 컨테이너 생성 및 실행
+
+```bash
+# 컨테이너 생성만 (시작하지 않음)
+docker create --name my-nginx nginx
+
+# 컨테이너 시작
+docker start my-nginx
+
+# 컨테이너 생성 및 시작 (한 번에)
+docker run --name my-nginx2 -d nginx
+
+# 인터랙티브 모드로 실행
+docker run -it ubuntu bash
+
+# 백그라운드에서 실행
+docker run -d nginx
+
+# 컨테이너 종료 시 자동 제거
+docker run --rm nginx
+
+# 환경 변수와 함께 실행
+docker run -e "DB_HOST=localhost" -e "DB_PORT=5432" myapp
+
+# 포트 매핑과 함께 실행
+docker run -p 8080:80 nginx
+
+# 볼륨 마운트와 함께 실행
+docker run -v /host/path:/container/path nginx
+```
+
+### 컨테이너 제어
+
+```bash
+# 실행 중인 컨테이너 목록
+docker ps
+
+# 모든 컨테이너 목록 (중지된 것 포함)
+docker ps -a
+
+# 컨테이너 중지 (SIGTERM 후 SIGKILL)
+docker stop <container-id>
+
+# 컨테이너 강제 종료 (SIGKILL)
+docker kill <container-id>
+
+# 컨테이너 재시작
+docker restart <container-id>
+
+# 컨테이너 일시 중지
+docker pause <container-id>
+
+# 컨테이너 재개
+docker unpause <container-id>
+
+# 실행 중인 컨테이너에 명령 실행
+docker exec -it <container-id> bash
+docker exec <container-id> ls -la /app
+
+# 컨테이너에서 파일 복사
+docker cp <container-id>:/path/to/file /local/path
+docker cp /local/path <container-id>:/path/to/file
+```
+
+### 컨테이너 로깅 및 모니터링
+
+```bash
+# 컨테이너 로그 확인
+docker logs <container-id>
+
+# 실시간 로그 스트리밍
+docker logs -f <container-id>
+
+# 마지막 N개 로그 라인
+docker logs --tail 100 <container-id>
+
+# 타임스탬프와 함께 로그 출력
+docker logs -t <container-id>
+
+# 특정 시간 이후 로그
+docker logs --since "2025-11-24T10:00:00" <container-id>
+
+# 컨테이너 리소스 사용량 확인
+docker stats <container-id>
+
+# 모든 컨테이너 리소스 사용량
+docker stats
+
+# 컨테이너 프로세스 확인
+docker top <container-id>
+
+# 컨테이너 상세 정보
+docker inspect <container-id>
+```
+
+### 컨테이너 정리
+
+```bash
+# 중지된 모든 컨테이너 제거
+docker container prune
+
+# 사용하지 않는 모든 리소스 제거 (컨테이너, 이미지, 네트워크, 볼륨)
+docker system prune
+
+# 볼륨 포함하여 모든 리소스 제거
+docker system prune --volumes
+
+# 디스크 사용량 확인
+docker system df
+
+# 이미지 제거
+docker rmi <image-id>
+
+# 사용하지 않는 이미지 제거
+docker image prune
+
+# 볼륨 제거
+docker volume rm <volume-name>
+
+# 사용하지 않는 볼륨 제거
+docker volume prune
+
+# 네트워크 제거
+docker network rm <network-name>
+
+# 사용하지 않는 네트워크 제거
+docker network prune
+```
+
+### 헬스 체크
+
+컨테이너의 건강 상태를 모니터링하여 자동으로 복구할 수 있습니다.
+
+```dockerfile
+FROM nginx:alpine
+
+# Dockerfile에서 헬스 체크 정의
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+```
+
+```bash
+# 실행 시 헬스 체크 정의
+docker run -d \
+  --health-cmd="curl -f http://localhost/ || exit 1" \
+  --health-interval=30s \
+  --health-timeout=3s \
+  --health-retries=3 \
+  nginx
+
+# 헬스 체크 상태 확인
+docker inspect <container-id> | jq '.[0].State.Health'
+```
+
+### 재시작 정책
+
+컨테이너가 종료될 때 자동으로 재시작하도록 설정할 수 있습니다.
+
+```bash
+# 재시작 정책 옵션
+# - no: 재시작하지 않음 (기본값)
+# - on-failure: 실패 시에만 재시작
+# - always: 항상 재시작
+# - unless-stopped: 명시적으로 중지하지 않는 한 항상 재시작
+
+# 실패 시 재시작 (최대 3회)
+docker run -d --restart=on-failure:3 nginx
+
+# 항상 재시작
+docker run -d --restart=always nginx
+
+# 명시적으로 중지하지 않는 한 재시작
+docker run -d --restart=unless-stopped nginx
+
+# 기존 컨테이너의 재시작 정책 변경
+docker update --restart=always <container-id>
+```
+
+### 컨테이너 디버깅
+
+```bash
+# 컨테이너 내부 파일 시스템 탐색
+docker exec -it <container-id> bash
+
+# 컨테이너의 환경 변수 확인
+docker exec <container-id> env
+
+# 컨테이너의 네트워크 정보 확인
+docker exec <container-id> ip addr
+docker exec <container-id> netstat -tuln
+
+# 컨테이너의 프로세스 확인
+docker exec <container-id> ps aux
+
+# 컨테이너 이벤트 모니터링
+docker events
+
+# 특정 컨테이너 이벤트 필터링
+docker events --filter container=<container-id>
+
+# 컨테이너 변경 사항 확인 (이미지와 비교)
+docker diff <container-id>
+```
 
 ## 컨테이너 오케스트레이션
 

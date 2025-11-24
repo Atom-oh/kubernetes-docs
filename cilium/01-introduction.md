@@ -1,7 +1,7 @@
 # Cilium 소개 및 기본 개념
 
-> **지원 버전**: Cilium 1.17  
-> **마지막 업데이트**: 2025년 7월 21일
+> **지원 버전**: Cilium 1.18  
+> **마지막 업데이트**: 2025년 11월 24일
 
 ## 실습 환경 설정
 
@@ -22,7 +22,7 @@ sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
 rm cilium-linux-amd64.tar.gz
 
 # Cilium 설치
-cilium install --version 1.17.0
+cilium install --version 1.18.0
 
 # 설치 상태 확인
 cilium status
@@ -40,7 +40,9 @@ Cilium은 Linux 커널의 강력한 eBPF 기술을 활용하여 컨테이너화�
 - **분산 로드 밸런싱**: 효율적인 서비스 간 통신을 위한 분산 로드 밸런싱
 - **네트워크 가시성**: Hubble을 통한 네트워크 흐름 모니터링 및 문제 해결
 - **멀티 클러스터 지원**: 클러스터 간 네트워킹 및 보안 정책 지원
-- **Kubernetes 호환성**: Kubernetes 1.30 이상 버전과 완벽하게 호환
+- **Kubernetes 호환성**: Kubernetes 1.32 이상 버전과 완벽하게 호환
+- **향상된 BGP 지원**: Cilium 1.18의 개선된 BGP 컨트롤 플레인으로 더욱 유연한 라우팅 구성
+- **강화된 관찰성**: 향상된 메트릭 및 추적 기능으로 더 깊은 인사이트 제공
 
 ### Cilium 아키텍처
 
@@ -87,7 +89,8 @@ Cilium은 Linux 커널의 강력한 eBPF 기술을 활용하여 컨테이너화�
 | **서비스 메시** | 내장 | Istio 필요 | Istio 필요 | Istio/AppMesh 필요 |
 | **성능** | 매우 높음 | 높음 | 중간 | 높음 |
 | **IPAM** | 클러스터 풀, CRD | IPAM 플러그인 | 호스트 서브넷 | AWS IPAM |
-| **Kubernetes 호환성** | 1.30+ | 1.29+ | 1.28+ | 1.29+ |
+| **Kubernetes 호환성** | 1.32+ | 1.29+ | 1.28+ | 1.29+ |
+| **BGP 지원** | 향상된 제어 (v1.18+) | 제한적 | 없음 | VPC 라우팅 |
 - **Weave Net**: 멀티 호스트 컨테이너 네트워킹
 - **AWS VPC CNI**: AWS VPC와 직접 통합
 
@@ -102,7 +105,7 @@ Cilium은 다른 CNI 솔루션과 비교하여 여러 고유한 이점을 제공
 - **XDP(eXpress Data Path)**: 패킷 처리 성능 최적화
 - **Kube-proxy 대체**: 더 효율적인 서비스 로드 밸런싱
 - **Hubble 통합**: 강력한 네트워크 관찰 가능성 도구
-- **최신 Kubernetes 호환성**: Kubernetes 1.30 이상 버전과 완벽하게 호환
+- **최신 Kubernetes 호환성**: Kubernetes 1.32 이상 버전과 완벽하게 호환
 
 ### 사용 사례별 이점:
 
@@ -121,7 +124,7 @@ sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
 rm cilium-linux-amd64.tar.gz
 
 # Cilium 설치
-cilium install --version 1.17.0
+cilium install --version 1.18.0
 
 # 설치 상태 확인
 cilium status

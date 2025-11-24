@@ -60,3 +60,7 @@ spec:
 
 - [Istio Security](https://istio.io/latest/docs/concepts/security/)
 - [mTLS Documentation](https://istio.io/latest/docs/concepts/security/#mutual-tls-authentication)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [Istio Security 퀴즈](../../../quizzes/tools/istio/security.md)를 풀어보세요.

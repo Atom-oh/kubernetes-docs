@@ -4,7 +4,7 @@
 
 * [소개](README.md)
 
-## 기초 개념
+## Basic
 
 * [Linux 기초](basics/01-linux-basics.md)
 * [컨테이너 기술](basics/02-container-technology.md)
@@ -48,7 +48,7 @@
 * [EKS 업그레이드](eks/08-eks-upgrades.md)
 * [EKS 문제 해결](eks/09-eks-troubleshooting.md)
 
-## 고급 주제
+## Advanced Topic
 
 * [Kyverno를 사용한 정책 관리](advanced/01-kyverno-policy-management.md)
 * [Custom Scheduler](advanced/02-custom-scheduler-part1.md)
@@ -71,7 +71,7 @@
     * [네트워킹 개념](cilium/networking-concepts.md)
 * [용어집](cilium/glossary.md)
 
-## 도구 및 통합
+## Tools and Integrations
 
 * [ArgoCD](tools/01-argocd.md)
 * [Istio](tools/istio/README.md)
@@ -166,7 +166,7 @@
     * [네트워킹 개념 퀴즈](quizzes/cilium/networking-concepts-quiz.md)
     * [용어집 퀴즈](quizzes/cilium/glossary-quiz.md)
 
-* 고급 주제
+* Advanced Topic
     * [Kyverno를 사용한 정책 관리 퀴즈](quizzes/advanced/01-kyverno-policy-management-quiz.md)
     * [Custom Scheduler 퀴즈 - Part 1](quizzes/advanced/02-custom-scheduler-part1-quiz.md)
     * [Custom Scheduler 퀴즈 - Part 2](quizzes/advanced/02-custom-scheduler-part2-quiz.md)
@@ -174,7 +174,7 @@
     * [AI/ML 워크로드 퀴즈](quizzes/advanced/03-ai-ml-workloads-quiz.md)
     * [vLLM 배포 퀴즈](quizzes/advanced/04-vllm-deployment-quiz.md)
 
-* 도구 및 통합
+* Tools and Integrations
     * [ArgoCD 퀴즈](quizzes/tools/01-argocd-quiz.md)
     * Istio 퀴즈
         * [Traffic Management 퀴즈](quizzes/tools/istio/traffic-management-quiz.md)

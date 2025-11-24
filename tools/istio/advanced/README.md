@@ -365,3 +365,7 @@ spec:
 - [Ambient Mode Documentation](https://istio.io/latest/docs/ops/ambient/)
 - [Multi-cluster Documentation](https://istio.io/latest/docs/setup/install/multicluster/)
 - [EnvoyFilter Reference](https://istio.io/latest/docs/reference/config/networking/envoy-filter/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [Istio Advanced 퀴즈](../../../quizzes/tools/istio/advanced.md)를 풀어보세요.

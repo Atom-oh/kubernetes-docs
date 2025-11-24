@@ -374,3 +374,7 @@ istioctl proxy-config endpoints <pod-name> -n <namespace>
 - [Outlier Detection](https://istio.io/latest/docs/reference/config/networking/destination-rule/#OutlierDetection)
 - [Rate Limiting](https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/)
 - [Locality Load Balancing](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+
+## 퀴즈
+
+이 장에서 배운 내용을 테스트하려면 [Istio Resilience 퀴즈](../../../quizzes/tools/istio/resilience.md)를 풀어보세요.

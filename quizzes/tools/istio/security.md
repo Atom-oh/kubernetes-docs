@@ -12,10 +12,10 @@
 
 PeerAuthentication의 mTLS 모드 중 **PERMISSIVE**의 특징으로 옳은 것은?
 
-A. mTLS와 평문 트래픽을 모두 허용한다
-B. mTLS만 허용하고 평문은 거부한다
-C. 모든 트래픽을 거부한다
-D. mTLS를 비활성화한다
+A. mTLS와 평문 트래픽을 모두 허용한다  
+B. mTLS만 허용하고 평문은 거부한다  
+C. 모든 트래픽을 거부한다  
+D. mTLS를 비활성화한다  
 
 <details>
 <summary>정답 및 해설</summary>
@@ -98,10 +98,10 @@ spec:
   {}
 ```
 
-A. 모든 요청을 허용한다
-B. 모든 요청을 거부한다
-C. 정책을 적용하지 않는다
-D. mTLS만 허용한다
+A. 모든 요청을 허용한다  
+B. 모든 요청을 거부한다  
+C. 정책을 적용하지 않는다  
+D. mTLS만 허용한다  
 
 <details>
 <summary>정답 및 해설</summary>
@@ -233,10 +233,10 @@ curl -X PUT http://backend/api
 
 RequestAuthentication에서 JWT 토큰을 검증할 때 사용하는 필드는?
 
-A. issuer와 audiences
-B. principals와 namespaces
-C. methods와 paths
-D. hosts와 ports
+A. issuer와 audiences  
+B. principals와 namespaces  
+C. methods와 paths  
+D. hosts와 ports  
 
 <details>
 <summary>정답 및 해설</summary>
@@ -399,10 +399,10 @@ curl -H "Authorization: Bearer $TOKEN" http://backend/api
 
 Istio에서 mTLS 인증서의 기본 유효 기간은?
 
-A. 1시간
-B. 24시간
-C. 7일
-D. 90일
+A. 1시간  
+B. 24시간  
+C. 7일  
+D. 90일  
 
 <details>
 <summary>정답 및 해설</summary>
@@ -434,14 +434,41 @@ spec:
 - **인증서 형식**: X.509
 
 **인증서 라이프사이클:**
-```
-0시간           16시간          24시간
-├───────────────┼──────────────┤
-│   사용 중      │  갱신 시작    │ 만료
-│               │               │
-│               └─ Envoy가 Istiod에 새 인증서 요청
-│                  Istiod가 새 인증서 발급
-│                  Envoy가 새 인증서로 교체
+
+```mermaid
+sequenceDiagram
+    autonumber
+    box rgba(0, 199, 183, 0.1) Pod
+    participant Envoy as Envoy Sidecar
+    end
+    box rgba(255, 153, 0, 0.1) Control Plane
+    participant Istiod as Istiod (CA)
+    end
+
+    Note over Envoy,Istiod: ⏰ T=0시간: 초기 인증서 발급
+    Istiod->>+Envoy: ✅ 새 인증서 발급
+    Note right of Envoy: 유효기간: 24시간<br/>형식: X.509<br/>SPIFFE ID 포함
+
+    rect rgba(144, 238, 144, 0.1)
+        Note over Envoy: ✓ T=0~16시간: 인증서 사용 중
+    end
+
+    Note over Envoy,Istiod: ⏰ T=16시간: 자동 갱신 시작 (만료 8시간 전)
+    Envoy->>Istiod: 🔄 새 인증서 요청 (CSR)
+    activate Istiod
+    Note right of Istiod: SPIFFE ID 검증<br/>새 인증서 생성
+    Istiod->>Envoy: ✅ 새 인증서 발급
+    deactivate Istiod
+
+    Envoy->>Envoy: 🔄 인증서 교체 (Hot Reload)
+    Note right of Envoy: 무중단으로<br/>새 인증서 적용
+
+    rect rgba(144, 238, 144, 0.1)
+        Note over Envoy: ✓ T=16~24시간: 새 인증서로 사용 중
+    end
+
+    Note over Envoy,Istiod: ⏰ T=24시간: 이전 인증서 만료 (영향 없음)
+    deactivate Envoy
 ```
 
 **인증서 확인:**
@@ -550,10 +577,10 @@ spec:
 
 Istio에서 서비스 간 인증에 사용되는 identity는?
 
-A. Pod 이름
-B. Service 이름
-C. Service Account
-D. Namespace 이름
+A. Pod 이름  
+B. Service 이름  
+C. Service Account  
+D. Namespace 이름  
 
 <details>
 <summary>정답 및 해설</summary>
