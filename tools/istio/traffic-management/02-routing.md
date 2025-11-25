@@ -61,7 +61,7 @@ flowchart LR
 ### 기본 구조
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: routing-example
@@ -156,7 +156,7 @@ http:
 ### Prefix 매칭
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: uri-prefix-routing
@@ -205,7 +205,7 @@ spec:
 ### Exact 매칭
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: uri-exact-routing
@@ -241,7 +241,7 @@ spec:
 ### Regex 매칭
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: uri-regex-routing
@@ -279,7 +279,7 @@ spec:
 ### User-Agent 기반 라우팅
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: header-user-agent-routing
@@ -317,7 +317,7 @@ spec:
 ### Custom Header 기반 라우팅
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: header-custom-routing
@@ -365,7 +365,7 @@ spec:
 ### API 버전 기반 라우팅
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: header-api-version-routing
@@ -405,7 +405,7 @@ spec:
 ### 기본 Query Parameter 매칭
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: query-param-routing
@@ -453,7 +453,7 @@ spec:
 ### 여러 Query Parameter 조합
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: query-param-combined-routing
@@ -493,7 +493,7 @@ spec:
 ## HTTP Method 기반 라우팅
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: method-based-routing
@@ -547,7 +547,7 @@ spec:
 ### Namespace 기반 라우팅
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: source-namespace-routing
@@ -581,7 +581,7 @@ spec:
 ### Service Account 기반 라우팅
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: source-sa-routing
@@ -617,7 +617,7 @@ spec:
 Istio는 VirtualService의 HTTP 라우팅 규칙을 **위에서 아래로** 평가합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: priority-example
@@ -661,7 +661,7 @@ spec:
 ### 폴백 전략
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: fallback-strategy
@@ -698,7 +698,7 @@ spec:
 ### 예제 1: 멀티 테넌트 라우팅
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: multi-tenant-routing
@@ -740,7 +740,7 @@ spec:
 ### 예제 2: Feature Flag 기반 라우팅
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: feature-flag-routing
@@ -790,7 +790,7 @@ spec:
 ### 예제 3: 지역 기반 라우팅
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: geo-routing
@@ -848,7 +848,7 @@ spec:
 ### 예제 4: API 게이트웨이 패턴
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: api-gateway-routing
@@ -1044,7 +1044,7 @@ match:
 
 ```yaml
 # ✅ 명확한 이름 사용
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: product-api-routing  # 명확한 이름
@@ -1059,7 +1059,7 @@ spec:
 ### 4. 문서화
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp-routing

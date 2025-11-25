@@ -130,7 +130,7 @@ flowchart TB
 ### 기본 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: local-ratelimit
@@ -198,7 +198,7 @@ token_bucket:
 ### 경로별 Rate Limiting
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: path-based-ratelimit
@@ -243,7 +243,7 @@ spec:
 ### 헤더 기반 Rate Limiting
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: user-based-ratelimit
@@ -429,7 +429,7 @@ data:
 
 ```yaml
 # 4. EnvoyFilter로 글로벌 Rate Limiting 적용
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: global-ratelimit
@@ -491,7 +491,7 @@ spec:
 ### 예제 1: API Gateway Rate Limiting
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: api-gateway-ratelimit
@@ -544,7 +544,7 @@ spec:
 ### 예제 2: 사용자 등급별 Rate Limiting
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: tiered-ratelimit
@@ -598,7 +598,7 @@ spec:
 
 ```yaml
 # 외부 API 호출 제한 (Egress)
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: external-api-ratelimit

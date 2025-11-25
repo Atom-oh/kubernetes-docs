@@ -60,7 +60,7 @@ flowchart TB
 비정상 동작을 하는 서비스 인스턴스를 자동으로 감지하고 트래픽 풀에서 제외합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp
@@ -84,7 +84,7 @@ spec:
 서비스를 과부하로부터 보호하기 위해 요청 속도를 제한합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: ratelimit
@@ -116,7 +116,7 @@ spec:
 가용 영역(Availability Zone) 간 트래픽을 최적화하여 지연시간을 줄이고 비용을 절감합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp
@@ -143,7 +143,7 @@ spec:
 ### Outlier Detection + Circuit Breaker
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp-resilient
@@ -170,7 +170,7 @@ spec:
 ### Rate Limiting + Retry
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
@@ -187,7 +187,7 @@ spec:
       retryOn: 5xx,reset,connect-failure
     timeout: 10s
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: EnvoyFilter
 metadata:
   name: ratelimit

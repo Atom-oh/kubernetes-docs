@@ -128,7 +128,7 @@ spec:
       port: 8080
 ---
 # Authorization Policy: L7 필터링
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-authz

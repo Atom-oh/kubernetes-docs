@@ -62,7 +62,7 @@ flowchart TB
 
 ## 1. Ambient Mode
 
-Istio 1.15+에서 도입된 새로운 데이터 플레인 아키텍처입니다.
+Istio 1.28+에서 도입된 새로운 데이터 플레인 아키텍처입니다.
 
 ### Sidecar Mode vs Ambient Mode
 
@@ -201,7 +201,7 @@ spec:
 DNS 조회를 캐싱하여 성능을 최적화합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: dns-cache
@@ -227,7 +227,7 @@ spec:
 gRPC 프로토콜을 위한 최적화된 라우팅과 로드 밸런싱을 제공합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: grpc-service
@@ -257,7 +257,7 @@ spec:
 WebSocket 연결을 위한 특별한 처리를 제공합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: websocket-service

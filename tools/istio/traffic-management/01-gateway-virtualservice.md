@@ -16,7 +16,7 @@ Gateway와 VirtualService는 Istio에서 트래픽을 관리하는 핵심 리소
 Gateway는 메시로 들어오는 외부 트래픽의 진입점을 정의합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: my-gateway
@@ -47,7 +47,7 @@ spec:
 VirtualService는 Gateway로 들어온 트래픽을 어떻게 라우팅할지 정의합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
@@ -78,7 +78,7 @@ spec:
 ### HTTP 트래픽
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: http-gateway
@@ -93,7 +93,7 @@ spec:
     hosts:
     - "*"  # 모든 호스트 허용
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: app-routes
@@ -121,7 +121,7 @@ kubectl create secret tls myapp-tls \
 ```
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: https-gateway
@@ -146,7 +146,7 @@ spec:
 ### Path 기반 라우팅
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: path-routing
@@ -185,7 +185,7 @@ spec:
 ### Header 기반 라우팅
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: header-routing
@@ -221,7 +221,7 @@ spec:
 ### 다중 도메인 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: multi-domain-gateway
@@ -248,7 +248,7 @@ spec:
     hosts:
     - "admin.example.com"
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: api-routes
@@ -262,7 +262,7 @@ spec:
     - destination:
         host: api-service
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: admin-routes
@@ -282,7 +282,7 @@ spec:
 ### HTTP to HTTPS 리다이렉트
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: secure-gateway
@@ -314,7 +314,7 @@ spec:
 ### URL Rewrite
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: url-rewrite
@@ -337,7 +337,7 @@ spec:
 ### Header 추가/수정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: header-manipulation
@@ -365,7 +365,7 @@ spec:
 ### Redirect
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: redirect-example

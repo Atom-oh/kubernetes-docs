@@ -42,7 +42,7 @@ spec:
 ## VirtualService 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp-vsvc
@@ -65,7 +65,7 @@ spec:
 ## DestinationRule 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp-destrule

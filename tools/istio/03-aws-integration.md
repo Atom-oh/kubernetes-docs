@@ -143,7 +143,7 @@ spec:
 **3. Gateway 리소스 설정**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: my-gateway
@@ -452,7 +452,7 @@ flowchart TB
 **예제: Istio의 고급 트래픽 관리**
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -744,7 +744,7 @@ kubectl create secret tls my-tls-secret \
 ```
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: my-gateway

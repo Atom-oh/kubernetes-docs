@@ -13,7 +13,7 @@ Istio gRPC 지원:
 ## 기본 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: grpc-service
@@ -29,7 +29,7 @@ spec:
         host: grpc-service
         subset: v2
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: grpc-service
@@ -50,7 +50,7 @@ spec:
 ## gRPC 헬스 체크
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: grpc-health-check
@@ -66,7 +66,7 @@ spec:
 ## Retry 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: grpc-retry

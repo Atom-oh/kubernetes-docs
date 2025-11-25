@@ -131,7 +131,7 @@ kubectl get nodes -L topology.kubernetes.io/zone -L topology.kubernetes.io/regio
 ### 2. DestinationRule에서 Zone Aware Routing 활성화
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp
@@ -147,7 +147,7 @@ spec:
 ### 3. 분산 비율 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp
@@ -186,7 +186,7 @@ spec:
 ### 장애조치 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp-failover
@@ -214,7 +214,7 @@ spec:
 ### Outlier Detection과 함께 사용
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp-resilient
@@ -246,7 +246,7 @@ spec:
 ### 다중 리전 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp-multi-region
@@ -362,7 +362,7 @@ spec:
 ### 3. Istio에서 Zone Aware Routing 활성화
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: myapp
@@ -441,7 +441,7 @@ spec:
                 - us-east-1a
 ---
 # Zone Aware Routing 설정
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: backend
@@ -463,7 +463,7 @@ spec:
 
 ```yaml
 # 크로스 AZ 비용 최소화
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: cost-optimized
@@ -486,7 +486,7 @@ spec:
 
 ```yaml
 # 가용성 우선 (크로스 AZ 허용)
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: high-availability

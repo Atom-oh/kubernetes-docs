@@ -112,7 +112,7 @@ flowchart LR
 ### 연속 에러 기반 감지
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-outlier
@@ -208,7 +208,7 @@ maxEjectionPercent: 50
 ### 게이트웨이 에러 기반 감지
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-gateway-errors
@@ -230,7 +230,7 @@ spec:
 ### Split Brain 방지
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-split-brain-safe
@@ -254,7 +254,7 @@ spec:
 ### 연결 실패 기반 감지
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-connection-errors
@@ -280,7 +280,7 @@ spec:
 ### 성공률 기반 감지 (고급)
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-success-rate
@@ -307,7 +307,7 @@ spec:
 
 ```yaml
 # Frontend → Backend → Database
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: backend-outlier
@@ -321,7 +321,7 @@ spec:
       baseEjectionTime: 30s
       maxEjectionPercent: 50
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: database-outlier
@@ -339,7 +339,7 @@ spec:
 ### 예제 2: Canary 배포와 함께 사용
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-canary
@@ -357,7 +357,7 @@ spec:
         subset: v2
       weight: 10
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
@@ -382,7 +382,7 @@ spec:
 ### 예제 3: 다중 리전 배포
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: api-multi-region
@@ -409,7 +409,7 @@ spec:
 ### 예제 4: Connection Pool + Outlier Detection
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-full-protection

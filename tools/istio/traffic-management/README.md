@@ -108,7 +108,7 @@ route:
 외부 트래픽이 메시로 들어오는 진입점을 정의합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: my-gateway
@@ -129,7 +129,7 @@ spec:
 요청을 어떻게 라우팅할지 정의합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -155,7 +155,7 @@ spec:
 대상 서비스에 대한 정책을 정의합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
@@ -179,7 +179,7 @@ spec:
 
 ```yaml
 # 1단계: 5% 트래픽으로 시작
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-canary
@@ -204,7 +204,7 @@ spec:
 ### Header 기반 라우팅 (개발자 테스트)
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-dev
@@ -231,7 +231,7 @@ spec:
 ### Circuit Breaker + Retry
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-resilient
@@ -251,7 +251,7 @@ spec:
       interval: 30s
       baseEjectionTime: 30s
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-retry

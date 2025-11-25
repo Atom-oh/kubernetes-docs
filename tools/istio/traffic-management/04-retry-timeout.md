@@ -56,7 +56,7 @@ flowchart LR
 ### 기본 Timeout
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-timeout
@@ -73,7 +73,7 @@ spec:
 ### 경로별 Timeout
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: api-timeouts
@@ -114,7 +114,7 @@ spec:
 ### 기본 Retry
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-retry
@@ -146,7 +146,7 @@ spec:
 ### 고급 Retry 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: advanced-retry
@@ -169,7 +169,7 @@ spec:
 ### 계층별 Timeout
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: layered-timeouts
@@ -191,7 +191,7 @@ spec:
 ### 멱등성 보장이 필요한 경우
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: idempotent-retry
@@ -232,7 +232,7 @@ spec:
 
 ```yaml
 # Frontend → Backend → Database
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: frontend
@@ -248,7 +248,7 @@ spec:
       attempts: 2
       perTryTimeout: 7s
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: backend
@@ -265,7 +265,7 @@ spec:
       perTryTimeout: 3s
       retryOn: 5xx,reset
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: database
@@ -286,7 +286,7 @@ spec:
 ### 예제 2: 외부 API 호출
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: external-api
@@ -303,7 +303,7 @@ spec:
       perTryTimeout: 5s
       retryOn: 5xx,reset,connect-failure,gateway-error
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-api
@@ -321,7 +321,7 @@ spec:
 ### 예제 3: Circuit Breaker와 함께 사용
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: resilient-service
@@ -338,7 +338,7 @@ spec:
       perTryTimeout: 3s
       retryOn: 5xx,reset,connect-failure
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: payment-circuit-breaker
@@ -369,7 +369,7 @@ spec:
 # Backend Service: 5s
 # Database: 3s
 
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: api-gateway
@@ -388,7 +388,7 @@ spec:
 
 ```yaml
 # ❌ 나쁜 예: 너무 긴 timeout
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: api-gateway
@@ -406,7 +406,7 @@ spec:
 
 ```yaml
 # ✅ 좋은 예: 멱등성 고려
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: api-service
@@ -444,7 +444,7 @@ spec:
 Istio는 기본적으로 25ms 간격으로 재시도하지만, 커스텀 백오프가 필요한 경우:
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: backoff-retry
@@ -507,7 +507,7 @@ istio_requests_total{destination_service="backend.default.svc.cluster.local",res
 
 ```yaml
 # Circuit Breaker와 함께 사용
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: prevent-retry-storm

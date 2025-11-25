@@ -52,7 +52,7 @@ flowchart TB
 ### 기본 JWT 검증
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-auth
@@ -69,7 +69,7 @@ spec:
 ### 여러 Issuer 지원
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: multi-issuer-jwt
@@ -85,7 +85,7 @@ spec:
 ### Custom Header
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-custom-header
@@ -104,7 +104,7 @@ spec:
 ### AWS Cognito
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: cognito-jwt
@@ -118,7 +118,7 @@ spec:
 ### Keycloak
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: keycloak-jwt
@@ -132,7 +132,7 @@ spec:
 ### Auth0
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: auth0-jwt
@@ -151,7 +151,7 @@ spec:
 
 ```yaml
 # JWT 검증
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-auth
@@ -165,7 +165,7 @@ spec:
     jwksUri: "https://auth.example.com/.well-known/jwks.json"
 ---
 # JWT 없으면 거부
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: require-jwt

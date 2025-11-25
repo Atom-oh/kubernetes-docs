@@ -12,7 +12,7 @@ DNS Caching의 이점:
 ## 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: external-api-dns-cache

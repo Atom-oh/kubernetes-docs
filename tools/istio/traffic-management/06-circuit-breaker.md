@@ -39,7 +39,7 @@ stateDiagram-v2
 ## Connection Pool 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-circuit-breaker
@@ -58,7 +58,7 @@ spec:
 ## Outlier Detection
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-outlier

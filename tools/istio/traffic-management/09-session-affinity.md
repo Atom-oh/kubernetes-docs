@@ -45,7 +45,7 @@ flowchart TB
 ### HTTP Header 기반
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-session-affinity
@@ -60,7 +60,7 @@ spec:
 ### Cookie 기반
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-cookie-affinity
@@ -77,7 +77,7 @@ spec:
 ### Source IP 기반
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-ip-affinity

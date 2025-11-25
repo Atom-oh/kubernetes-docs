@@ -51,7 +51,7 @@ flowchart LR
 ### STRICT 모드 (권장)
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -64,7 +64,7 @@ spec:
 ### PERMISSIVE 모드 (마이그레이션용)
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -77,7 +77,7 @@ spec:
 ### DISABLE 모드
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: disable-mtls
@@ -92,7 +92,7 @@ spec:
 ### 전역 설정
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -105,7 +105,7 @@ spec:
 ### 네임스페이스별 설정
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: namespace-policy
@@ -118,7 +118,7 @@ spec:
 ### 워크로드별 설정
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: workload-policy
@@ -135,7 +135,7 @@ spec:
 ### 포트별 설정
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: port-policy
@@ -166,7 +166,7 @@ istioctl authn tls-check <pod-name> -n <namespace>
 ### 2단계: PERMISSIVE 모드로 전환
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -191,7 +191,7 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
 ### 4단계: STRICT 모드로 전환
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default

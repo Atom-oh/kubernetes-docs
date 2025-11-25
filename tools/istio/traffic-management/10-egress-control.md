@@ -43,7 +43,7 @@ flowchart LR
 ### 외부 서비스 등록
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-api
@@ -61,7 +61,7 @@ spec:
 ### HTTP 외부 서비스
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: httpbin
@@ -90,7 +90,7 @@ helm install istio-egressgateway istio/gateway \
 ### Egress Gateway 구성
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: istio-egressgateway
@@ -107,7 +107,7 @@ spec:
     tls:
       mode: PASSTHROUGH
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: direct-external-through-egress-gateway

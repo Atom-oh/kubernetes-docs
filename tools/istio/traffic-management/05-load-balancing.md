@@ -48,7 +48,7 @@ flowchart TB
 ### Round Robin (기본값)
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-round-robin
@@ -62,7 +62,7 @@ spec:
 ### Least Request
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-least-request
@@ -76,7 +76,7 @@ spec:
 ### Random
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-random
@@ -90,7 +90,7 @@ spec:
 ### Consistent Hash
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-consistent-hash
@@ -105,7 +105,7 @@ spec:
 ## Locality 기반 로드 밸런싱
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: locality-lb

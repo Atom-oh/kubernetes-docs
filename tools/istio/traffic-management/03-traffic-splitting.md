@@ -54,7 +54,7 @@ flowchart TB
 ### 기본 구조
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -276,7 +276,7 @@ spec:
 **중요**: Argo Rollouts는 VirtualService를 자동으로 수정하지 **않습니다**. VirtualService는 미리 생성되어 있어야 하며, Rollout은 이를 참조하여 가중치만 업데이트합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vsvc
@@ -307,7 +307,7 @@ spec:
 **중요**: Argo Rollouts는 DestinationRule을 자동으로 생성하지 **않습니다**. 반드시 미리 생성해야 합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-destrule
@@ -587,7 +587,7 @@ Argo Rollouts는 VirtualService의 match 조건과 함께 사용할 수 있습�
 #### 예제 1: 헤더 기반 Canary (내부 테스터용)
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vsvc
@@ -630,7 +630,7 @@ curl http://reviews:9080/
 #### 예제 2: 지역 기반 단계적 배포
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vsvc
@@ -702,7 +702,7 @@ spec:
 #### 예제 3: 사용자 등급별 배포
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vsvc
@@ -747,7 +747,7 @@ spec:
 #### 예제 4: 모바일 앱 버전별 배포
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vsvc
@@ -799,7 +799,7 @@ spec:
 
 ---
 # DestinationRule
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-destrule
@@ -813,7 +813,7 @@ spec:
 
 ---
 # VirtualService
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vsvc
@@ -930,7 +930,7 @@ strategy:
 필요한 경우 여러 route를 동시에 관리할 수 있습니다:
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vsvc
@@ -1199,7 +1199,7 @@ spec:
 ```yaml
 ---
 # Gateway
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: reviews-gateway
@@ -1216,7 +1216,7 @@ spec:
 
 ---
 # VirtualService - Active Service
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vsvc
@@ -1234,7 +1234,7 @@ spec:
 
 ---
 # VirtualService - Preview Service (테스트용)
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-preview-vsvc
@@ -1531,7 +1531,7 @@ flowchart TB
 ### Cookie 기반 A/B 테스트
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp-ab-test
@@ -1578,7 +1578,7 @@ spec:
 ### Header 기반 A/B 테스트
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp-ab-header
@@ -1616,7 +1616,7 @@ spec:
 ### 지역 기반 A/B 테스트
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp-ab-geo
@@ -1670,7 +1670,7 @@ for i in "${!WEIGHTS[@]}"; do
   echo "[$i/${#WEIGHTS[@]}] Shifting traffic: v1=$prev_weight%, v2=$weight%"
 
   kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: ${SERVICE}
@@ -1705,7 +1705,7 @@ EOF
     if [ "$ERROR_RATE" != "" ] && [ "$ERROR_RATE" -gt 5 ]; then
       echo "ERROR: High error rate detected ($ERROR_RATE errors). Rolling back!"
       kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: ${SERVICE}
@@ -1733,7 +1733,7 @@ echo "Progressive rollout completed successfully!"
 트래픽 분할과 미러링을 결합하여 더 안전한 배포를 할 수 있습니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp-canary-with-mirror
@@ -1764,7 +1764,7 @@ spec:
 ### 예제 1: 사용자 세그먼트별 배포
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp-segmented-rollout
@@ -1822,7 +1822,7 @@ spec:
 ### 예제 2: 시간대별 배포
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp-time-based
@@ -1868,7 +1868,7 @@ spec:
 
 ```yaml
 # Frontend Canary
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: frontend-canary
@@ -1887,7 +1887,7 @@ spec:
       weight: 10
 ---
 # Backend Canary (Frontend v2만 사용)
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: backend-canary
@@ -1968,7 +1968,7 @@ if [ "$TOTAL_REQUESTS" -gt 0 ]; then
     echo "Rolling back to v1..."
 
     kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: ${SERVICE}
@@ -2046,7 +2046,7 @@ kubectl get pods -n <namespace> -l version=v2
 ```bash
 # 롤백용 YAML 파일 미리 준비
 cat > rollback-v1.yaml <<EOF
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp
@@ -2129,7 +2129,7 @@ spec:
 ### 5. 문서화
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp-canary

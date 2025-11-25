@@ -43,7 +43,7 @@ flowchart LR
 ## 기본 설정
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-mirror
@@ -66,7 +66,7 @@ spec:
 ## 부분 미러링
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-partial-mirror

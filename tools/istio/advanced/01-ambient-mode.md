@@ -1,6 +1,6 @@
 # Ambient Mode
 
-Ambient Mode는 Istio 1.15에서 도입된 혁신적인 데이터 플레인 아키텍처입니다. 기존 Sidecar 방식의 복잡성과 리소스 오버헤드를 줄이면서도 Service Mesh의 핵심 기능을 제공합니다.
+Ambient Mode는 Istio 1.28에서 도입된 혁신적인 데이터 플레인 아키텍처입니다. 기존 Sidecar 방식의 복잡성과 리소스 오버헤드를 줄이면서도 Service Mesh의 핵심 기능을 제공합니다.
 
 ## 목차
 
@@ -307,7 +307,7 @@ flowchart TB
 #### Waypoint 배포
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: reviews-waypoint
@@ -395,7 +395,7 @@ kubectl get gateway -n default
 
 ```yaml
 # VirtualService (Waypoint 사용)
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -418,7 +418,7 @@ spec:
         subset: v1
 ---
 # DestinationRule
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
@@ -596,7 +596,7 @@ spec:
 
 ```yaml
 # 특정 Service만 Waypoint 사용
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: frontend-waypoint

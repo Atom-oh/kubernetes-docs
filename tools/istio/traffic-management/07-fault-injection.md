@@ -42,7 +42,7 @@ flowchart LR
 ## Delay 주입
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-delay
@@ -63,7 +63,7 @@ spec:
 ## Abort 주입
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-abort

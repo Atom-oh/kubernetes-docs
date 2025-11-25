@@ -51,7 +51,7 @@ flowchart TB
 ### 기본 거부 (Deny All)
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: deny-all
@@ -65,7 +65,7 @@ spec:
 ### 기본 허용 (Allow All)
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-all
@@ -79,7 +79,7 @@ spec:
 ### HTTP Method 기반
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: httpbin-get-only
@@ -100,7 +100,7 @@ spec:
 ### Service Account 기반
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: ratings-sa-policy
@@ -119,7 +119,7 @@ spec:
 ### Namespace 기반
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: db-namespace-policy
@@ -138,7 +138,7 @@ spec:
 ### Path 기반
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: path-based-policy
@@ -163,7 +163,7 @@ spec:
 ### JWT Claims 기반
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: jwt-claims-policy

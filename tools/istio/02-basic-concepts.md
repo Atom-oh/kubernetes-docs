@@ -71,7 +71,7 @@ flowchart TB
 **Istio 해결책**:
 ```yaml
 # 코드 변경 없이 Canary 배포
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -103,7 +103,7 @@ spec:
 **Istio 해결책**:
 ```yaml
 # 자동 mTLS 활성화
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -140,7 +140,7 @@ spec:
 **Istio 해결책**:
 ```yaml
 # Circuit Breaker 자동 설정
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
@@ -473,7 +473,7 @@ flowchart LR
 
 ```yaml
 # PeerAuthentication 예제
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -580,7 +580,7 @@ Istio는 Kubernetes Custom Resource Definitions (CRDs)를 사용하여 구성을
 VirtualService는 요청을 서비스로 라우팅하는 방법을 정의합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -613,7 +613,7 @@ spec:
 DestinationRule은 서비스의 서브셋(버전)을 정의하고 트래픽 정책을 적용합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-destination
@@ -656,7 +656,7 @@ spec:
 Gateway는 메시로 들어오는 외부 트래픽을 관리합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: bookinfo-gateway
@@ -692,7 +692,7 @@ spec:
 ServiceEntry는 메시 외부의 서비스를 메시 내부 서비스처럼 사용할 수 있게 합니다.
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-api
@@ -717,7 +717,7 @@ spec:
 PeerAuthentication은 서비스 간 인증 정책을 정의합니다.
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -732,7 +732,7 @@ spec:
 AuthorizationPolicy는 서비스 접근 권한을 정의합니다.
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-ratings
@@ -780,7 +780,7 @@ flowchart LR
 ### 트래픽 분할 (Canary 배포)
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-canary
@@ -802,7 +802,7 @@ spec:
 ### Circuit Breaker
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-circuit-breaker
@@ -867,7 +867,7 @@ flowchart LR
 
 ```yaml
 # JWT 인증
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-auth
@@ -877,7 +877,7 @@ spec:
     jwksUri: "https://www.googleapis.com/oauth2/v3/certs"
 ---
 # 권한 부여 정책
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: require-jwt
@@ -959,7 +959,7 @@ spec:
 
 ```yaml
 # 네임스페이스별 mTLS 정책
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -969,7 +969,7 @@ spec:
     mode: STRICT
 ---
 # 네임스페이스별 권한 정책
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: deny-all
@@ -995,7 +995,7 @@ kubectl label namespace kube-system istio-injection=disabled
 
 ```yaml
 # Sidecar 리소스로 메시 범위 제한
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Sidecar
 metadata:
   name: default

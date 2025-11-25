@@ -148,7 +148,7 @@ Istio를 처음 사용하신다면 다음 순서로 문서를 읽어보세요:
 
 ```yaml
 # 예제 VirtualService
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews

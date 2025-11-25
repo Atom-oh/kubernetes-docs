@@ -71,7 +71,7 @@ spec:
 ### 3. Connection Pool 최적화
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: optimized-pool
@@ -97,7 +97,7 @@ spec:
 ### 4. Locality Load Balancing
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: locality-lb
@@ -122,7 +122,7 @@ spec:
 ### 5. Sidecar Scope 제한
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Sidecar
 metadata:
   name: default
@@ -144,7 +144,7 @@ spec:
 ### 1. Strict mTLS 적용
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -163,7 +163,7 @@ spec:
 
 ```yaml
 # Deny by default
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: deny-all
@@ -171,7 +171,7 @@ metadata:
 spec: {}  # 모든 요청 거부
 ---
 # Allow specific
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-frontend
@@ -205,7 +205,7 @@ spec:
       mode: REGISTRY_ONLY  # 명시적 ServiceEntry만 허용
 ---
 # 허용된 외부 서비스
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-api
@@ -223,7 +223,7 @@ spec:
 ### 4. JWT 인증
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-auth
@@ -235,7 +235,7 @@ spec:
   - issuer: "https://auth.example.com"
     jwksUri: "https://auth.example.com/.well-known/jwks.json"
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: require-jwt
@@ -290,7 +290,7 @@ kubectl label namespace default istio-injection=enabled
 **Phase 2: mTLS PERMISSIVE (1-2주)**
 ```yaml
 # PERMISSIVE 모드 활성화
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -302,7 +302,7 @@ spec:
 **Phase 3: mTLS STRICT (1주)**
 ```yaml
 # STRICT 모드로 전환
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
