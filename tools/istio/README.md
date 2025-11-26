@@ -172,8 +172,8 @@ spec:
 ### 퀴즈
 
 이 장에서 배운 내용을 테스트하려면 다음 퀴즈를 풀어보세요:
-- [Traffic Management 퀴즈](../../quizzes/tools/istio/traffic-management.md)
-- [Security 퀴즈](../../quizzes/tools/istio/security.md)
-- [Observability 퀴즈](../../quizzes/tools/istio/observability.md)
-- [Resilience 퀴즈](../../quizzes/tools/istio/resilience.md)
-- [Advanced 퀴즈](../../quizzes/tools/istio/advanced.md)
+- [Traffic Management 퀴즈](quizzes/tools/istio/traffic-management.md)
+- [Security 퀴즈](quizzes/tools/istio/security.md)
+- [Observability 퀴즈](quizzes/tools/istio/observability.md)
+- [Resilience 퀴즈](quizzes/tools/istio/resilience.md)
+- [Advanced 퀴즈](quizzes/tools/istio/advanced.md)
