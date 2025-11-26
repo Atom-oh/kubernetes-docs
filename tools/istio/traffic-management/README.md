@@ -6,14 +6,16 @@ Istio의 트래픽 관리 기능은 서비스 메시 내에서 트래픽 흐름�
 
 1. [Gateway와 VirtualService](01-gateway-virtualservice.md)
 2. [라우팅](02-routing.md)
-3. [트래픽 분할](03-traffic-splitting.md)
-4. [Retry 및 Timeout](04-retry-timeout.md)
-5. [로드 밸런싱](05-load-balancing.md)
-6. [Circuit Breaker](06-circuit-breaker.md)
-7. [Fault Injection](07-fault-injection.md)
-8. [Traffic Mirroring](08-traffic-mirror.md)
-9. [Session Affinity](09-session-affinity.md)
-10. [Egress 제어](10-egress-control.md)
+3. [DestinationRule](03-destination-rule.md) ⭐ 필수 개념
+4. [트래픽 분할](04-traffic-splitting.md)
+5. [Retry 및 Timeout](05-retry-timeout.md)
+6. [로드 밸런싱](06-load-balancing.md)
+7. [Circuit Breaker](07-circuit-breaker.md)
+8. [Fault Injection](08-fault-injection.md)
+9. [Traffic Mirroring](09-traffic-mirror.md)
+10. [Session Affinity](10-session-affinity.md)
+11. [Egress 제어](11-egress-control.md)
+12. [ServiceEntry (외부 서비스 관리)](12-service-entry.md)
 
 ## 개요
 
@@ -335,37 +337,46 @@ flowchart LR
    - 고급 라우팅 패턴
    - 조건부 라우팅
 
-3. **[트래픽 분할](03-traffic-splitting.md)**
+3. **[DestinationRule](03-destination-rule.md)** ⭐ 필수 개념
+   - Subset 개념 이해
+   - Traffic Policy 기초
+   - VirtualService와 통합
+
+4. **[트래픽 분할](04-traffic-splitting.md)**
    - Canary 배포
    - A/B 테스트
 
-4. **[Retry 및 Timeout](04-retry-timeout.md)**
+5. **[Retry 및 Timeout](05-retry-timeout.md)**
    - 장애 복구
    - 응답 시간 제어
 
-5. **[로드 밸런싱](05-load-balancing.md)**
+6. **[로드 밸런싱](06-load-balancing.md)**
    - 다양한 알고리즘
    - 성능 최적화
 
-6. **[Circuit Breaker](06-circuit-breaker.md)**
+7. **[Circuit Breaker](07-circuit-breaker.md)**
    - 장애 격리
    - Cascading Failure 방지
 
-7. **[Fault Injection](07-fault-injection.md)**
+8. **[Fault Injection](08-fault-injection.md)**
    - 장애 테스트
    - Chaos Engineering
 
-8. **[Traffic Mirroring](08-traffic-mirror.md)**
+9. **[Traffic Mirroring](09-traffic-mirror.md)**
    - 프로덕션 테스트
    - 새 버전 검증
 
-9. **[Session Affinity](09-session-affinity.md)**
-   - Sticky Session
-   - 상태 유지
+10. **[Session Affinity](10-session-affinity.md)**
+    - Sticky Session
+    - 상태 유지
 
-10. **[Egress 제어](10-egress-control.md)**
+11. **[Egress 제어](11-egress-control.md)**
     - 외부 서비스 접근
     - 보안 강화
+
+12. **[ServiceEntry](12-service-entry.md)**
+    - 외부 서비스 등록
+    - Egress Gateway 통합
 
 ## 모범 사례
 

@@ -9,8 +9,9 @@ Retry와 Timeout은 마이크로서비스의 복원력을 높이는 핵심 메�
 3. [Retry 설정](#retry-설정)
 4. [Retry와 Timeout 조합](#retry와-timeout-조합)
 5. [실전 예제](#실전-예제)
-6. [모범 사례](#모범-사례)
-7. [문제 해결](#문제-해결)
+6. [중요 주의사항](#중요-주의사항)
+7. [모범 사례](#모범-사례)
+8. [문제 해결](#문제-해결)
 
 ## 개요
 
@@ -357,6 +358,255 @@ spec:
       baseEjectionTime: 30s
       maxEjectionPercent: 50
 ```
+
+## 중요 주의사항
+
+### ⚠️ 비멱등성 요청(Non-Idempotent Requests)에 대한 Retry 위험
+
+**핵심 원칙**: POST, PUT, DELETE 등 **상태를 변경하는 요청**은 Istio Proxy에서 자동 retry를 사용하면 **데이터 정합성 문제**가 발생할 수 있습니다.
+
+#### 문제 상황
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client
+    participant Proxy as Istio Proxy
+    participant Service
+    participant DB as Database
+
+    Client->>Proxy: POST /orders (주문 생성)
+    Proxy->>Service: POST /orders
+    Service->>DB: INSERT order (성공)
+    DB-->>Service: 200 OK
+    Service--xProxy: Network Timeout (응답 손실)
+    Note over Proxy: Retry 시도 (자동)
+    Proxy->>Service: POST /orders (동일 요청)
+    Service->>DB: INSERT order (중복!)
+    DB-->>Service: 200 OK
+    Service-->>Proxy: 200 OK
+    Proxy-->>Client: 200 OK
+    Note over DB: ❌ 중복 주문 생성!
+```
+
+#### 왜 위험한가?
+
+1. **중복 생성**: POST 요청이 실제로는 성공했지만 네트워크 문제로 응답이 손실되면, Proxy가 재시도하여 **중복 레코드**가 생성됩니다.
+2. **잘못된 상태 변경**: 결제, 재고 차감 등 **비즈니스 크리티컬한 작업**이 중복 실행될 수 있습니다.
+3. **검증 불가능**: Istio Proxy는 요청이 성공했는지 확인할 방법이 없습니다.
+
+#### 안전한 Retry 전략
+
+**✅ 권장: 애플리케이션 레벨 Retry**
+
+```yaml
+# Istio: 네트워크 문제만 재시도
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: order-service
+spec:
+  hosts:
+  - order-service
+  http:
+  - match:
+    - method:
+        exact: POST
+    route:
+    - destination:
+        host: order-service
+    timeout: 10s
+    retries:
+      attempts: 1  # Retry 비활성화
+      perTryTimeout: 5s
+      retryOn: connect-failure,refused-stream  # 연결 실패만
+```
+
+```python
+# 애플리케이션: Idempotency Key 사용
+import uuid
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
+def create_order_with_idempotency(order_data):
+    # 고유한 Idempotency Key 생성
+    idempotency_key = str(uuid.uuid4())
+
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=3,
+        status_forcelist=[500, 502, 503, 504],
+        allowed_methods=["POST"],  # POST도 재시도
+        backoff_factor=1
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+
+    headers = {
+        "X-Idempotency-Key": idempotency_key  # 중복 방지
+    }
+
+    response = session.post(
+        "http://order-service/orders",
+        json=order_data,
+        headers=headers
+    )
+    return response
+
+# 서버측: Idempotency Key 검증
+@app.route('/orders', methods=['POST'])
+def create_order():
+    idempotency_key = request.headers.get('X-Idempotency-Key')
+
+    # Redis/DB에서 이미 처리된 요청인지 확인
+    if redis.exists(f"order:idempotency:{idempotency_key}"):
+        # 이미 처리된 요청 - 저장된 결과 반환
+        cached_result = redis.get(f"order:result:{idempotency_key}")
+        return jsonify(json.loads(cached_result)), 200
+
+    # 새 주문 생성
+    order = create_order_in_db(request.json)
+
+    # Idempotency Key와 결과 저장 (24시간 TTL)
+    redis.setex(f"order:idempotency:{idempotency_key}", 86400, "1")
+    redis.setex(f"order:result:{idempotency_key}", 86400, json.dumps(order))
+
+    return jsonify(order), 201
+```
+
+#### HTTP 메소드별 Retry 안전성
+
+| 메소드 | 멱등성 | Istio Retry 안전성 | 권장 설정 |
+|-------|--------|-------------------|----------|
+| **GET** | ✅ 멱등 | ✅ 안전 | `attempts: 3, retryOn: 5xx,reset` |
+| **HEAD** | ✅ 멱등 | ✅ 안전 | `attempts: 3, retryOn: 5xx,reset` |
+| **OPTIONS** | ✅ 멱등 | ✅ 안전 | `attempts: 3, retryOn: 5xx,reset` |
+| **PUT** | ⚠️ 조건부 멱등 | ⚠️ 주의 | Idempotency Key 필요 |
+| **DELETE** | ⚠️ 조건부 멱등 | ⚠️ 주의 | Idempotency Key 필요 |
+| **POST** | ❌ 비멱등 | ❌ 위험 | `attempts: 1, 애플리케이션 retry` |
+| **PATCH** | ❌ 비멱등 | ❌ 위험 | `attempts: 1, 애플리케이션 retry` |
+
+#### 안전하게 Retry 가능한 경우
+
+```yaml
+# 읽기 전용 요청 - 안전
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: api-service-reads
+spec:
+  hosts:
+  - api-service
+  http:
+  - match:
+    - method:
+        regex: "GET|HEAD|OPTIONS"
+    route:
+    - destination:
+        host: api-service
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: 5xx,reset,connect-failure
+```
+
+```yaml
+# 멱등성이 보장된 쓰기 요청
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: idempotent-writes
+spec:
+  hosts:
+  - api-service
+  http:
+  - match:
+    - method:
+        exact: PUT
+    - headers:
+        x-idempotency-key:
+          regex: ".+"  # Idempotency Key 있을 때만
+    route:
+    - destination:
+        host: api-service
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: 5xx,reset
+```
+
+#### Circuit Breaker와 함께 사용 시 주의사항
+
+Circuit Breaker는 **장애 격리**에는 효과적이지만, **비멱등성 요청의 중복 실행**은 막지 못합니다.
+
+```yaml
+# ❌ 잘못된 예: POST + Circuit Breaker + Retry
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: payment-service
+spec:
+  hosts:
+  - payment-service
+  http:
+  - route:
+    - destination:
+        host: payment-service
+    retries:
+      attempts: 3  # ❌ POST에 대해 3번 재시도
+      retryOn: 5xx
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: payment-circuit-breaker
+spec:
+  host: payment-service
+  trafficPolicy:
+    outlierDetection:
+      consecutiveErrors: 5
+      baseEjectionTime: 30s
+
+# 결과: Circuit Breaker가 열리기 전에
+# 중복 결제가 3번 발생할 수 있음!
+```
+
+```yaml
+# ✅ 올바른 예: Circuit Breaker만 사용, Retry는 애플리케이션에서
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: payment-service
+spec:
+  hosts:
+  - payment-service
+  http:
+  - route:
+    - destination:
+        host: payment-service
+    timeout: 10s
+    retries:
+      attempts: 0  # Retry 완전 비활성화
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: payment-circuit-breaker
+spec:
+  host: payment-service
+  trafficPolicy:
+    outlierDetection:
+      consecutiveErrors: 5
+      baseEjectionTime: 30s
+```
+
+#### 실전 가이드라인
+
+1. **GET/HEAD/OPTIONS**: Istio Proxy Retry 사용 가능 ✅
+2. **POST/PATCH**: Istio Retry 비활성화, 애플리케이션 레벨 Retry + Idempotency Key ✅
+3. **PUT/DELETE**: Idempotency 보장 시에만 Istio Retry 사용 ⚠️
+4. **결제/재고/포인트 등 크리티컬**: 반드시 애플리케이션 레벨 검증 + Idempotency Key 🔴
 
 ## 모범 사례
 
