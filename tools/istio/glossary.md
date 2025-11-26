@@ -1,0 +1,932 @@
+# Istio 용어집
+
+> **지원 버전**: Istio 1.28+
+> **마지막 업데이트**: 2025년 11월 24일
+
+Istio와 Service Mesh 관련 주요 용어들을 알파벳 순으로 정리한 용어집입니다.
+
+## 목차
+
+- [A-C](#a-c)
+- [D-F](#d-f)
+- [G-I](#g-i)
+- [J-L](#j-l)
+- [M-O](#m-o)
+- [P-R](#p-r)
+- [S-U](#s-u)
+- [V-Z](#v-z)
+
+---
+
+## A-C
+
+### Ambient Mode
+
+Istio 1.20+에서 도입된 새로운 데이터 플레인 모드로, Sidecar Proxy 없이 서비스 메시 기능을 제공합니다.
+
+**특징**:
+- Sidecar 컨테이너 불필요
+- 노드 레벨에서 ztunnel 사용
+- 리소스 효율성 향상
+- L4와 L7 기능 분리
+
+**관련 문서**: [Ambient Mode](advanced/01-ambient-mode.md)
+
+---
+
+### Certificate Authority (CA)
+
+서비스 간 mTLS 통신을 위한 인증서를 발급하고 관리하는 기관입니다.
+
+**Istio에서의 역할**:
+- Istiod의 Citadel 기능이 CA 역할 수행
+- SPIFFE ID 기반 인증서 발급
+- 자동 인증서 갱신 (기본 TTL: 24시간)
+
+**관련 항목**: [Citadel](#citadel), [SPIFFE](#spiffe), [mTLS](#mtls)
+
+---
+
+### Circuit Breaker
+
+장애가 발생한 서비스로의 요청을 차단하여 전체 시스템의 장애 전파를 방지하는 패턴입니다.
+
+**작동 방식**:
+1. **Closed**: 정상 동작
+2. **Open**: 연속 실패 시 요청 차단
+3. **Half-Open**: 일정 시간 후 일부 요청 허용
+
+**Istio 구현**:
+```yaml
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+spec:
+  trafficPolicy:
+    outlierDetection:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+```
+
+**관련 문서**: [Circuit Breaker](traffic-management/07-circuit-breaker.md)
+
+---
+
+### Citadel
+
+Istio 1.4 이전에 독립적으로 존재했던 보안 컴포넌트입니다. 현재는 Istiod에 통합되어 있습니다.
+
+**주요 기능**:
+- Certificate Authority (CA) 관리
+- SPIFFE ID 발급 및 관리
+- X.509 인증서 생성 및 갱신
+
+**현재 상태**: Istio 1.5+에서는 Istiod 내부 기능으로 존재
+
+**관련 항목**: [Istiod](#istiod), [Certificate Authority](#certificate-authority-ca)
+
+---
+
+### CDS (Cluster Discovery Service)
+
+xDS API의 하나로, Envoy가 업스트림 서비스(클러스터)의 구성을 동적으로 받아오는 서비스입니다.
+
+**제공 정보**:
+- 클러스터 이름 및 타입
+- 로드 밸런싱 정책
+- Health check 설정
+- Circuit breaker 설정
+- TLS 설정
+
+**관련 항목**: [xDS](#xds), [Envoy](#envoy)
+
+---
+
+## D-F
+
+### Data Plane
+
+서비스 메시에서 실제 트래픽을 처리하는 계층입니다.
+
+**Istio의 Data Plane**:
+- Envoy Proxy (Sidecar 또는 Ambient Mode)
+- 모든 인바운드/아웃바운드 트래픽 처리
+- mTLS 암호화/복호화
+- 메트릭 수집
+
+**관련 항목**: [Control Plane](#control-plane), [Envoy](#envoy)
+
+---
+
+### DestinationRule
+
+VirtualService가 라우팅한 트래픽에 대한 정책을 정의하는 Istio CRD입니다.
+
+**주요 기능**:
+- Subset 정의 (버전, 지역 등)
+- 로드 밸런싱 정책
+- Connection Pool 설정
+- Circuit Breaker 설정
+- TLS 설정
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: reviews
+spec:
+  host: reviews
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+```
+
+**관련 문서**: [DestinationRule](traffic-management/03-destination-rule.md)
+
+---
+
+### eBPF (Extended Berkeley Packet Filter)
+
+Linux 커널 내부에서 안전하게 프로그램을 실행할 수 있는 기술입니다.
+
+**Istio에서의 활용**:
+- Ambient Mode의 핵심 기술
+- iptables 대체 (더 빠른 성능)
+- CNI 플러그인을 통한 트래픽 가로채기
+- Init Container 불필요
+
+**장점**:
+- 낮은 오버헤드
+- 커널 레벨 처리
+- 동적 프로그래밍 가능
+
+**관련 항목**: [Ambient Mode](#ambient-mode), [iptables](#iptables)
+
+---
+
+### EDS (Endpoint Discovery Service)
+
+xDS API의 하나로, 클러스터 내 실제 엔드포인트(파드 IP)를 동적으로 제공하는 서비스입니다.
+
+**제공 정보**:
+- 엔드포인트 IP 주소 및 포트
+- Health 상태
+- 로드 밸런싱 가중치
+- Locality 정보
+
+**예시**:
+```json
+{
+  "cluster_name": "outbound|9080||reviews",
+  "endpoints": [
+    {
+      "lb_endpoints": [
+        {"endpoint": {"address": {"socket_address": {"address": "10.244.1.5", "port_value": 9080}}}},
+        {"endpoint": {"address": {"socket_address": {"address": "10.244.2.8", "port_value": 9080}}}}
+      ]
+    }
+  ]
+}
+```
+
+**관련 항목**: [xDS](#xds), [CDS](#cds-cluster-discovery-service)
+
+---
+
+### Envoy Proxy
+
+Istio의 Data Plane을 구성하는 고성능 L7 프록시입니다.
+
+**역사**:
+- 2016년 Matt Klein이 Lyft에서 개발
+- 2017년 CNCF Incubating 프로젝트
+- 2018년 CNCF Graduated 프로젝트
+
+**주요 특징**:
+- C++로 작성된 고성능 프록시
+- xDS API를 통한 동적 구성
+- HTTP/1.1, HTTP/2, gRPC 지원
+- 풍부한 observability
+
+**구성 요소**:
+- Listeners: 포트 수신
+- Filters: 요청/응답 처리
+- Routers: 라우팅 결정
+- Clusters: 업스트림 서비스
+
+**관련 문서**: [아키텍처 - Envoy Proxy](02-architecture.md#data-plane-envoy-proxy)
+
+---
+
+## G-I
+
+### Galley
+
+Istio 1.4 이전에 독립적으로 존재했던 구성 검증 컴포넌트입니다. 현재는 Istiod에 통합되어 있습니다.
+
+**주요 기능**:
+- Istio 구성 검증
+- Kubernetes 리소스 처리
+- 구성 배포 전 오류 검사
+
+**현재 상태**: Istio 1.5+에서는 Istiod 내부 기능으로 존재
+
+**관련 항목**: [Istiod](#istiod)
+
+---
+
+### Gateway
+
+Service Mesh로 들어오는 외부 트래픽의 진입점을 정의하는 Istio CRD입니다.
+
+**종류**:
+1. **Ingress Gateway**: 외부 → 내부 트래픽
+2. **Egress Gateway**: 내부 → 외부 트래픽
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: my-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "example.com"
+```
+
+**관련 문서**: [Gateway와 VirtualService](traffic-management/01-gateway-virtualservice.md)
+
+---
+
+### gRPC
+
+Google이 개발한 고성능 RPC (Remote Procedure Call) 프레임워크입니다.
+
+**Istio와의 관계**:
+- xDS API는 gRPC 기반
+- Istiod ↔ Envoy 통신에 사용
+- HTTP/2 기반 (멀티플렉싱 지원)
+
+**장점**:
+- 양방향 스트리밍
+- 낮은 지연 시간
+- Protocol Buffers 사용
+
+**관련 항목**: [xDS](#xds)
+
+---
+
+### Identity
+
+Service Mesh 내에서 워크로드의 신원을 나타냅니다.
+
+**Istio의 Identity**:
+- SPIFFE ID 형식 사용
+- Kubernetes ServiceAccount 기반
+- X.509 인증서로 증명
+
+**예시**:
+```
+spiffe://cluster.local/ns/default/sa/reviews
+```
+
+**관련 항목**: [SPIFFE](#spiffe), [mTLS](#mtls)
+
+---
+
+### iptables
+
+Linux에서 네트워크 트래픽을 제어하는 방화벽 도구입니다.
+
+**Istio에서의 역할**:
+- istio-init 컨테이너가 iptables 규칙 설정
+- 파드의 모든 트래픽을 Envoy로 리다이렉트
+- NAT 테이블 사용 (PREROUTING, OUTPUT 체인)
+
+**주요 규칙**:
+```bash
+# 아웃바운드: Envoy 제외한 모든 트래픽 → 15001
+iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner 1337 -j REDIRECT --to-port 15001
+
+# 인바운드: 모든 트래픽 → 15006
+iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-port 15006
+```
+
+**대안**: eBPF (Ambient Mode)
+
+**관련 문서**: [아키텍처 - iptables](02-architecture.md#iptables와-트래픽-가로채기)
+
+---
+
+### Istiod
+
+Istio 1.5+의 통합된 Control Plane 컴포넌트입니다.
+
+**통합된 기능**:
+- **Pilot**: Service Discovery, Traffic Management
+- **Citadel**: Certificate Authority, Identity
+- **Galley**: Configuration Validation
+
+**실행 방식**:
+- 단일 Go 바이너리: `pilot-discovery`
+- 모든 기능이 하나의 프로세스 내에서 실행
+- 기본 포트: 15012 (xDS), 15017 (Webhook)
+
+**장점**:
+- 복잡도 감소
+- 운영 단순화
+- 리소스 효율성
+
+**관련 문서**: [아키텍처 - Istiod](02-architecture.md#control-plane-istiod)
+
+---
+
+## J-L
+
+### LDS (Listener Discovery Service)
+
+xDS API의 하나로, Envoy가 수신 대기할 포트와 필터 체인을 동적으로 받아오는 서비스입니다.
+
+**제공 정보**:
+- 리스너 주소 및 포트
+- 프로토콜 (HTTP, TCP)
+- 필터 체인 구성
+- TLS 설정
+
+**Istio의 기본 Listeners**:
+- `0.0.0.0:15001`: 아웃바운드 TCP
+- `0.0.0.0:15006`: 인바운드 TCP
+- `0.0.0.0:15021`: Health check
+- `0.0.0.0:15090`: Prometheus 메트릭
+
+**관련 항목**: [xDS](#xds), [Envoy](#envoy)
+
+---
+
+### Locality-aware Load Balancing
+
+지역(Region, Zone) 정보를 고려한 로드 밸런싱 방식입니다.
+
+**우선순위**:
+1. 같은 Zone의 엔드포인트
+2. 같은 Region의 다른 Zone
+3. 다른 Region
+
+**설정 예시**:
+```yaml
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+spec:
+  trafficPolicy:
+    loadBalancer:
+      localityLbSetting:
+        enabled: true
+        distribute:
+        - from: us-west/zone-1a/*
+          to:
+            "us-west/zone-1a/*": 80
+            "us-west/zone-1b/*": 20
+```
+
+**관련 문서**: [Zone Aware Routing](resilience/03-zone-aware-routing.md)
+
+---
+
+## M-O
+
+### Mixer
+
+Istio 1.4 이전에 존재했던 정책 및 텔레메트리 컴포넌트입니다.
+
+**주요 기능**:
+- 정책 적용 (Rate Limiting, 접근 제어)
+- 텔레메트리 수집
+
+**제거 이유**:
+- 성능 오버헤드 (모든 요청마다 Mixer 호출)
+- 복잡한 아키텍처
+
+**현재 상태**: Istio 1.5+에서 완전히 제거됨 (기능이 Envoy로 이동)
+
+**관련 항목**: [Istiod](#istiod)
+
+---
+
+### mTLS (Mutual TLS)
+
+클라이언트와 서버가 서로를 인증하는 양방향 TLS 통신 방식입니다.
+
+**Istio의 mTLS**:
+- 자동 인증서 발급 및 갱신
+- SPIFFE ID 기반 인증
+- 기본 암호화: AES-256-GCM
+
+**모드**:
+1. **STRICT**: mTLS만 허용
+2. **PERMISSIVE**: mTLS + 평문 허용 (마이그레이션용)
+3. **DISABLE**: 평문만 허용
+
+```yaml
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+spec:
+  mtls:
+    mode: STRICT
+```
+
+**관련 문서**: [mTLS](security/01-mtls.md)
+
+---
+
+### Outlier Detection
+
+비정상적인 동작을 보이는 엔드포인트를 자동으로 제외하는 기능입니다.
+
+**감지 조건**:
+- 연속 오류 횟수
+- 오류 비율
+- 응답 지연 시간
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+spec:
+  trafficPolicy:
+    outlierDetection:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+```
+
+**관련 문서**: [Outlier Detection](resilience/01-outlier-detection.md)
+
+---
+
+## P-R
+
+### Pilot
+
+Istio 1.4 이전에 독립적으로 존재했던 트래픽 관리 컴포넌트입니다. 현재는 Istiod에 통합되어 있습니다.
+
+**주요 기능**:
+- Service Discovery
+- Traffic Management (VirtualService, DestinationRule 처리)
+- xDS Server
+
+**현재 상태**: Istio 1.5+에서는 Istiod 내부 기능으로 존재
+
+**관련 항목**: [Istiod](#istiod), [xDS](#xds)
+
+---
+
+### RDS (Route Discovery Service)
+
+xDS API의 하나로, HTTP 라우팅 규칙을 동적으로 제공하는 서비스입니다.
+
+**제공 정보**:
+- 라우트 매칭 규칙 (경로, 헤더 등)
+- 가중치 기반 라우팅
+- 리다이렉트 및 재작성 규칙
+- Timeout 및 Retry 설정
+
+**VirtualService와의 관계**:
+- VirtualService → Istiod에서 변환 → RDS 구성
+
+**관련 항목**: [xDS](#xds), [VirtualService](#virtualservice)
+
+---
+
+### Rate Limiting
+
+단위 시간당 허용되는 요청 수를 제한하는 기능입니다.
+
+**구현 방법**:
+1. **Local Rate Limiting**: Envoy 로컬에서 처리
+2. **Global Rate Limiting**: 외부 Rate Limit 서비스 사용
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: EnvoyFilter
+metadata:
+  name: filter-local-ratelimit
+spec:
+  configPatches:
+  - applyTo: HTTP_FILTER
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.local_ratelimit
+        typed_config:
+          stat_prefix: http_local_rate_limiter
+          token_bucket:
+            max_tokens: 100
+            tokens_per_fill: 100
+            fill_interval: 1s
+```
+
+**관련 문서**: [Rate Limiting](resilience/02-rate-limiting.md)
+
+---
+
+## S-U
+
+### SDS (Secret Discovery Service)
+
+xDS API의 하나로, TLS 인증서와 키를 동적으로 제공하는 서비스입니다.
+
+**제공 정보**:
+- X.509 인증서
+- Private Key
+- CA Root Certificate
+
+**장점**:
+- 파일 시스템 불필요
+- 자동 인증서 갱신
+- 무중단 갱신
+
+**관련 항목**: [xDS](#xds), [mTLS](#mtls)
+
+---
+
+### Service Entry
+
+Service Mesh 외부의 서비스를 메시에 등록하는 Istio CRD입니다.
+
+**사용 목적**:
+- 외부 API 접근 제어
+- 외부 서비스에 Istio 기능 적용 (Retry, Timeout 등)
+- Egress Gateway 통합
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: external-api
+spec:
+  hosts:
+  - api.external.com
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS
+```
+
+**관련 문서**: [ServiceEntry](traffic-management/12-service-entry.md)
+
+---
+
+### Service Mesh
+
+마이크로서비스 간 통신을 관리하는 인프라 계층입니다.
+
+**핵심 기능**:
+- 트래픽 관리 (라우팅, 로드 밸런싱)
+- 보안 (mTLS, 인증/인가)
+- Observability (메트릭, 로그, 추적)
+- 복원력 (Retry, Circuit Breaker)
+
+**주요 구현체**:
+- Istio
+- Linkerd
+- Consul Connect
+- AWS App Mesh
+
+---
+
+### Sidecar
+
+애플리케이션 컨테이너와 함께 배포되는 보조 컨테이너 패턴입니다.
+
+**Istio의 Sidecar**:
+- 컨테이너 이름: `istio-proxy`
+- 이미지: `istio/proxyv2`
+- Envoy Proxy 실행
+- 모든 트래픽 가로채기 (iptables 또는 eBPF)
+
+**Injection 방법**:
+1. **Automatic**: Namespace 레이블
+2. **Manual**: `istioctl kube-inject`
+
+```yaml
+metadata:
+  labels:
+    istio-injection: enabled  # Automatic injection
+```
+
+**관련 문서**: [Sidecar Injection](advanced/07-sidecar-injection.md)
+
+---
+
+### Sidecar Resource
+
+Envoy가 수신할 서비스 정보를 제한하는 Istio CRD입니다.
+
+**목적**:
+- 메모리 사용량 감소
+- 구성 푸시 시간 단축
+- 네트워크 격리
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: Sidecar
+metadata:
+  name: default
+  namespace: default
+spec:
+  egress:
+  - hosts:
+    - "./*"  # 같은 네임스페이스만
+    - "istio-system/*"
+```
+
+**효과**:
+- Before: 1000개 서비스 → 500 MB 메모리
+- After: 10개 서비스 → 80 MB 메모리
+
+**관련 문서**: [아키텍처 - Sidecar 리소스](02-architecture.md#sidecar-리소스를-통한-최적화)
+
+---
+
+### SPIFFE (Secure Production Identity Framework for Everyone)
+
+클라우드 네이티브 환경에서 워크로드 신원을 증명하는 표준입니다.
+
+**SPIFFE ID 형식**:
+```
+spiffe://trust-domain/path
+```
+
+**Istio 예시**:
+```
+spiffe://cluster.local/ns/default/sa/reviews
+  │         │           │     │      │    │
+  │         │           │     │      │    └─ ServiceAccount 이름
+  │         │           │     │      └────── "sa" (ServiceAccount)
+  │         │           │     └───────────── Namespace 이름
+  │         │           └─────────────────── "ns" (Namespace)
+  │         └─────────────────────────────── Trust Domain
+  └───────────────────────────────────────── 프로토콜
+```
+
+**구성 요소**:
+- **SPIFFE ID**: 워크로드 식별자
+- **SVID (SPIFFE Verifiable Identity Document)**: X.509 인증서
+
+**관련 항목**: [Identity](#identity), [mTLS](#mtls)
+
+---
+
+### Subset
+
+DestinationRule에서 정의하는 서비스의 논리적 그룹입니다.
+
+**일반적인 사용**:
+- 버전별: `v1`, `v2`, `v3`
+- 배포 단계별: `stable`, `canary`, `test`
+- 지역별: `us-west`, `us-east`, `eu-central`
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+spec:
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+```
+
+**관련 문서**: [DestinationRule - Subset 개념](traffic-management/03-destination-rule.md#subset-개념)
+
+---
+
+## V-Z
+
+### Waypoint Proxy
+
+Ambient Mode에서 L7 기능을 제공하는 선택적 프록시입니다.
+
+**역할**:
+- Service Account 또는 Namespace별로 배포
+- Envoy Proxy 기반
+- L7 트래픽 관리 기능 전담
+- ztunnel과 함께 동작
+
+**제공 기능**:
+- L7 라우팅 (Path, Header 기반)
+- Retry 및 Timeout
+- Circuit Breaker
+- Fault Injection
+- Header 조작
+
+**배포 예시**:
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: reviews-waypoint
+  namespace: default
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+  - name: mesh
+    port: 15008
+    protocol: HBONE
+```
+
+**특징**:
+- ztunnel이 L4만 처리하고 L7은 waypoint가 담당
+- 필요한 서비스만 선택적 사용 가능
+- Sidecar보다 리소스 효율적 (공유 방식)
+- Service Account 단위 또는 Namespace 단위 배포
+
+**관련 항목**: [Ambient Mode](#ambient-mode), [ztunnel](#ztunnel-zero-trust-tunnel)
+
+---
+
+### VirtualService
+
+Service Mesh 내에서 트래픽을 어떻게 라우팅할지 정의하는 Istio CRD입니다.
+
+**주요 기능**:
+- URI, 헤더, 쿼리 파라미터 기반 라우팅
+- 가중치 기반 트래픽 분배
+- Retry 및 Timeout 설정
+- Fault Injection
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: reviews
+spec:
+  hosts:
+  - reviews
+  http:
+  - match:
+    - uri:
+        prefix: "/v2"
+    route:
+    - destination:
+        host: reviews
+        subset: v2
+  - route:
+    - destination:
+        host: reviews
+        subset: v1
+```
+
+**관련 문서**: [Gateway와 VirtualService](traffic-management/01-gateway-virtualservice.md)
+
+---
+
+### xDS (Discovery Service)
+
+Envoy Proxy의 동적 구성을 위한 API 세트입니다.
+
+**"xDS"의 의미**:
+- `x`: 다양한 타입을 대표하는 변수
+- `DS`: Discovery Service
+
+**xDS API 종류**:
+
+| API | 이름 | 역할 |
+|-----|------|------|
+| **LDS** | Listener Discovery Service | 수신 포트 및 필터 체인 |
+| **RDS** | Route Discovery Service | HTTP 라우팅 규칙 |
+| **CDS** | Cluster Discovery Service | 업스트림 서비스 구성 |
+| **EDS** | Endpoint Discovery Service | 실제 파드 IP 목록 |
+| **SDS** | Secret Discovery Service | TLS 인증서 및 키 |
+
+**통신 방식**:
+- 프로토콜: gRPC
+- 포트: 15012 (Istiod)
+- 양방향 스트리밍
+
+**순서**:
+```
+Envoy 시작 → LDS → CDS → EDS → RDS → SDS
+```
+
+**관련 문서**: [아키텍처 - xDS API 통신](02-architecture.md#xds-api-통신)
+
+---
+
+### Zone
+
+Kubernetes의 가용 영역(Availability Zone)을 나타냅니다.
+
+**레이블 형식**:
+```yaml
+topology.kubernetes.io/zone: us-west-1a
+```
+
+**Istio에서의 활용**:
+- Locality-aware Load Balancing
+- Zone Aware Routing
+- 같은 Zone 우선 라우팅
+
+**관련 항목**: [Locality-aware Load Balancing](#locality-aware-load-balancing)
+
+---
+
+### ztunnel (Zero Trust Tunnel)
+
+Ambient Mode의 핵심 구성 요소로, 노드 레벨에서 실행되는 경량 L4 프록시입니다.
+
+**역할**:
+- DaemonSet으로 각 노드에 배포
+- 모든 파드의 L4 트래픽 처리
+- Sidecar 없이 서비스 메시 기능 제공
+- CNI 플러그인과 통합
+
+**제공 기능**:
+- **mTLS**: 자동 암호화/복호화
+- **L4 Telemetry**: 메트릭 수집
+- **Identity**: Service Account 기반 인증
+- **L4 Load Balancing**: 기본 로드 밸런싱
+
+**기술 특징**:
+- Rust로 작성 (고성능)
+- eBPF 기반 트래픽 리다이렉션
+- Init Container 불필요
+- 낮은 리소스 사용 (~50MB per node)
+
+**배포 예시**:
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ztunnel
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      app: ztunnel
+  template:
+    spec:
+      hostNetwork: true
+      containers:
+      - name: istio-proxy
+        image: istio/ztunnel:1.28.0
+        securityContext:
+          privileged: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
+```
+
+**Namespace 활성화**:
+```bash
+# Ambient Mode 활성화
+kubectl label namespace default istio.io/dataplane-mode=ambient
+```
+
+**장점**:
+- Sidecar 대비 86% 메모리 절감
+- 파드 재시작 불필요
+- 애플리케이션 투명성
+- 초기 지연 최소화
+
+**제한사항**:
+- L7 기능은 Waypoint Proxy 필요
+- eBPF 지원 커널 필요 (Linux 4.20+)
+
+**관련 항목**: [Ambient Mode](#ambient-mode), [Waypoint Proxy](#waypoint-proxy), [eBPF](#ebpf-extended-berkeley-packet-filter)
+
+---
+
+## 참고 자료
+
+### 공식 문서
+- [Istio Glossary](https://istio.io/latest/docs/reference/glossary/)
+- [Envoy Terminology](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/intro/terminology)
+- [SPIFFE Specification](https://github.com/spiffe/spiffe/tree/main/standards)
+
+### 관련 문서
+- [Istio 아키텍처](02-architecture.md)
+- [Traffic Management](traffic-management/README.md)
+- [Security](security/README.md)
+- [Observability](observability/README.md)
+
+---
+
+**마지막 업데이트**: 2025년 11월 24일

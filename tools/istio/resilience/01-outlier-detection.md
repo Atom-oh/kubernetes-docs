@@ -301,6 +301,635 @@ spec:
       enforcingSuccessRate: 100
 ```
 
+## 외부 서비스 보호 (ServiceEntry)
+
+외부 API나 레거시 시스템을 ServiceEntry로 등록하고 Outlier Detection을 적용하여 장애 전파를 방지합니다.
+
+### 외부 API 보호 아키텍처
+
+```mermaid
+flowchart LR
+    subgraph "Kubernetes Cluster"
+        App[Application Pod]
+        Envoy[Envoy Proxy<br/>Outlier Detection]
+    end
+
+    subgraph "External Services"
+        API1[External API<br/>Instance 1<br/>정상]
+        API2[External API<br/>Instance 2<br/>에러 발생]
+        API3[External API<br/>Instance 3<br/>정상]
+    end
+
+    App --> Envoy
+    Envoy -->|트래픽 전송| API1
+    Envoy -.->|제외됨| API2
+    Envoy -->|트래픽 전송| API3
+
+    %% 스타일 정의
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef external fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
+
+    %% 클래스 적용
+    class App,Envoy k8sComponent;
+    class API1,API3 external;
+    class API2 unhealthy;
+```
+
+### 예제 1: 단일 외부 API (DNS 기반)
+
+```yaml
+# 외부 REST API 서비스 등록
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: external-payment-api
+  namespace: payment
+spec:
+  hosts:
+  - api.payment-provider.com
+
+  # DNS를 통한 로드밸런싱
+  resolution: DNS
+
+  # HTTPS 포트
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+
+  # 외부 서비스
+  location: MESH_EXTERNAL
+---
+# Outlier Detection 적용
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: external-payment-api
+  namespace: payment
+spec:
+  host: api.payment-provider.com
+
+  trafficPolicy:
+    # TLS 설정
+    tls:
+      mode: SIMPLE
+
+    # Connection Pool (Circuit Breaker)
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 3s
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+
+    # Outlier Detection
+    outlierDetection:
+      # 외부 API는 빠르게 감지
+      consecutiveErrors: 3
+      consecutiveGatewayErrors: 2
+
+      # 10초마다 평가
+      interval: 10s
+
+      # 30초 동안 제외
+      baseEjectionTime: 30s
+
+      # 최대 50%까지 제외 가능
+      maxEjectionPercent: 50
+
+      # 로컬 오류도 감지 (timeout, connection failure)
+      splitExternalLocalOriginErrors: true
+      consecutiveLocalOriginFailures: 3
+```
+
+**사용 예제**:
+```go
+// Go 애플리케이션 코드
+func processPayment(ctx context.Context, amount float64) error {
+    // Istio가 자동으로 api.payment-provider.com으로 라우팅
+    // 에러 발생 시 자동으로 다른 인스턴스로 재시도
+    resp, err := http.Post(
+        "https://api.payment-provider.com/v1/charge",
+        "application/json",
+        bytes.NewBuffer(paymentData),
+    )
+
+    if err != nil {
+        // 연속 3회 에러 발생 시 Outlier Detection 발동
+        return fmt.Errorf("payment failed: %w", err)
+    }
+
+    return nil
+}
+```
+
+### 예제 2: 다중 외부 API 엔드포인트
+
+```yaml
+# 여러 리전의 외부 API 엔드포인트
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: external-weather-api
+  namespace: weather
+spec:
+  hosts:
+  - weather.api.com
+
+  # 정적 IP 주소 지정
+  resolution: STATIC
+
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+
+  location: MESH_EXTERNAL
+
+  # 다중 엔드포인트
+  endpoints:
+  - address: 203.0.113.10
+    labels:
+      region: us-east-1
+  - address: 203.0.113.20
+    labels:
+      region: us-west-2
+  - address: 203.0.113.30
+    labels:
+      region: eu-central-1
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: external-weather-api
+  namespace: weather
+spec:
+  host: weather.api.com
+
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+
+    # 로드밸런서 설정
+    loadBalancer:
+      simple: LEAST_REQUEST
+
+    connectionPool:
+      tcp:
+        maxConnections: 50
+        connectTimeout: 5s
+      http:
+        http1MaxPendingRequests: 20
+        maxRequestsPerConnection: 5
+
+    outlierDetection:
+      # 외부 API 특성에 맞게 조정
+      consecutiveErrors: 5
+      consecutiveGatewayErrors: 3
+      consecutiveLocalOriginFailures: 5
+
+      interval: 30s
+      baseEjectionTime: 60s
+
+      # 각 리전별로 최대 1개까지 제외
+      maxEjectionPercent: 33  # 3개 중 1개
+
+      splitExternalLocalOriginErrors: true
+```
+
+### 예제 3: 레거시 데이터베이스 보호
+
+```yaml
+# 외부 PostgreSQL 데이터베이스
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: legacy-postgres
+  namespace: database
+spec:
+  hosts:
+  - legacy-db.company.internal
+
+  resolution: DNS
+
+  ports:
+  - number: 5432
+    name: tcp-postgres
+    protocol: TCP
+
+  location: MESH_EXTERNAL
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: legacy-postgres
+  namespace: database
+spec:
+  host: legacy-db.company.internal
+
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 50
+        connectTimeout: 10s
+
+    outlierDetection:
+      # 데이터베이스는 신중하게 감지
+      consecutiveErrors: 10
+
+      # TCP 연결 실패 감지
+      consecutiveLocalOriginFailures: 5
+
+      interval: 60s
+      baseEjectionTime: 300s  # 5분
+
+      # 데이터베이스는 보수적으로
+      maxEjectionPercent: 20
+
+      splitExternalLocalOriginErrors: true
+```
+
+### 예제 4: 외부 API with Retry
+
+```yaml
+# 외부 RESTful API
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: external-geocoding-api
+  namespace: location
+spec:
+  hosts:
+  - maps.googleapis.com
+
+  resolution: DNS
+
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+
+  location: MESH_EXTERNAL
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: external-geocoding-api
+  namespace: location
+spec:
+  hosts:
+  - maps.googleapis.com
+
+  http:
+  - timeout: 5s
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: 5xx,reset,connect-failure,refused-stream
+    route:
+    - destination:
+        host: maps.googleapis.com
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: external-geocoding-api
+  namespace: location
+spec:
+  host: maps.googleapis.com
+
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 3s
+      http:
+        http1MaxPendingRequests: 50
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+
+    outlierDetection:
+      # 빠른 감지
+      consecutiveErrors: 3
+      consecutiveGatewayErrors: 2
+      consecutiveLocalOriginFailures: 3
+
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+
+      # 로컬 오류 (timeout, connection failure) 별도 추적
+      splitExternalLocalOriginErrors: true
+```
+
+### 예제 5: 외부 서비스 with Rate Limiting
+
+```yaml
+# 외부 API with Rate Limiting
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: external-rate-limited-api
+  namespace: api
+spec:
+  hosts:
+  - api.third-party.com
+
+  resolution: DNS
+
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+
+  location: MESH_EXTERNAL
+---
+# Rate Limiting 설정
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ratelimit-config
+  namespace: api
+data:
+  config.yaml: |
+    domain: external-api-ratelimit
+    descriptors:
+    - key: destination_cluster
+      value: outbound|443||api.third-party.com
+      rate_limit:
+        unit: second
+        requests_per_unit: 100
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: external-rate-limited-api
+  namespace: api
+spec:
+  host: api.third-party.com
+
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 10
+
+    outlierDetection:
+      # Rate limit 초과 시 빠르게 감지
+      consecutiveErrors: 3
+      consecutiveGatewayErrors: 2  # 429 Too Many Requests
+
+      interval: 10s
+      baseEjectionTime: 60s  # Rate limit 재설정 대기
+      maxEjectionPercent: 50
+
+      splitExternalLocalOriginErrors: true
+      consecutiveLocalOriginFailures: 3
+```
+
+### 외부 서비스 Outlier Detection 모범 사례
+
+#### 1. 에러 유형 구분
+
+```yaml
+outlierDetection:
+  # Gateway 에러 (502, 503, 504)
+  consecutiveGatewayErrors: 2  # 빠르게 감지
+
+  # 5xx 에러 (500, 501, etc.)
+  consecutiveErrors: 3
+
+  # Local 오류 (timeout, connection failure)
+  consecutiveLocalOriginFailures: 3
+
+  # 로컬 오류와 원격 오류 분리 추적
+  splitExternalLocalOriginErrors: true
+```
+
+**중요**: `splitExternalLocalOriginErrors: true`를 설정하면:
+- **Local Origin Failures**: 연결 타임아웃, DNS 실패, 연결 거부
+- **Upstream Failures**: 외부 API가 반환한 5xx 에러
+
+이 둘을 별도로 카운트하여 더 정확한 감지가 가능합니다.
+
+#### 2. Timeout 설정
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: external-api
+spec:
+  hosts:
+  - api.external.com
+  http:
+  - timeout: 5s  # 전체 요청 타임아웃
+    retries:
+      attempts: 3
+      perTryTimeout: 2s  # 각 재시도 타임아웃
+    route:
+    - destination:
+        host: api.external.com
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: external-api
+spec:
+  host: api.external.com
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        connectTimeout: 3s  # TCP 연결 타임아웃
+    outlierDetection:
+      consecutiveLocalOriginFailures: 3  # timeout도 카운트
+      splitExternalLocalOriginErrors: true
+```
+
+#### 3. 외부 서비스 모니터링
+
+```promql
+# Outlier Detection 메트릭
+# 1. 제외된 외부 엔드포인트
+envoy_cluster_outlier_detection_ejections_active{
+  cluster_name=~"outbound.*api\\.external\\.com.*"
+}
+
+# 2. 로컬 오류 (timeout, connection failure)
+rate(envoy_cluster_upstream_rq_timeout{
+  cluster_name=~"outbound.*api\\.external\\.com.*"
+}[5m])
+
+# 3. 외부 API 5xx 에러
+rate(istio_requests_total{
+  destination_service="api.external.com",
+  response_code=~"5.."
+}[5m])
+
+# 4. 외부 API 응답 시간
+histogram_quantile(0.95,
+  sum(rate(istio_request_duration_milliseconds_bucket{
+    destination_service="api.external.com"
+  }[5m])) by (le)
+)
+```
+
+#### 4. 알림 설정
+
+```yaml
+# Prometheus Alert Rules
+groups:
+- name: external_api_alerts
+  interval: 1m
+  rules:
+  # 외부 API 에러율 높음
+  - alert: ExternalAPIHighErrorRate
+    expr: |
+      (sum(rate(istio_requests_total{
+        destination_service=~".*external.*",
+        response_code=~"5.."
+      }[5m])) by (destination_service)
+      /
+      sum(rate(istio_requests_total{
+        destination_service=~".*external.*"
+      }[5m])) by (destination_service))
+      * 100 > 5
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High error rate for external API {{ $labels.destination_service }}"
+      description: "Error rate is {{ $value }}%"
+
+  # 외부 API 제외됨
+  - alert: ExternalAPIInstanceEjected
+    expr: |
+      envoy_cluster_outlier_detection_ejections_active{
+        cluster_name=~"outbound.*external.*"
+      } > 0
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "External API instance ejected"
+      description: "{{ $value }} instances ejected from {{ $labels.cluster_name }}"
+
+  # 외부 API 타임아웃 증가
+  - alert: ExternalAPIHighTimeout
+    expr: |
+      rate(envoy_cluster_upstream_rq_timeout{
+        cluster_name=~"outbound.*external.*"
+      }[5m]) > 0.1
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High timeout rate for external API"
+      description: "Timeout rate is {{ $value }} req/s"
+```
+
+#### 5. 문제 해결
+
+```bash
+# 1. ServiceEntry 확인
+kubectl get serviceentry -A
+kubectl describe serviceentry external-api -n <namespace>
+
+# 2. DestinationRule 적용 확인
+istioctl proxy-config clusters <pod-name> -n <namespace> --fqdn api.external.com -o json | \
+  jq '.[] | {name: .name, outlierDetection: .outlierDetection}'
+
+# 3. 외부 API 연결 테스트
+kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- \
+  curl -v https://api.external.com/health
+
+# 4. Envoy 통계 확인
+kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- \
+  curl localhost:15000/stats/prometheus | grep "outbound.*external"
+
+# 5. Outlier Detection 상태
+kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- \
+  curl localhost:15000/clusters | grep -A 20 "outbound|443||api.external.com"
+```
+
+### 외부 서비스 장애 시나리오
+
+#### 시나리오 1: 외부 API 일시적 장애
+
+```yaml
+# 설정: 빠른 감지 및 복구
+outlierDetection:
+  consecutiveErrors: 3           # 3회 연속 에러
+  consecutiveGatewayErrors: 2    # 2회 게이트웨이 에러
+  interval: 10s                  # 10초마다 평가
+  baseEjectionTime: 30s          # 30초 후 복구 시도
+  maxEjectionPercent: 50         # 최대 50% 제외
+```
+
+**결과**:
+1. 외부 API가 502/503 에러 반환
+2. 2회 연속 에러 발생 시 즉시 제외
+3. 30초 후 자동으로 복구 시도
+4. 복구 실패 시 다시 30초 제외 (지수 백오프)
+
+#### 시나리오 2: 외부 API 완전 다운
+
+```yaml
+# 설정: 여러 엔드포인트로 failover
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: external-api-ha
+spec:
+  hosts:
+  - api.external.com
+  resolution: STATIC
+  endpoints:
+  - address: 203.0.113.10    # Primary
+    labels:
+      tier: primary
+  - address: 203.0.113.20    # Secondary
+    labels:
+      tier: secondary
+  - address: 203.0.113.30    # Tertiary
+    labels:
+      tier: tertiary
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: external-api-ha
+spec:
+  host: api.external.com
+  trafficPolicy:
+    outlierDetection:
+      consecutiveErrors: 3
+      consecutiveLocalOriginFailures: 3
+      interval: 10s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 66  # 3개 중 2개까지 제외 가능
+      minHealthPercent: 33    # 최소 1개는 유지
+```
+
+**결과**:
+1. Primary 엔드포인트 다운 → 제외
+2. 트래픽이 자동으로 Secondary로 이동
+3. Secondary도 실패 시 Tertiary로 이동
+4. Primary가 60초 후 복구되면 자동으로 재포함
+
 ## 실전 예제
 
 ### 예제 1: 마이크로서비스 체인

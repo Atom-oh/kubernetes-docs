@@ -1007,24 +1007,426 @@ spec:
     - "istio-system/*"
 ```
 
+## VM 워크로드 등록
+
+Istio는 Kubernetes 파드뿐만 아니라 **Virtual Machine (VM) 워크로드**도 서비스 메시에 등록할 수 있습니다. 이를 통해 레거시 애플리케이션이나 클러스터 외부의 서비스도 Istio의 트래픽 관리, 보안, 관찰성 기능을 활용할 수 있습니다.
+
+### VM 워크로드가 필요한 이유
+
+```mermaid
+flowchart TB
+    subgraph Legacy[레거시 환경]
+        VM1[VM<br/>레거시 앱]
+        VM2[VM<br/>데이터베이스]
+        VM3[VM<br/>외부 서비스]
+    end
+
+    subgraph K8S[Kubernetes 클러스터]
+        subgraph Pod1[파드]
+            App1[신규 앱]
+            Envoy1[Envoy]
+        end
+
+        subgraph Pod2[파드]
+            App2[마이크로서비스]
+            Envoy2[Envoy]
+        end
+    end
+
+    subgraph Istiod[Control Plane]
+        CP[istiod]
+    end
+
+    VM1 -->|마이그레이션 전<br/>직접 통신| App1
+    App1 -.->|메시 등록 후<br/>mTLS, 정책 적용| VM1
+
+    CP -.->|구성 전달| Envoy1
+    CP -.->|구성 전달| Envoy2
+    CP -.->|VM도 등록 가능| VM1
+
+    %% 스타일 정의
+    classDef vm fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
+    classDef k8sApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+
+    %% 클래스 적용
+    class VM1,VM2,VM3 vm;
+    class App1,App2 k8sApp;
+    class Envoy1,Envoy2 proxy;
+    class CP controlPlane;
+```
+
+**사용 시나리오**:
+- 레거시 애플리케이션의 점진적 마이그레이션
+- 데이터베이스 서버를 메시에 포함
+- 클러스터 외부의 서비스 통합
+- 하이브리드 클라우드 환경 구성
+
+### VM 등록 아키텍처
+
+```mermaid
+flowchart LR
+    subgraph VM[Virtual Machine]
+        LegacyApp[레거시<br/>애플리케이션]
+        EnvoyVM[Envoy<br/>Sidecar]
+    end
+
+    subgraph K8S[Kubernetes 클러스터]
+        subgraph Pod[파드]
+            App[애플리케이션]
+            EnvoyPod[Envoy<br/>Sidecar]
+        end
+
+        Istiod[istiod<br/>Control Plane]
+    end
+
+    LegacyApp <-->|로컬 통신| EnvoyVM
+    App <-->|로컬 통신| EnvoyPod
+
+    EnvoyVM <-->|mTLS| EnvoyPod
+
+    Istiod -.->|xDS 구성| EnvoyVM
+    Istiod -.->|xDS 구성| EnvoyPod
+    Istiod -.->|인증서 발급| EnvoyVM
+
+    %% 스타일 정의
+    classDef vmApp fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
+    classDef k8sApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+
+    %% 클래스 적용
+    class LegacyApp vmApp;
+    class App k8sApp;
+    class EnvoyVM,EnvoyPod proxy;
+    class Istiod controlPlane;
+```
+
+### WorkloadEntry 리소스
+
+VM 워크로드는 **WorkloadEntry** 리소스로 등록합니다.
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: WorkloadEntry
+metadata:
+  name: legacy-database
+  namespace: default
+spec:
+  address: 192.168.1.100  # VM의 IP 주소
+  labels:
+    app: mysql
+    version: v5.7
+  serviceAccount: database-sa
+  ports:
+    mysql: 3306
+```
+
+**WorkloadEntry 주요 필드**:
+- `address`: VM의 IP 주소
+- `labels`: 서비스 선택자와 매칭
+- `serviceAccount`: mTLS 인증을 위한 서비스 계정
+- `ports`: 노출할 포트 정의
+
+### ServiceEntry와 통합
+
+WorkloadEntry는 ServiceEntry와 함께 사용하여 VM 서비스를 메시에 등록합니다.
+
+```yaml
+# ServiceEntry로 서비스 정의
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: legacy-database
+spec:
+  hosts:
+  - database.legacy.com
+  ports:
+  - number: 3306
+    name: mysql
+    protocol: TCP
+  location: MESH_INTERNAL  # 메시 내부 서비스로 등록
+  resolution: STATIC
+  workloadSelector:
+    labels:
+      app: mysql
+---
+# WorkloadEntry로 VM 인스턴스 등록
+apiVersion: networking.istio.io/v1
+kind: WorkloadEntry
+metadata:
+  name: mysql-vm-1
+  namespace: default
+spec:
+  address: 192.168.1.100
+  labels:
+    app: mysql
+    version: v5.7
+  serviceAccount: mysql-sa
+```
+
+### VM 등록 vs Multi-Cluster 비교
+
+| 기능 | VM 워크로드 등록 | Multi-Cluster | Kubernetes 파드 |
+|------|----------------|---------------|----------------|
+| **워크로드 위치** | 클러스터 외부 VM | 다른 Kubernetes 클러스터 | 클러스터 내부 |
+| **Envoy 설치** | 수동 설치 | 자동 (사이드카) | 자동 (사이드카) |
+| **등록 방법** | WorkloadEntry | ServiceEntry + EndpointSlice | Service + Pod |
+| **mTLS** | 지원 | 지원 | 지원 |
+| **서비스 디스커버리** | 수동 (IP 지정) | 자동 | 자동 |
+| **사용 시나리오** | 레거시 앱, DB | 멀티 클라우드, 재해 복구 | 클라우드 네이티브 앱 |
+| **운영 복잡도** | 높음 | 중간 | 낮음 |
+
+### VM 등록의 이점
+
+#### 1. 점진적 마이그레이션
+
+```mermaid
+flowchart LR
+    subgraph Phase1[1단계: 레거시 환경]
+        VM1[VM<br/>모놀리스 앱]
+    end
+
+    subgraph Phase2[2단계: VM 메시 등록]
+        VM2[VM<br/>모놀리스 앱<br/>+ Envoy]
+    end
+
+    subgraph Phase3[3단계: 하이브리드]
+        VM3[VM<br/>레거시 모듈]
+        K8S1[K8s<br/>신규 마이크로서비스]
+        VM3 <-->|mTLS| K8S1
+    end
+
+    subgraph Phase4[4단계: 완전 마이그레이션]
+        K8S2[K8s<br/>전체 마이크로서비스]
+    end
+
+    Phase1 -->|VM 등록| Phase2
+    Phase2 -->|일부 마이그레이션| Phase3
+    Phase3 -->|완료| Phase4
+
+    %% 스타일 정의
+    classDef vm fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
+    classDef k8s fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    %% 클래스 적용
+    class VM1,VM2,VM3 vm;
+    class K8S1,K8S2 k8s;
+```
+
+**이점**:
+- 기존 VM 애플리케이션을 수정하지 않고 메시에 통합
+- 단계적으로 Kubernetes로 마이그레이션
+- 마이그레이션 중에도 일관된 보안 및 관찰성 유지
+
+#### 2. 통합된 보안 정책
+
+```yaml
+# VM과 파드 모두에 적용되는 mTLS 정책
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: default
+spec:
+  mtls:
+    mode: STRICT  # VM과 파드 모두 mTLS 강제
+---
+# VM 데이터베이스 접근 제어
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: database-access
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: mysql  # WorkloadEntry의 레이블
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/default/sa/app-sa"]
+    to:
+    - operation:
+        methods: ["*"]
+```
+
+#### 3. 일관된 관찰성
+
+VM 워크로드도 Kubernetes 파드와 동일한 메트릭, 로그, 분산 추적을 제공합니다.
+
+```promql
+# VM과 파드의 통합 메트릭 조회
+sum(rate(istio_requests_total{destination_workload="mysql-vm-1"}[5m]))
+
+# VM에서 발생한 에러율
+sum(rate(istio_requests_total{destination_workload="mysql-vm-1",response_code="500"}[5m]))
+/
+sum(rate(istio_requests_total{destination_workload="mysql-vm-1"}[5m]))
+```
+
+### VM 등록 제약사항
+
+1. **수동 Envoy 설치**: VM에 Envoy 프록시를 수동으로 설치하고 구성해야 함
+2. **네트워크 연결**: VM과 Kubernetes 클러스터 간 네트워크 연결 필요
+3. **인증서 관리**: VM에 서비스 계정 인증서를 배포해야 함
+4. **운영 부담**: VM의 Envoy 버전 관리 및 업데이트 필요
+5. **자동 확장 제한**: Kubernetes의 HPA와 같은 자동 확장 불가
+
+### 실제 사용 예시
+
+#### 시나리오: 레거시 데이터베이스 통합
+
+```yaml
+# 1. ServiceEntry로 데이터베이스 서비스 정의
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: legacy-postgres
+  namespace: production
+spec:
+  hosts:
+  - postgres.production.svc.cluster.local
+  addresses:
+  - 240.240.1.10  # 가상 IP
+  ports:
+  - number: 5432
+    name: postgresql
+    protocol: TCP
+  location: MESH_INTERNAL
+  resolution: STATIC
+  workloadSelector:
+    labels:
+      app: postgres
+      tier: database
+---
+# 2. WorkloadEntry로 VM 인스턴스 등록
+apiVersion: networking.istio.io/v1
+kind: WorkloadEntry
+metadata:
+  name: postgres-vm-1
+  namespace: production
+spec:
+  address: 10.0.1.100  # 실제 VM IP
+  labels:
+    app: postgres
+    tier: database
+    version: v13
+  serviceAccount: postgres-sa
+  ports:
+    postgresql: 5432
+---
+# 3. 접근 제어 정책
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: postgres-access-control
+  namespace: production
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["production"]
+        principals: ["cluster.local/ns/production/sa/api-service"]
+    to:
+    - operation:
+        ports: ["5432"]
+```
+
+**결과**:
+- Kubernetes 파드는 `postgres.production.svc.cluster.local`로 데이터베이스 접근
+- VM과 파드 간 자동 mTLS 암호화
+- 접근 제어 정책 적용
+- 메트릭 및 분산 추적 자동 수집
+
+### 워크로드 등록 비교 요약
+
+```mermaid
+flowchart TB
+    subgraph Types[워크로드 유형]
+        K8S[Kubernetes 파드<br/>클러스터 내부]
+        MC[Multi-Cluster<br/>다른 클러스터]
+        VM[Virtual Machine<br/>클러스터 외부]
+    end
+
+    subgraph Features[공통 기능]
+        mTLS[mTLS 암호화]
+        Traffic[트래픽 관리]
+        Policy[보안 정책]
+        Metrics[메트릭 & 추적]
+    end
+
+    K8S & MC & VM --> mTLS
+    K8S & MC & VM --> Traffic
+    K8S & MC & VM --> Policy
+    K8S & MC & VM --> Metrics
+
+    %% 스타일 정의
+    classDef workload fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef feature fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+
+    %% 클래스 적용
+    class K8S,MC,VM workload;
+    class mTLS,Traffic,Policy,Metrics feature;
+```
+
+Istio의 유연한 워크로드 등록 기능을 통해:
+- **Kubernetes 파드**: 클라우드 네이티브 애플리케이션
+- **Multi-Cluster**: 멀티 클라우드, 지역 분산, 재해 복구
+- **Virtual Machine**: 레거시 앱, 데이터베이스, 하이브리드 환경
+
+모든 워크로드에 일관된 보안, 트래픽 관리, 관찰성 기능을 제공합니다.
+
 ## 다음 단계
 
 이제 Istio의 기본 개념을 이해했습니다. 다음 문서를 통해 실제 사용 방법을 학습하세요:
 
+### 핵심 기능
+
 1. **[Traffic Management](traffic-management/README.md)**
    - Gateway와 VirtualService 사용법
-   - 고급 라우팅 패턴
-   - Circuit Breaker, Rate Limiting
+   - DestinationRule과 서브셋 정의
+   - ServiceEntry와 WorkloadEntry (VM 등록)
+   - 고급 라우팅 패턴 (Canary, A/B 테스트)
+   - Traffic Mirroring 및 Shadowing
 
 2. **[Security](security/README.md)**
-   - mTLS 구성
-   - 인증 및 권한 부여
+   - mTLS 구성 및 PeerAuthentication
+   - 인증 (RequestAuthentication, JWT)
+   - 권한 부여 (AuthorizationPolicy)
    - 보안 정책 관리
+   - 외부 인증 통합
 
 3. **[Observability](observability/README.md)**
-   - 메트릭 수집 및 시각화
-   - 분산 추적 설정
+   - 메트릭 수집 (Prometheus)
+   - 분산 추적 (Jaeger, Zipkin)
    - 로깅 구성
+   - Kiali 서비스 메시 시각화
+   - Grafana 대시보드
+
+4. **[Resilience](resilience/README.md)**
+   - Circuit Breaker 패턴
+   - Retry 및 Timeout 설정
+   - Rate Limiting
+   - Outlier Detection
+   - Fault Injection 테스트
+
+### 고급 주제
+
+5. **[Advanced Topics](advanced/README.md)**
+   - Ambient Mode (사이드카 없는 메시)
+   - Multi-Cluster 구성
+   - EnvoyFilter 커스터마이징
+   - DNS Proxy 및 Caching
+   - VM 워크로드 상세 구성
+   - WASM 플러그인 개발
 
 ## 참고 자료
 
