@@ -12,6 +12,22 @@ AuthorizationPolicy를 사용하여 서비스 접근 권한을 세밀하게 제�
 
 ## 권한 부여 개요
 
+<p align="center">
+  <img src="https://istio.io/latest/docs/concepts/security/authz.svg" alt="Istio Authorization" width="700">
+</p>
+
+Istio AuthorizationPolicy는 서비스에 대한 세밀한 접근 제어를 제공합니다. 위 다이어그램은 Authorization Policy가 어떻게 작동하는지 보여줍니다:
+
+1. **요청 수신**: Envoy가 인바운드 요청을 받음
+2. **Policy 평가**: AuthorizationPolicy 규칙을 순서대로 평가
+3. **접근 결정**: ALLOW, DENY, CUSTOM 액션 적용
+4. **Audit Logging**: 모든 결정 기록
+
+**지원되는 조건**:
+- **Source**: 요청 출처 (ServiceAccount, Namespace, IP)
+- **Operation**: HTTP 메서드, 경로, 포트
+- **Conditions**: 커스텀 조건 (헤더, JWT 클레임 등)
+
 ```mermaid
 flowchart TB
     Request[요청]

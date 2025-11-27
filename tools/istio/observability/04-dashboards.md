@@ -85,7 +85,19 @@ flowchart TD
 
 ## Kiali
 
-Kiali는 Istio 서비스 메시를 위한 관찰성 콘솔입니다.
+<p align="center">
+  <img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png" alt="Kiali Service Graph" width="900">
+</p>
+
+Kiali는 Istio 서비스 메시를 위한 **관찰성 콘솔**입니다. 서비스 토폴로지를 실시간으로 시각화하고, 트래픽 흐름을 분석하며, Istio 구성을 검증합니다.
+
+### Kiali의 핵심 가치
+
+1. **서비스 그래프 시각화**: 마이크로서비스 간의 관계와 트래픽 흐름을 직관적으로 표현
+2. **실시간 모니터링**: 요청률, 에러율, 응답시간을 실시간으로 확인
+3. **구성 검증**: VirtualService, DestinationRule 등의 Istio CRD 오류 감지
+4. **mTLS 상태 확인**: 서비스 간 mTLS 적용 여부를 시각적으로 확인
+5. **분산 추적 통합**: Jaeger와 연동하여 서비스 그래프에서 바로 트레이스 확인
 
 ### 프로덕션 배포
 
@@ -246,11 +258,21 @@ kubectl create token kiali -n istio-system --duration=24h
 
 #### 1. 서비스 그래프 (Graph)
 
+<p align="center">
+  <img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph-overview.png" alt="Kiali Graph Overview" width="800">
+</p>
+
 **Overview**:
 - 네임스페이스별 서비스 토폴로지 시각화
 - 트래픽 흐름 및 요청률(RPS) 표시
 - 에러율 및 응답 시간 시각화
 - 버전별 트래픽 분산 확인
+
+<p align="center">
+  <img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-traffic-animation.png" alt="Kiali Traffic Animation" width="700">
+</p>
+
+위 그림은 Kiali의 **Traffic Animation** 기능으로, 실시간 트래픽 흐름을 애니메이션으로 보여줍니다. 점의 크기와 빈도로 트래픽 양을 직관적으로 파악할 수 있습니다.
 
 **그래프 뷰 타입**:
 
@@ -313,6 +335,10 @@ Hide: kube-system namespace
 
 #### 3. 워크로드 뷰 (Workloads)
 
+<p align="center">
+  <img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-workload-detail.png" alt="Kiali Workload Detail" width="900">
+</p>
+
 Deployment, StatefulSet 등 워크로드별 상세 정보:
 
 - **Pods**: 파드 목록 및 상태
@@ -339,6 +365,10 @@ Kubernetes Service별 상세 정보:
 - **Traces**: 서비스 호출 추적
 
 #### 5. Istio 구성 검증 (Istio Config)
+
+<p align="center">
+  <img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-config-validation.png" alt="Kiali Config Validation" width="900">
+</p>
 
 모든 Istio 리소스 검증 및 관리:
 
@@ -421,6 +451,10 @@ spec:
 
 #### 6. 보안 (Security)
 
+<p align="center">
+  <img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-mtls.png" alt="Kiali mTLS Status" width="800">
+</p>
+
 **mTLS 상태 확인**:
 
 Kiali 그래프에서 mTLS 상태를 시각적으로 확인:
@@ -436,6 +470,10 @@ Kiali 그래프에서 mTLS 상태를 시각적으로 확인:
 
 #### 7. 분산 추적 통합 (Distributed Tracing)
 
+<p align="center">
+  <img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-jaeger-integration.png" alt="Kiali Jaeger Integration" width="800">
+</p>
+
 Kiali는 Jaeger와 통합되어 서비스 그래프에서 바로 trace를 확인할 수 있습니다.
 
 **사용 방법**:
@@ -443,9 +481,19 @@ Kiali는 Jaeger와 통합되어 서비스 그래프에서 바로 trace를 확인
 2. "View Traces" 링크 클릭
 3. Jaeger UI로 자동 이동하여 해당 서비스의 trace 확인
 
+**Trace 상세 정보**:
+- Span duration (각 서비스 처리 시간)
+- Request/Response 헤더
+- 에러 상세 내용
+- Service dependency 맵
+
 ### Kiali 고급 기능
 
 #### Traffic Shifting 시각화
+
+<p align="center">
+  <img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-weighted-routing.png" alt="Kiali Weighted Routing" width="700">
+</p>
 
 ```yaml
 # 카나리 배포 VirtualService
@@ -469,6 +517,12 @@ spec:
 ```
 
 Kiali 그래프는 실시간 트래픽 분산율을 엣지 레이블로 표시합니다.
+
+**Canary 배포 모니터링**:
+- 버전별 요청률 (v1: 90%, v2: 10%)
+- 버전별 에러율 비교
+- 버전별 응답 시간 (P50, P95, P99)
+- 실시간 트래픽 애니메이션으로 분산 확인
 
 #### Namespace 격리 및 접근 제어
 

@@ -12,6 +12,8 @@ Istio의 고급 기능들을 다룹니다. 이 섹션에서는 Ambient Mode, Mul
 6. [WebSocket](06-websocket.md)
 7. [Sidecar Injection](07-sidecar-injection.md)
 8. [Argo Rollouts Integration](08-argo-rollouts.md)
+9. [Zone-Aware Argo Rollouts](09-zone-aware-argo-rollouts.md)
+10. [KEDA Autoscaling](10-keda-autoscaling.md)
 
 ## 개요
 
@@ -348,6 +350,102 @@ spec:
 
 **자세한 내용**: [Argo Rollouts 통합 가이드](08-argo-rollouts.md)
 
+## 9. Zone-Aware Argo Rollouts
+
+Zone을 인식하여 가용 영역별로 Canary 배포를 수행합니다.
+
+**자세한 내용**: [Zone-Aware Argo Rollouts 가이드](09-zone-aware-argo-rollouts.md)
+
+## 10. KEDA Autoscaling
+
+KEDA를 활용하여 Istio 메트릭 기반 오토스케일링을 구현합니다.
+
+### KEDA vs HPA
+
+| 기능 | Kubernetes HPA | KEDA |
+|------|---------------|------|
+| **메트릭 소스** | CPU/Memory + Custom Metrics | 60+ Scaler (Prometheus, CloudWatch, Kafka 등) |
+| **Scale to Zero** | ❌ 미지원 (최소 1) | ✅ 지원 (Pod 0개 가능) |
+| **외부 메트릭** | ⚠️ Metrics Server 필요 | ✅ 네이티브 지원 |
+| **복잡한 쿼리** | ❌ 제한적 | ✅ PromQL, CloudWatch Insights |
+
+### KEDA 아키텍처
+
+```mermaid
+flowchart TB
+    subgraph IstioMesh[Istio Service Mesh]
+        Service[Service<br/>with Envoy]
+        Envoy[Envoy Proxy]
+        Service --> Envoy
+    end
+
+    subgraph Observability[관찰성 스택]
+        Prometheus[Prometheus<br/>메트릭 수집]
+        CloudWatch[CloudWatch<br/>AWS 메트릭]
+    end
+
+    subgraph Autoscaling[오토스케일링]
+        KEDA[KEDA<br/>Operator]
+        HPA[HPA<br/>Controller]
+        ScaledObject[ScaledObject<br/>정책]
+    end
+
+    Envoy -->|메트릭| Prometheus
+    Envoy -->|메트릭| CloudWatch
+
+    Prometheus -->|쿼리| KEDA
+    CloudWatch -->|쿼리| KEDA
+
+    KEDA -->|생성/관리| HPA
+    ScaledObject -->|정의| KEDA
+
+    HPA -->|스케일| Service
+
+    %% 스타일 정의
+    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
+    classDef observability fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
+    classDef autoscaling fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
+
+    %% 클래스 적용
+    class Service,Envoy istio;
+    class Prometheus,CloudWatch observability;
+    class KEDA,HPA,ScaledObject autoscaling;
+```
+
+### 주요 스케일링 전략
+
+```yaml
+# RPS 기반 스케일링
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: reviews-rps-scaler
+spec:
+  scaleTargetRef:
+    name: reviews
+  triggers:
+  - type: prometheus
+    metadata:
+      query: |
+        sum(rate(istio_requests_total{
+          destination_workload="reviews"
+        }[1m]))
+      threshold: '100'
+```
+
+**스케일링 메트릭**:
+- **RPS (Requests Per Second)**: 초당 요청 수 기반
+- **Latency (P50/P95/P99)**: 지연 시간 백분위수 기반
+- **Error Rate**: 5xx 에러율 기반
+- **Circuit Breaker**: Circuit Breaker 상태 기반
+- **Composite Metrics**: 복합 메트릭 조합
+
+**메트릭 소스**:
+- **Prometheus**: 실시간 Istio/Envoy 메트릭
+- **AWS CloudWatch**: ADOT Collector를 통한 CloudWatch 메트릭
+
+**자세한 내용**: [KEDA Autoscaling 가이드](10-keda-autoscaling.md)
+
 ## 학습 순서
 
 1. **[Ambient Mode](01-ambient-mode.md)** - 새로운 아키텍처 이해
@@ -358,6 +456,8 @@ spec:
 6. **[WebSocket](06-websocket.md)** - WebSocket 지원
 7. **[DNS Caching](04-dns-cache.md)** - 성능 최적화
 8. **[Argo Rollouts](08-argo-rollouts.md)** - Progressive Delivery
+9. **[Zone-Aware Argo Rollouts](09-zone-aware-argo-rollouts.md)** - 가용 영역별 배포
+10. **[KEDA Autoscaling](10-keda-autoscaling.md)** - 메트릭 기반 오토스케일링
 
 ## 참고 자료
 

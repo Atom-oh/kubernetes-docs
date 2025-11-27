@@ -608,6 +608,295 @@ spec:
 
 ---
 
+### SigV4 (AWS Signature Version 4)
+
+AWS API 요청을 인증하기 위한 서명 프로토콜입니다.
+
+**작동 방식**:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client as 클라이언트
+    participant Envoy as Envoy Proxy
+    participant AWS as AWS 서비스
+
+    Client->>Envoy: HTTP 요청
+    Envoy->>Envoy: AWS Credentials 로드
+    Envoy->>Envoy: SigV4 서명 생성<br/>HMAC-SHA256
+    Envoy->>AWS: Authorization 헤더 추가<br/>AWS4-HMAC-SHA256
+    AWS->>AWS: 서명 검증
+    AWS->>Envoy: 응답
+    Envoy->>Client: 응답
+```
+
+**서명 구성 요소**:
+
+1. **Canonical Request**: 요청의 표준화된 형식
+   - HTTP 메서드
+   - URI 경로
+   - 쿼리 문자열
+   - 헤더
+   - 페이로드 해시
+
+2. **String to Sign**: 서명할 문자열
+   - 알고리즘: `AWS4-HMAC-SHA256`
+   - 타임스탬프
+   - Credential Scope
+   - Canonical Request 해시
+
+3. **Signing Key**: 서명 키 계산
+   ```
+   HMAC(HMAC(HMAC(HMAC("AWS4" + SecretKey, Date), Region), Service), "aws4_request")
+   ```
+
+4. **Signature**: 최종 서명
+   ```
+   HMAC(SigningKey, StringToSign)
+   ```
+
+**Istio와의 통합**:
+
+#### 1. EnvoyFilter를 통한 SigV4 인증
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: aws-sigv4-filter
+  namespace: istio-system
+spec:
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_OUTBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.aws_request_signing
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.aws_request_signing.v3.AwsRequestSigning
+          service_name: s3
+          region: us-west-2
+          use_unsigned_payload: false
+          match_excluded_headers:
+          - prefix: x-envoy
+```
+
+#### 2. External Authorization과 통합
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: aws-auth
+  namespace: default
+spec:
+  jwtRules:
+  - issuer: "https://sts.amazonaws.com"
+    audiences:
+    - "sts.amazonaws.com"
+    jwksUri: "https://sts.amazonaws.com/.well-known/jwks"
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: require-aws-auth
+  namespace: default
+spec:
+  action: CUSTOM
+  provider:
+    name: aws-sigv4-authorizer
+  rules:
+  - to:
+    - operation:
+        paths: ["/api/*"]
+```
+
+**사용 시나리오**:
+
+#### 시나리오 1: S3 접근
+
+```yaml
+# ServiceEntry로 S3 등록
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: s3-external
+spec:
+  hosts:
+  - "*.s3.amazonaws.com"
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS
+---
+# DestinationRule로 TLS 설정
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: s3-external
+spec:
+  host: "*.s3.amazonaws.com"
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+```
+
+**애플리케이션 코드**:
+```python
+import requests
+
+# Envoy가 자동으로 SigV4 서명 추가
+response = requests.get("https://my-bucket.s3.us-west-2.amazonaws.com/object.txt")
+print(response.text)
+```
+
+#### 시나리오 2: API Gateway 통합
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: aws-api-gateway
+spec:
+  hosts:
+  - api.example.com
+  http:
+  - match:
+    - uri:
+        prefix: "/api"
+    route:
+    - destination:
+        host: my-api.execute-api.us-west-2.amazonaws.com
+        port:
+          number: 443
+```
+
+#### 시나리오 3: DynamoDB 접근
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: dynamodb-sigv4
+spec:
+  configPatches:
+  - applyTo: HTTP_FILTER
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.aws_request_signing
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.aws_request_signing.v3.AwsRequestSigning
+          service_name: dynamodb
+          region: us-west-2
+          host_rewrite: dynamodb.us-west-2.amazonaws.com
+```
+
+**AWS Credentials 제공 방법**:
+
+1. **ServiceAccount + IRSA (권장)**:
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-sa
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/app-role
+```
+
+2. **EC2 Instance Profile**:
+   - 노드에 할당된 IAM 역할 자동 사용
+
+3. **환경 변수**:
+```yaml
+env:
+- name: AWS_ACCESS_KEY_ID
+  valueFrom:
+    secretKeyRef:
+      name: aws-credentials
+      key: access-key-id
+- name: AWS_SECRET_ACCESS_KEY
+  valueFrom:
+    secretKeyRef:
+      name: aws-credentials
+      key: secret-access-key
+```
+
+**보안 고려사항**:
+
+1. **Credential Rotation**:
+   - IRSA를 사용하여 자동 순환
+   - 기본 TTL: 1시간
+
+2. **최소 권한 원칙**:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::my-bucket/*"
+    }
+  ]
+}
+```
+
+3. **Audit Logging**:
+   - CloudTrail로 모든 API 호출 기록
+   - Istio Access Log와 통합
+
+**디버깅**:
+
+```bash
+# Envoy 로그에서 SigV4 서명 확인
+kubectl logs <pod-name> -c istio-proxy | grep aws_request_signing
+
+# Authorization 헤더 확인
+kubectl exec -it <pod-name> -c istio-proxy -- \
+  curl -v localhost:15000/config_dump | jq '.configs[] | select(.["@type"] == "type.googleapis.com/envoy.admin.v3.ClustersConfigDump")'
+
+# AWS API 호출 테스트
+kubectl exec -it <pod-name> -- \
+  curl -v https://my-bucket.s3.amazonaws.com/test.txt
+```
+
+**성능 영향**:
+
+| 작업 | 지연 시간 |
+|------|----------|
+| SigV4 서명 계산 | ~1-2ms |
+| Credential 로드 (캐시) | ~0.1ms |
+| Credential 로드 (IRSA) | ~50ms (첫 요청) |
+| 전체 오버헤드 | ~1-3ms |
+
+**대안 비교**:
+
+| 방식 | 장점 | 단점 |
+|------|------|------|
+| **SigV4 (Envoy)** | 애플리케이션 코드 수정 불필요 | Envoy 구성 필요 |
+| **AWS SDK** | 유연한 제어 | 모든 앱에 SDK 추가 |
+| **API Gateway** | 관리형 솔루션 | 추가 비용 |
+
+**관련 항목**: [AuthorizationPolicy](#authorizationpolicy), [ServiceEntry](#service-entry), [EnvoyFilter](advanced/03-envoy-filter.md)
+
+**참고 자료**:
+- [AWS Signature Version 4](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)
+- [Envoy AWS Request Signing](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/aws_request_signing_filter)
+- [AWS 통합](04-aws-integration.md)
+
+---
+
 ### Sidecar
 
 애플리케이션 컨테이너와 함께 배포되는 보조 컨테이너 패턴입니다.

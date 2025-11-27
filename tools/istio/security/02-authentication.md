@@ -12,6 +12,22 @@ Istio는 서비스 간 인증(Peer Authentication)과 최종 사용자 인증(Re
 
 ## 인증 개요
 
+<p align="center">
+  <img src="https://istio.io/latest/docs/concepts/security/authn.svg" alt="Istio Authentication" width="800">
+</p>
+
+Istio는 두 가지 유형의 인증을 제공합니다:
+
+1. **Peer Authentication (서비스 간 인증)**
+   - mTLS를 사용한 서비스 간 인증
+   - SPIFFE ID 기반 신원 확인
+   - PeerAuthentication CRD로 구성
+
+2. **Request Authentication (최종 사용자 인증)**
+   - JWT 토큰 기반 사용자 인증
+   - OAuth/OIDC 제공자 통합
+   - RequestAuthentication CRD로 구성
+
 ```mermaid
 flowchart TB
     User[사용자]
