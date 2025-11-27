@@ -6,14 +6,18 @@ Amazon EKS에서 Istio Service Mesh를 활용한 실용적인 가이드입니다
 
 0. [서비스 메시가 정말 필요한가?](#서비스-메시가-정말-필요한가)
 1. [설치 및 초기 설정](01-installation.md)
-2. [기본 개념](02-basic-concepts.md)
-3. [Traffic Management (트래픽 관리)](traffic-management/README.md)
-4. [Security (보안)](security/README.md)
-5. [Observability (관찰성)](observability/README.md)
-6. [Resilience (복원력)](resilience/README.md)
-7. [Advanced (고급 기능)](advanced/README.md)
-8. [모범 사례](best-practices.md)
-9. [대안 비교](../comparison/01-service-mesh-comparison.md)
+2. [아키텍처](02-architecture.md)
+3. [기본 개념](03-basic-concepts.md)
+4. [AWS 통합](04-aws-integration.md)
+5. [용어집](glossary.md)
+6. [Traffic Management (트래픽 관리)](traffic-management/README.md)
+7. [Security (보안)](security/README.md)
+8. [Observability (관찰성)](observability/README.md)
+9. [Resilience (복원력)](resilience/README.md)
+10. [Advanced (고급 기능)](advanced/README.md)
+11. [Troubleshooting (문제 해결)](troubleshooting/common-errors.md)
+12. [모범 사례](best-practices.md)
+13. [대안 비교](../comparison/README.md)
 
 ## Istio란?
 

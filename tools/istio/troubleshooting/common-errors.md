@@ -72,7 +72,9 @@ sequenceDiagram
 
 ### 해결 방법
 
-#### 방법 1: preStop Hook 사용 (권장)
+#### 방법 1: Envoy Proxy preStop Hook 설정 (권장)
+
+Istio Proxy 컨테이너에 preStop Hook을 설정하여 활성 연결이 모두 종료될 때까지 대기하도록 합니다.
 
 ```yaml
 apiVersion: apps/v1
@@ -81,17 +83,16 @@ metadata:
   name: myapp
 spec:
   template:
+    metadata:
+      annotations:
+        # Envoy가 활성 연결 종료까지 대기
+        proxy.istio.io/config: |
+          terminationDrainDuration: 30s
     spec:
+      terminationGracePeriodSeconds: 60
       containers:
       - name: myapp
         image: myapp:latest
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - sleep 15  # Envoy가 종료되기 전 대기
         ports:
         - containerPort: 8080
 ```
@@ -111,8 +112,8 @@ sequenceDiagram
     K8s->>Envoy: SIGTERM 전송
 
     rect rgb(200, 255, 200)
-        Note over App: ✅ preStop Hook 실행
-        App->>App: sleep 15초<br/>새 연결 거부<br/>기존 연결 완료
+        Note over Envoy: ✅ Drain 모드 진입
+        Envoy->>Envoy: 새 연결 거부<br/>기존 연결 유지<br/>30초 대기
     end
 
     Client->>Envoy: 요청 전송
@@ -120,43 +121,16 @@ sequenceDiagram
     App->>Envoy: 응답
     Envoy->>Client: ✅ 정상 응답
 
-    Note over App: 15초 후
-    App->>App: 정상 종료
+    Note over Envoy: 활성 연결 종료 확인
+    Envoy->>Envoy: 정상 종료
 
-    Note over Envoy: Envoy도 정상 종료
-    Envoy->>Envoy: Graceful Shutdown
+    Note over App: App도 정상 종료
+    App->>App: Graceful Shutdown
 ```
 
-#### 방법 2: EXIT_ON_ZERO_ACTIVE_CONNECTIONS 설정
+#### 방법 2: Pod Annotation으로 Envoy 종료 동작 제어
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio-sidecar-injector
-  namespace: istio-system
-data:
-  values: |
-    global:
-      proxy:
-        holdApplicationUntilProxyStarts: true
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - |
-                while [ $(netstat -plunt | grep tcp | grep -v TIME_WAIT | wc -l | xargs) -ne 0 ]; do
-                  sleep 1;
-                done
-```
-
-**설명**:
-- Envoy가 모든 활성 연결이 종료될 때까지 대기
-- 활성 연결 수가 0이 되면 종료
-
-#### 방법 3: terminationGracePeriodSeconds 증가
+Pod 단위로 Envoy의 종료 동작을 세밀하게 제어할 수 있습니다.
 
 ```yaml
 apiVersion: apps/v1
@@ -165,23 +139,62 @@ metadata:
   name: myapp
 spec:
   template:
+    metadata:
+      annotations:
+        # Envoy가 애플리케이션 시작까지 대기
+        proxy.istio.io/config: |
+          holdApplicationUntilProxyStarts: true
+          terminationDrainDuration: 30s
+        # Envoy 종료 타임아웃
+        sidecar.istio.io/terminationGracePeriodSeconds: "60"
     spec:
-      terminationGracePeriodSeconds: 60  # 기본값: 30초
+      terminationGracePeriodSeconds: 60
       containers:
       - name: myapp
         image: myapp:latest
+```
+
+**설정 설명**:
+- `holdApplicationUntilProxyStarts: true`: 애플리케이션보다 Envoy가 먼저 시작
+- `terminationDrainDuration: 30s`: Envoy 종료 시 30초 동안 드레인
+- `terminationGracePeriodSeconds: 60`: 전체 파드 종료 유예 시간
+
+#### 방법 3: 전역 설정 (IstioOperator)
+
+클러스터 전체에 일관된 종료 정책을 적용합니다.
+
+```yaml
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: istio-controlplane
+spec:
+  meshConfig:
+    defaultConfig:
+      terminationDrainDuration: 30s
+      holdApplicationUntilProxyStarts: true
+  values:
+    global:
+      proxy:
         lifecycle:
           preStop:
             exec:
               command:
               - /bin/sh
               - -c
-              - sleep 20
+              - |
+                # Envoy 드레인 시작
+                curl -X POST http://localhost:15000/drain_listeners?graceful
+                # 활성 연결 대기
+                while [ $(netstat -plunt | grep tcp | grep -v TIME_WAIT | wc -l | xargs) -ne 0 ]; do
+                  sleep 1;
+                done
 ```
 
 **권장 설정**:
-- `terminationGracePeriodSeconds`: 60초 (충분한 시간 확보)
-- `preStop sleep`: 15-20초 (Envoy drain 시간)
+- `terminationDrainDuration`: 30초 (활성 연결 드레인 시간)
+- `terminationGracePeriodSeconds`: 60초 (SIGKILL 전 유예 시간)
+- Envoy가 활성 연결을 확인하고 graceful shutdown 수행
 
 ### 검증 방법
 
@@ -206,22 +219,19 @@ metadata:
   name: myapp
 spec:
   template:
+    metadata:
+      annotations:
+        # Envoy 종료 동작 제어
+        proxy.istio.io/config: |
+          holdApplicationUntilProxyStarts: true
+          terminationDrainDuration: 30s
     spec:
       terminationGracePeriodSeconds: 60
       containers:
       - name: myapp
         image: myapp:latest
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - |
-                # 1. Health check endpoint 비활성화
-                curl -X POST http://localhost:8080/admin/shutdown
-                # 2. 기존 요청 완료 대기
-                sleep 15
+        ports:
+        - containerPort: 8080
         readinessProbe:
           httpGet:
             path: /health
@@ -229,14 +239,31 @@ spec:
           periodSeconds: 5
           successThreshold: 1
           failureThreshold: 3
+        # 선택사항: 애플리케이션 graceful shutdown
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - |
+                # Readiness 비활성화 (optional)
+                touch /tmp/not-ready
+                # 애플리케이션 요청 완료 대기
+                sleep 5
 ```
 
 **체크리스트**:
-- ✅ preStop Hook 설정
-- ✅ terminationGracePeriodSeconds 충분히 설정 (최소 60초)
+- ✅ **Envoy terminationDrainDuration 설정** (가장 중요!)
+- ✅ **holdApplicationUntilProxyStarts: true** (시작 순서 보장)
+- ✅ **terminationGracePeriodSeconds 충분히 설정** (최소 60초)
 - ✅ ReadinessProbe 설정 (종료 시 빠르게 unhealthy 전환)
-- ✅ 애플리케이션 graceful shutdown 구현
+- ✅ 애플리케이션 graceful shutdown 구현 (선택사항)
 - ✅ 모니터링 및 로깅 설정
+
+**핵심**:
+- ❌ **애플리케이션 컨테이너에 sleep을 추가하지 마세요!**
+- ✅ **Envoy가 드레인 모드로 graceful shutdown하도록 설정하세요.**
 
 ## Sidecar 주입 문제
 
