@@ -118,6 +118,9 @@
         * [Argo Rollouts 통합](tools/istio/advanced/08-argo-rollouts.md)
         * [Zone-Aware Argo Rollouts](tools/istio/advanced/09-zone-aware-argo-rollouts.md)
         * [AutoScaling using istio metrics](tools/istio/advanced/10-keda-autoscaling.md)
+    * [비교 가이드](tools/istio/comparison/README.md)
+        * [Service Mesh 솔루션 비교](tools/istio/comparison/01-service-mesh-comparison.md)
+        * [Istio vs VPC Lattice](tools/istio/comparison/02-istio-vs-lattice.md)
     * [Troubleshooting](tools/istio/troubleshooting/common-errors.md)
     * [모범 사례](tools/istio/best-practices.md)
 * [AWS Controllers for Kubernetes (ACK)](tools/03-ack.md)
@@ -127,9 +130,6 @@
 * [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](tools/07-monitoring-stack.md)
 * [로깅 스택 (Loki, Tempo)](tools/08-logging-stack.md)
 * [VPC Lattice](tools/09-vpc-lattice.md)
-* [비교 가이드](tools/comparison/README.md)
-    * [Service Mesh 솔루션 비교](tools/comparison/01-service-mesh-comparison.md)
-    * [Istio vs VPC Lattice](tools/comparison/02-istio-vs-lattice.md)
 
 ## Quiz 모음
 * [퀴즈 모음 - 주제별 퀴즈](quizzes/README.md)
