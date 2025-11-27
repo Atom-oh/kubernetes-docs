@@ -117,6 +117,7 @@
         * [Sidecar Injection](tools/istio/advanced/07-sidecar-injection.md)
         * [Argo Rollouts 통합](tools/istio/advanced/08-argo-rollouts.md)
         * [Zone-Aware Argo Rollouts](tools/istio/advanced/09-zone-aware-argo-rollouts.md)
+        * [AutoScaling using istio metrics](tools/istio/advanced/10-keda-autoscaling.md)
     * [Troubleshooting](tools/istio/troubleshooting/common-errors.md)
     * [모범 사례](tools/istio/best-practices.md)
 * [AWS Controllers for Kubernetes (ACK)](tools/03-ack.md)
