@@ -28,59 +28,7 @@ Istio의 내부 아키텍처와 네트워킹 메커니즘을 심층적으로 다
 
 ### 전체 구조
 
-```mermaid
-flowchart TB
-    subgraph Admin[관리자]
-        User[운영자]
-        K8S[Kubernetes API]
-    end
-
-    subgraph ControlPlane[Control Plane]
-        Istiod[Istiod<br/>- Pilot<br/>- Citadel<br/>- Galley]
-    end
-
-    subgraph DataPlane[Data Plane]
-        subgraph Pod1[파드 1]
-            App1[애플리케이션]
-            Envoy1[Envoy Proxy]
-        end
-
-        subgraph Pod2[파드 2]
-            App2[애플리케이션]
-            Envoy2[Envoy Proxy]
-        end
-
-        subgraph Pod3[파드 3]
-            App3[애플리케이션]
-            Envoy3[Envoy Proxy]
-        end
-    end
-
-    User -->|1\. 정책 설정| K8S
-    K8S -->|2\. CRD| Istiod
-    Istiod -->|3\. xDS Config| Envoy1
-    Istiod -->|3\. xDS Config| Envoy2
-    Istiod -->|3\. xDS Config| Envoy3
-
-    App1 <-->|4\. Local| Envoy1
-    App2 <-->|4\. Local| Envoy2
-    App3 <-->|4\. Local| Envoy3
-
-    Envoy1 <-->|5\. mTLS| Envoy2
-    Envoy2 <-->|5\. mTLS| Envoy3
-
-    %% 스타일 정의
-    classDef admin fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef control fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class User,K8S admin;
-    class Istiod control;
-    class App1,App2,App3 app;
-    class Envoy1,Envoy2,Envoy3 proxy;
-```
+![istio-overview](../../assets/istio-overview.png)
 
 ### Control Plane vs Data Plane
 
