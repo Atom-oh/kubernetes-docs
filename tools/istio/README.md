@@ -6,8 +6,8 @@ Amazon EKS에서 Istio Service Mesh를 활용한 실용적인 가이드입니다
 
 0. [서비스 메시가 정말 필요한가?](#서비스-메시가-정말-필요한가)
 1. [설치 및 초기 설정](01-installation.md)
-2. [아키텍처](02-architecture.md)
-3. [기본 개념](03-basic-concepts.md)
+2. [기본 개념](03-basic-concepts.md)
+3. [아키텍처](02-architecture.md)
 4. [AWS 통합](04-aws-integration.md)
 5. [용어집](glossary.md)
 6. [Traffic Management (트래픽 관리)](traffic-management/README.md)

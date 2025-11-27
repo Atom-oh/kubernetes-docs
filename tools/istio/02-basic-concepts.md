@@ -4,17 +4,255 @@
 
 ## 목차
 
-1. [Why Istio?](#why-istio)
-2. [Deployment Modes: Sidecar vs Ambient](#deployment-modes-sidecar-vs-ambient)
+1. [배경과 역사](#배경과-역사)
+2. [Why Istio?](#why-istio)
 3. [Istio 아키텍처](#istio-아키텍처)
-4. [Control Plane (istiod)](#control-plane-istiod)
-5. [Data Plane (Envoy Proxy)](#data-plane-envoy-proxy)
-6. [핵심 리소스](#핵심-리소스)
-7. [트래픽 관리 개념](#트래픽-관리-개념)
-8. [보안 개념](#보안-개념)
-9. [관찰성 개념](#관찰성-개념)
-10. [네임스페이스와 서비스 메시](#네임스페이스와-서비스-메시)
-11. [다음 단계](#다음-단계)
+4. [Deployment Modes: Sidecar vs Ambient](#deployment-modes-sidecar-vs-ambient)
+5. [핵심 리소스](#핵심-리소스)
+6. [트래픽 관리 개념](#트래픽-관리-개념)
+7. [보안 개념](#보안-개념)
+8. [관찰성 개념](#관찰성-개념)
+9. [네임스페이스와 서비스 메시](#네임스페이스와-서비스-메시)
+10. [다음 단계](#다음-단계)
+
+## 배경과 역사
+
+### Service Mesh의 탄생 배경
+
+#### 마이크로서비스의 도전 과제
+
+2010년대 초반, 기업들은 모놀리식 애플리케이션을 마이크로서비스로 분해하기 시작했습니다.
+
+```mermaid
+flowchart TB
+    subgraph Before[모놀리식 시대]
+        M[모놀리식<br/>애플리케이션]
+        M -->|하나의 프로세스| M
+    end
+
+    subgraph After[마이크로서비스 시대]
+        S1[서비스 A]
+        S2[서비스 B]
+        S3[서비스 C]
+        S4[서비스 D]
+        S5[서비스 E]
+
+        S1 --> S2
+        S1 --> S3
+        S2 --> S4
+        S3 --> S4
+        S4 --> S5
+    end
+
+    Before -.->|전환| After
+
+    %% 스타일 정의
+    classDef monolith fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
+    classDef micro fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+
+    %% 클래스 적용
+    class M monolith;
+    class S1,S2,S3,S4,S5 micro;
+```
+
+**새로운 문제들**:
+
+| 문제 | 설명 | 영향 |
+|------|------|------|
+| **서비스 간 통신** | 네트워크 호출 증가 | 지연 시간, 장애 전파 |
+| **Observability** | 분산 추적 필요 | 디버깅 어려움 |
+| **보안** | 서비스 간 인증/암호화 | mTLS 구현 복잡도 |
+| **트래픽 제어** | 카나리 배포, A/B 테스트 | 애플리케이션 코드 수정 |
+| **장애 처리** | Circuit Breaker, Retry | 각 서비스마다 구현 |
+
+#### 초기 해결 방법: 라이브러리
+
+**문제점**:
+- 언어별로 라이브러리 개발 필요 (Java용 Hystrix, Go용 별도 라이브러리...)
+- 애플리케이션 코드에 긴밀히 결합
+- 업데이트 시 모든 서비스 재배포
+- 버전 관리 복잡
+
+```mermaid
+flowchart LR
+    subgraph App1[Java 서비스]
+        J[애플리케이션 코드]
+        H[Hystrix<br/>Netflix OSS]
+    end
+
+    subgraph App2[Go 서비스]
+        G[애플리케이션 코드]
+        L[Go 라이브러리]
+    end
+
+    subgraph App3[Python 서비스]
+        P[애플리케이션 코드]
+        R[Requests + Retry]
+    end
+
+    J --- H
+    G --- L
+    P --- R
+
+    %% 스타일 정의
+    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef lib fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
+
+    %% 클래스 적용
+    class J,G,P app;
+    class H,L,R lib;
+```
+
+**Service Mesh의 아이디어**: 네트워킹 로직을 애플리케이션에서 분리하여 인프라 레이어로 이동
+
+### Envoy Proxy의 탄생
+
+#### Lyft의 문제
+
+**2015년, Lyft**는 다음 문제들을 겪고 있었습니다:
+
+- 200+ 마이크로서비스 운영
+- 다양한 언어와 프레임워크 (Python, Go, Java 등)
+- 기존 프록시(HAProxy, NGINX)로는 부족
+  - 동적 구성 변경 어려움
+  - Observability 부족
+  - 고급 라우팅 기능 제한
+
+#### Matt Klein과 Envoy
+
+**Matt Klein** (Lyft 엔지니어)는 2016년 Envoy를 오픈소스로 공개했습니다.
+
+**Envoy가 해결한 문제들**:
+
+```mermaid
+flowchart TB
+    subgraph Problems[기존 프록시의 문제]
+        P1[정적 설정<br/>파일 기반]
+        P2[제한적<br/>메트릭]
+        P3[복잡한<br/>재시작]
+        P4[단순한<br/>라우팅]
+    end
+
+    subgraph Solutions[Envoy의 해결책]
+        S1[동적 API<br/>xDS Protocol]
+        S2[풍부한<br/>통계/추적]
+        S3[Hot Restart<br/>무중단]
+        S4[고급 L7<br/>라우팅]
+    end
+
+    P1 -.->|해결| S1
+    P2 -.->|해결| S2
+    P3 -.->|해결| S3
+    P4 -.->|해결| S4
+
+    %% 스타일 정의
+    classDef problem fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
+    classDef solution fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+
+    %% 클래스 적용
+    class P1,P2,P3,P4 problem;
+    class S1,S2,S3,S4 solution;
+```
+
+**Envoy의 핵심 특징**:
+
+1. **Out-of-process Architecture**: 애플리케이션과 별도 프로세스
+2. **xDS APIs**: 동적 구성 업데이트
+3. **L7 Proxy**: HTTP/2, gRPC, WebSocket 지원
+4. **Observability**: 상세한 메트릭, 추적, 로깅
+5. **성능**: C++로 작성, 고성능
+
+#### CNCF 편입
+
+**타임라인**:
+- **2016년 9월**: Envoy 오픈소스 공개
+- **2017년 9월**: CNCF 프로젝트로 승인 (Incubating)
+- **2018년 11월**: CNCF Graduated 프로젝트로 승격
+
+### Istio의 탄생과 역사
+
+#### Google, IBM, Lyft의 협력
+
+**2017년 5월**, Google, IBM, Lyft가 협력하여 Istio를 발표했습니다.
+
+```mermaid
+flowchart LR
+    subgraph Companies[참여 기업]
+        G[Google<br/>Kubernetes 경험]
+        I[IBM<br/>엔터프라이즈 요구사항]
+        L[Lyft<br/>Envoy Proxy]
+    end
+
+    subgraph Istio[Istio Service Mesh]
+        CP[Control Plane<br/>Google 주도]
+        DP[Data Plane<br/>Envoy 기반]
+    end
+
+    G --> CP
+    I --> CP
+    L --> DP
+
+    %% 스타일 정의
+    classDef company fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef component fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+
+    %% 클래스 적용
+    class G,I,L company;
+    class CP,DP component;
+```
+
+**각 회사의 기여**:
+
+| 회사 | 주요 기여 | 이유 |
+|------|----------|------|
+| **Google** | Control Plane 설계 | Borg, Kubernetes 경험 |
+| **IBM** | 엔터프라이즈 기능 | 기업 고객 요구사항 |
+| **Lyft** | Envoy Proxy | 프로덕션 검증된 프록시 |
+
+#### Istio 버전 역사
+
+**주요 마일스톤**:
+
+```mermaid
+timeline
+    title Istio 주요 버전 역사
+    2017-05 : Istio 0.1 발표
+    2018-07 : Istio 1.0 : 프로덕션 사용 가능
+    2019-03 : Istio 1.1 : 성능 개선
+    2020-03 : Istio 1.5 : Istiod 통합
+    2021-05 : Istio 1.10 : Discovery Selectors
+    2022-02 : Istio 1.13 : Gateway API 지원
+    2023-11 : Istio 1.20 : Ambient Mode
+    2024-05 : Istio 1.22 : 안정성 개선
+    2025-01 : Istio 1.28 : 현재 버전
+```
+
+**1.5 버전 (2020년 3월) - 중요한 전환점**:
+
+이전 아키텍처 (Istio 1.4 이전):
+```
+별도 컴포넌트로 분리:
+- Mixer (정책/텔레메트리)
+- Pilot (트래픽 관리)
+- Citadel (인증서 관리)
+- Galley (구성 검증)
+```
+
+새로운 아키텍처 (Istio 1.5+, 현재 1.28):
+```
+Istiod (단일 바이너리로 통합)
+├── Pilot 기능 (Service Discovery, Traffic Management)
+├── Citadel 기능 (Certificate Authority, Identity)
+└── Galley 기능 (Configuration Validation)
+
+Mixer는 완전히 제거됨 (기능이 Envoy로 이동)
+```
+
+**변경 이유**:
+- 복잡도 감소 (4개 → 1개 컴포넌트)
+- 성능 향상 (Mixer 제거로 지연 시간 50% 감소)
+- 운영 단순화 (단일 프로세스 관리)
+- 리소스 효율성 (메모리, CPU 사용량 감소)
 
 ## Why Istio?
 
@@ -348,228 +586,14 @@ flowchart TB
 
 ## Istio 아키텍처
 
-Istio는 크게 **Control Plane**과 **Data Plane**으로 구성됩니다.
+Istio는 **Control Plane**과 **Data Plane** 두 가지 주요 구성 요소로 이루어져 있습니다.
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane["Control Plane (istiod)"]
-        Istiod[istiod<br/>통합 제어 평면]
+| 구성 요소 | 설명 |
+|----------|------|
+| **Control Plane (istiod)** | 서비스 디스커버리, 구성 배포, 인증서 관리를 담당하는 중앙 제어 시스템 |
+| **Data Plane (Envoy Proxy)** | 각 파드의 사이드카로 배포되어 실제 트래픽을 처리 (라우팅, mTLS, 메트릭) |
 
-        subgraph IstiodComponents["istiod 구성 요소"]
-            Pilot[Pilot<br/>서비스 디스커버리 & 구성]
-            Citadel[Citadel<br/>인증서 관리]
-            Galley[Galley<br/>구성 검증]
-        end
-    end
-
-    subgraph DataPlane["Data Plane"]
-        subgraph NS1["Namespace: default"]
-            subgraph Pod1["Pod: reviews-v1"]
-                App1[애플리케이션<br/>컨테이너]
-                Envoy1[Envoy Proxy<br/>사이드카]
-            end
-
-            subgraph Pod2["Pod: reviews-v2"]
-                App2[애플리케이션<br/>컨테이너]
-                Envoy2[Envoy Proxy<br/>사이드카]
-            end
-        end
-
-        subgraph NS2["Namespace: prod"]
-            subgraph Pod3["Pod: ratings"]
-                App3[애플리케이션<br/>컨테이너]
-                Envoy3[Envoy Proxy<br/>사이드카]
-            end
-        end
-    end
-
-    subgraph K8s["Kubernetes API Server"]
-        K8sAPI[Kubernetes API<br/>리소스 관리]
-    end
-
-    Istiod -.->|구성 전달| Envoy1
-    Istiod -.->|구성 전달| Envoy2
-    Istiod -.->|구성 전달| Envoy3
-
-    Istiod -.->|인증서 발급| Envoy1
-    Istiod -.->|인증서 발급| Envoy2
-    Istiod -.->|인증서 발급| Envoy3
-
-    Istiod <-->|리소스 감시| K8sAPI
-
-    Envoy1 <-->|mTLS 트래픽| Envoy2
-    Envoy1 <-->|mTLS 트래픽| Envoy3
-    Envoy2 <-->|mTLS 트래픽| Envoy3
-
-    App1 -->|로컬 요청| Envoy1
-    App2 -->|로컬 요청| Envoy2
-    App3 -->|로컬 요청| Envoy3
-
-    %% 스타일 정의
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef dataPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Istiod,Pilot,Citadel,Galley controlPlane;
-    class App1,App2,App3 app;
-    class Envoy1,Envoy2,Envoy3 proxy;
-    class K8sAPI k8s;
-```
-
-### 주요 구성 요소
-
-| 구성 요소 | 설명 | 역할 |
-|----------|------|------|
-| **Control Plane (istiod)** | 통합된 제어 평면 | 서비스 메시의 구성 관리, 인증서 발급, 서비스 디스커버리 |
-| **Data Plane (Envoy)** | 각 파드의 사이드카 프록시 | 트래픽 라우팅, 로드 밸런싱, 보안, 관찰성 |
-| **Kubernetes API** | Kubernetes 클러스터 API | Istio 리소스 저장 및 관리 |
-
-## Control Plane (istiod)
-
-Istio 1.5부터 Control Plane의 여러 구성 요소(Pilot, Citadel, Galley)가 **istiod**라는 단일 바이너리로 통합되었습니다.
-
-### istiod의 주요 기능
-
-#### 1. Pilot (서비스 디스커버리 및 트래픽 관리)
-
-```mermaid
-flowchart LR
-    K8s[Kubernetes API] -->|서비스 정보| Pilot
-    VirtualService[VirtualService<br/>리소스] -->|라우팅 규칙| Pilot
-    DestinationRule[DestinationRule<br/>리소스] -->|정책| Pilot
-    Gateway[Gateway<br/>리소스] -->|게이트웨이 구성| Pilot
-
-    Pilot -->|Envoy 구성| Envoy1[Envoy<br/>Proxy 1]
-    Pilot -->|Envoy 구성| Envoy2[Envoy<br/>Proxy 2]
-    Pilot -->|Envoy 구성| Envoy3[Envoy<br/>Proxy 3]
-
-    %% 스타일 정의
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sResource fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Pilot controlPlane;
-    class K8s,VirtualService,DestinationRule,Gateway k8sResource;
-    class Envoy1,Envoy2,Envoy3 proxy;
-```
-
-**주요 역할**:
-- Kubernetes의 Service, Endpoint 정보를 Envoy가 이해할 수 있는 형식으로 변환
-- VirtualService, DestinationRule 등의 트래픽 관리 규칙을 Envoy 구성으로 변환
-- 모든 Envoy 프록시에 구성을 실시간으로 배포
-
-#### 2. Citadel (인증서 관리)
-
-**주요 역할**:
-- 서비스 간 mTLS 통신을 위한 인증서 자동 발급 및 갱신
-- 워크로드 신원 관리
-- 인증서 수명 주기 관리
-
-```yaml
-# PeerAuthentication 예제
-apiVersion: security.istio.io/v1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: istio-system
-spec:
-  mtls:
-    mode: STRICT  # 모든 트래픽에 mTLS 강제
-```
-
-#### 3. Galley (구성 검증)
-
-**주요 역할**:
-- Istio 구성 리소스의 유효성 검증
-- Kubernetes API와의 통신 추상화
-- 구성 변경 사항 처리 및 배포
-
-## Data Plane (Envoy Proxy)
-
-Envoy는 각 애플리케이션 파드에 **사이드카 컨테이너**로 배포되어 모든 네트워크 트래픽을 가로채고 제어합니다.
-
-### Envoy Proxy의 주요 기능
-
-```mermaid
-flowchart TB
-    subgraph Pod["애플리케이션 파드"]
-        App[애플리케이션<br/>컨테이너<br/>Port 8080]
-
-        subgraph Envoy["Envoy Proxy 사이드카"]
-            Inbound[Inbound<br/>리스너<br/>:15006]
-            Outbound[Outbound<br/>리스너<br/>:15001]
-            Admin[Admin<br/>인터페이스<br/>:15000]
-        end
-    end
-
-    External[외부 요청] -->|트래픽 가로채기| Inbound
-    Inbound -->|전달| App
-
-    App -->|외부 호출| Outbound
-    Outbound -->|라우팅| Target[대상 서비스]
-
-    Istiod[istiod] -.->|구성 업데이트| Envoy
-    Monitoring[모니터링 도구] -.->|메트릭 수집| Admin
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App app;
-    class Inbound,Outbound,Admin proxy;
-    class Istiod controlPlane;
-    class External,Target,Monitoring external;
-```
-
-### Envoy의 기능
-
-1. **트래픽 가로채기 (Interception)**
-   - iptables 규칙을 사용하여 파드의 모든 인바운드/아웃바운드 트래픽을 가로챔
-   - 애플리케이션 코드 변경 없이 투명하게 동작
-
-2. **로드 밸런싱**
-   - Round Robin, Least Request, Random, Ring Hash 등 다양한 알고리즘 지원
-   - 헬스 체크 기반 로드 밸런싱
-
-3. **서비스 디스커버리**
-   - 동적 서비스 엔드포인트 검색
-   - 실시간 엔드포인트 업데이트
-
-4. **보안**
-   - mTLS를 통한 서비스 간 통신 암호화
-   - 인증 및 권한 부여
-
-5. **관찰성**
-   - 메트릭, 로그, 분산 추적 자동 생성
-   - Prometheus 형식 메트릭 노출
-
-### Sidecar 주입 방식
-
-#### 자동 주입
-
-```bash
-# 네임스페이스에 레이블 추가
-kubectl label namespace default istio-injection=enabled
-
-# 파드 배포 시 자동으로 Envoy 사이드카 주입
-kubectl apply -f deployment.yaml
-```
-
-#### 수동 주입
-
-```bash
-# YAML 파일에 사이드카 주입
-istioctl kube-inject -f deployment.yaml | kubectl apply -f -
-```
+**상세한 아키텍처 구조, 내부 동작 원리, 트래픽 가로채기 메커니즘**은 [아키텍처 문서](02-architecture.md)를 참고하세요.
 
 ## 핵심 리소스
 

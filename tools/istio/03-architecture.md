@@ -4,7 +4,9 @@
 > **API 버전**: `networking.istio.io/v1`, `security.istio.io/v1`
 > **마지막 업데이트**: 2025년 11월 24일
 
-Istio의 탄생 배경부터 내부 아키텍처, 네트워킹 메커니즘까지 심층적으로 다룹니다.
+Istio의 내부 아키텍처와 네트워킹 메커니즘을 심층적으로 다룹니다.
+
+**배경 및 역사**는 [기본 개념](03-basic-concepts.md#배경과-역사) 문서를 참고하세요.
 
 **중요 변경사항 (Istio 1.5+)**:
 - Pilot, Citadel, Galley, Mixer는 별도 컴포넌트가 **아닙니다**
@@ -13,254 +15,14 @@ Istio의 탄생 배경부터 내부 아키텍처, 네트워킹 메커니즘까�
 
 ## 목차
 
-1. [Service Mesh의 탄생 배경](#service-mesh의-탄생-배경)
-2. [Envoy Proxy의 탄생](#envoy-proxy의-탄생)
-3. [Istio의 탄생과 역사](#istio의-탄생과-역사)
-4. [Istio 아키텍처 개요](#istio-아키텍처-개요)
-5. [Control Plane: Istiod](#control-plane-istiod)
-6. [Data Plane: Envoy Proxy](#data-plane-envoy-proxy)
-7. [Sidecar Injection 메커니즘](#sidecar-injection-메커니즘)
-8. [iptables와 트래픽 가로채기](#iptables와-트래픽-가로채기)
-9. [DNS 처리 메커니즘](#dns-처리-메커니즘)
-10. [xDS API 통신](#xds-api-통신)
-11. [Sidecar 리소스를 통한 최적화](#sidecar-리소스를-통한-최적화)
-
-## Service Mesh의 탄생 배경
-
-### 마이크로서비스의 도전 과제
-
-2010년대 초반, 기업들은 모놀리식 애플리케이션을 마이크로서비스로 분해하기 시작했습니다.
-
-```mermaid
-flowchart TB
-    subgraph Before[모놀리식 시대]
-        M[모놀리식<br/>애플리케이션]
-        M -->|하나의 프로세스| M
-    end
-
-    subgraph After[마이크로서비스 시대]
-        S1[서비스 A]
-        S2[서비스 B]
-        S3[서비스 C]
-        S4[서비스 D]
-        S5[서비스 E]
-
-        S1 --> S2
-        S1 --> S3
-        S2 --> S4
-        S3 --> S4
-        S4 --> S5
-    end
-
-    Before -.->|전환| After
-
-    %% 스타일 정의
-    classDef monolith fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef micro fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class M monolith;
-    class S1,S2,S3,S4,S5 micro;
-```
-
-**새로운 문제들**:
-
-| 문제 | 설명 | 영향 |
-|------|------|------|
-| **서비스 간 통신** | 네트워크 호출 증가 | 지연 시간, 장애 전파 |
-| **Observability** | 분산 추적 필요 | 디버깅 어려움 |
-| **보안** | 서비스 간 인증/암호화 | mTLS 구현 복잡도 |
-| **트래픽 제어** | 카나리 배포, A/B 테스트 | 애플리케이션 코드 수정 |
-| **장애 처리** | Circuit Breaker, Retry | 각 서비스마다 구현 |
-
-### 초기 해결 방법: 라이브러리
-
-**문제점**:
-- 언어별로 라이브러리 개발 필요 (Java용 Hystrix, Go용 별도 라이브러리...)
-- 애플리케이션 코드에 긴밀히 결합
-- 업데이트 시 모든 서비스 재배포
-- 버전 관리 복잡
-
-```mermaid
-flowchart LR
-    subgraph App1[Java 서비스]
-        J[애플리케이션 코드]
-        H[Hystrix<br/>Netflix OSS]
-    end
-
-    subgraph App2[Go 서비스]
-        G[애플리케이션 코드]
-        L[Go 라이브러리]
-    end
-
-    subgraph App3[Python 서비스]
-        P[애플리케이션 코드]
-        R[Requests + Retry]
-    end
-
-    J --- H
-    G --- L
-    P --- R
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lib fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class J,G,P app;
-    class H,L,R lib;
-```
-
-**Service Mesh의 아이디어**: 네트워킹 로직을 애플리케이션에서 분리하여 인프라 레이어로 이동
-
-## Envoy Proxy의 탄생
-
-### Lyft의 문제
-
-**2015년, Lyft**는 다음 문제들을 겪고 있었습니다:
-
-- 200+ 마이크로서비스 운영
-- 다양한 언어와 프레임워크 (Python, Go, Java 등)
-- 기존 프록시(HAProxy, NGINX)로는 부족
-  - 동적 구성 변경 어려움
-  - Observability 부족
-  - 고급 라우팅 기능 제한
-
-### Matt Klein과 Envoy
-
-**Matt Klein** (Lyft 엔지니어)는 2016년 Envoy를 오픈소스로 공개했습니다.
-
-**Envoy가 해결한 문제들**:
-
-```mermaid
-flowchart TB
-    subgraph Problems[기존 프록시의 문제]
-        P1[정적 설정<br/>파일 기반]
-        P2[제한적<br/>메트릭]
-        P3[복잡한<br/>재시작]
-        P4[단순한<br/>라우팅]
-    end
-
-    subgraph Solutions[Envoy의 해결책]
-        S1[동적 API<br/>xDS Protocol]
-        S2[풍부한<br/>통계/추적]
-        S3[Hot Restart<br/>무중단]
-        S4[고급 L7<br/>라우팅]
-    end
-
-    P1 -.->|해결| S1
-    P2 -.->|해결| S2
-    P3 -.->|해결| S3
-    P4 -.->|해결| S4
-
-    %% 스타일 정의
-    classDef problem fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef solution fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class P1,P2,P3,P4 problem;
-    class S1,S2,S3,S4 solution;
-```
-
-**Envoy의 핵심 특징**:
-
-1. **Out-of-process Architecture**: 애플리케이션과 별도 프로세스
-2. **xDS APIs**: 동적 구성 업데이트
-3. **L7 Proxy**: HTTP/2, gRPC, WebSocket 지원
-4. **Observability**: 상세한 메트릭, 추적, 로깅
-5. **성능**: C++로 작성, 고성능
-
-### CNCF 편입
-
-**타임라인**:
-- **2016년 9월**: Envoy 오픈소스 공개
-- **2017년 9월**: CNCF 프로젝트로 승인 (Incubating)
-- **2018년 11월**: CNCF Graduated 프로젝트로 승격
-
-## Istio의 탄생과 역사
-
-### Google, IBM, Lyft의 협력
-
-**2017년 5월**, Google, IBM, Lyft가 협력하여 Istio를 발표했습니다.
-
-```mermaid
-flowchart LR
-    subgraph Companies[참여 기업]
-        G[Google<br/>Kubernetes 경험]
-        I[IBM<br/>엔터프라이즈 요구사항]
-        L[Lyft<br/>Envoy Proxy]
-    end
-
-    subgraph Istio[Istio Service Mesh]
-        CP[Control Plane<br/>Google 주도]
-        DP[Data Plane<br/>Envoy 기반]
-    end
-
-    G --> CP
-    I --> CP
-    L --> DP
-
-    %% 스타일 정의
-    classDef company fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef component fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class G,I,L company;
-    class CP,DP component;
-```
-
-**각 회사의 기여**:
-
-| 회사 | 주요 기여 | 이유 |
-|------|----------|------|
-| **Google** | Control Plane 설계 | Borg, Kubernetes 경험 |
-| **IBM** | 엔터프라이즈 기능 | 기업 고객 요구사항 |
-| **Lyft** | Envoy Proxy | 프로덕션 검증된 프록시 |
-
-### Istio 버전 역사
-
-**주요 마일스톤**:
-
-```mermaid
-timeline
-    title Istio 주요 버전 역사
-    2017-05 : Istio 0.1 발표
-    2018-07 : Istio 1.0<br/>프로덕션 사용 가능
-    2019-03 : Istio 1.1<br/>성능 개선
-    2020-03 : Istio 1.5<br/>Istiod 통합
-    2021-05 : Istio 1.10<br/>Discovery Selectors
-    2022-02 : Istio 1.13<br/>Gateway API 지원
-    2023-11 : Istio 1.20<br/>Ambient Mode
-    2024-05 : Istio 1.22<br/>안정성 개선
-    2025-01 : Istio 1.28<br/>현재 버전
-```
-
-**1.5 버전 (2020년 3월) - 중요한 전환점**:
-
-이전 아키텍처 (Istio 1.4 이전):
-```
-별도 컴포넌트로 분리:
-- Mixer (정책/텔레메트리)
-- Pilot (트래픽 관리)
-- Citadel (인증서 관리)
-- Galley (구성 검증)
-```
-
-새로운 아키텍처 (Istio 1.5+, 현재 1.28):
-```
-Istiod (단일 바이너리로 통합)
-├── Pilot 기능 (Service Discovery, Traffic Management)
-├── Citadel 기능 (Certificate Authority, Identity)
-└── Galley 기능 (Configuration Validation)
-
-Mixer는 완전히 제거됨 (기능이 Envoy로 이동)
-```
-
-**변경 이유**:
-- 복잡도 감소 (4개 → 1개 컴포넌트)
-- 성능 향상 (Mixer 제거로 지연 시간 50% 감소)
-- 운영 단순화 (단일 프로세스 관리)
-- 리소스 효율성 (메모리, CPU 사용량 감소)
+1. [Istio 아키텍처 개요](#istio-아키텍처-개요)
+2. [Control Plane: Istiod](#control-plane-istiod)
+3. [Data Plane: Envoy Proxy](#data-plane-envoy-proxy)
+4. [Sidecar Injection 메커니즘](#sidecar-injection-메커니즘)
+5. [iptables와 트래픽 가로채기](#iptables와-트래픽-가로채기)
+6. [DNS 처리 메커니즘](#dns-처리-메커니즘)
+7. [xDS API 통신](#xds-api-통신)
+8. [Sidecar 리소스를 통한 최적화](#sidecar-리소스를-통한-최적화)
 
 ## Istio 아키텍처 개요
 
@@ -794,9 +556,15 @@ spec:
 
 ### Sidecar Injection 활성화
 
+#### 자동 주입 (권장)
+
 **Namespace 레벨**:
 ```bash
+# 네임스페이스에 레이블 추가
 kubectl label namespace default istio-injection=enabled
+
+# 이후 해당 네임스페이스에 배포되는 모든 파드에 자동으로 사이드카 주입
+kubectl apply -f deployment.yaml
 ```
 
 **Pod 레벨** (Annotation):
@@ -805,12 +573,30 @@ apiVersion: v1
 kind: Pod
 metadata:
   annotations:
-    sidecar.istio.io/inject: "true"
+    sidecar.istio.io/inject: "true"  # 파드별 주입 활성화
 spec:
   containers:
   - name: app
     image: myapp:v1
 ```
+
+#### 수동 주입
+
+`istioctl kube-inject` 명령어를 사용하여 YAML 파일에 직접 사이드카를 주입합니다.
+
+```bash
+# YAML 파일에 사이드카 주입 후 배포
+istioctl kube-inject -f deployment.yaml | kubectl apply -f -
+
+# 또는 파일로 저장
+istioctl kube-inject -f deployment.yaml -o deployment-injected.yaml
+kubectl apply -f deployment-injected.yaml
+```
+
+**수동 주입 사용 시나리오**:
+- 자동 주입을 사용할 수 없는 환경
+- CI/CD 파이프라인에서 명시적으로 제어하고 싶을 때
+- 디버깅 목적으로 주입된 YAML을 확인하고 싶을 때
 
 ## iptables와 트래픽 가로채기
 
