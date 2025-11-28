@@ -477,6 +477,297 @@ spec:
 
 ## P-R
 
+### Downstream
+
+Envoy 관점에서 **요청을 보내는 쪽**을 의미합니다. 즉, Envoy에게 연결을 시작하는 클라이언트입니다.
+
+**Envoy의 Downstream**:
+- Envoy로 들어오는 연결 (Inbound)
+- 요청을 보내는 클라이언트
+- Listener가 수신하는 연결
+
+**트래픽 흐름**:
+```
+Downstream (클라이언트)  →  Envoy Proxy  →  Upstream (백엔드)
+```
+
+**예시 시나리오**:
+
+#### 1. Sidecar Mode - 아웃바운드 요청
+
+```mermaid
+flowchart LR
+    App[애플리케이션<br/>Downstream]
+    Envoy[Envoy Sidecar]
+    Backend[Backend 서비스<br/>Upstream]
+
+    App -->|"요청 전송<br/>(Downstream → Envoy)"| Envoy
+    Envoy -->|"요청 전달<br/>(Envoy → Upstream)"| Backend
+
+    classDef downstream fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
+    classDef proxy fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
+    classDef upstream fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
+
+    class App downstream;
+    class Envoy proxy;
+    class Backend upstream;
+```
+
+**관점**:
+- **Envoy 입장**: 애플리케이션이 Downstream (요청 보내는 쪽)
+- **Envoy 입장**: Backend 서비스가 Upstream (요청 받는 쪽)
+
+#### 2. Ingress Gateway - 외부 요청
+
+```mermaid
+flowchart LR
+    Client[외부 클라이언트<br/>Downstream]
+    Gateway[Ingress Gateway<br/>Envoy]
+    Service[내부 서비스<br/>Upstream]
+
+    Client -->|"HTTP 요청<br/>(Downstream → Envoy)"| Gateway
+    Gateway -->|"라우팅<br/>(Envoy → Upstream)"| Service
+
+    classDef downstream fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
+    classDef proxy fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
+    classDef upstream fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
+
+    class Client downstream;
+    class Gateway proxy;
+    class Service upstream;
+```
+
+**Downstream 관련 Envoy 설정**:
+
+```yaml
+# Listener - Downstream 연결 수신
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: downstream-config
+spec:
+  configPatches:
+  - applyTo: LISTENER
+    patch:
+      operation: MERGE
+      value:
+        per_connection_buffer_limit_bytes: 32768  # Downstream 버퍼
+        listener_filters:
+        - name: envoy.filters.listener.tls_inspector
+```
+
+**Downstream 메트릭**:
+```bash
+# Downstream 연결 수
+envoy_listener_downstream_cx_active
+
+# Downstream 요청 수
+envoy_http_downstream_rq_total
+
+# Downstream 응답 시간
+envoy_http_downstream_rq_time
+```
+
+**관련 항목**: [Upstream](#upstream), [Envoy](#envoy-proxy), [Listener](#lds-listener-discovery-service)
+
+---
+
+### Upstream
+
+Envoy 관점에서 **요청을 받는 쪽**을 의미합니다. 즉, Envoy가 연결을 시작하는 백엔드 서비스입니다.
+
+**Envoy의 Upstream**:
+- Envoy에서 나가는 연결 (Outbound)
+- 요청을 처리하는 백엔드 서비스
+- Cluster가 관리하는 엔드포인트들
+
+**트래픽 흐름**:
+```
+Downstream (클라이언트)  →  Envoy Proxy  →  Upstream (백엔드)
+```
+
+**Upstream 구성 요소**:
+
+#### 1. Cluster (Upstream 그룹)
+
+```yaml
+# DestinationRule로 Upstream Cluster 정의
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: reviews
+spec:
+  host: reviews  # Upstream 서비스
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+    connectionPool:
+      tcp:
+        maxConnections: 100      # Upstream 연결 제한
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+    outlierDetection:
+      consecutiveErrors: 5        # Upstream 장애 감지
+      interval: 30s
+```
+
+#### 2. Endpoint (실제 Upstream 인스턴스)
+
+```bash
+# Upstream 엔드포인트 확인
+istioctl proxy-config endpoints <pod-name> | grep reviews
+
+# 출력 예시:
+# ENDPOINT              STATUS      CLUSTER
+# 10.244.1.5:9080       HEALTHY     outbound|9080||reviews.default.svc.cluster.local
+# 10.244.2.8:9080       HEALTHY     outbound|9080||reviews.default.svc.cluster.local
+# 10.244.3.12:9080      UNHEALTHY   outbound|9080||reviews.default.svc.cluster.local
+```
+
+**Upstream 트래픽 정책**:
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+spec:
+  host: reviews
+  trafficPolicy:
+    # Upstream 로드 밸런싱
+    loadBalancer:
+      consistentHash:
+        httpHeaderName: "x-user-id"
+
+    # Upstream 연결 풀
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 30s
+      http:
+        h2UpgradePolicy: UPGRADE
+
+    # Upstream TLS
+    tls:
+      mode: ISTIO_MUTUAL
+
+    # Upstream Circuit Breaker
+    outlierDetection:
+      consecutiveErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+```
+
+**Upstream vs Downstream 비교**:
+
+| 항목 | Downstream | Upstream |
+|------|-----------|----------|
+| **방향** | Envoy로 들어옴 (Inbound) | Envoy에서 나감 (Outbound) |
+| **역할** | 요청 보내는 쪽 (클라이언트) | 요청 받는 쪽 (서버) |
+| **Envoy 구성** | Listener, Filter Chain | Cluster, Endpoint |
+| **예시** | 외부 사용자, 다른 서비스 | Backend API, 데이터베이스 |
+| **메트릭** | `downstream_cx_*`, `downstream_rq_*` | `upstream_cx_*`, `upstream_rq_*` |
+
+**실제 예시**:
+
+#### 시나리오 1: 서비스 A → 서비스 B 호출
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Service A Pod                                       │
+│                                                     │
+│  App ──► Envoy Sidecar                             │
+│          │                                          │
+│          │ Downstream: App                          │
+│          │ Upstream: Service B                      │
+└──────────┼──────────────────────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────────────────────┐
+│ Service B Pod                                       │
+│                                                     │
+│          Envoy Sidecar ──► App                      │
+│          │                                          │
+│          │ Downstream: Service A Envoy              │
+│          │ Upstream: Local App (Service B)          │
+└─────────────────────────────────────────────────────┘
+```
+
+**Service A의 Envoy 관점**:
+- Downstream: Service A의 애플리케이션
+- Upstream: Service B
+
+**Service B의 Envoy 관점**:
+- Downstream: Service A의 Envoy
+- Upstream: Service B의 애플리케이션 (로컬)
+
+#### 시나리오 2: Ingress Gateway
+
+```
+External Client (Downstream)
+        ↓
+Ingress Gateway (Envoy)
+        ↓
+Internal Service (Upstream)
+```
+
+**Upstream 메트릭**:
+
+```bash
+# Upstream 연결 수
+envoy_cluster_upstream_cx_active
+
+# Upstream 요청 성공률
+envoy_cluster_upstream_rq_success_rate
+
+# Upstream 응답 시간
+envoy_cluster_upstream_rq_time
+
+# Upstream Health 체크
+envoy_cluster_health_check_success
+
+# Upstream Circuit Breaker
+envoy_cluster_circuit_breakers_default_remaining
+```
+
+**Upstream Health Check**:
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+spec:
+  host: reviews
+  trafficPolicy:
+    outlierDetection:
+      # Upstream Health 감지
+      consecutiveGatewayErrors: 5
+      consecutive5xxErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+```
+
+**디버깅**:
+
+```bash
+# 1. Upstream Cluster 확인
+istioctl proxy-config clusters <pod-name> --fqdn reviews.default.svc.cluster.local
+
+# 2. Upstream Endpoint 상태 확인
+istioctl proxy-config endpoints <pod-name> --cluster "outbound|9080||reviews.default.svc.cluster.local"
+
+# 3. Upstream 메트릭 확인
+kubectl exec <pod-name> -c istio-proxy -- \
+  curl -s localhost:15000/stats/prometheus | grep upstream
+
+# 4. Upstream 연결 확인
+istioctl proxy-config all <pod-name> -o json | \
+  jq '.configs[] | select(.["@type"] | contains("ClustersConfigDump"))'
+```
+
+**관련 항목**: [Downstream](#downstream), [Envoy](#envoy-proxy), [Cluster](#cds-cluster-discovery-service), [Endpoint](#eds-endpoint-discovery-service)
+
+---
+
 ### Pilot
 
 Istio 1.4 이전에 독립적으로 존재했던 트래픽 관리 컴포넌트입니다. 현재는 Istiod에 통합되어 있습니다.
@@ -1083,6 +1374,193 @@ spec:
 ```
 
 **관련 문서**: [Gateway와 VirtualService](traffic-management/01-gateway-virtualservice.md)
+
+---
+
+### WASM (WebAssembly)
+
+웹 브라우저에서 실행될 수 있도록 설계된 바이너리 명령 형식입니다. Istio에서는 Envoy 프록시의 기능을 확장하는 데 사용됩니다.
+
+**Istio에서의 활용**:
+- Envoy Filter로 커스텀 로직 추가
+- 재배포 없이 동적으로 기능 확장
+- 다양한 언어로 작성 가능 (Rust, C++, Go 등)
+- 샌드박스 환경에서 안전하게 실행
+
+**주요 사용 사례**:
+1. **커스텀 인증/인가**: 복잡한 비즈니스 로직 구현
+2. **요청/응답 변환**: 헤더 조작, 페이로드 변환
+3. **고급 라우팅**: 커스텀 라우팅 로직
+4. **메트릭 수집**: 특화된 텔레메트리
+
+**WASM 플러그인 예시**:
+```yaml
+apiVersion: extensions.istio.io/v1alpha1
+kind: WasmPlugin
+metadata:
+  name: custom-auth
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      istio: ingressgateway
+  url: oci://ghcr.io/my-org/custom-auth:v1.0.0
+  phase: AUTHN
+  pluginConfig:
+    api_key_header: "X-API-Key"
+    validate_endpoint: "https://auth.example.com/validate"
+```
+
+**배포 방법**:
+
+#### 1. OCI 레지스트리를 통한 배포 (권장)
+
+```yaml
+apiVersion: extensions.istio.io/v1alpha1
+kind: WasmPlugin
+metadata:
+  name: rate-limiter
+spec:
+  url: oci://docker.io/istio/rate-limit:1.0.0
+  imagePullPolicy: Always
+  imagePullSecret: registry-credential
+```
+
+#### 2. HTTP URL을 통한 배포
+
+```yaml
+apiVersion: extensions.istio.io/v1alpha1
+kind: WasmPlugin
+metadata:
+  name: custom-filter
+spec:
+  url: https://example.com/filters/custom-filter.wasm
+  sha256: "8a8c3b5e..."
+```
+
+#### 3. 로컬 파일 배포
+
+```yaml
+apiVersion: extensions.istio.io/v1alpha1
+kind: WasmPlugin
+metadata:
+  name: local-filter
+spec:
+  url: file:///etc/istio/filters/custom.wasm
+```
+
+**WASM 개발 예시 (Rust)**:
+
+```rust
+use proxy_wasm::traits::*;
+use proxy_wasm::types::*;
+
+#[no_mangle]
+pub fn _start() {
+    proxy_wasm::set_log_level(LogLevel::Trace);
+    proxy_wasm::set_http_context(|_, _| -> Box<dyn HttpContext> {
+        Box::new(CustomFilter)
+    });
+}
+
+struct CustomFilter;
+
+impl HttpContext for CustomFilter {
+    fn on_http_request_headers(&mut self, _: usize) -> Action {
+        // API Key 검증
+        match self.get_http_request_header("x-api-key") {
+            Some(key) if key == "secret-key" => {
+                Action::Continue
+            }
+            _ => {
+                self.send_http_response(
+                    403,
+                    vec![("content-type", "text/plain")],
+                    Some(b"Forbidden: Invalid API Key"),
+                );
+                Action::Pause
+            }
+        }
+    }
+}
+```
+
+**빌드 및 배포**:
+
+```bash
+# 1. WASM 빌드 (Rust)
+cargo build --target wasm32-unknown-unknown --release
+
+# 2. OCI 이미지로 패키징
+docker build -t ghcr.io/my-org/custom-auth:v1.0.0 .
+docker push ghcr.io/my-org/custom-auth:v1.0.0
+
+# 3. WasmPlugin 적용
+kubectl apply -f wasmplugin.yaml
+```
+
+**성능 특징**:
+
+| 메트릭 | 값 |
+|--------|-----|
+| 시작 시간 | ~1-5ms |
+| 메모리 오버헤드 | ~100KB per filter |
+| 실행 오버헤드 | ~0.1-1ms per request |
+| 샌드박스 격리 | ✅ 보장됨 |
+
+**Ambient Mode 지원**:
+
+```yaml
+apiVersion: extensions.istio.io/v1alpha1
+kind: WasmPlugin
+metadata:
+  name: waypoint-filter
+spec:
+  selector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-name: reviews-waypoint
+  url: oci://ghcr.io/filters/custom:latest
+  phase: AUTHN
+```
+
+**디버깅**:
+
+```bash
+# WASM 플러그인 상태 확인
+kubectl get wasmplugin -A
+
+# Envoy 로그에서 WASM 관련 로그 확인
+kubectl logs <pod-name> -c istio-proxy | grep wasm
+
+# WASM 모듈 로드 확인
+istioctl proxy-config all <pod-name> -o json | jq '.configs[] | select(.name | contains("wasm"))'
+```
+
+**보안 고려사항**:
+1. **샌드박스 격리**: WASM 모듈은 Envoy 프로세스와 격리된 환경에서 실행
+2. **리소스 제한**: CPU 및 메모리 제한 설정 가능
+3. **서명 검증**: SHA256 해시로 무결성 확인
+4. **최소 권한**: 필요한 권한만 부여
+
+**장점**:
+- 🚀 고성능 (네이티브 코드 수준)
+- 🔒 안전한 샌드박스 실행
+- 🔄 재배포 없이 업데이트 가능
+- 🌐 다양한 언어 지원
+- 📦 표준 OCI 이미지 형식
+
+**제한사항**:
+- 일부 시스템 콜 제한
+- 파일 I/O 제한적
+- 네트워크 호출은 Envoy API 통해서만 가능
+
+**관련 항목**: [Envoy](#envoy-proxy), [Waypoint Proxy](#waypoint-proxy), [Ambient Mode](#ambient-mode)
+
+**참고 자료**:
+- [Istio WASM Plugin](https://istio.io/latest/docs/concepts/wasm/)
+- [Proxy-Wasm SDK](https://github.com/proxy-wasm)
+- [WebAssembly 공식 사이트](https://webassembly.org/)
+- [Ambient Mode - WASM](advanced/01-ambient-mode.md#wasm-플러그인)
 
 ---
 

@@ -106,6 +106,196 @@ us-west-2/us-west-2a/*
 2. **Same Region**: 같은 Region, 다른 Zone
 3. **Different Region**: 다른 Region
 
+### Pod에 AZ 레이블이 없어도 동작하는 원리
+
+**중요**: Pod 자체에는 AZ 레이블이 필요하지 않습니다. Istio는 **노드의 Topology 레이블**을 읽어서 Pod의 Locality를 자동으로 파악합니다.
+
+#### 동작 방식
+
+```mermaid
+flowchart TB
+    subgraph Node1["Node 1<br/>topology.kubernetes.io/zone=us-east-1a"]
+        Pod1[Pod A<br/>❌ Zone 레이블 없음]
+        Pod2[Pod B<br/>❌ Zone 레이블 없음]
+    end
+
+    subgraph Node2["Node 2<br/>topology.kubernetes.io/zone=us-east-1b"]
+        Pod3[Pod C<br/>❌ Zone 레이블 없음]
+    end
+
+    subgraph Istiod["Istiod (Control Plane)"]
+        Discovery[Service Discovery]
+        EDS[EDS 생성]
+    end
+
+    Discovery -->|"1. Node 레이블 조회<br/>Pod → Node 매핑"| Node1
+    Discovery -->|"1. Node 레이블 조회<br/>Pod → Node 매핑"| Node2
+    Discovery -->|"2. Pod Locality 파악<br/>Pod A → us-east-1a<br/>Pod C → us-east-1b"| EDS
+    EDS -->|"3. xDS 푸시<br/>(Locality 정보 포함)"| Envoy[Envoy Proxy]
+
+    %% 스타일 정의
+    classDef node fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
+    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef control fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
+
+    class Node1,Node2 node;
+    class Pod1,Pod2,Pod3 pod;
+    class Discovery,EDS,Envoy control;
+```
+
+#### 단계별 프로세스
+
+**1단계: Istiod가 Pod 정보 수집**
+
+```bash
+# Istiod는 Kubernetes API를 통해 Pod 정보 조회
+kubectl get pod <pod-name> -o json | jq '.spec.nodeName'
+# 출력: "ip-10-0-1-10.ec2.internal"
+```
+
+**2단계: Pod가 실행 중인 Node의 Topology 레이블 조회**
+
+```bash
+# Pod의 nodeName으로 Node 정보 조회
+kubectl get node ip-10-0-1-10.ec2.internal -o json | \
+  jq '.metadata.labels."topology.kubernetes.io/zone"'
+# 출력: "us-east-1a"
+```
+
+**3단계: EDS (Endpoint Discovery Service) 생성**
+
+Istiod는 Pod IP와 함께 Locality 정보를 EDS로 생성합니다:
+
+```json
+{
+  "cluster_name": "outbound|8080||myapp.default.svc.cluster.local",
+  "endpoints": [
+    {
+      "locality": {
+        "region": "us-east-1",
+        "zone": "us-east-1a"
+      },
+      "lb_endpoints": [
+        {
+          "endpoint": {
+            "address": {
+              "socket_address": {
+                "address": "10.0.1.10",
+                "port_value": 8080
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "locality": {
+        "region": "us-east-1",
+        "zone": "us-east-1b"
+      },
+      "lb_endpoints": [
+        {
+          "endpoint": {
+            "address": {
+              "socket_address": {
+                "address": "10.0.2.20",
+                "port_value": 8080
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+**4단계: Envoy가 Locality 기반 라우팅**
+
+Envoy는 받은 EDS 정보를 바탕으로 자신의 Locality와 비교하여 라우팅:
+
+```bash
+# Envoy의 Locality 확인 (자신이 실행 중인 노드 기준)
+kubectl exec <pod-name> -c istio-proxy -- \
+  curl -s localhost:15000/config_dump | \
+  jq '.configs[] | select(.["@type"] | contains("BootstrapConfigDump")) | .bootstrap.node.locality'
+
+# 출력:
+# {
+#   "region": "us-east-1",
+#   "zone": "us-east-1a"
+# }
+```
+
+#### 실제 확인 방법
+
+```bash
+# 1. Pod가 어느 Node에서 실행 중인지 확인
+kubectl get pod <pod-name> -o wide
+# NAME        READY   STATUS    NODE
+# myapp-abc   2/2     Running   ip-10-0-1-10.ec2.internal
+
+# 2. 해당 Node의 Zone 레이블 확인
+kubectl get node ip-10-0-1-10.ec2.internal \
+  -o jsonpath='{.metadata.labels.topology\.kubernetes\.io/zone}'
+# 출력: us-east-1a
+
+# 3. Envoy가 인식한 Endpoint Locality 확인
+istioctl proxy-config endpoints <pod-name> | grep myapp
+# ENDPOINT          STATUS    OUTLIER CHECK     CLUSTER                    LOCALITY
+# 10.0.1.10:8080    HEALTHY   OK                myapp.default              us-east-1/us-east-1a
+# 10.0.2.20:8080    HEALTHY   OK                myapp.default              us-east-1/us-east-1b
+```
+
+#### 왜 Pod 레이블이 필요 없는가?
+
+**전통적인 접근 (불필요)**:
+```yaml
+# ❌ 필요 없음
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    topology.kubernetes.io/zone: us-east-1a  # 불필요!
+```
+
+**Istio 접근 (자동)**:
+```yaml
+# ✅ Node 레이블만 필요
+apiVersion: v1
+kind: Node
+metadata:
+  name: ip-10-0-1-10.ec2.internal
+  labels:
+    topology.kubernetes.io/zone: us-east-1a  # 이것만 있으면 됨!
+    topology.kubernetes.io/region: us-east-1
+```
+
+**이유**:
+1. **Pod는 이동하지 않음**: Pod가 생성된 후 다른 노드로 이동하지 않음
+2. **Node가 진실의 원천**: Pod의 물리적 위치는 항상 Node가 결정
+3. **중복 제거**: Pod마다 레이블을 추가할 필요 없이 Node 레이블만 관리
+4. **자동 동기화**: Istiod가 항상 최신 Node 정보를 Kubernetes API에서 조회
+
+#### AWS EKS의 자동 설정
+
+AWS EKS는 노드 생성 시 자동으로 Topology 레이블을 추가합니다:
+
+```bash
+# EKS 노드 확인
+kubectl get nodes -L topology.kubernetes.io/zone,topology.kubernetes.io/region
+
+# 출력 예시:
+# NAME                           ZONE         REGION
+# ip-10-0-1-10.ec2.internal      us-east-1a   us-east-1
+# ip-10-0-2-20.ec2.internal      us-east-1b   us-east-1
+# ip-10-0-3-30.ec2.internal      us-east-1c   us-east-1
+```
+
+이러한 레이블은 다음 소스에서 자동으로 가져옵니다:
+- **EC2 Instance Metadata**: `http://169.254.169.254/latest/meta-data/placement/availability-zone`
+- **AWS API**: Node의 `spec.providerID`를 통해 EC2 정보 조회
+
 ## 기본 설정
 
 ### 1. Kubernetes 노드에 Topology 레이블 설정
