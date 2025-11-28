@@ -287,60 +287,101 @@ spec:
 
 ## 글로벌 Rate Limiting
 
-### Redis 기반 글로벌 Rate Limiting
+글로벌 Rate Limiting은 중앙 집중식 Rate Limit 서비스를 사용하여 클러스터 전체에 걸쳐 정확한 속도 제한을 적용합니다.
 
-```yaml
-# 1. Redis 배포
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: redis-ratelimit
-  namespace: istio-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: redis-ratelimit
-  template:
-    metadata:
-      labels:
-        app: redis-ratelimit
-    spec:
-      containers:
-      - name: redis
-        image: redis:7-alpine
-        ports:
-        - containerPort: 6379
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "100m"
-          limits:
-            memory: "128Mi"
-            cpu: "200m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: redis-ratelimit
-  namespace: istio-system
-spec:
-  ports:
-  - port: 6379
-    name: redis
-  selector:
-    app: redis-ratelimit
+### 아키텍처
+
+```mermaid
+flowchart TB
+    subgraph Clients["클라이언트들"]
+        C1[Client 1]
+        C2[Client 2]
+        C3[Client 3]
+    end
+
+    subgraph Gateway["Istio Gateway"]
+        IG[Ingress Gateway<br/>Envoy Proxy]
+    end
+
+    subgraph RateLimitService["Rate Limit Service"]
+        RLS[Rate Limit Server<br/>envoyproxy/ratelimit]
+        Cache[In-Memory Cache]
+    end
+
+    subgraph Backend["백엔드 서비스"]
+        S1[Service A]
+        S2[Service B]
+    end
+
+    C1 -->|요청| IG
+    C2 -->|요청| IG
+    C3 -->|요청| IG
+
+    IG -->|"1. Rate Limit 확인<br/>(gRPC)"| RLS
+    RLS -->|"2. 허용/거부 응답"| IG
+    RLS -.->|캐시 조회/업데이트| Cache
+
+    IG -->|"3. 허용된 요청만<br/>전달"| S1
+    IG -->|"3. 허용된 요청만<br/>전달"| S2
+
+    %% 스타일 정의
+    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    classDef gateway fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef ratelimit fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+
+    %% 클래스 적용
+    class C1,C2,C3 client;
+    class IG gateway;
+    class RLS,Cache ratelimit;
+    class S1,S2 service;
 ```
 
+### 구성 방법
+
+글로벌 Rate Limiting은 외부 Rate Limit 서비스를 배포하고 EnvoyFilter로 연동합니다.
+
+#### 1. Rate Limit Service 배포
+
+**참고**: Istio는 [envoyproxy/ratelimit](https://github.com/envoyproxy/ratelimit) 서비스를 외부 의존성으로 사용합니다.
+
 ```yaml
-# 2. Rate Limit Service 배포
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ratelimit-config
+  namespace: istio-system
+data:
+  config.yaml: |
+    domain: production-ratelimit
+    descriptors:
+      # 전역 제한: 초당 100개
+      - key: generic_key
+        value: "global"
+        rate_limit:
+          unit: second
+          requests_per_unit: 100
+
+      # 경로별 제한
+      - key: header_match
+        value: "/api/v1/*"
+        rate_limit:
+          unit: second
+          requests_per_unit: 50
+
+      # 사용자별 제한 (분당)
+      - key: remote_address
+        rate_limit:
+          unit: minute
+          requests_per_unit: 1000
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ratelimit
   namespace: istio-system
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: ratelimit
@@ -351,30 +392,35 @@ spec:
     spec:
       containers:
       - name: ratelimit
-        image: envoyproxy/ratelimit:latest
+        image: envoyproxy/ratelimit:19f2079f  # 안정 버전 사용
         ports:
         - containerPort: 8080
           name: http
         - containerPort: 8081
           name: grpc
-        - containerPort: 6070
-          name: debug
         env:
-        - name: REDIS_SOCKET_TYPE
-          value: tcp
-        - name: REDIS_URL
-          value: redis-ratelimit:6379
-        - name: USE_STATSD
-          value: "false"
         - name: LOG_LEVEL
           value: debug
         - name: RUNTIME_ROOT
           value: /data
         - name: RUNTIME_SUBDIRECTORY
           value: ratelimit
+        - name: RUNTIME_IGNOREDOTFILES
+          value: "true"
+        - name: USE_STATSD
+          value: "false"
         volumeMounts:
         - name: config-volume
           mountPath: /data/ratelimit/config
+          readOnly: true
+        command: ["/bin/ratelimit"]
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
       volumes:
       - name: config-volume
         configMap:
@@ -389,102 +435,163 @@ spec:
   ports:
   - port: 8080
     name: http
+    targetPort: 8080
   - port: 8081
     name: grpc
+    targetPort: 8081
   selector:
     app: ratelimit
 ```
 
-```yaml
-# 3. Rate Limit 구성
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ratelimit-config
-  namespace: istio-system
-data:
-  config.yaml: |
-    domain: production
-    descriptors:
-      # 전체 요청 제한 (100 req/s)
-      - key: header_match
-        value: "/"
-        rate_limit:
-          unit: second
-          requests_per_unit: 100
-      
-      # API 경로별 제한
-      - key: header_match
-        value: "/api/v1/users"
-        rate_limit:
-          unit: second
-          requests_per_unit: 50
-      
-      # 사용자별 제한
-      - key: user_id
-        rate_limit:
-          unit: minute
-          requests_per_unit: 1000
-```
+#### 2. EnvoyFilter로 글로벌 Rate Limiting 구성
 
 ```yaml
-# 4. EnvoyFilter로 글로벌 Rate Limiting 적용
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
-  name: global-ratelimit
+  name: filter-ratelimit
   namespace: istio-system
 spec:
   workloadSelector:
     labels:
       istio: ingressgateway
   configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: GATEWAY
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-            subFilter:
-              name: "envoy.filters.http.router"
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.ratelimit
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
-          domain: production
-          failure_mode_deny: false
-          timeout: 10s
-          rate_limit_service:
-            grpc_service:
-              envoy_grpc:
-                cluster_name: rate_limit_cluster
-            transport_api_version: V3
-  
-  # Rate Limit 클러스터 정의
-  - applyTo: CLUSTER
-    match:
-      context: GATEWAY
-    patch:
-      operation: ADD
-      value:
-        name: rate_limit_cluster
-        type: STRICT_DNS
-        connect_timeout: 10s
-        lb_policy: ROUND_ROBIN
-        http2_protocol_options: {}
-        load_assignment:
-          cluster_name: rate_limit_cluster
-          endpoints:
-          - lb_endpoints:
-            - endpoint:
-                address:
-                  socket_address:
-                    address: ratelimit.istio-system.svc.cluster.local
-                    port_value: 8081
+    # HTTP 필터 추가
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: "envoy.filters.network.http_connection_manager"
+              subFilter:
+                name: "envoy.filters.http.router"
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.filters.http.ratelimit
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+            domain: production-ratelimit
+            failure_mode_deny: true
+            timeout: 5s
+            rate_limit_service:
+              grpc_service:
+                envoy_grpc:
+                  cluster_name: rate_limit_cluster
+              transport_api_version: V3
+
+    # Rate Limit 클러스터 추가
+    - applyTo: CLUSTER
+      match:
+        context: GATEWAY
+      patch:
+        operation: ADD
+        value:
+          name: rate_limit_cluster
+          type: STRICT_DNS
+          connect_timeout: 5s
+          lb_policy: ROUND_ROBIN
+          http2_protocol_options: {}
+          load_assignment:
+            cluster_name: rate_limit_cluster
+            endpoints:
+            - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: ratelimit.istio-system.svc.cluster.local
+                      port_value: 8081
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: filter-ratelimit-svc
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      istio: ingressgateway
+  configPatches:
+    # VirtualHost에 rate limit action 추가
+    - applyTo: VIRTUAL_HOST
+      match:
+        context: GATEWAY
+      patch:
+        operation: MERGE
+        value:
+          rate_limits:
+            # 전역 제한
+            - actions:
+              - generic_key:
+                  descriptor_value: "global"
 ```
+
+#### 3. VirtualService에 Rate Limit 액션 추가
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: filter-ratelimit-actions
+  namespace: default
+spec:
+  workloadSelector:
+    labels:
+      istio: ingressgateway
+  configPatches:
+    - applyTo: VIRTUAL_HOST
+      match:
+        context: GATEWAY
+        routeConfiguration:
+          vhost:
+            name: "*:80"
+      patch:
+        operation: MERGE
+        value:
+          rate_limits:
+            # 경로별 Rate Limiting
+            - actions:
+              - header_value_match:
+                  descriptor_value: "/api/v1/*"
+                  headers:
+                  - name: ":path"
+                    string_match:
+                      prefix: "/api/v1/"
+
+            # IP 기반 Rate Limiting
+            - actions:
+              - remote_address: {}
+```
+
+### 주요 파라미터 설명
+
+| 파라미터 | 설명 |
+|---------|------|
+| `domain` | Rate Limit Service 구성 도메인 (ConfigMap과 일치해야 함) |
+| `failure_mode_deny` | Rate Limit Service 실패 시 요청 거부 여부 |
+| `timeout` | Rate Limit Service 응답 대기 시간 |
+| `rate_limit_service` | 외부 Rate Limit Service의 gRPC 엔드포인트 |
+
+### 글로벌 vs 로컬 Rate Limiting 선택 기준
+
+**로컬 Rate Limiting 사용**:
+- ✅ 간단한 구성
+- ✅ 빠른 응답 속도
+- ✅ 외부 의존성 없음
+- ❌ 파드별 제한 (전체 제한 부정확)
+
+**글로벌 Rate Limiting 사용**:
+- ✅ 정확한 전체 제한
+- ✅ 복잡한 규칙 (사용자별, IP별, 경로별)
+- ✅ 중앙 집중식 관리
+- ❌ 외부 서비스 필요 (복잡도 증가)
+- ❌ 약간의 지연 (gRPC 호출)
+
+**권장 사항**:
+- **프로덕션 API Gateway**: 글로벌 Rate Limiting (정확한 제어 필요)
+- **마이크로서비스 보호**: 로컬 Rate Limiting (빠른 응답)
+- **하이브리드**: Gateway는 글로벌, 내부 서비스는 로컬
 
 ## 실전 예제
 
