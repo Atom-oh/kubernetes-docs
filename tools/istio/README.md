@@ -6,8 +6,8 @@ Amazon EKS에서 Istio Service Mesh를 활용한 실용적인 가이드입니다
 
 0. [서비스 메시가 정말 필요한가?](#서비스-메시가-정말-필요한가)
 1. [설치 및 초기 설정](01-installation.md)
-2. [기본 개념](03-basic-concepts.md)
-3. [아키텍처](02-architecture.md)
+2. [기본 개념](02-basic-concepts.md)
+3. [아키텍처](03-architecture.md)
 4. [AWS 통합](04-aws-integration.md)
 5. [용어집](glossary.md)
 6. [Traffic Management (트래픽 관리)](traffic-management/README.md)
@@ -17,7 +17,7 @@ Amazon EKS에서 Istio Service Mesh를 활용한 실용적인 가이드입니다
 10. [Advanced (고급 기능)](advanced/README.md)
 11. [Troubleshooting (문제 해결)](troubleshooting/common-errors.md)
 12. [모범 사례](best-practices.md)
-13. [대안 비교](../comparison/README.md)
+13. [대안 비교](comparison/README.md)
 
 ## Istio란?
 
@@ -332,7 +332,7 @@ flowchart TB
 - Service Mesh 운영 부담 회피
 - 간단한 mTLS 및 관찰성만 필요
 
-**참고**: [Cilium 문서](../cilium/README.md)
+**참고**: [Cilium 문서](../../cilium/README.md)
 
 ### 의사결정 체크리스트
 

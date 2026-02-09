@@ -72,6 +72,9 @@
    - [Part 3: 커스텀 스케줄러 구현 사례 및 모니터링](./advanced/02-custom-scheduler-part3.md) | [퀴즈](./quizzes/advanced/02-custom-scheduler-part3-quiz.md)
 3. [AI/ML 워크로드](./advanced/03-ai-ml-workloads.md) | [퀴즈](./quizzes/advanced/03-ai-ml-workloads-quiz.md)
 4. [vLLM 배포](./advanced/04-vllm-deployment.md) | [퀴즈](./quizzes/advanced/04-vllm-deployment-quiz.md)
+5. [KRO를 활용한 Helm 차트 마이그레이션](./advanced/05-kro-helm-migration.md)
+6. [Kubernetes 인증 및 권한 부여](./advanced/06-kubernetes-auth-authz.md)
+7. [Kubernetes 확장 메커니즘](./advanced/07-kubernetes-extensions.md)
 
 ### 도구 및 통합
 1. [ArgoCD](./tools/01-argocd.md) | [퀴즈](./quizzes/tools/01-argocd-quiz.md)

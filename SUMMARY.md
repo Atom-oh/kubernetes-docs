@@ -57,6 +57,9 @@
     * [Part 3: 고급 기능](advanced/02-custom-scheduler-part3.md)
 * [AI/ML 워크로드](advanced/03-ai-ml-workloads.md)
 * [vLLM 배포](advanced/04-vllm-deployment.md)
+* [KRO를 활용한 Helm 차트 마이그레이션](advanced/05-kro-helm-migration.md)
+* [Kubernetes 인증 및 권한 부여](advanced/06-kubernetes-auth-authz.md)
+* [Kubernetes 확장 메커니즘](advanced/07-kubernetes-extensions.md)
 
 ## Cilium
 
@@ -93,11 +96,11 @@
         * [Session Affinity](tools/istio/traffic-management/10-session-affinity.md)
         * [Egress 제어](tools/istio/traffic-management/11-egress-control.md)
         * [ServiceEntry](tools/istio/traffic-management/12-service-entry.md)
+        * [WorkloadEntry](tools/istio/traffic-management/13-workload-entry.md)
     * [Security](tools/istio/security/README.md)
         * [mTLS](tools/istio/security/01-mtls.md)
         * [인증](tools/istio/security/02-authentication.md)
         * [권한 부여](tools/istio/security/03-authorization.md)
-        * [Network Policy](tools/istio/security/04-network-policy.md)
     * [Observability](tools/istio/observability/README.md)
         * [메트릭](tools/istio/observability/01-metrics.md)
         * [분산 추적](tools/istio/observability/02-tracing.md)

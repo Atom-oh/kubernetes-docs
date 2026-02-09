@@ -1268,7 +1268,7 @@ kubectl delete workloadentry legacy-api-vm -n vm-workloads
 - [Virtual Machine Installation](https://istio.io/latest/docs/setup/install/virtual-machine/)
 
 ### 관련 문서
-- [기본 개념 - VM 워크로드 등록](../03-basic-concepts.md#vm-워크로드-등록)
+- [기본 개념 - VM 워크로드 등록](../02-basic-concepts.md#vm-워크로드-등록)
 - [ServiceEntry](12-service-entry.md)
 - [Egress 제어](11-egress-control.md)
 - [보안 - mTLS](../security/01-mtls.md)

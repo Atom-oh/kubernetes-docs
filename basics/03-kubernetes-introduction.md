@@ -138,7 +138,7 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 전체 아키텍처
 
-![Kubernetes 아키텍처](../assets/kubernetes_architecture.png)
+![Kubernetes 아키텍처](../assets/kubernetes_architecture.svg)
 
 ## Kubernetes 주요 구성 요소
 
