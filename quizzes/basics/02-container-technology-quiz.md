@@ -152,7 +152,7 @@ Amazon Fargate는 AWS의 서버리스 컨테이너 실행 환경으로, 서버�
     - B) 서비스 검색 및 로드 밸런싱
     - C) 컨테이너 이미지 빌드
     - D) 자동 확장
-    
+
 <details>
 
 <summary>정답 보기</summary>
@@ -163,9 +163,57 @@ Amazon Fargate는 AWS의 서버리스 컨테이너 실행 환경으로, 서버�
 컨테이너 이미지 빌드는 일반적으로 CI/CD 파이프라인이나 Docker와 같은 컨테이너 빌드 도구의 역할입니다. 컨테이너 오케스트레이션 도구(Kubernetes, Docker Swarm 등)의 주요 기능은 자동 배포 및 롤백, 서비스 검색 및 로드 밸런싱, 자동 확장, 자가 복구, 구성 관리, 스토리지 오케스트레이션 등입니다.
 </details>
 
+11. 컨테이너가 실행 중이 아닌 상태에서 존재할 수 있는 상태가 아닌 것은 무엇인가요?
+    - A) Created
+    - B) Exited
+    - C) Building
+    - D) Paused
+
+<details>
+
+<summary>정답 보기</summary>
+
+**정답: C) Building**
+
+**설명:**
+컨테이너의 라이프사이클 상태에는 Created(생성됨), Running(실행 중), Paused(일시 중지), Restarting(재시작 중), Exited(종료됨), Dead(죽음) 상태가 있습니다. Building은 이미지 빌드 과정의 상태이며, 컨테이너의 상태가 아닙니다. 컨테이너는 이미지가 빌드된 후에 생성됩니다.
+</details>
+
+12. 컨테이너 재시작 정책 중 Docker 데몬 시작 시에도 컨테이너가 재시작되지만, 수동으로 중지한 경우에는 재시작되지 않는 정책은 무엇인가요?
+    - A) no
+    - B) on-failure
+    - C) always
+    - D) unless-stopped
+
+<details>
+
+<summary>정답 보기</summary>
+
+**정답: D) unless-stopped**
+
+**설명:**
+`unless-stopped` 재시작 정책은 컨테이너가 명시적으로 중지되지 않는 한 항상 재시작됩니다. Docker 데몬이 재시작되어도 컨테이너가 자동으로 시작되지만, 사용자가 수동으로 `docker stop` 명령으로 중지한 경우에는 데몬 재시작 후에도 컨테이너가 시작되지 않습니다. `always`는 수동 중지 여부와 관계없이 항상 재시작됩니다.
+</details>
+
+13. 컨테이너와 원본 이미지 사이의 파일 시스템 변경 사항을 확인하는 Docker 명령은 무엇인가요?
+    - A) docker inspect
+    - B) docker diff
+    - C) docker logs
+    - D) docker history
+
+<details>
+
+<summary>정답 보기</summary>
+
+**정답: B) docker diff**
+
+**설명:**
+`docker diff` 명령은 컨테이너의 파일 시스템과 원본 이미지 사이의 변경 사항을 보여줍니다. 출력에서 A는 추가(Added), C는 변경(Changed), D는 삭제(Deleted)된 파일을 나타냅니다. 이 명령은 컨테이너가 실행되는 동안 어떤 파일이 수정되었는지 디버깅할 때 유용합니다.
+</details>
+
 ## 단답형 문제
 
-11. 컨테이너 이미지의 내용을 기반으로 한 고유한 식별자로, SHA256 해시 형태로 표현되는 것은 무엇인가요?
+14. 컨테이너 이미지의 내용을 기반으로 한 고유한 식별자로, SHA256 해시 형태로 표현되는 것은 무엇인가요?
 
 <details>
 
@@ -177,7 +225,7 @@ Amazon Fargate는 AWS의 서버리스 컨테이너 실행 환경으로, 서버�
 다이제스트는 컨테이너 이미지 내용의 SHA256 해시로, 이미지의 고유한 식별자입니다. 태그와 달리 이미지 내용이 변경되면 다이제스트도 변경되므로, 특정 이미지 버전을 정확하게 참조할 때 사용됩니다. 예: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`
 </details>
 
-12. Dockerfile에서 컨테이너 시작 시 실행할 명령을 지정하는 지시문은 무엇인가요?
+15. Dockerfile에서 컨테이너 시작 시 실행할 명령을 지정하는 지시문은 무엇인가요?
 
 <details>
 
@@ -189,7 +237,7 @@ Amazon Fargate는 AWS의 서버리스 컨테이너 실행 환경으로, 서버�
 CMD 지시문은 컨테이너가 시작될 때 실행할 기본 명령을 지정합니다. 예를 들어, `CMD ["node", "server.js"]`는 컨테이너가 시작될 때 `node server.js` 명령을 실행합니다. CMD는 docker run 명령에 인자를 제공하여 재정의할 수 있습니다.
 </details>
 
-13. 컨테이너 간 통신을 위해 Docker가 생성하는 가상 네트워크 인터페이스의 이름은 무엇인가요?
+16. 컨테이너 간 통신을 위해 Docker가 생성하는 가상 네트워크 인터페이스의 이름은 무엇인가요?
 
 <details>
 
@@ -201,7 +249,7 @@ CMD 지시문은 컨테이너가 시작될 때 실행할 기본 명령을 지정
 docker0는 Docker가 기본적으로 생성하는 가상 브리지 네트워크 인터페이스입니다. 이 브리지는 동일한 호스트에서 실행되는 컨테이너 간의 통신을 가능하게 하고, 컨테이너와 외부 네트워크 간의 통신을 중개합니다.
 </details>
 
-14. 컨테이너 내에서 실행되는 프로세스가 사용할 수 있는 시스템 호출을 제한하는 Linux 보안 기능은 무엇인가요?
+17. 컨테이너 내에서 실행되는 프로세스가 사용할 수 있는 시스템 호출을 제한하는 Linux 보안 기능은 무엇인가요?
 
 <details>
 
@@ -213,7 +261,7 @@ docker0는 Docker가 기본적으로 생성하는 가상 브리지 네트워크 
 seccomp는 프로세스가 사용할 수 있는 시스템 호출을 제한하는 Linux 커널 보안 기능입니다. Docker와 같은 컨테이너 런타임은 seccomp 프로필을 사용하여 컨테이너가 수행할 수 있는 시스템 호출을 제한함으로써 보안을 강화합니다.
 </details>
 
-15. AWS에서 컨테이너 이미지를 저장하고 관리하는 서비스의 이름은 무엇인가요?
+18. AWS에서 컨테이너 이미지를 저장하고 관리하는 서비스의 이름은 무엇인가요?
 
 <details>
 
@@ -225,9 +273,33 @@ seccomp는 프로세스가 사용할 수 있는 시스템 호출을 제한하는
 Amazon ECR(Elastic Container Registry)은 AWS의 관리형 컨테이너 이미지 레지스트리 서비스입니다. 이미지 취약점 스캐닝, IAM과의 통합, 이미지 라이프사이클 관리 등의 기능을 제공하며, AWS의 다른 서비스들과 원활하게 통합됩니다.
 </details>
 
+19. 컨테이너가 실행 중일 때 해당 컨테이너 내부에서 추가 명령을 실행할 수 있게 해주는 Docker 명령은 무엇인가요?
+
+<details>
+
+<summary>정답 보기</summary>
+
+**정답: docker exec**
+
+**설명:**
+`docker exec` 명령은 실행 중인 컨테이너 내부에서 추가 명령을 실행할 수 있게 해줍니다. 예를 들어, `docker exec -it <container> bash`로 컨테이너 내부에 대화형 셸로 접속하거나, `docker exec <container> ls /app`으로 컨테이너 내부의 파일 목록을 확인할 수 있습니다. 이 명령은 컨테이너 디버깅에 매우 유용합니다.
+</details>
+
+20. Docker에서 컨테이너의 실시간 이벤트(시작, 중지, 재시작 등)를 스트림으로 모니터링하는 명령은 무엇인가요?
+
+<details>
+
+<summary>정답 보기</summary>
+
+**정답: docker events**
+
+**설명:**
+`docker events` 명령은 Docker 데몬에서 발생하는 실시간 이벤트를 스트림으로 보여줍니다. 컨테이너 시작, 중지, 재시작, 이미지 풀, 네트워크 연결/해제 등의 이벤트를 모니터링할 수 있습니다. `--filter` 옵션으로 특정 컨테이너나 이벤트 유형만 필터링할 수 있어 디버깅과 모니터링에 유용합니다.
+</details>
+
 ## 실습 문제
 
-16. 다음 요구사항을 충족하는 Dockerfile을 작성하세요:
+21. 다음 요구사항을 충족하는 Dockerfile을 작성하세요:
     - Node.js 14 Alpine 이미지 사용
     - 작업 디렉토리를 /app으로 설정
     - package.json과 package-lock.json 파일을 먼저 복사
@@ -261,7 +333,7 @@ CMD ["node", "server.js"]
 이 Dockerfile은 Node.js 애플리케이션을 위한 기본적인 구성을 보여줍니다. 의존성 파일(package*.json)을 먼저 복사하고 설치한 후, 나머지 파일을 복사하는 방식으로 Docker의 레이어 캐싱을 최적화합니다. 이렇게 하면 소스 코드가 변경되어도 의존성이 변경되지 않았다면 npm install 단계를 재사용할 수 있습니다.
 </details>
 
-17. 다음 Docker 명령을 분석하고 그 목적을 설명하세요:
+22. 다음 Docker 명령을 분석하고 그 목적을 설명하세요:
     ```bash
     docker run -d --name my-app -p 8080:80 -v data:/app/data --restart always nginx:latest
     ```
@@ -282,7 +354,7 @@ CMD ["node", "server.js"]
 이 명령은 nginx 웹 서버를 백그라운드에서 실행하고, 호스트의 8080 포트를 통해 접근할 수 있게 하며, 영구 데이터 저장을 위한 볼륨을 설정하고, 컨테이너가 종료되면 자동으로 재시작하도록 구성합니다.
 </details>
 
-18. 다단계 빌드를 사용하여 React 애플리케이션을 위한 최적화된 Dockerfile을 작성하세요.
+23. 다단계 빌드를 사용하여 React 애플리케이션을 위한 최적화된 Dockerfile을 작성하세요.
 
 <details>
 
@@ -324,9 +396,93 @@ CMD ["nginx", "-g", "daemon off;"]
 이 접근 방식의 장점은 최종 이미지에 Node.js 런타임, npm 패키지, 소스 코드 등이 포함되지 않아 이미지 크기가 크게 줄어든다는 것입니다. 최종 이미지는 빌드된 정적 파일과 nginx만 포함하므로 더 작고 보안적으로 안전합니다.
 </details>
 
+24. 컨테이너 헬스 체크를 포함하는 Dockerfile을 작성하세요. HTTP 엔드포인트 /health를 30초마다 확인하고, 3초 이내에 응답이 없으면 실패로 처리하며, 3회 실패 시 비정상으로 판단하도록 설정하세요.
+
+<details>
+
+<summary>정답 보기</summary>
+
+**정답:**
+```dockerfile
+FROM nginx:alpine
+
+# 애플리케이션 복사 (예시)
+COPY ./html /usr/share/nginx/html
+
+# 헬스 체크 설정
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+**설명:**
+HEALTHCHECK 지시어의 각 옵션 의미:
+- `--interval=30s`: 30초마다 헬스 체크 수행
+- `--timeout=3s`: 헬스 체크 명령이 3초 이내에 완료되어야 함
+- `--start-period=10s`: 컨테이너 시작 후 10초간 헬스 체크 실패를 무시 (초기화 시간)
+- `--retries=3`: 3회 연속 실패 시 컨테이너를 unhealthy로 표시
+- `CMD`: 실행할 헬스 체크 명령. wget으로 /health 엔드포인트 확인
+
+헬스 체크는 컨테이너 오케스트레이션 도구가 컨테이너 상태를 파악하여 자동 복구나 트래픽 라우팅 결정에 활용합니다.
+</details>
+
+25. 컨테이너 디버깅을 위해 실행 중인 컨테이너의 환경 변수, 네트워크 설정, 프로세스 목록을 확인하는 Docker 명령어들을 작성하세요.
+
+<details>
+
+<summary>정답 보기</summary>
+
+**정답:**
+```bash
+# 1. 환경 변수 확인
+docker exec <container-id> env
+
+# 또는 inspect 사용
+docker inspect <container-id> --format='{{range .Config.Env}}{{println .}}{{end}}'
+
+# 2. 네트워크 설정 확인
+docker exec <container-id> ip addr
+docker exec <container-id> netstat -tuln
+# 또는
+docker exec <container-id> ss -tuln
+
+# IP 주소만 확인
+docker inspect <container-id> --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+
+# 3. 프로세스 목록 확인
+docker exec <container-id> ps aux
+# 또는
+docker top <container-id>
+
+# 4. 추가 유용한 디버깅 명령
+# 컨테이너 상세 정보
+docker inspect <container-id>
+
+# 컨테이너 로그
+docker logs <container-id>
+
+# 파일 시스템 변경 사항
+docker diff <container-id>
+
+# 실시간 리소스 사용량
+docker stats <container-id>
+```
+
+**설명:**
+컨테이너 디버깅 시 이러한 명령들을 조합하여 문제를 진단합니다:
+- `docker exec`는 실행 중인 컨테이너에서 명령 실행
+- `docker inspect`는 컨테이너의 상세 메타데이터 확인
+- `docker top`은 컨테이너 프로세스를 호스트 관점에서 확인
+- `docker diff`는 이미지 대비 변경된 파일 확인
+이러한 도구들을 활용하면 컨테이너 내부 상태를 효과적으로 파악하고 문제를 해결할 수 있습니다.
+</details>
+
 ## 심화 문제
 
-19. 컨테이너 기술의 핵심 구성 요소인 네임스페이스와 cgroups의 역할을 비교하고, 각각이 컨테이너 격리에 어떻게 기여하는지 설명하세요.
+26. 컨테이너 기술의 핵심 구성 요소인 네임스페이스와 cgroups의 역할을 비교하고, 각각이 컨테이너 격리에 어떻게 기여하는지 설명하세요.
 
 <details>
 
@@ -366,7 +522,7 @@ CMD ["nginx", "-g", "daemon off;"]
 두 기술이 함께 작동하여 컨테이너는 독립된 환경에서 제한된 자원을 사용하며 실행될 수 있습니다. 이러한 격리는 가상 머신보다 가볍지만, 보안과 자원 관리 측면에서 충분한 격리를 제공합니다.
 </details>
 
-20. 컨테이너 이미지 레이어링 시스템의 작동 방식과 Copy-on-Write(CoW) 전략이 컨테이너의 효율성에 어떻게 기여하는지 설명하세요.
+27. 컨테이너 이미지 레이어링 시스템의 작동 방식과 Copy-on-Write(CoW) 전략이 컨테이너의 효율성에 어떻게 기여하는지 설명하세요.
 
 <details>
 
@@ -409,6 +565,83 @@ Copy-on-Write는 데이터가 실제로 수정될 때까지 복사 작업을 지
     - 이미지 다운로드 시 이미 존재하는 레이어는 다시 다운로드하지 않아도 됩니다.
 
 이러한 효율성 덕분에 컨테이너는 가상 머신보다 더 가볍고 빠르게 시작할 수 있으며, 동일한 호스트에서 더 많은 수의 컨테이너를 실행할 수 있습니다.
+</details>
+
+28. 컨테이너 라이프사이클 전체를 설명하고, 각 상태(Created, Running, Paused, Restarting, Exited, Dead)에서의 컨테이너 동작과 상태 전환 방법을 설명하세요.
+
+<details>
+
+<summary>정답 보기</summary>
+
+**정답:**
+
+**컨테이너 라이프사이클 상태:**
+
+1. **Created (생성됨)**
+   - 컨테이너가 생성되었으나 아직 시작되지 않은 상태
+   - `docker create` 명령으로 생성
+   - 프로세스가 실행되지 않음, 리소스 할당 최소화
+   - 전환: `docker start` → Running
+
+2. **Running (실행 중)**
+   - 컨테이너의 메인 프로세스가 실행 중인 상태
+   - `docker run` 또는 `docker start`로 진입
+   - CPU, 메모리 등 리소스 활발히 사용
+   - 전환:
+     - `docker pause` → Paused
+     - `docker stop` → Exited
+     - `docker kill` → Exited
+     - `docker restart` → Restarting → Running
+     - 프로세스 종료 시 → Exited
+
+3. **Paused (일시 중지)**
+   - 모든 프로세스가 SIGSTOP으로 일시 중지됨
+   - `docker pause` 명령으로 진입
+   - 메모리는 유지되지만 CPU 사용 없음
+   - 전환: `docker unpause` → Running
+
+4. **Restarting (재시작 중)**
+   - 컨테이너가 재시작 중인 임시 상태
+   - `docker restart` 또는 재시작 정책에 의해 발생
+   - 전환: 자동으로 Running 또는 Exited로 전환
+
+5. **Exited (종료됨)**
+   - 메인 프로세스가 종료된 상태
+   - 종료 코드(exit code) 보존
+   - 파일 시스템 변경 사항 유지
+   - 전환:
+     - `docker start` → Running
+     - `docker rm` → 삭제
+
+6. **Dead (죽음)**
+   - 컨테이너 제거 시도가 실패한 비정상 상태
+   - 리소스 정리가 완료되지 않음
+   - 일반적으로 수동 개입 필요
+   - `docker rm -f`로 강제 제거 시도
+
+**상태 확인 및 관리 명령:**
+```bash
+# 상태 확인
+docker ps -a                    # 모든 컨테이너 목록
+docker inspect <id> | jq '.[0].State'  # 상세 상태
+
+# 상태 전환
+docker create nginx             # → Created
+docker start <id>               # → Running
+docker pause <id>               # → Paused
+docker unpause <id>             # → Running
+docker stop <id>                # → Exited
+docker restart <id>             # → Running
+docker rm <id>                  # 삭제
+```
+
+**재시작 정책과 라이프사이클:**
+- `no`: 자동 재시작 없음
+- `on-failure[:max]`: 비정상 종료 시 재시작, 최대 횟수 지정 가능
+- `always`: 항상 재시작 (데몬 재시작 포함)
+- `unless-stopped`: 수동 중지 전까지 항상 재시작
+
+컨테이너 라이프사이클을 이해하면 애플리케이션의 가용성을 보장하고, 문제 발생 시 적절한 복구 전략을 수립할 수 있습니다.
 </details>
 
 ---
