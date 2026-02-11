@@ -1,0 +1,214 @@
+<mxfile host="app.diagrams.net" modified="2025-08-05T12:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
+  <diagram name="Service LoadBalancer Issues" id="service-loadbalancer-issues">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="서비스 및 로드 밸런서 문제 해결" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="30" width="350" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Client -->
+        <mxCell id="client" value="클라이언트" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333;strokeWidth=2;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="100" height="70" as="geometry" />
+        </mxCell>
+        
+        <!-- EKS Cluster Container -->
+        <mxCell id="eks-cluster" value="EKS 클러스터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="220" y="80" width="860" height="350" as="geometry" />
+        </mxCell>
+        
+        <!-- Services Container -->
+        <mxCell id="services" value="서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="260" y="120" width="200" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Service -->
+        <mxCell id="service" value="서비스" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=svc;" vertex="1" parent="1">
+          <mxGeometry x="300" y="160" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        <!-- Endpoints -->
+        <mxCell id="endpoints" value="엔드포인트" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=ep;" vertex="1" parent="1">
+          <mxGeometry x="380" y="160" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        <!-- Pods Container -->
+        <mxCell id="pods" value="포드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="500" y="120" width="200" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Pod 1 -->
+        <mxCell id="pod1" value="포드 1" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="530" y="160" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        <!-- Pod 2 -->
+        <mxCell id="pod2" value="포드 2" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="620" y="160" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        <!-- Ingress Controller Container -->
+        <mxCell id="ingress-controller" value="Ingress 컨트롤러" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="740" y="120" width="200" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- AWS Load Balancer Controller -->
+        <mxCell id="alb-controller" value="AWS Load Balancer&#xa;Controller" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=deploy;" vertex="1" parent="1">
+          <mxGeometry x="815" y="160" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        <!-- AWS Resources Container -->
+        <mxCell id="aws-resources" value="AWS 리소스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="260" y="280" width="680" height="130" as="geometry" />
+        </mxCell>
+        
+        <!-- Load Balancer -->
+        <mxCell id="lb" value="로드 밸런서" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.application_load_balancer;" vertex="1" parent="1">
+          <mxGeometry x="320" y="320" width="60" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Target Group -->
+        <mxCell id="tg" value="대상 그룹" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.target_group;" vertex="1" parent="1">
+          <mxGeometry x="450" y="320" width="60" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Security Group -->
+        <mxCell id="sg" value="보안 그룹" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.security_group;" vertex="1" parent="1">
+          <mxGeometry x="580" y="320" width="60" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Subnet -->
+        <mxCell id="subnet" value="서브넷" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.vpc_subnet_public;" vertex="1" parent="1">
+          <mxGeometry x="710" y="320" width="60" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Problem Indicators -->
+        <mxCell id="problem1" value="연결 실패" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#FFCDD2;strokeColor=#D32F2F;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="120" width="60" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="problem2" value="LB 생성 실패" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#FFE0B2;strokeColor=#FF9800;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="260" width="60" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="problem3" value="헬스체크 실패" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="260" width="60" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections -->
+        <!-- Client to Service -->
+        <mxCell id="client-to-service" value="요청" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#F44336;strokeDashArray=5 5;fontSize=10;fontStyle=1;" edge="1" parent="1" source="client" target="service">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="200" y="135" />
+              <mxPoint x="200" y="184" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Service to Endpoints -->
+        <mxCell id="service-to-endpoints" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="service" target="endpoints">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Endpoints to Pods -->
+        <mxCell id="endpoints-to-pod1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="endpoints" target="pod1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="endpoints-to-pod2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="endpoints" target="pod2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Controller to LB -->
+        <mxCell id="controller-to-lb" value="LB 생성/관리" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#326CE5;fontSize=9;fontStyle=1;" edge="1" parent="1" source="alb-controller" target="lb">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="840" y="260" />
+              <mxPoint x="380" y="260" />
+              <mxPoint x="380" y="338" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- LB to Target Group -->
+        <mxCell id="lb-to-tg" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="lb" target="tg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Target Group to Pods -->
+        <mxCell id="tg-to-pod1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="tg" target="pod1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="280" />
+              <mxPoint x="555" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="tg-to-pod2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="tg" target="pod2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="280" />
+              <mxPoint x="645" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Security Group and Subnet connections -->
+        <mxCell id="sg-to-lb" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="sg" target="lb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="subnet-to-lb" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="subnet" target="sg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Troubleshooting Guide -->
+        <mxCell id="troubleshooting" value="문제 해결 가이드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="450" width="1000" height="320" as="geometry" />
+        </mxCell>
+        
+        <!-- Service Connection Issues -->
+        <mxCell id="service-issues" value="서비스 연결 문제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#D32F2F;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="490" width="280" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="service-issues-content" value="증상: 서비스를 통해 포드에 연결할 수 없음&#xa;&#xa;진단 명령:&#xa;kubectl describe service &lt;service-name&gt;&#xa;kubectl get endpoints &lt;service-name&gt;&#xa;kubectl get pods -l &lt;selector-label&gt;&#xa;&#xa;일반적인 원인:&#xa;• 잘못된 서비스 선택기&#xa;• 포드가 준비되지 않음&#xa;• 포트 불일치&#xa;• 엔드포인트 누락" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="520" width="260" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Load Balancer Issues -->
+        <mxCell id="lb-issues" value="로드 밸런서 문제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="420" y="490" width="280" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lb-issues-content" value="증상: 외부에서 로드 밸런서에 연결할 수 없음&#xa;&#xa;진단 명령:&#xa;kubectl get service &lt;service-name&gt; -o wide&#xa;kubectl describe service &lt;service-name&gt;&#xa;&#xa;일반적인 원인:&#xa;• 서브넷 태그 누락&#xa;• 보안 그룹 규칙 문제&#xa;• IAM 권한 부족&#xa;• 상태 확인 실패" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="430" y="520" width="260" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Ingress Issues -->
+        <mxCell id="ingress-issues" value="Ingress 문제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#388E3C;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="720" y="490" width="280" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="ingress-issues-content" value="증상: Ingress를 통한 접근이 작동하지 않음&#xa;&#xa;진단 명령:&#xa;kubectl describe ingress &lt;ingress-name&gt;&#xa;kubectl get ingress &lt;ingress-name&gt; -o yaml&#xa;kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller&#xa;&#xa;일반적인 원인:&#xa;• 컨트롤러 설치 문제&#xa;• 어노테이션 오류&#xa;• 인증서 문제" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="730" y="520" width="260" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Common Solutions -->
+        <mxCell id="solutions" value="일반적인 해결 방법" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#F57C00;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="630" width="880" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="solutions-content" value="1. 서브넷 태그 확인 및 추가:&#xa;   # 퍼블릭 서브넷: kubernetes.io/role/elb=1&#xa;   # 프라이빗 서브넷: kubernetes.io/role/internal-elb=1&#xa;   aws ec2 create-tags --resources subnet-12345678 --tags Key=kubernetes.io/role/elb,Value=1&#xa;&#xa;2. 보안 그룹 규칙 확인:&#xa;   # 로드 밸런서 보안 그룹에서 필요한 포트 허용&#xa;   aws ec2 authorize-security-group-ingress --group-id sg-12345678 --protocol tcp --port 80 --cidr 0.0.0.0/0&#xa;&#xa;3. 서비스 재생성:&#xa;   kubectl delete service &lt;service-name&gt;&#xa;   kubectl apply -f service.yaml&#xa;&#xa;4. AWS Load Balancer Controller 재시작:&#xa;   kubectl rollout restart deployment aws-load-balancer-controller -n kube-system" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="140" y="660" width="840" height="80" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

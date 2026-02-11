@@ -4,66 +4,85 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Korean-language Kubernetes and Amazon EKS training content repository. It is a documentation-only project (no application code) hosted on GitBook. All content is written in Markdown.
+Bilingual (Korean + English) Kubernetes and Amazon EKS training content hosted on GitBook. Documentation-only project — no application code, no test/lint/CI pipelines. All content is Markdown.
 
 **GitBook URL**: https://atomoh.gitbook.io/kubernetes-docs/
 
 ## Build Commands
 
-### Presentations (Marp)
-
 ```bash
-# Build Istio presentation slides (requires marp-cli)
+# Build Istio presentation slides (requires marp-cli: npm install -g @marp-team/marp-cli)
 cd slide && bash build-presentation.sh
-
-# Install marp-cli if needed
-npm install -g @marp-team/marp-cli
 ```
-
-There are no test, lint, or CI/CD pipelines for this project.
 
 ## Repository Structure
 
-- `SUMMARY.md` — GitBook table of contents (must be updated when adding/removing/renaming pages)
-- `README.md` — Project introduction and learning guide
-- `basics/` — Linux, containers, Kubernetes introduction (3 docs)
-- `core/` — Kubernetes core concepts: architecture, pods, services, storage, security, scheduling, etc. (11 docs)
-- `eks/` — Amazon EKS: cluster creation, networking, storage, security, monitoring, cost optimization, upgrades, troubleshooting (multi-part docs)
-- `cilium/` — Cilium CNI deep dive: eBPF, networking, IPAM, security, L2-L7 (10 docs)
-- `advanced/` — Kyverno, Custom Scheduler, AI/ML workloads, vLLM deployment
-- `tools/` — ArgoCD, Istio (extensive sub-hierarchy), ACK, Cilium, KEDA, Karpenter, monitoring stack, logging stack, VPC Lattice
-- `tools/istio/` — Deep Istio documentation with subdirectories: `traffic-management/`, `security/`, `observability/`, `resilience/`, `advanced/`, `comparison/`, `troubleshooting/`
-- `quizzes/` — Quiz files mirroring the same structure as content directories (`quizzes/basics/`, `quizzes/core/`, `quizzes/eks/`, etc.)
-- `assets/` — Images and diagrams (SVG, PNG, drawio)
-- `slide/` — Marp presentation sources and build script
+```
+kubernetes-docs/
+├── README.md              # Language selector (root)
+├── CLAUDE.md
+├── assets/                # Shared images/diagrams (SVG, PNG, drawio)
+├── slide/                 # Marp presentation sources and build script
+├── ko/                    # Korean content
+│   ├── README.md          # Korean table of contents
+│   ├── SUMMARY.md         # GitBook navigation (Korean)
+│   ├── basics/            # Linux, containers, K8s intro (3 docs)
+│   ├── core/              # K8s core concepts (11 docs)
+│   ├── eks/               # Amazon EKS topics (multi-part, 19 docs)
+│   ├── cilium/            # Cilium CNI deep dive (10 docs)
+│   ├── advanced/          # Kyverno, Custom Scheduler, AI/ML, vLLM, KRO, auth, extensions (7 docs)
+│   ├── tools/             # ArgoCD, ACK, Cilium, KEDA, Karpenter, monitoring/logging, VPC Lattice, Helm
+│   ├── tools/istio/       # Istio deep dive with subdirs: traffic-management/, security/, observability/, resilience/, advanced/, comparison/, troubleshooting/
+│   ├── quizzes/           # Mirrors content structure with -quiz suffix
+│   └── labs/              # Hands-on lab guides with step-by-step exercises (basics, core, eks)
+└── en/                    # English content (same structure as ko/)
+    ├── README.md
+    ├── SUMMARY.md
+    └── ...
+```
+
+`assets/` is shared at root level. From `ko/` or `en/` files, asset references use `../../assets/` (or `../../../assets/` for deeper nesting like `tools/istio/`).
+
+## Adding or Renaming Content — Files to Keep in Sync
+
+When adding, removing, or renaming any content page, update **all of these in both languages**:
+
+1. **`ko/SUMMARY.md`** and **`en/SUMMARY.md`** — GitBook navigation
+2. **`ko/README.md`** and **`en/README.md`** — Table of contents with learning/quiz link pairs
+3. **`ko/quizzes/`** and **`en/quizzes/`** — Every content file should have a corresponding quiz
 
 ## Content Conventions
 
 ### Document Header Format
 
-Each document starts with a title, version/compatibility info block, and last-update date:
-
+Korean:
 ```markdown
 # Document Title
-
 > **지원 버전**: ...
 > **마지막 업데이트**: 2025년 X월 X일
 ```
 
+English:
+```markdown
+# Document Title
+> **Supported Versions**: ...
+> **Last Updated**: Month Day, 2025
+```
+
 ### Quiz Format
 
-Quizzes use HTML `<details><summary>` tags for collapsible answers:
+Korean quizzes use `<details><summary>정답 보기</summary>`, English quizzes use `<details><summary>Show Answer</summary>`:
 
 ```markdown
 1. Question text
    - A) Option A
    - B) Option B
 <details>
-<summary>정답 보기</summary>
+<summary>정답 보기</summary>  <!-- or "Show Answer" in en/ -->
 
-**정답: B) Option B**
+**정답: B) Option B**  <!-- or "Answer: B) Option B" in en/ -->
 
-**설명:**
+**설명:**  <!-- or "Explanation:" in en/ -->
 Explanation text here.
 
 </details>
@@ -74,9 +93,9 @@ Explanation text here.
 - Content files: `NN-topic-name.md` (e.g., `01-linux-basics.md`)
 - Multi-part topics: `NN-topic-name-partN.md` (e.g., `02-eks-cluster-creation-part1.md`)
 - Quiz files: mirror content path under `quizzes/` with `-quiz` suffix (e.g., `quizzes/basics/01-linux-basics-quiz.md`)
+- Lab files: mirror content path under `labs/` with `-lab` suffix (e.g., `labs/basics/01-linux-basics-lab.md`)
+- **Exception — Istio quizzes** use topic-based names without numbers: `quizzes/tools/istio/traffic-management.md`, `security.md`, etc.
 
-## Key Relationships
+## Known Gaps
 
-- **Every content file should have a corresponding quiz** in the `quizzes/` directory
-- **SUMMARY.md must stay in sync** with actual files — GitBook uses it to generate navigation
-- **README.md table of contents** should also be updated when adding new content sections
+None - all content files have corresponding quizzes.

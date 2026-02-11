@@ -7,8 +7,9 @@
 ## Basic
 
 * [Linux 기초](basics/01-linux-basics.md)
-* [컨테이너 기술](basics/02-container-technology.md)
-* [Kubernetes 소개](basics/03-kubernetes-introduction.md)
+* [Linux 운영 기술](basics/02-linux-advanced.md)
+* [컨테이너 기술](basics/03-container-technology.md)
+* [Kubernetes 소개](basics/04-kubernetes-introduction.md)
 
 ## Kubernetes 핵심 개념
 
@@ -47,6 +48,9 @@
 * [EKS 비용 최적화](eks/07-eks-cost-optimization.md)
 * [EKS 업그레이드](eks/08-eks-upgrades.md)
 * [EKS 문제 해결](eks/09-eks-troubleshooting.md)
+* [EKS 복원력과 고가용성](eks/10-eks-resiliency.md)
+* [EKS 고급 디버깅](eks/11-eks-advanced-debugging.md)
+* [EKS Hybrid Nodes](eks/12-eks-hybrid-nodes.md)
 
 ## Advanced Topic
 
@@ -60,6 +64,7 @@
 * [KRO를 활용한 Helm 차트 마이그레이션](advanced/05-kro-helm-migration.md)
 * [Kubernetes 인증 및 권한 부여](advanced/06-kubernetes-auth-authz.md)
 * [Kubernetes 확장 메커니즘](advanced/07-kubernetes-extensions.md)
+* [Agentic AI 플랫폼](advanced/08-agentic-ai-platform.md)
 
 ## Cilium
 
@@ -133,12 +138,26 @@
 * [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](tools/07-monitoring-stack.md)
 * [로깅 스택 (Loki, Tempo)](tools/08-logging-stack.md)
 * [VPC Lattice](tools/09-vpc-lattice.md)
+* [Helm](tools/10-helm.md)
+
+## 실습 가이드
+
+* [실습 가이드 소개](labs/README.md)
+    * [Linux 기초 실습](labs/basics/01-linux-basics-lab.md)
+    * [Linux 실무 기술 실습](labs/basics/02-linux-advanced-lab.md)
+    * [컨테이너 기술 실습](labs/basics/03-container-technology-lab.md)
+    * [파드와 워크로드 실습](labs/core/02-pods-and-workloads-lab.md)
+    * [서비스와 네트워킹 실습](labs/core/03-services-networking-lab.md)
+    * [스토리지 실습](labs/core/04-storage-lab.md)
+    * [ConfigMap과 Secret 실습](labs/core/05-configuration-secrets-lab.md)
+    * [EKS 클러스터 생성 실습](labs/eks/01-eks-cluster-creation-lab.md)
 
 ## Quiz 모음
 * [퀴즈 모음 - 주제별 퀴즈](quizzes/README.md)
     * [Linux 기초 퀴즈](quizzes/basics/01-linux-basics-quiz.md)
-    * [컨테이너 기술 퀴즈](quizzes/basics/02-container-technology-quiz.md)
-    * [Kubernetes 소개 퀴즈](quizzes/basics/03-kubernetes-introduction-quiz.md)
+    * [Linux 운영 기술 퀴즈](quizzes/basics/02-linux-advanced-quiz.md)
+    * [컨테이너 기술 퀴즈](quizzes/basics/03-container-technology-quiz.md)
+    * [Kubernetes 소개 퀴즈](quizzes/basics/04-kubernetes-introduction-quiz.md)
 * [클러스터 아키텍처 퀴즈](quizzes/core/01-cluster-architecture-quiz.md)
     * [파드와 워크로드 퀴즈](quizzes/core/02-pods-and-workloads-quiz.md)
     * [서비스와 네트워킹 퀴즈](quizzes/core/03-services-networking-quiz.md)
@@ -168,6 +187,9 @@
     * [EKS 비용 최적화 퀴즈](quizzes/eks/07-eks-cost-optimization-quiz.md)
     * [EKS 업그레이드 퀴즈](quizzes/eks/08-eks-upgrades-quiz.md)
     * [EKS 문제 해결 퀴즈](quizzes/eks/09-eks-troubleshooting-quiz.md)
+    * [EKS 복원력과 고가용성 퀴즈](quizzes/eks/10-eks-resiliency-quiz.md)
+    * [EKS 고급 디버깅 퀴즈](quizzes/eks/11-eks-advanced-debugging-quiz.md)
+    * [EKS Hybrid Nodes 퀴즈](quizzes/eks/12-eks-hybrid-nodes-quiz.md)
 * Cilium
     * [Part 1: 소개 퀴즈](quizzes/cilium/01-introduction-quiz.md)
     * [Part 2: eBPF 퀴즈](quizzes/cilium/02-ebpf-quiz.md)
@@ -186,6 +208,10 @@
     * [Custom Scheduler 퀴즈 - Part 3](quizzes/advanced/02-custom-scheduler-part3-quiz.md)
     * [AI/ML 워크로드 퀴즈](quizzes/advanced/03-ai-ml-workloads-quiz.md)
     * [vLLM 배포 퀴즈](quizzes/advanced/04-vllm-deployment-quiz.md)
+    * [KRO를 활용한 Helm 차트 마이그레이션 퀴즈](quizzes/advanced/05-kro-helm-migration-quiz.md)
+    * [Kubernetes 인증 및 권한 부여 퀴즈](quizzes/advanced/06-kubernetes-auth-authz-quiz.md)
+    * [Kubernetes 확장 메커니즘 퀴즈](quizzes/advanced/07-kubernetes-extensions-quiz.md)
+    * [Agentic AI 플랫폼 퀴즈](quizzes/advanced/08-agentic-ai-platform-quiz.md)
 
 * Tools and Integrations
     * [ArgoCD 퀴즈](quizzes/tools/01-argocd-quiz.md)
@@ -203,3 +229,4 @@
     * [모니터링 스택 퀴즈](quizzes/tools/07-monitoring-stack-quiz.md)
     * [로깅 스택 퀴즈](quizzes/tools/08-logging-stack-quiz.md)
     * [VPC Lattice 퀴즈](quizzes/tools/09-vpc-lattice-quiz.md)
+    * [Helm 퀴즈](quizzes/tools/10-helm-quiz.md)

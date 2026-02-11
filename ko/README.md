@@ -1,3 +1,5 @@
+> [English Version](https://atomoh.gitbook.io/kubernetes-docs-en/)
+
 # Kubernetes 및 Amazon EKS 교육 컨텐츠
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
 
@@ -13,9 +15,10 @@
 ## 목차
 
 ### 기초 개념
-1. [Linux 기초](./basics/01-linux-basics.md) | [퀴즈](./quizzes/basics/01-linux-basics-quiz.md)
-2. [컨테이너 기술](./basics/02-container-technology.md) | [퀴즈](./quizzes/basics/02-container-technology-quiz.md)
-3. [Kubernetes 소개](./basics/03-kubernetes-introduction.md) | [퀴즈](./quizzes/basics/03-kubernetes-introduction-quiz.md)
+1. [Linux 기초](./basics/01-linux-basics.md) | [퀴즈](./quizzes/basics/01-linux-basics-quiz.md) | [실습](./labs/basics/01-linux-basics-lab.md)
+2. [Linux 운영 기술](./basics/02-linux-advanced.md) | [퀴즈](./quizzes/basics/02-linux-advanced-quiz.md) | [실습](./labs/basics/02-linux-advanced-lab.md)
+3. [컨테이너 기술](./basics/03-container-technology.md) | [퀴즈](./quizzes/basics/03-container-technology-quiz.md) | [실습](./labs/basics/03-container-technology-lab.md)
+4. [Kubernetes 소개](./basics/04-kubernetes-introduction.md) | [퀴즈](./quizzes/basics/04-kubernetes-introduction-quiz.md)
 
 ### Kubernetes 핵심 개념
 1. [클러스터 아키텍처](./core/01-cluster-architecture.md) | [퀴즈](./quizzes/core/01-cluster-architecture-quiz.md)
@@ -51,6 +54,9 @@
 7. [EKS 비용 최적화](./eks/07-eks-cost-optimization.md) | [퀴즈](./quizzes/eks/07-eks-cost-optimization-quiz.md)
 8. [EKS 업그레이드](./eks/08-eks-upgrades.md) | [퀴즈](./quizzes/eks/08-eks-upgrades-quiz.md)
 9. [EKS 문제 해결](./eks/09-eks-troubleshooting.md) | [퀴즈](./quizzes/eks/09-eks-troubleshooting-quiz.md)
+10. [EKS 복원력과 고가용성](./eks/10-eks-resiliency.md) | [퀴즈](./quizzes/eks/10-eks-resiliency-quiz.md)
+11. [EKS 고급 디버깅](./eks/11-eks-advanced-debugging.md) | [퀴즈](./quizzes/eks/11-eks-advanced-debugging-quiz.md)
+12. [EKS Hybrid Nodes](./eks/12-eks-hybrid-nodes.md) | [퀴즈](./quizzes/eks/12-eks-hybrid-nodes-quiz.md)
 
 ### Cilium
 1. [Cilium 소개](./cilium/README.md)
@@ -72,9 +78,10 @@
    - [Part 3: 커스텀 스케줄러 구현 사례 및 모니터링](./advanced/02-custom-scheduler-part3.md) | [퀴즈](./quizzes/advanced/02-custom-scheduler-part3-quiz.md)
 3. [AI/ML 워크로드](./advanced/03-ai-ml-workloads.md) | [퀴즈](./quizzes/advanced/03-ai-ml-workloads-quiz.md)
 4. [vLLM 배포](./advanced/04-vllm-deployment.md) | [퀴즈](./quizzes/advanced/04-vllm-deployment-quiz.md)
-5. [KRO를 활용한 Helm 차트 마이그레이션](./advanced/05-kro-helm-migration.md)
-6. [Kubernetes 인증 및 권한 부여](./advanced/06-kubernetes-auth-authz.md)
-7. [Kubernetes 확장 메커니즘](./advanced/07-kubernetes-extensions.md)
+5. [KRO를 활용한 Helm 차트 마이그레이션](./advanced/05-kro-helm-migration.md) | [퀴즈](./quizzes/advanced/05-kro-helm-migration-quiz.md)
+6. [Kubernetes 인증 및 권한 부여](./advanced/06-kubernetes-auth-authz.md) | [퀴즈](./quizzes/advanced/06-kubernetes-auth-authz-quiz.md)
+7. [Kubernetes 확장 메커니즘](./advanced/07-kubernetes-extensions.md) | [퀴즈](./quizzes/advanced/07-kubernetes-extensions-quiz.md)
+8. [Agentic AI 플랫폼](./advanced/08-agentic-ai-platform.md) | [퀴즈](./quizzes/advanced/08-agentic-ai-platform-quiz.md)
 
 ### 도구 및 통합
 1. [ArgoCD](./tools/01-argocd.md) | [퀴즈](./quizzes/tools/01-argocd-quiz.md)
@@ -86,6 +93,16 @@
 7. [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](./tools/07-monitoring-stack.md) | [퀴즈](./quizzes/tools/07-monitoring-stack-quiz.md)
 8. [로깅 스택 (Loki, Tempo)](./tools/08-logging-stack.md) | [퀴즈](./quizzes/tools/08-logging-stack-quiz.md)
 9. [VPC Lattice](./tools/09-vpc-lattice.md) | [퀴즈](./quizzes/tools/09-vpc-lattice-quiz.md)
+10. [Helm](./tools/10-helm.md) | [퀴즈](./quizzes/tools/10-helm-quiz.md)
+
+## 실습 가이드
+
+이론 학습 후 실제 환경에서 실습할 수 있는 가이드를 제공합니다.
+
+- [실습 가이드 목록](./labs/README.md)
+- 기초: Linux 기초, Linux 실무, 컨테이너 실습
+- 핵심: Pod, Service, Storage, ConfigMap 실습
+- EKS: 클러스터 생성 실습
 
 ## 학습 가이드
 

@@ -14,7 +14,7 @@
 
 Amazon FSx for Lustre는 고성능 컴퓨팅(HPC), 기계 학습, 빅 데이터 처리와 같은 컴퓨팅 집약적 워크로드를 위한 고성능 파일 시스템입니다. Lustre는 병렬 분산 파일 시스템으로, 수천 개의 클라이언트에서 동시에 액세스할 수 있는 높은 처리량과 낮은 지연 시간을 제공합니다.
 
-![FSx for Lustre CSI 아키텍처](../../assets/generated-diagrams/fsx_lustre_csi_architecture.drawio)
+![FSx for Lustre CSI 아키텍처](../assets/generated-diagrams/fsx_lustre_csi_architecture.drawio)
 
 ### FSx for Lustre CSI 드라이버 설치
 
@@ -212,7 +212,7 @@ parameters:
 
 Amazon S3는 객체 스토리지 서비스로, 무제한 양의 데이터를 저장하고 검색할 수 있습니다. Kubernetes에서는 S3를 직접 볼륨으로 마운트할 수는 없지만, 다양한 방법으로 S3와 통합할 수 있습니다.
 
-![S3 통합 방법](../../assets/generated-diagrams/s3_integration_methods.drawio)
+![S3 통합 방법](../assets/generated-diagrams/s3_integration_methods.drawio)
 
 ### S3 액세스를 위한 IRSA 설정
 
@@ -368,7 +368,7 @@ Amazon S3는 다음과 같은 사용 사례에 적합합니다:
 
 Kubernetes에서는 볼륨 스냅샷을 사용하여 PV의 데이터를 백업하고 복원할 수 있습니다.
 
-![볼륨 스냅샷 시스템](../../assets/generated-diagrams/volume_snapshot_system.drawio)
+![볼륨 스냅샷 시스템](../assets/generated-diagrams/volume_snapshot_system.drawio)
 
 ### 볼륨 스냅샷 컨트롤러 설치
 
@@ -474,7 +474,7 @@ velero restore create --from-backup daily-backup-20250710010000
 
 Kubernetes에서는 PVC의 크기를 확장하여 스토리지 용량을 늘릴 수 있습니다.
 
-![볼륨 확장 프로세스](../../assets/generated-diagrams/volume_expansion_process.drawio)
+![볼륨 확장 프로세스](../assets/generated-diagrams/volume_expansion_process.drawio)
 
 ### 볼륨 확장 활성화
 
@@ -539,7 +539,7 @@ xfs_growfs /data
 
 EKS에서 스토리지 성능을 최적화하기 위한 다양한 전략을 살펴보겠습니다.
 
-![스토리지 성능 최적화](../../assets/generated-diagrams/storage_performance_optimization.drawio)
+![스토리지 성능 최적화](../assets/generated-diagrams/storage_performance_optimization.drawio)
 
 ### EBS 성능 최적화
 

@@ -1,0 +1,156 @@
+<mxfile host="65bd71144e">
+    <diagram id="kubernetes_architecture" name="Kubernetes Architecture">
+        <mxGraphModel dx="1377" dy="1187" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="control_plane_container" value="Control Plane (Master Node)" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;fontSize=14;fontColor=#1A1A1A;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="40" width="600" height="240" as="geometry"/>
+                </mxCell>
+                <mxCell id="api_server" value="kube-apiserver" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="150" y="90" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="etcd" value="etcd (저장소)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="530" y="90" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="scheduler" value="kube-scheduler" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="150" y="170" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="controller_manager" value="kube-controller-manager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="340" y="170" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="cloud_controller_manager" value="cloud-controller-manager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="530" y="170" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="worker_node1" value="Worker Node 1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#3F51B5;fontSize=14;fontColor=#1A1A1A;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="320" width="280" height="240" as="geometry"/>
+                </mxCell>
+                <mxCell id="kubelet1" value="kubelet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5C6BC0;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="140" y="360" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="kube_proxy1" value="kube-proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5C6BC0;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="280" y="360" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="container_runtime1" value="Container Runtime" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7986CB;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="140" y="420" width="240" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="pods1" value="Pods (컨테이너 그룹)" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD;fontSize=12;fontColor=#1A1A1A;" parent="1" vertex="1">
+                    <mxGeometry x="140" y="480" width="240" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="pod1_1" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="150" y="510" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="pod1_2" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="230" y="510" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="pod1_3" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="310" y="510" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="worker_node2" value="Worker Node 2" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#3F51B5;fontSize=14;fontColor=#1A1A1A;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="320" width="280" height="240" as="geometry"/>
+                </mxCell>
+                <mxCell id="kubelet2" value="kubelet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5C6BC0;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="460" y="360" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="kube_proxy2" value="kube-proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5C6BC0;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="600" y="360" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="container_runtime2" value="Container Runtime" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7986CB;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="460" y="420" width="240" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="pods2" value="Pods (컨테이너 그룹)" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD;fontSize=12;fontColor=#1A1A1A;" parent="1" vertex="1">
+                    <mxGeometry x="460" y="480" width="240" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="pod2_1" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="470" y="510" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="pod2_2" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="550" y="510" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="pod2_3" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="630" y="510" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="conn_api_etcd" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="api_server" target="etcd" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="410" as="sourcePoint"/>
+                        <mxPoint x="450" y="360" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="conn_api_scheduler" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="scheduler" target="api_server" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="410" as="sourcePoint"/>
+                        <mxPoint x="450" y="360" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="conn_api_cm" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" parent="1" source="controller_manager" target="api_server" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="410" as="sourcePoint"/>
+                        <mxPoint x="450" y="360" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="conn_api_ccm" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="cloud_controller_manager" target="etcd" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="410" as="sourcePoint"/>
+                        <mxPoint x="450" y="360" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="conn_kubelet1_api" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" parent="1" source="kubelet1" target="api_server" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="410" as="sourcePoint"/>
+                        <mxPoint x="450" y="360" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="190" y="300"/>
+                            <mxPoint x="190" y="300"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="conn_kubelet2_api" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" parent="1" source="kubelet2" target="api_server" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="410" as="sourcePoint"/>
+                        <mxPoint x="450" y="360" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="510" y="300"/>
+                            <mxPoint x="270" y="300"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="title_control" value="컨트롤 플레인 컴포넌트" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#1A1A1A;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="36" width="160" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="title_worker" value="워커 노드 컴포넌트" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#FF66B3;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="320" width="160" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="external_clients" value="외부 클라이언트 (kubectl, API 클라이언트)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB74D;strokeColor=#333333;fontColor=#000000;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="340" y="90" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="conn_clients_api" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="external_clients" target="api_server" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="400" y="410" as="sourcePoint"/>
+                        <mxPoint x="450" y="360" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="legend_title" value="범례" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="120" y="580" width="60" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend_control" value="컨트롤 플레인 컴포넌트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="600" width="140" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend_worker" value="워커 노드 컴포넌트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5C6BC0;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="630" width="140" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend_pod" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="660" width="140" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend_storage" value="저장소" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="600" width="140" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend_runtime" value="컨테이너 런타임" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7986CB;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="630" width="140" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend_client" value="외부 클라이언트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB74D;strokeColor=#333333;fontColor=#000000;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="660" width="140" height="20" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

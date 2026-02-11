@@ -6,7 +6,7 @@ EKS 클러스터를 생성한 후에는 클러스터에 액세스하기 위한 �
 
 ### 클러스터 액세스 구성 프로세스
 
-![EKS 클러스터 액세스 구성 프로세스](../../assets/generated-diagrams/eks_cluster_access_configuration.drawio)
+![EKS 클러스터 액세스 구성 프로세스](../assets/generated-diagrams/eks_cluster_access_configuration.drawio)
 
 ### kubeconfig 구성
 
@@ -24,7 +24,7 @@ aws eks update-kubeconfig \
 
 기본적으로 EKS 클러스터를 생성한 IAM 엔터티(사용자 또는 역할)만 클러스터에 액세스할 수 있습니다. 다른 IAM 사용자 또는 역할에 클러스터 액세스 권한을 부여하는 방법에는 두 가지가 있습니다: 전통적인 aws-auth ConfigMap 방식과 새로운 EKS Access Entry 방식입니다.
 
-![EKS IAM 액세스 방법 비교](../../assets/generated-diagrams/eks_iam_access_methods.drawio)
+![EKS IAM 액세스 방법 비교](../assets/generated-diagrams/eks_iam_access_methods.drawio)
     class B1,B2,C,D k8sComponent;
 ```
 
@@ -182,7 +182,7 @@ EKS 클러스터를 생성한 후에는 클러스터가 올바르게 작동하�
 
 ### 클러스터 검증 프로세스
 
-![EKS 클러스터 검증 프로세스](../../assets/generated-diagrams/eks_cluster_validation_process.drawio)
+![EKS 클러스터 검증 프로세스](../assets/generated-diagrams/eks_cluster_validation_process.drawio)
 
 ### 노드 확인
 
@@ -276,7 +276,7 @@ EKS 클러스터를 최신 상태로 유지하려면 정기적으로 업그레�
 
 ### 클러스터 업그레이드 프로세스
 
-![EKS 클러스터 업그레이드 프로세스](../../assets/generated-diagrams/eks_cluster_upgrade_process.drawio)
+![EKS 클러스터 업그레이드 프로세스](../assets/generated-diagrams/eks_cluster_upgrade_process.drawio)
 
 ### 컨트롤 플레인 업그레이드
 
@@ -349,7 +349,7 @@ EKS 클러스터가 더 이상 필요하지 않은 경우 삭제하여 비용을
 
 ### 클러스터 삭제 프로세스
 
-![EKS 클러스터 삭제 프로세스](../../assets/generated-diagrams/eks_cluster_deletion_process.drawio)
+![EKS 클러스터 삭제 프로세스](../assets/generated-diagrams/eks_cluster_deletion_process.drawio)
 
 ### 리소스 정리
 

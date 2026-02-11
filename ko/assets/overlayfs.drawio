@@ -1,0 +1,64 @@
+<mxfile host="app.diagrams.net" modified="2025-07-21T08:00:00.000Z" agent="Mozilla/5.0" etag="overlayfs_diagram" version="21.6.6" type="device">
+  <diagram id="overlayfs_architecture" name="OverlayFS Architecture">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Client (app) -->
+        <mxCell id="client" value="Client (app)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="320" y="40" width="200" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- OverlayFS -->
+        <mxCell id="overlay" value="OverlayFS (merged view)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB74D;strokeColor=#333333;fontColor=#000000;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="320" y="140" width="200" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Upper Dir -->
+        <mxCell id="upper" value="upperdir (writable layer)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="320" y="240" width="200" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Work Dir -->
+        <mxCell id="work" value="workdir (scratch space)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8BC34A;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="320" y="340" width="200" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Lower Dir -->
+        <mxCell id="lower" value="lowerdir (read-only layer)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90A4AE;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="320" y="440" width="200" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections -->
+        <mxCell id="conn_client_overlay" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="client" target="overlay">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="410" as="sourcePoint" />
+            <mxPoint x="450" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="conn_overlay_upper" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="overlay" target="upper">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="410" as="sourcePoint" />
+            <mxPoint x="450" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="conn_upper_work" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="upper" target="work">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="410" as="sourcePoint" />
+            <mxPoint x="450" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="conn_work_lower" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="work" target="lower">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="410" as="sourcePoint" />
+            <mxPoint x="450" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

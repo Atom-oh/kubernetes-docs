@@ -1,0 +1,140 @@
+<mxfile host="app.diagrams.net" modified="2025-07-22T05:10:00.000Z" agent="Mozilla/5.0" version="22.0.0" etag="your-etag">
+  <diagram id="service-mesh" name="Service Mesh Architecture">
+    <mxGraphModel dx="1000" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Control Plane -->
+        <mxCell id="control_plane" value="컨트롤 플레인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="320" y="80" width="200" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="istio_control" value="Istio Control Plane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="360" y="120" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Service A -->
+        <mxCell id="service_a" value="서비스 A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="160" y="200" width="160" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="service_a_app" value="서비스 A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="180" y="240" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="sidecar_a" value="사이드카 프록시 A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+          <mxGeometry x="180" y="320" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Service B -->
+        <mxCell id="service_b" value="서비스 B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="340" y="200" width="160" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="service_b_app" value="서비스 B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="360" y="240" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="sidecar_b" value="사이드카 프록시 B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+          <mxGeometry x="360" y="320" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Service C -->
+        <mxCell id="service_c" value="서비스 C" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="520" y="200" width="160" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="service_c_app" value="서비스 C" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="540" y="240" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="sidecar_c" value="사이드카 프록시 C" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+          <mxGeometry x="540" y="320" width="120" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections between services and sidecars -->
+        <mxCell id="service_a_to_sidecar_a" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="service_a_app" target="sidecar_a">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="service_b_to_sidecar_b" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="service_b_app" target="sidecar_b">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="service_c_to_sidecar_c" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="service_c_app" target="sidecar_c">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Connections between control plane and sidecars -->
+        <mxCell id="control_to_sidecar_a" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="istio_control" target="sidecar_a">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="390" y="200" />
+              <mxPoint x="240" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="control_to_sidecar_b" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="istio_control" target="sidecar_b">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="420" y="200" />
+              <mxPoint x="420" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="control_to_sidecar_c" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="istio_control" target="sidecar_c">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="450" y="200" />
+              <mxPoint x="600" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Connections between sidecars -->
+        <mxCell id="sidecar_a_to_sidecar_b" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="sidecar_a" target="sidecar_b">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="sidecar_b_to_sidecar_c" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="sidecar_b" target="sidecar_c">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="sidecar_a_to_sidecar_c" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;curved=1;" edge="1" parent="1" source="sidecar_a" target="sidecar_c">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="240" y="400" />
+              <mxPoint x="600" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -39,11 +39,11 @@ Terraform은 인프라를 코드로 관리하는 도구로, EKS 클러스터를 
 
 ### Terraform을 사용한 EKS 클러스터 생성 프로세스
 
-![Terraform을 사용한 EKS 클러스터 생성 프로세스](../../assets/generated-diagrams/terraform_eks_creation_process.drawio)
+![Terraform을 사용한 EKS 클러스터 생성 프로세스](../assets/generated-diagrams/terraform_eks_creation_process.drawio)
 
 ### Terraform 구성 요소 관계
 
-![Terraform 구성 요소 관계](../../assets/generated-diagrams/terraform_components_relationship.drawio)
+![Terraform 구성 요소 관계](../assets/generated-diagrams/terraform_components_relationship.drawio)
     
     %% 클래스 적용
     class E,F awsService;
@@ -365,11 +365,11 @@ AWS Cloud Development Kit(CDK)는 익숙한 프로그래밍 언어를 사용하�
 
 ### AWS CDK를 사용한 EKS 클러스터 생성 프로세스
 
-![AWS CDK를 사용한 EKS 클러스터 생성 프로세스](../../assets/generated-diagrams/cdk_eks_creation_process.drawio)
+![AWS CDK를 사용한 EKS 클러스터 생성 프로세스](../assets/generated-diagrams/cdk_eks_creation_process.drawio)
 
 ### CDK 구성 요소 관계
 
-![CDK 구성 요소 관계](../../assets/generated-diagrams/cdk_components_relationship.drawio)
+![CDK 구성 요소 관계](../assets/generated-diagrams/cdk_components_relationship.drawio)
     class F,G,H,I awsService;
     class A userApp;
 ```
@@ -529,11 +529,11 @@ Kubernetes Operator와 Custom Resource Definition(CRD)은 Kubernetes의 기능�
 
 ### Kubernetes Operator 개요
 
-![Kubernetes Operator 개요](../../assets/generated-diagrams/kubernetes_operator_overview.drawio)
+![Kubernetes Operator 개요](../assets/generated-diagrams/kubernetes_operator_overview.drawio)
 
 ### Operator와 CRD의 관계
 
-![Operator와 CRD의 관계](../../assets/generated-diagrams/operator_crd_relationship.drawio)
+![Operator와 CRD의 관계](../assets/generated-diagrams/operator_crd_relationship.drawio)
 
 ### 1. Operator란 무엇인가?
 

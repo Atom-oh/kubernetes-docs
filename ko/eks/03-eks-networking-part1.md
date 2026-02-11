@@ -8,7 +8,7 @@ Amazon EKS의 네트워킹은 Kubernetes 클러스터의 통신을 관리하는 
 
 EKS 네트워킹 아키텍처는 다음과 같은 구성 요소로 이루어져 있습니다:
 
-![EKS 네트워킹 아키텍처 개요](../../assets/generated-diagrams/eks_networking_architecture_overview.drawio)
+![EKS 네트워킹 아키텍처 개요](../assets/generated-diagrams/eks_networking_architecture_overview.drawio)
     Node1 --- Pod1
     Node1 --- Pod2
     Node2 --- Pod3
@@ -51,7 +51,7 @@ EKS 네트워킹 아키텍처는 다음과 같은 구성 요소로 이루어져 
 
 EKS 클러스터에서 네트워크 트래픽은 다음과 같이 흐릅니다:
 
-![EKS 네트워크 트래픽 흐름](../../assets/generated-diagrams/eks_network_traffic_flow.drawio)
+![EKS 네트워크 트래픽 흐름](../assets/generated-diagrams/eks_network_traffic_flow.drawio)
     Pod2 <--> Pod4
     
     %% 포드와 서비스 간 통신
@@ -92,13 +92,13 @@ EKS 클러스터에서 네트워크 트래픽은 다음과 같이 흐릅니다:
 
 ### EKS 네트워킹 구성 요소 간 관계
 
-![EKS 네트워킹 구성 요소 간 관계](../../assets/generated-diagrams/eks_networking_components_relationship.drawio)
+![EKS 네트워킹 구성 요소 간 관계](../assets/generated-diagrams/eks_networking_components_relationship.drawio)
 
 ## VPC 요구 사항
 
 EKS 클러스터를 위한 VPC는 다음 요구 사항을 충족해야 합니다:
 
-![EKS VPC 요구 사항](../../assets/generated-diagrams/eks_vpc_requirements.drawio)
+![EKS VPC 요구 사항](../assets/generated-diagrams/eks_vpc_requirements.drawio)
 
 1. **서브넷**: 최소 2개 이상의 가용 영역에 서브넷이 있어야 함
 2. **IP 주소**: 충분한 수의 IP 주소를 제공해야 함
@@ -109,7 +109,7 @@ EKS 클러스터를 위한 VPC는 다음 요구 사항을 충족해야 합니다
 
 VPC CIDR 블록을 계획할 때 고려해야 할 사항:
 
-![VPC CIDR 계획 고려사항](../../assets/generated-diagrams/eks_vpc_cidr_planning.drawio)
+![VPC CIDR 계획 고려사항](../assets/generated-diagrams/eks_vpc_cidr_planning.drawio)
 
 1. **클러스터 크기**: 예상되는 노드 및 포드 수
 2. **IP 주소 요구 사항**: 각 노드 및 포드에 필요한 IP 주소 수
@@ -123,7 +123,7 @@ VPC CIDR 블록을 계획할 때 고려해야 할 사항:
 
 ### 서브넷 설계
 
-![EKS 서브넷 설계](../../assets/generated-diagrams/eks_subnet_design.drawio)
+![EKS 서브넷 설계](../assets/generated-diagrams/eks_subnet_design.drawio)
 
 EKS 클러스터를 위한 서브넷 설계 모범 사례:
 
@@ -150,7 +150,7 @@ EKS 클러스터를 위한 서브넷 설계 모범 사례:
 
 ### 서브넷 태그
 
-![EKS 서브넷 태그 구성](../../assets/generated-diagrams/eks_subnet_tags.drawio)
+![EKS 서브넷 태그 구성](../assets/generated-diagrams/eks_subnet_tags.drawio)
 
 EKS는 서브넷에 특정 태그를 사용하여 리소스를 자동으로 검색합니다:
 
@@ -171,7 +171,7 @@ aws ec2 create-tags \
 
 ### 보안 그룹 구성
 
-![EKS 보안 그룹 구성](../../assets/generated-diagrams/eks_security_groups.drawio)
+![EKS 보안 그룹 구성](../assets/generated-diagrams/eks_security_groups.drawio)
 
 EKS 클러스터에는 두 가지 주요 보안 그룹이 있습니다:
 

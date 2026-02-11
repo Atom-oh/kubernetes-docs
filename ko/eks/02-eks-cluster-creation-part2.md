@@ -6,7 +6,7 @@ eksctl은 EKS 클러스터를 생성하고 관리하기 위한 가장 간단한 
 
 다음 다이어그램은 eksctl을 사용한 EKS 클러스터 생성 프로세스를 보여줍니다:
 
-![eksctl 클러스터 생성 프로세스](../../assets/generated-diagrams/eksctl_cluster_creation_process.drawio)
+![eksctl 클러스터 생성 프로세스](../assets/generated-diagrams/eksctl_cluster_creation_process.drawio)
 
 ### 기본 클러스터 생성
 
@@ -107,7 +107,7 @@ eksctl create cluster -f cluster.yaml
 
 다음 다이어그램은 EKS 클러스터의 관리형 노드 그룹 아키텍처를 보여줍니다:
 
-![EKS 관리형 노드 그룹 아키텍처](../../assets/generated-diagrams/eks_managed_node_group_detailed.drawio)
+![EKS 관리형 노드 그룹 아키텍처](../assets/generated-diagrams/eks_managed_node_group_detailed.drawio)
 
 기존 클러스터에 관리형 노드 그룹을 추가하려면 다음 명령을 실행합니다:
 
@@ -156,7 +156,7 @@ eksctl create nodegroup -f nodegroup.yaml
 
 다음 다이어그램은 EKS Fargate 프로필 아키텍처를 보여줍니다:
 
-![EKS Fargate 프로필 아키텍처](../../assets/generated-diagrams/eks_fargate_profile_architecture.drawio)
+![EKS Fargate 프로필 아키텍처](../assets/generated-diagrams/eks_fargate_profile_architecture.drawio)
 
 Fargate 프로필을 생성하려면 다음 명령을 실행합니다:
 
@@ -217,7 +217,7 @@ eksctl delete cluster --name=my-cluster --region=us-west-2
 
 다음 다이어그램은 EKS 클러스터의 전체 라이프사이클 관리 프로세스를 보여줍니다:
 
-![EKS 클러스터 라이프사이클 관리](../../assets/generated-diagrams/eks_cluster_lifecycle_management.drawio)
+![EKS 클러스터 라이프사이클 관리](../assets/generated-diagrams/eks_cluster_lifecycle_management.drawio)
 
 ## 퀴즈
 

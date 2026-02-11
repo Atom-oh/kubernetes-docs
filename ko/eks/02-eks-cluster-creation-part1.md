@@ -14,7 +14,7 @@ Amazon EKS 클러스터를 생성하는 방법은 여러 가지가 있습니다.
 
 EKS 클러스터를 생성하기 전에 다음과 같은 사전 요구 사항이 필요합니다:
 
-![EKS 클러스터 사전 요구 사항](../../assets/eks_cluster_prerequisites.svg)
+![EKS 클러스터 사전 요구 사항](../assets/eks_cluster_prerequisites.svg)
 
 ### 1. AWS 계정
 
@@ -138,7 +138,7 @@ $env:PATH += ";$env:USERPROFILE\.eksctl\bin"
 
 EKS 클러스터는 VPC와 서브넷이 필요합니다. 기존 VPC를 사용하거나 새 VPC를 생성할 수 있습니다. EKS 클러스터를 위한 VPC는 다음 요구 사항을 충족해야 합니다:
 
-![EKS VPC 아키텍처](../../assets/generated-diagrams/eks_vpc_architecture.drawio)
+![EKS VPC 아키텍처](../assets/generated-diagrams/eks_vpc_architecture.drawio)
 
 - 최소 2개의 서브넷이 서로 다른 가용 영역에 있어야 합니다.
 - 서브넷에는 인터넷 액세스가 필요합니다(NAT 게이트웨이 또는 인터넷 게이트웨이를 통해).

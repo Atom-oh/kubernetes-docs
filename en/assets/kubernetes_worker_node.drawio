@@ -1,0 +1,114 @@
+<mxfile host="app.diagrams.net" modified="2025-07-21T08:00:00.000Z" agent="Mozilla/5.0" etag="kubernetes_worker_node_diagram" version="21.6.6" type="device">
+  <diagram id="kubernetes_worker_node" name="Kubernetes Worker Node">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Worker Node Container -->
+        <mxCell id="worker_node_container" value="Node (Worker)" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#3F51B5;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="120" y="40" width="600" height="360" as="geometry" />
+        </mxCell>
+        
+        <!-- kubelet -->
+        <mxCell id="kubelet" value="kubelet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="150" y="90" width="160" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- kube-proxy -->
+        <mxCell id="kube_proxy" value="kube-proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="530" y="90" width="160" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Container Runtime -->
+        <mxCell id="container_runtime" value="Container Runtime" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="150" y="170" width="540" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Pods Container -->
+        <mxCell id="pods_container" value="Pods" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="150" y="250" width="540" height="130" as="geometry" />
+        </mxCell>
+        
+        <!-- Container 1 -->
+        <mxCell id="container1" value="Container 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="170" y="300" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Container 2 -->
+        <mxCell id="container2" value="Container 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="310" y="300" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Container 3 -->
+        <mxCell id="container3" value="Container 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="450" y="300" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Dots -->
+        <mxCell id="dots" value="..." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="580" y="315" width="60" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections -->
+        <mxCell id="conn_cr_container1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.185;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitPerimeter=0;" edge="1" parent="1" source="container_runtime" target="container1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="410" as="sourcePoint" />
+            <mxPoint x="450" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="conn_cr_container2" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="container_runtime" target="container2">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="410" as="sourcePoint" />
+            <mxPoint x="450" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="conn_cr_container3" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.815;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitPerimeter=0;" edge="1" parent="1" source="container_runtime" target="container3">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="410" as="sourcePoint" />
+            <mxPoint x="450" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="conn_cr_dots" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.95;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitPerimeter=0;" edge="1" parent="1" source="container_runtime" target="dots">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="410" as="sourcePoint" />
+            <mxPoint x="450" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Component Descriptions -->
+        <mxCell id="kubelet_desc" value="노드 에이전트" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="150" y="70" width="160" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kube_proxy_desc" value="네트워크 프록시" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="530" y="70" width="160" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="container_runtime_desc" value="컨테이너 실행 환경 (Docker, containerd, CRI-O 등)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="150" y="150" width="540" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- Additional Information -->
+        <mxCell id="kubelet_info" value="kubelet: 컨트롤 플레인으로부터 지시를 받아 컨테이너를 관리하고 노드 상태를 보고" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="120" y="420" width="600" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="kube_proxy_info" value="kube-proxy: 서비스 추상화를 구현하고 네트워크 규칙을 관리하여 Pod 간 통신 가능" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="120" y="440" width="600" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="container_runtime_info" value="Container Runtime: 컨테이너 이미지를 다운로드하고 실행하는 소프트웨어" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="120" y="460" width="600" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pods_info" value="Pods: 하나 이상의 컨테이너 그룹으로, 스토리지와 네트워크를 공유하는 배포 단위" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="120" y="480" width="600" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

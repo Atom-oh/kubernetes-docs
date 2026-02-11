@@ -71,7 +71,7 @@ Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 �
 
 사용자 공간은 일반 응용 프로그램이 실행되는 메모리 영역입니다. 사용자 공간 프로그램은 시스템 호출을 통해 커널 서비스에 접근합니다.
 
-![Linux 아키텍처](../../assets/linux_architecture.svg)
+![Linux 아키텍처](../assets/linux_architecture.svg)
 
 ### 시스템 호출 예시
 
@@ -87,7 +87,7 @@ Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 �
 
 ### 리눅스 커널 아키텍처
 
-![리눅스 커널 아키텍처](../../assets/linux_kernel_architecture.svg)
+![리눅스 커널 아키텍처](../assets/linux_kernel_architecture.svg)
 
 
 ## 프로세스 관리
@@ -306,7 +306,7 @@ ip link set <veth2> netns <네임스페이스명>
 
 Linux 파일 권한은 소유자, 그룹, 기타 사용자에 대한 읽기(r), 쓰기(w), 실행(x) 권한으로 구성됩니다.
 
-![파일 권한 구조](../../assets/file_permissions.svg)
+![파일 권한 구조](../assets/file_permissions.svg)
 
 ### 권한 관련 명령어
 
@@ -1001,7 +1001,7 @@ journalctl -u <서비스> # 서비스 로그 확인
 
 OverlayFS는 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현하는 유니온 마운트 파일 시스템입니다. Docker와 같은 컨테이너 런타임에서 이미지 레이어를 구현하는 데 사용됩니다.
 
-![](../../assets/linux_basics_overlayfs.svg)
+![](../assets/linux_basics_overlayfs.svg)
 
 ### 네트워크 브릿지와 NAT
 

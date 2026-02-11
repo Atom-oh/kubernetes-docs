@@ -1,0 +1,223 @@
+<mxfile host="65bd71144e">
+    <diagram name="Istio Overview" id="istio-overview">
+        <mxGraphModel dx="787" dy="1035" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1400" background="#ffffff" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+
+                <!-- Title -->
+                <mxCell id="title" value="Istio Architecture Overview" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#1976D2;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="40" width="400" height="40" as="geometry"/>
+                </mxCell>
+
+                <!-- Admin Section (관리자) -->
+                <mxCell id="admin-container" value="관리자 (Admin)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#999999;strokeWidth=2;fontSize=18;fontStyle=1;verticalAlign=top;align=center;spacingTop=15;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="120" width="800" height="140" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="user" value="운영자&lt;br&gt;(User)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0E0E0;strokeColor=#757575;strokeWidth=2;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="170" width="150" height="60" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="k8s-api" value="Kubernetes API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0E0E0;strokeColor=#757575;strokeWidth=2;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="670" y="170" width="250" height="60" as="geometry"/>
+                </mxCell>
+
+                <!-- Control Plane Section -->
+                <mxCell id="control-plane-container" value="Control Plane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1565C0;strokeWidth=3;fontSize=18;fontStyle=1;verticalAlign=top;align=center;spacingTop=15;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="320" width="800" height="180" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="istiod" value="Istiod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E88E5;strokeColor=#0D47A1;strokeWidth=2;fontSize=16;fontStyle=1;verticalAlign=top;align=center;spacingTop=10;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="370" width="640" height="100" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="pilot" value="Pilot&lt;br&gt;(Service Discovery)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#42A5F5;strokeColor=#1976D2;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="410" width="160" height="50" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="citadel" value="Citadel&lt;br&gt;(Certificate)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#42A5F5;strokeColor=#1976D2;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="410" width="160" height="50" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="galley" value="Galley&lt;br&gt;(Configuration)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#42A5F5;strokeColor=#1976D2;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="720" y="410" width="160" height="50" as="geometry"/>
+                </mxCell>
+
+                <!-- Data Plane Section -->
+                <mxCell id="data-plane-container" value="Data Plane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#388E3C;strokeWidth=3;fontSize=18;fontStyle=1;verticalAlign=top;align=center;spacingTop=15;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="560" width="800" height="340" as="geometry"/>
+                </mxCell>
+
+                <!-- Pod 1 -->
+                <mxCell id="pod1-container" value="파드 1 (Pod 1)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#00796B;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;align=center;spacingTop=10;" parent="1" vertex="1">
+                    <mxGeometry x="240" y="610" width="200" height="260" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="app1" value="애플리케이션&lt;br&gt;(Application)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#00695C;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="650" width="160" height="80" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="envoy1" value="Envoy Proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#1A237E;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="760" width="160" height="80" as="geometry"/>
+                </mxCell>
+
+                <!-- Pod 2 -->
+                <mxCell id="pod2-container" value="파드 2 (Pod 2)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#00796B;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;align=center;spacingTop=10;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="610" width="200" height="260" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="app2" value="애플리케이션&lt;br&gt;(Application)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#00695C;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="650" width="160" height="80" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="envoy2" value="Envoy Proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#1A237E;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="760" width="160" height="80" as="geometry"/>
+                </mxCell>
+
+                <!-- Pod 3 -->
+                <mxCell id="pod3-container" value="파드 3 (Pod 3)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#00796B;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;align=center;spacingTop=10;" parent="1" vertex="1">
+                    <mxGeometry x="760" y="610" width="200" height="260" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="app3" value="애플리케이션&lt;br&gt;(Application)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#00695C;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="780" y="650" width="160" height="80" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="envoy3" value="Envoy Proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#1A237E;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" parent="1" vertex="1">
+                    <mxGeometry x="780" y="760" width="160" height="80" as="geometry"/>
+                </mxCell>
+
+                <!-- Connection 1: User -> K8s API -->
+                <mxCell id="conn1" value="1. 정책 설정" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#424242;fontSize=13;fontStyle=1;endFill=1;" parent="1" source="user" target="k8s-api" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Connection 2: K8s API -> Istiod -->
+                <mxCell id="conn2" value="2. CRD" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#1976D2;fontSize=13;fontStyle=1;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" parent="1" source="k8s-api" target="istiod" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Connection 3a: Istiod -> Envoy1 -->
+                <mxCell id="conn3a" value="3. xDS Config" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#1565C0;fontSize=13;fontStyle=1;endFill=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="istiod" target="envoy1" edge="1">
+                    <mxGeometry x="-0.2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                        <Array as="points">
+                            <mxPoint x="440" y="520"/>
+                            <mxPoint x="340" y="520"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Connection 3b: Istiod -> Envoy2 -->
+                <mxCell id="conn3b" value="3. xDS Config" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#1565C0;fontSize=13;fontStyle=1;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="istiod" target="envoy2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                        <Array as="points">
+                            <mxPoint x="600" y="520"/>
+                            <mxPoint x="600" y="520"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Connection 3c: Istiod -> Envoy3 -->
+                <mxCell id="conn3c" value="3. xDS Config" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#1565C0;fontSize=13;fontStyle=1;endFill=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="istiod" target="envoy3" edge="1">
+                    <mxGeometry x="-0.2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                        <Array as="points">
+                            <mxPoint x="760" y="520"/>
+                            <mxPoint x="860" y="520"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Connection 4a: App1 <-> Envoy1 -->
+                <mxCell id="conn4a" value="4. Local" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=2;strokeColor=#00695C;fontSize=12;fontStyle=1;endFill=1;startFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="app1" target="envoy1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Connection 4b: App2 <-> Envoy2 -->
+                <mxCell id="conn4b" value="4. Local" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=2;strokeColor=#00695C;fontSize=12;fontStyle=1;endFill=1;startFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="app2" target="envoy2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Connection 4c: App3 <-> Envoy3 -->
+                <mxCell id="conn4c" value="4. Local" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=2;strokeColor=#00695C;fontSize=12;fontStyle=1;endFill=1;startFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="app3" target="envoy3" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Connection 5a: Envoy1 <-> Envoy2 -->
+                <mxCell id="conn5a" value="5. mTLS" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=3;strokeColor=#388E3C;fontSize=13;fontStyle=1;endFill=1;startFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="envoy1" target="envoy2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Connection 5b: Envoy2 <-> Envoy3 -->
+                <mxCell id="conn5b" value="5. mTLS" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=3;strokeColor=#388E3C;fontSize=13;fontStyle=1;endFill=1;startFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="envoy2" target="envoy3" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Legend -->
+                <mxCell id="legend-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#9E9E9E;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="960" width="800" height="100" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="965" width="800" height="25" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="legend1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#00695C;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="230" y="1010" width="40" height="30" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="legend1-text" value="Application" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="1010" width="100" height="30" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="legend2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#1A237E;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="1010" width="40" height="30" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="legend2-text" value="Envoy Proxy" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="1010" width="100" height="30" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="legend3" value="" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=3;strokeColor=#388E3C;endFill=1;startFill=1;" parent="1" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="570" y="1025" as="sourcePoint"/>
+                        <mxPoint x="610" y="1025" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <mxCell id="legend3-text" value="mTLS Communication" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="620" y="1010" width="150" height="30" as="geometry"/>
+                </mxCell>
+
+                <mxCell id="legend4" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#1565C0;endFill=1;" parent="1" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="790" y="1025" as="sourcePoint"/>
+                        <mxPoint x="830" y="1025" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <mxCell id="legend4-text" value="xDS Config" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="840" y="1010" width="100" height="30" as="geometry"/>
+                </mxCell>
+
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

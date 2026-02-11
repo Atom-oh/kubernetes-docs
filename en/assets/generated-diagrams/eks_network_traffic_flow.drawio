@@ -1,0 +1,254 @@
+<mxfile host="app.diagrams.net" modified="2025-08-05T11:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
+  <diagram name="EKS Network Traffic Flow" id="eks-network-traffic-flow">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="EKS 네트워크 트래픽 흐름" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="40" width="300" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- External Container -->
+        <mxCell id="external" value="외부" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="200" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- Internet -->
+        <mxCell id="internet" value="인터넷" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="140" width="80" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- External Services -->
+        <mxCell id="external-services" value="외부 서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="210" width="80" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- EKS Cluster Container -->
+        <mxCell id="eks-cluster" value="EKS 클러스터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="100" width="760" height="600" as="geometry" />
+        </mxCell>
+        
+        <!-- Control Plane Container -->
+        <mxCell id="control-plane" value="컨트롤 플레인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="360" y="140" width="300" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- API Server -->
+        <mxCell id="api-server" value="API 서버" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=api;" vertex="1" parent="1">
+          <mxGeometry x="380" y="180" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        <!-- Controller Manager -->
+        <mxCell id="controller" value="컨트롤러&#xa;매니저" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=c_m;" vertex="1" parent="1">
+          <mxGeometry x="460" y="180" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        <!-- Scheduler -->
+        <mxCell id="scheduler" value="스케줄러" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=sched;" vertex="1" parent="1">
+          <mxGeometry x="540" y="180" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        <!-- Data Plane Container -->
+        <mxCell id="data-plane" value="데이터 플레인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="360" y="300" width="680" height="280" as="geometry" />
+        </mxCell>
+        
+        <!-- Node 1 Container -->
+        <mxCell id="node1-container" value="노드 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=1;fontSize=11;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="340" width="280" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Kubelet 1 -->
+        <mxCell id="kubelet1" value="Kubelet" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=kubelet;" vertex="1" parent="1">
+          <mxGeometry x="400" y="370" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Pod 1 -->
+        <mxCell id="pod1" value="포드 1" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="480" y="370" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Pod 2 -->
+        <mxCell id="pod2" value="포드 2" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="560" y="370" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Node 2 Container -->
+        <mxCell id="node2-container" value="노드 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=1;fontSize=11;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="720" y="340" width="280" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Kubelet 2 -->
+        <mxCell id="kubelet2" value="Kubelet" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=kubelet;" vertex="1" parent="1">
+          <mxGeometry x="740" y="370" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Pod 3 -->
+        <mxCell id="pod3" value="포드 3" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="820" y="370" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Pod 4 -->
+        <mxCell id="pod4" value="포드 4" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="900" y="370" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Services Container -->
+        <mxCell id="services" value="서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="500" width="620" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- ClusterIP -->
+        <mxCell id="clusterip" value="ClusterIP" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=svc;" vertex="1" parent="1">
+          <mxGeometry x="420" y="520" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- NodePort -->
+        <mxCell id="nodeport" value="NodePort" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=svc;" vertex="1" parent="1">
+          <mxGeometry x="520" y="520" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- LoadBalancer -->
+        <mxCell id="loadbalancer" value="LoadBalancer" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.application_load_balancer;" vertex="1" parent="1">
+          <mxGeometry x="620" y="520" width="40" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Traffic Flow Arrows -->
+        <!-- External to Control Plane -->
+        <mxCell id="external-to-api" value="kubectl/API 호출" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#9673A6;" edge="1" parent="1" source="internet" target="api-server">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="165" />
+              <mxPoint x="300" y="204" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Control Plane Internal Communication -->
+        <mxCell id="api-to-controller" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#82B366;" edge="1" parent="1" source="api-server" target="controller">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="controller-to-scheduler" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#82B366;" edge="1" parent="1" source="controller" target="scheduler">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Control Plane to Data Plane -->
+        <mxCell id="api-to-kubelet1" value="kubelet 통신" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="api-server" target="kubelet1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="405" y="280" />
+              <mxPoint x="420" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="api-to-kubelet2" value="kubelet 통신" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="scheduler" target="kubelet2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="565" y="280" />
+              <mxPoint x="760" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Pod to Pod Communication -->
+        <mxCell id="pod1-to-pod2" value="포드 간 통신" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="pod1" target="pod2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pod1-to-pod3" value="크로스 노드 통신" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="pod2" target="pod3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="650" y="389" />
+              <mxPoint x="650" y="389" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Services to Pods -->
+        <mxCell id="clusterip-to-pods" value="내부 트래픽" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#B85450;" edge="1" parent="1" source="clusterip" target="pod1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="440" y="480" />
+              <mxPoint x="500" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- External to LoadBalancer -->
+        <mxCell id="external-to-lb" value="외부 트래픽" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#FF9900;" edge="1" parent="1" source="external-services" target="loadbalancer">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="235" />
+              <mxPoint x="300" y="540" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Traffic Flow Legend -->
+        <mxCell id="legend" value="트래픽 흐름 범례" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="320" width="200" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-external" value="외부 API 호출" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="350" width="100" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-line1" value="" style="endArrow=classic;html=1;rounded=0;strokeWidth=2;strokeColor=#9673A6;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="100" y="360" as="sourcePoint" />
+            <mxPoint x="115" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="legend-control" value="컨트롤 플레인 통신" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="380" width="120" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-line2" value="" style="endArrow=classic;html=1;rounded=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="100" y="390" as="sourcePoint" />
+            <mxPoint x="115" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="legend-pod" value="포드 간 통신" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="410" width="100" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-line3" value="" style="endArrow=classic;html=1;rounded=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="100" y="420" as="sourcePoint" />
+            <mxPoint x="115" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="legend-service" value="서비스 트래픽" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="440" width="100" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-line4" value="" style="endArrow=classic;html=1;rounded=0;strokeWidth=2;strokeColor=#B85450;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="100" y="450" as="sourcePoint" />
+            <mxPoint x="115" y="450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="legend-external-traffic" value="외부 트래픽" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="470" width="100" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-line5" value="" style="endArrow=classic;html=1;rounded=0;strokeWidth=3;strokeColor=#FF9900;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="100" y="480" as="sourcePoint" />
+            <mxPoint x="115" y="480" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
