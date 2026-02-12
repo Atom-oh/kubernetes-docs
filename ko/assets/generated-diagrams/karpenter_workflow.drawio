@@ -1,0 +1,154 @@
+<mxfile host="65bd71144e">
+    <diagram id="karpenter_workflow" name="Karpenter 워크플로우">
+        <mxGraphModel dx="1066" dy="619" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                
+                <!-- Actors -->
+                <mxCell id="2" value="Pod" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+                    <mxGeometry x="120" y="80" width="100" height="500" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="3" value="Karpenter Controller" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+                    <mxGeometry x="240" y="80" width="120" height="500" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="4" value="Kubernetes API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+                    <mxGeometry x="380" y="80" width="100" height="500" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="5" value="AWS EC2 API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+                    <mxGeometry x="500" y="80" width="100" height="500" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="6" value="New Node" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+                    <mxGeometry x="620" y="80" width="100" height="500" as="geometry"/>
+                </mxCell>
+                
+                <!-- Messages -->
+                <mxCell id="7" value="Pod 생성 (스케줄링 불가)" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="2" target="4">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="170" y="160" as="sourcePoint"/>
+                        <mxPoint x="250" y="160" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="230" y="160"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="8" value="Pod 이벤트 알림" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="4" target="3">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="380" y="190" as="sourcePoint"/>
+                        <mxPoint x="460" y="190" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="360" y="190"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="9" value="Pod 요구 사항 분석" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="3" target="3">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="300" y="220" as="sourcePoint"/>
+                        <mxPoint x="380" y="220" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="330" y="220"/>
+                            <mxPoint x="330" y="240"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="10" value="프로비저너 및 노드 템플릿 평가" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="3" target="3">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="300" y="270" as="sourcePoint"/>
+                        <mxPoint x="380" y="270" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="330" y="270"/>
+                            <mxPoint x="330" y="290"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="11" value="인스턴스 유형 및 가격 조회" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="3" target="5">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="300" y="320" as="sourcePoint"/>
+                        <mxPoint x="380" y="320" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="400" y="320"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="12" value="인스턴스 정보 반환" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;rounded=0;" edge="1" parent="1" source="5" target="3">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="380" y="350" as="sourcePoint"/>
+                        <mxPoint x="300" y="350" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="400" y="350"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="13" value="노드 프로비저닝 요청" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="3" target="5">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="300" y="380" as="sourcePoint"/>
+                        <mxPoint x="380" y="380" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="400" y="380"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="14" value="인스턴스 생성" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="5" target="6">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="550" y="410" as="sourcePoint"/>
+                        <mxPoint x="630" y="410" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="590" y="410"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="15" value="노드 등록" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="6" target="4">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="550" y="440" as="sourcePoint"/>
+                        <mxPoint x="630" y="440" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="550" y="440"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="16" value="노드 이벤트 알림" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="4" target="3">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="380" y="470" as="sourcePoint"/>
+                        <mxPoint x="460" y="470" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="360" y="470"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="17" value="노드 레이블 및 테인트 설정" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="3" target="4">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="300" y="500" as="sourcePoint"/>
+                        <mxPoint x="380" y="500" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="360" y="500"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="18" value="Pod 스케줄링" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1" source="4" target="2">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="380" y="530" as="sourcePoint"/>
+                        <mxPoint x="460" y="530" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="230" y="530"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

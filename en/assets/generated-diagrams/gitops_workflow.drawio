@@ -1,0 +1,154 @@
+<mxfile host="65bd71144e">
+    <diagram id="gitops_workflow" name="GitOps 워크플로우">
+        <mxGraphModel dx="1066" dy="619" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                
+                <!-- Actors -->
+                <mxCell id="2" value="Developer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="40" width="100" height="600" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="3" value="애플리케이션 저장소" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="40" width="100" height="600" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="4" value="CI 시스템" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="280" y="40" width="100" height="600" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="5" value="컨테이너 레지스트리" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="400" y="40" width="100" height="600" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="6" value="구성 저장소" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="520" y="40" width="100" height="600" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="7" value="ArgoCD" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="640" y="40" width="100" height="600" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="8" value="Kubernetes 클러스터" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="760" y="40" width="100" height="600" as="geometry"/>
+                </mxCell>
+                
+                <!-- 개발자 작업 영역 -->
+                <mxCell id="9" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="120" width="160" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="개발자 작업" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="120" width="80" height="20" as="geometry"/>
+                </mxCell>
+                
+                <!-- 자동화된 빌드 프로세스 영역 -->
+                <mxCell id="11" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff5e6;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="220" width="400" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="자동화된 빌드 프로세스" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="220" width="140" height="20" as="geometry"/>
+                </mxCell>
+                
+                <!-- GitOps 자동화 영역 -->
+                <mxCell id="13" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ebf5ff;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="520" y="360" width="280" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="GitOps 자동화" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+                    <mxGeometry x="520" y="360" width="100" height="20" as="geometry"/>
+                </mxCell>
+                
+                <!-- 지속적 동기화 영역 -->
+                <mxCell id="15" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0fff0;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="520" y="480" width="280" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="지속적 동기화" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+                    <mxGeometry x="640" y="480" width="100" height="20" as="geometry"/>
+                </mxCell>
+                
+                <!-- 개발자 작업 메시지 -->
+                <mxCell id="17" value="코드 변경 커밋" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="90" y="160" as="sourcePoint"/>
+                        <mxPoint x="210" y="160" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <!-- 자동화된 빌드 프로세스 메시지 -->
+                <mxCell id="18" value="웹훅 트리거" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="210" y="240" as="sourcePoint"/>
+                        <mxPoint x="330" y="240" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="19" value="빌드 및 테스트" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="330" y="260" as="sourcePoint"/>
+                        <mxPoint x="330" y="280" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="350" y="260"/>
+                            <mxPoint x="350" y="280"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="20" value="이미지 푸시" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="330" y="300" as="sourcePoint"/>
+                        <mxPoint x="450" y="300" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="21" value="이미지 태그 업데이트" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="330" y="320" as="sourcePoint"/>
+                        <mxPoint x="570" y="320" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <!-- GitOps 자동화 메시지 -->
+                <mxCell id="22" value="변경 감지" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="570" y="380" as="sourcePoint"/>
+                        <mxPoint x="690" y="380" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="23" value="새 버전 배포" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="690" y="400" as="sourcePoint"/>
+                        <mxPoint x="810" y="400" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="24" value="배포 상태 업데이트" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="690" y="440" as="sourcePoint"/>
+                        <mxPoint x="570" y="440" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <!-- 지속적 동기화 메시지 -->
+                <mxCell id="25" value="변경 확인" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="690" y="520" as="sourcePoint"/>
+                        <mxPoint x="570" y="520" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <mxCell id="26" value="상태 확인 및 조정" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="690" y="560" as="sourcePoint"/>
+                        <mxPoint x="810" y="560" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <!-- 지속적 모니터링 루프 -->
+                <mxCell id="27" value="지속적 모니터링" style="shape=umlFrame;whiteSpace=wrap;html=1;width=120;height=30;" vertex="1" parent="1">
+                    <mxGeometry x="530" y="500" width="300" height="90" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

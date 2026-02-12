@@ -1,0 +1,149 @@
+<mxfile host="app.diagrams.net" modified="2025-08-05T11:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
+  <diagram name="EKS Cluster Deletion Process" id="eks-cluster-deletion-process">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="EKS 클러스터 삭제 프로세스" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="40" width="300" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Deletion Steps -->
+        <mxCell id="deletion-start" value="클러스터 삭제 시작" style="ellipse;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontColor=black;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lb-services" value="LoadBalancer&#xa;서비스 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1F497D;fontColor=white;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="240" y="100" width="100" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pvc-deletion" value="PersistentVolumeClaim&#xa;삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1F497D;fontColor=white;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="380" y="100" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="nodegroup-deletion" value="노드 그룹 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="540" y="100" width="100" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fargate-deletion" value="Fargate 프로필 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="680" y="100" width="100" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cluster-deletion" value="클러스터 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="100" width="100" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="vpc-deletion" value="VPC 및&#xa;관련 리소스 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="680" y="220" width="100" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="iam-deletion" value="IAM 역할 및&#xa;정책 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="540" y="220" width="100" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="logs-deletion" value="CloudWatch&#xa;로그 그룹 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="400" y="220" width="100" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="deletion-complete" value="클러스터 삭제 완료" style="ellipse;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontColor=black;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="220" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Deletion Guide -->
+        <mxCell id="deletion-guide" value="삭제 가이드 및 주의사항" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="320" width="840" height="280" as="geometry" />
+        </mxCell>
+        
+        <!-- Pre-deletion Checklist -->
+        <mxCell id="pre-deletion" value="삭제 전 체크리스트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="360" width="180" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pre-deletion-items" value="⚠ 중요 데이터 백업 완료&#xa;⚠ 애플리케이션 중단 계획 수립&#xa;⚠ LoadBalancer 서비스 확인&#xa;⚠ PVC 및 스토리지 확인&#xa;⚠ 네트워크 의존성 확인&#xa;⚠ 팀 구성원 알림 완료&#xa;⚠ 롤백 계획 준비" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="400" width="180" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- Deletion Commands -->
+        <mxCell id="deletion-commands" value="삭제 명령어" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="360" width="200" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="command-examples" value="# LoadBalancer 서비스 삭제&#xa;kubectl delete svc --all --field-selector spec.type=LoadBalancer&#xa;&#xa;# PVC 삭제&#xa;kubectl delete pvc --all --all-namespaces&#xa;&#xa;# 노드 그룹 삭제&#xa;eksctl delete nodegroup --cluster=my-cluster --name=my-nodegroup&#xa;&#xa;# 클러스터 삭제&#xa;eksctl delete cluster --name=my-cluster" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=8;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="300" y="400" width="200" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- Cost Considerations -->
+        <mxCell id="cost-considerations" value="비용 고려사항" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="360" width="180" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cost-items" value="💰 EBS 볼륨 자동 삭제 안됨&#xa;💰 LoadBalancer 요금 지속&#xa;💰 NAT Gateway 요금 지속&#xa;💰 Elastic IP 요금 지속&#xa;💰 CloudWatch 로그 보관 요금&#xa;💰 백업 스냅샷 요금&#xa;💰 미사용 보안 그룹 정리" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="520" y="400" width="180" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- Troubleshooting -->
+        <mxCell id="troubleshooting" value="삭제 문제 해결" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="720" y="360" width="180" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="troubleshooting-items" value="🔧 ENI 삭제 실패 시:&#xa;   - 수동으로 ENI 분리 후 삭제&#xa;🔧 보안 그룹 삭제 실패 시:&#xa;   - 의존성 확인 후 순차 삭제&#xa;🔧 VPC 삭제 실패 시:&#xa;   - 서브넷, IGW, NAT 먼저 삭제&#xa;🔧 IAM 역할 삭제 실패 시:&#xa;   - 정책 분리 후 역할 삭제" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="720" y="400" width="180" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- Data Recovery -->
+        <mxCell id="data-recovery" value="데이터 복구 옵션" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="510" width="800" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="recovery-options" value="• EBS 스냅샷에서 볼륨 복구  • etcd 백업에서 클러스터 상태 복구  • 애플리케이션 백업에서 데이터 복구  • GitOps 리포지토리에서 구성 복구&#xa;• Velero 백업에서 전체 클러스터 복구  • AWS Backup을 통한 자동 복구  • 크로스 리전 백업에서 재해 복구" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;spacingLeft=20;" vertex="1" parent="1">
+          <mxGeometry x="120" y="550" width="760" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Flow Connections -->
+        <mxCell id="start-to-lb" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#B85450;" edge="1" parent="1" source="deletion-start" target="lb-services">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lb-to-pvc" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="lb-services" target="pvc-deletion">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pvc-to-nodegroup" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="pvc-deletion" target="nodegroup-deletion">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="nodegroup-to-fargate" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="nodegroup-deletion" target="fargate-deletion">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fargate-to-cluster" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="fargate-deletion" target="cluster-deletion">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="cluster-to-vpc" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="cluster-deletion" target="vpc-deletion">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="870" y="190" />
+              <mxPoint x="730" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="vpc-to-iam" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="vpc-deletion" target="iam-deletion">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="iam-to-logs" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="iam-deletion" target="logs-deletion">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="logs-to-complete" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#B85450;" edge="1" parent="1" source="logs-deletion" target="deletion-complete">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

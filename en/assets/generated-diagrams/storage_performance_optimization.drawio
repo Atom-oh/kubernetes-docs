@@ -1,0 +1,283 @@
+<mxfile host="app.diagrams.net" modified="2025-08-05T13:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
+  <diagram name="Storage Performance Optimization" id="storage-performance-optimization">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="스토리지 성능 최적화" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="30" width="250" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Storage Optimization Container -->
+        <mxCell id="storage-optimization" value="스토리지 성능 최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="1000" height="400" as="geometry" />
+        </mxCell>
+        
+        <!-- EBS Optimization Container -->
+        <mxCell id="ebs-optimization" value="EBS 최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="120" width="200" height="160" as="geometry" />
+        </mxCell>
+        
+        <!-- EBS Volume Type -->
+        <mxCell id="ebs-type" value="볼륨 유형 선택" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0277BD;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="140" y="150" width="80" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- EBS Performance -->
+        <mxCell id="ebs-perf" value="성능 조정&#xa;(IOPS & 처리량)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0277BD;strokeColor=#333;fontSize=9;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="240" y="150" width="70" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- EBS Instance -->
+        <mxCell id="ebs-instance" value="인스턴스 유형 고려" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0277BD;strokeColor=#333;fontSize=9;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="140" y="200" width="80" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- EBS Init -->
+        <mxCell id="ebs-init" value="볼륨 초기화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0277BD;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="240" y="200" width="70" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- EFS Optimization Container -->
+        <mxCell id="efs-optimization" value="EFS 최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="340" y="120" width="200" height="160" as="geometry" />
+        </mxCell>
+        
+        <!-- EFS Mode -->
+        <mxCell id="efs-mode" value="성능 모드 선택" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="360" y="150" width="80" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- EFS Throughput -->
+        <mxCell id="efs-throughput" value="처리량 모드 선택" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#333;fontSize=9;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="460" y="150" width="70" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- EFS Access -->
+        <mxCell id="efs-access" value="액세스 패턴&#xa;최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#333;fontSize=9;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="360" y="200" width="80" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- EFS Mount -->
+        <mxCell id="efs-mount" value="마운트 옵션&#xa;최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#333;fontSize=9;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="460" y="200" width="70" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- FSx Optimization Container -->
+        <mxCell id="fsx-optimization" value="FSx for Lustre 최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="560" y="120" width="200" height="160" as="geometry" />
+        </mxCell>
+        
+        <!-- FSx Type -->
+        <mxCell id="fsx-type" value="배포 유형 선택" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="580" y="150" width="80" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- FSx Throughput -->
+        <mxCell id="fsx-throughput" value="처리량 선택" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="680" y="150" width="70" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- FSx Stripe -->
+        <mxCell id="fsx-stripe" value="스트라이핑&#xa;최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=#333;fontSize=9;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="580" y="200" width="80" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- FSx Mount -->
+        <mxCell id="fsx-mount" value="마운트 옵션&#xa;최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=#333;fontSize=9;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="680" y="200" width="70" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- FSx Compress -->
+        <mxCell id="fsx-compress" value="데이터 압축&#xa;활성화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=#333;fontSize=9;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="630" y="240" width="70" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- vLLM Optimization Container -->
+        <mxCell id="vllm-optimization" value="vLLM 워크로드 최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="780" y="120" width="200" height="160" as="geometry" />
+        </mxCell>
+        
+        <!-- vLLM Storage -->
+        <mxCell id="vllm-storage" value="FSx for Lustre&#xa;사용" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7B1FA2;strokeColor=#333;fontSize=9;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="800" y="150" width="80" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- vLLM Config -->
+        <mxCell id="vllm-config" value="최적의 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7B1FA2;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="900" y="150" width="70" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- vLLM Model -->
+        <mxCell id="vllm-model" value="모델 파일&#xa;최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7B1FA2;strokeColor=#333;fontSize=9;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="800" y="200" width="80" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- vLLM Instance -->
+        <mxCell id="vllm-instance" value="노드 인스턴스&#xa;선택" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7B1FA2;strokeColor=#333;fontSize=9;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="900" y="200" width="70" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Workload Types Container -->
+        <mxCell id="workload-types" value="워크로드 유형" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="320" width="1000" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Database -->
+        <mxCell id="db" value="데이터베이스" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="140" y="350" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Web Server -->
+        <mxCell id="web" value="웹 서버" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="300" y="350" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Machine Learning -->
+        <mxCell id="ml" value="기계 학습" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="460" y="350" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Data Analytics -->
+        <mxCell id="analytics" value="데이터 분석" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="620" y="350" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Large Language Model -->
+        <mxCell id="llm" value="대규모 언어 모델" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="820" y="350" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Workload to Optimization Connections -->
+        <mxCell id="db-to-ebs-type" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#0277BD;" edge="1" parent="1" source="db" target="ebs-type">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="160" y="300" />
+              <mxPoint x="180" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="db-to-ebs-perf" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#0277BD;" edge="1" parent="1" source="db" target="ebs-perf">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="160" y="300" />
+              <mxPoint x="275" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="web-to-efs-mode" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#4CAF50;" edge="1" parent="1" source="web" target="efs-mode">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="300" />
+              <mxPoint x="400" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="web-to-efs-mount" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#4CAF50;" edge="1" parent="1" source="web" target="efs-mount">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="300" />
+              <mxPoint x="495" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="ml-to-fsx-type" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9800;" edge="1" parent="1" source="ml" target="fsx-type">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="300" />
+              <mxPoint x="620" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="ml-to-fsx-throughput" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9800;" edge="1" parent="1" source="ml" target="fsx-throughput">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="300" />
+              <mxPoint x="715" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="analytics-to-fsx-stripe" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9800;" edge="1" parent="1" source="analytics" target="fsx-stripe">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="640" y="300" />
+              <mxPoint x="620" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="analytics-to-fsx-compress" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9800;" edge="1" parent="1" source="analytics" target="fsx-compress">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="640" y="300" />
+              <mxPoint x="665" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="llm-to-vllm-storage" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#7B1FA2;" edge="1" parent="1" source="llm" target="vllm-storage">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="840" y="300" />
+              <mxPoint x="840" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="llm-to-vllm-config" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#7B1FA2;" edge="1" parent="1" source="llm" target="vllm-config">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="840" y="300" />
+              <mxPoint x="935" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="llm-to-vllm-model" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#7B1FA2;" edge="1" parent="1" source="llm" target="vllm-model">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="840" y="300" />
+              <mxPoint x="840" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Optimization Flow Connections -->
+        <mxCell id="ebs-type-to-perf" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#0277BD;" edge="1" parent="1" source="ebs-type" target="ebs-perf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="ebs-perf-to-instance" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#0277BD;" edge="1" parent="1" source="ebs-perf" target="ebs-init">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="275" y="190" />
+              <mxPoint x="275" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="ebs-instance-to-init" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#0277BD;" edge="1" parent="1" source="ebs-instance" target="ebs-init">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Performance Optimization Guide -->
+        <mxCell id="optimization-guide" value="성능 최적화 가이드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="500" width="1000" height="200" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="optimization-content" value="EBS 최적화:&#xa;• gp3 볼륨 타입 사용으로 비용 효율성과 성능 균형&#xa;• 워크로드에 따른 IOPS 및 처리량 조정 (최대 16,000 IOPS, 1,000 MiB/s)&#xa;• EBS 최적화 인스턴스 사용으로 전용 대역폭 확보&#xa;• 볼륨 워밍업으로 초기 성능 저하 방지&#xa;&#xa;EFS 최적화:&#xa;• General Purpose 모드: 낮은 지연 시간, 최대 7,000 파일 작업/초&#xa;• Max I/O 모드: 높은 처리량, 더 높은 지연 시간&#xa;• Provisioned 처리량 모드로 예측 가능한 성능 확보&#xa;• 적절한 마운트 옵션 (rsize, wsize, timeo) 설정&#xa;&#xa;FSx for Lustre 최적화:&#xa;• Scratch 파일 시스템: 임시 고성능 워크로드용&#xa;• Persistent 파일 시스템: 장기 저장 및 백업 필요시&#xa;• 적절한 처리량 선택 (50MB/s/TiB ~ 1,000MB/s/TiB)&#xa;• 스트라이핑 최적화로 병렬 I/O 성능 향상&#xa;• 데이터 압축으로 스토리지 효율성 개선&#xa;&#xa;vLLM 워크로드 최적화:&#xa;• FSx for Lustre 사용으로 모델 로딩 시간 단축&#xa;• 높은 처리량 설정으로 대용량 모델 파일 빠른 액세스&#xa;• 모델 파일 사전 로딩 및 캐싱 전략&#xa;• GPU 인스턴스와 스토리지 성능 균형 고려" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="540" width="960" height="150" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

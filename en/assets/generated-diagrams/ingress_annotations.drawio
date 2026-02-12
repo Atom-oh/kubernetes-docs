@@ -1,0 +1,84 @@
+<mxfile host="app.diagrams.net" modified="2025-08-05T11:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
+  <diagram name="Ingress Annotations" id="ingress-annotations">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="Ingress 어노테이션 가이드" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="30" width="300" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Basic Annotations -->
+        <mxCell id="basic-annotations" value="기본 어노테이션" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="500" height="200" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="basic-content" value="# Ingress 클래스 지정&#xa;kubernetes.io/ingress.class: alb&#xa;&#xa;# 로드 밸런서 스키마&#xa;alb.ingress.kubernetes.io/scheme: internet-facing&#xa;# 또는 internal&#xa;&#xa;# 타겟 타입&#xa;alb.ingress.kubernetes.io/target-type: ip&#xa;# 또는 instance&#xa;&#xa;# 리스너 포트&#xa;alb.ingress.kubernetes.io/listen-ports: '[{\"HTTP\": 80}, {\"HTTPS\": 443}]'&#xa;&#xa;# 헬스체크 경로&#xa;alb.ingress.kubernetes.io/healthcheck-path: /health" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="90" y="120" width="480" height="150" as="geometry" />
+        </mxCell>
+        
+        <!-- SSL/TLS Annotations -->
+        <mxCell id="ssl-annotations" value="SSL/TLS 어노테이션" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="600" y="80" width="480" height="200" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="ssl-content" value="# SSL 인증서 ARN&#xa;alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account:certificate/cert-id&#xa;&#xa;# SSL 정책&#xa;alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01&#xa;&#xa;# HTTP to HTTPS 리다이렉트&#xa;alb.ingress.kubernetes.io/ssl-redirect: '443'&#xa;&#xa;# 백엔드 프로토콜&#xa;alb.ingress.kubernetes.io/backend-protocol: HTTPS&#xa;&#xa;# 백엔드 프로토콜 버전&#xa;alb.ingress.kubernetes.io/backend-protocol-version: HTTP2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="610" y="120" width="460" height="150" as="geometry" />
+        </mxCell>
+        
+        <!-- Routing Annotations -->
+        <mxCell id="routing-annotations" value="라우팅 어노테이션" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="300" width="500" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="routing-content" value="# 로드 밸런싱 알고리즘&#xa;alb.ingress.kubernetes.io/load-balancer-algorithm: round_robin&#xa;# 또는 least_outstanding_requests&#xa;&#xa;# 스티키 세션&#xa;alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=86400&#xa;&#xa;# 헬스체크 설정&#xa;alb.ingress.kubernetes.io/healthcheck-interval-seconds: '30'&#xa;alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'&#xa;alb.ingress.kubernetes.io/healthy-threshold-count: '2'&#xa;alb.ingress.kubernetes.io/unhealthy-threshold-count: '3'" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="90" y="340" width="480" height="130" as="geometry" />
+        </mxCell>
+        
+        <!-- Security Annotations -->
+        <mxCell id="security-annotations" value="보안 어노테이션" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#D32F2F;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="600" y="300" width="480" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="security-content" value="# 보안 그룹&#xa;alb.ingress.kubernetes.io/security-groups: sg-12345678,sg-87654321&#xa;&#xa;# 서브넷 지정&#xa;alb.ingress.kubernetes.io/subnets: subnet-12345,subnet-67890&#xa;&#xa;# IP 화이트리스트&#xa;alb.ingress.kubernetes.io/inbound-cidrs: 10.0.0.0/8,172.16.0.0/12&#xa;&#xa;# WAF 연결&#xa;alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:region:account:regional/webacl/name/id" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="610" y="340" width="460" height="130" as="geometry" />
+        </mxCell>
+        
+        <!-- Advanced Annotations -->
+        <mxCell id="advanced-annotations" value="고급 어노테이션" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="500" width="1000" height="220" as="geometry" />
+        </mxCell>
+        
+        <!-- Actions -->
+        <mxCell id="actions" value="액션 설정" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="540" width="280" height="160" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="actions-content" value="# 고정 응답&#xa;alb.ingress.kubernetes.io/actions.response-503: |&#xa;  {&#xa;    \"type\": \"fixed-response\",&#xa;    \"fixedResponseConfig\": {&#xa;      \"contentType\": \"text/plain\",&#xa;      \"statusCode\": \"503\",&#xa;      \"messageBody\": \"Service Unavailable\"&#xa;    }&#xa;  }&#xa;&#xa;# 리다이렉트&#xa;alb.ingress.kubernetes.io/actions.redirect: |&#xa;  {&#xa;    \"type\": \"redirect\",&#xa;    \"redirectConfig\": {&#xa;      \"statusCode\": \"HTTP_301\",&#xa;      \"host\": \"new.example.com\"&#xa;    }&#xa;  }" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=8;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="570" width="260" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Conditions -->
+        <mxCell id="conditions" value="조건 설정" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="420" y="540" width="280" height="160" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conditions-content" value="# 헤더 기반 라우팅&#xa;alb.ingress.kubernetes.io/conditions.header-route: |&#xa;  [{&#xa;    \"field\": \"http-header\",&#xa;    \"httpHeaderConfig\": {&#xa;      \"httpHeaderName\": \"X-Custom-Header\",&#xa;      \"values\": [\"value1\", \"value2\"]&#xa;    }&#xa;  }]&#xa;&#xa;# 쿼리 스트링 기반&#xa;alb.ingress.kubernetes.io/conditions.query-route: |&#xa;  [{&#xa;    \"field\": \"query-string\",&#xa;    \"queryStringConfig\": {&#xa;      \"values\": [{&#xa;        \"key\": \"version\",&#xa;        \"value\": \"v2\"&#xa;      }]&#xa;    }&#xa;  }]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=8;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="430" y="570" width="260" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Tags and Naming -->
+        <mxCell id="tags-naming" value="태그 및 네이밍" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="720" y="540" width="280" height="160" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="tags-content" value="# 로드 밸런서 이름&#xa;alb.ingress.kubernetes.io/load-balancer-name: my-custom-alb&#xa;&#xa;# 태그 설정&#xa;alb.ingress.kubernetes.io/tags: |&#xa;  Environment=production,&#xa;  Team=backend,&#xa;  Project=myapp&#xa;&#xa;# 그룹 이름 (여러 Ingress 공유)&#xa;alb.ingress.kubernetes.io/group.name: my-group&#xa;alb.ingress.kubernetes.io/group.order: '10'&#xa;&#xa;# 타겟 그룹 바인딩&#xa;alb.ingress.kubernetes.io/target-group-binding-only: 'true'" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=8;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="730" y="570" width="260" height="120" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

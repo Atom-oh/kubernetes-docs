@@ -1,0 +1,207 @@
+<mxfile host="app.diagrams.net" modified="2025-08-05T13:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
+  <diagram name="S3 Integration Methods" id="s3-integration-methods">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="Amazon S3 통합 방법" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="30" width="250" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- EKS Cluster Container -->
+        <mxCell id="eks-cluster" value="Amazon EKS 클러스터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="1000" height="300" as="geometry" />
+        </mxCell>
+        
+        <!-- Integration Methods Container -->
+        <mxCell id="integration-methods" value="S3 통합 방법" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=13;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="120" width="400" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- IRSA -->
+        <mxCell id="irsa" value="IAM Roles for&#xa;Service Accounts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="140" y="160" width="80" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- S3 CSI Driver -->
+        <mxCell id="s3-csi" value="S3 CSI 드라이버" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="240" y="160" width="80" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- S3A Filesystem -->
+        <mxCell id="s3a" value="Hadoop S3A&#xa;파일 시스템" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="340" y="160" width="80" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- AWS SDK -->
+        <mxCell id="sdk" value="AWS SDK&#xa;직접 사용" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="440" y="160" width="80" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Application Pods Container -->
+        <mxCell id="pods" value="애플리케이션 파드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontSize=13;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="560" y="120" width="480" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Web Application -->
+        <mxCell id="web-app" value="웹 애플리케이션" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="590" y="160" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Data Processing App -->
+        <mxCell id="data-app" value="데이터 처리 앱" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="690" y="160" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- ML Training -->
+        <mxCell id="ml-app" value="ML 모델 훈련" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="790" y="160" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- Log Collector -->
+        <mxCell id="log-app" value="로그 수집기" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+          <mxGeometry x="890" y="160" width="40" height="38" as="geometry" />
+        </mxCell>
+        
+        <!-- AWS Services Container -->
+        <mxCell id="aws-services" value="AWS 서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="400" width="1000" height="200" as="geometry" />
+        </mxCell>
+        
+        <!-- Amazon S3 -->
+        <mxCell id="s3" value="Amazon S3" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3;" vertex="1" parent="1">
+          <mxGeometry x="200" y="450" width="80" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- S3 Use Cases Container -->
+        <mxCell id="s3-use-cases" value="S3 사용 사례" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="440" width="720" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- Data Lake -->
+        <mxCell id="data-lake" value="데이터 레이크" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3;" vertex="1" parent="1">
+          <mxGeometry x="360" y="480" width="50" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Backup -->
+        <mxCell id="backup" value="백업 및 아카이브" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3_glacier;" vertex="1" parent="1">
+          <mxGeometry x="460" y="480" width="50" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Static Content -->
+        <mxCell id="static-content" value="정적 웹 콘텐츠" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.cloudfront;" vertex="1" parent="1">
+          <mxGeometry x="560" y="480" width="50" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Model Storage -->
+        <mxCell id="model-storage" value="ML 모델 저장소" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sagemaker_model;" vertex="1" parent="1">
+          <mxGeometry x="660" y="480" width="50" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Log Storage -->
+        <mxCell id="log-storage" value="로그 저장소" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.cloudwatch_logs;" vertex="1" parent="1">
+          <mxGeometry x="760" y="480" width="50" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections -->
+        <!-- Apps to Integration Methods -->
+        <mxCell id="web-to-irsa" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="web-app" target="irsa">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="179" />
+              <mxPoint x="540" y="185" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="data-to-s3csi" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="data-app" target="s3-csi">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="179" />
+              <mxPoint x="540" y="185" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="ml-to-s3a" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="ml-app" target="s3a">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="179" />
+              <mxPoint x="540" y="185" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="log-to-sdk" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="log-app" target="sdk">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="179" />
+              <mxPoint x="540" y="185" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Integration Methods to S3 -->
+        <mxCell id="irsa-to-s3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=3;strokeColor=#326CE5;" edge="1" parent="1" source="irsa" target="s3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="350" />
+              <mxPoint x="216" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="s3csi-to-s3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.4;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=3;strokeColor=#326CE5;" edge="1" parent="1" source="s3-csi" target="s3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="280" y="350" />
+              <mxPoint x="232" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="s3a-to-s3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.6;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=3;strokeColor=#326CE5;" edge="1" parent="1" source="s3a" target="s3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="380" y="350" />
+              <mxPoint x="248" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="sdk-to-s3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=3;strokeColor=#326CE5;" edge="1" parent="1" source="sdk" target="s3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="350" />
+              <mxPoint x="264" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- S3 to Use Cases -->
+        <mxCell id="s3-to-data-lake" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.2;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="s3" target="data-lake">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="s3-to-backup" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.4;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="s3" target="backup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="s3-to-static" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.6;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="s3" target="static-content">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="s3-to-model" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.8;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="s3" target="model-storage">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="s3-to-log" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="s3" target="log-storage">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
