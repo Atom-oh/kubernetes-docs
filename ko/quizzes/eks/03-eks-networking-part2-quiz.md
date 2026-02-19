@@ -1516,3 +1516,110 @@ spec:
 
 서비스 메시는 EKS 클러스터의 네트워킹 아키텍처에 상당한 변화를 가져오지만, 마이크로서비스 아키텍처의 복잡성을 관리하는 데 강력한 도구를 제공합니다. 기본 EKS 네트워킹 모델과의 통합은 사이드카 패턴을 통해 이루어지며, 이는 기존 애플리케이션 코드를 변경하지 않고도 고급 네트워킹 기능을 추가할 수 있게 합니다. 서비스 메시 도입 시에는 성능 영향, 운영 복잡성, 리소스 요구 사항을 신중하게 고려해야 하며, 점진적인 접근 방식이 권장됩니다.
 </details>
+
+### 11. Kubernetes Gateway API에서 L7 로드 밸런싱(ALB)을 위해 사용하는 라우팅 리소스는 무엇인가요?
+
+A. IngressRoute
+B. HTTPRoute
+C. VirtualService
+D. ServiceRoute
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. HTTPRoute**
+
+**설명:**
+Kubernetes Gateway API에서 L7 로드 밸런싱을 위해 HTTPRoute 리소스를 사용합니다. HTTPRoute는 HTTP/HTTPS 트래픽을 서비스로 라우팅하는 규칙을 정의하며, AWS Load Balancer Controller와 함께 사용할 경우 ALB를 통해 트래픽을 분배합니다.
+
+**Gateway API 리소스 계층 구조:**
+
+1. **GatewayClass**: 로드 밸런서 유형 정의 (예: `amazon-alb`, `amazon-nlb`)
+2. **Gateway**: 실제 로드 밸런서 인스턴스 (리스너 포트, TLS 설정 등)
+3. **HTTPRoute**: L7 라우팅 규칙 (호스트, 경로, 헤더 기반 라우팅)
+4. **TCPRoute**: L4 라우팅 규칙 (TCP 트래픽)
+
+**HTTPRoute의 주요 기능:**
+- 경로 및 호스트 기반 라우팅
+- 네이티브 가중치 기반 트래픽 분할
+- 헤더 및 쿼리 파라미터 매칭
+- 여러 백엔드 서비스로의 라우팅
+
+다른 옵션들의 문제점:
+- **A. IngressRoute**: 이는 표준 Gateway API 리소스가 아닙니다.
+- **C. VirtualService**: 이는 Istio 서비스 메시의 리소스입니다.
+- **D. ServiceRoute**: 이러한 리소스는 존재하지 않습니다.
+</details>
+
+### 12. AWS Load Balancer Controller에서 Gateway API를 활성화하기 위해 필요한 feature gate 플래그는 무엇인가요?
+
+A. `--enable-gateway-api`
+B. `--feature-gates=EnableGatewayAPI=true`
+C. `--gateway-api-enabled=true`
+D. `--enable-feature=gateway-api`
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: B. `--feature-gates=EnableGatewayAPI=true`**
+
+**설명:**
+AWS Load Balancer Controller에서 Gateway API를 활성화하려면 컨트롤러 배포 시 `--feature-gates=EnableGatewayAPI=true` 플래그를 추가해야 합니다. 이 feature gate는 컨트롤러가 Gateway API 리소스(GatewayClass, Gateway, HTTPRoute, TCPRoute 등)를 감시하고 처리하도록 활성화합니다.
+
+**Gateway API 활성화를 위한 전체 사전 요구 사항:**
+
+1. AWS Load Balancer Controller v2.13.0 이상 설치
+2. `--feature-gates=EnableGatewayAPI=true` 플래그 추가
+3. Gateway API Standard CRDs 설치
+4. Experimental CRDs 설치 (TCPRoute 등 사용 시)
+5. AWS LBC 전용 CRDs 설치
+
+다른 옵션들의 문제점:
+- **A, C, D**: 이러한 플래그는 AWS Load Balancer Controller에서 사용되지 않는 올바르지 않은 형식입니다.
+</details>
+
+### 13. Gateway API에서 L4 레벨의 TCP 트래픽을 NLB를 통해 라우팅하기 위해 사용하는 리소스는 무엇인가요?
+
+A. HTTPRoute
+B. TLSRoute
+C. TCPRoute
+D. GRPCRoute
+
+<details>
+<summary>정답 및 설명</summary>
+
+**정답: C. TCPRoute**
+
+**설명:**
+Gateway API에서 L4 레벨의 TCP 트래픽을 라우팅하기 위해 TCPRoute 리소스를 사용합니다. AWS Load Balancer Controller와 함께 사용할 경우, TCPRoute는 NLB(Network Load Balancer)를 통해 TCP 트래픽을 백엔드 서비스로 전달합니다.
+
+**TCPRoute 설정 예시:**
+```yaml
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: db-route
+spec:
+  parentRefs:
+  - name: my-nlb-gateway
+    sectionName: tcp
+  rules:
+  - backendRefs:
+    - name: postgres-service
+      port: 5432
+```
+
+**Gateway API 라우팅 리소스별 용도:**
+
+| 리소스 | 프로토콜 | AWS LB 유형 |
+|--------|----------|-------------|
+| HTTPRoute | HTTP/HTTPS | ALB |
+| TCPRoute | TCP | NLB |
+| TLSRoute | TLS | NLB |
+| GRPCRoute | gRPC | ALB |
+
+다른 옵션들의 문제점:
+- **A. HTTPRoute**: HTTP/HTTPS L7 트래픽용으로 ALB와 함께 사용됩니다.
+- **B. TLSRoute**: TLS 트래픽 라우팅용이지만, TCP 레벨 라우팅에는 TCPRoute가 적합합니다.
+- **D. GRPCRoute**: gRPC 프로토콜 전용 라우팅 리소스입니다.
+</details>

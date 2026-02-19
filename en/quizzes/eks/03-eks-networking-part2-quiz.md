@@ -1518,3 +1518,110 @@ spec:
 
 Service mesh brings significant changes to the networking architecture of EKS clusters but provides powerful tools for managing the complexity of microservices architecture. Integration with the default EKS networking model is done through the sidecar pattern, which allows adding advanced networking features without changing existing application code. When adopting a service mesh, performance impact, operational complexity, and resource requirements should be carefully considered, and a gradual approach is recommended.
 </details>
+
+### 11. What routing resource is used for L7 load balancing (ALB) in Kubernetes Gateway API?
+
+A. IngressRoute
+B. HTTPRoute
+C. VirtualService
+D. ServiceRoute
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B. HTTPRoute**
+
+**Explanation:**
+In Kubernetes Gateway API, the HTTPRoute resource is used for L7 load balancing. HTTPRoute defines rules for routing HTTP/HTTPS traffic to services, and when used with AWS Load Balancer Controller, it distributes traffic through an ALB.
+
+**Gateway API Resource Hierarchy:**
+
+1. **GatewayClass**: Defines load balancer type (e.g., `amazon-alb`, `amazon-nlb`)
+2. **Gateway**: Actual load balancer instance (listener ports, TLS settings, etc.)
+3. **HTTPRoute**: L7 routing rules (host, path, header-based routing)
+4. **TCPRoute**: L4 routing rules (TCP traffic)
+
+**Key HTTPRoute Features:**
+- Path and host-based routing
+- Native weight-based traffic splitting
+- Header and query parameter matching
+- Routing to multiple backend services
+
+Issues with other options:
+- **A. IngressRoute**: This is not a standard Gateway API resource.
+- **C. VirtualService**: This is a resource from the Istio service mesh.
+- **D. ServiceRoute**: This resource does not exist.
+</details>
+
+### 12. What feature gate flag is required to enable Gateway API in AWS Load Balancer Controller?
+
+A. `--enable-gateway-api`
+B. `--feature-gates=EnableGatewayAPI=true`
+C. `--gateway-api-enabled=true`
+D. `--enable-feature=gateway-api`
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B. `--feature-gates=EnableGatewayAPI=true`**
+
+**Explanation:**
+To enable Gateway API in AWS Load Balancer Controller, the `--feature-gates=EnableGatewayAPI=true` flag must be added when deploying the controller. This feature gate enables the controller to watch and process Gateway API resources (GatewayClass, Gateway, HTTPRoute, TCPRoute, etc.).
+
+**Complete Prerequisites for Gateway API Activation:**
+
+1. Install AWS Load Balancer Controller v2.13.0 or later
+2. Add `--feature-gates=EnableGatewayAPI=true` flag
+3. Install Gateway API Standard CRDs
+4. Install Experimental CRDs (when using TCPRoute, etc.)
+5. Install AWS LBC-specific CRDs
+
+Issues with other options:
+- **A, C, D**: These flags are incorrect formats not used by AWS Load Balancer Controller.
+</details>
+
+### 13. What resource is used to route L4-level TCP traffic through an NLB in Gateway API?
+
+A. HTTPRoute
+B. TLSRoute
+C. TCPRoute
+D. GRPCRoute
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C. TCPRoute**
+
+**Explanation:**
+In Gateway API, the TCPRoute resource is used to route L4-level TCP traffic. When used with AWS Load Balancer Controller, TCPRoute forwards TCP traffic to backend services through an NLB (Network Load Balancer).
+
+**TCPRoute Configuration Example:**
+```yaml
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: db-route
+spec:
+  parentRefs:
+  - name: my-nlb-gateway
+    sectionName: tcp
+  rules:
+  - backendRefs:
+    - name: postgres-service
+      port: 5432
+```
+
+**Gateway API Routing Resource Usage:**
+
+| Resource | Protocol | AWS LB Type |
+|----------|----------|-------------|
+| HTTPRoute | HTTP/HTTPS | ALB |
+| TCPRoute | TCP | NLB |
+| TLSRoute | TLS | NLB |
+| GRPCRoute | gRPC | ALB |
+
+Issues with other options:
+- **A. HTTPRoute**: Used for HTTP/HTTPS L7 traffic with ALB.
+- **B. TLSRoute**: For TLS traffic routing, but TCPRoute is appropriate for TCP-level routing.
+- **D. GRPCRoute**: A routing resource specifically for gRPC protocol.
+</details>
