@@ -2,8 +2,8 @@
 
 < [Table of Contents](./README.md) | [Next: Network Configuration](./02-network-configuration.md) >
 
-> **Supported Versions**: EKS 1.31+, nodeadm 0.1+, Harbor 2.13+
-> **Last Updated**: February 2025
+> **Supported Versions**: EKS 1.28+, nodeadm 0.1+
+> **Last Updated**: February 2026
 
 This document covers the system requirements for on-premises nodes, GPU servers, and network infrastructure needed to deploy EKS Hybrid Nodes.
 
@@ -16,6 +16,9 @@ This document covers the system requirements for on-premises nodes, GPU servers,
 | Ubuntu LTS | 20.04, 22.04, 24.04 | x86_64, arm64 |
 | RHEL | 8, 9 | x86_64, arm64 |
 | Amazon Linux | 2023 | x86_64, arm64 |
+| Bottlerocket | v1.37.0 and above (VMware variants only) | x86_64 only |
+
+> **Bottlerocket Note**: Only VMware variants of Bottlerocket are supported for EKS Hybrid Nodes, and Kubernetes v1.28 or higher is required. Bottlerocket includes all necessary dependencies automatically, so the `nodeadm` CLI is not required. ARM architecture is not supported for Bottlerocket.
 
 ### Container Runtime
 
@@ -91,26 +94,22 @@ nvcc --version
 | NVIDIA A100 | 40/80 GB | AI/ML general purpose |
 | NVIDIA L40S | 48 GB | Inference optimized |
 
-### GPU Driver Installation (Ubuntu Example)
+### GPU Driver Installation (Amazon Linux 2023 Example)
 
 ```bash
-# Add NVIDIA driver repository
-sudo add-apt-repository ppa:graphics-drivers/ppa
-sudo apt update
+# NVIDIA driver installation (Amazon Linux 2023)
+# Install kernel development packages
+sudo dnf install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r)
 
-# Install driver (version 550)
-sudo apt install -y nvidia-driver-550
+# Add NVIDIA driver repository
+sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
+
+# Install driver
+sudo dnf module install -y nvidia-driver:550-dkms
 
 # Install NVIDIA Container Toolkit
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-
-curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
-  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-
-sudo apt update
-sudo apt install -y nvidia-container-toolkit
+sudo dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+sudo dnf install -y nvidia-container-toolkit
 
 # Update containerd configuration
 sudo nvidia-ctk runtime configure --runtime=containerd
@@ -137,17 +136,12 @@ ip link show eth0 | grep mtu
 # Set MTU to 9000 (temporary)
 sudo ip link set dev eth0 mtu 9000
 
-# Permanent configuration (Ubuntu - Netplan)
-cat <<EOF | sudo tee /etc/netplan/01-netcfg.yaml
-network:
-  version: 2
-  ethernets:
-    eth0:
-      mtu: 9000
-      dhcp4: true
-EOF
+# Permanent configuration (Amazon Linux 2023 - NetworkManager)
+sudo nmcli connection modify "System eth0" 802-3-ethernet.mtu 9000
+sudo nmcli connection up "System eth0"
 
-sudo netplan apply
+# Verify configuration
+nmcli connection show "System eth0" | grep mtu
 ```
 
 ---

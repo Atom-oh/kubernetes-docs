@@ -2,8 +2,8 @@
 
 < [목차](./README.md) | [다음: 네트워크 구성](./02-network-configuration.md) >
 
-> **지원 버전**: EKS 1.31+, nodeadm 0.1+, Harbor 2.13+
-> **마지막 업데이트**: 2025년 2월
+> **지원 버전**: EKS 1.28+, nodeadm 0.1+
+> **마지막 업데이트**: 2026년 2월
 
 이 문서에서는 EKS Hybrid Nodes를 구성하기 위한 온프레미스 노드, GPU 서버, 네트워크 요구 사항을 다룹니다.
 
@@ -16,6 +16,9 @@
 | Ubuntu LTS | 20.04, 22.04, 24.04 | x86_64, arm64 |
 | RHEL | 8, 9 | x86_64, arm64 |
 | Amazon Linux | 2023 | x86_64, arm64 |
+| Bottlerocket | v1.37.0 이상 (VMware 변형만 지원) | x86_64만 |
+
+> **Bottlerocket 참고 사항**: Bottlerocket은 VMware 변형만 EKS Hybrid Nodes에서 지원되며, Kubernetes v1.28 이상이 필요합니다. Bottlerocket은 필요한 의존성을 자체적으로 포함하고 있어 `nodeadm` CLI가 필요하지 않습니다. ARM 아키텍처는 Bottlerocket에서 지원되지 않습니다.
 
 ### 컨테이너 런타임
 
@@ -91,26 +94,22 @@ nvcc --version
 | NVIDIA A100 | 40/80 GB | AI/ML 범용 |
 | NVIDIA L40S | 48 GB | 추론 최적화 |
 
-### GPU 드라이버 설치 (Ubuntu 예시)
+### GPU 드라이버 설치 (Amazon Linux 2023 예시)
 
 ```bash
-# NVIDIA 드라이버 저장소 추가
-sudo add-apt-repository ppa:graphics-drivers/ppa
-sudo apt update
+# NVIDIA 드라이버 설치 (Amazon Linux 2023)
+# 커널 개발 패키지 설치
+sudo dnf install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r)
 
-# 드라이버 설치 (버전 550)
-sudo apt install -y nvidia-driver-550
+# NVIDIA 드라이버 저장소 추가
+sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
+
+# 드라이버 설치
+sudo dnf module install -y nvidia-driver:550-dkms
 
 # NVIDIA Container Toolkit 설치
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-
-curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
-  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-
-sudo apt update
-sudo apt install -y nvidia-container-toolkit
+sudo dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+sudo dnf install -y nvidia-container-toolkit
 
 # containerd 설정 업데이트
 sudo nvidia-ctk runtime configure --runtime=containerd
@@ -137,17 +136,12 @@ ip link show eth0 | grep mtu
 # MTU 9000으로 설정 (임시)
 sudo ip link set dev eth0 mtu 9000
 
-# 영구 설정 (Ubuntu - Netplan)
-cat <<EOF | sudo tee /etc/netplan/01-netcfg.yaml
-network:
-  version: 2
-  ethernets:
-    eth0:
-      mtu: 9000
-      dhcp4: true
-EOF
+# 영구 설정 (Amazon Linux 2023 - NetworkManager)
+sudo nmcli connection modify "System eth0" 802-3-ethernet.mtu 9000
+sudo nmcli connection up "System eth0"
 
-sudo netplan apply
+# 설정 확인
+nmcli connection show "System eth0" | grep mtu
 ```
 
 ---

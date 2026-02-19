@@ -1,11 +1,11 @@
-# 에어갭 환경 구성 및 Harbor 레지스트리
+# 에어갭 환경 구성 (S3 + VPC 엔드포인트)
 
 < [이전: 네트워크 구성](./02-network-configuration.md) | [목차](./README.md) | [다음: 노드 부트스트랩](./04-node-bootstrap.md) >
 
-> **지원 버전**: EKS 1.31+, nodeadm 0.1+, Harbor 2.13+
-> **마지막 업데이트**: 2025년 2월
+> **지원 버전**: EKS 1.31+, nodeadm 0.1+
+> **마지막 업데이트**: 2026년 2월
 
-이 문서에서는 에어갭(Air-Gapped) 환경에서 EKS Hybrid Nodes를 구성하는 방법과 Harbor 레지스트리 통합을 다룹니다.
+이 문서에서는 에어갭(Air-Gapped) 환경에서 EKS Hybrid Nodes를 구성하는 방법을 다룹니다. 바이너리 아티팩트는 프라이빗 S3 버킷과 VPC 엔드포인트를 통해, 컨테이너 이미지는 ECR VPC 엔드포인트를 통해 접근합니다.
 
 ## 에어갭 환경이란?
 
@@ -39,13 +39,675 @@
 │  │  (제한된 접근)  │    │  (허용 목록만)  │    │  (선별된 접근)  │        │
 │  └────────────────┘    └────────────────┘    └────────────────┘        │
 └─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                  프라이빗 연결 환경 (VPN/DX + VPC Endpoint)               │
+│  ┌────────────────┐    ┌────────────────┐    ┌────────────────┐        │
+│  │  온프레미스     │ ─→ │  VPN / Direct  │ ─→ │  VPC Endpoint  │        │
+│  │  네트워크      │    │  Connect       │    │  (S3, ECR 등)  │        │
+│  └────────────────┘    └────────────────┘    └────────────────┘        │
+│  인터넷 경로 없이 AWS 서비스에 프라이빗 접근                              │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-## 에어갭 환경에서의 컨테이너 이미지 미러링
+---
 
-### 필수 EKS/Kubernetes 이미지 목록
+## 에어갭 아키텍처 개요
 
-EKS Hybrid Nodes를 운영하려면 다음 이미지들을 로컬 레지스트리에 미러링해야 합니다:
+이 문서에서 구성하는 에어갭 아키텍처는 다음과 같습니다:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  사전 준비 (인터넷 접근 가능 호스트)                                       │
+│                                                                         │
+│  hybrid-assets.eks.amazonaws.com                                        │
+│        │  manifest.yaml 기반으로 바이너리/체크섬 다운로드                   │
+│        ▼                                                                │
+│  ekshybrid-download.sh 실행                                             │
+│        │                                                                │
+│        ├──→ 바이너리, 체크섬 → 프라이빗 S3 버킷에 업로드                   │
+│        └──→ 컨테이너 이미지 목록 → ECR에서 직접 풀 (VPC Endpoint 경유)     │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  런타임 (에어갭 환경)                                                     │
+│                                                                         │
+│  온프레미스 노드                                                         │
+│        │                                                                │
+│        ├──→ 바이너리 다운로드                                             │
+│        │    PHZ (hybrid-assets.eks.amazonaws.com)                        │
+│        │      → S3 Interface VPC Endpoint → 프라이빗 S3 버킷             │
+│        │                                                                │
+│        └──→ 컨테이너 이미지 풀                                            │
+│             ECR API/DKR VPC Endpoint → ECR                              │
+│             (ecr.api + ecr.dkr 엔드포인트)                               │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 아티팩트 저장소 역할 분담
+
+| 아티팩트 유형 | 저장소 | 접근 경로 |
+|--------------|--------|----------|
+| nodeadm, kubelet, kubectl, kube-proxy | S3 버킷 | S3 Interface VPC Endpoint |
+| cni-plugins, ecr-credential-provider | S3 버킷 | S3 Interface VPC Endpoint |
+| aws-iam-authenticator, aws_signing_helper | S3 버킷 | S3 Interface VPC Endpoint |
+| 체크섬 파일 (.sha256) | S3 버킷 | S3 Interface VPC Endpoint |
+| manifest.yaml | S3 버킷 | S3 Interface VPC Endpoint |
+| pause, coredns, kube-proxy 이미지 | ECR | ECR API/DKR VPC Endpoint |
+| vpc-cni, vpc-cni-init 이미지 | ECR | ECR API/DKR VPC Endpoint |
+
+---
+
+## manifest.yaml 기반 아티팩트 다운로드
+
+### manifest.yaml 구조
+
+`hybrid-assets.eks.amazonaws.com/manifest.yaml`에는 EKS Hybrid Node에 필요한 모든 바이너리의 URL과 체크섬이 버전/아키텍처별로 정의되어 있습니다.
+
+```yaml
+# manifest.yaml 구조 (발췌)
+supported_eks_releases:
+- latest_patch_version: "3"
+  major_minor_version: "1.33"
+  patch_releases:
+  - version: "1.33.3"
+    artifacts:
+    - arch: amd64
+      checksum_uri: https://hybrid-assets.eks.amazonaws.com/artifacts/1.33.0/.../kubelet.sha256
+      name: kubelet
+      os: linux
+      uri: https://hybrid-assets.eks.amazonaws.com/artifacts/1.33.0/.../kubelet
+    - arch: amd64
+      checksum_uri: https://hybrid-assets.eks.amazonaws.com/artifacts/1.33.0/.../kubectl.sha256
+      name: kubectl
+      os: linux
+      uri: https://hybrid-assets.eks.amazonaws.com/artifacts/1.33.0/.../kubectl
+    # ... cni, cni-plugins, kube-proxy, ecr-credential-provider, aws-iam-authenticator
+```
+
+manifest.yaml에 포함된 주요 바이너리:
+
+| 바이너리 | 용도 |
+|---------|------|
+| `kubelet` | 노드의 Kubernetes 에이전트 |
+| `kubectl` | Kubernetes CLI |
+| `kube-proxy` | 네트워크 프록시 |
+| `cni` / `cni-plugins` | 컨테이너 네트워크 인터페이스 |
+| `ecr-credential-provider` | ECR 인증 헬퍼 |
+| `aws-iam-authenticator` | IAM 인증 |
+
+### 다운로드 및 S3 업로드 스크립트 (ekshybrid-download.sh)
+
+인터넷 접근 가능한 호스트에서 실행하여 manifest.yaml 기반으로 모든 바이너리를 다운로드하고 S3에 업로드합니다.
+
+```bash
+#!/bin/bash
+# ekshybrid-download.sh - EKS Hybrid nodeadm 에어갭 설치 준비 스크립트
+# 사용법: ./ekshybrid-download.sh <S3_BUCKET_NAME> [KUBERNETES_VERSION] [ARCHITECTURE]
+# 예시:   ./ekshybrid-download.sh ekshybrid-my-bucket 1.33.3 amd64
+
+set -e
+
+# 기본값 설정
+KUBERNETES_VERSION="${2:-1.33.3}"
+ARCHITECTURE="${3:-amd64}"
+REGION="ap-northeast-2"
+MANIFEST_URL="https://hybrid-assets.eks.amazonaws.com/manifest.yaml"
+WORK_DIR="/tmp/nodeadm-offline"
+LOG_FILE="/tmp/nodeadm-offline-setup.log"
+
+# 색상 정의
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log()  { echo -e "${GREEN}[$(date '+%Y-%m-%d %H:%M:%S')] $1${NC}" | tee -a "$LOG_FILE"; }
+warn() { echo -e "${YELLOW}[$(date '+%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}" | tee -a "$LOG_FILE"; }
+error(){ echo -e "${RED}[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}" | tee -a "$LOG_FILE"; exit 1; }
+info() { echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] INFO: $1${NC}" | tee -a "$LOG_FILE"; }
+
+# 매개변수 검증
+if [ $# -lt 1 ]; then
+    echo "사용법: $0 <S3_BUCKET_NAME> [KUBERNETES_VERSION] [ARCHITECTURE]"
+    echo ""
+    echo "매개변수:"
+    echo "  S3_BUCKET_NAME      : 바이너리를 저장할 S3 버킷명 (필수)"
+    echo "  KUBERNETES_VERSION  : Kubernetes 버전 (기본값: 1.33.3)"
+    echo "  ARCHITECTURE        : 아키텍처 (기본값: amd64, 옵션: arm64)"
+    echo ""
+    echo "예시:"
+    echo "  $0 my-nodeadm-bucket"
+    echo "  $0 my-nodeadm-bucket 1.33.3 amd64"
+    exit 1
+fi
+
+S3_BUCKET="$1"
+
+# 필수 도구 확인
+check_prerequisites() {
+    log "필수 도구 확인 중..."
+    local missing_tools=()
+
+    command -v aws &>/dev/null  || missing_tools+=("aws-cli")
+    command -v curl &>/dev/null || missing_tools+=("curl")
+    command -v yq &>/dev/null   || missing_tools+=("yq (https://github.com/mikefarah/yq)")
+    command -v jq &>/dev/null   || missing_tools+=("jq")
+
+    if [ ${#missing_tools[@]} -ne 0 ]; then
+        error "다음 도구들이 필요합니다: ${missing_tools[*]}"
+    fi
+    log "필수 도구 확인 완료"
+}
+
+# 작업 디렉터리 설정
+setup_work_directory() {
+    log "작업 디렉터리 설정 중..."
+    rm -rf "$WORK_DIR"
+    mkdir -p "$WORK_DIR"/{binaries,checksums,images}
+    cd "$WORK_DIR"
+}
+
+# manifest.yaml 다운로드
+download_manifest() {
+    log "manifest.yaml 다운로드 중..."
+    curl -sL "$MANIFEST_URL" -o manifest.yaml
+    [ -f manifest.yaml ] || error "manifest.yaml 다운로드 실패"
+    log "manifest.yaml 다운로드 완료"
+}
+
+# manifest.yaml에서 바이너리 URL 추출 (yq 사용)
+extract_binary_urls() {
+    log "Kubernetes $KUBERNETES_VERSION ($ARCHITECTURE) 바이너리 URL 추출 중..."
+    local MAJOR_MINOR=$(echo "$KUBERNETES_VERSION" | cut -d. -f1,2)
+
+    # 바이너리 URL 추출
+    yq -r ".supported_eks_releases[]
+      | select(.major_minor_version == \"$MAJOR_MINOR\")
+      | .patch_releases[]
+      | select(.version == \"$KUBERNETES_VERSION\")
+      | .artifacts[]
+      | select(.os == \"linux\" and .arch == \"$ARCHITECTURE\")
+      | .uri" manifest.yaml > binary_urls.txt
+
+    # 체크섬 URL 추출
+    yq -r ".supported_eks_releases[]
+      | select(.major_minor_version == \"$MAJOR_MINOR\")
+      | .patch_releases[]
+      | select(.version == \"$KUBERNETES_VERSION\")
+      | .artifacts[]
+      | select(.os == \"linux\" and .arch == \"$ARCHITECTURE\")
+      | .checksum_uri" manifest.yaml > checksum_urls.txt
+
+    [ -s binary_urls.txt ] || error "지정된 버전/아키텍처에 해당하는 바이너리를 찾을 수 없습니다"
+
+    # 추가 URL 및 메타데이터를 JSON으로 생성
+    local ECR_ACCOUNT_ID=$(yq -r ".region_config.\"$REGION\".ecr_account_id // \"602401143452\"" manifest.yaml)
+    local SIGNING_URI=$(yq -r "[.iam_roles_anywhere_releases[].artifacts[] | select(.os == \"linux\" and .arch == \"$ARCHITECTURE\")] | .[0].uri // \"\"" manifest.yaml)
+    local SIGNING_CHECKSUM=$(yq -r "[.iam_roles_anywhere_releases[].artifacts[] | select(.os == \"linux\" and .arch == \"$ARCHITECTURE\")] | .[0].checksum_uri // \"\"" manifest.yaml)
+
+    jq -n \
+      --arg ecr "$ECR_ACCOUNT_ID" \
+      --arg nodeadm "https://hybrid-assets.eks.amazonaws.com/releases/latest/bin/linux/${ARCHITECTURE}/nodeadm" \
+      --arg ssm "https://amazon-ssm-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_${ARCHITECTURE}/ssm-setup-cli" \
+      --arg signing_uri "$SIGNING_URI" \
+      --arg signing_checksum "$SIGNING_CHECKSUM" \
+      '{ecr_account_id: $ecr, nodeadm: $nodeadm, ssm_setup_cli: $ssm,
+        aws_signing_helper: {uri: $signing_uri, checksum_uri: $signing_checksum}}' \
+      > additional_urls.json
+
+    # 컨테이너 이미지 목록 생성
+    # 참고: 이미지 태그는 manifest.yaml에 포함되지 않으므로 하드코딩합니다
+    local ECR_REGISTRY="${ECR_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+    cat > container_images.txt <<IMGEOF
+${ECR_REGISTRY}/eks/kube-proxy:v${KUBERNETES_VERSION}-minimal-eksbuild.1
+${ECR_REGISTRY}/eks/pause:3.5
+${ECR_REGISTRY}/amazon-k8s-cni:v1.18.5-eksbuild.1
+${ECR_REGISTRY}/amazon-k8s-cni-init:v1.18.5-eksbuild.1
+${ECR_REGISTRY}/eks/coredns:v1.11.3-eksbuild.1
+IMGEOF
+
+    log "추출 완료: 바이너리 $(wc -l < binary_urls.txt)개, 체크섬 $(wc -l < checksum_urls.txt)개, 이미지 $(wc -l < container_images.txt)개"
+}
+
+# 바이너리 다운로드
+download_binaries() {
+    log "바이너리 다운로드 중..."
+    local count=0
+    local total=$(wc -l < binary_urls.txt)
+    while IFS= read -r url; do
+        [ -n "$url" ] || continue
+        count=$((count + 1))
+        filename=$(basename "$url")
+        info "[$count/$total] $filename 다운로드 중..."
+        curl -sL -o "binaries/$filename" "$url" && log "  $filename 완료" || warn "  $filename 실패"
+    done < binary_urls.txt
+}
+
+# 체크섬 다운로드
+download_checksums() {
+    log "체크섬 파일 다운로드 중..."
+    local count=0
+    local total=$(wc -l < checksum_urls.txt)
+    while IFS= read -r url; do
+        [ -n "$url" ] || continue
+        count=$((count + 1))
+        filename=$(basename "$url")
+        info "[$count/$total] $filename 다운로드 중..."
+        curl -sL -o "checksums/$filename" "$url" && log "  $filename 완료" || warn "  $filename 실패"
+    done < checksum_urls.txt
+}
+
+# 추가 바이너리 다운로드 (nodeadm, ssm-setup-cli, aws_signing_helper)
+download_additional_binaries() {
+    log "추가 필수 바이너리 다운로드 중..."
+    if [ -f additional_urls.json ]; then
+        local nodeadm_url=$(jq -r '.nodeadm // empty' additional_urls.json)
+        [ -n "$nodeadm_url" ] && { info "nodeadm 다운로드 중..."; curl -sL -o "binaries/nodeadm" "$nodeadm_url"; chmod +x "binaries/nodeadm"; }
+
+        local ssm_url=$(jq -r '.ssm_setup_cli // empty' additional_urls.json)
+        [ -n "$ssm_url" ] && { info "ssm-setup-cli 다운로드 중..."; curl -sL -o "binaries/ssm-setup-cli" "$ssm_url"; chmod +x "binaries/ssm-setup-cli"; }
+
+        local signing_helper=$(jq -r '.aws_signing_helper.uri // empty' additional_urls.json)
+        [ -n "$signing_helper" ] && { info "aws_signing_helper 다운로드 중..."; curl -sL -o "binaries/aws_signing_helper" "$signing_helper"; chmod +x "binaries/aws_signing_helper"; }
+    fi
+}
+
+# 체크섬 검증
+verify_checksums() {
+    log "체크섬 검증 중..."
+    local verified=0 failed=0
+    for checksum_file in checksums/*.sha256; do
+        [ -f "$checksum_file" ] || continue
+        checksum_name=$(basename "$checksum_file" .sha256)
+        binary_file="binaries/$checksum_name"
+        [ -f "$binary_file" ] || continue
+        expected=$(awk '{print $1}' "$checksum_file")
+        actual=$(sha256sum "$binary_file" | awk '{print $1}')
+        if [ "$expected" = "$actual" ]; then
+            info "  $checksum_name 검증 성공"; verified=$((verified + 1))
+        else
+            warn "  $checksum_name 검증 실패"; failed=$((failed + 1))
+        fi
+    done
+    log "체크섬 검증 완료: 성공 ${verified}개, 실패 ${failed}개"
+}
+
+# S3 업로드
+upload_to_s3() {
+    log "S3 버킷 ($S3_BUCKET)에 업로드 중..."
+    aws s3 ls "s3://$S3_BUCKET" --region "$REGION" &>/dev/null || {
+        info "S3 버킷 생성 중..."; aws s3 mb "s3://$S3_BUCKET" --region "$REGION"
+    }
+    aws s3 cp manifest.yaml "s3://$S3_BUCKET/manifest.yaml" --region "$REGION"
+    aws s3 sync binaries/  "s3://$S3_BUCKET/binaries/"  --region "$REGION"
+    aws s3 sync checksums/ "s3://$S3_BUCKET/checksums/" --region "$REGION"
+    aws s3 cp container_images.txt "s3://$S3_BUCKET/container_images.txt" --region "$REGION"
+    aws s3 cp additional_urls.json "s3://$S3_BUCKET/additional_urls.json" --region "$REGION"
+    log "S3 업로드 완료"
+}
+
+# 메인 실행
+main() {
+    log "EKS Hybrid nodeadm 에어갭 설치 준비 시작"
+    log "S3 버킷: $S3_BUCKET, Kubernetes: $KUBERNETES_VERSION, 아키텍처: $ARCHITECTURE"
+
+    check_prerequisites
+    setup_work_directory
+    download_manifest
+    extract_binary_urls
+    download_binaries
+    download_checksums
+    download_additional_binaries
+    verify_checksums
+    upload_to_s3
+
+    log "=== 업로드 완료 요약 ==="
+    info "바이너리: $(ls binaries/ | wc -l)개 → /binaries 하위 폴더"
+    info "체크섬: $(ls checksums/ | wc -l)개 → /checksums 하위 폴더"
+    info "컨테이너 이미지: $(wc -l < container_images.txt)개 → container_images.txt"
+    log "모든 작업이 완료되었습니다!"
+}
+
+main "$@"
+```
+
+실행 결과 S3 버킷에는 다음과 같은 구조로 파일이 저장됩니다:
+
+```
+s3://<BUCKET_NAME>/
+├── manifest.yaml
+├── container_images.txt
+├── additional_urls.json
+├── binaries/
+│   ├── nodeadm
+│   ├── kubelet
+│   ├── kubectl
+│   ├── kube-proxy
+│   ├── cni-plugins-linux-amd64-*.tgz
+│   ├── ecr-credential-provider
+│   ├── aws-iam-authenticator
+│   ├── ssm-setup-cli
+│   └── aws_signing_helper
+└── checksums/
+    ├── kubelet.sha256
+    ├── kubectl.sha256
+    ├── kube-proxy.sha256
+    └── ...
+```
+
+---
+
+## S3 버킷 구성
+
+### 버킷 생성 및 버전 관리
+
+```bash
+BUCKET_NAME="my-hybrid-assets-$(aws sts get-caller-identity --query Account --output text)"
+REGION="ap-northeast-2"
+
+# S3 버킷 생성
+aws s3 mb s3://${BUCKET_NAME} --region ${REGION}
+
+# 버전 관리 활성화 (롤백 대비)
+aws s3api put-bucket-versioning \
+  --bucket ${BUCKET_NAME} \
+  --versioning-configuration Status=Enabled
+```
+
+### S3 버킷 정책 (VPC Endpoint 제한)
+
+VPC Endpoint를 통한 접근만 허용하도록 버킷 정책을 설정합니다.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowVPCEndpointAccess",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::my-hybrid-assets-<ACCOUNT_ID>",
+        "arn:aws:s3:::my-hybrid-assets-<ACCOUNT_ID>/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:sourceVpce": "<VPCE_ID>"
+        }
+      }
+    },
+    {
+      "Sid": "DenyNonVPCEndpointAccess",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::my-hybrid-assets-<ACCOUNT_ID>",
+        "arn:aws:s3:::my-hybrid-assets-<ACCOUNT_ID>/*"
+      ],
+      "Condition": {
+        "StringNotEquals": {
+          "aws:sourceVpce": "<VPCE_ID>"
+        }
+      }
+    }
+  ]
+}
+```
+
+```bash
+# 버킷 정책 적용
+aws s3api put-bucket-policy \
+  --bucket my-hybrid-assets-<ACCOUNT_ID> \
+  --policy file://bucket-policy.json
+```
+
+---
+
+## PHZ DNS 오버라이드
+
+### 문제
+
+`hybrid-assets.eks.amazonaws.com`은 AWS가 CloudFront를 통해 배포하는 nodeadm 바이너리 호스팅 URL입니다. 이 도메인은 표준 VPC 엔드포인트로 접근할 수 없습니다:
+
+- **CloudFront 배포**이므로 S3 또는 EKS VPC 엔드포인트로는 도달 불가
+- 에어갭 환경에서 `nodeadm install` 실행 시 이 URL에서 바이너리 다운로드를 시도하여 실패
+- 인터넷 경로가 없으면 nodeadm 설치 자체가 불가능
+
+### 해결 방법
+
+아티팩트를 프라이빗 S3 버킷에 미러링하고, Private Hosted Zone(PHZ)으로 DNS를 오버라이드하여 `hybrid-assets.eks.amazonaws.com` 요청을 S3 Interface VPC Endpoint로 라우팅합니다.
+
+### S3 Interface VPC 엔드포인트
+
+S3 Interface VPC 엔드포인트는 [네트워크 구성 문서](./02-network-configuration.md#vpc-프라이빗-엔드포인트-에어갭프라이빗-환경)에서 이미 생성했습니다. 엔드포인트 DNS 이름을 확인합니다:
+
+```bash
+# S3 Interface VPC 엔드포인트의 DNS 이름 확인
+aws ec2 describe-vpc-endpoints \
+  --filters "Name=service-name,Values=com.amazonaws.<REGION>.s3" \
+             "Name=vpc-endpoint-type,Values=Interface" \
+  --query 'VpcEndpoints[0].DnsEntries[0].DnsName' \
+  --output text
+# 출력 예시: *.vpce-0abc123def456789a-xyz12345.s3.ap-northeast-2.vpce.amazonaws.com
+```
+
+### Private Hosted Zone 생성
+
+```bash
+# 1. Private Hosted Zone 생성
+HOSTED_ZONE_ID=$(aws route53 create-hosted-zone \
+  --name "hybrid-assets.eks.amazonaws.com" \
+  --vpc VPCRegion=<REGION>,VPCId=<VPC_ID> \
+  --caller-reference "hybrid-assets-phz-$(date +%s)" \
+  --hosted-zone-config PrivateZone=true \
+  --query 'HostedZone.Id' --output text)
+
+echo "PHZ 생성 완료: ${HOSTED_ZONE_ID}"
+
+# 2. S3 Interface VPC Endpoint의 리전 DNS 이름 확인
+VPCE_DNS=$(aws ec2 describe-vpc-endpoints \
+  --filters "Name=service-name,Values=com.amazonaws.<REGION>.s3" \
+             "Name=vpc-endpoint-type,Values=Interface" \
+  --query 'VpcEndpoints[0].DnsEntries[?contains(DnsName, `vpce`)].DnsName | [0]' \
+  --output text)
+
+# 3. S3 VPC Endpoint의 Hosted Zone ID 확인
+VPCE_HZ_ID=$(aws ec2 describe-vpc-endpoints \
+  --filters "Name=service-name,Values=com.amazonaws.<REGION>.s3" \
+             "Name=vpc-endpoint-type,Values=Interface" \
+  --query 'VpcEndpoints[0].DnsEntries[?contains(DnsName, `vpce`)].HostedZoneId | [0]' \
+  --output text)
+
+# 4. Alias 레코드 생성
+aws route53 change-resource-record-sets \
+  --hosted-zone-id ${HOSTED_ZONE_ID} \
+  --change-batch "{
+    \"Changes\": [{
+      \"Action\": \"UPSERT\",
+      \"ResourceRecordSet\": {
+        \"Name\": \"hybrid-assets.eks.amazonaws.com\",
+        \"Type\": \"A\",
+        \"AliasTarget\": {
+          \"DNSName\": \"${VPCE_DNS}\",
+          \"HostedZoneId\": \"${VPCE_HZ_ID}\",
+          \"EvaluateTargetHealth\": true
+        }
+      }
+    }]
+  }"
+
+echo "PHZ Alias 레코드 생성 완료"
+```
+
+### 온프레미스 DNS 연동
+
+온프레미스 노드에서 `hybrid-assets.eks.amazonaws.com`을 쿼리할 때 PHZ를 거쳐 S3 VPC Endpoint의 프라이빗 IP가 반환되도록 구성합니다.
+
+[네트워크 구성 문서](./02-network-configuration.md)에서 이미 Route 53 Resolver Inbound Endpoint를 생성했다면, 온프레미스 DNS의 조건부 포워딩에 `eks.amazonaws.com` 도메인이 포함되어 있는지 확인합니다.
+
+```
+# BIND 예시 - eks.amazonaws.com 전체를 Route 53으로 포워딩
+zone "eks.amazonaws.com" {
+    type forward;
+    forward only;
+    forwarders {
+        10.0.1.10;    # Route 53 Inbound Endpoint IP #1
+        10.0.2.10;    # Route 53 Inbound Endpoint IP #2
+    };
+};
+```
+
+---
+
+## 에어갭 노드에서 설치
+
+### 오프라인 설치 스크립트 (offline-install.sh)
+
+에어갭 환경의 노드에서 실행하여 S3 버킷의 바이너리를 VPC Endpoint를 통해 다운로드하고 설치합니다.
+
+```bash
+#!/bin/bash
+# offline-install.sh - EKS Hybrid nodeadm 에어갭 설치 스크립트
+# 사용법: ./offline-install.sh <S3_BUCKET_NAME> <VPC_ENDPOINT_URL>
+# 예시:   ./offline-install.sh my-nodeadm-bucket https://vpce-xxxxx-xxxxx.s3.ap-northeast-2.vpce.amazonaws.com
+
+set -e
+
+S3_BUCKET="$1"
+VPC_ENDPOINT_URL="$2"
+REGION="ap-northeast-2"
+
+if [ $# -lt 2 ]; then
+    echo "사용법: $0 <S3_BUCKET_NAME> <VPC_ENDPOINT_URL>"
+    echo "예시: $0 my-nodeadm-bucket https://vpce-xxxxx-xxxxx.s3.ap-northeast-2.vpce.amazonaws.com"
+    exit 1
+fi
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"; }
+
+# AWS CLI에서 S3 VPC Endpoint를 사용하도록 설정
+export AWS_S3_ENDPOINT_URL="$VPC_ENDPOINT_URL"
+
+# 작업 디렉터리 생성
+WORK_DIR="/tmp/nodeadm-install"
+mkdir -p "$WORK_DIR"
+cd "$WORK_DIR"
+
+# S3에서 파일 다운로드
+log "S3에서 파일 다운로드 중..."
+aws s3 cp "s3://$S3_BUCKET/manifest.yaml" . --region "$REGION"
+aws s3 cp "s3://$S3_BUCKET/container_images.txt" . --region "$REGION"
+
+mkdir -p binaries checksums
+aws s3 sync "s3://$S3_BUCKET/binaries/"  binaries/  --region "$REGION"
+aws s3 sync "s3://$S3_BUCKET/checksums/" checksums/ --region "$REGION"
+
+# 체크섬 검증
+log "체크섬 검증 중..."
+for checksum_file in checksums/*.sha256; do
+    [ -f "$checksum_file" ] || continue
+    checksum_name=$(basename "$checksum_file" .sha256)
+    binary_file="binaries/$checksum_name"
+    [ -f "$binary_file" ] || continue
+
+    expected=$(awk '{print $1}' "$checksum_file")
+    actual=$(sha256sum "$binary_file" | awk '{print $1}')
+
+    if [ "$expected" = "$actual" ]; then
+        log "  $checksum_name 검증 성공"
+    else
+        log "  $checksum_name 검증 실패"
+        exit 1
+    fi
+done
+
+# 바이너리 설치
+log "바이너리 설치 중..."
+sudo cp binaries/nodeadm /usr/local/bin/ 2>/dev/null || true
+sudo cp binaries/kubectl /usr/local/bin/ 2>/dev/null || true
+sudo cp binaries/kubelet /usr/local/bin/ 2>/dev/null || true
+sudo cp binaries/aws-iam-authenticator /usr/local/bin/ 2>/dev/null || true
+sudo cp binaries/ecr-credential-provider /usr/local/bin/ 2>/dev/null || true
+sudo cp binaries/kube-proxy /usr/local/bin/ 2>/dev/null || true
+
+# 실행 권한 부여
+sudo chmod +x /usr/local/bin/{nodeadm,kubectl,kubelet,aws-iam-authenticator,ecr-credential-provider,kube-proxy} 2>/dev/null || true
+
+# CNI 플러그인 설치
+log "CNI 플러그인 설치 중..."
+sudo mkdir -p /opt/cni/bin
+for tgz in binaries/cni-plugins-linux-*.tgz binaries/cni-*-v*.tgz; do
+    [ -f "$tgz" ] && sudo tar -xzf "$tgz" -C /opt/cni/bin/
+done
+
+# containerd 설정 (이미 설치된 경우)
+if command -v containerd &>/dev/null; then
+    log "containerd 설정 중..."
+    sudo mkdir -p /etc/containerd
+    [ -f /etc/containerd/config.toml ] || sudo containerd config default | sudo tee /etc/containerd/config.toml >/dev/null
+fi
+
+log "설치 완료!"
+log ""
+log "다음 단계:"
+log "1. nodeadm 버전 확인: nodeadm version"
+log "2. EKS 컴포넌트 설치: sudo nodeadm install $KUBERNETES_VERSION --credential-provider ssm"
+log "3. 클러스터 조인: sudo nodeadm init --config-source file://nodeconfig.yaml"
+```
+
+### nodeadm init 실행
+
+설치 완료 후 노드를 EKS 클러스터에 등록합니다:
+
+```yaml
+# nodeconfig.yaml
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster:
+    name: my-hybrid-cluster
+    region: ap-northeast-2
+    apiServerEndpoint: https://XXXXXXXX.gr7.ap-northeast-2.eks.amazonaws.com
+    certificateAuthority: |
+      -----BEGIN CERTIFICATE-----
+      ...
+      -----END CERTIFICATE-----
+    cidr: 10.100.0.0/16
+
+  hybrid:
+    ssm:
+      activationCode: <activation-code>
+      activationId: <activation-id>
+
+  kubelet:
+    config:
+      maxPods: 110
+    flags:
+      - --node-labels=topology.kubernetes.io/zone=on-premises
+```
+
+```bash
+# 설정 파일 검증
+nodeadm config check --config-source file://nodeconfig.yaml
+
+# 노드 초기화
+sudo -E nodeadm init --config-source file://nodeconfig.yaml
+```
+
+---
+
+## 컨테이너 이미지 접근 (ECR VPC 엔드포인트)
+
+### 필수 컨테이너 이미지
+
+EKS Hybrid Nodes 운영에 필요한 컨테이너 이미지는 ECR에서 제공됩니다:
 
 | 이미지 | 용도 | 소스 레지스트리 |
 |--------|------|-----------------|
@@ -55,89 +717,53 @@ EKS Hybrid Nodes를 운영하려면 다음 이미지들을 로컬 레지스트�
 | `vpc-cni-init` | VPC CNI 초기화 | `602401143452.dkr.ecr.<region>.amazonaws.com/amazon-k8s-cni-init` |
 | `aws-node` | AWS VPC CNI | `602401143452.dkr.ecr.<region>.amazonaws.com/amazon-k8s-cni` |
 
-### skopeo를 사용한 이미지 미러링
+### ECR VPC 엔드포인트를 통한 이미지 접근
+
+[네트워크 구성 문서](./02-network-configuration.md#vpc-프라이빗-엔드포인트-에어갭프라이빗-환경)에서 이미 ECR API (`ecr.api`) 및 ECR DKR (`ecr.dkr`) Interface VPC 엔드포인트를 생성했습니다. 이를 통해 에어갭 환경에서도 ECR에서 직접 이미지를 풀할 수 있습니다.
+
+### ecr-credential-provider 설정
+
+kubelet이 ECR에서 이미지를 풀하려면 인증이 필요합니다. `ecr-credential-provider`는 ekshybrid-download.sh에서 이미 다운로드하여 `/usr/local/bin/`에 설치되어 있습니다.
 
 ```bash
-#!/bin/bash
-# mirror-eks-images.sh - EKS 필수 이미지 미러링 스크립트
+# credential provider 설정 디렉터리 생성
+sudo mkdir -p /etc/kubernetes/image-credential-provider
 
-# 설정
-SOURCE_REGISTRY="602401143452.dkr.ecr.ap-northeast-2.amazonaws.com"
-TARGET_REGISTRY="harbor.internal.company.io/eks-system"
-EKS_VERSION="1.31"
+# credential provider 설정 파일
+cat <<EOF | sudo tee /etc/kubernetes/image-credential-provider/config.json
+{
+  "apiVersion": "kubelet.config.k8s.io/v1",
+  "kind": "CredentialProviderConfig",
+  "providers": [
+    {
+      "name": "ecr-credential-provider",
+      "matchImages": [
+        "*.dkr.ecr.*.amazonaws.com",
+        "*.dkr.ecr.*.amazonaws.com.cn"
+      ],
+      "defaultCacheDuration": "12h",
+      "apiVersion": "credentialprovider.kubelet.k8s.io/v1"
+    }
+  ]
+}
+EOF
+```
 
-# AWS ECR 로그인
-aws ecr get-login-password --region ap-northeast-2 | \
-  skopeo login --username AWS --password-stdin $SOURCE_REGISTRY
+### 완전 에어갭 환경을 위한 이미지 내보내기/가져오기
 
-# Harbor 로그인
-skopeo login $TARGET_REGISTRY --username admin --password 'StrongP@ssw0rd!'
+ECR VPC 엔드포인트도 사용할 수 없는 완전 에어갭 환경에서는 이미지를 파일로 내보내 물리적 미디어로 전달합니다.
 
-# 미러링할 이미지 목록
-declare -A IMAGES=(
-  ["eks/pause:3.9"]="pause:3.9"
-  ["eks/coredns:v1.11.1-eksbuild.8"]="coredns:v1.11.1"
-  ["eks/kube-proxy:v${EKS_VERSION}.0-eksbuild.1"]="kube-proxy:v${EKS_VERSION}.0"
-  ["amazon-k8s-cni-init:v1.18.0"]="vpc-cni-init:v1.18.0"
-  ["amazon-k8s-cni:v1.18.0"]="aws-node:v1.18.0"
+```bash
+# 인터넷 연결 환경에서 이미지를 tar로 내보내기
+IMAGES=(
+  "602401143452.dkr.ecr.ap-northeast-2.amazonaws.com/eks/pause:3.5"
+  "602401143452.dkr.ecr.ap-northeast-2.amazonaws.com/eks/coredns:v1.11.3-eksbuild.1"
+  "602401143452.dkr.ecr.ap-northeast-2.amazonaws.com/eks/kube-proxy:v1.33.3-minimal-eksbuild.1"
 )
-
-# 이미지 미러링
-for src in "${!IMAGES[@]}"; do
-  dst="${IMAGES[$src]}"
-  echo "Mirroring: $src -> $dst"
-  skopeo copy --all \
-    "docker://${SOURCE_REGISTRY}/${src}" \
-    "docker://${TARGET_REGISTRY}/${dst}"
-done
-
-echo "이미지 미러링 완료!"
-```
-
-### crane을 사용한 이미지 미러링
-
-```bash
-#!/bin/bash
-# mirror-with-crane.sh - crane을 사용한 이미지 미러링
-
-# crane 설치 (필요한 경우)
-# GO111MODULE=on go install github.com/google/go-containerregistry/cmd/crane@latest
-
-SOURCE_REGISTRY="602401143452.dkr.ecr.ap-northeast-2.amazonaws.com"
-TARGET_REGISTRY="harbor.internal.company.io/eks-system"
-
-# ECR 인증
-aws ecr get-login-password --region ap-northeast-2 | \
-  crane auth login $SOURCE_REGISTRY --username AWS --password-stdin
-
-# Harbor 인증
-crane auth login $TARGET_REGISTRY --username admin --password 'StrongP@ssw0rd!'
-
-# 이미지 복사
-crane copy "${SOURCE_REGISTRY}/eks/pause:3.9" "${TARGET_REGISTRY}/pause:3.9"
-crane copy "${SOURCE_REGISTRY}/eks/coredns:v1.11.1-eksbuild.8" "${TARGET_REGISTRY}/coredns:v1.11.1"
-crane copy "${SOURCE_REGISTRY}/eks/kube-proxy:v1.31.0-eksbuild.1" "${TARGET_REGISTRY}/kube-proxy:v1.31.0"
-```
-
-### 오프라인 환경을 위한 이미지 내보내기/가져오기
-
-완전한 에어갭 환경에서는 이미지를 파일로 내보내 물리적 미디어로 전달해야 합니다.
-
-```bash
-#!/bin/bash
-# export-images.sh - 이미지를 tar 파일로 내보내기
 
 EXPORT_DIR="/media/usb/eks-images"
 mkdir -p $EXPORT_DIR
 
-# 이미지 목록
-IMAGES=(
-  "602401143452.dkr.ecr.ap-northeast-2.amazonaws.com/eks/pause:3.9"
-  "602401143452.dkr.ecr.ap-northeast-2.amazonaws.com/eks/coredns:v1.11.1-eksbuild.8"
-  "602401143452.dkr.ecr.ap-northeast-2.amazonaws.com/eks/kube-proxy:v1.31.0-eksbuild.1"
-)
-
-# 이미지 저장
 for img in "${IMAGES[@]}"; do
   filename=$(echo $img | tr '/:' '_')
   echo "Exporting: $img"
@@ -145,166 +771,25 @@ for img in "${IMAGES[@]}"; do
 done
 
 # 체크섬 생성
-cd $EXPORT_DIR
-sha256sum *.tar > checksums.sha256
+cd $EXPORT_DIR && sha256sum *.tar > checksums.sha256
 ```
 
 ```bash
-#!/bin/bash
-# import-images.sh - tar 파일에서 이미지 가져오기 (에어갭 환경)
-
+# 에어갭 환경에서 이미지 가져오기 (containerd 사용)
 IMPORT_DIR="/media/usb/eks-images"
-TARGET_REGISTRY="harbor.internal.company.io/eks-system"
 
-# 체크섬 검증
 cd $IMPORT_DIR
 sha256sum -c checksums.sha256
 
-# Harbor 로그인
-skopeo login $TARGET_REGISTRY --username admin --password 'StrongP@ssw0rd!'
-
-# 이미지 가져오기
 for tarfile in $IMPORT_DIR/*.tar; do
-  # 파일명에서 이미지 이름 추출
-  basename=$(basename $tarfile .tar)
-  # 간단한 이름으로 변환 (예: pause_3.9)
-  simple_name=$(echo $basename | sed 's/.*_eks_//' | tr '_' ':')
-
-  echo "Importing: $tarfile -> $TARGET_REGISTRY/$simple_name"
-  skopeo copy "oci-archive:${tarfile}" "docker://${TARGET_REGISTRY}/${simple_name}"
+  echo "Importing: $tarfile"
+  sudo ctr -n k8s.io images import "$tarfile"
 done
 ```
 
-## nodeadm 오프라인 설치
+---
 
-에어갭 환경에서는 nodeadm과 필요한 바이너리를 미리 다운로드하여 로컬 저장소에서 설치해야 합니다.
-
-### 필요한 패키지 다운로드 (인터넷 연결 환경)
-
-```bash
-#!/bin/bash
-# download-nodeadm-packages.sh - 오프라인 설치를 위한 패키지 다운로드
-
-DOWNLOAD_DIR="/media/usb/nodeadm-packages"
-mkdir -p $DOWNLOAD_DIR/{binaries,rpms,debs}
-
-# nodeadm 바이너리 다운로드
-curl -Lo $DOWNLOAD_DIR/binaries/nodeadm \
-  https://hybrid-assets.eks.amazonaws.com/releases/latest/bin/linux/amd64/nodeadm
-chmod +x $DOWNLOAD_DIR/binaries/nodeadm
-
-# containerd 바이너리 다운로드
-CONTAINERD_VERSION="1.7.13"
-curl -Lo $DOWNLOAD_DIR/binaries/containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz \
-  https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
-
-# runc 다운로드
-RUNC_VERSION="1.1.12"
-curl -Lo $DOWNLOAD_DIR/binaries/runc.amd64 \
-  https://github.com/opencontainers/runc/releases/download/v${RUNC_VERSION}/runc.amd64
-
-# CNI 플러그인 다운로드
-CNI_VERSION="1.4.0"
-curl -Lo $DOWNLOAD_DIR/binaries/cni-plugins-linux-amd64-v${CNI_VERSION}.tgz \
-  https://github.com/containernetworking/plugins/releases/download/v${CNI_VERSION}/cni-plugins-linux-amd64-v${CNI_VERSION}.tgz
-
-# Ubuntu/Debian용 패키지 다운로드
-cd $DOWNLOAD_DIR/debs
-apt-get download \
-  iptables \
-  conntrack \
-  socat \
-  ethtool \
-  ebtables
-
-# RHEL/CentOS용 패키지 다운로드
-cd $DOWNLOAD_DIR/rpms
-yumdownloader \
-  iptables \
-  conntrack-tools \
-  socat \
-  ethtool \
-  ebtables
-
-echo "패키지 다운로드 완료: $DOWNLOAD_DIR"
-```
-
-### 에어갭 환경에서 설치
-
-```bash
-#!/bin/bash
-# install-nodeadm-offline.sh - 오프라인 환경에서 nodeadm 설치
-
-PACKAGE_DIR="/media/usb/nodeadm-packages"
-
-# OS 감지
-if [ -f /etc/debian_version ]; then
-  PKG_TYPE="deb"
-  PKG_INSTALL="dpkg -i"
-elif [ -f /etc/redhat-release ]; then
-  PKG_TYPE="rpm"
-  PKG_INSTALL="rpm -ivh"
-else
-  echo "지원되지 않는 OS입니다"
-  exit 1
-fi
-
-# 의존성 패키지 설치
-echo "의존성 패키지 설치 중..."
-$PKG_INSTALL $PACKAGE_DIR/${PKG_TYPE}s/*
-
-# containerd 설치
-echo "containerd 설치 중..."
-tar -xzf $PACKAGE_DIR/binaries/containerd-*-linux-amd64.tar.gz -C /usr/local
-
-# runc 설치
-echo "runc 설치 중..."
-install -m 755 $PACKAGE_DIR/binaries/runc.amd64 /usr/local/sbin/runc
-
-# CNI 플러그인 설치
-echo "CNI 플러그인 설치 중..."
-mkdir -p /opt/cni/bin
-tar -xzf $PACKAGE_DIR/binaries/cni-plugins-linux-amd64-*.tgz -C /opt/cni/bin
-
-# nodeadm 설치
-echo "nodeadm 설치 중..."
-install -m 755 $PACKAGE_DIR/binaries/nodeadm /usr/local/bin/nodeadm
-
-# containerd 서비스 설정
-cat <<EOF | sudo tee /etc/systemd/system/containerd.service
-[Unit]
-Description=containerd container runtime
-Documentation=https://containerd.io
-After=network.target
-
-[Service]
-ExecStart=/usr/local/bin/containerd
-Restart=always
-RestartSec=5
-Delegate=yes
-KillMode=process
-OOMScoreAdjust=-999
-LimitNOFILE=1048576
-LimitNPROC=infinity
-LimitCORE=infinity
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# containerd 시작
-systemctl daemon-reload
-systemctl enable --now containerd
-
-# 설치 확인
-echo ""
-echo "=== 설치 확인 ==="
-nodeadm version
-containerd --version
-runc --version
-```
-
-### 로컬 RPM/DEB 저장소 구성
+## 로컬 RPM/DEB 저장소 구성
 
 대규모 배포를 위해 로컬 패키지 저장소를 구성할 수 있습니다.
 
@@ -342,6 +827,8 @@ yum clean all
 yum makecache
 ```
 
+---
+
 ## 프록시 환경 구성
 
 부분 에어갭 환경에서는 프록시를 통해 제한된 외부 접근을 허용할 수 있습니다.
@@ -365,14 +852,13 @@ source /etc/environment
 ### containerd 프록시 설정
 
 ```bash
-# containerd 서비스에 프록시 환경 변수 추가
 sudo mkdir -p /etc/systemd/system/containerd.service.d
 
 cat <<EOF | sudo tee /etc/systemd/system/containerd.service.d/http-proxy.conf
 [Service]
 Environment="HTTP_PROXY=http://proxy.internal.company.io:3128"
 Environment="HTTPS_PROXY=http://proxy.internal.company.io:3128"
-Environment="NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.internal.company.io,harbor.internal.company.io"
+Environment="NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.internal.company.io,.eks.amazonaws.com"
 EOF
 
 sudo systemctl daemon-reload
@@ -382,7 +868,6 @@ sudo systemctl restart containerd
 ### kubelet 프록시 설정
 
 ```bash
-# kubelet 서비스에 프록시 환경 변수 추가
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
 
 cat <<EOF | sudo tee /etc/systemd/system/kubelet.service.d/http-proxy.conf
@@ -418,7 +903,6 @@ spec:
       activationCode: <activation-code>
       activationId: <activation-id>
 
-  # 프록시 설정
   kubelet:
     config:
       maxPods: 110
@@ -435,333 +919,177 @@ spec:
         [proxy.https]
           address = "http://proxy.internal.company.io:3128"
         [proxy.no_proxy]
-          addresses = ["localhost", "127.0.0.1", "10.0.0.0/8", "harbor.internal.company.io"]
+          addresses = ["localhost", "127.0.0.1", "10.0.0.0/8", ".eks.amazonaws.com"]
 ```
+
+---
 
 ## 에어갭 환경 검증
 
-### 이미지 풀링 테스트
+### 검증 스크립트
 
 ```bash
 #!/bin/bash
 # verify-airgap.sh - 에어갭 환경 검증 스크립트
 
 echo "=== 에어갭 환경 검증 ==="
+PASS=0
+FAIL=0
 
-# Harbor 연결 테스트
+# 1. DNS 해석 테스트 (hybrid-assets → 프라이빗 IP)
 echo ""
-echo "1. Harbor 레지스트리 연결 테스트"
-curl -sk https://harbor.internal.company.io/api/v2.0/systeminfo | jq '.harbor_version'
-if [ $? -eq 0 ]; then
-  echo "   [PASS] Harbor 연결 성공"
+echo "1. DNS 해석 테스트"
+RESOLVED_IP=$(nslookup hybrid-assets.eks.amazonaws.com | grep "Address:" | tail -1 | awk '{print $2}')
+echo "   hybrid-assets.eks.amazonaws.com → ${RESOLVED_IP}"
+
+if [[ "$RESOLVED_IP" == 10.* ]] || [[ "$RESOLVED_IP" == 172.* ]] || [[ "$RESOLVED_IP" == 192.168.* ]]; then
+  echo "   [PASS] 프라이빗 IP로 해석됨 (VPC Endpoint 경유)"
+  ((PASS++))
 else
-  echo "   [FAIL] Harbor 연결 실패"
+  echo "   [FAIL] 퍼블릭 IP로 해석됨 — PHZ 또는 DNS 포워딩 확인 필요"
+  ((FAIL++))
 fi
 
-# 이미지 풀링 테스트
+# 2. S3 VPC Endpoint 연결 테스트
 echo ""
-echo "2. 이미지 풀링 테스트"
-ctr image pull harbor.internal.company.io/eks-system/pause:3.9 --skip-verify
-if [ $? -eq 0 ]; then
-  echo "   [PASS] 이미지 풀링 성공"
+echo "2. S3 VPC Endpoint 상태"
+aws ec2 describe-vpc-endpoints \
+  --filters "Name=service-name,Values=com.amazonaws.*.s3" \
+             "Name=vpc-endpoint-type,Values=Interface" \
+  --query 'VpcEndpoints[].{ID:VpcEndpointId, State:State}' \
+  --output table
+((PASS++))
+
+# 3. S3에서 바이너리 다운로드 테스트
+echo ""
+echo "3. S3 바이너리 다운로드 테스트"
+if aws s3 ls "s3://<BUCKET_NAME>/binaries/nodeadm" --region ap-northeast-2 &>/dev/null; then
+  echo "   [PASS] S3 버킷에서 nodeadm 확인 성공"
+  ((PASS++))
 else
-  echo "   [FAIL] 이미지 풀링 실패"
+  echo "   [FAIL] S3 버킷 접근 실패"
+  ((FAIL++))
 fi
 
-# DNS 해석 테스트
+# 4. ECR VPC Endpoint 연결 테스트
 echo ""
-echo "3. DNS 해석 테스트"
-nslookup harbor.internal.company.io
-if [ $? -eq 0 ]; then
-  echo "   [PASS] DNS 해석 성공"
+echo "4. ECR VPC Endpoint 테스트"
+if aws ecr describe-repositories --region ap-northeast-2 &>/dev/null; then
+  echo "   [PASS] ECR API 연결 성공"
+  ((PASS++))
 else
-  echo "   [FAIL] DNS 해석 실패"
+  echo "   [FAIL] ECR API 연결 실패"
+  ((FAIL++))
 fi
 
-# EKS API 서버 연결 테스트
+# 5. 컨테이너 이미지 풀링 테스트
 echo ""
-echo "4. EKS API 서버 연결 테스트"
-curl -sk --connect-timeout 5 https://XXXXXXXX.gr7.ap-northeast-2.eks.amazonaws.com/healthz
-if [ $? -eq 0 ]; then
+echo "5. ECR 이미지 풀링 테스트"
+if sudo ctr -n k8s.io images pull 602401143452.dkr.ecr.ap-northeast-2.amazonaws.com/eks/pause:3.5 2>/dev/null; then
+  echo "   [PASS] ECR 이미지 풀링 성공"
+  ((PASS++))
+else
+  echo "   [FAIL] ECR 이미지 풀링 실패"
+  ((FAIL++))
+fi
+
+# 6. EKS API 서버 연결 테스트
+echo ""
+echo "6. EKS API 서버 연결 테스트"
+if curl -sk --connect-timeout 5 https://XXXXXXXX.gr7.ap-northeast-2.eks.amazonaws.com/healthz | grep -q "ok"; then
   echo "   [PASS] EKS API 서버 연결 성공"
+  ((PASS++))
 else
   echo "   [FAIL] EKS API 서버 연결 실패 (VPN/Direct Connect 확인 필요)"
+  ((FAIL++))
 fi
 
-# nodeadm dry-run 테스트
+# 7. 필수 바이너리 확인
 echo ""
-echo "5. nodeadm dry-run 테스트"
-sudo nodeadm init -c file://nodeconfig.yaml --dry-run
-if [ $? -eq 0 ]; then
-  echo "   [PASS] nodeadm 구성 유효"
-else
-  echo "   [FAIL] nodeadm 구성 오류"
-fi
-
-echo ""
-echo "=== 검증 완료 ==="
-```
-
-## Harbor 레지스트리 통합
-
-Hybrid Nodes 환경에서는 온프레미스에 자체 컨테이너 레지스트리를 운영하는 것이 효율적입니다. Harbor는 엔터프라이즈급 기능을 제공하는 오픈소스 레지스트리입니다.
-
-### Harbor 2.13 설치 (Helm)
-
-#### 사전 준비
-
-```bash
-# Helm 저장소 추가
-helm repo add harbor https://helm.goharbor.io
-helm repo update
-
-# 네임스페이스 생성
-kubectl create namespace harbor
-```
-
-#### TLS 인증서 생성 (Self-Signed)
-
-```bash
-# CA 키 및 인증서 생성
-openssl genrsa -out ca.key 4096
-openssl req -x509 -new -nodes -sha512 -days 3650 \
-  -subj "/C=KR/ST=Seoul/L=Seoul/O=Company/OU=IT/CN=harbor-ca" \
-  -key ca.key \
-  -out ca.crt
-
-# Harbor 서버 키 생성
-openssl genrsa -out harbor.key 4096
-
-# CSR 설정 파일 생성
-cat > harbor-csr.conf <<EOF
-[req]
-default_bits = 4096
-distinguished_name = req_distinguished_name
-req_extensions = req_ext
-prompt = no
-
-[req_distinguished_name]
-C = KR
-ST = Seoul
-L = Seoul
-O = Company
-OU = IT
-CN = harbor.internal.company.io
-
-[req_ext]
-subjectAltName = @alt_names
-
-[alt_names]
-DNS.1 = harbor.internal.company.io
-DNS.2 = harbor
-DNS.3 = harbor.harbor.svc.cluster.local
-IP.1 = 192.168.1.100
-EOF
-
-# CSR 생성
-openssl req -new -key harbor.key -out harbor.csr -config harbor-csr.conf
-
-# 인증서 서명
-openssl x509 -req -sha512 -days 3650 \
-  -extfile harbor-csr.conf \
-  -extensions req_ext \
-  -CA ca.crt -CAkey ca.key -CAcreateserial \
-  -in harbor.csr \
-  -out harbor.crt
-
-# Kubernetes Secret 생성
-kubectl create secret tls harbor-tls \
-  --cert=harbor.crt \
-  --key=harbor.key \
-  -n harbor
-```
-
-#### Harbor Helm Values 구성
-
-```yaml
-# harbor-values.yaml
-expose:
-  type: loadBalancer
-  tls:
-    enabled: true
-    certSource: secret
-    secret:
-      secretName: harbor-tls
-
-externalURL: https://harbor.internal.company.io
-
-persistence:
-  enabled: true
-  persistentVolumeClaim:
-    registry:
-      storageClass: "local-path"
-      size: 500Gi
-    database:
-      storageClass: "local-path"
-      size: 10Gi
-    redis:
-      storageClass: "local-path"
-      size: 5Gi
-    trivy:
-      storageClass: "local-path"
-      size: 10Gi
-
-harborAdminPassword: "StrongP@ssw0rd!"
-
-database:
-  type: internal
-  internal:
-    resources:
-      requests:
-        memory: 256Mi
-        cpu: 100m
-
-redis:
-  type: internal
-
-trivy:
-  enabled: true
-  skipUpdate: false
-  resources:
-    requests:
-      memory: 512Mi
-      cpu: 200m
-
-metrics:
-  enabled: true
-  serviceMonitor:
-    enabled: true
-  core:
-    path: /metrics
-    port: 8001
-  registry:
-    path: /metrics
-    port: 8001
-  exporter:
-    path: /metrics
-    port: 8001
-
-portal:
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-
-core:
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-
-jobservice:
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-
-registry:
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-```
-
-```bash
-# Harbor 설치
-helm install harbor harbor/harbor \
-  --namespace harbor \
-  --values harbor-values.yaml \
-  --version 1.14.0
-
-# 설치 확인
-kubectl get pods -n harbor
-kubectl get svc -n harbor
-```
-
-### Robot Account 생성
-
-Kubernetes에서 이미지를 풀링할 때 사용할 Robot Account를 생성합니다.
-
-```bash
-# Harbor CLI 또는 API를 통한 Robot Account 생성
-curl -k -X POST "https://harbor.internal.company.io/api/v2.0/robots" \
-  -H "Content-Type: application/json" \
-  -u "admin:StrongP@ssw0rd!" \
-  -d '{
-    "name": "k8s-pull-robot",
-    "description": "Robot account for Kubernetes image pulling",
-    "duration": -1,
-    "level": "system",
-    "permissions": [
-      {
-        "kind": "project",
-        "namespace": "*",
-        "access": [
-          {"resource": "repository", "action": "pull"},
-          {"resource": "artifact", "action": "read"}
-        ]
-      }
-    ]
-  }'
-```
-
-### Kubernetes 통합
-
-#### Docker Registry Secret 생성
-
-```bash
-# Harbor 자격 증명으로 Secret 생성
-kubectl create secret docker-registry harbor-registry-secret \
-  --docker-server=harbor.internal.company.io \
-  --docker-username='robot$k8s-pull-robot' \
-  --docker-password='<robot-account-token>' \
-  --docker-email=admin@company.io \
-  --namespace=default
-
-# 모든 네임스페이스에 복제 (선택사항)
-for ns in $(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}'); do
-  kubectl get secret harbor-registry-secret -n default -o yaml | \
-    sed "s/namespace: default/namespace: $ns/" | \
-    kubectl apply -f -
+echo "7. 필수 바이너리 확인"
+for bin in nodeadm kubelet kubectl containerd runc; do
+  if command -v $bin &>/dev/null; then
+    echo "   [PASS] $bin 설치됨"
+    ((PASS++))
+  else
+    echo "   [FAIL] $bin 미설치"
+    ((FAIL++))
+  fi
 done
+
+# 8. nodeadm dry-run 테스트
+echo ""
+echo "8. nodeadm 구성 검증"
+if [ -f /etc/eks/nodeconfig.yaml ]; then
+  if sudo nodeadm init -c file:///etc/eks/nodeconfig.yaml --dry-run 2>/dev/null; then
+    echo "   [PASS] nodeadm 구성 유효"
+    ((PASS++))
+  else
+    echo "   [FAIL] nodeadm 구성 오류"
+    ((FAIL++))
+  fi
+else
+  echo "   [SKIP] nodeconfig.yaml 파일 없음"
+fi
+
+# 요약
+echo ""
+echo "=== 검증 결과 ==="
+echo "성공: ${PASS}"
+echo "실패: ${FAIL}"
+
+if [ ${FAIL} -eq 0 ]; then
+  echo ""
+  echo "모든 검증 통과! Hybrid Node 초기화를 진행할 수 있습니다."
+  exit 0
+else
+  echo ""
+  echo "일부 검증 실패. 문제를 해결한 후 다시 시도하세요."
+  exit 1
+fi
 ```
 
-#### ServiceAccount에 imagePullSecrets 설정
+---
 
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: default
-  namespace: default
-imagePullSecrets:
-- name: harbor-registry-secret
-```
+## 미러링 동기화 자동화
+
+새로운 nodeadm 버전이 릴리스될 때 프라이빗 S3 버킷을 자동으로 동기화하는 cron 작업을 설정합니다.
 
 ```bash
-# 기존 default ServiceAccount 패치
-kubectl patch serviceaccount default \
-  -p '{"imagePullSecrets": [{"name": "harbor-registry-secret"}]}'
-```
+#!/bin/bash
+# sync-hybrid-assets.sh - 인터넷 접근 가능한 중간 호스트에서 실행
+# crontab 예시: 0 2 * * 0 /opt/scripts/sync-hybrid-assets.sh
 
-#### CoreDNS에서 Harbor 호스트명 해석 설정
+BUCKET_NAME="my-hybrid-assets-$(aws sts get-caller-identity --query Account --output text)"
+LOG_FILE="/var/log/hybrid-assets-sync.log"
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: coredns-custom
-  namespace: kube-system
-data:
-  harbor.server: |
-    harbor.internal.company.io:53 {
-        errors
-        cache 30
-        hosts {
-            192.168.1.100 harbor.internal.company.io
-            fallthrough
-        }
-    }
+echo "$(date): 동기화 시작" >> ${LOG_FILE}
+
+for ARCH in amd64 arm64; do
+  REMOTE_URL="https://hybrid-assets.eks.amazonaws.com/releases/latest/bin/linux/${ARCH}/nodeadm"
+  S3_KEY="releases/latest/bin/linux/${ARCH}/nodeadm"
+  LOCAL_TMP="/tmp/nodeadm-${ARCH}"
+
+  # 다운로드
+  curl -sLo "${LOCAL_TMP}" "${REMOTE_URL}"
+
+  # 기존 파일과 체크섬 비교
+  LOCAL_SHA=$(sha256sum "${LOCAL_TMP}" | awk '{print $1}')
+  REMOTE_SHA=$(aws s3api head-object --bucket ${BUCKET_NAME} --key ${S3_KEY} \
+    --query 'Metadata.sha256' --output text 2>/dev/null || echo "none")
+
+  if [ "${LOCAL_SHA}" != "${REMOTE_SHA}" ]; then
+    echo "$(date): 새 버전 감지 (${ARCH}) — 업로드 중" >> ${LOG_FILE}
+    aws s3 cp "${LOCAL_TMP}" "s3://${BUCKET_NAME}/${S3_KEY}" \
+      --metadata sha256="${LOCAL_SHA}"
+  else
+    echo "$(date): 변경 없음 (${ARCH})" >> ${LOG_FILE}
+  fi
+
+  rm -f "${LOCAL_TMP}"
+done
+
+echo "$(date): 동기화 완료" >> ${LOG_FILE}
 ```
 
 ---
