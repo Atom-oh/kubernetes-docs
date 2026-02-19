@@ -70,30 +70,46 @@ This training content provides quizzes for each topic along with the learning ma
 9. [Networking Concepts](./cilium/networking-concepts.md) | [Quiz](./quizzes/cilium/networking-concepts-quiz.md)
 10. [Glossary](./cilium/glossary.md) | [Quiz](./quizzes/cilium/glossary-quiz.md)
 
-### Advanced Topics
-1. [Policy Management with Kyverno](./advanced/01-kyverno-policy-management.md) | [Quiz](./quizzes/advanced/01-kyverno-policy-management-quiz.md)
-2. Custom Scheduler
-   - [Part 1: Custom Scheduler Basics](./advanced/02-custom-scheduler-part1.md) | [Quiz](./quizzes/advanced/02-custom-scheduler-part1-quiz.md)
-   - [Part 2: Scheduler Extensions and Framework](./advanced/02-custom-scheduler-part2.md) | [Quiz](./quizzes/advanced/02-custom-scheduler-part2-quiz.md)
-   - [Part 3: Custom Scheduler Implementation Examples and Monitoring](./advanced/02-custom-scheduler-part3.md) | [Quiz](./quizzes/advanced/02-custom-scheduler-part3-quiz.md)
-3. [AI/ML Workloads](./advanced/03-ai-ml-workloads.md) | [Quiz](./quizzes/advanced/03-ai-ml-workloads-quiz.md)
-4. [vLLM Deployment](./advanced/04-vllm-deployment.md) | [Quiz](./quizzes/advanced/04-vllm-deployment-quiz.md)
-5. [Helm Chart Migration with KRO](./advanced/05-kro-helm-migration.md) | [Quiz](./quizzes/advanced/05-kro-helm-migration-quiz.md)
-6. [Kubernetes Authentication and Authorization](./advanced/06-kubernetes-auth-authz.md) | [Quiz](./quizzes/advanced/06-kubernetes-auth-authz-quiz.md)
-7. [Kubernetes Extension Mechanisms](./advanced/07-kubernetes-extensions.md) | [Quiz](./quizzes/advanced/07-kubernetes-extensions-quiz.md)
-8. [Agentic AI Platform on EKS](./advanced/08-agentic-ai-platform.md) | [Quiz](./quizzes/advanced/08-agentic-ai-platform-quiz.md)
+### AI/ML
+1. [AI/ML Workloads](./ai-ml/01-ai-ml-workloads.md) | [Quiz](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+2. [vLLM Deployment](./ai-ml/02-vllm-deployment.md) | [Quiz](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
+3. [Agentic AI Platform on EKS](./ai-ml/03-agentic-ai-platform.md) | [Quiz](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 
-### Tools and Integrations
-1. [ArgoCD](./tools/01-argocd.md) | [Quiz](./quizzes/tools/01-argocd-quiz.md)
-2. [Istio](./tools/02-istio.md) | [Quiz](./quizzes/tools/02-istio-quiz.md)
-3. [AWS Controllers for Kubernetes (ACK)](./tools/03-ack.md) | [Quiz](./quizzes/tools/03-ack-quiz.md)
-4. [Cilium](./tools/04-cilium.md) | [Quiz](./quizzes/tools/04-cilium-quiz.md)
-5. [KEDA](./tools/05-keda.md) | [Quiz](./quizzes/tools/05-keda-quiz.md)
-6. [Karpenter](./tools/06-karpenter.md) | [Quiz](./quizzes/tools/06-karpenter-quiz.md)
-7. [Monitoring Stack (VictoriaMetrics, Prometheus, Grafana)](./tools/07-monitoring-stack.md) | [Quiz](./quizzes/tools/07-monitoring-stack-quiz.md)
-8. [Logging Stack (Loki, Tempo)](./tools/08-logging-stack.md) | [Quiz](./quizzes/tools/08-logging-stack-quiz.md)
-9. [VPC Lattice](./tools/09-vpc-lattice.md) | [Quiz](./quizzes/tools/09-vpc-lattice-quiz.md)
-10. [Helm](./tools/10-helm.md) | [Quiz](./quizzes/tools/10-helm-quiz.md)
+### Networking
+1. [Cilium](./networking/01-cilium.md) | [Quiz](./quizzes/networking/04-cilium-quiz.md)
+2. [VPC Lattice](./networking/02-vpc-lattice.md) | [Quiz](./quizzes/networking/09-vpc-lattice-quiz.md)
+
+### Service Mesh
+1. [Istio](./service-mesh/02-istio.md) | [Quiz](./quizzes/service-mesh/02-istio-quiz.md)
+
+### Security & Policy
+1. [Policy Management with Kyverno](./security/01-kyverno-policy-management.md) | [Quiz](./quizzes/security/01-kyverno-policy-management-quiz.md)
+2. [Kubernetes Authentication and Authorization](./security/02-kubernetes-auth-authz.md) | [Quiz](./quizzes/security/06-kubernetes-auth-authz-quiz.md)
+
+### GitOps
+1. [ArgoCD](./gitops/01-argocd.md) | [Quiz](./quizzes/gitops/01-argocd-quiz.md)
+
+### Autoscaling
+1. [KEDA](./autoscaling/01-keda.md) | [Quiz](./quizzes/autoscaling/05-keda-quiz.md)
+2. [Karpenter](./autoscaling/02-karpenter.md) | [Quiz](./quizzes/autoscaling/06-karpenter-quiz.md)
+
+### Observability
+1. [Monitoring Stack (VictoriaMetrics, Prometheus, Grafana)](./observability/01-monitoring-stack.md) | [Quiz](./quizzes/observability/07-monitoring-stack-quiz.md)
+2. [Logging Stack (Loki, Tempo)](./observability/02-logging-stack.md) | [Quiz](./quizzes/observability/08-logging-stack-quiz.md)
+
+### Scheduling
+1. Custom Scheduler
+   - [Part 1: Custom Scheduler Basics](./scheduling/01-custom-scheduler-part1.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+   - [Part 2: Scheduler Extensions and Framework](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+   - [Part 3: Custom Scheduler Implementation Examples and Monitoring](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+
+### Package Management
+1. [Helm](./package-management/01-helm.md) | [Quiz](./quizzes/package-management/10-helm-quiz.md)
+2. [Helm Chart Migration with KRO](./package-management/02-kro-helm-migration.md) | [Quiz](./quizzes/package-management/05-kro-helm-migration-quiz.md)
+
+### Platform & AWS Integration
+1. [AWS Controllers for Kubernetes (ACK)](./platform/01-ack.md) | [Quiz](./quizzes/platform/03-ack-quiz.md)
+2. [Kubernetes Extension Mechanisms](./platform/02-kubernetes-extensions.md) | [Quiz](./quizzes/platform/07-kubernetes-extensions-quiz.md)
 
 ## Lab Guides
 
@@ -112,7 +128,7 @@ We provide hands-on lab guides for practicing in real environments after learnin
 3. Execute commands and example code hands-on in a practice environment
 
 ### Learning Path for Advanced Users
-1. Study in this order: **Amazon EKS** -> **Advanced Topics** -> **Tools and Integrations**
+1. Study in this order: **Amazon EKS** -> **AI/ML** -> **Service Mesh** -> **Security & Policy**
 2. Deep dive into networking with the **Cilium** section
 3. Focus on specific tools or technologies for in-depth learning
 

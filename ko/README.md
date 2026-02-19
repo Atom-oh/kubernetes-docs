@@ -70,30 +70,46 @@
 9. [네트워킹 개념](./cilium/networking-concepts.md) | [퀴즈](./quizzes/cilium/networking-concepts-quiz.md)
 10. [용어집](./cilium/glossary.md) | [퀴즈](./quizzes/cilium/glossary-quiz.md)
 
-### 고급 주제
-1. [Kyverno를 사용한 정책 관리](./advanced/01-kyverno-policy-management.md) | [퀴즈](./quizzes/advanced/01-kyverno-policy-management-quiz.md)
-2. Custom Scheduler
-   - [Part 1: Custom Scheduler 기초](./advanced/02-custom-scheduler-part1.md) | [퀴즈](./quizzes/advanced/02-custom-scheduler-part1-quiz.md)
-   - [Part 2: 스케줄러 확장 및 프레임워크](./advanced/02-custom-scheduler-part2.md) | [퀴즈](./quizzes/advanced/02-custom-scheduler-part2-quiz.md)
-   - [Part 3: 커스텀 스케줄러 구현 사례 및 모니터링](./advanced/02-custom-scheduler-part3.md) | [퀴즈](./quizzes/advanced/02-custom-scheduler-part3-quiz.md)
-3. [AI/ML 워크로드](./advanced/03-ai-ml-workloads.md) | [퀴즈](./quizzes/advanced/03-ai-ml-workloads-quiz.md)
-4. [vLLM 배포](./advanced/04-vllm-deployment.md) | [퀴즈](./quizzes/advanced/04-vllm-deployment-quiz.md)
-5. [KRO를 활용한 Helm 차트 마이그레이션](./advanced/05-kro-helm-migration.md) | [퀴즈](./quizzes/advanced/05-kro-helm-migration-quiz.md)
-6. [Kubernetes 인증 및 권한 부여](./advanced/06-kubernetes-auth-authz.md) | [퀴즈](./quizzes/advanced/06-kubernetes-auth-authz-quiz.md)
-7. [Kubernetes 확장 메커니즘](./advanced/07-kubernetes-extensions.md) | [퀴즈](./quizzes/advanced/07-kubernetes-extensions-quiz.md)
-8. [Agentic AI 플랫폼](./advanced/08-agentic-ai-platform.md) | [퀴즈](./quizzes/advanced/08-agentic-ai-platform-quiz.md)
+### AI/ML
+1. [AI/ML 워크로드](./ai-ml/01-ai-ml-workloads.md) | [퀴즈](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+2. [vLLM 배포](./ai-ml/02-vllm-deployment.md) | [퀴즈](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
+3. [Agentic AI 플랫폼](./ai-ml/03-agentic-ai-platform.md) | [퀴즈](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 
-### 도구 및 통합
-1. [ArgoCD](./tools/01-argocd.md) | [퀴즈](./quizzes/tools/01-argocd-quiz.md)
-2. [Istio](./tools/02-istio.md) | [퀴즈](./quizzes/tools/02-istio-quiz.md)
-3. [AWS Controllers for Kubernetes (ACK)](./tools/03-ack.md) | [퀴즈](./quizzes/tools/03-ack-quiz.md)
-4. [Cilium](./tools/04-cilium.md) | [퀴즈](./quizzes/tools/04-cilium-quiz.md)
-5. [KEDA](./tools/05-keda.md) | [퀴즈](./quizzes/tools/05-keda-quiz.md)
-6. [Karpenter](./tools/06-karpenter.md) | [퀴즈](./quizzes/tools/06-karpenter-quiz.md)
-7. [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](./tools/07-monitoring-stack.md) | [퀴즈](./quizzes/tools/07-monitoring-stack-quiz.md)
-8. [로깅 스택 (Loki, Tempo)](./tools/08-logging-stack.md) | [퀴즈](./quizzes/tools/08-logging-stack-quiz.md)
-9. [VPC Lattice](./tools/09-vpc-lattice.md) | [퀴즈](./quizzes/tools/09-vpc-lattice-quiz.md)
-10. [Helm](./tools/10-helm.md) | [퀴즈](./quizzes/tools/10-helm-quiz.md)
+### Networking
+1. [Cilium](./networking/01-cilium.md) | [퀴즈](./quizzes/networking/04-cilium-quiz.md)
+2. [VPC Lattice](./networking/02-vpc-lattice.md) | [퀴즈](./quizzes/networking/09-vpc-lattice-quiz.md)
+
+### Service Mesh
+1. [Istio](./service-mesh/02-istio.md) | [퀴즈](./quizzes/service-mesh/02-istio-quiz.md)
+
+### Security & Policy
+1. [Kyverno를 사용한 정책 관리](./security/01-kyverno-policy-management.md) | [퀴즈](./quizzes/security/01-kyverno-policy-management-quiz.md)
+2. [Kubernetes 인증 및 권한 부여](./security/02-kubernetes-auth-authz.md) | [퀴즈](./quizzes/security/06-kubernetes-auth-authz-quiz.md)
+
+### GitOps
+1. [ArgoCD](./gitops/01-argocd.md) | [퀴즈](./quizzes/gitops/01-argocd-quiz.md)
+
+### Autoscaling
+1. [KEDA](./autoscaling/01-keda.md) | [퀴즈](./quizzes/autoscaling/05-keda-quiz.md)
+2. [Karpenter](./autoscaling/02-karpenter.md) | [퀴즈](./quizzes/autoscaling/06-karpenter-quiz.md)
+
+### Observability
+1. [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](./observability/01-monitoring-stack.md) | [퀴즈](./quizzes/observability/07-monitoring-stack-quiz.md)
+2. [로깅 스택 (Loki, Tempo)](./observability/02-logging-stack.md) | [퀴즈](./quizzes/observability/08-logging-stack-quiz.md)
+
+### Scheduling
+1. Custom Scheduler
+   - [Part 1: Custom Scheduler 기초](./scheduling/01-custom-scheduler-part1.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+   - [Part 2: 스케줄러 확장 및 프레임워크](./scheduling/02-custom-scheduler-part2.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+   - [Part 3: 커스텀 스케줄러 구현 사례 및 모니터링](./scheduling/03-custom-scheduler-part3.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+
+### Package Management
+1. [Helm](./package-management/01-helm.md) | [퀴즈](./quizzes/package-management/10-helm-quiz.md)
+2. [KRO를 활용한 Helm 차트 마이그레이션](./package-management/02-kro-helm-migration.md) | [퀴즈](./quizzes/package-management/05-kro-helm-migration-quiz.md)
+
+### Platform & AWS Integration
+1. [AWS Controllers for Kubernetes (ACK)](./platform/01-ack.md) | [퀴즈](./quizzes/platform/03-ack-quiz.md)
+2. [Kubernetes 확장 메커니즘](./platform/02-kubernetes-extensions.md) | [퀴즈](./quizzes/platform/07-kubernetes-extensions-quiz.md)
 
 ## 실습 가이드
 
@@ -112,7 +128,7 @@
 3. 실습 환경에서 직접 명령어와 예제 코드 실행
 
 ### 고급 사용자를 위한 학습 순서
-1. **Amazon EKS** → **고급 주제** → **도구 및 통합** 순서로 학습
+1. **Amazon EKS** → **AI/ML** → **Service Mesh** → **Security & Policy** 순서로 학습
 2. **Cilium** 섹션으로 네트워킹 심화 학습
 3. 특정 도구나 기술에 집중하여 심화 학습
 
