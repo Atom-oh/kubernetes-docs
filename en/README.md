@@ -19,6 +19,7 @@ This training content provides quizzes for each topic along with the learning ma
 2. [Linux Operations Skills](./basics/02-linux-advanced.md) | [Quiz](./quizzes/basics/02-linux-advanced-quiz.md) | [Lab](./labs/basics/02-linux-advanced-lab.md)
 3. [Container Technology](./basics/03-container-technology.md) | [Quiz](./quizzes/basics/03-container-technology-quiz.md) | [Lab](./labs/basics/03-container-technology-lab.md)
 4. [Introduction to Kubernetes](./basics/04-kubernetes-introduction.md) | [Quiz](./quizzes/basics/04-kubernetes-introduction-quiz.md)
+5. [eBPF Fundamentals and Practical Applications](./basics/05-ebpf-fundamentals.md) | [Quiz](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
 
 ### Kubernetes Core Concepts
 1. [Cluster Architecture](./core/01-cluster-architecture.md) | [Quiz](./quizzes/core/01-cluster-architecture-quiz.md)
@@ -56,7 +57,29 @@ This training content provides quizzes for each topic along with the learning ma
 9. [EKS Troubleshooting](./eks/09-eks-troubleshooting.md) | [Quiz](./quizzes/eks/09-eks-troubleshooting-quiz.md)
 10. [EKS Resiliency and High Availability](./eks/10-eks-resiliency.md) | [Quiz](./quizzes/eks/10-eks-resiliency-quiz.md)
 11. [EKS Advanced Debugging](./eks/11-eks-advanced-debugging.md) | [Quiz](./quizzes/eks/11-eks-advanced-debugging-quiz.md)
-12. [EKS Hybrid Nodes](./eks/12-eks-hybrid-nodes.md) | [Quiz](./quizzes/eks/12-eks-hybrid-nodes-quiz.md)
+
+### EKS Hybrid Nodes
+1. [EKS Hybrid Nodes Introduction](./eks-hybrid-nodes/README.md)
+2. [Prerequisites](./eks-hybrid-nodes/01-prerequisites.md) | [Quiz](./quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+3. [Network Configuration](./eks-hybrid-nodes/02-network-configuration.md) | [Quiz](./quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+4. [Air-Gap Environment Setup](./eks-hybrid-nodes/03-airgap-setup.md) | [Quiz](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+5. [Node Bootstrap](./eks-hybrid-nodes/04-node-bootstrap.md) | [Quiz](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+6. [GPU Server Integration](./eks-hybrid-nodes/05-gpu-integration.md) | [Quiz](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+7. [Workload Placement Strategies](./eks-hybrid-nodes/06-workload-placement.md) | [Quiz](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+8. [Cost Optimization](./eks-hybrid-nodes/07-cost-optimization.md) | [Quiz](./quizzes/eks-hybrid-nodes/07-cost-optimization-quiz.md)
+9. [Operations and Maintenance](./eks-hybrid-nodes/08-operations.md) | [Quiz](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+
+### EKS Auto Mode
+1. [EKS Auto Mode Introduction](./eks-auto-mode/README.md)
+2. [Getting Started](./eks-auto-mode/01-getting-started.md) | [Quiz](./quizzes/eks-auto-mode/01-getting-started-quiz.md)
+3. [NodePool Configuration](./eks-auto-mode/02-nodepool-configuration.md) | [Quiz](./quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
+4. [Scaling Behavior](./eks-auto-mode/03-scaling-behavior.md) | [Quiz](./quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
+5. [Spot Instance Strategies](./eks-auto-mode/04-spot-strategies.md) | [Quiz](./quizzes/eks-auto-mode/04-spot-strategies-quiz.md)
+6. [Operations and Management](./eks-auto-mode/05-operations.md) | [Quiz](./quizzes/eks-auto-mode/05-operations-quiz.md)
+7. [Cost Management](./eks-auto-mode/06-cost-management.md) | [Quiz](./quizzes/eks-auto-mode/06-cost-management-quiz.md)
+8. [Node Lifecycle](./eks-auto-mode/07-node-lifecycle.md) | [Quiz](./quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
+9. [Workload Optimization](./eks-auto-mode/08-workload-optimization.md) | [Quiz](./quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
+10. [Migration Guide](./eks-auto-mode/09-migration-guide.md) | [Quiz](./quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
 ### Cilium
 1. [Introduction to Cilium](./cilium/README.md)
@@ -81,6 +104,8 @@ This training content provides quizzes for each topic along with the learning ma
 
 ### Service Mesh
 1. [Istio](./service-mesh/02-istio.md) | [Quiz](./quizzes/service-mesh/02-istio-quiz.md)
+2. [Linkerd](./service-mesh/03-linkerd.md) | [Quiz](./quizzes/service-mesh/03-linkerd-quiz.md)
+3. [Cilium Service Mesh](./service-mesh/04-cilium-service-mesh.md) | [Quiz](./quizzes/service-mesh/04-cilium-service-mesh-quiz.md)
 
 ### Security & Policy
 1. [Policy Management with Kyverno](./security/01-kyverno-policy-management.md) | [Quiz](./quizzes/security/01-kyverno-policy-management-quiz.md)
@@ -96,6 +121,7 @@ This training content provides quizzes for each topic along with the learning ma
 ### Observability
 1. [Monitoring Stack (VictoriaMetrics, Prometheus, Grafana)](./observability/01-monitoring-stack.md) | [Quiz](./quizzes/observability/07-monitoring-stack-quiz.md)
 2. [Logging Stack (Loki, Tempo)](./observability/02-logging-stack.md) | [Quiz](./quizzes/observability/08-logging-stack-quiz.md)
+3. [Observability Optimization Guide](./advanced/09-observability-optimization.md) | [Quiz](./quizzes/advanced/09-observability-optimization-quiz.md)
 
 ### Scheduling
 1. Custom Scheduler

@@ -10,6 +10,7 @@
 * [Linux Operations Skills](basics/02-linux-advanced.md)
 * [Container Technology](basics/03-container-technology.md)
 * [Introduction to Kubernetes](basics/04-kubernetes-introduction.md)
+* [eBPF Fundamentals and Practical Applications](basics/05-ebpf-fundamentals.md)
 
 ## Kubernetes Core Concepts
 
@@ -50,7 +51,31 @@
 * [EKS Troubleshooting](eks/09-eks-troubleshooting.md)
 * [EKS Resiliency and High Availability](eks/10-eks-resiliency.md)
 * [EKS Advanced Debugging](eks/11-eks-advanced-debugging.md)
-* [EKS Hybrid Nodes](eks/12-eks-hybrid-nodes.md)
+
+## EKS Hybrid Nodes
+
+* [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
+    * [Prerequisites](eks-hybrid-nodes/01-prerequisites.md)
+    * [Network Configuration](eks-hybrid-nodes/02-network-configuration.md)
+    * [Air-Gap Environment Setup](eks-hybrid-nodes/03-airgap-setup.md)
+    * [Node Bootstrap](eks-hybrid-nodes/04-node-bootstrap.md)
+    * [GPU Server Integration](eks-hybrid-nodes/05-gpu-integration.md)
+    * [Workload Placement Strategies](eks-hybrid-nodes/06-workload-placement.md)
+    * [Cost Optimization](eks-hybrid-nodes/07-cost-optimization.md)
+    * [Operations and Maintenance](eks-hybrid-nodes/08-operations.md)
+
+## EKS Auto Mode
+
+* [EKS Auto Mode](eks-auto-mode/README.md)
+    * [Getting Started](eks-auto-mode/01-getting-started.md)
+    * [NodePool Configuration](eks-auto-mode/02-nodepool-configuration.md)
+    * [Scaling Behavior](eks-auto-mode/03-scaling-behavior.md)
+    * [Spot Instance Strategies](eks-auto-mode/04-spot-strategies.md)
+    * [Operations and Management](eks-auto-mode/05-operations.md)
+    * [Cost Management](eks-auto-mode/06-cost-management.md)
+    * [Node Lifecycle](eks-auto-mode/07-node-lifecycle.md)
+    * [Workload Optimization](eks-auto-mode/08-workload-optimization.md)
+    * [Migration Guide](eks-auto-mode/09-migration-guide.md)
 
 ## AI/ML
 
@@ -114,6 +139,8 @@
         * [Istio vs VPC Lattice](service-mesh/istio/comparison/02-istio-vs-lattice.md)
     * [Troubleshooting](service-mesh/istio/troubleshooting/common-errors.md)
     * [Best Practices](service-mesh/istio/best-practices.md)
+* [Linkerd](service-mesh/03-linkerd.md)
+* [Cilium Service Mesh](service-mesh/04-cilium-service-mesh.md)
 
 ## Security & Policy
 
@@ -133,6 +160,7 @@
 
 * [Monitoring Stack (VictoriaMetrics, Prometheus, Grafana)](observability/01-monitoring-stack.md)
 * [Logging Stack (Loki, Tempo)](observability/02-logging-stack.md)
+* [Observability Optimization Guide](advanced/09-observability-optimization.md)
 
 ## Scheduling
 
@@ -182,6 +210,7 @@
     * [Linux Operations Skills Quiz](quizzes/basics/02-linux-advanced-quiz.md)
     * [Container Technology Quiz](quizzes/basics/03-container-technology-quiz.md)
     * [Introduction to Kubernetes Quiz](quizzes/basics/04-kubernetes-introduction-quiz.md)
+    * [eBPF Fundamentals and Practical Applications Quiz](quizzes/basics/05-ebpf-fundamentals-quiz.md)
 * [Cluster Architecture Quiz](quizzes/core/01-cluster-architecture-quiz.md)
     * [Pods and Workloads Quiz](quizzes/core/02-pods-and-workloads-quiz.md)
     * [Services and Networking Quiz](quizzes/core/03-services-networking-quiz.md)
@@ -213,7 +242,28 @@
     * [EKS Troubleshooting Quiz](quizzes/eks/09-eks-troubleshooting-quiz.md)
     * [EKS Resiliency and High Availability Quiz](quizzes/eks/10-eks-resiliency-quiz.md)
     * [EKS Advanced Debugging Quiz](quizzes/eks/11-eks-advanced-debugging-quiz.md)
-    * [EKS Hybrid Nodes Quiz](quizzes/eks/12-eks-hybrid-nodes-quiz.md)
+
+* EKS Hybrid Nodes
+    * [Prerequisites Quiz](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+    * [Network Configuration Quiz](quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+    * [Air-Gap Environment Setup Quiz](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+    * [Node Bootstrap Quiz](quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+    * [GPU Server Integration Quiz](quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+    * [Workload Placement Strategies Quiz](quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+    * [Cost Optimization Quiz](quizzes/eks-hybrid-nodes/07-cost-optimization-quiz.md)
+    * [Operations and Maintenance Quiz](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+
+* EKS Auto Mode
+    * [Getting Started Quiz](quizzes/eks-auto-mode/01-getting-started-quiz.md)
+    * [NodePool Configuration Quiz](quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
+    * [Scaling Behavior Quiz](quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
+    * [Spot Instance Strategies Quiz](quizzes/eks-auto-mode/04-spot-strategies-quiz.md)
+    * [Operations and Management Quiz](quizzes/eks-auto-mode/05-operations-quiz.md)
+    * [Cost Management Quiz](quizzes/eks-auto-mode/06-cost-management-quiz.md)
+    * [Node Lifecycle Quiz](quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
+    * [Workload Optimization Quiz](quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
+    * [Migration Guide Quiz](quizzes/eks-auto-mode/09-migration-guide-quiz.md)
+
 * Cilium
     * [Part 1: Introduction Quiz](quizzes/cilium/01-introduction-quiz.md)
     * [Part 2: eBPF Quiz](quizzes/cilium/02-ebpf-quiz.md)
@@ -236,6 +286,8 @@
 
 * Service Mesh
     * [Istio Quiz](quizzes/service-mesh/02-istio-quiz.md)
+    * [Linkerd Quiz](quizzes/service-mesh/03-linkerd-quiz.md)
+    * [Cilium Service Mesh Quiz](quizzes/service-mesh/04-cilium-service-mesh-quiz.md)
     * Istio Detailed Quiz
         * [Traffic Management Quiz](quizzes/service-mesh/istio/traffic-management.md)
         * [Security Quiz](quizzes/service-mesh/istio/security.md)
@@ -258,6 +310,7 @@
 * Observability
     * [Monitoring Stack Quiz](quizzes/observability/07-monitoring-stack-quiz.md)
     * [Logging Stack Quiz](quizzes/observability/08-logging-stack-quiz.md)
+    * [Observability Optimization Guide Quiz](quizzes/advanced/09-observability-optimization-quiz.md)
 
 * Scheduling
     * [Custom Scheduler Quiz - Part 1](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)

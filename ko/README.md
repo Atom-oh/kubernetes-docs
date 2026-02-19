@@ -19,6 +19,7 @@
 2. [Linux 운영 기술](./basics/02-linux-advanced.md) | [퀴즈](./quizzes/basics/02-linux-advanced-quiz.md) | [실습](./labs/basics/02-linux-advanced-lab.md)
 3. [컨테이너 기술](./basics/03-container-technology.md) | [퀴즈](./quizzes/basics/03-container-technology-quiz.md) | [실습](./labs/basics/03-container-technology-lab.md)
 4. [Kubernetes 소개](./basics/04-kubernetes-introduction.md) | [퀴즈](./quizzes/basics/04-kubernetes-introduction-quiz.md)
+5. [eBPF 기초와 실무 활용](./basics/05-ebpf-fundamentals.md) | [퀴즈](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
 
 ### Kubernetes 핵심 개념
 1. [클러스터 아키텍처](./core/01-cluster-architecture.md) | [퀴즈](./quizzes/core/01-cluster-architecture-quiz.md)
@@ -56,7 +57,29 @@
 9. [EKS 문제 해결](./eks/09-eks-troubleshooting.md) | [퀴즈](./quizzes/eks/09-eks-troubleshooting-quiz.md)
 10. [EKS 복원력과 고가용성](./eks/10-eks-resiliency.md) | [퀴즈](./quizzes/eks/10-eks-resiliency-quiz.md)
 11. [EKS 고급 디버깅](./eks/11-eks-advanced-debugging.md) | [퀴즈](./quizzes/eks/11-eks-advanced-debugging-quiz.md)
-12. [EKS Hybrid Nodes](./eks/12-eks-hybrid-nodes.md) | [퀴즈](./quizzes/eks/12-eks-hybrid-nodes-quiz.md)
+
+### EKS Hybrid Nodes
+1. [EKS Hybrid Nodes 소개](./eks-hybrid-nodes/README.md)
+2. [사전 요구 사항](./eks-hybrid-nodes/01-prerequisites.md) | [퀴즈](./quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+3. [네트워크 구성](./eks-hybrid-nodes/02-network-configuration.md) | [퀴즈](./quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+4. [에어갭 환경 구성](./eks-hybrid-nodes/03-airgap-setup.md) | [퀴즈](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+5. [노드 부트스트랩](./eks-hybrid-nodes/04-node-bootstrap.md) | [퀴즈](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+6. [GPU 서버 통합](./eks-hybrid-nodes/05-gpu-integration.md) | [퀴즈](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+7. [워크로드 배치 전략](./eks-hybrid-nodes/06-workload-placement.md) | [퀴즈](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+8. [비용 최적화](./eks-hybrid-nodes/07-cost-optimization.md) | [퀴즈](./quizzes/eks-hybrid-nodes/07-cost-optimization-quiz.md)
+9. [운영 및 유지보수](./eks-hybrid-nodes/08-operations.md) | [퀴즈](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+
+### EKS Auto Mode
+1. [EKS Auto Mode 소개](./eks-auto-mode/README.md)
+2. [Auto Mode 시작하기](./eks-auto-mode/01-getting-started.md) | [퀴즈](./quizzes/eks-auto-mode/01-getting-started-quiz.md)
+3. [NodePool 구성](./eks-auto-mode/02-nodepool-configuration.md) | [퀴즈](./quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
+4. [스케일링 동작](./eks-auto-mode/03-scaling-behavior.md) | [퀴즈](./quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
+5. [Spot 인스턴스 전략](./eks-auto-mode/04-spot-strategies.md) | [퀴즈](./quizzes/eks-auto-mode/04-spot-strategies-quiz.md)
+6. [운영 및 관리](./eks-auto-mode/05-operations.md) | [퀴즈](./quizzes/eks-auto-mode/05-operations-quiz.md)
+7. [비용 관리](./eks-auto-mode/06-cost-management.md) | [퀴즈](./quizzes/eks-auto-mode/06-cost-management-quiz.md)
+8. [노드 생명주기](./eks-auto-mode/07-node-lifecycle.md) | [퀴즈](./quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
+9. [워크로드별 최적화](./eks-auto-mode/08-workload-optimization.md) | [퀴즈](./quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
+10. [마이그레이션 가이드](./eks-auto-mode/09-migration-guide.md) | [퀴즈](./quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
 ### Cilium
 1. [Cilium 소개](./cilium/README.md)
@@ -81,6 +104,8 @@
 
 ### Service Mesh
 1. [Istio](./service-mesh/02-istio.md) | [퀴즈](./quizzes/service-mesh/02-istio-quiz.md)
+2. [Linkerd](./service-mesh/03-linkerd.md) | [퀴즈](./quizzes/service-mesh/03-linkerd-quiz.md)
+3. [Cilium Service Mesh](./service-mesh/04-cilium-service-mesh.md) | [퀴즈](./quizzes/service-mesh/04-cilium-service-mesh-quiz.md)
 
 ### Security & Policy
 1. [Kyverno를 사용한 정책 관리](./security/01-kyverno-policy-management.md) | [퀴즈](./quizzes/security/01-kyverno-policy-management-quiz.md)
@@ -96,6 +121,7 @@
 ### Observability
 1. [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](./observability/01-monitoring-stack.md) | [퀴즈](./quizzes/observability/07-monitoring-stack-quiz.md)
 2. [로깅 스택 (Loki, Tempo)](./observability/02-logging-stack.md) | [퀴즈](./quizzes/observability/08-logging-stack-quiz.md)
+3. [관측성 최적화 가이드](./advanced/09-observability-optimization.md) | [퀴즈](./quizzes/advanced/09-observability-optimization-quiz.md)
 
 ### Scheduling
 1. Custom Scheduler
