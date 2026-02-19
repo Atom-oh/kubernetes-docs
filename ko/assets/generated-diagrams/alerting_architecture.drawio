@@ -1,0 +1,95 @@
+<mxfile host="app.diagrams.net" agent="Claude">
+  <diagram name="Alerting Architecture" id="alerting-arch-1">
+    <mxGraphModel dx="1100" dy="600" grid="1" gridSize="10" page="0" background="none">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Kubernetes Cluster Container -->
+        <mxCell id="k8s-cluster" value="Kubernetes Cluster" style="swimlane;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;fontColor=#333;fontFamily=Amazon Ember;fontSize=14;fontStyle=1;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="20" y="40" width="400" height="220" as="geometry"/>
+        </mxCell>
+        <!-- Prometheus -->
+        <mxCell id="prometheus" value="Prometheus" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;fontColor=#FFFFFF;strokeColor=#333;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;" vertex="1" parent="k8s-cluster">
+          <mxGeometry x="30" y="60" width="100" height="50" as="geometry"/>
+        </mxCell>
+        <!-- PrometheusRule CRDs -->
+        <mxCell id="rules" value="PrometheusRule&#xa;CRDs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;fontColor=#FFFFFF;strokeColor=#333;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;" vertex="1" parent="k8s-cluster">
+          <mxGeometry x="30" y="140" width="100" height="50" as="geometry"/>
+        </mxCell>
+        <!-- Alertmanager -->
+        <mxCell id="alertmanager" value="Alertmanager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EB6E85;fontColor=#FFFFFF;strokeColor=#333;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;" vertex="1" parent="k8s-cluster">
+          <mxGeometry x="260" y="95" width="110" height="50" as="geometry"/>
+        </mxCell>
+        <!-- Internal connections -->
+        <mxCell id="edge1" value="규칙 평가" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=classic;endFill=1;fontFamily=Amazon Ember;fontSize=10;" edge="1" parent="k8s-cluster" source="prometheus" target="rules">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge2" value="알림 발생" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=classic;endFill=1;fontFamily=Amazon Ember;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="k8s-cluster" source="rules" target="alertmanager">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="165"/>
+              <mxPoint x="180" y="120"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- Notification Channels Container -->
+        <mxCell id="notify-container" value="알림 채널" style="swimlane;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666;fontColor=#333;fontFamily=Amazon Ember;fontSize=14;fontStyle=1;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="500" y="40" width="280" height="220" as="geometry"/>
+        </mxCell>
+        <!-- Slack -->
+        <mxCell id="slack" value="Slack" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4285F4;fontColor=#FFFFFF;strokeColor=#333;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;" vertex="1" parent="notify-container">
+          <mxGeometry x="30" y="50" width="90" height="40" as="geometry"/>
+        </mxCell>
+        <!-- PagerDuty -->
+        <mxCell id="pagerduty" value="PagerDuty" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4285F4;fontColor=#FFFFFF;strokeColor=#333;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;" vertex="1" parent="notify-container">
+          <mxGeometry x="150" y="50" width="90" height="40" as="geometry"/>
+        </mxCell>
+        <!-- Email -->
+        <mxCell id="email" value="Email" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4285F4;fontColor=#FFFFFF;strokeColor=#333;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;" vertex="1" parent="notify-container">
+          <mxGeometry x="30" y="120" width="90" height="40" as="geometry"/>
+        </mxCell>
+        <!-- Webhook -->
+        <mxCell id="webhook" value="Webhook" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4285F4;fontColor=#FFFFFF;strokeColor=#333;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;" vertex="1" parent="notify-container">
+          <mxGeometry x="150" y="120" width="90" height="40" as="geometry"/>
+        </mxCell>
+        <!-- Routing connections from Alertmanager to channels -->
+        <mxCell id="route1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="alertmanager" target="slack">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="160"/>
+              <mxPoint x="460" y="110"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="route2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="alertmanager" target="pagerduty">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="160"/>
+              <mxPoint x="460" y="110"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="route3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="alertmanager" target="email">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="160"/>
+              <mxPoint x="460" y="200"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="route4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="alertmanager" target="webhook">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="160"/>
+              <mxPoint x="460" y="200"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- Routing label -->
+        <mxCell id="routing-label" value="라우팅" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#545B64;" vertex="1" parent="1">
+          <mxGeometry x="440" y="130" width="50" height="20" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
