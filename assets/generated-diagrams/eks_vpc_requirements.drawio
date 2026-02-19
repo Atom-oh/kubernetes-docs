@@ -42,7 +42,7 @@
         
         <!-- Detailed Requirements -->
         <mxCell id="details-container" value="상세 요구 사항" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
-          <mxGeometry x="80" y="480" width="1000" height="280" as="geometry" />
+          <mxGeometry x="80" y="480" width="1000" height="360" as="geometry" />
         </mxCell>
         
         <!-- Subnet Details -->
@@ -50,7 +50,7 @@
           <mxGeometry x="100" y="520" width="220" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="subnet-desc" value="• 최소 2개의 가용 영역에 서브넷 배치&#xa;• 각 AZ에 퍼블릭 및 프라이빗 서브넷 권장&#xa;• 고가용성을 위한 다중 AZ 구성&#xa;• 로드 밸런서 배치를 위한 퍼블릭 서브넷&#xa;• 워커 노드 배치를 위한 프라이빗 서브넷" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="subnet-desc" value="• 최소 2개의 가용 영역에 서브넷 배치&#xa;• 각 AZ에 퍼블릭 및 프라이빗 서브넷 권장&#xa;• 고가용성을 위한 다중 AZ 구성&#xa;• 로드 밸런서 배치를 위한 퍼블릭 서브넷&#xa;• 워커 노드 배치를 위한 프라이빗 서브넷" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="100" y="560" width="220" height="80" as="geometry" />
         </mxCell>
         
@@ -59,7 +59,7 @@
           <mxGeometry x="340" y="520" width="220" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="ip-desc" value="• 노드당 최대 포드 수 고려&#xa;• ENI 및 보조 IP 주소 계산&#xa;• 향후 확장을 위한 여유 공간&#xa;• 일반적인 권장사항:&#xa;  - 소규모: /24 (256개 IP)&#xa;  - 중간규모: /20 (4,096개 IP)&#xa;  - 대규모: /16 (65,536개 IP)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="ip-desc" value="• 노드당 최대 포드 수 고려&#xa;• ENI 및 보조 IP 주소 계산&#xa;• 향후 확장을 위한 여유 공간&#xa;• 일반적인 권장사항:&#xa;  - 소규모: /24 (256개 IP)&#xa;  - 중간규모: /20 (4,096개 IP)&#xa;  - 대규모: /16 (65,536개 IP)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="340" y="560" width="220" height="80" as="geometry" />
         </mxCell>
         
@@ -68,7 +68,7 @@
           <mxGeometry x="580" y="520" width="220" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="dns-desc" value="• enableDnsHostnames: true&#xa;• enableDnsSupport: true&#xa;• 노드 간 통신을 위한 DNS 확인&#xa;• 서비스 디스커버리 지원&#xa;• AWS 서비스와의 통합을 위한 DNS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="dns-desc" value="• enableDnsHostnames: true&#xa;• enableDnsSupport: true&#xa;• 노드 간 통신을 위한 DNS 확인&#xa;• 서비스 디스커버리 지원&#xa;• AWS 서비스와의 통합을 위한 DNS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="580" y="560" width="220" height="80" as="geometry" />
         </mxCell>
         
@@ -77,7 +77,7 @@
           <mxGeometry x="820" y="520" width="220" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="internet-desc" value="• 컨테이너 이미지 다운로드&#xa;• AWS API 호출&#xa;• 외부 서비스와의 통신&#xa;• 패키지 및 업데이트 다운로드&#xa;• NAT 게이트웨이 (권장) 또는&#xa;  NAT 인스턴스 사용" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="internet-desc" value="• 컨테이너 이미지 다운로드&#xa;• AWS API 호출&#xa;• 외부 서비스와의 통신&#xa;• 패키지 및 업데이트 다운로드&#xa;• NAT 게이트웨이 (권장) 또는&#xa;  NAT 인스턴스 사용" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="820" y="560" width="220" height="80" as="geometry" />
         </mxCell>
         
@@ -86,8 +86,8 @@
           <mxGeometry x="100" y="660" width="940" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="config-code" value="# VPC 생성 예시&#xa;aws ec2 create-vpc --cidr-block 10.0.0.0/16 --enable-dns-hostnames --enable-dns-support&#xa;&#xa;# 서브넷 생성 예시&#xa;aws ec2 create-subnet --vpc-id vpc-12345678 --cidr-block 10.0.1.0/24 --availability-zone us-west-2a&#xa;aws ec2 create-subnet --vpc-id vpc-12345678 --cidr-block 10.0.2.0/24 --availability-zone us-west-2b&#xa;&#xa;# 인터넷 게이트웨이 연결&#xa;aws ec2 create-internet-gateway&#xa;aws ec2 attach-internet-gateway --vpc-id vpc-12345678 --internet-gateway-id igw-12345678" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
-          <mxGeometry x="110" y="700" width="920" height="50" as="geometry" />
+        <mxCell id="config-code" value="# VPC 생성 예시&#xa;aws ec2 create-vpc --cidr-block 10.0.0.0/16 --enable-dns-hostnames --enable-dns-support&#xa;&#xa;# 서브넷 생성 예시&#xa;aws ec2 create-subnet --vpc-id vpc-12345678 --cidr-block 10.0.1.0/24 --availability-zone us-west-2a&#xa;aws ec2 create-subnet --vpc-id vpc-12345678 --cidr-block 10.0.2.0/24 --availability-zone us-west-2b&#xa;&#xa;# 인터넷 게이트웨이 연결&#xa;aws ec2 create-internet-gateway&#xa;aws ec2 attach-internet-gateway --vpc-id vpc-12345678 --internet-gateway-id igw-12345678" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Courier New;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="110" y="700" width="920" height="120" as="geometry" />
         </mxCell>
         
         <!-- Flow Connections -->

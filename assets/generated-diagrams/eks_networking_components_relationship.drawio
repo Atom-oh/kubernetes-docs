@@ -55,7 +55,7 @@
           <mxGeometry x="100" y="520" width="120" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="step1-desc" value="• 인터넷에서 IGW로 진입&#xa;• 퍼블릭 서브넷의 ALB/NLB로 라우팅&#xa;• 로드 밸런서가 프라이빗 서브넷의 워커 노드로 전달" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="step1-desc" value="• 인터넷에서 IGW로 진입&#xa;• 퍼블릭 서브넷의 ALB/NLB로 라우팅&#xa;• 로드 밸런서가 프라이빗 서브넷의 워커 노드로 전달" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="100" y="555" width="200" height="40" as="geometry" />
         </mxCell>
         
@@ -63,7 +63,7 @@
           <mxGeometry x="320" y="520" width="120" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="step2-desc" value="• 워커 노드에서 NAT 게이트웨이로&#xa;• NAT 게이트웨이에서 IGW로&#xa;• IGW에서 인터넷으로 나감" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="step2-desc" value="• 워커 노드에서 NAT 게이트웨이로&#xa;• NAT 게이트웨이에서 IGW로&#xa;• IGW에서 인터넷으로 나감" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="320" y="555" width="200" height="40" as="geometry" />
         </mxCell>
         
@@ -71,7 +71,7 @@
           <mxGeometry x="540" y="520" width="140" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="step3-desc" value="• 워커 노드와 EKS 컨트롤 플레인 간 직접 통신&#xa;• API 서버 호출 및 kubelet 통신&#xa;• 보안 그룹으로 트래픽 제어" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="step3-desc" value="• 워커 노드와 EKS 컨트롤 플레인 간 직접 통신&#xa;• API 서버 호출 및 kubelet 통신&#xa;• 보안 그룹으로 트래픽 제어" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="540" y="555" width="200" height="40" as="geometry" />
         </mxCell>
         
@@ -84,7 +84,7 @@
           <mxGeometry x="820" y="160" width="240" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="practice1-desc" value="• 최소 2개 이상의 가용 영역 사용&#xa;• 각 AZ에 퍼블릭/프라이빗 서브넷 배치&#xa;• 각 AZ에 NAT 게이트웨이 배치&#xa;• 로드 밸런서를 여러 AZ에 분산" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="practice1-desc" value="• 최소 2개 이상의 가용 영역 사용&#xa;• 각 AZ에 퍼블릭/프라이빗 서브넷 배치&#xa;• 각 AZ에 NAT 게이트웨이 배치&#xa;• 로드 밸런서를 여러 AZ에 분산" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="830" y="200" width="220" height="60" as="geometry" />
         </mxCell>
         
@@ -92,7 +92,7 @@
           <mxGeometry x="820" y="280" width="240" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="practice2-desc" value="• 워커 노드를 프라이빗 서브넷에 배치&#xa;• 보안 그룹으로 최소 권한 원칙 적용&#xa;• NACLs로 추가 네트워크 보안 계층&#xa;• VPC 엔드포인트로 AWS 서비스 접근" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="practice2-desc" value="• 워커 노드를 프라이빗 서브넷에 배치&#xa;• 보안 그룹으로 최소 권한 원칙 적용&#xa;• NACLs로 추가 네트워크 보안 계층&#xa;• VPC 엔드포인트로 AWS 서비스 접근" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="830" y="320" width="220" height="60" as="geometry" />
         </mxCell>
         
@@ -100,7 +100,7 @@
           <mxGeometry x="820" y="400" width="240" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="practice3-desc" value="• 적절한 인스턴스 타입 선택&#xa;• Enhanced Networking 활성화&#xa;• Placement Groups 고려&#xa;• 네트워크 대역폭 모니터링" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="practice3-desc" value="• 적절한 인스턴스 타입 선택&#xa;• Enhanced Networking 활성화&#xa;• Placement Groups 고려&#xa;• 네트워크 대역폭 모니터링" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="830" y="440" width="220" height="60" as="geometry" />
         </mxCell>
         
@@ -108,7 +108,7 @@
           <mxGeometry x="820" y="520" width="240" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="practice4-desc" value="• NAT 게이트웨이 vs NAT 인스턴스 비교&#xa;• VPC 엔드포인트로 데이터 전송 비용 절약&#xa;• 불필요한 크로스 AZ 트래픽 최소화&#xa;• 네트워크 사용량 모니터링 및 최적화" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="practice4-desc" value="• NAT 게이트웨이 vs NAT 인스턴스 비교&#xa;• VPC 엔드포인트로 데이터 전송 비용 절약&#xa;• 불필요한 크로스 AZ 트래픽 최소화&#xa;• 네트워크 사용량 모니터링 및 최적화" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="830" y="560" width="220" height="60" as="geometry" />
         </mxCell>
         
@@ -146,7 +146,6 @@
         <mxCell id="workers-to-cp" value="6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#9673A6;" edge="1" parent="1" source="worker-nodes" target="eks-cp">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="500" y="390" />
               <mxPoint x="500" y="390" />
             </Array>
           </mxGeometry>

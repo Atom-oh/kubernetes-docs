@@ -25,8 +25,8 @@
           <mxGeometry x="140" y="180" width="160" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="cp-inbound-rules" value="443/TCP:&#xa;워커 노드 보안 그룹" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Courier New;spacingTop=5;spacingLeft=5;" vertex="1" parent="1">
-          <mxGeometry x="145" y="205" width="150" height="30" as="geometry" />
+        <mxCell id="cp-inbound-rules" value="443/TCP:&#xa;워커 노드 보안 그룹" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Courier New;spacingTop=5;spacingLeft=5;" vertex="1" parent="1">
+          <mxGeometry x="145" y="205" width="150" height="50" as="geometry" />
         </mxCell>
         
         <!-- Control Plane Outbound -->
@@ -34,8 +34,8 @@
           <mxGeometry x="320" y="180" width="160" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="cp-outbound-rules" value="1025-65535/TCP:&#xa;워커 노드 보안 그룹" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Courier New;spacingTop=5;spacingLeft=5;" vertex="1" parent="1">
-          <mxGeometry x="325" y="205" width="150" height="30" as="geometry" />
+        <mxCell id="cp-outbound-rules" value="1025-65535/TCP:&#xa;워커 노드 보안 그룹" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Courier New;spacingTop=5;spacingLeft=5;" vertex="1" parent="1">
+          <mxGeometry x="325" y="205" width="150" height="50" as="geometry" />
         </mxCell>
         
         <!-- Worker Node Security Group -->
@@ -48,8 +48,8 @@
           <mxGeometry x="580" y="180" width="200" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="wn-inbound-rules" value="443/TCP: 컨트롤 플레인 보안 그룹&#xa;1025-65535/TCP: 컨트롤 플레인 보안 그룹&#xa;ALL: 워커 노드 보안 그룹" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=8;fontFamily=Courier New;spacingTop=5;spacingLeft=5;" vertex="1" parent="1">
-          <mxGeometry x="585" y="205" width="190" height="30" as="geometry" />
+        <mxCell id="wn-inbound-rules" value="443/TCP: 컨트롤 플레인 보안 그룹&#xa;1025-65535/TCP: 컨트롤 플레인 보안 그룹&#xa;ALL: 워커 노드 보안 그룹" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Courier New;spacingTop=5;spacingLeft=5;" vertex="1" parent="1">
+          <mxGeometry x="585" y="205" width="190" height="50" as="geometry" />
         </mxCell>
         
         <!-- Worker Node Outbound -->
@@ -57,12 +57,12 @@
           <mxGeometry x="800" y="180" width="200" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="wn-outbound-rules" value="ALL: 0.0.0.0/0" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Courier New;spacingTop=5;spacingLeft=5;" vertex="1" parent="1">
-          <mxGeometry x="805" y="205" width="190" height="30" as="geometry" />
+        <mxCell id="wn-outbound-rules" value="ALL: 0.0.0.0/0" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Courier New;spacingTop=5;spacingLeft=5;" vertex="1" parent="1">
+          <mxGeometry x="805" y="205" width="190" height="50" as="geometry" />
         </mxCell>
         
         <!-- Bidirectional Connection -->
-        <mxCell id="bidirectional" value="양방향 통신" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#FF9900;startArrow=classic;startFill=1;" edge="1" parent="1" source="cp-sg-container" target="wn-sg-container">
+        <mxCell id="bidirectional" value="양방향 통신&#xa;443/TCP, 1025-65535/TCP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#FF9900;startArrow=classic;startFill=1;" edge="1" parent="1" source="cp-sg-container" target="wn-sg-container">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         
@@ -76,7 +76,7 @@
           <mxGeometry x="100" y="560" width="200" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="cp-rules-desc" value="인바운드:&#xa;• 443/TCP: HTTPS API 서버 접근&#xa;• 워커 노드에서만 접근 허용&#xa;&#xa;아웃바운드:&#xa;• 1025-65535/TCP: kubelet 통신&#xa;• 워커 노드로만 송신&#xa;&#xa;목적:&#xa;• API 서버 보안&#xa;• 클러스터 관리 트래픽 제어" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="cp-rules-desc" value="인바운드:&#xa;• 443/TCP: HTTPS API 서버 접근&#xa;• 워커 노드에서만 접근 허용&#xa;&#xa;아웃바운드:&#xa;• 1025-65535/TCP: kubelet 통신&#xa;• 워커 노드로만 송신&#xa;&#xa;목적:&#xa;• API 서버 보안&#xa;• 클러스터 관리 트래픽 제어" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="100" y="600" width="200" height="110" as="geometry" />
         </mxCell>
         
@@ -85,7 +85,7 @@
           <mxGeometry x="320" y="560" width="200" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="wn-rules-desc" value="인바운드:&#xa;• 443/TCP: API 서버 접근&#xa;• 1025-65535/TCP: kubelet 포트&#xa;• ALL: 노드 간 통신 (포드 네트워킹)&#xa;&#xa;아웃바운드:&#xa;• ALL: 인터넷 접근 (이미지 다운로드 등)&#xa;&#xa;목적:&#xa;• 워커 노드 간 통신&#xa;• 외부 리소스 접근" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="wn-rules-desc" value="인바운드:&#xa;• 443/TCP: API 서버 접근&#xa;• 1025-65535/TCP: kubelet 포트&#xa;• ALL: 노드 간 통신 (포드 네트워킹)&#xa;&#xa;아웃바운드:&#xa;• ALL: 인터넷 접근 (이미지 다운로드 등)&#xa;&#xa;목적:&#xa;• 워커 노드 간 통신&#xa;• 외부 리소스 접근" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="320" y="600" width="200" height="110" as="geometry" />
         </mxCell>
         
@@ -94,7 +94,7 @@
           <mxGeometry x="540" y="560" width="200" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="additional-desc" value="로드 밸런서 보안 그룹:&#xa;• 80/443: 인터넷에서 접근&#xa;• 워커 노드로 트래픽 전달&#xa;&#xa;데이터베이스 보안 그룹:&#xa;• 3306/5432: 워커 노드에서만 접근&#xa;&#xa;관리 보안 그룹:&#xa;• 22/3389: 바스티온 호스트에서만 접근&#xa;• 관리 목적의 제한적 접근" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="additional-desc" value="로드 밸런서 보안 그룹:&#xa;• 80/443: 인터넷에서 접근&#xa;• 워커 노드로 트래픽 전달&#xa;&#xa;데이터베이스 보안 그룹:&#xa;• 3306/5432: 워커 노드에서만 접근&#xa;&#xa;관리 보안 그룹:&#xa;• 22/3389: 바스티온 호스트에서만 접근&#xa;• 관리 목적의 제한적 접근" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="540" y="600" width="200" height="110" as="geometry" />
         </mxCell>
         
@@ -103,7 +103,7 @@
           <mxGeometry x="760" y="560" width="200" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="sg-practices-desc" value="권장사항:&#xa;• 최소 권한 원칙 적용&#xa;• 명확한 명명 규칙 사용&#xa;• 정기적인 규칙 검토&#xa;• 불필요한 규칙 제거&#xa;&#xa;주의사항:&#xa;• 0.0.0.0/0 사용 최소화&#xa;• 포트 범위 최소화&#xa;• 소스/대상 명시적 지정&#xa;• 변경 사항 문서화" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="sg-practices-desc" value="권장사항:&#xa;• 최소 권한 원칙 적용&#xa;• 명확한 명명 규칙 사용&#xa;• 정기적인 규칙 검토&#xa;• 불필요한 규칙 제거&#xa;&#xa;주의사항:&#xa;• 0.0.0.0/0 사용 최소화&#xa;• 포트 범위 최소화&#xa;• 소스/대상 명시적 지정&#xa;• 변경 사항 문서화" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="760" y="600" width="200" height="110" as="geometry" />
         </mxCell>
         
