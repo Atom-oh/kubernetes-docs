@@ -52,19 +52,104 @@
 * [EKS 고급 디버깅](eks/11-eks-advanced-debugging.md)
 * [EKS Hybrid Nodes](eks/12-eks-hybrid-nodes.md)
 
-## Advanced Topic
+## AI/ML
 
-* [Kyverno를 사용한 정책 관리](advanced/01-kyverno-policy-management.md)
-* [Custom Scheduler](advanced/02-custom-scheduler-part1.md)
-    * [Part 1: 기본 개념](advanced/02-custom-scheduler-part1.md)
-    * [Part 2: 구현](advanced/02-custom-scheduler-part2.md)
-    * [Part 3: 고급 기능](advanced/02-custom-scheduler-part3.md)
-* [AI/ML 워크로드](advanced/03-ai-ml-workloads.md)
-* [vLLM 배포](advanced/04-vllm-deployment.md)
-* [KRO를 활용한 Helm 차트 마이그레이션](advanced/05-kro-helm-migration.md)
-* [Kubernetes 인증 및 권한 부여](advanced/06-kubernetes-auth-authz.md)
-* [Kubernetes 확장 메커니즘](advanced/07-kubernetes-extensions.md)
-* [Agentic AI 플랫폼](advanced/08-agentic-ai-platform.md)
+* [AI/ML 워크로드](ai-ml/01-ai-ml-workloads.md)
+* [vLLM 배포](ai-ml/02-vllm-deployment.md)
+* [Agentic AI 플랫폼](ai-ml/03-agentic-ai-platform.md)
+
+## Networking
+
+* [Cilium](networking/01-cilium.md)
+* [VPC Lattice](networking/02-vpc-lattice.md)
+
+## Service Mesh
+
+* [Istio](service-mesh/istio/README.md)
+    * [설치 및 초기 설정](service-mesh/istio/01-installation.md)
+    * [기본 개념](service-mesh/istio/02-basic-concepts.md)
+    * [아키텍처](service-mesh/istio/03-architecture.md)
+    * [AWS 통합](service-mesh/istio/04-aws-integration.md)
+    * [용어집](service-mesh/istio/glossary.md)
+    * [Traffic Management](service-mesh/istio/traffic-management/README.md)
+        * [Gateway와 VirtualService](service-mesh/istio/traffic-management/01-gateway-virtualservice.md)
+        * [라우팅](service-mesh/istio/traffic-management/02-routing.md)
+        * [DestinationRule](service-mesh/istio/traffic-management/03-destination-rule.md)
+        * [트래픽 분할](service-mesh/istio/traffic-management/04-traffic-splitting.md)
+        * [Retry 및 Timeout](service-mesh/istio/traffic-management/05-retry-timeout.md)
+        * [로드 밸런싱](service-mesh/istio/traffic-management/06-load-balancing.md)
+        * [Circuit Breaker](service-mesh/istio/traffic-management/07-circuit-breaker.md)
+        * [Fault Injection](service-mesh/istio/traffic-management/08-fault-injection.md)
+        * [Traffic Mirroring](service-mesh/istio/traffic-management/09-traffic-mirror.md)
+        * [Session Affinity](service-mesh/istio/traffic-management/10-session-affinity.md)
+        * [Egress 제어](service-mesh/istio/traffic-management/11-egress-control.md)
+        * [ServiceEntry](service-mesh/istio/traffic-management/12-service-entry.md)
+        * [WorkloadEntry](service-mesh/istio/traffic-management/13-workload-entry.md)
+    * [Security](service-mesh/istio/security/README.md)
+        * [mTLS](service-mesh/istio/security/01-mtls.md)
+        * [인증](service-mesh/istio/security/02-authentication.md)
+        * [권한 부여](service-mesh/istio/security/03-authorization.md)
+    * [Observability](service-mesh/istio/observability/README.md)
+        * [메트릭](service-mesh/istio/observability/01-metrics.md)
+        * [분산 추적](service-mesh/istio/observability/02-tracing.md)
+        * [로깅](service-mesh/istio/observability/03-logging.md)
+        * [대시보드](service-mesh/istio/observability/04-dashboards.md)
+    * [Resilience](service-mesh/istio/resilience/README.md)
+        * [Outlier Detection](service-mesh/istio/resilience/01-outlier-detection.md)
+        * [Rate Limiting](service-mesh/istio/resilience/02-rate-limiting.md)
+        * [Zone Aware Routing](service-mesh/istio/resilience/03-zone-aware-routing.md)
+    * [Advanced](service-mesh/istio/advanced/README.md)
+        * [Ambient Mode](service-mesh/istio/advanced/01-ambient-mode.md)
+        * [Multi-cluster](service-mesh/istio/advanced/02-multi-cluster.md)
+        * [EnvoyFilter](service-mesh/istio/advanced/03-envoy-filter.md)
+        * [DNS Caching](service-mesh/istio/advanced/04-dns-cache.md)
+        * [gRPC](service-mesh/istio/advanced/05-grpc.md)
+        * [WebSocket](service-mesh/istio/advanced/06-websocket.md)
+        * [Sidecar Injection](service-mesh/istio/advanced/07-sidecar-injection.md)
+        * [Argo Rollouts 통합](service-mesh/istio/advanced/08-argo-rollouts.md)
+        * [Zone-Aware Argo Rollouts](service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md)
+        * [AutoScaling using istio metrics](service-mesh/istio/advanced/10-keda-autoscaling.md)
+    * [비교 가이드](service-mesh/istio/comparison/README.md)
+        * [Service Mesh 솔루션 비교](service-mesh/istio/comparison/01-service-mesh-comparison.md)
+        * [Istio vs VPC Lattice](service-mesh/istio/comparison/02-istio-vs-lattice.md)
+    * [Troubleshooting](service-mesh/istio/troubleshooting/common-errors.md)
+    * [모범 사례](service-mesh/istio/best-practices.md)
+
+## Security & Policy
+
+* [Kyverno를 사용한 정책 관리](security/01-kyverno-policy-management.md)
+* [Kubernetes 인증 및 권한 부여](security/02-kubernetes-auth-authz.md)
+
+## GitOps
+
+* [ArgoCD](gitops/01-argocd.md)
+
+## Autoscaling
+
+* [KEDA](autoscaling/01-keda.md)
+* [Karpenter](autoscaling/02-karpenter.md)
+
+## Observability
+
+* [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](observability/01-monitoring-stack.md)
+* [로깅 스택 (Loki, Tempo)](observability/02-logging-stack.md)
+
+## Scheduling
+
+* [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
+    * [Part 1: 기본 개념](scheduling/01-custom-scheduler-part1.md)
+    * [Part 2: 구현](scheduling/02-custom-scheduler-part2.md)
+    * [Part 3: 고급 기능](scheduling/03-custom-scheduler-part3.md)
+
+## Package Management
+
+* [Helm](package-management/01-helm.md)
+* [KRO를 활용한 Helm 차트 마이그레이션](package-management/02-kro-helm-migration.md)
+
+## Platform & AWS Integration
+
+* [AWS Controllers for Kubernetes (ACK)](platform/01-ack.md)
+* [Kubernetes 확장 메커니즘](platform/02-kubernetes-extensions.md)
 
 ## Cilium
 
@@ -78,67 +163,6 @@
     * [Part 7: 고급 주제](cilium/07-advanced-topics.md)
     * [네트워킹 개념](cilium/networking-concepts.md)
 * [용어집](cilium/glossary.md)
-
-## Tools and Integrations
-
-* [ArgoCD](tools/01-argocd.md)
-* [Istio](tools/istio/README.md)
-    * [설치 및 초기 설정](tools/istio/01-installation.md)
-    * [기본 개념](tools/istio/02-basic-concepts.md)
-    * [아키텍처](tools/istio/03-architecture.md)
-    * [AWS 통합](tools/istio/04-aws-integration.md)
-    * [용어집](tools/istio/glossary.md)
-    * [Traffic Management](tools/istio/traffic-management/README.md)
-        * [Gateway와 VirtualService](tools/istio/traffic-management/01-gateway-virtualservice.md)
-        * [라우팅](tools/istio/traffic-management/02-routing.md)
-        * [DestinationRule](tools/istio/traffic-management/03-destination-rule.md)
-        * [트래픽 분할](tools/istio/traffic-management/04-traffic-splitting.md)
-        * [Retry 및 Timeout](tools/istio/traffic-management/05-retry-timeout.md)
-        * [로드 밸런싱](tools/istio/traffic-management/06-load-balancing.md)
-        * [Circuit Breaker](tools/istio/traffic-management/07-circuit-breaker.md)
-        * [Fault Injection](tools/istio/traffic-management/08-fault-injection.md)
-        * [Traffic Mirroring](tools/istio/traffic-management/09-traffic-mirror.md)
-        * [Session Affinity](tools/istio/traffic-management/10-session-affinity.md)
-        * [Egress 제어](tools/istio/traffic-management/11-egress-control.md)
-        * [ServiceEntry](tools/istio/traffic-management/12-service-entry.md)
-        * [WorkloadEntry](tools/istio/traffic-management/13-workload-entry.md)
-    * [Security](tools/istio/security/README.md)
-        * [mTLS](tools/istio/security/01-mtls.md)
-        * [인증](tools/istio/security/02-authentication.md)
-        * [권한 부여](tools/istio/security/03-authorization.md)
-    * [Observability](tools/istio/observability/README.md)
-        * [메트릭](tools/istio/observability/01-metrics.md)
-        * [분산 추적](tools/istio/observability/02-tracing.md)
-        * [로깅](tools/istio/observability/03-logging.md)
-        * [대시보드](tools/istio/observability/04-dashboards.md)
-    * [Resilience](tools/istio/resilience/README.md)
-        * [Outlier Detection](tools/istio/resilience/01-outlier-detection.md)
-        * [Rate Limiting](tools/istio/resilience/02-rate-limiting.md)
-        * [Zone Aware Routing](tools/istio/resilience/03-zone-aware-routing.md)
-    * [Advanced](tools/istio/advanced/README.md)
-        * [Ambient Mode](tools/istio/advanced/01-ambient-mode.md)
-        * [Multi-cluster](tools/istio/advanced/02-multi-cluster.md)
-        * [EnvoyFilter](tools/istio/advanced/03-envoy-filter.md)
-        * [DNS Caching](tools/istio/advanced/04-dns-cache.md)
-        * [gRPC](tools/istio/advanced/05-grpc.md)
-        * [WebSocket](tools/istio/advanced/06-websocket.md)
-        * [Sidecar Injection](tools/istio/advanced/07-sidecar-injection.md)
-        * [Argo Rollouts 통합](tools/istio/advanced/08-argo-rollouts.md)
-        * [Zone-Aware Argo Rollouts](tools/istio/advanced/09-zone-aware-argo-rollouts.md)
-        * [AutoScaling using istio metrics](tools/istio/advanced/10-keda-autoscaling.md)
-    * [비교 가이드](tools/istio/comparison/README.md)
-        * [Service Mesh 솔루션 비교](tools/istio/comparison/01-service-mesh-comparison.md)
-        * [Istio vs VPC Lattice](tools/istio/comparison/02-istio-vs-lattice.md)
-    * [Troubleshooting](tools/istio/troubleshooting/common-errors.md)
-    * [모범 사례](tools/istio/best-practices.md)
-* [AWS Controllers for Kubernetes (ACK)](tools/03-ack.md)
-* [Cilium](tools/04-cilium.md)
-* [KEDA](tools/05-keda.md)
-* [Karpenter](tools/06-karpenter.md)
-* [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](tools/07-monitoring-stack.md)
-* [로깅 스택 (Loki, Tempo)](tools/08-logging-stack.md)
-* [VPC Lattice](tools/09-vpc-lattice.md)
-* [Helm](tools/10-helm.md)
 
 ## 실습 가이드
 
@@ -201,32 +225,49 @@
     * [네트워킹 개념 퀴즈](quizzes/cilium/networking-concepts-quiz.md)
     * [용어집 퀴즈](quizzes/cilium/glossary-quiz.md)
 
-* Advanced Topic
-    * [Kyverno를 사용한 정책 관리 퀴즈](quizzes/advanced/01-kyverno-policy-management-quiz.md)
-    * [Custom Scheduler 퀴즈 - Part 1](quizzes/advanced/02-custom-scheduler-part1-quiz.md)
-    * [Custom Scheduler 퀴즈 - Part 2](quizzes/advanced/02-custom-scheduler-part2-quiz.md)
-    * [Custom Scheduler 퀴즈 - Part 3](quizzes/advanced/02-custom-scheduler-part3-quiz.md)
-    * [AI/ML 워크로드 퀴즈](quizzes/advanced/03-ai-ml-workloads-quiz.md)
-    * [vLLM 배포 퀴즈](quizzes/advanced/04-vllm-deployment-quiz.md)
-    * [KRO를 활용한 Helm 차트 마이그레이션 퀴즈](quizzes/advanced/05-kro-helm-migration-quiz.md)
-    * [Kubernetes 인증 및 권한 부여 퀴즈](quizzes/advanced/06-kubernetes-auth-authz-quiz.md)
-    * [Kubernetes 확장 메커니즘 퀴즈](quizzes/advanced/07-kubernetes-extensions-quiz.md)
-    * [Agentic AI 플랫폼 퀴즈](quizzes/advanced/08-agentic-ai-platform-quiz.md)
+* AI/ML
+    * [AI/ML 워크로드 퀴즈](quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+    * [vLLM 배포 퀴즈](quizzes/ai-ml/04-vllm-deployment-quiz.md)
+    * [Agentic AI 플랫폼 퀴즈](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 
-* Tools and Integrations
-    * [ArgoCD 퀴즈](quizzes/tools/01-argocd-quiz.md)
-    * Istio 퀴즈
-        * [Traffic Management 퀴즈](quizzes/tools/istio/traffic-management.md)
-        * [Security 퀴즈](quizzes/tools/istio/security.md)
-        * [Observability 퀴즈](quizzes/tools/istio/observability.md)
-        * [Resilience 퀴즈](quizzes/tools/istio/resilience.md)
-        * [Advanced 퀴즈](quizzes/tools/istio/advanced.md)
-        * [Basic 퀴즈](quizzes/tools/istio/basic.md)
-    * [AWS Controllers for Kubernetes (ACK) 퀴즈](quizzes/tools/03-ack-quiz.md)
-    * [Cilium 퀴즈](quizzes/tools/04-cilium-quiz.md)
-    * [KEDA 퀴즈](quizzes/tools/05-keda-quiz.md)
-    * [Karpenter 퀴즈](quizzes/tools/06-karpenter-quiz.md)
-    * [모니터링 스택 퀴즈](quizzes/tools/07-monitoring-stack-quiz.md)
-    * [로깅 스택 퀴즈](quizzes/tools/08-logging-stack-quiz.md)
-    * [VPC Lattice 퀴즈](quizzes/tools/09-vpc-lattice-quiz.md)
-    * [Helm 퀴즈](quizzes/tools/10-helm-quiz.md)
+* Networking
+    * [Cilium 퀴즈](quizzes/networking/04-cilium-quiz.md)
+    * [VPC Lattice 퀴즈](quizzes/networking/09-vpc-lattice-quiz.md)
+
+* Service Mesh
+    * [Istio 퀴즈](quizzes/service-mesh/02-istio-quiz.md)
+    * Istio 상세 퀴즈
+        * [Traffic Management 퀴즈](quizzes/service-mesh/istio/traffic-management.md)
+        * [Security 퀴즈](quizzes/service-mesh/istio/security.md)
+        * [Observability 퀴즈](quizzes/service-mesh/istio/observability.md)
+        * [Resilience 퀴즈](quizzes/service-mesh/istio/resilience.md)
+        * [Advanced 퀴즈](quizzes/service-mesh/istio/advanced.md)
+        * [Basic 퀴즈](quizzes/service-mesh/istio/basic.md)
+
+* Security & Policy
+    * [Kyverno를 사용한 정책 관리 퀴즈](quizzes/security/01-kyverno-policy-management-quiz.md)
+    * [Kubernetes 인증 및 권한 부여 퀴즈](quizzes/security/06-kubernetes-auth-authz-quiz.md)
+
+* GitOps
+    * [ArgoCD 퀴즈](quizzes/gitops/01-argocd-quiz.md)
+
+* Autoscaling
+    * [KEDA 퀴즈](quizzes/autoscaling/05-keda-quiz.md)
+    * [Karpenter 퀴즈](quizzes/autoscaling/06-karpenter-quiz.md)
+
+* Observability
+    * [모니터링 스택 퀴즈](quizzes/observability/07-monitoring-stack-quiz.md)
+    * [로깅 스택 퀴즈](quizzes/observability/08-logging-stack-quiz.md)
+
+* Scheduling
+    * [Custom Scheduler 퀴즈 - Part 1](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+    * [Custom Scheduler 퀴즈 - Part 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+    * [Custom Scheduler 퀴즈 - Part 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+
+* Package Management
+    * [Helm 퀴즈](quizzes/package-management/10-helm-quiz.md)
+    * [KRO를 활용한 Helm 차트 마이그레이션 퀴즈](quizzes/package-management/05-kro-helm-migration-quiz.md)
+
+* Platform & AWS Integration
+    * [AWS Controllers for Kubernetes (ACK) 퀴즈](quizzes/platform/03-ack-quiz.md)
+    * [Kubernetes 확장 메커니즘 퀴즈](quizzes/platform/07-kubernetes-extensions-quiz.md)

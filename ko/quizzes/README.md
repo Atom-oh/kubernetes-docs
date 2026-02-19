@@ -62,24 +62,45 @@
 - [네트워킹 개념 퀴즈](./cilium/networking-concepts-quiz.md)
 - [용어집 퀴즈](./cilium/glossary-quiz.md)
 
-### 고급 주제
-- [Kyverno를 사용한 정책 관리 퀴즈](./advanced/01-kyverno-policy-management-quiz.md)
-- [Custom Scheduler 퀴즈 - Part 1](./advanced/02-custom-scheduler-part1-quiz.md)
-- [Custom Scheduler 퀴즈 - Part 2](./advanced/02-custom-scheduler-part2-quiz.md)
-- [Custom Scheduler 퀴즈 - Part 3](./advanced/02-custom-scheduler-part3-quiz.md)
-- [AI/ML 워크로드 퀴즈](./advanced/03-ai-ml-workloads-quiz.md)
-- [vLLM 배포 퀴즈](./advanced/04-vllm-deployment-quiz.md)
+### AI/ML
+- [AI/ML 워크로드 퀴즈](./ai-ml/03-ai-ml-workloads-quiz.md)
+- [vLLM 배포 퀴즈](./ai-ml/04-vllm-deployment-quiz.md)
+- [Agentic AI 플랫폼 퀴즈](./ai-ml/08-agentic-ai-platform-quiz.md)
 
-### 도구 및 통합
-- [ArgoCD 퀴즈](./tools/01-argocd-quiz.md)
-- [Istio 퀴즈](./tools/02-istio-quiz.md)
-- [AWS Controllers for Kubernetes (ACK) 퀴즈](./tools/03-ack-quiz.md)
-- [Cilium 퀴즈](./tools/04-cilium-quiz.md)
-- [KEDA 퀴즈](./tools/05-keda-quiz.md)
-- [Karpenter 퀴즈](./tools/06-karpenter-quiz.md)
-- [모니터링 스택 퀴즈](./tools/07-monitoring-stack-quiz.md)
-- [로깅 스택 퀴즈](./tools/08-logging-stack-quiz.md)
-- [VPC Lattice 퀴즈](./tools/09-vpc-lattice-quiz.md)
+### Networking
+- [Cilium 퀴즈](./networking/04-cilium-quiz.md)
+- [VPC Lattice 퀴즈](./networking/09-vpc-lattice-quiz.md)
+
+### Service Mesh
+- [Istio 퀴즈](./service-mesh/02-istio-quiz.md)
+
+### Security & Policy
+- [Kyverno를 사용한 정책 관리 퀴즈](./security/01-kyverno-policy-management-quiz.md)
+- [Kubernetes 인증 및 권한 부여 퀴즈](./security/06-kubernetes-auth-authz-quiz.md)
+
+### GitOps
+- [ArgoCD 퀴즈](./gitops/01-argocd-quiz.md)
+
+### Autoscaling
+- [KEDA 퀴즈](./autoscaling/05-keda-quiz.md)
+- [Karpenter 퀴즈](./autoscaling/06-karpenter-quiz.md)
+
+### Observability
+- [모니터링 스택 퀴즈](./observability/07-monitoring-stack-quiz.md)
+- [로깅 스택 퀴즈](./observability/08-logging-stack-quiz.md)
+
+### Scheduling
+- [Custom Scheduler 퀴즈 - Part 1](./scheduling/02-custom-scheduler-part1-quiz.md)
+- [Custom Scheduler 퀴즈 - Part 2](./scheduling/02-custom-scheduler-part2-quiz.md)
+- [Custom Scheduler 퀴즈 - Part 3](./scheduling/02-custom-scheduler-part3-quiz.md)
+
+### Package Management
+- [Helm 퀴즈](./package-management/10-helm-quiz.md)
+- [KRO를 활용한 Helm 차트 마이그레이션 퀴즈](./package-management/05-kro-helm-migration-quiz.md)
+
+### Platform & AWS Integration
+- [AWS Controllers for Kubernetes (ACK) 퀴즈](./platform/03-ack-quiz.md)
+- [Kubernetes 확장 메커니즘 퀴즈](./platform/07-kubernetes-extensions-quiz.md)
 
 ## 퀴즈 사용 방법
 

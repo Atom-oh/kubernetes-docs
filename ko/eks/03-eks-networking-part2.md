@@ -585,6 +585,266 @@ flowchart TD
 4. **이그레스 트래픽 제한**: 포드에서 나가는 트래픽도 제한하여 보안을 강화합니다.
 5. **정책 테스트**: 네트워크 정책을 적용하기 전에 테스트하여 의도하지 않은 통신 차단을 방지합니다.
 
+---
+
+## Gateway API
+
+> **지원 버전**: AWS Load Balancer Controller v2.13.0+
+> **마지막 업데이트**: 2025년 2월
+
+### 개요
+
+Gateway API는 Kubernetes의 차세대 서비스 네트워킹 API로, 기존 Ingress 리소스의 한계를 극복하고 더 풍부한 라우팅 기능을 제공합니다. AWS Load Balancer Controller는 Gateway API를 지원하여 L4(NLB) 및 L7(ALB) 라우팅을 Gateway 리소스를 통해 구성할 수 있습니다.
+
+```mermaid
+flowchart TD
+    GC[GatewayClass] --> GW[Gateway]
+    GW --> HR[HTTPRoute - L7/ALB]
+    GW --> TR[TCPRoute - L4/NLB]
+    HR --> SVC1[Service A]
+    HR --> SVC2[Service B]
+    TR --> SVC3[Service C]
+
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    class GC,GW,HR,TR k8sComponent;
+    class SVC1,SVC2,SVC3 awsService;
+```
+
+### 사전 요구 사항
+
+1. **AWS Load Balancer Controller v2.13.0 이상** 설치
+2. **Feature Gates 활성화**: Controller 배포 시 `--feature-gates=EnableGatewayAPI=true` 플래그 추가
+3. **Gateway API CRD 설치**:
+
+```bash
+# Standard CRDs 설치
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+
+# Experimental CRDs 설치 (TCPRoute 등)
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
+
+# AWS LBC 전용 CRDs 설치
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/config/crd/gateway-api/crds.yaml
+```
+
+### GatewayClass 및 Gateway 설정
+
+GatewayClass는 로드 밸런서의 유형을 정의하고, Gateway는 실제 로드 밸런서 인스턴스를 나타냅니다.
+
+```yaml
+# GatewayClass 정의
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: amazon-alb
+spec:
+  controllerName: gateway.k8s.aws/alb
+
+---
+# Gateway 정의 (L7 - ALB)
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: my-hotel-gateway
+  namespace: default
+spec:
+  gatewayClassName: amazon-alb
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+  - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: my-tls-secret
+```
+
+### HTTPRoute 예제 (L7 → ALB)
+
+HTTPRoute는 HTTP/HTTPS 트래픽을 서비스로 라우팅하는 규칙을 정의합니다. Gateway에 연결된 HTTPRoute는 ALB를 통해 트래픽을 분배합니다.
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app-route
+  namespace: default
+spec:
+  parentRefs:
+  - name: my-hotel-gateway
+    sectionName: http
+  hostnames:
+  - "app.example.com"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+    backendRefs:
+    - name: api-service
+      port: 80
+      weight: 90
+    - name: api-service-v2
+      port: 80
+      weight: 10
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: frontend-service
+      port: 80
+```
+
+### TCPRoute 예제 (L4 → NLB)
+
+TCPRoute는 TCP 트래픽을 처리하며, NLB를 통해 L4 레벨의 로드 밸런싱을 제공합니다.
+
+```yaml
+# NLB용 GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: amazon-nlb
+spec:
+  controllerName: gateway.k8s.aws/nlb
+
+---
+# NLB Gateway
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: my-nlb-gateway
+spec:
+  gatewayClassName: amazon-nlb
+  listeners:
+  - name: tcp
+    protocol: TCP
+    port: 5432
+
+---
+# TCPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: db-route
+spec:
+  parentRefs:
+  - name: my-nlb-gateway
+    sectionName: tcp
+  rules:
+  - backendRefs:
+    - name: postgres-service
+      port: 5432
+```
+
+### QUIC/HTTP3 지원
+
+Gateway API를 통해 생성된 ALB는 QUIC/HTTP3 프로토콜을 자동으로 지원합니다. HTTPS 리스너가 구성되면 ALB는 자동으로 QUIC 프로토콜 업그레이드를 처리합니다.
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: quic-gateway
+  annotations:
+    gateway.k8s.aws/quic-enabled: "true"
+spec:
+  gatewayClassName: amazon-alb
+  listeners:
+  - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: tls-cert
+```
+
+### 인증서 디스커버리
+
+AWS Load Balancer Controller는 두 가지 인증서 디스커버리 방법을 지원합니다:
+
+1. **정적 인증서 참조**: Gateway의 `tls.certificateRefs`에서 직접 지정
+2. **호스트명 기반 자동 디스커버리**: HTTPRoute의 `hostnames` 필드를 기반으로 ACM에서 자동으로 일치하는 인증서를 검색
+
+```yaml
+# 호스트명 기반 자동 디스커버리 예시
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: auto-cert-route
+spec:
+  parentRefs:
+  - name: my-gateway
+  hostnames:
+  - "secure.example.com"  # ACM에서 이 도메인과 일치하는 인증서 자동 검색
+  rules:
+  - backendRefs:
+    - name: secure-service
+      port: 443
+```
+
+### 보안 그룹
+
+Gateway API를 통해 생성된 로드 밸런서에는 보안 그룹이 자동으로 생성됩니다:
+
+- **프론트엔드 보안 그룹**: 클라이언트에서 로드 밸런서로의 인바운드 트래픽을 허용
+- **백엔드 보안 그룹**: 로드 밸런서에서 대상 파드로의 트래픽을 허용
+
+Gateway 어노테이션을 통해 사용자 정의 보안 그룹을 지정할 수도 있습니다:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: custom-sg-gateway
+  annotations:
+    gateway.k8s.aws/security-group-ids: sg-0123456789abcdef0,sg-0987654321fedcba0
+spec:
+  gatewayClassName: amazon-alb
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+```
+
+### Out-of-Band 대상 그룹
+
+`TargetGroupName` backendRef를 사용하면 기존에 생성된 대상 그룹을 Gateway API 라우팅에 연결할 수 있습니다. 이는 기존 인프라와의 통합이나 마이그레이션 시나리오에서 유용합니다.
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: oob-route
+spec:
+  parentRefs:
+  - name: my-gateway
+  rules:
+  - backendRefs:
+    - group: gateway.k8s.aws
+      kind: TargetGroupBinding
+      name: existing-target-group
+```
+
+### Gateway API vs Ingress 비교
+
+| 기능 | Ingress | Gateway API |
+|------|---------|-------------|
+| 라우팅 모델 | 호스트/경로 기반 | 호스트/경로/헤더/쿼리 기반 |
+| 프로토콜 지원 | HTTP/HTTPS | HTTP, HTTPS, TCP, TLS, gRPC |
+| 트래픽 분할 | 어노테이션 기반 | 네이티브 가중치 기반 |
+| 역할 분리 | 단일 리소스 | GatewayClass/Gateway/Route 분리 |
+| 확장성 | 어노테이션으로 제한적 | Policy attachment로 확장 가능 |
+| L4 로드 밸런싱 | 미지원 | TCPRoute/UDPRoute 지원 |
+
 ## 퀴즈
 
 이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/eks/03-eks-networking-part2-quiz.md)를 풀어보세요.

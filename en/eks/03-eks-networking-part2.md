@@ -585,6 +585,266 @@ flowchart TD
 4. **Restrict egress traffic**: Enhance security by restricting traffic going out from pods.
 5. **Test policies**: Test network policies before applying them to prevent unintended communication blocking.
 
+---
+
+## Gateway API
+
+> **Supported Versions**: AWS Load Balancer Controller v2.13.0+
+> **Last Updated**: February 2025
+
+### Overview
+
+Gateway API is Kubernetes' next-generation service networking API that overcomes the limitations of traditional Ingress resources and provides richer routing capabilities. AWS Load Balancer Controller supports Gateway API, enabling L4 (NLB) and L7 (ALB) routing configuration through Gateway resources.
+
+```mermaid
+flowchart TD
+    GC[GatewayClass] --> GW[Gateway]
+    GW --> HR[HTTPRoute - L7/ALB]
+    GW --> TR[TCPRoute - L4/NLB]
+    HR --> SVC1[Service A]
+    HR --> SVC2[Service B]
+    TR --> SVC3[Service C]
+
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    class GC,GW,HR,TR k8sComponent;
+    class SVC1,SVC2,SVC3 awsService;
+```
+
+### Prerequisites
+
+1. **AWS Load Balancer Controller v2.13.0 or later** installed
+2. **Feature Gates enabled**: Add `--feature-gates=EnableGatewayAPI=true` flag when deploying the controller
+3. **Gateway API CRD installation**:
+
+```bash
+# Install Standard CRDs
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+
+# Install Experimental CRDs (TCPRoute, etc.)
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
+
+# Install AWS LBC-specific CRDs
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/config/crd/gateway-api/crds.yaml
+```
+
+### GatewayClass and Gateway Setup
+
+GatewayClass defines the type of load balancer, and Gateway represents the actual load balancer instance.
+
+```yaml
+# GatewayClass definition
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: amazon-alb
+spec:
+  controllerName: gateway.k8s.aws/alb
+
+---
+# Gateway definition (L7 - ALB)
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: my-hotel-gateway
+  namespace: default
+spec:
+  gatewayClassName: amazon-alb
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+  - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: my-tls-secret
+```
+
+### HTTPRoute Example (L7 → ALB)
+
+HTTPRoute defines rules for routing HTTP/HTTPS traffic to services. HTTPRoutes attached to a Gateway distribute traffic through an ALB.
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app-route
+  namespace: default
+spec:
+  parentRefs:
+  - name: my-hotel-gateway
+    sectionName: http
+  hostnames:
+  - "app.example.com"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+    backendRefs:
+    - name: api-service
+      port: 80
+      weight: 90
+    - name: api-service-v2
+      port: 80
+      weight: 10
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: frontend-service
+      port: 80
+```
+
+### TCPRoute Example (L4 → NLB)
+
+TCPRoute handles TCP traffic and provides L4-level load balancing through an NLB.
+
+```yaml
+# GatewayClass for NLB
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: amazon-nlb
+spec:
+  controllerName: gateway.k8s.aws/nlb
+
+---
+# NLB Gateway
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: my-nlb-gateway
+spec:
+  gatewayClassName: amazon-nlb
+  listeners:
+  - name: tcp
+    protocol: TCP
+    port: 5432
+
+---
+# TCPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: db-route
+spec:
+  parentRefs:
+  - name: my-nlb-gateway
+    sectionName: tcp
+  rules:
+  - backendRefs:
+    - name: postgres-service
+      port: 5432
+```
+
+### QUIC/HTTP3 Support
+
+ALBs created through Gateway API automatically support the QUIC/HTTP3 protocol. When an HTTPS listener is configured, the ALB automatically handles QUIC protocol upgrades.
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: quic-gateway
+  annotations:
+    gateway.k8s.aws/quic-enabled: "true"
+spec:
+  gatewayClassName: amazon-alb
+  listeners:
+  - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: tls-cert
+```
+
+### Certificate Discovery
+
+AWS Load Balancer Controller supports two certificate discovery methods:
+
+1. **Static certificate reference**: Directly specified in the Gateway's `tls.certificateRefs`
+2. **Hostname-based auto-discovery**: Automatically searches ACM for matching certificates based on the HTTPRoute's `hostnames` field
+
+```yaml
+# Hostname-based auto-discovery example
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: auto-cert-route
+spec:
+  parentRefs:
+  - name: my-gateway
+  hostnames:
+  - "secure.example.com"  # Auto-discovers matching certificate from ACM
+  rules:
+  - backendRefs:
+    - name: secure-service
+      port: 443
+```
+
+### Security Groups
+
+Load balancers created through Gateway API automatically have security groups created:
+
+- **Frontend security group**: Allows inbound traffic from clients to the load balancer
+- **Backend security group**: Allows traffic from the load balancer to target pods
+
+Custom security groups can also be specified through Gateway annotations:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: custom-sg-gateway
+  annotations:
+    gateway.k8s.aws/security-group-ids: sg-0123456789abcdef0,sg-0987654321fedcba0
+spec:
+  gatewayClassName: amazon-alb
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+```
+
+### Out-of-Band Target Groups
+
+Using `TargetGroupName` backendRef allows connecting pre-existing target groups to Gateway API routing. This is useful for integration with existing infrastructure or migration scenarios.
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: oob-route
+spec:
+  parentRefs:
+  - name: my-gateway
+  rules:
+  - backendRefs:
+    - group: gateway.k8s.aws
+      kind: TargetGroupBinding
+      name: existing-target-group
+```
+
+### Gateway API vs Ingress Comparison
+
+| Feature | Ingress | Gateway API |
+|---------|---------|-------------|
+| Routing Model | Host/Path based | Host/Path/Header/Query based |
+| Protocol Support | HTTP/HTTPS | HTTP, HTTPS, TCP, TLS, gRPC |
+| Traffic Splitting | Annotation based | Native weight-based |
+| Role Separation | Single resource | GatewayClass/Gateway/Route separation |
+| Extensibility | Limited via annotations | Extensible via Policy attachment |
+| L4 Load Balancing | Not supported | TCPRoute/UDPRoute supported |
+
 ## Quiz
 
 To test what you learned in this chapter, try the [Topic Quiz](../quizzes/eks/03-eks-networking-part2-quiz.md).
