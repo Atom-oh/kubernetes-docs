@@ -64,7 +64,12 @@ kubectl -n storage-demo get pvc,pod
 5. [동적 프로비저닝](#동적-프로비저닝)
 6. [볼륨 스냅샷](#볼륨-스냅샷)
 7. [볼륨 확장](#볼륨-확장)
-8. [EKS에서의 스토리지 옵션](#eks에서의-스토리지-옵션)
+8. [Projected Volumes](#projected-volumes)
+9. [Generic Ephemeral Volumes](#generic-ephemeral-volumes)
+10. [Block Volume Mode](#block-volume-mode)
+11. [Volume Cloning](#volume-cloning)
+12. [Storage ResourceQuota](#storage-resourcequota)
+13. [EKS에서의 스토리지 옵션](#eks에서의-스토리지-옵션)
 
 ## 볼륨(Volume)
 
@@ -699,6 +704,499 @@ spec:
     requests:
       storage: 16Gi  # 원래 8Gi에서 16Gi로 확장
   storageClassName: standard
+```
+
+## Projected Volumes
+
+Projected Volumes는 여러 볼륨 소스를 하나의 디렉토리에 마운트할 수 있는 기능입니다. secrets, configMaps, downwardAPI, serviceAccountToken을 단일 볼륨으로 결합할 수 있습니다.
+
+```mermaid
+graph TD
+    subgraph "Projected Volume 구성"
+        PV["Projected Volume"]
+        PV -->|소스| Secret["secrets"]
+        PV -->|소스| ConfigMap["configMaps"]
+        PV -->|소스| DownwardAPI["downwardAPI"]
+        PV -->|소스| SAToken["serviceAccountToken"]
+
+        MountPath["/etc/credentials"]
+        Secret -->|마운트| MountPath
+        ConfigMap -->|마운트| MountPath
+        DownwardAPI -->|마운트| MountPath
+        SAToken -->|마운트| MountPath
+    end
+
+    subgraph "결과 디렉토리 구조"
+        Dir["/etc/credentials/"]
+        Dir --> F1["db-password (from secret)"]
+        Dir --> F2["app-config (from configMap)"]
+        Dir --> F3["labels (from downwardAPI)"]
+        Dir --> F4["token (from serviceAccountToken)"]
+    end
+
+    %% 스타일 정의
+    classDef pvComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef sourceComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef dirComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    %% 클래스 적용
+    class PV pvComponent;
+    class Secret,ConfigMap,DownwardAPI,SAToken,MountPath sourceComponent;
+    class Dir,F1,F2,F3,F4 dirComponent;
+```
+
+### Projected Volume 예제
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: projected-volume-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sleep", "3600"]
+    volumeMounts:
+    - name: all-in-one
+      mountPath: /etc/credentials
+      readOnly: true
+  volumes:
+  - name: all-in-one
+    projected:
+      sources:
+      # Secret에서 데이터베이스 자격 증명
+      - secret:
+          name: db-credentials
+          items:
+          - key: username
+            path: db-username
+          - key: password
+            path: db-password
+      # ConfigMap에서 애플리케이션 구성
+      - configMap:
+          name: app-config
+          items:
+          - key: config.yaml
+            path: app-config.yaml
+      # Downward API에서 포드 메타데이터
+      - downwardAPI:
+          items:
+          - path: labels
+            fieldRef:
+              fieldPath: metadata.labels
+          - path: namespace
+            fieldRef:
+              fieldPath: metadata.namespace
+      # ServiceAccountToken
+      - serviceAccountToken:
+          path: token
+          expirationSeconds: 3600
+          audience: api
+```
+
+### 사용 사례
+
+1. **통합 자격 증명 관리**: 여러 소스의 자격 증명을 단일 디렉토리에 마운트
+2. **애플리케이션 구성**: 구성 파일과 시크릿을 함께 제공
+3. **서비스 메시 통합**: ServiceAccount 토큰과 인증서를 함께 마운트
+
+## Generic Ephemeral Volumes
+
+Generic Ephemeral Volumes는 PVC 기반의 임시 볼륨을 제공합니다. emptyDir과 달리 동적 프로비저닝과 스토리지 클래스의 모든 기능을 사용할 수 있습니다.
+
+### emptyDir과의 비교
+
+| 특성 | emptyDir | Generic Ephemeral Volume |
+|------|----------|-------------------------|
+| **프로비저닝** | 노드 로컬 디스크 | 동적 프로비저닝 (CSI) |
+| **스토리지 클래스** | 지원 안 함 | 지원 |
+| **용량 지정** | sizeLimit (소프트 제한) | 정확한 용량 요청 |
+| **스냅샷** | 지원 안 함 | 지원 |
+| **암호화** | 노드에 따라 다름 | 스토리지 클래스로 제어 |
+| **IOPS/처리량** | 노드에 따라 다름 | 스토리지 클래스로 제어 |
+| **수명 주기** | 포드와 함께 | 포드와 함께 |
+
+### Generic Ephemeral Volume 예제
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ephemeral-volume-pod
+spec:
+  containers:
+  - name: app
+    image: nginx
+    volumeMounts:
+    - name: scratch
+      mountPath: /scratch
+  volumes:
+  - name: scratch
+    ephemeral:
+      volumeClaimTemplate:
+        metadata:
+          labels:
+            type: ephemeral
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          storageClassName: gp3-fast
+          resources:
+            requests:
+              storage: 10Gi
+```
+
+### 사용 사례
+
+1. **고성능 임시 스토리지**: CSI 드라이버의 고성능 스토리지를 임시로 사용
+2. **대용량 캐시**: emptyDir의 노드 디스크 제한 없이 대용량 캐시 사용
+3. **ML/AI 워크로드**: 모델 학습 중 체크포인트를 고성능 스토리지에 저장
+4. **암호화된 임시 스토리지**: CSI 드라이버의 암호화 기능 활용
+
+```yaml
+# ML 학습용 고성능 임시 스토리지
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ml-training
+spec:
+  containers:
+  - name: trainer
+    image: pytorch/pytorch:latest
+    volumeMounts:
+    - name: checkpoint
+      mountPath: /checkpoints
+  volumes:
+  - name: checkpoint
+    ephemeral:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          storageClassName: io2-high-iops
+          resources:
+            requests:
+              storage: 100Gi
+```
+
+## Block Volume Mode
+
+Block Volume Mode는 파일시스템 대신 원시 블록 디바이스로 볼륨을 마운트할 수 있는 기능입니다. 이는 데이터베이스와 같이 파일시스템 오버헤드 없이 직접 블록 접근이 필요한 애플리케이션에 유용합니다.
+
+```mermaid
+graph TD
+    subgraph "Filesystem Mode (기본)"
+        FS_PV["PersistentVolume"]
+        FS_Mount["파일시스템 마운트<br>/mnt/data"]
+        FS_Pod["Pod"]
+
+        FS_PV -->|ext4/xfs 포맷| FS_Mount
+        FS_Mount -->|디렉토리 접근| FS_Pod
+    end
+
+    subgraph "Block Mode"
+        Block_PV["PersistentVolume"]
+        Block_Device["/dev/xvda"]
+        Block_Pod["Pod"]
+
+        Block_PV -->|원시 블록| Block_Device
+        Block_Device -->|디바이스 접근| Block_Pod
+    end
+
+    %% 스타일 정의
+    classDef pvComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef fsComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef blockComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef podComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    %% 클래스 적용
+    class FS_PV,Block_PV pvComponent;
+    class FS_Mount fsComponent;
+    class Block_Device blockComponent;
+    class FS_Pod,Block_Pod podComponent;
+```
+
+### Block Volume 설정
+
+```yaml
+# PersistentVolume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: block-pv
+spec:
+  capacity:
+    storage: 100Gi
+  volumeMode: Block  # Block 모드 지정
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: block-storage
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-0abcd1234efgh5678
+---
+# PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: block-pvc
+spec:
+  volumeMode: Block  # Block 모드 지정
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: block-storage
+  resources:
+    requests:
+      storage: 100Gi
+```
+
+### Block Volume 사용
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: block-volume-pod
+spec:
+  containers:
+  - name: database
+    image: postgres:15
+    volumeDevices:  # volumeMounts 대신 volumeDevices 사용
+    - name: data
+      devicePath: /dev/xvda  # 디바이스 경로
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: block-pvc
+```
+
+### 사용 사례
+
+1. **고성능 데이터베이스**: PostgreSQL, MySQL 등이 직접 블록 디바이스 사용
+2. **NoSQL 데이터베이스**: Cassandra, ScyllaDB 등의 성능 최적화
+3. **가상화**: VM 디스크 이미지 저장
+4. **커스텀 파일시스템**: 애플리케이션이 자체 파일시스템 사용
+
+## Volume Cloning
+
+Volume Cloning은 기존 PVC의 데이터를 새 PVC로 복제하는 기능입니다. 스냅샷을 거치지 않고 직접 PVC-to-PVC 클론을 생성할 수 있습니다.
+
+```mermaid
+graph TD
+    subgraph "Volume Cloning 과정"
+        Source["소스 PVC<br>(data-pvc)"]
+        Clone["클론 PVC<br>(data-pvc-clone)"]
+        Source -->|dataSource 참조| Clone
+    end
+
+    subgraph "사용 사례"
+        Dev["개발 환경 복제"]
+        Test["테스트 데이터 준비"]
+        Backup["빠른 백업"]
+    end
+
+    Source -->|복제| Dev
+    Source -->|복제| Test
+    Source -->|복제| Backup
+
+    %% 스타일 정의
+    classDef pvcComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef useCaseComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+
+    %% 클래스 적용
+    class Source,Clone pvcComponent;
+    class Dev,Test,Backup useCaseComponent;
+```
+
+### Volume Cloning 예제
+
+```yaml
+# 소스 PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: source-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: gp3
+  resources:
+    requests:
+      storage: 100Gi
+---
+# 클론 PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cloned-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: gp3  # 동일한 스토리지 클래스
+  resources:
+    requests:
+      storage: 100Gi  # 동일하거나 더 큰 크기
+  dataSource:
+    kind: PersistentVolumeClaim
+    name: source-pvc  # 소스 PVC 참조
+```
+
+### CSI 드라이버 지원 요구사항
+
+Volume Cloning을 사용하려면 CSI 드라이버가 `CLONE_VOLUME` capability를 지원해야 합니다.
+
+```bash
+# EBS CSI 드라이버 지원 확인
+kubectl get csidrivers ebs.csi.aws.com -o yaml
+# capabilities에 CLONE_VOLUME이 있어야 함
+```
+
+### 지원되는 AWS CSI 드라이버
+
+| CSI 드라이버 | Volume Cloning 지원 |
+|------------|-------------------|
+| EBS CSI Driver | ✅ 지원 |
+| EFS CSI Driver | ❌ 미지원 (NFS 특성) |
+| FSx for Lustre CSI Driver | ✅ 지원 |
+
+### 주의사항
+
+1. **동일한 네임스페이스**: 소스 PVC와 클론 PVC는 동일한 네임스페이스에 있어야 합니다.
+2. **동일한 스토리지 클래스**: 일반적으로 동일한 스토리지 클래스를 사용해야 합니다.
+3. **용량**: 클론 PVC의 크기는 소스보다 크거나 같아야 합니다.
+4. **성능 영향**: 대용량 볼륨 클론은 시간이 걸릴 수 있습니다.
+
+## Storage ResourceQuota
+
+Storage ResourceQuota는 네임스페이스 단위로 스토리지 리소스 사용을 제한합니다. PVC 수와 총 스토리지 용량을 제어할 수 있습니다.
+
+```mermaid
+graph TD
+    subgraph "ResourceQuota 적용"
+        NS["Namespace: dev-team"]
+        RQ["ResourceQuota"]
+
+        RQ -->|제한| PVCCount["PVC 수: 10개"]
+        RQ -->|제한| StorageTotal["총 용량: 500Gi"]
+        RQ -->|제한| SCSpecific["gp3 클래스: 200Gi"]
+    end
+
+    subgraph "현재 사용량"
+        Used["현재: 5 PVC, 150Gi"]
+        Remaining["남은: 5 PVC, 350Gi"]
+    end
+
+    NS --> RQ
+    RQ --> Used
+    Used --> Remaining
+
+    %% 스타일 정의
+    classDef nsComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef rqComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef limitComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef usageComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    %% 클래스 적용
+    class NS nsComponent;
+    class RQ rqComponent;
+    class PVCCount,StorageTotal,SCSpecific limitComponent;
+    class Used,Remaining usageComponent;
+```
+
+### Storage ResourceQuota 예제
+
+```yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: storage-quota
+  namespace: dev-team
+spec:
+  hard:
+    # 총 PVC 수 제한
+    persistentvolumeclaims: "10"
+
+    # 총 스토리지 요청량 제한
+    requests.storage: "500Gi"
+
+    # 특정 스토리지 클래스별 제한
+    gp3.storageclass.storage.k8s.io/requests.storage: "200Gi"
+    gp3.storageclass.storage.k8s.io/persistentvolumeclaims: "5"
+
+    io2.storageclass.storage.k8s.io/requests.storage: "100Gi"
+    io2.storageclass.storage.k8s.io/persistentvolumeclaims: "3"
+```
+
+### 스토리지 클래스별 쿼터
+
+```yaml
+# 여러 팀을 위한 스토리지 할당
+---
+# 개발 팀
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: dev-storage-quota
+  namespace: development
+spec:
+  hard:
+    requests.storage: "200Gi"
+    persistentvolumeclaims: "20"
+    gp3.storageclass.storage.k8s.io/requests.storage: "150Gi"
+    io2.storageclass.storage.k8s.io/requests.storage: "50Gi"
+---
+# 프로덕션 팀
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: prod-storage-quota
+  namespace: production
+spec:
+  hard:
+    requests.storage: "2Ti"
+    persistentvolumeclaims: "50"
+    gp3.storageclass.storage.k8s.io/requests.storage: "1Ti"
+    io2.storageclass.storage.k8s.io/requests.storage: "500Gi"
+    fsx-lustre.storageclass.storage.k8s.io/requests.storage: "500Gi"
+```
+
+### 쿼터 사용량 확인
+
+```bash
+# ResourceQuota 상태 확인
+kubectl describe resourcequota storage-quota -n dev-team
+
+# 출력 예시:
+# Name:                                                       storage-quota
+# Namespace:                                                  dev-team
+# Resource                                                    Used   Hard
+# --------                                                    ----   ----
+# gp3.storageclass.storage.k8s.io/persistentvolumeclaims      3      5
+# gp3.storageclass.storage.k8s.io/requests.storage            75Gi   200Gi
+# persistentvolumeclaims                                      5      10
+# requests.storage                                            100Gi  500Gi
+```
+
+### LimitRange와 함께 사용
+
+```yaml
+# PVC 기본값 및 제한 설정
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: storage-limits
+  namespace: dev-team
+spec:
+  limits:
+  - type: PersistentVolumeClaim
+    default:
+      storage: 10Gi
+    defaultRequest:
+      storage: 5Gi
+    max:
+      storage: 100Gi
+    min:
+      storage: 1Gi
 ```
 
 ## EKS에서의 스토리지 옵션

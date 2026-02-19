@@ -425,25 +425,25 @@ Admission controllers are plugins that intercept requests to the Kubernetes API 
 The following diagram shows how admission controllers work:
 
 ```mermaid
-flowchart LR
-    User[User] --> |1. API Request| Auth[Authentication/Authorization]
-    Auth --> |2. Request Passes| MAC[Mutating Admission Controller]
-    MAC --> |3. Mutated Request| VAC[Validating Admission Controller]
-    VAC --> |4. Validated Request| API[API Processing]
-    API --> |5. Store| STOR[(etcd Storage)]
+sequenceDiagram
+    participant User
+    participant Auth as Authentication<br/>Authorization
+    participant MAC as Mutating<br/>Admission Controller
+    participant MWH as Mutating Webhook
+    participant VAC as Validating<br/>Admission Controller
+    participant VWH as Validating Webhook
+    participant API as API Processing
+    participant STOR as etcd Storage
 
-    MAC -.-> |Webhook Call| MWH[Mutating Webhook]
-    VAC -.-> |Webhook Call| VWH[Validating Webhook]
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Auth,MAC,VAC,API k8sComponent;
-    class User userApp;
-    class STOR dataStore;
-    class MWH,VWH default;
+    User->>Auth: 1. API Request
+    Auth->>MAC: 2. Request Passes
+    MAC-->>MWH: Webhook Call
+    MWH-->>MAC: Response
+    MAC->>VAC: 3. Mutated Request
+    VAC-->>VWH: Webhook Call
+    VWH-->>VAC: Response
+    VAC->>API: 4. Validated Request
+    API->>STOR: 5. Store
 ```
 
 ### Admission Controller Types

@@ -10,13 +10,18 @@ To securely run workloads on Amazon EKS (Elastic Kubernetes Service), you need t
 1. [EKS Security Overview](#eks-security-overview)
 2. [Latest Security Trends (2023)](#latest-security-trends-2023)
 3. [IAM and Authentication](#iam-and-authentication)
-4. [Network Security](#network-security)
-5. [Pod Security](#pod-security)
-6. [Encryption and Secrets Management](#encryption-and-secrets-management)
-7. [Compliance and Auditing](#compliance-and-auditing)
-8. [Security Monitoring and Detection](#security-monitoring-and-detection)
-9. [EKS Security Best Practices](#eks-security-best-practices)
-10. [EKS Security Considerations for Financial Services](#eks-security-considerations-for-financial-services)
+4. [OIDC Provider Deep Dive](#oidc-provider-deep-dive)
+5. [EKS Pod Identity](#eks-pod-identity)
+6. [Cluster Endpoint Access Control](#cluster-endpoint-access-control)
+7. [Network Security](#network-security)
+8. [Pod Security](#pod-security)
+9. [Bottlerocket and Read-Only OS](#bottlerocket-and-read-only-os)
+10. [IAM Permission Boundaries](#iam-permission-boundaries)
+11. [Encryption and Secrets Management](#encryption-and-secrets-management)
+12. [Compliance and Auditing](#compliance-and-auditing)
+13. [Security Monitoring and Detection](#security-monitoring-and-detection)
+14. [EKS Security Best Practices](#eks-security-best-practices)
+15. [EKS Security Considerations for Financial Services](#eks-security-considerations-for-financial-services)
 
 ## EKS Security Overview
 
@@ -304,6 +309,526 @@ spec:
   - name: app
     image: amazonlinux:2
     command: ['sh', '-c', 'aws s3 ls']
+```
+
+## OIDC Provider Deep Dive
+
+OpenID Connect (OIDC) is the foundation of IAM Roles for Service Accounts (IRSA) in EKS. Understanding how OIDC works helps you troubleshoot authentication issues and implement secure workload identity patterns.
+
+### OIDC Trust Relationship Mechanics
+
+When you create an EKS cluster, AWS automatically creates an OIDC provider endpoint. This endpoint serves as an identity provider that AWS STS trusts to authenticate Kubernetes service accounts.
+
+The trust relationship works as follows:
+1. EKS issues OIDC tokens to pods via projected service account tokens
+2. The token contains claims about the pod's identity (namespace, service account name)
+3. AWS STS validates the token against the OIDC provider's public keys
+4. If valid, STS issues temporary AWS credentials
+
+### STS AssumeRoleWithWebIdentity Flow
+
+```mermaid
+sequenceDiagram
+    participant Pod
+    participant K8s as Kubernetes API
+    participant OIDC as EKS OIDC Provider
+    participant STS as AWS STS
+    participant AWS as AWS Service
+
+    Pod->>K8s: Request projected token
+    K8s->>Pod: JWT token (signed by EKS)
+    Pod->>STS: AssumeRoleWithWebIdentity(token, role ARN)
+    STS->>OIDC: Fetch JWKS (/.well-known/jwks.json)
+    OIDC->>STS: Public keys
+    STS->>STS: Validate token signature & claims
+    STS->>Pod: Temporary credentials (AccessKey, SecretKey, SessionToken)
+    Pod->>AWS: API call with temporary credentials
+    AWS->>Pod: Response
+```
+
+### Token Exchange Mechanism
+
+The projected service account token is a JWT (JSON Web Token) with the following structure:
+
+```json
+{
+  "aud": ["sts.amazonaws.com"],
+  "exp": 1234567890,
+  "iat": 1234567800,
+  "iss": "https://oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE",
+  "kubernetes.io": {
+    "namespace": "default",
+    "pod": {
+      "name": "my-pod",
+      "uid": "1234-5678-9012-3456"
+    },
+    "serviceaccount": {
+      "name": "my-service-account",
+      "uid": "abcd-efgh-ijkl-mnop"
+    }
+  },
+  "sub": "system:serviceaccount:default:my-service-account"
+}
+```
+
+Key claims:
+- **iss**: The OIDC provider URL (must match the IAM trust policy)
+- **sub**: The subject (service account identifier)
+- **aud**: The audience (must include `sts.amazonaws.com` for AWS)
+
+### OIDC Endpoint Verification
+
+Verify your cluster's OIDC configuration:
+
+```bash
+# Get OIDC provider URL
+aws eks describe-cluster \
+  --name my-cluster \
+  --query "cluster.identity.oidc.issuer" \
+  --output text
+
+# Example output: https://oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE
+
+# List OIDC providers in your account
+aws iam list-open-id-connect-providers
+
+# Get OIDC provider details
+aws iam get-open-id-connect-provider \
+  --open-id-connect-provider-arn arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE
+```
+
+### JWKS URI and Token Validation
+
+The JWKS (JSON Web Key Set) endpoint provides public keys for token validation:
+
+```bash
+# Fetch JWKS from OIDC provider
+OIDC_URL=$(aws eks describe-cluster --name my-cluster --query "cluster.identity.oidc.issuer" --output text)
+curl -s "${OIDC_URL}/.well-known/openid-configuration" | jq .
+
+# Get the JWKS directly
+curl -s "${OIDC_URL}/keys" | jq .
+```
+
+The JWKS response contains RSA public keys used to verify token signatures:
+
+```json
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "kid": "key-id-1",
+      "use": "sig",
+      "alg": "RS256",
+      "n": "base64-encoded-modulus",
+      "e": "AQAB"
+    }
+  ]
+}
+```
+
+## EKS Pod Identity
+
+EKS Pod Identity is a newer authentication mechanism that simplifies how pods access AWS services. It provides advantages over IRSA while maintaining strong security guarantees.
+
+### Advantages over IRSA
+
+| Feature | IRSA | EKS Pod Identity |
+|---------|------|------------------|
+| Setup Complexity | Requires OIDC provider + IAM role per SA | Simpler Pod Identity Association |
+| IAM Role Reuse | One role per service account | Same role across clusters/accounts |
+| Session Tags | Limited | Full support for ABAC |
+| Cross-Account | Complex trust policies | Simplified with associations |
+| Credential Rotation | Token-based, short-lived | Managed by Pod Identity Agent |
+| Troubleshooting | Complex token validation | Simpler debugging |
+
+### Pod Identity Agent Mechanics
+
+The EKS Pod Identity Agent runs as a DaemonSet on your nodes and handles credential distribution:
+
+```mermaid
+flowchart TD
+    subgraph Node["EKS Node"]
+        PIA[Pod Identity Agent]
+        Pod1[Application Pod 1]
+        Pod2[Application Pod 2]
+    end
+
+    subgraph AWS["AWS Services"]
+        PIAS[Pod Identity Service]
+        STS[AWS STS]
+        IAM[IAM Role]
+    end
+
+    Pod1 -->|1. Credential request| PIA
+    PIA -->|2. GetCallerIdentity| PIAS
+    PIAS -->|3. Validate pod identity| STS
+    STS -->|4. AssumeRole| IAM
+    IAM -->|5. Temporary credentials| PIAS
+    PIAS -->|6. Credentials| PIA
+    PIA -->|7. Inject credentials| Pod1
+
+    style PIA fill:#FF9900,stroke:#333
+    style PIAS fill:#FF9900,stroke:#333
+```
+
+### Pod Identity Association Setup
+
+**Using eksctl**:
+
+```bash
+# Create Pod Identity Association
+eksctl create podidentityassociation \
+  --cluster my-cluster \
+  --namespace default \
+  --service-account-name my-app-sa \
+  --role-arn arn:aws:iam::123456789012:role/MyAppRole
+```
+
+**Using AWS CLI**:
+
+```bash
+# First, create the IAM role with Pod Identity trust policy
+cat > trust-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "pods.eks.amazonaws.com"
+      },
+      "Action": [
+        "sts:AssumeRole",
+        "sts:TagSession"
+      ]
+    }
+  ]
+}
+EOF
+
+aws iam create-role \
+  --role-name MyAppRole \
+  --assume-role-policy-document file://trust-policy.json
+
+# Attach required policies
+aws iam attach-role-policy \
+  --role-name MyAppRole \
+  --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+# Create the Pod Identity Association
+aws eks create-pod-identity-association \
+  --cluster-name my-cluster \
+  --namespace default \
+  --service-account my-app-sa \
+  --role-arn arn:aws:iam::123456789012:role/MyAppRole
+```
+
+### IRSA to Pod Identity Migration Procedure
+
+Step-by-step migration from IRSA to Pod Identity:
+
+1. **Install Pod Identity Agent** (if not already installed):
+
+```bash
+aws eks create-addon \
+  --cluster-name my-cluster \
+  --addon-name eks-pod-identity-agent \
+  --addon-version v1.0.0-eksbuild.1
+```
+
+2. **Update IAM role trust policy** to support both IRSA and Pod Identity:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-west-2.amazonaws.com/id/EXAMPLE"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLE:sub": "system:serviceaccount:default:my-app-sa"
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "pods.eks.amazonaws.com"
+      },
+      "Action": [
+        "sts:AssumeRole",
+        "sts:TagSession"
+      ]
+    }
+  ]
+}
+```
+
+3. **Create Pod Identity Association**:
+
+```bash
+aws eks create-pod-identity-association \
+  --cluster-name my-cluster \
+  --namespace default \
+  --service-account my-app-sa \
+  --role-arn arn:aws:iam::123456789012:role/MyAppRole
+```
+
+4. **Test the new authentication** by restarting pods:
+
+```bash
+kubectl rollout restart deployment my-app -n default
+```
+
+5. **Remove IRSA annotations** after verifying Pod Identity works:
+
+```bash
+kubectl annotate serviceaccount my-app-sa \
+  -n default \
+  eks.amazonaws.com/role-arn-
+```
+
+6. **Clean up IRSA trust policy** from IAM role (optional, after full migration).
+
+### Pod Identity Architecture Diagram
+
+```mermaid
+flowchart TD
+    subgraph Cluster["EKS Cluster"]
+        subgraph NS1["Namespace: app-1"]
+            SA1[ServiceAccount: app-sa]
+            Pod1[Application Pod]
+        end
+
+        subgraph NS2["Namespace: app-2"]
+            SA2[ServiceAccount: app-sa]
+            Pod2[Application Pod]
+        end
+
+        PIA[Pod Identity Agent DaemonSet]
+    end
+
+    subgraph AWS["AWS"]
+        PIA_SVC[EKS Pod Identity Service]
+
+        subgraph IAM["IAM"]
+            Role1[IAM Role: App1Role]
+            Role2[IAM Role: App2Role]
+        end
+
+        subgraph Services["AWS Services"]
+            S3[Amazon S3]
+            DDB[DynamoDB]
+        end
+    end
+
+    SA1 -.->|Association| Role1
+    SA2 -.->|Association| Role2
+
+    Pod1 --> PIA
+    Pod2 --> PIA
+    PIA --> PIA_SVC
+    PIA_SVC --> Role1
+    PIA_SVC --> Role2
+
+    Pod1 -->|Access| S3
+    Pod2 -->|Access| DDB
+
+    style PIA fill:#FF9900,stroke:#333
+    style PIA_SVC fill:#FF9900,stroke:#333
+    style Role1 fill:#3B48CC,stroke:#333,color:white
+    style Role2 fill:#3B48CC,stroke:#333,color:white
+```
+
+## Cluster Endpoint Access Control
+
+EKS cluster endpoint access control determines how users and workloads can reach the Kubernetes API server. Proper configuration is essential for security.
+
+### Public/Private/Public+Private Endpoint Configuration
+
+EKS supports three endpoint access configurations:
+
+| Configuration | Public Endpoint | Private Endpoint | Use Case |
+|--------------|-----------------|------------------|----------|
+| Public Only | Enabled | Disabled | Development, testing |
+| Private Only | Disabled | Enabled | High-security production |
+| Public + Private | Enabled | Enabled | Balanced security and convenience |
+
+**Public Only** (default):
+- API server accessible from the internet
+- Nodes communicate over the internet
+- Simplest setup but least secure
+
+**Private Only**:
+- API server only accessible from within VPC
+- Requires VPN, Direct Connect, or bastion host for kubectl access
+- Nodes communicate over private network
+- Most secure option
+
+**Public + Private**:
+- API server accessible from both internet and VPC
+- Nodes communicate over private network (more efficient)
+- Good balance of security and usability
+
+### CIDR Restriction Settings
+
+When using public endpoint, restrict access to specific IP ranges:
+
+```bash
+# Update cluster to restrict public access
+aws eks update-cluster-config \
+  --name my-cluster \
+  --resources-vpc-config \
+    endpointPublicAccess=true,\
+    endpointPrivateAccess=true,\
+    publicAccessCidrs="10.0.0.0/8","203.0.113.0/24"
+```
+
+Using eksctl:
+
+```yaml
+# cluster-config.yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+
+vpc:
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+  publicAccessCIDRs:
+    - 10.0.0.0/8        # Internal corporate network
+    - 203.0.113.0/24    # Office IP range
+```
+
+### Private Cluster Operation Patterns
+
+Operating a private-only EKS cluster requires network connectivity solutions:
+
+**Pattern 1: VPN Access**
+
+```mermaid
+flowchart LR
+    Admin[Admin Workstation] --> VPN[AWS Client VPN]
+    VPN --> VPC[VPC]
+    VPC --> EKS[EKS API Server]
+```
+
+```bash
+# Create Client VPN endpoint
+aws ec2 create-client-vpn-endpoint \
+  --client-cidr-block 10.100.0.0/16 \
+  --server-certificate-arn arn:aws:acm:us-west-2:123456789012:certificate/abc123 \
+  --authentication-options Type=certificate-authentication,MutualAuthentication={ClientRootCertificateChainArn=arn:aws:acm:us-west-2:123456789012:certificate/xyz789} \
+  --connection-log-options Enabled=false \
+  --vpc-id vpc-12345678
+```
+
+**Pattern 2: Transit Gateway**
+
+```mermaid
+flowchart LR
+    subgraph OnPrem["On-Premises"]
+        Admin[Admin Workstation]
+    end
+
+    subgraph AWS["AWS"]
+        TGW[Transit Gateway]
+        VPC[EKS VPC]
+        EKS[EKS API Server]
+    end
+
+    Admin --> |Direct Connect/VPN| TGW
+    TGW --> VPC
+    VPC --> EKS
+```
+
+**Pattern 3: Bastion Host with SSM**
+
+```yaml
+# Bastion host deployment for kubectl access
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubectl-bastion
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubectl-bastion
+  template:
+    metadata:
+      labels:
+        app: kubectl-bastion
+    spec:
+      serviceAccountName: kubectl-bastion-sa
+      containers:
+      - name: bastion
+        image: amazon/aws-cli:latest
+        command: ["sleep", "infinity"]
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+```
+
+Access via SSM Session Manager:
+
+```bash
+# Start SSM session to bastion pod's node
+aws ssm start-session --target i-1234567890abcdef0
+
+# Or use kubectl exec through SSM
+aws ssm start-session \
+  --target i-1234567890abcdef0 \
+  --document-name AWS-StartPortForwardingSession \
+  --parameters '{"portNumber":["443"],"localPortNumber":["6443"]}'
+```
+
+### Endpoint Access Control Configuration Example
+
+Complete example for a production-ready private cluster:
+
+```bash
+# Create cluster with private endpoint only
+eksctl create cluster \
+  --name production-cluster \
+  --region us-west-2 \
+  --vpc-private-subnets subnet-private1,subnet-private2,subnet-private3 \
+  --without-nodegroup
+
+# Update to private-only endpoint
+aws eks update-cluster-config \
+  --name production-cluster \
+  --resources-vpc-config \
+    endpointPublicAccess=false,\
+    endpointPrivateAccess=true
+
+# Verify endpoint configuration
+aws eks describe-cluster \
+  --name production-cluster \
+  --query "cluster.resourcesVpcConfig.{PublicAccess:endpointPublicAccess,PrivateAccess:endpointPrivateAccess,PublicCIDRs:publicAccessCidrs}"
+```
+
+Required VPC endpoints for private clusters:
+
+```bash
+# Create required VPC endpoints
+for service in ec2 ecr.api ecr.dkr s3 logs sts elasticloadbalancing autoscaling; do
+  aws ec2 create-vpc-endpoint \
+    --vpc-id vpc-12345678 \
+    --service-name com.amazonaws.us-west-2.${service} \
+    --subnet-ids subnet-private1 subnet-private2 \
+    --security-group-ids sg-12345678
+done
 ```
 
 ## Network Security
@@ -617,6 +1142,438 @@ spec:
           - name: "*"
             securityContext:
               privileged: false
+```
+
+## Bottlerocket and Read-Only OS
+
+Bottlerocket is a purpose-built, security-focused operating system designed specifically for running containers. It provides enhanced security through its minimal footprint and immutable design.
+
+### Bottlerocket Characteristics
+
+**API-Based Configuration**:
+- No SSH access by default
+- Configuration changes through API (apiclient)
+- Settings persisted across reboots
+- Changes validated before application
+
+```bash
+# Example: Configure Bottlerocket settings via user data
+[settings.kubernetes]
+cluster-name = "my-cluster"
+api-server = "https://EXAMPLE.gr7.us-west-2.eks.amazonaws.com"
+cluster-certificate = "BASE64_ENCODED_CERT"
+
+[settings.kubernetes.node-labels]
+"node.kubernetes.io/os" = "bottlerocket"
+
+[settings.kubernetes.node-taints]
+"bottlerocket" = "true:NoSchedule"
+```
+
+**Automatic Updates**:
+- Wave-based update deployment
+- Automatic rollback on failure
+- Configurable update windows
+
+```bash
+# Configure update settings
+[settings.updates]
+targets-base-url = "https://updates.bottlerocket.aws/"
+version-lock = "1.15.%"  # Lock to specific minor version
+```
+
+### SELinux Enforcement
+
+Bottlerocket runs SELinux in enforcing mode by default:
+
+- **Process Isolation**: Containers cannot access host resources
+- **File System Protection**: Strict access controls on system files
+- **Network Isolation**: Controlled network access between processes
+
+SELinux provides mandatory access control that prevents:
+- Container escape attacks
+- Privilege escalation
+- Unauthorized file access
+
+### dm-verity (Root Filesystem Integrity)
+
+dm-verity provides cryptographic verification of the root filesystem:
+
+```mermaid
+flowchart TD
+    subgraph Boot["Boot Process"]
+        BL[Bootloader]
+        Kernel[Linux Kernel]
+        Verity[dm-verity]
+    end
+
+    subgraph Storage["Storage"]
+        RootFS[Root Filesystem]
+        HashTree[Hash Tree]
+        RootHash[Root Hash]
+    end
+
+    BL --> Kernel
+    Kernel --> Verity
+    Verity --> RootFS
+    Verity --> HashTree
+    HashTree --> RootHash
+
+    Verity -->|Verify| Decision{Hash Match?}
+    Decision -->|Yes| Boot_OK[Continue Boot]
+    Decision -->|No| Boot_Fail[Fail Boot]
+
+    style Verity fill:#FF9900,stroke:#333
+    style Decision fill:#326CE5,stroke:#333,color:white
+```
+
+Key benefits:
+- **Tamper Detection**: Any modification to system files is detected
+- **Boot-Time Verification**: System integrity verified before containers start
+- **Read-Only Root**: Root filesystem mounted read-only
+
+### Immutable Infrastructure Strategy
+
+Bottlerocket enables a true immutable infrastructure approach:
+
+1. **No In-Place Updates**: Replace nodes instead of patching
+2. **Consistent State**: Every node starts from a known-good image
+3. **Audit Trail**: All changes tracked through AMI versions
+4. **Fast Recovery**: Roll back by launching previous AMI
+
+Implementation pattern:
+
+```yaml
+# Node group with Bottlerocket
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: secure-cluster
+  region: us-west-2
+
+managedNodeGroups:
+  - name: bottlerocket-ng
+    instanceType: m5.large
+    desiredCapacity: 3
+    amiFamily: Bottlerocket
+    bottlerocket:
+      settings:
+        kubernetes:
+          node-labels:
+            os: bottlerocket
+        host-containers:
+          admin:
+            enabled: false  # Disable admin container for production
+```
+
+### Using Bottlerocket with EKS Managed Node Groups
+
+Complete setup for Bottlerocket managed node groups:
+
+```bash
+# Create managed node group with Bottlerocket
+aws eks create-nodegroup \
+  --cluster-name my-cluster \
+  --nodegroup-name bottlerocket-nodes \
+  --node-role arn:aws:iam::123456789012:role/EKSNodeRole \
+  --subnets subnet-1 subnet-2 subnet-3 \
+  --ami-type BOTTLEROCKET_x86_64 \
+  --instance-types m5.large \
+  --scaling-config minSize=2,maxSize=10,desiredSize=3 \
+  --update-config maxUnavailable=1
+```
+
+Using eksctl with advanced configuration:
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: production-cluster
+  region: us-west-2
+
+managedNodeGroups:
+  - name: bottlerocket-workers
+    instanceType: m5.xlarge
+    minSize: 3
+    maxSize: 20
+    desiredCapacity: 5
+    amiFamily: Bottlerocket
+    volumeSize: 100
+    volumeType: gp3
+    volumeEncrypted: true
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+    bottlerocket:
+      settings:
+        kubernetes:
+          node-labels:
+            workload-type: general
+            os: bottlerocket
+          node-taints:
+            - key: "CriticalAddonsOnly"
+              value: "true"
+              effect: "NoSchedule"
+        kernel:
+          sysctl:
+            "net.core.somaxconn": "32768"
+            "net.ipv4.tcp_max_syn_backlog": "32768"
+        host-containers:
+          admin:
+            enabled: false
+          control:
+            enabled: true
+```
+
+## IAM Permission Boundaries
+
+IAM Permission Boundaries provide a mechanism to set the maximum permissions that an IAM entity can have, regardless of what policies are attached to it.
+
+### Permission Boundary Concept
+
+The effective permissions are the intersection of identity-based policies and permission boundaries:
+
+```
+Effective Permissions = Identity Policy ∩ Permission Boundary
+```
+
+```mermaid
+flowchart TD
+    subgraph Request["API Request"]
+        Action[Requested Action]
+    end
+
+    subgraph Evaluation["Permission Evaluation"]
+        Identity[Identity-Based Policy]
+        Boundary[Permission Boundary]
+        Intersection{Intersection}
+    end
+
+    subgraph Result["Result"]
+        Allow[Allow]
+        Deny[Deny]
+    end
+
+    Action --> Identity
+    Action --> Boundary
+    Identity --> Intersection
+    Boundary --> Intersection
+    Intersection -->|Both Allow| Allow
+    Intersection -->|Either Denies| Deny
+
+    style Intersection fill:#FF9900,stroke:#333
+    style Allow fill:#00C7B7,stroke:#333
+    style Deny fill:#CC0000,stroke:#333,color:white
+```
+
+Example scenario:
+- Identity policy allows: `s3:*`, `ec2:*`, `rds:*`
+- Permission boundary allows: `s3:*`, `ec2:Describe*`
+- Effective permissions: `s3:*`, `ec2:Describe*`
+
+### SCP (Service Control Policy) Usage
+
+SCPs provide guardrails at the AWS Organizations level:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyEKSClusterDeletion",
+      "Effect": "Deny",
+      "Action": "eks:DeleteCluster",
+      "Resource": "*",
+      "Condition": {
+        "StringNotLike": {
+          "aws:PrincipalArn": "arn:aws:iam::*:role/EKSAdminRole"
+        }
+      }
+    },
+    {
+      "Sid": "RequireIMDSv2",
+      "Effect": "Deny",
+      "Action": "ec2:RunInstances",
+      "Resource": "arn:aws:ec2:*:*:instance/*",
+      "Condition": {
+        "StringNotEquals": {
+          "ec2:MetadataHttpTokens": "required"
+        }
+      }
+    },
+    {
+      "Sid": "DenyPublicEKSEndpoint",
+      "Effect": "Deny",
+      "Action": "eks:UpdateClusterConfig",
+      "Resource": "*",
+      "Condition": {
+        "Bool": {
+          "eks:endpointPublicAccess": "true"
+        }
+      }
+    }
+  ]
+}
+```
+
+### Least Privilege IAM Policy Patterns
+
+Best practices for EKS IAM policies:
+
+**Pattern 1: Namespace-Scoped Permissions**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowNamespaceOperations",
+      "Effect": "Allow",
+      "Action": [
+        "eks:DescribeCluster",
+        "eks:ListClusters"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowSpecificClusterAccess",
+      "Effect": "Allow",
+      "Action": [
+        "eks:AccessKubernetesApi"
+      ],
+      "Resource": "arn:aws:eks:us-west-2:123456789012:cluster/production-cluster",
+      "Condition": {
+        "StringEquals": {
+          "eks:namespaces": ["team-a", "team-a-staging"]
+        }
+      }
+    }
+  ]
+}
+```
+
+**Pattern 2: Resource-Based Restrictions**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowECRPull",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "ecr:BatchCheckLayerAvailability"
+      ],
+      "Resource": "arn:aws:ecr:us-west-2:123456789012:repository/approved-*"
+    },
+    {
+      "Sid": "AllowECRAuth",
+      "Effect": "Allow",
+      "Action": "ecr:GetAuthorizationToken",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+**Pattern 3: Condition-Based Access**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowS3AccessWithTags",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource": "arn:aws:s3:::app-bucket/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": "${aws:PrincipalTag/Environment}"
+        }
+      }
+    }
+  ]
+}
+```
+
+### EKS Node Role Permission Boundary Example
+
+Apply permission boundaries to EKS node roles to limit blast radius:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowEKSNodeOperations",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeVolumes",
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:AttachVolume",
+        "ec2:DetachVolume",
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyPrivilegedActions",
+      "Effect": "Deny",
+      "Action": [
+        "iam:*",
+        "organizations:*",
+        "account:*",
+        "eks:DeleteCluster",
+        "eks:UpdateClusterConfig",
+        "ec2:DeleteVpc",
+        "ec2:DeleteSubnet",
+        "ec2:DeleteSecurityGroup"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowSecretsInNamespace",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue"
+      ],
+      "Resource": "arn:aws:secretsmanager:*:*:secret:/eks/production/*"
+    }
+  ]
+}
+```
+
+Apply the boundary to the node role:
+
+```bash
+# Create permission boundary
+aws iam create-policy \
+  --policy-name EKSNodePermissionBoundary \
+  --policy-document file://node-permission-boundary.json
+
+# Apply boundary to node role
+aws iam put-role-permissions-boundary \
+  --role-name EKSNodeRole \
+  --permissions-boundary arn:aws:iam::123456789012:policy/EKSNodePermissionBoundary
+
+# Verify boundary is applied
+aws iam get-role --role-name EKSNodeRole --query "Role.PermissionsBoundary"
 ```
 
 ## Encryption and Secrets Management

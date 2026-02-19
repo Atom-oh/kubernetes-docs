@@ -8,7 +8,10 @@
 2. [Amazon S3 스토리지 통합](#amazon-s3-스토리지-통합)
 3. [스냅샷 및 백업](#스냅샷-및-백업)
 4. [볼륨 확장 및 크기 조정](#볼륨-확장-및-크기-조정)
-5. [스토리지 성능 최적화](#스토리지-성능-최적화)
+5. [볼륨 클로닝](#볼륨-클로닝)
+6. [다중 연결 EBS (Multi-Attach)](#다중-연결-ebs-multi-attach)
+7. [Mountpoint for S3 CSI 심화](#mountpoint-for-s3-csi-심화)
+8. [스토리지 성능 최적화](#스토리지-성능-최적화)
 
 ## Amazon FSx for Lustre
 
@@ -534,6 +537,464 @@ xfs_growfs /data
 3. **점진적 확장**: 필요에 따라 점진적으로 볼륨 크기 확장
 4. **다운타임 계획**: 일부 파일 시스템 확장은 다운타임이 필요할 수 있음
 5. **자동화 고려**: 자동 확장 정책 구현
+
+## 볼륨 클로닝
+
+볼륨 클로닝은 기존 PVC(PersistentVolumeClaim)의 데이터를 복사하여 새로운 PVC를 생성하는 기능입니다. EBS CSI 드라이버는 Kubernetes의 `dataSource` 필드를 통해 볼륨 클로닝을 지원합니다.
+
+### 볼륨 클론 개념
+
+볼륨 클로닝은 스냅샷과 달리 소스 볼륨에서 직접 새 볼륨을 생성합니다. 클로닝 과정에서 데이터는 백그라운드에서 복사되며, 새 볼륨은 즉시 사용할 수 있습니다.
+
+```mermaid
+flowchart LR
+    subgraph Source["소스"]
+        SourcePVC[소스 PVC]
+        SourcePV[소스 PV]
+        SourceEBS[소스 EBS 볼륨]
+    end
+
+    subgraph Clone["클론"]
+        ClonePVC[클론 PVC]
+        ClonePV[클론 PV]
+        CloneEBS[클론 EBS 볼륨]
+    end
+
+    SourcePVC --> SourcePV
+    SourcePV --> SourceEBS
+
+    SourcePVC -->|dataSource 참조| ClonePVC
+    ClonePVC --> ClonePV
+    ClonePV --> CloneEBS
+
+    SourceEBS -->|데이터 복사| CloneEBS
+
+    style Source fill:#e6f7ff,stroke:#0099cc
+    style Clone fill:#e6ffe6,stroke:#009900
+```
+
+### dataSource 필드 사용
+
+PVC의 `dataSource` 필드를 사용하여 기존 PVC를 소스로 지정합니다:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ebs-clone
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ebs-gp3
+  resources:
+    requests:
+      storage: 10Gi  # 소스 PVC와 같거나 더 큰 크기 지정
+  dataSource:
+    kind: PersistentVolumeClaim
+    name: ebs-source  # 소스 PVC 이름
+```
+
+### 클론 생성 예제
+
+전체 클론 생성 워크플로우:
+
+```yaml
+# 1. 소스 PVC (이미 데이터가 있는 볼륨)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ebs-source
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ebs-gp3
+  resources:
+    requests:
+      storage: 10Gi
+---
+# 2. 클론 PVC 생성
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ebs-clone
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ebs-gp3
+  resources:
+    requests:
+      storage: 10Gi
+  dataSource:
+    kind: PersistentVolumeClaim
+    name: ebs-source
+---
+# 3. 클론된 볼륨을 사용하는 파드
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-clone
+spec:
+  containers:
+  - name: app
+    image: nginx
+    volumeMounts:
+    - mountPath: "/data"
+      name: cloned-volume
+  volumes:
+  - name: cloned-volume
+    persistentVolumeClaim:
+      claimName: ebs-clone
+```
+
+### 스냅샷 기반 복원 vs 클론 비교
+
+| 특성 | 볼륨 클로닝 | 스냅샷 기반 복원 |
+|------|------------|-----------------|
+| **소스** | 기존 PVC | VolumeSnapshot |
+| **속도** | 즉시 사용 가능 (백그라운드 복사) | 스냅샷 생성 후 복원 |
+| **스토리지 클래스** | 동일해야 함 | 다른 스토리지 클래스 가능 |
+| **사용 사례** | 개발/테스트 환경 복제, 데이터 마이그레이션 | 백업/복구, 재해 복구, 장기 보존 |
+| **비용** | 클론 볼륨 전체 비용 | 스냅샷 저장 비용 (증분) + 복원 볼륨 비용 |
+
+## 다중 연결 EBS (Multi-Attach)
+
+다중 연결 EBS(Multi-Attach)는 단일 EBS 볼륨을 동일한 가용 영역 내 여러 인스턴스에 동시에 연결할 수 있는 기능입니다.
+
+### 지원 볼륨 유형
+
+다중 연결은 다음 볼륨 유형에서만 지원됩니다:
+
+- **io1**: 프로비저닝된 IOPS SSD
+- **io2 Block Express**: 차세대 고성능 IOPS SSD
+
+> **주의**: gp3, gp2, st1, sc1 볼륨 유형은 다중 연결을 지원하지 않습니다.
+
+### ReadWriteMany가 아닌 이유
+
+EBS 다중 연결은 Kubernetes의 `ReadWriteMany` 액세스 모드와 다릅니다:
+
+- EBS 다중 연결은 **Block 모드**에서만 작동합니다
+- Filesystem 모드의 동시 쓰기는 파일 시스템 손상을 초래할 수 있습니다
+- 애플리케이션 수준에서 동시 액세스 조정이 필요합니다 (클러스터 파일 시스템 또는 분산 잠금)
+
+```mermaid
+flowchart TD
+    subgraph MultiAttach["다중 연결 EBS"]
+        EBS[io2 Block Express 볼륨]
+
+        subgraph AZ["동일 가용 영역"]
+            Node1[노드 1]
+            Node2[노드 2]
+            Node3[노드 3]
+        end
+    end
+
+    EBS <--> |Block 디바이스| Node1
+    EBS <--> |Block 디바이스| Node2
+    EBS <--> |Block 디바이스| Node3
+
+    Note["주의: 파일시스템 동시 쓰기 불가
+클러스터 파일시스템 필요 (GFS2, OCFS2)"]
+
+    style MultiAttach fill:#fff3e6,stroke:#ff9900
+    style Note fill:#ffe6e6,stroke:#cc0000
+```
+
+### 제한사항
+
+1. **동일 가용 영역**: 모든 연결된 인스턴스가 같은 AZ에 있어야 합니다
+2. **Block 볼륨 모드만**: `volumeMode: Block` 필수
+3. **최대 연결 수**: 동시에 최대 16개 인스턴스까지 연결 가능
+4. **클러스터 파일 시스템 필요**: 동시 쓰기를 위해서는 GFS2, OCFS2 등 클러스터 인식 파일 시스템 필요
+
+### 사용 사례
+
+- 고가용성이 필요한 데이터베이스 클러스터 (Oracle RAC 등)
+- 분산 스토리지 시스템
+- 장애 조치(failover) 시나리오
+
+### 다중 연결 EBS 구성 예제
+
+```yaml
+# 다중 연결을 지원하는 스토리지 클래스
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-io2-multi-attach
+provisioner: ebs.csi.aws.com
+parameters:
+  type: io2
+  iops: "10000"
+volumeBindingMode: WaitForFirstConsumer
+---
+# Block 모드 PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: multi-attach-pvc
+spec:
+  accessModes:
+    - ReadWriteMany  # 다중 연결 시 사용
+  volumeMode: Block   # 필수: Block 모드
+  storageClassName: ebs-io2-multi-attach
+  resources:
+    requests:
+      storage: 100Gi
+---
+# 첫 번째 파드 - Block 디바이스로 마운트
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-1
+spec:
+  containers:
+  - name: app
+    image: amazonlinux:2
+    command: ["sleep", "infinity"]
+    volumeDevices:         # volumeMounts 대신 volumeDevices 사용
+    - name: data
+      devicePath: /dev/xvda
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: multi-attach-pvc
+---
+# 두 번째 파드 - 같은 볼륨을 다른 노드에서 사용
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-2
+spec:
+  containers:
+  - name: app
+    image: amazonlinux:2
+    command: ["sleep", "infinity"]
+    volumeDevices:
+    - name: data
+      devicePath: /dev/xvda
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: multi-attach-pvc
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app: multi-attach-app
+        topologyKey: "kubernetes.io/hostname"
+```
+
+## Mountpoint for S3 CSI 심화
+
+Mountpoint for Amazon S3 CSI 드라이버는 S3 버킷을 Kubernetes 파드에 파일 시스템으로 마운트할 수 있게 해줍니다. 이 섹션에서는 성능 특성, 제한사항, 캐싱 전략 및 대규모 데이터 학습 시나리오에 대해 심층적으로 다룹니다.
+
+### 성능 특성
+
+Mountpoint for S3는 특정 워크로드 패턴에 최적화되어 있습니다:
+
+```mermaid
+flowchart TD
+    subgraph Performance["성능 특성"]
+        subgraph Optimized["최적화된 작업"]
+            SeqRead["순차 읽기
+✅ 높은 처리량"]
+            LargeFiles["대용량 파일
+✅ 효율적"]
+            Streaming["스트리밍 읽기
+✅ 최적화됨"]
+        end
+
+        subgraph Limited["제한된 작업"]
+            RandomWrite["랜덤 쓰기
+❌ 지원 안 됨"]
+            SmallFiles["작은 파일 많음
+⚠️ 오버헤드"]
+            Append["파일 추가 쓰기
+❌ 지원 안 됨"]
+        end
+    end
+
+    style Optimized fill:#e6ffe6,stroke:#009900
+    style Limited fill:#ffe6e6,stroke:#cc0000
+```
+
+| 작업 | 성능 | 설명 |
+|------|------|------|
+| 순차 읽기 | 우수 | 멀티파트 다운로드로 높은 처리량 달성 |
+| 순차 쓰기 | 양호 | 새 파일 생성 시 멀티파트 업로드 |
+| 랜덤 읽기 | 보통 | 바이트 범위 요청 지원, 지연 시간 존재 |
+| 랜덤 쓰기 | 미지원 | S3 특성상 기존 파일 수정 불가 |
+| 메타데이터 작업 | 양호 | ListObjects API 활용 |
+
+### 제한사항
+
+Mountpoint for S3는 POSIX 파일 시스템과 완전히 호환되지 않습니다:
+
+**지원되지 않는 기능:**
+
+1. **하드 링크**: `ln` 명령 사용 불가
+2. **심볼릭 링크**: `ln -s` 명령 사용 불가
+3. **파일 권한 변경**: `chmod`, `chown` 무시됨
+4. **파일 잠금**: `flock`, `fcntl` 잠금 미지원
+5. **특수 파일**: 디바이스 파일, 소켓, 파이프 생성 불가
+6. **기존 파일 수정**: 파일 내용 추가/수정 불가 (덮어쓰기만 가능)
+
+**지원되는 기능:**
+
+- 파일 및 디렉토리 생성
+- 파일 읽기 (순차/랜덤)
+- 새 파일 쓰기 (전체 쓰기)
+- 파일 삭제
+- 디렉토리 목록 조회
+
+### 캐시 설정
+
+성능 향상을 위해 메타데이터 및 데이터 캐시를 구성할 수 있습니다:
+
+#### 메타데이터 캐시
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: s3-cached
+provisioner: s3.csi.aws.com
+parameters:
+  bucketName: my-ml-data-bucket
+mountOptions:
+  # 메타데이터 캐시: 디렉토리 목록 결과 캐싱
+  - metadata-ttl=3600       # 메타데이터 TTL (초)
+  - max-cache-size=1000     # 최대 캐시 항목 수
+```
+
+#### 데이터 캐시
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: s3-data-cached
+provisioner: s3.csi.aws.com
+parameters:
+  bucketName: my-training-data
+mountOptions:
+  # 데이터 캐시: 로컬 디스크에 데이터 캐싱
+  - cache=/tmp/s3-cache     # 캐시 디렉토리
+  - max-cache-size-mb=10240 # 최대 캐시 크기 (MB)
+  - cache-block-size=8      # 캐시 블록 크기 (MB)
+```
+
+#### 성능 튜닝 옵션
+
+```yaml
+mountOptions:
+  # 읽기 성능 최적화
+  - read-ahead=10           # 미리 읽기 블록 수
+  - max-read-parallelism=8  # 병렬 읽기 스레드 수
+
+  # 쓰기 성능 최적화
+  - max-write-parallelism=4 # 병렬 쓰기 스레드 수
+  - upload-part-size=8      # 멀티파트 업로드 크기 (MB)
+```
+
+### 대량 데이터 학습 시나리오
+
+ML/AI 워크로드에서 S3의 대용량 학습 데이터를 효율적으로 사용하는 예제:
+
+```yaml
+# S3 학습 데이터용 스토리지 클래스
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: s3-ml-training
+provisioner: s3.csi.aws.com
+parameters:
+  bucketName: ml-training-datasets
+mountOptions:
+  # 읽기 최적화 설정
+  - read-only                    # 학습 데이터는 읽기 전용
+  - max-read-parallelism=16      # 높은 병렬성
+  - read-ahead=20                # 공격적인 미리 읽기
+  - metadata-ttl=86400           # 메타데이터 24시간 캐시
+  # 로컬 캐시 활성화
+  - cache=/mnt/nvme/s3-cache     # NVMe 스토리지에 캐싱
+  - max-cache-size-mb=102400     # 100GB 캐시
+---
+# 학습 데이터 PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: training-data
+spec:
+  accessModes:
+    - ReadOnlyMany               # 여러 학습 파드에서 공유
+  storageClassName: s3-ml-training
+  resources:
+    requests:
+      storage: 1Ti               # S3이므로 실제 제한 없음
+---
+# PyTorch 학습 파드
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pytorch-training
+spec:
+  serviceAccountName: ml-training-sa  # IRSA로 S3 접근
+  containers:
+  - name: pytorch
+    image: pytorch/pytorch:2.0.0-cuda11.7-cudnn8-runtime
+    resources:
+      limits:
+        nvidia.com/gpu: 8
+        memory: "256Gi"
+        cpu: "64"
+    command:
+    - python
+    - -m
+    - torch.distributed.launch
+    - --nproc_per_node=8
+    - train.py
+    - --data-path=/data/training
+    env:
+    - name: PYTORCH_CUDA_ALLOC_CONF
+      value: "max_split_size_mb:512"
+    volumeMounts:
+    - name: training-data
+      mountPath: /data/training
+      readOnly: true
+    - name: model-output
+      mountPath: /data/models
+    - name: local-cache
+      mountPath: /mnt/nvme/s3-cache
+  volumes:
+  - name: training-data
+    persistentVolumeClaim:
+      claimName: training-data
+  - name: model-output
+    persistentVolumeClaim:
+      claimName: fsx-model-output  # 모델 출력은 FSx 사용
+  - name: local-cache
+    emptyDir:
+      medium: Memory              # 또는 로컬 NVMe
+      sizeLimit: "100Gi"
+  nodeSelector:
+    node.kubernetes.io/instance-type: p4d.24xlarge
+```
+
+### S3 vs EFS vs FSx 성능 비교
+
+학습 워크로드에서 스토리지 옵션 선택 가이드:
+
+| 특성 | S3 (Mountpoint) | EFS | FSx for Lustre |
+|------|----------------|-----|----------------|
+| **처리량** | 높음 (S3 한도) | 중간 | 매우 높음 |
+| **지연 시간** | 높음 | 중간 | 낮음 |
+| **비용** | 낮음 | 중간 | 높음 |
+| **동시 접근** | 무제한 | 수천 클라이언트 | 수천 클라이언트 |
+| **랜덤 읽기** | 느림 | 빠름 | 매우 빠름 |
+| **쓰기 패턴** | 새 파일만 | 모든 패턴 | 모든 패턴 |
+| **사용 사례** | 대용량 데이터셋 읽기 | 범용 | HPC, ML 학습 |
 
 ## 스토리지 성능 최적화
 

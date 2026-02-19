@@ -64,7 +64,12 @@ kubectl -n storage-demo get pvc,pod
 5. [Dynamic Provisioning](#dynamic-provisioning)
 6. [Volume Snapshots](#volume-snapshots)
 7. [Volume Expansion](#volume-expansion)
-8. [Storage Options in EKS](#storage-options-in-eks)
+8. [Projected Volumes](#projected-volumes)
+9. [Generic Ephemeral Volumes](#generic-ephemeral-volumes)
+10. [Block Volume Mode](#block-volume-mode)
+11. [Volume Cloning](#volume-cloning)
+12. [Storage ResourceQuota](#storage-resourcequota)
+13. [Storage Options in EKS](#storage-options-in-eks)
 
 ## Volumes
 
@@ -700,6 +705,434 @@ spec:
       storage: 16Gi  # Expanded from original 8Gi to 16Gi
   storageClassName: standard
 ```
+
+## Projected Volumes
+
+Projected volumes allow you to combine multiple volume sources into a single volume mount. This is useful when you need to expose secrets, configMaps, downwardAPI, and serviceAccountToken together in a single directory.
+
+### Supported Sources
+
+- **secret**: Mount secret data
+- **configMap**: Mount configuration data
+- **downwardAPI**: Expose pod and container metadata
+- **serviceAccountToken**: Mount service account tokens with configurable expiration
+
+### Projected Volume Example
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: projected-volume-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "ls -la /etc/projected && sleep 3600"]
+    volumeMounts:
+    - name: all-in-one
+      mountPath: /etc/projected
+      readOnly: true
+  volumes:
+  - name: all-in-one
+    projected:
+      sources:
+      - secret:
+          name: db-credentials
+          items:
+          - key: username
+            path: db/username
+          - key: password
+            path: db/password
+      - configMap:
+          name: app-config
+          items:
+          - key: config.yaml
+            path: config/app.yaml
+      - downwardAPI:
+          items:
+          - path: labels
+            fieldRef:
+              fieldPath: metadata.labels
+          - path: cpu-request
+            resourceFieldRef:
+              containerName: app
+              resource: requests.cpu
+      - serviceAccountToken:
+          path: token
+          expirationSeconds: 3600
+          audience: api
+```
+
+This configuration creates a single volume at `/etc/projected` containing:
+- `/etc/projected/db/username` and `/etc/projected/db/password` from the secret
+- `/etc/projected/config/app.yaml` from the configMap
+- `/etc/projected/labels` and `/etc/projected/cpu-request` from downwardAPI
+- `/etc/projected/token` with an auto-rotating service account token
+
+### Service Account Token Projection
+
+Service account token projection provides tokens with bounded lifetime and audience:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: token-projected-pod
+spec:
+  serviceAccountName: my-service-account
+  containers:
+  - name: app
+    image: myapp:latest
+    volumeMounts:
+    - name: token
+      mountPath: /var/run/secrets/tokens
+  volumes:
+  - name: token
+    projected:
+      sources:
+      - serviceAccountToken:
+          path: api-token
+          expirationSeconds: 7200  # 2 hours
+          audience: my-api-service
+```
+
+## Generic Ephemeral Volumes
+
+Generic ephemeral volumes provide PVC-like storage that is tied to the pod's lifecycle. Unlike emptyDir, they use the full power of PVCs and StorageClasses, including dynamic provisioning.
+
+### Differences from emptyDir
+
+| Feature | emptyDir | Generic Ephemeral Volume |
+|---------|----------|--------------------------|
+| **Storage backend** | Node local storage or memory | Any CSI driver |
+| **Provisioning** | Automatic, simple | Uses StorageClass, dynamic provisioning |
+| **Size limits** | sizeLimit (soft) | Full PVC capacity management |
+| **Snapshots** | Not supported | Supported (if CSI driver supports) |
+| **Storage features** | Basic | Full CSI features (encryption, IOPS, etc.) |
+| **Persistence** | Lost when pod is deleted | Lost when pod is deleted |
+
+### Generic Ephemeral Volume Example
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ephemeral-volume-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "dd if=/dev/zero of=/scratch/data bs=1M count=100 && sleep 3600"]
+    volumeMounts:
+    - name: scratch
+      mountPath: /scratch
+  volumes:
+  - name: scratch
+    ephemeral:
+      volumeClaimTemplate:
+        metadata:
+          labels:
+            type: scratch-storage
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          storageClassName: fast-ssd
+          resources:
+            requests:
+              storage: 10Gi
+```
+
+### Use Cases
+
+1. **CI/CD pipelines**: Temporary build artifacts with guaranteed storage capacity
+2. **Data processing**: Scratch space with specific performance requirements
+3. **Testing**: Temporary databases or caches with CSI features
+4. **Machine learning**: Temporary model checkpoints with high-performance storage
+
+### Deployment with Generic Ephemeral Volumes
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-training
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ml-training
+  template:
+    metadata:
+      labels:
+        app: ml-training
+    spec:
+      containers:
+      - name: trainer
+        image: ml-trainer:latest
+        volumeMounts:
+        - name: checkpoint-storage
+          mountPath: /checkpoints
+      volumes:
+      - name: checkpoint-storage
+        ephemeral:
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+              - ReadWriteOnce
+              storageClassName: high-iops
+              resources:
+                requests:
+                  storage: 50Gi
+```
+
+## Block Volume Mode
+
+Kubernetes supports raw block volumes in addition to filesystem volumes. Block volumes present storage as a raw block device without a filesystem, useful for applications that manage their own data layout.
+
+### Filesystem vs Block Mode
+
+| Aspect | Filesystem (default) | Block |
+|--------|---------------------|-------|
+| **volumeMode** | `Filesystem` | `Block` |
+| **Mount type** | Mounted as directory | Exposed as device file |
+| **Filesystem** | ext4, xfs, etc. | None (raw) |
+| **Access in pod** | `/mnt/data/` | `/dev/xvda` |
+| **Use case** | General applications | Databases, specialized apps |
+
+### Block Volume PV and PVC
+
+```yaml
+# PersistentVolume with Block mode
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: block-pv
+spec:
+  capacity:
+    storage: 100Gi
+  volumeMode: Block
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: block-storage
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-0123456789abcdef0
+---
+# PersistentVolumeClaim for Block volume
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: block-pvc
+spec:
+  volumeMode: Block
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: block-storage
+  resources:
+    requests:
+      storage: 100Gi
+```
+
+### Using Block Volumes in Pods
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: block-volume-pod
+spec:
+  containers:
+  - name: database
+    image: custom-database:latest
+    volumeDevices:
+    - name: data
+      devicePath: /dev/xvda
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: block-pvc
+```
+
+Note: Block volumes use `volumeDevices` and `devicePath` instead of `volumeMounts` and `mountPath`.
+
+### Use Cases for Block Volumes
+
+1. **Databases**: MySQL, PostgreSQL, or MongoDB that benefit from raw disk access
+2. **Custom filesystems**: Applications using specialized filesystems like ZFS or LVM
+3. **High-performance storage**: Applications requiring direct I/O without filesystem overhead
+4. **Storage virtualization**: Software-defined storage solutions
+
+## Volume Cloning
+
+Volume cloning creates a new PVC with the contents of an existing PVC. This is useful for creating test environments, duplicating data, or migrating workloads.
+
+### Prerequisites
+
+- CSI driver must support volume cloning
+- Source and destination PVCs must be in the same namespace
+- Source and destination must use the same StorageClass
+- Source and destination must have the same volumeMode
+
+### PVC Cloning Example
+
+```yaml
+# Source PVC (existing)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: source-pvc
+  namespace: production
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ebs-sc
+  resources:
+    requests:
+      storage: 100Gi
+---
+# Clone PVC using dataSource
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cloned-pvc
+  namespace: production
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ebs-sc
+  resources:
+    requests:
+      storage: 100Gi  # Must be >= source size
+  dataSource:
+    kind: PersistentVolumeClaim
+    name: source-pvc
+```
+
+### Cloning vs Snapshots
+
+| Feature | Volume Cloning | Volume Snapshots |
+|---------|---------------|------------------|
+| **Result** | New PVC with data | Snapshot object |
+| **Use case** | Duplicate live volume | Point-in-time backup |
+| **Performance** | May be slower (full copy) | Usually faster (copy-on-write) |
+| **Cross-namespace** | No | No |
+| **Storage overhead** | Full copy | Incremental |
+
+### Clone for Testing
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-db-clone
+  namespace: staging
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ebs-sc
+  resources:
+    requests:
+      storage: 100Gi
+  dataSource:
+    kind: PersistentVolumeClaim
+    name: production-db-pvc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-database
+  namespace: staging
+spec:
+  containers:
+  - name: postgres
+    image: postgres:15
+    volumeMounts:
+    - name: data
+      mountPath: /var/lib/postgresql/data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: test-db-clone
+```
+
+## Storage ResourceQuota
+
+ResourceQuota can limit storage consumption within a namespace, including the number of PVCs and total storage capacity.
+
+### Storage-Related Quota Fields
+
+| Field | Description |
+|-------|-------------|
+| **persistentvolumeclaims** | Total number of PVCs allowed |
+| **requests.storage** | Total storage capacity across all PVCs |
+| **\<storage-class\>.storageclass.storage.k8s.io/requests.storage** | Storage capacity for specific StorageClass |
+| **\<storage-class\>.storageclass.storage.k8s.io/persistentvolumeclaims** | PVC count for specific StorageClass |
+
+### ResourceQuota Example
+
+```yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: storage-quota
+  namespace: team-a
+spec:
+  hard:
+    # Total limits
+    persistentvolumeclaims: "10"
+    requests.storage: "500Gi"
+
+    # Per-StorageClass limits
+    ebs-sc.storageclass.storage.k8s.io/requests.storage: "200Gi"
+    ebs-sc.storageclass.storage.k8s.io/persistentvolumeclaims: "5"
+
+    efs-sc.storageclass.storage.k8s.io/requests.storage: "300Gi"
+    efs-sc.storageclass.storage.k8s.io/persistentvolumeclaims: "5"
+```
+
+### Checking ResourceQuota Status
+
+```bash
+# View quota status
+kubectl get resourcequota storage-quota -n team-a -o yaml
+
+# Example output
+status:
+  hard:
+    persistentvolumeclaims: "10"
+    requests.storage: "500Gi"
+  used:
+    persistentvolumeclaims: "3"
+    requests.storage: "150Gi"
+```
+
+### LimitRange for Storage
+
+LimitRange can set default and limit values for PVC storage requests:
+
+```yaml
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: storage-limits
+  namespace: team-a
+spec:
+  limits:
+  - type: PersistentVolumeClaim
+    min:
+      storage: 1Gi
+    max:
+      storage: 100Gi
+    default:
+      storage: 10Gi
+```
+
+This ensures:
+- Minimum PVC size is 1Gi
+- Maximum PVC size is 100Gi
+- Default size (if not specified) is 10Gi
 
 ## Storage Options in EKS
 

@@ -8,35 +8,7 @@ Amazon EKS networking is a core component that manages communication for Kuberne
 
 The EKS networking architecture consists of the following components:
 
-![EKS Networking Architecture Overview](../assets/generated-diagrams/eks_networking_architecture_overview.drawio)
-    Node1 --- Pod1
-    Node1 --- Pod2
-    Node2 --- Pod3
-    Pod1 <--> Pod2
-    Pod2 <--> Pod3
-    Pod1 <--> Pod3
-    Node1 <--> NLB
-    Node2 <--> NLB
-    Worker_Nodes <--> EKS_CP
-    Worker_Nodes <--> S3_EP
-    Worker_Nodes <--> ECR_EP
-    Worker_Nodes <--> EKS_EP
-    S3_EP <--> S3
-    ECR_EP <--> ECR
-    EKS_EP <--> EKS_CP
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class IGW,NATGW,ALB,NLB,S3_EP,ECR_EP,EKS_EP,S3,ECR,EKS_CP awsService;
-    class Node1,Node2 k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
-```
+![EKS Networking Architecture Overview](../assets/generated-diagrams/eks_networking_architecture_overview.png)
 
 1. **VPC (Virtual Private Cloud)**: Isolated network environment where the EKS cluster runs
 2. **Subnets**: Units that divide IP address ranges within the VPC
@@ -51,39 +23,7 @@ The EKS networking architecture consists of the following components:
 
 Network traffic flows in an EKS cluster as follows:
 
-![EKS Network Traffic Flow](../assets/generated-diagrams/eks_network_traffic_flow.drawio)
-    Pod2 <--> Pod4
-
-    %% Pod to service communication
-    Pod1 --> ClusterIP
-    Pod2 --> ClusterIP
-    Pod3 --> ClusterIP
-    Pod4 --> ClusterIP
-
-    %% Internal to external cluster communication
-    Internet <--> LoadBalancer
-    External_Services <--> LoadBalancer
-    LoadBalancer --> NodePort
-    NodePort --> ClusterIP
-
-    %% Control plane to node communication
-    API <--> Kubelet1
-    API <--> Kubelet2
-    Controller <--> Kubelet1
-    Controller <--> Kubelet2
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class API,Controller,Scheduler,Kubelet1,Kubelet2,ClusterIP,NodePort,LoadBalancer k8sComponent;
-    class Pod1,Pod2,Pod3,Pod4 userApp;
-    class Internet,External_Services default;
-```
+![EKS Network Traffic Flow](../assets/generated-diagrams/eks_network_traffic_flow.png)
 
 1. **Pod-to-Pod Communication**: Communication between pods on the same node or different nodes
 2. **Pod-to-Service Communication**: Communication between pods and services within the cluster
@@ -92,13 +32,13 @@ Network traffic flows in an EKS cluster as follows:
 
 ### Relationship Between EKS Networking Components
 
-![Relationship Between EKS Networking Components](../assets/generated-diagrams/eks_networking_components_relationship.drawio)
+![Relationship Between EKS Networking Components](../assets/generated-diagrams/eks_networking_components_relationship.png)
 
 ## VPC Requirements
 
 A VPC for an EKS cluster must meet the following requirements:
 
-![EKS VPC Requirements](../assets/generated-diagrams/eks_vpc_requirements.drawio)
+![EKS VPC Requirements](../assets/generated-diagrams/eks_vpc_requirements.png)
 
 1. **Subnets**: Must have subnets in at least 2 availability zones
 2. **IP Addresses**: Must provide a sufficient number of IP addresses
@@ -109,7 +49,7 @@ A VPC for an EKS cluster must meet the following requirements:
 
 Considerations when planning VPC CIDR blocks:
 
-![VPC CIDR Planning Considerations](../assets/generated-diagrams/eks_vpc_cidr_planning.drawio)
+![VPC CIDR Planning Considerations](../assets/generated-diagrams/eks_vpc_cidr_planning.png)
 
 1. **Cluster Size**: Expected number of nodes and pods
 2. **IP Address Requirements**: Number of IP addresses needed for each node and pod
@@ -123,7 +63,7 @@ Common VPC CIDR block sizes:
 
 ### Subnet Design
 
-![EKS Subnet Design](../assets/generated-diagrams/eks_subnet_design.drawio)
+![EKS Subnet Design](../assets/generated-diagrams/eks_subnet_design.png)
 
 Best practices for subnet design for EKS clusters:
 
@@ -150,7 +90,7 @@ Example subnet design:
 
 ### Subnet Tags
 
-![EKS Subnet Tag Configuration](../assets/generated-diagrams/eks_subnet_tags.drawio)
+![EKS Subnet Tag Configuration](../assets/generated-diagrams/eks_subnet_tags.png)
 
 EKS uses specific tags on subnets to automatically discover resources:
 
@@ -171,7 +111,7 @@ aws ec2 create-tags \
 
 ### Security Group Configuration
 
-![EKS Security Group Configuration](../assets/generated-diagrams/eks_security_groups.drawio)
+![EKS Security Group Configuration](../assets/generated-diagrams/eks_security_groups.png)
 
 EKS clusters have two main security groups:
 

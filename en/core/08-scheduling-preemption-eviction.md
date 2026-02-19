@@ -197,9 +197,12 @@ graph TD
 8. [Pod Eviction](#pod-eviction)
 9. [Pod Disruption Budget (PDB)](#pod-disruption-budget-pdb)
 10. [Node Pressure Eviction](#node-pressure-eviction)
-11. [Scheduling Optimization in Amazon EKS](#scheduling-optimization-in-amazon-eks)
-12. [Scheduling Best Practices](#scheduling-best-practices)
-13. [Conclusion](#conclusion)
+11. [TopologySpreadConstraints](#topologyspreadconstraints)
+12. [Pod Deletion Cost](#pod-deletion-cost)
+13. [Descheduler](#descheduler)
+14. [Scheduling Optimization in Amazon EKS](#scheduling-optimization-in-amazon-eks)
+15. [Scheduling Best Practices](#scheduling-best-practices)
+16. [Conclusion](#conclusion)
 
 ## Scheduling Overview
 
@@ -1057,6 +1060,454 @@ evictionPressureTransitionPeriod: "30s"
 In the example above:
 - `evictionMinimumReclaim`: Minimum resources that must be reclaimed after eviction
 - `evictionPressureTransitionPeriod`: Wait time between pressure state transitions
+
+## TopologySpreadConstraints
+
+TopologySpreadConstraints provide fine-grained control over how pods are distributed across topology domains such as availability zones, nodes, or regions. This feature offers more flexibility than Pod anti-affinity for achieving high availability and efficient resource utilization.
+
+```mermaid
+graph TD
+    subgraph "TopologySpreadConstraints Overview"
+        TSC["TopologySpreadConstraints"]
+        TSC -->|controls| Distribution["Pod Distribution"]
+
+        subgraph "Key Fields"
+            MaxSkew["maxSkew<br>(max difference allowed)"]
+            TopologyKey["topologyKey<br>(topology domain)"]
+            WhenUnsatisfiable["whenUnsatisfiable<br>(scheduling action)"]
+            LabelSelector["labelSelector<br>(target pods)"]
+        end
+
+        subgraph "Optional Fields (1.27+)"
+            MinDomains["minDomains<br>(minimum topology domains)"]
+            MatchLabelKeys["matchLabelKeys<br>(dynamic label matching)"]
+            NodeAffinityPolicy["nodeAffinityPolicy<br>(Honor/Ignore)"]
+            NodeTaintsPolicy["nodeTaintsPolicy<br>(Honor/Ignore)"]
+        end
+    end
+
+    subgraph "Distribution Example"
+        Zone1["Zone A<br>2 pods"]
+        Zone2["Zone B<br>2 pods"]
+        Zone3["Zone C<br>1 pod"]
+
+        Zone1 -.->|maxSkew: 1| Zone3
+        Zone2 -.->|maxSkew: 1| Zone3
+    end
+
+    TSC --> MaxSkew
+    TSC --> TopologyKey
+    TSC --> WhenUnsatisfiable
+    TSC --> LabelSelector
+    TSC --> MinDomains
+    TSC --> MatchLabelKeys
+
+    %% Style definitions
+    classDef tscComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef fieldComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef optionalField fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef zoneComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+
+    %% Apply classes
+    class TSC,Distribution tscComponent;
+    class MaxSkew,TopologyKey,WhenUnsatisfiable,LabelSelector fieldComponent;
+    class MinDomains,MatchLabelKeys,NodeAffinityPolicy,NodeTaintsPolicy optionalField;
+    class Zone1,Zone2,Zone3 zoneComponent;
+```
+
+### Key Fields
+
+| Field | Description | Required |
+|-------|-------------|----------|
+| **maxSkew** | Maximum allowed difference in pod count between any two topology domains | Yes |
+| **topologyKey** | Node label key that defines topology domains | Yes |
+| **whenUnsatisfiable** | Action when constraints cannot be satisfied: `DoNotSchedule` or `ScheduleAnyway` | Yes |
+| **labelSelector** | Selects which pods to count for spread calculation | Yes |
+| **minDomains** | Minimum number of topology domains required (1.27+) | No |
+| **matchLabelKeys** | Pod label keys to match for spread calculation (1.27+) | No |
+
+### whenUnsatisfiable Options
+
+- **DoNotSchedule**: Scheduler will not schedule the pod if the constraint cannot be satisfied (hard constraint)
+- **ScheduleAnyway**: Scheduler still schedules the pod, giving higher priority to nodes that minimize skew (soft constraint)
+
+### EKS Availability Zone Spread Example
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: web
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: web
+      containers:
+      - name: web
+        image: nginx:1.25
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+```
+
+This configuration ensures:
+1. Pods are evenly distributed across availability zones (hard constraint)
+2. Pods are preferably distributed across nodes within each zone (soft constraint)
+
+### minDomains and matchLabelKeys (Kubernetes 1.27+)
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-with-min-domains
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: distributed-app
+  template:
+    metadata:
+      labels:
+        app: distributed-app
+        version: v1
+    spec:
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: distributed-app
+        minDomains: 3
+        matchLabelKeys:
+        - version
+      containers:
+      - name: app
+        image: myapp:v1
+```
+
+- **minDomains**: Ensures pods are spread across at least 3 zones. If fewer zones are available, scheduling is blocked.
+- **matchLabelKeys**: Automatically uses the pod's `version` label value in the selector, enabling per-revision spread without modifying the selector.
+
+### Advantages Over Pod Anti-Affinity
+
+| Aspect | TopologySpreadConstraints | Pod Anti-Affinity |
+|--------|---------------------------|-------------------|
+| **Flexibility** | Allows controlled skew (maxSkew > 1) | Binary: either same or different domain |
+| **Soft constraints** | `ScheduleAnyway` for best-effort | `preferredDuringScheduling` but less control |
+| **Multi-level** | Multiple constraints with different topologyKeys | Requires complex nested rules |
+| **Performance** | Better scheduler performance at scale | Can slow scheduling with many pods |
+| **Use case** | Even distribution with tolerance | Strict separation |
+
+## Pod Deletion Cost
+
+Pod Deletion Cost is a feature that allows you to control which pods are removed first during scale-down operations. By setting the `controller.kubernetes.io/pod-deletion-cost` annotation, you can influence the order in which pods are terminated.
+
+### How It Works
+
+When a controller (like HPA or manual scale-down) needs to reduce replicas, it considers:
+1. Pods with lower deletion cost are removed first
+2. Default deletion cost is 0
+3. Valid range: -2147483648 to 2147483647
+
+### Basic Example
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: worker-pod
+  annotations:
+    controller.kubernetes.io/pod-deletion-cost: "100"
+spec:
+  containers:
+  - name: worker
+    image: worker:latest
+```
+
+### HPA Scale-Down Priority Control
+
+Use deletion cost to protect important pods during HPA scale-down:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-service
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+      # Lower cost pods are deleted first during scale-down
+      annotations:
+        controller.kubernetes.io/pod-deletion-cost: "0"
+    spec:
+      containers:
+      - name: web
+        image: nginx:1.25
+```
+
+### Cache Protection Pattern
+
+Protect pods with warm caches by dynamically adjusting deletion cost:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cache-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cache
+  template:
+    metadata:
+      labels:
+        app: cache
+    spec:
+      containers:
+      - name: cache
+        image: redis:7
+      - name: cost-updater
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Update deletion cost based on cache warmth
+          while true; do
+            CACHE_SIZE=$(redis-cli DBSIZE | awk '{print $2}')
+            # Higher cache size = higher cost = less likely to be deleted
+            kubectl annotate pod $POD_NAME \
+              controller.kubernetes.io/pod-deletion-cost="$CACHE_SIZE" \
+              --overwrite
+            sleep 60
+          done
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+```
+
+### Practical Use Cases
+
+1. **Stateful workloads**: Protect pods with accumulated state
+2. **Leader election**: Keep leader pods running longer
+3. **Connection draining**: Give time for long-running connections
+4. **Cache warming**: Preserve pods with warm caches
+5. **Batch processing**: Keep pods processing large jobs
+
+## Descheduler
+
+The Descheduler is a Kubernetes component that evicts pods from nodes to allow the scheduler to reschedule them to more appropriate nodes. Unlike the scheduler which only places new pods, the descheduler helps maintain optimal pod placement over time.
+
+```mermaid
+graph TD
+    subgraph "Descheduler Operation"
+        Descheduler["Descheduler"]
+
+        subgraph "Strategies"
+            RemoveDuplicates["RemoveDuplicates"]
+            LowNodeUtilization["LowNodeUtilization"]
+            RemovePodsHavingTooManyRestarts["RemovePodsHavingTooManyRestarts"]
+            PodLifeTime["PodLifeTime"]
+            RemovePodsViolatingInterPodAntiAffinity["RemovePodsViolatingInterPodAntiAffinity"]
+            RemovePodsViolatingNodeAffinity["RemovePodsViolatingNodeAffinity"]
+            RemovePodsViolatingTopologySpreadConstraint["RemovePodsViolatingTopologySpreadConstraint"]
+        end
+
+        subgraph "Process"
+            Analyze["Analyze Cluster State"]
+            Identify["Identify Pods to Evict"]
+            Evict["Evict Pods"]
+            Reschedule["Scheduler Reschedules"]
+        end
+    end
+
+    Descheduler --> RemoveDuplicates
+    Descheduler --> LowNodeUtilization
+    Descheduler --> RemovePodsHavingTooManyRestarts
+    Descheduler --> PodLifeTime
+    Descheduler --> RemovePodsViolatingInterPodAntiAffinity
+    Descheduler --> RemovePodsViolatingNodeAffinity
+    Descheduler --> RemovePodsViolatingTopologySpreadConstraint
+
+    Analyze --> Identify
+    Identify --> Evict
+    Evict --> Reschedule
+
+    %% Style definitions
+    classDef descheduler fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef strategy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef process fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+
+    %% Apply classes
+    class Descheduler descheduler;
+    class RemoveDuplicates,LowNodeUtilization,RemovePodsHavingTooManyRestarts,PodLifeTime,RemovePodsViolatingInterPodAntiAffinity,RemovePodsViolatingNodeAffinity,RemovePodsViolatingTopologySpreadConstraint strategy;
+    class Analyze,Identify,Evict,Reschedule process;
+```
+
+### Why Descheduling Is Needed
+
+1. **Cluster changes**: New nodes added, node labels changed
+2. **Pod drift**: Initial placement becomes suboptimal over time
+3. **Affinity violations**: Rules violated after cluster changes
+4. **Resource imbalance**: Some nodes overutilized, others underutilized
+5. **Failed pods**: Pods stuck in restart loops
+
+### Key Strategies
+
+| Strategy | Description | Use Case |
+|----------|-------------|----------|
+| **RemoveDuplicates** | Removes duplicate pods from the same node | Ensure HA after node failures |
+| **LowNodeUtilization** | Moves pods from overutilized to underutilized nodes | Balance cluster resources |
+| **RemovePodsHavingTooManyRestarts** | Evicts pods with excessive restarts | Clean up problematic pods |
+| **PodLifeTime** | Evicts pods older than specified age | Force fresh scheduling |
+| **RemovePodsViolatingInterPodAntiAffinity** | Evicts pods violating anti-affinity rules | Restore affinity compliance |
+| **RemovePodsViolatingNodeAffinity** | Evicts pods violating node affinity | Restore affinity compliance |
+| **RemovePodsViolatingTopologySpreadConstraint** | Evicts pods violating spread constraints | Restore even distribution |
+
+### Helm Installation
+
+```bash
+# Add the descheduler Helm repository
+helm repo add descheduler https://kubernetes-sigs.github.io/descheduler/
+
+# Install descheduler
+helm install descheduler descheduler/descheduler \
+  --namespace kube-system \
+  --set schedule="*/5 * * * *" \
+  --set deschedulerPolicy.strategies.RemoveDuplicates.enabled=true \
+  --set deschedulerPolicy.strategies.LowNodeUtilization.enabled=true
+```
+
+### DeschedulerPolicy Configuration
+
+```yaml
+apiVersion: "descheduler/v1alpha2"
+kind: "DeschedulerPolicy"
+profiles:
+- name: default
+  pluginConfig:
+  - name: RemoveDuplicates
+    args:
+      excludeOwnerKinds:
+      - DaemonSet
+  - name: LowNodeUtilization
+    args:
+      thresholds:
+        cpu: 20
+        memory: 20
+        pods: 20
+      targetThresholds:
+        cpu: 50
+        memory: 50
+        pods: 50
+      useDeviationThresholds: false
+  - name: RemovePodsHavingTooManyRestarts
+    args:
+      podRestartThreshold: 10
+      includingInitContainers: true
+  - name: PodLifeTime
+    args:
+      maxPodLifeTimeSeconds: 86400  # 24 hours
+      podStatusPhases:
+      - Running
+  - name: RemovePodsViolatingTopologySpreadConstraint
+    args:
+      constraints:
+      - DoNotSchedule
+  plugins:
+    deschedule:
+      enabled:
+      - RemoveDuplicates
+      - LowNodeUtilization
+      - RemovePodsHavingTooManyRestarts
+      - PodLifeTime
+      - RemovePodsViolatingTopologySpreadConstraint
+```
+
+### PDB Respect
+
+The descheduler respects Pod Disruption Budgets (PDBs). If evicting a pod would violate a PDB, the descheduler will not evict that pod:
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web-pdb
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: web
+```
+
+With this PDB in place, the descheduler will ensure at least 2 pods with `app: web` label remain available during descheduling operations.
+
+### Descheduler CronJob Example
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: descheduler
+  namespace: kube-system
+spec:
+  schedule: "*/30 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: descheduler
+          containers:
+          - name: descheduler
+            image: registry.k8s.io/descheduler/descheduler:v0.28.0
+            args:
+            - --policy-config-file=/policy/policy.yaml
+            - --v=3
+            volumeMounts:
+            - name: policy
+              mountPath: /policy
+          volumes:
+          - name: policy
+            configMap:
+              name: descheduler-policy
+          restartPolicy: OnFailure
+```
+
+> **Deep Dive**: For detailed information on custom schedulers, see:
+> - [Custom Scheduler Part 1: Basic Concepts](../scheduling/01-custom-scheduler-part1.md)
+> - [Custom Scheduler Part 2: Implementation](../scheduling/02-custom-scheduler-part2.md)
+> - [Custom Scheduler Part 3: Advanced Features](../scheduling/03-custom-scheduler-part3.md)
 
 ## Scheduling Optimization in Amazon EKS
 

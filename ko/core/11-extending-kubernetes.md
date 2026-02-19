@@ -425,25 +425,25 @@ make deploy
 다음 다이어그램은 어드미션 컨트롤러의 작동 방식을 보여줍니다:
 
 ```mermaid
-flowchart LR
-    User[사용자] --> |1. API 요청| Auth[인증/권한 부여]
-    Auth --> |2. 요청 통과| MAC[변형 어드미션 컨트롤러]
-    MAC --> |3. 변형된 요청| VAC[검증 어드미션 컨트롤러]
-    VAC --> |4. 검증된 요청| API[API 처리]
-    API --> |5. 저장| STOR[(etcd 스토리지)]
-    
-    MAC -.-> |웹훅 호출| MWH[변형 웹훅]
-    VAC -.-> |웹훅 호출| VWH[검증 웹훅]
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class Auth,MAC,VAC,API k8sComponent;
-    class User userApp;
-    class STOR dataStore;
-    class MWH,VWH default;
+sequenceDiagram
+    participant User as 사용자
+    participant Auth as 인증<br/>권한 부여
+    participant MAC as 변형<br/>어드미션 컨트롤러
+    participant MWH as 변형 웹훅
+    participant VAC as 검증<br/>어드미션 컨트롤러
+    participant VWH as 검증 웹훅
+    participant API as API 처리
+    participant STOR as etcd 스토리지
+
+    User->>Auth: 1. API 요청
+    Auth->>MAC: 2. 요청 통과
+    MAC-->>MWH: 웹훅 호출
+    MWH-->>MAC: 응답
+    MAC->>VAC: 3. 변형된 요청
+    VAC-->>VWH: 웹훅 호출
+    VWH-->>VAC: 응답
+    VAC->>API: 4. 검증된 요청
+    API->>STOR: 5. 저장
 ```
 
 ### 어드미션 컨트롤러 유형
