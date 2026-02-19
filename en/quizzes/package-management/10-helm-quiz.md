@@ -1,6 +1,6 @@
 # Helm Package Manager Quiz
 
-> **Related Document**: [Helm Package Manager](../../tools/10-helm.md)
+> **Related Document**: [Helm Package Manager](../../package-management/01-helm.md)
 
 ## Multiple Choice Questions
 

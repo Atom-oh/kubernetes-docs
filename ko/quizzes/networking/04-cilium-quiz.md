@@ -296,4 +296,4 @@ cilium connectivity test
 - 7-9개 정답: 보통 (추가 학습 권장)
 - 0-6개 정답: 미흡 (기본 개념 복습 필요)
 
-[학습 자료로 돌아가기](../../tools/04-cilium.md)
+[학습 자료로 돌아가기](../../networking/01-cilium.md)

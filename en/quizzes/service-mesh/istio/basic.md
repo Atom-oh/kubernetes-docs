@@ -31,8 +31,8 @@ One of the core advantages of Service Mesh is that it can control and observe co
 - D (O): It applies security policies at the network level with mTLS, Authorization Policy, etc.
 
 **Reference:**
-- [Istio Core Concepts](../../../tools/istio/core-concepts.md)
-- [What is Service Mesh?](../../../tools/02-istio.md#introduction)
+- [Istio Core Concepts](../../../service-mesh/istio/core-concepts.md)
+- [What is Service Mesh?](../../../service-mesh/02-istio.md#introduction)
 </details>
 
 ---
@@ -71,8 +71,8 @@ D. Citadel
 ```
 
 **Reference:**
-- [Istio Components](../../../tools/istio/components.md)
-- [Architecture Overview](../../../tools/02-istio.md#architecture-overview)
+- [Istio Components](../../../service-mesh/istio/components.md)
+- [Architecture Overview](../../../service-mesh/02-istio.md#architecture-overview)
 </details>
 
 ---
@@ -100,7 +100,7 @@ Kubernetes CRD validation and storage is the role of the Control Plane (Istiod).
 - D (O): Envoy collects metrics (Prometheus), logs (Access Log), and traces (Jaeger) for all requests
 
 **Reference:**
-- [Data Plane Structure](../../../tools/istio/components.md#data-plane-envoy-proxy)
+- [Data Plane Structure](../../../service-mesh/istio/components.md#data-plane-envoy-proxy)
 </details>
 
 ---
@@ -152,8 +152,8 @@ istioctl install --set profile=production -y
 - ✅ Monitoring stack ready
 
 **Reference:**
-- [Installation Guide](../../../tools/istio/installation.md)
-- [Best Practices](../../../tools/istio/best-practices.md#production-checklist)
+- [Installation Guide](../../../service-mesh/istio/installation.md)
+- [Best Practices](../../../service-mesh/istio/best-practices.md#production-checklist)
 </details>
 
 ---
@@ -221,8 +221,8 @@ spec:
 ```
 
 **Reference:**
-- [Traffic Management](../../../tools/istio/traffic-management/)
-- [Security](../../../tools/istio/security/)
+- [Traffic Management](../../../service-mesh/istio/traffic-management/)
+- [Security](../../../service-mesh/istio/security/)
 </details>
 
 ---
@@ -299,7 +299,7 @@ spec:
 - Only set `sidecar.istio.io/inject: "false"` for Pods that need exclusion
 
 **Reference:**
-- [Sidecar Injection](../../../tools/istio/advanced/07-sidecar-injection.md)
+- [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
 </details>
 
 ---
@@ -383,8 +383,8 @@ Monthly cost savings: $4,536 - $181 = $4,355 (96%)
 - Ambient Mode is a beta feature in Istio 1.28+
 
 **Reference:**
-- [Ambient Mode](../../../tools/istio/advanced/01-ambient-mode.md#resource-usage-comparison)
-- [Cost Optimization](../../../tools/istio/best-practices.md#cost-optimization)
+- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md#resource-usage-comparison)
+- [Cost Optimization](../../../service-mesh/istio/best-practices.md#cost-optimization)
 </details>
 
 ---
@@ -507,8 +507,8 @@ istioctl proxy-config secret <pod-name> -o json
 4. **Automation**: Applied without code changes
 
 **Reference:**
-- [mTLS](../../../tools/istio/security/01-mtls.md)
-- [Certificate Management](../../../tools/istio/components.md#certificate-management)
+- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+- [Certificate Management](../../../service-mesh/istio/components.md#certificate-management)
 </details>
 
 ---
@@ -1016,7 +1016,7 @@ istioctl uninstall --revision=1-28-0 -y
 
 **Reference:**
 - [Canary Upgrade](https://istio.io/latest/docs/setup/upgrade/canary/)
-- [Upgrade Strategy](../../../tools/istio/best-practices.md#upgrade-strategy)
+- [Upgrade Strategy](../../../service-mesh/istio/best-practices.md#upgrade-strategy)
 </details>
 
 ---
@@ -1036,7 +1036,7 @@ istioctl uninstall --revision=1-28-0 -y
 
 ## Learning Resources
 
-- [Istio Installation Guide](../../../tools/istio/installation.md)
-- [Core Concepts](../../../tools/istio/core-concepts.md)
-- [Components](../../../tools/istio/components.md)
+- [Istio Installation Guide](../../../service-mesh/istio/installation.md)
+- [Core Concepts](../../../service-mesh/istio/core-concepts.md)
+- [Components](../../../service-mesh/istio/components.md)
 - [Istio Official Documentation](https://istio.io/latest/docs/)

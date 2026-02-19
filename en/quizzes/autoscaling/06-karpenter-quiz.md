@@ -343,4 +343,4 @@ When troubleshooting Karpenter issues, check multiple aspects. First verify cont
 - 7-9 correct: Average (additional learning recommended)
 - 0-6 correct: Insufficient (basic concepts review needed)
 
-[Return to Learning Materials](../../tools/06-karpenter.md)
+[Return to Learning Materials](../../autoscaling/02-karpenter.md)

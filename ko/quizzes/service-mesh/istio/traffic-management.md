@@ -60,8 +60,8 @@ spec:
 ```
 
 **참고 자료:**
-- [라우팅](../../../tools/istio/traffic-management/02-routing.md)
-- [VirtualService 개념](../../../tools/istio/core-concepts.md#virtualservice)
+- [라우팅](../../../service-mesh/istio/traffic-management/02-routing.md)
+- [VirtualService 개념](../../../service-mesh/istio/core-concepts.md#virtualservice)
 </details>
 
 ---
@@ -149,8 +149,8 @@ spec:
 | Connection Pool | ❌ | ✅ |
 
 **참고 자료:**
-- [로드 밸런싱](../../../tools/istio/traffic-management/05-load-balancing.md)
-- [Connection Pool](../../../tools/istio/traffic-management/08-connection-pool.md)
+- [로드 밸런싱](../../../service-mesh/istio/traffic-management/05-load-balancing.md)
+- [Connection Pool](../../../service-mesh/istio/traffic-management/08-connection-pool.md)
 </details>
 
 ---
@@ -239,8 +239,8 @@ spec:
 ```
 
 **참고 자료:**
-- [트래픽 분할](../../../tools/istio/traffic-management/03-traffic-splitting.md)
-- [Argo Rollouts 통합](../../../tools/istio/advanced/08-argo-rollouts.md)
+- [트래픽 분할](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md)
+- [Argo Rollouts 통합](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 </details>
 
 ---
@@ -325,8 +325,8 @@ spec:
 | 내부 라우팅 | ❌ | ✅ |
 
 **참고 자료:**
-- [Gateway](../../../tools/istio/traffic-management/01-gateway.md)
-- [mTLS](../../../tools/istio/security/01-mtls.md)
+- [Gateway](../../../service-mesh/istio/traffic-management/01-gateway.md)
+- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
 </details>
 
 ---
@@ -424,7 +424,7 @@ retries:
 - Idempotent 작업에만 재시도 권장
 
 **참고 자료:**
-- [Timeout과 Retry](../../../tools/istio/traffic-management/06-timeout-retry.md)
+- [Timeout과 Retry](../../../service-mesh/istio/traffic-management/06-timeout-retry.md)
 </details>
 
 ---
@@ -710,8 +710,8 @@ kubectl argo rollouts dashboard
 4. **일관된 프로세스**: 표준화된 배포 전략
 
 **참고 자료:**
-- [트래픽 분할](../../../tools/istio/traffic-management/03-traffic-splitting.md)
-- [Argo Rollouts](../../../tools/istio/advanced/08-argo-rollouts.md)
+- [트래픽 분할](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md)
+- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 </details>
 
 ---
@@ -903,8 +903,8 @@ spec:
 ```
 
 **참고 자료:**
-- [트래픽 분할](../../../tools/istio/traffic-management/03-traffic-splitting.md)
-- [Blue/Green 배포](../../../tools/istio/traffic-management/03-traffic-splitting.md#bluegreen-배포)
+- [트래픽 분할](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md)
+- [Blue/Green 배포](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-배포)
 </details>
 
 ---
@@ -1164,7 +1164,7 @@ GET /api/orders   # 읽기 전용 작업만 미러링
 ```
 
 **참고 자료:**
-- [트래픽 미러링](../../../tools/istio/traffic-management/04-traffic-mirroring.md)
+- [트래픽 미러링](../../../service-mesh/istio/traffic-management/04-traffic-mirroring.md)
 </details>
 
 ---
@@ -1470,8 +1470,8 @@ spec:
 ```
 
 **참고 자료:**
-- [Zone Aware Routing](../../../tools/istio/resilience/03-zone-aware-routing.md)
-- [AWS EKS 비용 최적화](../../../tools/istio/best-practices.md#비용-최적화)
+- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+- [AWS EKS 비용 최적화](../../../service-mesh/istio/best-practices.md#비용-최적화)
 </details>
 
 ---
@@ -1901,8 +1901,8 @@ spec:
 - ❌ TLS 1.0/1.1 사용 금지
 
 **참고 자료:**
-- [Gateway](../../../tools/istio/traffic-management/01-gateway.md)
-- [TLS 구성](../../../tools/istio/traffic-management/01-gateway.md#tls-구성)
+- [Gateway](../../../service-mesh/istio/traffic-management/01-gateway.md)
+- [TLS 구성](../../../service-mesh/istio/traffic-management/01-gateway.md#tls-구성)
 </details>
 
 ---
@@ -1922,8 +1922,8 @@ spec:
 
 ## 학습 자료
 
-- [트래픽 관리 문서](../../../tools/istio/traffic-management/)
-- [VirtualService](../../../tools/istio/traffic-management/02-routing.md)
-- [Gateway](../../../tools/istio/traffic-management/01-gateway.md)
-- [트래픽 분할](../../../tools/istio/traffic-management/03-traffic-splitting.md)
-- [Argo Rollouts](../../../tools/istio/advanced/08-argo-rollouts.md)
+- [트래픽 관리 문서](../../../service-mesh/istio/traffic-management/)
+- [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
+- [Gateway](../../../service-mesh/istio/traffic-management/01-gateway.md)
+- [트래픽 분할](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md)
+- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)

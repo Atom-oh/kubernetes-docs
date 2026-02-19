@@ -296,4 +296,4 @@ First remove the existing AWS VPC CNI (aws-node DaemonSet). Then install Cilium 
 - 7-9 correct: Average (additional learning recommended)
 - 0-6 correct: Insufficient (basic concepts review needed)
 
-[Return to Learning Materials](../../tools/04-cilium.md)
+[Return to Learning Materials](../../networking/01-cilium.md)

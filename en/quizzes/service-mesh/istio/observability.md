@@ -116,7 +116,7 @@ kubectl port-forward -n istio-system svc/prometheus 9090:9090
 ```
 
 **Reference:**
-- [Metrics](../../../tools/istio/observability/01-metrics.md)
+- [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
 </details>
 
 ---
@@ -263,7 +263,7 @@ istioctl dashboard jaeger
 ```
 
 **Reference:**
-- [Distributed Tracing](../../../tools/istio/observability/02-distributed-tracing.md)
+- [Distributed Tracing](../../../service-mesh/istio/observability/02-distributed-tracing.md)
 </details>
 
 ---
@@ -403,7 +403,7 @@ istioctl dashboard kiali
 ```
 
 **Reference:**
-- [Visualization](../../../tools/istio/observability/04-visualization.md)
+- [Visualization](../../../service-mesh/istio/observability/04-visualization.md)
 - [Kiali Official Documentation](https://kiali.io/docs/)
 </details>
 
@@ -575,7 +575,7 @@ kubectl logs <pod-name> -c istio-proxy | \
 ```
 
 **Reference:**
-- [Logging](../../../tools/istio/observability/03-logging.md)
+- [Logging](../../../service-mesh/istio/observability/03-logging.md)
 - [Envoy Access Log Format](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
 </details>
 
@@ -728,7 +728,7 @@ expr: |
 ```
 
 **Reference:**
-- [Visualization](../../../tools/istio/observability/04-visualization.md)
+- [Visualization](../../../service-mesh/istio/observability/04-visualization.md)
 - [Grafana Official Documentation](https://grafana.com/docs/)
 </details>
 
@@ -1092,7 +1092,7 @@ spec:
 ```
 
 **Reference:**
-- [Metrics](../../../tools/istio/observability/01-metrics.md)
+- [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
 - [Google SRE Book - Monitoring](https://sre.google/sre-book/monitoring-distributed-systems/)
 </details>
 
@@ -1416,7 +1416,7 @@ histogram_quantile(0.99,
 ```
 
 **Reference:**
-- [Distributed Tracing](../../../tools/istio/observability/02-distributed-tracing.md)
+- [Distributed Tracing](../../../service-mesh/istio/observability/02-distributed-tracing.md)
 - [Jaeger Official Documentation](https://www.jaegertracing.io/docs/)
 </details>
 
@@ -1834,7 +1834,7 @@ flowchart TD
 ```
 
 **Reference:**
-- [Visualization](../../../tools/istio/observability/04-visualization.md)
+- [Visualization](../../../service-mesh/istio/observability/04-visualization.md)
 - [Kiali Official Documentation](https://kiali.io/docs/)
 </details>
 
@@ -1889,7 +1889,7 @@ Due to the length of this answer, please refer to the Korean source file for the
 6. **Alerting Configuration** with PrometheusRules
 
 **Reference:**
-- [Metrics](../../../tools/istio/observability/01-metrics.md)
+- [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
 - [Prometheus Client Libraries](https://prometheus.io/docs/instrumenting/clientlibs/)
 - [Grafana Provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
 </details>
@@ -1911,7 +1911,7 @@ Due to the length of this answer, please refer to the Korean source file for the
 
 ## Learning Resources
 
-- [Metrics](../../../tools/istio/observability/01-metrics.md)
-- [Distributed Tracing](../../../tools/istio/observability/02-distributed-tracing.md)
-- [Logging](../../../tools/istio/observability/03-logging.md)
-- [Visualization](../../../tools/istio/observability/04-visualization.md)
+- [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
+- [Distributed Tracing](../../../service-mesh/istio/observability/02-distributed-tracing.md)
+- [Logging](../../../service-mesh/istio/observability/03-logging.md)
+- [Visualization](../../../service-mesh/istio/observability/04-visualization.md)

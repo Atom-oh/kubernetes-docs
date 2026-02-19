@@ -1,6 +1,6 @@
 # Kubernetes Authentication and Authorization Quiz
 
-> **Related Document**: [Kubernetes Authentication and Authorization System](../../advanced/06-kubernetes-auth-authz.md)
+> **Related Document**: [Kubernetes Authentication and Authorization System](../../security/02-kubernetes-auth-authz.md)
 
 ## Multiple Choice Questions
 

@@ -60,8 +60,8 @@ spec:
 ```
 
 **Reference:**
-- [Routing](../../../tools/istio/traffic-management/02-routing.md)
-- [VirtualService Concepts](../../../tools/istio/core-concepts.md#virtualservice)
+- [Routing](../../../service-mesh/istio/traffic-management/02-routing.md)
+- [VirtualService Concepts](../../../service-mesh/istio/core-concepts.md#virtualservice)
 </details>
 
 ---
@@ -149,8 +149,8 @@ spec:
 | Connection Pool | No | Yes |
 
 **Reference:**
-- [Load Balancing](../../../tools/istio/traffic-management/05-load-balancing.md)
-- [Connection Pool](../../../tools/istio/traffic-management/08-connection-pool.md)
+- [Load Balancing](../../../service-mesh/istio/traffic-management/05-load-balancing.md)
+- [Connection Pool](../../../service-mesh/istio/traffic-management/08-connection-pool.md)
 </details>
 
 ---
@@ -239,8 +239,8 @@ spec:
 ```
 
 **Reference:**
-- [Traffic Splitting](../../../tools/istio/traffic-management/03-traffic-splitting.md)
-- [Argo Rollouts Integration](../../../tools/istio/advanced/08-argo-rollouts.md)
+- [Traffic Splitting](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md)
+- [Argo Rollouts Integration](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 </details>
 
 ---
@@ -325,8 +325,8 @@ spec:
 | Internal routing | No | Yes |
 
 **Reference:**
-- [Gateway](../../../tools/istio/traffic-management/01-gateway.md)
-- [mTLS](../../../tools/istio/security/01-mtls.md)
+- [Gateway](../../../service-mesh/istio/traffic-management/01-gateway.md)
+- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
 </details>
 
 ---
@@ -424,7 +424,7 @@ retries:
 - Retry recommended only for idempotent operations
 
 **Reference:**
-- [Timeout and Retry](../../../tools/istio/traffic-management/06-timeout-retry.md)
+- [Timeout and Retry](../../../service-mesh/istio/traffic-management/06-timeout-retry.md)
 </details>
 
 ---
@@ -710,8 +710,8 @@ kubectl argo rollouts dashboard
 4. **Consistent Process**: Standardized deployment strategy
 
 **Reference:**
-- [Traffic Splitting](../../../tools/istio/traffic-management/03-traffic-splitting.md)
-- [Argo Rollouts](../../../tools/istio/advanced/08-argo-rollouts.md)
+- [Traffic Splitting](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md)
+- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 </details>
 
 ---
@@ -903,8 +903,8 @@ In practice, you can combine both strategies:
 ```
 
 **Reference:**
-- [Traffic Splitting](../../../tools/istio/traffic-management/03-traffic-splitting.md)
-- [Blue/Green Deployment](../../../tools/istio/traffic-management/03-traffic-splitting.md#bluegreen-deployment)
+- [Traffic Splitting](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md)
+- [Blue/Green Deployment](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-deployment)
 </details>
 
 ---
@@ -1164,7 +1164,7 @@ Cannot validate:
 ```
 
 **Reference:**
-- [Traffic Mirroring](../../../tools/istio/traffic-management/04-traffic-mirroring.md)
+- [Traffic Mirroring](../../../service-mesh/istio/traffic-management/04-traffic-mirroring.md)
 </details>
 
 ---
@@ -1470,8 +1470,8 @@ spec:
 ```
 
 **Reference:**
-- [Zone Aware Routing](../../../tools/istio/resilience/03-zone-aware-routing.md)
-- [AWS EKS Cost Optimization](../../../tools/istio/best-practices.md#cost-optimization)
+- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+- [AWS EKS Cost Optimization](../../../service-mesh/istio/best-practices.md#cost-optimization)
 </details>
 
 ---
@@ -1901,8 +1901,8 @@ spec:
 - Do not use TLS 1.0/1.1
 
 **Reference:**
-- [Gateway](../../../tools/istio/traffic-management/01-gateway.md)
-- [TLS Configuration](../../../tools/istio/traffic-management/01-gateway.md#tls-configuration)
+- [Gateway](../../../service-mesh/istio/traffic-management/01-gateway.md)
+- [TLS Configuration](../../../service-mesh/istio/traffic-management/01-gateway.md#tls-configuration)
 </details>
 
 ---
@@ -1922,8 +1922,8 @@ spec:
 
 ## Learning Resources
 
-- [Traffic Management Documentation](../../../tools/istio/traffic-management/)
-- [VirtualService](../../../tools/istio/traffic-management/02-routing.md)
-- [Gateway](../../../tools/istio/traffic-management/01-gateway.md)
-- [Traffic Splitting](../../../tools/istio/traffic-management/03-traffic-splitting.md)
-- [Argo Rollouts](../../../tools/istio/advanced/08-argo-rollouts.md)
+- [Traffic Management Documentation](../../../service-mesh/istio/traffic-management/)
+- [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
+- [Gateway](../../../service-mesh/istio/traffic-management/01-gateway.md)
+- [Traffic Splitting](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md)
+- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)

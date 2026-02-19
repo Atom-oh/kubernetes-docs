@@ -1,6 +1,6 @@
 # Kubernetes 확장 메커니즘 퀴즈
 
-> **관련 문서**: [Kubernetes 확장 메커니즘](../../advanced/07-kubernetes-extensions.md)
+> **관련 문서**: [Kubernetes 확장 메커니즘](../../platform/02-kubernetes-extensions.md)
 
 ## 객관식 문제
 

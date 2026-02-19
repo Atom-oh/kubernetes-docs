@@ -1,6 +1,6 @@
 # Kubernetes 인증 및 권한 부여 퀴즈
 
-> **관련 문서**: [Kubernetes 인증 및 권한 부여 시스템](../../advanced/06-kubernetes-auth-authz.md)
+> **관련 문서**: [Kubernetes 인증 및 권한 부여 시스템](../../security/02-kubernetes-auth-authz.md)
 
 ## 객관식 문제
 

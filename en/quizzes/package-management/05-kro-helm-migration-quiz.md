@@ -1,6 +1,6 @@
 # KRO Helm Migration Quiz
 
-> **Related Document**: [KRO-based Helm Chart Migration](../../advanced/05-kro-helm-migration.md)
+> **Related Document**: [KRO-based Helm Chart Migration](../../package-management/02-kro-helm-migration.md)
 
 ## Multiple Choice Questions
 

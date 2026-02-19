@@ -729,4 +729,4 @@ spec:
 - [Istio 공식 문서](https://istio.io/latest/docs/)
 - [Argo Rollouts 문서](https://argo-rollouts.readthedocs.io/)
 - [EKS Workshop - Istio](https://www.eksworkshop.com/docs/security/servicemesh/)
-- [본 가이드의 상세 문서](../../tools/istio/)
+- [본 가이드의 상세 문서](../../service-mesh/istio/)

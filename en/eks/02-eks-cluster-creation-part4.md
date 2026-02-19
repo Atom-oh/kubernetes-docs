@@ -792,9 +792,9 @@ In this document, we learned how to create an EKS cluster using Terraform and AW
 
 ### Related Tools and Integrations
 
-- [ArgoCD](../tools/01-argocd.md) - Declarative continuous deployment tool for GitOps
-- [AWS Controllers for Kubernetes (ACK)](../tools/03-ack.md) - Managing AWS resources from Kubernetes
-- [Karpenter](../tools/06-karpenter.md) - Automating node provisioning for Kubernetes clusters
+- [ArgoCD](../gitops/01-argocd.md) - Declarative continuous deployment tool for GitOps
+- [AWS Controllers for Kubernetes (ACK)](../platform/01-ack.md) - Managing AWS resources from Kubernetes
+- [Karpenter](../autoscaling/02-karpenter.md) - Automating node provisioning for Kubernetes clusters
 
 ### Lab Environment Setup
 

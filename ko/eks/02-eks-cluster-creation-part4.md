@@ -792,9 +792,9 @@ export class EksCrdStack extends cdk.Stack {
 
 ### 관련 도구 및 통합
 
-- [ArgoCD](../tools/01-argocd.md) - GitOps를 위한 선언적 연속 배포 도구
-- [AWS Controllers for Kubernetes (ACK)](../tools/03-ack.md) - Kubernetes에서 AWS 리소스 관리
-- [Karpenter](../tools/06-karpenter.md) - Kubernetes 클러스터의 노드 프로비저닝 자동화
+- [ArgoCD](../gitops/01-argocd.md) - GitOps를 위한 선언적 연속 배포 도구
+- [AWS Controllers for Kubernetes (ACK)](../platform/01-ack.md) - Kubernetes에서 AWS 리소스 관리
+- [Karpenter](../autoscaling/02-karpenter.md) - Kubernetes 클러스터의 노드 프로비저닝 자동화
 
 ### 실습 환경 설정
 

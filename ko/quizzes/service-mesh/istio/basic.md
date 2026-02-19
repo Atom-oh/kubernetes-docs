@@ -31,8 +31,8 @@ D. 네트워크 레벨에서 보안과 정책을 적용한다.
 - D (O): mTLS, Authorization Policy 등으로 네트워크 레벨에서 보안 정책을 적용합니다
 
 **참고 자료:**
-- [Istio 핵심 개념](../../../tools/istio/core-concepts.md)
-- [서비스 메시란?](../../../tools/02-istio.md#소개)
+- [Istio 핵심 개념](../../../service-mesh/istio/core-concepts.md)
+- [서비스 메시란?](../../../service-mesh/02-istio.md#소개)
 </details>
 
 ---
@@ -71,8 +71,8 @@ D. Citadel
 ```
 
 **참고 자료:**
-- [Istio 구성 요소](../../../tools/istio/components.md)
-- [아키텍처 개요](../../../tools/02-istio.md#아키텍처-개요)
+- [Istio 구성 요소](../../../service-mesh/istio/components.md)
+- [아키텍처 개요](../../../service-mesh/02-istio.md#아키텍처-개요)
 </details>
 
 ---
@@ -100,7 +100,7 @@ Kubernetes CRD 검증 및 저장은 Control Plane(Istiod)의 역할입니다.
 - D (O): Envoy는 모든 요청에 대한 메트릭(Prometheus), 로그(Access Log), 트레이스(Jaeger)를 수집합니다
 
 **참고 자료:**
-- [Data Plane 구조](../../../tools/istio/components.md#data-plane-envoy-proxy)
+- [Data Plane 구조](../../../service-mesh/istio/components.md#data-plane-envoy-proxy)
 </details>
 
 ---
@@ -152,8 +152,8 @@ istioctl install --set profile=production -y
 - ✅ 모니터링 스택 준비
 
 **참고 자료:**
-- [설치 가이드](../../../tools/istio/installation.md)
-- [모범 사례](../../../tools/istio/best-practices.md#프로덕션-체크리스트)
+- [설치 가이드](../../../service-mesh/istio/installation.md)
+- [모범 사례](../../../service-mesh/istio/best-practices.md#프로덕션-체크리스트)
 </details>
 
 ---
@@ -221,8 +221,8 @@ spec:
 ```
 
 **참고 자료:**
-- [트래픽 관리](../../../tools/istio/traffic-management/)
-- [보안](../../../tools/istio/security/)
+- [트래픽 관리](../../../service-mesh/istio/traffic-management/)
+- [보안](../../../service-mesh/istio/security/)
 </details>
 
 ---
@@ -299,7 +299,7 @@ spec:
 - 제외가 필요한 Pod만 `sidecar.istio.io/inject: "false"` 설정
 
 **참고 자료:**
-- [Sidecar Injection](../../../tools/istio/advanced/07-sidecar-injection.md)
+- [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
 </details>
 
 ---
@@ -383,8 +383,8 @@ Ambient Mode:
 - Ambient Mode는 Istio 1.28+ 베타 기능
 
 **참고 자료:**
-- [Ambient Mode](../../../tools/istio/advanced/01-ambient-mode.md#리소스-사용량-비교)
-- [비용 최적화](../../../tools/istio/best-practices.md#비용-최적화)
+- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md#리소스-사용량-비교)
+- [비용 최적화](../../../service-mesh/istio/best-practices.md#비용-최적화)
 </details>
 
 ---
@@ -507,8 +507,8 @@ istioctl proxy-config secret <pod-name> -o json
 4. **자동화**: 코드 변경 없이 적용
 
 **참고 자료:**
-- [mTLS](../../../tools/istio/security/01-mtls.md)
-- [인증서 관리](../../../tools/istio/components.md#인증서-관리)
+- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+- [인증서 관리](../../../service-mesh/istio/components.md#인증서-관리)
 </details>
 
 ---
@@ -1016,7 +1016,7 @@ istioctl uninstall --revision=1-28-0 -y
 
 **참고 자료:**
 - [Canary Upgrade](https://istio.io/latest/docs/setup/upgrade/canary/)
-- [업그레이드 전략](../../../tools/istio/best-practices.md#업그레이드-전략)
+- [업그레이드 전략](../../../service-mesh/istio/best-practices.md#업그레이드-전략)
 </details>
 
 ---
@@ -1036,7 +1036,7 @@ istioctl uninstall --revision=1-28-0 -y
 
 ## 학습 자료
 
-- [Istio 설치 가이드](../../../tools/istio/installation.md)
-- [핵심 개념](../../../tools/istio/core-concepts.md)
-- [구성 요소](../../../tools/istio/components.md)
+- [Istio 설치 가이드](../../../service-mesh/istio/installation.md)
+- [핵심 개념](../../../service-mesh/istio/core-concepts.md)
+- [구성 요소](../../../service-mesh/istio/components.md)
 - [Istio 공식 문서](https://istio.io/latest/docs/)

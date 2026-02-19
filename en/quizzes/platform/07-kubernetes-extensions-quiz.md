@@ -1,6 +1,6 @@
 # Kubernetes Extension Mechanisms Quiz
 
-> **Related Document**: [Kubernetes Extension Mechanisms](../../advanced/07-kubernetes-extensions.md)
+> **Related Document**: [Kubernetes Extension Mechanisms](../../platform/02-kubernetes-extensions.md)
 
 ## Multiple Choice Questions
 

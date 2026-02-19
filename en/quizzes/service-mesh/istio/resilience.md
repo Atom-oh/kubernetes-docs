@@ -76,7 +76,7 @@ flowchart LR
 - If recovery attempts succeed, traffic reception resumes
 
 **Reference:**
-- [Outlier Detection](../../../tools/istio/resilience/01-outlier-detection.md)
+- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
 </details>
 
 ---
@@ -176,7 +176,7 @@ flowchart TB
 ```
 
 **Reference:**
-- [Rate Limiting](../../../tools/istio/resilience/02-rate-limiting.md)
+- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
 </details>
 
 ---
@@ -274,7 +274,7 @@ spec:
 ```
 
 **Reference:**
-- [Zone Aware Routing](../../../tools/istio/resilience/03-zone-aware-routing.md)
+- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
 </details>
 
 ---
@@ -393,7 +393,7 @@ T=30s: If Pod-1 still has errors → Additional 30s ejection (cumulative)
 ```
 
 **Reference:**
-- [Outlier Detection](../../../tools/istio/resilience/01-outlier-detection.md)
+- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
 </details>
 
 ---
@@ -522,7 +522,7 @@ spec:
 ```
 
 **Reference:**
-- [Rate Limiting](../../../tools/istio/resilience/02-rate-limiting.md)
+- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
 </details>
 
 ---
@@ -660,7 +660,7 @@ outlierDetection:
 ```
 
 **Reference:**
-- [Outlier Detection](../../../tools/istio/resilience/01-outlier-detection.md)
+- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
 </details>
 
 ---
@@ -882,7 +882,7 @@ sum(rate(istio_requests_total{response_code="429"}[5m]))
 ```
 
 **Reference:**
-- [Rate Limiting](../../../tools/istio/resilience/02-rate-limiting.md)
+- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
 </details>
 
 ---
@@ -1142,7 +1142,7 @@ spec:
 ```
 
 **Reference:**
-- [Zone Aware Routing](../../../tools/istio/resilience/03-zone-aware-routing.md)
+- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
 </details>
 
 ---
@@ -1417,8 +1417,8 @@ outlierDetection:
 ```
 
 **Reference:**
-- [Outlier Detection](../../../tools/istio/resilience/01-outlier-detection.md)
-- [Traffic Management](../../../tools/istio/traffic/README.md)
+- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+- [Traffic Management](../../../service-mesh/istio/traffic/README.md)
 </details>
 
 ---
@@ -1781,9 +1781,9 @@ sum(rate(envoy_http_local_rate_limit_rate_limited[5m]))
 ```
 
 **Reference:**
-- [Zone Aware Routing](../../../tools/istio/resilience/03-zone-aware-routing.md)
-- [Outlier Detection](../../../tools/istio/resilience/01-outlier-detection.md)
-- [Rate Limiting](../../../tools/istio/resilience/02-rate-limiting.md)
+- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
 </details>
 
 ---
@@ -1803,6 +1803,6 @@ sum(rate(envoy_http_local_rate_limit_rate_limited[5m]))
 
 ## Learning Resources
 
-- [Outlier Detection](../../../tools/istio/resilience/01-outlier-detection.md)
-- [Rate Limiting](../../../tools/istio/resilience/02-rate-limiting.md)
-- [Zone Aware Routing](../../../tools/istio/resilience/03-zone-aware-routing.md)
+- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)

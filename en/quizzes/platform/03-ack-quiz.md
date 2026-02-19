@@ -285,4 +285,4 @@ When troubleshooting ACK resource creation issues, check multiple aspects. First
 - 7-9 correct: Average (additional learning recommended)
 - 0-6 correct: Insufficient (basic concepts review needed)
 
-[Return to Learning Materials](../../tools/03-ack.md)
+[Return to Learning Materials](../../platform/01-ack.md)

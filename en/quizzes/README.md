@@ -63,24 +63,45 @@ All quiz questions include answers in toggle format, so you can attempt the ques
 - [Networking Concepts Quiz](./cilium/networking-concepts-quiz.md)
 - [Glossary Quiz](./cilium/glossary-quiz.md)
 
-### Advanced Topics
-- [Policy Management with Kyverno Quiz](./advanced/01-kyverno-policy-management-quiz.md)
-- [Custom Scheduler Quiz - Part 1](./advanced/02-custom-scheduler-part1-quiz.md)
-- [Custom Scheduler Quiz - Part 2](./advanced/02-custom-scheduler-part2-quiz.md)
-- [Custom Scheduler Quiz - Part 3](./advanced/02-custom-scheduler-part3-quiz.md)
-- [AI/ML Workloads Quiz](./advanced/03-ai-ml-workloads-quiz.md)
-- [vLLM Deployment Quiz](./advanced/04-vllm-deployment-quiz.md)
+### AI/ML
+- [AI/ML Workloads Quiz](./ai-ml/03-ai-ml-workloads-quiz.md)
+- [vLLM Deployment Quiz](./ai-ml/04-vllm-deployment-quiz.md)
+- [Agentic AI Platform on EKS Quiz](./ai-ml/08-agentic-ai-platform-quiz.md)
 
-### Tools and Integrations
-- [ArgoCD Quiz](./tools/01-argocd-quiz.md)
-- [Istio Quiz](./tools/02-istio-quiz.md)
-- [AWS Controllers for Kubernetes (ACK) Quiz](./tools/03-ack-quiz.md)
-- [Cilium Quiz](./tools/04-cilium-quiz.md)
-- [KEDA Quiz](./tools/05-keda-quiz.md)
-- [Karpenter Quiz](./tools/06-karpenter-quiz.md)
-- [Monitoring Stack Quiz](./tools/07-monitoring-stack-quiz.md)
-- [Logging Stack Quiz](./tools/08-logging-stack-quiz.md)
-- [VPC Lattice Quiz](./tools/09-vpc-lattice-quiz.md)
+### Networking
+- [Cilium Quiz](./networking/04-cilium-quiz.md)
+- [VPC Lattice Quiz](./networking/09-vpc-lattice-quiz.md)
+
+### Service Mesh
+- [Istio Quiz](./service-mesh/02-istio-quiz.md)
+
+### Security & Policy
+- [Policy Management with Kyverno Quiz](./security/01-kyverno-policy-management-quiz.md)
+- [Kubernetes Authentication and Authorization Quiz](./security/06-kubernetes-auth-authz-quiz.md)
+
+### GitOps
+- [ArgoCD Quiz](./gitops/01-argocd-quiz.md)
+
+### Autoscaling
+- [KEDA Quiz](./autoscaling/05-keda-quiz.md)
+- [Karpenter Quiz](./autoscaling/06-karpenter-quiz.md)
+
+### Observability
+- [Monitoring Stack Quiz](./observability/07-monitoring-stack-quiz.md)
+- [Logging Stack Quiz](./observability/08-logging-stack-quiz.md)
+
+### Scheduling
+- [Custom Scheduler Quiz - Part 1](./scheduling/02-custom-scheduler-part1-quiz.md)
+- [Custom Scheduler Quiz - Part 2](./scheduling/02-custom-scheduler-part2-quiz.md)
+- [Custom Scheduler Quiz - Part 3](./scheduling/02-custom-scheduler-part3-quiz.md)
+
+### Package Management
+- [Helm Quiz](./package-management/10-helm-quiz.md)
+- [Helm Chart Migration with KRO Quiz](./package-management/05-kro-helm-migration-quiz.md)
+
+### Platform & AWS Integration
+- [AWS Controllers for Kubernetes (ACK) Quiz](./platform/03-ack-quiz.md)
+- [Kubernetes Extension Mechanisms Quiz](./platform/07-kubernetes-extensions-quiz.md)
 
 ## How to Use Quizzes
 

@@ -1,6 +1,6 @@
 # Helm 패키지 매니저 퀴즈
 
-> **관련 문서**: [Helm 패키지 매니저](../../tools/10-helm.md)
+> **관련 문서**: [Helm 패키지 매니저](../../package-management/01-helm.md)
 
 ## 객관식 문제
 

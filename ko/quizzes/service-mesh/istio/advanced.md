@@ -107,7 +107,7 @@ kubectl get pods -n istio-system | grep ztunnel
 - D (X): 보안 수준은 동일 (mTLS, AuthorizationPolicy 모두 지원)
 
 **참고 자료:**
-- [Ambient Mode](../../../tools/istio/advanced/01-ambient-mode.md)
+- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 </details>
 
 ---
@@ -217,7 +217,7 @@ data:
 - D (X): ServiceEntry는 외부 서비스를 수동으로 등록하는 리소스
 
 **참고 자료:**
-- [Multi-cluster](../../../tools/istio/advanced/02-multi-cluster.md)
+- [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 </details>
 
 ---
@@ -365,7 +365,7 @@ spec:
 - D (X): Istiod 구성은 IstioOperator로 변경
 
 **참고 자료:**
-- [EnvoyFilter](../../../tools/istio/advanced/03-envoy-filter.md)
+- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
 </details>
 
 ---
@@ -504,7 +504,7 @@ spec:
 - D (O): A와 B 모두 유효한 방법
 
 **참고 자료:**
-- [Sidecar Injection](../../../tools/istio/advanced/07-sidecar-injection.md)
+- [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
 </details>
 
 ---
@@ -660,7 +660,7 @@ spec:
 - D (X): Gateway는 외부 트래픽 진입점 (트래픽 분할 안함)
 
 **참고 자료:**
-- [Argo Rollouts](../../../tools/istio/advanced/08-argo-rollouts.md)
+- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 </details>
 
 ---
@@ -860,7 +860,7 @@ Ambient Mode 전환 비용 (1회):
 - ⚠️ 충분한 테스트 필요
 
 **참고 자료:**
-- [Ambient Mode](../../../tools/istio/advanced/01-ambient-mode.md)
+- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 </details>
 
 ---
@@ -1250,7 +1250,7 @@ istioctl dashboard kiali --context="${CTX_CLUSTER1}"
 - ✅ Cross-cluster 트래픽 모니터링
 
 **참고 자료:**
-- [Multi-cluster](../../../tools/istio/advanced/02-multi-cluster.md)
+- [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 </details>
 
 ---
@@ -1694,8 +1694,8 @@ sum(rate(envoy_http_ratelimit_error_total[5m])) by (pod)
 - ✅ 사용자별 예외 처리 (VIP 사용자 등)
 
 **참고 자료:**
-- [EnvoyFilter](../../../tools/istio/advanced/03-envoy-filter.md)
-- [Rate Limiting](../../../tools/istio/resilience/02-rate-limiting.md)
+- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
+- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
 </details>
 
 ---
@@ -2183,7 +2183,7 @@ sum(rate(istio_requests_total{destination_service_name="myapp"}[5m])) by (destin
 - ⚠️ 세션 관리 (Sticky Session 필요 시)
 
 **참고 자료:**
-- [Argo Rollouts](../../../tools/istio/advanced/08-argo-rollouts.md)
+- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 </details>
 
 ---
@@ -2522,7 +2522,7 @@ rate(envoy_cluster_upstream_cx_total[5m])
 - ⚠️ 장애 조치 시나리오 테스트
 
 **참고 자료:**
-- [DNS Caching](../../../tools/istio/advanced/04-dns-cache.md)
+- [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
 </details>
 
 ---
@@ -2542,11 +2542,11 @@ rate(envoy_cluster_upstream_cx_total[5m])
 
 ## 학습 자료
 
-- [Ambient Mode](../../../tools/istio/advanced/01-ambient-mode.md)
-- [Multi-cluster](../../../tools/istio/advanced/02-multi-cluster.md)
-- [EnvoyFilter](../../../tools/istio/advanced/03-envoy-filter.md)
-- [DNS Caching](../../../tools/istio/advanced/04-dns-cache.md)
-- [gRPC](../../../tools/istio/advanced/05-grpc.md)
-- [WebSocket](../../../tools/istio/advanced/06-websocket.md)
-- [Sidecar Injection](../../../tools/istio/advanced/07-sidecar-injection.md)
-- [Argo Rollouts](../../../tools/istio/advanced/08-argo-rollouts.md)
+- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+- [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
+- [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
+- [gRPC](../../../service-mesh/istio/advanced/05-grpc.md)
+- [WebSocket](../../../service-mesh/istio/advanced/06-websocket.md)
+- [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
+- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)

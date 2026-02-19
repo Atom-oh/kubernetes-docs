@@ -1,6 +1,6 @@
 # KRO Helm 마이그레이션 퀴즈
 
-> **관련 문서**: [KRO를 활용한 Helm 차트 마이그레이션](../../advanced/05-kro-helm-migration.md)
+> **관련 문서**: [KRO를 활용한 Helm 차트 마이그레이션](../../package-management/02-kro-helm-migration.md)
 
 ## 객관식 문제
 

@@ -116,7 +116,7 @@ kubectl port-forward -n istio-system svc/prometheus 9090:9090
 ```
 
 **참고 자료:**
-- [메트릭](../../../tools/istio/observability/01-metrics.md)
+- [메트릭](../../../service-mesh/istio/observability/01-metrics.md)
 </details>
 
 ---
@@ -263,7 +263,7 @@ istioctl dashboard jaeger
 ```
 
 **참고 자료:**
-- [분산 추적](../../../tools/istio/observability/02-distributed-tracing.md)
+- [분산 추적](../../../service-mesh/istio/observability/02-distributed-tracing.md)
 </details>
 
 ---
@@ -403,7 +403,7 @@ istioctl dashboard kiali
 ```
 
 **참고 자료:**
-- [시각화](../../../tools/istio/observability/04-visualization.md)
+- [시각화](../../../service-mesh/istio/observability/04-visualization.md)
 - [Kiali 공식 문서](https://kiali.io/docs/)
 </details>
 
@@ -575,7 +575,7 @@ kubectl logs <pod-name> -c istio-proxy | \
 ```
 
 **참고 자료:**
-- [로깅](../../../tools/istio/observability/03-logging.md)
+- [로깅](../../../service-mesh/istio/observability/03-logging.md)
 - [Envoy Access Log Format](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
 </details>
 
@@ -728,7 +728,7 @@ expr: |
 ```
 
 **참고 자료:**
-- [시각화](../../../tools/istio/observability/04-visualization.md)
+- [시각화](../../../service-mesh/istio/observability/04-visualization.md)
 - [Grafana 공식 문서](https://grafana.com/docs/)
 </details>
 
@@ -1092,7 +1092,7 @@ spec:
 ```
 
 **참고 자료:**
-- [메트릭](../../../tools/istio/observability/01-metrics.md)
+- [메트릭](../../../service-mesh/istio/observability/01-metrics.md)
 - [Google SRE Book - Monitoring](https://sre.google/sre-book/monitoring-distributed-systems/)
 </details>
 
@@ -1416,7 +1416,7 @@ histogram_quantile(0.99,
 ```
 
 **참고 자료:**
-- [분산 추적](../../../tools/istio/observability/02-distributed-tracing.md)
+- [분산 추적](../../../service-mesh/istio/observability/02-distributed-tracing.md)
 - [Jaeger 공식 문서](https://www.jaegertracing.io/docs/)
 </details>
 
@@ -1834,7 +1834,7 @@ flowchart TD
 ```
 
 **참고 자료:**
-- [시각화](../../../tools/istio/observability/04-visualization.md)
+- [시각화](../../../service-mesh/istio/observability/04-visualization.md)
 - [Kiali 공식 문서](https://kiali.io/docs/)
 </details>
 
@@ -2799,7 +2799,7 @@ spec:
 ```
 
 **참고 자료:**
-- [메트릭](../../../tools/istio/observability/01-metrics.md)
+- [메트릭](../../../service-mesh/istio/observability/01-metrics.md)
 - [Prometheus Client Libraries](https://prometheus.io/docs/instrumenting/clientlibs/)
 - [Grafana Provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
 </details>
@@ -2821,7 +2821,7 @@ spec:
 
 ## 학습 자료
 
-- [메트릭](../../../tools/istio/observability/01-metrics.md)
-- [분산 추적](../../../tools/istio/observability/02-distributed-tracing.md)
-- [로깅](../../../tools/istio/observability/03-logging.md)
-- [시각화](../../../tools/istio/observability/04-visualization.md)
+- [메트릭](../../../service-mesh/istio/observability/01-metrics.md)
+- [분산 추적](../../../service-mesh/istio/observability/02-distributed-tracing.md)
+- [로깅](../../../service-mesh/istio/observability/03-logging.md)
+- [시각화](../../../service-mesh/istio/observability/04-visualization.md)

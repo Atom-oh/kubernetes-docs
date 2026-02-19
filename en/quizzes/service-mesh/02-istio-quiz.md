@@ -729,4 +729,4 @@ spec:
 - [Istio Official Documentation](https://istio.io/latest/docs/)
 - [Argo Rollouts Documentation](https://argo-rollouts.readthedocs.io/)
 - [EKS Workshop - Istio](https://www.eksworkshop.com/docs/security/servicemesh/)
-- [Detailed documentation in this guide](../../tools/istio/)
+- [Detailed documentation in this guide](../../service-mesh/istio/)

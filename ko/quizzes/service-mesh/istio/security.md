@@ -79,8 +79,8 @@ spec:
 ```
 
 **참고 자료:**
-- [PeerAuthentication](../../../tools/istio/security/04-peer-authentication.md)
-- [mTLS](../../../tools/istio/security/01-mtls.md)
+- [PeerAuthentication](../../../service-mesh/istio/security/04-peer-authentication.md)
+- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
 </details>
 
 ---
@@ -224,7 +224,7 @@ curl -X PUT http://backend/api
 ```
 
 **참고 자료:**
-- [Authorization Policy](../../../tools/istio/security/02-authorization-policy.md)
+- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
 </details>
 
 ---
@@ -390,7 +390,7 @@ curl -H "Authorization: Bearer $TOKEN" http://backend/api
 ```
 
 **참고 자료:**
-- [Request Authentication](../../../tools/istio/security/03-request-authentication.md)
+- [Request Authentication](../../../service-mesh/istio/security/03-request-authentication.md)
 </details>
 
 ---
@@ -567,8 +567,8 @@ spec:
 ```
 
 **참고 자료:**
-- [mTLS](../../../tools/istio/security/01-mtls.md)
-- [인증서 관리](../../../tools/istio/components.md#인증서-관리)
+- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+- [인증서 관리](../../../service-mesh/istio/components.md#인증서-관리)
 </details>
 
 ---
@@ -760,8 +760,8 @@ spec:
 ```
 
 **참고 자료:**
-- [mTLS](../../../tools/istio/security/01-mtls.md)
-- [Authorization Policy](../../../tools/istio/security/02-authorization-policy.md)
+- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
 </details>
 
 ---
@@ -1138,8 +1138,8 @@ curl http://<ingress-gateway>/frontend
    - 롤백 계획 준비
 
 **참고 자료:**
-- [Authorization Policy](../../../tools/istio/security/02-authorization-policy.md)
-- [PeerAuthentication](../../../tools/istio/security/04-peer-authentication.md)
+- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
+- [PeerAuthentication](../../../service-mesh/istio/security/04-peer-authentication.md)
 </details>
 
 ---
@@ -1534,8 +1534,8 @@ curl -H "Authorization: Bearer invalid-token" \
    - 동적 권한 업데이트 (Keycloak에서 관리)
 
 **참고 자료:**
-- [Request Authentication](../../../tools/istio/security/03-request-authentication.md)
-- [mTLS](../../../tools/istio/security/01-mtls.md)
+- [Request Authentication](../../../service-mesh/istio/security/03-request-authentication.md)
+- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
 </details>
 
 ---
@@ -2383,8 +2383,8 @@ spec:
    - 비정상 패턴 탐지
 
 **참고 자료:**
-- [Authorization Policy](../../../tools/istio/security/02-authorization-policy.md)
-- [Access Logging](../../../tools/istio/observability/03-logging.md)
+- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
+- [Access Logging](../../../service-mesh/istio/observability/03-logging.md)
 </details>
 
 ---
@@ -2913,8 +2913,8 @@ sum(rate(envoy_http_rbac_denied_total[5m])) by (namespace, pod)
 
 **참고 자료:**
 - [Zero Trust with Istio](https://istio.io/latest/blog/2021/zero-trust/)
-- [mTLS](../../../tools/istio/security/01-mtls.md)
-- [Authorization Policy](../../../tools/istio/security/02-authorization-policy.md)
+- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
 </details>
 
 ---
@@ -2934,7 +2934,7 @@ sum(rate(envoy_http_rbac_denied_total[5m])) by (namespace, pod)
 
 ## 학습 자료
 
-- [mTLS](../../../tools/istio/security/01-mtls.md)
-- [Authorization Policy](../../../tools/istio/security/02-authorization-policy.md)
-- [Request Authentication](../../../tools/istio/security/03-request-authentication.md)
-- [Peer Authentication](../../../tools/istio/security/04-peer-authentication.md)
+- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
+- [Request Authentication](../../../service-mesh/istio/security/03-request-authentication.md)
+- [Peer Authentication](../../../service-mesh/istio/security/04-peer-authentication.md)

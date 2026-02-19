@@ -107,7 +107,7 @@ kubectl get pods -n istio-system | grep ztunnel
 - D (X): Security level is the same (mTLS, AuthorizationPolicy both supported)
 
 **Reference:**
-- [Ambient Mode](../../../tools/istio/advanced/01-ambient-mode.md)
+- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 </details>
 
 ---
@@ -217,7 +217,7 @@ data:
 - D (X): ServiceEntry is a resource for manually registering external services
 
 **Reference:**
-- [Multi-cluster](../../../tools/istio/advanced/02-multi-cluster.md)
+- [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 </details>
 
 ---
@@ -365,7 +365,7 @@ Warning: **EnvoyFilter is very powerful but risky:**
 - D (X): Istiod configuration is changed with IstioOperator
 
 **Reference:**
-- [EnvoyFilter](../../../tools/istio/advanced/03-envoy-filter.md)
+- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
 </details>
 
 ---
@@ -504,7 +504,7 @@ spec:
 - D (O): Both A and B are valid methods
 
 **Reference:**
-- [Sidecar Injection](../../../tools/istio/advanced/07-sidecar-injection.md)
+- [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
 </details>
 
 ---
@@ -660,7 +660,7 @@ spec:
 - D (X): Gateway is external traffic entry point (not traffic splitting)
 
 **Reference:**
-- [Argo Rollouts](../../../tools/istio/advanced/08-argo-rollouts.md)
+- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 </details>
 
 ---
@@ -860,7 +860,7 @@ Payback period:
 - Thorough testing required
 
 **Reference:**
-- [Ambient Mode](../../../tools/istio/advanced/01-ambient-mode.md)
+- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 </details>
 
 ---
@@ -1250,7 +1250,7 @@ istioctl dashboard kiali --context="${CTX_CLUSTER1}"
 - Monitor cross-cluster traffic
 
 **Reference:**
-- [Multi-cluster](../../../tools/istio/advanced/02-multi-cluster.md)
+- [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
 </details>
 
 ---
@@ -1577,8 +1577,8 @@ curl -I -H "x-user-id: user123" \
 - Per-user exception handling (VIP users, etc.)
 
 **Reference:**
-- [EnvoyFilter](../../../tools/istio/advanced/03-envoy-filter.md)
-- [Rate Limiting](../../../tools/istio/resilience/02-rate-limiting.md)
+- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
+- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
 </details>
 
 ---
@@ -1991,7 +1991,7 @@ kubectl argo rollouts get rollout myapp
 - Session management (if Sticky Session needed)
 
 **Reference:**
-- [Argo Rollouts](../../../tools/istio/advanced/08-argo-rollouts.md)
+- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 </details>
 
 ---
@@ -2182,7 +2182,7 @@ kubectl exec -it test-app -c istio-proxy -- \
 - Test failover scenarios
 
 **Reference:**
-- [DNS Caching](../../../tools/istio/advanced/04-dns-cache.md)
+- [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
 </details>
 
 ---
@@ -2202,11 +2202,11 @@ kubectl exec -it test-app -c istio-proxy -- \
 
 ## Study Materials
 
-- [Ambient Mode](../../../tools/istio/advanced/01-ambient-mode.md)
-- [Multi-cluster](../../../tools/istio/advanced/02-multi-cluster.md)
-- [EnvoyFilter](../../../tools/istio/advanced/03-envoy-filter.md)
-- [DNS Caching](../../../tools/istio/advanced/04-dns-cache.md)
-- [gRPC](../../../tools/istio/advanced/05-grpc.md)
-- [WebSocket](../../../tools/istio/advanced/06-websocket.md)
-- [Sidecar Injection](../../../tools/istio/advanced/07-sidecar-injection.md)
-- [Argo Rollouts](../../../tools/istio/advanced/08-argo-rollouts.md)
+- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+- [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
+- [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
+- [gRPC](../../../service-mesh/istio/advanced/05-grpc.md)
+- [WebSocket](../../../service-mesh/istio/advanced/06-websocket.md)
+- [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
+- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
