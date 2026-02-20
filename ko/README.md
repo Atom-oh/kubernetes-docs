@@ -119,9 +119,34 @@
 2. [Karpenter](./autoscaling/02-karpenter.md) | [퀴즈](./quizzes/autoscaling/06-karpenter-quiz.md)
 
 ### Observability
-1. [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](./observability/01-monitoring-stack.md) | [퀴즈](./quizzes/observability/07-monitoring-stack-quiz.md)
-2. [로깅 스택 (Loki, Tempo)](./observability/02-logging-stack.md) | [퀴즈](./quizzes/observability/08-logging-stack-quiz.md)
-3. [관측성 최적화 가이드](./advanced/09-observability-optimization.md) | [퀴즈](./quizzes/advanced/09-observability-optimization-quiz.md)
+1. [Observability 개요](./observability/README.md)
+2. **Metrics**
+   - [메트릭 개요](./observability/metrics/README.md) | [퀴즈](./quizzes/observability/metrics/00-metrics-overview-quiz.md)
+   - [Prometheus](./observability/metrics/01-prometheus.md) | [퀴즈](./quizzes/observability/metrics/01-prometheus-quiz.md)
+   - [VictoriaMetrics](./observability/metrics/02-victoriametrics.md) | [퀴즈](./quizzes/observability/metrics/02-victoriametrics-quiz.md)
+   - [Grafana Mimir](./observability/metrics/03-mimir.md) | [퀴즈](./quizzes/observability/metrics/03-mimir-quiz.md)
+   - [CloudWatch Metrics](./observability/metrics/04-cloudwatch-metrics.md) | [퀴즈](./quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
+   - [Datadog](./observability/metrics/05-datadog.md) | [퀴즈](./quizzes/observability/metrics/05-datadog-quiz.md)
+3. **Logging**
+   - [로깅 개요](./observability/logging/README.md) | [퀴즈](./quizzes/observability/logging/README-quiz.md)
+   - [Grafana Loki](./observability/logging/01-loki.md) | [퀴즈](./quizzes/observability/logging/01-loki-quiz.md)
+   - [OpenSearch](./observability/logging/02-opensearch.md) | [퀴즈](./quizzes/observability/logging/02-opensearch-quiz.md)
+   - [CloudWatch Logs](./observability/logging/03-cloudwatch-logs.md) | [퀴즈](./quizzes/observability/logging/03-cloudwatch-logs-quiz.md)
+   - [ClickHouse](./observability/logging/04-clickhouse.md) | [퀴즈](./quizzes/observability/logging/04-clickhouse-quiz.md)
+   - [Log Collectors](./observability/logging/05-collectors.md) | [퀴즈](./quizzes/observability/logging/05-collectors-quiz.md)
+4. **Tracing**
+   - [트레이싱 개요](./observability/tracing/README.md)
+   - [Grafana Tempo](./observability/tracing/01-tempo.md) | [퀴즈](./quizzes/observability/tracing/01-tempo-quiz.md)
+   - [AWS X-Ray](./observability/tracing/02-xray.md) | [퀴즈](./quizzes/observability/tracing/02-xray-quiz.md)
+   - [OpenTelemetry](./observability/tracing/03-opentelemetry.md) | [퀴즈](./quizzes/observability/tracing/03-opentelemetry-quiz.md)
+   - [Dynatrace](./observability/tracing/04-dynatrace.md) | [퀴즈](./quizzes/observability/tracing/04-dynatrace-quiz.md)
+5. **Alerting**
+   - [알림 개요](./observability/alerting/README.md)
+   - [Alertmanager](./observability/alerting/01-alertmanager.md) | [퀴즈](./quizzes/observability/alerting/01-alertmanager-quiz.md)
+   - [CloudWatch Alarms](./observability/alerting/02-cloudwatch-alarms.md) | [퀴즈](./quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md)
+   - [Grafana OnCall](./observability/alerting/03-grafana-oncall.md) | [퀴즈](./quizzes/observability/alerting/03-grafana-oncall-quiz.md)
+6. [Grafana](./observability/grafana/README.md) | [퀴즈](./quizzes/observability/grafana/grafana-quiz.md)
+7. [관측성 최적화 가이드](./advanced/09-observability-optimization.md) | [퀴즈](./quizzes/advanced/09-observability-optimization-quiz.md)
 
 ### Scheduling
 1. Custom Scheduler
@@ -136,6 +161,19 @@
 ### Platform & AWS Integration
 1. [AWS Controllers for Kubernetes (ACK)](./platform/01-ack.md) | [퀴즈](./quizzes/platform/03-ack-quiz.md)
 2. [Kubernetes 확장 메커니즘](./platform/02-kubernetes-extensions.md) | [퀴즈](./quizzes/platform/07-kubernetes-extensions-quiz.md)
+
+### 운영 가이드
+1. [인프라 구성 기초](./ops/01-infrastructure-setup.md) | [퀴즈](./quizzes/ops/01-infrastructure-setup-quiz.md)
+2. [인프라 구성 고급](./ops/02-infrastructure-advanced.md) | [퀴즈](./quizzes/ops/02-infrastructure-advanced-quiz.md)
+3. [CI 파이프라인 구성](./ops/03-ci-pipelines.md) | [퀴즈](./quizzes/ops/03-ci-pipelines-quiz.md)
+4. [GitOps 멀티 클러스터](./ops/04-gitops-multi-cluster.md) | [퀴즈](./quizzes/ops/04-gitops-multi-cluster-quiz.md)
+5. [GitOps 자동화](./ops/05-gitops-automation.md) | [퀴즈](./quizzes/ops/05-gitops-automation-quiz.md)
+6. [스케일링 전략](./ops/06-scaling-strategies.md) | [퀴즈](./quizzes/ops/06-scaling-strategies-quiz.md)
+7. [Observability 알림 설정](./ops/07-observability-alerts.md) | [퀴즈](./quizzes/ops/07-observability-alerts-quiz.md)
+8. [Observability 분석 방법](./ops/08-observability-analysis.md) | [퀴즈](./quizzes/ops/08-observability-analysis-quiz.md)
+9. [Observability 스택 구성](./ops/09-observability-stack.md) | [퀴즈](./quizzes/ops/09-observability-stack-quiz.md)
+10. [리소스 최적화](./ops/10-resource-optimization.md) | [퀴즈](./quizzes/ops/10-resource-optimization-quiz.md)
+11. [EKS 업그레이드 운영](./ops/11-upgrade-operations.md) | [퀴즈](./quizzes/ops/11-upgrade-operations-quiz.md)
 
 ## 실습 가이드
 
