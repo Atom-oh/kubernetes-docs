@@ -56,6 +56,8 @@ An air-gapped environment is a network that is completely isolated from the publ
 
 The air-gap architecture configured in this document is as follows:
 
+![EKS Hybrid Nodes Air-Gap Architecture](../../assets/generated-diagrams/eks_hybrid_airgap_architecture.drawio)
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  Preparation (internet-connected host)                                  │

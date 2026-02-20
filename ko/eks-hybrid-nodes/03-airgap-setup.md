@@ -56,6 +56,8 @@
 
 이 문서에서 구성하는 에어갭 아키텍처는 다음과 같습니다:
 
+![EKS Hybrid Nodes Air-Gap Architecture](../../assets/generated-diagrams/eks_hybrid_airgap_architecture.drawio)
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  사전 준비 (인터넷 접근 가능 호스트)                                       │
