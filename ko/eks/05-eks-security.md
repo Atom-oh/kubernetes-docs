@@ -10,13 +10,18 @@ Amazon EKS(Elastic Kubernetes Service)에서 워크로드를 안전하게 실행
 1. [EKS 보안 개요](#eks-보안-개요)
 2. [최신 보안 트렌드 (2023)](#최신-보안-트렌드-2023)
 3. [IAM 및 인증](#iam-및-인증)
-4. [네트워크 보안](#네트워크-보안)
-5. [포드 보안](#포드-보안)
-6. [암호화 및 비밀 관리](#암호화-및-비밀-관리)
-7. [컴플라이언스 및 감사](#컴플라이언스-및-감사)
-8. [보안 모니터링 및 탐지](#보안-모니터링-및-탐지)
-9. [EKS 보안 모범 사례](#eks-보안-모범-사례)
-10. [금융 서비스를 위한 EKS 보안 고려사항](#금융-서비스를-위한-eks-보안-고려사항)
+4. [OIDC Provider 심화](#oidc-provider-심화)
+5. [EKS Pod Identity](#eks-pod-identity)
+6. [Cluster Endpoint 접근 제어](#cluster-endpoint-접근-제어)
+7. [네트워크 보안](#네트워크-보안)
+8. [포드 보안](#포드-보안)
+9. [Bottlerocket 및 읽기 전용 OS](#bottlerocket-및-읽기-전용-os)
+10. [IAM 권한 경계](#iam-권한-경계)
+11. [암호화 및 비밀 관리](#암호화-및-비밀-관리)
+12. [컴플라이언스 및 감사](#컴플라이언스-및-감사)
+13. [보안 모니터링 및 탐지](#보안-모니터링-및-탐지)
+14. [EKS 보안 모범 사례](#eks-보안-모범-사례)
+15. [금융 서비스를 위한 EKS 보안 고려사항](#금융-서비스를-위한-eks-보안-고려사항)
 
 ## EKS 보안 개요
 
@@ -304,6 +309,491 @@ spec:
   - name: app
     image: amazonlinux:2
     command: ['sh', '-c', 'aws s3 ls']
+```
+
+## OIDC Provider 심화
+
+EKS에서 OIDC(OpenID Connect) Provider는 Kubernetes 서비스 계정과 AWS IAM 역할을 연결하는 핵심 메커니즘입니다. 이 섹션에서는 OIDC 신뢰 관계의 동작 원리와 토큰 교환 메커니즘을 심층적으로 살펴봅니다.
+
+### OIDC 신뢰 관계 동작 원리
+
+EKS 클러스터를 생성하면 AWS는 클러스터별로 고유한 OIDC 발급자(Issuer) URL을 생성합니다. 이 URL은 IAM Identity Provider로 등록되어 Kubernetes 서비스 계정 토큰을 AWS IAM 자격 증명으로 교환할 수 있게 합니다.
+
+```mermaid
+sequenceDiagram
+    participant Pod as 파드
+    participant SA as 서비스 계정
+    participant OIDC as EKS OIDC Provider
+    participant STS as AWS STS
+    participant IAM as IAM 역할
+
+    Pod->>SA: 1. 토큰 요청
+    SA->>Pod: 2. JWT 토큰 발급<br/>(projected volume)
+
+    Pod->>STS: 3. AssumeRoleWithWebIdentity<br/>(JWT 토큰 + 역할 ARN)
+
+    STS->>OIDC: 4. 토큰 검증 요청
+    OIDC->>STS: 5. JWKS로 서명 검증
+
+    STS->>IAM: 6. 신뢰 정책 확인
+    IAM->>STS: 7. 정책 승인
+
+    STS->>Pod: 8. 임시 자격 증명<br/>(AccessKey, SecretKey, SessionToken)
+
+    Pod->>Pod: 9. AWS API 호출
+```
+
+### STS AssumeRoleWithWebIdentity 흐름
+
+IRSA의 핵심은 `AssumeRoleWithWebIdentity` API 호출입니다. 이 API는 다음 단계로 동작합니다:
+
+1. **토큰 발급**: Kubernetes API 서버가 서비스 계정에 대한 JWT 토큰 발급
+2. **토큰 전달**: 파드 내 애플리케이션이 projected volume에서 토큰 읽기
+3. **역할 전환**: AWS SDK가 STS에 토큰과 함께 역할 전환 요청
+4. **토큰 검증**: STS가 OIDC Provider의 JWKS(JSON Web Key Set)로 토큰 서명 검증
+5. **정책 평가**: IAM 역할의 신뢰 정책에서 OIDC 조건 확인
+6. **자격 증명 반환**: 임시 자격 증명(Access Key, Secret Key, Session Token) 발급
+
+### 토큰 교환 메커니즘
+
+서비스 계정 토큰은 다음 정보를 포함합니다:
+
+```json
+{
+  "aud": ["sts.amazonaws.com"],
+  "exp": 1234567890,
+  "iat": 1234567800,
+  "iss": "https://oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE",
+  "kubernetes.io": {
+    "namespace": "default",
+    "pod": {
+      "name": "my-pod",
+      "uid": "xxx-xxx-xxx"
+    },
+    "serviceaccount": {
+      "name": "my-service-account",
+      "uid": "xxx-xxx-xxx"
+    }
+  },
+  "sub": "system:serviceaccount:default:my-service-account"
+}
+```
+
+### OIDC 엔드포인트 확인
+
+클러스터의 OIDC Provider 정보를 확인하는 방법:
+
+```bash
+# OIDC 발급자 URL 확인
+aws eks describe-cluster \
+  --name my-cluster \
+  --query "cluster.identity.oidc.issuer" \
+  --output text
+
+# 출력: https://oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE
+
+# IAM OIDC Provider 상태 확인
+aws iam list-open-id-connect-providers | \
+  jq '.OpenIDConnectProviderList[] | select(.Arn | contains("EXAMPLED539D4633E53DE1B71EXAMPLE"))'
+
+# OIDC Provider 상세 정보
+aws iam get-open-id-connect-provider \
+  --open-id-connect-provider-arn arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE
+```
+
+### JWKS URI와 토큰 검증
+
+JWKS(JSON Web Key Set)는 토큰 서명을 검증하는 데 사용되는 공개 키 집합입니다:
+
+```bash
+# JWKS URI 확인 (OIDC 발급자 URL + /.well-known/openid-configuration)
+OIDC_URL=$(aws eks describe-cluster --name my-cluster --query "cluster.identity.oidc.issuer" --output text)
+
+# OpenID Configuration 조회
+curl -s "${OIDC_URL}/.well-known/openid-configuration" | jq '.'
+
+# JWKS 직접 조회
+curl -s "${OIDC_URL}/keys" | jq '.'
+```
+
+JWKS 응답 예시:
+
+```json
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "kid": "xxx-xxx-xxx",
+      "use": "sig",
+      "alg": "RS256",
+      "n": "...(base64 encoded modulus)...",
+      "e": "AQAB"
+    }
+  ]
+}
+```
+
+### IAM 역할 신뢰 정책 설정
+
+OIDC를 사용하는 IAM 역할의 신뢰 정책:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE:sub": "system:serviceaccount:default:my-service-account",
+          "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE:aud": "sts.amazonaws.com"
+        }
+      }
+    }
+  ]
+}
+```
+
+## EKS Pod Identity
+
+EKS Pod Identity는 2023년에 도입된 새로운 방식으로, IRSA의 복잡성을 줄이고 더 간단하게 파드에 AWS IAM 권한을 부여합니다.
+
+### IRSA 대비 장점
+
+| 특성 | IRSA | EKS Pod Identity |
+|------|------|------------------|
+| **설정 복잡도** | OIDC Provider, IAM 역할 신뢰 정책 필요 | Pod Identity Association만 필요 |
+| **IAM 역할 재사용** | 클러스터별 역할 필요 | 여러 클러스터에서 역할 재사용 가능 |
+| **세션 태그** | 미지원 | 지원 (리소스 태깅 자동화) |
+| **자격 증명 위치** | Projected Volume | EKS Auth API |
+| **토큰 갱신** | 파드 내 SDK 담당 | Pod Identity Agent 담당 |
+
+### Pod Identity Agent 동작 원리
+
+```mermaid
+flowchart TD
+    subgraph EKS_Cluster["EKS 클러스터"]
+        subgraph Node["노드"]
+            PIA["Pod Identity Agent
+            (DaemonSet)"]
+            Pod["애플리케이션 파드"]
+        end
+
+        SA[서비스 계정]
+        PodIdentity["Pod Identity
+        Association"]
+    end
+
+    IAM["IAM 역할"]
+    STS["AWS STS"]
+
+    Pod -->|1. 자격 증명 요청| PIA
+    PIA -->|2. 연결 확인| PodIdentity
+    PodIdentity -->|3. 역할 매핑| IAM
+    PIA -->|4. AssumeRoleForPodIdentity| STS
+    STS -->|5. 임시 자격 증명| PIA
+    PIA -->|6. 자격 증명 전달| Pod
+
+    SA -.->|연결| Pod
+    SA -.->|참조| PodIdentity
+
+    style EKS_Cluster fill:#e6f7ff,stroke:#0099cc
+    style Node fill:#fff3e6,stroke:#ff9900
+```
+
+Pod Identity Agent는 각 노드에서 DaemonSet으로 실행되며:
+1. 파드의 자격 증명 요청을 가로챕니다
+2. Pod Identity Association을 확인합니다
+3. 연결된 IAM 역할의 임시 자격 증명을 획득합니다
+4. 파드에 자격 증명을 전달합니다
+
+### Pod Identity Association 설정
+
+#### eksctl 사용
+
+```bash
+# Pod Identity Association 생성
+eksctl create podidentityassociation \
+  --cluster my-cluster \
+  --namespace default \
+  --service-account-name s3-reader \
+  --role-arn arn:aws:iam::123456789012:role/S3ReaderRole
+
+# 연결 확인
+eksctl get podidentityassociation --cluster my-cluster
+```
+
+#### AWS CLI 사용
+
+```bash
+# Pod Identity Association 생성
+aws eks create-pod-identity-association \
+  --cluster-name my-cluster \
+  --namespace default \
+  --service-account s3-reader \
+  --role-arn arn:aws:iam::123456789012:role/S3ReaderRole
+
+# 연결 목록 조회
+aws eks list-pod-identity-associations --cluster-name my-cluster
+
+# 특정 연결 상세 정보
+aws eks describe-pod-identity-association \
+  --cluster-name my-cluster \
+  --association-id a-xxxxxxxxxxxxx
+```
+
+### IRSA에서 Pod Identity로 마이그레이션
+
+기존 IRSA 설정을 Pod Identity로 마이그레이션하는 절차:
+
+```bash
+# 1. Pod Identity Agent 애드온 설치 확인
+aws eks describe-addon \
+  --cluster-name my-cluster \
+  --addon-name eks-pod-identity-agent
+
+# 애드온 미설치 시 설치
+aws eks create-addon \
+  --cluster-name my-cluster \
+  --addon-name eks-pod-identity-agent
+
+# 2. 기존 IRSA IAM 역할의 신뢰 정책 업데이트
+# Pod Identity도 허용하도록 Principal 추가
+cat > trust-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "pods.eks.amazonaws.com"
+      },
+      "Action": [
+        "sts:AssumeRole",
+        "sts:TagSession"
+      ]
+    }
+  ]
+}
+EOF
+
+aws iam update-assume-role-policy \
+  --role-name S3ReaderRole \
+  --policy-document file://trust-policy.json
+
+# 3. Pod Identity Association 생성
+aws eks create-pod-identity-association \
+  --cluster-name my-cluster \
+  --namespace default \
+  --service-account s3-reader \
+  --role-arn arn:aws:iam::123456789012:role/S3ReaderRole
+
+# 4. 서비스 계정에서 IRSA 어노테이션 제거 (선택적)
+kubectl annotate serviceaccount s3-reader \
+  eks.amazonaws.com/role-arn- \
+  -n default
+
+# 5. 파드 재시작하여 Pod Identity 사용 확인
+kubectl rollout restart deployment my-app -n default
+```
+
+### Pod Identity 사용 예제
+
+```yaml
+# 1. 서비스 계정 생성 (IRSA 어노테이션 불필요)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: s3-reader
+  namespace: default
+---
+# 2. 파드에서 서비스 계정 사용
+apiVersion: v1
+kind: Pod
+metadata:
+  name: s3-reader-pod
+spec:
+  serviceAccountName: s3-reader
+  containers:
+  - name: app
+    image: amazonlinux:2
+    command:
+    - /bin/sh
+    - -c
+    - |
+      # AWS SDK가 자동으로 Pod Identity Agent에서 자격 증명 획득
+      aws s3 ls
+      aws sts get-caller-identity
+```
+
+## Cluster Endpoint 접근 제어
+
+EKS 클러스터의 Kubernetes API 서버 엔드포인트에 대한 접근을 제어하는 것은 보안의 기본입니다.
+
+### 엔드포인트 구성 옵션
+
+EKS는 세 가지 엔드포인트 구성을 지원합니다:
+
+```mermaid
+flowchart TB
+    subgraph Option1["Public Only"]
+        Internet1((인터넷)) --> Public1[Public Endpoint]
+        Public1 --> CP1[컨트롤 플레인]
+        VPC1[VPC 내 노드] --> |인터넷 경유| Public1
+    end
+
+    subgraph Option2["Private Only"]
+        VPC2[VPC 내 노드] --> Private2[Private Endpoint]
+        Private2 --> CP2[컨트롤 플레인]
+        VPN2[VPN/Direct Connect] --> VPC2
+    end
+
+    subgraph Option3["Public + Private"]
+        Internet3((인터넷)) --> |CIDR 제한| Public3[Public Endpoint]
+        VPC3[VPC 내 노드] --> Private3[Private Endpoint]
+        Public3 --> CP3[컨트롤 플레인]
+        Private3 --> CP3
+    end
+
+    style Option1 fill:#ffe6e6,stroke:#cc0000
+    style Option2 fill:#e6ffe6,stroke:#009900
+    style Option3 fill:#e6f7ff,stroke:#0099cc
+```
+
+| 구성 | Public | Private | 사용 사례 |
+|------|--------|---------|-----------|
+| **Public Only** | ✅ | ❌ | 개발/테스트 환경, 빠른 시작 |
+| **Private Only** | ❌ | ✅ | 프로덕션, 금융/의료 워크로드 |
+| **Public + Private** | ✅ | ✅ | 하이브리드 접근, CI/CD 통합 |
+
+### Public/Private/Public+Private 엔드포인트 구성
+
+```bash
+# 현재 엔드포인트 설정 확인
+aws eks describe-cluster \
+  --name my-cluster \
+  --query "cluster.resourcesVpcConfig.{PublicAccess:endpointPublicAccess, PrivateAccess:endpointPrivateAccess, PublicCIDRs:publicAccessCidrs}"
+
+# Public + Private 설정 (권장)
+aws eks update-cluster-config \
+  --name my-cluster \
+  --resources-vpc-config endpointPublicAccess=true,endpointPrivateAccess=true
+
+# Private Only 설정 (최고 보안)
+aws eks update-cluster-config \
+  --name my-cluster \
+  --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true
+```
+
+### CIDR 제한 설정
+
+퍼블릭 엔드포인트에 접근 가능한 IP 범위를 제한합니다:
+
+```bash
+# 특정 CIDR 범위만 허용
+aws eks update-cluster-config \
+  --name my-cluster \
+  --resources-vpc-config publicAccessCidrs="203.0.113.0/24","198.51.100.0/24"
+
+# 회사 VPN IP 대역만 허용
+aws eks update-cluster-config \
+  --name my-cluster \
+  --resources-vpc-config publicAccessCidrs="10.0.0.0/8"
+```
+
+> **권장사항**: 프로덕션 환경에서는 CIDR 제한과 함께 Public + Private 구성을 사용하거나, 보안이 중요한 환경에서는 Private Only 구성을 사용하세요.
+
+### Private 클러스터 운영 패턴
+
+Private 엔드포인트만 활성화된 클러스터에 접근하는 방법:
+
+#### VPN 연결
+
+```mermaid
+flowchart LR
+    Admin[관리자] --> VPN[AWS VPN]
+    VPN --> VPC[EKS VPC]
+    VPC --> Private[Private Endpoint]
+    Private --> CP[컨트롤 플레인]
+```
+
+```bash
+# Site-to-Site VPN 설정 후 kubectl 사용
+kubectl --kubeconfig ~/.kube/config get nodes
+```
+
+#### Transit Gateway
+
+```mermaid
+flowchart LR
+    subgraph OnPrem["온프레미스"]
+        Admin[관리자]
+    end
+
+    subgraph AWS["AWS"]
+        DX[Direct Connect]
+        TGW[Transit Gateway]
+        VPC[EKS VPC]
+        EKS[EKS Cluster]
+    end
+
+    Admin --> DX
+    DX --> TGW
+    TGW --> VPC
+    VPC --> EKS
+```
+
+#### Bastion Host / Session Manager
+
+```bash
+# Systems Manager Session Manager를 통한 접근
+aws ssm start-session \
+  --target i-xxxxxxxxxxxxx \
+  --document-name AWS-StartPortForwardingSession \
+  --parameters '{"portNumber":["443"],"localPortNumber":["6443"]}'
+
+# 로컬에서 kubectl 사용
+kubectl --server=https://localhost:6443 get nodes
+```
+
+### 엔드포인트 접근 제어 설정 예제
+
+eksctl을 사용한 완전한 클러스터 구성:
+
+```yaml
+# cluster-config.yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: secure-cluster
+  region: us-west-2
+
+vpc:
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+  publicAccessCIDRs:
+    - 203.0.113.0/24  # 회사 VPN IP 대역
+    - 198.51.100.0/24 # CI/CD 서버 IP 대역
+
+managedNodeGroups:
+  - name: ng-private
+    instanceType: m5.large
+    desiredCapacity: 3
+    privateNetworking: true  # 노드를 프라이빗 서브넷에 배치
+```
+
+```bash
+# 클러스터 생성
+eksctl create cluster -f cluster-config.yaml
+
+# 엔드포인트 설정 확인
+kubectl cluster-info
 ```
 
 ## 네트워크 보안
@@ -617,6 +1107,401 @@ spec:
           - name: "*"
             securityContext:
               privileged: false
+```
+
+## Bottlerocket 및 읽기 전용 OS
+
+Bottlerocket은 AWS에서 개발한 컨테이너 워크로드 전용 Linux 운영 체제입니다. 보안을 최우선으로 설계되어 불변 인프라 전략에 적합합니다.
+
+### Bottlerocket 특성
+
+```mermaid
+flowchart TD
+    subgraph Bottlerocket["Bottlerocket OS"]
+        subgraph Security["보안 특성"]
+            API["API 기반 구성"]
+            SELinux["SELinux 적용"]
+            DMVerity["dm-verity 무결성"]
+            ReadOnly["읽기 전용 루트"]
+        end
+
+        subgraph Updates["업데이트"]
+            AutoUpdate["자동 업데이트"]
+            Rollback["자동 롤백"]
+            AB["A/B 파티션"]
+        end
+
+        subgraph Minimal["최소화"]
+            NoShell["SSH/셸 기본 비활성화"]
+            NoPkgMgr["패키지 관리자 없음"]
+            MinServices["최소 서비스"]
+        end
+    end
+
+    style Bottlerocket fill:#e6f7ff,stroke:#0099cc
+    style Security fill:#e6ffe6,stroke:#009900
+```
+
+#### API 기반 구성
+
+Bottlerocket은 SSH 대신 API 서버를 통해 구성됩니다:
+
+```bash
+# Bottlerocket 설정 확인 (컨트롤 컨테이너에서)
+apiclient get settings
+
+# 설정 변경
+apiclient set kubernetes.node-labels.environment=production
+
+# 커밋 및 적용
+apiclient commit
+```
+
+#### 자동 업데이트
+
+```yaml
+# 자동 업데이트 설정 (eksctl)
+managedNodeGroups:
+  - name: bottlerocket-ng
+    amiFamily: Bottlerocket
+    bottlerocket:
+      settings:
+        # 업데이트 설정
+        motd: "EKS Production Node"
+        kubernetes:
+          node-labels:
+            environment: production
+```
+
+### SELinux 적용
+
+Bottlerocket은 SELinux가 기본 활성화되어 있어 컨테이너 간 격리를 강화합니다:
+
+```yaml
+# SELinux 상태 확인 (파드 내에서)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: selinux-check
+spec:
+  containers:
+  - name: check
+    image: amazonlinux:2
+    command:
+    - /bin/sh
+    - -c
+    - |
+      getenforce
+      cat /proc/self/attr/current
+```
+
+### dm-verity (루트 파일시스템 무결성)
+
+dm-verity는 블록 레벨에서 루트 파일시스템의 무결성을 검증합니다:
+
+```mermaid
+flowchart LR
+    subgraph DM_Verity["dm-verity 동작"]
+        Read[블록 읽기] --> Hash[해시 계산]
+        Hash --> Verify[해시 검증]
+        Verify -->|일치| Allow[접근 허용]
+        Verify -->|불일치| Deny[접근 차단]
+    end
+
+    MerkleTree[Merkle Tree
+    해시 저장소] --> Verify
+
+    style DM_Verity fill:#e6ffe6,stroke:#009900
+```
+
+- 부팅 시 루트 파일시스템의 무결성 검증
+- 런타임에 수정 시도 감지 및 차단
+- 악성 코드 주입 방지
+
+### 불변 인프라 전략
+
+Bottlerocket을 사용한 불변 인프라 구현:
+
+```yaml
+# 1. 새 버전의 노드 그룹 생성
+managedNodeGroups:
+  - name: bottlerocket-v2
+    amiFamily: Bottlerocket
+    instanceType: m5.xlarge
+    desiredCapacity: 3
+    labels:
+      version: v2
+
+# 2. 기존 노드 드레인 및 삭제
+# kubectl cordon/drain 사용
+```
+
+```bash
+# 노드 교체 전략
+# 1. 새 노드 그룹 생성
+eksctl create nodegroup -f new-nodegroup.yaml
+
+# 2. 기존 노드 cordon
+kubectl cordon -l eks.amazonaws.com/nodegroup=bottlerocket-v1
+
+# 3. 기존 노드 drain
+kubectl drain -l eks.amazonaws.com/nodegroup=bottlerocket-v1 \
+  --ignore-daemonsets \
+  --delete-emptydir-data
+
+# 4. 기존 노드 그룹 삭제
+eksctl delete nodegroup \
+  --cluster my-cluster \
+  --name bottlerocket-v1
+```
+
+### EKS 관리형 노드 그룹에서 Bottlerocket 사용
+
+```yaml
+# eksctl 설정
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: secure-cluster
+  region: us-west-2
+
+managedNodeGroups:
+  - name: bottlerocket-ng
+    amiFamily: Bottlerocket
+    instanceType: m5.large
+    desiredCapacity: 3
+    privateNetworking: true
+
+    # Bottlerocket 특화 설정
+    bottlerocket:
+      settings:
+        motd: "Production EKS Node"
+        kubernetes:
+          allowed-unsafe-sysctls:
+            - net.core.somaxconn
+          cluster-dns-ip: 10.100.0.10
+          max-pods: 110
+        # 호스트 컨테이너 설정
+        host-containers:
+          admin:
+            enabled: false  # 프로덕션에서는 비활성화 권장
+          control:
+            enabled: true
+```
+
+```bash
+# AWS CLI로 Bottlerocket 노드 그룹 생성
+aws eks create-nodegroup \
+  --cluster-name my-cluster \
+  --nodegroup-name bottlerocket-ng \
+  --ami-type BOTTLEROCKET_x86_64 \
+  --instance-types m5.large \
+  --scaling-config minSize=2,maxSize=5,desiredSize=3 \
+  --subnets subnet-xxx subnet-yyy \
+  --node-role arn:aws:iam::123456789012:role/EKSNodeRole
+```
+
+## IAM 권한 경계
+
+IAM 권한 경계(Permission Boundary)는 IAM 역할이나 사용자에게 부여할 수 있는 최대 권한을 정의합니다. EKS 환경에서 권한 경계를 적절히 활용하면 보안을 강화할 수 있습니다.
+
+### Permission Boundary 개념
+
+권한 경계는 "유효 권한 = 정책 ∩ 경계"의 원칙을 따릅니다:
+
+```mermaid
+flowchart TD
+    subgraph EffectivePermissions["유효 권한 계산"]
+        Policy[IAM 정책]
+        Boundary[권한 경계]
+        Effective[유효 권한]
+
+        Policy --> |AND| Effective
+        Boundary --> |AND| Effective
+    end
+
+    subgraph Example["예시"]
+        PolS3["정책: S3, DynamoDB,
+        EC2 권한 부여"]
+        BoundS3["경계: S3, DynamoDB만
+        허용"]
+        EffS3["유효: S3, DynamoDB만
+        사용 가능"]
+
+        PolS3 --> |교집합| EffS3
+        BoundS3 --> |교집합| EffS3
+    end
+
+    style EffectivePermissions fill:#e6f7ff,stroke:#0099cc
+    style Example fill:#e6ffe6,stroke:#009900
+```
+
+### SCP (Service Control Policy) 활용
+
+AWS Organizations의 SCP와 IAM 권한 경계를 함께 사용하여 다층 방어:
+
+```json
+// 조직 수준 SCP - EKS 관련 서비스만 허용
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowEKSServices",
+      "Effect": "Allow",
+      "Action": [
+        "eks:*",
+        "ec2:*",
+        "ecr:*",
+        "s3:*",
+        "logs:*",
+        "cloudwatch:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyDangerousActions",
+      "Effect": "Deny",
+      "Action": [
+        "eks:DeleteCluster",
+        "ec2:TerminateInstances"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:PrincipalTag/Role": "admin"
+        }
+      }
+    }
+  ]
+}
+```
+
+### 최소 권한 IAM 정책 패턴
+
+EKS 워크로드에 대한 최소 권한 정책 예시:
+
+```json
+// S3 접근만 허용하는 최소 권한 정책
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowS3BucketAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::my-app-bucket",
+        "arn:aws:s3:::my-app-bucket/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Environment": "${aws:PrincipalTag/Environment}"
+        }
+      }
+    }
+  ]
+}
+```
+
+### EKS 노드 역할 권한 경계 예제
+
+```json
+// EKS 노드 역할에 적용할 권한 경계
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowEKSNodeActions",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeRouteTables",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeVolumes",
+        "ec2:DescribeVolumesModifications",
+        "ec2:DescribeVpcs",
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:CreateNetworkInterface",
+        "ec2:AttachNetworkInterface",
+        "ec2:DeleteNetworkInterface",
+        "ec2:ModifyNetworkInterfaceAttribute",
+        "ec2:AssignPrivateIpAddresses",
+        "ec2:UnassignPrivateIpAddresses"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowECRPull",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowCloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogStreams"
+      ],
+      "Resource": "arn:aws:logs:*:*:log-group:/aws/eks/*"
+    },
+    {
+      "Sid": "DenyDangerousActions",
+      "Effect": "Deny",
+      "Action": [
+        "iam:*",
+        "organizations:*",
+        "account:*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+### 권한 경계 적용
+
+```bash
+# 권한 경계 생성
+aws iam create-policy \
+  --policy-name EKSNodePermissionBoundary \
+  --policy-document file://permission-boundary.json
+
+# IAM 역할에 권한 경계 적용
+aws iam put-role-permissions-boundary \
+  --role-name EKSNodeRole \
+  --permissions-boundary arn:aws:iam::123456789012:policy/EKSNodePermissionBoundary
+
+# 권한 경계 확인
+aws iam get-role --role-name EKSNodeRole --query "Role.PermissionsBoundary"
+```
+
+### 파드 IAM 역할에 권한 경계 적용
+
+IRSA 또는 Pod Identity에서 사용하는 IAM 역할에도 권한 경계를 적용할 수 있습니다:
+
+```bash
+# 파드용 IAM 역할 생성 시 권한 경계 포함
+aws iam create-role \
+  --role-name PodS3ReaderRole \
+  --assume-role-policy-document file://trust-policy.json \
+  --permissions-boundary arn:aws:iam::123456789012:policy/PodPermissionBoundary
+
+# 기존 역할에 권한 경계 추가
+aws iam put-role-permissions-boundary \
+  --role-name PodS3ReaderRole \
+  --permissions-boundary arn:aws:iam::123456789012:policy/PodPermissionBoundary
 ```
 
 ## 암호화 및 비밀 관리

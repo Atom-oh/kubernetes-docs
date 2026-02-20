@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="Claude">
+  <diagram name="Layer Integration Flow" id="tf-layer-integration-en">
+    <mxGraphModel dx="1100" dy="700" grid="1" gridSize="10" page="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="Layer Integration Flow" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Amazon Ember;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="250" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- 01-network Box (Left) -->
+        <mxCell id="network-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5A30B5;strokeColor=#5A30B5;" vertex="1" parent="1">
+          <mxGeometry x="50" y="100" width="180" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="network-label" value="01-network" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontFamily=Amazon Ember;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="90" y="110" width="100" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="network-content" value="Outputs:&#xa;  • vpc_id&#xa;  • subnets&#xa;  • azs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;fontColor=#333333;strokeColor=#CCCCCC;fontSize=12;fontFamily=Amazon Ember;align=left;spacingLeft=10;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="65" y="150" width="150" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- 02-cluster Box (Center) -->
+        <mxCell id="cluster-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D05C17;strokeColor=#D05C17;" vertex="1" parent="1">
+          <mxGeometry x="330" y="100" width="180" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="cluster-label" value="02-cluster" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontFamily=Amazon Ember;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="375" y="110" width="90" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="cluster-content" value="Inputs:&#xa;  • vpc_id&#xa;  • subnets&#xa;&#xa;Outputs:&#xa;  • cluster_name&#xa;  • oidc_arn" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;fontColor=#333333;strokeColor=#CCCCCC;fontSize=12;fontFamily=Amazon Ember;align=left;spacingLeft=10;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="345" y="150" width="150" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- 03-platform Box (Right) -->
+        <mxCell id="platform-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#277116;strokeColor=#277116;" vertex="1" parent="1">
+          <mxGeometry x="610" y="100" width="180" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="platform-label" value="03-platform" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontFamily=Amazon Ember;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="650" y="110" width="100" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="platform-content" value="Inputs:&#xa;  • vpc_id&#xa;  • cluster_name&#xa;  • oidc_arn" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;fontColor=#333333;strokeColor=#CCCCCC;fontSize=12;fontFamily=Amazon Ember;align=left;spacingLeft=10;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="625" y="150" width="150" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: network -> cluster (vpc_id, subnets) -->
+        <mxCell id="arrow-n-c" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=block;endFill=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="230" y="160" as="sourcePoint"/>
+            <mxPoint x="330" y="160" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow-n-c-label" value="vpc_id, subnets" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Amazon Ember;fontColor=#545B64;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="240" y="140" width="90" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: network -> platform (vpc_id) - curved up -->
+        <mxCell id="arrow-n-p" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=block;endFill=1;curved=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="230" y="130" as="sourcePoint"/>
+            <mxPoint x="610" y="130" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="280" y="130"/>
+              <mxPoint x="280" y="70"/>
+              <mxPoint x="560" y="70"/>
+              <mxPoint x="560" y="130"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow-n-p-label" value="vpc_id" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Amazon Ember;fontColor=#545B64;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="400" y="50" width="50" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: cluster -> platform (cluster_name, oidc_arn) -->
+        <mxCell id="arrow-c-p" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="200" as="sourcePoint"/>
+            <mxPoint x="610" y="200" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow-c-p-label" value="cluster_name,&#xa;oidc_arn" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Amazon Ember;fontColor=#545B64;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="530" y="185" width="70" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Legend box -->
+        <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#CCCCCC;" vertex="1" parent="1">
+          <mxGeometry x="50" y="340" width="740" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-label" value="terraform_remote_state references:" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontFamily=Amazon Ember;fontColor=#333333;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="350" width="180" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-items" value="02-cluster reads from network  |  03-platform reads from network + cluster" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontFamily=Amazon Ember;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="250" y="350" width="520" height="30" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

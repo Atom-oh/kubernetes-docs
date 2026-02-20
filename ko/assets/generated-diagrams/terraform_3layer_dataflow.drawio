@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="Claude">
+  <diagram name="Terraform 3-Layer Data Flow" id="tf3layer-dataflow-ko">
+    <mxGraphModel dx="1200" dy="1400" grid="1" gridSize="10" page="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="Terraform 3-Layer 데이터 흐름" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Amazon Ember;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="400" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- 00-shared Layer -->
+        <mxCell id="shared-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#232F3E;verticalAlign=top;spacingTop=10;fontFamily=Amazon Ember;" vertex="1" parent="1">
+          <mxGeometry x="150" y="80" width="500" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="shared-label" value="00-shared" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontFamily=Amazon Ember;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="340" y="85" width="120" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="shared-content" value="S3 Bucket: eks-platform-prod-terraform-state&#xa;S3 Lock: use_lockfile = true (네이티브 S3 잠금)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;fontColor=#333333;strokeColor=#CCCCCC;fontSize=12;fontFamily=Amazon Ember;align=left;spacingLeft=15;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="180" y="120" width="440" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- S3 Icon in shared -->
+        <mxCell id="s3-icon" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#277116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
+          <mxGeometry x="560" y="125" width="48" height="48" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow from shared to network -->
+        <mxCell id="arrow1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="400" y="200" as="sourcePoint"/>
+            <mxPoint x="400" y="250" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- 01-network Layer -->
+        <mxCell id="network-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5A30B5;strokeColor=#5A30B5;verticalAlign=top;spacingTop=10;fontFamily=Amazon Ember;" vertex="1" parent="1">
+          <mxGeometry x="150" y="250" width="500" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="network-label" value="01-network" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontFamily=Amazon Ember;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="340" y="255" width="120" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="network-state" value="State: network/terraform.tfstate" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontFamily=Amazon Ember;fontColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="320" y="280" width="160" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="network-content" value="Outputs:&#xa;  • vpc_id&#xa;  • private_subnet_ids&#xa;  • public_subnet_ids&#xa;  • blue_zone_subnets / green_zone_subnets&#xa;  • cluster_names" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;fontColor=#333333;strokeColor=#CCCCCC;fontSize=11;fontFamily=Amazon Ember;align=left;spacingLeft=15;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="180" y="305" width="440" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow from network to cluster -->
+        <mxCell id="arrow2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="400" y="410" as="sourcePoint"/>
+            <mxPoint x="400" y="460" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow2-label" value="terraform_remote_state.network" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Amazon Ember;fontColor=#545B64;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="410" y="420" width="180" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- 02-cluster Layer -->
+        <mxCell id="cluster-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D05C17;strokeColor=#D05C17;verticalAlign=top;spacingTop=10;fontFamily=Amazon Ember;" vertex="1" parent="1">
+          <mxGeometry x="150" y="460" width="500" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="cluster-label" value="02-cluster" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontFamily=Amazon Ember;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="340" y="465" width="120" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="cluster-state" value="State: cluster/terraform.tfstate" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontFamily=Amazon Ember;fontColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="320" y="490" width="160" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="cluster-content" value="Inputs (from 01-network):&#xa;  • vpc_id&#xa;  • subnet_ids&#xa;  • cluster_names&#xa;&#xa;Outputs:&#xa;  • blue_cluster_name, blue_cluster_endpoint, blue_oidc_provider_arn&#xa;  • green_cluster_name, green_cluster_endpoint, green_oidc_provider_arn" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;fontColor=#333333;strokeColor=#CCCCCC;fontSize=11;fontFamily=Amazon Ember;align=left;spacingLeft=15;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="180" y="515" width="440" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow from cluster to platform -->
+        <mxCell id="arrow3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="400" y="640" as="sourcePoint"/>
+            <mxPoint x="400" y="690" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow3-label" value="terraform_remote_state.network +&#xa;terraform_remote_state.cluster" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Amazon Ember;fontColor=#545B64;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="410" y="645" width="180" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- 03-platform Layer -->
+        <mxCell id="platform-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#277116;strokeColor=#277116;verticalAlign=top;spacingTop=10;fontFamily=Amazon Ember;" vertex="1" parent="1">
+          <mxGeometry x="150" y="690" width="500" height="170" as="geometry"/>
+        </mxCell>
+        <mxCell id="platform-label" value="03-platform" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontFamily=Amazon Ember;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="340" y="695" width="120" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="platform-state" value="State: platform/terraform.tfstate" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontFamily=Amazon Ember;fontColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="320" y="720" width="160" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="platform-content" value="Inputs (from 01-network + 02-cluster):&#xa;  • vpc_id&#xa;  • cluster_names&#xa;  • oidc_provider_arns&#xa;&#xa;Creates:&#xa;  • Pod Identity associations&#xa;  • EKS Add-ons&#xa;  • Access Entries" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;fontColor=#333333;strokeColor=#CCCCCC;fontSize=11;fontFamily=Amazon Ember;align=left;spacingLeft=15;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="180" y="745" width="440" height="100" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

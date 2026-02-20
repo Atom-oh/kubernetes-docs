@@ -1,0 +1,122 @@
+<mxfile host="app.diagrams.net" agent="Claude">
+  <diagram name="NLB Blue/Green Architecture" id="nlb-bluegreen-en">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" page="0" background="none" defaultFontFamily="Amazon Ember">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- VPC Container -->
+        <mxCell id="vpc" value="VPC: 10.0.0.0/16" style="rounded=1;fillColor=none;strokeColor=#248814;strokeWidth=2;dashed=1;verticalAlign=top;fontFamily=Amazon Ember;fontSize=14;fontColor=#248814;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="280" width="720" height="380" as="geometry"/>
+        </mxCell>
+
+        <!-- Route 53 -->
+        <mxCell id="route53" value="Route53&#xa;Weighted DNS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.route_53;fontFamily=Amazon Ember;" vertex="1" parent="1">
+          <mxGeometry x="361" y="20" width="78" height="78" as="geometry"/>
+        </mxCell>
+
+        <!-- NLB -->
+        <mxCell id="nlb" value="Network Load Balancer&#xa;(Shared)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_load_balancer;fontFamily=Amazon Ember;" vertex="1" parent="1">
+          <mxGeometry x="361" y="150" width="78" height="78" as="geometry"/>
+        </mxCell>
+
+        <!-- Blue Target Group -->
+        <mxCell id="tg-blue" value="Target Group Blue&#xa;Weight: 100%" style="rounded=1;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;fontFamily=Amazon Ember;fontSize=11;fontColor=#1565C0;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="100" y="300" width="140" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Green Target Group -->
+        <mxCell id="tg-green" value="Target Group Green&#xa;Weight: 0%" style="rounded=1;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;fontFamily=Amazon Ember;fontSize=11;fontColor=#2E7D32;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="560" y="300" width="140" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Blue AZ Container -->
+        <mxCell id="az-blue" value="ap-northeast-2a" style="rounded=1;fillColor=#E6F2F8;strokeColor=#147EBA;strokeWidth=1;dashed=1;verticalAlign=top;fontFamily=Amazon Ember;fontSize=12;fontColor=#147EBA;align=left;spacingLeft=5;" vertex="1" parent="1">
+          <mxGeometry x="60" y="370" width="280" height="270" as="geometry"/>
+        </mxCell>
+
+        <!-- Green AZ Container -->
+        <mxCell id="az-green" value="ap-northeast-2c" style="rounded=1;fillColor=#E6F2F8;strokeColor=#147EBA;strokeWidth=1;dashed=1;verticalAlign=top;fontFamily=Amazon Ember;fontSize=12;fontColor=#147EBA;align=left;spacingLeft=5;" vertex="1" parent="1">
+          <mxGeometry x="460" y="370" width="280" height="270" as="geometry"/>
+        </mxCell>
+
+        <!-- EKS Blue -->
+        <mxCell id="eks-blue" value="EKS Cluster Blue&#xa;(zone: 2a)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eks;fontFamily=Amazon Ember;" vertex="1" parent="1">
+          <mxGeometry x="131" y="400" width="78" height="78" as="geometry"/>
+        </mxCell>
+
+        <!-- EKS Green -->
+        <mxCell id="eks-green" value="EKS Cluster Green&#xa;(zone: 2c)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eks;fontFamily=Amazon Ember;" vertex="1" parent="1">
+          <mxGeometry x="561" y="400" width="78" height="78" as="geometry"/>
+        </mxCell>
+
+        <!-- Blue NodePool -->
+        <mxCell id="nodepool-blue" value="NodePool&#xa;(zone: 2a)" style="rounded=1;fillColor=#BBDEFB;strokeColor=#1976D2;strokeWidth=1;fontFamily=Amazon Ember;fontSize=11;fontColor=#1565C0;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="80" y="510" width="100" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Green NodePool -->
+        <mxCell id="nodepool-green" value="NodePool&#xa;(zone: 2c)" style="rounded=1;fillColor=#C8E6C9;strokeColor=#388E3C;strokeWidth=1;fontFamily=Amazon Ember;fontSize=11;fontColor=#2E7D32;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="480" y="510" width="100" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- EBS Blue -->
+        <mxCell id="ebs-blue" value="EBS Volumes&#xa;(zone: 2a)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#60A337;gradientDirection=north;fillColor=#277116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elastic_block_store;fontFamily=Amazon Ember;" vertex="1" parent="1">
+          <mxGeometry x="220" y="500" width="60" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- EBS Green -->
+        <mxCell id="ebs-green" value="EBS Volumes&#xa;(zone: 2c)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#60A337;gradientDirection=north;fillColor=#277116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elastic_block_store;fontFamily=Amazon Ember;" vertex="1" parent="1">
+          <mxGeometry x="620" y="500" width="60" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Connections -->
+        <!-- Route53 to NLB -->
+        <mxCell id="conn1" value="" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#545B64;strokeWidth=2;endArrow=classic;html=1;" edge="1" parent="1" source="route53" target="nlb">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- NLB to Blue TG -->
+        <mxCell id="conn2" value="" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1565C0;strokeWidth=2;endArrow=classic;html=1;" edge="1" parent="1" source="nlb" target="tg-blue">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- NLB to Green TG -->
+        <mxCell id="conn3" value="" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#2E7D32;strokeWidth=2;endArrow=classic;html=1;" edge="1" parent="1" source="nlb" target="tg-green">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Blue TG to EKS Blue -->
+        <mxCell id="conn4" value="" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1565C0;strokeWidth=2;endArrow=classic;html=1;" edge="1" parent="1" source="tg-blue" target="eks-blue">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Green TG to EKS Green -->
+        <mxCell id="conn5" value="" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#2E7D32;strokeWidth=2;endArrow=classic;html=1;" edge="1" parent="1" source="tg-green" target="eks-green">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- EKS Blue to NodePool Blue -->
+        <mxCell id="conn6" value="" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1976D2;strokeWidth=1;endArrow=classic;html=1;dashed=1;" edge="1" parent="1" source="eks-blue" target="nodepool-blue">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- EKS Green to NodePool Green -->
+        <mxCell id="conn7" value="" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#388E3C;strokeWidth=1;endArrow=classic;html=1;dashed=1;" edge="1" parent="1" source="eks-green" target="nodepool-green">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- EKS Blue to EBS Blue -->
+        <mxCell id="conn8" value="" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#277116;strokeWidth=1;endArrow=classic;html=1;dashed=1;" edge="1" parent="1" source="eks-blue" target="ebs-blue">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- EKS Green to EBS Green -->
+        <mxCell id="conn9" value="" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#277116;strokeWidth=1;endArrow=classic;html=1;dashed=1;" edge="1" parent="1" source="eks-green" target="ebs-green">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

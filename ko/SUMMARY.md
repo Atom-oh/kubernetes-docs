@@ -10,6 +10,7 @@
 * [Linux 운영 기술](basics/02-linux-advanced.md)
 * [컨테이너 기술](basics/03-container-technology.md)
 * [Kubernetes 소개](basics/04-kubernetes-introduction.md)
+* [eBPF 기초와 실무 활용](basics/05-ebpf-fundamentals.md)
 
 ## Kubernetes 핵심 개념
 
@@ -50,7 +51,31 @@
 * [EKS 문제 해결](eks/09-eks-troubleshooting.md)
 * [EKS 복원력과 고가용성](eks/10-eks-resiliency.md)
 * [EKS 고급 디버깅](eks/11-eks-advanced-debugging.md)
-* [EKS Hybrid Nodes](eks/12-eks-hybrid-nodes.md)
+
+## EKS Hybrid Nodes
+
+* [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
+    * [사전 요구 사항](eks-hybrid-nodes/01-prerequisites.md)
+    * [네트워크 구성](eks-hybrid-nodes/02-network-configuration.md)
+    * [에어갭 환경 구성](eks-hybrid-nodes/03-airgap-setup.md)
+    * [노드 부트스트랩](eks-hybrid-nodes/04-node-bootstrap.md)
+    * [GPU 서버 통합](eks-hybrid-nodes/05-gpu-integration.md)
+    * [워크로드 배치 전략](eks-hybrid-nodes/06-workload-placement.md)
+    * [비용 최적화](eks-hybrid-nodes/07-cost-optimization.md)
+    * [운영 및 유지보수](eks-hybrid-nodes/08-operations.md)
+
+## EKS Auto Mode
+
+* [EKS Auto Mode](eks-auto-mode/README.md)
+    * [Auto Mode 시작하기](eks-auto-mode/01-getting-started.md)
+    * [NodePool 구성](eks-auto-mode/02-nodepool-configuration.md)
+    * [스케일링 동작](eks-auto-mode/03-scaling-behavior.md)
+    * [Spot 인스턴스 전략](eks-auto-mode/04-spot-strategies.md)
+    * [운영 및 관리](eks-auto-mode/05-operations.md)
+    * [비용 관리](eks-auto-mode/06-cost-management.md)
+    * [노드 생명주기](eks-auto-mode/07-node-lifecycle.md)
+    * [워크로드별 최적화](eks-auto-mode/08-workload-optimization.md)
+    * [마이그레이션 가이드](eks-auto-mode/09-migration-guide.md)
 
 ## AI/ML
 
@@ -114,6 +139,8 @@
         * [Istio vs VPC Lattice](service-mesh/istio/comparison/02-istio-vs-lattice.md)
     * [Troubleshooting](service-mesh/istio/troubleshooting/common-errors.md)
     * [모범 사례](service-mesh/istio/best-practices.md)
+* [Linkerd](service-mesh/03-linkerd.md)
+* [Cilium Service Mesh](service-mesh/04-cilium-service-mesh.md)
 
 ## Security & Policy
 
@@ -133,6 +160,7 @@
 
 * [모니터링 스택 (VictoriaMetrics, Prometheus, Grafana)](observability/01-monitoring-stack.md)
 * [로깅 스택 (Loki, Tempo)](observability/02-logging-stack.md)
+* [관측성 최적화 가이드](advanced/09-observability-optimization.md)
 
 ## Scheduling
 
@@ -182,6 +210,7 @@
     * [Linux 운영 기술 퀴즈](quizzes/basics/02-linux-advanced-quiz.md)
     * [컨테이너 기술 퀴즈](quizzes/basics/03-container-technology-quiz.md)
     * [Kubernetes 소개 퀴즈](quizzes/basics/04-kubernetes-introduction-quiz.md)
+    * [eBPF 기초와 실무 활용 퀴즈](quizzes/basics/05-ebpf-fundamentals-quiz.md)
 * [클러스터 아키텍처 퀴즈](quizzes/core/01-cluster-architecture-quiz.md)
     * [파드와 워크로드 퀴즈](quizzes/core/02-pods-and-workloads-quiz.md)
     * [서비스와 네트워킹 퀴즈](quizzes/core/03-services-networking-quiz.md)
@@ -213,7 +242,28 @@
     * [EKS 문제 해결 퀴즈](quizzes/eks/09-eks-troubleshooting-quiz.md)
     * [EKS 복원력과 고가용성 퀴즈](quizzes/eks/10-eks-resiliency-quiz.md)
     * [EKS 고급 디버깅 퀴즈](quizzes/eks/11-eks-advanced-debugging-quiz.md)
-    * [EKS Hybrid Nodes 퀴즈](quizzes/eks/12-eks-hybrid-nodes-quiz.md)
+
+* EKS Hybrid Nodes
+    * [사전 요구 사항 퀴즈](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+    * [네트워크 구성 퀴즈](quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+    * [에어갭 환경 구성 퀴즈](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+    * [노드 부트스트랩 퀴즈](quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+    * [GPU 서버 통합 퀴즈](quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+    * [워크로드 배치 전략 퀴즈](quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+    * [비용 최적화 퀴즈](quizzes/eks-hybrid-nodes/07-cost-optimization-quiz.md)
+    * [운영 및 유지보수 퀴즈](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+
+* EKS Auto Mode
+    * [Auto Mode 시작하기 퀴즈](quizzes/eks-auto-mode/01-getting-started-quiz.md)
+    * [NodePool 구성 퀴즈](quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
+    * [스케일링 동작 퀴즈](quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
+    * [Spot 인스턴스 전략 퀴즈](quizzes/eks-auto-mode/04-spot-strategies-quiz.md)
+    * [운영 및 관리 퀴즈](quizzes/eks-auto-mode/05-operations-quiz.md)
+    * [비용 관리 퀴즈](quizzes/eks-auto-mode/06-cost-management-quiz.md)
+    * [노드 생명주기 퀴즈](quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
+    * [워크로드별 최적화 퀴즈](quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
+    * [마이그레이션 가이드 퀴즈](quizzes/eks-auto-mode/09-migration-guide-quiz.md)
+
 * Cilium
     * [Part 1: 소개 퀴즈](quizzes/cilium/01-introduction-quiz.md)
     * [Part 2: eBPF 퀴즈](quizzes/cilium/02-ebpf-quiz.md)
@@ -243,6 +293,8 @@
         * [Resilience 퀴즈](quizzes/service-mesh/istio/resilience.md)
         * [Advanced 퀴즈](quizzes/service-mesh/istio/advanced.md)
         * [Basic 퀴즈](quizzes/service-mesh/istio/basic.md)
+    * [Linkerd 퀴즈](quizzes/service-mesh/03-linkerd-quiz.md)
+    * [Cilium Service Mesh 퀴즈](quizzes/service-mesh/04-cilium-service-mesh-quiz.md)
 
 * Security & Policy
     * [Kyverno를 사용한 정책 관리 퀴즈](quizzes/security/01-kyverno-policy-management-quiz.md)
@@ -258,6 +310,7 @@
 * Observability
     * [모니터링 스택 퀴즈](quizzes/observability/07-monitoring-stack-quiz.md)
     * [로깅 스택 퀴즈](quizzes/observability/08-logging-stack-quiz.md)
+    * [관측성 최적화 가이드 퀴즈](quizzes/advanced/09-observability-optimization-quiz.md)
 
 * Scheduling
     * [Custom Scheduler 퀴즈 - Part 1](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)

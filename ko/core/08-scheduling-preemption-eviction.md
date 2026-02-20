@@ -197,9 +197,12 @@ graph TD
 8. [포드 축출](#포드-축출)
 9. [포드 중단 예산(PDB)](#포드-중단-예산pdb)
 10. [노드 압력 축출](#노드-압력-축출)
-11. [Amazon EKS에서의 스케줄링 최적화](#amazon-eks에서의-스케줄링-최적화)
-12. [스케줄링 모범 사례](#스케줄링-모범-사례)
-13. [결론](#결론)
+11. [토폴로지 분배 제약 조건(TopologySpreadConstraints)](#토폴로지-분배-제약-조건topologyspreadconstraints)
+12. [Pod Deletion Cost](#pod-deletion-cost)
+13. [Descheduler](#descheduler)
+14. [Amazon EKS에서의 스케줄링 최적화](#amazon-eks에서의-스케줄링-최적화)
+15. [스케줄링 모범 사례](#스케줄링-모범-사례)
+16. [결론](#결론)
 
 ## 스케줄링 개요
 
@@ -1056,6 +1059,553 @@ evictionPressureTransitionPeriod: "30s"
 위 예시에서:
 - `evictionMinimumReclaim`: 축출 후 최소한으로 확보해야 할 리소스 양
 - `evictionPressureTransitionPeriod`: 압력 상태 전환 사이의 대기 시간
+
+## 토폴로지 분배 제약 조건(TopologySpreadConstraints)
+
+토폴로지 분배 제약 조건은 포드를 클러스터의 여러 토폴로지 도메인(노드, 영역, 리전 등)에 균등하게 분산시키는 기능입니다. 이는 고가용성을 보장하고 장애 도메인의 영향을 최소화하는 데 유용합니다.
+
+```mermaid
+graph TD
+    subgraph "TopologySpreadConstraints 개념"
+        TSC["TopologySpreadConstraints"]
+        TSC -->|설정| MaxSkew["maxSkew<br>(최대 불균형 허용치)"]
+        TSC -->|설정| TopologyKey["topologyKey<br>(토폴로지 도메인 키)"]
+        TSC -->|설정| WhenUnsatisfiable["whenUnsatisfiable<br>(제약 미충족 시 동작)"]
+        TSC -->|설정| LabelSelector["labelSelector<br>(대상 포드 선택)"]
+    end
+
+    subgraph "EKS 가용 영역 분산 예시"
+        AZ1["ap-northeast-2a<br>포드: 3개"]
+        AZ2["ap-northeast-2b<br>포드: 2개"]
+        AZ3["ap-northeast-2c<br>포드: 3개"]
+
+        NewPod["새 포드"] -->|maxSkew=1| AZ2
+
+        Note1["maxSkew=1이면<br>AZ2에 배치 (2개 → 3개)"]
+    end
+
+    subgraph "whenUnsatisfiable 옵션"
+        DoNotSchedule["DoNotSchedule<br>(스케줄링 거부)"]
+        ScheduleAnyway["ScheduleAnyway<br>(최선 노력 배치)"]
+    end
+
+    WhenUnsatisfiable -->|옵션| DoNotSchedule
+    WhenUnsatisfiable -->|옵션| ScheduleAnyway
+
+    %% 스타일 정의
+    classDef tscComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef settingComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef azComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef optionComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef noteComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    %% 클래스 적용
+    class TSC tscComponent;
+    class MaxSkew,TopologyKey,WhenUnsatisfiable,LabelSelector settingComponent;
+    class AZ1,AZ2,AZ3,NewPod azComponent;
+    class DoNotSchedule,ScheduleAnyway optionComponent;
+    class Note1 noteComponent;
+```
+
+### 주요 필드 설명
+
+| 필드 | 설명 | 필수 여부 |
+|------|------|----------|
+| **maxSkew** | 토폴로지 도메인 간 포드 수 차이의 최대 허용치 | 필수 |
+| **topologyKey** | 토폴로지 도메인을 정의하는 노드 레이블 키 | 필수 |
+| **whenUnsatisfiable** | 제약 조건을 충족할 수 없을 때 동작 (DoNotSchedule 또는 ScheduleAnyway) | 필수 |
+| **labelSelector** | 분산 대상 포드를 선택하는 레이블 셀렉터 | 필수 |
+| **minDomains** | 최소 토폴로지 도메인 수 (Kubernetes 1.25+) | 선택 |
+| **matchLabelKeys** | 동일한 키의 레이블 값으로 그룹화 (Kubernetes 1.27+) | 선택 |
+| **nodeAffinityPolicy** | 노드 어피니티/노드 셀렉터 고려 여부 (Kubernetes 1.26+) | 선택 |
+| **nodeTaintsPolicy** | 노드 테인트 고려 여부 (Kubernetes 1.26+) | 선택 |
+
+### EKS 가용 영역 분산 예제
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server
+  namespace: production
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      topologySpreadConstraints:
+      # 가용 영역 간 균등 분산 (하드 제약)
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: web
+      # 노드 간 균등 분산 (소프트 제약)
+      - maxSkew: 2
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: web
+      containers:
+      - name: web
+        image: nginx:1.24
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+```
+
+### minDomains 사용 (Kubernetes 1.25+)
+
+`minDomains`는 최소 도메인 수를 지정하여, 도메인 수가 이 값보다 적을 때 스케줄링 동작을 제어합니다.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zone-spread-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zone-spread
+  template:
+    metadata:
+      labels:
+        app: zone-spread
+    spec:
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        minDomains: 3  # 최소 3개 영역에 분산 필요
+        labelSelector:
+          matchLabels:
+            app: zone-spread
+      containers:
+      - name: app
+        image: nginx
+```
+
+### matchLabelKeys 사용 (Kubernetes 1.27+)
+
+`matchLabelKeys`는 동일한 키의 레이블 값을 공유하는 포드끼리만 분산을 계산합니다. 이는 롤링 업데이트 시 새 버전과 이전 버전의 포드를 별도로 분산시키는 데 유용합니다.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rolling-update-app
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: myapp
+        matchLabelKeys:
+        - pod-template-hash  # 같은 ReplicaSet의 포드끼리만 분산 계산
+      containers:
+      - name: app
+        image: myapp:v2
+```
+
+### Pod Anti-Affinity 대비 장점
+
+| 특성 | TopologySpreadConstraints | Pod Anti-Affinity |
+|------|--------------------------|-------------------|
+| **분산 수준** | 균등 분산 (maxSkew로 제어) | 완전 분리 또는 없음 |
+| **유연성** | 높음 (허용 편차 지정 가능) | 낮음 (all-or-nothing) |
+| **스케일링** | 확장 시에도 균등 분산 유지 | 노드 수에 제한됨 |
+| **성능** | 효율적 | 포드 수 증가 시 성능 저하 |
+| **권장 사용** | 일반적인 고가용성 배포 | 동일 노드 배치 완전 금지 시 |
+
+```yaml
+# Anti-Affinity: 동일 노드에 절대 배치 불가 (레플리카 수 = 노드 수로 제한)
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchLabels:
+          app: web
+      topologyKey: kubernetes.io/hostname
+
+# TopologySpreadConstraints: 균등 분산 (더 유연함)
+topologySpreadConstraints:
+- maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: DoNotSchedule
+  labelSelector:
+    matchLabels:
+      app: web
+```
+
+## Pod Deletion Cost
+
+Pod Deletion Cost는 HPA(Horizontal Pod Autoscaler)가 스케일다운 시 어떤 포드를 먼저 제거할지 결정하는 데 사용되는 어노테이션입니다. 낮은 비용의 포드가 먼저 제거됩니다.
+
+```mermaid
+graph TD
+    subgraph "Pod Deletion Cost 작동 방식"
+        HPA["HPA 스케일다운<br>5개 → 3개"]
+
+        subgraph "포드 목록"
+            Pod1["Pod A<br>cost: 100"]
+            Pod2["Pod B<br>cost: -50"]
+            Pod3["Pod C<br>cost: 0"]
+            Pod4["Pod D<br>cost: 500"]
+            Pod5["Pod E<br>cost: 200"]
+        end
+
+        HPA -->|삭제 순서| Order["1. Pod B (cost: -50)<br>2. Pod C (cost: 0)"]
+
+        Remaining["남은 포드:<br>Pod A, Pod D, Pod E"]
+    end
+
+    subgraph "사용 사례"
+        Cache["캐시 보호<br>(웜 캐시 유지)"]
+        Leader["리더 포드 보호"]
+        LongTask["장시간 작업<br>포드 보호"]
+    end
+
+    %% 스타일 정의
+    classDef hpaComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef podComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef useCaseComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    %% 클래스 적용
+    class HPA hpaComponent;
+    class Pod1,Pod2,Pod3,Pod4,Pod5 podComponent;
+    class Cache,Leader,LongTask useCaseComponent;
+    class Order,Remaining resultComponent;
+```
+
+### 어노테이션 형식
+
+```yaml
+metadata:
+  annotations:
+    controller.kubernetes.io/pod-deletion-cost: "100"
+```
+
+- **값 범위**: -2147483648 ~ 2147483647 (32비트 정수)
+- **기본값**: 0 (어노테이션이 없는 경우)
+- **동작**: 낮은 값의 포드가 먼저 삭제됨
+
+### 캐시 보호 패턴
+
+캐시가 충분히 워밍업된 포드를 보호하여 스케일다운 시에도 캐시 히트율을 유지합니다.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cache-service
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: cache-service
+  template:
+    metadata:
+      labels:
+        app: cache-service
+    spec:
+      containers:
+      - name: cache
+        image: redis:7
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - |
+                # 시작 시 낮은 비용 설정
+                sleep 10
+        # 캐시 워밍업 완료 후 사이드카가 비용 증가
+      - name: cost-updater
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # 5분 후 캐시 워밍업 완료로 간주하고 비용 증가
+          sleep 300
+          kubectl annotate pod $POD_NAME \
+            controller.kubernetes.io/pod-deletion-cost=1000 \
+            --overwrite
+          # 이후 주기적으로 캐시 히트율에 따라 비용 조정
+          while true; do
+            sleep 60
+            HIT_RATE=$(redis-cli INFO stats | grep keyspace_hits)
+            # 캐시 히트율에 따라 비용 동적 조정 로직
+          done
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+```
+
+### 장시간 작업 보호 패턴
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: long-running-task
+spec:
+  template:
+    metadata:
+      annotations:
+        # 작업 진행 중인 포드 보호
+        controller.kubernetes.io/pod-deletion-cost: "10000"
+    spec:
+      containers:
+      - name: worker
+        image: worker:latest
+        command: ["./process-large-dataset.sh"]
+      restartPolicy: Never
+```
+
+### HPA와 함께 사용
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cache-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cache-service
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      # Pod Deletion Cost가 자동으로 고려됨
+```
+
+## Descheduler
+
+Descheduler는 실행 중인 클러스터에서 포드를 재분산시키는 도구입니다. 스케줄러는 새 포드를 배치할 때만 동작하지만, Descheduler는 이미 실행 중인 포드를 축출하여 더 나은 분산을 달성할 수 있습니다.
+
+```mermaid
+graph TD
+    subgraph "Descheduler 필요성"
+        Initial["초기 상태<br>(균등 분산)"]
+        NodeAdd["노드 추가"]
+        NodeRemove["노드 제거/장애"]
+        PodChange["포드 변경<br>(레이블, 어피니티 등)"]
+
+        Initial --> NodeAdd
+        Initial --> NodeRemove
+        Initial --> PodChange
+
+        NodeAdd --> Imbalanced["불균형 상태"]
+        NodeRemove --> Imbalanced
+        PodChange --> Imbalanced
+
+        Imbalanced -->|Descheduler| Rebalanced["재균형 상태"]
+    end
+
+    subgraph "Descheduler 전략"
+        RemoveDuplicates["RemoveDuplicates<br>(중복 포드 제거)"]
+        LowNodeUtilization["LowNodeUtilization<br>(저활용 노드로 이동)"]
+        RemovePodsHavingTooManyRestarts["RemovePodsHavingTooManyRestarts<br>(재시작 과다 포드 제거)"]
+        PodLifeTime["PodLifeTime<br>(수명 초과 포드 제거)"]
+        RemovePodsViolatingNodeAffinity["RemovePodsViolatingNodeAffinity<br>(노드 어피니티 위반 제거)"]
+        RemovePodsViolatingTopologySpreadConstraint["RemovePodsViolatingTopologySpreadConstraint<br>(TSC 위반 제거)"]
+    end
+
+    %% 스타일 정의
+    classDef stateComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef eventComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+    classDef strategyComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+
+    %% 클래스 적용
+    class Initial,Imbalanced,Rebalanced stateComponent;
+    class NodeAdd,NodeRemove,PodChange eventComponent;
+    class RemoveDuplicates,LowNodeUtilization,RemovePodsHavingTooManyRestarts,PodLifeTime,RemovePodsViolatingNodeAffinity,RemovePodsViolatingTopologySpreadConstraint strategyComponent;
+```
+
+### Helm을 사용한 설치
+
+```bash
+# Helm 저장소 추가
+helm repo add descheduler https://kubernetes-sigs.github.io/descheduler/
+
+# 기본 설치
+helm install descheduler descheduler/descheduler \
+  --namespace kube-system \
+  --set cronJobApiVersion="batch/v1"
+
+# 커스텀 설정으로 설치
+helm install descheduler descheduler/descheduler \
+  --namespace kube-system \
+  --values descheduler-values.yaml
+```
+
+### DeschedulerPolicy 설정
+
+```yaml
+apiVersion: "descheduler/v1alpha2"
+kind: "DeschedulerPolicy"
+profiles:
+- name: default
+  pluginConfig:
+  # 동일한 노드에 같은 ReplicaSet/Deployment의 포드가 2개 이상 있으면 제거
+  - name: RemoveDuplicates
+    args:
+      excludeOwnerKinds:
+      - StatefulSet
+
+  # 저활용 노드에서 고활용 노드로 포드 이동
+  - name: LowNodeUtilization
+    args:
+      thresholds:
+        cpu: 20
+        memory: 20
+        pods: 20
+      targetThresholds:
+        cpu: 50
+        memory: 50
+        pods: 50
+
+  # 재시작 횟수가 많은 포드 제거
+  - name: RemovePodsHavingTooManyRestarts
+    args:
+      podRestartThreshold: 100
+      includingInitContainers: true
+
+  # 특정 시간 이상 실행된 포드 제거
+  - name: PodLifeTime
+    args:
+      maxPodLifeTimeSeconds: 86400  # 24시간
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/lifecycle: ephemeral
+
+  # 노드 어피니티 규칙을 위반하는 포드 제거
+  - name: RemovePodsViolatingNodeAffinity
+    args:
+      nodeAffinityType:
+      - requiredDuringSchedulingIgnoredDuringExecution
+
+  # TopologySpreadConstraints 위반 포드 제거
+  - name: RemovePodsViolatingTopologySpreadConstraint
+    args:
+      constraints:
+      - DoNotSchedule
+
+  plugins:
+    balance:
+      enabled:
+      - RemoveDuplicates
+      - LowNodeUtilization
+      - RemovePodsViolatingTopologySpreadConstraint
+    deschedule:
+      enabled:
+      - RemovePodsHavingTooManyRestarts
+      - PodLifeTime
+      - RemovePodsViolatingNodeAffinity
+```
+
+### Descheduler CronJob 설정
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: descheduler
+  namespace: kube-system
+spec:
+  schedule: "*/30 * * * *"  # 30분마다 실행
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: descheduler
+          containers:
+          - name: descheduler
+            image: registry.k8s.io/descheduler/descheduler:v0.28.0
+            args:
+            - --policy-config-file=/policy-dir/policy.yaml
+            - --v=3
+            volumeMounts:
+            - name: policy-volume
+              mountPath: /policy-dir
+          restartPolicy: Never
+          volumes:
+          - name: policy-volume
+            configMap:
+              name: descheduler-policy
+```
+
+### PDB 존중
+
+Descheduler는 기본적으로 PodDisruptionBudget(PDB)을 존중합니다. PDB가 설정된 포드는 PDB 제한 내에서만 축출됩니다.
+
+```yaml
+# PDB 설정 예시
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web-pdb
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: web
+---
+# Descheduler가 이 PDB를 존중하여
+# 최소 2개의 web 포드가 항상 유지됨
+```
+
+### 주의사항
+
+1. **시스템 포드 보호**: kube-system 네임스페이스의 포드는 기본적으로 제외됩니다.
+2. **DaemonSet 포드**: DaemonSet 포드는 축출되지 않습니다.
+3. **로컬 스토리지**: 로컬 스토리지를 사용하는 포드는 기본적으로 축출되지 않습니다.
+4. **PDB 제한**: PDB 제한을 초과하여 포드를 축출하지 않습니다.
+
+> 📚 **심화 학습**: 커스텀 스케줄러에 대한 자세한 내용은 다음을 참조하세요:
+> - [Custom Scheduler Part 1: 기본 개념](../scheduling/01-custom-scheduler-part1.md)
+> - [Custom Scheduler Part 2: 구현](../scheduling/02-custom-scheduler-part2.md)
+> - [Custom Scheduler Part 3: 고급 기능](../scheduling/03-custom-scheduler-part3.md)
 
 ## Amazon EKS에서의 스케줄링 최적화
 
