@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="app.diagrams.net" modified="2025-07-22T05:05:00.000Z" agent="Mozilla/5.0" version="22.0.0" etag="your-etag">
   <diagram id="network-policy" name="Kubernetes Network Policy">
     <mxGraphModel dx="1000" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
@@ -5,73 +6,73 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         
-        <!-- Namespace A -->
-        <mxCell id="namespace_a" value="네임스페이스 A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1" vertex="1" parent="1">
+        
+        <mxCell id="namespace_a" value="네임스페이스 A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1;fontSize=14;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="120" y="80" width="320" height="280" as="geometry" />
         </mxCell>
         
-        <!-- Pods in Namespace A -->
-        <mxCell id="frontend_pod" value="Frontend Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        
+        <mxCell id="frontend_pod" value="Frontend Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
           <mxGeometry x="160" y="120" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="api_pod" value="API Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="api_pod" value="API Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="160" y="200" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="db_pod" value="Database Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="db_pod" value="Database Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="160" y="280" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <!-- Network Policies in Namespace A -->
-        <mxCell id="network_policy_1" value="Network Policy 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+        
+        <mxCell id="network_policy_1" value="Network Policy 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="320" y="120" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="network_policy_2" value="Network Policy 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+        <mxCell id="network_policy_2" value="Network Policy 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="320" y="200" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <!-- Namespace B -->
-        <mxCell id="namespace_b" value="네임스페이스 B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1" vertex="1" parent="1">
+        
+        <mxCell id="namespace_b" value="네임스페이스 B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1;fontSize=14;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="120" y="400" width="320" height="160" as="geometry" />
         </mxCell>
         
-        <!-- Pods in Namespace B -->
-        <mxCell id="monitoring_pod" value="Monitoring Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        
+        <mxCell id="monitoring_pod" value="Monitoring Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="160" y="440" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <!-- Network Policy in Namespace B -->
-        <mxCell id="network_policy_3" value="Network Policy 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+        
+        <mxCell id="network_policy_3" value="Network Policy 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="320" y="440" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <!-- Connections -->
-        <!-- Allowed connections -->
-        <mxCell id="fe_to_api" value="허용" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#00CC00;strokeWidth=2;" edge="1" parent="1" source="frontend_pod" target="api_pod">
+        
+        
+        <mxCell id="fe_to_api" value="허용" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#00CC00;strokeWidth=2;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="frontend_pod" target="api_pod">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="api_to_db" value="허용" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#00CC00;strokeWidth=2;" edge="1" parent="1" source="api_pod" target="db_pod">
+        <mxCell id="api_to_db" value="허용" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#00CC00;strokeWidth=2;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="api_pod" target="db_pod">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="mon_to_api" value="허용" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#00CC00;strokeWidth=2;" edge="1" parent="1" source="monitoring_pod" target="api_pod">
+        <mxCell id="mon_to_api" value="허용" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#00CC00;strokeWidth=2;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="monitoring_pod" target="api_pod">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <!-- Blocked connections -->
-        <mxCell id="fe_to_db" value="차단" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;strokeColor=#FF0000;strokeWidth=2;dashed=1;" edge="1" parent="1" source="frontend_pod" target="db_pod">
+        
+        <mxCell id="fe_to_db" value="차단" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;strokeColor=#FF0000;strokeWidth=2;dashed=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="frontend_pod" target="db_pod">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
@@ -82,7 +83,7 @@
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="mon_to_db" value="차단" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;strokeColor=#FF0000;strokeWidth=2;dashed=1;" edge="1" parent="1" source="monitoring_pod" target="db_pod">
+        <mxCell id="mon_to_db" value="차단" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;strokeColor=#FF0000;strokeWidth=2;dashed=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="monitoring_pod" target="db_pod">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
@@ -92,7 +93,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-      </root>
+      <mxCell id="icon_2000" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1"><mxGeometry x="164.0" y="129.0" width="24" height="22" as="geometry" /></mxCell></root>
     </mxGraphModel>
   </diagram>
 </mxfile>

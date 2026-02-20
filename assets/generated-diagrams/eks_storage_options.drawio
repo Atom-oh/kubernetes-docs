@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="app.diagrams.net" modified="2025-08-05T12:30:00.000Z" agent="5.0" etag="generated" version="24.7.17">
   <diagram name="EKS Storage Options" id="eks-storage-options">
     <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
@@ -5,88 +6,88 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         
-        <!-- Title -->
-        <mxCell id="title" value="Amazon EKS 스토리지 옵션" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+        
+        <mxCell id="title" value="Amazon EKS 스토리지 옵션" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="450" y="30" width="300" height="30" as="geometry" />
         </mxCell>
         
-        <!-- EKS Cluster Container -->
-        <mxCell id="eks-cluster" value="Amazon EKS 클러스터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+        
+        <mxCell id="eks-cluster" value="Amazon EKS 클러스터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="80" y="80" width="1000" height="600" as="geometry" />
         </mxCell>
         
-        <!-- Storage Options Container -->
-        <mxCell id="storage-options" value="스토리지 옵션" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=13;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+        
+        <mxCell id="storage-options" value="스토리지 옵션" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=13;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="120" y="120" width="300" height="200" as="geometry" />
         </mxCell>
         
-        <!-- Amazon EBS -->
-        <mxCell id="ebs" value="Amazon EBS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ebs_volume;" vertex="1" parent="1">
+        
+        <mxCell id="ebs" value="Amazon EBS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ebs_volume;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="150" y="160" width="50" height="50" as="geometry" />
         </mxCell>
         
-        <!-- Amazon EFS -->
-        <mxCell id="efs" value="Amazon EFS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.efs_standard;" vertex="1" parent="1">
+        
+        <mxCell id="efs" value="Amazon EFS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.efs_standard;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="240" y="160" width="50" height="50" as="geometry" />
         </mxCell>
         
-        <!-- Amazon FSx -->
-        <mxCell id="fsx" value="Amazon FSx&#xa;for Lustre" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.fsx_for_lustre;" vertex="1" parent="1">
+        
+        <mxCell id="fsx" value="Amazon FSx&#10;for Lustre" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.fsx_for_lustre;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="330" y="160" width="50" height="50" as="geometry" />
         </mxCell>
         
-        <!-- Amazon S3 -->
-        <mxCell id="s3" value="Amazon S3" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3;" vertex="1" parent="1">
+        
+        <mxCell id="s3" value="Amazon S3" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="150" y="240" width="50" height="50" as="geometry" />
         </mxCell>
         
-        <!-- Access Modes Container -->
-        <mxCell id="access-modes" value="액세스 모드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=13;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+        
+        <mxCell id="access-modes" value="액세스 모드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=13;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="460" y="120" width="280" height="200" as="geometry" />
         </mxCell>
         
-        <!-- ReadWriteOnce -->
-        <mxCell id="rwo" value="ReadWriteOnce&#xa;(RWO)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+        
+        <mxCell id="rwo" value="ReadWriteOnce&#10;(RWO)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
           <mxGeometry x="480" y="160" width="100" height="40" as="geometry" />
         </mxCell>
         
-        <!-- ReadOnlyMany -->
-        <mxCell id="rox" value="ReadOnlyMany&#xa;(ROX)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+        
+        <mxCell id="rox" value="ReadOnlyMany&#10;(ROX)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
           <mxGeometry x="600" y="160" width="100" height="40" as="geometry" />
         </mxCell>
         
-        <!-- ReadWriteMany -->
-        <mxCell id="rwx" value="ReadWriteMany&#xa;(RWX)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+        
+        <mxCell id="rwx" value="ReadWriteMany&#10;(RWX)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
           <mxGeometry x="480" y="220" width="100" height="40" as="geometry" />
         </mxCell>
         
-        <!-- ReadWriteOncePod -->
-        <mxCell id="rwop" value="ReadWriteOncePod&#xa;(RWOP)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+        
+        <mxCell id="rwop" value="ReadWriteOncePod&#10;(RWOP)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333;fontSize=10;fontStyle=1;fontColor=white;" vertex="1" parent="1">
           <mxGeometry x="600" y="220" width="100" height="40" as="geometry" />
         </mxCell>
         
-        <!-- CSI Drivers Container -->
-        <mxCell id="csi-drivers" value="CSI 드라이버" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=13;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+        
+        <mxCell id="csi-drivers" value="CSI 드라이버" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=13;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="780" y="120" width="260" height="200" as="geometry" />
         </mxCell>
         
-        <!-- EBS CSI Driver -->
-        <mxCell id="ebs-csi" value="EBS CSI 드라이버" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=c_csi;" vertex="1" parent="1">
+        
+        <mxCell id="ebs-csi" value="EBS CSI 드라이버" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=c_csi;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="820" y="160" width="50" height="48" as="geometry" />
         </mxCell>
         
-        <!-- EFS CSI Driver -->
-        <mxCell id="efs-csi" value="EFS CSI 드라이버" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=c_csi;" vertex="1" parent="1">
+        
+        <mxCell id="efs-csi" value="EFS CSI 드라이버" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=c_csi;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="920" y="160" width="50" height="48" as="geometry" />
         </mxCell>
         
-        <!-- FSx CSI Driver -->
-        <mxCell id="fsx-csi" value="FSx CSI 드라이버" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=c_csi;" vertex="1" parent="1">
+        
+        <mxCell id="fsx-csi" value="FSx CSI 드라이버" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=c_csi;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="870" y="240" width="50" height="48" as="geometry" />
         </mxCell>
         
-        <!-- Storage to Access Mode Connections -->
-        <!-- EBS connections -->
+        
+        
         <mxCell id="ebs-to-rwo" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="ebs" target="rwo">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -105,7 +106,7 @@
           </mxGeometry>
         </mxCell>
         
-        <!-- EFS connections -->
+        
         <mxCell id="efs-to-rwo" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="efs" target="rwo">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -133,7 +134,7 @@
           </mxGeometry>
         </mxCell>
         
-        <!-- FSx connections -->
+        
         <mxCell id="fsx-to-rwo" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="fsx" target="rwo">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -166,7 +167,7 @@
           </mxGeometry>
         </mxCell>
         
-        <!-- Storage to CSI Driver Connections -->
+        
         <mxCell id="ebs-to-ebs-csi" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="ebs" target="ebs-csi">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -194,50 +195,50 @@
           </mxGeometry>
         </mxCell>
         
-        <!-- Storage Comparison Table -->
-        <mxCell id="comparison" value="스토리지 서비스 비교" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+        
+        <mxCell id="comparison" value="스토리지 서비스 비교" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="120" y="360" width="920" height="300" as="geometry" />
         </mxCell>
         
-        <!-- Table Headers -->
-        <mxCell id="header-service" value="서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+        
+        <mxCell id="header-service" value="서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="160" y="400" width="120" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="header-type" value="타입" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="header-type" value="타입" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="300" y="400" width="120" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="header-access" value="액세스 모드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="header-access" value="액세스 모드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="440" y="400" width="120" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="header-usecase" value="사용 사례" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="header-usecase" value="사용 사례" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="580" y="400" width="200" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="header-performance" value="성능 특성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="header-performance" value="성능 특성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="800" y="400" width="200" height="30" as="geometry" />
         </mxCell>
         
-        <!-- Table Content -->
-        <mxCell id="table-content" value="Amazon EBS&#xa;&#xa;Amazon EFS&#xa;&#xa;Amazon FSx&#xa;&#xa;Amazon S3" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        
+        <mxCell id="table-content" value="Amazon EBS&#10;&#10;Amazon EFS&#10;&#10;Amazon FSx&#10;&#10;Amazon S3" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;spacingTop=5;spacingLeft=10;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="160" y="440" width="120" height="200" as="geometry" />
         </mxCell>
         
-        <mxCell id="type-content" value="블록 스토리지&#xa;&#xa;파일 시스템&#xa;&#xa;고성능 파일 시스템&#xa;&#xa;객체 스토리지" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="type-content" value="블록 스토리지&#10;&#10;파일 시스템&#10;&#10;고성능 파일 시스템&#10;&#10;객체 스토리지" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;spacingTop=5;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="300" y="440" width="120" height="200" as="geometry" />
         </mxCell>
         
-        <mxCell id="access-content" value="RWO, RWOP&#xa;&#xa;RWO, ROX, RWX&#xa;&#xa;RWO, ROX, RWX&#xa;&#xa;API 기반" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="access-content" value="RWO, RWOP&#10;&#10;RWO, ROX, RWX&#10;&#10;RWO, ROX, RWX&#10;&#10;API 기반" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;spacingTop=5;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="440" y="440" width="120" height="200" as="geometry" />
         </mxCell>
         
-        <mxCell id="usecase-content" value="• 데이터베이스&#xa;• 상태 유지 애플리케이션&#xa;&#xa;• 공유 파일 시스템&#xa;• 콘텐츠 관리&#xa;&#xa;• HPC, ML 워크로드&#xa;• 빅 데이터 분석&#xa;&#xa;• 백업, 아카이브&#xa;• 정적 웹 콘텐츠" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="usecase-content" value="• 데이터베이스&#10;• 상태 유지 애플리케이션&#10;&#10;• 공유 파일 시스템&#10;• 콘텐츠 관리&#10;&#10;• HPC, ML 워크로드&#10;• 빅 데이터 분석&#10;&#10;• 백업, 아카이브&#10;• 정적 웹 콘텐츠" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="580" y="440" width="200" height="200" as="geometry" />
         </mxCell>
         
-        <mxCell id="performance-content" value="• 높은 IOPS&#xa;• 낮은 지연 시간&#xa;&#xa;• 확장 가능한 처리량&#xa;• 동시 액세스&#xa;&#xa;• 매우 높은 처리량&#xa;• 병렬 액세스&#xa;&#xa;• 높은 내구성&#xa;• 무제한 확장성" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+        <mxCell id="performance-content" value="• 높은 IOPS&#10;• 낮은 지연 시간&#10;&#10;• 확장 가능한 처리량&#10;• 동시 액세스&#10;&#10;• 매우 높은 처리량&#10;• 병렬 액세스&#10;&#10;• 높은 내구성&#10;• 무제한 확장성" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="800" y="440" width="200" height="200" as="geometry" />
         </mxCell>
         

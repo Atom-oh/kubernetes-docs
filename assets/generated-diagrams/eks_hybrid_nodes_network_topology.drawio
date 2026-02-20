@@ -1,0 +1,194 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mxfile host="65bd71144e">
+    <diagram id="eks_hybrid_net_topo" name="EKS Hybrid Nodes - Network Topology">
+        <mxGraphModel dx="1822" dy="1300" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+
+                <!-- Title -->
+                <mxCell id="10" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;&lt;b&gt;EKS Hybrid Nodes — Network Topology&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#666666&quot; style=&quot;font-size: 12px;&quot;&gt;VPC, Subnets, Transit Gateway, Remote CIDRs, Firewall Ports&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="350" y="10" width="900" height="50" as="geometry" />
+                </mxCell>
+
+                <!-- ==================== AWS Cloud ==================== -->
+                <mxCell id="20" value="&lt;b&gt;AWS Cloud&lt;/b&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;fontSize=14;fontStyle=0;startSize=30;rounded=1;arcSize=4;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="70" width="1540" height="500" as="geometry" />
+                </mxCell>
+
+                <!-- VPC -->
+                <mxCell id="30" value="&lt;b&gt;VPC&lt;/b&gt; — 10.0.0.0/16" style="swimlane;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;fontSize=13;fontStyle=0;startSize=28;rounded=1;arcSize=6;" vertex="1" parent="20">
+                    <mxGeometry x="30" y="45" width="900" height="430" as="geometry" />
+                </mxCell>
+
+                <!-- Private Subnet AZ-a -->
+                <mxCell id="31" value="&lt;b&gt;Private Subnet AZ-a&lt;/b&gt;&lt;br&gt;10.0.1.0/24" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32;strokeWidth=1;fontSize=11;verticalAlign=top;spacingTop=5;" vertex="1" parent="30">
+                    <mxGeometry x="30" y="45" width="400" height="160" as="geometry" />
+                </mxCell>
+                <mxCell id="32" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#E65100&quot;&gt;EKS API ENI&lt;br&gt;10.0.1.10&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=1;fontSize=10;" vertex="1" parent="30">
+                    <mxGeometry x="50" y="85" width="90" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="33" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#7B1FA2&quot;&gt;VPCE ENI&lt;br&gt;(ECR, S3, SSM)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#7B1FA2;strokeWidth=1;fontSize=10;" vertex="1" parent="30">
+                    <mxGeometry x="160" y="85" width="100" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="34" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#8C4FFF&quot;&gt;R53 Resolver&lt;br&gt;Inbound: 10.0.1.53&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1C4E9;strokeColor=#8C4FFF;strokeWidth=1;fontSize=10;" vertex="1" parent="30">
+                    <mxGeometry x="280" y="85" width="120" height="40" as="geometry" />
+                </mxCell>
+
+                <!-- Private Subnet AZ-b -->
+                <mxCell id="35" value="&lt;b&gt;Private Subnet AZ-b&lt;/b&gt;&lt;br&gt;10.0.2.0/24" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32;strokeWidth=1;fontSize=11;verticalAlign=top;spacingTop=5;" vertex="1" parent="30">
+                    <mxGeometry x="460" y="45" width="400" height="160" as="geometry" />
+                </mxCell>
+                <mxCell id="36" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#E65100&quot;&gt;EKS API ENI&lt;br&gt;10.0.2.10&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=1;fontSize=10;" vertex="1" parent="30">
+                    <mxGeometry x="480" y="85" width="90" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="37" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#7B1FA2&quot;&gt;VPCE ENI&lt;br&gt;(ECR, S3, SSM)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#7B1FA2;strokeWidth=1;fontSize=10;" vertex="1" parent="30">
+                    <mxGeometry x="590" y="85" width="100" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="38" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#8C4FFF&quot;&gt;R53 Resolver&lt;br&gt;Inbound: 10.0.2.53&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1C4E9;strokeColor=#8C4FFF;strokeWidth=1;fontSize=10;" vertex="1" parent="30">
+                    <mxGeometry x="710" y="85" width="120" height="40" as="geometry" />
+                </mxCell>
+
+                <!-- Route Table -->
+                <mxCell id="40" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;VPC Route Table&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;10.0.0.0/16 → local&lt;br&gt;&lt;font color=&quot;#1565C0&quot;&gt;10.80.0.0/16 → TGW&lt;/font&gt; (Remote Node CIDR)&lt;br&gt;&lt;font color=&quot;#E65100&quot;&gt;10.85.0.0/16 → TGW&lt;/font&gt; (Remote Pod CIDR)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E7D32;strokeWidth=2;verticalAlign=top;spacingTop=2;spacingLeft=8;fontSize=11;align=left;" vertex="1" parent="30">
+                    <mxGeometry x="30" y="230" width="300" height="90" as="geometry" />
+                </mxCell>
+
+                <!-- Security Group -->
+                <mxCell id="41" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;EKS Cluster Security Group&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;Inbound (auto):&lt;/b&gt; TCP 443 ← Remote Node/Pod CIDR&lt;br&gt;&lt;b&gt;Outbound (manual):&lt;/b&gt;&lt;br&gt;TCP 10250 → Remote Node CIDR (kubelet)&lt;br&gt;TCP 8443 → Remote Pod CIDR (webhooks)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E65100;strokeWidth=2;verticalAlign=top;spacingTop=2;spacingLeft=8;fontSize=11;align=left;" vertex="1" parent="30">
+                    <mxGeometry x="370" y="230" width="320" height="110" as="geometry" />
+                </mxCell>
+
+                <!-- TGW/VGW -->
+                <mxCell id="45" value="&lt;b&gt;Transit Gateway&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;(or Virtual Private Gateway)&lt;/font&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.transit_gateway;strokeWidth=2;" vertex="1" parent="20">
+                    <mxGeometry x="970" y="140" width="60" height="60" as="geometry" />
+                </mxCell>
+
+                <!-- TGW Route Table -->
+                <mxCell id="46" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;TGW Route Table&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;10.0.0.0/16 → VPC Attachment&lt;br&gt;10.80.0.0/16 → VPN Attachment&lt;br&gt;10.85.0.0/16 → VPN Attachment&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#8C4FFF;strokeWidth=2;verticalAlign=top;spacingTop=2;spacingLeft=8;fontSize=11;align=left;" vertex="1" parent="20">
+                    <mxGeometry x="940" y="270" width="260" height="90" as="geometry" />
+                </mxCell>
+
+                <!-- VPN Connection -->
+                <mxCell id="47" value="VPN / Direct Connect" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.site_to_site_vpn;strokeWidth=2;" vertex="1" parent="20">
+                    <mxGeometry x="1260" y="140" width="60" height="60" as="geometry" />
+                </mxCell>
+
+                <!-- Arrow: VPC to TGW -->
+                <mxCell id="50" value="" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=2;strokeColor=#8C4FFF;" edge="1" parent="20">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="930" y="170" as="sourcePoint" />
+                        <mxPoint x="970" y="170" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+                <!-- Arrow: TGW to VPN -->
+                <mxCell id="51" value="" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=2;strokeColor=#8C4FFF;" edge="1" parent="20">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1030" y="170" as="sourcePoint" />
+                        <mxPoint x="1260" y="170" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- EKS Endpoint Access Modes -->
+                <mxCell id="55" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;API Server Endpoint Access&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;Public:&lt;/b&gt; kubelet → Internet → EKS API&lt;br&gt;&lt;b&gt;Private:&lt;/b&gt; kubelet → VPN/DX → VPC ENI → API&lt;br&gt;&lt;b&gt;Public+Private:&lt;/b&gt; cloud via ENI, on-prem via public or private&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1565C0;strokeWidth=2;verticalAlign=top;spacingTop=2;spacingLeft=8;fontSize=11;align=left;" vertex="1" parent="20">
+                    <mxGeometry x="1240" y="260" width="280" height="100" as="geometry" />
+                </mxCell>
+
+                <!-- ==================== On-Premises ==================== -->
+                <mxCell id="60" value="&lt;b&gt;On-Premises Data Center&lt;/b&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#3949AB;strokeWidth=2;fontSize=14;fontStyle=0;startSize=30;rounded=1;arcSize=4;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="620" width="1540" height="530" as="geometry" />
+                </mxCell>
+
+                <!-- On-Prem Router -->
+                <mxCell id="61" value="&lt;b&gt;Customer Gateway&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;On-Prem Router / Firewall&lt;/font&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#232F3E;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.customer_gateway;strokeWidth=2;" vertex="1" parent="60">
+                    <mxGeometry x="30" y="50" width="60" height="60" as="geometry" />
+                </mxCell>
+
+                <!-- VPN arrow from cloud -->
+                <mxCell id="62" value="" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=3;strokeColor=#8C4FFF;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1350" y="570" as="sourcePoint" />
+                        <mxPoint x="90" y="670" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- On-Prem Network -->
+                <mxCell id="65" value="&lt;b&gt;On-Prem Network&lt;/b&gt; — Node CIDR: 10.80.0.0/16" style="swimlane;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;fontSize=12;fontStyle=0;startSize=25;rounded=1;arcSize=6;" vertex="1" parent="60">
+                    <mxGeometry x="150" y="40" width="700" height="200" as="geometry" />
+                </mxCell>
+                <mxCell id="66" value="&lt;b&gt;Hybrid Node 1&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;10.80.0.1&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;strokeWidth=1;fontSize=11;" vertex="1" parent="65">
+                    <mxGeometry x="30" y="40" width="130" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="67" value="&lt;b&gt;Hybrid Node 2&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;10.80.0.2&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;strokeWidth=1;fontSize=11;" vertex="1" parent="65">
+                    <mxGeometry x="190" y="40" width="130" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="68" value="&lt;b&gt;Hybrid Node 3&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;10.80.0.3&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;strokeWidth=1;fontSize=11;" vertex="1" parent="65">
+                    <mxGeometry x="350" y="40" width="130" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="69" value="&lt;b&gt;GPU Node&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;10.80.0.4&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=1;fontSize=11;" vertex="1" parent="65">
+                    <mxGeometry x="510" y="40" width="130" height="50" as="geometry" />
+                </mxCell>
+
+                <!-- Pod Network -->
+                <mxCell id="70" value="&lt;b&gt;Pod Network&lt;/b&gt; — Pod CIDR: 10.85.0.0/16 (Cilium VXLAN)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#F1F8E9;strokeColor=#558B2F;strokeWidth=2;fontSize=12;fontStyle=0;startSize=25;rounded=1;arcSize=6;" vertex="1" parent="60">
+                    <mxGeometry x="150" y="120" width="700" height="80" as="geometry" />
+                </mxCell>
+                <mxCell id="71" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;10.85.0.0/24&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCEDC8;strokeColor=#558B2F;strokeWidth=1;fontSize=10;" vertex="1" parent="70">
+                    <mxGeometry x="30" y="35" width="100" height="30" as="geometry" />
+                </mxCell>
+                <mxCell id="72" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;10.85.1.0/24&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCEDC8;strokeColor=#558B2F;strokeWidth=1;fontSize=10;" vertex="1" parent="70">
+                    <mxGeometry x="160" y="35" width="100" height="30" as="geometry" />
+                </mxCell>
+                <mxCell id="73" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;10.85.2.0/24&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCEDC8;strokeColor=#558B2F;strokeWidth=1;fontSize=10;" vertex="1" parent="70">
+                    <mxGeometry x="290" y="35" width="100" height="30" as="geometry" />
+                </mxCell>
+                <mxCell id="74" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;10.85.3.0/24&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCEDC8;strokeColor=#558B2F;strokeWidth=1;fontSize=10;" vertex="1" parent="70">
+                    <mxGeometry x="420" y="35" width="100" height="30" as="geometry" />
+                </mxCell>
+
+                <!-- On-Prem DNS -->
+                <mxCell id="75" value="&lt;b&gt;On-Prem DNS Server&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Conditional forwarding:&lt;br&gt;*.amazonaws.com → R53 Inbound&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#3949AB;strokeWidth=2;fontSize=11;verticalAlign=top;spacingTop=5;" vertex="1" parent="60">
+                    <mxGeometry x="150" y="270" width="250" height="65" as="geometry" />
+                </mxCell>
+
+                <!-- Firewall Rules -->
+                <mxCell id="80" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;On-Premises Firewall Rules&lt;/b&gt;&lt;/font&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;fontSize=12;fontStyle=0;startSize=25;rounded=1;arcSize=8;" vertex="1" parent="60">
+                    <mxGeometry x="30" y="360" width="750" height="150" as="geometry" />
+                </mxCell>
+                <mxCell id="81" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;Outbound (On-Prem → AWS)&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;TCP 443 → EKS API (kubelet, pods)&lt;br&gt;TCP 443 → ECR, S3, SSM, STS&lt;br&gt;UDP 500/4500 → VPN IKE/NAT-T&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C62828;strokeWidth=1;verticalAlign=top;spacingTop=2;spacingLeft=8;fontSize=11;align=left;" vertex="1" parent="80">
+                    <mxGeometry x="15" y="35" width="230" height="100" as="geometry" />
+                </mxCell>
+                <mxCell id="82" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;Inbound (AWS → On-Prem)&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;TCP 10250 ← API Server (kubelet)&lt;br&gt;TCP 8443 ← API Server (webhooks)&lt;br&gt;UDP 500/4500 ← VPN IKE/NAT-T&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C62828;strokeWidth=1;verticalAlign=top;spacingTop=2;spacingLeft=8;fontSize=11;align=left;" vertex="1" parent="80">
+                    <mxGeometry x="260" y="35" width="230" height="100" as="geometry" />
+                </mxCell>
+                <mxCell id="83" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;Internal (Node ↔ Node)&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;UDP 8472 ↔ Cilium VXLAN overlay&lt;br&gt;TCP 4240 ↔ Cilium health check&lt;br&gt;TCP/UDP 53 ↔ CoreDNS&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C62828;strokeWidth=1;verticalAlign=top;spacingTop=2;spacingLeft=8;fontSize=11;align=left;" vertex="1" parent="80">
+                    <mxGeometry x="505" y="35" width="230" height="100" as="geometry" />
+                </mxCell>
+
+                <!-- CIDR Requirements -->
+                <mxCell id="85" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;CIDR Requirements&lt;/b&gt;&lt;/font&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#FF8F00;strokeWidth=2;fontSize=12;fontStyle=0;startSize=25;rounded=1;arcSize=8;" vertex="1" parent="60">
+                    <mxGeometry x="830" y="360" width="680" height="150" as="geometry" />
+                </mxCell>
+                <mxCell id="86" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;Must be RFC-1918:&lt;/b&gt; 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16&lt;br&gt;&lt;br&gt;&lt;b&gt;Must NOT overlap:&lt;/b&gt;&lt;br&gt;• VPC CIDR (10.0.0.0/16) ≠ Node CIDR (10.80.0.0/16)&lt;br&gt;• VPC CIDR ≠ Pod CIDR (10.85.0.0/16)&lt;br&gt;• Node CIDR ≠ Pod CIDR&lt;br&gt;• None overlap with K8s Service CIDR (172.20.0.0/16)&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;spacingLeft=8;spacingTop=4;fontSize=10;" vertex="1" parent="85">
+                    <mxGeometry x="10" y="30" width="660" height="110" as="geometry" />
+                </mxCell>
+
+                <!-- Routing Info -->
+                <mxCell id="90" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;On-Prem Routing&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;10.0.0.0/16 → VPN tunnel (→ VPC)&lt;br&gt;10.85.0.0/16 → local (pod CIDR)&lt;br&gt;10.80.0.0/16 → local (node CIDR)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#3949AB;strokeWidth=2;verticalAlign=top;spacingTop=2;spacingLeft=8;fontSize=11;align=left;" vertex="1" parent="60">
+                    <mxGeometry x="830" y="40" width="260" height="90" as="geometry" />
+                </mxCell>
+
+                <!-- BGP Info -->
+                <mxCell id="91" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;Cilium BGP (Optional)&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Advertise Pod CIDR to on-prem router&lt;br&gt;Makes pods routable without VXLAN&lt;br&gt;Required for: webhooks, ALB, Prometheus&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#558B2F;strokeWidth=2;verticalAlign=top;spacingTop=2;spacingLeft=8;fontSize=11;align=left;" vertex="1" parent="60">
+                    <mxGeometry x="830" y="160" width="260" height="90" as="geometry" />
+                </mxCell>
+
+                <!-- DNS Flow -->
+                <mxCell id="92" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;DNS Resolution&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;On-prem node → On-prem DNS&lt;br&gt;→ Conditional forward *.amazonaws.com&lt;br&gt;→ R53 Resolver Inbound (10.0.1.53)&lt;br&gt;→ Private Hosted Zone / VPC DNS&lt;br&gt;→ Returns VPC Endpoint private IP&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#8C4FFF;strokeWidth=2;verticalAlign=top;spacingTop=2;spacingLeft=8;fontSize=11;align=left;" vertex="1" parent="60">
+                    <mxGeometry x="1130" y="40" width="280" height="120" as="geometry" />
+                </mxCell>
+
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

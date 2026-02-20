@@ -1,46 +1,47 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="65bd71144e">
     <diagram id="overlayfs-diagram" name="OverlayFS">
         <mxGraphModel dx="729" dy="1323" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
-                <mxCell id="client" value="Client (app)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;" parent="1" vertex="1">
-                    <mxGeometry x="320" y="80" width="150" height="60" as="geometry"/>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                <mxCell id="client" value="Client (app)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="80" width="150" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="overlay" value="OverlayFS (merged view)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB74D;strokeColor=#333333;fontColor=#000000;" parent="1" vertex="1">
-                    <mxGeometry x="320" y="180" width="150" height="60" as="geometry"/>
+                <mxCell id="overlay" value="OverlayFS (merged view)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB74D;strokeColor=#333333;fontColor=#000000;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="180" width="150" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="upper" value="upperdir (writable layer)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#333333;fontColor=#FFFFFF;" parent="1" vertex="1">
-                    <mxGeometry x="320" y="280" width="150" height="60" as="geometry"/>
+                <mxCell id="upper" value="upperdir (writable layer)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="280" width="150" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="work" value="workdir (scratch space)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8BC34A;strokeColor=#333333;fontColor=#FFFFFF;" parent="1" vertex="1">
-                    <mxGeometry x="320" y="380" width="150" height="60" as="geometry"/>
+                <mxCell id="work" value="workdir (scratch space)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8BC34A;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="380" width="150" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="lower" value="lowerdir (read-only layer)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90A4AE;strokeColor=#333333;fontColor=#FFFFFF;" parent="1" vertex="1">
-                    <mxGeometry x="320" y="480" width="150" height="60" as="geometry"/>
+                <mxCell id="lower" value="lowerdir (read-only layer)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90A4AE;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="480" width="150" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="client-overlay" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="client" target="overlay" edge="1">
+                <mxCell id="client-overlay" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" parent="1" source="client" target="overlay" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="400" y="330" as="sourcePoint"/>
-                        <mxPoint x="450" y="280" as="targetPoint"/>
+                        <mxPoint x="400" y="330" as="sourcePoint" />
+                        <mxPoint x="450" y="280" as="targetPoint" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="overlay-upper" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="overlay" target="upper" edge="1">
+                <mxCell id="overlay-upper" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" parent="1" source="overlay" target="upper" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="400" y="330" as="sourcePoint"/>
-                        <mxPoint x="450" y="280" as="targetPoint"/>
+                        <mxPoint x="400" y="330" as="sourcePoint" />
+                        <mxPoint x="450" y="280" as="targetPoint" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="upper-work" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="upper" target="work" edge="1">
+                <mxCell id="upper-work" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" parent="1" source="upper" target="work" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="400" y="330" as="sourcePoint"/>
-                        <mxPoint x="450" y="280" as="targetPoint"/>
+                        <mxPoint x="400" y="330" as="sourcePoint" />
+                        <mxPoint x="450" y="280" as="targetPoint" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="work-lower" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="work" target="lower" edge="1">
+                <mxCell id="work-lower" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" parent="1" source="work" target="lower" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="400" y="330" as="sourcePoint"/>
-                        <mxPoint x="450" y="280" as="targetPoint"/>
+                        <mxPoint x="400" y="330" as="sourcePoint" />
+                        <mxPoint x="450" y="280" as="targetPoint" />
                     </mxGeometry>
                 </mxCell>
             </root>

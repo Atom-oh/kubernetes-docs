@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="app.diagrams.net" modified="2025-07-22T04:55:00.000Z" agent="Mozilla/5.0" version="22.0.0" etag="your-etag">
   <diagram id="services-networking-architecture" name="Kubernetes Services Architecture">
     <mxGraphModel dx="1000" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
@@ -5,91 +6,91 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         
-        <!-- Kubernetes Cluster -->
-        <mxCell id="kubernetes_cluster" value="Kubernetes 클러스터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1" vertex="1" parent="1">
+        
+        <mxCell id="kubernetes_cluster" value="Kubernetes 클러스터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1;fontSize=14;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="120" y="80" width="600" height="520" as="geometry" />
         </mxCell>
         
-        <!-- Service Types -->
-        <mxCell id="service_types" value="서비스 유형" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;" vertex="1" parent="1">
+        
+        <mxCell id="service_types" value="서비스 유형" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontSize=14;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="160" y="120" width="200" height="200" as="geometry" />
         </mxCell>
         
-        <mxCell id="loadbalancer" value="LoadBalancer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="loadbalancer" value="LoadBalancer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="200" y="160" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="nodeport" value="NodePort" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="nodeport" value="NodePort" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="200" y="220" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="clusterip" value="ClusterIP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="clusterip" value="ClusterIP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="200" y="280" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="externalname" value="ExternalName" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="externalname" value="ExternalName" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="200" y="340" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <!-- Service Discovery -->
-        <mxCell id="service_discovery" value="서비스 디스커버리" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;" vertex="1" parent="1">
+        
+        <mxCell id="service_discovery" value="서비스 디스커버리" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontSize=14;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="400" y="120" width="200" height="120" as="geometry" />
         </mxCell>
         
-        <mxCell id="coredns" value="CoreDNS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+        <mxCell id="coredns" value="CoreDNS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="440" y="160" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="endpoints" value="Endpoints" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+        <mxCell id="endpoints" value="Endpoints" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="440" y="220" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <!-- Backend Pods -->
-        <mxCell id="backend_pods" value="백엔드 포드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;" vertex="1" parent="1">
+        
+        <mxCell id="backend_pods" value="백엔드 포드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontSize=14;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="400" y="280" width="200" height="160" as="geometry" />
         </mxCell>
         
-        <mxCell id="pod1" value="Pod 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="pod1" value="Pod 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
           <mxGeometry x="440" y="320" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="pod2" value="Pod 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="pod2" value="Pod 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
           <mxGeometry x="440" y="380" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="pod3" value="Pod 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="pod3" value="Pod 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
           <mxGeometry x="440" y="440" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <!-- External Clients -->
-        <mxCell id="external_client" value="외부 클라이언트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+        
+        <mxCell id="external_client" value="외부 클라이언트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1px;fontColor=black;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="40" y="200" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="internal_client" value="클러스터 내부 클라이언트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+        <mxCell id="internal_client" value="클러스터 내부 클라이언트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1px;fontColor=black;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="280" y="480" width="160" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="external_service" value="외부 서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E83E8C;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="external_service" value="외부 서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E83E8C;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="40" y="340" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <!-- Connections -->
-        <mxCell id="lb_to_np" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="loadbalancer" target="nodeport">
+        
+        <mxCell id="lb_to_np" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="loadbalancer" target="nodeport">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="np_to_cip" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="nodeport" target="clusterip">
+        <mxCell id="np_to_cip" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="nodeport" target="clusterip">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="cip_to_dns" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="clusterip" target="coredns">
+        <mxCell id="cip_to_dns" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="clusterip" target="coredns">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
@@ -100,7 +101,7 @@
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="cip_to_ep" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="clusterip" target="endpoints">
+        <mxCell id="cip_to_ep" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="clusterip" target="endpoints">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
@@ -111,42 +112,42 @@
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="ep_to_pod1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="endpoints" target="pod1">
+        <mxCell id="ep_to_pod1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="endpoints" target="pod1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="ep_to_pod2" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pod1" target="pod2">
+        <mxCell id="ep_to_pod2" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="pod1" target="pod2">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="ep_to_pod3" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pod2" target="pod3">
+        <mxCell id="ep_to_pod3" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="pod2" target="pod3">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="ext_client_to_lb" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="external_client" target="loadbalancer">
+        <mxCell id="ext_client_to_lb" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="external_client" target="loadbalancer">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="ext_client_to_np" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="external_client" target="nodeport">
+        <mxCell id="ext_client_to_np" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="external_client" target="nodeport">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="int_client_to_cip" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="internal_client" target="clusterip">
+        <mxCell id="int_client_to_cip" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="internal_client" target="clusterip">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
@@ -157,7 +158,7 @@
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="int_client_to_dns" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="internal_client" target="coredns">
+        <mxCell id="int_client_to_dns" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="internal_client" target="coredns">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
@@ -169,13 +170,13 @@
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="ext_to_ext_service" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="externalname" target="external_service">
+        <mxCell id="ext_to_ext_service" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="externalname" target="external_service">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-      </root>
+      <mxCell id="icon_1000" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1"><mxGeometry x="444.0" y="329.0" width="24" height="22" as="geometry" /></mxCell><mxCell id="icon_1001" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1"><mxGeometry x="444.0" y="389.0" width="24" height="22" as="geometry" /></mxCell><mxCell id="icon_1002" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1"><mxGeometry x="444.0" y="449.0" width="24" height="22" as="geometry" /></mxCell></root>
     </mxGraphModel>
   </diagram>
 </mxfile>

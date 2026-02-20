@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="app.diagrams.net" modified="2025-08-05T11:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
   <diagram name="EKS Networking Architecture Overview" id="eks-networking-architecture-overview">
     <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
@@ -5,130 +6,130 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         
-        <!-- Title -->
-        <mxCell id="title" value="EKS 네트워킹 아키텍처 개요" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+        
+        <mxCell id="title" value="EKS 네트워킹 아키텍처 개요" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="400" y="40" width="350" height="30" as="geometry" />
         </mxCell>
         
-        <!-- AWS Cloud Container -->
-        <mxCell id="aws-cloud" value="AWS 클라우드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+        
+        <mxCell id="aws-cloud" value="AWS 클라우드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="80" y="80" width="1120" height="680" as="geometry" />
         </mxCell>
         
-        <!-- VPC Container -->
+        
         <mxCell id="vpc" value="VPC" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
           <mxGeometry x="120" y="120" width="920" height="580" as="geometry" />
         </mxCell>
         
-        <!-- Internet -->
-        <mxCell id="internet" value="인터넷" style="ellipse;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+        
+        <mxCell id="internet" value="인터넷" style="ellipse;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="20" y="300" width="80" height="60" as="geometry" />
         </mxCell>
         
-        <!-- Internet Gateway -->
-        <mxCell id="igw" value="인터넷 게이트웨이" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.internet_gateway;" vertex="1" parent="1">
+        
+        <mxCell id="igw" value="인터넷 게이트웨이" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.internet_gateway;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="160" y="300" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <!-- Public Subnets Container -->
-        <mxCell id="public-subnets" value="퍼블릭 서브넷" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+        
+        <mxCell id="public-subnets" value="퍼블릭 서브넷" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="160" y="160" width="360" height="120" as="geometry" />
         </mxCell>
         
-        <!-- NAT Gateway -->
-        <mxCell id="nat-gw" value="NAT 게이트웨이" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.nat_gateway;" vertex="1" parent="1">
+        
+        <mxCell id="nat-gw" value="NAT 게이트웨이" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.nat_gateway;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="200" y="200" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <!-- Application Load Balancer -->
-        <mxCell id="alb" value="Application&#xa;Load Balancer" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.application_load_balancer;" vertex="1" parent="1">
+        
+        <mxCell id="alb" value="Application&#10;Load Balancer" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.application_load_balancer;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="320" y="200" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <!-- Private Subnets Container -->
-        <mxCell id="private-subnets" value="프라이빗 서브넷" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+        
+        <mxCell id="private-subnets" value="프라이빗 서브넷" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="160" y="400" width="520" height="200" as="geometry" />
         </mxCell>
         
-        <!-- Worker Nodes Container -->
-        <mxCell id="worker-nodes" value="워커 노드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+        
+        <mxCell id="worker-nodes" value="워커 노드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="200" y="440" width="280" height="120" as="geometry" />
         </mxCell>
         
-        <!-- Node 1 -->
-        <mxCell id="node1" value="노드 1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;" vertex="1" parent="1">
+        
+        <mxCell id="node1" value="노드 1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="220" y="480" width="50" height="50" as="geometry" />
         </mxCell>
         
-        <!-- Node 2 -->
-        <mxCell id="node2" value="노드 2" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;" vertex="1" parent="1">
+        
+        <mxCell id="node2" value="노드 2" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="300" y="480" width="50" height="50" as="geometry" />
         </mxCell>
         
-        <!-- Pods Container -->
-        <mxCell id="pods-container" value="포드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1;fontSize=10;fontStyle=1;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+        
+        <mxCell id="pods-container" value="포드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1;fontSize=10;fontStyle=1;verticalAlign=top;spacingTop=5;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="375" y="475" width="120" height="60" as="geometry" />
         </mxCell>
         
-        <!-- Pods -->
-        <mxCell id="pod1" value="" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=8;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+        
+        <mxCell id="pod1" value="" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=14;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="382" y="495" width="30" height="29" as="geometry" />
         </mxCell>
         
-        <mxCell id="pod2" value="" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=8;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+        <mxCell id="pod2" value="" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=14;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="416" y="495" width="30" height="29" as="geometry" />
         </mxCell>
         
-        <mxCell id="pod3" value="" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=8;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1">
+        <mxCell id="pod3" value="" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=14;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="450" y="495" width="30" height="29" as="geometry" />
         </mxCell>
         
-        <!-- Network Load Balancer -->
-        <mxCell id="nlb" value="Network&#xa;Load Balancer" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.network_load_balancer;" vertex="1" parent="1">
+        
+        <mxCell id="nlb" value="Network&#10;Load Balancer" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.network_load_balancer;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="520" y="480" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <!-- VPC Endpoints Container -->
-        <mxCell id="vpc-endpoints" value="VPC 엔드포인트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
+        
+        <mxCell id="vpc-endpoints" value="VPC 엔드포인트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="720" y="160" width="280" height="440" as="geometry" />
         </mxCell>
         
-        <!-- S3 Endpoint -->
-        <mxCell id="s3-endpoint" value="S3 엔드포인트" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.vpc_endpoint;" vertex="1" parent="1">
+        
+        <mxCell id="s3-endpoint" value="S3 엔드포인트" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.vpc_endpoint;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="760" y="200" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <!-- ECR Endpoint -->
-        <mxCell id="ecr-endpoint" value="ECR 엔드포인트" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.vpc_endpoint;" vertex="1" parent="1">
+        
+        <mxCell id="ecr-endpoint" value="ECR 엔드포인트" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.vpc_endpoint;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="860" y="200" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <!-- EKS Endpoint -->
-        <mxCell id="eks-endpoint" value="EKS 엔드포인트" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.vpc_endpoint;" vertex="1" parent="1">
+        
+        <mxCell id="eks-endpoint" value="EKS 엔드포인트" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.vpc_endpoint;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="810" y="300" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <!-- EKS Control Plane -->
-        <mxCell id="eks-cp" value="EKS 컨트롤 플레인" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_cloud;" vertex="1" parent="1">
+        
+        <mxCell id="eks-cp" value="EKS 컨트롤 플레인" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_cloud;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="810" y="480" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <!-- AWS Services -->
-        <mxCell id="s3" value="S3" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#3F8624;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3;" vertex="1" parent="1">
+        
+        <mxCell id="s3" value="S3" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#3F8624;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="1080" y="200" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="ecr" value="ECR" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecr;" vertex="1" parent="1">
+        <mxCell id="ecr" value="ECR" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecr;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="1080" y="300" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <!-- Connections -->
-        <!-- Internet to IGW -->
+        
+        
         <mxCell id="internet-to-igw" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="internet" target="igw">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         
-        <!-- IGW to Public Subnet components -->
+        
         <mxCell id="igw-to-alb" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#82B366;" edge="1" parent="1" source="igw" target="alb">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -147,7 +148,7 @@
           </mxGeometry>
         </mxCell>
         
-        <!-- NAT to Worker Nodes -->
+        
         <mxCell id="nat-to-nodes" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#D6B656;" edge="1" parent="1" source="nat-gw" target="worker-nodes">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -157,12 +158,12 @@
           </mxGeometry>
         </mxCell>
         
-        <!-- Worker Nodes to EKS Control Plane -->
+        
         <mxCell id="nodes-to-cp" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#9673A6;" edge="1" parent="1" source="worker-nodes" target="eks-cp">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         
-        <!-- VPC Endpoints to AWS Services -->
+        
         <mxCell id="s3-ep-to-s3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#B85450;dashed=1;" edge="1" parent="1" source="s3-endpoint" target="s3">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -176,16 +177,16 @@
           </mxGeometry>
         </mxCell>
         
-        <!-- Labels -->
-        <mxCell id="public-label" value="인터넷 연결" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#82B366;" vertex="1" parent="1">
+        
+        <mxCell id="public-label" value="인터넷 연결" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#82B366;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="160" y="140" width="80" height="20" as="geometry" />
         </mxCell>
         
-        <mxCell id="private-label" value="프라이빗 네트워크" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#D6B656;" vertex="1" parent="1">
+        <mxCell id="private-label" value="프라이빗 네트워크" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#D6B656;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="160" y="380" width="100" height="20" as="geometry" />
         </mxCell>
         
-        <mxCell id="endpoints-label" value="프라이빗 연결" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#B85450;" vertex="1" parent="1">
+        <mxCell id="endpoints-label" value="프라이빗 연결" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#B85450;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="720" y="140" width="80" height="20" as="geometry" />
         </mxCell>
         
