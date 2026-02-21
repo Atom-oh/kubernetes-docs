@@ -1,53 +1,31 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<mxfile host="app.diagrams.net" modified="2025-07-22T04:40:00.000Z" agent="Mozilla/5.0" version="22.0.0" etag="your-etag">
-  <diagram id="container-layers-diagram" name="Container Layers">
-    <mxGraphModel dx="1000" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        
-        
-        <mxCell id="app_layer" value="응용 프로그램 레이어&#10;애플리케이션 코드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
-          <mxGeometry x="320" y="120" width="200" height="60" as="geometry" />
-        </mxCell>
-        
-        
-        <mxCell id="dep_layer" value="의존성 레이어&#10;npm 패키지, pip 패키지 등" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
-          <mxGeometry x="320" y="220" width="200" height="60" as="geometry" />
-        </mxCell>
-        
-        
-        <mxCell id="runtime_layer" value="런타임 레이어&#10;Node.js, Python 등" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
-          <mxGeometry x="320" y="320" width="200" height="60" as="geometry" />
-        </mxCell>
-        
-        
-        <mxCell id="os_layer" value="OS 레이어&#10;Ubuntu, Alpine 등" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
-          <mxGeometry x="320" y="420" width="200" height="60" as="geometry" />
-        </mxCell>
-        
-        
-        <mxCell id="app_to_dep" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="app_layer" target="dep_layer">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="dep_to_runtime" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="dep_layer" target="runtime_layer">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="runtime_to_os" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="runtime_layer" target="os_layer">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-      <mxCell id="icon_2000" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=node;" vertex="1" parent="1"><mxGeometry x="324.0" y="339.0" width="24" height="22" as="geometry" /></mxCell></root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram id="container-layers-diagram" name="Container Layers">
+        <mxGraphModel dx="783" dy="907" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="500" pageHeight="550" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="응용 프로그램 레이어&#10;애플리케이션 코드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#00897B;strokeWidth=2;fontColor=white;fontSize=13;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="50" width="300" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="의존성 레이어&#10;npm 패키지, pip 패키지 등" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1A237E;strokeWidth=2;fontColor=white;fontSize=13;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="170" width="300" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="런타임 레이어&#10;Node.js, Python 등" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1A237E;strokeWidth=2;fontColor=white;fontSize=13;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="290" width="300" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="OS 레이어&#10;Ubuntu, Alpine 등" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#1A237E;strokeWidth=2;fontColor=white;fontSize=13;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="410" width="300" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#545B64;" edge="1" parent="1" source="2" target="3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#545B64;" edge="1" parent="1" source="3" target="4">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#545B64;" edge="1" parent="1" source="4" target="5">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>

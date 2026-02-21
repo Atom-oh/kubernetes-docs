@@ -1,6 +1,6 @@
 # EKS Hybrid Nodes Guide
 
-> **Supported Versions**: EKS 1.31+, nodeadm 0.1+, Harbor 2.13+
+> **Supported Versions**: EKS 1.31+, nodeadm 0.1+
 > **Last Updated**: February 2025
 
 Amazon EKS Hybrid Nodes is a feature that allows you to manage on-premises servers from the AWS EKS control plane. This guide covers the concepts, configuration methods, and practical usage of EKS Hybrid Nodes in production environments.
@@ -9,7 +9,7 @@ Amazon EKS Hybrid Nodes is a feature that allows you to manage on-premises serve
 
 1. [Prerequisites and System Requirements](./01-prerequisites.md)
 2. [Network Configuration](./02-network-configuration.md)
-3. [Air-Gap Environment Setup and Harbor Registry](./03-airgap-setup.md)
+3. [Air-Gap Environment Setup (S3 + VPC Endpoints)](./03-airgap-setup.md)
 4. [Node Bootstrap](./04-node-bootstrap.md)
 5. [GPU Server Integration](./05-gpu-integration.md)
 6. [Workload Placement Strategies](./06-workload-placement.md)
@@ -20,33 +20,11 @@ Amazon EKS Hybrid Nodes is a feature that allows you to manage on-premises serve
 
 EKS Hybrid Nodes is a feature that enables you to register servers in your on-premises data center or edge environment as Kubernetes nodes managed by the AWS EKS control plane. This allows you to manage cloud and on-premises infrastructure as a single Kubernetes cluster.
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        AWS Cloud                                         │
-│  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │                    EKS Control Plane                              │   │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐               │   │
-│  │  │ API Server  │  │    etcd     │  │ Controller  │               │   │
-│  │  │             │  │             │  │  Manager    │               │   │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘               │   │
-│  └──────────────────────────────────────────────────────────────────┘   │
-│                              │                                           │
-│                    VPN / Direct Connect                                  │
-│                              │                                           │
-└──────────────────────────────┼───────────────────────────────────────────┘
-                               │
-┌──────────────────────────────┼───────────────────────────────────────────┐
-│         On-Premises          │        Data Center                        │
-│  ┌───────────────────────────┴────────────────────────────────────────┐ │
-│  │                     Hybrid Nodes                                    │ │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                 │ │
-│  │  │   Node 1    │  │   Node 2    │  │  GPU Node   │                 │ │
-│  │  │  (Worker)   │  │  (Worker)   │  │   (H100)    │                 │ │
-│  │  │  nodeadm    │  │  nodeadm    │  │  nodeadm    │                 │ │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘                 │ │
-│  └────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+![EKS Hybrid Nodes High-Level Network Architecture](../../assets/aws-official-diagrams/hybrid-nodes-highlevel-network.png)
+
+The following diagram shows the network prerequisites including VPC, subnets, Transit Gateway/Virtual Private Gateway, and Remote Node/Pod CIDR connectivity.
+
+![EKS Hybrid Nodes Network Prerequisites](../../assets/aws-official-diagrams/hybrid-prereq-diagram.png)
 
 ## Why Use Hybrid Nodes?
 
@@ -94,6 +72,34 @@ The EKS Hybrid Nodes architecture consists of the following components:
 | VPN/Direct Connect | Network | Secure connection between AWS and on-premises |
 | SSM Agent or IAM Roles Anywhere | On-Premises | Credential management |
 
+### Key Constraints and Limitations
+
+- **Network connectivity**: Requires reliable on-premises to AWS connectivity via VPN or Direct Connect (not suitable for disconnected, intermittent, limited, or denied environments)
+- **CIDR limits**: Up to 15 CIDRs for Remote Node Networks and Remote Pod Networks per cluster
+- **IPv4 only**: Must use IPv4 address family (IPv6 not supported for hybrid nodes)
+- **Authentication mode**: Cluster must use `API` or `API_AND_CONFIG_MAP` authentication mode
+- **Endpoint access**: Must use Public OR Private only ("Public and Private" **not supported** — causes hybrid node join failures)
+- **Per-vCPU pricing**: Hybrid nodes are charged per-vCPU hourly (no minimum commitments)
+- **Cloud infrastructure**: Not supported on cloud infrastructure (running on EC2 will incur hybrid node fees)
+- **VPC CNI**: Amazon VPC CNI is not compatible with hybrid nodes; use Cilium or Calico
+
+### Credential Provider Options
+
+EKS Hybrid Nodes supports two credential providers for authenticating on-premises nodes with AWS:
+
+| Feature | SSM Hybrid Activations | IAM Roles Anywhere |
+|---------|----------------------|-------------------|
+| **Setup complexity** | Simple — activation code/ID pair | Moderate — requires PKI infrastructure |
+| **Certificate required** | No | Yes (X.509 certificate per node) |
+| **Air-gap compatible** | No (requires SSM endpoint access) | Yes (works with local CA) |
+| **Credential rotation** | Automatic (AWS managed, 1-hour TTL fixed) | Automatic (certificate-based, 1-12 hours configurable) |
+| **Node naming** | Auto-generated (`mi-xxxx`, not customizable) | Custom (must match certificate CN) |
+| **Scaling limits** | 1,000 free per account per region; advanced-instances tier for more (extra cost) | No limits |
+| **AWS dependency** | SSM service | IAM Roles Anywhere service |
+| **Best for** | Standard environments with internet/VPN | Air-gap, strict compliance, existing PKI |
+
+> **Recommendation**: Use SSM Hybrid Activations for simplicity in most environments. Choose IAM Roles Anywhere when you need air-gap support or already have PKI infrastructure.
+
 ## Primary Use Cases
 
 1. **AI/ML Workloads**: Model training on on-premises GPU servers, inference services in the cloud
@@ -108,7 +114,7 @@ Start with the [Prerequisites and System Requirements](./01-prerequisites.md) to
 ## Quiz
 
 To test your understanding of EKS Hybrid Nodes, try the following quiz:
-- [EKS Hybrid Nodes Quiz](../quizzes/eks/12-eks-hybrid-nodes-quiz.md)
+- [EKS Hybrid Nodes Quiz](../quizzes/eks-hybrid-nodes/)
 
 ## Related Documents
 
@@ -118,7 +124,10 @@ To test your understanding of EKS Hybrid Nodes, try the following quiz:
 
 ## Official Documentation
 
-- [AWS EKS Hybrid Nodes Official Documentation](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes.html)
+- [AWS EKS Hybrid Nodes Official Documentation](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html)
 - [nodeadm User Guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html)
 - [Harbor Official Documentation](https://goharbor.io/docs/)
 - [NVIDIA GPU Operator Documentation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/overview.html)
+- [Hybrid Nodes Networking Guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)
+- [Hybrid Nodes CNI Configuration](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [Hybrid Nodes Troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-troubleshooting.html)

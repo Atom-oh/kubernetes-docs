@@ -8,7 +8,7 @@
 
 EKS 클러스터의 네트워크 성능을 최적화하기 위한 여러 전략이 있습니다.
 
-![EKS 네트워크 성능 최적화](../assets/generated-diagrams/network_performance_optimization.drawio)
+![EKS 네트워크 성능 최적화](../assets/generated-diagrams/network_performance_optimization.png)
 
 ### 인스턴스 유형 선택
 
@@ -30,7 +30,7 @@ EKS 클러스터의 네트워크 성능을 최적화하기 위한 여러 전략�
 
 EKS는 여러 네트워킹 모드를 지원하며, 각 모드는 성능 특성이 다릅니다.
 
-![EKS 네트워킹 모드](../assets/generated-diagrams/eks_networking_modes.drawio)
+![EKS 네트워킹 모드](../assets/generated-diagrams/eks_networking_modes.png)
 
 1. **AWS VPC CNI(기본값)**:
    - 포드에 VPC IP 주소를 직접 할당합니다.
@@ -104,7 +104,7 @@ sysctl -w net.ipv4.tcp_wmem="4096 65536 16777216"
 
 노드 배치 및 지역성을 최적화하여 네트워크 성능을 향상시킬 수 있습니다.
 
-![노드 배치 및 지역성 최적화](../assets/generated-diagrams/node_placement_locality.drawio)
+![노드 배치 및 지역성 최적화](../assets/generated-diagrams/node_placement_locality.png)
 
 1. **가용 영역 지역성**:
    - 통신이 빈번한 포드를 같은 가용 영역에 배치하여 지연 시간을 줄입니다.
@@ -212,11 +212,11 @@ spec:
 
 EKS 클러스터에서 발생할 수 있는 일반적인 네트워킹 문제와 해결 방법을 알아보겠습니다.
 
-![EKS 네트워킹 문제 해결](../assets/generated-diagrams/networking_troubleshooting.drawio)
+![EKS 네트워킹 문제 해결](../assets/generated-diagrams/networking_troubleshooting.png)
 
 ### 포드 네트워킹 문제
 
-![포드 네트워킹 문제](../assets/generated-diagrams/pod_networking_issues.drawio)
+![포드 네트워킹 문제](../assets/generated-diagrams/pod_networking_issues.png)
 
 1. **포드 IP 할당 실패**:
    - 증상: 포드가 `ContainerCreating` 상태에 멈춰 있음
@@ -257,7 +257,7 @@ kubectl exec -it <pod-name> -- dig kubernetes.default.svc.cluster.local
 
 ### 서비스 및 로드 밸런싱 문제
 
-![서비스 및 로드 밸런서 문제](../assets/generated-diagrams/service_loadbalancer_issues.drawio)
+![서비스 및 로드 밸런서 문제](../assets/generated-diagrams/service_loadbalancer_issues.png)
 
 1. **서비스 연결 문제**:
    - 증상: 서비스를 통해 포드에 연결할 수 없음

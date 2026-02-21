@@ -5,7 +5,7 @@
             <root>
                 <mxCell id="0" />
                 <mxCell id="1" parent="0" />
-                <mxCell id="2" value="Kubernetes 클러스터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                <mxCell id="2" value="Kubernetes 클러스터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;fontFamily=Noto Sans CJK KR;arcSize=5;" parent="1" vertex="1">
                     <mxGeometry x="290" y="-50" width="800" height="890" as="geometry" />
                 </mxCell>
                 <mxCell id="3" value="컨트롤 플레인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
@@ -38,7 +38,7 @@
                 <mxCell id="12" value="커스텀 프로필" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;fontSize=10;fontColor=black;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
                     <mxGeometry x="840" y="340" width="90" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="13" value="워커 노드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;fontFamily=Noto Sans CJK KR;spacingLeft=28;" parent="1" vertex="1">
+                <mxCell id="13" value="워커 노드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
                     <mxGeometry x="340" y="540" width="700" height="120" as="geometry" />
                 </mxCell>
                 <mxCell id="14" value="노드 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontSize=11;fontColor=white;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">

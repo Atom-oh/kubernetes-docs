@@ -16,7 +16,7 @@
         </mxCell>
         
         
-        <mxCell id="sc" value="스토리지 클래스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="sc" value="스토리지 클래스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="320" y="130" width="160" height="40" as="geometry" />
         </mxCell>
         
@@ -28,7 +28,7 @@
           <mxGeometry x="600" y="290" width="160" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="pod" value="파드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="pod" value="파드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="320" y="400" width="160" height="40" as="geometry" />
         </mxCell>
         

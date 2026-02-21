@@ -7,7 +7,7 @@
                 <mxCell id="1" parent="0" />
                 
                 
-                <mxCell id="2" value="Pod" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="2" value="Pod" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
                     <mxGeometry x="120" y="80" width="100" height="500" as="geometry" />
                 </mxCell>
                 
@@ -19,11 +19,11 @@
                     <mxGeometry x="380" y="80" width="100" height="500" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="5" value="AWS EC2 API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="5" value="AWS EC2 API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
                     <mxGeometry x="500" y="80" width="100" height="500" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="6" value="New Node" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="6" value="New Node" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" vertex="1" parent="1">
                     <mxGeometry x="620" y="80" width="100" height="500" as="geometry" />
                 </mxCell>
                 

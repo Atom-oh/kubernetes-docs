@@ -5,7 +5,7 @@
             <root>
                 <mxCell id="0" />
                 <mxCell id="1" parent="0" />
-                <mxCell id="2" value="EKS 클러스터" style="swimlane;whiteSpace=wrap;html=1;startSize=23;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" parent="1" vertex="1">
+                <mxCell id="2" value="EKS 클러스터" style="swimlane;whiteSpace=wrap;html=1;startSize=23;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
                     <mxGeometry x="120" y="120" width="230" height="330" as="geometry" />
                 </mxCell>
                 <mxCell id="3" value="Gateway API Controller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" parent="2" vertex="1">
@@ -14,10 +14,10 @@
                 <mxCell id="4" value="Gateway API 리소스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="2" vertex="1">
                     <mxGeometry x="40" y="120" width="160" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="5" value="Kubernetes 서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" parent="2" vertex="1">
+                <mxCell id="5" value="Kubernetes 서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="2" vertex="1">
                     <mxGeometry x="40" y="180" width="160" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="6" value="Kubernetes 파드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" parent="2" vertex="1">
+                <mxCell id="6" value="Kubernetes 파드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="2" vertex="1">
                     <mxGeometry x="40" y="250" width="160" height="40" as="geometry" />
                 </mxCell>
                 <mxCell id="14" value="선택" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fontFamily=Noto Sans CJK KR;" parent="2" source="5" target="6" edge="1">
@@ -32,7 +32,7 @@
                 <mxCell id="7" value="VPC Lattice 서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;fontColor=#000000;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
                     <mxGeometry x="400" y="205" width="160" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="8" value="VPC Lattice 대상 그룹" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;fontColor=#000000;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" parent="1" vertex="1">
+                <mxCell id="8" value="VPC Lattice 대상 그룹" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;fontColor=#000000;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
                     <mxGeometry x="400" y="285" width="160" height="40" as="geometry" />
                 </mxCell>
                 <mxCell id="9" value="VPC Lattice 서비스 네트워크" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;fontColor=#000000;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">

@@ -1,107 +1,111 @@
-# EKS 클러스터 생성 - 4부: Terraform 및 CDK를 사용한 클러스터 생성
+# EKS 클러스터 생성 - Part 4: Terraform을 사용한 클러스터 생성
 
-> **지원 버전**: Kubernetes 1.31, 1.32, 1.33  
-> **마지막 업데이트**: 2025년 7월 25일
+> **지원 버전**: Kubernetes 1.31, 1.32, 1.33
+> **마지막 업데이트**: 2026년 2월 19일
 
-## 실습 환경 설정
+## 프로덕션 Terraform 프로젝트 구조
 
-이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
+Terraform은 인프라를 코드로 정의하고, 프로비저닝하며, 관리할 수 있는 도구로 EKS 클러스터를 반복 가능하고 버전 관리되는 방식으로 배포할 수 있습니다. 이 가이드에서는 **AWS 프로바이더 ~> 6.0**과 커뮤니티 **EKS 모듈 ~> 21.0**을 사용하며, Auto Mode, Hybrid Nodes, Pod Identity, API 기반 Access Entry 등 최신 EKS 기능을 지원합니다.
 
-### 필수 도구
-- AWS CLI v2.0 이상
-- Terraform v1.0.0 이상 (Terraform 예제용)
-- AWS CDK v2.0 이상 (CDK 예제용)
-- kubectl v1.31 이상
-- Node.js v14 이상 (CDK 사용 시)
+프로덕션 환경에서 단일 Terraform 디렉토리에 하나의 상태 파일을 사용하면 문제가 발생합니다. VPC 변경이 실수로 클러스터를 삭제할 수 있고, 프로젝트가 커질수록 `terraform plan`이 느려지며, 서로 다른 팀이 독립적으로 작업할 수 없습니다. **멀티 레이어 아키텍처**는 변경 빈도와 소유권에 따라 인프라를 별도의 상태 파일로 분리하여 이러한 문제를 해결합니다.
 
-### AWS 계정 설정
-1. AWS 계정이 필요합니다. 계정이 없는 경우 [AWS 계정 생성](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/)을 참조하세요.
-2. 다음 IAM 권한이 필요합니다:
-   - AmazonEKSClusterPolicy
-   - AmazonEKSServicePolicy
-   - AmazonVPCFullAccess
-   - IAMFullAccess
+### 3-레이어 아키텍처
 
-### AWS CLI 구성
-```bash
-aws configure
-# AWS Access Key ID, Secret Access Key, 리전, 출력 형식을 입력합니다.
+```
+eks-terraform/
+├── 01-network/                   # 레이어 1: VPC 및 네트워킹
+│   ├── providers.tf
+│   ├── backend.tf                # S3 키: eks/network/terraform.tfstate
+│   ├── variables.tf
+│   ├── main.tf                   # VPC 모듈
+│   └── outputs.tf                # vpc_id, subnet_ids → 원격 상태
+├── 02-cluster/                   # 레이어 2: EKS 클러스터 및 노드 그룹
+│   ├── providers.tf
+│   ├── backend.tf                # S3 키: eks/cluster/terraform.tfstate
+│   ├── data.tf                   # terraform_remote_state → 01-network
+│   ├── variables.tf
+│   ├── main.tf                   # EKS 모듈, 노드 그룹, 코어 애드온
+│   └── outputs.tf                # cluster_name, endpoint → 원격 상태
+└── 03-platform/                  # 레이어 3: 애드온, RBAC, Pod Identity
+    ├── providers.tf
+    ├── backend.tf                # S3 키: eks/platform/terraform.tfstate
+    ├── data.tf                   # terraform_remote_state → 01-network, 02-cluster
+    ├── variables.tf
+    ├── addons.tf                 # EBS CSI 드라이버, 추가 애드온
+    ├── pod-identity.tf           # Pod Identity 연결
+    └── access-entries.tf         # 개발자/뷰어 액세스 엔트리
 ```
 
-### 로컬 개발 환경 (선택 사항)
-로컬에서 Kubernetes를 테스트하려면 다음 도구 중 하나를 사용할 수 있습니다:
-- **minikube**: `brew install minikube` (macOS) 또는 [minikube 설치 가이드](https://minikube.sigs.k8s.io/docs/start/) 참조
-- **kind**: `brew install kind` (macOS) 또는 [kind 설치 가이드](https://kind.sigs.k8s.io/docs/user/quick-start/) 참조
+### 레이어를 분리하는 이유
 
-## Terraform을 사용한 클러스터 생성
+| 레이어 | 변경 빈도 | 소유 팀 | 영향 범위 |
+|--------|----------|---------|----------|
+| 01-network | 드물게 | 인프라 팀 | VPC, 서브넷만 |
+| 02-cluster | 월간 | 플랫폼 팀 | EKS 클러스터, 노드 |
+| 03-platform | 주간 | 플랫폼 / 앱 팀 | 애드온, RBAC, Pod Identity |
 
-Terraform은 인프라를 코드로 관리하는 도구로, EKS 클러스터를 생성하고 관리하는 데 사용할 수 있습니다. Terraform을 사용하면 인프라를 버전 관리하고 반복 가능한 방식으로 배포할 수 있습니다.
+각 레이어는 자체 S3 상태 파일을 가지며 독립적으로 plan/apply 할 수 있습니다. `03-platform`에서 애드온을 변경해도 VPC나 클러스터 자체에 영향을 주지 않습니다.
 
-### Terraform을 사용한 EKS 클러스터 생성 프로세스
+### 공유 S3 백엔드
 
-![Terraform을 사용한 EKS 클러스터 생성 프로세스](../assets/generated-diagrams/terraform_eks_creation_process.drawio)
+모든 레이어는 DynamoDB 잠금이 있는 단일 S3 버킷을 공유하지만, 각 레이어는 **서로 다른 상태 키**에 기록합니다:
 
-### Terraform 구성 요소 관계
-
-![Terraform 구성 요소 관계](../assets/generated-diagrams/terraform_components_relationship.drawio)
-    
-    %% 클래스 적용
-    class E,F awsService;
-    class G,H,I,J awsService;
-    class A,B,C,D userApp;
-```
-
-### 1. Terraform 설치
-
-먼저 Terraform을 설치해야 합니다:
-
-**macOS**:
-```bash
-brew install terraform
-```
-
-**Linux**:
-```bash
-curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-sudo apt-get update && sudo apt-get install terraform
-```
-
-**Windows**:
-```
-https://www.terraform.io/downloads.html
-```
-
-### 2. 프로젝트 디렉토리 생성
-
-Terraform 프로젝트를 위한 디렉토리를 생성합니다:
-
-```bash
-mkdir eks-terraform
-cd eks-terraform
-```
-
-### 3. Terraform 구성 파일 작성
-
-다음과 같은 Terraform 구성 파일을 작성합니다:
-
-**providers.tf**:
 ```hcl
-provider "aws" {
-  region = "us-west-2"
-}
-
+# 예시: 01-network/backend.tf
 terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.0"
-    }
+  backend "s3" {
+    bucket         = "my-terraform-state"
+    key            = "eks/network/terraform.tfstate"
+    region         = "ap-northeast-2"
+    dynamodb_table = "terraform-lock"
+    encrypt        = true
   }
 }
 ```
 
-**variables.tf**:
+레이어 간 참조는 `terraform_remote_state` 데이터 소스를 통해 이루어지며, 이는 다른 레이어의 상태 파일에서 출력을 읽어 Terraform 코드 자체에 대한 의존성 없이 연결합니다.
+
+---
+
+## 레이어 1: 네트워크 (01-network)
+
+이 레이어는 VPC, 서브넷, NAT 게이트웨이 및 모든 네트워킹 전제 조건을 프로비저닝합니다. 변경이 드물며 일반적으로 인프라 팀이 소유합니다.
+
+### 01-network/providers.tf
+
+```hcl
+terraform {
+  required_version = ">= 1.3"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.region
+}
+```
+
+### 01-network/backend.tf
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket         = "my-terraform-state"
+    key            = "eks/network/terraform.tfstate"
+    region         = "ap-northeast-2"
+    dynamodb_table = "terraform-lock"
+    encrypt        = true
+  }
+}
+```
+
+### 01-network/variables.tf
+
 ```hcl
 variable "cluster_name" {
   description = "Name of the EKS cluster"
@@ -109,10 +113,10 @@ variable "cluster_name" {
   default     = "my-eks-cluster"
 }
 
-variable "cluster_version" {
-  description = "Kubernetes version to use for the EKS cluster"
+variable "region" {
+  description = "AWS region"
   type        = string
-  default     = "1.26"
+  default     = "ap-northeast-2"
 }
 
 variable "vpc_cidr" {
@@ -124,51 +128,37 @@ variable "vpc_cidr" {
 variable "availability_zones" {
   description = "List of availability zones"
   type        = list(string)
-  default     = ["us-west-2a", "us-west-2b"]
+  default     = ["ap-northeast-2a", "ap-northeast-2b", "ap-northeast-2c"]
 }
 
 variable "private_subnets" {
-  description = "List of private subnet CIDR blocks"
+  description = "Private subnet CIDR blocks"
   type        = list(string)
-  default     = ["10.0.1.0/24", "10.0.2.0/24"]
+  default     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
 }
 
 variable "public_subnets" {
-  description = "List of public subnet CIDR blocks"
+  description = "Public subnet CIDR blocks"
   type        = list(string)
-  default     = ["10.0.101.0/24", "10.0.102.0/24"]
+  default     = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
 }
 
-variable "node_groups" {
-  description = "Map of EKS managed node group definitions"
-  type        = map(any)
-  default     = {
-    ng1 = {
-      name           = "node-group-1"
-      instance_types = ["m5.large"]
-      min_size       = 1
-      max_size       = 3
-      desired_size   = 2
-      disk_size      = 80
-    }
-    ng2 = {
-      name           = "node-group-2"
-      instance_types = ["c5.xlarge"]
-      min_size       = 1
-      max_size       = 3
-      desired_size   = 2
-      disk_size      = 80
-      capacity_type  = "SPOT"
-    }
+variable "tags" {
+  description = "Common tags for all resources"
+  type        = map(string)
+  default = {
+    Environment = "dev"
+    Terraform   = "true"
   }
 }
 ```
 
-**vpc.tf**:
+### 01-network/main.tf
+
 ```hcl
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 3.0"
+  version = "~> 5.0"
 
   name = "${var.cluster_name}-vpc"
   cidr = var.vpc_cidr
@@ -182,101 +172,216 @@ module "vpc" {
   enable_dns_hostnames = true
 
   public_subnet_tags = {
-    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-    "kubernetes.io/role/elb"                    = "1"
+    "kubernetes.io/role/elb" = "1"
   }
 
   private_subnet_tags = {
-    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-    "kubernetes.io/role/internal-elb"           = "1"
+    "kubernetes.io/role/internal-elb" = "1"
   }
 
-  tags = {
+  tags = var.tags
+}
+```
+
+> **참고**: EKS 모듈 ~> 21.0과 AWS Load Balancer Controller를 사용할 때 서브넷에 `kubernetes.io/cluster/<cluster-name>` 태그는 더 이상 필요하지 않습니다. `kubernetes.io/role/elb` 및 `kubernetes.io/role/internal-elb` 태그만으로 서브넷 검색이 가능합니다.
+
+### 01-network/outputs.tf
+
+```hcl
+output "vpc_id" {
+  description = "VPC ID"
+  value       = module.vpc.vpc_id
+}
+
+output "private_subnet_ids" {
+  description = "Private subnet IDs"
+  value       = module.vpc.private_subnets
+}
+
+output "public_subnet_ids" {
+  description = "Public subnet IDs"
+  value       = module.vpc.public_subnets
+}
+```
+
+---
+
+## 레이어 2: EKS 클러스터 (02-cluster)
+
+이 레이어는 EKS 클러스터, 관리형 노드 그룹, 코어 애드온을 프로비저닝합니다. `terraform_remote_state`를 통해 레이어 1의 네트워크 정보를 읽어옵니다.
+
+### 02-cluster/providers.tf
+
+```hcl
+terraform {
+  required_version = ">= 1.3"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.region
+}
+```
+
+### 02-cluster/backend.tf
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket         = "my-terraform-state"
+    key            = "eks/cluster/terraform.tfstate"
+    region         = "ap-northeast-2"
+    dynamodb_table = "terraform-lock"
+    encrypt        = true
+  }
+}
+```
+
+### 02-cluster/data.tf
+
+```hcl
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = {
+    bucket = "my-terraform-state"
+    key    = "eks/network/terraform.tfstate"
+    region = "ap-northeast-2"
+  }
+}
+```
+
+### 02-cluster/variables.tf
+
+```hcl
+variable "cluster_name" {
+  description = "Name of the EKS cluster"
+  type        = string
+  default     = "my-eks-cluster"
+}
+
+variable "cluster_version" {
+  description = "Kubernetes version for the EKS cluster"
+  type        = string
+  default     = "1.33"
+}
+
+variable "region" {
+  description = "AWS region"
+  type        = string
+  default     = "ap-northeast-2"
+}
+
+variable "tags" {
+  description = "Common tags for all resources"
+  type        = map(string)
+  default = {
     Environment = "dev"
     Terraform   = "true"
   }
 }
 ```
 
-**eks.tf**:
+### 02-cluster/main.tf
+
 ```hcl
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 18.0"
+  version = "~> 21.0"
 
   cluster_name    = var.cluster_name
   cluster_version = var.cluster_version
 
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
+  vpc_id     = data.terraform_remote_state.network.outputs.vpc_id
+  subnet_ids = data.terraform_remote_state.network.outputs.private_subnet_ids
 
+  # 클러스터 엔드포인트 접근 설정
   cluster_endpoint_private_access = true
   cluster_endpoint_public_access  = true
 
-  # EKS Managed Node Groups
-  eks_managed_node_group_defaults = {
-    disk_size      = 80
-    instance_types = ["m5.large"]
+  # API 기반 인증 사용 (aws-auth ConfigMap 대체)
+  authentication_mode = "API"
+
+  # Terraform 호출자에게 클러스터 관리자 권한 부여
+  enable_cluster_creator_admin_permissions = true
+
+  # EKS 애드온 (코어만 — 추가 애드온은 03-platform에서 관리)
+  cluster_addons = {
+    coredns = {
+      most_recent = true
+    }
+    vpc-cni = {
+      most_recent    = true
+      before_compute = true
+      configuration_values = jsonencode({
+        env = {
+          ENABLE_PREFIX_DELEGATION = "true"
+        }
+      })
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+    eks-pod-identity-agent = {
+      most_recent    = true
+      before_compute = true
+    }
   }
 
+  # 관리형 노드 그룹
   eks_managed_node_groups = {
-    for k, v in var.node_groups : k => {
-      name           = v.name
-      instance_types = v.instance_types
-      min_size       = v.min_size
-      max_size       = v.max_size
-      desired_size   = v.desired_size
-      disk_size      = v.disk_size
-      capacity_type  = lookup(v, "capacity_type", "ON_DEMAND")
-    }
-  }
-
-  # Fargate Profile
-  fargate_profiles = {
     default = {
-      name = "default"
-      selectors = [
-        {
-          namespace = "default"
-          labels = {
-            env = "fargate"
-          }
-        }
-      ]
+      ami_type       = "AL2023_x86_64_STANDARD"
+      instance_types = ["m5.large"]
+
+      min_size     = 2
+      max_size     = 5
+      desired_size = 2
+
+      disk_size = 50
     }
-    kube-system = {
-      name = "kube-system"
-      selectors = [
-        {
-          namespace = "kube-system"
-          labels = {
-            k8s-app = "kube-dns"
-          }
-        }
-      ]
+
+    spot = {
+      ami_type       = "AL2023_x86_64_STANDARD"
+      instance_types = ["m5.large", "m5a.large", "m5d.large"]
+      capacity_type  = "SPOT"
+
+      min_size     = 0
+      max_size     = 5
+      desired_size = 1
+
+      disk_size = 50
     }
   }
 
-  # Enable EKS Cluster CloudWatch Logging
+  # CloudWatch 로깅
   cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
-  tags = {
-    Environment = "dev"
-    Terraform   = "true"
-  }
+  tags = var.tags
 }
 ```
 
-**outputs.tf**:
+### 02-cluster/outputs.tf
+
 ```hcl
-output "cluster_id" {
-  description = "EKS cluster ID"
-  value       = module.eks.cluster_id
+output "cluster_name" {
+  description = "EKS cluster name"
+  value       = module.eks.cluster_name
 }
 
 output "cluster_endpoint" {
-  description = "Endpoint for EKS control plane"
+  description = "EKS cluster API endpoint"
   value       = module.eks.cluster_endpoint
+}
+
+output "cluster_certificate_authority_data" {
+  description = "Base64 encoded certificate data for the cluster"
+  value       = module.eks.cluster_certificate_authority_data
 }
 
 output "cluster_security_group_id" {
@@ -284,554 +389,625 @@ output "cluster_security_group_id" {
   value       = module.eks.cluster_security_group_id
 }
 
-output "config_map_aws_auth" {
-  description = "A kubernetes configuration to authenticate to this EKS cluster"
-  value       = module.eks.aws_auth_configmap_yaml
+output "oidc_provider_arn" {
+  description = "OIDC provider ARN for the EKS cluster"
+  value       = module.eks.oidc_provider_arn
 }
 
 output "region" {
   description = "AWS region"
-  value       = "us-west-2"
+  value       = var.region
 }
 ```
 
-### 4. Terraform 초기화 및 적용
+---
 
-Terraform 구성 파일을 작성한 후에는 다음 단계로 진행합니다:
+## 레이어 3: 플랫폼 구성 (03-platform)
 
-> **중요**: 실행 전 모든 구성 파일이 올바르게 작성되었는지 확인하세요.
+이 레이어는 코어 세트 이외의 애드온, Pod Identity 연결, 액세스 엔트리를 관리합니다. 가장 자주 변경되며 클러스터나 네트워크에 영향을 주지 않고 독립적으로 적용할 수 있습니다.
 
-#### 4.1 Terraform 초기화
+### 03-platform/providers.tf
 
-먼저 Terraform을 초기화하여 필요한 공급자와 모듈을 다운로드합니다:
+```hcl
+terraform {
+  required_version = ">= 1.3"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.region
+}
+```
+
+### 03-platform/backend.tf
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket         = "my-terraform-state"
+    key            = "eks/platform/terraform.tfstate"
+    region         = "ap-northeast-2"
+    dynamodb_table = "terraform-lock"
+    encrypt        = true
+  }
+}
+```
+
+### 03-platform/data.tf
+
+```hcl
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = {
+    bucket = "my-terraform-state"
+    key    = "eks/network/terraform.tfstate"
+    region = "ap-northeast-2"
+  }
+}
+
+data "terraform_remote_state" "cluster" {
+  backend = "s3"
+  config = {
+    bucket = "my-terraform-state"
+    key    = "eks/cluster/terraform.tfstate"
+    region = "ap-northeast-2"
+  }
+}
+```
+
+### 03-platform/variables.tf
+
+```hcl
+variable "cluster_name" {
+  description = "Name of the EKS cluster"
+  type        = string
+  default     = "my-eks-cluster"
+}
+
+variable "region" {
+  description = "AWS region"
+  type        = string
+  default     = "ap-northeast-2"
+}
+
+variable "tags" {
+  description = "Common tags for all resources"
+  type        = map(string)
+  default = {
+    Environment = "dev"
+    Terraform   = "true"
+  }
+}
+```
+
+### 03-platform/addons.tf
+
+```hcl
+# Pod Identity를 사용하는 EBS CSI 드라이버
+resource "aws_iam_role" "ebs_csi" {
+  name = "${var.cluster_name}-ebs-csi"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "pods.eks.amazonaws.com"
+      }
+      Action = [
+        "sts:AssumeRole",
+        "sts:TagSession"
+      ]
+    }]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi" {
+  role       = aws_iam_role.ebs_csi.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+}
+
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name = data.terraform_remote_state.cluster.outputs.cluster_name
+  addon_name   = "aws-ebs-csi-driver"
+
+  pod_identity_association {
+    role_arn        = aws_iam_role.ebs_csi.arn
+    service_account = "ebs-csi-controller-sa"
+  }
+
+  tags = var.tags
+}
+```
+
+### 03-platform/pod-identity.tf
+
+```hcl
+# 예제: 애플리케이션 파드의 S3 접근
+resource "aws_iam_role" "app_s3_access" {
+  name = "${var.cluster_name}-app-s3-access"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "pods.eks.amazonaws.com"
+      }
+      Action = [
+        "sts:AssumeRole",
+        "sts:TagSession"
+      ]
+    }]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "app_s3_access" {
+  role       = aws_iam_role.app_s3_access.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+}
+
+# IAM 역할을 Kubernetes 서비스 어카운트와 연결
+resource "aws_eks_pod_identity_association" "app_s3_access" {
+  cluster_name    = data.terraform_remote_state.cluster.outputs.cluster_name
+  namespace       = "default"
+  service_account = "app-sa"
+  role_arn        = aws_iam_role.app_s3_access.arn
+}
+```
+
+### 03-platform/access-entries.tf
+
+```hcl
+resource "aws_eks_access_entry" "admin" {
+  cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
+  principal_arn = "arn:aws:iam::123456789012:role/AdminRole"
+}
+
+resource "aws_eks_access_policy_association" "admin" {
+  cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
+  principal_arn = "arn:aws:iam::123456789012:role/AdminRole"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
+# 네임스페이스 범위 접근 권한의 개발자
+resource "aws_eks_access_entry" "developer" {
+  cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
+  principal_arn = "arn:aws:iam::123456789012:role/DevRole"
+}
+
+resource "aws_eks_access_policy_association" "developer" {
+  cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
+  principal_arn = "arn:aws:iam::123456789012:role/DevRole"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
+
+  access_scope {
+    type       = "namespace"
+    namespaces = ["app-dev", "app-staging"]
+  }
+}
+
+# 읽기 전용 접근
+resource "aws_eks_access_entry" "viewer" {
+  cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
+  principal_arn = "arn:aws:iam::123456789012:role/ViewerRole"
+}
+
+resource "aws_eks_access_policy_association" "viewer" {
+  cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
+  principal_arn = "arn:aws:iam::123456789012:role/ViewerRole"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+}
+```
+
+---
+
+## EKS Pod Identity 구성
+
+EKS Pod Identity는 Kubernetes 워크로드에 AWS 권한을 부여하는 권장 방식입니다. IAM Roles for Service Accounts(IRSA)를 대체하며 OIDC 프로바이더가 필요하지 않습니다.
+
+### Pod Identity 동작 방식
+
+1. `eks-pod-identity-agent` 애드온이 모든 노드에서 DaemonSet으로 실행됩니다 (레이어 2에서 설치).
+2. Pod Identity 트러스트 정책이 포함된 IAM 역할이 생성됩니다 (레이어 3에서 생성).
+3. `aws_eks_pod_identity_association`을 통해 IAM 역할이 Kubernetes 서비스 어카운트와 연결됩니다.
+4. 해당 서비스 어카운트를 사용하는 파드는 자동으로 임시 AWS 자격 증명을 받습니다.
+
+위의 `03-platform/pod-identity.tf`에 표시된 Pod Identity 리소스가 이 패턴을 따릅니다. IAM 역할의 트러스트 정책은 `pods.eks.amazonaws.com`을 보안 주체로 사용하며, `sts:TagSession`은 클러스터, 네임스페이스, 서비스 어카운트 메타데이터를 사용한 자동 세션 태깅을 활성화합니다.
+
+### Pod Identity vs IRSA 비교
+
+| 기능 | Pod Identity | IRSA |
+|------|-------------|------|
+| OIDC 프로바이더 필요 | 아니오 | 예 |
+| 크로스 어카운트 지원 | `sts:TagSession`으로 내장 지원 | 어카운트별 OIDC 트러스트 필요 |
+| 설정 복잡도 | 낮음 — 단일 연결 | 보통 — OIDC, 역할, 어노테이션 |
+| 세션 태그 | 자동 (클러스터, 네임스페이스, SA) | 지원하지 않음 |
+| 재사용성 | 동일 역할을 여러 클러스터에서 사용 | 클러스터 OIDC당 하나의 역할 |
+
+> **권장 사항**: 모든 새 워크로드에는 Pod Identity를 사용하세요. IRSA는 하위 호환성을 위해 계속 지원됩니다.
+
+---
+
+## EKS Auto Mode 클러스터
+
+EKS Auto Mode는 노드 프로비저닝, 스케일링, OS 관리를 AWS에 완전히 위임합니다. 관리형 노드 그룹을 정의할 필요가 없으며 EKS가 자동으로 컴퓨팅을 프로비저닝하고 관리합니다. Auto Mode를 사용할 때는 표준 `02-cluster/main.tf`를 다음 변형으로 대체합니다:
+
+```hcl
+# 02-cluster/main.tf (Auto Mode 변형)
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 21.0"
+
+  cluster_name    = var.cluster_name
+  cluster_version = var.cluster_version
+
+  vpc_id     = data.terraform_remote_state.network.outputs.vpc_id
+  subnet_ids = data.terraform_remote_state.network.outputs.private_subnet_ids
+
+  authentication_mode                      = "API"
+  enable_cluster_creator_admin_permissions = true
+
+  # Auto Mode 활성화
+  cluster_compute_config = {
+    enabled    = true
+    node_pools = ["general-purpose", "system"]
+  }
+
+  # Auto Mode가 이 애드온을 관리하므로 자체 관리 애드온 부트스트랩 비활성화
+  bootstrap_self_managed_addons = false
+
+  tags = var.tags
+}
+```
+
+### 핵심 사항
+
+- **`cluster_compute_config.enabled = true`**로 Auto Mode를 활성화합니다.
+- **`node_pools`**는 활성화할 내장 노드 풀을 지정합니다 (`general-purpose`, `system`).
+- **`bootstrap_self_managed_addons = false`**로 충돌을 방지합니다 — Auto Mode가 코어 애드온(CoreDNS, kube-proxy, VPC CNI)을 자동으로 관리합니다.
+- Auto Mode 사용 시 `eks_managed_node_groups`를 정의하지 **않습니다**.
+- Auto Mode는 노드 풀에서 EC2 인스턴스를 프로비저닝하고 OS 패치, 스케일링, 라이프사이클을 처리합니다.
+
+---
+
+## EKS Hybrid Nodes 구성
+
+EKS Hybrid Nodes를 사용하면 온프레미스 또는 엣지 서버를 EKS 클러스터의 워커 노드로 참여시킬 수 있으며, EKS 컨트롤 플레인은 AWS에 유지됩니다. Hybrid Nodes를 사용할 때는 표준 `02-cluster/main.tf`를 다음 변형으로 대체합니다:
+
+```hcl
+# 02-cluster/main.tf (Hybrid Nodes 변형)
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 21.0"
+
+  cluster_name    = var.cluster_name
+  cluster_version = var.cluster_version
+
+  vpc_id     = data.terraform_remote_state.network.outputs.vpc_id
+  subnet_ids = data.terraform_remote_state.network.outputs.private_subnet_ids
+
+  authentication_mode                      = "API"
+  enable_cluster_creator_admin_permissions = true
+
+  # Hybrid Nodes 네트워크 구성
+  remote_network_config = {
+    remote_node_networks = [
+      {
+        cidrs = ["172.16.0.0/16"]
+      }
+    ]
+    remote_pod_networks = [
+      {
+        cidrs = ["192.168.0.0/16"]
+      }
+    ]
+  }
+
+  # Hybrid 노드용 액세스 엔트리
+  access_entries = {
+    hybrid_nodes = {
+      principal_arn = aws_iam_role.hybrid_node_role.arn
+      type          = "HYBRID_LINUX"
+    }
+  }
+
+  cluster_addons = {
+    coredns = {
+      most_recent = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+  }
+
+  tags = var.tags
+}
+
+resource "aws_iam_role" "hybrid_node_role" {
+  name = "${var.cluster_name}-hybrid-node-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ssm.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "hybrid_eks_node" {
+  role       = aws_iam_role.hybrid_node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodeMinimalPolicy"
+}
+
+# Hybrid 노드 트래픽을 위한 보안 그룹 규칙
+resource "aws_security_group_rule" "hybrid_node_ingress" {
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["172.16.0.0/16"]
+  security_group_id = module.eks.cluster_security_group_id
+  description       = "Hybrid 노드에서 API 서버와의 통신 허용"
+}
+
+resource "aws_security_group_rule" "hybrid_node_kubelet" {
+  type              = "ingress"
+  from_port         = 10250
+  to_port           = 10250
+  protocol          = "tcp"
+  cidr_blocks       = ["172.16.0.0/16"]
+  security_group_id = module.eks.cluster_security_group_id
+  description       = "Hybrid 노드에서의 kubelet 통신 허용"
+}
+```
+
+### 핵심 사항
+
+- **`remote_network_config`**는 온프레미스 노드와 파드의 CIDR 범위를 정의합니다.
+- Hybrid 노드는 `HYBRID_LINUX` 유형의 액세스 엔트리가 있는 IAM 역할을 통해 인증합니다.
+- 보안 그룹 규칙에서 온프레미스 CIDR에서 EKS API 서버(443) 및 kubelet(10250)으로의 트래픽을 허용해야 합니다.
+- Hybrid 노드에서는 VPC CNI가 사용되지 않으므로 온프레미스 측에서 대체 CNI(예: Cilium)를 구성해야 합니다.
+
+---
+
+## Add-on 관리
+
+EKS 애드온은 클러스터에서 실행되는 관리형 컴포넌트입니다. 멀티 레이어 아키텍처에서 **코어 애드온**(coredns, vpc-cni, kube-proxy, eks-pod-identity-agent)은 클러스터 동작에 필수적이므로 `02-cluster`에 정의하고, **추가 애드온**(EBS CSI 등)은 `03-platform`에서 관리합니다.
+
+### 주요 옵션
+
+| 옵션 | 설명 |
+|------|------|
+| `most_recent` | 클러스터의 Kubernetes 버전과 호환되는 최신 버전을 항상 사용합니다. |
+| `before_compute` | 노드 그룹 프로비저닝 전에 애드온을 설치합니다. `vpc-cni`와 `eks-pod-identity-agent`에서 노드가 올바르게 시작되도록 필요합니다. |
+| `configuration_values` | 애드온별 설정의 JSON 문자열입니다 (예: VPC CNI 프리픽스 위임). |
+| `service_account_role_arn` | AWS API 접근이 필요한 애드온의 IAM 역할 ARN입니다 (예: EBS CSI 드라이버). IRSA와 Pod Identity 모두 지원합니다. |
+| `resolve_conflicts_on_create` | 마이그레이션 중 기존 자체 관리 버전을 교체하려면 `"OVERWRITE"`로 설정합니다. |
+| `resolve_conflicts_on_update` | 충돌하는 애드온 구성을 강제 업데이트하려면 `"OVERWRITE"`로 설정합니다. |
+
+### Add-on의 Pod Identity
+
+일부 애드온은 Pod Identity 연결을 직접 지원합니다. `03-platform/addons.tf`의 EBS CSI 드라이버 구성이 `pod_identity_association`을 사용하는 패턴을 보여줍니다:
+
+```hcl
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name = data.terraform_remote_state.cluster.outputs.cluster_name
+  addon_name   = "aws-ebs-csi-driver"
+
+  pod_identity_association {
+    role_arn        = aws_iam_role.ebs_csi.arn
+    service_account = "ebs-csi-controller-sa"
+  }
+}
+```
+
+---
+
+## Access Entry 기반 접근 제어
+
+EKS는 레거시 `aws-auth` ConfigMap을 대체하는 Access Entry를 통한 API 기반 인증을 지원합니다. 멀티 레이어 아키텍처에서 초기 클러스터 관리자 접근은 `02-cluster`에서 (`enable_cluster_creator_admin_permissions`를 통해) 구성하고, 개발자와 뷰어를 위한 추가 액세스 엔트리는 `03-platform/access-entries.tf`에서 관리합니다.
+
+### 인증 모드
+
+| 모드 | 설명 |
+|------|------|
+| `API` | Access Entry만 사용 (신규 클러스터에 권장). |
+| `API_AND_CONFIG_MAP` | Access Entry와 `aws-auth` ConfigMap 모두 사용 (마이그레이션 기간). |
+| `CONFIG_MAP` | 레거시 `aws-auth`만 사용 (권장하지 않음). |
+
+### 사용 가능한 Access Policy ARN
+
+| 정책 | ARN | 설명 |
+|------|-----|------|
+| Cluster Admin | `arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy` | 전체 클러스터 접근 |
+| Admin | `arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy` | 관리자 접근 (IAM 관리 제외) |
+| Edit | `arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy` | 대부분의 리소스 읽기/쓰기 |
+| View | `arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy` | 읽기 전용 접근 |
+
+---
+
+## 배포 워크플로
+
+### 레이어 순서대로 배포
+
+각 레이어는 순서대로 초기화하고 적용해야 합니다. 이후 레이어가 이전 레이어의 상태 출력에 의존하기 때문입니다:
 
 ```bash
+# 레이어 1: 네트워크
+cd eks-terraform/01-network
 terraform init
-```
-
-#### 4.2 계획 확인
-
-변경 사항을 적용하기 전에 계획을 확인하여 어떤 리소스가 생성될지 미리 확인합니다:
-
-```bash
 terraform plan
-```
+terraform apply
 
-이 명령은 생성될 리소스 목록과 변경 사항을 보여줍니다. 출력을 주의 깊게 검토하세요.
+# 레이어 2: 클러스터
+cd ../02-cluster
+terraform init
+terraform plan
+terraform apply
 
-#### 4.3 인프라 생성
-
-계획을 검토한 후 문제가 없으면 다음 명령으로 인프라를 생성합니다:
-
-```bash
+# 레이어 3: 플랫폼
+cd ../03-platform
+terraform init
+terraform plan
 terraform apply
 ```
 
-`terraform apply` 명령을 실행하면 Terraform은 계획을 다시 표시하고 확인을 요청합니다. `yes`를 입력하여 계획을 적용합니다.
+> **참고**: EKS 클러스터 생성(레이어 2)에는 일반적으로 10-15분이 소요됩니다. 레이어 1과 3은 더 빠릅니다.
 
-> **참고**: EKS 클러스터 생성에는 약 15-20분이 소요될 수 있습니다.
+### kubeconfig 구성
 
-`terraform apply` 명령을 실행하면 Terraform은 계획을 표시하고 확인을 요청합니다. `yes`를 입력하여 계획을 적용합니다.
-
-### 5. kubeconfig 구성
-
-Terraform 출력에서 클러스터 이름과 리전을 사용하여 kubeconfig를 구성합니다:
+레이어 2 완료 후 `kubectl` 접근을 구성합니다:
 
 ```bash
+cd eks-terraform/02-cluster
+
 aws eks update-kubeconfig \
-  --name $(terraform output -raw cluster_id) \
+  --name $(terraform output -raw cluster_name) \
   --region $(terraform output -raw region)
 ```
 
-### 6. 클러스터 확인
-
-클러스터가 올바르게 구성되었는지 확인합니다:
+### 클러스터 확인
 
 ```bash
+# 노드 상태 확인
 kubectl get nodes
+
+# 시스템 파드 확인
+kubectl get pods -n kube-system
+
+# EKS 애드온 확인
+kubectl get daemonsets -n kube-system
 ```
 
-### 7. 클러스터 삭제
+정상적인 클러스터의 예상 출력:
 
-클러스터를 삭제하려면 다음 명령을 실행합니다:
+```
+NAME                              STATUS   ROLES    AGE   VERSION
+ip-10-0-1-xxx.ap-northeast-2...  Ready    <none>   5m    v1.33.x
+ip-10-0-2-xxx.ap-northeast-2...  Ready    <none>   5m    v1.33.x
+```
+
+### 역순으로 삭제
+
+모든 리소스를 삭제하려면 의존하는 리소스가 먼저 제거되도록 역순으로 삭제합니다:
 
 ```bash
+# 레이어 3: 플랫폼
+cd eks-terraform/03-platform
+terraform destroy
+
+# 레이어 2: 클러스터
+cd ../02-cluster
+terraform destroy
+
+# 레이어 1: 네트워크
+cd ../01-network
 terraform destroy
 ```
 
-## AWS CDK를 사용한 클러스터 생성
+> **주의**: `terraform destroy`는 해당 레이어의 상태에서 관리하는 모든 리소스를 삭제합니다. 클러스터 레이어를 삭제하기 전에 실행 중인 중요한 워크로드가 없는지 확인하세요.
 
-AWS Cloud Development Kit(CDK)는 익숙한 프로그래밍 언어를 사용하여 클라우드 인프라를 정의하는 도구입니다. CDK를 사용하면 TypeScript, Python, Java 또는 C#과 같은 언어로 EKS 클러스터를 생성하고 관리할 수 있습니다.
+---
 
-### AWS CDK를 사용한 EKS 클러스터 생성 프로세스
+## 모범 사례
 
-![AWS CDK를 사용한 EKS 클러스터 생성 프로세스](../assets/generated-diagrams/cdk_eks_creation_process.drawio)
+### 상태 관리
 
-### CDK 구성 요소 관계
+멀티 레이어 아키텍처는 이미 DynamoDB 잠금이 있는 레이어별 S3 상태 키를 사용합니다. 추가 권장 사항:
 
-![CDK 구성 요소 관계](../assets/generated-diagrams/cdk_components_relationship.drawio)
-    class F,G,H,I awsService;
-    class A userApp;
-```
+- S3 버킷에 **버전 관리를 활성화**하여 실수로 인한 상태 손상을 복구할 수 있도록 합니다.
+- IAM 정책으로 **버킷 접근을 제한**합니다 — CI/CD 파이프라인과 권한 있는 운영자만 상태를 읽고 쓸 수 있어야 합니다.
+- **상태 파일을 수동으로 편집하지 마세요** — 상태 조작이 필요한 경우 `terraform state` 명령을 사용합니다.
 
-### 1. AWS CDK 설치
+### 모듈 버전 관리
 
-먼저 AWS CDK를 설치해야 합니다:
+- `~>`로 모듈 버전을 고정하여 (예: `~> 21.0`) 패치 업데이트는 허용하면서 호환성 파괴 변경을 방지합니다.
+- 메이저 버전 업그레이드 전에 모듈 CHANGELOG를 검토합니다.
+- 비프로덕션 환경에서 먼저 업그레이드를 테스트합니다.
 
-```bash
-npm install -g aws-cdk
-```
+### 환경 분리
 
-### 2. CDK 프로젝트 생성
+다음 방법 중 하나를 사용하여 환경을 분리합니다:
 
-CDK 프로젝트를 생성합니다:
+| 방식 | 장점 | 단점 |
+|------|------|------|
+| **별도 디렉토리** | 명확한 격리, 독립적인 상태 | 코드 중복 |
+| **Terraform Workspace** | 단일 코드베이스, 쉬운 전환 | 공유 백엔드, 제한적 격리 |
+| **Terragrunt** | DRY 구성, 강력한 격리 | 추가 도구 의존성 |
 
-```bash
-mkdir eks-cdk
-cd eks-cdk
-cdk init app --language typescript
-```
+멀티 레이어 아키텍처에서 가장 일반적인 접근 방식은 **환경별 별도 디렉토리**로, 각 환경이 서로 다른 변수 값과 상태 키를 가진 자체 `01-network/`, `02-cluster/`, `03-platform/` 트리를 갖는 것입니다.
 
-### 3. 필요한 패키지 설치
+### 태깅 전략
 
-EKS 클러스터를 생성하는 데 필요한 패키지를 설치합니다:
-
-```bash
-npm install @aws-cdk/aws-eks @aws-cdk/aws-ec2 @aws-cdk/aws-iam
-```
-
-### 4. CDK 스택 정의
-
-`lib/eks-cdk-stack.ts` 파일을 다음과 같이 수정합니다:
-
-```typescript
-import * as cdk from '@aws-cdk/core';
-import * as ec2 from '@aws-cdk/aws-ec2';
-import * as eks from '@aws-cdk/aws-eks';
-import * as iam from '@aws-cdk/aws-iam';
-
-export class EksCdkStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
-
-    // VPC 생성
-    const vpc = new ec2.Vpc(this, 'EksVpc', {
-      cidr: '10.0.0.0/16',
-      natGateways: 1,
-      maxAzs: 2,
-      subnetConfiguration: [
-        {
-          name: 'private',
-          subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
-          cidrMask: 24,
-        },
-        {
-          name: 'public',
-          subnetType: ec2.SubnetType.PUBLIC,
-          cidrMask: 24,
-        },
-      ],
-    });
-
-    // EKS 클러스터 생성
-    const cluster = new eks.Cluster(this, 'EksCluster', {
-      vpc,
-      version: eks.KubernetesVersion.V1_26,
-      defaultCapacity: 0,
-    });
-
-    // 관리형 노드 그룹 추가
-    cluster.addNodegroupCapacity('ManagedNodeGroup', {
-      instanceTypes: [new ec2.InstanceType('m5.large')],
-      minSize: 1,
-      maxSize: 3,
-      desiredSize: 2,
-      diskSize: 80,
-    });
-
-    // Spot 인스턴스를 사용하는 노드 그룹 추가
-    cluster.addNodegroupCapacity('SpotNodeGroup', {
-      instanceTypes: [
-        new ec2.InstanceType('c5.large'),
-        new ec2.InstanceType('c5a.large'),
-        new ec2.InstanceType('c5d.large'),
-      ],
-      minSize: 1,
-      maxSize: 3,
-      desiredSize: 2,
-      capacityType: eks.CapacityType.SPOT,
-      diskSize: 80,
-    });
-
-    // Fargate 프로필 추가
-    cluster.addFargateProfile('DefaultProfile', {
-      selectors: [
-        { namespace: 'default', labels: { env: 'fargate' } },
-      ],
-    });
-
-    // 출력
-    new cdk.CfnOutput(this, 'ClusterName', {
-      value: cluster.clusterName,
-    });
-
-    new cdk.CfnOutput(this, 'ClusterEndpoint', {
-      value: cluster.clusterEndpoint,
-    });
-
-    new cdk.CfnOutput(this, 'ClusterArn', {
-      value: cluster.clusterArn,
-    });
-  }
-}
-```
-
-### 5. CDK 배포
-
-CDK 스택을 배포합니다:
-
-```bash
-cdk bootstrap
-cdk deploy
-```
-
-`cdk deploy` 명령을 실행하면 CDK는 변경 사항을 표시하고 확인을 요청합니다. `y`를 입력하여 배포를 진행합니다.
-
-### 6. kubeconfig 구성
-
-CDK 출력에서 클러스터 이름을 사용하여 kubeconfig를 구성합니다:
-
-```bash
-aws eks update-kubeconfig \
-  --name $(aws cloudformation describe-stacks --stack-name EksCdkStack --query "Stacks[0].Outputs[?OutputKey=='ClusterName'].OutputValue" --output text) \
-  --region us-west-2
-```
-
-### 7. 클러스터 확인
-
-클러스터가 올바르게 구성되었는지 확인합니다:
-
-```bash
-kubectl get nodes
-```
-
-### 8. 클러스터 삭제
-
-클러스터를 삭제하려면 다음 명령을 실행합니다:
-
-```bash
-cdk destroy
-```
-
-## Kubernetes Operator와 CRD를 사용한 EKS 확장
-
-Kubernetes Operator와 Custom Resource Definition(CRD)은 Kubernetes의 기능을 확장하는 강력한 메커니즘입니다. 이를 통해 EKS 클러스터에서 사용자 정의 리소스를 생성하고 관리할 수 있습니다.
-
-### Kubernetes Operator 개요
-
-![Kubernetes Operator 개요](../assets/generated-diagrams/kubernetes_operator_overview.drawio)
-
-### Operator와 CRD의 관계
-
-![Operator와 CRD의 관계](../assets/generated-diagrams/operator_crd_relationship.drawio)
-
-### 1. Operator란 무엇인가?
-
-Kubernetes Operator는 애플리케이션별 운영 지식을 소프트웨어에 인코딩하여 Kubernetes API를 통해 서비스를 관리하는 소프트웨어 확장입니다. Operator는 복잡한 애플리케이션의 설치, 업데이트, 백업, 복구 등과 같은 작업을 자동화합니다.
-
-Operator는 다음과 같은 구성 요소로 이루어집니다:
-
-1. **Custom Resource Definition (CRD)**: 사용자 정의 리소스의 스키마를 정의합니다.
-2. **Custom Resource (CR)**: CRD에 따라 생성된 리소스 인스턴스입니다.
-3. **Controller**: CR의 상태를 모니터링하고 원하는 상태로 조정하는 컨트롤러입니다.
-
-### 2. Custom Resource Definition (CRD)
-
-CRD는 Kubernetes API를 확장하여 사용자 정의 리소스를 정의할 수 있게 해줍니다. CRD를 생성하면 새로운 리소스 유형이 Kubernetes API에 추가되며, 이를 통해 사용자 정의 리소스를 생성하고 관리할 수 있습니다.
-
-CRD 예시:
-
-```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: databases.example.com
-spec:
-  group: example.com
-  names:
-    kind: Database
-    listKind: DatabaseList
-    plural: databases
-    singular: database
-    shortNames:
-    - db
-  scope: Namespaced
-  versions:
-  - name: v1
-    served: true
-    storage: true
-    schema:
-      openAPIV3Schema:
-        type: object
-        properties:
-          spec:
-            type: object
-            properties:
-              engine:
-                type: string
-              version:
-                type: string
-              storageSize:
-                type: string
-              replicas:
-                type: integer
-                minimum: 1
-            required:
-            - engine
-            - version
-            - storageSize
-          status:
-            type: object
-            properties:
-              phase:
-                type: string
-              message:
-                type: string
-```
-
-### 3. EKS에서 Operator 사용하기
-
-EKS에서 Operator를 사용하는 방법은 다음과 같습니다:
-
-1. **Operator 설치**: Helm, YAML 매니페스트 또는 Operator Lifecycle Manager(OLM)를 사용하여 Operator를 설치합니다.
-2. **CRD 생성**: Operator가 사용할 CRD를 생성합니다.
-3. **Custom Resource 생성**: CRD에 따라 Custom Resource를 생성합니다.
-4. **Operator 동작 확인**: Operator가 Custom Resource를 감지하고 필요한 작업을 수행하는지 확인합니다.
-
-### 4. 인기 있는 Kubernetes Operator
-
-EKS에서 사용할 수 있는 인기 있는 Operator는 다음과 같습니다:
-
-1. **Prometheus Operator**: Prometheus 모니터링 스택을 관리합니다.
-2. **Elasticsearch Operator**: Elasticsearch 클러스터를 관리합니다.
-3. **PostgreSQL Operator**: PostgreSQL 데이터베이스를 관리합니다.
-4. **Kafka Operator**: Kafka 클러스터를 관리합니다.
-5. **Istio Operator**: Istio 서비스 메시를 관리합니다.
-
-### 5. Operator 개발 도구
-
-Operator를 개발하는 데 사용할 수 있는 도구는 다음과 같습니다:
-
-1. **Operator SDK**: Operator를 빠르게 개발하고 배포하기 위한 프레임워크입니다.
-2. **Kubebuilder**: Kubernetes API를 확장하는 프레임워크입니다.
-3. **KUDO (Kubernetes Universal Declarative Operator)**: 선언적 방식으로 Operator를 생성하는 도구입니다.
-
-### 6. Terraform과 CDK에서 CRD 및 Operator 관리
-
-Terraform과 AWS CDK를 사용하여 EKS 클러스터에 CRD와 Operator를 배포할 수 있습니다.
-
-**Terraform을 사용한 CRD 배포**:
+비용 할당, 컴플라이언스, 리소스 관리를 위해 일관된 태그를 적용합니다:
 
 ```hcl
-resource "kubernetes_manifest" "database_crd" {
-  manifest = {
-    apiVersion = "apiextensions.k8s.io/v1"
-    kind       = "CustomResourceDefinition"
-    metadata = {
-      name = "databases.example.com"
-    }
-    spec = {
-      group = "example.com"
-      names = {
-        kind     = "Database"
-        listKind = "DatabaseList"
-        plural   = "databases"
-        singular = "database"
-        shortNames = ["db"]
-      }
-      scope = "Namespaced"
-      versions = [{
-        name    = "v1"
-        served  = true
-        storage = true
-        schema = {
-          openAPIV3Schema = {
-            type = "object"
-            properties = {
-              spec = {
-                type = "object"
-                properties = {
-                  engine = {
-                    type = "string"
-                  }
-                  version = {
-                    type = "string"
-                  }
-                  storageSize = {
-                    type = "string"
-                  }
-                  replicas = {
-                    type = "integer"
-                    minimum = 1
-                  }
-                }
-                required = ["engine", "version", "storageSize"]
-              }
-              status = {
-                type = "object"
-                properties = {
-                  phase = {
-                    type = "string"
-                  }
-                  message = {
-                    type = "string"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }]
-    }
+variable "tags" {
+  default = {
+    Environment = "dev"
+    Team        = "platform"
+    ManagedBy   = "terraform"
+    Project     = "eks-cluster"
   }
 }
 ```
 
-**AWS CDK를 사용한 CRD 배포**:
+---
 
-```typescript
-import * as cdk from '@aws-cdk/core';
-import * as eks from '@aws-cdk/aws-eks';
+## 다음 단계
 
-export class EksCrdStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+- [EKS 클러스터 생성 - 1부: 사전 요구 사항](./02-eks-cluster-creation-part1.md) — EKS 클러스터 생성을 위한 사전 준비 사항
+- [EKS 클러스터 생성 - 2부: eksctl을 사용한 클러스터 생성](./02-eks-cluster-creation-part2.md) — eksctl을 사용한 EKS 클러스터 생성
+- [EKS 클러스터 생성 - 3부: AWS Console 및 CLI를 사용한 클러스터 생성](./02-eks-cluster-creation-part3.md) — Console과 CLI를 사용한 EKS 클러스터 생성
+- [EKS 클러스터 생성 - 5부: 클러스터 액세스, 검증, 업그레이드 및 삭제](./02-eks-cluster-creation-part5.md) — EKS 클러스터 관리
+- [EKS 네트워킹 - 1부: 기본 개념 및 VPC 구성](./03-eks-networking-part1.md) — EKS 네트워킹 기본 개념
+- [EKS 보안](./05-eks-security.md) — EKS 클러스터 보안 구성
 
-    // 기존 EKS 클러스터 참조
-    const cluster = eks.Cluster.fromClusterAttributes(this, 'ImportedCluster', {
-      clusterName: 'my-eks-cluster',
-      kubectlRoleArn: 'arn:aws:iam::account:role/role-name',
-    });
+### 관련 주제
 
-    // CRD 매니페스트 적용
-    cluster.addManifest('DatabaseCRD', {
-      apiVersion: 'apiextensions.k8s.io/v1',
-      kind: 'CustomResourceDefinition',
-      metadata: {
-        name: 'databases.example.com',
-      },
-      spec: {
-        group: 'example.com',
-        names: {
-          kind: 'Database',
-          listKind: 'DatabaseList',
-          plural: 'databases',
-          singular: 'database',
-          shortNames: ['db'],
-        },
-        scope: 'Namespaced',
-        versions: [{
-          name: 'v1',
-          served: true,
-          storage: true,
-          schema: {
-            openAPIV3Schema: {
-              type: 'object',
-              properties: {
-                spec: {
-                  type: 'object',
-                  properties: {
-                    engine: {
-                      type: 'string',
-                    },
-                    version: {
-                      type: 'string',
-                    },
-                    storageSize: {
-                      type: 'string',
-                    },
-                    replicas: {
-                      type: 'integer',
-                      minimum: 1,
-                    },
-                  },
-                  required: ['engine', 'version', 'storageSize'],
-                },
-                status: {
-                  type: 'object',
-                  properties: {
-                    phase: {
-                      type: 'string',
-                    },
-                    message: {
-                      type: 'string',
-                    },
-                  },
-                },
-              },
-            },
-          },
-        }],
-      },
-    });
-  }
-}
-```
-
-## 더 알아보기
-
-이 문서에서는 Terraform과 AWS CDK를 사용하여 EKS 클러스터를 생성하는 방법과 Kubernetes Operator 및 CRD를 사용하여 EKS를 확장하는 방법에 대해 알아보았습니다. 다음 주제들을 통해 EKS에 대한 이해를 더욱 깊게 할 수 있습니다:
-
-- [EKS 클러스터 생성 - 1부: 사전 요구 사항](./02-eks-cluster-creation-part1.md) - EKS 클러스터 생성을 위한 사전 준비 사항
-- [EKS 클러스터 생성 - 2부: eksctl을 사용한 클러스터 생성](./02-eks-cluster-creation-part2.md) - eksctl을 사용한 EKS 클러스터 생성 방법
-- [EKS 클러스터 생성 - 3부: AWS Management Console 및 CLI를 사용한 클러스터 생성](./02-eks-cluster-creation-part3.md) - AWS Management Console과 CLI를 사용한 EKS 클러스터 생성 방법
-- [EKS 클러스터 생성 - 5부: 클러스터 액세스, 검증, 업그레이드 및 삭제](./02-eks-cluster-creation-part5.md) - EKS 클러스터 관리 방법
-- [EKS 네트워킹 - 1부: 기본 개념 및 VPC 구성](./03-eks-networking-part1.md) - EKS 네트워킹의 기본 개념
-- [EKS 보안](./05-eks-security.md) - EKS 클러스터의 보안 구성
-- [Kubernetes 확장](../core/11-extending-kubernetes.md) - Kubernetes API 확장에 대한 자세한 내용
-
-### 관련 도구 및 통합
-
-- [ArgoCD](../gitops/01-argocd.md) - GitOps를 위한 선언적 연속 배포 도구
-- [AWS Controllers for Kubernetes (ACK)](../platform/01-ack.md) - Kubernetes에서 AWS 리소스 관리
-- [Karpenter](../autoscaling/02-karpenter.md) - Kubernetes 클러스터의 노드 프로비저닝 자동화
-
-### 실습 환경 설정
-
-이 문서의 예제를 따라하기 위해서는 다음과 같은 도구가 필요합니다:
-
-- AWS CLI v2.0 이상
-- Terraform v1.0.0 이상
-- AWS CDK v2.0 이상
-- kubectl v1.31 이상
-- Node.js v14 이상 (CDK 사용 시)
-
-AWS 계정에는 다음과 같은 IAM 권한이 필요합니다:
-- AmazonEKSClusterPolicy
-- AmazonEKSServicePolicy
-- AmazonVPCFullAccess
-- IAMFullAccess
-
-로컬 개발 환경에서 테스트하려면 [minikube](https://minikube.sigs.k8s.io/) 또는 [kind](https://kind.sigs.k8s.io/)를 사용할 수 있습니다.
+- [ArgoCD](../gitops/01-argocd.md) — GitOps 연속 배포
+- [AWS Controllers for Kubernetes (ACK)](../platform/01-ack.md) — Kubernetes에서 AWS 리소스 관리
+- [Karpenter](../autoscaling/02-karpenter.md) — 노드 프로비저닝 자동화
+- [Kubernetes 확장](../core/11-extending-kubernetes.md) — Operator와 CRD를 사용한 Kubernetes API 확장
 
 ## 용어집
 
-이 문서에서 사용된 주요 용어와 약어는 다음과 같습니다:
-
 | 용어 | 설명 |
 |------|------|
-| **EKS** | Amazon Elastic Kubernetes Service의 약자로, AWS에서 제공하는 관리형 Kubernetes 서비스입니다. |
-| **Kubernetes** | 컨테이너화된 애플리케이션의 배포, 확장 및 관리를 자동화하는 오픈소스 컨테이너 오케스트레이션 플랫폼입니다. |
-| **클러스터** | Kubernetes의 기본 단위로, 컨트롤 플레인과 노드로 구성됩니다. |
-| **노드** | Kubernetes 클러스터의 워커 머신으로, 컨테이너화된 애플리케이션을 실행합니다. |
-| **파드(Pod)** | Kubernetes의 가장 작은 배포 단위로, 하나 이상의 컨테이너를 포함합니다. |
-| **Terraform** | HashiCorp에서 개발한 인프라를 코드로 관리하는 도구입니다. |
-| **CDK** | AWS Cloud Development Kit의 약자로, 익숙한 프로그래밍 언어를 사용하여 클라우드 인프라를 정의하는 도구입니다. |
-| **Operator** | Kubernetes API를 확장하여 애플리케이션별 운영 지식을 소프트웨어에 인코딩하는 소프트웨어 확장입니다. |
-| **CRD** | Custom Resource Definition의 약자로, Kubernetes API를 확장하여 사용자 정의 리소스를 정의할 수 있게 해주는 기능입니다. |
-| **IAM** | Identity and Access Management의 약자로, AWS 리소스에 대한 액세스를 안전하게 제어하는 서비스입니다. |
-| **VPC** | Virtual Private Cloud의 약자로, AWS 클라우드 내에서 논리적으로 격리된 가상 네트워크입니다. |
+| **EKS** | Amazon Elastic Kubernetes Service — AWS에서 제공하는 관리형 Kubernetes 서비스입니다. |
+| **Terraform** | HashiCorp에서 개발한 인프라를 코드로 프로비저닝하고 관리하는 도구입니다. |
+| **Access Entry** | `aws-auth` ConfigMap을 대체하는 EKS API 기반의 클러스터 접근 권한 부여 메커니즘입니다. |
+| **Pod Identity** | OIDC 프로바이더 없이 파드에 AWS 자격 증명을 제공하는 EKS 기능입니다. |
+| **Auto Mode** | AWS가 노드 프로비저닝, 스케일링, OS 업데이트를 완전히 관리하는 EKS 모드입니다. |
+| **Hybrid Nodes** | 온프레미스 또는 엣지 서버를 EKS 클러스터의 워커 노드로 참여시킬 수 있는 EKS 기능입니다. |
+| **IAM** | Identity and Access Management — AWS 리소스에 대한 접근을 제어하는 서비스입니다. |
+| **VPC** | Virtual Private Cloud — AWS 클라우드 내의 논리적으로 격리된 가상 네트워크입니다. |
+| **IRSA** | IAM Roles for Service Accounts — OIDC를 통해 파드에 AWS 권한을 부여하는 레거시 방식입니다. |
+| **원격 상태** | 하나의 Terraform 구성이 다른 구성의 상태 파일에서 출력을 읽을 수 있게 하는 Terraform 기능입니다. |
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [EKS 클러스터 생성 - 4부 퀴즈](../quizzes/eks/02-eks-cluster-creation-part4-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [EKS 클러스터 생성 - Part 4 퀴즈](../quizzes/eks/02-eks-cluster-creation-part4-quiz.md)를 풀어보세요.

@@ -7,7 +7,7 @@
         <mxCell id="1" parent="0" />
         
         
-        <mxCell id="title" value="Operator와 CRD의 관계" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="title" value="Operator와 CRD의 관계" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="450" y="40" width="300" height="30" as="geometry" />
         </mxCell>
         

@@ -154,13 +154,12 @@
    - [Part 2: 스케줄러 확장 및 프레임워크](./scheduling/02-custom-scheduler-part2.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [Part 3: 커스텀 스케줄러 구현 사례 및 모니터링](./scheduling/03-custom-scheduler-part3.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
-### Package Management
-1. [Helm](./package-management/01-helm.md) | [퀴즈](./quizzes/package-management/10-helm-quiz.md)
-2. [KRO를 활용한 Helm 차트 마이그레이션](./package-management/02-kro-helm-migration.md) | [퀴즈](./quizzes/package-management/05-kro-helm-migration-quiz.md)
-
-### Platform & AWS Integration
-1. [AWS Controllers for Kubernetes (ACK)](./platform/01-ack.md) | [퀴즈](./quizzes/platform/03-ack-quiz.md)
-2. [Kubernetes 확장 메커니즘](./platform/02-kubernetes-extensions.md) | [퀴즈](./quizzes/platform/07-kubernetes-extensions-quiz.md)
+### Platform Engineering
+1. [Helm](./platform-engineering/01-helm.md) | [퀴즈](./quizzes/platform-engineering/01-helm-quiz.md)
+2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [퀴즈](./quizzes/platform-engineering/02-ack-quiz.md)
+3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [퀴즈](./quizzes/platform-engineering/03-kro-quiz.md)
+4. [Kubernetes 확장 메커니즘](./platform-engineering/04-kubernetes-extensions.md) | [퀴즈](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+5. [ExampleCorp: ACK + KRO 통합 예제](./platform-engineering/05-example-corp-app.md)
 
 ### 운영 가이드
 1. [인프라 구성 기초](./ops/01-infrastructure-setup.md) | [퀴즈](./quizzes/ops/01-infrastructure-setup-quiz.md)

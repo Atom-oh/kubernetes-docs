@@ -14,7 +14,7 @@ Amazon EKS에서 애플리케이션을 실행할 때 데이터를 저장하고 �
 
 Kubernetes에서 스토리지를 관리하기 위한 핵심 개념들을 먼저 이해해 보겠습니다.
 
-![Kubernetes 스토리지 개념](../assets/generated-diagrams/kubernetes_storage_concepts.drawio)
+![Kubernetes 스토리지 개념](../assets/generated-diagrams/kubernetes_storage_concepts.png)
 
 ### 볼륨(Volume)
 
@@ -45,7 +45,7 @@ Kubernetes는 다음과 같은 액세스 모드를 지원합니다:
 
 Amazon EKS에서는 다양한 AWS 스토리지 서비스를 활용하여 컨테이너화된 애플리케이션에 스토리지를 제공할 수 있습니다.
 
-![EKS 스토리지 옵션](../assets/generated-diagrams/eks_storage_options.drawio)
+![EKS 스토리지 옵션](../assets/generated-diagrams/eks_storage_options.png)
 
 ### 주요 스토리지 옵션
 
@@ -82,7 +82,7 @@ Amazon EKS에서는 다양한 AWS 스토리지 서비스를 활용하여 컨테�
 
 Amazon EBS는 EC2 인스턴스에 연결할 수 있는 블록 수준 스토리지 볼륨을 제공합니다. EKS에서는 EBS CSI(Container Storage Interface) 드라이버를 통해 EBS 볼륨을 Kubernetes 파드에 마운트할 수 있습니다.
 
-![EBS CSI 드라이버 아키텍처](../assets/generated-diagrams/ebs_csi_architecture.drawio)
+![EBS CSI 드라이버 아키텍처](../assets/generated-diagrams/ebs_csi_architecture.png)
 
 ### EBS CSI 드라이버 설치
 
@@ -203,7 +203,7 @@ EKS에서는 gp3 볼륨 타입을 권장합니다. gp3는 비용 효율적이면
 
 Amazon EFS는 완전 관리형 NFS 파일 시스템으로, 여러 EC2 인스턴스에서 동시에 액세스할 수 있습니다. EKS에서는 EFS CSI 드라이버를 통해 EFS 파일 시스템을 여러 파드에 동시에 마운트할 수 있습니다.
 
-![EFS CSI 드라이버 아키텍처](../assets/generated-diagrams/efs_csi_architecture.drawio)
+![EFS CSI 드라이버 아키텍처](../assets/generated-diagrams/efs_csi_architecture.png)
 
 ### EFS CSI 드라이버 설치
 
@@ -362,7 +362,7 @@ Amazon EFS는 두 가지 성능 모드와 세 가지 처리량 모드를 제공�
 
 Kubernetes의 스토리지 클래스를 사용하면 영구 볼륨을 동적으로 프로비저닝할 수 있습니다. EKS에서는 다양한 AWS 스토리지 서비스에 대한 스토리지 클래스를 구성할 수 있습니다.
 
-![Kubernetes 스토리지 워크플로우](../assets/generated-diagrams/storage_workflow.drawio)
+![Kubernetes 스토리지 워크플로우](../assets/generated-diagrams/storage_workflow.png)
 
 ### 볼륨 바인딩 모드
 

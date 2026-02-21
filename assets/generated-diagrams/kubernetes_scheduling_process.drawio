@@ -14,7 +14,7 @@
                 <mxCell id="4" value="필터링 단계" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
                     <mxGeometry x="360" y="240" width="120" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="5" value="적합한 노드 있음?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" parent="1" vertex="1">
+                <mxCell id="5" value="적합한 노드 있음?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
                     <mxGeometry x="360" y="340" width="120" height="80" as="geometry" />
                 </mxCell>
                 <mxCell id="6" value="스케줄링 불가능으로 표시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">

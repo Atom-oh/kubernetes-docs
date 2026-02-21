@@ -6,7 +6,7 @@ eksctl is the simplest way to create and manage EKS clusters. eksctl uses CloudF
 
 The following diagram shows the EKS cluster creation process using eksctl:
 
-![eksctl Cluster Creation Process](../assets/generated-diagrams/eksctl_cluster_creation_process.drawio)
+![eksctl Cluster Creation Process](../assets/generated-diagrams/eksctl_cluster_creation_process.png)
 
 ### Basic Cluster Creation
 
@@ -107,7 +107,7 @@ eksctl create cluster -f cluster.yaml
 
 The following diagram shows the managed node group architecture for an EKS cluster:
 
-![EKS Managed Node Group Architecture](../assets/generated-diagrams/eks_managed_node_group_detailed.drawio)
+![EKS Managed Node Group Architecture](../assets/generated-diagrams/eks_managed_node_group_detailed.png)
 
 To add a managed node group to an existing cluster, run the following command:
 
@@ -156,7 +156,7 @@ eksctl create nodegroup -f nodegroup.yaml
 
 The following diagram shows the EKS Fargate profile architecture:
 
-![EKS Fargate Profile Architecture](../assets/generated-diagrams/eks_fargate_profile_architecture.drawio)
+![EKS Fargate Profile Architecture](../assets/generated-diagrams/eks_fargate_profile_architecture.png)
 
 To create a Fargate profile, run the following command:
 
@@ -217,7 +217,7 @@ eksctl delete cluster --name=my-cluster --region=us-west-2
 
 The following diagram shows the overall lifecycle management process for an EKS cluster:
 
-![EKS Cluster Lifecycle Management](../assets/generated-diagrams/eks_cluster_lifecycle_management.drawio)
+![EKS Cluster Lifecycle Management](../assets/generated-diagrams/eks_cluster_lifecycle_management.png)
 
 ## Quiz
 

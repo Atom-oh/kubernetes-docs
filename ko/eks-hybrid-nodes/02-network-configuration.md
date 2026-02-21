@@ -2,10 +2,16 @@
 
 < [이전: 사전 요구 사항](./01-prerequisites.md) | [목차](./README.md) | [다음: 에어갭 환경 구성](./03-airgap-setup.md) >
 
-> **지원 버전**: EKS 1.28+, nodeadm 1.0+
-> **마지막 업데이트**: 2026년 2월
+> **지원 버전**: EKS 1.31+, nodeadm 0.1+
+> **마지막 업데이트**: 2025년 2월
 
 이 문서에서는 EKS Hybrid Nodes 환경에서 필요한 CIDR 요구 사항, 방화벽 포트, AWS 엔드포인트 접근, 보안 그룹 구성, DNS 구성을 다룹니다.
+
+## 네트워크 아키텍처 개요
+
+다음 다이어그램은 VPC 구성, Transit Gateway 라우팅, 원격 CIDR, 방화벽 규칙을 포함한 EKS Hybrid Nodes의 전체 네트워크 토폴로지를 보여줍니다.
+
+![EKS Hybrid Nodes 네트워크 사전 요구 사항](../../assets/aws-official-diagrams/hybrid-prereq-diagram.png)
 
 ## CIDR 범위 요구 사항
 
@@ -138,7 +144,7 @@ aws ec2 describe-network-interfaces \
 
 ## VPC 프라이빗 엔드포인트 (에어갭/프라이빗 환경)
 
-VPN 또는 Direct Connect를 통해 AWS에 연결된 온프레미스 환경에서 인터넷 없이 AWS 서비스에 접근하려면 **VPC Interface Endpoint (PrivateLink)**를 구성해야 합니다.
+VPN 또는 Direct Connect를 통해 AWS에 연결된 온프레미스 환경에서 인터넷 없이 AWS 서비스에 접근하려면 **VPC Interface Endpoint** (PrivateLink)를 구성해야 합니다.
 
 ### 왜 VPC 엔드포인트가 필요한가
 
@@ -595,6 +601,303 @@ kubectl get nodes -L eks.amazonaws.com/compute-type
 > **참고**:
 > - EKS 관리형 CoreDNS 애드온을 사용하는 경우, 애드온의 `configurationValues`를 통해 동일한 설정을 적용할 수 있습니다.
 > - `whenUnsatisfiable: ScheduleAnyway`를 사용하므로 한쪽에 노드가 없어도 스케줄링이 차단되지 않습니다. 이는 클러스터 초기 부트스트랩 시 CoreDNS가 정상적으로 시작될 수 있도록 보장합니다.
+
+---
+
+## 트래픽 플로우 패턴
+
+AWS와 온프레미스 간의 트래픽 흐름 패턴을 이해하는 것은 방화벽 구성과 문제 해결에 필수적입니다. 다음 섹션에서는 AWS 공식 아키텍처 다이어그램과 함께 각 트래픽 패턴을 상세히 설명합니다.
+
+> **출처**: [AWS EKS Hybrid Nodes Traffic Flows](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-traffic-flows.html)
+
+### 패턴 1: Kubelet → EKS 컨트롤 플레인
+
+Kubelet은 DNS 조회를 통해 API 서버 엔드포인트로 HTTPS 요청을 시작합니다. 퍼블릭 액세스 모드에서는 트래픽이 퍼블릭 인터넷을 통과합니다. 프라이빗 모드에서는 VPN/DX를 통해 VPC ENI로 트래픽이 흐릅니다.
+
+![Kubelet에서 컨트롤 플레인으로](../../assets/interactive-diagrams/hybrid-nodes-kubelet-to-cp.svg)
+
+### 패턴 2: EKS 컨트롤 플레인 → Kubelet
+
+API 서버는 노드 상태 객체에서 노드 IP를 가져옵니다. 트래픽은 VPC를 통해 라우팅된 후 Direct Connect 또는 VPN을 통해 클라우드 경계를 넘어 포트 10250의 kubelet에 도달합니다. 이는 `kubectl logs`, `kubectl exec`, `kubectl port-forward` 등에 사용됩니다.
+
+![컨트롤 플레인에서 Kubelet으로](../../assets/interactive-diagrams/hybrid-nodes-cp-to-kubelet.svg)
+
+### 패턴 3: Pod → EKS 컨트롤 플레인
+
+Pod는 `kubernetes` Service(ClusterIP)를 통해 Kubernetes API와 통신합니다. kube-proxy가 DNAT를 적용하여 서비스 IP를 컨트롤 플레인 ENI IP로 변환한 후, 패킷이 VPN/DX를 통해 VPC로 라우팅됩니다.
+
+- **CNI NAT 미사용 시**: Pod가 kubernetes 서비스 IP(예: 172.16.0.1)로 전송하면 kube-proxy가 컨트롤 플레인 ENI IP로 DNAT를 적용합니다. 반환 트래픽은 파드 CIDR을 통한 역방향 라우팅이 필요합니다.
+- **CNI NAT 사용 시**: CNI가 노드 처리 전에 SNAT를 적용하여 반환 라우팅을 단순화합니다(추가 파드 CIDR 라우팅 불필요).
+
+![Pod에서 컨트롤 플레인으로](../../assets/interactive-diagrams/hybrid-nodes-pod-to-cp.svg)
+
+### 패턴 4: EKS 컨트롤 플레인 → Pod (웹훅)
+
+API 서버가 하이브리드 노드에서 실행 중인 웹훅 Pod에 직접 연결을 시작합니다. 트래픽은 원격 파드 CIDR에 대해 VPC를 통해 라우팅되고, 게이트웨이를 통해 경계를 넘습니다. 이는 **라우팅 가능한 파드 CIDR이 필요**합니다.
+
+![컨트롤 플레인에서 Pod로](../../assets/interactive-diagrams/hybrid-nodes-cp-to-pod.svg)
+
+> **중요**: 온프레미스 파드 CIDR이 라우팅 불가능한 경우, **모든 웹훅을 클라우드 노드에서 실행**해야 합니다. 아래 [웹훅 구성](#웹훅-구성) 섹션을 참조하세요.
+
+### 패턴 5: 하이브리드 노드 간 Pod ↔ Pod
+
+서로 다른 하이브리드 노드의 Pod는 [VXLAN 캡슐화](../cilium/03-networking.md#vxlan-기술-심층-분석)(또는 Geneve, IP-in-IP와 같은 유사한 오버레이 프로토콜)를 사용하여 통신합니다. CNI는 소스/대상 노드 IP를 사용하여 외부 헤더로 원본 Pod-to-Pod 패킷을 캡슐화합니다. 수신 노드의 CNI가 캡슐을 해제하고 대상 Pod로 전달합니다.
+
+![하이브리드 노드 간 Pod-to-Pod](../../assets/interactive-diagrams/hybrid-nodes-pod-to-pod.svg)
+
+### 패턴 6: 클라우드 Pod ↔ 하이브리드 Pod (East-West)
+
+VPC Pod(VPC CNI 사용)가 하이브리드 Pod로 직접 전송합니다. VPC 라우팅이 트래픽을 온프레미스 게이트웨이로 보냅니다. 패킷이 경계를 넘어 하이브리드 노드에 도착합니다. 이는 **라우팅 가능한 파드 CIDR**과 적절한 VPC 라우트 테이블 항목이 필요합니다.
+
+![East-West 트래픽](../../assets/interactive-diagrams/hybrid-nodes-east-west.svg)
+
+### 트래픽 플로우 요약
+
+| # | 플로우 | 방향 | 포트 | 요구 사항 |
+|---|--------|------|------|-----------|
+| 1 | Kubelet → API 서버 | On-Prem → AWS | TCP 443 | VPN/DX 또는 인터넷 |
+| 2 | API 서버 → Kubelet | AWS → On-Prem | TCP 10250 | SG 아웃바운드 규칙 |
+| 3 | Pod → API 서버 | On-Prem → AWS | TCP 443 | kube-proxy DNAT |
+| 4 | API 서버 → Webhook Pod | AWS → On-Prem | TCP 8443+ | **라우팅 가능 파드 CIDR** |
+| 5 | Hybrid Pod ↔ Hybrid Pod | On-Prem 내부 | UDP 8472 | Cilium VXLAN |
+| 6 | Cloud Pod ↔ Hybrid Pod | AWS ↔ On-Prem | VPC 라우트 | **라우팅 가능 파드 CIDR** + VPC 라우트 |
+
+---
+
+## 라우팅 가능한 Pod CIDR 구성
+
+온프레미스 파드 CIDR을 라우팅 가능하게 만드는 것은 웹훅, East-West 트래픽, AWS 서비스 통합(ALB, Prometheus 등)에 필수적입니다.
+
+![원격 Pod CIDR](../../assets/aws-official-diagrams/hybrid-nodes-remote-pod-cidrs.png)
+
+### 옵션 1: BGP (권장)
+
+CNI가 가상 라우터 역할을 하며 노드별 파드 CIDR 라우트를 로컬 온프레미스 라우터에 전파합니다. 가장 동적이고 유지보수하기 쉬운 접근 방식입니다.
+
+![BGP 라우팅](../../assets/aws-official-diagrams/hybrid-nodes-bgp.png)
+
+#### Cilium BGP Control Plane 구성
+
+```yaml
+apiVersion: cilium.io/v2alpha1
+kind: CiliumBGPClusterConfig
+metadata:
+  name: hybrid-bgp-config
+spec:
+  bgpInstances:
+  - name: hybrid-instance
+    localASN: 65001
+    peers:
+    - name: on-prem-router
+      peerASN: 65000
+      peerAddress: 10.80.0.1
+      peerConfigRef:
+        name: on-prem-peer
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumBGPPeerConfig
+metadata:
+  name: on-prem-peer
+spec:
+  families:
+  - afi: ipv4
+    safi: unicast
+  gracefulRestart:
+    enabled: true
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumBGPAdvertisement
+metadata:
+  name: pod-cidr-advert
+spec:
+  advertisements:
+  - advertisementType: PodCIDR
+  - advertisementType: Service
+    service:
+      addresses:
+      - ClusterIP
+```
+
+#### ASN (Autonomous System Number) 이해하기
+
+위 Cilium BGP 구성에서 `localASN`과 `peerASN`은 **자율 시스템 번호**(Autonomous System Number)입니다. 각 BGP 참여자(라우터, 스위치, 또는 여기서는 각 노드의 Cilium)에게 할당되는 고유 식별자로, BGP 피어링의 양쪽 모두 ASN이 필요합니다.
+
+**Private vs Public ASN 범위**
+
+| 범위 | 유형 | 사용 사례 |
+|------|------|----------|
+| **64512 – 65534** | 16비트 Private | 내부 네트워크, 데이터센터, 랩 환경. **EKS Hybrid Nodes에서는 이 범위를 사용합니다.** |
+| **4200000000 – 4294967294** | 32비트 Private | 많은 고유 ASN이 필요한 대규모 내부 배포 |
+| 1 – 64511 | 16비트 Public | RIR(ARIN, RIPE, APNIC)에 등록된 인터넷 대면 네트워크 |
+
+> **EKS Hybrid Nodes의 경우**: 항상 **Private ASN 범위**(64512–65534)를 사용하세요. Public ASN은 필요하지 않습니다 — 여기서 BGP는 Cilium 노드와 온프레미스 라우터 간의 내부 네트워크에서만 사용됩니다.
+
+**ASN 값 선택 방법**
+
+- **`localASN`** (예: `65001`): 하이브리드 노드에서 실행되는 Cilium에 할당된 ASN. 동일 클러스터의 모든 Cilium 노드는 일반적으로 하나의 ASN을 공유합니다.
+- **`peerASN`** (예: `65000`): Cilium과 피어링하는 온프레미스 라우터의 ASN. 라우터의 BGP 구성에서 이 값을 확인합니다.
+
+환경에 BGP가 아직 구성되어 있지 않다면, Private 범위에서 서로 다른 두 숫자를 선택하면 됩니다 (예: 라우터에 `65000`, Cilium에 `65001`). 네트워크 팀이 이미 내부적으로 BGP를 사용하고 있다면, ASN 충돌을 방지하기 위해 조율이 필요합니다.
+
+**온프레미스 라우터 BGP 구성 예시**
+
+아래는 위 Cilium 구성과 매칭되는 **라우터 측** BGP 피어링 구성 예시입니다. 각 예시에서 라우터는 ASN `65000`을 사용하고, `10.80.1.10`(ASN `65001`)의 Cilium 노드와 피어링합니다.
+
+##### Cisco IOS / IOS-XE
+
+```
+router bgp 65000
+ neighbor 10.80.1.10 remote-as 65001
+ neighbor 10.80.1.10 description "EKS Hybrid Node - Cilium BGP"
+ !
+ address-family ipv4 unicast
+  neighbor 10.80.1.10 activate
+  neighbor 10.80.1.10 soft-reconfiguration inbound
+ exit-address-family
+```
+
+##### Cisco NX-OS (Nexus)
+
+```
+router bgp 65000
+  address-family ipv4 unicast
+  neighbor 10.80.1.10
+    remote-as 65001
+    description EKS-Hybrid-Cilium
+    address-family ipv4 unicast
+      soft-reconfiguration inbound
+```
+
+##### Juniper Junos (MX / QFX / SRX)
+
+```
+set protocols bgp group eks-hybrid type external
+set protocols bgp group eks-hybrid peer-as 65001
+set protocols bgp group eks-hybrid neighbor 10.80.1.10 description "EKS Hybrid Node"
+set protocols bgp group eks-hybrid family inet unicast
+set routing-options autonomous-system 65000
+```
+
+##### Arista EOS
+
+```
+router bgp 65000
+   neighbor 10.80.1.10 remote-as 65001
+   neighbor 10.80.1.10 description EKS-Hybrid-Cilium
+   !
+   address-family ipv4
+      neighbor 10.80.1.10 activate
+```
+
+##### MikroTik RouterOS
+
+```
+/routing bgp connection
+add name=eks-hybrid remote.address=10.80.1.10 remote.as=65001 \
+    local.role=ebgp as=65000 address-families=ip
+```
+
+##### FRRouting (FRR) — 소프트웨어 라우터 (Linux)
+
+FRRouting은 Linux 서버 및 VM에서 소프트웨어 BGP 라우터로 널리 사용됩니다:
+
+```
+router bgp 65000
+ neighbor 10.80.1.10 remote-as 65001
+ neighbor 10.80.1.10 description EKS-Hybrid-Cilium
+ !
+ address-family ipv4 unicast
+  neighbor 10.80.1.10 activate
+ exit-address-family
+```
+
+##### AWS Transit Gateway (TGW)
+
+AWS Transit Gateway와 Site-to-Site VPN을 사용하는 경우, TGW 측 ASN은 TGW 생성 시 구성됩니다:
+
+```bash
+# 커스텀 ASN으로 TGW 생성
+aws ec2 create-transit-gateway \
+  --options AmazonSideAsn=65000
+
+# VPN 터널은 TGW ASN으로 자동으로 BGP를 설정합니다
+# 온프레미스 라우터(또는 Cilium)는 자체 ASN을 사용하여 TGW와 피어링합니다
+```
+
+> **참고**: AWS TGW의 기본 ASN은 `64512`입니다. Cilium 노드가 `65001`을 사용하는 경우, Cilium 구성의 피어 ASN은 TGW(또는 VGW)의 ASN과 일치해야 합니다.
+
+**다수의 하이브리드 노드 구성**
+
+여러 하이브리드 노드가 있는 경우, 각 노드는 **동일한 `localASN`** 으로 자체 Cilium BGP 스피커를 실행합니다. 온프레미스 라우터는 각 노드와 개별적으로 피어링합니다:
+
+```
+# 라우터 구성 — 각 하이브리드 노드와 피어링
+router bgp 65000
+ neighbor 10.80.1.10 remote-as 65001   ! hybrid-node-001
+ neighbor 10.80.1.11 remote-as 65001   ! hybrid-node-002
+ neighbor 10.80.1.12 remote-as 65001   ! hybrid-node-003
+```
+
+각 노드는 자신의 파드 CIDR 조각을 광고합니다 (예: node-001은 `10.85.0.0/25`, node-002는 `10.85.0.128/25`를 광고). 이를 통해 라우터는 모든 파드 CIDR에 대한 완전한 라우팅 테이블을 구성합니다.
+
+#### BGP 피어링 확인
+
+```bash
+cilium bgp peers
+cilium bgp routes
+```
+
+하이브리드 노드에서 Session State가 `established`로 표시되어야 합니다.
+
+### 옵션 2: 정적 라우트
+
+파드 CIDR을 사용한 수동 라우터 구성입니다. 가장 간단하지만 오류가 발생하기 쉽고 노드가 변경될 때 수동 업데이트가 필요합니다.
+
+![정적 라우트](../../assets/aws-official-diagrams/hybrid-nodes-static-routes.png)
+
+### 옵션 3: ARP 프록시
+
+노드가 호스팅된 파드 IP에 대한 ARP 요청에 응답합니다. 로컬 라우터와 레이어 2 네트워크 근접성이 필요합니다. Cilium에는 프록시 ARP 지원이 내장되어 있습니다. 라우터 BGP나 정적 라우트 구성이 필요 없지만, 파드 CIDR이 다른 네트워크와 겹치면 안 됩니다.
+
+![ARP 프록시](../../assets/aws-official-diagrams/hybrid-nodes-arp-proxy.png)
+
+---
+
+## 웹훅 구성
+
+웹훅은 Kubernetes 애플리케이션과 오픈소스 프로젝트(AWS Load Balancer Controller, CloudWatch Observability Agent)에서 변환(mutating) 및 검증(validation) 기능에 사용됩니다.
+
+### 라우팅 가능한 파드 네트워크 사용 시
+
+온프레미스 파드 CIDR이 라우팅 가능한 경우(BGP, 정적 라우트 또는 ARP 프록시를 통해), 웹훅을 하이브리드 노드에서 실행할 수 있습니다.
+
+### 라우팅 불가능한 파드 네트워크 사용 시
+
+온프레미스 파드 CIDR이 **라우팅 불가능**한 경우, 노드 어피니티를 사용하여 **모든 웹훅을 클라우드 노드에서 실행**하세요:
+
+```yaml
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: eks.amazonaws.com/compute-type
+          operator: NotIn
+          values:
+          - hybrid
+```
+
+### 웹훅을 사용하는 애드온
+
+다음 애드온은 웹훅 배치를 고려해야 합니다:
+
+| 애드온 | 웹훅 배치 (라우팅 불가능 파드 CIDR) |
+|--------|-----------------------------------|
+| AWS Load Balancer Controller | 클라우드 노드만 |
+| CloudWatch Observability Agent | 클라우드 노드만 |
+| ADOT (OpenTelemetry) | 클라우드 노드만 |
+| cert-manager | 클라우드 노드만 |
+| Kubernetes Metrics Server | 라우팅 가능 파드 CIDR 필요 |
 
 ---
 

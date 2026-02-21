@@ -12,7 +12,7 @@
         </mxCell>
         
         
-        <mxCell id="frontend_pod" value="Frontend Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="frontend_pod" value="Frontend Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="160" y="120" width="120" height="40" as="geometry" />
         </mxCell>
         

@@ -28,7 +28,7 @@
                     <mxGeometry x="20" y="110" width="120" height="30" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="7" value="node-exporter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;spacingLeft=28;" vertex="1" parent="3">
+                <mxCell id="7" value="node-exporter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="3">
                     <mxGeometry x="20" y="150" width="120" height="30" as="geometry" />
                 </mxCell>
                 

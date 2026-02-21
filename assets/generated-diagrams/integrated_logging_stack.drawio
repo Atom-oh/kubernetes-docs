@@ -32,7 +32,7 @@
                     <mxGeometry x="360" y="200" width="120" height="30" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="8" value="Prometheus/VictoriaMetrics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="8" value="Prometheus/VictoriaMetrics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
                     <mxGeometry x="360" y="240" width="120" height="30" as="geometry" />
                 </mxCell>
                 

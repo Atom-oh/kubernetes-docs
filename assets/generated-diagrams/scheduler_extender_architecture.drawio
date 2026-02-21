@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="65bd71144e">
     <diagram id="scheduler_extender_architecture" name="Scheduler Extender Architecture">
-        <mxGraphModel dx="690" dy="1353" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="1200" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="520" math="0" shadow="0">
             <root>
                 <mxCell id="0" />
                 <mxCell id="1" parent="0" />
@@ -20,7 +20,7 @@
                 <mxCell id="6" value="스케줄러 확장" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="2" vertex="1">
                     <mxGeometry x="400" y="40" width="390" height="300" as="geometry" />
                 </mxCell>
-                <mxCell id="7" value="확장 서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" parent="6" vertex="1">
+                <mxCell id="7" value="확장 서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="6" vertex="1">
                     <mxGeometry x="20" y="40" width="350" height="40" as="geometry" />
                 </mxCell>
                 <mxCell id="8" value="확장 엔드포인트" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="6" vertex="1">
@@ -41,7 +41,7 @@
                 <mxCell id="13" value="/prescore" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1;fontColor=#000000;fontSize=12;" parent="8" vertex="1">
                     <mxGeometry x="260" y="70" width="80" height="30" as="geometry" />
                 </mxCell>
-                <mxCell id="14" value="워커 노드" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" parent="2" vertex="1">
+                <mxCell id="14" value="워커 노드" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="2" vertex="1">
                     <mxGeometry x="20" y="220" width="350" height="120" as="geometry" />
                 </mxCell>
                 <mxCell id="15" value="노드 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="14" vertex="1">

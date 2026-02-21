@@ -16,7 +16,7 @@
                 </mxCell>
                 
                 
-                <mxCell id="4" value="노드 그룹 기반 스케일링" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="4" value="노드 그룹 기반 스케일링" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
                     <mxGeometry x="120" y="180" width="160" height="30" as="geometry" />
                 </mxCell>
                 

@@ -8,7 +8,7 @@
                 <mxCell id="2" value="AWS 클라우드" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
                     <mxGeometry x="120" y="80" width="600" height="580" as="geometry" />
                 </mxCell>
-                <mxCell id="3" value="Amazon EKS" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;fontSize=12;spacingLeft=28;" parent="2" vertex="1">
+                <mxCell id="3" value="Amazon EKS" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;fontSize=12;" parent="2" vertex="1">
                     <mxGeometry x="40" y="40" width="520" height="420" as="geometry" />
                 </mxCell>
                 <mxCell id="4" value="API 서버" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="3" vertex="1">
@@ -20,7 +20,7 @@
                 <mxCell id="6" value="기본 스케줄러" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="5" vertex="1">
                     <mxGeometry x="10" y="30" width="100" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="16" value="노드 그룹" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" parent="3" vertex="1">
+                <mxCell id="16" value="노드 그룹" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="3" vertex="1">
                     <mxGeometry x="30" y="310" width="460" height="100" as="geometry" />
                 </mxCell>
                 <mxCell id="17" value="P3 인스턴스" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1;fontSize=12;fontFamily=Noto Sans CJK KR;" parent="16" vertex="1">
@@ -50,7 +50,7 @@
                 <mxCell id="25" value="g5.2xlarge" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;" parent="23" vertex="1">
                     <mxGeometry x="80" y="25" width="50" height="30" as="geometry" />
                 </mxCell>
-                <mxCell id="26" value="CloudWatch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1;fontColor=#000000;fontSize=12;spacingLeft=28;" parent="3" vertex="1">
+                <mxCell id="26" value="CloudWatch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1;fontColor=#000000;fontSize=12;" parent="3" vertex="1">
                     <mxGeometry x="130" y="470" width="120" height="40" as="geometry" />
                 </mxCell>
                 <mxCell id="27" value="Prometheus" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1;fontColor=#000000;fontSize=12;" parent="3" vertex="1">

@@ -19,7 +19,7 @@
                     <mxGeometry x="40" y="100" width="120" height="40" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="5" value="Horizontal Pod Autoscaler" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;spacingLeft=28;" vertex="1" parent="2">
+                <mxCell id="5" value="Horizontal Pod Autoscaler" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="2">
                     <mxGeometry x="200" y="40" width="120" height="40" as="geometry" />
                 </mxCell>
                 
@@ -27,7 +27,7 @@
                     <mxGeometry x="40" y="160" width="120" height="40" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="7" value="Deployment / Job" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;spacingLeft=28;" vertex="1" parent="2">
+                <mxCell id="7" value="Deployment / Job" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="2">
                     <mxGeometry x="200" y="160" width="120" height="40" as="geometry" />
                 </mxCell>
                 

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="65bd71144e">
     <diagram id="vpc_lattice_service_network" name="VPC Lattice 서비스 네트워크 아키텍처">
-        <mxGraphModel dx="1066" dy="619" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="1100" dy="650" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="620" math="0" shadow="0">
             <root>
                 <mxCell id="0" />
                 <mxCell id="1" parent="0" />
@@ -11,7 +11,7 @@
                     <mxGeometry x="120" y="120" width="280" height="160" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="3" value="VPC 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;fontColor=#000000;fontSize=12;spacingLeft=28;" vertex="1" parent="2">
+                <mxCell id="3" value="VPC 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;fontColor=#000000;fontSize=12;" vertex="1" parent="2">
                     <mxGeometry x="40" y="40" width="80" height="40" as="geometry" />
                 </mxCell>
                 
@@ -29,7 +29,7 @@
                 </mxCell>
                 
                 
-                <mxCell id="7" value="서비스 네트워크" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;fontColor=#000000;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="7" value="서비스 네트워크" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;fontColor=#000000;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
                     <mxGeometry x="480" y="200" width="120" height="60" as="geometry" />
                 </mxCell>
                 

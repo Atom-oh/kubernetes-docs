@@ -65,7 +65,7 @@
                 <mxCell id="best-practices-title" value="모범 사례" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
                     <mxGeometry x="80" y="500" width="200" height="30" as="geometry" />
                 </mxCell>
-                <mxCell id="best-practices" value="• 클러스터 생성 시 구성 파일 사용으로 재현 가능한 배포 보장&#10;• 정기적인 클러스터 및 노드 그룹 버전 업데이트&#10;• 삭제 전 중요한 데이터 백업 및 확인&#10;• 태그를 사용한 리소스 관리 및 비용 추적&#10;• IAM 역할 및 정책의 최소 권한 원칙 적용&#10;• 네트워크 보안 그룹 및 서브넷 구성 검토" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;fontSize=10;fontStyle=0;align=left;verticalAlign=top;spacingTop=10;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                <mxCell id="best-practices" value="• 클러스터 생성 시 구성 파일 사용으로 재현 가능한 배포 보장&#10;• 정기적인 클러스터 및 노드 그룹 버전 업데이트&#10;• 삭제 전 중요한 데이터 백업 및 확인&#10;• 태그를 사용한 리소스 관리 및 비용 추적&#10;• IAM 역할 및 정책의 최소 권한 원칙 적용&#10;• 네트워크 보안 그룹 및 서브넷 구성 검토" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;fontSize=10;fontStyle=0;align=left;verticalAlign=top;spacingTop=10;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;arcSize=5;" parent="1" vertex="1">
                     <mxGeometry x="80" y="540" width="1040" height="110" as="geometry" />
                 </mxCell>
             </root>

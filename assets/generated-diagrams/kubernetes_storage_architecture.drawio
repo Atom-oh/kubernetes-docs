@@ -17,15 +17,15 @@
         </mxCell>
         
         
-        <mxCell id="pod1" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="pod1" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="180" y="160" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="pod2" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="pod2" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="360" y="160" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="pod3" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="pod3" value="Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="540" y="160" width="120" height="40" as="geometry" />
         </mxCell>
         
@@ -61,7 +61,7 @@
         </mxCell>
         
         
-        <mxCell id="sc" value="StorageClass" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E83E8C;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="sc" value="StorageClass" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E83E8C;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="360" y="400" width="120" height="40" as="geometry" />
         </mxCell>
         
@@ -71,7 +71,7 @@
         </mxCell>
         
         
-        <mxCell id="csi" value="CSI 드라이버" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6c757d;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="csi" value="CSI 드라이버" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6c757d;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="360" y="520" width="120" height="40" as="geometry" />
         </mxCell>
         

@@ -7,7 +7,7 @@
         <mxCell id="1" parent="0" />
         
         
-        <mxCell id="title" value="EKS 클러스터 삭제 프로세스" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="title" value="EKS 클러스터 삭제 프로세스" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="400" y="40" width="300" height="30" as="geometry" />
         </mxCell>
         
@@ -16,19 +16,19 @@
           <mxGeometry x="80" y="100" width="120" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="lb-services" value="LoadBalancer&#10;서비스 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1F497D;fontColor=white;fontSize=11;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="lb-services" value="LoadBalancer&#10;서비스 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1F497D;fontColor=white;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="240" y="100" width="100" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="pvc-deletion" value="PersistentVolumeClaim&#10;삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1F497D;fontColor=white;fontSize=11;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="pvc-deletion" value="PersistentVolumeClaim&#10;삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1F497D;fontColor=white;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="380" y="100" width="120" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="nodegroup-deletion" value="노드 그룹 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="nodegroup-deletion" value="노드 그룹 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="540" y="100" width="100" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="fargate-deletion" value="Fargate 프로필 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="fargate-deletion" value="Fargate 프로필 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="680" y="100" width="100" height="60" as="geometry" />
         </mxCell>
         

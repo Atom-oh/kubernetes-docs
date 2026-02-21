@@ -7,7 +7,7 @@
         <mxCell id="1" parent="0" />
         
         
-        <mxCell id="title" value="EKS 네트워킹 문제 해결" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="title" value="EKS 네트워킹 문제 해결" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="450" y="30" width="300" height="30" as="geometry" />
         </mxCell>
         
@@ -21,11 +21,11 @@
           <mxGeometry x="150" y="80" width="150" height="50" as="geometry" />
         </mxCell>
         
-        <mxCell id="service-lb" value="서비스 및&#10;로드 밸런싱 문제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD;strokeWidth=2;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="service-lb" value="서비스 및&#10;로드 밸런싱 문제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD;strokeWidth=2;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="750" y="80" width="150" height="50" as="geometry" />
         </mxCell>
         
-        <mxCell id="vpc-subnet" value="VPC 및 서브넷 문제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;strokeWidth=2;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="vpc-subnet" value="VPC 및 서브넷 문제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;strokeWidth=2;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="150" y="200" width="150" height="50" as="geometry" />
         </mxCell>
         
@@ -51,7 +51,7 @@
           <mxGeometry x="650" y="160" width="100" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="lb-issues" value="로드 밸런서 문제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="lb-issues" value="로드 밸런서 문제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="770" y="160" width="100" height="40" as="geometry" />
         </mxCell>
         

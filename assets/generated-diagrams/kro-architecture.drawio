@@ -117,7 +117,7 @@
           <mxGeometry x="440" y="550" width="120" height="25" as="geometry" />
         </mxCell>
         
-        <mxCell id="23" value="• 커스텀 리소스: 사용자 정의 애플리케이션 스펙&#10;• ResourceGraphDefinition: 리소스 간 관계 및 템플릿 정의&#10;• 네이티브 리소스: Kubernetes 표준 리소스 (Pod, Service, Deployment 등)&#10;• KRO 컨트롤러: 선언적 상태를 실제 상태로 조정하는 핵심 엔진" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;spacingLeft=28;" parent="1" vertex="1">
+        <mxCell id="23" value="• 커스텀 리소스: 사용자 정의 애플리케이션 스펙&#10;• ResourceGraphDefinition: 리소스 간 관계 및 템플릿 정의&#10;• 네이티브 리소스: Kubernetes 표준 리소스 (Pod, Service, Deployment 등)&#10;• KRO 컨트롤러: 선언적 상태를 실제 상태로 조정하는 핵심 엔진" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
           <mxGeometry x="100" y="585" width="600" height="45" as="geometry" />
         </mxCell>
         

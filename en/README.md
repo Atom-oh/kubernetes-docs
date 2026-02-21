@@ -154,13 +154,12 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 2: Scheduler Extensions and Framework](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [Part 3: Custom Scheduler Implementation Examples and Monitoring](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
-### Package Management
-1. [Helm](./package-management/01-helm.md) | [Quiz](./quizzes/package-management/10-helm-quiz.md)
-2. [Helm Chart Migration with KRO](./package-management/02-kro-helm-migration.md) | [Quiz](./quizzes/package-management/05-kro-helm-migration-quiz.md)
-
-### Platform & AWS Integration
-1. [AWS Controllers for Kubernetes (ACK)](./platform/01-ack.md) | [Quiz](./quizzes/platform/03-ack-quiz.md)
-2. [Kubernetes Extension Mechanisms](./platform/02-kubernetes-extensions.md) | [Quiz](./quizzes/platform/07-kubernetes-extensions-quiz.md)
+### Platform Engineering
+1. [Helm](./platform-engineering/01-helm.md) | [Quiz](./quizzes/platform-engineering/01-helm-quiz.md)
+2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [Quiz](./quizzes/platform-engineering/02-ack-quiz.md)
+3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [Quiz](./quizzes/platform-engineering/03-kro-quiz.md)
+4. [Kubernetes Extension Mechanisms](./platform-engineering/04-kubernetes-extensions.md) | [Quiz](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+5. [ExampleCorp: ACK + KRO Integration Example](./platform-engineering/05-example-corp-app.md)
 
 ### Operations Guide
 1. [Infrastructure Setup](./ops/01-infrastructure-setup.md) | [Quiz](./quizzes/ops/01-infrastructure-setup-quiz.md)

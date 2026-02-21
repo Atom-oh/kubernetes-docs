@@ -33,7 +33,7 @@
                     <mxGeometry x="280" y="370" width="640" height="100" as="geometry" />
                 </mxCell>
 
-                <mxCell id="pilot" value="Pilot&lt;br&gt;(Service Discovery)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#42A5F5;strokeColor=#1976D2;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#FFFFFF;spacingLeft=28;" parent="1" vertex="1">
+                <mxCell id="pilot" value="Pilot&lt;br&gt;(Service Discovery)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#42A5F5;strokeColor=#1976D2;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" parent="1" vertex="1">
                     <mxGeometry x="320" y="410" width="160" height="50" as="geometry" />
                 </mxCell>
 
@@ -51,7 +51,7 @@
                 </mxCell>
 
                 
-                <mxCell id="pod1-container" value="파드 1 (Pod 1)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#00796B;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;align=center;spacingTop=10;fontFamily=Noto Sans CJK KR;spacingLeft=28;" parent="1" vertex="1">
+                <mxCell id="pod1-container" value="파드 1 (Pod 1)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#00796B;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;align=center;spacingTop=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
                     <mxGeometry x="240" y="610" width="200" height="260" as="geometry" />
                 </mxCell>
 

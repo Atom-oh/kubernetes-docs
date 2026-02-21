@@ -7,7 +7,7 @@
                 <mxCell id="1" parent="0" />
                 
                 
-                <mxCell id="2" value="Node 1&#10;50% 사용" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="2" value="Node 1&#10;50% 사용" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
                     <mxGeometry x="120" y="120" width="120" height="60" as="geometry" />
                 </mxCell>
                 

@@ -190,15 +190,16 @@
     * [Part 2: Implementation](scheduling/02-custom-scheduler-part2.md)
     * [Part 3: Advanced Features](scheduling/03-custom-scheduler-part3.md)
 
-## Package Management
+## Platform Engineering
 
-* [Helm](package-management/01-helm.md)
-* [Helm Chart Migration with KRO](package-management/02-kro-helm-migration.md)
-
-## Platform & AWS Integration
-
-* [AWS Controllers for Kubernetes (ACK)](platform/01-ack.md)
-* [Kubernetes Extension Mechanisms](platform/02-kubernetes-extensions.md)
+* [Helm](platform-engineering/01-helm.md)
+* [AWS Controllers for Kubernetes (ACK)](platform-engineering/02-ack.md)
+  * [S3 and IAM Examples](platform-engineering/ack/01-s3-iam.md)
+  * [SQS and SNS Examples](platform-engineering/ack/02-sqs-sns.md)
+  * [ELBv2, Route 53, RDS Examples](platform-engineering/ack/03-elbv2-route53-rds.md)
+* [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
+* [Kubernetes Extension Mechanisms](platform-engineering/04-kubernetes-extensions.md)
+* [ExampleCorp: ACK + KRO Integration Example](platform-engineering/05-example-corp-app.md)
 
 ## Cilium
 
@@ -374,13 +375,11 @@
     * [Custom Scheduler Quiz - Part 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
     * [Custom Scheduler Quiz - Part 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
-* Package Management
-    * [Helm Quiz](quizzes/package-management/10-helm-quiz.md)
-    * [Helm Chart Migration with KRO Quiz](quizzes/package-management/05-kro-helm-migration-quiz.md)
-
-* Platform & AWS Integration
-    * [AWS Controllers for Kubernetes (ACK) Quiz](quizzes/platform/03-ack-quiz.md)
-    * [Kubernetes Extension Mechanisms Quiz](quizzes/platform/07-kubernetes-extensions-quiz.md)
+* Platform Engineering
+    * [Helm Quiz](quizzes/platform-engineering/01-helm-quiz.md)
+    * [ACK Quiz](quizzes/platform-engineering/02-ack-quiz.md)
+    * [KRO Quiz](quizzes/platform-engineering/03-kro-quiz.md)
+    * [Kubernetes Extension Mechanisms Quiz](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
 
 * Operations Guide
     * [Infrastructure Setup Quiz](quizzes/ops/01-infrastructure-setup-quiz.md)

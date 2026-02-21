@@ -16,7 +16,7 @@
         </mxCell>
         
         
-        <mxCell id="service_a" value="서비스 A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1;fontSize=14;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+        <mxCell id="service_a" value="서비스 A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1;fontSize=14;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
           <mxGeometry x="160" y="200" width="160" height="120" as="geometry" />
         </mxCell>
         

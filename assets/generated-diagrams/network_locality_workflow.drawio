@@ -23,7 +23,7 @@
                     <mxGeometry x="440" y="80" width="100" height="600" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="6" value="서비스 맵" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="6" value="서비스 맵" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
                     <mxGeometry x="560" y="80" width="100" height="600" as="geometry" />
                 </mxCell>
                 
@@ -31,7 +31,7 @@
                     <mxGeometry x="680" y="80" width="100" height="600" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="8" value="노드" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#3B48CC;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="8" value="노드" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#3B48CC;strokeColor=#333333;strokeWidth=1;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
                     <mxGeometry x="800" y="80" width="100" height="600" as="geometry" />
                 </mxCell>
                 

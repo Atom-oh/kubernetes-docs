@@ -190,15 +190,16 @@
     * [Part 2: 구현](scheduling/02-custom-scheduler-part2.md)
     * [Part 3: 고급 기능](scheduling/03-custom-scheduler-part3.md)
 
-## Package Management
+## Platform Engineering
 
-* [Helm](package-management/01-helm.md)
-* [KRO를 활용한 Helm 차트 마이그레이션](package-management/02-kro-helm-migration.md)
-
-## Platform & AWS Integration
-
-* [AWS Controllers for Kubernetes (ACK)](platform/01-ack.md)
-* [Kubernetes 확장 메커니즘](platform/02-kubernetes-extensions.md)
+* [Helm](platform-engineering/01-helm.md)
+* [AWS Controllers for Kubernetes (ACK)](platform-engineering/02-ack.md)
+  * [S3 및 IAM 예제](platform-engineering/ack/01-s3-iam.md)
+  * [SQS 및 SNS 예제](platform-engineering/ack/02-sqs-sns.md)
+  * [ELBv2, Route 53, RDS 예제](platform-engineering/ack/03-elbv2-route53-rds.md)
+* [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
+* [Kubernetes 확장 메커니즘](platform-engineering/04-kubernetes-extensions.md)
+* [ExampleCorp: ACK + KRO 통합 예제](platform-engineering/05-example-corp-app.md)
 
 ## Cilium
 
@@ -375,13 +376,11 @@
     * [Custom Scheduler 퀴즈 - Part 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
     * [Custom Scheduler 퀴즈 - Part 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
-* Package Management
-    * [Helm 퀴즈](quizzes/package-management/10-helm-quiz.md)
-    * [KRO를 활용한 Helm 차트 마이그레이션 퀴즈](quizzes/package-management/05-kro-helm-migration-quiz.md)
-
-* Platform & AWS Integration
-    * [AWS Controllers for Kubernetes (ACK) 퀴즈](quizzes/platform/03-ack-quiz.md)
-    * [Kubernetes 확장 메커니즘 퀴즈](quizzes/platform/07-kubernetes-extensions-quiz.md)
+* Platform Engineering
+    * [Helm 퀴즈](quizzes/platform-engineering/01-helm-quiz.md)
+    * [ACK 퀴즈](quizzes/platform-engineering/02-ack-quiz.md)
+    * [KRO 퀴즈](quizzes/platform-engineering/03-kro-quiz.md)
+    * [Kubernetes 확장 메커니즘 퀴즈](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
 
 * 운영 가이드
     * [인프라 구성 기초 퀴즈](quizzes/ops/01-infrastructure-setup-quiz.md)

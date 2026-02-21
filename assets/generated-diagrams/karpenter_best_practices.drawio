@@ -36,7 +36,7 @@
                     <mxGeometry x="120" y="280" width="120" height="40" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="9" value="노드 통합 활성화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="9" value="노드 통합 활성화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
                     <mxGeometry x="120" y="330" width="120" height="40" as="geometry" />
                 </mxCell>
                 
@@ -75,15 +75,15 @@
                 </mxCell>
                 
                 
-                <mxCell id="18" value="IAM 역할 최소 권한" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F44336;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="18" value="IAM 역할 최소 권한" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F44336;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
                     <mxGeometry x="600" y="180" width="120" height="40" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="19" value="보안 그룹 제한" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F44336;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="19" value="보안 그룹 제한" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F44336;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
                     <mxGeometry x="600" y="230" width="120" height="40" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="20" value="암호화된 EBS 볼륨" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F44336;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="20" value="암호화된 EBS 볼륨" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F44336;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
                     <mxGeometry x="600" y="280" width="120" height="40" as="geometry" />
                 </mxCell>
                 

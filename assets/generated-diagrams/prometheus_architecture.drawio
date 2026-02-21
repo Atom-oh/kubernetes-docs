@@ -15,7 +15,7 @@
                     <mxGeometry x="120" y="120" width="120" height="40" as="geometry" />
                 </mxCell>
                 
-                <mxCell id="4" value="Service Discovery" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;spacingLeft=28;" vertex="1" parent="1">
+                <mxCell id="4" value="Service Discovery" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
                     <mxGeometry x="120" y="200" width="120" height="40" as="geometry" />
                 </mxCell>
                 

@@ -12,7 +12,7 @@
         </mxCell>
         
         
-        <mxCell id="aws-cloud" value="AWS 클라우드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="aws-cloud" value="AWS 클라우드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;arcSize=5;" vertex="1" parent="1">
           <mxGeometry x="80" y="80" width="1120" height="680" as="geometry" />
         </mxCell>
         

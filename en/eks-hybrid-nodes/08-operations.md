@@ -2,7 +2,7 @@
 
 < [Previous: Cost Optimization](./07-cost-optimization.md) | [Table of Contents](./README.md) >
 
-> **Supported Versions**: EKS 1.31+, Harbor 2.13+, Prometheus Operator
+> **Supported Versions**: EKS 1.31+, Prometheus Operator
 > **Last Updated**: February 2025
 
 This document covers day-to-day operations and maintenance tasks for EKS Hybrid Nodes environments, including monitoring, backup procedures, and troubleshooting.

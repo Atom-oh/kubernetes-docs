@@ -12,22 +12,22 @@
                 </mxCell>
                 
                 
-                <mxCell id="load_balancer" value="AWS ALB&#10;(Application Load Balancer)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=2;fontColor=black;fontSize=12;fontStyle=1;spacingLeft=28;" parent="1" vertex="1">
+                <mxCell id="load_balancer" value="AWS ALB&#10;(Application Load Balancer)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=2;fontColor=black;fontSize=12;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="250" y="80" width="150" height="50" as="geometry" />
                 </mxCell>
                 
                 
-                <mxCell id="ingress_controller" value="AWS Load Balancer&#10;Controller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=2;fontColor=white;fontSize=12;fontStyle=1;spacingLeft=28;" parent="1" vertex="1">
+                <mxCell id="ingress_controller" value="AWS Load Balancer&#10;Controller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=2;fontColor=white;fontSize=12;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="500" y="80" width="150" height="50" as="geometry" />
                 </mxCell>
                 
                 
-                <mxCell id="ingress_resource" value="Ingress 리소스&#10;(라우팅 규칙)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=2;fontColor=white;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;spacingLeft=28;" parent="1" vertex="1">
+                <mxCell id="ingress_resource" value="Ingress 리소스&#10;(라우팅 규칙)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=2;fontColor=white;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
                     <mxGeometry x="500" y="200" width="150" height="50" as="geometry" />
                 </mxCell>
                 
                 
-                <mxCell id="service_a" value="Service A&#10;(app1-service)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=2;fontColor=white;fontSize=12;fontStyle=1;spacingLeft=28;" parent="1" vertex="1">
+                <mxCell id="service_a" value="Service A&#10;(app1-service)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=2;fontColor=white;fontSize=12;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="200" y="320" width="120" height="50" as="geometry" />
                 </mxCell>
                 
