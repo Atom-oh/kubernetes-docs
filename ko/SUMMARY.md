@@ -51,9 +51,6 @@
 * [EKS 문제 해결](eks/09-eks-troubleshooting.md)
 * [EKS 복원력과 고가용성](eks/10-eks-resiliency.md)
 * [EKS 고급 디버깅](eks/11-eks-advanced-debugging.md)
-
-## EKS Hybrid Nodes
-
 * [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
     * [사전 요구 사항](eks-hybrid-nodes/01-prerequisites.md)
     * [네트워크 구성](eks-hybrid-nodes/02-network-configuration.md)
@@ -63,9 +60,6 @@
     * [워크로드 배치 전략](eks-hybrid-nodes/06-workload-placement.md)
     * [비용 최적화](eks-hybrid-nodes/07-cost-optimization.md)
     * [운영 및 유지보수](eks-hybrid-nodes/08-operations.md)
-
-## EKS Auto Mode
-
 * [EKS Auto Mode](eks-auto-mode/README.md)
     * [Auto Mode 시작하기](eks-auto-mode/01-getting-started.md)
     * [NodePool 구성](eks-auto-mode/02-nodepool-configuration.md)
@@ -151,45 +145,6 @@
 
 * [ArgoCD](gitops/01-argocd.md)
 
-## Autoscaling
-
-* [KEDA](autoscaling/01-keda.md)
-* [Karpenter](autoscaling/02-karpenter.md)
-
-## Observability
-
-* [Observability 개요](observability/README.md)
-* [Metrics](observability/metrics/README.md)
-    * [Prometheus](observability/metrics/01-prometheus.md)
-    * [VictoriaMetrics](observability/metrics/02-victoriametrics.md)
-    * [Grafana Mimir](observability/metrics/03-mimir.md)
-    * [CloudWatch Metrics](observability/metrics/04-cloudwatch-metrics.md)
-    * [Datadog](observability/metrics/05-datadog.md)
-* [Logging](observability/logging/README.md)
-    * [Grafana Loki](observability/logging/01-loki.md)
-    * [OpenSearch](observability/logging/02-opensearch.md)
-    * [CloudWatch Logs](observability/logging/03-cloudwatch-logs.md)
-    * [ClickHouse](observability/logging/04-clickhouse.md)
-    * [Log Collectors](observability/logging/05-collectors.md)
-* [Tracing](observability/tracing/README.md)
-    * [Grafana Tempo](observability/tracing/01-tempo.md)
-    * [AWS X-Ray](observability/tracing/02-xray.md)
-    * [OpenTelemetry](observability/tracing/03-opentelemetry.md)
-    * [Dynatrace](observability/tracing/04-dynatrace.md)
-* [Alerting](observability/alerting/README.md)
-    * [Alertmanager](observability/alerting/01-alertmanager.md)
-    * [CloudWatch Alarms](observability/alerting/02-cloudwatch-alarms.md)
-    * [Grafana OnCall](observability/alerting/03-grafana-oncall.md)
-* [Grafana](observability/grafana/README.md)
-* [관측성 최적화 가이드](advanced/09-observability-optimization.md)
-
-## Scheduling
-
-* [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
-    * [Part 1: 기본 개념](scheduling/01-custom-scheduler-part1.md)
-    * [Part 2: 구현](scheduling/02-custom-scheduler-part2.md)
-    * [Part 3: 고급 기능](scheduling/03-custom-scheduler-part3.md)
-
 ## Platform Engineering
 
 * [Helm](platform-engineering/01-helm.md)
@@ -214,7 +169,7 @@
     * [네트워킹 개념](cilium/networking-concepts.md)
 * [용어집](cilium/glossary.md)
 
-## 운영 가이드
+## Operations Guide
 
 * [운영 가이드 소개](ops/README.md)
     * [인프라 구성 기초](ops/01-infrastructure-setup.md)
@@ -228,8 +183,39 @@
     * [Observability 스택 구성](ops/09-observability-stack.md)
     * [리소스 최적화](ops/10-resource-optimization.md)
     * [EKS 업그레이드 운영](ops/11-upgrade-operations.md)
+* [Observability 개요](observability/README.md)
+    * [Metrics](observability/metrics/README.md)
+        * [Prometheus](observability/metrics/01-prometheus.md)
+        * [VictoriaMetrics](observability/metrics/02-victoriametrics.md)
+        * [Grafana Mimir](observability/metrics/03-mimir.md)
+        * [CloudWatch Metrics](observability/metrics/04-cloudwatch-metrics.md)
+        * [Datadog](observability/metrics/05-datadog.md)
+    * [Logging](observability/logging/README.md)
+        * [Grafana Loki](observability/logging/01-loki.md)
+        * [OpenSearch](observability/logging/02-opensearch.md)
+        * [CloudWatch Logs](observability/logging/03-cloudwatch-logs.md)
+        * [ClickHouse](observability/logging/04-clickhouse.md)
+        * [Log Collectors](observability/logging/05-collectors.md)
+    * [Tracing](observability/tracing/README.md)
+        * [Grafana Tempo](observability/tracing/01-tempo.md)
+        * [AWS X-Ray](observability/tracing/02-xray.md)
+        * [OpenTelemetry](observability/tracing/03-opentelemetry.md)
+        * [Dynatrace](observability/tracing/04-dynatrace.md)
+    * [Alerting](observability/alerting/README.md)
+        * [Alertmanager](observability/alerting/01-alertmanager.md)
+        * [CloudWatch Alarms](observability/alerting/02-cloudwatch-alarms.md)
+        * [Grafana OnCall](observability/alerting/03-grafana-oncall.md)
+    * [Grafana](observability/grafana/README.md)
+* [관측성 최적화 가이드](advanced/09-observability-optimization.md)
+* [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
+    * [Part 1: 기본 개념](scheduling/01-custom-scheduler-part1.md)
+    * [Part 2: 구현](scheduling/02-custom-scheduler-part2.md)
+    * [Part 3: 고급 기능](scheduling/03-custom-scheduler-part3.md)
+* [Scaling]    
+    * [KEDA](autoscaling/01-keda.md)
+    * [Karpenter](autoscaling/02-karpenter.md)
 
-## 실습 가이드
+## Lab Guides
 
 * [실습 가이드 소개](labs/README.md)
     * [Linux 기초 실습](labs/basics/01-linux-basics-lab.md)
