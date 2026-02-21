@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="app.diagrams.net" modified="2025-07-22T05:15:00.000Z" agent="Mozilla/5.0" version="22.0.0" etag="your-etag">
   <diagram id="cilium-architecture" name="Cilium Architecture">
     <mxGraphModel dx="1000" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
@@ -5,61 +6,61 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         
-        <!-- Components -->
-        <mxCell id="kubernetes" value="Kubernetes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        
+        <mxCell id="kubernetes" value="Kubernetes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="320" y="120" width="200" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="cni" value="Container Network Interface" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="cni" value="Container Network Interface" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="320" y="200" width="200" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="cilium" value="Cilium" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="cilium" value="Cilium" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="320" y="280" width="200" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="ebpf" value="eBPF" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+        <mxCell id="ebpf" value="eBPF" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="320" y="360" width="200" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="kernel" value="Linux Kernel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;" vertex="1" parent="1">
+        <mxCell id="kernel" value="Linux Kernel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontColor=black;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="320" y="440" width="200" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="hubble" value="Hubble" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#333333;strokeWidth=1px;fontColor=white;" vertex="1" parent="1">
+        <mxCell id="hubble" value="Hubble" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="560" y="280" width="120" height="40" as="geometry" />
         </mxCell>
         
-        <!-- Connections -->
-        <mxCell id="k8s_to_cni" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="kubernetes" target="cni">
+        
+        <mxCell id="k8s_to_cni" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="kubernetes" target="cni">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="cni_to_cilium" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cni" target="cilium">
+        <mxCell id="cni_to_cilium" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="cni" target="cilium">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="cilium_to_ebpf" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cilium" target="ebpf">
+        <mxCell id="cilium_to_ebpf" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="cilium" target="ebpf">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="ebpf_to_kernel" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ebpf" target="kernel">
+        <mxCell id="ebpf_to_kernel" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="ebpf" target="kernel">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         
-        <mxCell id="cilium_to_hubble" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="cilium" target="hubble">
+        <mxCell id="cilium_to_hubble" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;" edge="1" parent="1" source="cilium" target="hubble">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="400" y="330" as="sourcePoint" />
             <mxPoint x="450" y="280" as="targetPoint" />

@@ -1,74 +1,49 @@
-<mxfile host="app.diagrams.net" modified="2025-07-22T04:50:00.000Z" agent="Mozilla/5.0" version="22.0.0" etag="your-etag">
-  <diagram id="container-runtime-hierarchy" name="Container Runtime Hierarchy">
-    <mxGraphModel dx="1000" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        
-        <!-- Kubernetes -->
-        <mxCell id="kubernetes" value="Kubernetes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;strokeWidth=1px;" vertex="1" parent="1">
-          <mxGeometry x="320" y="120" width="200" height="60" as="geometry" />
-        </mxCell>
-        
-        <!-- CRI -->
-        <mxCell id="cri" value="Container Runtime Interface" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1c4e9;strokeColor=#673ab7;strokeWidth=1px;" vertex="1" parent="1">
-          <mxGeometry x="320" y="220" width="200" height="60" as="geometry" />
-        </mxCell>
-        
-        <!-- High-level Runtimes -->
-        <mxCell id="containerd" value="containerd" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#388e3c;strokeWidth=1px;" vertex="1" parent="1">
-          <mxGeometry x="240" y="320" width="160" height="60" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="crio" value="CRI-O" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#388e3c;strokeWidth=1px;" vertex="1" parent="1">
-          <mxGeometry x="440" y="320" width="160" height="60" as="geometry" />
-        </mxCell>
-        
-        <!-- Low-level Runtimes -->
-        <mxCell id="runc" value="runc" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#d32f2f;strokeWidth=1px;" vertex="1" parent="1">
-          <mxGeometry x="240" y="420" width="160" height="60" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="crun" value="crun" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#d32f2f;strokeWidth=1px;" vertex="1" parent="1">
-          <mxGeometry x="440" y="420" width="160" height="60" as="geometry" />
-        </mxCell>
-        
-        <!-- Connections -->
-        <mxCell id="k8s_to_cri" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="kubernetes" target="cri">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="cri_to_containerd" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cri" target="containerd">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="cri_to_crio" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cri" target="crio">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="containerd_to_runc" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="containerd" target="runc">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="crio_to_crun" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="crio" target="crun">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram id="container-runtime-hierarchy" name="Container Runtime Hierarchy">
+        <mxGraphModel dx="783" dy="907" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="600" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="kubernetes" value="Kubernetes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;strokeWidth=2;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="325" y="60" width="200" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cri" value="Container Runtime Interface (CRI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1c4e9;strokeColor=#673ab7;strokeWidth=2;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="285" y="180" width="280" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="containerd" value="containerd" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#388e3c;strokeWidth=2;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="225" y="300" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="crio" value="CRI-O" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#388e3c;strokeWidth=2;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="465" y="300" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="runc" value="runc" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#d32f2f;strokeWidth=2;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="225" y="420" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="crun" value="crun" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#d32f2f;strokeWidth=2;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="465" y="420" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="k8s_to_cri" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#545B64;" parent="1" source="kubernetes" target="cri" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cri_to_containerd" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#545B64;" parent="1" source="cri" target="containerd" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cri_to_crio" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#545B64;" parent="1" source="cri" target="crio" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="containerd_to_runc" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#545B64;" parent="1" source="containerd" target="runc" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="crio_to_crun" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#545B64;" parent="1" source="crio" target="crun" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="label-high" value="고수준 런타임" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=2;fontColor=#673ab7;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="195" width="100" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="label-low" value="저수준 런타임" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=2;fontColor=#d32f2f;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="435" width="100" height="30" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>

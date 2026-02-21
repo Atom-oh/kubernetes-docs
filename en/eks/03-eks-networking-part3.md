@@ -8,7 +8,7 @@ This document covers performance optimization, troubleshooting methods, and adva
 
 There are several strategies for optimizing network performance in EKS clusters.
 
-![EKS Network Performance Optimization](../assets/generated-diagrams/network_performance_optimization.drawio)
+![EKS Network Performance Optimization](../assets/generated-diagrams/network_performance_optimization.png)
 
 ### Instance Type Selection
 
@@ -30,7 +30,7 @@ Network performance varies significantly depending on the instance type. For net
 
 EKS supports multiple networking modes, each with different performance characteristics.
 
-![EKS Networking Modes](../assets/generated-diagrams/eks_networking_modes.drawio)
+![EKS Networking Modes](../assets/generated-diagrams/eks_networking_modes.png)
 
 1. **AWS VPC CNI (Default)**:
    - Assigns VPC IP addresses directly to pods.
@@ -104,7 +104,7 @@ sysctl -w net.ipv4.tcp_wmem="4096 65536 16777216"
 
 Network performance can be improved by optimizing node placement and locality.
 
-![Node Placement and Locality Optimization](../assets/generated-diagrams/node_placement_locality.drawio)
+![Node Placement and Locality Optimization](../assets/generated-diagrams/node_placement_locality.png)
 
 1. **Availability Zone Locality**:
    - Place frequently communicating pods in the same availability zone to reduce latency.
@@ -212,11 +212,11 @@ Network policies enhance security but can impact performance.
 
 Let's explore common networking issues that can occur in EKS clusters and how to resolve them.
 
-![EKS Networking Troubleshooting](../assets/generated-diagrams/networking_troubleshooting.drawio)
+![EKS Networking Troubleshooting](../assets/generated-diagrams/networking_troubleshooting.png)
 
 ### Pod Networking Issues
 
-![Pod Networking Issues](../assets/generated-diagrams/pod_networking_issues.drawio)
+![Pod Networking Issues](../assets/generated-diagrams/pod_networking_issues.png)
 
 1. **Pod IP Assignment Failure**:
    - Symptom: Pod stuck in `ContainerCreating` state
@@ -257,7 +257,7 @@ kubectl exec -it <pod-name> -- dig kubernetes.default.svc.cluster.local
 
 ### Service and Load Balancing Issues
 
-![Service and Load Balancer Issues](../assets/generated-diagrams/service_loadbalancer_issues.drawio)
+![Service and Load Balancer Issues](../assets/generated-diagrams/service_loadbalancer_issues.png)
 
 1. **Service Connection Issues**:
    - Symptom: Cannot connect to pods through the service

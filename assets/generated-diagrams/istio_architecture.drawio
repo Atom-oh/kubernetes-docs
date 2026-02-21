@@ -1,77 +1,78 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="65bd71144e">
     <diagram id="istio_architecture" name="Istio 아키텍처">
         <mxGraphModel dx="1066" dy="619" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
                 
-                <!-- Control Plane -->
-                <mxCell id="2" value="Control Plane" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
-                    <mxGeometry x="120" y="120" width="200" height="120" as="geometry"/>
-                </mxCell>
-                <mxCell id="3" value="istiod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;" vertex="1" parent="2">
-                    <mxGeometry x="40" y="50" width="120" height="40" as="geometry"/>
-                </mxCell>
                 
-                <!-- Data Plane -->
-                <mxCell id="4" value="Data Plane" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
-                    <mxGeometry x="120" y="280" width="200" height="200" as="geometry"/>
+                <mxCell id="2" value="Control Plane" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=12;" vertex="1" parent="1">
+                    <mxGeometry x="120" y="120" width="200" height="120" as="geometry" />
                 </mxCell>
-                <mxCell id="5" value="Envoy Proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;" vertex="1" parent="4">
-                    <mxGeometry x="40" y="40" width="120" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="6" value="Envoy Proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;" vertex="1" parent="4">
-                    <mxGeometry x="40" y="100" width="120" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="7" value="Envoy Proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;" vertex="1" parent="4">
-                    <mxGeometry x="40" y="160" width="120" height="40" as="geometry"/>
+                <mxCell id="3" value="istiod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="2">
+                    <mxGeometry x="40" y="50" width="120" height="40" as="geometry" />
                 </mxCell>
                 
-                <!-- Services -->
-                <mxCell id="8" value="Services" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
-                    <mxGeometry x="400" y="280" width="200" height="200" as="geometry"/>
+                
+                <mxCell id="4" value="Data Plane" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=12;" vertex="1" parent="1">
+                    <mxGeometry x="120" y="280" width="200" height="200" as="geometry" />
                 </mxCell>
-                <mxCell id="9" value="Service A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;fontColor=#000000;" vertex="1" parent="8">
-                    <mxGeometry x="40" y="40" width="120" height="40" as="geometry"/>
+                <mxCell id="5" value="Envoy Proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="4">
+                    <mxGeometry x="40" y="40" width="120" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="10" value="Service B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;fontColor=#000000;" vertex="1" parent="8">
-                    <mxGeometry x="40" y="100" width="120" height="40" as="geometry"/>
+                <mxCell id="6" value="Envoy Proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="4">
+                    <mxGeometry x="40" y="100" width="120" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="11" value="Service C" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;fontColor=#000000;" vertex="1" parent="8">
-                    <mxGeometry x="40" y="160" width="120" height="40" as="geometry"/>
+                <mxCell id="7" value="Envoy Proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="4">
+                    <mxGeometry x="40" y="160" width="120" height="40" as="geometry" />
                 </mxCell>
                 
-                <!-- Connections -->
-                <mxCell id="12" value="구성 배포" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="3" target="5">
-                    <mxGeometry relative="1" as="geometry"/>
+                
+                <mxCell id="8" value="Services" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=12;" vertex="1" parent="1">
+                    <mxGeometry x="400" y="280" width="200" height="200" as="geometry" />
                 </mxCell>
-                <mxCell id="13" value="구성 배포" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="3" target="6">
+                <mxCell id="9" value="Service A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;fontColor=#000000;fontSize=12;" vertex="1" parent="8">
+                    <mxGeometry x="40" y="40" width="120" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="10" value="Service B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;fontColor=#000000;fontSize=12;" vertex="1" parent="8">
+                    <mxGeometry x="40" y="100" width="120" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="11" value="Service C" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;fontColor=#000000;fontSize=12;" vertex="1" parent="8">
+                    <mxGeometry x="40" y="160" width="120" height="40" as="geometry" />
+                </mxCell>
+                
+                
+                <mxCell id="12" value="구성 배포" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="3" target="5">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="13" value="구성 배포" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="3" target="6">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="220" y="260"/>
-                            <mxPoint x="220" y="260"/>
+                            <mxPoint x="220" y="260" />
+                            <mxPoint x="220" y="260" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="14" value="구성 배포" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="3" target="7">
+                <mxCell id="14" value="구성 배포" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="3" target="7">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="220" y="260"/>
-                            <mxPoint x="220" y="260"/>
+                            <mxPoint x="220" y="260" />
+                            <mxPoint x="220" y="260" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 
-                <mxCell id="15" value="사이드카" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="5" target="9">
-                    <mxGeometry relative="1" as="geometry"/>
+                <mxCell id="15" value="사이드카" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="5" target="9">
+                    <mxGeometry relative="1" as="geometry" />
                 </mxCell>
-                <mxCell id="16" value="사이드카" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="6" target="10">
-                    <mxGeometry relative="1" as="geometry"/>
+                <mxCell id="16" value="사이드카" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="6" target="10">
+                    <mxGeometry relative="1" as="geometry" />
                 </mxCell>
-                <mxCell id="17" value="사이드카" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="7" target="11">
-                    <mxGeometry relative="1" as="geometry"/>
+                <mxCell id="17" value="사이드카" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="7" target="11">
+                    <mxGeometry relative="1" as="geometry" />
                 </mxCell>
-            </root>
+            <mxCell id="icon_2000" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=svc;" vertex="1" parent="1"><mxGeometry x="404.0" y="369.0" width="24" height="22" as="geometry" /></mxCell></root>
         </mxGraphModel>
     </diagram>
 </mxfile>

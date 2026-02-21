@@ -14,7 +14,7 @@ When running applications on Amazon EKS, there are various storage options for s
 
 Let's first understand the key concepts for managing storage in Kubernetes.
 
-![Kubernetes Storage Concepts](../assets/generated-diagrams/kubernetes_storage_concepts.drawio)
+![Kubernetes Storage Concepts](../assets/generated-diagrams/kubernetes_storage_concepts.png)
 
 ### Volume
 
@@ -45,7 +45,7 @@ Kubernetes supports the following access modes:
 
 In Amazon EKS, you can leverage various AWS storage services to provide storage for containerized applications.
 
-![EKS Storage Options](../assets/generated-diagrams/eks_storage_options.drawio)
+![EKS Storage Options](../assets/generated-diagrams/eks_storage_options.png)
 
 ### Main Storage Options
 
@@ -82,7 +82,7 @@ In Amazon EKS, you can leverage various AWS storage services to provide storage 
 
 Amazon EBS provides block-level storage volumes that can be attached to EC2 instances. In EKS, you can mount EBS volumes to Kubernetes pods through the EBS CSI (Container Storage Interface) driver.
 
-![EBS CSI Driver Architecture](../assets/generated-diagrams/ebs_csi_architecture.drawio)
+![EBS CSI Driver Architecture](../assets/generated-diagrams/ebs_csi_architecture.png)
 
 ### Installing EBS CSI Driver
 
@@ -203,7 +203,7 @@ For EKS, the gp3 volume type is recommended. gp3 is cost-effective while providi
 
 Amazon EFS is a fully managed NFS file system that can be accessed simultaneously from multiple EC2 instances. In EKS, you can mount EFS file systems to multiple pods simultaneously through the EFS CSI driver.
 
-![EFS CSI Driver Architecture](../assets/generated-diagrams/efs_csi_architecture.drawio)
+![EFS CSI Driver Architecture](../assets/generated-diagrams/efs_csi_architecture.png)
 
 ### Installing EFS CSI Driver
 
@@ -362,7 +362,7 @@ Amazon EFS provides two performance modes and three throughput modes:
 
 Using Kubernetes storage classes allows persistent volumes to be dynamically provisioned. In EKS, you can configure storage classes for various AWS storage services.
 
-![Kubernetes Storage Workflow](../assets/generated-diagrams/storage_workflow.drawio)
+![Kubernetes Storage Workflow](../assets/generated-diagrams/storage_workflow.png)
 
 ### Volume Binding Modes
 

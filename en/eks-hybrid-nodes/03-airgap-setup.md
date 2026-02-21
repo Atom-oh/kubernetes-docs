@@ -3,7 +3,7 @@
 < [Previous: Network Configuration](./02-network-configuration.md) | [Table of Contents](./README.md) | [Next: Node Bootstrap](./04-node-bootstrap.md) >
 
 > **Supported Versions**: EKS 1.31+, nodeadm 0.1+
-> **Last Updated**: February 2026
+> **Last Updated**: February 2025
 
 This document covers setting up air-gapped environments for EKS Hybrid Nodes. Binary artifacts are accessed through a private S3 bucket via VPC Endpoints, and container images are accessed through ECR VPC Endpoints.
 
@@ -22,32 +22,26 @@ An air-gapped environment is a network that is completely isolated from the publ
 
 ### Types of Air-Gapped Environments
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     Fully Air-Gapped Environment                        │
-│  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │  No internet connectivity                                        │   │
-│  │  All software/images delivered via physical media                 │   │
-│  │  USB drives, DVDs, removable hard drives                         │   │
-│  └──────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph type1["Fully Air-Gapped"]
+        A1[No Internet Connectivity] --> A2[Physical Media Delivery]
+        A2 --> A3[USB / DVD / Removable HDD]
+    end
 
-┌─────────────────────────────────────────────────────────────────────────┐
-│                   Partially Air-Gapped Environment (Proxy)              │
-│  ┌────────────────┐    ┌────────────────┐    ┌────────────────┐        │
-│  │ Internal Network│ ─→ │  Proxy Server  │ ─→ │   Internet     │        │
-│  │ (restricted)    │    │ (allow-listed) │    │ (selective)    │        │
-│  └────────────────┘    └────────────────┘    └────────────────┘        │
-└─────────────────────────────────────────────────────────────────────────┘
+    subgraph type2["Partially Air-Gapped - Proxy"]
+        B1[Internal Network<br/>Restricted Access] -->|Allow-listed| B2[Proxy Server]
+        B2 -->|Selective| B3[Internet]
+    end
 
-┌─────────────────────────────────────────────────────────────────────────┐
-│              Private Connectivity (VPN/DX + VPC Endpoint)               │
-│  ┌────────────────┐    ┌────────────────┐    ┌────────────────┐        │
-│  │  On-Premises   │ ─→ │  VPN / Direct  │ ─→ │  VPC Endpoint  │        │
-│  │  Network       │    │  Connect       │    │  (S3, ECR etc) │        │
-│  └────────────────┘    └────────────────┘    └────────────────┘        │
-│  Private access to AWS services without internet path                   │
-└─────────────────────────────────────────────────────────────────────────┘
+    subgraph type3["Private Connectivity - VPN/DX + VPC Endpoint"]
+        C1[On-Premises<br/>Network] -->|VPN / Direct Connect| C2[AWS VPC]
+        C2 --> C3[VPC Endpoints<br/>S3, ECR, etc.]
+    end
+
+    style type1 fill:#fee,stroke:#c00
+    style type2 fill:#ffe,stroke:#cc0
+    style type3 fill:#efe,stroke:#0a0
 ```
 
 ---
@@ -56,34 +50,26 @@ An air-gapped environment is a network that is completely isolated from the publ
 
 The air-gap architecture configured in this document is as follows:
 
-![EKS Hybrid Nodes Air-Gap Architecture](../../assets/generated-diagrams/eks_hybrid_airgap_architecture.drawio)
+```mermaid
+graph TD
+    subgraph prep["Preparation - Internet-Connected Host"]
+        P1[hybrid-assets.eks.amazonaws.com] -->|Download manifest.yaml| P2[ekshybrid-download.sh]
+        P2 -->|Binaries + Checksums| P3[Upload to Private S3 Bucket]
+        P2 -->|Container Image List| P4[Pull from ECR via VPC Endpoint]
+    end
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  Preparation (internet-connected host)                                  │
-│                                                                         │
-│  hybrid-assets.eks.amazonaws.com                                        │
-│        │  Download binaries/checksums based on manifest.yaml            │
-│        ▼                                                                │
-│  Run ekshybrid-download.sh                                              │
-│        │                                                                │
-│        ├──→ Binaries, checksums → Upload to private S3 bucket           │
-│        └──→ Container image list → Pull from ECR (via VPC Endpoint)     │
-└─────────────────────────────────────────────────────────────────────────┘
+    subgraph runtime["Runtime - Air-Gapped Environment"]
+        R1[On-Premises Node] -->|Binary Downloads| R2[PHZ: hybrid-assets.eks.amazonaws.com]
+        R2 --> R3[S3 Interface VPC Endpoint]
+        R3 --> R4[Private S3 Bucket]
+        R1 -->|Container Image Pulls| R5[ECR API/DKR VPC Endpoint]
+        R5 --> R6[ECR]
+    end
 
-┌─────────────────────────────────────────────────────────────────────────┐
-│  Runtime (air-gapped environment)                                       │
-│                                                                         │
-│  On-premises node                                                       │
-│        │                                                                │
-│        ├──→ Binary downloads                                            │
-│        │    PHZ (hybrid-assets.eks.amazonaws.com)                       │
-│        │      → S3 Interface VPC Endpoint → Private S3 bucket           │
-│        │                                                                │
-│        └──→ Container image pulls                                       │
-│             ECR API/DKR VPC Endpoint → ECR                              │
-│             (ecr.api + ecr.dkr endpoints)                               │
-└─────────────────────────────────────────────────────────────────────────┘
+    prep -.->|"Artifacts pre-staged"| runtime
+
+    style prep fill:#e8f4fd,stroke:#1976d2
+    style runtime fill:#fce4ec,stroke:#c62828
 ```
 
 ### Artifact Storage Responsibilities

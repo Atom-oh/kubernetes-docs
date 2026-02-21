@@ -1,0 +1,163 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mxfile host="65bd71144e">
+    <diagram id="eks_hybrid_bootstrap" name="EKS Hybrid Nodes - Bootstrap Flow">
+        <mxGraphModel dx="1822" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+
+                <!-- Title -->
+                <mxCell id="10" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;&lt;b&gt;EKS Hybrid Nodes — Bootstrap Workflow&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#666666&quot; style=&quot;font-size: 12px;&quot;&gt;From IAM Credential Setup to Node Ready&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="400" y="10" width="800" height="50" as="geometry" />
+                </mxCell>
+
+                <!-- ==================== Step 1: Prepare IAM ==================== -->
+                <mxCell id="20" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;Step 1&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Prepare IAM Credentials&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=3;fontSize=12;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="80" width="350" height="280" as="geometry" />
+                </mxCell>
+
+                <!-- SSM Option -->
+                <mxCell id="21" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;Option A: SSM Hybrid Activations&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;1. Create SSM Activation&lt;br&gt;2. Get ActivationCode + ActivationId&lt;br&gt;3. Add to NodeConfig YAML&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#2E7D32&quot;&gt;✓ Simpler setup, no PKI needed&lt;br&gt;✓ AWS manages credential rotation&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1565C0;strokeWidth=1;verticalAlign=top;spacingTop=5;spacingLeft=8;align=left;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="45" y="140" width="320" height="140" as="geometry" />
+                </mxCell>
+
+                <!-- IAM RA Option -->
+                <mxCell id="22" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;Option B: IAM Roles Anywhere&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;1. Create Trust Anchor (CA cert)&lt;br&gt;2. Create Profile (maps to IAM Role)&lt;br&gt;3. Issue X.509 cert per node&lt;br&gt;4. Configure cert path in NodeConfig&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#E65100&quot;&gt;✓ No SSM dependency, works in air-gap&lt;br&gt;✓ Uses existing PKI infrastructure&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=1;verticalAlign=top;spacingTop=5;spacingLeft=8;align=left;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="45" y="290" width="320" height="145" as="geometry" />
+                </mxCell>
+
+                <!-- Arrow 1→2 -->
+                <mxCell id="25" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#1565C0;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="380" y="220" as="sourcePoint" />
+                        <mxPoint x="430" y="220" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- ==================== Step 2: Install nodeadm ==================== -->
+                <mxCell id="30" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;Step 2&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Install nodeadm CLI&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;curl -Lo nodeadm https://hybrid-assets.&lt;br&gt;eks.amazonaws.com/releases/latest/&lt;br&gt;bin/linux/amd64/nodeadm&lt;br&gt;&lt;br&gt;chmod +x nodeadm&lt;br&gt;sudo mv nodeadm /usr/local/bin/&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=3;fontSize=12;verticalAlign=top;spacingTop=8;spacingLeft=8;align=left;" vertex="1" parent="1">
+                    <mxGeometry x="430" y="80" width="240" height="190" as="geometry" />
+                </mxCell>
+
+                <!-- Arrow 2→3 -->
+                <mxCell id="31" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#2E7D32;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="670" y="175" as="sourcePoint" />
+                        <mxPoint x="710" y="175" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- ==================== Step 3: Write NodeConfig ==================== -->
+                <mxCell id="40" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;Step 3&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Write NodeConfig YAML&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;• cluster name, region, endpoint&lt;br&gt;• CA certificate&lt;br&gt;• Service CIDR&lt;br&gt;• Credential provider config&lt;br&gt;  (SSM or IAM Roles Anywhere)&lt;br&gt;• kubelet config (labels, taints)&lt;br&gt;• containerd config (registry mirror)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#FF8F00;strokeWidth=3;fontSize=12;verticalAlign=top;spacingTop=8;spacingLeft=8;align=left;" vertex="1" parent="1">
+                    <mxGeometry x="710" y="80" width="250" height="220" as="geometry" />
+                </mxCell>
+
+                <!-- Arrow 3→4 -->
+                <mxCell id="41" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#FF8F00;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="960" y="190" as="sourcePoint" />
+                        <mxPoint x="1010" y="190" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- ==================== Step 4: Install CA Certs ==================== -->
+                <mxCell id="50" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;Step 4&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Install CA Certificates&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;• System CA store (update-ca-certificates)&lt;br&gt;• containerd cert directory&lt;br&gt;• Registry mirror hosts.toml&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#E65100&quot;&gt;Required for:&lt;/font&gt;&lt;br&gt;• Private registry (Harbor)&lt;br&gt;• IAM Roles Anywhere (if used)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=3;fontSize=12;verticalAlign=top;spacingTop=8;spacingLeft=8;align=left;" vertex="1" parent="1">
+                    <mxGeometry x="1010" y="80" width="250" height="220" as="geometry" />
+                </mxCell>
+
+                <!-- Arrow 4→5 -->
+                <mxCell id="51" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#7B1FA2;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1260" y="190" as="sourcePoint" />
+                        <mxPoint x="1310" y="190" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- ==================== Step 5: nodeadm init ==================== -->
+                <mxCell id="60" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;Step 5&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Run nodeadm init&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;sudo nodeadm init \&lt;br&gt;  -c file://nodeconfig.yaml&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#E65100&quot;&gt;This command:&lt;/font&gt;&lt;br&gt;• Validates NodeConfig&lt;br&gt;• Registers with SSM/IAM RA&lt;br&gt;• Downloads K8s binaries&lt;br&gt;• Configures kubelet&lt;br&gt;• Starts kubelet service&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=3;fontSize=12;verticalAlign=top;spacingTop=8;spacingLeft=8;align=left;" vertex="1" parent="1">
+                    <mxGeometry x="1310" y="80" width="250" height="240" as="geometry" />
+                </mxCell>
+
+                <!-- Arrow 5→6 (down) -->
+                <mxCell id="61" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#C62828;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1435" y="320" as="sourcePoint" />
+                        <mxPoint x="1435" y="380" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- ==================== Step 6: Kubelet Registers ==================== -->
+                <mxCell id="70" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;Step 6&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Kubelet Registers with EKS API&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;• kubelet → VPN/DX → API Server (443)&lt;br&gt;• Node object created in etcd&lt;br&gt;• Labels applied:&lt;br&gt;  eks.amazonaws.com/compute-type=hybrid&lt;br&gt;• Taint applied:&lt;br&gt;  eks.amazonaws.com/compute-type=hybrid:NoSchedule&lt;br&gt;• Node status: NotReady (waiting for CNI)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=3;fontSize=12;verticalAlign=top;spacingTop=8;spacingLeft=8;align=left;" vertex="1" parent="1">
+                    <mxGeometry x="1060" y="380" width="330" height="200" as="geometry" />
+                </mxCell>
+
+                <!-- Arrow 6→7 (left) -->
+                <mxCell id="71" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#1565C0;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1060" y="480" as="sourcePoint" />
+                        <mxPoint x="1000" y="480" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- ==================== Step 7: Cilium CNI Setup ==================== -->
+                <mxCell id="80" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;Step 7&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Cilium CNI Configures Networking&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;• Cilium agent starts on node&lt;br&gt;• Allocates Pod CIDR from RemotePodNetwork&lt;br&gt;• Configures VXLAN tunnel (port 8472)&lt;br&gt;• Sets up iptables/eBPF rules&lt;br&gt;• Optional: BGP peering for routable pods&lt;br&gt;• Node condition: NetworkReady = True&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1F8E9;strokeColor=#558B2F;strokeWidth=3;fontSize=12;verticalAlign=top;spacingTop=8;spacingLeft=8;align=left;" vertex="1" parent="1">
+                    <mxGeometry x="660" y="380" width="340" height="200" as="geometry" />
+                </mxCell>
+
+                <!-- Arrow 7→8 (left) -->
+                <mxCell id="81" value="" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#558B2F;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="660" y="480" as="sourcePoint" />
+                        <mxPoint x="600" y="480" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- ==================== Step 8: Node Ready ==================== -->
+                <mxCell id="90" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;&lt;b&gt;Step 8&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;✓ Node Ready&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;• Node status: &lt;font color=&quot;#2E7D32&quot;&gt;&lt;b&gt;Ready&lt;/b&gt;&lt;/font&gt;&lt;br&gt;• Pods can be scheduled&lt;br&gt;• kubectl get nodes shows hybrid node&lt;br&gt;• Workloads targeted via:&lt;br&gt;  nodeSelector / tolerations&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32;strokeWidth=4;fontSize=12;verticalAlign=top;spacingTop=8;spacingLeft=8;align=left;" vertex="1" parent="1">
+                    <mxGeometry x="310" y="380" width="290" height="200" as="geometry" />
+                </mxCell>
+
+                <!-- ==================== Troubleshooting ==================== -->
+                <mxCell id="100" value="&lt;font style=&quot;font-size: 13px;&quot;&gt;&lt;b&gt;Troubleshooting — Common Bootstrap Failures&lt;/b&gt;&lt;/font&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;fontSize=12;fontStyle=0;startSize=25;rounded=1;arcSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="630" width="1530" height="200" as="geometry" />
+                </mxCell>
+                <mxCell id="101" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;SSM Registration Failure&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;Symptom:&lt;/b&gt; &quot;unable to register SSM instance&quot;&lt;br&gt;&lt;b&gt;Causes:&lt;/b&gt;&lt;br&gt;• Expired activation code&lt;br&gt;• No outbound access to ssm.&amp;lt;region&amp;gt;.amazonaws.com&lt;br&gt;• IAM role missing permissions&lt;br&gt;&lt;b&gt;Fix:&lt;/b&gt; Create new activation, verify firewall rules&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C62828;strokeWidth=1;verticalAlign=top;spacingTop=5;spacingLeft=8;align=left;fontSize=11;" vertex="1" parent="100">
+                    <mxGeometry x="15" y="35" width="290" height="150" as="geometry" />
+                </mxCell>
+                <mxCell id="102" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;API Server Unreachable&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;Symptom:&lt;/b&gt; &quot;Unable to connect to the server&quot;&lt;br&gt;&lt;b&gt;Causes:&lt;/b&gt;&lt;br&gt;• VPN/DX tunnel down&lt;br&gt;• Firewall blocking port 443&lt;br&gt;• DNS not resolving EKS endpoint&lt;br&gt;• Private endpoint but no VPC route&lt;br&gt;&lt;b&gt;Fix:&lt;/b&gt; Check VPN status, DNS, SG rules&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C62828;strokeWidth=1;verticalAlign=top;spacingTop=5;spacingLeft=8;align=left;fontSize=11;" vertex="1" parent="100">
+                    <mxGeometry x="320" y="35" width="290" height="150" as="geometry" />
+                </mxCell>
+                <mxCell id="103" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;Node Stays NotReady&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;Symptom:&lt;/b&gt; Node registered but NotReady&lt;br&gt;&lt;b&gt;Causes:&lt;/b&gt;&lt;br&gt;• CNI not installed/started&lt;br&gt;• Cilium unable to allocate pod CIDR&lt;br&gt;• VXLAN port 8472 blocked&lt;br&gt;• containerd not running&lt;br&gt;&lt;b&gt;Fix:&lt;/b&gt; Check Cilium logs, firewall, containerd&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C62828;strokeWidth=1;verticalAlign=top;spacingTop=5;spacingLeft=8;align=left;fontSize=11;" vertex="1" parent="100">
+                    <mxGeometry x="625" y="35" width="290" height="150" as="geometry" />
+                </mxCell>
+                <mxCell id="104" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;Image Pull Failures&lt;/b&gt;&lt;/font&gt;&lt;hr size=&quot;1&quot;&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;Symptom:&lt;/b&gt; ErrImagePull on system pods&lt;br&gt;&lt;b&gt;Causes:&lt;/b&gt;&lt;br&gt;• ECR VPC endpoint not configured&lt;br&gt;• Private registry cert not trusted&lt;br&gt;• ecr-credential-provider missing&lt;br&gt;• containerd registry config incorrect&lt;br&gt;&lt;b&gt;Fix:&lt;/b&gt; Verify VPC endpoints, certs, creds&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C62828;strokeWidth=1;verticalAlign=top;spacingTop=5;spacingLeft=8;align=left;fontSize=11;" vertex="1" parent="100">
+                    <mxGeometry x="930" y="35" width="290" height="150" as="geometry" />
+                </mxCell>
+
+                <!-- Diagnostic Commands -->
+                <mxCell id="105" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Key Diagnostic Commands&lt;/b&gt;&lt;/font&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#FF8F00;strokeWidth=2;fontSize=12;fontStyle=0;startSize=25;rounded=1;arcSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="860" width="1530" height="80" as="geometry" />
+                </mxCell>
+                <mxCell id="106" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;code&gt;sudo journalctl -u kubelet -f&lt;/code&gt; — Kubelet logs&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=8;" vertex="1" parent="105">
+                    <mxGeometry x="10" y="30" width="300" height="20" as="geometry" />
+                </mxCell>
+                <mxCell id="107" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;code&gt;sudo nodeadm debug&lt;/code&gt; — nodeadm diagnostics&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=8;" vertex="1" parent="105">
+                    <mxGeometry x="320" y="30" width="300" height="20" as="geometry" />
+                </mxCell>
+                <mxCell id="108" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;code&gt;kubectl get nodes -o wide&lt;/code&gt; — Node status from API&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=8;" vertex="1" parent="105">
+                    <mxGeometry x="630" y="30" width="300" height="20" as="geometry" />
+                </mxCell>
+                <mxCell id="109" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;code&gt;kubectl describe node &amp;lt;name&amp;gt;&lt;/code&gt; — Node conditions&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=8;" vertex="1" parent="105">
+                    <mxGeometry x="940" y="30" width="300" height="20" as="geometry" />
+                </mxCell>
+                <mxCell id="110" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;code&gt;sudo systemctl status containerd&lt;/code&gt; — Runtime status&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=8;" vertex="1" parent="105">
+                    <mxGeometry x="10" y="52" width="300" height="20" as="geometry" />
+                </mxCell>
+                <mxCell id="111" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;code&gt;cilium status&lt;/code&gt; — CNI health&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=8;" vertex="1" parent="105">
+                    <mxGeometry x="320" y="52" width="250" height="20" as="geometry" />
+                </mxCell>
+
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

@@ -73,33 +73,27 @@ kubectl run gpu-test --rm -it \
 
 Kubernetes 1.31+ enables more flexible GPU resource management through DRA.
 
-### ResourceClass Definition
+### DeviceClass Definition
 
 ```yaml
-# gpu-resource-class.yaml
+# gpu-device-class.yaml
 apiVersion: resource.k8s.io/v1alpha3
-kind: ResourceClass
+kind: DeviceClass
 metadata:
   name: nvidia-gpu
-driverName: gpu.nvidia.com
-suitableNodes:
-  nodeSelectorTerms:
-  - matchExpressions:
-    - key: nvidia.com/gpu.present
-      operator: In
-      values: ["true"]
+spec:
+  selectors:
+  - cel:
+      expression: "device.driver == 'gpu.nvidia.com'"
 ---
 apiVersion: resource.k8s.io/v1alpha3
-kind: ResourceClass
+kind: DeviceClass
 metadata:
   name: high-memory-gpu
-driverName: gpu.nvidia.com
-suitableNodes:
-  nodeSelectorTerms:
-  - matchExpressions:
-    - key: nvidia.com/gpu.product
-      operator: In
-      values: ["NVIDIA-H100-80GB-HBM3", "NVIDIA-H200"]
+spec:
+  selectors:
+  - cel:
+      expression: "device.driver == 'gpu.nvidia.com' && device.attributes['gpu.nvidia.com'].productName in ['NVIDIA-H100-80GB-HBM3', 'NVIDIA-H200']"
 ```
 
 ### ResourceClaim Template
@@ -113,8 +107,11 @@ metadata:
   namespace: ai-workloads
 spec:
   spec:
-    resourceClassName: nvidia-gpu
-    allocationMode: WaitForFirstConsumer
+    devices:
+      requests:
+      - name: gpu
+        deviceClassName: nvidia-gpu
+        count: 1
 ```
 
 ### Pod Definition Using DRA
@@ -136,7 +133,7 @@ spec:
     effect: NoSchedule
   containers:
   - name: llm-server
-    image: harbor.internal.company.io/ai/vllm-server:v0.4.0
+    image: <REGISTRY>/ai/vllm-server:v0.4.0
     resources:
       claims:
       - name: gpu-resource

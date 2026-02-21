@@ -119,9 +119,34 @@ This training content provides quizzes for each topic along with the learning ma
 2. [Karpenter](./autoscaling/02-karpenter.md) | [Quiz](./quizzes/autoscaling/06-karpenter-quiz.md)
 
 ### Observability
-1. [Monitoring Stack (VictoriaMetrics, Prometheus, Grafana)](./observability/01-monitoring-stack.md) | [Quiz](./quizzes/observability/07-monitoring-stack-quiz.md)
-2. [Logging Stack (Loki, Tempo)](./observability/02-logging-stack.md) | [Quiz](./quizzes/observability/08-logging-stack-quiz.md)
-3. [Observability Optimization Guide](./advanced/09-observability-optimization.md) | [Quiz](./quizzes/advanced/09-observability-optimization-quiz.md)
+1. [Observability Overview](./observability/README.md)
+2. **Metrics**
+   - [Metrics Overview](./observability/metrics/README.md) | [Quiz](./quizzes/observability/metrics/00-metrics-overview-quiz.md)
+   - [Prometheus](./observability/metrics/01-prometheus.md) | [Quiz](./quizzes/observability/metrics/01-prometheus-quiz.md)
+   - [VictoriaMetrics](./observability/metrics/02-victoriametrics.md) | [Quiz](./quizzes/observability/metrics/02-victoriametrics-quiz.md)
+   - [Grafana Mimir](./observability/metrics/03-mimir.md) | [Quiz](./quizzes/observability/metrics/03-mimir-quiz.md)
+   - [CloudWatch Metrics](./observability/metrics/04-cloudwatch-metrics.md) | [Quiz](./quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
+   - [Datadog](./observability/metrics/05-datadog.md) | [Quiz](./quizzes/observability/metrics/05-datadog-quiz.md)
+3. **Logging**
+   - [Logging Overview](./observability/logging/README.md)
+   - [Grafana Loki](./observability/logging/01-loki.md) | [Quiz](./quizzes/observability/logging/01-loki-quiz.md)
+   - [OpenSearch](./observability/logging/02-opensearch.md) | [Quiz](./quizzes/observability/logging/02-opensearch-quiz.md)
+   - [CloudWatch Logs](./observability/logging/03-cloudwatch-logs.md) | [Quiz](./quizzes/observability/logging/03-cloudwatch-logs-quiz.md)
+   - [ClickHouse](./observability/logging/04-clickhouse.md) | [Quiz](./quizzes/observability/logging/04-clickhouse-quiz.md)
+   - [Log Collectors](./observability/logging/05-collectors.md) | [Quiz](./quizzes/observability/logging/05-collectors-quiz.md)
+4. **Tracing**
+   - [Tracing Overview](./observability/tracing/README.md)
+   - [Grafana Tempo](./observability/tracing/01-tempo.md) | [Quiz](./quizzes/observability/tracing/01-tempo-quiz.md)
+   - [AWS X-Ray](./observability/tracing/02-xray.md) | [Quiz](./quizzes/observability/tracing/02-xray-quiz.md)
+   - [OpenTelemetry](./observability/tracing/03-opentelemetry.md) | [Quiz](./quizzes/observability/tracing/03-opentelemetry-quiz.md)
+   - [Dynatrace](./observability/tracing/04-dynatrace.md) | [Quiz](./quizzes/observability/tracing/04-dynatrace-quiz.md)
+5. **Alerting**
+   - [Alerting Overview](./observability/alerting/README.md)
+   - [Alertmanager](./observability/alerting/01-alertmanager.md) | [Quiz](./quizzes/observability/alerting/01-alertmanager-quiz.md)
+   - [CloudWatch Alarms](./observability/alerting/02-cloudwatch-alarms.md) | [Quiz](./quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md)
+   - [Grafana OnCall](./observability/alerting/03-grafana-oncall.md) | [Quiz](./quizzes/observability/alerting/03-grafana-oncall-quiz.md)
+6. [Grafana](./observability/grafana/README.md) | [Quiz](./quizzes/observability/grafana/grafana-quiz.md)
+7. [Observability Optimization Guide](./advanced/09-observability-optimization.md) | [Quiz](./quizzes/advanced/09-observability-optimization-quiz.md)
 
 ### Scheduling
 1. Custom Scheduler
@@ -129,13 +154,25 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 2: Scheduler Extensions and Framework](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [Part 3: Custom Scheduler Implementation Examples and Monitoring](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
-### Package Management
-1. [Helm](./package-management/01-helm.md) | [Quiz](./quizzes/package-management/10-helm-quiz.md)
-2. [Helm Chart Migration with KRO](./package-management/02-kro-helm-migration.md) | [Quiz](./quizzes/package-management/05-kro-helm-migration-quiz.md)
+### Platform Engineering
+1. [Helm](./platform-engineering/01-helm.md) | [Quiz](./quizzes/platform-engineering/01-helm-quiz.md)
+2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [Quiz](./quizzes/platform-engineering/02-ack-quiz.md)
+3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [Quiz](./quizzes/platform-engineering/03-kro-quiz.md)
+4. [Kubernetes Extension Mechanisms](./platform-engineering/04-kubernetes-extensions.md) | [Quiz](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+5. [ExampleCorp: ACK + KRO Integration Example](./platform-engineering/05-example-corp-app.md)
 
-### Platform & AWS Integration
-1. [AWS Controllers for Kubernetes (ACK)](./platform/01-ack.md) | [Quiz](./quizzes/platform/03-ack-quiz.md)
-2. [Kubernetes Extension Mechanisms](./platform/02-kubernetes-extensions.md) | [Quiz](./quizzes/platform/07-kubernetes-extensions-quiz.md)
+### Operations Guide
+1. [Infrastructure Setup](./ops/01-infrastructure-setup.md) | [Quiz](./quizzes/ops/01-infrastructure-setup-quiz.md)
+2. [Infrastructure Advanced](./ops/02-infrastructure-advanced.md) | [Quiz](./quizzes/ops/02-infrastructure-advanced-quiz.md)
+3. [CI Pipelines](./ops/03-ci-pipelines.md) | [Quiz](./quizzes/ops/03-ci-pipelines-quiz.md)
+4. [GitOps Multi-Cluster](./ops/04-gitops-multi-cluster.md) | [Quiz](./quizzes/ops/04-gitops-multi-cluster-quiz.md)
+5. [GitOps Automation](./ops/05-gitops-automation.md) | [Quiz](./quizzes/ops/05-gitops-automation-quiz.md)
+6. [Scaling Strategies](./ops/06-scaling-strategies.md) | [Quiz](./quizzes/ops/06-scaling-strategies-quiz.md)
+7. [Observability Alerts](./ops/07-observability-alerts.md) | [Quiz](./quizzes/ops/07-observability-alerts-quiz.md)
+8. [Observability Analysis](./ops/08-observability-analysis.md) | [Quiz](./quizzes/ops/08-observability-analysis-quiz.md)
+9. [Observability Stack](./ops/09-observability-stack.md) | [Quiz](./quizzes/ops/09-observability-stack-quiz.md)
+10. [Resource Optimization](./ops/10-resource-optimization.md) | [Quiz](./quizzes/ops/10-resource-optimization-quiz.md)
+11. [Upgrade Operations](./ops/11-upgrade-operations.md) | [Quiz](./quizzes/ops/11-upgrade-operations-quiz.md)
 
 ## Lab Guides
 

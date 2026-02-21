@@ -158,8 +158,29 @@
 
 ## Observability
 
-* [Monitoring Stack (VictoriaMetrics, Prometheus, Grafana)](observability/01-monitoring-stack.md)
-* [Logging Stack (Loki, Tempo)](observability/02-logging-stack.md)
+* [Observability Overview](observability/README.md)
+* [Metrics](observability/metrics/README.md)
+    * [Prometheus](observability/metrics/01-prometheus.md)
+    * [VictoriaMetrics](observability/metrics/02-victoriametrics.md)
+    * [Grafana Mimir](observability/metrics/03-mimir.md)
+    * [CloudWatch Metrics](observability/metrics/04-cloudwatch-metrics.md)
+    * [Datadog](observability/metrics/05-datadog.md)
+* [Logging](observability/logging/README.md)
+    * [Grafana Loki](observability/logging/01-loki.md)
+    * [OpenSearch](observability/logging/02-opensearch.md)
+    * [CloudWatch Logs](observability/logging/03-cloudwatch-logs.md)
+    * [ClickHouse](observability/logging/04-clickhouse.md)
+    * [Log Collectors](observability/logging/05-collectors.md)
+* [Tracing](observability/tracing/README.md)
+    * [Grafana Tempo](observability/tracing/01-tempo.md)
+    * [AWS X-Ray](observability/tracing/02-xray.md)
+    * [OpenTelemetry](observability/tracing/03-opentelemetry.md)
+    * [Dynatrace](observability/tracing/04-dynatrace.md)
+* [Alerting](observability/alerting/README.md)
+    * [Alertmanager](observability/alerting/01-alertmanager.md)
+    * [CloudWatch Alarms](observability/alerting/02-cloudwatch-alarms.md)
+    * [Grafana OnCall](observability/alerting/03-grafana-oncall.md)
+* [Grafana](observability/grafana/README.md)
 * [Observability Optimization Guide](advanced/09-observability-optimization.md)
 
 ## Scheduling
@@ -169,15 +190,16 @@
     * [Part 2: Implementation](scheduling/02-custom-scheduler-part2.md)
     * [Part 3: Advanced Features](scheduling/03-custom-scheduler-part3.md)
 
-## Package Management
+## Platform Engineering
 
-* [Helm](package-management/01-helm.md)
-* [Helm Chart Migration with KRO](package-management/02-kro-helm-migration.md)
-
-## Platform & AWS Integration
-
-* [AWS Controllers for Kubernetes (ACK)](platform/01-ack.md)
-* [Kubernetes Extension Mechanisms](platform/02-kubernetes-extensions.md)
+* [Helm](platform-engineering/01-helm.md)
+* [AWS Controllers for Kubernetes (ACK)](platform-engineering/02-ack.md)
+  * [S3 and IAM Examples](platform-engineering/ack/01-s3-iam.md)
+  * [SQS and SNS Examples](platform-engineering/ack/02-sqs-sns.md)
+  * [ELBv2, Route 53, RDS Examples](platform-engineering/ack/03-elbv2-route53-rds.md)
+* [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
+* [Kubernetes Extension Mechanisms](platform-engineering/04-kubernetes-extensions.md)
+* [ExampleCorp: ACK + KRO Integration Example](platform-engineering/05-example-corp-app.md)
 
 ## Cilium
 
@@ -191,6 +213,21 @@
     * [Part 7: Advanced Topics](cilium/07-advanced-topics.md)
     * [Networking Concepts](cilium/networking-concepts.md)
 * [Glossary](cilium/glossary.md)
+
+## Operations Guide
+
+* [Operations Guide](ops/README.md)
+    * [Infrastructure Setup](ops/01-infrastructure-setup.md)
+    * [Infrastructure Advanced](ops/02-infrastructure-advanced.md)
+    * [CI Pipelines](ops/03-ci-pipelines.md)
+    * [GitOps Multi-Cluster](ops/04-gitops-multi-cluster.md)
+    * [GitOps Automation](ops/05-gitops-automation.md)
+    * [Scaling Strategies](ops/06-scaling-strategies.md)
+    * [Observability Alerts](ops/07-observability-alerts.md)
+    * [Observability Analysis](ops/08-observability-analysis.md)
+    * [Observability Stack](ops/09-observability-stack.md)
+    * [Resource Optimization](ops/10-resource-optimization.md)
+    * [Upgrade Operations](ops/11-upgrade-operations.md)
 
 ## Lab Guides
 
@@ -308,8 +345,29 @@
     * [Karpenter Quiz](quizzes/autoscaling/06-karpenter-quiz.md)
 
 * Observability
-    * [Monitoring Stack Quiz](quizzes/observability/07-monitoring-stack-quiz.md)
-    * [Logging Stack Quiz](quizzes/observability/08-logging-stack-quiz.md)
+    * Metrics
+        * [Metrics Overview Quiz](quizzes/observability/metrics/00-metrics-overview-quiz.md)
+        * [Prometheus Quiz](quizzes/observability/metrics/01-prometheus-quiz.md)
+        * [VictoriaMetrics Quiz](quizzes/observability/metrics/02-victoriametrics-quiz.md)
+        * [Grafana Mimir Quiz](quizzes/observability/metrics/03-mimir-quiz.md)
+        * [CloudWatch Metrics Quiz](quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
+        * [Datadog Quiz](quizzes/observability/metrics/05-datadog-quiz.md)
+    * Logging
+        * [Grafana Loki Quiz](quizzes/observability/logging/01-loki-quiz.md)
+        * [OpenSearch Quiz](quizzes/observability/logging/02-opensearch-quiz.md)
+        * [CloudWatch Logs Quiz](quizzes/observability/logging/03-cloudwatch-logs-quiz.md)
+        * [ClickHouse Quiz](quizzes/observability/logging/04-clickhouse-quiz.md)
+        * [Log Collectors Quiz](quizzes/observability/logging/05-collectors-quiz.md)
+    * Tracing
+        * [Grafana Tempo Quiz](quizzes/observability/tracing/01-tempo-quiz.md)
+        * [AWS X-Ray Quiz](quizzes/observability/tracing/02-xray-quiz.md)
+        * [OpenTelemetry Quiz](quizzes/observability/tracing/03-opentelemetry-quiz.md)
+        * [Dynatrace Quiz](quizzes/observability/tracing/04-dynatrace-quiz.md)
+    * Alerting
+        * [Alertmanager Quiz](quizzes/observability/alerting/01-alertmanager-quiz.md)
+        * [CloudWatch Alarms Quiz](quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md)
+        * [Grafana OnCall Quiz](quizzes/observability/alerting/03-grafana-oncall-quiz.md)
+    * [Grafana Quiz](quizzes/observability/grafana/grafana-quiz.md)
     * [Observability Optimization Guide Quiz](quizzes/advanced/09-observability-optimization-quiz.md)
 
 * Scheduling
@@ -317,10 +375,21 @@
     * [Custom Scheduler Quiz - Part 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
     * [Custom Scheduler Quiz - Part 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
-* Package Management
-    * [Helm Quiz](quizzes/package-management/10-helm-quiz.md)
-    * [Helm Chart Migration with KRO Quiz](quizzes/package-management/05-kro-helm-migration-quiz.md)
+* Platform Engineering
+    * [Helm Quiz](quizzes/platform-engineering/01-helm-quiz.md)
+    * [ACK Quiz](quizzes/platform-engineering/02-ack-quiz.md)
+    * [KRO Quiz](quizzes/platform-engineering/03-kro-quiz.md)
+    * [Kubernetes Extension Mechanisms Quiz](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
 
-* Platform & AWS Integration
-    * [AWS Controllers for Kubernetes (ACK) Quiz](quizzes/platform/03-ack-quiz.md)
-    * [Kubernetes Extension Mechanisms Quiz](quizzes/platform/07-kubernetes-extensions-quiz.md)
+* Operations Guide
+    * [Infrastructure Setup Quiz](quizzes/ops/01-infrastructure-setup-quiz.md)
+    * [Infrastructure Advanced Quiz](quizzes/ops/02-infrastructure-advanced-quiz.md)
+    * [CI Pipelines Quiz](quizzes/ops/03-ci-pipelines-quiz.md)
+    * [GitOps Multi-Cluster Quiz](quizzes/ops/04-gitops-multi-cluster-quiz.md)
+    * [GitOps Automation Quiz](quizzes/ops/05-gitops-automation-quiz.md)
+    * [Scaling Strategies Quiz](quizzes/ops/06-scaling-strategies-quiz.md)
+    * [Observability Alerts Quiz](quizzes/ops/07-observability-alerts-quiz.md)
+    * [Observability Analysis Quiz](quizzes/ops/08-observability-analysis-quiz.md)
+    * [Observability Stack Quiz](quizzes/ops/09-observability-stack-quiz.md)
+    * [Resource Optimization Quiz](quizzes/ops/10-resource-optimization-quiz.md)
+    * [Upgrade Operations Quiz](quizzes/ops/11-upgrade-operations-quiz.md)

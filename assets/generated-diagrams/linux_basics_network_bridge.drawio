@@ -1,64 +1,65 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="65bd71144e">
     <diagram id="network-bridge-diagram" name="Network Bridge and NAT">
         <mxGraphModel dx="744" dy="1323" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
-                <mxCell id="host" value="Host" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1" parent="1" vertex="1">
-                    <mxGeometry x="120" y="80" width="520" height="400" as="geometry"/>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                <mxCell id="host" value="Host" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="80" width="520" height="400" as="geometry" />
                 </mxCell>
-                <mxCell id="container_a_group" value="Container A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;" parent="1" vertex="1">
-                    <mxGeometry x="160" y="120" width="160" height="100" as="geometry"/>
+                <mxCell id="container_a_group" value="Container A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="120" width="160" height="100" as="geometry" />
                 </mxCell>
-                <mxCell id="container_a" value="eth0&#10;172.17.0.2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" parent="1" vertex="1">
-                    <mxGeometry x="180" y="160" width="120" height="40" as="geometry"/>
+                <mxCell id="container_a" value="eth0&#10;172.17.0.2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="180" y="160" width="120" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="container_b_group" value="Container B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;" parent="1" vertex="1">
-                    <mxGeometry x="160" y="240" width="160" height="100" as="geometry"/>
+                <mxCell id="container_b_group" value="Container B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;verticalAlign=top;dashed=1;strokeWidth=1px;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="240" width="160" height="100" as="geometry" />
                 </mxCell>
-                <mxCell id="container_b" value="eth0&#10;172.17.0.3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;" parent="1" vertex="1">
-                    <mxGeometry x="180" y="280" width="120" height="40" as="geometry"/>
+                <mxCell id="container_b" value="eth0&#10;172.17.0.3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="180" y="280" width="120" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="bridge" value="Bridge (docker0)&#10;172.17.0.1/16" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;" parent="1" vertex="1">
-                    <mxGeometry x="360" y="200" width="120" height="60" as="geometry"/>
+                <mxCell id="bridge" value="Bridge (docker0)&#10;172.17.0.1/16" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="200" width="120" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="iptables" value="iptables&#10;NAT Rules" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#333333;strokeWidth=1px;fontColor=white;" parent="1" vertex="1">
-                    <mxGeometry x="360" y="300" width="120" height="60" as="geometry"/>
+                <mxCell id="iptables" value="iptables&#10;NAT Rules" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#333333;strokeWidth=1px;fontColor=white;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="300" width="120" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="eth0" value="eth0&#10;192.168.1.10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1px;" parent="1" vertex="1">
-                    <mxGeometry x="360" y="400" width="120" height="60" as="geometry"/>
+                <mxCell id="eth0" value="eth0&#10;192.168.1.10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#333333;strokeWidth=1px;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="400" width="120" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="internet" value="External Network&#10;Internet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;" parent="1" vertex="1">
-                    <mxGeometry x="360" y="520" width="120" height="60" as="geometry"/>
+                <mxCell id="internet" value="External Network&#10;Internet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#333333;strokeWidth=1px;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="520" width="120" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="container_a_to_bridge" value="veth pair" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="container_a" target="bridge" edge="1">
+                <mxCell id="container_a_to_bridge" value="veth pair" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;strokeWidth=1;" parent="1" source="container_a" target="bridge" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="400" y="330" as="sourcePoint"/>
-                        <mxPoint x="450" y="280" as="targetPoint"/>
+                        <mxPoint x="400" y="330" as="sourcePoint" />
+                        <mxPoint x="450" y="280" as="targetPoint" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="container_b_to_bridge" value="veth pair" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="container_b" target="bridge" edge="1">
+                <mxCell id="container_b_to_bridge" value="veth pair" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;strokeWidth=1;" parent="1" source="container_b" target="bridge" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="400" y="330" as="sourcePoint"/>
-                        <mxPoint x="450" y="280" as="targetPoint"/>
+                        <mxPoint x="400" y="330" as="sourcePoint" />
+                        <mxPoint x="450" y="280" as="targetPoint" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="bridge_to_iptables" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="bridge" target="iptables" edge="1">
+                <mxCell id="bridge_to_iptables" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" parent="1" source="bridge" target="iptables" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="400" y="330" as="sourcePoint"/>
-                        <mxPoint x="450" y="280" as="targetPoint"/>
+                        <mxPoint x="400" y="330" as="sourcePoint" />
+                        <mxPoint x="450" y="280" as="targetPoint" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="iptables_to_eth0" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="iptables" target="eth0" edge="1">
+                <mxCell id="iptables_to_eth0" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" parent="1" source="iptables" target="eth0" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="400" y="330" as="sourcePoint"/>
-                        <mxPoint x="450" y="280" as="targetPoint"/>
+                        <mxPoint x="400" y="330" as="sourcePoint" />
+                        <mxPoint x="450" y="280" as="targetPoint" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="eth0_to_internet" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="eth0" target="internet" edge="1">
+                <mxCell id="eth0_to_internet" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;" parent="1" source="eth0" target="internet" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="400" y="330" as="sourcePoint"/>
-                        <mxPoint x="450" y="280" as="targetPoint"/>
+                        <mxPoint x="400" y="330" as="sourcePoint" />
+                        <mxPoint x="450" y="280" as="targetPoint" />
                     </mxGeometry>
                 </mxCell>
             </root>

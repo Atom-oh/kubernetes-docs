@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EKS Hybrid Nodes - Control Plane → Pod (Webhooks) Traffic Flow</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background-color: #f2f3f3;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    min-height: 100vh;
+    font-family: 'Amazon Ember', 'Helvetica Neue', Arial, sans-serif;
+    padding: 24px;
+  }
+  h1 { color: #232f3e; font-size: 1.3rem; margin-bottom: 8px; }
+  .subtitle { color: #545b64; font-size: 0.9rem; margin-bottom: 20px; }
+  .architecture-wrapper {
+    position: relative; width: 90%; max-width: 1000px;
+    aspect-ratio: 1562 / 874;
+    background-image: url('../aws-official-diagrams/hybrid-nodes-cp-to-pod.png');
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .animation-layer {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+  .legend {
+    display: flex; gap: 32px; margin-top: 16px;
+    padding: 12px 24px; background: white;
+    border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.85rem; color: #545b64;
+    cursor: pointer; user-select: none;
+    transition: opacity 0.3s;
+  }
+  .legend-item:hover { opacity: 0.8; }
+  .legend-item.disabled { opacity: 0.35; }
+  .legend-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .legend-dot.main { background: #DD344C; }
+  .controls { margin-top: 12px; font-size: 0.8rem; color: #7d8998; }
+</style>
+</head>
+<body>
+
+<h1>Pattern 4: EKS Control Plane → Pod (Webhooks)</h1>
+<p class="subtitle">Control Plane reaches Webhook Pods — requires routable Pod CIDRs</p>
+
+<div class="architecture-wrapper">
+  <svg class="animation-layer" viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg">
+
+    <!-- MAIN PATH: EKS CP → CP ENI → Router → Gateway → On-prem Router → Node → CNI → Pod -->
+    <path id="main-path"
+          d="M 100,108 L 258,108 L 258,260 L 448,400 L 800,400 L 800,260 L 800,155 L 650,155"
+          fill="none" stroke="#DD344C" stroke-width="2" stroke-dasharray="6,4" opacity="0.5" />
+
+    <!-- Primary animated dot -->
+    <g id="main-dot">
+      <circle cx="0" cy="0" r="7" fill="#DD344C" stroke="#ffffff" stroke-width="2" />
+      <circle cx="0" cy="0" r="12" fill="#DD344C" opacity="0.3">
+        <animate attributeName="r" values="10;15;10" dur="1.5s" repeatCount="indefinite"/>
+      </circle>
+      <animateMotion dur="5s" repeatCount="indefinite" calcMode="linear">
+        <mpath href="#main-path"/>
+      </animateMotion>
+    </g>
+
+    <!-- Staggered second dot -->
+    <g id="main-dot-2" opacity="0.5">
+      <circle cx="0" cy="0" r="5" fill="#DD344C" stroke="#ffffff" stroke-width="1.5" />
+      <circle cx="0" cy="0" r="9" fill="#DD344C" opacity="0.2">
+        <animate attributeName="r" values="7;11;7" dur="1.5s" repeatCount="indefinite"/>
+      </circle>
+      <animateMotion dur="5s" begin="2.5s" repeatCount="indefinite" calcMode="linear">
+        <mpath href="#main-path"/>
+      </animateMotion>
+    </g>
+
+  </svg>
+</div>
+
+<div class="legend">
+  <div class="legend-item" onclick="togglePath('main')">
+    <div class="legend-dot main"></div>
+    <span>Control Plane → Webhook Pod</span>
+  </div>
+</div>
+
+<p class="controls">Click legend to toggle animation</p>
+
+<script>
+function togglePath(type) {
+  const path = document.getElementById(type + '-path');
+  const dot1 = document.getElementById(type + '-dot');
+  const dot2 = document.getElementById(type + '-dot-2');
+  const isHidden = path.style.display === 'none';
+  path.style.display = isHidden ? '' : 'none';
+  dot1.style.display = isHidden ? '' : 'none';
+  dot2.style.display = isHidden ? '' : 'none';
+  document.querySelector('.legend-item').classList.toggle('disabled', !isHidden);
+}
+</script>
+
+</body>
+</html>

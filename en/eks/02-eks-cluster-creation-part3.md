@@ -4,7 +4,7 @@
 
 The steps to create an EKS cluster using the AWS Management Console are as follows:
 
-![EKS Cluster Creation Workflow via AWS Management Console](../assets/generated-diagrams/eks_console_cluster_creation_workflow.drawio)
+![EKS Cluster Creation Workflow via AWS Management Console](../assets/generated-diagrams/eks_console_cluster_creation_workflow.png)
 
 1. Log in to the [AWS Management Console](https://console.aws.amazon.com/).
 2. Search for "EKS" or select "Elastic Kubernetes Service" from the services list.
@@ -81,7 +81,7 @@ Once cluster creation is complete, you can click the "Add node group" button to 
 
 The process of creating an EKS cluster using AWS CLI consists of several steps. This method is useful when more control is needed.
 
-![EKS Cluster Creation Workflow via AWS CLI](../assets/generated-diagrams/eks_cli_cluster_creation_workflow.drawio)
+![EKS Cluster Creation Workflow via AWS CLI](../assets/generated-diagrams/eks_cli_cluster_creation_workflow.png)
 
 ### 1. Create Cluster IAM Role
 

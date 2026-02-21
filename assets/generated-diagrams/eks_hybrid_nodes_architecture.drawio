@@ -1,0 +1,302 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mxfile host="65bd71144e">
+    <diagram id="eks_hybrid_nodes_arch" name="EKS Hybrid Nodes - Architecture Overview">
+        <mxGraphModel dx="1822" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+
+                <!-- Title -->
+                <mxCell id="10" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;&lt;b&gt;EKS Hybrid Nodes — Architecture Overview&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#666666&quot; style=&quot;font-size: 12px;&quot;&gt;AWS Cloud + On-Premises Unified Kubernetes Cluster&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="400" y="10" width="800" height="50" as="geometry" />
+                </mxCell>
+
+                <!-- ==================== AWS Cloud Section ==================== -->
+                <mxCell id="20" value="&lt;b&gt;AWS Cloud&lt;/b&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;fontSize=14;fontStyle=0;startSize=30;rounded=1;arcSize=4;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="70" width="1540" height="480" as="geometry" />
+                </mxCell>
+
+                <!-- EKS Control Plane -->
+                <mxCell id="30" value="&lt;b&gt;EKS Control Plane&lt;/b&gt; (AWS Managed)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;fontSize=12;fontStyle=0;startSize=25;rounded=1;arcSize=8;" vertex="1" parent="20">
+                    <mxGeometry x="30" y="50" width="450" height="200" as="geometry" />
+                </mxCell>
+                <mxCell id="31" value="&lt;b&gt;API Server&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1565C0;strokeWidth=1;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="30">
+                    <mxGeometry x="20" y="40" width="120" height="45" as="geometry" />
+                </mxCell>
+                <mxCell id="32" value="&lt;b&gt;etcd&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;strokeColor=#1565C0;strokeWidth=1;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="30">
+                    <mxGeometry x="160" y="40" width="120" height="45" as="geometry" />
+                </mxCell>
+                <mxCell id="33" value="&lt;b&gt;Controller Manager&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1565C0;strokeWidth=1;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="30">
+                    <mxGeometry x="20" y="100" width="120" height="45" as="geometry" />
+                </mxCell>
+                <mxCell id="34" value="&lt;b&gt;Scheduler&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1565C0;strokeWidth=1;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="30">
+                    <mxGeometry x="160" y="100" width="120" height="45" as="geometry" />
+                </mxCell>
+                <mxCell id="35" value="&lt;b&gt;Cloud Controller&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1565C0;strokeWidth=1;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="30">
+                    <mxGeometry x="300" y="40" width="130" height="45" as="geometry" />
+                </mxCell>
+
+                <!-- VPC -->
+                <mxCell id="40" value="&lt;b&gt;VPC&lt;/b&gt; (10.0.0.0/16)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;fontSize=12;fontStyle=0;startSize=25;rounded=1;arcSize=6;" vertex="1" parent="20">
+                    <mxGeometry x="520" y="50" width="480" height="200" as="geometry" />
+                </mxCell>
+                <mxCell id="41" value="&lt;b&gt;Subnet AZ-a&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;10.0.1.0/24&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32;strokeWidth=1;fontSize=11;" vertex="1" parent="40">
+                    <mxGeometry x="20" y="40" width="200" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="42" value="&lt;b&gt;Subnet AZ-b&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;10.0.2.0/24&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32;strokeWidth=1;fontSize=11;" vertex="1" parent="40">
+                    <mxGeometry x="250" y="40" width="200" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="43" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#E65100&quot;&gt;[ENI]&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=1;fontSize=10;" vertex="1" parent="40">
+                    <mxGeometry x="30" y="100" width="50" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="44" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#E65100&quot;&gt;[ENI]&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=1;fontSize=10;" vertex="1" parent="40">
+                    <mxGeometry x="90" y="100" width="50" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="45" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#E65100&quot;&gt;[ENI]&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=1;fontSize=10;" vertex="1" parent="40">
+                    <mxGeometry x="260" y="100" width="50" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="46" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#E65100&quot;&gt;[ENI]&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=1;fontSize=10;" vertex="1" parent="40">
+                    <mxGeometry x="320" y="100" width="50" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="47" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;EKS API Server ENIs&lt;br&gt;(cross-account, managed by AWS)&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="40">
+                    <mxGeometry x="80" y="135" width="300" height="30" as="geometry" />
+                </mxCell>
+                <!-- TGW/VGW -->
+                <mxCell id="48" value="&lt;b&gt;TGW / VGW&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8C4FFF;strokeColor=#6A1B9A;strokeWidth=2;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="40">
+                    <mxGeometry x="160" y="165" width="150" height="30" as="geometry" />
+                </mxCell>
+
+                <!-- AWS Services -->
+                <mxCell id="50" value="&lt;b&gt;AWS Services&lt;/b&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=1;fontSize=12;fontStyle=0;startSize=25;rounded=1;arcSize=8;" vertex="1" parent="20">
+                    <mxGeometry x="1040" y="50" width="470" height="200" as="geometry" />
+                </mxCell>
+                <mxCell id="51" value="SSM" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.systems_manager;strokeWidth=2;" vertex="1" parent="50">
+                    <mxGeometry x="20" y="40" width="48" height="48" as="geometry" />
+                </mxCell>
+                <mxCell id="52" value="IAM" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.identity_and_access_management;strokeWidth=2;" vertex="1" parent="50">
+                    <mxGeometry x="100" y="40" width="48" height="48" as="geometry" />
+                </mxCell>
+                <mxCell id="53" value="ECR" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elastic_container_registry;strokeWidth=2;" vertex="1" parent="50">
+                    <mxGeometry x="180" y="40" width="48" height="48" as="geometry" />
+                </mxCell>
+                <mxCell id="54" value="S3" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#3F8624;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;strokeWidth=2;" vertex="1" parent="50">
+                    <mxGeometry x="260" y="40" width="48" height="48" as="geometry" />
+                </mxCell>
+                <mxCell id="55" value="STS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sts;strokeWidth=2;" vertex="1" parent="50">
+                    <mxGeometry x="340" y="40" width="48" height="48" as="geometry" />
+                </mxCell>
+                <mxCell id="56" value="IAM Roles&#10;Anywhere" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.role;strokeWidth=2;" vertex="1" parent="50">
+                    <mxGeometry x="20" y="120" width="48" height="48" as="geometry" />
+                </mxCell>
+                <mxCell id="57" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;Credential Providers:&lt;/b&gt;&lt;br&gt;• SSM Hybrid Activations&lt;br&gt;• IAM Roles Anywhere (X.509)&lt;/font&gt;" style="text;html=1;strokeColor=#CCCCCC;fillColor=#FFFFFF;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;spacingLeft=8;spacingTop=4;strokeWidth=1;fontSize=10;" vertex="1" parent="50">
+                    <mxGeometry x="110" y="120" width="200" height="55" as="geometry" />
+                </mxCell>
+
+                <!-- Connection: Control Plane to VPC ENIs -->
+                <mxCell id="60" value="" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=2;strokeColor=#1565C0;" edge="1" parent="20" source="30" target="40">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+
+                <!-- EKS Endpoint Access Mode -->
+                <mxCell id="65" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;API Endpoint Access:&lt;/b&gt;&lt;br&gt;• Public: kubelet → internet → API&lt;br&gt;• Private: kubelet → VPN/DX → VPC ENI → API&lt;br&gt;• Public+Private: both paths available&lt;/font&gt;" style="text;html=1;strokeColor=#1565C0;fillColor=#E3F2FD;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;spacingLeft=8;spacingTop=4;strokeWidth=1;fontSize=10;" vertex="1" parent="20">
+                    <mxGeometry x="30" y="280" width="270" height="70" as="geometry" />
+                </mxCell>
+
+                <!-- Route Table Info -->
+                <mxCell id="66" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;VPC Route Table:&lt;/b&gt;&lt;br&gt;10.0.0.0/16 → local&lt;br&gt;10.80.0.0/16 → TGW (Remote Node CIDR)&lt;br&gt;10.85.0.0/16 → TGW (Remote Pod CIDR)&lt;/font&gt;" style="text;html=1;strokeColor=#2E7D32;fillColor=#E8F5E9;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;spacingLeft=8;spacingTop=4;strokeWidth=1;fontSize=10;" vertex="1" parent="20">
+                    <mxGeometry x="520" y="280" width="260" height="70" as="geometry" />
+                </mxCell>
+
+                <!-- Security Group Info -->
+                <mxCell id="67" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;EKS Cluster Security Group:&lt;/b&gt;&lt;br&gt;Inbound: TCP 443 from Remote Node/Pod CIDR&lt;br&gt;Outbound: TCP 10250 to Remote Node CIDR&lt;br&gt;Outbound: TCP 8443 to Remote Pod CIDR (webhooks)&lt;/font&gt;" style="text;html=1;strokeColor=#E65100;fillColor=#FFF3E0;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;spacingLeft=8;spacingTop=4;strokeWidth=1;fontSize=10;" vertex="1" parent="20">
+                    <mxGeometry x="820" y="280" width="300" height="70" as="geometry" />
+                </mxCell>
+
+                <!-- RemoteNodeNetwork / RemotePodNetwork -->
+                <mxCell id="68" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;EKS Cluster Config:&lt;/b&gt;&lt;br&gt;RemoteNodeNetwork: 10.80.0.0/16&lt;br&gt;RemotePodNetwork: 10.85.0.0/16&lt;/font&gt;" style="text;html=1;strokeColor=#E65100;fillColor=#FFF8E1;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;spacingLeft=8;spacingTop=4;strokeWidth=1;fontSize=10;" vertex="1" parent="20">
+                    <mxGeometry x="30" y="380" width="220" height="55" as="geometry" />
+                </mxCell>
+
+                <!-- ==================== VPN / Direct Connect ==================== -->
+                <mxCell id="70" value="VPN / Direct Connect" style="sketch=0;outlineConnect=0;fontColor=#232F3E;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.site_to_site_vpn;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="740" y="560" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="71" value="" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=3;strokeColor=#8C4FFF;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="740" y="590" as="sourcePoint" />
+                        <mxPoint x="640" y="550" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="72" value="" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=3;strokeColor=#8C4FFF;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="800" y="610" as="sourcePoint" />
+                        <mxPoint x="800" y="650" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- ==================== On-Premises Section ==================== -->
+                <mxCell id="80" value="&lt;b&gt;On-Premises / Edge&lt;/b&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#3949AB;strokeWidth=2;fontSize=14;fontStyle=0;startSize=30;rounded=1;arcSize=4;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="650" width="1540" height="420" as="geometry" />
+                </mxCell>
+
+                <!-- Hybrid Node 1 -->
+                <mxCell id="90" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;" vertex="1" parent="80">
+                    <mxGeometry x="30" y="50" width="260" height="240" as="geometry" />
+                </mxCell>
+                <mxCell id="91" value="&lt;b&gt;Hybrid Node 1&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" vertex="1" parent="80">
+                    <mxGeometry x="90" y="55" width="140" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="92" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;nodeadm&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=#E65100;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="45" y="85" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="93" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;kubelet&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1565C0;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="125" y="85" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="94" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;containerd&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#546E7A;strokeColor=#37474F;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="205" y="85" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="95" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;kube-proxy&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1565C0;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="45" y="118" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="96" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Cilium CNI&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8BC34A;strokeColor=#558B2F;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="125" y="118" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="97" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;SSM Agent&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7157B;strokeColor=#AD1457;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="205" y="118" width="70" height="25" as="geometry" />
+                </mxCell>
+                <!-- Pods in Node 1 -->
+                <mxCell id="98" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#1565C0&quot;&gt;Pod&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;strokeWidth=1;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="45" y="160" width="65" height="28" as="geometry" />
+                </mxCell>
+                <mxCell id="99" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#1565C0&quot;&gt;Pod&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;strokeWidth=1;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="120" y="160" width="65" height="28" as="geometry" />
+                </mxCell>
+                <mxCell id="100" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#1565C0&quot;&gt;Pod&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;strokeWidth=1;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="195" y="160" width="65" height="28" as="geometry" />
+                </mxCell>
+                <mxCell id="101" value="&lt;font style=&quot;font-size: 9px;&quot; color=&quot;#666666&quot;&gt;10.80.0.1 | Pods: 10.85.0.0/24&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="80">
+                    <mxGeometry x="45" y="195" width="230" height="20" as="geometry" />
+                </mxCell>
+
+                <!-- Hybrid Node 2 -->
+                <mxCell id="110" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;" vertex="1" parent="80">
+                    <mxGeometry x="320" y="50" width="260" height="240" as="geometry" />
+                </mxCell>
+                <mxCell id="111" value="&lt;b&gt;Hybrid Node 2&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" vertex="1" parent="80">
+                    <mxGeometry x="380" y="55" width="140" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="112" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;nodeadm&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=#E65100;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="335" y="85" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="113" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;kubelet&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1565C0;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="415" y="85" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="114" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;containerd&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#546E7A;strokeColor=#37474F;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="495" y="85" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="115" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;kube-proxy&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1565C0;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="335" y="118" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="116" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Cilium CNI&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8BC34A;strokeColor=#558B2F;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="415" y="118" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="117" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;SSM Agent&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7157B;strokeColor=#AD1457;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="495" y="118" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="118" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#1565C0&quot;&gt;Pod&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;strokeWidth=1;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="335" y="160" width="65" height="28" as="geometry" />
+                </mxCell>
+                <mxCell id="119" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#1565C0&quot;&gt;Pod&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;strokeWidth=1;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="410" y="160" width="65" height="28" as="geometry" />
+                </mxCell>
+                <mxCell id="120" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#1565C0&quot;&gt;Pod&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;strokeWidth=1;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="485" y="160" width="65" height="28" as="geometry" />
+                </mxCell>
+                <mxCell id="121" value="&lt;font style=&quot;font-size: 9px;&quot; color=&quot;#666666&quot;&gt;10.80.0.2 | Pods: 10.85.1.0/24&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="80">
+                    <mxGeometry x="335" y="195" width="230" height="20" as="geometry" />
+                </mxCell>
+
+                <!-- GPU Node -->
+                <mxCell id="130" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#F57F17;strokeWidth=2;" vertex="1" parent="80">
+                    <mxGeometry x="610" y="50" width="260" height="240" as="geometry" />
+                </mxCell>
+                <mxCell id="131" value="&lt;b&gt;GPU Node (H100)&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" vertex="1" parent="80">
+                    <mxGeometry x="670" y="55" width="140" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="132" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;nodeadm&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=#E65100;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="625" y="85" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="133" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;kubelet&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1565C0;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="705" y="85" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="134" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;containerd&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#546E7A;strokeColor=#37474F;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="785" y="85" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="135" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;GPU Operator&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#76B900;strokeColor=#558B2F;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="625" y="118" width="75" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="136" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;Cilium CNI&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8BC34A;strokeColor=#558B2F;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="710" y="118" width="70" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="137" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;NVIDIA Driver&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#76B900;strokeColor=#558B2F;strokeWidth=1;fontColor=#FFFFFF;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="790" y="118" width="75" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="138" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#F57F17&quot;&gt;GPU Pod&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=1;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="625" y="160" width="100" height="28" as="geometry" />
+                </mxCell>
+                <mxCell id="139" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#F57F17&quot;&gt;GPU Pod&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=1;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="740" y="160" width="100" height="28" as="geometry" />
+                </mxCell>
+
+                <!-- CIDR Labels -->
+                <mxCell id="140" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Node CIDR: 10.80.0.0/16&lt;/b&gt;&lt;/font&gt;" style="text;html=1;strokeColor=#3949AB;fillColor=#C5CAE9;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;spacingLeft=8;spacingRight=8;strokeWidth=1;fontSize=12;" vertex="1" parent="80">
+                    <mxGeometry x="30" y="310" width="220" height="30" as="geometry" />
+                </mxCell>
+                <mxCell id="141" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Pod CIDR: 10.85.0.0/16&lt;/b&gt;&lt;/font&gt;" style="text;html=1;strokeColor=#3949AB;fillColor=#C5CAE9;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;spacingLeft=8;spacingRight=8;strokeWidth=1;fontSize=12;" vertex="1" parent="80">
+                    <mxGeometry x="280" y="310" width="220" height="30" as="geometry" />
+                </mxCell>
+
+                <!-- VXLAN overlay -->
+                <mxCell id="142" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;VXLAN Overlay (port 8472)&lt;/font&gt;" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=2;strokeColor=#8BC34A;dashed=1;dashPattern=5 5;" edge="1" parent="80">
+                    <mxGeometry x="0.1" y="10" relative="1" as="geometry">
+                        <mxPoint x="290" y="230" as="sourcePoint" />
+                        <mxPoint x="320" y="230" as="targetPoint" />
+                        <mxPoint as="offset" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- On-Prem network details -->
+                <mxCell id="145" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;&lt;b&gt;On-Prem Networking:&lt;/b&gt;&lt;br&gt;• Cilium VXLAN tunnel between nodes (port 8472)&lt;br&gt;• BGP peering for routable pod CIDR (optional)&lt;br&gt;• DNS: CoreDNS on cloud + on-prem nodes&lt;/font&gt;" style="text;html=1;strokeColor=#3949AB;fillColor=#E8EAF6;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;spacingLeft=8;spacingTop=4;strokeWidth=1;fontSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="530" y="310" width="300" height="70" as="geometry" />
+                </mxCell>
+
+                <!-- Legend -->
+                <mxCell id="150" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;&lt;b&gt;Legend&lt;/b&gt;&lt;/font&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#999999;strokeWidth=1;fontSize=11;fontStyle=0;startSize=20;rounded=1;arcSize=10;" vertex="1" parent="80">
+                    <mxGeometry x="880" y="50" width="640" height="90" as="geometry" />
+                </mxCell>
+                <mxCell id="151" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#FF9800&quot;&gt;■&lt;/font&gt; &lt;font style=&quot;font-size: 10px;&quot;&gt;nodeadm&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="150">
+                    <mxGeometry x="10" y="25" width="80" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="152" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#326CE5&quot;&gt;■&lt;/font&gt; &lt;font style=&quot;font-size: 10px;&quot;&gt;K8s Components&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="150">
+                    <mxGeometry x="100" y="25" width="120" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="153" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#8BC34A&quot;&gt;■&lt;/font&gt; &lt;font style=&quot;font-size: 10px;&quot;&gt;Cilium CNI&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="150">
+                    <mxGeometry x="240" y="25" width="90" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="154" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#E7157B&quot;&gt;■&lt;/font&gt; &lt;font style=&quot;font-size: 10px;&quot;&gt;SSM Agent&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="150">
+                    <mxGeometry x="350" y="25" width="90" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="155" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#76B900&quot;&gt;■&lt;/font&gt; &lt;font style=&quot;font-size: 10px;&quot;&gt;NVIDIA/GPU&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="150">
+                    <mxGeometry x="460" y="25" width="100" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="156" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#8C4FFF&quot;&gt;━━&lt;/font&gt; &lt;font style=&quot;font-size: 10px;&quot;&gt;VPN/DX&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="150">
+                    <mxGeometry x="10" y="55" width="90" height="25" as="geometry" />
+                </mxCell>
+                <mxCell id="157" value="&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#E65100&quot;&gt;■&lt;/font&gt; &lt;font style=&quot;font-size: 10px;&quot;&gt;ENI (API Server)&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="150">
+                    <mxGeometry x="100" y="55" width="120" height="25" as="geometry" />
+                </mxCell>
+
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

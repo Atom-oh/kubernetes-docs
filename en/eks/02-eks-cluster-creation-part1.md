@@ -138,7 +138,7 @@ $env:PATH += ";$env:USERPROFILE\.eksctl\bin"
 
 An EKS cluster requires a VPC and subnets. You can use an existing VPC or create a new one. The VPC for an EKS cluster must meet the following requirements:
 
-![EKS VPC Architecture](../assets/generated-diagrams/eks_vpc_architecture.drawio)
+![EKS VPC Architecture](../assets/generated-diagrams/eks_vpc_architecture.png)
 
 - At least 2 subnets must be in different availability zones.
 - Subnets must have internet access (through a NAT gateway or internet gateway).

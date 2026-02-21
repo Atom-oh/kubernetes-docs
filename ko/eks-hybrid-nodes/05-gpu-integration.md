@@ -2,7 +2,7 @@
 
 < [이전: 노드 부트스트랩](./04-node-bootstrap.md) | [목차](./README.md) | [다음: 워크로드 배치 전략](./06-workload-placement.md) >
 
-> **지원 버전**: EKS 1.31+, nodeadm 0.1+, Harbor 2.13+
+> **지원 버전**: EKS 1.31+, nodeadm 0.1+
 > **마지막 업데이트**: 2025년 2월
 
 이 문서에서는 온프레미스 GPU 서버를 EKS Hybrid Nodes에 통합하는 방법을 다룹니다.
@@ -73,36 +73,44 @@ kubectl run gpu-test --rm -it \
 
 Kubernetes 1.31+에서는 DRA를 통해 더 유연한 GPU 리소스 관리가 가능합니다.
 
-### ResourceClass 정의
+### DeviceClass 정의
+
+> **참고**: Kubernetes 1.31의 `resource.k8s.io/v1alpha3`에서 `ResourceClass`는 `DeviceClass`로 대체되었습니다.
 
 ```yaml
-# gpu-resource-class.yaml
+# gpu-device-class.yaml
 apiVersion: resource.k8s.io/v1alpha3
-kind: ResourceClass
+kind: DeviceClass
 metadata:
   name: nvidia-gpu
-driverName: gpu.nvidia.com
-suitableNodes:
-  nodeSelectorTerms:
-  - matchExpressions:
-    - key: nvidia.com/gpu.present
-      operator: In
-      values: ["true"]
+spec:
+  selectors:
+  - cel:
+      expression: "device.driver == 'gpu.nvidia.com'"
+  suitableNodes:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: nvidia.com/gpu.present
+        operator: In
+        values: ["true"]
 ---
 apiVersion: resource.k8s.io/v1alpha3
-kind: ResourceClass
+kind: DeviceClass
 metadata:
   name: high-memory-gpu
-driverName: gpu.nvidia.com
-suitableNodes:
-  nodeSelectorTerms:
-  - matchExpressions:
-    - key: nvidia.com/gpu.product
-      operator: In
-      values: ["NVIDIA-H100-80GB-HBM3", "NVIDIA-H200"]
+spec:
+  selectors:
+  - cel:
+      expression: "device.driver == 'gpu.nvidia.com' && device.attributes['gpu.nvidia.com'].productName in ['NVIDIA-H100-80GB-HBM3', 'NVIDIA-H200']"
+  suitableNodes:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: nvidia.com/gpu.product
+        operator: In
+        values: ["NVIDIA-H100-80GB-HBM3", "NVIDIA-H200"]
 ```
 
-### ResourceClaim 템플릿
+### ResourceClaimTemplate 정의
 
 ```yaml
 # gpu-resource-claim-template.yaml
@@ -113,8 +121,11 @@ metadata:
   namespace: ai-workloads
 spec:
   spec:
-    resourceClassName: nvidia-gpu
-    allocationMode: WaitForFirstConsumer
+    devices:
+      requests:
+      - name: gpu
+        deviceClassName: nvidia-gpu
+        count: 1
 ```
 
 ### DRA를 사용하는 Pod 정의
@@ -136,7 +147,7 @@ spec:
     effect: NoSchedule
   containers:
   - name: llm-server
-    image: harbor.internal.company.io/ai/vllm-server:v0.4.0
+    image: <REGISTRY>/ai/vllm-server:v0.4.0  # ECR 또는 프라이빗 레지스트리
     resources:
       claims:
       - name: gpu-resource

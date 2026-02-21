@@ -1,71 +1,72 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="65bd71144e">
     <diagram name="EKS Cluster Lifecycle Management" id="eks-cluster-lifecycle-management">
         <mxGraphModel dx="1436" dy="1323" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
             <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
-                <mxCell id="title" value="EKS 클러스터 라이프사이클 관리" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="400" y="40" width="300" height="30" as="geometry"/>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                <mxCell id="title" value="EKS 클러스터 라이프사이클 관리" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="40" width="300" height="30" as="geometry" />
                 </mxCell>
-                <mxCell id="creation-phase" value="1. 클러스터 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
-                    <mxGeometry x="80" y="100" width="240" height="150" as="geometry"/>
+                <mxCell id="creation-phase" value="1. 클러스터 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="100" width="240" height="150" as="geometry" />
                 </mxCell>
-                <mxCell id="eksctl-create" value="eksctl create cluster" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;" parent="1" vertex="1">
-                    <mxGeometry x="110" y="140" width="50" height="50" as="geometry"/>
+                <mxCell id="eksctl-create" value="eksctl create cluster" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="140" width="50" height="50" as="geometry" />
                 </mxCell>
-                <mxCell id="config-file" value="구성 파일&#10;(cluster.yaml)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#F58536;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.document;" parent="1" vertex="1">
-                    <mxGeometry x="210" y="140" width="50" height="50" as="geometry"/>
+                <mxCell id="config-file" value="구성 파일&#10;(cluster.yaml)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#F58536;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.document;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="140" width="50" height="50" as="geometry" />
                 </mxCell>
-                <mxCell id="config-phase" value="2. 클러스터 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
-                    <mxGeometry x="360" y="100" width="240" height="150" as="geometry"/>
+                <mxCell id="config-phase" value="2. 클러스터 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="100" width="240" height="150" as="geometry" />
                 </mxCell>
-                <mxCell id="nodegroup-add" value="노드 그룹&#10;추가" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_nodegroup;" parent="1" vertex="1">
-                    <mxGeometry x="390" y="140" width="50" height="50" as="geometry"/>
+                <mxCell id="nodegroup-add" value="노드 그룹&#10;추가" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_nodegroup;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="390" y="140" width="50" height="50" as="geometry" />
                 </mxCell>
-                <mxCell id="fargate-add" value="Fargate&#10;프로필 추가" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.fargate;" parent="1" vertex="1">
-                    <mxGeometry x="490" y="140" width="50" height="50" as="geometry"/>
+                <mxCell id="fargate-add" value="Fargate&#10;프로필 추가" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.fargate;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="490" y="140" width="50" height="50" as="geometry" />
                 </mxCell>
-                <mxCell id="update-phase" value="3. 클러스터 업데이트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
-                    <mxGeometry x="640" y="100" width="240" height="150" as="geometry"/>
+                <mxCell id="update-phase" value="3. 클러스터 업데이트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="640" y="100" width="240" height="150" as="geometry" />
                 </mxCell>
-                <mxCell id="cluster-upgrade" value="클러스터&#10;버전 업그레이드" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_cloud;" parent="1" vertex="1">
-                    <mxGeometry x="670" y="140" width="50" height="50" as="geometry"/>
+                <mxCell id="cluster-upgrade" value="클러스터&#10;버전 업그레이드" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_cloud;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="670" y="140" width="50" height="50" as="geometry" />
                 </mxCell>
-                <mxCell id="nodegroup-upgrade" value="노드 그룹&#10;업그레이드" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.auto_scaling2;" parent="1" vertex="1">
-                    <mxGeometry x="770" y="140" width="50" height="50" as="geometry"/>
+                <mxCell id="nodegroup-upgrade" value="노드 그룹&#10;업그레이드" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.auto_scaling2;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="770" y="140" width="50" height="50" as="geometry" />
                 </mxCell>
-                <mxCell id="deletion-phase" value="4. 클러스터 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
-                    <mxGeometry x="920" y="100" width="200" height="150" as="geometry"/>
+                <mxCell id="deletion-phase" value="4. 클러스터 삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="920" y="100" width="200" height="150" as="geometry" />
                 </mxCell>
-                <mxCell id="eksctl-delete" value="eksctl delete cluster" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;" parent="1" vertex="1">
-                    <mxGeometry x="995" y="140" width="50" height="50" as="geometry"/>
+                <mxCell id="eksctl-delete" value="eksctl delete cluster" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="995" y="140" width="50" height="50" as="geometry" />
                 </mxCell>
-                <mxCell id="commands-title" value="주요 eksctl 명령어" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="80" y="300" width="200" height="30" as="geometry"/>
+                <mxCell id="commands-title" value="주요 eksctl 명령어" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="300" width="200" height="30" as="geometry" />
                 </mxCell>
-                <mxCell id="create-commands" value="클러스터 생성:&#10;• eksctl create cluster --name=my-cluster&#10;• eksctl create cluster -f cluster.yaml&#10;&#10;노드 그룹 추가:&#10;• eksctl create nodegroup --cluster=my-cluster&#10;&#10;Fargate 프로필 추가:&#10;• eksctl create fargateprofile --cluster=my-cluster" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontStyle=0;align=left;verticalAlign=top;spacingTop=10;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="80" y="340" width="280" height="140" as="geometry"/>
+                <mxCell id="create-commands" value="클러스터 생성:&#10;• eksctl create cluster --name=my-cluster&#10;• eksctl create cluster -f cluster.yaml&#10;&#10;노드 그룹 추가:&#10;• eksctl create nodegroup --cluster=my-cluster&#10;&#10;Fargate 프로필 추가:&#10;• eksctl create fargateprofile --cluster=my-cluster" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontStyle=0;align=left;verticalAlign=top;spacingTop=10;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="340" width="280" height="140" as="geometry" />
                 </mxCell>
-                <mxCell id="update-commands" value="클러스터 업데이트:&#10;• eksctl upgrade cluster --name=my-cluster --version=1.27&#10;&#10;노드 그룹 업그레이드:&#10;• eksctl upgrade nodegroup --cluster=my-cluster --name=my-nodegroup&#10;&#10;애드온 업데이트:&#10;• eksctl update addon --cluster=my-cluster --name=vpc-cni" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontStyle=0;align=left;verticalAlign=top;spacingTop=10;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="400" y="340" width="320" height="140" as="geometry"/>
+                <mxCell id="update-commands" value="클러스터 업데이트:&#10;• eksctl upgrade cluster --name=my-cluster --version=1.27&#10;&#10;노드 그룹 업그레이드:&#10;• eksctl upgrade nodegroup --cluster=my-cluster --name=my-nodegroup&#10;&#10;애드온 업데이트:&#10;• eksctl update addon --cluster=my-cluster --name=vpc-cni" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontStyle=0;align=left;verticalAlign=top;spacingTop=10;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="340" width="320" height="140" as="geometry" />
                 </mxCell>
-                <mxCell id="delete-commands" value="클러스터 삭제:&#10;• eksctl delete cluster --name=my-cluster&#10;• eksctl delete cluster --name=my-cluster --region=us-west-2&#10;&#10;노드 그룹 삭제:&#10;• eksctl delete nodegroup --cluster=my-cluster --name=my-nodegroup&#10;&#10;Fargate 프로필 삭제:&#10;• eksctl delete fargateprofile --cluster=my-cluster --name=my-fargate-profile" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontStyle=0;align=left;verticalAlign=top;spacingTop=10;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="760" y="340" width="360" height="140" as="geometry"/>
+                <mxCell id="delete-commands" value="클러스터 삭제:&#10;• eksctl delete cluster --name=my-cluster&#10;• eksctl delete cluster --name=my-cluster --region=us-west-2&#10;&#10;노드 그룹 삭제:&#10;• eksctl delete nodegroup --cluster=my-cluster --name=my-nodegroup&#10;&#10;Fargate 프로필 삭제:&#10;• eksctl delete fargateprofile --cluster=my-cluster --name=my-fargate-profile" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontStyle=0;align=left;verticalAlign=top;spacingTop=10;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="760" y="340" width="360" height="140" as="geometry" />
                 </mxCell>
                 <mxCell id="flow-1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#82B366;" parent="1" source="creation-phase" target="config-phase" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                    <mxGeometry relative="1" as="geometry" />
                 </mxCell>
                 <mxCell id="flow-2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#D6B656;" parent="1" source="config-phase" target="update-phase" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                    <mxGeometry relative="1" as="geometry" />
                 </mxCell>
                 <mxCell id="flow-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#9673A6;" parent="1" source="update-phase" target="deletion-phase" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                    <mxGeometry relative="1" as="geometry" />
                 </mxCell>
-                <mxCell id="best-practices-title" value="모범 사례" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="80" y="500" width="200" height="30" as="geometry"/>
+                <mxCell id="best-practices-title" value="모범 사례" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="500" width="200" height="30" as="geometry" />
                 </mxCell>
-                <mxCell id="best-practices" value="• 클러스터 생성 시 구성 파일 사용으로 재현 가능한 배포 보장&#10;• 정기적인 클러스터 및 노드 그룹 버전 업데이트&#10;• 삭제 전 중요한 데이터 백업 및 확인&#10;• 태그를 사용한 리소스 관리 및 비용 추적&#10;• IAM 역할 및 정책의 최소 권한 원칙 적용&#10;• 네트워크 보안 그룹 및 서브넷 구성 검토" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;fontSize=10;fontStyle=0;align=left;verticalAlign=top;spacingTop=10;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="80" y="540" width="1040" height="110" as="geometry"/>
+                <mxCell id="best-practices" value="• 클러스터 생성 시 구성 파일 사용으로 재현 가능한 배포 보장&#10;• 정기적인 클러스터 및 노드 그룹 버전 업데이트&#10;• 삭제 전 중요한 데이터 백업 및 확인&#10;• 태그를 사용한 리소스 관리 및 비용 추적&#10;• IAM 역할 및 정책의 최소 권한 원칙 적용&#10;• 네트워크 보안 그룹 및 서브넷 구성 검토" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;fontSize=10;fontStyle=0;align=left;verticalAlign=top;spacingTop=10;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;arcSize=5;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="540" width="1040" height="110" as="geometry" />
                 </mxCell>
             </root>
         </mxGraphModel>

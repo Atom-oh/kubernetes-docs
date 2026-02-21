@@ -1,261 +1,262 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="65bd71144e">
     <diagram name="KRO Use Cases" id="kro-use-cases">
         <mxGraphModel dx="445" dy="592" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1200" math="0" shadow="0">
             <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
-                <mxCell id="2" value="KRO 사용 사례" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="600" y="40" width="200" height="30" as="geometry"/>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                <mxCell id="2" value="KRO 사용 사례" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="600" y="40" width="200" height="30" as="geometry" />
                 </mxCell>
-                <mxCell id="3" value="사용 사례 1: 다중 계층 애플리케이션" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="80" y="100" width="600" height="310" as="geometry"/>
+                <mxCell id="3" value="사용 사례 1: 다중 계층 애플리케이션" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="100" width="600" height="310" as="geometry" />
                 </mxCell>
                 <mxCell id="4" value="WebApp CR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2196F3;strokeColor=#333333;fontSize=12;fontColor=white;" parent="1" vertex="1">
-                    <mxGeometry x="120" y="130" width="100" height="50" as="geometry"/>
+                    <mxGeometry x="120" y="130" width="100" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="5" value="Frontend&#10;Deployment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#64B5F6;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="280" y="182" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="280" y="182" width="80" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="6" value="Backend&#10;Deployment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#64B5F6;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="380" y="182" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="380" y="182" width="80" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="7" value="Database&#10;StatefulSet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#64B5F6;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="480" y="182" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="480" y="182" width="80" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="8" value="LoadBalancer&#10;Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#64B5F6;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="580" y="182" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="580" y="182" width="80" height="50" as="geometry" />
                 </mxCell>
-                <mxCell id="9" value="apiVersion: kro.run/v1alpha1&lt;br&gt;kind: WebApp&lt;br&gt;metadata:&lt;br&gt;&amp;nbsp; name: my-webapp&lt;br&gt;spec:&lt;br&gt;&amp;nbsp; replicas: 3&lt;br&gt;&amp;nbsp; image: nginx:latest&lt;br&gt;&amp;nbsp; database:&lt;br&gt;&amp;nbsp; &amp;nbsp; type: postgresql&lt;br&gt;&amp;nbsp; &amp;nbsp; storage: 10Gi" style="text;html=1;strokeColor=#333333;fillColor=#F5F5F5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontFamily=monospace;" parent="1" vertex="1">
-                    <mxGeometry x="120" y="254" width="240" height="140" as="geometry"/>
+                <mxCell id="9" value="apiVersion: kro.run/v1alpha1&lt;br&gt;kind: WebApp&lt;br&gt;metadata:&lt;br&gt;&amp;nbsp; name: my-webapp&lt;br&gt;spec:&lt;br&gt;&amp;nbsp; replicas: 3&lt;br&gt;&amp;nbsp; image: nginx:latest&lt;br&gt;&amp;nbsp; database:&lt;br&gt;&amp;nbsp; &amp;nbsp; type: postgresql&lt;br&gt;&amp;nbsp; &amp;nbsp; storage: 10Gi" style="text;html=1;strokeColor=#333333;fillColor=#F5F5F5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontFamily=monospace;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="254" width="240" height="140" as="geometry" />
                 </mxCell>
-                <mxCell id="10" value="장점:&#10;• 단일 리소스로 전체 스택 관리&#10;• 일관된 구성&#10;• 자동 의존성 처리&#10;• 개발자 친화적 인터페이스" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="400" y="254" width="260" height="140" as="geometry"/>
+                <mxCell id="10" value="장점:&#10;• 단일 리소스로 전체 스택 관리&#10;• 일관된 구성&#10;• 자동 의존성 처리&#10;• 개발자 친화적 인터페이스" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="254" width="260" height="140" as="geometry" />
                 </mxCell>
-                <mxCell id="11" value="사용 사례 2: 데이터베이스 오퍼레이터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="720" y="100" width="600" height="310" as="geometry"/>
+                <mxCell id="11" value="사용 사례 2: 데이터베이스 오퍼레이터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="720" y="100" width="600" height="310" as="geometry" />
                 </mxCell>
                 <mxCell id="12" value="PostgreSQL CR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9C27B0;strokeColor=#333333;fontSize=12;fontColor=white;" parent="1" vertex="1">
-                    <mxGeometry x="760" y="130" width="100" height="50" as="geometry"/>
+                    <mxGeometry x="760" y="130" width="100" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="13" value="StatefulSet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CE93D8;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="920" y="182" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="920" y="182" width="80" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="14" value="PVC" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CE93D8;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="1020" y="182" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="1020" y="182" width="80" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="15" value="Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CE93D8;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="1120" y="182" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="1120" y="182" width="80" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="16" value="Secret" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CE93D8;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="1220" y="182" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="1220" y="182" width="80" height="50" as="geometry" />
                 </mxCell>
-                <mxCell id="17" value="apiVersion: kro.run/v1alpha1&lt;br&gt;kind: PostgreSQL&lt;br&gt;metadata:&lt;br&gt;&amp;nbsp; name: my-db&lt;br&gt;spec:&lt;br&gt;&amp;nbsp; version: &quot;13&quot;&lt;br&gt;&amp;nbsp; storage: 50Gi&lt;br&gt;&amp;nbsp; replicas: 3&lt;br&gt;&amp;nbsp; backup:&lt;br&gt;&amp;nbsp; &amp;nbsp; enabled: true&lt;br&gt;&amp;nbsp; &amp;nbsp; schedule: &quot;0 2 * * *&quot;&amp;nbsp;&amp;nbsp;" style="text;html=1;strokeColor=#333333;fillColor=#F5F5F5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontFamily=monospace;" parent="1" vertex="1">
-                    <mxGeometry x="760" y="254" width="240" height="140" as="geometry"/>
+                <mxCell id="17" value="apiVersion: kro.run/v1alpha1&lt;br&gt;kind: PostgreSQL&lt;br&gt;metadata:&lt;br&gt;&amp;nbsp; name: my-db&lt;br&gt;spec:&lt;br&gt;&amp;nbsp; version: &quot;13&quot;&lt;br&gt;&amp;nbsp; storage: 50Gi&lt;br&gt;&amp;nbsp; replicas: 3&lt;br&gt;&amp;nbsp; backup:&lt;br&gt;&amp;nbsp; &amp;nbsp; enabled: true&lt;br&gt;&amp;nbsp; &amp;nbsp; schedule: &quot;0 2 * * *&quot;&amp;nbsp;&amp;nbsp;" style="text;html=1;strokeColor=#333333;fillColor=#F5F5F5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontFamily=monospace;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="760" y="254" width="240" height="140" as="geometry" />
                 </mxCell>
-                <mxCell id="18" value="장점:&#10;• 자동 백업 설정&#10;• 고가용성 구성&#10;• 모니터링 통합&#10;• 업그레이드 자동화&#10;• 보안 설정 자동화" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="1040" y="254" width="260" height="140" as="geometry"/>
+                <mxCell id="18" value="장점:&#10;• 자동 백업 설정&#10;• 고가용성 구성&#10;• 모니터링 통합&#10;• 업그레이드 자동화&#10;• 보안 설정 자동화" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="1040" y="254" width="260" height="140" as="geometry" />
                 </mxCell>
-                <mxCell id="19" value="사용 사례 3: CI/CD 파이프라인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#388E3C;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="80" y="420" width="600" height="310" as="geometry"/>
+                <mxCell id="19" value="사용 사례 3: CI/CD 파이프라인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#388E3C;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="420" width="600" height="310" as="geometry" />
                 </mxCell>
                 <mxCell id="20" value="Pipeline CR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#333333;fontSize=12;fontColor=white;" parent="1" vertex="1">
-                    <mxGeometry x="120" y="440" width="100" height="50" as="geometry"/>
+                    <mxGeometry x="120" y="440" width="100" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="21" value="Build Job" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#81C784;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="280" y="500" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="280" y="500" width="80" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="22" value="Test Job" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#81C784;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="380" y="500" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="380" y="500" width="80" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="23" value="Deploy Job" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#81C784;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="480" y="500" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="480" y="500" width="80" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="24" value="Webhook" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#81C784;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="580" y="500" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="580" y="500" width="80" height="50" as="geometry" />
                 </mxCell>
-                <mxCell id="25" value="apiVersion: kro.run/v1alpha1&lt;br&gt;kind: Pipeline&lt;br&gt;metadata:&lt;br&gt;&amp;nbsp; name: my-pipeline&lt;br&gt;spec:&lt;br&gt;&amp;nbsp; source:&lt;br&gt;&amp;nbsp; &amp;nbsp; git: https://github.com/...&lt;br&gt;&amp;nbsp; stages:&lt;br&gt;&amp;nbsp; &amp;nbsp; - build&lt;br&gt;&amp;nbsp; &amp;nbsp; - test&lt;br&gt;&amp;nbsp; &amp;nbsp; - deploy&lt;br&gt;&amp;nbsp; notifications:&lt;br&gt;&amp;nbsp; &amp;nbsp; slack: true" style="text;html=1;strokeColor=#333333;fillColor=#F5F5F5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontFamily=monospace;" parent="1" vertex="1">
-                    <mxGeometry x="120" y="560" width="240" height="170" as="geometry"/>
+                <mxCell id="25" value="apiVersion: kro.run/v1alpha1&lt;br&gt;kind: Pipeline&lt;br&gt;metadata:&lt;br&gt;&amp;nbsp; name: my-pipeline&lt;br&gt;spec:&lt;br&gt;&amp;nbsp; source:&lt;br&gt;&amp;nbsp; &amp;nbsp; git: https://github.com/...&lt;br&gt;&amp;nbsp; stages:&lt;br&gt;&amp;nbsp; &amp;nbsp; - build&lt;br&gt;&amp;nbsp; &amp;nbsp; - test&lt;br&gt;&amp;nbsp; &amp;nbsp; - deploy&lt;br&gt;&amp;nbsp; notifications:&lt;br&gt;&amp;nbsp; &amp;nbsp; slack: true" style="text;html=1;strokeColor=#333333;fillColor=#F5F5F5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontFamily=monospace;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="560" width="240" height="170" as="geometry" />
                 </mxCell>
-                <mxCell id="26" value="장점:&#10;• 선언적 파이프라인 정의&#10;• 자동 스테이지 관리&#10;• 통합 알림 시스템&#10;• 롤백 메커니즘&#10;• 병렬 실행 지원" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="400" y="560" width="260" height="140" as="geometry"/>
+                <mxCell id="26" value="장점:&#10;• 선언적 파이프라인 정의&#10;• 자동 스테이지 관리&#10;• 통합 알림 시스템&#10;• 롤백 메커니즘&#10;• 병렬 실행 지원" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="560" width="260" height="140" as="geometry" />
                 </mxCell>
-                <mxCell id="27" value="사용 사례 4: 모니터링 스택" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#F57C00;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="720" y="420" width="600" height="310" as="geometry"/>
+                <mxCell id="27" value="사용 사례 4: 모니터링 스택" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#F57C00;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="720" y="420" width="600" height="310" as="geometry" />
                 </mxCell>
                 <mxCell id="28" value="Monitoring CR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9800;strokeColor=#333333;fontSize=12;fontColor=white;" parent="1" vertex="1">
-                    <mxGeometry x="760" y="440" width="100" height="50" as="geometry"/>
+                    <mxGeometry x="760" y="440" width="100" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="29" value="Prometheus" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB74D;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="920" y="510" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="920" y="510" width="80" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="30" value="Grafana" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB74D;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="1020" y="510" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="1020" y="510" width="80" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="31" value="AlertManager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB74D;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="1120" y="510" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="1120" y="510" width="80" height="50" as="geometry" />
                 </mxCell>
                 <mxCell id="32" value="ServiceMonitor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB74D;strokeColor=#333333;fontSize=11;fontColor=black;" parent="1" vertex="1">
-                    <mxGeometry x="1220" y="510" width="80" height="50" as="geometry"/>
+                    <mxGeometry x="1220" y="510" width="80" height="50" as="geometry" />
                 </mxCell>
-                <mxCell id="33" value="apiVersion: kro.run/v1alpha1&lt;br&gt;kind: Monitoring&lt;br&gt;metadata:&lt;br&gt;&amp;nbsp; name: my-monitoring&lt;br&gt;spec:&lt;br&gt;&amp;nbsp; prometheus:&lt;br&gt;&amp;nbsp; &amp;nbsp; retention: 30d&lt;br&gt;&amp;nbsp; grafana:&lt;br&gt;&amp;nbsp; &amp;nbsp; dashboards: true&lt;br&gt;&amp;nbsp; alerts:&lt;br&gt;&amp;nbsp; &amp;nbsp; slack: webhook-url" style="text;html=1;strokeColor=#333333;fillColor=#F5F5F5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontFamily=monospace;" parent="1" vertex="1">
-                    <mxGeometry x="760" y="580" width="240" height="140" as="geometry"/>
+                <mxCell id="33" value="apiVersion: kro.run/v1alpha1&lt;br&gt;kind: Monitoring&lt;br&gt;metadata:&lt;br&gt;&amp;nbsp; name: my-monitoring&lt;br&gt;spec:&lt;br&gt;&amp;nbsp; prometheus:&lt;br&gt;&amp;nbsp; &amp;nbsp; retention: 30d&lt;br&gt;&amp;nbsp; grafana:&lt;br&gt;&amp;nbsp; &amp;nbsp; dashboards: true&lt;br&gt;&amp;nbsp; alerts:&lt;br&gt;&amp;nbsp; &amp;nbsp; slack: webhook-url" style="text;html=1;strokeColor=#333333;fillColor=#F5F5F5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontFamily=monospace;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="760" y="580" width="240" height="140" as="geometry" />
                 </mxCell>
-                <mxCell id="34" value="장점:&#10;• 통합 모니터링 스택&#10;• 자동 대시보드 생성&#10;• 알림 규칙 자동 설정&#10;• 메트릭 수집 자동화&#10;• 고가용성 구성" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="1040" y="580" width="260" height="140" as="geometry"/>
+                <mxCell id="34" value="장점:&#10;• 통합 모니터링 스택&#10;• 자동 대시보드 생성&#10;• 알림 규칙 자동 설정&#10;• 메트릭 수집 자동화&#10;• 고가용성 구성" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="1040" y="580" width="260" height="140" as="geometry" />
                 </mxCell>
-                <mxCell id="35" value="KRO의 공통 장점" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#333333;strokeWidth=3;fontSize=16;fontStyle=1;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="80" y="740" width="1240" height="200" as="geometry"/>
+                <mxCell id="35" value="KRO의 공통 장점" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#333333;strokeWidth=3;fontSize=16;fontStyle=1;verticalAlign=top;fontFamily=Noto Sans CJK KR;arcSize=5;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="740" width="1240" height="200" as="geometry" />
                 </mxCell>
-                <mxCell id="36" value="선언적 관리" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;fontSize=12;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="120" y="780" width="180" height="40" as="geometry"/>
+                <mxCell id="36" value="선언적 관리" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="780" width="180" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="37" value="GitOps 친화적" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;fontSize=12;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="320" y="780" width="180" height="40" as="geometry"/>
+                <mxCell id="37" value="GitOps 친화적" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="780" width="180" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="38" value="자동 수명 주기" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#388E3C;fontSize=12;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="520" y="780" width="180" height="40" as="geometry"/>
+                <mxCell id="38" value="자동 수명 주기" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#388E3C;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="780" width="180" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="39" value="일관된 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#F57C00;fontSize=12;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="720" y="780" width="180" height="40" as="geometry"/>
+                <mxCell id="39" value="일관된 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#F57C00;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="720" y="780" width="180" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="40" value="확장성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#D32F2F;fontSize=12;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="920" y="780" width="180" height="40" as="geometry"/>
+                <mxCell id="40" value="확장성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#D32F2F;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="920" y="780" width="180" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="41" value="재사용성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1F8E9;strokeColor=#689F38;fontSize=12;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="1120" y="780" width="180" height="40" as="geometry"/>
+                <mxCell id="41" value="재사용성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1F8E9;strokeColor=#689F38;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="1120" y="780" width="180" height="40" as="geometry" />
                 </mxCell>
-                <mxCell id="42" value="• YAML로 원하는 상태 정의&#10;• 컨트롤러가 자동으로 조정&#10;• 복잡한 스크립트 불필요" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;" parent="1" vertex="1">
-                    <mxGeometry x="120" y="830" width="180" height="60" as="geometry"/>
+                <mxCell id="42" value="• YAML로 원하는 상태 정의&#10;• 컨트롤러가 자동으로 조정&#10;• 복잡한 스크립트 불필요" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="830" width="180" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="43" value="• Git 저장소에서 관리&#10;• 버전 제어 및 추적&#10;• 자동 배포 파이프라인" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;" parent="1" vertex="1">
-                    <mxGeometry x="320" y="830" width="180" height="60" as="geometry"/>
+                <mxCell id="43" value="• Git 저장소에서 관리&#10;• 버전 제어 및 추적&#10;• 자동 배포 파이프라인" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="830" width="180" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="44" value="• 생성, 업데이트, 삭제 자동화&#10;• 의존성 관리&#10;• 장애 복구" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;" parent="1" vertex="1">
-                    <mxGeometry x="520" y="830" width="180" height="60" as="geometry"/>
+                <mxCell id="44" value="• 생성, 업데이트, 삭제 자동화&#10;• 의존성 관리&#10;• 장애 복구" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="830" width="180" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="45" value="• 표준화된 설정&#10;• 환경 간 일관성&#10;• 베스트 프랙티스 적용" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;" parent="1" vertex="1">
-                    <mxGeometry x="720" y="830" width="180" height="60" as="geometry"/>
+                <mxCell id="45" value="• 표준화된 설정&#10;• 환경 간 일관성&#10;• 베스트 프랙티스 적용" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="720" y="830" width="180" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="46" value="• 수평적 확장 지원&#10;• 다중 클러스터 관리&#10;• 대규모 환경 적합" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;" parent="1" vertex="1">
-                    <mxGeometry x="920" y="830" width="180" height="60" as="geometry"/>
+                <mxCell id="46" value="• 수평적 확장 지원&#10;• 다중 클러스터 관리&#10;• 대규모 환경 적합" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="920" y="830" width="180" height="60" as="geometry" />
                 </mxCell>
-                <mxCell id="47" value="• 템플릿 기반 생성&#10;• 조직 전체 공유&#10;• 표준 패턴 적용" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;" parent="1" vertex="1">
-                    <mxGeometry x="1120" y="830" width="180" height="60" as="geometry"/>
+                <mxCell id="47" value="• 템플릿 기반 생성&#10;• 조직 전체 공유&#10;• 표준 패턴 적용" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="1120" y="830" width="180" height="60" as="geometry" />
                 </mxCell>
                 <mxCell id="48" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#1976D2;endArrow=classic;" parent="1" source="4" target="5" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="310" y="150"/>
+                            <mxPoint x="310" y="150" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="49" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#1976D2;endArrow=classic;" parent="1" source="4" target="6" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="420" y="150"/>
+                            <mxPoint x="420" y="150" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="50" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#1976D2;endArrow=classic;" parent="1" source="4" target="7" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="520" y="150"/>
+                            <mxPoint x="520" y="150" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="51" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#1976D2;endArrow=classic;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="4" target="8" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="220" y="150"/>
-                            <mxPoint x="620" y="150"/>
+                            <mxPoint x="220" y="150" />
+                            <mxPoint x="620" y="150" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="52" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7B1FA2;endArrow=classic;" parent="1" source="12" target="13" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="960" y="155"/>
+                            <mxPoint x="960" y="155" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="53" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7B1FA2;endArrow=classic;" parent="1" source="12" target="14" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="1060" y="155"/>
+                            <mxPoint x="1060" y="155" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="54" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7B1FA2;endArrow=classic;" parent="1" source="12" target="15" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="1160" y="155"/>
+                            <mxPoint x="1160" y="155" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="55" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7B1FA2;endArrow=classic;" parent="1" source="12" target="16" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="1260" y="155"/>
+                            <mxPoint x="1260" y="155" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="56" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#388E3C;endArrow=classic;" parent="1" source="20" target="21" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="320" y="465"/>
+                            <mxPoint x="320" y="465" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="57" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#388E3C;endArrow=classic;" parent="1" source="20" target="22" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="420" y="465"/>
+                            <mxPoint x="420" y="465" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="58" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#388E3C;endArrow=classic;" parent="1" source="20" target="23" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="520" y="465"/>
+                            <mxPoint x="520" y="465" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="59" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#388E3C;endArrow=classic;" parent="1" source="20" target="24" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="620" y="465"/>
+                            <mxPoint x="620" y="465" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="60" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57C00;endArrow=classic;" parent="1" source="28" target="29" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="960" y="465"/>
+                            <mxPoint x="960" y="465" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="61" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57C00;endArrow=classic;" parent="1" source="28" target="30" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="1060" y="465"/>
+                            <mxPoint x="1060" y="465" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="62" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57C00;endArrow=classic;" parent="1" source="28" target="31" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="1160" y="465"/>
+                            <mxPoint x="1160" y="465" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="63" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57C00;endArrow=classic;" parent="1" source="28" target="32" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="1260" y="465"/>
+                            <mxPoint x="1260" y="465" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
-            </root>
+            <mxCell id="icon_2000" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=deploy;" vertex="1" parent="1"><mxGeometry x="284.0" y="196.0" width="24" height="22" as="geometry" /></mxCell><mxCell id="icon_2001" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=svc;" vertex="1" parent="1"><mxGeometry x="584.0" y="196.0" width="24" height="22" as="geometry" /></mxCell><mxCell id="icon_2002" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pv;" vertex="1" parent="1"><mxGeometry x="1024.0" y="196.0" width="24" height="22" as="geometry" /></mxCell></root>
         </mxGraphModel>
     </diagram>
 </mxfile>
