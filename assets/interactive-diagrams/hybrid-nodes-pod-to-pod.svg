@@ -3,12 +3,12 @@
 
   <!-- FORWARD PATH (Pink): Node 1 Pod → CNI encap → Node out → Router → Node 2 in → CNI decap → Pod -->
   <path id="forward-path"
-        d="M 107,326 L 303,326 303,558 707,558 707,326 885,326"
+        d="M 150,355 L 273,355 273,630 610,630 610,680 725,680 725,350 840,350"
         fill="none" stroke="#DD344C" stroke-width="2" stroke-dasharray="6,4" opacity="0.5" />
 
   <!-- REVERSE PATH (Blue): Node 2 Pod → CNI encap → Node out → Router → Node 1 in → CNI decap → Pod -->
   <path id="reverse-path"
-        d="M 885,326 L 713,326 713,568 297,568 297,326 107,326"
+        d="M 840,350 L 725,350 725,680 610,680 610,630 273,630 273,355 150,355"
         fill="none" stroke="#147EBA" stroke-width="2" stroke-dasharray="6,4" opacity="0.5" />
 
   <!-- Forward primary dot -->
@@ -17,7 +17,7 @@
     <circle cx="0" cy="0" r="12" fill="#DD344C" opacity="0.3">
       <animate attributeName="r" values="10;15;10" dur="1.5s" repeatCount="indefinite"/>
     </circle>
-    <animateMotion dur="5s" repeatCount="indefinite" calcMode="linear">
+    <animateMotion dur="4s" repeatCount="indefinite" calcMode="linear">
       <mpath href="#forward-path"/>
     </animateMotion>
   </g>
@@ -28,7 +28,7 @@
     <circle cx="0" cy="0" r="9" fill="#DD344C" opacity="0.2">
       <animate attributeName="r" values="7;11;7" dur="1.5s" repeatCount="indefinite"/>
     </circle>
-    <animateMotion dur="5s" begin="2.5s" repeatCount="indefinite" calcMode="linear">
+    <animateMotion dur="4s" begin="2s" repeatCount="indefinite" calcMode="linear">
       <mpath href="#forward-path"/>
     </animateMotion>
   </g>
@@ -39,7 +39,7 @@
     <circle cx="0" cy="0" r="12" fill="#147EBA" opacity="0.3">
       <animate attributeName="r" values="10;15;10" dur="1.5s" repeatCount="indefinite"/>
     </circle>
-    <animateMotion dur="5s" begin="1.5s" repeatCount="indefinite" calcMode="linear">
+    <animateMotion dur="4s" begin="1s" repeatCount="indefinite" calcMode="linear">
       <mpath href="#reverse-path"/>
     </animateMotion>
   </g>
@@ -50,7 +50,7 @@
     <circle cx="0" cy="0" r="9" fill="#147EBA" opacity="0.2">
       <animate attributeName="r" values="7;11;7" dur="1.5s" repeatCount="indefinite"/>
     </circle>
-    <animateMotion dur="5s" begin="4s" repeatCount="indefinite" calcMode="linear">
+    <animateMotion dur="4s" begin="3s" repeatCount="indefinite" calcMode="linear">
       <mpath href="#reverse-path"/>
     </animateMotion>
   </g>

@@ -51,9 +51,6 @@
 * [EKS Troubleshooting](eks/09-eks-troubleshooting.md)
 * [EKS Resiliency and High Availability](eks/10-eks-resiliency.md)
 * [EKS Advanced Debugging](eks/11-eks-advanced-debugging.md)
-
-## EKS Hybrid Nodes
-
 * [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
     * [Prerequisites](eks-hybrid-nodes/01-prerequisites.md)
     * [Network Configuration](eks-hybrid-nodes/02-network-configuration.md)
@@ -63,9 +60,6 @@
     * [Workload Placement Strategies](eks-hybrid-nodes/06-workload-placement.md)
     * [Cost Optimization](eks-hybrid-nodes/07-cost-optimization.md)
     * [Operations and Maintenance](eks-hybrid-nodes/08-operations.md)
-
-## EKS Auto Mode
-
 * [EKS Auto Mode](eks-auto-mode/README.md)
     * [Getting Started](eks-auto-mode/01-getting-started.md)
     * [NodePool Configuration](eks-auto-mode/02-nodepool-configuration.md)
@@ -151,45 +145,6 @@
 
 * [ArgoCD](gitops/01-argocd.md)
 
-## Autoscaling
-
-* [KEDA](autoscaling/01-keda.md)
-* [Karpenter](autoscaling/02-karpenter.md)
-
-## Observability
-
-* [Observability Overview](observability/README.md)
-* [Metrics](observability/metrics/README.md)
-    * [Prometheus](observability/metrics/01-prometheus.md)
-    * [VictoriaMetrics](observability/metrics/02-victoriametrics.md)
-    * [Grafana Mimir](observability/metrics/03-mimir.md)
-    * [CloudWatch Metrics](observability/metrics/04-cloudwatch-metrics.md)
-    * [Datadog](observability/metrics/05-datadog.md)
-* [Logging](observability/logging/README.md)
-    * [Grafana Loki](observability/logging/01-loki.md)
-    * [OpenSearch](observability/logging/02-opensearch.md)
-    * [CloudWatch Logs](observability/logging/03-cloudwatch-logs.md)
-    * [ClickHouse](observability/logging/04-clickhouse.md)
-    * [Log Collectors](observability/logging/05-collectors.md)
-* [Tracing](observability/tracing/README.md)
-    * [Grafana Tempo](observability/tracing/01-tempo.md)
-    * [AWS X-Ray](observability/tracing/02-xray.md)
-    * [OpenTelemetry](observability/tracing/03-opentelemetry.md)
-    * [Dynatrace](observability/tracing/04-dynatrace.md)
-* [Alerting](observability/alerting/README.md)
-    * [Alertmanager](observability/alerting/01-alertmanager.md)
-    * [CloudWatch Alarms](observability/alerting/02-cloudwatch-alarms.md)
-    * [Grafana OnCall](observability/alerting/03-grafana-oncall.md)
-* [Grafana](observability/grafana/README.md)
-* [Observability Optimization Guide](advanced/09-observability-optimization.md)
-
-## Scheduling
-
-* [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
-    * [Part 1: Basic Concepts](scheduling/01-custom-scheduler-part1.md)
-    * [Part 2: Implementation](scheduling/02-custom-scheduler-part2.md)
-    * [Part 3: Advanced Features](scheduling/03-custom-scheduler-part3.md)
-
 ## Platform Engineering
 
 * [Helm](platform-engineering/01-helm.md)
@@ -228,6 +183,37 @@
     * [Observability Stack](ops/09-observability-stack.md)
     * [Resource Optimization](ops/10-resource-optimization.md)
     * [Upgrade Operations](ops/11-upgrade-operations.md)
+* [Observability Overview](observability/README.md)
+    * [Metrics](observability/metrics/README.md)
+        * [Prometheus](observability/metrics/01-prometheus.md)
+        * [VictoriaMetrics](observability/metrics/02-victoriametrics.md)
+        * [Grafana Mimir](observability/metrics/03-mimir.md)
+        * [CloudWatch Metrics](observability/metrics/04-cloudwatch-metrics.md)
+        * [Datadog](observability/metrics/05-datadog.md)
+    * [Logging](observability/logging/README.md)
+        * [Grafana Loki](observability/logging/01-loki.md)
+        * [OpenSearch](observability/logging/02-opensearch.md)
+        * [CloudWatch Logs](observability/logging/03-cloudwatch-logs.md)
+        * [ClickHouse](observability/logging/04-clickhouse.md)
+        * [Log Collectors](observability/logging/05-collectors.md)
+    * [Tracing](observability/tracing/README.md)
+        * [Grafana Tempo](observability/tracing/01-tempo.md)
+        * [AWS X-Ray](observability/tracing/02-xray.md)
+        * [OpenTelemetry](observability/tracing/03-opentelemetry.md)
+        * [Dynatrace](observability/tracing/04-dynatrace.md)
+    * [Alerting](observability/alerting/README.md)
+        * [Alertmanager](observability/alerting/01-alertmanager.md)
+        * [CloudWatch Alarms](observability/alerting/02-cloudwatch-alarms.md)
+        * [Grafana OnCall](observability/alerting/03-grafana-oncall.md)
+    * [Grafana](observability/grafana/README.md)
+    * [Observability Optimization Guide](advanced/09-observability-optimization.md)
+* [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
+    * [Part 1: Basic Concepts](scheduling/01-custom-scheduler-part1.md)
+    * [Part 2: Implementation](scheduling/02-custom-scheduler-part2.md)
+    * [Part 3: Advanced Features](scheduling/03-custom-scheduler-part3.md)
+* [AutoScaling]
+    * [KEDA](autoscaling/01-keda.md)
+    * [Karpenter](autoscaling/02-karpenter.md)
 
 ## Lab Guides
 
