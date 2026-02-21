@@ -1716,7 +1716,7 @@ graph LR
 
 **관련 퀴즈:**
 
-- [관측성 최적화 퀴즈](../../quizzes/advanced/09-observability-optimization-quiz.md)
+- [관측성 최적화 퀴즈](../quizzes/observability/09-observability-optimization-quiz.md)
 
 ---
 

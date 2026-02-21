@@ -112,21 +112,51 @@ nvcc --version
 | NVIDIA A100 | 40/80 GB | AI/ML general purpose |
 | NVIDIA L40S | 48 GB | Inference optimized |
 
-### GPU Driver Installation (Amazon Linux 2023 Example)
+### GPU Driver Installation
+
+**Ubuntu 22.04 LTS (Recommended):**
 
 ```bash
-# NVIDIA driver installation (Amazon Linux 2023)
+# Install kernel headers
+sudo apt-get install -y linux-headers-$(uname -r)
+
+# Add NVIDIA driver repository
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+wget https://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+sudo apt-get update
+
+# Install driver
+sudo apt-get install -y cuda-drivers-550
+
+# Install NVIDIA Container Toolkit
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+sudo apt-get update
+sudo apt-get install -y nvidia-container-toolkit
+
+# Update containerd configuration
+sudo nvidia-ctk runtime configure --runtime=containerd
+sudo systemctl restart containerd
+```
+
+**RHEL 9:**
+
+```bash
 # Install kernel development packages
 sudo dnf install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r)
 
 # Add NVIDIA driver repository
-sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
+sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
 
 # Install driver
 sudo dnf module install -y nvidia-driver:550-dkms
 
 # Install NVIDIA Container Toolkit
-sudo dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
+  sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
 sudo dnf install -y nvidia-container-toolkit
 
 # Update containerd configuration

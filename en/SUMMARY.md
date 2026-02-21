@@ -141,10 +141,6 @@
 * [Policy Management with Kyverno](security/01-kyverno-policy-management.md)
 * [Kubernetes Authentication and Authorization](security/02-kubernetes-auth-authz.md)
 
-## GitOps
-
-* [ArgoCD](gitops/01-argocd.md)
-
 ## Platform Engineering
 
 * [Helm](platform-engineering/01-helm.md)
@@ -206,7 +202,7 @@
         * [CloudWatch Alarms](observability/alerting/02-cloudwatch-alarms.md)
         * [Grafana OnCall](observability/alerting/03-grafana-oncall.md)
     * [Grafana](observability/grafana/README.md)
-    * [Observability Optimization Guide](advanced/09-observability-optimization.md)
+    * [Observability Optimization Guide](observability/09-observability-optimization.md)
 * [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
     * [Part 1: Basic Concepts](scheduling/01-custom-scheduler-part1.md)
     * [Part 2: Implementation](scheduling/02-custom-scheduler-part2.md)
@@ -214,6 +210,19 @@
 * Scaling
     * [KEDA](autoscaling/01-keda.md)
     * [Karpenter](autoscaling/02-karpenter.md)
+* [GitOps](gitops/README.md)
+    * [ArgoCD](gitops/argocd/README.md)
+        * [Installation](gitops/argocd/01-installation.md)
+        * [Applications](gitops/argocd/02-applications.md)
+        * [Sync Strategies](gitops/argocd/03-sync-strategies.md)
+        * [ApplicationSets](gitops/argocd/04-applicationsets.md)
+        * [Traffic Management](gitops/argocd/05-traffic-management.md)
+        * [Projects & RBAC](gitops/argocd/06-projects-rbac.md)
+        * [Security](gitops/argocd/07-security.md)
+        * [Notifications](gitops/argocd/08-notifications.md)
+        * [Best Practices](gitops/argocd/09-best-practices.md)
+    * [FluxCD](gitops/02-fluxcd.md)
+    * [GitOps Tools Comparison](gitops/03-gitops-comparison.md)
 
 ## Lab Guides
 
@@ -325,6 +334,18 @@
 
 * GitOps
     * [ArgoCD Quiz](quizzes/gitops/01-argocd-quiz.md)
+    * ArgoCD Detailed Quiz
+        * [Installation Quiz](quizzes/gitops/argocd/01-installation-quiz.md)
+        * [Applications Quiz](quizzes/gitops/argocd/02-applications-quiz.md)
+        * [Sync Strategies Quiz](quizzes/gitops/argocd/03-sync-strategies-quiz.md)
+        * [ApplicationSets Quiz](quizzes/gitops/argocd/04-applicationsets-quiz.md)
+        * [Traffic Management Quiz](quizzes/gitops/argocd/05-traffic-management-quiz.md)
+        * [Projects & RBAC Quiz](quizzes/gitops/argocd/06-projects-rbac-quiz.md)
+        * [Security Quiz](quizzes/gitops/argocd/07-security-quiz.md)
+        * [Notifications Quiz](quizzes/gitops/argocd/08-notifications-quiz.md)
+        * [Best Practices Quiz](quizzes/gitops/argocd/09-best-practices-quiz.md)
+    * [FluxCD Quiz](quizzes/gitops/02-fluxcd-quiz.md)
+    * [GitOps Tools Comparison Quiz](quizzes/gitops/03-gitops-comparison-quiz.md)
 
 * Autoscaling
     * [KEDA Quiz](quizzes/autoscaling/05-keda-quiz.md)
@@ -354,7 +375,7 @@
         * [CloudWatch Alarms Quiz](quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md)
         * [Grafana OnCall Quiz](quizzes/observability/alerting/03-grafana-oncall-quiz.md)
     * [Grafana Quiz](quizzes/observability/grafana/grafana-quiz.md)
-    * [Observability Optimization Guide Quiz](quizzes/advanced/09-observability-optimization-quiz.md)
+    * [Observability Optimization Guide Quiz](quizzes/observability/09-observability-optimization-quiz.md)
 
 * Scheduling
     * [Custom Scheduler Quiz - Part 1](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)

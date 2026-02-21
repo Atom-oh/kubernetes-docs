@@ -141,10 +141,6 @@
 * [Kyverno를 사용한 정책 관리](security/01-kyverno-policy-management.md)
 * [Kubernetes 인증 및 권한 부여](security/02-kubernetes-auth-authz.md)
 
-## GitOps
-
-* [ArgoCD](gitops/01-argocd.md)
-
 ## Platform Engineering
 
 * [Helm](platform-engineering/01-helm.md)
@@ -206,7 +202,7 @@
         * [CloudWatch Alarms](observability/alerting/02-cloudwatch-alarms.md)
         * [Grafana OnCall](observability/alerting/03-grafana-oncall.md)
     * [Grafana](observability/grafana/README.md)
-* [관측성 최적화 가이드](advanced/09-observability-optimization.md)
+* [관측성 최적화 가이드](observability/09-observability-optimization.md)
 * [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
     * [Part 1: 기본 개념](scheduling/01-custom-scheduler-part1.md)
     * [Part 2: 구현](scheduling/02-custom-scheduler-part2.md)
@@ -214,6 +210,19 @@
 * Scaling
     * [KEDA](autoscaling/01-keda.md)
     * [Karpenter](autoscaling/02-karpenter.md)
+* [GitOps](gitops/README.md)
+    * [ArgoCD](gitops/argocd/README.md)
+        * [설치 및 구성](gitops/argocd/01-installation.md)
+        * [애플리케이션](gitops/argocd/02-applications.md)
+        * [동기화 전략](gitops/argocd/03-sync-strategies.md)
+        * [ApplicationSets](gitops/argocd/04-applicationsets.md)
+        * [트래픽 관리](gitops/argocd/05-traffic-management.md)
+        * [프로젝트와 RBAC](gitops/argocd/06-projects-rbac.md)
+        * [보안](gitops/argocd/07-security.md)
+        * [알림](gitops/argocd/08-notifications.md)
+        * [모범 사례](gitops/argocd/09-best-practices.md)
+    * [FluxCD](gitops/02-fluxcd.md)
+    * [GitOps 도구 비교](gitops/03-gitops-comparison.md)
 
 ## Lab Guides
 
@@ -325,6 +334,18 @@
 
 * GitOps
     * [ArgoCD 퀴즈](quizzes/gitops/01-argocd-quiz.md)
+    * ArgoCD 상세 퀴즈
+        * [설치 및 구성 퀴즈](quizzes/gitops/argocd/01-installation-quiz.md)
+        * [애플리케이션 퀴즈](quizzes/gitops/argocd/02-applications-quiz.md)
+        * [동기화 전략 퀴즈](quizzes/gitops/argocd/03-sync-strategies-quiz.md)
+        * [ApplicationSets 퀴즈](quizzes/gitops/argocd/04-applicationsets-quiz.md)
+        * [트래픽 관리 퀴즈](quizzes/gitops/argocd/05-traffic-management-quiz.md)
+        * [프로젝트와 RBAC 퀴즈](quizzes/gitops/argocd/06-projects-rbac-quiz.md)
+        * [보안 퀴즈](quizzes/gitops/argocd/07-security-quiz.md)
+        * [알림 퀴즈](quizzes/gitops/argocd/08-notifications-quiz.md)
+        * [모범 사례 퀴즈](quizzes/gitops/argocd/09-best-practices-quiz.md)
+    * [FluxCD 퀴즈](quizzes/gitops/02-fluxcd-quiz.md)
+    * [GitOps 도구 비교 퀴즈](quizzes/gitops/03-gitops-comparison-quiz.md)
 
 * Autoscaling
     * [KEDA 퀴즈](quizzes/autoscaling/05-keda-quiz.md)
@@ -355,7 +376,7 @@
         * [CloudWatch Alarms 퀴즈](quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md)
         * [Grafana OnCall 퀴즈](quizzes/observability/alerting/03-grafana-oncall-quiz.md)
     * [Grafana 퀴즈](quizzes/observability/grafana/grafana-quiz.md)
-    * [관측성 최적화 가이드 퀴즈](quizzes/advanced/09-observability-optimization-quiz.md)
+    * [관측성 최적화 가이드 퀴즈](quizzes/observability/09-observability-optimization-quiz.md)
 
 * Scheduling
     * [Custom Scheduler 퀴즈 - Part 1](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)

@@ -146,7 +146,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [CloudWatch Alarms](./observability/alerting/02-cloudwatch-alarms.md) | [Quiz](./quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md)
    - [Grafana OnCall](./observability/alerting/03-grafana-oncall.md) | [Quiz](./quizzes/observability/alerting/03-grafana-oncall-quiz.md)
 6. [Grafana](./observability/grafana/README.md) | [Quiz](./quizzes/observability/grafana/grafana-quiz.md)
-7. [Observability Optimization Guide](./advanced/09-observability-optimization.md) | [Quiz](./quizzes/advanced/09-observability-optimization-quiz.md)
+7. [Observability Optimization Guide](./observability/09-observability-optimization.md) | [Quiz](./quizzes/observability/09-observability-optimization-quiz.md)
 
 ### Scheduling
 1. Custom Scheduler

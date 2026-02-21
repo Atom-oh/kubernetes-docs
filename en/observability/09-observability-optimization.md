@@ -1716,7 +1716,7 @@ graph LR
 
 **Related Quiz:**
 
-- [Observability Optimization Quiz](../../quizzes/advanced/09-observability-optimization-quiz.md)
+- [Observability Optimization Quiz](../quizzes/observability/09-observability-optimization-quiz.md)
 
 ---
 

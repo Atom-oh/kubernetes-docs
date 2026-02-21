@@ -146,7 +146,7 @@
    - [CloudWatch Alarms](./observability/alerting/02-cloudwatch-alarms.md) | [퀴즈](./quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md)
    - [Grafana OnCall](./observability/alerting/03-grafana-oncall.md) | [퀴즈](./quizzes/observability/alerting/03-grafana-oncall-quiz.md)
 6. [Grafana](./observability/grafana/README.md) | [퀴즈](./quizzes/observability/grafana/grafana-quiz.md)
-7. [관측성 최적화 가이드](./advanced/09-observability-optimization.md) | [퀴즈](./quizzes/advanced/09-observability-optimization-quiz.md)
+7. [관측성 최적화 가이드](./observability/09-observability-optimization.md) | [퀴즈](./quizzes/observability/09-observability-optimization-quiz.md)
 
 ### Scheduling
 1. Custom Scheduler
