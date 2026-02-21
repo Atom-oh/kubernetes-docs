@@ -211,7 +211,7 @@
     * [Part 1: 기본 개념](scheduling/01-custom-scheduler-part1.md)
     * [Part 2: 구현](scheduling/02-custom-scheduler-part2.md)
     * [Part 3: 고급 기능](scheduling/03-custom-scheduler-part3.md)
-* [Scaling]    
+* Scaling
     * [KEDA](autoscaling/01-keda.md)
     * [Karpenter](autoscaling/02-karpenter.md)
 

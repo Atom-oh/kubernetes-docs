@@ -211,7 +211,7 @@
     * [Part 1: Basic Concepts](scheduling/01-custom-scheduler-part1.md)
     * [Part 2: Implementation](scheduling/02-custom-scheduler-part2.md)
     * [Part 3: Advanced Features](scheduling/03-custom-scheduler-part3.md)
-* [AutoScaling]
+* Scaling
     * [KEDA](autoscaling/01-keda.md)
     * [Karpenter](autoscaling/02-karpenter.md)
 
