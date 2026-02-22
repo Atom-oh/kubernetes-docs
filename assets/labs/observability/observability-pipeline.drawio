@@ -1,100 +1,162 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" modified="2026-02-22T00:00:00.000Z" agent="Claude" version="24.0.0" type="device">
   <diagram id="observability-pipeline" name="Observability Pipeline">
-    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0" defaultFontFamily="Amazon Ember">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <!-- Data Sources Container -->
-        <mxCell id="data-sources" value="Data Sources" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;fontColor=#FFFFFF;strokeColor=#232F3E;verticalAlign=top;fontSize=14;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="40" y="40" width="160" height="280" as="geometry"/>
+
+        <!-- Data Sources Group -->
+        <mxCell id="data-sources-group" value="Data Sources" style="rounded=1;fillColor=#232F3E;fontColor=#FFFFFF;strokeColor=#232F3E;verticalAlign=top;fontSize=14;fontStyle=1;spacingTop=5;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="100" width="200" height="300" as="geometry"/>
         </mxCell>
-        <mxCell id="src-pods" value="Pods / Containers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;fontColor=#FFFFFF;strokeColor=#326CE5;" vertex="1" parent="1">
-          <mxGeometry x="60" y="80" width="120" height="40" as="geometry"/>
+
+        <mxCell id="msa-apps-src" value="MSA Applications" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E8900;fontColor=#FFFFFF;strokeColor=#1E8900;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="150" width="160" height="45" as="geometry"/>
         </mxCell>
-        <mxCell id="src-nodes" value="Kubernetes Nodes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;fontColor=#FFFFFF;strokeColor=#326CE5;" vertex="1" parent="1">
-          <mxGeometry x="60" y="140" width="120" height="40" as="geometry"/>
+
+        <mxCell id="node-metrics-src" value="Node Metrics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;fontColor=#FFFFFF;strokeColor=#326CE5;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="210" width="160" height="45" as="geometry"/>
         </mxCell>
-        <mxCell id="src-apps" value="Application Traces" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E8900;fontColor=#FFFFFF;strokeColor=#1E8900;" vertex="1" parent="1">
-          <mxGeometry x="60" y="200" width="120" height="40" as="geometry"/>
+
+        <mxCell id="k8s-events-src" value="Kubernetes Events" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;fontColor=#FFFFFF;strokeColor=#326CE5;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="270" width="160" height="45" as="geometry"/>
         </mxCell>
-        <mxCell id="src-logs" value="Application Logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E8900;fontColor=#FFFFFF;strokeColor=#1E8900;" vertex="1" parent="1">
-          <mxGeometry x="60" y="260" width="120" height="40" as="geometry"/>
+
+        <mxCell id="app-logs-src" value="Application Logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E8900;fontColor=#FFFFFF;strokeColor=#1E8900;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="330" width="160" height="45" as="geometry"/>
         </mxCell>
-        <!-- OTel Collector Container -->
-        <mxCell id="otel-collector" value="OpenTelemetry Collector" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#425CC7;fontColor=#FFFFFF;strokeColor=#425CC7;verticalAlign=top;fontSize=14;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="260" y="40" width="200" height="280" as="geometry"/>
+
+        <!-- OTel Collector Group (highlighted) -->
+        <mxCell id="otel-collector-group" value="OpenTelemetry Collector" style="rounded=1;fillColor=#425CC7;fontColor=#FFFFFF;strokeColor=#425CC7;verticalAlign=top;fontSize=14;fontStyle=1;spacingTop=5;html=1;strokeWidth=3;" vertex="1" parent="1">
+          <mxGeometry x="300" y="100" width="260" height="300" as="geometry"/>
         </mxCell>
-        <mxCell id="receivers" value="Receivers&#xa;(OTLP, Prometheus,&#xa;Filelog, Hostmetrics)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5C6BC0;fontColor=#FFFFFF;strokeColor=#5C6BC0;" vertex="1" parent="1">
-          <mxGeometry x="280" y="80" width="160" height="60" as="geometry"/>
+
+        <mxCell id="receivers" value="Receivers&#xa;(OTLP, Prometheus)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7986CB;fontColor=#FFFFFF;strokeColor=#7986CB;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="150" width="220" height="55" as="geometry"/>
         </mxCell>
-        <mxCell id="processors" value="Processors&#xa;(Batch, Memory Limit,&#xa;Attributes, Filter)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5C6BC0;fontColor=#FFFFFF;strokeColor=#5C6BC0;" vertex="1" parent="1">
-          <mxGeometry x="280" y="160" width="160" height="60" as="geometry"/>
+
+        <mxCell id="processors" value="Processors&#xa;(batch, k8sattributes)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7986CB;fontColor=#FFFFFF;strokeColor=#7986CB;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="220" width="220" height="55" as="geometry"/>
         </mxCell>
-        <mxCell id="exporters" value="Exporters&#xa;(OTLP, Prometheus,&#xa;Loki, AWS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5C6BC0;fontColor=#FFFFFF;strokeColor=#5C6BC0;" vertex="1" parent="1">
-          <mxGeometry x="280" y="240" width="160" height="60" as="geometry"/>
+
+        <mxCell id="exporters" value="Exporters&#xa;(Fan-out)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7986CB;fontColor=#FFFFFF;strokeColor=#7986CB;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="290" width="220" height="55" as="geometry"/>
         </mxCell>
-        <!-- Metrics Backends Container -->
-        <mxCell id="metrics-backends" value="Metrics Backends" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7157B;fontColor=#FFFFFF;strokeColor=#E7157B;verticalAlign=top;fontSize=12;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="520" y="40" width="180" height="180" as="geometry"/>
-        </mxCell>
-        <mxCell id="prometheus" value="Prometheus" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;fontColor=#FFFFFF;strokeColor=#E6522C;" vertex="1" parent="1">
-          <mxGeometry x="540" y="70" width="70" height="30" as="geometry"/>
-        </mxCell>
-        <mxCell id="victoria" value="VictoriaMetrics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#621773;fontColor=#FFFFFF;strokeColor=#621773;" vertex="1" parent="1">
-          <mxGeometry x="620" y="70" width="70" height="30" as="geometry"/>
-        </mxCell>
-        <mxCell id="mimir" value="Mimir" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F46800;fontColor=#FFFFFF;strokeColor=#F46800;" vertex="1" parent="1">
-          <mxGeometry x="540" y="110" width="70" height="30" as="geometry"/>
-        </mxCell>
-        <mxCell id="amp" value="AMP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;fontColor=#232F3E;strokeColor=#FF9900;" vertex="1" parent="1">
-          <mxGeometry x="620" y="110" width="70" height="30" as="geometry"/>
-        </mxCell>
-        <mxCell id="cw-metrics" value="CloudWatch Metrics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF4F8B;fontColor=#FFFFFF;strokeColor=#FF4F8B;" vertex="1" parent="1">
-          <mxGeometry x="540" y="150" width="140" height="30" as="geometry"/>
-        </mxCell>
-        <!-- Logging Backends Container -->
-        <mxCell id="logging-backends" value="Logging Backends" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2CC0C;fontColor=#232F3E;strokeColor=#F2CC0C;verticalAlign=top;fontSize=12;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="720" y="40" width="180" height="180" as="geometry"/>
-        </mxCell>
-        <mxCell id="loki" value="Loki" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F46800;fontColor=#FFFFFF;strokeColor=#F46800;" vertex="1" parent="1">
-          <mxGeometry x="740" y="70" width="70" height="30" as="geometry"/>
-        </mxCell>
-        <mxCell id="clickhouse" value="ClickHouse" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCC01;fontColor=#232F3E;strokeColor=#FFCC01;" vertex="1" parent="1">
-          <mxGeometry x="820" y="70" width="70" height="30" as="geometry"/>
-        </mxCell>
-        <mxCell id="opensearch" value="OpenSearch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#005EB8;fontColor=#FFFFFF;strokeColor=#005EB8;" vertex="1" parent="1">
-          <mxGeometry x="740" y="110" width="70" height="30" as="geometry"/>
-        </mxCell>
-        <mxCell id="cw-logs" value="CW Logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF4F8B;fontColor=#FFFFFF;strokeColor=#FF4F8B;" vertex="1" parent="1">
-          <mxGeometry x="820" y="110" width="70" height="30" as="geometry"/>
-        </mxCell>
-        <!-- Tracing Backends Container -->
-        <mxCell id="tracing-backends" value="Tracing Backends" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0097A7;fontColor=#FFFFFF;strokeColor=#0097A7;verticalAlign=top;fontSize=12;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="920" y="40" width="180" height="180" as="geometry"/>
-        </mxCell>
-        <mxCell id="tempo" value="Tempo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F46800;fontColor=#FFFFFF;strokeColor=#F46800;" vertex="1" parent="1">
-          <mxGeometry x="940" y="80" width="140" height="30" as="geometry"/>
-        </mxCell>
-        <mxCell id="xray" value="AWS X-Ray" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;fontColor=#232F3E;strokeColor=#FF9900;" vertex="1" parent="1">
-          <mxGeometry x="940" y="120" width="140" height="30" as="geometry"/>
-        </mxCell>
-        <mxCell id="jaeger" value="Jaeger" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#66CFE3;fontColor=#232F3E;strokeColor=#66CFE3;" vertex="1" parent="1">
-          <mxGeometry x="940" y="160" width="140" height="30" as="geometry"/>
-        </mxCell>
-        <!-- Arrows -->
-        <mxCell id="arrow-src-otel" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="data-sources" target="otel-collector">
+
+        <!-- Internal OTel arrows -->
+        <mxCell id="arrow-recv-proc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FFFFFF;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="receivers" target="processors">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="arrow-otel-metrics" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#E7157B;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="exporters" target="metrics-backends">
+
+        <mxCell id="arrow-proc-exp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FFFFFF;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="processors" target="exporters">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="arrow-otel-logs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F2CC0C;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="exporters" target="logging-backends">
+
+        <!-- Metrics Backends Column -->
+        <mxCell id="metrics-group" value="Metrics Backends" style="rounded=1;fillColor=#BC1356;fontColor=#FFFFFF;strokeColor=#BC1356;verticalAlign=top;fontSize=12;fontStyle=1;spacingTop=5;html=1;opacity=80;" vertex="1" parent="1">
+          <mxGeometry x="620" y="40" width="200" height="260" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="prometheus-icon" value="Prometheus" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#F34482;gradientDirection=north;fillColor=#BC1356;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.managed_service_for_prometheus;" vertex="1" parent="1">
+          <mxGeometry x="640" y="80" width="50" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="amp-icon" value="AMP" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#F34482;gradientDirection=north;fillColor=#BC1356;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.managed_service_for_prometheus;" vertex="1" parent="1">
+          <mxGeometry x="750" y="80" width="50" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="victoria" value="VictoriaMetrics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#621773;fontColor=#FFFFFF;strokeColor=#621773;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="640" y="160" width="70" height="35" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mimir" value="Mimir" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F46800;fontColor=#FFFFFF;strokeColor=#F46800;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="720" y="160" width="70" height="35" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="cw-metrics-icon" value="CloudWatch" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#F34482;gradientDirection=north;fillColor=#BC1356;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch_2;" vertex="1" parent="1">
+          <mxGeometry x="695" y="210" width="50" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Logging Backends Column -->
+        <mxCell id="logging-group" value="Logging Backends" style="rounded=1;fillColor=#F2CC0C;fontColor=#232F3E;strokeColor=#F2CC0C;verticalAlign=top;fontSize=12;fontStyle=1;spacingTop=5;html=1;opacity=80;" vertex="1" parent="1">
+          <mxGeometry x="860" y="40" width="200" height="260" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="loki" value="Loki" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F46800;fontColor=#FFFFFF;strokeColor=#F46800;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="880" y="80" width="70" height="35" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="clickhouse" value="ClickHouse" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCC01;fontColor=#232F3E;strokeColor=#FFCC01;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="970" y="80" width="70" height="35" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="opensearch-icon" value="OpenSearch" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.opensearch_service;" vertex="1" parent="1">
+          <mxGeometry x="880" y="140" width="50" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="cw-logs-icon" value="CW Logs" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=#F34482;gradientDirection=north;fillColor=#BC1356;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch_2;" vertex="1" parent="1">
+          <mxGeometry x="980" y="140" width="50" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Tracing Backends Column -->
+        <mxCell id="tracing-group" value="Tracing Backends" style="rounded=1;fillColor=#0097A7;fontColor=#FFFFFF;strokeColor=#0097A7;verticalAlign=top;fontSize=12;fontStyle=1;spacingTop=5;html=1;opacity=80;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="40" width="200" height="260" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="tempo" value="Tempo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F46800;fontColor=#FFFFFF;strokeColor=#F46800;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="80" width="160" height="35" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="xray" value="X-Ray" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;fontColor=#232F3E;strokeColor=#FF9900;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="130" width="160" height="35" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="jaeger" value="Jaeger" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#66CFE3;fontColor=#232F3E;strokeColor=#66CFE3;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="180" width="160" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- Main Flow Arrows -->
+        <!-- Data Sources to OTel -->
+        <mxCell id="arrow-src-otel" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#545B64;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="data-sources-group" target="otel-collector-group">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="arrow-otel-traces" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0097A7;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="exporters" target="tracing-backends">
-          <mxGeometry relative="1" as="geometry"/>
+
+        <!-- OTel to Metrics (fan-out) -->
+        <mxCell id="arrow-otel-metrics" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#BC1356;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="exporters" target="metrics-group">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="590" y="318"/>
+              <mxPoint x="590" y="170"/>
+            </Array>
+          </mxGeometry>
         </mxCell>
+
+        <!-- OTel to Logging (fan-out) -->
+        <mxCell id="arrow-otel-logging" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F2CC0C;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="exporters" target="logging-group">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="318"/>
+              <mxPoint x="600" y="170"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- OTel to Tracing (fan-out) -->
+        <mxCell id="arrow-otel-tracing" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0097A7;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="exporters" target="tracing-group">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="610" y="318"/>
+              <mxPoint x="610" y="170"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend" value="Fan-out Pattern: Single collector distributes to multiple backends" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=2;fontColor=#545B64;" vertex="1" parent="1">
+          <mxGeometry x="620" y="320" width="380" height="30" as="geometry"/>
+        </mxCell>
+
       </root>
     </mxGraphModel>
   </diagram>
