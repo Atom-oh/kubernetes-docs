@@ -215,7 +215,7 @@ karpenter-6f4f46d855-5lqx7   1/1     Running   0          1m
 ### Basic Provisioner Configuration
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: default
@@ -239,17 +239,21 @@ spec:
           operator: In
           values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: default
 ---
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: default
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: "true"
-  securityGroupSelector:
-    karpenter.sh/discovery: "true"
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "true"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "true"
   tags:
     karpenter.sh/discovery: "true"
   blockDeviceMappings:
@@ -267,7 +271,7 @@ NodePool is a Kubernetes custom resource that defines how Karpenter provisions n
 ### Basic NodePool Configuration
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: default
@@ -295,6 +299,8 @@ spec:
   template:
     spec:
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: default
 
   # Node expiration settings
@@ -389,18 +395,20 @@ Node classes define the configuration of nodes that Karpenter provisions. On AWS
 ### AWS EC2NodeClass Configuration
 
 ```yaml
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: default
 spec:
   # Subnet selection
-  subnetSelector:
-    karpenter.sh/discovery: "true"
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "true"
 
   # Security group selection
-  securityGroupSelector:
-    karpenter.sh/discovery: "true"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "true"
 
   # Instance tags
   tags:
@@ -417,7 +425,7 @@ spec:
         encrypted: true
 
   # Detailed instance configuration
-  instanceProfile: KarpenterNodeInstanceProfile
+  role: KarpenterNodeRole
   amiFamily: AL2
   userData: |
     #!/bin/bash
@@ -581,7 +589,7 @@ Karpenter handles the following interruption events:
 ### Interruption Handling Configuration
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: default
@@ -1025,7 +1033,7 @@ aws eks create-fargate-profile \
   --selectors namespace=default,namespace=kube-system
 
 # Karpenter NodePool configuration
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: ec2
@@ -1037,20 +1045,24 @@ spec:
           operator: In
           values: ["on-demand"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: ec2
   disruption:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s
 ---
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: ec2
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: "${CLUSTER_NAME}"
-  securityGroupSelector:
-    karpenter.sh/discovery: "${CLUSTER_NAME}"
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}"
 ```
 
 ### EKS Cost Optimization
@@ -1251,7 +1263,7 @@ flowchart TD
 4. **Enable Node Consolidation**: Enable node consolidation to optimize resource utilization
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: optimized
@@ -1268,6 +1280,8 @@ spec:
             "r5.large", "r5.xlarge", "r5.2xlarge"
           ]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: optimized
 
   # Set appropriate TTL
@@ -1285,7 +1299,7 @@ spec:
 4. **Set Node Expiration**: Leverage latest instance types through regular node replacement
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: cost-optimized
@@ -1298,6 +1312,8 @@ spec:
           operator: In
           values: ["spot"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: cost-optimized
 
   # Zero scaling and node expiration settings
@@ -1315,7 +1331,7 @@ spec:
 4. **Optimize Interruption Handling**: Ensure workload availability during node interruptions
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: high-availability

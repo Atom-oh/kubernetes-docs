@@ -192,7 +192,7 @@ EC2NodeClass에서 `subnetSelectorTerms`와 `securityGroupSelectorTerms`를 사�
 
 **정답:**
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: cost-optimized
@@ -222,7 +222,7 @@ spec:
             - r5.xlarge
             - r5.2xlarge
       nodeClassRef:
-        apiVersion: karpenter.k8s.aws/v1beta1
+        apiVersion: karpenter.k8s.aws/v1
         kind: EC2NodeClass
         name: default
   limits:
@@ -246,7 +246,7 @@ spec:
 
 **정답:**
 ```yaml
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: secure-nodeclass

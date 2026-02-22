@@ -16,12 +16,20 @@ This section provides hands-on lab guides for practicing Kubernetes and related 
 | 6 | [Storage Lab](core/04-storage-lab.md) | Intermediate | kubectl, K8s cluster |
 | 7 | [ConfigMap and Secret Lab](core/05-configuration-secrets-lab.md) | Beginner | kubectl, K8s cluster |
 | 8 | [EKS Cluster Creation Lab](eks/01-eks-cluster-creation-lab.md) | Intermediate | AWS CLI, eksctl |
+| 9 | [Observability E2E: Series Introduction](observability/README.md) | Advanced | AWS account, Terraform, Helm |
+| 10 | [Observability E2E: Infrastructure Setup](observability/01-infrastructure-setup-lab.md) | Intermediate | Part 0 completed |
+| 11 | [Observability E2E: Observability Stack](observability/02-observability-stack-lab.md) | Advanced | Part 1 completed |
+| 12 | [Observability E2E: MSA Deployment and Canary](observability/03-msa-deployment-lab.md) | Advanced | Part 2 completed |
+| 13 | [Observability E2E: Load Testing and Autoscaling](observability/04-load-testing-scaling-lab.md) | Intermediate | Part 3 completed |
+| 14 | [Observability E2E: Alerting and AIOps](observability/05-alerting-aiops-lab.md) | Advanced | Part 4 completed |
+| 15 | [Observability E2E: Distributed Tracing Analysis](observability/06-distributed-tracing-lab.md) | Advanced | Part 5 completed |
 
 ## Recommended Learning Path
 
 1. **Basic Labs** (1→2→3): Learn Linux and container technology
 2. **Core Labs** (4→7→5→6): Work with Kubernetes core resources
 3. **EKS Labs** (8): Operate clusters in a real cloud environment
+4. **Observability Labs** (9→10→11→12→13→14→15): Build and operate an end-to-end observability stack
 
 ## Lab Environment Setup
 

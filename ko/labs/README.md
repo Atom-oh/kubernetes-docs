@@ -16,12 +16,20 @@
 | 6 | [스토리지 실습](core/04-storage-lab.md) | 중급 | kubectl, K8s 클러스터 |
 | 7 | [ConfigMap과 Secret 실습](core/05-configuration-secrets-lab.md) | 초급 | kubectl, K8s 클러스터 |
 | 8 | [EKS 클러스터 생성 실습](eks/01-eks-cluster-creation-lab.md) | 중급 | AWS CLI, eksctl |
+| 9 | [Observability E2E: 시리즈 소개](observability/README.md) | 고급 | AWS 계정, Terraform, Helm |
+| 10 | [Observability E2E: 인프라 구성](observability/01-infrastructure-setup-lab.md) | 중급 | Part 0 완료 |
+| 11 | [Observability E2E: Observability 스택](observability/02-observability-stack-lab.md) | 고급 | Part 1 완료 |
+| 12 | [Observability E2E: MSA 배포 및 카나리](observability/03-msa-deployment-lab.md) | 고급 | Part 2 완료 |
+| 13 | [Observability E2E: 부하 테스트 및 스케일링](observability/04-load-testing-scaling-lab.md) | 중급 | Part 3 완료 |
+| 14 | [Observability E2E: 알림 및 AIOps](observability/05-alerting-aiops-lab.md) | 고급 | Part 4 완료 |
+| 15 | [Observability E2E: 분산 추적 분석](observability/06-distributed-tracing-lab.md) | 고급 | Part 5 완료 |
 
 ## 권장 학습 순서
 
 1. **기초 실습** (1→2→3): Linux와 컨테이너 기술 익히기
 2. **핵심 실습** (4→7→5→6): Kubernetes 핵심 리소스 다루기
 3. **EKS 실습** (8): 실제 클라우드 환경에서 클러스터 운영
+4. **Observability 실습** (9→10→11→12→13→14→15): End-to-End 관측성 스택 구축 및 운영
 
 ## 실습 환경 준비
 

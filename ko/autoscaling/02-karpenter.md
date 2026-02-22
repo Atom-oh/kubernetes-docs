@@ -215,7 +215,7 @@ karpenter-6f4f46d855-5lqx7   1/1     Running   0          1m
 ### 기본 프로비저너 구성
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: default
@@ -241,7 +241,7 @@ spec:
       nodeClassRef:
         name: default
 ---
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: default
@@ -267,7 +267,7 @@ NodePool은 Karpenter가 노드를 프로비저닝하는 방법을 정의하는 
 ### 기본 NodePool 구성
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: default
@@ -389,7 +389,7 @@ disruption:
 ### AWS EC2NodeClass 구성
 
 ```yaml
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: default
@@ -581,7 +581,7 @@ Karpenter는 다음과 같은 인터럽션 이벤트를 처리합니다:
 ### 인터럽션 처리 구성
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: default
@@ -1025,7 +1025,7 @@ aws eks create-fargate-profile \
   --selectors namespace=default,namespace=kube-system
 
 # Karpenter NodePool 구성
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: ec2
@@ -1042,7 +1042,7 @@ spec:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s
 ---
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: ec2
@@ -1251,7 +1251,7 @@ flowchart TD
 4. **노드 통합 활성화**: 리소스 활용도 최적화를 위한 노드 통합 활성화
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: optimized
@@ -1285,7 +1285,7 @@ spec:
 4. **노드 만료 설정**: 정기적인 노드 교체를 통한 최신 인스턴스 유형 활용
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: cost-optimized
@@ -1315,7 +1315,7 @@ spec:
 4. **인터럽션 처리 최적화**: 노드 인터럽션 시 워크로드 가용성 보장
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: high-availability

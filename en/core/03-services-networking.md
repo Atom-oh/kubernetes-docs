@@ -963,7 +963,7 @@ graph TD
     class EBPF,Kernel kernel;
 ```
 
-[Cilium Details](../cilium/README.md)
+[Cilium Details](../networking/cilium/README.md)
 
 ### Introduction to Cilium
 

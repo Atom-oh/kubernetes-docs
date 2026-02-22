@@ -641,7 +641,7 @@ API 서버가 하이브리드 노드에서 실행 중인 웹훅 Pod에 직접 �
 
 ### 패턴 5: 하이브리드 노드 간 Pod ↔ Pod
 
-서로 다른 하이브리드 노드의 Pod는 [VXLAN 캡슐화](../cilium/03-networking.md#vxlan-기술-심층-분석)(또는 Geneve, IP-in-IP와 같은 유사한 오버레이 프로토콜)를 사용하여 통신합니다. CNI는 소스/대상 노드 IP를 사용하여 외부 헤더로 원본 Pod-to-Pod 패킷을 캡슐화합니다. 수신 노드의 CNI가 캡슐을 해제하고 대상 Pod로 전달합니다.
+서로 다른 하이브리드 노드의 Pod는 [VXLAN 캡슐화](../networking/cilium/03-networking.md#vxlan-기술-심층-분석)(또는 Geneve, IP-in-IP와 같은 유사한 오버레이 프로토콜)를 사용하여 통신합니다. CNI는 소스/대상 노드 IP를 사용하여 외부 헤더로 원본 Pod-to-Pod 패킷을 캡슐화합니다. 수신 노드의 CNI가 캡슐을 해제하고 대상 Pod로 전달합니다.
 
 ![하이브리드 노드 간 Pod-to-Pod](../../assets/interactive-diagrams/hybrid-nodes-pod-to-pod.svg)
 

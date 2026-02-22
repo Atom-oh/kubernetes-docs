@@ -535,7 +535,7 @@ kubectl get events -n karpenter --sort-by='.lastTimestamp'
 #### Karpenter 설정 예시
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: default
@@ -553,6 +553,8 @@ spec:
           operator: In
           values: ["c", "m", "r"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: default
   limits:
     cpu: 1000

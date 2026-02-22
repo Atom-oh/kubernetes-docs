@@ -260,7 +260,7 @@ eksctl create nodegroup \
 #### Karpenter를 사용한 스팟 인스턴스 프로비저닝
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: spot
@@ -278,6 +278,8 @@ spec:
         operator: In
         values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: spot-class
   limits:
     cpu: 1000
@@ -286,15 +288,17 @@ spec:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s
 ---
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: spot-class
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: my-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: my-cluster
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
 ```
 
 #### 스팟 인스턴스 중단 처리
@@ -405,7 +409,7 @@ kubectl -n kube-system set env deployment.apps/cluster-autoscaler \
 Karpenter는 Cluster Autoscaler의 대안으로, 더 빠르고 유연한 노드 프로비저닝을 제공합니다:
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: default
@@ -420,6 +424,8 @@ spec:
         operator: In
         values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: default-class
   limits:
     cpu: 1000
@@ -428,15 +434,17 @@ spec:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s
 ---
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: default-class
 spec:
-  subnetSelector:
-    karpenter.sh/discovery: my-cluster
-  securityGroupSelector:
-    karpenter.sh/discovery: my-cluster
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
 ```
 
 Karpenter 비용 최적화 설정:

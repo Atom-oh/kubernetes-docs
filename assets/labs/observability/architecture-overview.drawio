@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-02-22T00:00:00.000Z" agent="Claude" version="24.0.0" type="device">
+  <diagram id="observability-arch-overview" name="Architecture Overview">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- EKS Managed Cluster Container -->
+        <mxCell id="managed-cluster" value="EKS Managed Cluster" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;fontColor=#FFFFFF;strokeColor=#232F3E;verticalAlign=top;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="300" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="argocd" value="ArgoCD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B48CC;fontColor=#FFFFFF;strokeColor=#3B48CC;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="obs-stack" value="Observability Stack" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7B42BC;fontColor=#FFFFFF;strokeColor=#7B42BC;" vertex="1" parent="1">
+          <mxGeometry x="60" y="150" width="260" height="70" as="geometry"/>
+        </mxCell>
+        <!-- EKS Service Cluster Container -->
+        <mxCell id="service-cluster" value="EKS Service Cluster" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;fontColor=#FFFFFF;strokeColor=#232F3E;verticalAlign=top;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="380" y="40" width="340" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="msa-apps" value="MSA Applications" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E8900;fontColor=#FFFFFF;strokeColor=#1E8900;" vertex="1" parent="1">
+          <mxGeometry x="400" y="80" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="karpenter" value="Karpenter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;fontColor=#232F3E;strokeColor=#FF9900;" vertex="1" parent="1">
+          <mxGeometry x="560" y="80" width="100" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="keda" value="KEDA" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0078D4;fontColor=#FFFFFF;strokeColor=#0078D4;" vertex="1" parent="1">
+          <mxGeometry x="400" y="150" width="100" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="otel-agent" value="OTel Agent (DaemonSet)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#425CC7;fontColor=#FFFFFF;strokeColor=#425CC7;" vertex="1" parent="1">
+          <mxGeometry x="520" y="150" width="180" height="50" as="geometry"/>
+        </mxCell>
+        <!-- AWS Managed Services Container -->
+        <mxCell id="aws-services" value="AWS Managed Services" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;fontColor=#232F3E;strokeColor=#FF9900;verticalAlign=top;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="40" width="360" height="340" as="geometry"/>
+        </mxCell>
+        <mxCell id="amp" value="Amazon Managed Prometheus (AMP)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7157B;fontColor=#FFFFFF;strokeColor=#E7157B;" vertex="1" parent="1">
+          <mxGeometry x="780" y="80" width="160" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="amg" value="Amazon Managed Grafana (AMG)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F46800;fontColor=#FFFFFF;strokeColor=#F46800;" vertex="1" parent="1">
+          <mxGeometry x="780" y="130" width="160" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="cloudwatch" value="CloudWatch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF4F8B;fontColor=#FFFFFF;strokeColor=#FF4F8B;" vertex="1" parent="1">
+          <mxGeometry x="960" y="80" width="140" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="opensearch" value="OpenSearch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#005EB8;fontColor=#FFFFFF;strokeColor=#005EB8;" vertex="1" parent="1">
+          <mxGeometry x="960" y="130" width="140" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="sqs-sns" value="SQS / SNS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF4F8B;fontColor=#FFFFFF;strokeColor=#FF4F8B;" vertex="1" parent="1">
+          <mxGeometry x="780" y="190" width="140" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="aurora" value="Aurora PostgreSQL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E73B8;fontColor=#FFFFFF;strokeColor=#2E73B8;" vertex="1" parent="1">
+          <mxGeometry x="780" y="250" width="140" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="mwaa" value="MWAA (Airflow)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#017CEE;fontColor=#FFFFFF;strokeColor=#017CEE;" vertex="1" parent="1">
+          <mxGeometry x="780" y="310" width="140" height="40" as="geometry"/>
+        </mxCell>
+        <!-- Arrows -->
+        <mxCell id="arrow1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;" edge="1" parent="1" source="argocd" target="service-cluster">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;" edge="1" parent="1" source="otel-agent" target="amp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;" edge="1" parent="1" source="msa-apps" target="aurora">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

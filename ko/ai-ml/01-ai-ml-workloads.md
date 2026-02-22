@@ -1131,7 +1131,7 @@ data:
 ### Spot 인스턴스 활용
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: gpu-spot
@@ -1161,7 +1161,7 @@ spec:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s
 ---
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: gpu-spot-class

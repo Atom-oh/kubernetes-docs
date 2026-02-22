@@ -332,7 +332,7 @@ flowchart TB
 - Service Mesh 운영 부담 회피
 - 간단한 mTLS 및 관찰성만 필요
 
-**참고**: [Cilium 문서](../../cilium/README.md)
+**참고**: [Cilium 문서](../../networking/cilium/README.md)
 
 ### 의사결정 체크리스트
 

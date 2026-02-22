@@ -1,6 +1,6 @@
 # Platform Engineering 개요
 
-> **마지막 업데이트**: 2026년 2월
+> **마지막 업데이트**: 2025년 2월
 
 ## 1. Platform Engineering이란?
 

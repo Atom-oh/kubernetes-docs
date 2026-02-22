@@ -1,7 +1,7 @@
 # 시크릿 관리 (Secrets Management)
 
 > **지원 버전**: Kubernetes 1.31, 1.32, 1.33
-> **마지막 업데이트**: 2026년 2월 21일
+> **마지막 업데이트**: 2025년 2월 21일
 
 Kubernetes 시크릿 관리는 애플리케이션 보안의 핵심입니다. 이 문서에서는 네이티브 Secrets부터 External Secrets Operator, Sealed Secrets, HashiCorp Vault, SOPS까지 다양한 시크릿 관리 도구를 상세히 다룹니다.
 

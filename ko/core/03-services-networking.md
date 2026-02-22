@@ -963,7 +963,7 @@ graph TD
     class EBPF,Kernel kernel;
 ```
 
-[Cilium 세부](../cilium/README.md)
+[Cilium 세부](../networking/cilium/README.md)
 ### Cilium 소개
 
 Cilium은 Linux 커널의 강력한 eBPF 기술을 활용하여 컨테이너화된 애플리케이션 간의 네트워크 연결, 보안, 관찰 가능성을 제공하는 오픈 소스 소프트웨어입니다. Kubernetes, Docker, Mesos와 같은 컨테이너 오케스트레이션 플랫폼에서 네트워킹, 보안, 관찰 가능성을 제공하기 위해 설계되었습니다.

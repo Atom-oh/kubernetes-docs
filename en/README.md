@@ -87,11 +87,33 @@ This training content provides quizzes for each topic along with the learning ma
 
 ### Networking
 1. [Networking Overview](./networking/README.md) | [Quiz](./quizzes/networking/00-networking-overview-quiz.md)
-2. [Cilium](./networking/01-cilium.md) | [Quiz](./quizzes/networking/01-cilium-quiz.md)
-3. [VPC Lattice](./networking/02-vpc-lattice.md) | [Quiz](./quizzes/networking/02-vpc-lattice-quiz.md)
-4. [Calico](./networking/03-calico.md) | [Quiz](./quizzes/networking/03-calico-quiz.md)
-5. [AWS Load Balancer Controller](./networking/04-aws-lb-controller.md) | [Quiz](./quizzes/networking/04-aws-lb-controller-quiz.md)
-6. [Gateway API](./networking/05-gateway-api.md) | [Quiz](./quizzes/networking/05-gateway-api-quiz.md)
+2. [VPC CNI](./networking/01-vpc-cni.md) | [Quiz](./quizzes/networking/01-vpc-cni-quiz.md)
+3. **Cilium Deep Dive**
+   - [Cilium Introduction](./networking/cilium/README.md)
+   - [Part 1: Introduction](./networking/cilium/01-introduction.md) | [Quiz](./quizzes/networking/cilium/01-introduction-quiz.md)
+   - [Part 2: eBPF](./networking/cilium/02-ebpf.md) | [Quiz](./quizzes/networking/cilium/02-ebpf-quiz.md)
+   - [Part 3: Networking](./networking/cilium/03-networking.md) | [Quiz](./quizzes/networking/cilium/03-networking-quiz.md)
+   - [Part 4: IPAM and Policies](./networking/cilium/04-ipam-policy.md) | [Quiz](./quizzes/networking/cilium/04-ipam-policy-quiz.md)
+   - [Part 5: L2-L7 Networking](./networking/cilium/05-l2-l7-networking.md) | [Quiz](./quizzes/networking/cilium/05-l2-l7-networking-quiz.md)
+   - [Part 6: Security and Visibility](./networking/cilium/06-security-visibility.md) | [Quiz](./quizzes/networking/cilium/06-security-visibility-quiz.md)
+   - [Part 7: Advanced Topics](./networking/cilium/07-advanced-topics.md) | [Quiz](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
+   - [Networking Concepts](./networking/cilium/networking-concepts.md) | [Quiz](./quizzes/networking/cilium/networking-concepts-quiz.md)
+   - [Glossary](./networking/cilium/glossary.md) | [Quiz](./quizzes/networking/cilium/glossary-quiz.md)
+4. **Calico Deep Dive**
+   - [Calico Introduction](./networking/calico/README.md)
+   - [Part 1: Introduction](./networking/calico/01-introduction.md) | [Quiz](./quizzes/networking/calico/01-introduction-quiz.md)
+   - [Part 2: Architecture](./networking/calico/02-architecture.md) | [Quiz](./quizzes/networking/calico/02-architecture-quiz.md)
+   - [Part 3: Networking Modes](./networking/calico/03-networking-modes.md) | [Quiz](./quizzes/networking/calico/03-networking-modes-quiz.md)
+   - [Part 4: BGP Deep Dive](./networking/calico/04-bgp-deep-dive.md) | [Quiz](./quizzes/networking/calico/04-bgp-deep-dive-quiz.md)
+   - [Part 5: Network Policy](./networking/calico/05-network-policy.md) | [Quiz](./quizzes/networking/calico/05-network-policy-quiz.md)
+   - [Part 6: eBPF Dataplane](./networking/calico/06-ebpf-dataplane.md) | [Quiz](./quizzes/networking/calico/06-ebpf-dataplane-quiz.md)
+   - [Part 7: Advanced Topics](./networking/calico/07-advanced-topics.md) | [Quiz](./quizzes/networking/calico/07-advanced-topics-quiz.md)
+   - [Part 8: EKS Integration](./networking/calico/08-eks-integration.md) | [Quiz](./quizzes/networking/calico/08-eks-integration-quiz.md)
+   - [Part 9: Operations](./networking/calico/09-operations.md) | [Quiz](./quizzes/networking/calico/09-operations-quiz.md)
+   - [Glossary](./networking/calico/glossary.md) | [Quiz](./quizzes/networking/calico/glossary-quiz.md)
+5. [VPC Lattice](./networking/03-vpc-lattice.md) | [Quiz](./quizzes/networking/03-vpc-lattice-quiz.md)
+6. [AWS Load Balancer Controller](./networking/04-aws-lb-controller.md) | [Quiz](./quizzes/networking/04-aws-lb-controller-quiz.md)
+7. [Gateway API](./networking/05-gateway-api.md) | [Quiz](./quizzes/networking/05-gateway-api-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [Quiz](./quizzes/service-mesh/02-istio-quiz.md)
@@ -209,6 +231,15 @@ We provide hands-on lab guides for practicing in real environments after learnin
 - Basics: Linux Basics, Linux Operations, Container Labs
 - Core: Pod, Service, Storage, ConfigMap Labs
 - EKS: Cluster Creation Lab
+
+### Observability End-to-End Labs
+1. [Lab Series Introduction](./labs/observability/README.md)
+2. [Part 1: Infrastructure Setup](./labs/observability/01-infrastructure-setup-lab.md) | [Quiz](./quizzes/observability/labs/01-infrastructure-setup-quiz.md)
+3. [Part 2: Observability Stack](./labs/observability/02-observability-stack-lab.md) | [Quiz](./quizzes/observability/labs/02-observability-stack-quiz.md)
+4. [Part 3: MSA Deployment and Canary](./labs/observability/03-msa-deployment-lab.md) | [Quiz](./quizzes/observability/labs/03-msa-deployment-quiz.md)
+5. [Part 4: Load Testing and Autoscaling](./labs/observability/04-load-testing-scaling-lab.md) | [Quiz](./quizzes/observability/labs/04-load-testing-scaling-quiz.md)
+6. [Part 5: Alerting and AIOps](./labs/observability/05-alerting-aiops-lab.md) | [Quiz](./quizzes/observability/labs/05-alerting-aiops-quiz.md)
+7. [Part 6: Distributed Tracing Analysis](./labs/observability/06-distributed-tracing-lab.md) | [Quiz](./quizzes/observability/labs/06-distributed-tracing-quiz.md)
 
 ## Learning Guide
 

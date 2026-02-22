@@ -1420,7 +1420,7 @@ spec:
 Karpenter is a new node auto-scaling tool developed by AWS that provides faster and more efficient node provisioning.
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: default
@@ -1437,7 +1437,7 @@ spec:
     cpu: 1000
     memory: 1000Gi
 ---
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: default-class
@@ -2001,7 +2001,7 @@ To deepen your understanding of the cluster architecture covered in this documen
 
 - [Kubernetes Official Tutorials](https://kubernetes.io/docs/tutorials/) - Learning through hands-on practice
 - [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way) - Building a Kubernetes cluster manually
-- [Cilium Networking](../cilium/01-introduction.md) - Advanced networking and security features
+- [Cilium Networking](../networking/cilium/01-introduction.md) - Advanced networking and security features
 
 ## Conclusion
 

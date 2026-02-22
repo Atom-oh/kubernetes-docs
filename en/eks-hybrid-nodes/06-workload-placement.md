@@ -3,7 +3,7 @@
 < [Previous: GPU Integration](./05-gpu-integration.md) | [Table of Contents](./README.md) | [Next: Node Lifecycle Management](./07-node-lifecycle.md) >
 
 > **Supported Versions**: EKS 1.31+, Karpenter 1.0+
-> **Last Updated**: February 2026
+> **Last Updated**: February 2025
 
 This document covers strategies for placing workloads across hybrid nodes and cloud nodes, including node affinity, taints/tolerations, and cloud bursting with Karpenter.
 

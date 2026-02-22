@@ -1416,7 +1416,7 @@ spec:
 Karpenter는 AWS에서 개발한 새로운 노드 자동 확장 도구로, 더 빠르고 효율적인 노드 프로비저닝을 제공합니다.
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: default
@@ -1433,7 +1433,7 @@ spec:
     cpu: 1000
     memory: 1000Gi
 ---
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: default-class
@@ -1997,7 +1997,7 @@ managedNodeGroups:
 
 - [Kubernetes 공식 튜토리얼](https://kubernetes.io/docs/tutorials/) - 실습을 통한 학습
 - [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way) - 수동으로 Kubernetes 클러스터 구축하기
-- [Cilium 네트워킹](../cilium/01-introduction.md) - 고급 네트워킹 및 보안 기능
+- [Cilium 네트워킹](../networking/cilium/01-introduction.md) - 고급 네트워킹 및 보안 기능
 
 ## 결론
 

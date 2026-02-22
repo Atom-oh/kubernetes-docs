@@ -1551,10 +1551,10 @@ For advanced content related to this document, refer to the following:
 
 | Topic | Document Link | Description |
 |-------|---------------|-------------|
-| Cilium Introduction | [Cilium Overview](../../cilium/01-introduction.md) | eBPF-based CNI introduction |
-| eBPF Deep Dive | [eBPF Technical Deep Dive](../../cilium/02-ebpf.md) | Advanced eBPF techniques |
-| Networking | [Cilium Networking](../../cilium/03-networking.md) | eBPF networking implementation |
-| Security | [Cilium Security](../../cilium/06-security-visibility.md) | eBPF-based security |
+| Cilium Introduction | [Cilium Overview](../networking/cilium/01-introduction.md) | eBPF-based CNI introduction |
+| eBPF Deep Dive | [eBPF Technical Deep Dive](../networking/cilium/02-ebpf.md) | Advanced eBPF techniques |
+| Networking | [Cilium Networking](../networking/cilium/03-networking.md) | eBPF networking implementation |
+| Security | [Cilium Security](../networking/cilium/06-security-visibility.md) | eBPF-based security |
 | Kubernetes Networking | [Kubernetes Networking](../core/05-networking.md) | Basic networking concepts |
 
 ### 10.4 Hands-on Checklist

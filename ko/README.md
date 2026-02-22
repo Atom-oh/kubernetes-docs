@@ -87,11 +87,33 @@
 
 ### Networking
 1. [Networking 개요](./networking/README.md) | [퀴즈](./quizzes/networking/00-networking-overview-quiz.md)
-2. [Cilium](./networking/01-cilium.md) | [퀴즈](./quizzes/networking/01-cilium-quiz.md)
-3. [VPC Lattice](./networking/02-vpc-lattice.md) | [퀴즈](./quizzes/networking/02-vpc-lattice-quiz.md)
-4. [Calico](./networking/03-calico.md) | [퀴즈](./quizzes/networking/03-calico-quiz.md)
-5. [AWS Load Balancer Controller](./networking/04-aws-lb-controller.md) | [퀴즈](./quizzes/networking/04-aws-lb-controller-quiz.md)
-6. [Gateway API](./networking/05-gateway-api.md) | [퀴즈](./quizzes/networking/05-gateway-api-quiz.md)
+2. [VPC CNI](./networking/01-vpc-cni.md) | [퀴즈](./quizzes/networking/01-vpc-cni-quiz.md)
+3. **Cilium 딥다이브**
+   - [Cilium 소개](./networking/cilium/README.md)
+   - [Part 1: 소개](./networking/cilium/01-introduction.md) | [퀴즈](./quizzes/networking/cilium/01-introduction-quiz.md)
+   - [Part 2: eBPF](./networking/cilium/02-ebpf.md) | [퀴즈](./quizzes/networking/cilium/02-ebpf-quiz.md)
+   - [Part 3: 네트워킹](./networking/cilium/03-networking.md) | [퀴즈](./quizzes/networking/cilium/03-networking-quiz.md)
+   - [Part 4: IPAM 및 정책](./networking/cilium/04-ipam-policy.md) | [퀴즈](./quizzes/networking/cilium/04-ipam-policy-quiz.md)
+   - [Part 5: L2-L7 네트워킹](./networking/cilium/05-l2-l7-networking.md) | [퀴즈](./quizzes/networking/cilium/05-l2-l7-networking-quiz.md)
+   - [Part 6: 보안 및 가시성](./networking/cilium/06-security-visibility.md) | [퀴즈](./quizzes/networking/cilium/06-security-visibility-quiz.md)
+   - [Part 7: 고급 주제](./networking/cilium/07-advanced-topics.md) | [퀴즈](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
+   - [네트워킹 개념](./networking/cilium/networking-concepts.md) | [퀴즈](./quizzes/networking/cilium/networking-concepts-quiz.md)
+   - [용어집](./networking/cilium/glossary.md) | [퀴즈](./quizzes/networking/cilium/glossary-quiz.md)
+4. **Calico 딥다이브**
+   - [Calico 소개](./networking/calico/README.md)
+   - [Part 1: 소개](./networking/calico/01-introduction.md) | [퀴즈](./quizzes/networking/calico/01-introduction-quiz.md)
+   - [Part 2: 아키텍처](./networking/calico/02-architecture.md) | [퀴즈](./quizzes/networking/calico/02-architecture-quiz.md)
+   - [Part 3: 네트워킹 모드](./networking/calico/03-networking-modes.md) | [퀴즈](./quizzes/networking/calico/03-networking-modes-quiz.md)
+   - [Part 4: BGP 심화](./networking/calico/04-bgp-deep-dive.md) | [퀴즈](./quizzes/networking/calico/04-bgp-deep-dive-quiz.md)
+   - [Part 5: Network Policy](./networking/calico/05-network-policy.md) | [퀴즈](./quizzes/networking/calico/05-network-policy-quiz.md)
+   - [Part 6: eBPF 데이터플레인](./networking/calico/06-ebpf-dataplane.md) | [퀴즈](./quizzes/networking/calico/06-ebpf-dataplane-quiz.md)
+   - [Part 7: 고급 주제](./networking/calico/07-advanced-topics.md) | [퀴즈](./quizzes/networking/calico/07-advanced-topics-quiz.md)
+   - [Part 8: EKS 통합](./networking/calico/08-eks-integration.md) | [퀴즈](./quizzes/networking/calico/08-eks-integration-quiz.md)
+   - [Part 9: 운영](./networking/calico/09-operations.md) | [퀴즈](./quizzes/networking/calico/09-operations-quiz.md)
+   - [용어집](./networking/calico/glossary.md) | [퀴즈](./quizzes/networking/calico/glossary-quiz.md)
+5. [VPC Lattice](./networking/03-vpc-lattice.md) | [퀴즈](./quizzes/networking/03-vpc-lattice-quiz.md)
+6. [AWS Load Balancer Controller](./networking/04-aws-lb-controller.md) | [퀴즈](./quizzes/networking/04-aws-lb-controller-quiz.md)
+7. [Gateway API](./networking/05-gateway-api.md) | [퀴즈](./quizzes/networking/05-gateway-api-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [퀴즈](./quizzes/service-mesh/02-istio-quiz.md)
@@ -209,6 +231,15 @@
 - 기초: Linux 기초, Linux 실무, 컨테이너 실습
 - 핵심: Pod, Service, Storage, ConfigMap 실습
 - EKS: 클러스터 생성 실습
+
+### Observability End-to-End 실습
+1. [실습 시리즈 소개](./labs/observability/README.md)
+2. [Part 1: 인프라 구성](./labs/observability/01-infrastructure-setup-lab.md) | [퀴즈](./quizzes/observability/labs/01-infrastructure-setup-quiz.md)
+3. [Part 2: Observability 스택](./labs/observability/02-observability-stack-lab.md) | [퀴즈](./quizzes/observability/labs/02-observability-stack-quiz.md)
+4. [Part 3: MSA 배포 및 카나리](./labs/observability/03-msa-deployment-lab.md) | [퀴즈](./quizzes/observability/labs/03-msa-deployment-quiz.md)
+5. [Part 4: 부하 테스트 및 스케일링](./labs/observability/04-load-testing-scaling-lab.md) | [퀴즈](./quizzes/observability/labs/04-load-testing-scaling-quiz.md)
+6. [Part 5: 알림 및 AIOps](./labs/observability/05-alerting-aiops-lab.md) | [퀴즈](./quizzes/observability/labs/05-alerting-aiops-quiz.md)
+7. [Part 6: 분산 추적 분석](./labs/observability/06-distributed-tracing-lab.md) | [퀴즈](./quizzes/observability/labs/06-distributed-tracing-quiz.md)
 
 ## 학습 가이드
 

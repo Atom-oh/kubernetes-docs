@@ -1551,10 +1551,10 @@ echo 2 | sudo tee /proc/sys/kernel/bpf_spec_v4
 
 | 주제 | 문서 링크 | 설명 |
 |------|----------|------|
-| Cilium 소개 | [Cilium 개요](../../cilium/01-introduction.md) | eBPF 기반 CNI 소개 |
-| eBPF 심층 분석 | [eBPF 기술 심층 분석](../../cilium/02-ebpf.md) | 고급 eBPF 기술 |
-| 네트워킹 | [Cilium 네트워킹](../../cilium/03-networking.md) | eBPF 네트워킹 구현 |
-| 보안 | [Cilium 보안](../../cilium/06-security-visibility.md) | eBPF 기반 보안 |
+| Cilium 소개 | [Cilium 개요](../networking/cilium/01-introduction.md) | eBPF 기반 CNI 소개 |
+| eBPF 심층 분석 | [eBPF 기술 심층 분석](../networking/cilium/02-ebpf.md) | 고급 eBPF 기술 |
+| 네트워킹 | [Cilium 네트워킹](../networking/cilium/03-networking.md) | eBPF 네트워킹 구현 |
+| 보안 | [Cilium 보안](../networking/cilium/06-security-visibility.md) | eBPF 기반 보안 |
 | Kubernetes 네트워킹 | [Kubernetes 네트워킹](../core/05-networking.md) | 기본 네트워킹 개념 |
 
 ### 10.4 실습 체크리스트

@@ -984,7 +984,7 @@ spec:
 Method to automatically provision GPU nodes:
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: vllm-gpu
@@ -1014,7 +1014,7 @@ spec:
   limits:
     nvidia.com/gpu: 32
 ---
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: vllm-gpu-class

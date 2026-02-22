@@ -416,7 +416,7 @@ kubectl get pods -n kube-system
 Auto Mode에서는 기본 노드 풀 외에 커스텀 노드 풀을 생성할 수 있습니다:
 
 ```yaml
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: gpu-nodepool
@@ -434,7 +434,7 @@ spec:
           operator: In
           values: ["p3.2xlarge", "p3.8xlarge"]
       nodeClassRef:
-        apiVersion: karpenter.k8s.aws/v1beta1
+        group: karpenter.k8s.aws
         kind: EC2NodeClass
         name: gpu-nodeclass
   limits:
@@ -443,7 +443,7 @@ spec:
     consolidationPolicy: WhenEmpty
     consolidateAfter: 30s
 ---
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: gpu-nodeclass

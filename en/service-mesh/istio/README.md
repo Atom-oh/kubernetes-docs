@@ -332,7 +332,7 @@ flowchart TB
 - Avoiding Service Mesh operational burden
 - Only simple mTLS and observability needed
 
-**Reference**: [Cilium Documentation](../../cilium/README.md)
+**Reference**: [Cilium Documentation](../../networking/cilium/README.md)
 
 ### Decision Checklist
 

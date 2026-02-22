@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-02-22T00:00:00.000Z" agent="Claude" version="24.0.0" type="device">
+  <diagram id="observability-aiops" name="AIOps Architecture">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Alert Source -->
+        <mxCell id="alertmanager" value="AlertManager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6522C;fontColor=#FFFFFF;strokeColor=#E6522C;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="180" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- API Gateway -->
+        <mxCell id="api-gateway" value="API Gateway" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;fontColor=#232F3E;strokeColor=#FF9900;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="180" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- Lambda -->
+        <mxCell id="lambda" value="Lambda&#xa;(AIOps Agent)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;fontColor=#232F3E;strokeColor=#FF9900;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="180" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <!-- Telemetry Sources Container -->
+        <mxCell id="telemetry-container" value="Parallel Telemetry Query" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;fontColor=#FFFFFF;strokeColor=#232F3E;verticalAlign=top;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="60" width="200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="cw-logs" value="CloudWatch Logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF4F8B;fontColor=#FFFFFF;strokeColor=#FF4F8B;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="540" y="95" width="160" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="amp-query" value="AMP (PromQL)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7157B;fontColor=#FFFFFF;strokeColor=#E7157B;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="540" y="140" width="160" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="xray-traces" value="X-Ray Traces" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;fontColor=#232F3E;strokeColor=#FF9900;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="540" y="185" width="160" height="35" as="geometry"/>
+        </mxCell>
+        <!-- Bedrock -->
+        <mxCell id="bedrock" value="Amazon Bedrock&#xa;(Claude)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#01A88D;fontColor=#FFFFFF;strokeColor=#01A88D;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="130" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <!-- SNS Notification -->
+        <mxCell id="sns" value="SNS&#xa;Notification" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF4F8B;fontColor=#FFFFFF;strokeColor=#FF4F8B;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="130" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <!-- CloudWatch Investigations Path -->
+        <mxCell id="cw-inv-label" value="CloudWatch Investigations (Parallel Path)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="360" y="320" width="240" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="cw-investigations" value="CloudWatch&#xa;Investigations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF4F8B;fontColor=#FFFFFF;strokeColor=#FF4F8B;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="360" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="cw-inv-ai" value="Automated AI&#xa;Analysis" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#01A88D;fontColor=#FFFFFF;strokeColor=#01A88D;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="360" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="cw-inv-report" value="Investigation&#xa;Report" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5C6BC0;fontColor=#FFFFFF;strokeColor=#5C6BC0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="360" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <!-- Main Flow Arrows -->
+        <mxCell id="arrow-alert-gw" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="alertmanager" target="api-gateway">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-gw-lambda" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="api-gateway" target="lambda">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-lambda-telem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="lambda" target="telemetry-container">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-telem-bedrock" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="telemetry-container" target="bedrock">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-bedrock-sns" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="bedrock" target="sns">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- CW Investigations Flow Arrows -->
+        <mxCell id="arrow-alert-cwinv" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF4F8B;strokeWidth=2;endArrow=classic;dashed=1;" edge="1" parent="1" source="alertmanager" target="cw-investigations">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="100" y="385"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow-cwinv-ai" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF4F8B;strokeWidth=2;endArrow=classic;dashed=1;" edge="1" parent="1" source="cw-investigations" target="cw-inv-ai">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-ai-report" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF4F8B;strokeWidth=2;endArrow=classic;dashed=1;" edge="1" parent="1" source="cw-inv-ai" target="cw-inv-report">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -641,7 +641,7 @@ The API server initiates direct connections to webhook pods running on hybrid no
 
 ### Pattern 5: Pod ↔ Pod on Hybrid Nodes
 
-Pods on different hybrid nodes communicate using [VXLAN encapsulation](../cilium/03-networking.md#vxlan-technology-deep-dive) (or similar overlay protocols like Geneve, IP-in-IP). The CNI encapsulates the original pod-to-pod packet with outer headers using source/destination node IPs. The receiving node's CNI decapsulates and delivers to the destination pod.
+Pods on different hybrid nodes communicate using [VXLAN encapsulation](../networking/cilium/03-networking.md#vxlan-technology-deep-dive) (or similar overlay protocols like Geneve, IP-in-IP). The CNI encapsulates the original pod-to-pod packet with outer headers using source/destination node IPs. The receiving node's CNI decapsulates and delivers to the destination pod.
 
 ![Pod to Pod on Hybrid Nodes](../../assets/interactive-diagrams/hybrid-nodes-pod-to-pod.svg)
 

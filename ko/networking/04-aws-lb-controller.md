@@ -1,7 +1,7 @@
 # AWS Load Balancer Controller
 
 > **지원 버전**: AWS Load Balancer Controller v2.8+
-> **마지막 업데이트**: 2026년 2월 21일
+> **마지막 업데이트**: 2025년 2월 21일
 
 ## 개요
 

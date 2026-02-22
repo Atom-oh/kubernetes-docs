@@ -3,7 +3,7 @@
 < [Previous: Workload Placement Strategies](./06-workload-placement.md) | [Table of Contents](./README.md) | [Next: Operations and Maintenance](./08-operations.md) >
 
 > **Supported Versions**: EKS 1.31+, nodeadm 0.1+
-> **Last Updated**: February 2026
+> **Last Updated**: February 2025
 
 This document covers advanced nodeadm configuration, fleet installation automation, upgrade strategies, credential lifecycle management, and health monitoring for EKS Hybrid Nodes.
 

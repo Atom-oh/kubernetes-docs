@@ -3,7 +3,7 @@
 < [Previous: Air-Gap Setup](./03-airgap-setup.md) | [Table of Contents](./README.md) | [Next: GPU Integration](./05-gpu-integration.md) >
 
 > **Supported Versions**: EKS 1.31+, nodeadm 0.1+
-> **Last Updated**: February 2026
+> **Last Updated**: February 2025
 
 This document covers the process of bootstrapping on-premises servers as EKS Hybrid Nodes using nodeadm.
 

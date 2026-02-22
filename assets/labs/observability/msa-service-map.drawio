@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-02-22T00:00:00.000Z" agent="Claude" version="24.0.0" type="device">
+  <diagram id="observability-msa-service-map" name="MSA Service Map">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- API Gateway -->
+        <mxCell id="api-gateway" value="API Gateway&#xa;(Go)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00ADD8;fontColor=#FFFFFF;strokeColor=#00ADD8;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="40" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <!-- Core Services Row -->
+        <mxCell id="order-service" value="Order Service&#xa;(Python)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3776AB;fontColor=#FFFFFF;strokeColor=#3776AB;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="160" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="payment-service" value="Payment Service&#xa;(Java)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ED8B00;fontColor=#FFFFFF;strokeColor=#ED8B00;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="160" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="notification-service" value="Notification Service&#xa;(Node.js)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#68A063;fontColor=#FFFFFF;strokeColor=#68A063;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="160" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <!-- Batch Service -->
+        <mxCell id="analytics-batch" value="Analytics Batch&#xa;(Python)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3776AB;fontColor=#FFFFFF;strokeColor=#3776AB;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="300" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <!-- AWS Services -->
+        <mxCell id="aurora-db" value="Aurora PostgreSQL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E73B8;fontColor=#FFFFFF;strokeColor=#2E73B8;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="300" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="sqs-queue" value="SQS Queue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF4F8B;fontColor=#FFFFFF;strokeColor=#FF4F8B;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="300" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="sns-topic" value="SNS Topic" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF4F8B;fontColor=#FFFFFF;strokeColor=#FF4F8B;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="960" y="160" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="mwaa" value="MWAA (Airflow)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#017CEE;fontColor=#FFFFFF;strokeColor=#017CEE;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="420" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <!-- Arrows from API Gateway -->
+        <mxCell id="arrow-gw-order" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="api-gateway" target="order-service">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-gw-payment" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="api-gateway" target="payment-service">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-gw-notif" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="api-gateway" target="notification-service">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Service to DB/Queue arrows -->
+        <mxCell id="arrow-order-db" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="order-service" target="aurora-db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-payment-db" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="payment-service" target="aurora-db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-order-sqs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="order-service" target="sqs-queue">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-notif-sns" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="notification-service" target="sns-topic">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-batch-db" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="analytics-batch" target="aurora-db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-mwaa-batch" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;endArrow=classic;dashed=1;" edge="1" parent="1" source="mwaa" target="analytics-batch">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

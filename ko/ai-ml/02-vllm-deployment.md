@@ -984,7 +984,7 @@ spec:
 GPU 노드를 자동으로 프로비저닝하는 방법:
 
 ```yaml
-apiVersion: karpenter.sh/v1beta1
+apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: vllm-gpu
@@ -1014,7 +1014,7 @@ spec:
   limits:
     nvidia.com/gpu: 32
 ---
-apiVersion: karpenter.k8s.aws/v1beta1
+apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
   name: vllm-gpu-class

@@ -1,7 +1,7 @@
 # 네트워크 정책 (Network Policies)
 
 > **지원 버전**: Kubernetes 1.31, 1.32, 1.33
-> **마지막 업데이트**: 2026년 2월 21일
+> **마지막 업데이트**: 2025년 2월 21일
 
 Kubernetes 네트워크 정책은 Pod 간 트래픽을 제어하는 방화벽 규칙입니다. 이 문서에서는 기본 NetworkPolicy부터 Cilium과 Calico의 확장 기능까지 상세히 다룹니다.
 
