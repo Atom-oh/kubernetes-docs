@@ -111,9 +111,9 @@
    - [Part 8: EKS 통합](./networking/calico/08-eks-integration.md) | [퀴즈](./quizzes/networking/calico/08-eks-integration-quiz.md)
    - [Part 9: 운영](./networking/calico/09-operations.md) | [퀴즈](./quizzes/networking/calico/09-operations-quiz.md)
    - [용어집](./networking/calico/glossary.md) | [퀴즈](./quizzes/networking/calico/glossary-quiz.md)
-5. [VPC Lattice](./networking/03-vpc-lattice.md) | [퀴즈](./quizzes/networking/03-vpc-lattice-quiz.md)
-6. [AWS Load Balancer Controller](./networking/04-aws-lb-controller.md) | [퀴즈](./quizzes/networking/04-aws-lb-controller-quiz.md)
-7. [Gateway API](./networking/05-gateway-api.md) | [퀴즈](./quizzes/networking/05-gateway-api-quiz.md)
+5. [VPC Lattice](./networking/02-vpc-lattice.md) | [퀴즈](./quizzes/networking/02-vpc-lattice-quiz.md)
+6. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [퀴즈](./quizzes/networking/03-aws-lb-controller-quiz.md)
+7. [Gateway API](./networking/04-gateway-api.md) | [퀴즈](./quizzes/networking/04-gateway-api-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [퀴즈](./quizzes/service-mesh/02-istio-quiz.md)

@@ -555,13 +555,13 @@ High-performance eBPF-based CNI solution. Provides advanced features like L7 Net
 ### [Calico Deep Dive](calico/README.md)
 One of the most widely used CNIs. Powerful Network Policy, BGP support, and enterprise features. Covers introduction, architecture, networking modes, BGP deep dive, Network Policy, eBPF, advanced topics, EKS integration, and operations guide.
 
-### [VPC Lattice](03-vpc-lattice.md)
+### [VPC Lattice](02-vpc-lattice.md)
 AWS managed application networking service. Cross-VPC, cross-account service-to-service communication.
 
-### [AWS Load Balancer Controller](04-aws-lb-controller.md)
+### [AWS Load Balancer Controller](03-aws-lb-controller.md)
 Integrates Kubernetes Services and Ingress with AWS ELB (ALB/NLB).
 
-### [Gateway API](05-gateway-api.md)
+### [Gateway API](04-gateway-api.md)
 Next-generation Kubernetes ingress API. Standardized resource model and role-based configuration.
 
 ## Network Troubleshooting
@@ -696,9 +696,9 @@ spec:
 1. [VPC CNI](01-vpc-cni.md) - Default EKS CNI
 2. [Cilium Deep Dive](cilium/README.md) - eBPF-based networking
 3. [Calico Deep Dive](calico/README.md) - Enterprise CNI
-4. [VPC Lattice](03-vpc-lattice.md) - AWS managed networking
-5. [AWS Load Balancer Controller](04-aws-lb-controller.md) - ELB integration
-6. [Gateway API](05-gateway-api.md) - Next-generation ingress
+4. [VPC Lattice](02-vpc-lattice.md) - AWS managed networking
+5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - ELB integration
+6. [Gateway API](04-gateway-api.md) - Next-generation ingress
 
 ---
 

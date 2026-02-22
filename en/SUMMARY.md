@@ -102,9 +102,9 @@
         * [Part 8: EKS Integration](networking/calico/08-eks-integration.md)
         * [Part 9: Operations](networking/calico/09-operations.md)
         * [Glossary](networking/calico/glossary.md)
-    * [VPC Lattice](networking/03-vpc-lattice.md)
-    * [AWS Load Balancer Controller](networking/04-aws-lb-controller.md)
-    * [Gateway API](networking/05-gateway-api.md)
+    * [VPC Lattice](networking/02-vpc-lattice.md)
+    * [AWS Load Balancer Controller](networking/03-aws-lb-controller.md)
+    * [Gateway API](networking/04-gateway-api.md)
 
 ## Service Mesh
 
@@ -365,9 +365,9 @@
         * [Part 8: EKS Integration Quiz](quizzes/networking/calico/08-eks-integration-quiz.md)
         * [Part 9: Operations Quiz](quizzes/networking/calico/09-operations-quiz.md)
         * [Glossary Quiz](quizzes/networking/calico/glossary-quiz.md)
-    * [VPC Lattice Quiz](quizzes/networking/03-vpc-lattice-quiz.md)
-    * [AWS Load Balancer Controller Quiz](quizzes/networking/04-aws-lb-controller-quiz.md)
-    * [Gateway API Quiz](quizzes/networking/05-gateway-api-quiz.md)
+    * [VPC Lattice Quiz](quizzes/networking/02-vpc-lattice-quiz.md)
+    * [AWS Load Balancer Controller Quiz](quizzes/networking/03-aws-lb-controller-quiz.md)
+    * [Gateway API Quiz](quizzes/networking/04-gateway-api-quiz.md)
 
 * Service Mesh
     * [Istio Quiz](quizzes/service-mesh/02-istio-quiz.md)

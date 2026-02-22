@@ -111,9 +111,9 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 8: EKS Integration](./networking/calico/08-eks-integration.md) | [Quiz](./quizzes/networking/calico/08-eks-integration-quiz.md)
    - [Part 9: Operations](./networking/calico/09-operations.md) | [Quiz](./quizzes/networking/calico/09-operations-quiz.md)
    - [Glossary](./networking/calico/glossary.md) | [Quiz](./quizzes/networking/calico/glossary-quiz.md)
-5. [VPC Lattice](./networking/03-vpc-lattice.md) | [Quiz](./quizzes/networking/03-vpc-lattice-quiz.md)
-6. [AWS Load Balancer Controller](./networking/04-aws-lb-controller.md) | [Quiz](./quizzes/networking/04-aws-lb-controller-quiz.md)
-7. [Gateway API](./networking/05-gateway-api.md) | [Quiz](./quizzes/networking/05-gateway-api-quiz.md)
+5. [VPC Lattice](./networking/02-vpc-lattice.md) | [Quiz](./quizzes/networking/02-vpc-lattice-quiz.md)
+6. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [Quiz](./quizzes/networking/03-aws-lb-controller-quiz.md)
+7. [Gateway API](./networking/04-gateway-api.md) | [Quiz](./quizzes/networking/04-gateway-api-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [Quiz](./quizzes/service-mesh/02-istio-quiz.md)

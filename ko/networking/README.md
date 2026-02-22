@@ -555,13 +555,13 @@ eBPF 기반의 고성능 CNI 솔루션. L7 Network Policy, Service Mesh, 관측�
 ### [Calico 딥다이브](calico/README.md)
 가장 널리 사용되는 CNI 중 하나. 강력한 Network Policy, BGP 지원, 엔터프라이즈 기능. 소개, 아키텍처, 네트워킹 모드, BGP 심화, Network Policy, eBPF, 고급 주제, EKS 통합, 운영 가이드를 다룹니다.
 
-### [VPC Lattice](03-vpc-lattice.md)
+### [VPC Lattice](02-vpc-lattice.md)
 AWS의 관리형 애플리케이션 네트워킹 서비스. 크로스 VPC, 크로스 계정 서비스 간 통신.
 
-### [AWS Load Balancer Controller](04-aws-lb-controller.md)
+### [AWS Load Balancer Controller](03-aws-lb-controller.md)
 Kubernetes Service와 Ingress를 AWS ELB(ALB/NLB)와 통합.
 
-### [Gateway API](05-gateway-api.md)
+### [Gateway API](04-gateway-api.md)
 차세대 Kubernetes 인그레스 API. 표준화된 리소스 모델과 역할 기반 구성.
 
 ## 네트워크 트러블슈팅
@@ -696,9 +696,9 @@ spec:
 1. [VPC CNI](01-vpc-cni.md) - EKS 기본 CNI
 2. [Cilium 딥다이브](cilium/README.md) - eBPF 기반 네트워킹
 3. [Calico 딥다이브](calico/README.md) - 엔터프라이즈 CNI
-4. [VPC Lattice](03-vpc-lattice.md) - AWS 관리형 네트워킹
-5. [AWS Load Balancer Controller](04-aws-lb-controller.md) - ELB 통합
-6. [Gateway API](05-gateway-api.md) - 차세대 인그레스
+4. [VPC Lattice](02-vpc-lattice.md) - AWS 관리형 네트워킹
+5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - ELB 통합
+6. [Gateway API](04-gateway-api.md) - 차세대 인그레스
 
 ---
 
