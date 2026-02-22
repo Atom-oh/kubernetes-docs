@@ -66,8 +66,7 @@ This training content provides quizzes for each topic along with the learning ma
 5. [Node Bootstrap](./eks-hybrid-nodes/04-node-bootstrap.md) | [Quiz](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
 6. [GPU Server Integration](./eks-hybrid-nodes/05-gpu-integration.md) | [Quiz](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
 7. [Workload Placement Strategies](./eks-hybrid-nodes/06-workload-placement.md) | [Quiz](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
-8. [Cost Optimization](./eks-hybrid-nodes/07-cost-optimization.md) | [Quiz](./quizzes/eks-hybrid-nodes/07-cost-optimization-quiz.md)
-9. [Operations and Maintenance](./eks-hybrid-nodes/08-operations.md) | [Quiz](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+8. [Operations and Maintenance](./eks-hybrid-nodes/08-operations.md) | [Quiz](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
 
 ### EKS Auto Mode
 1. [EKS Auto Mode Introduction](./eks-auto-mode/README.md)
@@ -81,38 +80,65 @@ This training content provides quizzes for each topic along with the learning ma
 9. [Workload Optimization](./eks-auto-mode/08-workload-optimization.md) | [Quiz](./quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
 10. [Migration Guide](./eks-auto-mode/09-migration-guide.md) | [Quiz](./quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
-### Cilium
-1. [Introduction to Cilium](./cilium/README.md)
-2. [Part 1: Introduction](./cilium/01-introduction.md) | [Quiz](./quizzes/cilium/01-introduction-quiz.md)
-3. [Part 2: eBPF](./cilium/02-ebpf.md) | [Quiz](./quizzes/cilium/02-ebpf-quiz.md)
-4. [Part 3: Networking](./cilium/03-networking.md) | [Quiz](./quizzes/cilium/03-networking-quiz.md)
-5. [Part 4: IPAM and Policies](./cilium/04-ipam-policy.md) | [Quiz](./quizzes/cilium/04-ipam-policy-quiz.md)
-6. [Part 5: L2-L7 Networking](./cilium/05-l2-l7-networking.md) | [Quiz](./quizzes/cilium/05-l2-l7-networking-quiz.md)
-7. [Part 6: Security and Visibility](./cilium/06-security-visibility.md) | [Quiz](./quizzes/cilium/06-security-visibility-quiz.md)
-8. [Part 7: Advanced Topics](./cilium/07-advanced-topics.md) | [Quiz](./quizzes/cilium/07-advanced-topics-quiz.md)
-9. [Networking Concepts](./cilium/networking-concepts.md) | [Quiz](./quizzes/cilium/networking-concepts-quiz.md)
-10. [Glossary](./cilium/glossary.md) | [Quiz](./quizzes/cilium/glossary-quiz.md)
-
 ### AI/ML
 1. [AI/ML Workloads](./ai-ml/01-ai-ml-workloads.md) | [Quiz](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
 2. [vLLM Deployment](./ai-ml/02-vllm-deployment.md) | [Quiz](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 3. [Agentic AI Platform on EKS](./ai-ml/03-agentic-ai-platform.md) | [Quiz](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 
 ### Networking
-1. [Cilium](./networking/01-cilium.md) | [Quiz](./quizzes/networking/04-cilium-quiz.md)
-2. [VPC Lattice](./networking/02-vpc-lattice.md) | [Quiz](./quizzes/networking/09-vpc-lattice-quiz.md)
+1. [Networking Overview](./networking/README.md) | [Quiz](./quizzes/networking/00-networking-overview-quiz.md)
+2. [Cilium](./networking/01-cilium.md) | [Quiz](./quizzes/networking/01-cilium-quiz.md)
+3. [VPC Lattice](./networking/02-vpc-lattice.md) | [Quiz](./quizzes/networking/02-vpc-lattice-quiz.md)
+4. [Calico](./networking/03-calico.md) | [Quiz](./quizzes/networking/03-calico-quiz.md)
+5. [AWS Load Balancer Controller](./networking/04-aws-lb-controller.md) | [Quiz](./quizzes/networking/04-aws-lb-controller-quiz.md)
+6. [Gateway API](./networking/05-gateway-api.md) | [Quiz](./quizzes/networking/05-gateway-api-quiz.md)
 
 ### Service Mesh
-1. [Istio](./service-mesh/02-istio.md) | [Quiz](./quizzes/service-mesh/02-istio-quiz.md)
-2. [Linkerd](./service-mesh/03-linkerd.md) | [Quiz](./quizzes/service-mesh/03-linkerd-quiz.md)
-3. [Cilium Service Mesh](./service-mesh/04-cilium-service-mesh.md) | [Quiz](./quizzes/service-mesh/04-cilium-service-mesh-quiz.md)
+1. [Istio](./service-mesh/istio/README.md) | [Quiz](./quizzes/service-mesh/02-istio-quiz.md)
+2. **Linkerd**
+   - [Linkerd Introduction](./service-mesh/linkerd/README.md)
+   - [Architecture](./service-mesh/linkerd/01-architecture.md) | [Quiz](./quizzes/service-mesh/linkerd/01-architecture-quiz.md)
+   - [Installation](./service-mesh/linkerd/02-installation.md) | [Quiz](./quizzes/service-mesh/linkerd/02-installation-quiz.md)
+   - [Traffic Management](./service-mesh/linkerd/03-traffic-management.md) | [Quiz](./quizzes/service-mesh/linkerd/03-traffic-management-quiz.md)
+   - [Security](./service-mesh/linkerd/04-security.md) | [Quiz](./quizzes/service-mesh/linkerd/04-security-quiz.md)
+   - [Observability](./service-mesh/linkerd/05-observability.md) | [Quiz](./quizzes/service-mesh/linkerd/05-observability-quiz.md)
+   - [Multi-cluster](./service-mesh/linkerd/06-multi-cluster.md) | [Quiz](./quizzes/service-mesh/linkerd/06-multi-cluster-quiz.md)
+   - [Best Practices](./service-mesh/linkerd/07-best-practices.md) | [Quiz](./quizzes/service-mesh/linkerd/07-best-practices-quiz.md)
+3. **Cilium Service Mesh**
+   - [Cilium Service Mesh Introduction](./service-mesh/cilium-service-mesh/README.md)
+   - [Architecture](./service-mesh/cilium-service-mesh/01-architecture.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/01-architecture-quiz.md)
+   - [Installation](./service-mesh/cilium-service-mesh/02-installation.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/02-installation-quiz.md)
+   - [Traffic Management](./service-mesh/cilium-service-mesh/03-traffic-management.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/03-traffic-management-quiz.md)
+   - [Security](./service-mesh/cilium-service-mesh/04-security.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/04-security-quiz.md)
+   - [Observability](./service-mesh/cilium-service-mesh/05-observability.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/05-observability-quiz.md)
+   - [Best Practices](./service-mesh/cilium-service-mesh/06-best-practices.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/06-best-practices-quiz.md)
 
 ### Security & Policy
 1. [Policy Management with Kyverno](./security/01-kyverno-policy-management.md) | [Quiz](./quizzes/security/01-kyverno-policy-management-quiz.md)
-2. [Kubernetes Authentication and Authorization](./security/02-kubernetes-auth-authz.md) | [Quiz](./quizzes/security/06-kubernetes-auth-authz-quiz.md)
+2. [Kubernetes Authentication and Authorization](./security/02-kubernetes-auth-authz.md) | [Quiz](./quizzes/security/02-kubernetes-auth-authz-quiz.md)
+3. [Pod Security Standards](./security/03-pod-security-standards.md) | [Quiz](./quizzes/security/03-pod-security-standards-quiz.md)
+4. [Network Policies](./security/04-network-policies.md) | [Quiz](./quizzes/security/04-network-policies-quiz.md)
+5. [Secrets Management](./security/05-secrets-management.md) | [Quiz](./quizzes/security/05-secrets-management-quiz.md)
+6. [EKS Security Best Practices](./security/06-eks-security-best-practices.md) | [Quiz](./quizzes/security/06-eks-security-best-practices-quiz.md)
+7. [Image Security](./security/07-image-security.md) | [Quiz](./quizzes/security/07-image-security-quiz.md)
+8. [Runtime Security](./security/08-runtime-security.md) | [Quiz](./quizzes/security/08-runtime-security-quiz.md)
+9. [OPA Gatekeeper](./security/09-opa-gatekeeper.md) | [Quiz](./quizzes/security/09-opa-gatekeeper-quiz.md)
 
 ### GitOps
-1. [ArgoCD](./gitops/01-argocd.md) | [Quiz](./quizzes/gitops/01-argocd-quiz.md)
+1. [GitOps Overview](./gitops/README.md)
+2. **ArgoCD**
+   - [ArgoCD Introduction](./gitops/argocd/README.md) | [Quiz](./quizzes/gitops/01-argocd-quiz.md)
+   - [Installation](./gitops/argocd/01-installation.md) | [Quiz](./quizzes/gitops/argocd/01-installation-quiz.md)
+   - [Applications](./gitops/argocd/02-applications.md) | [Quiz](./quizzes/gitops/argocd/02-applications-quiz.md)
+   - [Sync Strategies](./gitops/argocd/03-sync-strategies.md) | [Quiz](./quizzes/gitops/argocd/03-sync-strategies-quiz.md)
+   - [ApplicationSets](./gitops/argocd/04-applicationsets.md) | [Quiz](./quizzes/gitops/argocd/04-applicationsets-quiz.md)
+   - [Traffic Management](./gitops/argocd/05-traffic-management.md) | [Quiz](./quizzes/gitops/argocd/05-traffic-management-quiz.md)
+   - [Projects & RBAC](./gitops/argocd/06-projects-rbac.md) | [Quiz](./quizzes/gitops/argocd/06-projects-rbac-quiz.md)
+   - [Security](./gitops/argocd/07-security.md) | [Quiz](./quizzes/gitops/argocd/07-security-quiz.md)
+   - [Notifications](./gitops/argocd/08-notifications.md) | [Quiz](./quizzes/gitops/argocd/08-notifications-quiz.md)
+   - [Best Practices](./gitops/argocd/09-best-practices.md) | [Quiz](./quizzes/gitops/argocd/09-best-practices-quiz.md)
+3. [FluxCD](./gitops/02-fluxcd.md) | [Quiz](./quizzes/gitops/02-fluxcd-quiz.md)
+4. [GitOps Tools Comparison](./gitops/03-gitops-comparison.md) | [Quiz](./quizzes/gitops/03-gitops-comparison-quiz.md)
 
 ### Autoscaling
 1. [KEDA](./autoscaling/01-keda.md) | [Quiz](./quizzes/autoscaling/05-keda-quiz.md)
@@ -155,6 +181,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 3: Custom Scheduler Implementation Examples and Monitoring](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
 ### Platform Engineering
+0. [Platform Engineering Overview](./platform-engineering/00-platform-engineering-overview.md) | [Quiz](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
 1. [Helm](./platform-engineering/01-helm.md) | [Quiz](./quizzes/platform-engineering/01-helm-quiz.md)
 2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [Quiz](./quizzes/platform-engineering/02-ack-quiz.md)
 3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [Quiz](./quizzes/platform-engineering/03-kro-quiz.md)

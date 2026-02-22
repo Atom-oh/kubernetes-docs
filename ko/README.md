@@ -66,8 +66,7 @@
 5. [노드 부트스트랩](./eks-hybrid-nodes/04-node-bootstrap.md) | [퀴즈](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
 6. [GPU 서버 통합](./eks-hybrid-nodes/05-gpu-integration.md) | [퀴즈](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
 7. [워크로드 배치 전략](./eks-hybrid-nodes/06-workload-placement.md) | [퀴즈](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
-8. [비용 최적화](./eks-hybrid-nodes/07-cost-optimization.md) | [퀴즈](./quizzes/eks-hybrid-nodes/07-cost-optimization-quiz.md)
-9. [운영 및 유지보수](./eks-hybrid-nodes/08-operations.md) | [퀴즈](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+8. [운영 및 유지보수](./eks-hybrid-nodes/08-operations.md) | [퀴즈](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
 
 ### EKS Auto Mode
 1. [EKS Auto Mode 소개](./eks-auto-mode/README.md)
@@ -81,38 +80,65 @@
 9. [워크로드별 최적화](./eks-auto-mode/08-workload-optimization.md) | [퀴즈](./quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
 10. [마이그레이션 가이드](./eks-auto-mode/09-migration-guide.md) | [퀴즈](./quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
-### Cilium
-1. [Cilium 소개](./cilium/README.md)
-2. [Part 1: 소개](./cilium/01-introduction.md) | [퀴즈](./quizzes/cilium/01-introduction-quiz.md)
-3. [Part 2: eBPF](./cilium/02-ebpf.md) | [퀴즈](./quizzes/cilium/02-ebpf-quiz.md)
-4. [Part 3: 네트워킹](./cilium/03-networking.md) | [퀴즈](./quizzes/cilium/03-networking-quiz.md)
-5. [Part 4: IPAM 및 정책](./cilium/04-ipam-policy.md) | [퀴즈](./quizzes/cilium/04-ipam-policy-quiz.md)
-6. [Part 5: L2-L7 네트워킹](./cilium/05-l2-l7-networking.md) | [퀴즈](./quizzes/cilium/05-l2-l7-networking-quiz.md)
-7. [Part 6: 보안 및 가시성](./cilium/06-security-visibility.md) | [퀴즈](./quizzes/cilium/06-security-visibility-quiz.md)
-8. [Part 7: 고급 주제](./cilium/07-advanced-topics.md) | [퀴즈](./quizzes/cilium/07-advanced-topics-quiz.md)
-9. [네트워킹 개념](./cilium/networking-concepts.md) | [퀴즈](./quizzes/cilium/networking-concepts-quiz.md)
-10. [용어집](./cilium/glossary.md) | [퀴즈](./quizzes/cilium/glossary-quiz.md)
-
 ### AI/ML
 1. [AI/ML 워크로드](./ai-ml/01-ai-ml-workloads.md) | [퀴즈](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
 2. [vLLM 배포](./ai-ml/02-vllm-deployment.md) | [퀴즈](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 3. [Agentic AI 플랫폼](./ai-ml/03-agentic-ai-platform.md) | [퀴즈](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 
 ### Networking
-1. [Cilium](./networking/01-cilium.md) | [퀴즈](./quizzes/networking/04-cilium-quiz.md)
-2. [VPC Lattice](./networking/02-vpc-lattice.md) | [퀴즈](./quizzes/networking/09-vpc-lattice-quiz.md)
+1. [Networking 개요](./networking/README.md) | [퀴즈](./quizzes/networking/00-networking-overview-quiz.md)
+2. [Cilium](./networking/01-cilium.md) | [퀴즈](./quizzes/networking/01-cilium-quiz.md)
+3. [VPC Lattice](./networking/02-vpc-lattice.md) | [퀴즈](./quizzes/networking/02-vpc-lattice-quiz.md)
+4. [Calico](./networking/03-calico.md) | [퀴즈](./quizzes/networking/03-calico-quiz.md)
+5. [AWS Load Balancer Controller](./networking/04-aws-lb-controller.md) | [퀴즈](./quizzes/networking/04-aws-lb-controller-quiz.md)
+6. [Gateway API](./networking/05-gateway-api.md) | [퀴즈](./quizzes/networking/05-gateway-api-quiz.md)
 
 ### Service Mesh
-1. [Istio](./service-mesh/02-istio.md) | [퀴즈](./quizzes/service-mesh/02-istio-quiz.md)
-2. [Linkerd](./service-mesh/03-linkerd.md) | [퀴즈](./quizzes/service-mesh/03-linkerd-quiz.md)
-3. [Cilium Service Mesh](./service-mesh/04-cilium-service-mesh.md) | [퀴즈](./quizzes/service-mesh/04-cilium-service-mesh-quiz.md)
+1. [Istio](./service-mesh/istio/README.md) | [퀴즈](./quizzes/service-mesh/02-istio-quiz.md)
+2. **Linkerd**
+   - [Linkerd 소개](./service-mesh/linkerd/README.md)
+   - [아키텍처](./service-mesh/linkerd/01-architecture.md) | [퀴즈](./quizzes/service-mesh/linkerd/01-architecture-quiz.md)
+   - [설치](./service-mesh/linkerd/02-installation.md) | [퀴즈](./quizzes/service-mesh/linkerd/02-installation-quiz.md)
+   - [트래픽 관리](./service-mesh/linkerd/03-traffic-management.md) | [퀴즈](./quizzes/service-mesh/linkerd/03-traffic-management-quiz.md)
+   - [보안](./service-mesh/linkerd/04-security.md) | [퀴즈](./quizzes/service-mesh/linkerd/04-security-quiz.md)
+   - [관측성](./service-mesh/linkerd/05-observability.md) | [퀴즈](./quizzes/service-mesh/linkerd/05-observability-quiz.md)
+   - [멀티클러스터](./service-mesh/linkerd/06-multi-cluster.md) | [퀴즈](./quizzes/service-mesh/linkerd/06-multi-cluster-quiz.md)
+   - [모범 사례](./service-mesh/linkerd/07-best-practices.md) | [퀴즈](./quizzes/service-mesh/linkerd/07-best-practices-quiz.md)
+3. **Cilium Service Mesh**
+   - [Cilium Service Mesh 소개](./service-mesh/cilium-service-mesh/README.md)
+   - [아키텍처](./service-mesh/cilium-service-mesh/01-architecture.md) | [퀴즈](./quizzes/service-mesh/cilium-service-mesh/01-architecture-quiz.md)
+   - [설치](./service-mesh/cilium-service-mesh/02-installation.md) | [퀴즈](./quizzes/service-mesh/cilium-service-mesh/02-installation-quiz.md)
+   - [트래픽 관리](./service-mesh/cilium-service-mesh/03-traffic-management.md) | [퀴즈](./quizzes/service-mesh/cilium-service-mesh/03-traffic-management-quiz.md)
+   - [보안](./service-mesh/cilium-service-mesh/04-security.md) | [퀴즈](./quizzes/service-mesh/cilium-service-mesh/04-security-quiz.md)
+   - [관측성](./service-mesh/cilium-service-mesh/05-observability.md) | [퀴즈](./quizzes/service-mesh/cilium-service-mesh/05-observability-quiz.md)
+   - [모범 사례](./service-mesh/cilium-service-mesh/06-best-practices.md) | [퀴즈](./quizzes/service-mesh/cilium-service-mesh/06-best-practices-quiz.md)
 
 ### Security & Policy
 1. [Kyverno를 사용한 정책 관리](./security/01-kyverno-policy-management.md) | [퀴즈](./quizzes/security/01-kyverno-policy-management-quiz.md)
-2. [Kubernetes 인증 및 권한 부여](./security/02-kubernetes-auth-authz.md) | [퀴즈](./quizzes/security/06-kubernetes-auth-authz-quiz.md)
+2. [Kubernetes 인증 및 권한 부여](./security/02-kubernetes-auth-authz.md) | [퀴즈](./quizzes/security/02-kubernetes-auth-authz-quiz.md)
+3. [Pod Security Standards](./security/03-pod-security-standards.md) | [퀴즈](./quizzes/security/03-pod-security-standards-quiz.md)
+4. [네트워크 정책](./security/04-network-policies.md) | [퀴즈](./quizzes/security/04-network-policies-quiz.md)
+5. [시크릿 관리](./security/05-secrets-management.md) | [퀴즈](./quizzes/security/05-secrets-management-quiz.md)
+6. [EKS 보안 모범 사례](./security/06-eks-security-best-practices.md) | [퀴즈](./quizzes/security/06-eks-security-best-practices-quiz.md)
+7. [이미지 보안](./security/07-image-security.md) | [퀴즈](./quizzes/security/07-image-security-quiz.md)
+8. [런타임 보안](./security/08-runtime-security.md) | [퀴즈](./quizzes/security/08-runtime-security-quiz.md)
+9. [OPA Gatekeeper](./security/09-opa-gatekeeper.md) | [퀴즈](./quizzes/security/09-opa-gatekeeper-quiz.md)
 
 ### GitOps
-1. [ArgoCD](./gitops/01-argocd.md) | [퀴즈](./quizzes/gitops/01-argocd-quiz.md)
+1. [GitOps 개요](./gitops/README.md)
+2. **ArgoCD**
+   - [ArgoCD 소개](./gitops/argocd/README.md) | [퀴즈](./quizzes/gitops/01-argocd-quiz.md)
+   - [설치](./gitops/argocd/01-installation.md) | [퀴즈](./quizzes/gitops/argocd/01-installation-quiz.md)
+   - [애플리케이션](./gitops/argocd/02-applications.md) | [퀴즈](./quizzes/gitops/argocd/02-applications-quiz.md)
+   - [동기화 전략](./gitops/argocd/03-sync-strategies.md) | [퀴즈](./quizzes/gitops/argocd/03-sync-strategies-quiz.md)
+   - [ApplicationSets](./gitops/argocd/04-applicationsets.md) | [퀴즈](./quizzes/gitops/argocd/04-applicationsets-quiz.md)
+   - [트래픽 관리](./gitops/argocd/05-traffic-management.md) | [퀴즈](./quizzes/gitops/argocd/05-traffic-management-quiz.md)
+   - [프로젝트 및 RBAC](./gitops/argocd/06-projects-rbac.md) | [퀴즈](./quizzes/gitops/argocd/06-projects-rbac-quiz.md)
+   - [보안](./gitops/argocd/07-security.md) | [퀴즈](./quizzes/gitops/argocd/07-security-quiz.md)
+   - [알림](./gitops/argocd/08-notifications.md) | [퀴즈](./quizzes/gitops/argocd/08-notifications-quiz.md)
+   - [모범 사례](./gitops/argocd/09-best-practices.md) | [퀴즈](./quizzes/gitops/argocd/09-best-practices-quiz.md)
+3. [FluxCD](./gitops/02-fluxcd.md) | [퀴즈](./quizzes/gitops/02-fluxcd-quiz.md)
+4. [GitOps 도구 비교](./gitops/03-gitops-comparison.md) | [퀴즈](./quizzes/gitops/03-gitops-comparison-quiz.md)
 
 ### Autoscaling
 1. [KEDA](./autoscaling/01-keda.md) | [퀴즈](./quizzes/autoscaling/05-keda-quiz.md)
@@ -155,6 +181,7 @@
    - [Part 3: 커스텀 스케줄러 구현 사례 및 모니터링](./scheduling/03-custom-scheduler-part3.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
 ### Platform Engineering
+0. [Platform Engineering 개요](./platform-engineering/00-platform-engineering-overview.md) | [퀴즈](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
 1. [Helm](./platform-engineering/01-helm.md) | [퀴즈](./quizzes/platform-engineering/01-helm-quiz.md)
 2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [퀴즈](./quizzes/platform-engineering/02-ack-quiz.md)
 3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [퀴즈](./quizzes/platform-engineering/03-kro-quiz.md)

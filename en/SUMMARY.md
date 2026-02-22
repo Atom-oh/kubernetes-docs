@@ -177,6 +177,7 @@
 
 ## Platform Engineering
 
+* [Platform Engineering Overview](platform-engineering/00-platform-engineering-overview.md)
 * [Helm](platform-engineering/01-helm.md)
 * [AWS Controllers for Kubernetes (ACK)](platform-engineering/02-ack.md)
   * [S3 and IAM Examples](platform-engineering/ack/01-s3-iam.md)
@@ -426,6 +427,7 @@
     * [Custom Scheduler Quiz - Part 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
 * Platform Engineering
+    * [Platform Engineering Overview Quiz](quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
     * [Helm Quiz](quizzes/platform-engineering/01-helm-quiz.md)
     * [ACK Quiz](quizzes/platform-engineering/02-ack-quiz.md)
     * [KRO Quiz](quizzes/platform-engineering/03-kro-quiz.md)
