@@ -1,7 +1,7 @@
 # Calico Networking Modes Quiz
 
 > **Related Document**: [Calico Networking Modes](../../../networking/calico/03-networking-modes.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: February 22, 2025
 
 ## Quiz
 

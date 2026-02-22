@@ -1,7 +1,7 @@
 # OPA Gatekeeper
 
 > **Supported Versions**: Gatekeeper v3.14+, Kubernetes 1.25+
-> **Last Updated**: February 21, 2026
+> **Last Updated**: February 21, 2025
 
 ## Overview
 

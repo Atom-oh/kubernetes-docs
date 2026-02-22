@@ -1,7 +1,7 @@
 # Cilium Service Mesh Overview
 
 > **Supported Versions**: Cilium 1.16+, Kubernetes 1.28+
-> **Last Updated**: February 21, 2026
+> **Last Updated**: February 21, 2025
 
 ## Introduction
 

@@ -1,7 +1,7 @@
 # Part 7: Advanced Calico Topics
 
 > **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 22, 2026
+> **Last Updated**: February 22, 2025
 
 ## Overview
 

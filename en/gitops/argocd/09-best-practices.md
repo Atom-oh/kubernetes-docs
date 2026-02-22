@@ -1,7 +1,7 @@
 # ArgoCD Best Practices
 
 > **Supported Versions**: ArgoCD v2.9+
-> **Last Updated**: February 21, 2026
+> **Last Updated**: February 21, 2025
 
 ## Table of Contents
 - [Repository Structure](#repository-structure)

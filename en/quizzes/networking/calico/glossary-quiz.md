@@ -1,7 +1,7 @@
 # Calico Glossary Quiz
 
 > **Related Document**: [Calico Glossary](../../../networking/calico/glossary.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: February 22, 2025
 
 ## Quiz
 

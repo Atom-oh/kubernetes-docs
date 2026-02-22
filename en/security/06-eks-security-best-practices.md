@@ -1,7 +1,7 @@
 # EKS Security Best Practices
 
 > **Supported Versions**: Amazon EKS 1.31, 1.32, 1.33
-> **Last Updated**: February 21, 2026
+> **Last Updated**: February 21, 2025
 
 This document covers security best practices for Amazon EKS environments. Learn how to securely operate EKS clusters from IAM integration to network security and runtime protection.
 

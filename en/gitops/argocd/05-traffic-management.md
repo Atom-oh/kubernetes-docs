@@ -1,7 +1,7 @@
 # ArgoCD Traffic Management
 
 > **Supported Versions**: Argo Rollouts v1.6+, ArgoCD v2.9+
-> **Last Updated**: February 21, 2026
+> **Last Updated**: February 21, 2025
 
 ## Table of Contents
 - [Argo Rollouts Overview](#argo-rollouts-overview)

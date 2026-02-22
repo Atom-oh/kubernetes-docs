@@ -1,7 +1,7 @@
 # Network Policies
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 21, 2026
+> **Last Updated**: February 21, 2025
 
 Kubernetes Network Policies are firewall rules that control traffic between Pods. This document covers everything from basic NetworkPolicy to Cilium and Calico extensions.
 

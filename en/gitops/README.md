@@ -1,6 +1,6 @@
 # GitOps
 
-> **Last Updated**: February 21, 2026
+> **Last Updated**: February 21, 2025
 
 ## Table of Contents
 - [What is GitOps?](#what-is-gitops)

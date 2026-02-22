@@ -1,7 +1,7 @@
 # Container Image Security
 
 > **Supported Versions**: Trivy 0.56+, Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 21, 2026
+> **Last Updated**: February 21, 2025
 
 Container image security is the first line of defense in Kubernetes security. This document covers image scanning, signing, verification, and supply chain security.
 

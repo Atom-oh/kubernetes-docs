@@ -1,6 +1,6 @@
 # Kubernetes Networking
 
-> **Last Updated**: February 21, 2026
+> **Last Updated**: February 21, 2025
 
 ## Overview
 

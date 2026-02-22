@@ -1,7 +1,7 @@
 # BGP Deep Dive Quiz
 
 > **Related Document**: [BGP Deep Dive](../../../networking/calico/04-bgp-deep-dive.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: February 22, 2025
 
 ## Quiz
 

@@ -1,7 +1,7 @@
 # eBPF Dataplane Quiz
 
 > **Related Document**: [eBPF Dataplane](../../../networking/calico/06-ebpf-dataplane.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: February 22, 2025
 
 ## Quiz
 

@@ -1,7 +1,7 @@
 # EKS Integration Quiz
 
 > **Related Document**: [EKS Integration](../../../networking/calico/08-eks-integration.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: February 22, 2025
 
 ## Quiz
 

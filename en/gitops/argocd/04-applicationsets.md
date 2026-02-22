@@ -1,7 +1,7 @@
 # ArgoCD ApplicationSets
 
 > **Supported Versions**: ArgoCD v2.9+, ApplicationSet Controller v0.4+
-> **Last Updated**: February 21, 2026
+> **Last Updated**: February 21, 2025
 
 ## Table of Contents
 - [ApplicationSet Overview](#applicationset-overview)

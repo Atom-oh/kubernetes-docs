@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **Supported Versions**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **Last Updated**: February 21, 2026
+> **Last Updated**: February 21, 2025
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)

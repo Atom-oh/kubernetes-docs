@@ -1,7 +1,7 @@
 # EKS Cluster Creation - Part 4: Creating Clusters Using Terraform
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 19, 2026
+> **Last Updated**: February 19, 2025
 
 ## Production Terraform Project Structure
 

@@ -1,7 +1,7 @@
 # Part 1: Introduction to Calico
 
 > **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 22, 2026
+> **Last Updated**: February 22, 2025
 
 ## Lab Environment Setup
 

@@ -1,6 +1,6 @@
 # Part 6: Calico eBPF Dataplane Deep Dive
 > **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 22, 2026
+> **Last Updated**: February 22, 2025
 
 ## Introduction
 

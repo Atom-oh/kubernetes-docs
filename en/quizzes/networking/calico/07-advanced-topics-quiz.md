@@ -1,7 +1,7 @@
 # Advanced Topics Quiz
 
 > **Related Document**: [Advanced Topics](../../../networking/calico/07-advanced-topics.md)
-> **Last Updated**: February 22, 2026
+> **Last Updated**: February 22, 2025
 
 ## Quiz
 
