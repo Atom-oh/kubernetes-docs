@@ -456,4 +456,4 @@ The key is importance-based tiering. Instead of treating all data equally, aggre
 ---
 
 **Related Learning Materials:**
-- [EKS Observability Optimization Guide](../../advanced/09-observability-optimization.md)
+- [EKS Observability Optimization Guide](../../observability/09-observability-optimization.md)

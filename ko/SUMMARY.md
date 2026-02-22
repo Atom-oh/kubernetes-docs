@@ -336,8 +336,8 @@
 
 * Networking
     * [Networking 개요 퀴즈](quizzes/networking/00-networking-overview-quiz.md)
-    * [Cilium 퀴즈](quizzes/networking/04-cilium-quiz.md)
-    * [VPC Lattice 퀴즈](quizzes/networking/09-vpc-lattice-quiz.md)
+    * [Cilium 퀴즈](quizzes/networking/01-cilium-quiz.md)
+    * [VPC Lattice 퀴즈](quizzes/networking/02-vpc-lattice-quiz.md)
     * [Calico 퀴즈](quizzes/networking/03-calico-quiz.md)
     * [AWS Load Balancer Controller 퀴즈](quizzes/networking/04-aws-lb-controller-quiz.md)
     * [Gateway API 퀴즈](quizzes/networking/05-gateway-api-quiz.md)
@@ -367,7 +367,7 @@
 
 * Security & Policy
     * [Kyverno를 사용한 정책 관리 퀴즈](quizzes/security/01-kyverno-policy-management-quiz.md)
-    * [Kubernetes 인증 및 권한 부여 퀴즈](quizzes/security/06-kubernetes-auth-authz-quiz.md)
+    * [Kubernetes 인증 및 권한 부여 퀴즈](quizzes/security/02-kubernetes-auth-authz-quiz.md)
     * [Pod Security Standards 퀴즈](quizzes/security/03-pod-security-standards-quiz.md)
     * [네트워크 정책 퀴즈](quizzes/security/04-network-policies-quiz.md)
     * [시크릿 관리 퀴즈](quizzes/security/05-secrets-management-quiz.md)

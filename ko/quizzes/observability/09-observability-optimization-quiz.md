@@ -456,4 +456,4 @@ Tail Sampling 정책은 순서대로 평가되며, 하나라도 일치하면 트
 ---
 
 **관련 학습 자료:**
-- [EKS 관측성 최적화 가이드](../../advanced/09-observability-optimization.md)
+- [EKS 관측성 최적화 가이드](../../observability/09-observability-optimization.md)
