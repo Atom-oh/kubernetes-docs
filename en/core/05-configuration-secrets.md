@@ -203,6 +203,9 @@ spec:
     - configMapRef:
         name: my-config
 ```
+
+```mermaid
+flowchart TD
     CM[ConfigMap] -->|Environment Variables| Pod1[Pod]
     CM -->|Volume Mount| Pod2[Pod]
     CM -->|Command Line Arguments| Pod3[Pod]

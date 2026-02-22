@@ -974,15 +974,15 @@ graph LR
     class V3 stable;
 ```
 
-**프로덕션 사용 현황** (2024년 기준):
+**프로덕션 사용 현황** (2025년 기준):
 - 🏢 **Solo.io**: 사내 클러스터 전체를 Ambient Mode로 마이그레이션
 - 🏦 **금융 기업**: 수천 개 마이크로서비스에 Ambient Mode 적용 (80% 비용 절감)
 - 🛒 **이커머스**: L4 ztunnel + 선택적 Waypoint로 하이브리드 운영
 
 **주요 기능 로드맵**:
-- ✅ **1.28 (2024 Q1)**: Ambient Mode GA (General Availability)
-- 🔄 **1.29 (2024 Q2)**: Multi-cluster Ambient 지원
-- 📅 **1.30+ (2024 Q3+)**: Gateway API 완전 통합, 성능 최적화
+- ✅ **1.25 (2025 Q1)**: Ambient Mode GA (General Availability)
+- 🔄 **1.26 (2025 Q2)**: Multi-cluster Ambient 지원
+- 📅 **1.27+ (2025 Q3+)**: Gateway API 완전 통합, 성능 최적화
 
 ## 요약
 

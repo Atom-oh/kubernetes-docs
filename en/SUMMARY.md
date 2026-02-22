@@ -58,7 +58,6 @@
     * [Node Bootstrap](eks-hybrid-nodes/04-node-bootstrap.md)
     * [GPU Server Integration](eks-hybrid-nodes/05-gpu-integration.md)
     * [Workload Placement Strategies](eks-hybrid-nodes/06-workload-placement.md)
-    * [Cost Optimization](eks-hybrid-nodes/07-cost-optimization.md)
     * [Operations and Maintenance](eks-hybrid-nodes/08-operations.md)
 * [EKS Auto Mode](eks-auto-mode/README.md)
     * [Getting Started](eks-auto-mode/01-getting-started.md)
@@ -79,8 +78,22 @@
 
 ## Networking
 
-* [Cilium](networking/01-cilium.md)
-* [VPC Lattice](networking/02-vpc-lattice.md)
+* [Networking Overview](networking/README.md)
+    * [Cilium](networking/01-cilium.md)
+    * [Cilium Deep Dive](cilium/README.md)
+        * [Part 1: Introduction](cilium/01-introduction.md)
+        * [Part 2: eBPF](cilium/02-ebpf.md)
+        * [Part 3: Networking](cilium/03-networking.md)
+        * [Part 4: IPAM and Policies](cilium/04-ipam-policy.md)
+        * [Part 5: L2-L7 Networking](cilium/05-l2-l7-networking.md)
+        * [Part 6: Security and Visibility](cilium/06-security-visibility.md)
+        * [Part 7: Advanced Topics](cilium/07-advanced-topics.md)
+        * [Networking Concepts](cilium/networking-concepts.md)
+        * [Glossary](cilium/glossary.md)
+    * [VPC Lattice](networking/02-vpc-lattice.md)
+    * [Calico](networking/03-calico.md)
+    * [AWS Load Balancer Controller](networking/04-aws-lb-controller.md)
+    * [Gateway API](networking/05-gateway-api.md)
 
 ## Service Mesh
 
@@ -133,13 +146,33 @@
         * [Istio vs VPC Lattice](service-mesh/istio/comparison/02-istio-vs-lattice.md)
     * [Troubleshooting](service-mesh/istio/troubleshooting/common-errors.md)
     * [Best Practices](service-mesh/istio/best-practices.md)
-* [Linkerd](service-mesh/03-linkerd.md)
-* [Cilium Service Mesh](service-mesh/04-cilium-service-mesh.md)
+* [Linkerd](service-mesh/linkerd/README.md)
+    * [Architecture](service-mesh/linkerd/01-architecture.md)
+    * [Installation](service-mesh/linkerd/02-installation.md)
+    * [Traffic Management](service-mesh/linkerd/03-traffic-management.md)
+    * [Security](service-mesh/linkerd/04-security.md)
+    * [Observability](service-mesh/linkerd/05-observability.md)
+    * [Multi-cluster](service-mesh/linkerd/06-multi-cluster.md)
+    * [Best Practices](service-mesh/linkerd/07-best-practices.md)
+* [Cilium Service Mesh](service-mesh/cilium-service-mesh/README.md)
+    * [Architecture](service-mesh/cilium-service-mesh/01-architecture.md)
+    * [Installation](service-mesh/cilium-service-mesh/02-installation.md)
+    * [Traffic Management](service-mesh/cilium-service-mesh/03-traffic-management.md)
+    * [Security](service-mesh/cilium-service-mesh/04-security.md)
+    * [Observability](service-mesh/cilium-service-mesh/05-observability.md)
+    * [Best Practices](service-mesh/cilium-service-mesh/06-best-practices.md)
 
 ## Security & Policy
 
 * [Policy Management with Kyverno](security/01-kyverno-policy-management.md)
 * [Kubernetes Authentication and Authorization](security/02-kubernetes-auth-authz.md)
+* [Pod Security Standards](security/03-pod-security-standards.md)
+* [Network Policies](security/04-network-policies.md)
+* [Secrets Management](security/05-secrets-management.md)
+* [EKS Security Best Practices](security/06-eks-security-best-practices.md)
+* [Image Security](security/07-image-security.md)
+* [Runtime Security](security/08-runtime-security.md)
+* [OPA Gatekeeper](security/09-opa-gatekeeper.md)
 
 ## Platform Engineering
 
@@ -151,19 +184,6 @@
 * [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
 * [Kubernetes Extension Mechanisms](platform-engineering/04-kubernetes-extensions.md)
 * [ExampleCorp: ACK + KRO Integration Example](platform-engineering/05-example-corp-app.md)
-
-## Cilium
-
-* [Introduction to Cilium](cilium/README.md)
-    * [Part 1: Introduction](cilium/01-introduction.md)
-    * [Part 2: eBPF](cilium/02-ebpf.md)
-    * [Part 3: Networking](cilium/03-networking.md)
-    * [Part 4: IPAM and Policies](cilium/04-ipam-policy.md)
-    * [Part 5: L2-L7 Networking](cilium/05-l2-l7-networking.md)
-    * [Part 6: Security and Visibility](cilium/06-security-visibility.md)
-    * [Part 7: Advanced Topics](cilium/07-advanced-topics.md)
-    * [Networking Concepts](cilium/networking-concepts.md)
-* [Glossary](cilium/glossary.md)
 
 ## Operations Guide
 
@@ -282,7 +302,6 @@
     * [Node Bootstrap Quiz](quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
     * [GPU Server Integration Quiz](quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
     * [Workload Placement Strategies Quiz](quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
-    * [Cost Optimization Quiz](quizzes/eks-hybrid-nodes/07-cost-optimization-quiz.md)
     * [Operations and Maintenance Quiz](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
 
 * EKS Auto Mode
@@ -313,13 +332,15 @@
     * [Agentic AI Platform on EKS Quiz](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 
 * Networking
-    * [Cilium Quiz](quizzes/networking/04-cilium-quiz.md)
-    * [VPC Lattice Quiz](quizzes/networking/09-vpc-lattice-quiz.md)
+    * [Networking Overview Quiz](quizzes/networking/00-networking-overview-quiz.md)
+    * [Cilium Quiz](quizzes/networking/01-cilium-quiz.md)
+    * [VPC Lattice Quiz](quizzes/networking/02-vpc-lattice-quiz.md)
+    * [Calico Quiz](quizzes/networking/03-calico-quiz.md)
+    * [AWS Load Balancer Controller Quiz](quizzes/networking/04-aws-lb-controller-quiz.md)
+    * [Gateway API Quiz](quizzes/networking/05-gateway-api-quiz.md)
 
 * Service Mesh
     * [Istio Quiz](quizzes/service-mesh/02-istio-quiz.md)
-    * [Linkerd Quiz](quizzes/service-mesh/03-linkerd-quiz.md)
-    * [Cilium Service Mesh Quiz](quizzes/service-mesh/04-cilium-service-mesh-quiz.md)
     * Istio Detailed Quiz
         * [Traffic Management Quiz](quizzes/service-mesh/istio/traffic-management.md)
         * [Security Quiz](quizzes/service-mesh/istio/security.md)
@@ -327,10 +348,30 @@
         * [Resilience Quiz](quizzes/service-mesh/istio/resilience.md)
         * [Advanced Quiz](quizzes/service-mesh/istio/advanced.md)
         * [Basic Quiz](quizzes/service-mesh/istio/basic.md)
+    * Linkerd Detailed Quiz
+        * [Architecture Quiz](quizzes/service-mesh/linkerd/architecture.md)
+        * [Installation Quiz](quizzes/service-mesh/linkerd/installation.md)
+        * [Traffic Management Quiz](quizzes/service-mesh/linkerd/traffic-management.md)
+        * [Security Quiz](quizzes/service-mesh/linkerd/security.md)
+        * [Observability Quiz](quizzes/service-mesh/linkerd/observability.md)
+        * [Multi-cluster Quiz](quizzes/service-mesh/linkerd/multi-cluster.md)
+    * Cilium Service Mesh Detailed Quiz
+        * [Architecture Quiz](quizzes/service-mesh/cilium-service-mesh/architecture.md)
+        * [Traffic Management Quiz](quizzes/service-mesh/cilium-service-mesh/traffic-management.md)
+        * [Security Quiz](quizzes/service-mesh/cilium-service-mesh/security.md)
+        * [Observability Quiz](quizzes/service-mesh/cilium-service-mesh/observability.md)
+        * [Ingress Gateway Quiz](quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
 
 * Security & Policy
     * [Policy Management with Kyverno Quiz](quizzes/security/01-kyverno-policy-management-quiz.md)
-    * [Kubernetes Authentication and Authorization Quiz](quizzes/security/06-kubernetes-auth-authz-quiz.md)
+    * [Kubernetes Authentication and Authorization Quiz](quizzes/security/02-kubernetes-auth-authz-quiz.md)
+    * [Pod Security Standards Quiz](quizzes/security/03-pod-security-standards-quiz.md)
+    * [Network Policies Quiz](quizzes/security/04-network-policies-quiz.md)
+    * [Secrets Management Quiz](quizzes/security/05-secrets-management-quiz.md)
+    * [EKS Security Best Practices Quiz](quizzes/security/06-eks-security-best-practices-quiz.md)
+    * [Image Security Quiz](quizzes/security/07-image-security-quiz.md)
+    * [Runtime Security Quiz](quizzes/security/08-runtime-security-quiz.md)
+    * [OPA Gatekeeper Quiz](quizzes/security/09-opa-gatekeeper-quiz.md)
 
 * GitOps
     * [ArgoCD Quiz](quizzes/gitops/01-argocd-quiz.md)

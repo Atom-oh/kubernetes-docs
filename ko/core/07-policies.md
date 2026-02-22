@@ -175,7 +175,6 @@ spec:
       memory: 128Mi
     type: Container
 ```
-```
 
 ## 목차
 1. [정책 개요](#정책-개요)

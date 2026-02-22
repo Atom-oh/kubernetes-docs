@@ -1,6 +1,6 @@
 # EKS High Availability and Resiliency Architecture
 
-> **Supported Versions**: EKS 1.28+, Istio 1.20+, Karpenter 0.33+
+> **Supported Versions**: EKS 1.28+, Istio 1.20+, Karpenter 1.0+
 > **Last Updated**: February 2025
 
 ## Resiliency Overview

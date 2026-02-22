@@ -71,6 +71,10 @@ flowchart TD
     classDef componentNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef benefitNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    class PagedAttention,ContinuousBatching,DistributedInference,Quantization,OpenAIAPI,Features featureNode;
+    class Engine,Scheduler,KVCache,ModelLoader,APIServer,Components componentNode;
+    class MemoryEfficiency,HighThroughput,LowLatency,Scalability,Benefits benefitNode;
+    class vLLM default;
 ```
 
 ### Key Features of vLLM
@@ -110,12 +114,6 @@ vLLM supports the following models:
 | **StarCoder** | 15.5B | FP16 |
 | **BLOOM** | All sizes | FP16 |
 | **GPT-NeoX** | All sizes | FP16 |
-
-    class PagedAttention,ContinuousBatching,DistributedInference,Quantization,OpenAIAPI,Features featureNode;
-    class Engine,Scheduler,KVCache,ModelLoader,APIServer,Components componentNode;
-    class MemoryEfficiency,HighThroughput,LowLatency,Scalability,Benefits benefitNode;
-    class vLLM default;
-```
 
 1. **PagedAttention**: Memory-efficient attention mechanism that optimizes memory usage when processing long sequences.
 2. **Continuous Batching**: Dynamically batches requests to improve throughput.

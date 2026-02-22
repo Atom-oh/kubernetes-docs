@@ -124,8 +124,6 @@ flowchart TD
 3. **Karpenter**: Efficient node provisioning and cost optimization
 4. **Goldilocks**: Resource requests and limits optimization
 5. **Vertical Pod Autoscaler**: Automatic adjustment of pod resource requests
-    class EKSCost,Compute,Storage,Networking,Others default;
-```
 
 ### EKS Cluster Cost
 

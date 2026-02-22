@@ -1,6 +1,6 @@
 # EKS Upgrades: Auto Mode Zero-Downtime Upgrade
 
-> **Supported Versions**: EKS 1.28+, Terraform 1.5+, Karpenter 0.37+
+> **Supported Versions**: EKS 1.28+, Terraform 1.5+, Karpenter 1.0+
 > **Last Updated**: June 2025
 
 < [Previous: Resource Optimization](./10-resource-optimization.md) | [Table of Contents](./README.md) | [Next: None] >

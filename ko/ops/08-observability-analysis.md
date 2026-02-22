@@ -1,6 +1,6 @@
 # 관측성 분석: Logs/Metrics/Traces 상관 분석
 
-> **지원 버전**: Grafana 10+, Loki 2.9+, Tempo 2.3+, Prometheus 2.45+
+> **지원 버전**: Loki 3.0+, Tempo 2.4+, Prometheus 2.50+, Grafana 10.0+
 > **마지막 업데이트**: 2025년 6월
 
 < [이전: 운영 알림 구성](./07-observability-alerts.md) | [목차](./README.md) | [다음: 관측성 스택 운영](./09-observability-stack.md) >
@@ -1485,7 +1485,7 @@ data:
 
 - [모니터링 스택](../observability/01-monitoring-stack.md) - Prometheus, VictoriaMetrics, Grafana 설정
 - [로깅 스택](../observability/02-logging-stack.md) - Loki, Tempo 설정
-- [관측성 최적화](../advanced/09-observability-optimization.md) - 고급 최적화 전략
+- [관측성 최적화](../observability/09-observability-optimization.md) - 고급 최적화 전략
 
 ---
 

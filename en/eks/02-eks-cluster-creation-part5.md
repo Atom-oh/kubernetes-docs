@@ -25,8 +25,6 @@ This command updates the `~/.kube/config` file to enable access to the EKS clust
 By default, only the IAM entity (user or role) that created the EKS cluster can access the cluster. There are two methods to grant cluster access to other IAM users or roles: the traditional aws-auth ConfigMap method and the new EKS Access Entry method.
 
 ![EKS IAM Access Methods Comparison](../assets/generated-diagrams/eks_iam_access_methods.png)
-    class B1,B2,C,D k8sComponent;
-```
 
 #### Method 1: EKS Access Entry (Recommended)
 

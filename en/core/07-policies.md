@@ -175,7 +175,6 @@ spec:
       memory: 128Mi
     type: Container
 ```
-```
 
 ## Table of Contents
 1. [Policy Overview](#policy-overview)

@@ -178,6 +178,8 @@ spec:
 > **핵심 개념**: Hubble은 Cilium의 관찰성 계층으로, eBPF를 활용하여 네트워크 흐름을 실시간으로 모니터링하고 분석합니다.
 
 Hubble은 Cilium의 관찰성 계층으로, eBPF를 활용하여 네트워크 흐름을 실시간으로 모니터링하고 분석합니다. 이를 통해 네트워크 문제 해결, 보안 모니터링, 성능 분석 등 다양한 용도로 활용할 수 있습니다.
+
+```yaml
 kind: CiliumNetworkPolicy
 metadata:
   name: "comprehensive-security"

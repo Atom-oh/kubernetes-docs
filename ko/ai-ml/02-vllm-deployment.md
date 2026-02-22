@@ -71,6 +71,10 @@ flowchart TD
     classDef componentNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
     classDef benefitNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    class PagedAttention,ContinuousBatching,DistributedInference,Quantization,OpenAIAPI,Features featureNode;
+    class Engine,Scheduler,KVCache,ModelLoader,APIServer,Components componentNode;
+    class MemoryEfficiency,HighThroughput,LowLatency,Scalability,Benefits benefitNode;
+    class vLLM default;
 ```
 
 ### vLLM의 주요 기능
@@ -110,12 +114,6 @@ vLLM은 다음과 같은 모델을 지원합니다:
 | **StarCoder** | 15.5B | FP16 |
 | **BLOOM** | 모든 크기 | FP16 |
 | **GPT-NeoX** | 모든 크기 | FP16 |
-    
-    class PagedAttention,ContinuousBatching,DistributedInference,Quantization,OpenAIAPI,Features featureNode;
-    class Engine,Scheduler,KVCache,ModelLoader,APIServer,Components componentNode;
-    class MemoryEfficiency,HighThroughput,LowLatency,Scalability,Benefits benefitNode;
-    class vLLM default;
-```
 
 1. **PagedAttention**: 메모리 효율적인 어텐션 메커니즘으로, 긴 시퀀스를 처리할 때 메모리 사용량을 최적화합니다.
 2. **연속 배치 처리**: 요청을 동적으로 배치 처리하여 처리량을 향상시킵니다.

@@ -203,6 +203,9 @@ spec:
     - configMapRef:
         name: my-config
 ```
+
+```mermaid
+flowchart TD
     CM[컨피그맵] -->|환경 변수| Pod1[파드]
     CM -->|볼륨 마운트| Pod2[파드]
     CM -->|명령줄 인수| Pod3[파드]

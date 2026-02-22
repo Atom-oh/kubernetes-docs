@@ -184,7 +184,6 @@ graph TD
 3. **Binding Phase**
    - Assigns the pod to the selected node
    - Updates binding information to the API server
-```
 
 ## Table of Contents
 1. [Scheduling Overview](#scheduling-overview)

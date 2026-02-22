@@ -1,6 +1,6 @@
 # Cilium
 
-> **Supported Versions**: Cilium 1.13, 1.14
+> **Supported Versions**: Cilium 1.17, 1.18
 > **Last Updated**: July 25, 2025
 
 ## Table of Contents

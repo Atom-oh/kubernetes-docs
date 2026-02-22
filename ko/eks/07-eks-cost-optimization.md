@@ -124,8 +124,6 @@ flowchart TD
 3. **Karpenter**: 효율적인 노드 프로비저닝 및 비용 최적화
 4. **Goldilocks**: 리소스 요청 및 제한 최적화
 5. **Vertical Pod Autoscaler**: 파드 리소스 요청 자동 조정
-    class EKSCost,Compute,Storage,Networking,Others default;
-```
 
 ### EKS 클러스터 비용
 

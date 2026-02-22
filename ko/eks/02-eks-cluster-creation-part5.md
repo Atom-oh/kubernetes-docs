@@ -25,8 +25,6 @@ aws eks update-kubeconfig \
 기본적으로 EKS 클러스터를 생성한 IAM 엔터티(사용자 또는 역할)만 클러스터에 액세스할 수 있습니다. 다른 IAM 사용자 또는 역할에 클러스터 액세스 권한을 부여하는 방법에는 두 가지가 있습니다: 전통적인 aws-auth ConfigMap 방식과 새로운 EKS Access Entry 방식입니다.
 
 ![EKS IAM 액세스 방법 비교](../assets/generated-diagrams/eks_iam_access_methods.png)
-    class B1,B2,C,D k8sComponent;
-```
 
 #### 방법 1: EKS Access Entry (권장)
 

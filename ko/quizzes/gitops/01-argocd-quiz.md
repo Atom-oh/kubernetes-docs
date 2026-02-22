@@ -243,7 +243,7 @@ spec:
 ## 문제 9: 최신 GitOps 트렌드
 
 <details>
-<summary>2023년 GitOps 영역의 주요 트렌드는?</summary>
+<summary>2025년 GitOps 영역의 주요 트렌드는?</summary>
 
 **답변:**
 1. **멀티 클러스터 GitOps**:
