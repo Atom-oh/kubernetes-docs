@@ -3,7 +3,7 @@
 < [Previous: Air-Gap Setup](./03-airgap-setup.md) | [Table of Contents](./README.md) | [Next: GPU Integration](./05-gpu-integration.md) >
 
 > **Supported Versions**: EKS 1.31+, nodeadm 0.1+
-> **Last Updated**: February 2025
+> **Last Updated**: February 2026
 
 This document covers the process of bootstrapping on-premises servers as EKS Hybrid Nodes using nodeadm.
 
@@ -98,8 +98,8 @@ spec:
       shutdownGracePeriod: 30s
       shutdownGracePeriodCriticalPods: 10s
     flags:
-      - --node-labels=topology.kubernetes.io/zone=on-premises,node.kubernetes.io/instance-type=on-prem-gpu
-      - --register-with-taints=location=on-premises:NoSchedule
+      - --node-labels=node.kubernetes.io/instance-type=on-prem-gpu
+      - --register-with-taints=eks.amazonaws.com/compute-type=hybrid:NoSchedule
 
   containerd:
     config: |
@@ -217,13 +217,13 @@ kubectl get nodes --show-labels
 # NAME                STATUS   ROLES    AGE   VERSION   LABELS
 # ip-10-0-1-100       Ready    <none>   1d    v1.31.0   topology.kubernetes.io/zone=ap-northeast-2a
 # ip-10-0-2-100       Ready    <none>   1d    v1.31.0   topology.kubernetes.io/zone=ap-northeast-2b
-# hybrid-node-001     Ready    <none>   5m    v1.31.0   topology.kubernetes.io/zone=on-premises
+# hybrid-node-001     Ready    <none>   5m    v1.31.0   eks.amazonaws.com/compute-type=hybrid
 
 # Check node details
 kubectl describe node hybrid-node-001
 
 # Filter Hybrid Nodes
-kubectl get nodes -l topology.kubernetes.io/zone=on-premises
+kubectl get nodes -l eks.amazonaws.com/compute-type=hybrid
 ```
 
 ---

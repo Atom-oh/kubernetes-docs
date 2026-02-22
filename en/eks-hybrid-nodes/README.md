@@ -13,7 +13,7 @@ Amazon EKS Hybrid Nodes is a feature that allows you to manage on-premises serve
 4. [Node Bootstrap](./04-node-bootstrap.md)
 5. [GPU Server Integration](./05-gpu-integration.md)
 6. [Workload Placement Strategies](./06-workload-placement.md)
-7. [Cost Optimization](./07-cost-optimization.md)
+7. [Node Lifecycle Management](./07-node-lifecycle.md)
 8. [Operations and Maintenance](./08-operations.md)
 
 ## What are Hybrid Nodes?

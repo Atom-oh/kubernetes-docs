@@ -1,9 +1,9 @@
 # Workload Placement Strategies
 
-< [Previous: GPU Integration](./05-gpu-integration.md) | [Table of Contents](./README.md) | [Next: Cost Optimization](./07-cost-optimization.md) >
+< [Previous: GPU Integration](./05-gpu-integration.md) | [Table of Contents](./README.md) | [Next: Node Lifecycle Management](./07-node-lifecycle.md) >
 
 > **Supported Versions**: EKS 1.31+, Karpenter 1.0+
-> **Last Updated**: February 2025
+> **Last Updated**: February 2026
 
 This document covers strategies for placing workloads across hybrid nodes and cloud nodes, including node affinity, taints/tolerations, and cloud bursting with Karpenter.
 
@@ -13,7 +13,7 @@ This document covers strategies for placing workloads across hybrid nodes and cl
 
 ```bash
 # Add Taint to on-premises nodes
-kubectl taint nodes hybrid-node-001 location=on-premises:NoSchedule
+kubectl taint nodes hybrid-node-001 eks.amazonaws.com/compute-type=hybrid:NoSchedule
 
 # Add additional Taint to GPU nodes
 kubectl taint nodes hybrid-gpu-node-001 gpu=true:NoSchedule
@@ -43,14 +43,14 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: topology.kubernetes.io/zone
+              - key: eks.amazonaws.com/compute-type
                 operator: In
                 values:
-                - on-premises
+                - hybrid
       tolerations:
-      - key: location
+      - key: eks.amazonaws.com/compute-type
         operator: Equal
-        value: on-premises
+        value: hybrid
         effect: NoSchedule
       containers:
       - name: processor
@@ -88,18 +88,18 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: topology.kubernetes.io/zone
+              - key: eks.amazonaws.com/compute-type
                 operator: In
                 values:
-                - on-premises
+                - hybrid
               - key: nvidia.com/gpu.present
                 operator: In
                 values:
                 - "true"
       tolerations:
-      - key: location
+      - key: eks.amazonaws.com/compute-type
         operator: Equal
-        value: on-premises
+        value: hybrid
         effect: NoSchedule
       - key: gpu
         operator: Equal
@@ -135,10 +135,8 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: topology.kubernetes.io/zone
-                operator: NotIn
-                values:
-                - on-premises
+              - key: eks.amazonaws.com/compute-type
+                operator: DoesNotExist
       containers:
       - name: api
         image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/ai/inference-api:v1.0.0
@@ -237,10 +235,10 @@ spec:
           - weight: 100
             preference:
               matchExpressions:
-              - key: topology.kubernetes.io/zone
+              - key: eks.amazonaws.com/compute-type
                 operator: In
                 values:
-                - on-premises
+                - hybrid
           - weight: 50
             preference:
               matchExpressions:
@@ -445,4 +443,4 @@ graph LR
 
 ---
 
-< [Previous: GPU Integration](./05-gpu-integration.md) | [Table of Contents](./README.md) | [Next: Cost Optimization](./07-cost-optimization.md) >
+< [Previous: GPU Integration](./05-gpu-integration.md) | [Table of Contents](./README.md) | [Next: Node Lifecycle Management](./07-node-lifecycle.md) >

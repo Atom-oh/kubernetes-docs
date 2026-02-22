@@ -13,7 +13,7 @@ Amazon EKS Hybrid Nodes는 온프레미스 서버를 AWS EKS 컨트롤 플레인
 4. [노드 부트스트랩](./04-node-bootstrap.md)
 5. [GPU 서버 통합](./05-gpu-integration.md)
 6. [워크로드 배치 전략](./06-workload-placement.md)
-7. [비용 최적화](./07-cost-optimization.md)
+7. [노드 라이프사이클 관리](./07-node-lifecycle.md)
 8. [운영 및 유지보수](./08-operations.md)
 
 ## EKS Hybrid Nodes 개요

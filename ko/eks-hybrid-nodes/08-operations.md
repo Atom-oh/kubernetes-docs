@@ -1,9 +1,9 @@
 # 운영 및 유지보수
 
-< [이전: 비용 최적화](./07-cost-optimization.md) | [목차](./README.md) >
+< [이전: 노드 라이프사이클 관리](./07-node-lifecycle.md) | [목차](./README.md) >
 
 > **지원 버전**: EKS 1.31+, nodeadm 0.1+
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월
 
 이 문서에서는 EKS Hybrid Nodes 환경의 운영 및 유지보수 절차를 다룹니다.
 
@@ -305,4 +305,4 @@ sudo nodeadm init -c file://nodeconfig.yaml
 
 ---
 
-< [이전: 비용 최적화](./07-cost-optimization.md) | [목차](./README.md) >
+< [이전: 노드 라이프사이클 관리](./07-node-lifecycle.md) | [목차](./README.md) >

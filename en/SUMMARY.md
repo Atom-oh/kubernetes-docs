@@ -58,6 +58,7 @@
     * [Node Bootstrap](eks-hybrid-nodes/04-node-bootstrap.md)
     * [GPU Server Integration](eks-hybrid-nodes/05-gpu-integration.md)
     * [Workload Placement Strategies](eks-hybrid-nodes/06-workload-placement.md)
+    * [Node Lifecycle Management](eks-hybrid-nodes/07-node-lifecycle.md)
     * [Operations and Maintenance](eks-hybrid-nodes/08-operations.md)
 * [EKS Auto Mode](eks-auto-mode/README.md)
     * [Getting Started](eks-auto-mode/01-getting-started.md)
@@ -302,6 +303,7 @@
     * [Node Bootstrap Quiz](quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
     * [GPU Server Integration Quiz](quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
     * [Workload Placement Strategies Quiz](quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+    * [Node Lifecycle Management Quiz](quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
     * [Operations and Maintenance Quiz](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
 
 * EKS Auto Mode

@@ -1,9 +1,9 @@
 # Operations and Maintenance
 
-< [Previous: Cost Optimization](./07-cost-optimization.md) | [Table of Contents](./README.md) >
+< [Previous: Node Lifecycle Management](./07-node-lifecycle.md) | [Table of Contents](./README.md) >
 
 > **Supported Versions**: EKS 1.31+, Prometheus Operator
-> **Last Updated**: February 2025
+> **Last Updated**: February 2026
 
 This document covers day-to-day operations and maintenance tasks for EKS Hybrid Nodes environments, including monitoring, backup procedures, and troubleshooting.
 
@@ -305,4 +305,4 @@ sudo nodeadm init -c file://nodeconfig.yaml
 
 ---
 
-< [Previous: Cost Optimization](./07-cost-optimization.md) | [Table of Contents](./README.md) >
+< [Previous: Node Lifecycle Management](./07-node-lifecycle.md) | [Table of Contents](./README.md) >

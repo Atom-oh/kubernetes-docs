@@ -1,9 +1,9 @@
 # 워크로드 배치 전략
 
-< [이전: GPU 서버 통합](./05-gpu-integration.md) | [목차](./README.md) | [다음: 비용 최적화](./07-cost-optimization.md) >
+< [이전: GPU 서버 통합](./05-gpu-integration.md) | [목차](./README.md) | [다음: 노드 라이프사이클 관리](./07-node-lifecycle.md) >
 
 > **지원 버전**: EKS 1.31+, nodeadm 0.1+
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월
 
 이 문서에서는 EKS Hybrid Nodes 환경에서 효과적인 워크로드 배치 전략을 다룹니다.
 
@@ -13,7 +13,7 @@
 
 ```bash
 # 온프레미스 노드에 Taint 추가
-kubectl taint nodes hybrid-node-001 location=on-premises:NoSchedule
+kubectl taint nodes hybrid-node-001 eks.amazonaws.com/compute-type=hybrid:NoSchedule
 
 # GPU 노드에 추가 Taint
 kubectl taint nodes hybrid-gpu-node-001 gpu=true:NoSchedule
@@ -43,14 +43,14 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: topology.kubernetes.io/zone
+              - key: eks.amazonaws.com/compute-type
                 operator: In
                 values:
-                - on-premises
+                - hybrid
       tolerations:
-      - key: location
+      - key: eks.amazonaws.com/compute-type
         operator: Equal
-        value: on-premises
+        value: hybrid
         effect: NoSchedule
       containers:
       - name: processor
@@ -88,18 +88,18 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: topology.kubernetes.io/zone
+              - key: eks.amazonaws.com/compute-type
                 operator: In
                 values:
-                - on-premises
+                - hybrid
               - key: nvidia.com/gpu.present
                 operator: In
                 values:
                 - "true"
       tolerations:
-      - key: location
+      - key: eks.amazonaws.com/compute-type
         operator: Equal
-        value: on-premises
+        value: hybrid
         effect: NoSchedule
       - key: gpu
         operator: Equal
@@ -135,10 +135,8 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: topology.kubernetes.io/zone
-                operator: NotIn
-                values:
-                - on-premises
+              - key: eks.amazonaws.com/compute-type
+                operator: DoesNotExist
       containers:
       - name: api
         image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/ai/inference-api:v1.0.0
@@ -237,10 +235,10 @@ spec:
           - weight: 100
             preference:
               matchExpressions:
-              - key: topology.kubernetes.io/zone
+              - key: eks.amazonaws.com/compute-type
                 operator: In
                 values:
-                - on-premises
+                - hybrid
           - weight: 50
             preference:
               matchExpressions:
@@ -445,4 +443,4 @@ graph LR
 
 ---
 
-< [이전: GPU 서버 통합](./05-gpu-integration.md) | [목차](./README.md) | [다음: 비용 최적화](./07-cost-optimization.md) >
+< [이전: GPU 서버 통합](./05-gpu-integration.md) | [목차](./README.md) | [다음: 노드 라이프사이클 관리](./07-node-lifecycle.md) >
