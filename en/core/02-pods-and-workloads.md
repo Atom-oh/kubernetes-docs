@@ -170,10 +170,6 @@ spec:
   - name: shared-data
     emptyDir: {}
 ```
-    Pod --> IP[IP Address: 10.244.0.1]
-
-    %% Style definitions
-```
 
 ### Practical Example: Web Application Pod
 

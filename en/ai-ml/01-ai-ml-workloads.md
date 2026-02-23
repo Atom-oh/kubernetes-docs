@@ -52,7 +52,7 @@ flowchart TD
 3. **Distributed Processing**: Requires distributed processing across multiple nodes for large-scale model training.
 4. **Workload Diversity**: Includes various types of workloads such as training, inference, and data preprocessing.
 
-## Latest AI/ML Trends (2023)
+## Latest AI/ML Trends (2025)
 
 The latest trends for running AI/ML workloads on Kubernetes include:
 

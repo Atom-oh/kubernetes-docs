@@ -162,7 +162,7 @@ Amazon EKS에서 Cilium을 사용하는 방법은 크게 두 가지가 있습니
 aws eks create-addon \
   --cluster-name my-cluster \
   --addon-name cilium \
-  --addon-version v1.14.0-eksbuild.1 \
+  --addon-version v1.17.0-eksbuild.1 \
   --service-account-role-arn arn:aws:iam::123456789012:role/AmazonEKSCiliumAddonRole
 
 # 추가 기능 상태 확인
@@ -182,7 +182,7 @@ helm repo update
 
 # Cilium 설치
 helm install cilium cilium/cilium \
-  --version 1.14.0 \
+  --version 1.17.0 \
   --namespace kube-system \
   --set eni.enabled=true \
   --set ipam.mode=eni \

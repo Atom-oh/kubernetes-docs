@@ -194,25 +194,6 @@ metadata:
     kubernetes.io/service-account.name: my-service-account
 type: kubernetes.io/service-account-token
 ```
-8. [Audit](#audit)
-9. [Amazon EKS Security Enhancement](#amazon-eks-security-enhancement)
-10. [Security Best Practices](#security-best-practices)
-11. [Conclusion](#conclusion)
-
-## Security Overview
-
-Kubernetes security is implemented at multiple layers:
-
-1. **Cluster Infrastructure Security**: Security of host OS, container runtime, network, etc.
-2. **Cluster Security**: Security of Kubernetes components like API server, etcd, kubelet, etc.
-3. **Application Security**: Security of container images, workloads, network communication, etc.
-
-Kubernetes follows these security principles:
-
-- **Defense in Depth**: Strengthen security through multiple layers of security controls
-- **Principle of Least Privilege**: Grant only the minimum necessary permissions
-- **Secure by Default**: Configure default settings to be secure
-- **Clear Boundaries**: Clear trust boundaries and separation of responsibilities
 
 ## Authentication
 

@@ -464,7 +464,7 @@ spec:
 3. **조정 빈도 조정**: 필요에 따라 조정 빈도 최적화
 
 ```yaml
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
+apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: ack-s3-controller

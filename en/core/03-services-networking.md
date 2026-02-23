@@ -1333,19 +1333,6 @@ In the next chapter, we'll learn about Kubernetes storage options.
 - [Cilium Official Documentation](https://docs.cilium.io/)
 - [CNI Official Documentation](https://github.com/containernetworking/cni)
 
-Understanding and utilizing Kubernetes networking features enables you to build secure and scalable applications.
-
-In the next chapter, we'll learn about Kubernetes storage options.
-
 ## Quiz
 
 To test what you learned in this chapter, try the [Services and Networking Quiz](../quizzes/core/03-services-networking-quiz.md).
-
-## References
-
-- [Kubernetes Official Documentation - Services](https://kubernetes.io/docs/concepts/services-networking/service/)
-- [Kubernetes Official Documentation - Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
-- [Kubernetes Official Documentation - Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [Kubernetes Official Documentation - DNS for Services and Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
-- [Istio Official Documentation](https://istio.io/latest/docs/)
-- [Linkerd Official Documentation](https://linkerd.io/2.11/overview/)
