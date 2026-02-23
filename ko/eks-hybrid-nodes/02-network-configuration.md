@@ -1001,6 +1001,160 @@ cilium bgp routes
 
 ![정적 라우트](../../assets/aws-official-diagrams/hybrid-nodes-static-routes.png)
 
+#### Cluster-Pool IPAM 할당 이해
+
+Cilium의 `cluster-pool` IPAM 모드에서는 전체 파드 CIDR 풀을 노드별로 고정 크기 블록으로 분할합니다. [04-node-bootstrap.md](./04-node-bootstrap.md)의 Cilium values에서 설정하는 두 가지 핵심 파라미터가 있습니다:
+
+| 파라미터 | 예시 값 | 설명 |
+|---------|---------|------|
+| `clusterPoolIPv4PodCIDRList` | `10.85.0.0/16` | 전체 파드 CIDR 풀 |
+| `clusterPoolIPv4MaskSize` | `25` | 노드당 할당되는 서브넷 크기 (/25 = 128 IP) |
+
+예를 들어, 풀이 `10.85.0.0/16`이고 마스크 크기가 `/25`이면 최대 **512개 노드**에 각각 128개의 파드 IP를 할당할 수 있습니다. Cilium Operator가 노드 등록 순서대로 블록을 할당합니다:
+
+| 노드 | 할당된 PodCIDR | 사용 가능한 파드 IP |
+|------|---------------|-------------------|
+| hybrid-node-001 | `10.85.0.0/25` | `10.85.0.1` – `10.85.0.126` |
+| hybrid-node-002 | `10.85.0.128/25` | `10.85.0.129` – `10.85.0.254` |
+| hybrid-node-003 | `10.85.1.0/25` | `10.85.1.1` – `10.85.1.126` |
+
+> **중요**: 이 할당 정보는 **CiliumNode CR**에 기록됩니다. Kubernetes Node 객체의 `spec.podCIDR`과 다를 수 있으므로, 정적 라우트 구성 시 반드시 CiliumNode CR을 참조하세요.
+
+#### 노드별 PodCIDR 조회
+
+정적 라우트를 구성하려면 각 노드에 할당된 PodCIDR과 노드 IP(넥스트 홉)를 확인해야 합니다. CNI별 조회 방법은 다음과 같습니다:
+
+**Cilium** — `CiliumNode` CR의 `spec.ipam.podCIDRs`가 권위 있는 소스입니다:
+
+```bash
+kubectl get ciliumnodes -o custom-columns='\
+NAME:.metadata.name,\
+NODE_IP:.spec.addresses[0].ip,\
+POD_CIDR:.spec.ipam.podCIDRs[0]'
+```
+
+```
+NAME                NODE_IP       POD_CIDR
+hybrid-node-001     10.80.1.10    10.85.0.0/25
+hybrid-node-002     10.80.1.11    10.85.0.128/25
+hybrid-node-003     10.80.1.12    10.85.1.0/25
+```
+
+> CiliumNode CR 구조, 스크립팅 활용 등 자세한 내용은 [Cilium IPAM — CiliumNode CR을 활용한 노드별 PodCIDR 조회](../networking/cilium/04-ipam-policy.md#ciliumnode-cr을-활용한-노드별-podcidr-조회)를 참조하세요.
+
+**Calico** — `BlockAffinity` CR로 노드별 CIDR 블록을 추적합니다:
+
+```bash
+kubectl get blockaffinities -o custom-columns='\
+NAME:.metadata.name,\
+CIDR:.spec.cidr,\
+NODE:.spec.node'
+```
+
+> **⚠ Deprecation**: Calico는 EKS Hybrid Nodes에서 공식 지원이 중단되었습니다. 신규 배포에는 Cilium을 사용하세요. BlockAffinity 조회 상세 내용은 [Calico 고급 주제 — BlockAffinity를 활용한 노드별 PodCIDR 조회](../networking/calico/07-advanced-topics.md#blockaffinity를-활용한-노드별-podcidr-조회)를 참조하세요.
+
+#### 정적 라우트 구성
+
+CiliumNode(또는 Calico BlockAffinity)에서 확인한 정보를 바탕으로 라우터에 정적 라우트를 추가합니다. 공통 패턴은 다음과 같습니다:
+
+```
+목적지(Destination) = 노드의 PodCIDR
+넥스트 홉(Next Hop)  = 노드의 InternalIP
+```
+
+##### Linux (ip route)
+
+```bash
+# 각 노드의 파드 CIDR에 대한 라우트 추가
+ip route add 10.85.0.0/25 via 10.80.1.10    # hybrid-node-001
+ip route add 10.85.0.128/25 via 10.80.1.11  # hybrid-node-002
+ip route add 10.85.1.0/25 via 10.80.1.12    # hybrid-node-003
+```
+
+재부팅 후에도 유지하려면 영구 설정이 필요합니다:
+
+```bash
+# /etc/network/interfaces.d/hybrid-routes (Debian/Ubuntu)
+up ip route add 10.85.0.0/25 via 10.80.1.10
+up ip route add 10.85.0.128/25 via 10.80.1.11
+up ip route add 10.85.1.0/25 via 10.80.1.12
+
+# 또는 NetworkManager (RHEL/Rocky)
+# /etc/NetworkManager/dispatcher.d/99-hybrid-routes
+```
+
+##### Cisco IOS / IOS-XE
+
+```
+ip route 10.85.0.0 255.255.255.128 10.80.1.10 name hybrid-node-001-pods
+ip route 10.85.0.128 255.255.255.128 10.80.1.11 name hybrid-node-002-pods
+ip route 10.85.1.0 255.255.255.128 10.80.1.12 name hybrid-node-003-pods
+```
+
+##### FRRouting (FRR)
+
+```
+ip route 10.85.0.0/25 10.80.1.10
+ip route 10.85.0.128/25 10.80.1.11
+ip route 10.85.1.0/25 10.80.1.12
+```
+
+##### AWS VPC 라우트 테이블
+
+VPN/Direct Connect를 통해 연결된 AWS VPC에서 파드 CIDR에 접근해야 하는 경우, 집계(aggregate) CIDR을 사용합니다:
+
+```bash
+# 집계 CIDR로 VPC 라우트 추가 (VPN Gateway 또는 TGW를 넥스트 홉으로)
+aws ec2 create-route \
+  --route-table-id rtb-0123456789abcdef0 \
+  --destination-cidr-block 10.85.0.0/16 \
+  --gateway-id vgw-0123456789abcdef0
+```
+
+```hcl
+# Terraform
+resource "aws_route" "hybrid_pod_cidr" {
+  route_table_id         = aws_route_table.main.id
+  destination_cidr_block = "10.85.0.0/16"
+  gateway_id             = aws_vpn_gateway.main.id
+}
+```
+
+#### 자동화 및 BGP 비교
+
+CiliumNode CR에서 자동으로 `ip route` 명령을 생성하는 스크립트 예시:
+
+```bash
+#!/bin/bash
+# generate-static-routes.sh — CiliumNode CR에서 정적 라우트 명령 생성
+kubectl get ciliumnodes -o json | jq -r \
+  '.items[] | "ip route add \(.spec.ipam.podCIDRs[0]) via \(.spec.addresses[0].ip)"'
+```
+
+출력 예시:
+
+```
+ip route add 10.85.0.0/25 via 10.80.1.10
+ip route add 10.85.0.128/25 via 10.80.1.11
+ip route add 10.85.1.0/25 via 10.80.1.12
+```
+
+**정적 라우트 vs BGP 비교**
+
+| 항목 | 정적 라우트 | BGP (옵션 1) |
+|------|-----------|-------------|
+| 노드 추가 시 | 라우터에 수동으로 라우트 추가 필요 | 자동으로 라우트 전파 |
+| 노드 제거 시 | 라우터에서 수동으로 라우트 삭제 필요 | 자동으로 라우트 철회 |
+| 노드 IP 변경 시 | 모든 라우트 수동 업데이트 필요 | 자동으로 업데이트 전파 |
+| 장애 감지 | 없음 (stale 라우트 남음) | BGP keepalive로 자동 감지 |
+| 구성 복잡도 | 낮음 | 중간 (BGP 피어링 설정 필요) |
+| 확장성 | 1–5 노드에 적합 | 수십~수백 노드까지 확장 가능 |
+
+> **권장사항**:
+> - **PoC / 소규모 환경** (1–5 노드): 정적 라우트로 빠르게 시작할 수 있습니다
+> - **프로덕션 / 5+ 노드**: [BGP (옵션 1)](#옵션-1-bgp-권장)를 사용하세요. 노드 변경에 자동으로 대응하며 운영 부담이 크게 줄어듭니다
+> - **BGP가 정책적으로 허용되지 않는 환경**: 정적 라우트를 사용하되, 위의 자동화 스크립트로 라우트 변경을 관리하세요
+
 ### 옵션 3: ARP 프록시
 
 노드가 호스팅된 파드 IP에 대한 ARP 요청에 응답합니다. 로컬 라우터와 레이어 2 네트워크 근접성이 필요합니다. Cilium에는 프록시 ARP 지원이 내장되어 있습니다. 라우터 BGP나 정적 라우트 구성이 필요 없지만, 파드 CIDR이 다른 네트워크와 겹치면 안 됩니다.

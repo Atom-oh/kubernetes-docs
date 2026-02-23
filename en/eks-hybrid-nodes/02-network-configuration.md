@@ -1001,6 +1001,160 @@ Manual router configuration with pod CIDRs. Simplest but error-prone and require
 
 ![Static Routes](../../assets/aws-official-diagrams/hybrid-nodes-static-routes.png)
 
+#### Understanding Cluster-Pool IPAM Allocation
+
+In Cilium's `cluster-pool` IPAM mode, the entire pod CIDR pool is divided into fixed-size blocks per node. Two key parameters are configured in the Cilium values from [04-node-bootstrap.md](./04-node-bootstrap.md):
+
+| Parameter | Example Value | Description |
+|-----------|--------------|-------------|
+| `clusterPoolIPv4PodCIDRList` | `10.85.0.0/16` | The entire pod CIDR pool |
+| `clusterPoolIPv4MaskSize` | `25` | Subnet size allocated per node (/25 = 128 IPs) |
+
+For example, with a pool of `10.85.0.0/16` and mask size `/25`, up to **512 nodes** can each be assigned 128 pod IPs. The Cilium Operator allocates blocks in node registration order:
+
+| Node | Allocated PodCIDR | Available Pod IPs |
+|------|-------------------|-------------------|
+| hybrid-node-001 | `10.85.0.0/25` | `10.85.0.1` – `10.85.0.126` |
+| hybrid-node-002 | `10.85.0.128/25` | `10.85.0.129` – `10.85.0.254` |
+| hybrid-node-003 | `10.85.1.0/25` | `10.85.1.1` – `10.85.1.126` |
+
+> **Important**: This allocation information is recorded in the **CiliumNode CR**. It may differ from the Kubernetes Node object's `spec.podCIDR`, so always reference the CiliumNode CR when configuring static routes.
+
+#### Querying Per-Node PodCIDRs
+
+To configure static routes, you need to identify each node's allocated PodCIDR and node IP (next hop). Query methods differ by CNI:
+
+**Cilium** — The `CiliumNode` CR's `spec.ipam.podCIDRs` is the authoritative source:
+
+```bash
+kubectl get ciliumnodes -o custom-columns='\
+NAME:.metadata.name,\
+NODE_IP:.spec.addresses[0].ip,\
+POD_CIDR:.spec.ipam.podCIDRs[0]'
+```
+
+```
+NAME                NODE_IP       POD_CIDR
+hybrid-node-001     10.80.1.10    10.85.0.0/25
+hybrid-node-002     10.80.1.11    10.85.0.128/25
+hybrid-node-003     10.80.1.12    10.85.1.0/25
+```
+
+> For CiliumNode CR structure, scripting usage, and more details, see [Cilium IPAM — Querying Per-Node PodCIDRs via CiliumNode CR](../networking/cilium/04-ipam-policy.md#querying-per-node-podcidrs-via-ciliumnode-cr).
+
+**Calico** — `BlockAffinity` CRs track per-node CIDR blocks:
+
+```bash
+kubectl get blockaffinities -o custom-columns='\
+NAME:.metadata.name,\
+CIDR:.spec.cidr,\
+NODE:.spec.node'
+```
+
+> **⚠ Deprecation**: Calico is no longer officially supported on EKS Hybrid Nodes. Use Cilium for new deployments. For detailed BlockAffinity queries, see [Calico Advanced Topics — Querying Per-Node PodCIDRs via BlockAffinity](../networking/calico/07-advanced-topics.md#querying-per-node-podcidrs-via-blockaffinity).
+
+#### Configuring Static Routes
+
+Based on the information from CiliumNode (or Calico BlockAffinity) CRs, add static routes to your router. The common pattern is:
+
+```
+Destination = Node's PodCIDR
+Next Hop    = Node's InternalIP
+```
+
+##### Linux (ip route)
+
+```bash
+# Add routes for each node's pod CIDR
+ip route add 10.85.0.0/25 via 10.80.1.10    # hybrid-node-001
+ip route add 10.85.0.128/25 via 10.80.1.11  # hybrid-node-002
+ip route add 10.85.1.0/25 via 10.80.1.12    # hybrid-node-003
+```
+
+For persistence across reboots:
+
+```bash
+# /etc/network/interfaces.d/hybrid-routes (Debian/Ubuntu)
+up ip route add 10.85.0.0/25 via 10.80.1.10
+up ip route add 10.85.0.128/25 via 10.80.1.11
+up ip route add 10.85.1.0/25 via 10.80.1.12
+
+# Or for NetworkManager (RHEL/Rocky)
+# /etc/NetworkManager/dispatcher.d/99-hybrid-routes
+```
+
+##### Cisco IOS / IOS-XE
+
+```
+ip route 10.85.0.0 255.255.255.128 10.80.1.10 name hybrid-node-001-pods
+ip route 10.85.0.128 255.255.255.128 10.80.1.11 name hybrid-node-002-pods
+ip route 10.85.1.0 255.255.255.128 10.80.1.12 name hybrid-node-003-pods
+```
+
+##### FRRouting (FRR)
+
+```
+ip route 10.85.0.0/25 10.80.1.10
+ip route 10.85.0.128/25 10.80.1.11
+ip route 10.85.1.0/25 10.80.1.12
+```
+
+##### AWS VPC Route Table
+
+When pods need to be reachable from an AWS VPC connected via VPN/Direct Connect, use an aggregate CIDR:
+
+```bash
+# Add VPC route with aggregate CIDR (VPN Gateway or TGW as next hop)
+aws ec2 create-route \
+  --route-table-id rtb-0123456789abcdef0 \
+  --destination-cidr-block 10.85.0.0/16 \
+  --gateway-id vgw-0123456789abcdef0
+```
+
+```hcl
+# Terraform
+resource "aws_route" "hybrid_pod_cidr" {
+  route_table_id         = aws_route_table.main.id
+  destination_cidr_block = "10.85.0.0/16"
+  gateway_id             = aws_vpn_gateway.main.id
+}
+```
+
+#### Automation and BGP Comparison
+
+Example script to auto-generate `ip route` commands from CiliumNode CRs:
+
+```bash
+#!/bin/bash
+# generate-static-routes.sh — Generate static route commands from CiliumNode CRs
+kubectl get ciliumnodes -o json | jq -r \
+  '.items[] | "ip route add \(.spec.ipam.podCIDRs[0]) via \(.spec.addresses[0].ip)"'
+```
+
+Example output:
+
+```
+ip route add 10.85.0.0/25 via 10.80.1.10
+ip route add 10.85.0.128/25 via 10.80.1.11
+ip route add 10.85.1.0/25 via 10.80.1.12
+```
+
+**Static Routes vs BGP Comparison**
+
+| Aspect | Static Routes | BGP (Option 1) |
+|--------|--------------|-----------------|
+| Node addition | Manual route addition to router required | Routes propagated automatically |
+| Node removal | Manual route deletion from router required | Routes withdrawn automatically |
+| Node IP change | All routes must be manually updated | Updates propagated automatically |
+| Failure detection | None (stale routes remain) | Auto-detected via BGP keepalives |
+| Configuration complexity | Low | Medium (BGP peering setup required) |
+| Scalability | Suitable for 1–5 nodes | Scales to tens/hundreds of nodes |
+
+> **Recommendations**:
+> - **PoC / Small environments** (1–5 nodes): Static routes provide a quick start
+> - **Production / 5+ nodes**: Use [BGP (Option 1)](#option-1-bgp-recommended). It automatically responds to node changes and significantly reduces operational overhead
+> - **Environments where BGP is not permitted by policy**: Use static routes with the automation script above to manage route changes
+
 ### Option 3: ARP Proxying
 
 Nodes respond to ARP requests for hosted pod IPs. Requires Layer 2 network proximity to the local router. Cilium has built-in proxy ARP support. No router BGP or static route configuration needed, but pod CIDR must not overlap with other networks.

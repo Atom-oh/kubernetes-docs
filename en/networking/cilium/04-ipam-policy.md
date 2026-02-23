@@ -325,6 +325,67 @@ CRD-based IPAM uses Kubernetes CRDs to manage IP address allocation.
 2. Cilium agent reads IP address allocation information from CRD.
 3. IP address allocation state is updated in CRD.
 
+## Querying Per-Node PodCIDRs via CiliumNode CR
+
+In Cilium's `cluster-pool` IPAM mode, pod CIDR allocation information for each node is recorded in the **CiliumNode CR**. This CR serves as the authoritative source for static route configuration, IPAM debugging, and network troubleshooting.
+
+> **Note**: The Kubernetes Node object's `spec.podCIDR` may differ from the CiliumNode CR's `spec.ipam.podCIDRs`. In Cilium environments, always use the CiliumNode CR as the source of truth.
+
+### CiliumNode CR Structure (Key Fields)
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNode
+metadata:
+  name: hybrid-node-001
+spec:
+  addresses:
+  - ip: 10.80.1.10        # Node IP (used as next hop for static routes)
+    type: InternalIP
+  ipam:
+    podCIDRs:
+    - 10.85.0.0/25         # Pod CIDR allocated to this node
+```
+
+- **`spec.addresses[].ip`**: The node's actual IP address. Used as the next hop when configuring static routes.
+- **`spec.ipam.podCIDRs`**: List of pod CIDRs allocated to this node by the Cilium Operator.
+
+### Query Commands
+
+```bash
+# List all CiliumNodes
+kubectl get ciliumnodes
+
+# Query node IP and PodCIDR in table format
+kubectl get ciliumnodes -o custom-columns='\
+NAME:.metadata.name,\
+NODE_IP:.spec.addresses[0].ip,\
+POD_CIDR:.spec.ipam.podCIDRs[0]'
+```
+
+Example output:
+
+```
+NAME                NODE_IP       POD_CIDR
+hybrid-node-001     10.80.1.10    10.85.0.0/25
+hybrid-node-002     10.80.1.11    10.85.0.128/25
+hybrid-node-003     10.80.1.12    10.85.1.0/25
+```
+
+### Scripting Usage
+
+```bash
+# Extract routing table information using jq
+kubectl get ciliumnodes -o json | jq -r \
+  '.items[] | "\(.metadata.name)\t\(.spec.addresses[0].ip)\t\(.spec.ipam.podCIDRs[0])"'
+
+# Auto-generate static route commands (useful for EKS Hybrid Nodes, etc.)
+kubectl get ciliumnodes -o json | jq -r \
+  '.items[] | "ip route add \(.spec.ipam.podCIDRs[0]) via \(.spec.addresses[0].ip)"'
+```
+
+> **Use Case**: This information is used to configure static routes without BGP in EKS Hybrid Nodes environments. For details, see [EKS Hybrid Nodes - Network Configuration](../../eks-hybrid-nodes/02-network-configuration.md).
+
 ## Network Policy Design and Implementation
 
 Cilium network policies provide a powerful mechanism to control communication between microservices at L3-L7 layers. These policies extend the Kubernetes NetworkPolicy API to provide more granular control.

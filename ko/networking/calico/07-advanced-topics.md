@@ -1,7 +1,7 @@
 # Part 7: Calico 고급 주제
 
 > **지원 버전**: Calico v3.29+ / Kubernetes 1.28+
-> **마지막 업데이트**: 2025년 2월 22일
+> **마지막 업데이트**: 2026년 2월 22일
 
 ## 개요
 
@@ -283,6 +283,58 @@ spec:
   # 대규모 클러스터에서 IP 고갈 방지
   # 설정하지 않으면 필요에 따라 무제한 할당
 ```
+
+## BlockAffinity를 활용한 노드별 PodCIDR 조회
+
+Calico의 Block 기반 IPAM에서 각 노드에 할당된 CIDR 블록은 **BlockAffinity CR**로 추적됩니다. 이 CR은 정적 라우트 구성이나 IPAM 디버깅 시 노드별 파드 CIDR을 확인하는 데 사용됩니다.
+
+> **⚠ EKS Hybrid Nodes 참고**: Calico는 EKS Hybrid Nodes에서 **공식 지원이 중단**되었습니다. 신규 배포에는 [Cilium](../cilium/04-ipam-policy.md)을 사용하세요. 아래 내용은 기존 Calico 환경의 참고용입니다.
+
+### BlockAffinity CR 조회
+
+```bash
+# calicoctl을 사용한 IPAM 블록 조회
+calicoctl ipam show --show-blocks
+
+# BlockAffinity CR로 노드별 CIDR 확인
+kubectl get blockaffinities
+
+# 테이블 형태로 조회
+kubectl get blockaffinities -o custom-columns='\
+NAME:.metadata.name,\
+CIDR:.spec.cidr,\
+NODE:.spec.node'
+```
+
+출력 예시:
+
+```
+NAME                                    CIDR               NODE
+hybrid-node-001-10-85-0-0-25            10.85.0.0/25       hybrid-node-001
+hybrid-node-002-10-85-0-128-25          10.85.0.128/25     hybrid-node-002
+hybrid-node-003-10-85-1-0-25            10.85.1.0/25       hybrid-node-003
+```
+
+### 전체 IPPool 확인
+
+```bash
+kubectl get ippools -o custom-columns='\
+NAME:.metadata.name,\
+CIDR:.spec.cidr,\
+BLOCK_SIZE:.spec.blockSize'
+```
+
+### 정적 라우트 자동 생성
+
+BlockAffinity에서 정적 라우트 명령을 생성하는 예시:
+
+```bash
+# BlockAffinity에서 ip route 명령 생성
+kubectl get blockaffinities -o json | jq -r \
+  '.items[] | "ip route add \(.spec.cidr) via <NODE_IP_FOR_\(.spec.node)>"'
+```
+
+> **활용 사례**: EKS Hybrid Nodes 환경에서 BGP 없이 정적 라우트를 구성할 때 이 정보를 사용합니다. 자세한 내용은 [EKS Hybrid Nodes - 네트워크 구성](../../eks-hybrid-nodes/02-network-configuration.md)을 참조하세요.
 
 ## WireGuard 암호화
 

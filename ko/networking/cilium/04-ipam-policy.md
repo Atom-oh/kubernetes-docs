@@ -325,6 +325,67 @@ CRD 기반 IPAM은 Kubernetes CRD를 사용하여 IP 주소 할당을 관리합�
 2. Cilium 에이전트는 CRD에서 IP 주소 할당 정보를 읽습니다.
 3. IP 주소 할당 상태는 CRD에 업데이트됩니다.
 
+## CiliumNode CR을 활용한 노드별 PodCIDR 조회
+
+Cilium의 `cluster-pool` IPAM 모드에서는 각 노드에 할당된 파드 CIDR 정보가 **CiliumNode CR**에 기록됩니다. 이 CR은 정적 라우트 구성, IPAM 디버깅, 네트워크 트러블슈팅에서 권위 있는 소스로 활용됩니다.
+
+> **참고**: Kubernetes Node 객체의 `spec.podCIDR`은 CiliumNode CR의 `spec.ipam.podCIDRs`와 다를 수 있습니다. Cilium 환경에서는 항상 CiliumNode CR을 기준으로 합니다.
+
+### CiliumNode CR 구조 (주요 필드)
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNode
+metadata:
+  name: hybrid-node-001
+spec:
+  addresses:
+  - ip: 10.80.1.10        # 노드 IP (정적 라우트의 넥스트 홉으로 사용)
+    type: InternalIP
+  ipam:
+    podCIDRs:
+    - 10.85.0.0/25         # 이 노드에 할당된 파드 CIDR
+```
+
+- **`spec.addresses[].ip`**: 노드의 실제 IP 주소. 정적 라우트 구성 시 넥스트 홉으로 사용됩니다.
+- **`spec.ipam.podCIDRs`**: Cilium Operator가 이 노드에 할당한 파드 CIDR 목록.
+
+### 조회 명령어
+
+```bash
+# 모든 CiliumNode 목록 조회
+kubectl get ciliumnodes
+
+# 노드 IP와 PodCIDR을 테이블 형태로 조회
+kubectl get ciliumnodes -o custom-columns='\
+NAME:.metadata.name,\
+NODE_IP:.spec.addresses[0].ip,\
+POD_CIDR:.spec.ipam.podCIDRs[0]'
+```
+
+출력 예시:
+
+```
+NAME                NODE_IP       POD_CIDR
+hybrid-node-001     10.80.1.10    10.85.0.0/25
+hybrid-node-002     10.80.1.11    10.85.0.128/25
+hybrid-node-003     10.80.1.12    10.85.1.0/25
+```
+
+### 스크립팅 활용
+
+```bash
+# jq를 사용하여 라우팅 테이블 생성에 필요한 정보 추출
+kubectl get ciliumnodes -o json | jq -r \
+  '.items[] | "\(.metadata.name)\t\(.spec.addresses[0].ip)\t\(.spec.ipam.podCIDRs[0])"'
+
+# 정적 라우트 명령 자동 생성 (EKS Hybrid Nodes 등에서 활용)
+kubectl get ciliumnodes -o json | jq -r \
+  '.items[] | "ip route add \(.spec.ipam.podCIDRs[0]) via \(.spec.addresses[0].ip)"'
+```
+
+> **활용 사례**: EKS Hybrid Nodes 환경에서 BGP 없이 정적 라우트를 구성할 때 이 정보를 사용합니다. 자세한 내용은 [EKS Hybrid Nodes - 네트워크 구성](../../eks-hybrid-nodes/02-network-configuration.md)을 참조하세요.
+
 ## 네트워크 정책 설계 및 구현
 
 Cilium 네트워크 정책은 L3-L7 계층에서 마이크로서비스 간 통신을 제어하는 강력한 메커니즘을 제공합니다. 이러한 정책은 Kubernetes NetworkPolicy API를 확장하여 더 세분화된 제어를 제공합니다.

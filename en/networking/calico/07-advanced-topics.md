@@ -362,6 +362,58 @@ calicoctl ipam release --ip=10.244.1.5
 calicoctl ipam show --show-blocks | grep -E "Node|Block"
 ```
 
+## Querying Per-Node PodCIDRs via BlockAffinity
+
+In Calico's block-based IPAM, the CIDR block allocated to each node is tracked via **BlockAffinity CRs**. These CRs are used to identify per-node pod CIDRs for static route configuration or IPAM debugging.
+
+> **⚠ EKS Hybrid Nodes Note**: Calico is **no longer officially supported** on EKS Hybrid Nodes. Use [Cilium](../cilium/04-ipam-policy.md) for new deployments. The information below is provided for reference in existing Calico environments.
+
+### Querying BlockAffinity CRs
+
+```bash
+# Query IPAM blocks using calicoctl
+calicoctl ipam show --show-blocks
+
+# Check per-node CIDRs via BlockAffinity CRs
+kubectl get blockaffinities
+
+# Table format query
+kubectl get blockaffinities -o custom-columns='\
+NAME:.metadata.name,\
+CIDR:.spec.cidr,\
+NODE:.spec.node'
+```
+
+Example output:
+
+```
+NAME                                    CIDR               NODE
+hybrid-node-001-10-85-0-0-25            10.85.0.0/25       hybrid-node-001
+hybrid-node-002-10-85-0-128-25          10.85.0.128/25     hybrid-node-002
+hybrid-node-003-10-85-1-0-25            10.85.1.0/25       hybrid-node-003
+```
+
+### Checking the Overall IPPool
+
+```bash
+kubectl get ippools -o custom-columns='\
+NAME:.metadata.name,\
+CIDR:.spec.cidr,\
+BLOCK_SIZE:.spec.blockSize'
+```
+
+### Auto-Generating Static Routes
+
+Example of generating static route commands from BlockAffinity:
+
+```bash
+# Generate ip route commands from BlockAffinity
+kubectl get blockaffinities -o json | jq -r \
+  '.items[] | "ip route add \(.spec.cidr) via <NODE_IP_FOR_\(.spec.node)>"'
+```
+
+> **Use Case**: This information is used to configure static routes without BGP in EKS Hybrid Nodes environments. For details, see [EKS Hybrid Nodes - Network Configuration](../../eks-hybrid-nodes/02-network-configuration.md).
+
 ## WireGuard Encryption
 
 WireGuard provides efficient encryption for pod-to-pod traffic across nodes.
