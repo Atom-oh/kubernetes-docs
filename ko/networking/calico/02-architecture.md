@@ -9,6 +9,8 @@ Calico의 아키텍처는 확장성, 성능, 유연성을 중심으로 설계되
 
 ## 전체 아키텍처 다이어그램
 
+![Calico 아키텍처](../../assets/calico_architecture.png)
+
 ```mermaid
 graph TB
     subgraph "Kubernetes Control Plane"

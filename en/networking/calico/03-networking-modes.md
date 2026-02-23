@@ -9,6 +9,8 @@ Calico supports multiple networking modes to accommodate different infrastructur
 
 ## Networking Mode Summary
 
+![Calico Networking Modes Comparison](../../assets/calico_networking_modes.png)
+
 ```mermaid
 flowchart TD
     subgraph Modes["Calico Networking Modes"]

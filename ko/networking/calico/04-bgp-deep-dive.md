@@ -159,6 +159,8 @@ flowchart TD
 
 ## Calico BGP 아키텍처
 
+![Calico BGP 토폴로지](../../assets/calico_bgp_topology.png)
+
 ### Full-Mesh 토폴로지
 
 기본적으로 Calico는 모든 노드 간에 iBGP full-mesh를 구성합니다.

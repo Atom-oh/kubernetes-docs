@@ -1,0 +1,254 @@
+<mxfile host="app.diagrams.net" modified="2026-02-23T00:00:00.000Z" agent="Claude" version="21.0.0">
+  <diagram name="Calico Network Policy Tier Evaluation" id="calico-tier-eval">
+    <mxGraphModel dx="800" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="800" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="Calico Network Policy Tier Evaluation" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=20;fontStyle=1;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="200" y="10" width="400" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Packet Arrives -->
+        <mxCell id="packet" value="Packet Arrives" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#232F3E;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="60" width="160" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow from packet to SecurityOps -->
+        <mxCell id="arrow1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#232F3E;strokeWidth=2;endArrow=classic;endFill=1;" edge="1" parent="1" source="packet" target="secops_tier">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- SecurityOps Tier -->
+        <mxCell id="secops_tier" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#FF9900;opacity=20;" vertex="1" parent="1">
+          <mxGeometry x="100" y="120" width="600" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="secops_label" value="SecurityOps Tier" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=16;fontStyle=1;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="110" y="125" width="150" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="secops_order" value="Order: 100 (Highest Priority)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="260" y="125" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="secops_policy" value="AdminNetworkPolicy" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="130" y="160" width="140" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="secops_example" value="Example: &quot;Block known malicious IPs&quot;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontStyle=2;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="130" y="200" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Decision outputs for SecurityOps -->
+        <mxCell id="secops_allow" value="✅ ALLOW" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="130" width="80" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="secops_deny" value="❌ DENY" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C62828;strokeColor=#C62828;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="130" width="80" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="secops_pass" value="⏭️ PASS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1565C0;strokeColor=#1565C0;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="165" width="80" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="secops_exit1" value="Exit" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontFamily=Amazon Ember;fontSize=9;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="710" y="133" width="30" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="secops_arrow_allow" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2E7D32;strokeWidth=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="secops_allow">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="710" y="144" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="secops_arrow_deny" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#C62828;strokeWidth=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="secops_deny">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="710" y="144" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Arrow to Platform Tier -->
+        <mxCell id="arrow2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#232F3E;strokeWidth=2;endArrow=classic;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="400" y="250" as="sourcePoint" />
+            <mxPoint x="400" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nomatch1" value="No Match / Pass" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Amazon Ember;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="410" y="255" width="90" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Platform Tier -->
+        <mxCell id="platform_tier" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3F8624;strokeColor=#3F8624;opacity=20;" vertex="1" parent="1">
+          <mxGeometry x="100" y="280" width="600" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="platform_label" value="Platform Tier" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=16;fontStyle=1;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="110" y="285" width="120" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="platform_order" value="Order: 200" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="230" y="285" width="80" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="platform_policy" value="DNS Allow Policies" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#3F8624;fontFamily=Amazon Ember;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="130" y="320" width="140" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="platform_example" value="Example: &quot;Allow DNS egress&quot;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontStyle=2;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="130" y="360" width="180" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Decision outputs for Platform -->
+        <mxCell id="platform_allow" value="✅ ALLOW" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="290" width="80" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="platform_deny" value="❌ DENY" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C62828;strokeColor=#C62828;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="290" width="80" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="platform_pass" value="⏭️ PASS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1565C0;strokeColor=#1565C0;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="325" width="80" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="platform_exit" value="Exit" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontFamily=Amazon Ember;fontSize=9;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="710" y="293" width="30" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="platform_arrow_allow" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2E7D32;strokeWidth=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="platform_allow">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="710" y="304" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="platform_arrow_deny" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#C62828;strokeWidth=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="platform_deny">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="710" y="304" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Arrow to Application Tier -->
+        <mxCell id="arrow3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#232F3E;strokeWidth=2;endArrow=classic;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="400" y="410" as="sourcePoint" />
+            <mxPoint x="400" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nomatch2" value="No Match / Pass" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Amazon Ember;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="410" y="415" width="90" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Application Tier -->
+        <mxCell id="app_tier" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1565C0;strokeColor=#1565C0;opacity=20;" vertex="1" parent="1">
+          <mxGeometry x="100" y="440" width="600" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="app_label" value="Application Tier" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=16;fontStyle=1;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="110" y="445" width="130" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="app_order" value="Order: 300" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="240" y="445" width="80" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="app_policy1" value="K8s NetworkPolicy" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1565C0;fontFamily=Amazon Ember;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="130" y="480" width="120" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="app_policy2" value="Calico NetworkPolicy" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1565C0;fontFamily=Amazon Ember;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="260" y="480" width="130" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="app_example" value="Example: &quot;Allow frontend → backend&quot;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontStyle=2;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="130" y="520" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Decision outputs for Application -->
+        <mxCell id="app_allow" value="✅ ALLOW" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="450" width="80" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="app_deny" value="❌ DENY" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C62828;strokeColor=#C62828;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="450" width="80" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="app_pass" value="⏭️ PASS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1565C0;strokeColor=#1565C0;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="485" width="80" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="app_exit" value="Exit" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontFamily=Amazon Ember;fontSize=9;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="710" y="453" width="30" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="app_arrow_allow" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2E7D32;strokeWidth=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="app_allow">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="710" y="464" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="app_arrow_deny" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#C62828;strokeWidth=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="app_deny">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="710" y="464" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Arrow to Default Tier -->
+        <mxCell id="arrow4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#232F3E;strokeWidth=2;endArrow=classic;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="400" y="570" as="sourcePoint" />
+            <mxPoint x="400" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nomatch3" value="No Match / Pass" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontFamily=Amazon Ember;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="410" y="575" width="90" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Default Tier -->
+        <mxCell id="default_tier" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#666666;strokeColor=#666666;opacity=20;" vertex="1" parent="1">
+          <mxGeometry x="100" y="600" width="600" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="default_label" value="Default Tier" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=16;fontStyle=1;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="110" y="605" width="110" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="default_order" value="Order: ∞ (Lowest Priority)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="220" y="605" width="150" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="default_policy" value="Default Deny / Allow" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontFamily=Amazon Ember;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="130" y="640" width="140" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- Default outputs -->
+        <mxCell id="default_allow" value="✅ ALLOW" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="620" width="80" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="default_deny" value="❌ DENY" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C62828;strokeColor=#C62828;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="620" width="80" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="default_exit" value="Exit" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontFamily=Amazon Ember;fontSize=9;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="710" y="623" width="30" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="default_arrow_allow" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2E7D32;strokeWidth=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="default_allow">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="710" y="634" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="default_arrow_deny" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#C62828;strokeWidth=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="default_deny">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="710" y="634" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Final Default Note -->
+        <mxCell id="final_note" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#CCCCCC;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="720" width="600" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="final_note_text" value="Final Default: If no tier matches → Profile default action (typically ALLOW or DENY based on endpoint profile)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="120" y="735" width="560" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#E0E0E0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="800" width="600" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_title" value="Legend - Decision Actions" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="110" y="805" width="150" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_allow" value="✅ ALLOW" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="835" width="70" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_allow_desc" value="Match with Allow action - traffic permitted, exit evaluation" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="195" y="835" width="280" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_deny" value="❌ DENY" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C62828;strokeColor=#C62828;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="805" width="70" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_deny_desc" value="Match with Deny action - traffic blocked, exit" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="555" y="805" width="140" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_pass" value="⏭️ PASS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1565C0;strokeColor=#1565C0;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="835" width="70" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_pass_desc" value="Match with Pass action - continue to next tier" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="555" y="835" width="140" height="25" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

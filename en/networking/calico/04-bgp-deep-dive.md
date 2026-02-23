@@ -71,6 +71,8 @@ flowchart TD
 
 ## Calico BGP Architecture
 
+![Calico BGP Topologies](../../assets/calico_bgp_topology.png)
+
 ### BIRD: Calico's BGP Implementation
 
 Calico uses BIRD (BIRD Internet Routing Daemon) as its BGP implementation. BIRD runs as part of the `calico-node` DaemonSet on every node.

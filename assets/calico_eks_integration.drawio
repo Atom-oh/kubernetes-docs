@@ -1,0 +1,463 @@
+<mxfile host="app.diagrams.net" modified="2026-02-23T00:00:00.000Z" agent="Claude" version="21.0.0" type="device">
+  <diagram name="Calico on EKS" id="calico-eks-integration">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1400" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- AWS Cloud Container -->
+        <mxCell id="aws-cloud" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#232F3E;opacity=10;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="1360" height="760" as="geometry"/>
+        </mxCell>
+        <mxCell id="aws-cloud-label" value="AWS Cloud" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=16;fontColor=#232F3E;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="35" y="30" width="120" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- VPC Container -->
+        <mxCell id="vpc" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#147EBA;strokeColor=#147EBA;opacity=15;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="60" y="70" width="1180" height="690" as="geometry"/>
+        </mxCell>
+        <mxCell id="vpc-label" value="VPC (10.0.0.0/16)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=14;fontColor=#147EBA;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="75" y="80" width="150" height="25" as="geometry"/>
+        </mxCell>
+
+        <!-- Title -->
+        <mxCell id="title" value="Calico on Amazon EKS (VPC CNI + Calico)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=20;fontColor=#232F3E;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="30" width="400" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- EKS Control Plane -->
+        <mxCell id="eks-control-plane" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#FF9900;opacity=20;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="350" y="110" width="500" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="eks-cp-label" value="EKS Control Plane (AWS Managed)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=14;fontColor=#232F3E;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="125" width="300" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="eks-cp-icon" value="&#x2601;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontColor=#FF9900;" vertex="1" parent="1">
+          <mxGeometry x="370" y="115" width="40" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="api-server" value="API Server" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="420" y="150" width="80" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="etcd" value="etcd" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="520" y="150" width="60" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="controllers" value="Controllers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="600" y="150" width="80" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- calico-kube-controllers -->
+        <mxCell id="calico-kube-controllers" value="calico-kube-controllers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#326CE5;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="710" y="150" width="130" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Typha Deployment -->
+        <mxCell id="typha-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#326CE5;opacity=15;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="470" y="210" width="260" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="typha-label" value="Typha (Calico Scale Layer)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=12;fontColor=#326CE5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="215" width="200" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="typha-1" value="Typha" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1A4B8E;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="490" y="235" width="60" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="typha-2" value="Typha" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1A4B8E;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="570" y="235" width="60" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="typha-3" value="Typha" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1A4B8E;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="650" y="235" width="60" height="25" as="geometry"/>
+        </mxCell>
+
+        <!-- Worker Node 1 -->
+        <mxCell id="node1-sg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#DD3522;strokeWidth=2;dashed=1;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="95" y="295" width="450" height="380" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-sg-label" value="Security Group" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#DD3522;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="100" y="298" width="90" height="15" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="node1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="110" y="315" width="420" height="345" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-label" value="Worker Node 1 (EC2)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=13;fontColor=#232F3E;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="320" width="160" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 1: aws-node (VPC CNI) -->
+        <mxCell id="node1-aws-node" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#FF9900;opacity=25;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="125" y="345" width="185" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-aws-node-label" value="aws-node (VPC CNI)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#FF9900;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="130" y="348" width="175" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-ipamd" value="IPAMD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="135" y="370" width="70" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-eni-mgr" value="ENI Manager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="215" y="370" width="85" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 1: calico-node -->
+        <mxCell id="node1-calico-node" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#326CE5;opacity=25;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="320" y="345" width="195" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-calico-label" value="calico-node" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#326CE5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="325" y="348" width="185" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-felix" value="Felix" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1A4B8E;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="335" y="370" width="60" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-ebpf" value="eBPF&#xa;(optional)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1A4B8E;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="405" y="370" width="55" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-bird" value="BIRD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1A4B8E;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="470" y="370" width="35" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 1: Pods -->
+        <mxCell id="node1-pods-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#4CAF50;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="125" y="430" width="390" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-pods-label" value="Pods" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#4CAF50;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="130" y="433" width="40" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-pod1" value="Pod A&#xa;10.0.1.10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="140" y="455" width="80" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-pod2" value="Pod B&#xa;10.0.1.11" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="235" y="455" width="80" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-pod3" value="Pod C&#xa;10.0.1.12" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="330" y="455" width="80" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-pod4" value="Pod D&#xa;10.0.1.13" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="425" y="455" width="80" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 1: ENIs -->
+        <mxCell id="node1-eni-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9900;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="125" y="540" width="390" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-eni-label" value="Elastic Network Interfaces" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#FF9900;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="130" y="543" width="180" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-eni1" value="Primary ENI&#xa;eth0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="140" y="562" width="90" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-eni2" value="Secondary ENI&#xa;eth1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="250" y="562" width="100" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-eni3" value="Secondary ENI&#xa;eth2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="370" y="562" width="100" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 1: Policy shield indicator -->
+        <mxCell id="node1-policy-shield" value="&#x1F6E1;&#xFE0F; Policy Enforced" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#326CE5;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="400" y="320" width="120" height="15" as="geometry"/>
+        </mxCell>
+
+        <!-- Worker Node 2 -->
+        <mxCell id="node2-sg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#DD3522;strokeWidth=2;dashed=1;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="655" y="295" width="450" height="380" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-sg-label" value="Security Group" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#DD3522;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="660" y="298" width="90" height="15" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="node2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="670" y="315" width="420" height="345" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-label" value="Worker Node 2 (EC2)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=13;fontColor=#232F3E;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="320" width="160" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 2: aws-node (VPC CNI) -->
+        <mxCell id="node2-aws-node" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#FF9900;opacity=25;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="685" y="345" width="185" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-aws-node-label" value="aws-node (VPC CNI)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#FF9900;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="690" y="348" width="175" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-ipamd" value="IPAMD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="695" y="370" width="70" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-eni-mgr" value="ENI Manager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="775" y="370" width="85" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 2: calico-node -->
+        <mxCell id="node2-calico-node" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#326CE5;opacity=25;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="880" y="345" width="195" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-calico-label" value="calico-node" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#326CE5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="885" y="348" width="185" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-felix" value="Felix" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1A4B8E;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="895" y="370" width="60" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-ebpf" value="eBPF&#xa;(optional)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1A4B8E;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="965" y="370" width="55" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-bird" value="BIRD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1A4B8E;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1030" y="370" width="35" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 2: Pods -->
+        <mxCell id="node2-pods-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#4CAF50;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="685" y="430" width="390" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-pods-label" value="Pods" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#4CAF50;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="690" y="433" width="40" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-pod1" value="Pod E&#xa;10.0.2.10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="700" y="455" width="80" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-pod2" value="Pod F&#xa;10.0.2.11" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="795" y="455" width="80" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-pod3" value="Pod G&#xa;10.0.2.12" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="890" y="455" width="80" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-pod4" value="Pod H&#xa;10.0.2.13" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#2E7D32;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="985" y="455" width="80" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 2: ENIs -->
+        <mxCell id="node2-eni-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9900;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="685" y="540" width="390" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-eni-label" value="Elastic Network Interfaces" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#FF9900;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="690" y="543" width="180" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-eni1" value="Primary ENI&#xa;eth0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="700" y="562" width="90" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-eni2" value="Secondary ENI&#xa;eth1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="810" y="562" width="100" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-eni3" value="Secondary ENI&#xa;eth2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="930" y="562" width="100" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 2: Policy shield indicator -->
+        <mxCell id="node2-policy-shield" value="&#x1F6E1;&#xFE0F; Policy Enforced" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#326CE5;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="960" y="320" width="120" height="15" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 1: kubelet -->
+        <mxCell id="node1-kubelet" value="kubelet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9E9E9E;strokeColor=#616161;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="125" y="610" width="60" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1-kube-proxy" value="kube-proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9E9E9E;strokeColor=#616161;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="195" y="610" width="75" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 2: kubelet -->
+        <mxCell id="node2-kubelet" value="kubelet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9E9E9E;strokeColor=#616161;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="685" y="610" width="60" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2-kube-proxy" value="kube-proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9E9E9E;strokeColor=#616161;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="755" y="610" width="75" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- AWS Services (ALB/NLB) -->
+        <mxCell id="alb-nlb" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;opacity=20;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="110" width="100" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="alb-nlb-label" value="Load Balancers" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=11;fontColor=#FF9900;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="115" width="100" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="alb" value="ALB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1135" y="145" width="70" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="nlb" value="NLB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1135" y="200" width="70" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Legend Box -->
+        <mxCell id="legend" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#BDBDBD;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="295" width="105" height="210" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=12;fontColor=#232F3E;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="300" width="105" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-vpc-cni" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;" vertex="1" parent="1">
+          <mxGeometry x="1130" y="325" width="20" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-vpc-cni-text" value="VPC CNI" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="1155" y="322" width="65" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-calico" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1A4B8E;" vertex="1" parent="1">
+          <mxGeometry x="1130" y="350" width="20" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-calico-text" value="Calico" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="1155" y="347" width="65" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-pod" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="1130" y="375" width="20" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-pod-text" value="Pod" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="1155" y="372" width="65" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-divider" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#BDBDBD;" vertex="1" parent="1">
+          <mxGeometry x="1125" y="400" width="95" height="10" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-role-title" value="Responsibilities" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#232F3E;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="410" width="105" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-vpc-role" value="VPC CNI =&#xa;Networking" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#FF9900;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="430" width="105" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-calico-role" value="Calico =&#xa;Policy" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#326CE5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="465" width="105" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Connections: Control Plane to Typha -->
+        <mxCell id="conn-cp-typha" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#326CE5;strokeWidth=2;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="eks-control-plane" target="typha-container">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="600" y="200" as="sourcePoint"/>
+            <mxPoint x="600" y="220" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Connections: Typha to calico-nodes -->
+        <mxCell id="conn-typha-node1" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#326CE5;strokeWidth=2;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="typha-container" target="node1-calico-node">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="500" y="280" as="sourcePoint"/>
+            <mxPoint x="420" y="345" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="535" y="300"/>
+              <mxPoint x="418" y="300"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn-typha-node2" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#326CE5;strokeWidth=2;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="typha-container" target="node2-calico-node">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="700" y="280" as="sourcePoint"/>
+            <mxPoint x="980" y="345" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="665" y="300"/>
+              <mxPoint x="978" y="300"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Connections: calico-kube-controllers to Typha -->
+        <mxCell id="conn-ckc-typha" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#326CE5;strokeWidth=1;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="calico-kube-controllers" target="typha-container">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="700" y="200" as="sourcePoint"/>
+            <mxPoint x="730" y="240" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="700" y="165"/>
+              <mxPoint x="700" y="195"/>
+              <mxPoint x="740" y="240"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Connections: VPC CNI to ENIs (orange arrows) -->
+        <mxCell id="conn-vpccni-eni1" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#FF9900;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="node1-aws-node" target="node1-eni-container">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="220" y="420" as="sourcePoint"/>
+            <mxPoint x="320" y="545" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="218" y="425"/>
+              <mxPoint x="118" y="425"/>
+              <mxPoint x="118" y="535"/>
+              <mxPoint x="320" y="535"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn-vpccni-eni2" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#FF9900;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="node2-aws-node" target="node2-eni-container">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="780" y="420" as="sourcePoint"/>
+            <mxPoint x="880" y="545" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="778" y="425"/>
+              <mxPoint x="678" y="425"/>
+              <mxPoint x="678" y="535"/>
+              <mxPoint x="880" y="535"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Connections: VPC CNI to Pods (IP assignment) -->
+        <mxCell id="conn-vpccni-pods1" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#FF9900;strokeWidth=1;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="170" y="405" as="sourcePoint"/>
+            <mxPoint x="242" y="430" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn-vpccni-pods2" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#FF9900;strokeWidth=1;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="730" y="405" as="sourcePoint"/>
+            <mxPoint x="802" y="430" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Connections: Calico policy to Pods (blue arrows) -->
+        <mxCell id="conn-calico-pods1" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#326CE5;strokeWidth=1;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.7;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="365" y="405" as="sourcePoint"/>
+            <mxPoint x="398" y="430" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn-calico-pods2" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#326CE5;strokeWidth=1;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.7;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="925" y="405" as="sourcePoint"/>
+            <mxPoint x="958" y="430" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Connection: ALB/NLB to nodes -->
+        <mxCell id="conn-lb-node1" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#FF9900;strokeWidth=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="alb-nlb">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1100" y="200" as="sourcePoint"/>
+            <mxPoint x="545" y="300" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="1100" y="185"/>
+              <mxPoint x="900" y="185"/>
+              <mxPoint x="900" y="280"/>
+              <mxPoint x="545" y="280"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Label: IP Assignment flow -->
+        <mxCell id="label-ip-assignment" value="IP Assignment" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=9;fontColor=#FF9900;fontStyle=2;rotation=-45;" vertex="1" parent="1">
+          <mxGeometry x="180" y="415" width="70" height="15" as="geometry"/>
+        </mxCell>
+
+        <!-- Label: Policy Enforcement flow -->
+        <mxCell id="label-policy-enforcement" value="Policy Enforcement" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=9;fontColor=#326CE5;fontStyle=2;rotation=-45;" vertex="1" parent="1">
+          <mxGeometry x="355" y="415" width="90" height="15" as="geometry"/>
+        </mxCell>
+
+        <!-- Cross-node traffic indicator -->
+        <mxCell id="cross-node-traffic" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;strokeColor=#4CAF50;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="520" y="480" as="sourcePoint"/>
+            <mxPoint x="690" y="480" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cross-node-label" value="Pod-to-Pod Traffic&#xa;(VPC Routed)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=9;fontColor=#4CAF50;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="555" y="455" width="100" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Subnet labels -->
+        <mxCell id="subnet1-label" value="Subnet: 10.0.1.0/24" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=bottom;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#147EBA;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="230" y="650" width="120" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="subnet2-label" value="Subnet: 10.0.2.0/24" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=bottom;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#147EBA;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="790" y="650" width="120" height="15" as="geometry"/>
+        </mxCell>
+
+        <!-- Data flow annotation -->
+        <mxCell id="data-flow-note" value="&#x2192; VPC CNI manages ENIs and assigns Pod IPs from VPC CIDR&#xa;&#x2192; Calico enforces NetworkPolicy without modifying networking" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontColor=#666666;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="75" y="695" width="400" height="35" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

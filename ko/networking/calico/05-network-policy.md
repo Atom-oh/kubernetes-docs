@@ -559,6 +559,8 @@ spec:
 
 ## Tier 기반 정책
 
+![Calico Network Policy Tier 평가 흐름](../../assets/calico_network_policy_tiers.png)
+
 Tier는 정책을 계층화하여 관리합니다. 보안팀, 플랫폼팀, 애플리케이션팀이 각자의 영역에서 정책을 관리할 수 있습니다.
 
 ### Tier 정의

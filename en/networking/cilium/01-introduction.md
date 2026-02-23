@@ -46,7 +46,7 @@ Cilium is an open-source software that provides networking, security, and observ
 
 ### Cilium Architecture
 
-![cilium-architecture](../assets/cilium_arch.png)
+![cilium-architecture](../../assets/cilium_arch.png)
 
 ## Container Networking Basics
 

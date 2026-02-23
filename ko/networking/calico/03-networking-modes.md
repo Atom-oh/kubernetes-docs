@@ -9,6 +9,8 @@ Calico는 다양한 네트워킹 환경에 맞는 여러 모드를 제공합니�
 
 ## 네트워킹 모드 개요
 
+![Calico 네트워킹 모드 비교](../../assets/calico_networking_modes.png)
+
 ```mermaid
 graph TB
     subgraph "Calico 네트워킹 모드"

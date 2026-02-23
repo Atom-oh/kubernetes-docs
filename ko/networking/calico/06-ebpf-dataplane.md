@@ -126,6 +126,8 @@ flowchart LR
 
 ## Calico eBPF vs iptables 아키텍처
 
+![Calico 데이터플레인: iptables vs eBPF](../../assets/calico_ebpf_vs_iptables.png)
+
 ### iptables 모드 아키텍처
 
 ```mermaid

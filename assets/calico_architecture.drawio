@@ -1,0 +1,207 @@
+<mxfile host="65bd71144e">
+    <diagram id="calico-architecture" name="Calico Architecture">
+        <mxGraphModel dx="991" dy="717" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1200" pageHeight="700" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="Calico Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontFamily=Amazon Ember;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="20" width="300" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="control-plane-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#CCCCCC;strokeWidth=2;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="230" y="70" width="440" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="control-plane-label" value="Control Plane" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="240" y="75" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="api-server" value="Kubernetes&#10;API Server" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8B5CF6;strokeColor=#7C3AED;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontStyle=1;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="410" y="90" width="80" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="api-server-subtitle" value="(Datastore)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="410" y="159" width="80" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="kube-controllers" value="kube-&#10;controllers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8B5CF6;strokeColor=#7C3AED;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontStyle=1;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="540" y="90" width="80" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="kube-controllers-desc" value="Syncs K8s resources" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="525" y="159" width="110" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="kube-to-api" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#7C3AED;strokeWidth=2;edgeStyle=orthogonalEdgeStyle;" parent="1" source="kube-controllers" target="api-server" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="530" y="130" as="sourcePoint"/>
+                        <mxPoint x="510" y="130" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="typha-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#F59E0B;strokeWidth=2;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="330" y="220" width="240" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="typha" value="Typha" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F97316;strokeColor=#EA580C;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="410" y="240" width="80" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="typha-desc" value="Caching Proxy (optional, for scale)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="330" y="275" width="240" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="api-to-typha" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#7C3AED;strokeWidth=2;edgeStyle=orthogonalEdgeStyle;" parent="1" source="api-server" target="typha" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="460" y="180" as="sourcePoint"/>
+                        <mxPoint x="460" y="220" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="api-to-typha-label" value="Watch" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Amazon Ember;fontColor=#7C3AED;" parent="1" vertex="1">
+                    <mxGeometry x="465" y="195" width="40" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="node1-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#94A3B8;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="320" width="280" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="node1-label" value="Worker Node 1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontFamily=Amazon Ember;fontColor=#334155;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="330" width="120" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="calico-node1-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#F97316;strokeWidth=2;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="360" width="240" height="240" as="geometry"/>
+                </mxCell>
+                <mxCell id="calico-node1-label" value="calico/node container" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;fontFamily=Amazon Ember;fontColor=#EA580C;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="365" width="140" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="felix1" value="Felix" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#22C55E;strokeColor=#16A34A;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="180" y="400" width="90" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="felix1-desc" value="Programs routes&#10;&amp; ACLs&#10;(iptables/eBPF)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="170" y="450" width="110" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="confd1" value="confd" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F97316;strokeColor=#EA580C;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="400" width="90" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="confd1-desc" value="Watches datastore&#10;Generates BIRD config" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="450" width="110" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="bird1" value="BIRD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B82F6;strokeColor=#2563EB;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="180" y="510" width="90" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="bird1-desc" value="BGP Daemon&#10;Distributes routes" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="170" y="560" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="confd1-to-bird1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#EA580C;strokeWidth=2;edgeStyle=orthogonalEdgeStyle;" parent="1" source="confd1-desc" target="bird1" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="225" y="460" as="sourcePoint"/>
+                        <mxPoint x="200" y="510" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="105" y="535"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="confd1-to-bird1-label" value="config" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;fontFamily=Amazon Ember;fontColor=#EA580C;" parent="1" vertex="1">
+                    <mxGeometry x="125" y="537.5" width="30" height="15" as="geometry"/>
+                </mxCell>
+                <mxCell id="node2-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#94A3B8;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="585" y="320" width="280" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="node2-label" value="Worker Node 2" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontFamily=Amazon Ember;fontColor=#334155;" parent="1" vertex="1">
+                    <mxGeometry x="595" y="330" width="120" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="calico-node2-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#F97316;strokeWidth=2;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="605" y="360" width="240" height="240" as="geometry"/>
+                </mxCell>
+                <mxCell id="calico-node2-label" value="calico/node container" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;fontFamily=Amazon Ember;fontColor=#EA580C;" parent="1" vertex="1">
+                    <mxGeometry x="615" y="365" width="140" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="felix2" value="Felix" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#22C55E;strokeColor=#16A34A;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="625" y="400" width="90" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="felix2-desc" value="Programs routes&#10;&amp; ACLs&#10;(iptables/eBPF)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="615" y="450" width="110" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="confd2" value="confd" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F97316;strokeColor=#EA580C;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="735" y="400" width="90" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="confd2-desc" value="Watches datastore&#10;Generates BIRD config" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="725" y="450" width="110" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="bird2" value="BIRD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B82F6;strokeColor=#2563EB;fontColor=#FFFFFF;fontFamily=Amazon Ember;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="625" y="510" width="90" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="bird2-desc" value="BGP Daemon&#10;Distributes routes" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="615" y="560" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="confd2-to-bird2" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#EA580C;strokeWidth=2;edgeStyle=orthogonalEdgeStyle;" parent="1" source="confd2" target="bird2" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="780" y="460" as="sourcePoint"/>
+                        <mxPoint x="755" y="510" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="780" y="535"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="confd2-to-bird2-label" value="config" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;fontFamily=Amazon Ember;fontColor=#EA580C;" parent="1" vertex="1">
+                    <mxGeometry x="740" y="537.5" width="30" height="15" as="geometry"/>
+                </mxCell>
+                <mxCell id="bgp-peering" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#2563EB;strokeWidth=3;edgeStyle=orthogonalEdgeStyle;" parent="1" source="bird1" target="bird2" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="300" y="535" as="sourcePoint"/>
+                        <mxPoint x="900" y="535" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="bgp-peering-label" value="BGP Peering" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;fontFamily=Amazon Ember;fontColor=#2563EB;" parent="1" vertex="1">
+                    <mxGeometry x="405" y="517.5" width="90" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="bgp-peering-desc" value="Route Exchange" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="405" y="537.5" width="90" height="15" as="geometry"/>
+                </mxCell>
+                <mxCell id="typha-to-felix1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#16A34A;strokeWidth=2;edgeStyle=orthogonalEdgeStyle;" parent="1" source="typha" target="felix1" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="540" y="260" as="sourcePoint"/>
+                        <mxPoint x="185" y="400" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="360" y="260"/>
+                            <mxPoint x="360" y="425"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="typha-to-felix1-label" value="Policy/Config" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;fontFamily=Amazon Ember;fontColor=#16A34A;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="300" width="60" height="15" as="geometry"/>
+                </mxCell>
+                <mxCell id="typha-to-felix2" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#16A34A;strokeWidth=2;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="typha" target="felix2" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="450" y="280" as="sourcePoint"/>
+                        <mxPoint x="905" y="400" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="540" y="260"/>
+                            <mxPoint x="540" y="425"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="typha-to-felix2-label" value="Policy/Config" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;fontFamily=Amazon Ember;fontColor=#16A34A;" parent="1" vertex="1">
+                    <mxGeometry x="600" y="300" width="60" height="15" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#E2E8F0;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="70" width="180" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontFamily=Amazon Ember;fontColor=#334155;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="75" width="60" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-purple" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8B5CF6;strokeColor=#7C3AED;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="100" width="20" height="15" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-purple-text" value="API / Control" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="55" y="97" width="80" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-orange" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F97316;strokeColor=#EA580C;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="125" width="20" height="15" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-orange-text" value="Compute / Config" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="55" y="122" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-green" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#22C55E;strokeColor=#16A34A;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="150" width="20" height="15" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-green-text" value="Policy (Felix)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="55" y="147" width="80" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-blue" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3B82F6;strokeColor=#2563EB;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="175" width="20" height="15" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-blue-text" value="Networking (BGP)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Amazon Ember;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="55" y="172" width="100" height="20" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

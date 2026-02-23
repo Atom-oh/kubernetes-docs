@@ -1,0 +1,286 @@
+<mxfile host="app.diagrams.net" modified="2026-02-23T00:00:00.000Z" agent="Claude" version="21.0.0">
+  <diagram name="Calico Dataplane Comparison" id="calico-dataplane-comparison">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1200" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="Calico Dataplane: iptables vs eBPF" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=24;fontStyle=1;fontColor=#232F3E;" parent="1" vertex="1">
+          <mxGeometry x="300" y="10" width="600" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Section 1: iptables Dataplane -->
+        <mxCell id="iptables-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E5;strokeColor=#FF9900;strokeWidth=2;fontFamily=Amazon Ember;" parent="1" vertex="1">
+          <mxGeometry x="20" y="60" width="1160" height="300" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iptables-title" value="iptables Dataplane (Legacy)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=18;fontStyle=1;fontColor=#FF9900;" parent="1" vertex="1">
+          <mxGeometry x="40" y="70" width="300" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- NIC (iptables) -->
+        <mxCell id="nic-iptables" value="NIC" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE4B5;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="40" y="150" width="60" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- PREROUTING chain -->
+        <mxCell id="prerouting" value="PREROUTING" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCC80;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="140" y="130" width="100" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Chain jumps under PREROUTING -->
+        <mxCell id="pre-raw" value="raw" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="140" y="175" width="45" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="pre-mangle" value="mangle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="140" y="200" width="45" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="pre-nat" value="nat" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="195" y="175" width="45" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Conntrack -->
+        <mxCell id="conntrack" value="conntrack&#xa;(Connection Tracking)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=10;fontStyle=2;" parent="1" vertex="1">
+          <mxGeometry x="145" y="225" width="90" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- FORWARD chain -->
+        <mxCell id="forward" value="FORWARD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCC80;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="280" y="130" width="100" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Chain jumps under FORWARD -->
+        <mxCell id="fwd-mangle" value="mangle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="280" y="175" width="45" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="fwd-filter" value="filter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="335" y="175" width="45" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- kube-proxy rules -->
+        <mxCell id="kube-proxy" value="kube-proxy&#xa;iptables rules&#xa;(Service LB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB74D;strokeColor=#E65100;fontFamily=Amazon Ember;fontSize=10;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="420" y="130" width="100" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- POSTROUTING chain -->
+        <mxCell id="postrouting" value="POSTROUTING" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCC80;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="560" y="130" width="100" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Chain jumps under POSTROUTING -->
+        <mxCell id="post-mangle" value="mangle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="560" y="175" width="45" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="post-nat" value="nat" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="615" y="175" width="45" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Destination Pod (iptables) -->
+        <mxCell id="dest-pod-iptables" value="Destination&#xa;Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE4B5;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="700" y="140" width="80" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- O(N) Warning -->
+        <mxCell id="on-warning" value="⚠ O(N) Rule Evaluation&#xa;Performance degrades&#xa;with rule count" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCDD2;strokeColor=#D32F2F;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;fontColor=#D32F2F;" parent="1" vertex="1">
+          <mxGeometry x="820" y="120" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Packet flow note (iptables) -->
+        <mxCell id="iptables-note" value="Multiple chain traversals per packet = high latency" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontStyle=2;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="200" y="290" width="400" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- iptables arrows -->
+        <mxCell id="arrow1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF9900;strokeWidth=2;endArrow=classic;endFill=1;" parent="1" source="nic-iptables" target="prerouting" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF9900;strokeWidth=2;endArrow=classic;endFill=1;" parent="1" source="prerouting" target="forward" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF9900;strokeWidth=2;endArrow=classic;endFill=1;" parent="1" source="forward" target="kube-proxy" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF9900;strokeWidth=2;endArrow=classic;endFill=1;" parent="1" source="kube-proxy" target="postrouting" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF9900;strokeWidth=2;endArrow=classic;endFill=1;" parent="1" source="postrouting" target="dest-pod-iptables" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Section 2: eBPF Dataplane -->
+        <mxCell id="ebpf-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#4CAF50;strokeWidth=2;fontFamily=Amazon Ember;" parent="1" vertex="1">
+          <mxGeometry x="20" y="380" width="1160" height="300" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ebpf-title" value="eBPF Dataplane (Modern)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=18;fontStyle=1;fontColor=#4CAF50;" parent="1" vertex="1">
+          <mxGeometry x="40" y="390" width="300" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- NIC (eBPF) -->
+        <mxCell id="nic-ebpf" value="NIC" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#4CAF50;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="40" y="470" width="60" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- TC Hook with BPF Program -->
+        <mxCell id="tc-hook" value="TC Hook&#xa;(BPF Program)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#81C784;strokeColor=#388E3C;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="150" y="460" width="120" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- BPF Maps -->
+        <mxCell id="bpf-maps-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#A5D6A7;strokeColor=#4CAF50;fontFamily=Amazon Ember;" parent="1" vertex="1">
+          <mxGeometry x="320" y="430" width="200" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="bpf-maps-title" value="BPF Maps" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;fontColor=#2E7D32;" parent="1" vertex="1">
+          <mxGeometry x="370" y="435" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="policy-map" value="Policy Lookup Map" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#4CAF50;fontFamily=Amazon Ember;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="335" y="460" width="170" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="service-map" value="Service Routing Map" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#4CAF50;fontFamily=Amazon Ember;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="335" y="495" width="170" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="endpoint-map" value="Endpoint Map" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#4CAF50;fontFamily=Amazon Ember;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="335" y="530" width="170" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Connect-time LB -->
+        <mxCell id="connect-lb" value="Connect-time&#xa;Load Balancing&#xa;(Socket Level)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#66BB6A;strokeColor=#2E7D32;fontFamily=Amazon Ember;fontSize=10;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="560" y="430" width="100" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Destination Pod (eBPF) -->
+        <mxCell id="dest-pod-ebpf" value="Destination&#xa;Pod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#4CAF50;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="700" y="460" width="80" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- DSR Path -->
+        <mxCell id="dsr-box" value="DSR Path&#xa;(Direct Server Return)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#81C784;strokeColor=#388E3C;fontFamily=Amazon Ember;fontSize=10;fontStyle=2;dashed=1;" parent="1" vertex="1">
+          <mxGeometry x="560" y="510" width="120" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- kube-proxy crossed out -->
+        <mxCell id="no-kube-proxy" value="kube-proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCDD2;strokeColor=#D32F2F;fontFamily=Amazon Ember;fontSize=10;fontStyle=1;fontColor=#D32F2F;dashed=1;" parent="1" vertex="1">
+          <mxGeometry x="820" y="500" width="80" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="cross-line1" style="endArrow=none;html=1;strokeColor=#D32F2F;strokeWidth=3;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820" y="535" as="sourcePoint" />
+            <mxPoint x="900" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cross-line2" style="endArrow=none;html=1;strokeColor=#D32F2F;strokeWidth=3;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820" y="500" as="sourcePoint" />
+            <mxPoint x="900" y="535" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="not-needed" value="Not Needed!" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=9;fontStyle=2;fontColor=#D32F2F;" parent="1" vertex="1">
+          <mxGeometry x="820" y="540" width="80" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- O(1) Success -->
+        <mxCell id="o1-success" value="✓ O(1) Map Lookup&#xa;Constant time&#xa;regardless of scale" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32;fontFamily=Amazon Ember;fontSize=11;fontStyle=1;fontColor=#2E7D32;" parent="1" vertex="1">
+          <mxGeometry x="820" y="430" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Packet flow note (eBPF) -->
+        <mxCell id="ebpf-note" value="Single BPF program handles policy + routing = low latency" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=10;fontStyle=2;fontColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="200" y="610" width="400" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- eBPF arrows -->
+        <mxCell id="arrow6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4CAF50;strokeWidth=2;endArrow=classic;endFill=1;" parent="1" source="nic-ebpf" target="tc-hook" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4CAF50;strokeWidth=2;endArrow=classic;endFill=1;" parent="1" source="tc-hook" target="bpf-maps-container" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4CAF50;strokeWidth=2;endArrow=classic;endFill=1;" parent="1" source="bpf-maps-container" target="connect-lb" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4CAF50;strokeWidth=2;endArrow=classic;endFill=1;" parent="1" source="connect-lb" target="dest-pod-ebpf" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- DSR arrow -->
+        <mxCell id="dsr-arrow" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2E7D32;strokeWidth=2;endArrow=classic;endFill=1;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="dsr-box" target="dest-pod-ebpf" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="690" y="532" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Comparison Metrics Section -->
+        <mxCell id="metrics-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#9E9E9E;strokeWidth=2;fontFamily=Amazon Ember;" parent="1" vertex="1">
+          <mxGeometry x="20" y="700" width="1160" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="metrics-title" value="Performance Comparison" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=14;fontStyle=1;fontColor=#424242;" parent="1" vertex="1">
+          <mxGeometry x="480" y="705" width="240" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Latency comparison -->
+        <mxCell id="latency-label" value="Latency" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;fontColor=#616161;" parent="1" vertex="1">
+          <mxGeometry x="60" y="730" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="latency-iptables" value="iptables: Higher ▲" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=10;fontColor=#E65100;" parent="1" vertex="1">
+          <mxGeometry x="150" y="730" width="120" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="latency-ebpf" value="eBPF: Lower ▼" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#4CAF50;fontFamily=Amazon Ember;fontSize=10;fontColor=#2E7D32;" parent="1" vertex="1">
+          <mxGeometry x="280" y="730" width="120" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- CPU comparison -->
+        <mxCell id="cpu-label" value="CPU Usage" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;fontColor=#616161;" parent="1" vertex="1">
+          <mxGeometry x="440" y="730" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="cpu-iptables" value="iptables: Higher ▲" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=10;fontColor=#E65100;" parent="1" vertex="1">
+          <mxGeometry x="530" y="730" width="120" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="cpu-ebpf" value="eBPF: Lower ▼" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#4CAF50;fontFamily=Amazon Ember;fontSize=10;fontColor=#2E7D32;" parent="1" vertex="1">
+          <mxGeometry x="660" y="730" width="120" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Scalability comparison -->
+        <mxCell id="scale-label" value="Scalability" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Amazon Ember;fontSize=12;fontStyle=1;fontColor=#616161;" parent="1" vertex="1">
+          <mxGeometry x="820" y="730" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="scale-iptables" value="iptables: Limited ✗" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FF9900;fontFamily=Amazon Ember;fontSize=10;fontColor=#E65100;" parent="1" vertex="1">
+          <mxGeometry x="910" y="730" width="120" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="scale-ebpf" value="eBPF: Excellent ✓" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#4CAF50;fontFamily=Amazon Ember;fontSize=10;fontColor=#2E7D32;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="730" width="120" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Latency bar indicators -->
+        <mxCell id="latency-bar-ipt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="150" y="760" width="100" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="latency-bar-ebpf" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="280" y="760" width="40" height="8" as="geometry" />
+        </mxCell>
+
+        <!-- CPU bar indicators -->
+        <mxCell id="cpu-bar-ipt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="530" y="760" width="90" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="cpu-bar-ebpf" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="660" y="760" width="35" height="8" as="geometry" />
+        </mxCell>
+
+        <!-- Scale bar indicators -->
+        <mxCell id="scale-bar-ipt" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="910" y="760" width="50" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="scale-bar-ebpf" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#4CAF50;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="760" width="110" height="8" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

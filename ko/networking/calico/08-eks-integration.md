@@ -9,6 +9,8 @@
 
 ## VPC CNI + Calico 아키텍처
 
+![Calico on Amazon EKS](../../assets/calico_eks_integration.png)
+
 ### 통합 아키텍처 상세
 
 EKS에서는 AWS VPC CNI가 Pod 네트워킹을 담당하고, Calico는 Network Policy 적용을 담당하는 하이브리드 구성이 일반적입니다.

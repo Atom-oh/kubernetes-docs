@@ -64,6 +64,8 @@ flowchart TB
 
 ## Calico eBPF Architecture
 
+![Calico Dataplane: iptables vs eBPF](../../assets/calico_ebpf_vs_iptables.png)
+
 ### Architecture Comparison
 
 ```mermaid
