@@ -458,7 +458,31 @@ aws s3api put-bucket-policy \
 
 ---
 
-## PHZ DNS Override
+## Air-Gap Installation Method Comparison
+
+There are two main approaches to installing nodeadm binaries on nodes in air-gapped environments:
+
+| Item | Method 1: PHZ DNS Override | Method 2: Manual Binary Pre-installation |
+|------|---------------------------|----------------------------------------|
+| **Principle** | Override DNS so `nodeadm install` downloads from S3 | Download directly from S3 and skip `nodeadm install` |
+| **PHZ Required** | Yes | No |
+| **Route53 Required** | Yes | No |
+| **Uses nodeadm install** | Yes (works normally) | No (skipped) |
+| **Advantages** | Uses the official nodeadm workflow as-is | Minimal infrastructure setup, fast configuration |
+| **Disadvantages** | Complex PHZ + DNS forwarding setup | Manual management required for nodeadm version updates |
+| **Best For** | Large-scale operations, long-term management | Small-scale, PoC, quick testing |
+
+> **Why can't you change the download URL with environment variables?**
+>
+> nodeadm's artifact download URL (`hybrid-assets.eks.amazonaws.com`) is a build-time constant injected
+> via Go ldflags (`-X github.com/aws/eks-hybrid/internal/aws.manifestUrl=...`).
+> There is no `os.Getenv()` call for the artifact URL, so the official release binary
+> cannot be redirected to a URL other than `hybrid-assets.eks.amazonaws.com`.
+> Building from source allows changing the `MANIFEST_HOST` Makefile variable, but this is outside official support.
+
+---
+
+## PHZ DNS Override (Method 1)
 
 ### The Problem
 
@@ -554,11 +578,11 @@ zone "eks.amazonaws.com" {
 
 ---
 
-## Installation on Air-Gapped Nodes
+## Installation on Air-Gapped Nodes (Method 2: Manual Binary Pre-installation)
 
 ### Offline Installation Script (offline-install.sh)
 
-Run this on the air-gapped node to download binaries from the S3 bucket via VPC Endpoint and install them.
+This method installs binaries directly on air-gapped nodes without PHZ configuration. It downloads binaries from the S3 bucket via VPC Endpoint and installs them manually. With this approach, you can skip the `nodeadm install` step and proceed directly to `nodeadm init`.
 
 ```bash
 #!/bin/bash
@@ -646,7 +670,9 @@ log "Installation complete!"
 log ""
 log "Next steps:"
 log "1. Verify nodeadm version: nodeadm version"
-log "2. Install EKS components: sudo nodeadm install $KUBERNETES_VERSION --credential-provider ssm"
+log "2. (Manual installation was used, so the nodeadm install step is skipped)"
+log "   Only run nodeadm install if you have configured PHZ DNS override:"
+log "   sudo nodeadm install $KUBERNETES_VERSION --credential-provider ssm"
 log "3. Join cluster: sudo nodeadm init --config-source file://nodeconfig.yaml"
 ```
 

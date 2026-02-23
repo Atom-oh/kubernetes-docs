@@ -458,7 +458,31 @@ aws s3api put-bucket-policy \
 
 ---
 
-## PHZ DNS 오버라이드
+## 에어갭 설치 방법 비교
+
+에어갭 환경에서 nodeadm 바이너리를 노드에 설치하는 방법은 크게 두 가지입니다:
+
+| 항목 | 방법 1: PHZ DNS 오버라이드 | 방법 2: 수동 바이너리 사전 설치 |
+|------|--------------------------|-------------------------------|
+| **원리** | DNS를 오버라이드하여 `nodeadm install`이 S3에서 다운로드하도록 유도 | S3에서 직접 다운로드 후 `nodeadm install` 단계를 건너뜀 |
+| **PHZ 필요** | 예 | 아니오 |
+| **Route53 필요** | 예 | 아니오 |
+| **nodeadm install 사용** | 예 (정상 동작) | 아니오 (건너뜀) |
+| **장점** | nodeadm 공식 워크플로를 그대로 사용 | 인프라 구성 최소화, 빠른 설정 |
+| **단점** | PHZ + DNS 포워딩 구성 복잡 | nodeadm 버전 업데이트 시 수동 관리 필요 |
+| **적합 환경** | 대규모 운영, 장기 관리 | 소규모, PoC, 빠른 테스트 |
+
+> **왜 환경변수로 다운로드 URL을 변경할 수 없는가?**
+>
+> nodeadm의 아티팩트 다운로드 URL(`hybrid-assets.eks.amazonaws.com`)은 Go 바이너리 빌드 시 ldflags로 주입되는 빌드 타임 상수입니다
+> (`-X github.com/aws/eks-hybrid/internal/aws.manifestUrl=...`).
+> `os.Getenv()`와 같은 런타임 환경변수 조회가 없으므로, 공식 배포 바이너리에서는
+> `hybrid-assets.eks.amazonaws.com` 외의 URL로 변경할 수 없습니다.
+> 소스에서 직접 빌드하면 `MANIFEST_HOST` Makefile 변수로 변경 가능하지만, 이는 공식 지원 범위 밖입니다.
+
+---
+
+## PHZ DNS 오버라이드 (방법 1)
 
 ### 문제
 
@@ -554,11 +578,11 @@ zone "eks.amazonaws.com" {
 
 ---
 
-## 에어갭 노드에서 설치
+## 에어갭 노드에서 설치 (방법 2: 수동 바이너리 사전 설치)
 
 ### 오프라인 설치 스크립트 (offline-install.sh)
 
-에어갭 환경의 노드에서 실행하여 S3 버킷의 바이너리를 VPC Endpoint를 통해 다운로드하고 설치합니다.
+PHZ 구성 없이 에어갭 환경의 노드에서 바이너리를 직접 설치하는 방법입니다. S3 버킷의 바이너리를 VPC Endpoint를 통해 다운로드하고 수동으로 설치합니다. 이 방법을 사용하면 `nodeadm install` 단계를 건너뛰고 바로 `nodeadm init`을 실행할 수 있습니다.
 
 ```bash
 #!/bin/bash
@@ -646,7 +670,9 @@ log "설치 완료!"
 log ""
 log "다음 단계:"
 log "1. nodeadm 버전 확인: nodeadm version"
-log "2. EKS 컴포넌트 설치: sudo nodeadm install $KUBERNETES_VERSION --credential-provider ssm"
+log "2. (수동 설치를 사용했으므로 nodeadm install 단계를 건너뜁니다)"
+log "   PHZ DNS 오버라이드를 구성한 경우에만 nodeadm install을 실행하세요:"
+log "   sudo nodeadm install $KUBERNETES_VERSION --credential-provider ssm"
 log "3. 클러스터 조인: sudo nodeadm init --config-source file://nodeconfig.yaml"
 ```
 
