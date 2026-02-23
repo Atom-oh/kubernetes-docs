@@ -1,6 +1,6 @@
 # Log Collectors Comparison
 
-> **Last Updated**: February 2025
+> **Last Updated**: February 20, 2026
 
 Various tools exist for collecting logs in Kubernetes environments. This document provides an in-depth comparison of FluentBit, Promtail, Grafana Alloy, and OpenTelemetry Collector, explaining configuration methods and optimization strategies for each tool.
 

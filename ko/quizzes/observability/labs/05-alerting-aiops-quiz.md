@@ -1,6 +1,6 @@
 # Observability 실습 Part 5: 알림 및 AIOps 퀴즈
 
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 22일
 
 이 퀴즈는 Observability 실습 Part 5의 알림 설정과 AIOps에 대한 이해도를 테스트합니다.
 

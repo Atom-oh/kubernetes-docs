@@ -1,6 +1,6 @@
 # GitOps Tools Comparison
 
-> **Last Updated**: February 21, 2025
+> **Last Updated**: February 22, 2026
 
 This guide provides a comprehensive comparison of GitOps tools, with a focus on ArgoCD and FluxCD, the two most popular choices in the Kubernetes ecosystem.
 

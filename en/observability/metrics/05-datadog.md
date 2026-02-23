@@ -1,6 +1,6 @@
 # Datadog
 
-> **Last Updated**: February 2025
+> **Last Updated**: February 20, 2026
 
 ## Table of Contents
 

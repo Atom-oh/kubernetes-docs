@@ -458,31 +458,7 @@ aws s3api put-bucket-policy \
 
 ---
 
-## 에어갭 설치 방법 비교
-
-에어갭 환경에서 nodeadm 바이너리를 노드에 설치하는 방법은 크게 두 가지입니다:
-
-| 항목 | 방법 1: PHZ DNS 오버라이드 | 방법 2: 수동 바이너리 사전 설치 |
-|------|--------------------------|-------------------------------|
-| **원리** | DNS를 오버라이드하여 `nodeadm install`이 S3에서 다운로드하도록 유도 | S3에서 직접 다운로드 후 `nodeadm install` 단계를 건너뜀 |
-| **PHZ 필요** | 예 | 아니오 |
-| **Route53 필요** | 예 | 아니오 |
-| **nodeadm install 사용** | 예 (정상 동작) | 아니오 (건너뜀) |
-| **장점** | nodeadm 공식 워크플로를 그대로 사용 | 인프라 구성 최소화, 빠른 설정 |
-| **단점** | PHZ + DNS 포워딩 구성 복잡 | nodeadm 버전 업데이트 시 수동 관리 필요 |
-| **적합 환경** | 대규모 운영, 장기 관리 | 소규모, PoC, 빠른 테스트 |
-
-> **왜 환경변수로 다운로드 URL을 변경할 수 없는가?**
->
-> nodeadm의 아티팩트 다운로드 URL(`hybrid-assets.eks.amazonaws.com`)은 Go 바이너리 빌드 시 ldflags로 주입되는 빌드 타임 상수입니다
-> (`-X github.com/aws/eks-hybrid/internal/aws.manifestUrl=...`).
-> `os.Getenv()`와 같은 런타임 환경변수 조회가 없으므로, 공식 배포 바이너리에서는
-> `hybrid-assets.eks.amazonaws.com` 외의 URL로 변경할 수 없습니다.
-> 소스에서 직접 빌드하면 `MANIFEST_HOST` Makefile 변수로 변경 가능하지만, 이는 공식 지원 범위 밖입니다.
-
----
-
-## PHZ DNS 오버라이드 (방법 1)
+## PHZ DNS 오버라이드
 
 ### 문제
 
@@ -578,102 +554,18 @@ zone "eks.amazonaws.com" {
 
 ---
 
-## 에어갭 노드에서 설치 (방법 2: 수동 바이너리 사전 설치)
+## 에어갭 노드에서 설치
 
-### 오프라인 설치 스크립트 (offline-install.sh)
-
-PHZ 구성 없이 에어갭 환경의 노드에서 바이너리를 직접 설치하는 방법입니다. S3 버킷의 바이너리를 VPC Endpoint를 통해 다운로드하고 수동으로 설치합니다. 이 방법을 사용하면 `nodeadm install` 단계를 건너뛰고 바로 `nodeadm init`을 실행할 수 있습니다.
+PHZ DNS 오버라이드 구성이 완료되면 일반 환경과 동일하게 `nodeadm install`과 `nodeadm init`을 실행합니다.
+`nodeadm install`은 `hybrid-assets.eks.amazonaws.com`에서 바이너리를 다운로드하며,
+PHZ에 의해 이 요청이 S3 VPC Endpoint로 라우팅됩니다.
 
 ```bash
-#!/bin/bash
-# offline-install.sh - EKS Hybrid nodeadm 에어갭 설치 스크립트
-# 사용법: ./offline-install.sh <S3_BUCKET_NAME> <VPC_ENDPOINT_URL>
-# 예시:   ./offline-install.sh my-nodeadm-bucket https://vpce-xxxxx-xxxxx.s3.ap-northeast-2.vpce.amazonaws.com
+# 1. EKS 컴포넌트 설치 (PHZ를 통해 S3에서 다운로드됨)
+sudo nodeadm install 1.31 --credential-provider ssm
 
-set -e
-
-S3_BUCKET="$1"
-VPC_ENDPOINT_URL="$2"
-REGION="ap-northeast-2"
-
-if [ $# -lt 2 ]; then
-    echo "사용법: $0 <S3_BUCKET_NAME> <VPC_ENDPOINT_URL>"
-    echo "예시: $0 my-nodeadm-bucket https://vpce-xxxxx-xxxxx.s3.ap-northeast-2.vpce.amazonaws.com"
-    exit 1
-fi
-
-log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"; }
-
-# AWS CLI에서 S3 VPC Endpoint를 사용하도록 설정
-export AWS_S3_ENDPOINT_URL="$VPC_ENDPOINT_URL"
-
-# 작업 디렉터리 생성
-WORK_DIR="/tmp/nodeadm-install"
-mkdir -p "$WORK_DIR"
-cd "$WORK_DIR"
-
-# S3에서 파일 다운로드
-log "S3에서 파일 다운로드 중..."
-aws s3 cp "s3://$S3_BUCKET/manifest.yaml" . --region "$REGION"
-aws s3 cp "s3://$S3_BUCKET/container_images.txt" . --region "$REGION"
-
-mkdir -p binaries checksums
-aws s3 sync "s3://$S3_BUCKET/binaries/"  binaries/  --region "$REGION"
-aws s3 sync "s3://$S3_BUCKET/checksums/" checksums/ --region "$REGION"
-
-# 체크섬 검증
-log "체크섬 검증 중..."
-for checksum_file in checksums/*.sha256; do
-    [ -f "$checksum_file" ] || continue
-    checksum_name=$(basename "$checksum_file" .sha256)
-    binary_file="binaries/$checksum_name"
-    [ -f "$binary_file" ] || continue
-
-    expected=$(awk '{print $1}' "$checksum_file")
-    actual=$(sha256sum "$binary_file" | awk '{print $1}')
-
-    if [ "$expected" = "$actual" ]; then
-        log "  $checksum_name 검증 성공"
-    else
-        log "  $checksum_name 검증 실패"
-        exit 1
-    fi
-done
-
-# 바이너리 설치
-log "바이너리 설치 중..."
-sudo cp binaries/nodeadm /usr/local/bin/ 2>/dev/null || true
-sudo cp binaries/kubectl /usr/local/bin/ 2>/dev/null || true
-sudo cp binaries/kubelet /usr/local/bin/ 2>/dev/null || true
-sudo cp binaries/aws-iam-authenticator /usr/local/bin/ 2>/dev/null || true
-sudo cp binaries/ecr-credential-provider /usr/local/bin/ 2>/dev/null || true
-sudo cp binaries/kube-proxy /usr/local/bin/ 2>/dev/null || true
-
-# 실행 권한 부여
-sudo chmod +x /usr/local/bin/{nodeadm,kubectl,kubelet,aws-iam-authenticator,ecr-credential-provider,kube-proxy} 2>/dev/null || true
-
-# CNI 플러그인 설치
-log "CNI 플러그인 설치 중..."
-sudo mkdir -p /opt/cni/bin
-for tgz in binaries/cni-plugins-linux-*.tgz binaries/cni-*-v*.tgz; do
-    [ -f "$tgz" ] && sudo tar -xzf "$tgz" -C /opt/cni/bin/
-done
-
-# containerd 설정 (이미 설치된 경우)
-if command -v containerd &>/dev/null; then
-    log "containerd 설정 중..."
-    sudo mkdir -p /etc/containerd
-    [ -f /etc/containerd/config.toml ] || sudo containerd config default | sudo tee /etc/containerd/config.toml >/dev/null
-fi
-
-log "설치 완료!"
-log ""
-log "다음 단계:"
-log "1. nodeadm 버전 확인: nodeadm version"
-log "2. (수동 설치를 사용했으므로 nodeadm install 단계를 건너뜁니다)"
-log "   PHZ DNS 오버라이드를 구성한 경우에만 nodeadm install을 실행하세요:"
-log "   sudo nodeadm install $KUBERNETES_VERSION --credential-provider ssm"
-log "3. 클러스터 조인: sudo nodeadm init --config-source file://nodeconfig.yaml"
+# 2. 설치 확인
+nodeadm version
 ```
 
 ### nodeadm init 실행

@@ -1,7 +1,7 @@
 # Building EKS Auto Mode Infrastructure with Terraform 3-Layer
 
 > **Supported Versions**: Terraform >= 1.10, AWS Provider >= 5.40, EKS >= 1.29
-> **Last Updated**: June 2025
+> **Last Updated**: February 19, 2026
 
 < [Table of Contents](./README.md) | [Next: NLB Weighted Routing and Blue/Green Clusters](./02-infrastructure-advanced.md) >
 

@@ -590,7 +590,7 @@ flowchart TD
 ## Gateway API
 
 > **Supported Versions**: AWS Load Balancer Controller v2.13.0+
-> **Last Updated**: February 2025
+> **Last Updated**: February 19, 2026
 
 ### Overview
 

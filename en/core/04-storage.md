@@ -1,7 +1,7 @@
 # Storage
 
 > **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 19, 2026
 
 In Kubernetes, storage is an important part of storing and managing data for containerized applications. In this chapter, we'll explore Kubernetes storage concepts in detail, including Volumes, Persistent Volumes, Persistent Volume Claims, and Storage Classes.
 

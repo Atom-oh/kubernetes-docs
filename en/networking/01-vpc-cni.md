@@ -1,7 +1,7 @@
 # Amazon VPC CNI
 
 > **Supported Versions**: VPC CNI v1.19+, EKS 1.25+
-> **Last Updated**: February 2025
+> **Last Updated**: February 22, 2026
 
 ## Table of Contents
 - [VPC CNI Overview](#vpc-cni-overview)

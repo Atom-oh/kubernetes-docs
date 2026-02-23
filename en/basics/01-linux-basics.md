@@ -1,7 +1,7 @@
 # Linux Basics
 
 > **Supported Versions**: All major Linux distributions (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+)
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 11, 2026
 
 Understanding Linux fundamentals is essential for comprehending Kubernetes and container technology. This document covers the core Linux concepts that are particularly important in Kubernetes environments.
 

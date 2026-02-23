@@ -1,7 +1,7 @@
 # Part 3: Calico Networking Modes
 
 > **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 22, 2025
+> **Last Updated**: February 23, 2026
 
 ## Overview
 

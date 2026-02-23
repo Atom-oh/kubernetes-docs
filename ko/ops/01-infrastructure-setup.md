@@ -1,7 +1,7 @@
 # Terraform 3-Layer로 EKS Auto Mode 인프라 구축
 
 > **지원 버전**: EKS 1.29+, Terraform 1.10+, AWS Provider 5.x
-> **마지막 업데이트**: 2025년 6월
+> **마지막 업데이트**: 2026년 2월 19일
 
 < [이전: 목차](./README.md) | [목차](./README.md) | [다음: NLB 가중치 라우팅](./02-infrastructure-advanced.md) >
 

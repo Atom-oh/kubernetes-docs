@@ -1,7 +1,7 @@
 # Observability Stack Operations: Loki, Tempo, Prometheus Configuration Guide
 
 > **Supported Versions**: Loki 3.x, Tempo 2.x, Prometheus 2.x, Grafana 10.x, Amazon Managed Prometheus
-> **Last Updated**: June 2025
+> **Last Updated**: February 23, 2026
 
 < [Previous: Observability Analysis](./08-observability-analysis.md) | [Table of Contents](./README.md) | [Next: Resource Optimization](./10-resource-optimization.md) >
 

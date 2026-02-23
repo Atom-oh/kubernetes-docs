@@ -1,7 +1,7 @@
 # 관측성 분석: Logs/Metrics/Traces 상관 분석
 
 > **지원 버전**: Loki 3.0+, Tempo 2.4+, Prometheus 2.50+, Grafana 10.0+
-> **마지막 업데이트**: 2025년 6월
+> **마지막 업데이트**: 2026년 2월 23일
 
 < [이전: 운영 알림 구성](./07-observability-alerts.md) | [목차](./README.md) | [다음: 관측성 스택 운영](./09-observability-stack.md) >
 

@@ -1,6 +1,6 @@
 # ExampleCorp Order System: ACK + KRO Integrated Deployment
 
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 21, 2026
 
 ## Scenario Overview
 

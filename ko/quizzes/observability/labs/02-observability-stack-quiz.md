@@ -1,6 +1,6 @@
 # Observability 실습 Part 2: Observability 스택 퀴즈
 
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 22일
 
 이 퀴즈는 Observability 실습 Part 2의 Observability 스택 구성에 대한 이해도를 테스트합니다.
 

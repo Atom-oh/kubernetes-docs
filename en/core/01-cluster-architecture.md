@@ -1,7 +1,7 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 22, 2026
 
 ## Lab Environment Setup
 

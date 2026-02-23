@@ -2,7 +2,7 @@
 
 > **Difficulty**: Intermediate
 > **Estimated Time**: 45 minutes
-> **Last Updated**: February 2025
+> **Last Updated**: February 22, 2026
 
 ## Learning Objectives
 

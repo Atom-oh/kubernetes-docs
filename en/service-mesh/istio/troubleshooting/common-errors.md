@@ -1,7 +1,7 @@
 # Istio Common Errors and Solutions
 
 > **Supported Version**: Istio 1.28
-> **Last Updated**: November 27, 2025
+> **Last Updated**: February 19, 2026
 
 This document summarizes the most common errors encountered when using Istio and their solutions.
 

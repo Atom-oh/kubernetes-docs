@@ -1,7 +1,7 @@
 # Scaling Strategies: HPA Custom Metrics, KEDA, VPA, Spot Utilization
 
 > **Supported Versions**: EKS 1.28+, Metrics Server 0.7+, KEDA 2.13+, VPA 1.0+
-> **Last Updated**: June 2025
+> **Last Updated**: February 19, 2026
 
 < [Previous: GitOps Automation](./05-gitops-automation.md) | [Table of Contents](./README.md) | [Next: Operational Alert Configuration](./07-observability-alerts.md) >
 

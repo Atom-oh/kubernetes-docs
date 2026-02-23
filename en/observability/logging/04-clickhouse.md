@@ -1,6 +1,6 @@
 # ClickHouse for Log Analytics
 
-> **Last Updated**: February 2025
+> **Last Updated**: February 20, 2026
 
 ClickHouse is an open-source columnar database optimized for OLAP (Online Analytical Processing) workloads. It provides excellent query performance and compression ratios for large-scale log analytics.
 

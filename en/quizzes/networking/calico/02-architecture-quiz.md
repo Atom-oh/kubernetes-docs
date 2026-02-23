@@ -1,7 +1,7 @@
 # Calico Architecture Quiz
 
 > **Related Document**: [Calico Architecture](../../../networking/calico/02-architecture.md)
-> **Last Updated**: February 22, 2025
+> **Last Updated**: February 22, 2026
 
 ## Quiz
 

@@ -1,7 +1,7 @@
 # GitOps Automation: Atlantis, FluxCD, AIOps
 
 > **Supported Versions**: EKS 1.28+, Atlantis 0.27+, FluxCD v2.2+, Terraform 1.6+
-> **Last Updated**: June 2025
+> **Last Updated**: February 21, 2026
 
 < [Previous: ArgoCD Multi-Cluster](./04-gitops-multi-cluster.md) | [Table of Contents](./README.md) | [Next: Scaling Strategies](./06-scaling-strategies.md) >
 

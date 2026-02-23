@@ -1,6 +1,6 @@
 # Operations Guide
 
-> **Last Updated**: June 2025
+> **Last Updated**: February 23, 2026
 
 This section provides a production operations guide for EKS Auto Mode environments. It covers infrastructure provisioning with Terraform, CI/CD pipelines, GitOps-based deployment, scaling, observability, resource optimization, and upgrades.
 

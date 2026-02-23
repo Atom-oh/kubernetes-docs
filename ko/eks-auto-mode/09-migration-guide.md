@@ -1,7 +1,7 @@
 # 관리형 노드 그룹에서 Auto Mode로 마이그레이션
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 19일
 
 < [이전: 워크로드 최적화](./08-workload-optimization.md) | [목차](./README.md) | [다음: 목차](./README.md) >
 

@@ -458,31 +458,7 @@ aws s3api put-bucket-policy \
 
 ---
 
-## Air-Gap Installation Method Comparison
-
-There are two main approaches to installing nodeadm binaries on nodes in air-gapped environments:
-
-| Item | Method 1: PHZ DNS Override | Method 2: Manual Binary Pre-installation |
-|------|---------------------------|----------------------------------------|
-| **Principle** | Override DNS so `nodeadm install` downloads from S3 | Download directly from S3 and skip `nodeadm install` |
-| **PHZ Required** | Yes | No |
-| **Route53 Required** | Yes | No |
-| **Uses nodeadm install** | Yes (works normally) | No (skipped) |
-| **Advantages** | Uses the official nodeadm workflow as-is | Minimal infrastructure setup, fast configuration |
-| **Disadvantages** | Complex PHZ + DNS forwarding setup | Manual management required for nodeadm version updates |
-| **Best For** | Large-scale operations, long-term management | Small-scale, PoC, quick testing |
-
-> **Why can't you change the download URL with environment variables?**
->
-> nodeadm's artifact download URL (`hybrid-assets.eks.amazonaws.com`) is a build-time constant injected
-> via Go ldflags (`-X github.com/aws/eks-hybrid/internal/aws.manifestUrl=...`).
-> There is no `os.Getenv()` call for the artifact URL, so the official release binary
-> cannot be redirected to a URL other than `hybrid-assets.eks.amazonaws.com`.
-> Building from source allows changing the `MANIFEST_HOST` Makefile variable, but this is outside official support.
-
----
-
-## PHZ DNS Override (Method 1)
+## PHZ DNS Override
 
 ### The Problem
 
@@ -578,102 +554,18 @@ zone "eks.amazonaws.com" {
 
 ---
 
-## Installation on Air-Gapped Nodes (Method 2: Manual Binary Pre-installation)
+## Installation on Air-Gapped Nodes
 
-### Offline Installation Script (offline-install.sh)
-
-This method installs binaries directly on air-gapped nodes without PHZ configuration. It downloads binaries from the S3 bucket via VPC Endpoint and installs them manually. With this approach, you can skip the `nodeadm install` step and proceed directly to `nodeadm init`.
+Once PHZ DNS override is configured, run `nodeadm install` and `nodeadm init` just like in a normal environment.
+`nodeadm install` downloads binaries from `hybrid-assets.eks.amazonaws.com`,
+and the PHZ routes these requests to the S3 VPC Endpoint.
 
 ```bash
-#!/bin/bash
-# offline-install.sh - EKS Hybrid nodeadm air-gap installation script
-# Usage: ./offline-install.sh <S3_BUCKET_NAME> <VPC_ENDPOINT_URL>
-# Example: ./offline-install.sh my-nodeadm-bucket https://vpce-xxxxx-xxxxx.s3.ap-northeast-2.vpce.amazonaws.com
+# 1. Install EKS components (downloaded from S3 via PHZ)
+sudo nodeadm install 1.31 --credential-provider ssm
 
-set -e
-
-S3_BUCKET="$1"
-VPC_ENDPOINT_URL="$2"
-REGION="ap-northeast-2"
-
-if [ $# -lt 2 ]; then
-    echo "Usage: $0 <S3_BUCKET_NAME> <VPC_ENDPOINT_URL>"
-    echo "Example: $0 my-nodeadm-bucket https://vpce-xxxxx-xxxxx.s3.ap-northeast-2.vpce.amazonaws.com"
-    exit 1
-fi
-
-log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"; }
-
-# Configure AWS CLI to use S3 VPC Endpoint
-export AWS_S3_ENDPOINT_URL="$VPC_ENDPOINT_URL"
-
-# Create work directory
-WORK_DIR="/tmp/nodeadm-install"
-mkdir -p "$WORK_DIR"
-cd "$WORK_DIR"
-
-# Download files from S3
-log "Downloading files from S3..."
-aws s3 cp "s3://$S3_BUCKET/manifest.yaml" . --region "$REGION"
-aws s3 cp "s3://$S3_BUCKET/container_images.txt" . --region "$REGION"
-
-mkdir -p binaries checksums
-aws s3 sync "s3://$S3_BUCKET/binaries/"  binaries/  --region "$REGION"
-aws s3 sync "s3://$S3_BUCKET/checksums/" checksums/ --region "$REGION"
-
-# Verify checksums
-log "Verifying checksums..."
-for checksum_file in checksums/*.sha256; do
-    [ -f "$checksum_file" ] || continue
-    checksum_name=$(basename "$checksum_file" .sha256)
-    binary_file="binaries/$checksum_name"
-    [ -f "$binary_file" ] || continue
-
-    expected=$(awk '{print $1}' "$checksum_file")
-    actual=$(sha256sum "$binary_file" | awk '{print $1}')
-
-    if [ "$expected" = "$actual" ]; then
-        log "  $checksum_name verification passed"
-    else
-        log "  $checksum_name verification failed"
-        exit 1
-    fi
-done
-
-# Install binaries
-log "Installing binaries..."
-sudo cp binaries/nodeadm /usr/local/bin/ 2>/dev/null || true
-sudo cp binaries/kubectl /usr/local/bin/ 2>/dev/null || true
-sudo cp binaries/kubelet /usr/local/bin/ 2>/dev/null || true
-sudo cp binaries/aws-iam-authenticator /usr/local/bin/ 2>/dev/null || true
-sudo cp binaries/ecr-credential-provider /usr/local/bin/ 2>/dev/null || true
-sudo cp binaries/kube-proxy /usr/local/bin/ 2>/dev/null || true
-
-# Set execute permissions
-sudo chmod +x /usr/local/bin/{nodeadm,kubectl,kubelet,aws-iam-authenticator,ecr-credential-provider,kube-proxy} 2>/dev/null || true
-
-# Install CNI plugins
-log "Installing CNI plugins..."
-sudo mkdir -p /opt/cni/bin
-for tgz in binaries/cni-plugins-linux-*.tgz binaries/cni-*-v*.tgz; do
-    [ -f "$tgz" ] && sudo tar -xzf "$tgz" -C /opt/cni/bin/
-done
-
-# Configure containerd (if already installed)
-if command -v containerd &>/dev/null; then
-    log "Configuring containerd..."
-    sudo mkdir -p /etc/containerd
-    [ -f /etc/containerd/config.toml ] || sudo containerd config default | sudo tee /etc/containerd/config.toml >/dev/null
-fi
-
-log "Installation complete!"
-log ""
-log "Next steps:"
-log "1. Verify nodeadm version: nodeadm version"
-log "2. (Manual installation was used, so the nodeadm install step is skipped)"
-log "   Only run nodeadm install if you have configured PHZ DNS override:"
-log "   sudo nodeadm install $KUBERNETES_VERSION --credential-provider ssm"
-log "3. Join cluster: sudo nodeadm init --config-source file://nodeconfig.yaml"
+# 2. Verify installation
+nodeadm version
 ```
 
 ### Running nodeadm init

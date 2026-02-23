@@ -1,7 +1,7 @@
 # Spot Instance Utilization Strategies
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 2025
+> **Last Updated**: February 19, 2026
 
 This guide covers strategies for using Spot instances effectively with EKS Auto Mode, including mixed capacity configurations, diversification, and interrupt handling.
 

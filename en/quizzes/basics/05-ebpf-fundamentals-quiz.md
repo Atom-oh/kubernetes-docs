@@ -1,7 +1,7 @@
 # eBPF Fundamentals Quiz
 
 > **Supported Versions**: Linux Kernel 4.18+, Kubernetes 1.25+
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 This quiz tests your overall understanding of eBPF (extended Berkeley Packet Filter), from basic concepts to its applications in Kubernetes environments.
 

@@ -2,7 +2,7 @@
 
 > **Difficulty**: Beginner
 > **Estimated Time**: 35 minutes
-> **Last Updated**: February 2025
+> **Last Updated**: February 11, 2026
 
 ## Learning Objectives
 - Create ConfigMaps and use them in Pods

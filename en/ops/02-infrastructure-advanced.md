@@ -1,7 +1,7 @@
 # NLB Weighted Routing and Blue/Green Clusters
 
 > **Supported Versions**: Terraform >= 1.5, AWS Provider >= 5.40, EKS >= 1.29
-> **Last Updated**: June 2025
+> **Last Updated**: February 19, 2026
 
 < [Previous: Terraform 3-Layer Infrastructure](./01-infrastructure-setup.md) | [Table of Contents](./README.md) | [Next: CI Pipelines](./03-ci-pipelines.md) >
 

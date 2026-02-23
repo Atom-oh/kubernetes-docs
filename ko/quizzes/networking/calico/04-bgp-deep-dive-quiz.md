@@ -1,7 +1,7 @@
 # Calico BGP 심화 퀴즈
 
 > **관련 문서**: [Calico BGP 심화](../../../networking/calico/04-bgp-deep-dive.md)
-> **마지막 업데이트**: 2025년 2월 22일
+> **마지막 업데이트**: 2026년 2월 22일
 
 ## 퀴즈
 

@@ -1,7 +1,7 @@
 # EKS Auto Mode Operations Guide
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 Amazon EKS Auto Mode is a feature that fully automates Kubernetes node management, automatically provisioning and optimizing nodes based on workload requirements. This guide covers the concepts of EKS Auto Mode, configuration methods, and best practices for production environments.
 

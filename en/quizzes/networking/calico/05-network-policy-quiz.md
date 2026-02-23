@@ -1,7 +1,7 @@
 # Network Policy Quiz
 
 > **Related Document**: [Network Policy](../../../networking/calico/05-network-policy.md)
-> **Last Updated**: February 22, 2025
+> **Last Updated**: February 22, 2026
 
 ## Quiz
 

@@ -2,7 +2,7 @@
 
 > **Difficulty**: Intermediate
 > **Estimated Time**: 60 minutes
-> **Last Updated**: February 2025
+> **Last Updated**: February 11, 2026
 
 ## Learning Objectives
 - Create an EKS cluster using eksctl

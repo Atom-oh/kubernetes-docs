@@ -1,6 +1,6 @@
 # Amazon OpenSearch Service
 
-> **Last Updated**: February 2025
+> **Last Updated**: February 20, 2026
 
 Amazon OpenSearch Service is a fully managed search and analytics service used for real-time application monitoring, log analytics, and website search. It's based on OpenSearch, a fork of Elasticsearch, and provides powerful full-text search capabilities.
 

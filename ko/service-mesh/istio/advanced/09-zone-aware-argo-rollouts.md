@@ -1,7 +1,7 @@
 # Zone-Aware Argo Rollouts
 
 > **지원 버전**: Istio 1.18+, Argo Rollouts 1.6+
-> **마지막 업데이트**: 2025년 1월
+> **마지막 업데이트**: 2026년 2월 19일
 > **난이도**: ⭐⭐⭐⭐⭐ (고급)
 
 이 문서는 AWS 가용 영역(Availability Zone)별로 독립적인 Argo Rollouts Canary 배포를 설정하면서, Istio의 locality-aware 라우팅을 활용하여 자동 failover를 구현하는 방법을 설명합니다.

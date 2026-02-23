@@ -1,7 +1,7 @@
 # Grafana Loki
 
 > **Supported Versions**: Loki 3.x
-> **Last Updated**: February 2025
+> **Last Updated**: February 20, 2026
 
 Grafana Loki is a horizontally scalable log aggregation system inspired by Prometheus. It provides cost-effective log storage and querying by indexing only labels rather than log content.
 

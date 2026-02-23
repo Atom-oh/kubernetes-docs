@@ -1,6 +1,6 @@
 # Observability Lab Part 6: Distributed Tracing Analysis Quiz
 
-> **Last Updated**: February 2025
+> **Last Updated**: February 22, 2026
 
 Test your understanding of distributed tracing analysis concepts covered in the Observability End-to-End Lab Part 6.
 

@@ -1,7 +1,7 @@
 # Linkerd Multi-cluster
 
 > **Supported Versions**: Linkerd 2.16+
-> **Last Updated**: February 21, 2025
+> **Last Updated**: February 22, 2026
 
 ## Overview
 

@@ -1,7 +1,7 @@
 # KEDA-based Autoscaling with Istio Metrics
 
 > **Supported Versions**: KEDA 2.18, Istio 1.28
-> **Last Updated**: November 27, 2025
+> **Last Updated**: February 19, 2026
 > **Kubernetes Compatibility**: 1.34
 
 This document covers **practical autoscaling strategies using Istio metrics**. It provides various patterns and real-world examples for scaling workloads based on Prometheus and CloudWatch metrics using KEDA.

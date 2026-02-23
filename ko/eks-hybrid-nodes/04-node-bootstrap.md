@@ -241,6 +241,199 @@ kubectl get nodes -l eks.amazonaws.com/compute-type=hybrid
 
 ---
 
+## systemd를 통한 자동 부트스트랩
+
+대규모 배포 환경에서는 노드가 부팅될 때 자동으로 `nodeadm install`과 `nodeadm init`이 실행되도록 systemd 서비스를 구성할 수 있습니다. 마커 파일을 사용하여 최초 부팅에서만 install이 실행되고, 이후 부팅에서는 건너뜁니다.
+
+### 사전 준비
+
+자동 부트스트랩을 사용하려면 다음 파일이 노드에 미리 배치되어 있어야 합니다:
+
+- `/etc/eks/nodeconfig.yaml` — NodeConfig 설정 파일
+- `/etc/eks/bootstrap.env` — 부트스트랩 환경 변수
+- `/usr/local/bin/nodeadm` — nodeadm 바이너리
+
+> **참고**: 이 파일들은 VM 이미지 빌드(Packer 등), cloud-init, 또는 구성 관리 도구(Ansible 등)를 통해 사전 배치할 수 있습니다.
+
+### 환경 설정 파일
+
+```bash
+# /etc/eks/bootstrap.env
+K8S_VERSION="1.31"
+CREDENTIAL_PROVIDER="ssm"          # ssm 또는 iam-ra
+NODECONFIG_PATH="/etc/eks/nodeconfig.yaml"
+```
+
+### 부트스트랩 스크립트
+
+```bash
+#!/bin/bash
+# /usr/local/bin/eks-hybrid-bootstrap.sh
+set -euo pipefail
+
+LOG_TAG="eks-hybrid-bootstrap"
+MARKER_DIR="/var/lib/eks"
+INSTALL_MARKER="${MARKER_DIR}/.nodeadm-installed"
+INIT_MARKER="${MARKER_DIR}/.nodeadm-initialized"
+
+# 환경 변수 로드
+source /etc/eks/bootstrap.env
+
+log() { logger -t "$LOG_TAG" "$1"; echo "[$(date '+%H:%M:%S')] $1"; }
+
+mkdir -p "$MARKER_DIR"
+
+# --- install 단계 (최초 1회만) ---
+if [ -f "$INSTALL_MARKER" ]; then
+  log "nodeadm install 이미 완료됨 — 건너뜀"
+else
+  log "nodeadm install ${K8S_VERSION} 시작 (credential-provider: ${CREDENTIAL_PROVIDER})"
+  nodeadm install "${K8S_VERSION}" --credential-provider "${CREDENTIAL_PROVIDER}"
+  touch "$INSTALL_MARKER"
+  log "nodeadm install 완료"
+fi
+
+# --- init 단계 (최초 1회만) ---
+if [ -f "$INIT_MARKER" ]; then
+  log "nodeadm init 이미 완료됨 — 건너뜀"
+else
+  log "nodeadm init 시작"
+  nodeadm init -c "file://${NODECONFIG_PATH}"
+  touch "$INIT_MARKER"
+  log "nodeadm init 완료 — 노드가 EKS 클러스터에 등록됨"
+fi
+```
+
+```bash
+sudo chmod +x /usr/local/bin/eks-hybrid-bootstrap.sh
+```
+
+### systemd 서비스 유닛
+
+```ini
+# /etc/systemd/system/eks-hybrid-bootstrap.service
+[Unit]
+Description=EKS Hybrid Node Bootstrap (install + init)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=!/var/lib/eks/.nodeadm-initialized
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/eks/bootstrap.env
+ExecStart=/usr/local/bin/eks-hybrid-bootstrap.sh
+RemainAfterExit=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+```
+
+> **ConditionPathExists**: `!` 접두사는 해당 파일이 **없을 때만** 서비스가 실행됨을 의미합니다. init이 완료되면 마커 파일이 생성되어 이후 부팅에서는 서비스가 자동으로 건너뛰어집니다.
+
+### 서비스 활성화
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable eks-hybrid-bootstrap.service
+```
+
+### 동작 확인
+
+```bash
+# 서비스 상태 확인
+sudo systemctl status eks-hybrid-bootstrap.service
+
+# 부트스트랩 로그 확인
+sudo journalctl -u eks-hybrid-bootstrap.service
+
+# 마커 파일 확인
+ls -la /var/lib/eks/.nodeadm-*
+```
+
+### 재설치가 필요한 경우
+
+노드를 초기화부터 다시 시작하려면 마커 파일을 삭제한 후 재부팅합니다:
+
+```bash
+# 기존 상태 정리
+sudo nodeadm uninstall
+sudo rm -f /var/lib/eks/.nodeadm-installed /var/lib/eks/.nodeadm-initialized
+
+# 재부팅 시 자동으로 install + init 재실행
+sudo reboot
+```
+
+### 자주 묻는 질문
+
+**Q: systemd 유닛 파일의 각 설정은 무엇을 의미하나요?**
+
+| 설정 | 의미 |
+|------|------|
+| `Type=oneshot` | 부팅 시 한 번 실행되고 종료되는 서비스 |
+| `After=network-online.target` | 네트워크가 완전히 준비된 후 실행 |
+| `ConditionPathExists=!/var/lib/eks/.nodeadm-initialized` | `!` 접두사 — 마커 파일이 **없을 때만** 실행 |
+| `RemainAfterExit=true` | 프로세스 종료 후에도 서비스가 active 상태로 유지 (상태 확인 가능) |
+| `WantedBy=multi-user.target` | 일반 부팅 시 자동 실행 |
+
+**Q: SSM activation code를 노드를 껐다 킬 때마다 다시 받아야 하나요?**
+
+아닙니다. SSM Hybrid Activation의 `activationCode`/`activationId`는 `nodeadm init` 시 SSM 에이전트를 AWS에 등록할 때 한 번만 사용됩니다. 등록 이후에는 SSM 에이전트가 자체적으로 자격 증명을 갱신하므로, **일반적인 재부팅에서는 activation code가 다시 필요하지 않습니다**.
+
+단, `nodeadm uninstall`을 실행하면 SSM 아티팩트가 삭제되어 재등록이 필요합니다. 이때 기존 activation의 `registration-limit`에 도달하지 않았다면 같은 코드를 재사용할 수 있습니다.
+
+**Q: `nodeadm init`이 노드를 클러스터에 조인시키는 건가요?**
+
+네. `nodeadm init`은 다음 단계를 순서대로 수행합니다:
+1. kubelet 설정 파일 생성 (`/etc/kubernetes/`)
+2. SSM 또는 IAM Roles Anywhere 자격 증명 등록
+3. kubelet systemd 서비스 시작
+4. kubelet이 EKS API 서버에 노드를 등록 (조인)
+
+즉, `nodeadm init`이 실질적인 **클러스터 조인 명령**입니다.
+
+**Q: SSM activation 등록은 `install`에서 되나요, `init`에서 되나요?**
+
+| 단계 | SSM 관련 동작 |
+|------|--------------|
+| `nodeadm install --credential-provider ssm` | SSM Agent **바이너리 설치**만 수행 |
+| `nodeadm init` | nodeconfig.yaml의 `activationCode`/`activationId`로 SSM Agent를 AWS에 **등록** |
+
+SSM activation(등록)은 **init 단계**에서 수행됩니다.
+
+**Q: SSM activation을 유지하면서 노드만 클러스터에서 제거/재등록하려면?**
+
+`kubectl delete node <NODE_NAME>`을 실행해도 SSM 등록은 영향받지 않습니다 (SSM은 OS 레벨, 노드 등록은 Kubernetes 레벨). kubelet이 실행 중이면 자동으로 재등록됩니다:
+
+```bash
+# 클러스터에서 노드 제거
+kubectl delete node hybrid-node-001
+
+# kubelet이 실행 중이면 자동 재등록됨
+# 중지된 경우 수동 재시작
+sudo systemctl restart kubelet
+```
+
+**Q: `drain → delete → shutdown` 후 재부팅하면 systemd로 자동 재등록되나요?**
+
+재등록은 되지만, systemd 부트스트랩 서비스가 아닌 **kubelet 서비스 자체**가 처리합니다:
+
+1. `nodeadm init`은 kubelet을 systemd 서비스로 설치합니다
+2. 재부팅 시 kubelet이 자동 시작되어 API 서버에 재등록됩니다
+3. 부트스트랩 서비스는 마커 파일이 존재하므로 건너뛰어집니다 (이것이 정상 동작)
+
+```bash
+# 이 워크플로우에서는 마커 파일을 삭제할 필요 없음
+kubectl drain hybrid-node-001 --ignore-daemonsets --delete-emptydir-data
+kubectl delete node hybrid-node-001
+# 노드 종료 후 재부팅 → kubelet이 자동으로 재등록
+```
+
+> **참고**: `nodeadm uninstall`을 실행한 경우에만 마커 파일을 삭제하고 부트스트랩 서비스를 통해 재설치해야 합니다.
+
+---
+
 ## Cilium CNI 설치
 
 Cilium은 EKS Hybrid Nodes를 위한 AWS 지원 CNI입니다. 하이브리드 노드는 CNI가 설치될 때까지 `Not Ready` 상태로 표시됩니다. Amazon VPC CNI는 하이브리드 노드와 **호환되지 않습니다**.

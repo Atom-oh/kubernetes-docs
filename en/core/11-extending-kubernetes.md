@@ -1,7 +1,7 @@
 # Extending Kubernetes
 
 > **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 19, 2026
 
 Kubernetes is a platform designed with extensibility in mind, allowing you to extend its functionality in various ways. In this chapter, we will explore the various methods to extend Kubernetes and how to leverage extension features in Amazon EKS.
 

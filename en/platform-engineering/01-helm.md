@@ -1,7 +1,7 @@
 # Helm Package Manager
 
 > **Supported Version**: Helm v3.x
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 ## Overview
 

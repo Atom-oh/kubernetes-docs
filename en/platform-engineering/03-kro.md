@@ -1,7 +1,7 @@
 # Kubernetes Resource Operator (KRO)
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 21, 2026
 
 ## Overview
 

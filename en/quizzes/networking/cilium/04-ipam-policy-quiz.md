@@ -1,7 +1,7 @@
 # Cilium IPAM and Network Policy Quiz
 
 > **Supported Version**: Cilium 1.17
-> **Last Updated**: July 21, 2025
+> **Last Updated**: February 22, 2026
 
 ## IPAM (IP Address Management)
 

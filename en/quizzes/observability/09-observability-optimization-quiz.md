@@ -1,7 +1,7 @@
 # Observability Optimization Quiz
 
 > **Supported Versions**: Amazon EKS 1.29+, OpenTelemetry 0.90+
-> **Last Updated**: February 2025
+> **Last Updated**: February 22, 2026
 
 This quiz tests your understanding of the EKS Observability Optimization Guide. It covers the three pillars of observability—logging, metrics, and tracing—as well as eBPF-based monitoring and cost optimization strategies.
 

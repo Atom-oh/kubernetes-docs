@@ -1,7 +1,7 @@
 # Kubernetes Security
 
 > **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 23, 2026
 
 In Kubernetes, security is a key element for protecting clusters and applications. In this chapter, we'll explore Kubernetes security concepts, authentication and authorization mechanisms, network policies, security contexts, and how to enhance security in Amazon EKS.
 

@@ -1,7 +1,7 @@
 # 리소스 최적화: Requests/Limits, JVM 튜닝, 프레임워크별 가이드
 
 > **지원 버전**: Kubernetes 1.28+, Java 17+, Python 3.11+, Node.js 20+, Go 1.21+
-> **마지막 업데이트**: 2025년 6월
+> **마지막 업데이트**: 2026년 2월 21일
 
 < [이전: 관측성 스택 운영](./09-observability-stack.md) | [목차](./README.md) | [다음: EKS 업그레이드](./11-upgrade-operations.md) >
 

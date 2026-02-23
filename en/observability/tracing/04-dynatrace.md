@@ -1,6 +1,6 @@
 # Dynatrace
 
-> **Last Updated**: February 2025
+> **Last Updated**: February 20, 2026
 
 ## Introduction
 

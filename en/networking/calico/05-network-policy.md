@@ -1,6 +1,6 @@
 # Part 5: Calico Network Policy Deep Dive
 > **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 22, 2025
+> **Last Updated**: February 23, 2026
 
 ## Introduction
 

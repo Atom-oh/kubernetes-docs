@@ -1,6 +1,6 @@
 # Observability Lab Part 2: Observability Stack Quiz
 
-> **Last Updated**: February 2025
+> **Last Updated**: February 22, 2026
 
 Test your understanding of the observability stack concepts covered in the Observability End-to-End Lab Part 2.
 

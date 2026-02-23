@@ -1,6 +1,6 @@
 # Observability Lab Part 4: Load Testing and Autoscaling Quiz
 
-> **Last Updated**: February 2025
+> **Last Updated**: February 22, 2026
 
 Test your understanding of load testing and autoscaling concepts covered in the Observability End-to-End Lab Part 4.
 

@@ -249,6 +249,199 @@ kubectl get nodes -l eks.amazonaws.com/compute-type=hybrid
 
 ---
 
+## Automated Bootstrap with systemd
+
+For large-scale deployments, you can configure a systemd service to automatically run `nodeadm install` and `nodeadm init` when a node boots. Marker files ensure that install only runs on the first boot and is skipped on subsequent boots.
+
+### Prerequisites
+
+The following files must be pre-placed on the node before automatic bootstrap:
+
+- `/etc/eks/nodeconfig.yaml` — NodeConfig configuration file
+- `/etc/eks/bootstrap.env` — Bootstrap environment variables
+- `/usr/local/bin/nodeadm` — nodeadm binary
+
+> **Note**: These files can be pre-placed via VM image builds (Packer, etc.), cloud-init, or configuration management tools (Ansible, etc.).
+
+### Environment Configuration File
+
+```bash
+# /etc/eks/bootstrap.env
+K8S_VERSION="1.31"
+CREDENTIAL_PROVIDER="ssm"          # ssm or iam-ra
+NODECONFIG_PATH="/etc/eks/nodeconfig.yaml"
+```
+
+### Bootstrap Script
+
+```bash
+#!/bin/bash
+# /usr/local/bin/eks-hybrid-bootstrap.sh
+set -euo pipefail
+
+LOG_TAG="eks-hybrid-bootstrap"
+MARKER_DIR="/var/lib/eks"
+INSTALL_MARKER="${MARKER_DIR}/.nodeadm-installed"
+INIT_MARKER="${MARKER_DIR}/.nodeadm-initialized"
+
+# Load environment variables
+source /etc/eks/bootstrap.env
+
+log() { logger -t "$LOG_TAG" "$1"; echo "[$(date '+%H:%M:%S')] $1"; }
+
+mkdir -p "$MARKER_DIR"
+
+# --- install phase (first boot only) ---
+if [ -f "$INSTALL_MARKER" ]; then
+  log "nodeadm install already completed — skipping"
+else
+  log "Starting nodeadm install ${K8S_VERSION} (credential-provider: ${CREDENTIAL_PROVIDER})"
+  nodeadm install "${K8S_VERSION}" --credential-provider "${CREDENTIAL_PROVIDER}"
+  touch "$INSTALL_MARKER"
+  log "nodeadm install completed"
+fi
+
+# --- init phase (first boot only) ---
+if [ -f "$INIT_MARKER" ]; then
+  log "nodeadm init already completed — skipping"
+else
+  log "Starting nodeadm init"
+  nodeadm init -c "file://${NODECONFIG_PATH}"
+  touch "$INIT_MARKER"
+  log "nodeadm init completed — node registered with EKS cluster"
+fi
+```
+
+```bash
+sudo chmod +x /usr/local/bin/eks-hybrid-bootstrap.sh
+```
+
+### systemd Service Unit
+
+```ini
+# /etc/systemd/system/eks-hybrid-bootstrap.service
+[Unit]
+Description=EKS Hybrid Node Bootstrap (install + init)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=!/var/lib/eks/.nodeadm-initialized
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/eks/bootstrap.env
+ExecStart=/usr/local/bin/eks-hybrid-bootstrap.sh
+RemainAfterExit=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+```
+
+> **ConditionPathExists**: The `!` prefix means the service only runs when the file **does not exist**. Once init completes and creates the marker file, the service is automatically skipped on subsequent boots.
+
+### Enable the Service
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable eks-hybrid-bootstrap.service
+```
+
+### Verify Operation
+
+```bash
+# Check service status
+sudo systemctl status eks-hybrid-bootstrap.service
+
+# View bootstrap logs
+sudo journalctl -u eks-hybrid-bootstrap.service
+
+# Check marker files
+ls -la /var/lib/eks/.nodeadm-*
+```
+
+### Reinstallation
+
+To start fresh from scratch, remove the marker files and reboot:
+
+```bash
+# Clean up existing state
+sudo nodeadm uninstall
+sudo rm -f /var/lib/eks/.nodeadm-installed /var/lib/eks/.nodeadm-initialized
+
+# Reboot triggers automatic install + init
+sudo reboot
+```
+
+### Frequently Asked Questions
+
+**Q: What does each setting in the systemd unit file mean?**
+
+| Setting | Meaning |
+|---------|---------|
+| `Type=oneshot` | Runs once at boot and exits |
+| `After=network-online.target` | Runs only after network is fully ready |
+| `ConditionPathExists=!/var/lib/eks/.nodeadm-initialized` | `!` prefix — runs only when the marker file **does not exist** |
+| `RemainAfterExit=true` | Service stays in active state after process exits (allows status checks) |
+| `WantedBy=multi-user.target` | Starts automatically during normal boot |
+
+**Q: Do I need a new SSM activation code every time the node is rebooted?**
+
+No. The SSM Hybrid Activation `activationCode`/`activationId` is used only once during `nodeadm init` to register the SSM agent with AWS. After registration, the SSM agent renews its own credentials automatically, so **activation codes are not needed on normal reboots**.
+
+However, if you run `nodeadm uninstall`, SSM artifacts are deleted and re-registration is required. You can reuse the same activation code if the `registration-limit` has not been reached.
+
+**Q: Does `nodeadm init` join the node to the cluster?**
+
+Yes. `nodeadm init` performs the following steps in order:
+1. Generates kubelet configuration files (`/etc/kubernetes/`)
+2. Registers SSM or IAM Roles Anywhere credentials
+3. Starts the kubelet systemd service
+4. kubelet registers (joins) the node with the EKS API server
+
+In other words, `nodeadm init` is the actual **cluster join command**.
+
+**Q: Does SSM activation registration happen during `install` or `init`?**
+
+| Phase | SSM-Related Action |
+|-------|-------------------|
+| `nodeadm install --credential-provider ssm` | Installs SSM Agent **binary only** |
+| `nodeadm init` | **Registers** the SSM Agent with AWS using `activationCode`/`activationId` from nodeconfig.yaml |
+
+SSM activation (registration) happens during the **init phase**.
+
+**Q: How do I remove and re-register a node while keeping the SSM activation?**
+
+`kubectl delete node <NODE_NAME>` does not affect SSM registration (SSM operates at the OS level; node registration is at the Kubernetes level). If kubelet is still running, the node will automatically re-register:
+
+```bash
+# Remove node from cluster
+kubectl delete node hybrid-node-001
+
+# If kubelet is running, it auto-registers
+# If stopped, restart manually
+sudo systemctl restart kubelet
+```
+
+**Q: After `drain → delete → shutdown`, will the node auto-register on reboot via systemd?**
+
+The node will re-register, but it is handled by the **kubelet service itself**, not the systemd bootstrap service:
+
+1. `nodeadm init` installs kubelet as a systemd service
+2. On reboot, kubelet starts automatically and re-registers with the API server
+3. The bootstrap service is skipped because the marker file exists (this is the expected behavior)
+
+```bash
+# No need to delete marker files in this workflow
+kubectl drain hybrid-node-001 --ignore-daemonsets --delete-emptydir-data
+kubectl delete node hybrid-node-001
+# Shutdown and reboot → kubelet auto-registers
+```
+
+> **Note**: Only when `nodeadm uninstall` has been run should you delete the marker files and rely on the bootstrap service for reinstallation.
+
+---
+
 ## Cilium CNI Installation
 
 Cilium is the AWS-supported CNI for EKS Hybrid Nodes. Hybrid nodes appear with status `Not Ready` until a CNI is installed. Amazon VPC CNI is **not compatible** with hybrid nodes.

@@ -1,7 +1,7 @@
 # Introduction to Kubernetes
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 11, 2026
 
 Kubernetes (K8s) is an open-source container orchestration platform that automates the deployment, scaling, and management of containerized applications. This document explains the basic concepts, architecture, main components, and features of Kubernetes.
 

@@ -1,7 +1,7 @@
 # Cilium eBPF Quiz
 
 > **Supported Version**: Cilium 1.17, Linux Kernel 4.19+
-> **Last Updated**: July 21, 2025
+> **Last Updated**: February 22, 2026
 
 ## eBPF Basic Concepts
 

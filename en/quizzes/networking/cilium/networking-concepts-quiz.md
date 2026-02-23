@@ -1,7 +1,7 @@
 # Cilium Networking Concepts Quiz
 
 > **Supported Version**: Cilium 1.17
-> **Last Updated**: July 21, 2025
+> **Last Updated**: February 22, 2026
 
 ## OSI Model and Basic Concepts
 

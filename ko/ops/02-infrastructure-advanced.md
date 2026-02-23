@@ -1,7 +1,7 @@
 # NLB 가중치 라우팅과 블루/그린 클러스터
 
 > **지원 버전**: EKS 1.29+, Terraform 1.5+, AWS Provider 5.x
-> **마지막 업데이트**: 2025년 6월
+> **마지막 업데이트**: 2026년 2월 23일
 
 < [이전: Terraform 3-Layer 인프라](./01-infrastructure-setup.md) | [목차](./README.md) | [다음: CI 파이프라인](./03-ci-pipelines.md) >
 

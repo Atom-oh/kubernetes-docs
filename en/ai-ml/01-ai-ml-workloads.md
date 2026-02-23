@@ -1,7 +1,7 @@
 # AI/ML Workloads
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: July 21, 2025
+> **Last Updated**: February 23, 2026
 
 Kubernetes is a powerful platform for running AI/ML workloads. In this chapter, we will learn how to run AI/ML workloads on EKS and explore best practices.
 

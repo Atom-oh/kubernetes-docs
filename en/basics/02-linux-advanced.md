@@ -1,7 +1,7 @@
 # Linux Operations Skills (For Kubernetes Practitioners)
 
 > **Supported Versions**: All major Linux distributions
-> **Last Updated**: February 2025
+> **Last Updated**: February 11, 2026
 
 This document covers essential Linux operations skills for working effectively in Kubernetes environments.
 

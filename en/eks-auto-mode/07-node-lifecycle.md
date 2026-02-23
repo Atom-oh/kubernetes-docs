@@ -1,7 +1,7 @@
 # Node Lifecycle Management
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 2025
+> **Last Updated**: February 19, 2026
 
 This guide covers node lifecycle management in EKS Auto Mode, including expiration policies, AMI management, drift detection, and node freshness monitoring.
 

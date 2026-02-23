@@ -1,7 +1,7 @@
 # 스케일링 동작 이해
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 19일
 
 < [이전: NodePool 구성](./02-nodepool-configuration.md) | [목차](./README.md) | [다음: Spot 전략](./04-spot-strategies.md) >
 

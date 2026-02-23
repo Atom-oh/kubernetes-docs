@@ -1,7 +1,7 @@
 # Container Technology
 
 > **Supported Versions**: Docker 20.10+, containerd 1.6+, CRI-O 1.24+
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 11, 2026
 
 Containers are a technology that packages applications and their dependencies together, enabling consistent execution across various environments. This document explains the fundamental concepts of containers, how they work, and their relationship with Kubernetes.
 

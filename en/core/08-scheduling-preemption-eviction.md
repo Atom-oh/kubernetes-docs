@@ -1,7 +1,7 @@
 # Kubernetes Scheduling, Preemption, and Eviction
 
 > **Supported Versions**: Kubernetes 1.32 - 1.34
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 22, 2026
 
 In Kubernetes, scheduling is the process of placing pods on appropriate nodes. Preemption is the process of removing lower-priority pods to make room for higher-priority pods, and eviction is the process of safely moving pods when node issues occur. In this chapter, we will learn about Kubernetes scheduling mechanisms, node selection, preemption, eviction, and scheduling optimization methods in Amazon EKS.
 

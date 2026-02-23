@@ -1,6 +1,6 @@
 # Observability Lab Part 1: Infrastructure Setup Quiz
 
-> **Last Updated**: February 2025
+> **Last Updated**: February 22, 2026
 
 Test your understanding of the infrastructure setup concepts covered in the Observability End-to-End Lab Part 1.
 

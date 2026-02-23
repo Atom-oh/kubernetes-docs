@@ -1,7 +1,7 @@
 # Operational Alert Configuration: Core Metrics Monitoring
 
 > **Supported Versions**: Prometheus 2.50+, Alertmanager 0.27+, Karpenter 0.35+
-> **Last Updated**: June 2025
+> **Last Updated**: February 23, 2026
 
 < [Previous: Scaling Strategies](./06-scaling-strategies.md) | [Table of Contents](./README.md) | [Next: Observability Analysis](./08-observability-analysis.md) >
 

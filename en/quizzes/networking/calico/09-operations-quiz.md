@@ -1,7 +1,7 @@
 # Operations Quiz
 
 > **Related Document**: [Operations](../../../networking/calico/09-operations.md)
-> **Last Updated**: February 22, 2025
+> **Last Updated**: February 22, 2026
 
 ## Quiz
 

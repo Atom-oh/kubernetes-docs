@@ -1,7 +1,7 @@
 # EKS 기반 CI 파이프라인: ECR 빌드 및 푸시
 
 > **지원 버전**: EKS 1.28+, GitLab Runner 17.0+, ARC 0.9+
-> **마지막 업데이트**: 2025년 6월
+> **마지막 업데이트**: 2026년 2월 23일
 
 < [이전: NLB 블루/그린](./02-infrastructure-advanced.md) | [목차](./README.md) | [다음: ArgoCD 멀티클러스터](./04-gitops-multi-cluster.md) >
 

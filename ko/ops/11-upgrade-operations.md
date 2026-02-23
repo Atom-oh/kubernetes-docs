@@ -1,7 +1,7 @@
 # EKS 업그레이드: Auto Mode 무중단 업그레이드
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2025년 6월
+> **마지막 업데이트**: 2026년 2월 21일
 
 < [이전: 리소스 최적화](./10-resource-optimization.md) | [목차](./README.md) | [다음: 없음] >
 

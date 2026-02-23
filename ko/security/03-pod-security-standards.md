@@ -1,7 +1,7 @@
 # Pod Security Standards (PSS)
 
 > **지원 버전**: Kubernetes 1.31, 1.32, 1.33
-> **마지막 업데이트**: 2025년 2월 21일
+> **마지막 업데이트**: 2026년 2월 22일
 
 Pod Security Standards(PSS)는 Kubernetes에서 Pod 보안을 위한 표준화된 정책 프레임워크입니다. 이 문서에서는 PSS의 개념, 구성 방법, 그리고 EKS 환경에서의 적용 방법을 상세히 알아봅니다.
 

@@ -1,7 +1,7 @@
 # Workload-Specific Optimization
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 2025
+> **Last Updated**: February 19, 2026
 
 This guide covers how to optimize EKS Auto Mode configurations for different workload types including web services, batch processing, GPU workloads, and AI/ML training.
 

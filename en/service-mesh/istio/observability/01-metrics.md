@@ -1,7 +1,7 @@
 # Istio Metrics
 
 > **Supported Versions**: Istio 1.28
-> **Last Updated**: November 26, 2025
+> **Last Updated**: February 19, 2026
 
 Istio automatically collects metrics for all traffic in the service mesh and integrates with various backends like Prometheus and OpenTelemetry to provide comprehensive observability.
 

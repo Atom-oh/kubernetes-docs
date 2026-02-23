@@ -1,7 +1,7 @@
 # Calico eBPF 데이터플레인 퀴즈
 
 > **관련 문서**: [Calico eBPF 데이터플레인](../../../networking/calico/06-ebpf-dataplane.md)
-> **마지막 업데이트**: 2025년 2월 22일
+> **마지막 업데이트**: 2026년 2월 22일
 
 ## 퀴즈
 

@@ -2,7 +2,7 @@
 
 > **Supported Version**: Istio 1.28+
 > **API Version**: `networking.istio.io/v1`
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 19, 2026
 
 DestinationRule is a core Istio resource that defines how to handle traffic after VirtualService routes it to the destination.
 

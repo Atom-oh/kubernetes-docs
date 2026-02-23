@@ -1,7 +1,7 @@
 # Argo Rollouts and Istio Integration
 
 > **Supported Versions**: Argo Rollouts 1.6+, Istio 1.18+
-> **Last Updated**: January 2025
+> **Last Updated**: February 19, 2026
 > **Difficulty**: ⭐⭐⭐⭐ (Advanced)
 
 This document explains in detail how to implement Progressive Delivery by integrating Argo Rollouts with Istio Service Mesh.

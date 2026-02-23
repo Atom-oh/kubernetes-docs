@@ -1,7 +1,7 @@
 # Istio Distributed Tracing
 
 > **Supported Versions**: Istio 1.28
-> **Last Updated**: November 26, 2025
+> **Last Updated**: February 19, 2026
 
 Distributed tracing tracks and visualizes request flows between microservices, enabling latency bottleneck identification, error root cause analysis, and understanding of service dependencies.
 

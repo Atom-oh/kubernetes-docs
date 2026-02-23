@@ -1,7 +1,7 @@
 # GitOps 자동화: Atlantis, FluxCD, AIOps
 
 > **지원 버전**: Atlantis v0.28+, FluxCD v2.3+, Terraform Cloud
-> **마지막 업데이트**: 2025년 6월
+> **마지막 업데이트**: 2026년 2월 21일
 
 < [이전: ArgoCD 멀티클러스터](./04-gitops-multi-cluster.md) | [목차](./README.md) | [다음: 스케일링 전략](./06-scaling-strategies.md) >
 

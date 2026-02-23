@@ -1,7 +1,7 @@
 # WorkloadEntry
 
 > **Supported Version**: Istio 1.28+
-> **Last Updated**: November 26, 2025
+> **Last Updated**: February 19, 2026
 
 WorkloadEntry is a resource for registering Virtual Machines (VMs) or bare-metal servers into the Istio service mesh. This enables workloads outside of Kubernetes to utilize the mesh's traffic management, security, and observability features.
 

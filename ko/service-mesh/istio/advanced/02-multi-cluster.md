@@ -1,7 +1,7 @@
 # Multi-cluster Service Mesh
 
 > **지원 버전**: Istio 1.18+
-> **마지막 업데이트**: 2025년 11월 24일
+> **마지막 업데이트**: 2026년 2월 23일
 > **Kubernetes 호환성**: 1.32+
 
 Multi-cluster Service Mesh는 여러 Kubernetes 클러스터를 하나의 통합된 서비스 메시로 연결합니다.

@@ -1,7 +1,7 @@
 # 관측성 스택 운영: Loki, Tempo, Prometheus 구성 가이드
 
 > **지원 버전**: Loki 3.0+, Tempo 2.4+, Prometheus 2.50+, Grafana 10.0+
-> **마지막 업데이트**: 2025년 6월
+> **마지막 업데이트**: 2026년 2월 23일
 
 < [이전: 관측성 분석](./08-observability-analysis.md) | [목차](./README.md) | [다음: 리소스 최적화](./10-resource-optimization.md) >
 

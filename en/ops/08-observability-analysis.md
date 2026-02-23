@@ -1,7 +1,7 @@
 # Observability Analysis: Logs/Metrics/Traces Correlation
 
 > **Supported Versions**: Loki 3.0+, Tempo 2.4+, Prometheus 2.50+, Grafana 10.0+
-> **Last Updated**: June 2025
+> **Last Updated**: February 23, 2026
 
 < [Previous: Operational Alert Configuration](./07-observability-alerts.md) | [Table of Contents](./README.md) | [Next: Observability Stack Operations](./09-observability-stack.md) >
 

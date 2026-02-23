@@ -1,6 +1,6 @@
 # Deep Dive into Networking Concepts
 
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 22, 2026
 
 This document provides in-depth explanations of core networking concepts needed to understand Cilium. It explores technical concepts that form the foundation of Cilium, including container networking, overlay networks, and routing protocols.
 

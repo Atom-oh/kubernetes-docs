@@ -1,7 +1,7 @@
 # 스케일링 전략: HPA 커스텀 메트릭, KEDA, VPA, Spot 활용
 
 > **지원 버전**: Kubernetes 1.28+, KEDA 2.14+, VPA 1.0+
-> **마지막 업데이트**: 2025년 6월
+> **마지막 업데이트**: 2026년 2월 21일
 
 < [이전: GitOps 자동화](./05-gitops-automation.md) | [목차](./README.md) | [다음: 운영 알림 구성](./07-observability-alerts.md) >
 

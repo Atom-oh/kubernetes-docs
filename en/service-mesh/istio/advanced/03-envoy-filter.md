@@ -1,7 +1,7 @@
 # EnvoyFilter
 
 > **Supported Versions**: Istio 1.28+
-> **Last Updated**: November 26, 2025
+> **Last Updated**: February 19, 2026
 
 EnvoyFilter is an advanced feature that allows you to directly customize Envoy proxy configurations.
 

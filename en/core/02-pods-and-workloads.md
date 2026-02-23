@@ -1,7 +1,7 @@
 # Kubernetes Pods and Workloads
 
 > **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 23, 2026
 
 This document provides a detailed explanation of Pods, the basic execution unit in Kubernetes, and the various workload resources that manage them. Starting from the concept of Pods, we'll cover the characteristics and use cases of various workload resources including Deployments, StatefulSets, DaemonSets, and more.
 

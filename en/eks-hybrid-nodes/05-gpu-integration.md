@@ -3,7 +3,7 @@
 < [Previous: Node Bootstrap](./04-node-bootstrap.md) | [Table of Contents](./README.md) | [Next: Workload Placement](./06-workload-placement.md) >
 
 > **Supported Versions**: EKS 1.31+, NVIDIA GPU Operator 24.x+
-> **Last Updated**: February 2025
+> **Last Updated**: February 21, 2026
 
 This document covers integrating NVIDIA GPU servers (H100, H200, A100, L40S) with EKS Hybrid Nodes for AI/ML workloads.
 

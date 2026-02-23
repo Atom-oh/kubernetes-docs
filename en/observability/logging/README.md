@@ -1,6 +1,6 @@
 # Logging Overview
 
-> **Last Updated**: February 2025
+> **Last Updated**: February 20, 2026
 
 Effective logging in Kubernetes environments is essential for system visibility, troubleshooting, and security auditing. This document covers logging fundamentals, log collection pipeline architecture, and logging strategies for EKS environments.
 

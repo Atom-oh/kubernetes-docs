@@ -1,7 +1,7 @@
 # Observability End-to-End Lab Series
 
 > **Difficulty**: Advanced
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 ## Overview
 

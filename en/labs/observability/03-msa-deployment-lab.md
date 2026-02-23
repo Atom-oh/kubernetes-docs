@@ -2,7 +2,7 @@
 
 > **Difficulty**: Advanced
 > **Estimated Time**: 60 minutes
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 ## Learning Objectives
 

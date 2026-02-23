@@ -1,6 +1,6 @@
 # Calico Glossary
 
-> **Last Updated**: February 22, 2025
+> **Last Updated**: February 22, 2026
 
 This document provides definitions of key terms and concepts related to Calico networking and security. Understanding these terms is essential for effectively deploying and operating Calico in Kubernetes environments.
 

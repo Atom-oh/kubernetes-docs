@@ -1,7 +1,7 @@
 # Observability
 
 > **Supported Versions**: Istio 1.28
-> **Last Updated**: November 27, 2025
+> **Last Updated**: February 19, 2026
 
 Istio provides comprehensive observability within the service mesh. It automatically collects metrics, logs, and traces for all service-to-service communication without requiring any changes to application code.
 

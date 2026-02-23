@@ -1,7 +1,7 @@
 # Auto Mode 시작하기
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 19일
 
 < [이전: 목차](./README.md) | [목차](./README.md) | [다음: NodePool 구성](./02-nodepool-configuration.md) >
 

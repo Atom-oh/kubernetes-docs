@@ -1,6 +1,6 @@
 # Lab Guide
 
-> **Last Updated**: February 2025
+> **Last Updated**: February 22, 2026
 
 This section provides hands-on lab guides for practicing Kubernetes and related technologies. Each lab includes step-by-step instructions and verification methods, allowing you to confirm what you learned in theory in a real environment.
 

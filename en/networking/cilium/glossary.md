@@ -1,6 +1,6 @@
 # Glossary and Abbreviations
 
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 22, 2026
 
 This document provides explanations of key terms and abbreviations related to Cilium. This glossary helps in understanding Cilium, eBPF, Kubernetes, and networking concepts.
 

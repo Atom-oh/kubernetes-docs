@@ -1,7 +1,7 @@
 # ArgoCD Notifications
 
 > **Supported Versions**: ArgoCD v2.9+, ArgoCD Notifications v1.2+
-> **Last Updated**: February 21, 2025
+> **Last Updated**: February 22, 2026
 
 ## Table of Contents
 - [Overview](#overview)

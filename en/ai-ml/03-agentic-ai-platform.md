@@ -1,7 +1,7 @@
 # Building an Agentic AI Platform on EKS
 
 > **Supported Versions**: EKS 1.31+, vLLM 0.6+, Karpenter 1.0+
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 Agentic AI goes beyond simple question-answering to autonomously create plans, use tools, and iteratively achieve goals. This chapter covers how to build a production-grade Agentic AI platform on EKS.
 

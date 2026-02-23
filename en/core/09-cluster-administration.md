@@ -1,7 +1,7 @@
 # Kubernetes Cluster Administration
 
 > **Supported Versions**: Kubernetes 1.34 (Released 2025-11-24)
-> **Last Updated**: 2025-11-24
+> **Last Updated**: February 23, 2026
 
 Kubernetes cluster administration is an important task that includes cluster setup, maintenance, monitoring, troubleshooting, and upgrades. In this chapter, we will explore various aspects of Kubernetes cluster administration and best practices for cluster management in Amazon EKS.
 

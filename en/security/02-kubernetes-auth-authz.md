@@ -1,7 +1,7 @@
 # Kubernetes Authentication and Authorization System
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 19, 2026
 
 ## Overview
 

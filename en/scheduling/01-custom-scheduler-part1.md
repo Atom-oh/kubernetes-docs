@@ -1,7 +1,7 @@
 # Part 1: Custom Scheduler Fundamentals
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 19, 2026
 
 The Kubernetes scheduler is a critical component that decides which node a pod should be placed on. While the default scheduler works well in most cases, you can implement a custom scheduler for specific requirements. In this chapter, we will learn how to implement a custom scheduler in EKS.
 

@@ -1,7 +1,7 @@
 # Zone-Aware Argo Rollouts
 
 > **Supported Versions**: Istio 1.18+, Argo Rollouts 1.6+
-> **Last Updated**: January 2025
+> **Last Updated**: February 19, 2026
 > **Difficulty**: Expert
 
 This document explains how to set up independent Argo Rollouts Canary deployments per AWS Availability Zone while leveraging Istio's locality-aware routing for automatic failover.

@@ -1,7 +1,7 @@
 # Istio Logging
 
 > **Supported Versions**: Istio 1.28
-> **Last Updated**: November 26, 2025
+> **Last Updated**: February 19, 2026
 
 Istio's logging capabilities allow you to record and analyze all activities in the service mesh. Use Access Logs, Envoy logs, and structured logs for traffic analysis, debugging, and security auditing.
 

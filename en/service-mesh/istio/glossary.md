@@ -1,7 +1,7 @@
 # Istio Glossary
 
 > **Supported Version**: Istio 1.28+
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 23, 2026
 
 This glossary organizes key terms related to Istio and Service Mesh in alphabetical order.
 

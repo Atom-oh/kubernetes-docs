@@ -2,7 +2,7 @@
 
 > **Supported Versions**: Istio 1.28.0
 > **EKS Version**: 1.34 (Kubernetes 1.28+)
-> **Last Updated**: January 2025
+> **Last Updated**: February 23, 2026
 
 ## Table of Contents
 

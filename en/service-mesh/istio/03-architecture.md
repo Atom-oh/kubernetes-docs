@@ -2,7 +2,7 @@
 
 > **Supported Version**: Istio 1.28+
 > **API Version**: `networking.istio.io/v1`, `security.istio.io/v1`
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 19, 2026
 
 This document provides an in-depth look at Istio's internal architecture and networking mechanisms.
 

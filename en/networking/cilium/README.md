@@ -6,7 +6,7 @@ This section provides a comprehensive understanding of Cilium's core concepts an
 
 > **Supported Versions**: Cilium 1.17, 1.18
 > **Kubernetes Compatibility**: 1.32 and above
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 23, 2026
 
 ## Key Improvements in Cilium 1.18
 

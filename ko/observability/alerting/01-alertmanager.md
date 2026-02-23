@@ -1,7 +1,7 @@
 # Prometheus Alertmanager
 
 > **지원 버전**: Alertmanager 0.27.x
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 20일
 
 ## 목차
 

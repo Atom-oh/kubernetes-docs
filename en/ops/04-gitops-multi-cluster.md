@@ -1,7 +1,7 @@
 # ArgoCD Multi-Cluster Deployment and IAM Identity Center
 
 > **Supported Versions**: ArgoCD 2.10+, EKS 1.28+, External Secrets Operator 0.9+
-> **Last Updated**: June 2025
+> **Last Updated**: February 23, 2026
 
 < [Previous: CI Pipelines](./03-ci-pipelines.md) | [Table of Contents](./README.md) | [Next: GitOps Automation](./05-gitops-automation.md) >
 

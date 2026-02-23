@@ -1,7 +1,7 @@
 # eBPF Technology Deep Dive
 
 > **Supported Versions**: Linux kernel 4.19+
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 22, 2026
 
 ## Lab Environment Setup
 

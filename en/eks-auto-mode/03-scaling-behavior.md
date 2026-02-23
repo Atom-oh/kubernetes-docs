@@ -1,7 +1,7 @@
 # Understanding Scaling Behavior
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 2025
+> **Last Updated**: February 19, 2026
 
 This guide explains how EKS Auto Mode handles node provisioning, consolidation, drift detection, and expiration-based renewal.
 

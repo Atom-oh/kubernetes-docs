@@ -1,6 +1,6 @@
 # ClickHouse for Log Analytics
 
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 20일
 
 ClickHouse는 OLAP(Online Analytical Processing) 워크로드에 최적화된 오픈소스 컬럼 기반 데이터베이스입니다. 대규모 로그 분석에서 뛰어난 쿼리 성능과 압축률을 제공합니다.
 

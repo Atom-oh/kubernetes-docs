@@ -1,7 +1,7 @@
 # 운영 알림 구성: 핵심 메트릭 모니터링
 
 > **지원 버전**: Prometheus 2.50+, Alertmanager 0.27+, kube-prometheus-stack 50+
-> **마지막 업데이트**: 2025년 6월
+> **마지막 업데이트**: 2026년 2월 23일
 
 < [이전: 스케일링 전략](./06-scaling-strategies.md) | [목차](./README.md) | [다음: 관측성 분석](./08-observability-analysis.md) >
 

@@ -1,7 +1,7 @@
 # Introduction to Amazon EKS
 
 > **Supported Versions**: Amazon EKS 1.31, 1.32, 1.33
-> **Last Updated**: July 25, 2025
+> **Last Updated**: February 21, 2026
 
 Amazon Elastic Kubernetes Service (EKS) is a managed service for running Kubernetes on AWS. In this chapter, we will explore the basic concepts of EKS, its architecture, and the differences from standard Kubernetes.
 

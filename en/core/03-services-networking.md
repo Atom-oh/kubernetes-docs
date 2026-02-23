@@ -1,7 +1,7 @@
 # Services and Networking
 
 > **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 23, 2026
 
 In Kubernetes, a Service is an abstraction layer that provides a single access point for a set of Pods. In this chapter, we'll explore Kubernetes networking concepts in detail, including various service types, Ingress, network policies, and more.
 

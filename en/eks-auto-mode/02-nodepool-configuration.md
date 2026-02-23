@@ -1,7 +1,7 @@
 # NodePool Configuration and Optimization
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 2025
+> **Last Updated**: February 19, 2026
 
 This guide covers the default NodePools provided by EKS Auto Mode and how to create custom NodePools tailored to your workload requirements.
 

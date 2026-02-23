@@ -1,7 +1,7 @@
 # Security
 
 > **Supported Versions**: Istio 1.28
-> **Last Updated**: November 27, 2025
+> **Last Updated**: February 19, 2026
 
 Istio provides robust security features within the service mesh. Based on the Zero Trust security model, it automatically encrypts service-to-service communication and provides fine-grained access control.
 

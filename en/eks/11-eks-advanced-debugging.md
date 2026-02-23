@@ -1,7 +1,7 @@
 # EKS Advanced Debugging and Incident Response
 
 > **Supported Versions**: EKS 1.28+, kubectl 1.28+
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 For stable operation of Amazon EKS clusters, a systematic incident response framework and advanced debugging skills are essential. This document provides a practical guide for quickly diagnosing and resolving complex issues that occur in production environments.
 

@@ -1,7 +1,7 @@
 # Karpenter
 
 > **Supported Versions**: Karpenter 1.6, Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: July 2025
+> **Last Updated**: February 22, 2026
 
 ## Table of Contents
 - [Introduction](#introduction)

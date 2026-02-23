@@ -1,6 +1,6 @@
 # CloudWatch Logs
 
-> **Last Updated**: February 2025
+> **Last Updated**: February 20, 2026
 
 Amazon CloudWatch Logs is a fully managed log monitoring service from AWS. It natively integrates with EKS, enabling log collection, storage, and analysis without separate infrastructure management.
 

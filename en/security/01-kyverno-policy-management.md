@@ -1,7 +1,7 @@
 # Policy Management with Kyverno
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 19, 2026
 
 Kyverno is a Kubernetes-native policy engine used to manage and enforce policies within clusters. In this chapter, we will learn how to manage policies in EKS clusters using Kyverno.
 

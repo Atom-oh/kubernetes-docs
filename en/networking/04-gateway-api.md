@@ -1,7 +1,7 @@
 # Kubernetes Gateway API
 
 > **Supported Versions**: Gateway API v1.2+
-> **Last Updated**: February 21, 2025
+> **Last Updated**: February 22, 2026
 
 ## Overview
 

@@ -1,7 +1,7 @@
 # ArgoCD 멀티클러스터 배포와 IAM Identity Center
 
 > **지원 버전**: ArgoCD 2.10+, EKS 1.28+, External Secrets Operator 0.9+
-> **마지막 업데이트**: 2025년 6월
+> **마지막 업데이트**: 2026년 2월 23일
 
 < [이전: CI 파이프라인](./03-ci-pipelines.md) | [목차](./README.md) | [다음: GitOps 자동화](./05-gitops-automation.md) >
 

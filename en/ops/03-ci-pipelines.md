@@ -1,7 +1,7 @@
 # EKS-Based CI Pipelines: ECR Build and Push
 
 > **Supported Versions**: Amazon EKS 1.28+, GitLab Runner 16.x+, Actions Runner Controller 0.9+
-> **Last Updated**: June 2025
+> **Last Updated**: February 23, 2026
 
 < [Previous: NLB Blue/Green](./02-infrastructure-advanced.md) | [Table of Contents](./README.md) | [Next: ArgoCD Multi-Cluster](./04-gitops-multi-cluster.md) >
 

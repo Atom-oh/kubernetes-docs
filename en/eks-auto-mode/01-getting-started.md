@@ -1,7 +1,7 @@
 # Getting Started with Auto Mode
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 2025
+> **Last Updated**: February 19, 2026
 
 This guide covers how to enable EKS Auto Mode on new clusters and how to convert existing clusters to use Auto Mode.
 

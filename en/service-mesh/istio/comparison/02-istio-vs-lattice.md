@@ -1,6 +1,6 @@
 # Istio Service Mesh vs AWS VPC Lattice Comparison
 
-> **Last Updated**: January 2025
+> **Last Updated**: February 23, 2026
 > **Istio Version**: 1.24
 > **VPC Lattice**: GA (Released 2023)
 

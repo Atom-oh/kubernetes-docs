@@ -1,7 +1,7 @@
 # Cilium Service Mesh Best Practices
 
 > **Supported Versions**: Cilium 1.16+, Kubernetes 1.28+
-> **Last Updated**: February 21, 2025
+> **Last Updated**: February 22, 2026
 
 ## Overview
 

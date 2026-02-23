@@ -1,7 +1,7 @@
 # Cost Management and Optimization
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 2025
+> **Last Updated**: February 19, 2026
 
 This guide covers cost optimization strategies for EKS Auto Mode, including cost analysis, Spot savings measurement, resource right-sizing, and Savings Plans integration.
 

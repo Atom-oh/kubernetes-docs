@@ -1,7 +1,7 @@
 # Amazon EKS Security
 
 > **Supported Versions**: Amazon EKS 1.31, 1.32, 1.33
-> **Last Updated**: July 25, 2025
+> **Last Updated**: February 19, 2026
 
 To securely run workloads on Amazon EKS (Elastic Kubernetes Service), you need to understand and implement various security layers and best practices. This document covers key concepts, components, and best practices for strengthening the security of your EKS cluster.
 

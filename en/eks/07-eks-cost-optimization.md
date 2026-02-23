@@ -1,7 +1,7 @@
 # Amazon EKS Cost Optimization
 
 > **Supported Versions**: Amazon EKS 1.31, 1.32, 1.33
-> **Last Updated**: July 21, 2025
+> **Last Updated**: February 22, 2026
 
 Amazon EKS (Elastic Kubernetes Service) makes it easy to deploy, manage, and scale containerized applications, but managing costs effectively is important. This document covers various strategies and best practices for optimizing the costs of your EKS cluster.
 

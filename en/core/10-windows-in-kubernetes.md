@@ -1,7 +1,7 @@
 # Windows in Kubernetes
 
 > **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 11, 2026
 
 Kubernetes was originally designed for Linux containers, but production support for Windows containers was added starting with version 1.14. In this chapter, we will explore how to run Windows workloads in Kubernetes, the architecture, limitations, and Windows support in Amazon EKS.
 

@@ -1,7 +1,7 @@
 # Secrets Management
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 21, 2025
+> **Last Updated**: February 22, 2026
 
 Kubernetes secrets management is a cornerstone of application security. This document covers various secrets management tools from native Secrets to External Secrets Operator, Sealed Secrets, HashiCorp Vault, and SOPS.
 

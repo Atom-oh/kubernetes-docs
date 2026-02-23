@@ -1,7 +1,7 @@
 # Runtime Security
 
 > **Supported Versions**: Falco 0.39+, Tetragon 1.2+, Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 21, 2025
+> **Last Updated**: February 22, 2026
 
 Runtime security involves detecting and responding to malicious activity and anomalous behavior while containers are running. This document covers runtime security strategies centered on Falco and Tetragon.
 

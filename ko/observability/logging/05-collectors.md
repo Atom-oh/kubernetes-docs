@@ -1,6 +1,6 @@
 # 로그 수집기 비교
 
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 20일
 
 Kubernetes 환경에서 로그를 수집하는 다양한 도구들이 있습니다. 이 문서에서는 FluentBit, Promtail, Grafana Alloy, OpenTelemetry Collector를 심층적으로 비교하고, 각 도구의 설정 방법과 최적화 전략을 설명합니다.
 

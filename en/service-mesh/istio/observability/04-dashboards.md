@@ -1,7 +1,7 @@
 # Istio Dashboards
 
 > **Supported Versions**: Istio 1.28
-> **Last Updated**: November 26, 2025
+> **Last Updated**: February 19, 2026
 
 Comprehensively visualize and monitor Istio service mesh using Grafana, Kiali, and Prometheus.
 

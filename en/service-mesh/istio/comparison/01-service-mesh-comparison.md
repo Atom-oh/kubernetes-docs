@@ -1,6 +1,6 @@
 # Comprehensive Service Mesh Solution Comparison
 
-> **Last Updated**: January 2025
+> **Last Updated**: February 19, 2026
 > **Comparison Targets**: Istio 1.24, Linkerd 2.15, Kong Mesh 2.8, Consul Connect 1.19
 
 This document provides a comprehensive comparison of major Service Mesh solutions available in Kubernetes environments.

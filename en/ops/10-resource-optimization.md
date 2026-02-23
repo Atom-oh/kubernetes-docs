@@ -1,7 +1,7 @@
 # Resource Optimization: Requests/Limits, JVM Tuning, Framework-Specific Guide
 
 > **Supported Versions**: Kubernetes 1.28+, Java 17+, Python 3.11+, Node.js 20+, Go 1.21+
-> **Last Updated**: June 2025
+> **Last Updated**: February 21, 2026
 
 < [Previous: Observability Stack Operations](./09-observability-stack.md) | [Table of Contents](./README.md) | [Next: EKS Upgrades](./11-upgrade-operations.md) >
 

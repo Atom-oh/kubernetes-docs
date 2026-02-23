@@ -1,7 +1,7 @@
 # FluxCD
 
 > **Supported Versions**: FluxCD v2.2+
-> **Last Updated**: February 21, 2025
+> **Last Updated**: February 22, 2026
 
 FluxCD is a set of continuous and progressive delivery solutions for Kubernetes that are open and extensible. FluxCD graduated from the CNCF in November 2022, making it one of the most mature GitOps tools in the cloud-native ecosystem.
 

@@ -1,7 +1,7 @@
 # DNS Proxy and DNS Caching
 
 > **Supported Versions**: Istio 1.28+
-> **Last Updated**: November 26, 2025
+> **Last Updated**: February 23, 2026
 
 Optimize external service access performance and control DNS lookups through Istio's DNS management features.
 

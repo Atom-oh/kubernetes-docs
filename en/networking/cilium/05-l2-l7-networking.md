@@ -1,7 +1,7 @@
 # L2-L7 Networking and Load Balancing
 
 > **Supported Versions**: Cilium 1.18
-> **Last Updated**: November 24, 2025
+> **Last Updated**: February 22, 2026
 
 ## Lab Environment Setup
 

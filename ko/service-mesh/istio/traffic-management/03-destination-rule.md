@@ -2,7 +2,7 @@
 
 > **지원 버전**: Istio 1.28+
 > **API 버전**: `networking.istio.io/v1`
-> **마지막 업데이트**: 2025년 11월 24일
+> **마지막 업데이트**: 2026년 2월 23일
 
 DestinationRule은 VirtualService가 트래픽을 라우팅한 후, 해당 트래픽을 어떻게 처리할지 정의하는 Istio의 핵심 리소스입니다.
 

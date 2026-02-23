@@ -1,7 +1,7 @@
 # Calico EKS 통합 퀴즈
 
 > **관련 문서**: [Calico EKS 통합](../../../networking/calico/08-eks-integration.md)
-> **마지막 업데이트**: 2025년 2월 22일
+> **마지막 업데이트**: 2026년 2월 22일
 
 ## 퀴즈
 
