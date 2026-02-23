@@ -1527,7 +1527,7 @@ echo 2 | sudo tee /proc/sys/kernel/bpf_spec_v4
 
 To verify your understanding of this document, try the following quiz:
 
-- [eBPF Fundamentals Quiz](../../quizzes/basics/05-ebpf-fundamentals-quiz.md)
+- [eBPF Fundamentals Quiz](../quizzes/basics/05-ebpf-fundamentals-quiz.md)
 
 ### 10.2 Advanced Learning Resources
 
@@ -1555,7 +1555,7 @@ For advanced content related to this document, refer to the following:
 | eBPF Deep Dive | [eBPF Technical Deep Dive](../networking/cilium/02-ebpf.md) | Advanced eBPF techniques |
 | Networking | [Cilium Networking](../networking/cilium/03-networking.md) | eBPF networking implementation |
 | Security | [Cilium Security](../networking/cilium/06-security-visibility.md) | eBPF-based security |
-| Kubernetes Networking | [Kubernetes Networking](../core/05-networking.md) | Basic networking concepts |
+| Kubernetes Networking | [Services and Networking](../core/03-services-networking.md) | Basic networking concepts |
 
 ### 10.4 Hands-on Checklist
 

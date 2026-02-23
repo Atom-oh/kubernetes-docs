@@ -1278,6 +1278,6 @@ flowchart TD
 
 **Related Documents**:
 - [Service Mesh Solution Comparison](01-service-mesh-comparison.md)
-- [Istio Architecture](../istio/02-architecture.md)
+- [Istio Architecture](../03-architecture.md)
 - [Istio Ambient Mode](../istio/advanced/01-ambient-mode.md)
-- [VPC Lattice Detailed Guide](../09-vpc-lattice.md)
+- [VPC Lattice Detailed Guide](../../networking/02-vpc-lattice.md)

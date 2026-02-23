@@ -1482,7 +1482,7 @@ route:
 
 ## Related Resources
 
-- [Monitoring Stack](../observability/01-monitoring-stack.md) - Prometheus and Grafana setup
+- [Monitoring Stack](../observability/README.md) - Prometheus and Grafana setup
 - [Node Lifecycle Management](../eks-auto-mode/07-node-lifecycle.md) - Karpenter node management
 - [Observability Analysis](./08-observability-analysis.md) - Log, metric, and trace correlation
 

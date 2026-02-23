@@ -484,4 +484,4 @@ spec:
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [ArgoCD 퀴즈](../../quizzes/gitops/argocd/README-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [ArgoCD 설치 퀴즈](../../quizzes/gitops/argocd/01-installation-quiz.md)를 풀어보세요.

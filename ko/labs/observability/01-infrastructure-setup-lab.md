@@ -1230,7 +1230,7 @@ aws mwaa get-environment \
 - [EKS 클러스터 생성 Part 1](../../eks/02-eks-cluster-creation-part1.md)
 - [EKS 클러스터 생성 Part 2](../../eks/02-eks-cluster-creation-part2.md)
 - [Karpenter 오토스케일링](../../autoscaling/02-karpenter.md)
-- [ArgoCD 소개](../../gitops/argocd/01-introduction.md)
+- [ArgoCD 설치](../../gitops/argocd/01-installation.md)
 
 ---
 

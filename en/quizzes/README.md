@@ -19,6 +19,7 @@ All quiz questions include answers in toggle format, so you can attempt the ques
 - [Linux Operations Quiz](./basics/02-linux-advanced-quiz.md)
 - [Container Technology Quiz](./basics/03-container-technology-quiz.md)
 - [Kubernetes Introduction Quiz](./basics/04-kubernetes-introduction-quiz.md)
+- [eBPF Fundamentals Quiz](./basics/05-ebpf-fundamentals-quiz.md)
 
 ### Kubernetes Core Concepts
 - [Cluster Architecture Quiz](./core/01-cluster-architecture-quiz.md)
@@ -53,15 +54,15 @@ All quiz questions include answers in toggle format, so you can attempt the ques
 - [EKS Troubleshooting Quiz](./eks/09-eks-troubleshooting-quiz.md)
 
 ### Cilium
-- [Part 1: Introduction Quiz](./cilium/01-introduction-quiz.md)
-- [Part 2: eBPF Quiz](./cilium/02-ebpf-quiz.md)
-- [Part 3: Networking Quiz](./cilium/03-networking-quiz.md)
-- [Part 4: IPAM and Policy Quiz](./cilium/04-ipam-policy-quiz.md)
-- [Part 5: L2-L7 Networking Quiz](./cilium/05-l2-l7-networking-quiz.md)
-- [Part 6: Security and Visibility Quiz](./cilium/06-security-visibility-quiz.md)
-- [Part 7: Advanced Topics Quiz](./cilium/07-advanced-topics-quiz.md)
-- [Networking Concepts Quiz](./cilium/networking-concepts-quiz.md)
-- [Glossary Quiz](./cilium/glossary-quiz.md)
+- [Part 1: Introduction Quiz](./networking/cilium/01-introduction-quiz.md)
+- [Part 2: eBPF Quiz](./networking/cilium/02-ebpf-quiz.md)
+- [Part 3: Networking Quiz](./networking/cilium/03-networking-quiz.md)
+- [Part 4: IPAM and Policy Quiz](./networking/cilium/04-ipam-policy-quiz.md)
+- [Part 5: L2-L7 Networking Quiz](./networking/cilium/05-l2-l7-networking-quiz.md)
+- [Part 6: Security and Visibility Quiz](./networking/cilium/06-security-visibility-quiz.md)
+- [Part 7: Advanced Topics Quiz](./networking/cilium/07-advanced-topics-quiz.md)
+- [Networking Concepts Quiz](./networking/cilium/networking-concepts-quiz.md)
+- [Glossary Quiz](./networking/cilium/glossary-quiz.md)
 
 ### AI/ML
 - [AI/ML Workloads Quiz](./ai-ml/03-ai-ml-workloads-quiz.md)
@@ -69,15 +70,25 @@ All quiz questions include answers in toggle format, so you can attempt the ques
 - [Agentic AI Platform on EKS Quiz](./ai-ml/08-agentic-ai-platform-quiz.md)
 
 ### Networking
-- [Cilium Quiz](./networking/04-cilium-quiz.md)
-- [VPC Lattice Quiz](./networking/09-vpc-lattice-quiz.md)
+- [Networking Overview Quiz](./networking/00-networking-overview-quiz.md)
+- [VPC CNI Quiz](./networking/01-vpc-cni-quiz.md)
+- [VPC Lattice Quiz](./networking/02-vpc-lattice-quiz.md)
+- [AWS Load Balancer Controller Quiz](./networking/03-aws-lb-controller-quiz.md)
+- [Gateway API Quiz](./networking/04-gateway-api-quiz.md)
 
 ### Service Mesh
 - [Istio Quiz](./service-mesh/02-istio-quiz.md)
 
 ### Security & Policy
 - [Policy Management with Kyverno Quiz](./security/01-kyverno-policy-management-quiz.md)
-- [Kubernetes Authentication and Authorization Quiz](./security/06-kubernetes-auth-authz-quiz.md)
+- [Kubernetes Authentication and Authorization Quiz](./security/02-kubernetes-auth-authz-quiz.md)
+- [Pod Security Standards Quiz](./security/03-pod-security-standards-quiz.md)
+- [Network Policies Quiz](./security/04-network-policies-quiz.md)
+- [Secrets Management Quiz](./security/05-secrets-management-quiz.md)
+- [EKS Security Best Practices Quiz](./security/06-eks-security-best-practices-quiz.md)
+- [Image Security Quiz](./security/07-image-security-quiz.md)
+- [Runtime Security Quiz](./security/08-runtime-security-quiz.md)
+- [OPA Gatekeeper Quiz](./security/09-opa-gatekeeper-quiz.md)
 
 ### GitOps
 - [ArgoCD Quiz](./gitops/01-argocd-quiz.md)
@@ -87,21 +98,19 @@ All quiz questions include answers in toggle format, so you can attempt the ques
 - [Karpenter Quiz](./autoscaling/06-karpenter-quiz.md)
 
 ### Observability
-- [Monitoring Stack Quiz](./observability/07-monitoring-stack-quiz.md)
-- [Logging Stack Quiz](./observability/08-logging-stack-quiz.md)
+- [Observability Optimization Guide Quiz](./observability/09-observability-optimization-quiz.md)
 
 ### Scheduling
 - [Custom Scheduler Quiz - Part 1](./scheduling/02-custom-scheduler-part1-quiz.md)
 - [Custom Scheduler Quiz - Part 2](./scheduling/02-custom-scheduler-part2-quiz.md)
 - [Custom Scheduler Quiz - Part 3](./scheduling/02-custom-scheduler-part3-quiz.md)
 
-### Package Management
-- [Helm Quiz](./package-management/10-helm-quiz.md)
-- [Helm Chart Migration with KRO Quiz](./package-management/05-kro-helm-migration-quiz.md)
-
-### Platform & AWS Integration
-- [AWS Controllers for Kubernetes (ACK) Quiz](./platform/03-ack-quiz.md)
-- [Kubernetes Extension Mechanisms Quiz](./platform/07-kubernetes-extensions-quiz.md)
+### Platform Engineering
+- [Platform Engineering Overview Quiz](./platform-engineering/00-platform-engineering-overview-quiz.md)
+- [Helm Quiz](./platform-engineering/01-helm-quiz.md)
+- [AWS Controllers for Kubernetes (ACK) Quiz](./platform-engineering/02-ack-quiz.md)
+- [Kubernetes Resource Operator (KRO) Quiz](./platform-engineering/03-kro-quiz.md)
+- [Kubernetes Extension Mechanisms Quiz](./platform-engineering/04-kubernetes-extensions-quiz.md)
 
 ## How to Use Quizzes
 

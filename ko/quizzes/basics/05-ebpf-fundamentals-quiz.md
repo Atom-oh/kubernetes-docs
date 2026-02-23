@@ -482,4 +482,4 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco -f
 
 ---
 
-[학습 자료로 돌아가기](../../basics/05-ebpf-fundamentals.md) | [다음 퀴즈: 컨테이너 기술](./02-container-technology-quiz.md)
+[학습 자료로 돌아가기](../../basics/05-ebpf-fundamentals.md) | [다음 퀴즈: 컨테이너 기술](./03-container-technology-quiz.md)

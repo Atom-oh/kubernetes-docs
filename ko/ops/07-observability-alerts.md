@@ -1869,8 +1869,8 @@ route:
 
 ## 관련 문서
 
-- [모니터링 스택](../observability/01-monitoring-stack.md) - Prometheus, VictoriaMetrics, Grafana 설정
-- [로깅 스택](../observability/02-logging-stack.md) - Loki, Tempo 설정
+- [모니터링 스택](../observability/README.md) - Prometheus, VictoriaMetrics, Grafana 설정
+- [로깅 스택](../observability/logging/README.md) - Loki, Tempo 설정
 - [EKS Auto Mode 노드 라이프사이클](../eks-auto-mode/07-node-lifecycle.md) - Karpenter 노드 관리
 
 ---

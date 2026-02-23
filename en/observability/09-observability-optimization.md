@@ -1709,10 +1709,8 @@ graph LR
 
 **Related Documents:**
 
-- [EKS Cluster Monitoring Basics](../eks/monitoring-basics.md)
-- [Prometheus Operations Guide](../tools/prometheus/README.md)
-- [Grafana Dashboard Configuration](../tools/grafana/README.md)
-- [CloudWatch Container Insights](../eks/container-insights.md)
+- [Prometheus Operations Guide](./metrics/01-prometheus.md)
+- [Grafana Dashboard Configuration](./grafana/README.md)
 
 **Related Quiz:**
 

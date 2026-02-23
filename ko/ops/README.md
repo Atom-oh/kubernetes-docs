@@ -96,9 +96,9 @@
 | 카테고리 | 개념 이해 | 실전 운영 (이 가이드) |
 |----------|----------|---------------------|
 | **EKS** | [EKS Auto Mode](../eks-auto-mode/README.md) | Terraform HCL, 업그레이드 스크립트 |
-| **GitOps** | [ArgoCD](../gitops/01-argocd.md) | ApplicationSet, 멀티클러스터 설정 |
+| **GitOps** | [ArgoCD](../gitops/argocd/README.md) | ApplicationSet, 멀티클러스터 설정 |
 | **스케일링** | [KEDA](../autoscaling/01-keda.md), [Karpenter](../autoscaling/02-karpenter.md) | HPA 커스텀 메트릭, VPA 통합 |
-| **관측성** | [관측성 스택](../observability/01-monitoring-stack.md) | PromQL, LogQL, TraceQL 쿼리 |
+| **관측성** | [관측성 스택](../observability/README.md) | PromQL, LogQL, TraceQL 쿼리 |
 | **보안** | [Kyverno](../security/01-kyverno-policy-management.md) | Policy 운영 가이드 |
 
 ### 문서 간 연계

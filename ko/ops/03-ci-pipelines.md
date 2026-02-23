@@ -1827,7 +1827,7 @@ build-optimized:
 ## 관련 문서
 
 - [ArgoCD 멀티클러스터 배포](./04-gitops-multi-cluster.md)
-- [ArgoCD 기초](../gitops/01-argocd.md)
+- [ArgoCD 기초](../gitops/argocd/README.md)
 - [NodePool 구성](../eks-auto-mode/02-nodepool-configuration.md)
 
 ---

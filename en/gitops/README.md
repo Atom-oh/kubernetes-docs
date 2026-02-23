@@ -408,7 +408,7 @@ For detailed FluxCD setup, see the FluxCD documentation.
 | Topic | Description |
 |-------|-------------|
 | [ArgoCD](argocd/README.md) | Complete ArgoCD guide with installation, applications, sync strategies, and more |
-| FluxCD | FluxCD setup, source controllers, and image automation |
+| [FluxCD](02-fluxcd.md) | FluxCD setup, source controllers, and image automation |
 
 ## Further Reading
 
@@ -418,4 +418,7 @@ For detailed FluxCD setup, see the FluxCD documentation.
 
 ## Quiz
 
-To test what you've learned, try the [GitOps overview quiz](../quizzes/gitops/README-quiz.md).
+To test what you've learned, try the following quizzes:
+- [ArgoCD Quiz](../quizzes/gitops/01-argocd-quiz.md)
+- [FluxCD Quiz](../quizzes/gitops/02-fluxcd-quiz.md)
+- [GitOps Comparison Quiz](../quizzes/gitops/03-gitops-comparison-quiz.md)

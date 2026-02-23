@@ -568,7 +568,7 @@ spec:
 
 **Reference:**
 - [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [Certificate Management](../../../service-mesh/istio/components.md#certificate-management)
+- [Certificate Management](../../../service-mesh/istio/03-architecture.md#certificate-management)
 </details>
 
 ---

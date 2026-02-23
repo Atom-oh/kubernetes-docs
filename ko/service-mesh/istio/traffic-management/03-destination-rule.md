@@ -462,7 +462,7 @@ trafficPolicy:
     simple: ROUND_ROBIN  # LEAST_REQUEST, RANDOM, PASSTHROUGH
 ```
 
-자세한 내용은 [로드 밸런싱](05-load-balancing.md) 참조
+자세한 내용은 [로드 밸런싱](06-load-balancing.md) 참조
 
 #### 2. Connection Pool
 
@@ -477,7 +477,7 @@ trafficPolicy:
       maxRequestsPerConnection: 2
 ```
 
-자세한 내용은 [Circuit Breaker](06-circuit-breaker.md) 참조
+자세한 내용은 [Circuit Breaker](07-circuit-breaker.md) 참조
 
 #### 3. Outlier Detection
 
@@ -490,7 +490,7 @@ trafficPolicy:
     maxEjectionPercent: 50
 ```
 
-자세한 내용은 [Circuit Breaker](06-circuit-breaker.md) 참조
+자세한 내용은 [Circuit Breaker](07-circuit-breaker.md) 참조
 
 #### 4. TLS 설정
 
@@ -1094,8 +1094,8 @@ istioctl analyze -n production
 DestinationRule을 이해했다면 다음 주제로 넘어가세요:
 
 1. **[트래픽 분할](03-traffic-splitting.md)**: Canary, Blue/Green 배포
-2. **[로드 밸런싱](05-load-balancing.md)**: 다양한 알고리즘과 정책
-3. **[Circuit Breaker](06-circuit-breaker.md)**: 장애 격리 및 복원력
+2. **[로드 밸런싱](06-load-balancing.md)**: 다양한 알고리즘과 정책
+3. **[Circuit Breaker](07-circuit-breaker.md)**: 장애 격리 및 복원력
 4. **[Retry 및 Timeout](04-retry-timeout.md)**: 재시도 및 타임아웃 설정
 
 ## 참고 자료

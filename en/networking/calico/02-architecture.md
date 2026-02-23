@@ -9,7 +9,7 @@ This section provides an in-depth exploration of Calico's architecture. Understa
 
 ## Full Architecture Diagram
 
-![Calico Architecture](../../assets/calico_architecture.png)
+![Calico Architecture](../../../assets/calico_architecture.png)
 
 ```mermaid
 flowchart TD

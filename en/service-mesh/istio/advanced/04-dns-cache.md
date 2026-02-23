@@ -791,6 +791,6 @@ spec:
 - [ServiceEntry](https://istio.io/latest/docs/reference/config/networking/service-entry/)
 
 ### Related Documents
-- [Istio Architecture - DNS Processing Mechanism](../02-architecture.md#dns-processing-mechanism)
+- [Istio Architecture - DNS Processing Mechanism](../03-architecture.md#dns-processing-mechanism)
 - [ServiceEntry](../traffic-management/12-service-entry.md)
 - [Egress Control](../traffic-management/11-egress-control.md)

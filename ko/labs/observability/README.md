@@ -237,7 +237,7 @@ sequenceDiagram
 
 ### Observability 기초
 - [Prometheus 기초](../../observability/metrics/01-prometheus.md)
-- [Grafana 대시보드](../../observability/metrics/02-grafana.md)
+- [Grafana 대시보드](../../observability/grafana/README.md)
 - [Logging Stack 개요](../../observability/logging/README.md)
 
 ### EKS 및 인프라
@@ -246,12 +246,12 @@ sequenceDiagram
 - [KEDA 이벤트 기반 스케일링](../../autoscaling/01-keda.md)
 
 ### GitOps 및 배포
-- [ArgoCD 소개](../../gitops/argocd/01-introduction.md)
-- [Argo Rollouts](../../gitops/argocd/04-rollouts.md)
+- [ArgoCD 설치](../../gitops/argocd/01-installation.md)
+- [트래픽 관리](../../gitops/argocd/05-traffic-management.md)
 
 ### 서비스 메시 및 네트워킹
 - [Cilium CNI](../../networking/cilium/01-introduction.md)
-- [OpenTelemetry 기초](../../observability/tracing/01-opentelemetry.md)
+- [OpenTelemetry 기초](../../observability/tracing/03-opentelemetry.md)
 
 ---
 

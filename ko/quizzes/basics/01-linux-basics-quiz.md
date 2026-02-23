@@ -777,4 +777,4 @@ journalctl --disk-usage
 
 ---
 
-[학습 자료로 돌아가기](../../basics/01-linux-basics.md) | [다음 퀴즈: 컨테이너 기술](./02-container-technology-quiz.md)
+[학습 자료로 돌아가기](../../basics/01-linux-basics.md) | [다음 퀴즈: Linux 실무 기술](./02-linux-advanced-quiz.md)

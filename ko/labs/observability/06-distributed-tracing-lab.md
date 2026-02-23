@@ -715,8 +715,8 @@ aws logs describe-log-groups --log-group-name-prefix "/aws/eks/obs-lab"
 
 ## 참조 문서
 
-- [OpenTelemetry 기초](../../observability/tracing/01-opentelemetry.md)
-- [Grafana Tempo 가이드](../../observability/tracing/02-tempo.md)
+- [OpenTelemetry 기초](../../observability/tracing/03-opentelemetry.md)
+- [Grafana Tempo 가이드](../../observability/tracing/01-tempo.md)
 - [Loki 로깅](../../observability/logging/01-loki.md)
 - [Prometheus 메트릭](../../observability/metrics/01-prometheus.md)
 

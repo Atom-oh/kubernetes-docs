@@ -1985,7 +1985,7 @@ managedNodeGroups:
 
 이 문서에서 다룬 클러스터 아키텍처에 대한 이해를 더욱 깊게 하려면 다음 주제들을 참조하세요:
 
-- [Kubernetes 소개](../basics/03-kubernetes-introduction.md) - Kubernetes의 기본 개념과 역사
+- [Kubernetes 소개](../basics/04-kubernetes-introduction.md) - Kubernetes의 기본 개념과 역사
 - [파드와 워크로드](./02-pods-and-workloads.md) - 클러스터에서 실행되는 워크로드 관리
 - [서비스와 네트워킹](./03-services-networking.md) - 클러스터 내 네트워킹 구성
 - [스케줄링, 선점 및 축출](./08-scheduling-preemption-eviction.md) - 노드에 파드를 배치하는 방법

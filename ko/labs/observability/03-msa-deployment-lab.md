@@ -1196,8 +1196,8 @@ sum(rate(http_requests_total{service="order-service"}[5m]))
 
 ## 참조 문서
 
-- [ArgoCD 소개](../../gitops/argocd/01-introduction.md)
-- [Argo Rollouts](../../gitops/argocd/04-rollouts.md)
+- [ArgoCD 설치](../../gitops/argocd/01-installation.md)
+- [트래픽 관리](../../gitops/argocd/05-traffic-management.md)
 - [KEDA 이벤트 기반 스케일링](../../autoscaling/01-keda.md)
 - [Karpenter 오토스케일링](../../autoscaling/02-karpenter.md)
 

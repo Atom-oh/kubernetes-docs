@@ -1527,7 +1527,7 @@ echo 2 | sudo tee /proc/sys/kernel/bpf_spec_v4
 
 이 문서의 내용을 확인하려면 다음 퀴즈를 풀어보세요:
 
-- [eBPF 기초 퀴즈](../../quizzes/basics/05-ebpf-fundamentals-quiz.md)
+- [eBPF 기초 퀴즈](../quizzes/basics/05-ebpf-fundamentals-quiz.md)
 
 ### 10.2 심화 학습 자료
 
@@ -1555,7 +1555,7 @@ echo 2 | sudo tee /proc/sys/kernel/bpf_spec_v4
 | eBPF 심층 분석 | [eBPF 기술 심층 분석](../networking/cilium/02-ebpf.md) | 고급 eBPF 기술 |
 | 네트워킹 | [Cilium 네트워킹](../networking/cilium/03-networking.md) | eBPF 네트워킹 구현 |
 | 보안 | [Cilium 보안](../networking/cilium/06-security-visibility.md) | eBPF 기반 보안 |
-| Kubernetes 네트워킹 | [Kubernetes 네트워킹](../core/05-networking.md) | 기본 네트워킹 개념 |
+| Kubernetes 네트워킹 | [서비스와 네트워킹](../core/03-services-networking.md) | 기본 네트워킹 개념 |
 
 ### 10.4 실습 체크리스트
 

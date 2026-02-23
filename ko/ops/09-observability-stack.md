@@ -1958,8 +1958,8 @@ data:
 
 ## 관련 문서
 
-- [모니터링 스택 기초](../observability/01-monitoring-stack.md)
-- [로깅 스택 기초](../observability/02-logging-stack.md)
+- [모니터링 스택 기초](../observability/README.md)
+- [로깅 스택 기초](../observability/logging/README.md)
 - [관측성 최적화](../observability/09-observability-optimization.md)
 - [리소스 최적화](./10-resource-optimization.md)
 

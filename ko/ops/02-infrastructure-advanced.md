@@ -1419,7 +1419,7 @@ esac
 
 - **[CI 파이프라인](./03-ci-pipelines.md)**: GitHub Actions를 사용한 CI 구성
 - **[GitOps 멀티 클러스터](./04-gitops-multi-cluster.md)**: ArgoCD로 블루/그린 클러스터 배포
-- **[모니터링 설정](./05-observability.md)**: Prometheus/Grafana 통합
+- **[모니터링 설정](./07-observability-alerts.md)**: Prometheus/Grafana 통합
 
 ---
 

@@ -16,8 +16,10 @@
 
 ### 기초 개념
 - [Linux 기초 퀴즈](./basics/01-linux-basics-quiz.md)
-- [컨테이너 기술 퀴즈](./basics/02-container-technology-quiz.md)
-- [Kubernetes 소개 퀴즈](./basics/03-kubernetes-introduction-quiz.md)
+- [Linux 운영 기술 퀴즈](./basics/02-linux-advanced-quiz.md)
+- [컨테이너 기술 퀴즈](./basics/03-container-technology-quiz.md)
+- [Kubernetes 소개 퀴즈](./basics/04-kubernetes-introduction-quiz.md)
+- [eBPF 기초와 실무 활용 퀴즈](./basics/05-ebpf-fundamentals-quiz.md)
 
 ### Kubernetes 핵심 개념
 - [클러스터 아키텍처 퀴즈](./core/01-cluster-architecture-quiz.md)
@@ -52,15 +54,15 @@
 - [EKS 문제 해결 퀴즈](./eks/09-eks-troubleshooting-quiz.md)
 
 ### Cilium
-- [Part 1: 소개 퀴즈](./cilium/01-introduction-quiz.md)
-- [Part 2: eBPF 퀴즈](./cilium/02-ebpf-quiz.md)
-- [Part 3: 네트워킹 퀴즈](./cilium/03-networking-quiz.md)
-- [Part 4: IPAM 및 정책 퀴즈](./cilium/04-ipam-policy-quiz.md)
-- [Part 5: L2-L7 네트워킹 퀴즈](./cilium/05-l2-l7-networking-quiz.md)
-- [Part 6: 보안 및 가시성 퀴즈](./cilium/06-security-visibility-quiz.md)
-- [Part 7: 고급 주제 퀴즈](./cilium/07-advanced-topics-quiz.md)
-- [네트워킹 개념 퀴즈](./cilium/networking-concepts-quiz.md)
-- [용어집 퀴즈](./cilium/glossary-quiz.md)
+- [Part 1: 소개 퀴즈](./networking/cilium/01-introduction-quiz.md)
+- [Part 2: eBPF 퀴즈](./networking/cilium/02-ebpf-quiz.md)
+- [Part 3: 네트워킹 퀴즈](./networking/cilium/03-networking-quiz.md)
+- [Part 4: IPAM 및 정책 퀴즈](./networking/cilium/04-ipam-policy-quiz.md)
+- [Part 5: L2-L7 네트워킹 퀴즈](./networking/cilium/05-l2-l7-networking-quiz.md)
+- [Part 6: 보안 및 가시성 퀴즈](./networking/cilium/06-security-visibility-quiz.md)
+- [Part 7: 고급 주제 퀴즈](./networking/cilium/07-advanced-topics-quiz.md)
+- [네트워킹 개념 퀴즈](./networking/cilium/networking-concepts-quiz.md)
+- [용어집 퀴즈](./networking/cilium/glossary-quiz.md)
 
 ### AI/ML
 - [AI/ML 워크로드 퀴즈](./ai-ml/03-ai-ml-workloads-quiz.md)
@@ -68,15 +70,25 @@
 - [Agentic AI 플랫폼 퀴즈](./ai-ml/08-agentic-ai-platform-quiz.md)
 
 ### Networking
-- [Cilium 퀴즈](./networking/04-cilium-quiz.md)
-- [VPC Lattice 퀴즈](./networking/09-vpc-lattice-quiz.md)
+- [Networking 개요 퀴즈](./networking/00-networking-overview-quiz.md)
+- [VPC CNI 퀴즈](./networking/01-vpc-cni-quiz.md)
+- [VPC Lattice 퀴즈](./networking/02-vpc-lattice-quiz.md)
+- [AWS Load Balancer Controller 퀴즈](./networking/03-aws-lb-controller-quiz.md)
+- [Gateway API 퀴즈](./networking/04-gateway-api-quiz.md)
 
 ### Service Mesh
 - [Istio 퀴즈](./service-mesh/02-istio-quiz.md)
 
 ### Security & Policy
 - [Kyverno를 사용한 정책 관리 퀴즈](./security/01-kyverno-policy-management-quiz.md)
-- [Kubernetes 인증 및 권한 부여 퀴즈](./security/06-kubernetes-auth-authz-quiz.md)
+- [Kubernetes 인증 및 권한 부여 퀴즈](./security/02-kubernetes-auth-authz-quiz.md)
+- [Pod Security Standards 퀴즈](./security/03-pod-security-standards-quiz.md)
+- [네트워크 정책 퀴즈](./security/04-network-policies-quiz.md)
+- [시크릿 관리 퀴즈](./security/05-secrets-management-quiz.md)
+- [EKS 보안 모범 사례 퀴즈](./security/06-eks-security-best-practices-quiz.md)
+- [이미지 보안 퀴즈](./security/07-image-security-quiz.md)
+- [런타임 보안 퀴즈](./security/08-runtime-security-quiz.md)
+- [OPA Gatekeeper 퀴즈](./security/09-opa-gatekeeper-quiz.md)
 
 ### GitOps
 - [ArgoCD 퀴즈](./gitops/01-argocd-quiz.md)
@@ -86,21 +98,19 @@
 - [Karpenter 퀴즈](./autoscaling/06-karpenter-quiz.md)
 
 ### Observability
-- [모니터링 스택 퀴즈](./observability/07-monitoring-stack-quiz.md)
-- [로깅 스택 퀴즈](./observability/08-logging-stack-quiz.md)
+- [관측성 최적화 가이드 퀴즈](./observability/09-observability-optimization-quiz.md)
 
 ### Scheduling
 - [Custom Scheduler 퀴즈 - Part 1](./scheduling/02-custom-scheduler-part1-quiz.md)
 - [Custom Scheduler 퀴즈 - Part 2](./scheduling/02-custom-scheduler-part2-quiz.md)
 - [Custom Scheduler 퀴즈 - Part 3](./scheduling/02-custom-scheduler-part3-quiz.md)
 
-### Package Management
-- [Helm 퀴즈](./package-management/10-helm-quiz.md)
-- [KRO를 활용한 Helm 차트 마이그레이션 퀴즈](./package-management/05-kro-helm-migration-quiz.md)
-
-### Platform & AWS Integration
-- [AWS Controllers for Kubernetes (ACK) 퀴즈](./platform/03-ack-quiz.md)
-- [Kubernetes 확장 메커니즘 퀴즈](./platform/07-kubernetes-extensions-quiz.md)
+### Platform Engineering
+- [Platform Engineering 개요 퀴즈](./platform-engineering/00-platform-engineering-overview-quiz.md)
+- [Helm 퀴즈](./platform-engineering/01-helm-quiz.md)
+- [AWS Controllers for Kubernetes (ACK) 퀴즈](./platform-engineering/02-ack-quiz.md)
+- [Kubernetes Resource Operator (KRO) 퀴즈](./platform-engineering/03-kro-quiz.md)
+- [Kubernetes 확장 메커니즘 퀴즈](./platform-engineering/04-kubernetes-extensions-quiz.md)
 
 ## 퀴즈 사용 방법
 

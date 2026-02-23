@@ -66,7 +66,7 @@ AWS CAF는 클라우드 플랫폼 성숙도를 세 단계로 정의합니다. �
 |------|------|----------------------|
 | **랜딩 존 & 가드레일** | 멀티 어카운트 환경, 예방적/탐지적 통제 | EKS 클러스터 구성, [OPA Gatekeeper](../security/09-opa-gatekeeper.md) / [Kyverno](../security/01-kyverno-policy-management.md) |
 | **인증** | 중앙 집중식 ID 관리, IdP 연동 | [K8s 인증 및 권한 부여](../security/02-kubernetes-auth-authz.md), OIDC, IRSA |
-| **네트워크** | 중앙 집중식 네트워크 관리 | VPC CNI, [Calico](../networking/03-calico.md), [Cilium](../networking/01-cilium.md) |
+| **네트워크** | 중앙 집중식 네트워크 관리 | VPC CNI, [Calico](../networking/calico/README.md), [Cilium](../networking/cilium/README.md) |
 | **로깅** | 크로스 어카운트 관측성 | [Prometheus](../observability/metrics/01-prometheus.md), [Loki](../observability/logging/01-loki.md), [OpenTelemetry](../observability/tracing/03-opentelemetry.md) |
 | **통제** | 프로그래밍 방식의 보안 통제 | [Pod Security Standards](../security/03-pod-security-standards.md), [네트워크 정책](../security/04-network-policies.md) |
 | **비용 관리** | 태깅 전략, 비용 할당 | 리소스 쿼터, LimitRange, [EKS 비용 최적화](../eks/07-eks-cost-optimization.md) |

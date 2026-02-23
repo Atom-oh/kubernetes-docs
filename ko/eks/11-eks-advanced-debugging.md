@@ -1916,11 +1916,11 @@ sudo ./eks-log-collector.sh
 
 ### 퀴즈
 
-이 문서에서 다룬 내용을 테스트하려면 [EKS 고급 디버깅 퀴즈](../../quizzes/eks/11-eks-advanced-debugging-quiz.md)를 풀어보세요.
+이 문서에서 다룬 내용을 테스트하려면 [EKS 고급 디버깅 퀴즈](../quizzes/eks/11-eks-advanced-debugging-quiz.md)를 풀어보세요.
 
 ### 다음 문서
 
-EKS 클러스터를 온프레미스 환경과 통합하는 방법을 알아보려면 [EKS Hybrid Nodes](./12-eks-hybrid-nodes.md)를 참조하세요.
+EKS 클러스터를 온프레미스 환경과 통합하는 방법을 알아보려면 [EKS Hybrid Nodes](../eks-hybrid-nodes/README.md)를 참조하세요.
 
 ### 추가 학습 자료
 

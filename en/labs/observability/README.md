@@ -211,6 +211,7 @@ By completing this lab series, you will be able to:
 
 - [Observability Overview](../../observability/README.md)
 - [Prometheus Documentation](../../observability/metrics/01-prometheus.md)
+- [Grafana Dashboard](../../observability/grafana/README.md)
 - [Loki Documentation](../../observability/logging/01-loki.md)
 - [Tempo Documentation](../../observability/tracing/01-tempo.md)
 - [OpenTelemetry Documentation](../../observability/tracing/03-opentelemetry.md)

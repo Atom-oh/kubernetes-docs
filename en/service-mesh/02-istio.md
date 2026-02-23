@@ -153,16 +153,16 @@ Detailed guides for all Istio features.
 
 | Document | Description |
 |----------|-------------|
-| [Gateway](istio/traffic-management/01-gateway.md) | Ingress/Egress Gateway configuration |
+| [Gateway & VirtualService](istio/traffic-management/01-gateway-virtualservice.md) | Ingress/Egress Gateway configuration |
 | [Routing](istio/traffic-management/02-routing.md) | VirtualService routing rules |
-| [Traffic Splitting](istio/traffic-management/03-traffic-splitting.md) | Canary deployment and A/B testing |
-| [Traffic Mirroring](istio/traffic-management/04-traffic-mirroring.md) | Traffic mirroring and shadow testing |
-| [Load Balancing](istio/traffic-management/05-load-balancing.md) | Various load balancing strategies |
-| [Timeout and Retry](istio/traffic-management/06-timeout-retry.md) | Timeout and retry policies |
+| [DestinationRule](istio/traffic-management/03-destination-rule.md) | Service traffic policies |
+| [Traffic Splitting](istio/traffic-management/04-traffic-splitting.md) | Canary deployment and A/B testing |
+| [Timeout and Retry](istio/traffic-management/05-retry-timeout.md) | Timeout and retry policies |
+| [Load Balancing](istio/traffic-management/06-load-balancing.md) | Various load balancing strategies |
 | [Circuit Breaker](istio/traffic-management/07-circuit-breaker.md) | Circuit breaker pattern implementation |
-| [Connection Pool](istio/traffic-management/08-connection-pool.md) | Connection pool management |
-| [Fault Injection](istio/traffic-management/09-fault-injection.md) | Chaos engineering |
-| [Traffic Policy](istio/traffic-management/10-traffic-policy.md) | Comprehensive traffic policies |
+| [Fault Injection](istio/traffic-management/08-fault-injection.md) | Chaos engineering |
+| [Traffic Mirroring](istio/traffic-management/09-traffic-mirror.md) | Traffic mirroring and shadow testing |
+| [Session Affinity](istio/traffic-management/10-session-affinity.md) | Session affinity configuration |
 
 ### 🔐 Security
 

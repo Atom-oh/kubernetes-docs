@@ -1709,10 +1709,8 @@ graph LR
 
 **관련 문서:**
 
-- [EKS 클러스터 모니터링 기초](../eks/monitoring-basics.md)
-- [Prometheus 운영 가이드](../tools/prometheus/README.md)
-- [Grafana 대시보드 구성](../tools/grafana/README.md)
-- [CloudWatch Container Insights](../eks/container-insights.md)
+- [Prometheus 운영 가이드](./metrics/01-prometheus.md)
+- [Grafana 대시보드 구성](./grafana/README.md)
 
 **관련 퀴즈:**
 

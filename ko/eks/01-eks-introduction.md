@@ -7,7 +7,7 @@ Amazon Elastic Kubernetes Service(EKS)는 AWS에서 Kubernetes를 실행하기 �
 
 ## EKS와 Kubernetes
 
-EKS는 표준 Kubernetes API를 제공하는 관리형 서비스입니다. Kubernetes의 기본 개념과 작동 방식에 대한 자세한 내용은 [Kubernetes 소개](../basics/03-kubernetes-introduction.md) 문서를 참조하세요.
+EKS는 표준 Kubernetes API를 제공하는 관리형 서비스입니다. Kubernetes의 기본 개념과 작동 방식에 대한 자세한 내용은 [Kubernetes 소개](../basics/04-kubernetes-introduction.md) 문서를 참조하세요.
 
 ### EKS의 주요 이점
 

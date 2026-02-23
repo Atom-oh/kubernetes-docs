@@ -1593,4 +1593,4 @@ Effectively implementing and managing VPC Lattice reduces the complexity of micr
 
 ## Quiz
 
-To test what you've learned in this chapter, try the [topic quiz](../quizzes/networking/09-vpc-lattice-quiz.md).
+To test what you've learned in this chapter, try the [VPC Lattice quiz](../quizzes/networking/02-vpc-lattice-quiz.md).

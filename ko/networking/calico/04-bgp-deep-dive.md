@@ -159,7 +159,7 @@ flowchart TD
 
 ## Calico BGP 아키텍처
 
-![Calico BGP 토폴로지](../../assets/calico_bgp_topology.png)
+![Calico BGP 토폴로지](../../../assets/calico_bgp_topology.png)
 
 ### Full-Mesh 토폴로지
 

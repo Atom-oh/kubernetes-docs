@@ -153,16 +153,16 @@ Istio의 모든 기능에 대한 상세 가이드입니다.
 
 | 문서 | 설명 |
 |------|------|
-| [Gateway](istio/traffic-management/01-gateway.md) | Ingress/Egress Gateway 구성 |
+| [Gateway & VirtualService](istio/traffic-management/01-gateway-virtualservice.md) | Ingress/Egress Gateway 구성 |
 | [라우팅](istio/traffic-management/02-routing.md) | VirtualService 라우팅 규칙 |
-| [트래픽 분할](istio/traffic-management/03-traffic-splitting.md) | Canary 배포 및 A/B 테스트 |
-| [트래픽 미러링](istio/traffic-management/04-traffic-mirroring.md) | 트래픽 미러링 및 섀도우 테스트 |
-| [로드 밸런싱](istio/traffic-management/05-load-balancing.md) | 다양한 로드 밸런싱 전략 |
-| [Timeout과 Retry](istio/traffic-management/06-timeout-retry.md) | 시간 초과 및 재시도 정책 |
+| [DestinationRule](istio/traffic-management/03-destination-rule.md) | 서비스 트래픽 정책 |
+| [트래픽 분할](istio/traffic-management/04-traffic-splitting.md) | Canary 배포 및 A/B 테스트 |
+| [Timeout과 Retry](istio/traffic-management/05-retry-timeout.md) | 시간 초과 및 재시도 정책 |
+| [로드 밸런싱](istio/traffic-management/06-load-balancing.md) | 다양한 로드 밸런싱 전략 |
 | [Circuit Breaker](istio/traffic-management/07-circuit-breaker.md) | 서킷 브레이커 패턴 구현 |
-| [Connection Pool](istio/traffic-management/08-connection-pool.md) | 연결 풀 관리 |
-| [장애 주입](istio/traffic-management/09-fault-injection.md) | 카오스 엔지니어링 |
-| [트래픽 정책](istio/traffic-management/10-traffic-policy.md) | 종합 트래픽 정책 |
+| [장애 주입](istio/traffic-management/08-fault-injection.md) | 카오스 엔지니어링 |
+| [트래픽 미러링](istio/traffic-management/09-traffic-mirror.md) | 트래픽 미러링 및 섀도우 테스트 |
+| [Session Affinity](istio/traffic-management/10-session-affinity.md) | 세션 어피니티 설정 |
 
 ### 🔐 보안
 

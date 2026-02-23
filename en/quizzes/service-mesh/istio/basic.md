@@ -31,7 +31,7 @@ One of the core advantages of Service Mesh is that it can control and observe co
 - D (O): It applies security policies at the network level with mTLS, Authorization Policy, etc.
 
 **Reference:**
-- [Istio Core Concepts](../../../service-mesh/istio/core-concepts.md)
+- [Istio Core Concepts](../../../service-mesh/istio/02-basic-concepts.md)
 - [What is Service Mesh?](../../../service-mesh/02-istio.md#introduction)
 </details>
 
@@ -71,7 +71,7 @@ D. Citadel
 ```
 
 **Reference:**
-- [Istio Components](../../../service-mesh/istio/components.md)
+- [Istio Components](../../../service-mesh/istio/03-architecture.md)
 - [Architecture Overview](../../../service-mesh/02-istio.md#architecture-overview)
 </details>
 
@@ -100,7 +100,7 @@ Kubernetes CRD validation and storage is the role of the Control Plane (Istiod).
 - D (O): Envoy collects metrics (Prometheus), logs (Access Log), and traces (Jaeger) for all requests
 
 **Reference:**
-- [Data Plane Structure](../../../service-mesh/istio/components.md#data-plane-envoy-proxy)
+- [Data Plane Structure](../../../service-mesh/istio/03-architecture.md#data-plane-envoy-proxy)
 </details>
 
 ---
@@ -152,7 +152,7 @@ istioctl install --set profile=production -y
 - ✅ Monitoring stack ready
 
 **Reference:**
-- [Installation Guide](../../../service-mesh/istio/installation.md)
+- [Installation Guide](../../../service-mesh/istio/01-installation.md)
 - [Best Practices](../../../service-mesh/istio/best-practices.md#production-checklist)
 </details>
 
@@ -508,7 +508,7 @@ istioctl proxy-config secret <pod-name> -o json
 
 **Reference:**
 - [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [Certificate Management](../../../service-mesh/istio/components.md#certificate-management)
+- [Certificate Management](../../../service-mesh/istio/03-architecture.md#certificate-management)
 </details>
 
 ---
@@ -1036,7 +1036,7 @@ istioctl uninstall --revision=1-28-0 -y
 
 ## Learning Resources
 
-- [Istio Installation Guide](../../../service-mesh/istio/installation.md)
-- [Core Concepts](../../../service-mesh/istio/core-concepts.md)
-- [Components](../../../service-mesh/istio/components.md)
+- [Istio Installation Guide](../../../service-mesh/istio/01-installation.md)
+- [Core Concepts](../../../service-mesh/istio/02-basic-concepts.md)
+- [Components](../../../service-mesh/istio/03-architecture.md)
 - [Istio Official Documentation](https://istio.io/latest/docs/)

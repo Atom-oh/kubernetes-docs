@@ -123,14 +123,14 @@ EKS Auto Mode는 다음 리전에서 사용 가능합니다:
 
 EKS Auto Mode를 성공적으로 구성한 후 다음 주제를 학습하는 것이 좋습니다:
 
-1. **[EKS 비용 최적화](/ko/eks/07-eks-cost-optimization.md)**: Spot, Savings Plans, 리소스 최적화
-2. **[EKS 모니터링 및 로깅](/ko/eks/06-eks-monitoring-logging.md)**: CloudWatch, Prometheus, Grafana
-3. **[EKS 보안](/ko/eks/05-eks-security.md)**: IAM, 네트워크 정책, Pod 보안
-4. **[Karpenter 심화](/ko/tools/karpenter/)**: 직접 Karpenter 설치 및 고급 기능
+1. **[EKS 비용 최적화](../eks/07-eks-cost-optimization.md)**: Spot, Savings Plans, 리소스 최적화
+2. **[EKS 모니터링 및 로깅](../eks/06-eks-monitoring-logging.md)**: CloudWatch, Prometheus, Grafana
+3. **[EKS 보안](../eks/05-eks-security.md)**: IAM, 네트워크 정책, Pod 보안
+4. **[Karpenter 심화](../autoscaling/02-karpenter.md)**: 직접 Karpenter 설치 및 고급 기능
 
 ## 관련 퀴즈
 
-학습 내용을 테스트하려면 [EKS Auto Mode 퀴즈](/ko/quizzes/eks/13-eks-auto-mode-quiz.md)를 풀어보세요.
+학습 내용을 테스트하려면 [EKS Auto Mode 퀴즈](../quizzes/eks-auto-mode/01-getting-started-quiz.md)를 풀어보세요.
 
 ---
 

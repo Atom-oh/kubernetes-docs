@@ -646,4 +646,4 @@ docker rm <id>                  # 삭제
 
 ---
 
-[학습 자료로 돌아가기](../../basics/02-container-technology.md) | [다음 퀴즈: Kubernetes 소개](./03-kubernetes-introduction-quiz.md)
+[학습 자료로 돌아가기](../../basics/03-container-technology.md) | [다음 퀴즈: Kubernetes 소개](./04-kubernetes-introduction-quiz.md)

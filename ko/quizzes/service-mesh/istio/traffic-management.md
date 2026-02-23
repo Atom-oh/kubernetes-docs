@@ -61,7 +61,7 @@ spec:
 
 **참고 자료:**
 - [라우팅](../../../service-mesh/istio/traffic-management/02-routing.md)
-- [VirtualService 개념](../../../service-mesh/istio/core-concepts.md#virtualservice)
+- [VirtualService 개념](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
 </details>
 
 ---

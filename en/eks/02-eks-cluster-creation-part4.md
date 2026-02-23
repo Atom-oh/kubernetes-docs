@@ -988,8 +988,8 @@ variable "tags" {
 
 ### Related Topics
 
-- [ArgoCD](../gitops/01-argocd.md) — GitOps continuous deployment
-- [AWS Controllers for Kubernetes (ACK)](../platform/01-ack.md) — Managing AWS resources from Kubernetes
+- [ArgoCD](../gitops/argocd/README.md) — GitOps continuous deployment
+- [AWS Controllers for Kubernetes (ACK)](../platform-engineering/02-ack.md) — Managing AWS resources from Kubernetes
 - [Karpenter](../autoscaling/02-karpenter.md) — Node provisioning automation
 - [Kubernetes Extensions](../core/11-extending-kubernetes.md) — Extending the Kubernetes API with Operators and CRDs
 

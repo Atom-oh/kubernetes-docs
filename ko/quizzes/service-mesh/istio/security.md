@@ -568,7 +568,7 @@ spec:
 
 **참고 자료:**
 - [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [인증서 관리](../../../service-mesh/istio/components.md#인증서-관리)
+- [인증서 관리](../../../service-mesh/istio/03-architecture.md#인증서-관리)
 </details>
 
 ---

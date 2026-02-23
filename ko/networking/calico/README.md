@@ -405,4 +405,4 @@ flowchart TD
 
 ## 퀴즈
 
-이 섹션에서 배운 내용을 테스트하려면 [Calico 딥다이브 퀴즈](../../quizzes/networking/calico/README-quiz.md)를 풀어보세요.
+이 섹션에서 배운 내용을 테스트하려면 [Calico 소개 퀴즈](../../quizzes/networking/calico/01-introduction-quiz.md)를 풀어보세요.

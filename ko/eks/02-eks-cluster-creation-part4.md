@@ -988,8 +988,8 @@ variable "tags" {
 
 ### 관련 주제
 
-- [ArgoCD](../gitops/01-argocd.md) — GitOps 연속 배포
-- [AWS Controllers for Kubernetes (ACK)](../platform/01-ack.md) — Kubernetes에서 AWS 리소스 관리
+- [ArgoCD](../gitops/argocd/README.md) — GitOps 연속 배포
+- [AWS Controllers for Kubernetes (ACK)](../platform-engineering/02-ack.md) — Kubernetes에서 AWS 리소스 관리
 - [Karpenter](../autoscaling/02-karpenter.md) — 노드 프로비저닝 자동화
 - [Kubernetes 확장](../core/11-extending-kubernetes.md) — Operator와 CRD를 사용한 Kubernetes API 확장
 

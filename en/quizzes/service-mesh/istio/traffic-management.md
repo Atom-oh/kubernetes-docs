@@ -61,7 +61,7 @@ spec:
 
 **Reference:**
 - [Routing](../../../service-mesh/istio/traffic-management/02-routing.md)
-- [VirtualService Concepts](../../../service-mesh/istio/core-concepts.md#virtualservice)
+- [VirtualService Concepts](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
 </details>
 
 ---

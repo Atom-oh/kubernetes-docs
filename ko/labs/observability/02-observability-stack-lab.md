@@ -1974,8 +1974,8 @@ kubectl port-forward svc/kube-prometheus-grafana 3000:80 -n monitoring &
 ## 참조 문서
 
 - [Prometheus 기초](../../observability/metrics/01-prometheus.md)
-- [Grafana 대시보드](../../observability/metrics/02-grafana.md)
-- [OpenTelemetry 기초](../../observability/tracing/01-opentelemetry.md)
+- [Grafana 대시보드](../../observability/grafana/README.md)
+- [OpenTelemetry 기초](../../observability/tracing/03-opentelemetry.md)
 - [Loki 로깅](../../observability/logging/01-loki.md)
 
 ---

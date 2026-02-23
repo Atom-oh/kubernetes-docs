@@ -1199,7 +1199,7 @@ kubectl logs -n istio-system -l app=istiod --context="${CTX_CLUSTER1}"
 
 - [Ambient Mode](01-ambient-mode.md) - 리소스 최적화
 - [mTLS](../security/01-mtls.md) - 클러스터 간 보안 통신
-- [VPC Lattice](../../09-vpc-lattice.md) - AWS 관리형 서비스 네트워킹
+- [VPC Lattice](../../networking/02-vpc-lattice.md) - AWS 관리형 서비스 네트워킹
 
 ## 요약
 

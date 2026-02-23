@@ -388,28 +388,21 @@ module "eks_blueprints_addons" {
 
 | 가이드 | 설명 |
 |--------|------|
-| [FluxCD 개요](fluxcd/README.md) | FluxCD 소개 및 아키텍처 |
-| [설치 및 부트스트랩](fluxcd/01-installation.md) | FluxCD 설치 방법 |
-| [소스 관리](fluxcd/02-sources.md) | GitRepository, HelmRepository |
-| [Kustomization](fluxcd/03-kustomization.md) | Kustomize Controller |
-| [Helm Releases](fluxcd/04-helm-releases.md) | Helm Controller |
-| [이미지 자동화](fluxcd/05-image-automation.md) | 이미지 업데이트 자동화 |
-| [알림](fluxcd/06-notifications.md) | 알림 시스템 |
-| [모범 사례](fluxcd/07-best-practices.md) | 프로덕션 권장 사항 |
+| [FluxCD 개요](02-fluxcd.md) | FluxCD 소개 및 아키텍처 |
 
 ### 비교 및 마이그레이션
 
 | 가이드 | 설명 |
 |--------|------|
-| [ArgoCD vs FluxCD](comparison.md) | 상세 비교 분석 |
+| [ArgoCD vs FluxCD](03-gitops-comparison.md) | 상세 비교 분석 |
 
 ## 다음 단계
 
 1. **ArgoCD 시작하기**: [ArgoCD 개요](argocd/README.md)로 이동하여 ArgoCD의 아키텍처와 주요 개념을 학습하세요.
 
-2. **FluxCD 시작하기**: [FluxCD 개요](fluxcd/README.md)로 이동하여 FluxCD의 모듈형 아키텍처를 살펴보세요.
+2. **FluxCD 시작하기**: [FluxCD 개요](02-fluxcd.md)로 이동하여 FluxCD의 모듈형 아키텍처를 살펴보세요.
 
-3. **도구 비교**: [ArgoCD vs FluxCD 비교](comparison.md)를 통해 프로젝트에 적합한 도구를 선택하세요.
+3. **도구 비교**: [ArgoCD vs FluxCD 비교](03-gitops-comparison.md)를 통해 프로젝트에 적합한 도구를 선택하세요.
 
 ## 참고 자료
 
@@ -421,4 +414,7 @@ module "eks_blueprints_addons" {
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [GitOps 퀴즈](../quizzes/gitops/README-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 다음 퀴즈를 풀어보세요:
+- [ArgoCD 퀴즈](../quizzes/gitops/01-argocd-quiz.md)
+- [FluxCD 퀴즈](../quizzes/gitops/02-fluxcd-quiz.md)
+- [GitOps 비교 퀴즈](../quizzes/gitops/03-gitops-comparison-quiz.md)

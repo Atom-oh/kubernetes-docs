@@ -72,7 +72,7 @@ This operations guide complements existing concept documentation with practical,
 
 ### Concept Documentation
 - [EKS Auto Mode](../eks-auto-mode/README.md) - Architecture and concepts
-- [ArgoCD](../gitops/01-argocd.md) - GitOps fundamentals
+- [ArgoCD](../gitops/argocd/README.md) - GitOps fundamentals
 - [KEDA](../autoscaling/01-keda.md) - Event-driven autoscaling concepts
 - [Karpenter](../autoscaling/02-karpenter.md) - Node provisioning concepts
 

@@ -218,7 +218,7 @@ A high-performance L7 proxy that forms the Data Plane of Istio.
 - Routers: Routing decisions
 - Clusters: Upstream services
 
-**Related Documentation**: [Architecture - Envoy Proxy](02-architecture.md#data-plane-envoy-proxy)
+**Related Documentation**: [Architecture - Envoy Proxy](03-architecture.md#data-plane-envoy-proxy)
 
 ---
 
@@ -324,7 +324,7 @@ iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-port 15006
 
 **Alternative**: eBPF (Ambient Mode)
 
-**Related Documentation**: [Architecture - iptables](02-architecture.md#iptables-and-traffic-interception)
+**Related Documentation**: [Architecture - iptables](03-architecture.md#iptables-and-traffic-interception)
 
 ---
 
@@ -347,7 +347,7 @@ The unified Control Plane component in Istio 1.5+.
 - Simplified operations
 - Resource efficiency
 
-**Related Documentation**: [Architecture - Istiod](02-architecture.md#control-plane-istiod)
+**Related Documentation**: [Architecture - Istiod](03-architecture.md#control-plane-istiod)
 
 ---
 
@@ -1238,7 +1238,7 @@ spec:
 - Before: 1000 services -> 500 MB memory
 - After: 10 services -> 80 MB memory
 
-**Related Documentation**: [Architecture - Sidecar Resource](02-architecture.md#optimization-through-sidecar-resource)
+**Related Documentation**: [Architecture - Sidecar Resource](03-architecture.md#optimization-through-sidecar-resource)
 
 ---
 
@@ -1592,7 +1592,7 @@ A set of APIs for dynamic configuration of Envoy Proxy.
 Envoy Start -> LDS -> CDS -> EDS -> RDS -> SDS
 ```
 
-**Related Documentation**: [Architecture - xDS API Communication](02-architecture.md#xds-api-communication)
+**Related Documentation**: [Architecture - xDS API Communication](03-architecture.md#xds-api-communication)
 
 ---
 
@@ -1689,7 +1689,7 @@ kubectl label namespace default istio.io/dataplane-mode=ambient
 - [SPIFFE Specification](https://github.com/spiffe/spiffe/tree/main/standards)
 
 ### Related Documentation
-- [Istio Architecture](02-architecture.md)
+- [Istio Architecture](03-architecture.md)
 - [Traffic Management](traffic-management/README.md)
 - [Security](security/README.md)
 - [Observability](observability/README.md)

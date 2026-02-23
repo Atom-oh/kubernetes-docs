@@ -321,4 +321,4 @@ spec:
 
 ## Quiz
 
-To test what you've learned, try the [ArgoCD overview quiz](../../quizzes/gitops/argocd/README-quiz.md).
+To test what you've learned, try the [ArgoCD installation quiz](../../quizzes/gitops/argocd/01-installation-quiz.md).

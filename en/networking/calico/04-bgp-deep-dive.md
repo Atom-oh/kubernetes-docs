@@ -71,7 +71,7 @@ flowchart TD
 
 ## Calico BGP Architecture
 
-![Calico BGP Topologies](../../assets/calico_bgp_topology.png)
+![Calico BGP Topologies](../../../assets/calico_bgp_topology.png)
 
 ### BIRD: Calico's BGP Implementation
 

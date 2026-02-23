@@ -1594,7 +1594,7 @@ This guide covered multi-cluster ArgoCD deployment with enterprise features:
 
 ## Related Documentation
 
-- [ArgoCD Fundamentals](../gitops/01-argocd.md)
+- [ArgoCD Fundamentals](../gitops/argocd/README.md)
 - [NodePool Configuration](../eks-auto-mode/02-nodepool-configuration.md)
 - [EKS Cluster Access](../eks/02-eks-cluster-creation-part3.md)
 - [CI Pipelines](./03-ci-pipelines.md)

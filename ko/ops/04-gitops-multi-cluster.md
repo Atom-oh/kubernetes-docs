@@ -2344,7 +2344,7 @@ resource "aws_eks_pod_identity_association" "myapp_secrets" {
 ## 관련 문서
 
 - [CI 파이프라인](./03-ci-pipelines.md)
-- [ArgoCD 기초](../gitops/01-argocd.md)
+- [ArgoCD 기초](../gitops/argocd/README.md)
 - [NodePool 구성](../eks-auto-mode/02-nodepool-configuration.md)
 - [GitOps 자동화](./05-gitops-automation.md)
 

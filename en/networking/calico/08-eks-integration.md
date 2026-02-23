@@ -48,7 +48,7 @@ graph TB
 
 ## VPC CNI + Calico Architecture
 
-![Calico on Amazon EKS](../../assets/calico_eks_integration.png)
+![Calico on Amazon EKS](../../../assets/calico_eks_integration.png)
 
 Amazon EKS uses AWS VPC CNI by default for pod networking. Calico can be added for advanced network policy capabilities while VPC CNI handles IP address management.
 

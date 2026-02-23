@@ -583,5 +583,5 @@ spec:
 ## Next Steps
 
 - [EKS Advanced Debugging and Incident Response](./11-eks-advanced-debugging.md)
-- [EKS High Availability Quiz](../../quizzes/eks/10-eks-resiliency-quiz.md)
+- [EKS High Availability Quiz](../quizzes/eks/10-eks-resiliency-quiz.md)
 - [Istio Service Mesh](../service-mesh/02-istio.md) - Circuit Breaker, Retry Deep Dive

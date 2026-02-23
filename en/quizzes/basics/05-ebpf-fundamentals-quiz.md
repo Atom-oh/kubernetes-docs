@@ -482,4 +482,4 @@ This design leverages eBPF's kernel-level visibility to detect and respond to se
 
 ---
 
-[Return to Learning Materials](../../basics/05-ebpf-fundamentals.md) | [Next Quiz: Container Technology](./02-container-technology-quiz.md)
+[Return to Learning Materials](../../basics/05-ebpf-fundamentals.md) | [Next Quiz: Container Technology](./03-container-technology-quiz.md)

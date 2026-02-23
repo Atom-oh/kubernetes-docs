@@ -2122,8 +2122,8 @@ data:
 
 ## Related Documentation
 
-- [Monitoring Stack Overview](../observability/01-monitoring-stack.md) - VictoriaMetrics, Prometheus, and Grafana fundamentals
-- [Logging Stack Overview](../observability/02-logging-stack.md) - Loki and Tempo introduction
+- [Monitoring Stack Overview](../observability/README.md) - VictoriaMetrics, Prometheus, and Grafana fundamentals
+- [Logging Stack Overview](../observability/logging/README.md) - Loki and Tempo introduction
 
 ---
 

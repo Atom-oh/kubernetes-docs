@@ -218,7 +218,7 @@ Istio의 Data Plane을 구성하는 고성능 L7 프록시입니다.
 - Routers: 라우팅 결정
 - Clusters: 업스트림 서비스
 
-**관련 문서**: [아키텍처 - Envoy Proxy](02-architecture.md#data-plane-envoy-proxy)
+**관련 문서**: [아키텍처 - Envoy Proxy](03-architecture.md#data-plane-envoy-proxy)
 
 ---
 
@@ -324,7 +324,7 @@ iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-port 15006
 
 **대안**: eBPF (Ambient Mode)
 
-**관련 문서**: [아키텍처 - iptables](02-architecture.md#iptables와-트래픽-가로채기)
+**관련 문서**: [아키텍처 - iptables](03-architecture.md#iptables와-트래픽-가로채기)
 
 ---
 
@@ -347,7 +347,7 @@ Istio 1.5+의 통합된 Control Plane 컴포넌트입니다.
 - 운영 단순화
 - 리소스 효율성
 
-**관련 문서**: [아키텍처 - Istiod](02-architecture.md#control-plane-istiod)
+**관련 문서**: [아키텍처 - Istiod](03-architecture.md#control-plane-istiod)
 
 ---
 
@@ -1238,7 +1238,7 @@ spec:
 - Before: 1000개 서비스 → 500 MB 메모리
 - After: 10개 서비스 → 80 MB 메모리
 
-**관련 문서**: [아키텍처 - Sidecar 리소스](02-architecture.md#sidecar-리소스를-통한-최적화)
+**관련 문서**: [아키텍처 - Sidecar 리소스](03-architecture.md#sidecar-리소스를-통한-최적화)
 
 ---
 
@@ -1592,7 +1592,7 @@ Envoy Proxy의 동적 구성을 위한 API 세트입니다.
 Envoy 시작 → LDS → CDS → EDS → RDS → SDS
 ```
 
-**관련 문서**: [아키텍처 - xDS API 통신](02-architecture.md#xds-api-통신)
+**관련 문서**: [아키텍처 - xDS API 통신](03-architecture.md#xds-api-통신)
 
 ---
 
@@ -1689,7 +1689,7 @@ kubectl label namespace default istio.io/dataplane-mode=ambient
 - [SPIFFE Specification](https://github.com/spiffe/spiffe/tree/main/standards)
 
 ### 관련 문서
-- [Istio 아키텍처](02-architecture.md)
+- [Istio 아키텍처](03-architecture.md)
 - [Traffic Management](traffic-management/README.md)
 - [Security](security/README.md)
 - [Observability](observability/README.md)

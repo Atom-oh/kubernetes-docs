@@ -1916,11 +1916,11 @@ Information collected:
 
 ### Quiz
 
-To test your understanding of the content covered in this document, try the [EKS Advanced Debugging Quiz](../../quizzes/eks/11-eks-advanced-debugging-quiz.md).
+To test your understanding of the content covered in this document, try the [EKS Advanced Debugging Quiz](../quizzes/eks/11-eks-advanced-debugging-quiz.md).
 
 ### Next Document
 
-To learn how to integrate EKS clusters with on-premises environments, see [EKS Hybrid Nodes](./12-eks-hybrid-nodes.md).
+To learn how to integrate EKS clusters with on-premises environments, see [EKS Hybrid Nodes](../eks-hybrid-nodes/README.md).
 
 ### Additional Learning Resources
 

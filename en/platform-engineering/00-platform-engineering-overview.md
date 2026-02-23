@@ -66,7 +66,7 @@ The stage of establishing foundational infrastructure and setting up security gu
 |-----------|-------------|------------------------------|
 | **Landing Zone & Guardrails** | Multi-account environment, preventive/detective controls | EKS cluster configuration, [OPA Gatekeeper](../security/09-opa-gatekeeper.md) / [Kyverno](../security/01-kyverno-policy-management.md) |
 | **Authentication** | Centralized identity management, IdP integration | [K8s Authentication & Authorization](../security/02-kubernetes-auth-authz.md), OIDC, IRSA |
-| **Networking** | Centralized network management | VPC CNI, [Calico](../networking/03-calico.md), [Cilium](../networking/01-cilium.md) |
+| **Networking** | Centralized network management | VPC CNI, [Calico](../networking/calico/README.md), [Cilium](../networking/cilium/README.md) |
 | **Logging** | Cross-account observability | [Prometheus](../observability/metrics/01-prometheus.md), [Loki](../observability/logging/01-loki.md), [OpenTelemetry](../observability/tracing/03-opentelemetry.md) |
 | **Controls** | Programmatic security controls | [Pod Security Standards](../security/03-pod-security-standards.md), [Network Policies](../security/04-network-policies.md) |
 | **Cost Management** | Tagging strategy, cost allocation | Resource Quotas, LimitRange, [EKS Cost Optimization](../eks/07-eks-cost-optimization.md) |

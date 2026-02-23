@@ -453,7 +453,7 @@ spec:
 
 #### AWS VPC Lattice vs Istio
 
-자세한 비교는 [AWS 통합](03-aws-integration.md#istio-vs-다른-솔루션-비교) 문서를 참고하세요.
+자세한 비교는 [AWS 통합](04-aws-integration.md#istio-vs-다른-솔루션-비교) 문서를 참고하세요.
 
 **간단 요약:**
 - **VPC Lattice**: AWS 관리형, 간단, 크로스 VPC/계정 통신
@@ -593,7 +593,7 @@ Istio는 **Control Plane**과 **Data Plane** 두 가지 주요 구성 요소로 
 | **Control Plane (istiod)** | 서비스 디스커버리, 구성 배포, 인증서 관리를 담당하는 중앙 제어 시스템 |
 | **Data Plane (Envoy Proxy)** | 각 파드의 사이드카로 배포되어 실제 트래픽을 처리 (라우팅, mTLS, 메트릭) |
 
-**상세한 아키텍처 구조, 내부 동작 원리, 트래픽 가로채기 메커니즘**은 [아키텍처 문서](02-architecture.md)를 참고하세요.
+**상세한 아키텍처 구조, 내부 동작 원리, 트래픽 가로채기 메커니즘**은 [아키텍처 문서](03-architecture.md)를 참고하세요.
 
 ## 핵심 리소스
 

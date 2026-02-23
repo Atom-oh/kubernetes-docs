@@ -125,14 +125,14 @@ EKS Auto Mode is available in the following regions:
 
 After successfully configuring EKS Auto Mode, we recommend learning the following topics:
 
-1. **[EKS Cost Optimization](../07-eks-cost-optimization.md)**: Spot, Savings Plans, resource optimization
-2. **[EKS Monitoring and Logging](../06-eks-monitoring-logging.md)**: CloudWatch, Prometheus, Grafana
-3. **[EKS Security](../05-eks-security.md)**: IAM, network policies, Pod security
-4. **[Karpenter Deep Dive](../../tools/karpenter/)**: Direct Karpenter installation and advanced features
+1. **[EKS Cost Optimization](../eks/07-eks-cost-optimization.md)**: Spot, Savings Plans, resource optimization
+2. **[EKS Monitoring and Logging](../eks/06-eks-monitoring-logging.md)**: CloudWatch, Prometheus, Grafana
+3. **[EKS Security](../eks/05-eks-security.md)**: IAM, network policies, Pod security
+4. **[Karpenter Deep Dive](../autoscaling/02-karpenter.md)**: Direct Karpenter installation and advanced features
 
 ## Related Quiz
 
-To test your learning, try the [EKS Auto Mode Quiz](../../quizzes/eks/13-eks-auto-mode-quiz.md).
+To test your learning, try the [EKS Auto Mode Quiz](../quizzes/eks-auto-mode/01-getting-started-quiz.md).
 
 ---
 

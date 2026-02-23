@@ -429,4 +429,4 @@ port: 3306
 
 ---
 
-[학습 자료로 돌아가기](../../basics/03-kubernetes-introduction.md) | [다음 퀴즈: 클러스터 아키텍처](../core/01-cluster-architecture-quiz.md)
+[학습 자료로 돌아가기](../../basics/04-kubernetes-introduction.md) | [다음 퀴즈: 클러스터 아키텍처](../core/01-cluster-architecture-quiz.md)

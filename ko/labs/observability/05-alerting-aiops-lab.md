@@ -1032,9 +1032,9 @@ kubectl --context service set image deployment/payment-service \
 
 ## 참조 문서
 
-- [Prometheus Alerting](../../observability/metrics/03-alerting.md)
-- [CloudWatch Alarms](../../observability/metrics/04-cloudwatch.md)
-- [Amazon Bedrock](../../ai-ml/01-bedrock.md)
+- [Alertmanager](../../observability/alerting/01-alertmanager.md)
+- [CloudWatch Alarms](../../observability/alerting/02-cloudwatch-alarms.md)
+- [Grafana OnCall](../../observability/alerting/03-grafana-oncall.md)
 
 ---
 

@@ -9,7 +9,7 @@
 
 ## VPC CNI + Calico 아키텍처
 
-![Calico on Amazon EKS](../../assets/calico_eks_integration.png)
+![Calico on Amazon EKS](../../../assets/calico_eks_integration.png)
 
 ### 통합 아키텍처 상세
 

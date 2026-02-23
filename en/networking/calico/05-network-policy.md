@@ -434,7 +434,7 @@ spec:
 
 ## Tiered Policies
 
-![Calico Network Policy Tier Evaluation](../../assets/calico_network_policy_tiers.png)
+![Calico Network Policy Tier Evaluation](../../../assets/calico_network_policy_tiers.png)
 
 Tiers provide hierarchical policy evaluation, enabling separation of concerns between platform, security, and application teams.
 

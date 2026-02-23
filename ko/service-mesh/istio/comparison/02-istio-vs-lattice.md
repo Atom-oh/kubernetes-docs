@@ -2481,9 +2481,9 @@ flowchart TB
 
 **관련 문서**:
 - [Service Mesh 솔루션 비교](01-service-mesh-comparison.md)
-- [Istio 아키텍처](../istio/02-architecture.md)
+- [Istio 아키텍처](../03-architecture.md)
 - [Istio Ambient Mode](../istio/advanced/01-ambient-mode.md)
-- [VPC Lattice 상세 가이드](../09-vpc-lattice.md)
+- [VPC Lattice 상세 가이드](../../networking/02-vpc-lattice.md)
 
 ## 실전 사례 및 교훈
 
@@ -2639,6 +2639,6 @@ flowchart TD
 
 **관련 문서**:
 - [Service Mesh 솔루션 비교](01-service-mesh-comparison.md)
-- [Istio 아키텍처](../istio/02-architecture.md)
+- [Istio 아키텍처](../03-architecture.md)
 - [Istio Ambient Mode](../istio/advanced/01-ambient-mode.md)
-- [VPC Lattice 상세 가이드](../09-vpc-lattice.md)
+- [VPC Lattice 상세 가이드](../../networking/02-vpc-lattice.md)

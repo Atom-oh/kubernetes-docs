@@ -1496,7 +1496,7 @@ Game Day는 체계적인 카오스 엔지니어링 실습입니다.
 ### 관련 문서
 
 - **다음 문서**: [EKS 고급 디버깅](./11-eks-advanced-debugging.md) - 복잡한 문제 상황에서의 디버깅 기법
-- **퀴즈**: [EKS 복원력 퀴즈](../../quizzes/eks/10-eks-resiliency-quiz.md) - 학습 내용 확인
+- **퀴즈**: [EKS 복원력 퀴즈](../quizzes/eks/10-eks-resiliency-quiz.md) - 학습 내용 확인
 
 ### 추가 학습 리소스
 

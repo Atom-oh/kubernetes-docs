@@ -1653,7 +1653,7 @@ This guide covered the complete setup for EKS-based CI pipelines:
 ## Related Documentation
 
 - [ArgoCD Multi-Cluster Deployment](./04-gitops-multi-cluster.md)
-- [GitOps Fundamentals](../gitops/01-argocd.md)
+- [GitOps Fundamentals](../gitops/argocd/README.md)
 - [EKS Networking](../eks/03-eks-networking-part1.md)
 - [Pod Identity Configuration](../eks/02-eks-cluster-creation-part3.md)
 

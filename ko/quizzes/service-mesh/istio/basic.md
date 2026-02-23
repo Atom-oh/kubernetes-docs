@@ -31,7 +31,7 @@ D. 네트워크 레벨에서 보안과 정책을 적용한다.
 - D (O): mTLS, Authorization Policy 등으로 네트워크 레벨에서 보안 정책을 적용합니다
 
 **참고 자료:**
-- [Istio 핵심 개념](../../../service-mesh/istio/core-concepts.md)
+- [Istio 핵심 개념](../../../service-mesh/istio/02-basic-concepts.md)
 - [서비스 메시란?](../../../service-mesh/02-istio.md#소개)
 </details>
 
@@ -71,7 +71,7 @@ D. Citadel
 ```
 
 **참고 자료:**
-- [Istio 구성 요소](../../../service-mesh/istio/components.md)
+- [Istio 구성 요소](../../../service-mesh/istio/03-architecture.md)
 - [아키텍처 개요](../../../service-mesh/02-istio.md#아키텍처-개요)
 </details>
 
@@ -100,7 +100,7 @@ Kubernetes CRD 검증 및 저장은 Control Plane(Istiod)의 역할입니다.
 - D (O): Envoy는 모든 요청에 대한 메트릭(Prometheus), 로그(Access Log), 트레이스(Jaeger)를 수집합니다
 
 **참고 자료:**
-- [Data Plane 구조](../../../service-mesh/istio/components.md#data-plane-envoy-proxy)
+- [Data Plane 구조](../../../service-mesh/istio/03-architecture.md#data-plane-envoy-proxy)
 </details>
 
 ---
@@ -152,7 +152,7 @@ istioctl install --set profile=production -y
 - ✅ 모니터링 스택 준비
 
 **참고 자료:**
-- [설치 가이드](../../../service-mesh/istio/installation.md)
+- [설치 가이드](../../../service-mesh/istio/01-installation.md)
 - [모범 사례](../../../service-mesh/istio/best-practices.md#프로덕션-체크리스트)
 </details>
 
@@ -508,7 +508,7 @@ istioctl proxy-config secret <pod-name> -o json
 
 **참고 자료:**
 - [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [인증서 관리](../../../service-mesh/istio/components.md#인증서-관리)
+- [인증서 관리](../../../service-mesh/istio/03-architecture.md#인증서-관리)
 </details>
 
 ---
@@ -1036,7 +1036,7 @@ istioctl uninstall --revision=1-28-0 -y
 
 ## 학습 자료
 
-- [Istio 설치 가이드](../../../service-mesh/istio/installation.md)
-- [핵심 개념](../../../service-mesh/istio/core-concepts.md)
-- [구성 요소](../../../service-mesh/istio/components.md)
+- [Istio 설치 가이드](../../../service-mesh/istio/01-installation.md)
+- [핵심 개념](../../../service-mesh/istio/02-basic-concepts.md)
+- [구성 요소](../../../service-mesh/istio/03-architecture.md)
 - [Istio 공식 문서](https://istio.io/latest/docs/)

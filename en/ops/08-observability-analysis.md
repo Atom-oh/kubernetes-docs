@@ -1361,7 +1361,7 @@ Complete panel with cross-datasource links:
 ## Related Resources
 
 - [Observability Optimization](../observability/09-observability-optimization.md) - Performance tuning for observability stack
-- [Logging Stack](../observability/02-logging-stack.md) - Loki deployment and configuration
+- [Logging Stack](../observability/logging/README.md) - Loki deployment and configuration
 - [Operational Alert Configuration](./07-observability-alerts.md) - Alert rules and Alertmanager setup
 
 ---
