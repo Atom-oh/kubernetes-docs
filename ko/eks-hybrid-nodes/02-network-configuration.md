@@ -3,7 +3,7 @@
 < [이전: 사전 요구 사항](./01-prerequisites.md) | [목차](./README.md) | [다음: 에어갭 환경 구성](./03-airgap-setup.md) >
 
 > **지원 버전**: EKS 1.31+, nodeadm 0.1+
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 23일
 
 이 문서에서는 EKS Hybrid Nodes 환경에서 필요한 CIDR 요구 사항, 방화벽 포트, AWS 엔드포인트 접근, 보안 그룹 구성, DNS 구성을 다룹니다.
 
@@ -12,6 +12,40 @@
 다음 다이어그램은 VPC 구성, Transit Gateway 라우팅, 원격 CIDR, 방화벽 규칙을 포함한 EKS Hybrid Nodes의 전체 네트워크 토폴로지를 보여줍니다.
 
 ![EKS Hybrid Nodes 네트워크 사전 요구 사항](../../assets/aws-official-diagrams/hybrid-prereq-diagram.png)
+
+### VPC 네트워크 허브 개념
+
+EKS Hybrid Nodes 환경에서 VPC는 하이브리드 노드와 컨트롤 플레인 간의 **네트워크 허브** 역할을 합니다.
+
+- **ENI 배치**: EKS 컨트롤 플레인은 VPC 서브넷에 ENI(Elastic Network Interface)를 배치합니다. 이 ENI들이 컨트롤 플레인과 하이브리드 노드 간의 통신 엔드포인트입니다.
+- **트래픽 경로**: 컨트롤 플레인과 하이브리드 노드 간의 모든 트래픽은 이 ENI를 통해 흐릅니다. API 서버 요청, kubelet 통신, 웹훅 호출 등 모든 제어 평면 트래픽이 VPC ENI를 경유합니다.
+- **ENI IP 변경 가능성**: 클러스터 업데이트(버전 업그레이드 등) 시 ENI가 삭제되고 재생성될 수 있으며, 이때 ENI IP 주소가 변경될 수 있습니다. 방화벽 규칙에서 개별 IP 대신 서브넷 CIDR 범위를 사용하면 이러한 변경에 유연하게 대응할 수 있습니다.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         AWS Cloud                                │
+│  ┌──────────────────┐    ┌──────────────────────────────────┐   │
+│  │  EKS Control     │    │              VPC                  │   │
+│  │     Plane        │◄──►│  ┌────────┐  ┌────────┐          │   │
+│  │                  │    │  │  ENI   │  │  ENI   │          │   │
+│  └──────────────────┘    │  │10.0.1.x│  │10.0.2.x│          │   │
+│                          │  └────┬───┘  └────┬───┘          │   │
+│                          └───────┼───────────┼──────────────┘   │
+└──────────────────────────────────┼───────────┼──────────────────┘
+                                   │           │
+                           VPN / Direct Connect
+                                   │           │
+┌──────────────────────────────────┼───────────┼──────────────────┐
+│                          On-Premises                             │
+│                    ┌─────────────┴───────────┴─────────────┐    │
+│                    │         Hybrid Nodes                   │    │
+│                    │   ┌─────────┐    ┌─────────┐          │    │
+│                    │   │  Node   │    │  Node   │          │    │
+│                    │   │ kubelet │    │ kubelet │          │    │
+│                    │   └─────────┘    └─────────┘          │    │
+│                    └───────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ## CIDR 범위 요구 사항
 
@@ -645,6 +679,49 @@ API 서버가 하이브리드 노드에서 실행 중인 웹훅 Pod에 직접 �
 
 ![하이브리드 노드 간 Pod-to-Pod](../../assets/interactive-diagrams/hybrid-nodes-pod-to-pod.svg)
 
+#### VXLAN 캡슐화 상세
+
+VXLAN(Virtual Extensible LAN)은 L2 프레임을 L3 패킷으로 캡슐화하여 오버레이 네트워크를 구성합니다. 하이브리드 노드 간 Pod 통신에서 패킷 구조가 어떻게 변환되는지 살펴봅니다.
+
+**원본 패킷 (캡슐화 전)**
+```
+┌────────────────────────────────────────────────┐
+│  Pod-A IP (src) → Pod-B IP (dst) │   Payload   │
+│    10.85.0.10       10.85.1.20   │   (data)    │
+└────────────────────────────────────────────────┘
+```
+
+**VXLAN 캡슐화 후**
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Outer IP Header │ UDP Header │ VXLAN Header │      Original Packet          │
+│ Node-A → Node-B │ Port 8472  │    (VNI)     │ Pod-A IP → Pod-B IP │ Payload │
+│ 10.80.1.10      │            │              │ 10.85.0.10  10.85.1.20        │
+│   → 10.80.1.11  │            │              │                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+**캡슐화 프로세스 (송신 노드)**
+1. Pod-A가 Pod-B로 패킷을 전송합니다
+2. 송신 노드의 CNI(Cilium)가 대상 Pod IP를 확인하고 해당 노드를 조회합니다
+3. CNI가 원본 패킷을 VXLAN 헤더와 외부 IP 헤더로 래핑합니다
+4. 외부 헤더의 소스/대상 IP는 노드 IP를 사용합니다
+5. 캡슐화된 패킷이 UDP 포트 8472로 전송됩니다
+
+**역캡슐화 프로세스 (수신 노드)**
+1. 수신 노드가 UDP 8472 포트에서 VXLAN 패킷을 수신합니다
+2. CNI가 VXLAN 헤더와 외부 IP 헤더를 제거합니다
+3. 원본 패킷이 대상 Pod로 전달됩니다
+
+**주요 구성 요소**
+| 구성 요소 | 설명 |
+|-----------|------|
+| VNI (VXLAN Network Identifier) | 파드 네트워크 트래픽을 격리하는 24비트 식별자 (기본값: 자동 할당) |
+| UDP 포트 | Cilium 기본값: 8472, 표준 VXLAN: 4789 |
+| MTU | VXLAN 오버헤드(50바이트)를 고려하여 설정 필요 (예: 1500 → 1450) |
+
+> **참고**: Cilium은 VXLAN 외에도 Geneve, IP-in-IP 등 다른 터널 프로토콜을 지원합니다. `--tunnel` 옵션으로 터널 모드를 선택할 수 있습니다.
+
 ### 패턴 6: 클라우드 Pod ↔ 하이브리드 Pod (East-West)
 
 VPC Pod(VPC CNI 사용)가 하이브리드 Pod로 직접 전송합니다. VPC 라우팅이 트래픽을 온프레미스 게이트웨이로 보냅니다. 패킷이 경계를 넘어 하이브리드 노드에 도착합니다. 이는 **라우팅 가능한 파드 CIDR**과 적절한 VPC 라우트 테이블 항목이 필요합니다.
@@ -661,6 +738,75 @@ VPC Pod(VPC CNI 사용)가 하이브리드 Pod로 직접 전송합니다. VPC �
 | 4 | API 서버 → Webhook Pod | AWS → On-Prem | TCP 8443+ | **라우팅 가능 파드 CIDR** |
 | 5 | Hybrid Pod ↔ Hybrid Pod | On-Prem 내부 | UDP 8472 | Cilium VXLAN |
 | 6 | Cloud Pod ↔ Hybrid Pod | AWS ↔ On-Prem | VPC 라우트 | **라우팅 가능 파드 CIDR** + VPC 라우트 |
+
+### kube-proxy iptables 체인 구조
+
+kube-proxy는 Kubernetes Service 트래픽을 실제 Pod로 라우팅하기 위해 iptables 규칙을 사용합니다. 하이브리드 노드에서도 동일한 3단계 체인 구조가 적용됩니다.
+
+```
+KUBE-SERVICES (진입점)
+  └─→ KUBE-SVC-xxxx (서비스별 체인, 로드 밸런싱)
+        └─→ KUBE-SEP-xxxx (엔드포인트별 체인, Pod IP로 DNAT)
+```
+
+**체인별 역할**
+
+| 체인 | 역할 | 예시 |
+|------|------|------|
+| **KUBE-SERVICES** | 모든 ClusterIP 서비스의 목적지 IP:Port를 매칭 | `172.20.0.1:443` → `KUBE-SVC-NPX...` |
+| **KUBE-SVC-xxxx** | 확률 기반 로드 밸런싱으로 엔드포인트 선택 | 3개 Pod → 각각 33% 확률 |
+| **KUBE-SEP-xxxx** | 특정 Pod IP:Port로 DNAT 수행 | DNAT to `10.85.0.15:8080` |
+
+**실제 iptables 규칙 예시**
+
+```bash
+# KUBE-SERVICES 체인 (nat 테이블)
+-A KUBE-SERVICES -d 172.20.0.10/32 -p tcp -m tcp --dport 80 -j KUBE-SVC-XXXXXX
+
+# KUBE-SVC 체인 (로드 밸런싱)
+-A KUBE-SVC-XXXXXX -m statistic --mode random --probability 0.33333 -j KUBE-SEP-AAAAAA
+-A KUBE-SVC-XXXXXX -m statistic --mode random --probability 0.50000 -j KUBE-SEP-BBBBBB
+-A KUBE-SVC-XXXXXX -j KUBE-SEP-CCCCCC
+
+# KUBE-SEP 체인 (DNAT)
+-A KUBE-SEP-AAAAAA -p tcp -j DNAT --to-destination 10.85.0.15:8080
+-A KUBE-SEP-BBBBBB -p tcp -j DNAT --to-destination 10.85.0.16:8080
+-A KUBE-SEP-CCCCCC -p tcp -j DNAT --to-destination 10.85.1.20:8080
+```
+
+> **하이브리드 환경에서의 의미**: 위 예시에서 `10.85.1.20`이 다른 하이브리드 노드에 있는 Pod라면, DNAT 후 패킷은 VXLAN 캡슐화를 거쳐 해당 노드로 전송됩니다. kube-proxy가 Service 트래픽을 Pod IP로 변환하고, CNI가 실제 네트워크 라우팅을 담당합니다.
+
+### kubelet 엔드포인트
+
+kubelet은 각 노드에서 실행되며 API 서버와의 통신을 위해 REST 엔드포인트를 노출합니다.
+
+**kubelet API 포트 및 엔드포인트**
+
+| 포트 | 엔드포인트 | 용도 |
+|------|-----------|------|
+| 10250 | `/pods` | 노드에서 실행 중인 Pod 목록 조회 |
+| 10250 | `/exec/{namespace}/{pod}/{container}` | 컨테이너에서 명령 실행 (`kubectl exec`) |
+| 10250 | `/logs/{namespace}/{pod}/{container}` | 컨테이너 로그 스트리밍 (`kubectl logs`) |
+| 10250 | `/metrics` | kubelet 메트릭 노출 (Prometheus 수집용) |
+| 10250 | `/healthz` | kubelet 헬스 체크 |
+
+**노드 등록 및 주소 보고**
+
+kubelet이 클러스터에 노드를 등록할 때 `Node.status.addresses`에 주소 정보를 보고합니다:
+
+```yaml
+status:
+  addresses:
+  - address: 10.80.1.10        # 실제 온프레미스 IP
+    type: InternalIP
+  - address: hybrid-node-001   # 노드 호스트명
+    type: Hostname
+```
+
+- **InternalIP**: 노드의 실제 온프레미스 IP 주소입니다. API 서버는 이 주소를 사용하여 kubelet에 연결합니다.
+- **Hostname**: 노드의 호스트명입니다.
+
+> **방화벽 규칙의 핵심**: API 서버가 kubelet에 연결할 때 `InternalIP`를 사용하므로, **AWS → On-Prem 방향으로 TCP 10250 포트**가 반드시 열려 있어야 합니다. 이 연결이 차단되면 `kubectl exec`, `kubectl logs`, `kubectl port-forward` 등의 명령이 실패합니다.
 
 ---
 
@@ -860,6 +1006,124 @@ cilium bgp routes
 노드가 호스팅된 파드 IP에 대한 ARP 요청에 응답합니다. 로컬 라우터와 레이어 2 네트워크 근접성이 필요합니다. Cilium에는 프록시 ARP 지원이 내장되어 있습니다. 라우터 BGP나 정적 라우트 구성이 필요 없지만, 파드 CIDR이 다른 네트워크와 겹치면 안 됩니다.
 
 ![ARP 프록시](../../assets/aws-official-diagrams/hybrid-nodes-arp-proxy.png)
+
+---
+
+## 네트워크 정책
+
+하이브리드 노드 환경에서 Pod 간 트래픽을 제어하기 위해 네트워크 정책을 사용할 수 있습니다. Cilium CNI를 사용하면 표준 Kubernetes NetworkPolicy와 확장된 CiliumNetworkPolicy 모두 지원됩니다.
+
+### Kubernetes NetworkPolicy
+
+표준 Kubernetes NetworkPolicy는 L3/L4 수준의 기본적인 트래픽 필터링을 제공합니다.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: bookinfo
+spec:
+  podSelector:
+    matchLabels:
+      app: reviews
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: productpage
+    ports:
+    - protocol: TCP
+      port: 9080
+```
+
+이 정책은 `bookinfo` 네임스페이스에서 `app: productpage` 레이블이 있는 Pod만 `app: reviews` Pod의 9080 포트에 접근할 수 있도록 허용합니다.
+
+### CiliumNetworkPolicy
+
+CiliumNetworkPolicy는 Kubernetes NetworkPolicy의 기능을 확장하여 L7 필터링, DNS 인식 정책, 아이덴티티 기반 매칭 등을 제공합니다.
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: bookinfo
+spec:
+  endpointSelector:
+    matchLabels:
+      app: reviews
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: productpage
+    toPorts:
+    - ports:
+      - port: "9080"
+        protocol: TCP
+```
+
+#### CiliumNetworkPolicy 고급 기능
+
+**L7 HTTP 필터링**
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: l7-rule
+  namespace: bookinfo
+spec:
+  endpointSelector:
+    matchLabels:
+      app: reviews
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: productpage
+    toPorts:
+    - ports:
+      - port: "9080"
+        protocol: TCP
+      rules:
+        http:
+        - method: "GET"
+          path: "/api/v1/.*"
+```
+
+**DNS 기반 Egress 정책**
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-external-api
+  namespace: bookinfo
+spec:
+  endpointSelector:
+    matchLabels:
+      app: productpage
+  egress:
+  - toFQDNs:
+    - matchName: "api.example.com"
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+```
+
+### 하이브리드 환경에서의 네트워크 정책 고려사항
+
+| 고려사항 | 설명 |
+|----------|------|
+| **기본 동작** | 네트워크 정책이 없으면 모든 트래픽이 허용됩니다. NetworkPolicy가 적용되면 명시적으로 허용된 트래픽만 통과합니다. |
+| **크로스 바운더리 트래픽** | 클라우드 노드의 Pod와 하이브리드 노드의 Pod 간 통신을 정책에 반영해야 합니다. |
+| **CNI 요구 사항** | Cilium이 CNI로 설정되어 있어야 두 정책 유형 모두 작동합니다. |
+| **정책 적용 범위** | CiliumNetworkPolicy는 해당 네임스페이스에만 적용됩니다. 클러스터 전체 정책은 CiliumClusterwideNetworkPolicy를 사용하세요. |
+
+> **권장 사항**: 하이브리드 환경에서는 명시적인 네트워크 정책을 정의하여 의도하지 않은 크로스 바운더리 트래픽을 방지하세요. 특히 민감한 워크로드는 엄격한 Ingress/Egress 정책으로 보호해야 합니다.
 
 ---
 

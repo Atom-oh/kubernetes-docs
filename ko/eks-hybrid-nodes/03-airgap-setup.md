@@ -3,7 +3,7 @@
 < [이전: 네트워크 구성](./02-network-configuration.md) | [목차](./README.md) | [다음: 노드 부트스트랩](./04-node-bootstrap.md) >
 
 > **지원 버전**: EKS 1.31+, nodeadm 0.1+
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 23일
 
 이 문서에서는 에어갭(Air-Gapped) 환경에서 EKS Hybrid Nodes를 구성하는 방법을 다룹니다. 바이너리 아티팩트는 프라이빗 S3 버킷과 VPC 엔드포인트를 통해, 컨테이너 이미지는 ECR VPC 엔드포인트를 통해 접근합니다.
 
@@ -909,6 +909,161 @@ spec:
         [proxy.no_proxy]
           addresses = ["localhost", "127.0.0.1", "10.0.0.0/8", ".eks.amazonaws.com"]
 ```
+
+### OS별 SSM 에이전트 프록시 설정
+
+SSM 에이전트는 OS에 따라 다른 경로에 프록시 설정 파일을 배치해야 합니다.
+
+| OS | 프록시 설정 경로 |
+|----|-----------------|
+| Ubuntu | `/etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/http-proxy.conf` |
+| AL2023 | `/etc/systemd/system/amazon-ssm-agent.service.d/http-proxy.conf` |
+| RHEL | `/etc/systemd/system/amazon-ssm-agent.service.d/http-proxy.conf` |
+
+**Ubuntu (snap 기반):**
+
+```bash
+sudo mkdir -p /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d
+
+cat <<EOF | sudo tee /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/http-proxy.conf
+[Service]
+Environment="HTTP_PROXY=http://proxy.internal.company.io:3128"
+Environment="HTTPS_PROXY=http://proxy.internal.company.io:3128"
+Environment="NO_PROXY=localhost,127.0.0.1,169.254.169.254,10.0.0.0/8,.eks.amazonaws.com"
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service
+```
+
+**AL2023 / RHEL:**
+
+```bash
+sudo mkdir -p /etc/systemd/system/amazon-ssm-agent.service.d
+
+cat <<EOF | sudo tee /etc/systemd/system/amazon-ssm-agent.service.d/http-proxy.conf
+[Service]
+Environment="HTTP_PROXY=http://proxy.internal.company.io:3128"
+Environment="HTTPS_PROXY=http://proxy.internal.company.io:3128"
+Environment="NO_PROXY=localhost,127.0.0.1,169.254.169.254,10.0.0.0/8,.eks.amazonaws.com"
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl restart amazon-ssm-agent
+```
+
+### kube-proxy DaemonSet 프록시 설정
+
+kube-proxy DaemonSet에 프록시 환경 변수를 설정해야 할 수 있습니다. 이 설정은 **클러스터 생성 후, nodeadm init 실행 전**에 적용해야 합니다.
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kube-proxy
+  namespace: kube-system
+spec:
+  template:
+    spec:
+      containers:
+        - name: kube-proxy
+          command:
+            - kube-proxy
+          env:
+            - name: HTTP_PROXY
+              value: "http://proxy.internal.company.io:3128"
+            - name: HTTPS_PROXY
+              value: "http://proxy.internal.company.io:3128"
+            - name: NO_PROXY
+              value: "localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.eks.amazonaws.com,.svc,.cluster.local"
+```
+
+```bash
+# 기존 kube-proxy DaemonSet에 환경 변수 패치
+kubectl patch daemonset kube-proxy -n kube-system --type='json' -p='[
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env",
+    "value": [
+      {"name": "HTTP_PROXY", "value": "http://proxy.internal.company.io:3128"},
+      {"name": "HTTPS_PROXY", "value": "http://proxy.internal.company.io:3128"},
+      {"name": "NO_PROXY", "value": "localhost,127.0.0.1,10.0.0.0/8,.eks.amazonaws.com,.svc,.cluster.local"}
+    ]
+  }
+]'
+```
+
+> **주의**: kube-proxy 프록시 설정은 클러스터 생성 후 nodeadm init 실행 전에 적용해야 합니다. 그렇지 않으면 하이브리드 노드에서 kube-proxy가 올바르게 시작되지 않을 수 있습니다.
+
+### IAM Roles Anywhere 프록시 설정
+
+IAM Roles Anywhere를 사용하는 경우, `aws_signing_helper` 서비스에도 프록시 설정이 필요합니다.
+
+```bash
+sudo mkdir -p /etc/systemd/system/aws_signing_helper_update.service.d
+
+cat <<EOF | sudo tee /etc/systemd/system/aws_signing_helper_update.service.d/http-proxy.conf
+[Service]
+Environment="HTTP_PROXY=http://proxy.internal.company.io:3128"
+Environment="HTTPS_PROXY=http://proxy.internal.company.io:3128"
+Environment="NO_PROXY=localhost,127.0.0.1,169.254.169.254,10.0.0.0/8,.eks.amazonaws.com"
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl restart aws_signing_helper_update.service
+```
+
+### 패키지 관리자 프록시 설정
+
+운영 체제의 패키지 관리자에도 프록시 설정이 필요할 수 있습니다.
+
+**Ubuntu - apt:**
+
+```bash
+cat <<EOF | sudo tee /etc/apt/apt.conf.d/proxy.conf
+Acquire::http::Proxy "http://proxy.internal.company.io:3128";
+Acquire::https::Proxy "http://proxy.internal.company.io:3128";
+EOF
+```
+
+**Ubuntu - snap:**
+
+```bash
+sudo snap set system proxy.http="http://proxy.internal.company.io:3128"
+sudo snap set system proxy.https="http://proxy.internal.company.io:3128"
+```
+
+**AL2023 - dnf:**
+
+```bash
+cat <<EOF | sudo tee -a /etc/dnf/dnf.conf
+proxy=http://proxy.internal.company.io:3128
+EOF
+```
+
+**RHEL - yum:**
+
+```bash
+cat <<EOF | sudo tee -a /etc/yum.conf
+proxy=http://proxy.internal.company.io:3128
+EOF
+```
+
+### 프록시 설정 요약
+
+| 구성 요소 | 설정 파일 |
+|----------|----------|
+| 시스템 전역 | `/etc/environment` |
+| containerd | `/etc/systemd/system/containerd.service.d/http-proxy.conf` |
+| kubelet | `/etc/systemd/system/kubelet.service.d/http-proxy.conf` |
+| SSM Agent (Ubuntu) | `/etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/http-proxy.conf` |
+| SSM Agent (AL2023/RHEL) | `/etc/systemd/system/amazon-ssm-agent.service.d/http-proxy.conf` |
+| IAM Roles Anywhere | `/etc/systemd/system/aws_signing_helper_update.service.d/http-proxy.conf` |
+| apt (Ubuntu) | `/etc/apt/apt.conf.d/proxy.conf` |
+| snap (Ubuntu) | `snap set system proxy.*` |
+| dnf (AL2023) | `/etc/dnf/dnf.conf` |
+| yum (RHEL) | `/etc/yum.conf` |
+| kube-proxy | DaemonSet 환경 변수 |
 
 ---
 

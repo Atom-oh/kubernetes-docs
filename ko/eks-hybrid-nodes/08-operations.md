@@ -1,9 +1,9 @@
 # 운영 및 유지보수
 
-< [이전: 노드 라이프사이클 관리](./07-node-lifecycle.md) | [목차](./README.md) >
+< [이전: 노드 라이프사이클 관리](./07-node-lifecycle.md) | [목차](./README.md) | [다음: 베어메탈 서버 OS 설치](./09-bare-metal-os-setup.md) >
 
 > **지원 버전**: EKS 1.31+, nodeadm 0.1+
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 23일
 
 이 문서에서는 EKS Hybrid Nodes 환경의 운영 및 유지보수 절차를 다룹니다.
 
@@ -240,6 +240,160 @@ echo "Kubernetes 클러스터 인증서"
 kubectl get nodes -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].lastHeartbeatTime}'
 ```
 
+## Ingress 구성
+
+### ALB Ingress (ip target mode)
+
+AWS Load Balancer Controller는 하이브리드 노드에서 `target-type: ip` 모드로 지원됩니다:
+
+- 라우팅 가능한 파드 CIDR 필요 (BGP 또는 정적 라우트)
+- 컨트롤러는 클라우드 노드에서만 실행해야 함 (웹훅 요구사항)
+
+```yaml
+# ALB Ingress에서 클라우드 노드 nodeAffinity 설정
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: eks.amazonaws.com/compute-type
+          operator: NotIn
+          values:
+          - hybrid
+```
+
+### Cilium Ingress Controller
+
+```yaml
+# Cilium Ingress 활성화 (Helm values)
+ingressController:
+  enabled: true
+  loadbalancerMode: dedicated  # 또는 shared
+```
+
+### Cilium Gateway API
+
+```yaml
+# Gateway API 활성화 (Helm values)
+gatewayAPI:
+  enabled: true
+```
+
+### LoadBalancer IPAM (Cilium)
+
+온프레미스 환경에서 LoadBalancer 타입 서비스에 IP를 할당하려면:
+
+```yaml
+# CiliumLoadBalancerIPPool
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: on-prem-pool
+spec:
+  blocks:
+  - cidr: "10.80.100.0/24"
+```
+
+## 로드 밸런싱
+
+### NLB (ip target mode)
+
+NLB는 ip target 타입으로 하이브리드 노드를 지원합니다:
+
+- 타겟은 파드 IP로 등록됨 (라우팅 가능한 파드 CIDR 필요)
+- Service annotation: `service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip`
+
+### Cilium LB + BGP
+
+Cilium은 온프레미스 서비스를 위한 LoadBalancer로 작동할 수 있습니다:
+
+- BGP 광고와 결합하면 외부 IP가 네트워크에서 접근 가능
+- `CiliumBGPAdvertisement`에서 `advertisementType: Service` + `addresses: [ExternalIP, LoadBalancerIP]` 설정
+
+```yaml
+# CiliumBGPAdvertisement 예시
+apiVersion: cilium.io/v2alpha1
+kind: CiliumBGPAdvertisement
+metadata:
+  name: service-advertisement
+spec:
+  advertisements:
+  - advertisementType: Service
+    selector:
+      matchExpressions:
+      - key: somekey
+        operator: NotIn
+        values: ['never-match-this']
+    addresses: [ExternalIP, LoadBalancerIP]
+```
+
+## 애드온 상세 설정
+
+### CloudWatch Observability Agent
+
+CloudWatch 에이전트에서 IRSA 대신 Pod Identity 사용:
+
+```yaml
+# CloudWatch agent configurationValues
+configurationValues: |
+  {
+    "agent": {
+      "config": {
+        "logs": { "metrics_collected": { "kubernetes": {} } }
+      }
+    },
+    "env": [
+      { "name": "RUN_WITH_IRSA", "value": "true" }
+    ]
+  }
+```
+
+### EKS Pod Identity Agent
+
+```yaml
+# NodeConfig에서 enableCredentialsFile 설정
+spec:
+  hybrid:
+    enableCredentialsFile: true
+```
+
+```bash
+# 애드온 설치 시 hybrid DaemonSet 활성화
+aws eks create-addon \
+  --cluster-name my-hybrid-cluster \
+  --addon-name eks-pod-identity-agent \
+  --configuration-values '{"daemonsets":{"hybrid":{"create": true}}}'
+```
+
+## 혼합 모드 웹훅 운영
+
+하이브리드 노드와 클라우드 노드가 혼합된 환경에서 웹훅 기반 애드온의 배치 전략입니다.
+
+### CoreDNS 배치
+
+`topologySpreadConstraints`를 사용하여 클라우드와 온프레미스 양쪽에 배치:
+
+```yaml
+topologySpreadConstraints:
+- maxSkew: 1
+  topologyKey: eks.amazonaws.com/compute-type
+  whenUnsatisfiable: DoNotSchedule
+  labelSelector:
+    matchLabels:
+      k8s-app: kube-dns
+```
+
+### 애드온별 nodeAffinity 설정 가이드
+
+| 애드온 | 권장 배치 | 이유 |
+|--------|----------|------|
+| AWS Load Balancer Controller | 클라우드 노드 전용 | 웹훅 필요, VPC 통합 |
+| CloudWatch Agent | DaemonSet 전체, 웹훅은 클라우드 | 메트릭 수집은 전체 노드, 웹훅은 클라우드 |
+| cert-manager | 클라우드 노드 전용 | 웹훅 필요 |
+| Metrics Server | 클라우드 노드 권장 | 라우팅 가능한 파드 CIDR 필요 |
+| CoreDNS | 양쪽 분산 | DNS 복원력 |
+| Cilium | 하이브리드 노드 전용 | 온프레미스 CNI |
+
 ## 일반적인 문제 해결
 
 ### ImagePullBackOff 진단
@@ -305,4 +459,4 @@ sudo nodeadm init -c file://nodeconfig.yaml
 
 ---
 
-< [이전: 노드 라이프사이클 관리](./07-node-lifecycle.md) | [목차](./README.md) >
+< [이전: 노드 라이프사이클 관리](./07-node-lifecycle.md) | [목차](./README.md) | [다음: 베어메탈 서버 OS 설치](./09-bare-metal-os-setup.md) >

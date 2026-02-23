@@ -1,7 +1,7 @@
 # EKS Hybrid Nodes 가이드
 
 > **지원 버전**: EKS 1.31+, nodeadm 0.1+
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 23일
 
 Amazon EKS Hybrid Nodes는 온프레미스 서버를 AWS EKS 컨트롤 플레인에서 관리할 수 있게 해주는 기능입니다. 이 문서에서는 EKS Hybrid Nodes의 개념, 설정 방법, 그리고 실제 운영 환경에서의 활용 방법을 상세히 다룹니다.
 
@@ -15,6 +15,7 @@ Amazon EKS Hybrid Nodes는 온프레미스 서버를 AWS EKS 컨트롤 플레인
 6. [워크로드 배치 전략](./06-workload-placement.md)
 7. [노드 라이프사이클 관리](./07-node-lifecycle.md)
 8. [운영 및 유지보수](./08-operations.md)
+9. [베어메탈 서버 OS 설치 및 마이그레이션 가이드](./09-bare-metal-os-setup.md)
 
 ## EKS Hybrid Nodes 개요
 

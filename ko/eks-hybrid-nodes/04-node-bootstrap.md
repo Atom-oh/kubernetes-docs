@@ -3,7 +3,7 @@
 < [이전: 에어갭 환경 구성](./03-airgap-setup.md) | [목차](./README.md) | [다음: GPU 서버 통합](./05-gpu-integration.md) >
 
 > **지원 버전**: EKS 1.31+, nodeadm 0.1+
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 23일
 
 이 문서에서는 nodeadm CLI를 사용하여 온프레미스 노드를 EKS 클러스터에 부트스트랩하는 방법을 다룹니다.
 
@@ -53,6 +53,16 @@ sudo nodeadm install 1.31 --credential-provider iam-ra
 ```
 
 > **참고**: `nodeadm install`은 반드시 root 권한으로 실행해야 합니다. 이 단계에서 필요한 모든 Kubernetes 바이너리와 런타임 의존성이 설치됩니다.
+
+### 설치 파일 경로
+
+| 구성 요소 | Ubuntu/AL2023 경로 | RHEL 경로 |
+|-----------|-------------------|-----------|
+| kubelet | /usr/bin/kubelet | /usr/bin/kubelet |
+| kubectl | /usr/bin/kubectl | /usr/bin/kubectl |
+| SSM Agent | /snap/amazon-ssm-agent (Ubuntu) / systemd (AL2023) | /usr/bin/amazon-ssm-agent |
+| containerd | /usr/bin/containerd | /usr/bin/containerd |
+| nodeadm | /usr/local/bin/nodeadm | /usr/local/bin/nodeadm |
 
 ## NodeConfig YAML 작성
 
@@ -188,6 +198,17 @@ EOF
 
 ## 노드 초기화
 
+### 구성 검증
+
+노드 초기화 전에 구성 파일을 검증하는 것을 권장합니다:
+
+```bash
+# 구성 검증 (노드 초기화 전 실행 권장)
+nodeadm config check --config-source file://nodeconfig.yaml
+```
+
+### 초기화 실행
+
 ```bash
 # nodeadm을 사용하여 노드 초기화
 sudo nodeadm init -c file://nodeconfig.yaml
@@ -293,6 +314,104 @@ kubectl get pods -n kube-system -l app.kubernetes.io/name=cilium
 # 노드가 이제 Ready 상태로 표시되어야 함
 kubectl get nodes -o wide
 ```
+
+### Cilium 업그레이드
+
+Cilium을 새 버전으로 업그레이드하는 절차입니다:
+
+```bash
+# 1. Preflight check (업그레이드 전 호환성 검증)
+helm install cilium-preflight oci://public.ecr.aws/eks/cilium/cilium \
+  --version NEW_VERSION \
+  --namespace kube-system \
+  --set preflight.enabled=true \
+  --set agent=false --set operator.enabled=false
+
+# 2. 기존 값 보존하여 업그레이드
+helm upgrade cilium oci://public.ecr.aws/eks/cilium/cilium \
+  --version NEW_VERSION \
+  --namespace kube-system \
+  --reuse-values
+
+# 3. 상태 확인
+kubectl get pods -n kube-system -l app.kubernetes.io/name=cilium
+
+# 4. 롤백 (문제 발생 시)
+helm rollback cilium --namespace kube-system
+```
+
+### Cilium 삭제
+
+Cilium을 완전히 제거하는 절차입니다:
+
+```bash
+# 1. Helm uninstall
+helm uninstall cilium --namespace kube-system
+
+# 2. CRD 삭제
+kubectl get crds -o name | grep cilium | xargs kubectl delete
+
+# 3. On-disk 정리 (각 노드에서 실행)
+sudo rm -rf /var/run/cilium /var/lib/cilium /etc/cni/net.d/05-cilium.conflist
+sudo rm -f /opt/cni/bin/cilium-cni
+```
+
+### Calico 지원 중단 안내
+
+> **참고**: Calico는 EKS Hybrid Nodes에서 더 이상 공식 지원되지 않으며, `eks-hybrid-examples` 리포지토리로 이전되었습니다. 신규 배포에서는 Cilium을 사용하는 것을 권장합니다. 기존 Calico 배포는 계속 작동하지만 AWS의 공식 지원이 제한됩니다.
+
+---
+
+## Bottlerocket 설정
+
+Bottlerocket은 VMware vSphere 환경에서만 지원되며 (v1.37.0+), x86_64 아키텍처만 지원됩니다. Bottlerocket은 **nodeadm을 사용하지 않으며**, TOML 기반 설정과 사용자 데이터를 통해 부트스트랩됩니다.
+
+### SSM Hybrid Activation 설정 (settings.toml)
+
+```toml
+[settings.kubernetes]
+cluster-name = "CLUSTER_NAME"
+api-server = "API_SERVER_ENDPOINT"
+cluster-certificate = "BASE64_CA_CERT"
+service-cidr = "SERVICE_CIDR"
+
+[settings.hybrid]
+enable-credentials-file = true  # Pod Identity에 필요
+
+[settings.hybrid.ssm]
+activation-id = "ACTIVATION_ID"
+activation-code = "ACTIVATION_CODE"
+```
+
+### IAM Roles Anywhere 설정 (settings.toml)
+
+```toml
+[settings.hybrid.iam-roles-anywhere]
+trust-anchor-arn = "TRUST_ANCHOR_ARN"
+profile-arn = "PROFILE_ARN"
+role-arn = "ROLE_ARN"
+node-name = "NODE_NAME"  # 인증서 CN과 일치해야 함
+certificate-path = "/PATH/TO/CERT"
+private-key-path = "/PATH/TO/KEY"
+```
+
+### govc를 사용한 VMware 배포
+
+```bash
+# VM 템플릿에서 복제
+govc vm.clone -vm "/PATH/TO/TEMPLATE" -ds="DATASTORE" \
+  -on=false -template=false -folder=/FOLDER "VM_NAME"
+
+# 사용자 데이터 설정
+govc vm.change -dc="DC" -vm "VM_NAME" \
+  -e guestinfo.userdata="${USER_DATA}" \
+  -e guestinfo.userdata.encoding=gzip+base64
+
+# VM 시작
+govc vm.power -on "VM_NAME"
+```
+
+> **참고**: `USER_DATA`는 settings.toml 내용을 gzip 압축 후 base64 인코딩한 값입니다.
 
 ---
 
@@ -470,15 +589,24 @@ sudo nodeadm debug -c file://nodeConfig.yaml
 부트스트랩이 실패하여 처음부터 다시 시작해야 하는 경우:
 
 ```bash
-# 노드 완전 초기화
+# 기본 삭제
 sudo nodeadm uninstall
 
-# 남은 상태 정리
-sudo rm -rf /var/lib/kubelet /etc/kubernetes /var/lib/etcd
+# 강제 삭제 (모든 상태 정리, 확인 프롬프트 건너뜀)
+sudo nodeadm uninstall --force
 
 # 초기화 재실행
-sudo nodeadm init -c file://nodeConfig.yaml
+sudo nodeadm init -c file://nodeconfig.yaml
 ```
+
+**nodeadm uninstall이 삭제하는 경로:**
+- `/etc/kubernetes` - Kubernetes 구성 파일
+- `/etc/eks` - EKS 관련 구성
+- SSM/IAM Roles Anywhere 아티팩트
+
+**v1.0.9+ 변경 사항:**
+- `/var/lib/kubelet`은 기본적으로 **보존됨** (데이터 보호 개선)
+- `--force` 옵션 사용 시 보존되는 아티팩트를 포함한 모든 항목 삭제
 
 ---
 

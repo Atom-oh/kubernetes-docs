@@ -3,7 +3,7 @@
 < [Previous: Air-Gap Setup](./03-airgap-setup.md) | [Table of Contents](./README.md) | [Next: GPU Integration](./05-gpu-integration.md) >
 
 > **Supported Versions**: EKS 1.31+, nodeadm 0.1+
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 This document covers the process of bootstrapping on-premises servers as EKS Hybrid Nodes using nodeadm.
 
@@ -57,6 +57,16 @@ sudo nodeadm install 1.31 --credential-provider ssm --timeout 20m0s
 ```
 
 > **Note**: Replace `1.31` with your target Kubernetes version. The version must match your EKS cluster version.
+
+### Installation File Paths
+
+| Component | Ubuntu/AL2023 Path | RHEL Path |
+|-----------|-------------------|-----------|
+| kubelet | /usr/bin/kubelet | /usr/bin/kubelet |
+| kubectl | /usr/bin/kubectl | /usr/bin/kubectl |
+| SSM Agent | /snap/amazon-ssm-agent (Ubuntu) / systemd (AL2023) | /usr/bin/amazon-ssm-agent |
+| containerd | /usr/bin/containerd | /usr/bin/containerd |
+| nodeadm | /usr/local/bin/nodeadm | /usr/local/bin/nodeadm |
 
 ## Writing NodeConfig YAML
 
@@ -196,6 +206,17 @@ EOF
 
 ## Node Initialization
 
+### Configuration Validation
+
+It is recommended to validate the configuration file before initializing the node:
+
+```bash
+# Validate configuration (recommended before node initialization)
+nodeadm config check --config-source file://nodeconfig.yaml
+```
+
+### Run Initialization
+
 ```bash
 # Initialize node using nodeadm
 sudo nodeadm init -c file://nodeconfig.yaml
@@ -301,6 +322,104 @@ kubectl get pods -n kube-system -l app.kubernetes.io/name=cilium
 # Nodes should now show Ready
 kubectl get nodes -o wide
 ```
+
+### Cilium Upgrade
+
+Procedure for upgrading Cilium to a new version:
+
+```bash
+# 1. Preflight check (validate compatibility before upgrade)
+helm install cilium-preflight oci://public.ecr.aws/eks/cilium/cilium \
+  --version NEW_VERSION \
+  --namespace kube-system \
+  --set preflight.enabled=true \
+  --set agent=false --set operator.enabled=false
+
+# 2. Upgrade while preserving existing values
+helm upgrade cilium oci://public.ecr.aws/eks/cilium/cilium \
+  --version NEW_VERSION \
+  --namespace kube-system \
+  --reuse-values
+
+# 3. Verify status
+kubectl get pods -n kube-system -l app.kubernetes.io/name=cilium
+
+# 4. Rollback (if issues occur)
+helm rollback cilium --namespace kube-system
+```
+
+### Cilium Uninstall
+
+Procedure for completely removing Cilium:
+
+```bash
+# 1. Helm uninstall
+helm uninstall cilium --namespace kube-system
+
+# 2. Delete CRDs
+kubectl get crds -o name | grep cilium | xargs kubectl delete
+
+# 3. On-disk cleanup (run on each node)
+sudo rm -rf /var/run/cilium /var/lib/cilium /etc/cni/net.d/05-cilium.conflist
+sudo rm -f /opt/cni/bin/cilium-cni
+```
+
+### Calico Deprecation Notice
+
+> **Note**: Calico is no longer officially supported for EKS Hybrid Nodes and has been moved to the `eks-hybrid-examples` repository. For new deployments, Cilium is recommended. Existing Calico deployments will continue to work but with limited official support from AWS.
+
+---
+
+## Bottlerocket Configuration
+
+Bottlerocket is supported only in VMware vSphere environments (v1.37.0+) and only for x86_64 architecture. Bottlerocket **does not use nodeadm** and is bootstrapped via TOML-based configuration and user data.
+
+### SSM Hybrid Activation Configuration (settings.toml)
+
+```toml
+[settings.kubernetes]
+cluster-name = "CLUSTER_NAME"
+api-server = "API_SERVER_ENDPOINT"
+cluster-certificate = "BASE64_CA_CERT"
+service-cidr = "SERVICE_CIDR"
+
+[settings.hybrid]
+enable-credentials-file = true  # Required for Pod Identity
+
+[settings.hybrid.ssm]
+activation-id = "ACTIVATION_ID"
+activation-code = "ACTIVATION_CODE"
+```
+
+### IAM Roles Anywhere Configuration (settings.toml)
+
+```toml
+[settings.hybrid.iam-roles-anywhere]
+trust-anchor-arn = "TRUST_ANCHOR_ARN"
+profile-arn = "PROFILE_ARN"
+role-arn = "ROLE_ARN"
+node-name = "NODE_NAME"  # Must match certificate CN
+certificate-path = "/PATH/TO/CERT"
+private-key-path = "/PATH/TO/KEY"
+```
+
+### VMware Deployment with govc
+
+```bash
+# Clone from VM template
+govc vm.clone -vm "/PATH/TO/TEMPLATE" -ds="DATASTORE" \
+  -on=false -template=false -folder=/FOLDER "VM_NAME"
+
+# Configure user data
+govc vm.change -dc="DC" -vm "VM_NAME" \
+  -e guestinfo.userdata="${USER_DATA}" \
+  -e guestinfo.userdata.encoding=gzip+base64
+
+# Start VM
+govc vm.power -on "VM_NAME"
+```
+
+> **Note**: `USER_DATA` is the settings.toml content gzip-compressed and base64-encoded.
 
 ---
 
@@ -477,15 +596,24 @@ sudo nodeadm debug -c file://nodeConfig.yaml
 If bootstrap fails and you need to start fresh:
 
 ```bash
-# Reset the node completely
+# Basic uninstall
 sudo nodeadm uninstall
 
-# Clean up any remaining state
-sudo rm -rf /var/lib/kubelet /etc/kubernetes /var/lib/etcd
+# Force uninstall (cleans all state, skips confirmation prompt)
+sudo nodeadm uninstall --force
 
 # Re-run initialization
-sudo nodeadm init -c file://nodeConfig.yaml
+sudo nodeadm init -c file://nodeconfig.yaml
 ```
+
+**Paths deleted by nodeadm uninstall:**
+- `/etc/kubernetes` - Kubernetes configuration files
+- `/etc/eks` - EKS-related configuration
+- SSM/IAM Roles Anywhere artifacts
+
+**v1.0.9+ Changes:**
+- `/var/lib/kubelet` is **preserved by default** (data protection improvement)
+- `--force` option removes all artifacts including those normally preserved
 
 ---
 

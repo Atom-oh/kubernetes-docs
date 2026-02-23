@@ -60,6 +60,7 @@
     * [Workload Placement Strategies](eks-hybrid-nodes/06-workload-placement.md)
     * [Node Lifecycle Management](eks-hybrid-nodes/07-node-lifecycle.md)
     * [Operations and Maintenance](eks-hybrid-nodes/08-operations.md)
+    * [Bare Metal OS Setup](eks-hybrid-nodes/09-bare-metal-os-setup.md)
 * [EKS Auto Mode](eks-auto-mode/README.md)
     * [Getting Started](eks-auto-mode/01-getting-started.md)
     * [NodePool Configuration](eks-auto-mode/02-nodepool-configuration.md)
@@ -324,6 +325,7 @@
     * [Workload Placement Strategies Quiz](quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
     * [Node Lifecycle Management Quiz](quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
     * [Operations and Maintenance Quiz](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+    * [Bare Metal OS Setup Quiz](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
 
 * EKS Auto Mode
     * [Getting Started Quiz](quizzes/eks-auto-mode/01-getting-started-quiz.md)

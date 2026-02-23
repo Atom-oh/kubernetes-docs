@@ -3,7 +3,7 @@
 < [목차](./README.md) | [다음: 네트워크 구성](./02-network-configuration.md) >
 
 > **지원 버전**: EKS 1.31+, nodeadm 0.1+
-> **마지막 업데이트**: 2025년 2월
+> **마지막 업데이트**: 2026년 2월 23일
 
 이 문서에서는 EKS Hybrid Nodes를 구성하기 위한 온프레미스 노드, GPU 서버, 네트워크 요구 사항을 다룹니다.
 
@@ -88,6 +88,63 @@ EOF
 
 sudo sysctl --system
 ```
+
+## AWS Packer 템플릿을 사용한 노드 이미지 빌드
+
+AWS는 EKS Hybrid Nodes용 노드 이미지를 빌드하기 위한 예제 Packer 템플릿을 제공합니다. 이 템플릿은 OVA (vSphere), Qcow2, Raw 출력 형식을 지원합니다.
+
+### Packer 사전 요구 사항
+
+| 도구 | 최소 버전 |
+|------|----------|
+| Packer | v1.11.0+ |
+| VMware vSphere 플러그인 | v1.4.0+ |
+| QEMU 플러그인 | 최신 버전 |
+
+### 환경 변수
+
+| 변수 | 설명 | 기본값 |
+|------|------|--------|
+| `PKR_SSH_PASSWORD` | SSH 비밀번호 | - |
+| `ISO_URL` | OS ISO 이미지 URL | - |
+| `ISO_CHECKSUM` | ISO 체크섬 | - |
+| `CREDENTIAL_PROVIDER` | 자격 증명 프로바이더 (`ssm` 또는 `iam`) | `ssm` |
+| `K8S_VERSION` | Kubernetes 버전 | - |
+| `NODEADM_ARCH` | 아키텍처 (`amd64` 또는 `arm64`) | `amd64` |
+
+**RHEL 전용 변수:**
+
+| 변수 | 설명 |
+|------|------|
+| `RH_USERNAME` | Red Hat 구독 사용자명 |
+| `RH_PASSWORD` | Red Hat 구독 비밀번호 |
+
+**vSphere 전용 변수:**
+
+| 변수 | 설명 |
+|------|------|
+| `VSPHERE_SERVER` | vCenter 서버 주소 |
+| `VSPHERE_USER` | vCenter 사용자명 |
+| `VSPHERE_PASSWORD` | vCenter 비밀번호 |
+| `VSPHERE_DATACENTER` | 데이터센터 이름 |
+| `VSPHERE_CLUSTER` | 클러스터 이름 |
+| `VSPHERE_DATASTORE` | 데이터스토어 이름 |
+| `VSPHERE_NETWORK` | 네트워크 이름 |
+
+### 빌드 명령어
+
+```bash
+# vSphere OVA 빌드 (Ubuntu 22.04)
+packer build -only=general-build.vsphere-iso.ubuntu22 template.pkr.hcl
+
+# QEMU 이미지 빌드 (RHEL 9)
+packer build -only=general-build.qemu.rhel9 template.pkr.hcl
+
+# Amazon Linux 2023 빌드
+packer build -only=general-build.qemu.al2023 template.pkr.hcl
+```
+
+> **참고**: `CREDENTIAL_PROVIDER` 환경 변수를 `iam`으로 설정하면 IAM Roles Anywhere용 이미지가 빌드됩니다. 기본값은 `ssm`입니다.
 
 ## GPU 서버 요구 사항 (선택사항)
 
@@ -256,6 +313,194 @@ sudo mkdir -p /etc/iam/pki
 sudo cp node.crt /etc/iam/pki/server.pem
 sudo cp node.key /etc/iam/pki/server.key
 ```
+
+### CloudFormation 기반 IAM 설정
+
+CLI 대신 CloudFormation을 사용하여 IAM 역할 및 관련 리소스를 설정할 수 있습니다.
+
+**SSM용 CloudFormation 템플릿:**
+
+```bash
+# 템플릿 다운로드
+curl -OL 'https://raw.githubusercontent.com/aws/eks-hybrid/refs/heads/main/example/hybrid-ssm-cfn.yaml'
+
+# 파라미터 파일 생성
+cat > cfn-ssm-parameters.json << 'EOF'
+[
+  {"ParameterKey": "RoleName", "ParameterValue": "EKSHybridNodeRole"},
+  {"ParameterKey": "SSMDeregisterConditionTagKey", "ParameterValue": "EKSClusterARN"},
+  {"ParameterKey": "SSMDeregisterConditionTagValue", "ParameterValue": "arn:aws:eks:ap-northeast-2:123456789012:cluster/my-hybrid-cluster"}
+]
+EOF
+
+# 스택 배포
+aws cloudformation create-stack \
+  --stack-name eks-hybrid-ssm-role \
+  --template-body file://hybrid-ssm-cfn.yaml \
+  --parameters file://cfn-ssm-parameters.json \
+  --capabilities CAPABILITY_NAMED_IAM
+```
+
+**IAM Roles Anywhere용 CloudFormation 템플릿:**
+
+```bash
+# 템플릿 다운로드
+curl -OL 'https://raw.githubusercontent.com/aws/eks-hybrid/refs/heads/main/example/hybrid-ira-cfn.yaml'
+
+# 파라미터 파일 생성
+cat > cfn-iamra-parameters.json << 'EOF'
+[
+  {"ParameterKey": "RoleName", "ParameterValue": "EKSHybridNodeRole"},
+  {"ParameterKey": "CertAttributeTrustPolicy", "ParameterValue": "CN"},
+  {"ParameterKey": "CABundleCert", "ParameterValue": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
+]
+EOF
+
+# 스택 배포
+aws cloudformation create-stack \
+  --stack-name eks-hybrid-iamra-role \
+  --template-body file://hybrid-ira-cfn.yaml \
+  --parameters file://cfn-iamra-parameters.json \
+  --capabilities CAPABILITY_NAMED_IAM
+```
+
+### IAM 정책 상세
+
+하이브리드 노드 역할에 필요한 IAM 정책 세부 사항입니다.
+
+**필수 관리형 정책:**
+
+| 정책 | 용도 |
+|------|------|
+| `AmazonEC2ContainerRegistryPullOnly` | ECR에서 컨테이너 이미지 풀 |
+| `AmazonSSMManagedInstanceCore` | SSM 에이전트 핵심 기능 (SSM 사용 시) |
+
+**선택적 정책:**
+
+| 정책 | 용도 |
+|------|------|
+| `eks-auth:AssumeRoleForPodIdentity` | EKS Pod Identity 지원 |
+
+**SSM Deregister 조건부 정책:**
+
+멀티 클러스터 환경에서 노드가 특정 클러스터에서만 등록 해제되도록 `EKSClusterARN` 조건 태그를 사용합니다:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "ssm:DeregisterManagedInstance",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "ssm:resourceTag/EKSClusterARN": "arn:aws:eks:ap-northeast-2:123456789012:cluster/my-hybrid-cluster"
+        }
+      }
+    }
+  ]
+}
+```
+
+### IAM Roles Anywhere 신뢰 정책 상세
+
+IAM Roles Anywhere를 사용할 때 신뢰 정책 구성이 중요합니다.
+
+**x509Subject/CN 매핑:**
+
+인증서의 CN(Common Name)이 노드 이름과 일치해야 합니다. 이는 감사 추적 및 노드 식별에 사용됩니다.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "rolesanywhere.amazonaws.com"
+      },
+      "Action": [
+        "sts:AssumeRole",
+        "sts:TagSession",
+        "sts:SetSourceIdentity"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:PrincipalTag/x509Subject/CN": "${aws:RequestTag/x509Subject/CN}"
+        },
+        "ArnEquals": {
+          "aws:SourceArn": "arn:aws:rolesanywhere:ap-northeast-2:123456789012:trust-anchor/TRUST_ANCHOR_ID"
+        }
+      }
+    }
+  ]
+}
+```
+
+**주요 구성 요소:**
+
+| 요소 | 설명 |
+|------|------|
+| `sts:SetSourceIdentity` | 감사 추적을 위한 소스 ID 설정 |
+| `sts:RoleSessionName` | 인증서 CN에 바인딩되는 세션 이름 |
+| `x509Subject/CN` | 인증서의 CN이 nodeName과 일치해야 함 |
+
+### 자격 증명 기간 비교
+
+| 측면 | SSM | IAM Roles Anywhere |
+|------|-----|-------------------|
+| 기본 기간 | 1시간 (고정) | 1시간 (구성 가능) |
+| 최대 기간 | 1시간 | 12시간 |
+| 갱신 방식 | AWS에서 자동 갱신 | 자동 갱신, `durationSeconds` 설정 준수 |
+| `MaxSessionDuration` | 해당 없음 | IAM 역할의 값이 프로필의 `durationSeconds`를 초과해야 함 |
+| 구성 방법 | 구성 불가 | 프로필의 `durationSeconds` 파라미터로 설정 |
+
+> **참고**: IAM Roles Anywhere 사용 시, IAM 역할의 `MaxSessionDuration`이 프로필의 `durationSeconds` 값보다 커야 합니다. 그렇지 않으면 자격 증명 획득에 실패합니다.
+
+## 클러스터 액세스 준비
+
+하이브리드 노드가 EKS 클러스터에 조인하려면 적절한 액세스 항목을 구성해야 합니다.
+
+### HYBRID_LINUX 액세스 항목 (권장)
+
+`HYBRID_LINUX` 액세스 항목 유형은 하이브리드 노드를 위해 특별히 설계되었습니다:
+
+```bash
+aws eks create-access-entry \
+  --cluster-name my-hybrid-cluster \
+  --principal-arn arn:aws:iam::123456789012:role/EKSHybridNodeRole \
+  --type HYBRID_LINUX
+```
+
+이 명령은 자동으로 다음을 설정합니다:
+- 사용자 이름: `system:node:{{SessionName}}`
+- Kubernetes 그룹: `system:bootstrappers`, `system:nodes`
+
+### aws-auth ConfigMap 대안
+
+`API_AND_CONFIG_MAP` 인증 모드를 사용하는 경우, `aws-auth` ConfigMap을 대안으로 사용할 수 있습니다:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+    - groups:
+      - system:bootstrappers
+      - system:nodes
+      rolearn: arn:aws:iam::123456789012:role/EKSHybridNodeRole
+      username: system:node:{{SessionName}}
+```
+
+```bash
+kubectl apply -f aws-auth-cm.yaml
+```
+
+> **주의**: `aws-auth` ConfigMap 방식은 레거시 방식입니다. 새 클러스터에서는 `HYBRID_LINUX` 액세스 항목 사용을 권장합니다.
 
 ## VPC 구성 요구 사항
 

@@ -3,7 +3,7 @@
 < [Table of Contents](./README.md) | [Next: Network Configuration](./02-network-configuration.md) >
 
 > **Supported Versions**: EKS 1.31+, nodeadm 0.1+
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 This document covers the system requirements for on-premises nodes, GPU servers, and network infrastructure needed to deploy EKS Hybrid Nodes.
 
@@ -88,6 +88,63 @@ EOF
 
 sudo sysctl --system
 ```
+
+## Building Node Images with AWS Packer Templates
+
+AWS provides example Packer templates for building node images for EKS Hybrid Nodes. These templates support OVA (vSphere), Qcow2, and Raw output formats.
+
+### Packer Prerequisites
+
+| Tool | Minimum Version |
+|------|-----------------|
+| Packer | v1.11.0+ |
+| VMware vSphere Plugin | v1.4.0+ |
+| QEMU Plugin | Latest |
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PKR_SSH_PASSWORD` | SSH password | - |
+| `ISO_URL` | OS ISO image URL | - |
+| `ISO_CHECKSUM` | ISO checksum | - |
+| `CREDENTIAL_PROVIDER` | Credential provider (`ssm` or `iam`) | `ssm` |
+| `K8S_VERSION` | Kubernetes version | - |
+| `NODEADM_ARCH` | Architecture (`amd64` or `arm64`) | `amd64` |
+
+**RHEL-specific Variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `RH_USERNAME` | Red Hat subscription username |
+| `RH_PASSWORD` | Red Hat subscription password |
+
+**vSphere-specific Variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `VSPHERE_SERVER` | vCenter server address |
+| `VSPHERE_USER` | vCenter username |
+| `VSPHERE_PASSWORD` | vCenter password |
+| `VSPHERE_DATACENTER` | Datacenter name |
+| `VSPHERE_CLUSTER` | Cluster name |
+| `VSPHERE_DATASTORE` | Datastore name |
+| `VSPHERE_NETWORK` | Network name |
+
+### Build Commands
+
+```bash
+# Build vSphere OVA (Ubuntu 22.04)
+packer build -only=general-build.vsphere-iso.ubuntu22 template.pkr.hcl
+
+# Build QEMU image (RHEL 9)
+packer build -only=general-build.qemu.rhel9 template.pkr.hcl
+
+# Build Amazon Linux 2023
+packer build -only=general-build.qemu.al2023 template.pkr.hcl
+```
+
+> **Note**: Setting the `CREDENTIAL_PROVIDER` environment variable to `iam` builds an image for IAM Roles Anywhere. The default is `ssm`.
 
 ## GPU Server Requirements (Optional)
 
@@ -256,6 +313,194 @@ sudo mkdir -p /etc/iam/pki
 sudo cp node.crt /etc/iam/pki/server.pem
 sudo cp node.key /etc/iam/pki/server.key
 ```
+
+### CloudFormation-Based IAM Setup
+
+Instead of CLI, you can use CloudFormation to set up IAM roles and related resources.
+
+**CloudFormation Template for SSM:**
+
+```bash
+# Download template
+curl -OL 'https://raw.githubusercontent.com/aws/eks-hybrid/refs/heads/main/example/hybrid-ssm-cfn.yaml'
+
+# Create parameter file
+cat > cfn-ssm-parameters.json << 'EOF'
+[
+  {"ParameterKey": "RoleName", "ParameterValue": "EKSHybridNodeRole"},
+  {"ParameterKey": "SSMDeregisterConditionTagKey", "ParameterValue": "EKSClusterARN"},
+  {"ParameterKey": "SSMDeregisterConditionTagValue", "ParameterValue": "arn:aws:eks:ap-northeast-2:123456789012:cluster/my-hybrid-cluster"}
+]
+EOF
+
+# Deploy stack
+aws cloudformation create-stack \
+  --stack-name eks-hybrid-ssm-role \
+  --template-body file://hybrid-ssm-cfn.yaml \
+  --parameters file://cfn-ssm-parameters.json \
+  --capabilities CAPABILITY_NAMED_IAM
+```
+
+**CloudFormation Template for IAM Roles Anywhere:**
+
+```bash
+# Download template
+curl -OL 'https://raw.githubusercontent.com/aws/eks-hybrid/refs/heads/main/example/hybrid-ira-cfn.yaml'
+
+# Create parameter file
+cat > cfn-iamra-parameters.json << 'EOF'
+[
+  {"ParameterKey": "RoleName", "ParameterValue": "EKSHybridNodeRole"},
+  {"ParameterKey": "CertAttributeTrustPolicy", "ParameterValue": "CN"},
+  {"ParameterKey": "CABundleCert", "ParameterValue": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
+]
+EOF
+
+# Deploy stack
+aws cloudformation create-stack \
+  --stack-name eks-hybrid-iamra-role \
+  --template-body file://hybrid-ira-cfn.yaml \
+  --parameters file://cfn-iamra-parameters.json \
+  --capabilities CAPABILITY_NAMED_IAM
+```
+
+### IAM Policy Details
+
+Details of the IAM policies required for the hybrid node role.
+
+**Required Managed Policies:**
+
+| Policy | Purpose |
+|--------|---------|
+| `AmazonEC2ContainerRegistryPullOnly` | Pull container images from ECR |
+| `AmazonSSMManagedInstanceCore` | SSM agent core functionality (when using SSM) |
+
+**Optional Policies:**
+
+| Policy | Purpose |
+|--------|---------|
+| `eks-auth:AssumeRoleForPodIdentity` | EKS Pod Identity support |
+
+**SSM Deregister Conditional Policy:**
+
+In multi-cluster environments, use the `EKSClusterARN` condition tag to ensure nodes can only be deregistered from specific clusters:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "ssm:DeregisterManagedInstance",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "ssm:resourceTag/EKSClusterARN": "arn:aws:eks:ap-northeast-2:123456789012:cluster/my-hybrid-cluster"
+        }
+      }
+    }
+  ]
+}
+```
+
+### IAM Roles Anywhere Trust Policy Details
+
+Trust policy configuration is critical when using IAM Roles Anywhere.
+
+**x509Subject/CN Mapping:**
+
+The certificate's CN (Common Name) must match the node name. This is used for audit tracking and node identification.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "rolesanywhere.amazonaws.com"
+      },
+      "Action": [
+        "sts:AssumeRole",
+        "sts:TagSession",
+        "sts:SetSourceIdentity"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:PrincipalTag/x509Subject/CN": "${aws:RequestTag/x509Subject/CN}"
+        },
+        "ArnEquals": {
+          "aws:SourceArn": "arn:aws:rolesanywhere:ap-northeast-2:123456789012:trust-anchor/TRUST_ANCHOR_ID"
+        }
+      }
+    }
+  ]
+}
+```
+
+**Key Components:**
+
+| Component | Description |
+|-----------|-------------|
+| `sts:SetSourceIdentity` | Sets source identity for audit tracking |
+| `sts:RoleSessionName` | Session name bound to certificate CN |
+| `x509Subject/CN` | Certificate CN must match nodeName |
+
+### Credential Duration Comparison
+
+| Aspect | SSM | IAM Roles Anywhere |
+|--------|-----|-------------------|
+| Default Duration | 1 hour (fixed) | 1 hour (configurable) |
+| Maximum Duration | 1 hour | 12 hours |
+| Rotation | Automatic by AWS | Automatic, respects `durationSeconds` |
+| `MaxSessionDuration` | N/A | IAM role value must exceed profile's `durationSeconds` |
+| Configuration | Not configurable | Set via profile's `durationSeconds` parameter |
+
+> **Note**: When using IAM Roles Anywhere, the IAM role's `MaxSessionDuration` must be greater than the profile's `durationSeconds` value. Otherwise, credential acquisition will fail.
+
+## Cluster Access Preparation
+
+Hybrid nodes require appropriate access entries to join the EKS cluster.
+
+### HYBRID_LINUX Access Entry (Recommended)
+
+The `HYBRID_LINUX` access entry type is specifically designed for hybrid nodes:
+
+```bash
+aws eks create-access-entry \
+  --cluster-name my-hybrid-cluster \
+  --principal-arn arn:aws:iam::123456789012:role/EKSHybridNodeRole \
+  --type HYBRID_LINUX
+```
+
+This command automatically sets:
+- Username: `system:node:{{SessionName}}`
+- Kubernetes groups: `system:bootstrappers`, `system:nodes`
+
+### aws-auth ConfigMap Alternative
+
+When using `API_AND_CONFIG_MAP` authentication mode, you can use the `aws-auth` ConfigMap as an alternative:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+    - groups:
+      - system:bootstrappers
+      - system:nodes
+      rolearn: arn:aws:iam::123456789012:role/EKSHybridNodeRole
+      username: system:node:{{SessionName}}
+```
+
+```bash
+kubectl apply -f aws-auth-cm.yaml
+```
+
+> **Note**: The `aws-auth` ConfigMap method is a legacy approach. For new clusters, using the `HYBRID_LINUX` access entry is recommended.
 
 ## VPC Configuration Requirements
 

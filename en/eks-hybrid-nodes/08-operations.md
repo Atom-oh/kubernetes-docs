@@ -1,9 +1,9 @@
 # Operations and Maintenance
 
-< [Previous: Node Lifecycle Management](./07-node-lifecycle.md) | [Table of Contents](./README.md) >
+< [Previous: Node Lifecycle Management](./07-node-lifecycle.md) | [Table of Contents](./README.md) | [Next: Bare Metal OS Setup](./09-bare-metal-os-setup.md) >
 
 > **Supported Versions**: EKS 1.31+, Prometheus Operator
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 This document covers day-to-day operations and maintenance tasks for EKS Hybrid Nodes environments, including monitoring, backup procedures, and troubleshooting.
 
@@ -240,6 +240,160 @@ echo "Kubernetes Cluster Certificate"
 kubectl get nodes -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].lastHeartbeatTime}'
 ```
 
+## Ingress Configuration
+
+### ALB Ingress (ip target mode)
+
+AWS Load Balancer Controller supports hybrid nodes with `target-type: ip` mode:
+
+- Requires routable pod CIDRs (BGP or static routes)
+- Controller must run on cloud nodes only (webhook requirement)
+
+```yaml
+# Cloud node nodeAffinity for ALB Ingress
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: eks.amazonaws.com/compute-type
+          operator: NotIn
+          values:
+          - hybrid
+```
+
+### Cilium Ingress Controller
+
+```yaml
+# Enable Cilium Ingress (Helm values)
+ingressController:
+  enabled: true
+  loadbalancerMode: dedicated  # or shared
+```
+
+### Cilium Gateway API
+
+```yaml
+# Enable Gateway API (Helm values)
+gatewayAPI:
+  enabled: true
+```
+
+### LoadBalancer IPAM (Cilium)
+
+To assign IPs to LoadBalancer type services in on-premises environments:
+
+```yaml
+# CiliumLoadBalancerIPPool
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: on-prem-pool
+spec:
+  blocks:
+  - cidr: "10.80.100.0/24"
+```
+
+## Load Balancing
+
+### NLB (ip target mode)
+
+NLB supports hybrid nodes with ip target type:
+
+- Targets are registered by pod IP (requires routable pod CIDRs)
+- Service annotation: `service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip`
+
+### Cilium LB + BGP
+
+Cilium can act as LoadBalancer for on-premises services:
+
+- Combined with BGP advertisement, external IPs are reachable from the network
+- Configure `CiliumBGPAdvertisement` with `advertisementType: Service` + `addresses: [ExternalIP, LoadBalancerIP]`
+
+```yaml
+# CiliumBGPAdvertisement example
+apiVersion: cilium.io/v2alpha1
+kind: CiliumBGPAdvertisement
+metadata:
+  name: service-advertisement
+spec:
+  advertisements:
+  - advertisementType: Service
+    selector:
+      matchExpressions:
+      - key: somekey
+        operator: NotIn
+        values: ['never-match-this']
+    addresses: [ExternalIP, LoadBalancerIP]
+```
+
+## Add-on Detailed Settings
+
+### CloudWatch Observability Agent
+
+Use Pod Identity instead of IRSA with CloudWatch agent:
+
+```yaml
+# CloudWatch agent configurationValues
+configurationValues: |
+  {
+    "agent": {
+      "config": {
+        "logs": { "metrics_collected": { "kubernetes": {} } }
+      }
+    },
+    "env": [
+      { "name": "RUN_WITH_IRSA", "value": "true" }
+    ]
+  }
+```
+
+### EKS Pod Identity Agent
+
+```yaml
+# enableCredentialsFile in NodeConfig
+spec:
+  hybrid:
+    enableCredentialsFile: true
+```
+
+```bash
+# Enable hybrid DaemonSet when installing add-on
+aws eks create-addon \
+  --cluster-name my-hybrid-cluster \
+  --addon-name eks-pod-identity-agent \
+  --configuration-values '{"daemonsets":{"hybrid":{"create": true}}}'
+```
+
+## Mixed-Mode Webhook Operations
+
+Placement strategies for webhook-based add-ons in environments with both hybrid and cloud nodes.
+
+### CoreDNS Placement
+
+Use `topologySpreadConstraints` to distribute across cloud and on-premises:
+
+```yaml
+topologySpreadConstraints:
+- maxSkew: 1
+  topologyKey: eks.amazonaws.com/compute-type
+  whenUnsatisfiable: DoNotSchedule
+  labelSelector:
+    matchLabels:
+      k8s-app: kube-dns
+```
+
+### Per-Add-on nodeAffinity Settings Guide
+
+| Add-on | Recommended Placement | Reason |
+|--------|----------------------|--------|
+| AWS Load Balancer Controller | Cloud nodes only | Webhook required, VPC integration |
+| CloudWatch Agent | DaemonSet on all, webhook on cloud | Metrics collection on all nodes, webhook on cloud |
+| cert-manager | Cloud nodes only | Webhook required |
+| Metrics Server | Cloud nodes recommended | Requires routable pod CIDR |
+| CoreDNS | Distributed on both | DNS resilience |
+| Cilium | Hybrid nodes only | On-premises CNI |
+
 ## Common Troubleshooting
 
 ### ImagePullBackOff Diagnosis
@@ -305,4 +459,4 @@ sudo nodeadm init -c file://nodeconfig.yaml
 
 ---
 
-< [Previous: Node Lifecycle Management](./07-node-lifecycle.md) | [Table of Contents](./README.md) >
+< [Previous: Node Lifecycle Management](./07-node-lifecycle.md) | [Table of Contents](./README.md) | [Next: Bare Metal OS Setup](./09-bare-metal-os-setup.md) >

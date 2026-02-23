@@ -3,7 +3,7 @@
 < [Previous: Network Configuration](./02-network-configuration.md) | [Table of Contents](./README.md) | [Next: Node Bootstrap](./04-node-bootstrap.md) >
 
 > **Supported Versions**: EKS 1.31+, nodeadm 0.1+
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 This document covers setting up air-gapped environments for EKS Hybrid Nodes. Binary artifacts are accessed through a private S3 bucket via VPC Endpoints, and container images are accessed through ECR VPC Endpoints.
 
@@ -909,6 +909,161 @@ spec:
         [proxy.no_proxy]
           addresses = ["localhost", "127.0.0.1", "10.0.0.0/8", ".eks.amazonaws.com"]
 ```
+
+### OS-Specific SSM Agent Proxy Settings
+
+The SSM agent requires proxy configuration files in different locations depending on the OS.
+
+| OS | Proxy Config Path |
+|----|-------------------|
+| Ubuntu | `/etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/http-proxy.conf` |
+| AL2023 | `/etc/systemd/system/amazon-ssm-agent.service.d/http-proxy.conf` |
+| RHEL | `/etc/systemd/system/amazon-ssm-agent.service.d/http-proxy.conf` |
+
+**Ubuntu (snap-based):**
+
+```bash
+sudo mkdir -p /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d
+
+cat <<EOF | sudo tee /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/http-proxy.conf
+[Service]
+Environment="HTTP_PROXY=http://proxy.internal.company.io:3128"
+Environment="HTTPS_PROXY=http://proxy.internal.company.io:3128"
+Environment="NO_PROXY=localhost,127.0.0.1,169.254.169.254,10.0.0.0/8,.eks.amazonaws.com"
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service
+```
+
+**AL2023 / RHEL:**
+
+```bash
+sudo mkdir -p /etc/systemd/system/amazon-ssm-agent.service.d
+
+cat <<EOF | sudo tee /etc/systemd/system/amazon-ssm-agent.service.d/http-proxy.conf
+[Service]
+Environment="HTTP_PROXY=http://proxy.internal.company.io:3128"
+Environment="HTTPS_PROXY=http://proxy.internal.company.io:3128"
+Environment="NO_PROXY=localhost,127.0.0.1,169.254.169.254,10.0.0.0/8,.eks.amazonaws.com"
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl restart amazon-ssm-agent
+```
+
+### kube-proxy DaemonSet Proxy Settings
+
+You may need to configure proxy environment variables for the kube-proxy DaemonSet. This configuration must be applied **after cluster creation but before running nodeadm init**.
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kube-proxy
+  namespace: kube-system
+spec:
+  template:
+    spec:
+      containers:
+        - name: kube-proxy
+          command:
+            - kube-proxy
+          env:
+            - name: HTTP_PROXY
+              value: "http://proxy.internal.company.io:3128"
+            - name: HTTPS_PROXY
+              value: "http://proxy.internal.company.io:3128"
+            - name: NO_PROXY
+              value: "localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.eks.amazonaws.com,.svc,.cluster.local"
+```
+
+```bash
+# Patch existing kube-proxy DaemonSet with environment variables
+kubectl patch daemonset kube-proxy -n kube-system --type='json' -p='[
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env",
+    "value": [
+      {"name": "HTTP_PROXY", "value": "http://proxy.internal.company.io:3128"},
+      {"name": "HTTPS_PROXY", "value": "http://proxy.internal.company.io:3128"},
+      {"name": "NO_PROXY", "value": "localhost,127.0.0.1,10.0.0.0/8,.eks.amazonaws.com,.svc,.cluster.local"}
+    ]
+  }
+]'
+```
+
+> **Note**: kube-proxy proxy settings must be applied after cluster creation but before running nodeadm init. Otherwise, kube-proxy may not start correctly on hybrid nodes.
+
+### IAM Roles Anywhere Proxy Settings
+
+When using IAM Roles Anywhere, the `aws_signing_helper` service also requires proxy configuration.
+
+```bash
+sudo mkdir -p /etc/systemd/system/aws_signing_helper_update.service.d
+
+cat <<EOF | sudo tee /etc/systemd/system/aws_signing_helper_update.service.d/http-proxy.conf
+[Service]
+Environment="HTTP_PROXY=http://proxy.internal.company.io:3128"
+Environment="HTTPS_PROXY=http://proxy.internal.company.io:3128"
+Environment="NO_PROXY=localhost,127.0.0.1,169.254.169.254,10.0.0.0/8,.eks.amazonaws.com"
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl restart aws_signing_helper_update.service
+```
+
+### Package Manager Proxy Settings
+
+Your operating system's package manager may also require proxy configuration.
+
+**Ubuntu - apt:**
+
+```bash
+cat <<EOF | sudo tee /etc/apt/apt.conf.d/proxy.conf
+Acquire::http::Proxy "http://proxy.internal.company.io:3128";
+Acquire::https::Proxy "http://proxy.internal.company.io:3128";
+EOF
+```
+
+**Ubuntu - snap:**
+
+```bash
+sudo snap set system proxy.http="http://proxy.internal.company.io:3128"
+sudo snap set system proxy.https="http://proxy.internal.company.io:3128"
+```
+
+**AL2023 - dnf:**
+
+```bash
+cat <<EOF | sudo tee -a /etc/dnf/dnf.conf
+proxy=http://proxy.internal.company.io:3128
+EOF
+```
+
+**RHEL - yum:**
+
+```bash
+cat <<EOF | sudo tee -a /etc/yum.conf
+proxy=http://proxy.internal.company.io:3128
+EOF
+```
+
+### Proxy Configuration Summary
+
+| Component | Configuration File |
+|-----------|-------------------|
+| System-wide | `/etc/environment` |
+| containerd | `/etc/systemd/system/containerd.service.d/http-proxy.conf` |
+| kubelet | `/etc/systemd/system/kubelet.service.d/http-proxy.conf` |
+| SSM Agent (Ubuntu) | `/etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/http-proxy.conf` |
+| SSM Agent (AL2023/RHEL) | `/etc/systemd/system/amazon-ssm-agent.service.d/http-proxy.conf` |
+| IAM Roles Anywhere | `/etc/systemd/system/aws_signing_helper_update.service.d/http-proxy.conf` |
+| apt (Ubuntu) | `/etc/apt/apt.conf.d/proxy.conf` |
+| snap (Ubuntu) | `snap set system proxy.*` |
+| dnf (AL2023) | `/etc/dnf/dnf.conf` |
+| yum (RHEL) | `/etc/yum.conf` |
+| kube-proxy | DaemonSet environment variables |
 
 ---
 

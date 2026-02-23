@@ -60,6 +60,7 @@
     * [워크로드 배치 전략](eks-hybrid-nodes/06-workload-placement.md)
     * [노드 라이프사이클 관리](eks-hybrid-nodes/07-node-lifecycle.md)
     * [운영 및 유지보수](eks-hybrid-nodes/08-operations.md)
+    * [베어메탈 서버 OS 설치](eks-hybrid-nodes/09-bare-metal-os-setup.md)
 * [EKS Auto Mode](eks-auto-mode/README.md)
     * [Auto Mode 시작하기](eks-auto-mode/01-getting-started.md)
     * [NodePool 구성](eks-auto-mode/02-nodepool-configuration.md)
@@ -324,6 +325,7 @@
     * [워크로드 배치 전략 퀴즈](quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
     * [노드 라이프사이클 관리 퀴즈](quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
     * [운영 및 유지보수 퀴즈](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+    * [베어메탈 서버 OS 설치 퀴즈](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
 
 * EKS Auto Mode
     * [Auto Mode 시작하기 퀴즈](quizzes/eks-auto-mode/01-getting-started-quiz.md)

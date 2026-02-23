@@ -3,7 +3,7 @@
 < [Previous: Prerequisites](./01-prerequisites.md) | [Table of Contents](./README.md) | [Next: Air-Gap Setup](./03-airgap-setup.md) >
 
 > **Supported Versions**: EKS 1.31+, nodeadm 0.1+
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 This document covers the network configuration required for EKS Hybrid Nodes, including CIDR requirements, firewall rules, AWS endpoint access, security group configuration, and DNS setup.
 
@@ -12,6 +12,40 @@ This document covers the network configuration required for EKS Hybrid Nodes, in
 The following diagram illustrates the complete network topology for EKS Hybrid Nodes, including VPC configuration, Transit Gateway routing, remote CIDRs, and firewall rules.
 
 ![EKS Hybrid Nodes Network Prerequisites](../../assets/aws-official-diagrams/hybrid-prereq-diagram.png)
+
+### VPC as Network Hub
+
+In an EKS Hybrid Nodes environment, the VPC serves as the **network hub** between hybrid nodes and the control plane.
+
+- **ENI Placement**: The EKS control plane places ENIs (Elastic Network Interfaces) in VPC subnets. These ENIs are the communication endpoints between the control plane and hybrid nodes.
+- **Traffic Path**: All traffic between the control plane and hybrid nodes flows through these ENIs. API server requests, kubelet communication, webhook calls, and all control plane traffic traverse the VPC ENIs.
+- **ENI IP Changes**: During cluster updates (e.g., version upgrades), ENIs may be deleted and recreated, which can change their IP addresses. Using subnet CIDR ranges instead of individual IPs in firewall rules provides flexibility for these changes.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         AWS Cloud                                │
+│  ┌──────────────────┐    ┌──────────────────────────────────┐   │
+│  │  EKS Control     │    │              VPC                  │   │
+│  │     Plane        │◄──►│  ┌────────┐  ┌────────┐          │   │
+│  │                  │    │  │  ENI   │  │  ENI   │          │   │
+│  └──────────────────┘    │  │10.0.1.x│  │10.0.2.x│          │   │
+│                          │  └────┬───┘  └────┬───┘          │   │
+│                          └───────┼───────────┼──────────────┘   │
+└──────────────────────────────────┼───────────┼──────────────────┘
+                                   │           │
+                           VPN / Direct Connect
+                                   │           │
+┌──────────────────────────────────┼───────────┼──────────────────┐
+│                          On-Premises                             │
+│                    ┌─────────────┴───────────┴─────────────┐    │
+│                    │         Hybrid Nodes                   │    │
+│                    │   ┌─────────┐    ┌─────────┐          │    │
+│                    │   │  Node   │    │  Node   │          │    │
+│                    │   │ kubelet │    │ kubelet │          │    │
+│                    │   └─────────┘    └─────────┘          │    │
+│                    └───────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ## CIDR Range Requirements
 
@@ -645,6 +679,49 @@ Pods on different hybrid nodes communicate using [VXLAN encapsulation](../networ
 
 ![Pod to Pod on Hybrid Nodes](../../assets/interactive-diagrams/hybrid-nodes-pod-to-pod.svg)
 
+#### VXLAN Encapsulation Details
+
+VXLAN (Virtual Extensible LAN) encapsulates L2 frames into L3 packets to create an overlay network. Here's how the packet structure transforms during Pod communication between hybrid nodes.
+
+**Original Packet (Before Encapsulation)**
+```
+┌────────────────────────────────────────────────┐
+│  Pod-A IP (src) → Pod-B IP (dst) │   Payload   │
+│    10.85.0.10       10.85.1.20   │   (data)    │
+└────────────────────────────────────────────────┘
+```
+
+**After VXLAN Encapsulation**
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Outer IP Header │ UDP Header │ VXLAN Header │      Original Packet          │
+│ Node-A → Node-B │ Port 8472  │    (VNI)     │ Pod-A IP → Pod-B IP │ Payload │
+│ 10.80.1.10      │            │              │ 10.85.0.10  10.85.1.20        │
+│   → 10.80.1.11  │            │              │                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Encapsulation Process (Source Node)**
+1. Pod-A sends a packet to Pod-B
+2. The source node's CNI (Cilium) looks up the destination Pod IP and identifies the target node
+3. CNI wraps the original packet with a VXLAN header and outer IP header
+4. The outer header uses node IPs as source/destination
+5. The encapsulated packet is sent via UDP port 8472
+
+**Decapsulation Process (Destination Node)**
+1. The destination node receives the VXLAN packet on UDP port 8472
+2. CNI strips the VXLAN header and outer IP header
+3. The original packet is delivered to the destination Pod
+
+**Key Components**
+| Component | Description |
+|-----------|-------------|
+| VNI (VXLAN Network Identifier) | 24-bit identifier that isolates pod network traffic (default: auto-assigned) |
+| UDP Port | Cilium default: 8472, Standard VXLAN: 4789 |
+| MTU | Must account for VXLAN overhead (50 bytes), e.g., 1500 → 1450 |
+
+> **Note**: Besides VXLAN, Cilium supports other tunnel protocols such as Geneve and IP-in-IP. Use the `--tunnel` option to select the tunnel mode.
+
 ### Pattern 6: Cloud Pod ↔ Hybrid Pod (East-West)
 
 VPC pods (using VPC CNI) send directly to hybrid pods; VPC routing directs traffic to the on-premises gateway. The packet crosses the boundary and arrives at the hybrid node. This **requires routable pod CIDRs** and proper VPC route table entries.
@@ -661,6 +738,75 @@ VPC pods (using VPC CNI) send directly to hybrid pods; VPC routing directs traff
 | 4 | API Server → Webhook Pod | AWS → On-Prem | TCP 8443+ | **Routable pod CIDR** |
 | 5 | Hybrid Pod ↔ Hybrid Pod | On-Prem internal | UDP 8472 | Cilium VXLAN |
 | 6 | Cloud Pod ↔ Hybrid Pod | AWS ↔ On-Prem | VPC route | **Routable pod CIDR** + VPC routes |
+
+### kube-proxy iptables Chain Structure
+
+kube-proxy uses iptables rules to route Kubernetes Service traffic to actual Pods. The same 3-layer chain structure applies on hybrid nodes.
+
+```
+KUBE-SERVICES (entry point)
+  └─→ KUBE-SVC-xxxx (per-service chain, load balancing)
+        └─→ KUBE-SEP-xxxx (per-endpoint chain, DNAT to pod IP)
+```
+
+**Chain Roles**
+
+| Chain | Role | Example |
+|-------|------|---------|
+| **KUBE-SERVICES** | Matches destination IP:Port against all ClusterIP services | `172.20.0.1:443` → `KUBE-SVC-NPX...` |
+| **KUBE-SVC-xxxx** | Selects endpoint using probability-based load balancing | 3 Pods → 33% probability each |
+| **KUBE-SEP-xxxx** | Performs DNAT to specific Pod IP:Port | DNAT to `10.85.0.15:8080` |
+
+**Actual iptables Rules Example**
+
+```bash
+# KUBE-SERVICES chain (nat table)
+-A KUBE-SERVICES -d 172.20.0.10/32 -p tcp -m tcp --dport 80 -j KUBE-SVC-XXXXXX
+
+# KUBE-SVC chain (load balancing)
+-A KUBE-SVC-XXXXXX -m statistic --mode random --probability 0.33333 -j KUBE-SEP-AAAAAA
+-A KUBE-SVC-XXXXXX -m statistic --mode random --probability 0.50000 -j KUBE-SEP-BBBBBB
+-A KUBE-SVC-XXXXXX -j KUBE-SEP-CCCCCC
+
+# KUBE-SEP chain (DNAT)
+-A KUBE-SEP-AAAAAA -p tcp -j DNAT --to-destination 10.85.0.15:8080
+-A KUBE-SEP-BBBBBB -p tcp -j DNAT --to-destination 10.85.0.16:8080
+-A KUBE-SEP-CCCCCC -p tcp -j DNAT --to-destination 10.85.1.20:8080
+```
+
+> **Hybrid Environment Implications**: In the example above, if `10.85.1.20` is a Pod on a different hybrid node, the packet after DNAT will be VXLAN-encapsulated and sent to that node. kube-proxy translates Service traffic to Pod IPs, and the CNI handles the actual network routing.
+
+### kubelet Endpoints
+
+kubelet runs on each node and exposes REST endpoints for API server communication.
+
+**kubelet API Ports and Endpoints**
+
+| Port | Endpoint | Purpose |
+|------|----------|---------|
+| 10250 | `/pods` | List pods running on the node |
+| 10250 | `/exec/{namespace}/{pod}/{container}` | Execute commands in containers (`kubectl exec`) |
+| 10250 | `/logs/{namespace}/{pod}/{container}` | Stream container logs (`kubectl logs`) |
+| 10250 | `/metrics` | Expose kubelet metrics (for Prometheus scraping) |
+| 10250 | `/healthz` | kubelet health check |
+
+**Node Registration and Address Reporting**
+
+When kubelet registers a node with the cluster, it reports address information in `Node.status.addresses`:
+
+```yaml
+status:
+  addresses:
+  - address: 10.80.1.10        # Actual on-premises IP
+    type: InternalIP
+  - address: hybrid-node-001   # Node hostname
+    type: Hostname
+```
+
+- **InternalIP**: The node's actual on-premises IP address. The API server uses this address to connect to kubelet.
+- **Hostname**: The node's hostname.
+
+> **Firewall Rule Requirement**: Since the API server uses `InternalIP` to connect to kubelet, **TCP port 10250 must be open from AWS → On-Prem**. If this connection is blocked, commands like `kubectl exec`, `kubectl logs`, and `kubectl port-forward` will fail.
 
 ---
 
@@ -860,6 +1006,124 @@ Manual router configuration with pod CIDRs. Simplest but error-prone and require
 Nodes respond to ARP requests for hosted pod IPs. Requires Layer 2 network proximity to the local router. Cilium has built-in proxy ARP support. No router BGP or static route configuration needed, but pod CIDR must not overlap with other networks.
 
 ![ARP Proxying](../../assets/aws-official-diagrams/hybrid-nodes-arp-proxy.png)
+
+---
+
+## Network Policies
+
+Network policies can be used to control Pod-to-Pod traffic in a hybrid node environment. When using Cilium CNI, both standard Kubernetes NetworkPolicy and extended CiliumNetworkPolicy are supported.
+
+### Kubernetes NetworkPolicy
+
+Standard Kubernetes NetworkPolicy provides basic L3/L4 traffic filtering.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: bookinfo
+spec:
+  podSelector:
+    matchLabels:
+      app: reviews
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: productpage
+    ports:
+    - protocol: TCP
+      port: 9080
+```
+
+This policy allows only Pods with the `app: productpage` label in the `bookinfo` namespace to access port 9080 on `app: reviews` Pods.
+
+### CiliumNetworkPolicy
+
+CiliumNetworkPolicy extends Kubernetes NetworkPolicy with L7 filtering, DNS-aware policies, and identity-based matching.
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: bookinfo
+spec:
+  endpointSelector:
+    matchLabels:
+      app: reviews
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: productpage
+    toPorts:
+    - ports:
+      - port: "9080"
+        protocol: TCP
+```
+
+#### CiliumNetworkPolicy Advanced Features
+
+**L7 HTTP Filtering**
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: l7-rule
+  namespace: bookinfo
+spec:
+  endpointSelector:
+    matchLabels:
+      app: reviews
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: productpage
+    toPorts:
+    - ports:
+      - port: "9080"
+        protocol: TCP
+      rules:
+        http:
+        - method: "GET"
+          path: "/api/v1/.*"
+```
+
+**DNS-Based Egress Policy**
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-external-api
+  namespace: bookinfo
+spec:
+  endpointSelector:
+    matchLabels:
+      app: productpage
+  egress:
+  - toFQDNs:
+    - matchName: "api.example.com"
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+```
+
+### Network Policy Considerations for Hybrid Environments
+
+| Consideration | Description |
+|---------------|-------------|
+| **Default Behavior** | Without network policies, all traffic is allowed. Once a NetworkPolicy is applied, only explicitly allowed traffic passes through. |
+| **Cross-Boundary Traffic** | Policies must account for communication between Pods on cloud nodes and Pods on hybrid nodes. |
+| **CNI Requirement** | Both policy types work when Cilium is configured as the CNI. |
+| **Policy Scope** | CiliumNetworkPolicy applies only to its namespace. Use CiliumClusterwideNetworkPolicy for cluster-wide policies. |
+
+> **Recommendation**: In hybrid environments, define explicit network policies to prevent unintended cross-boundary traffic. Sensitive workloads should be protected with strict Ingress/Egress policies.
 
 ---
 

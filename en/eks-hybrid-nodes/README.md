@@ -1,7 +1,7 @@
 # EKS Hybrid Nodes Guide
 
 > **Supported Versions**: EKS 1.31+, nodeadm 0.1+
-> **Last Updated**: February 2025
+> **Last Updated**: February 23, 2026
 
 Amazon EKS Hybrid Nodes is a feature that allows you to manage on-premises servers from the AWS EKS control plane. This guide covers the concepts, configuration methods, and practical usage of EKS Hybrid Nodes in production environments.
 
@@ -15,6 +15,7 @@ Amazon EKS Hybrid Nodes is a feature that allows you to manage on-premises serve
 6. [Workload Placement Strategies](./06-workload-placement.md)
 7. [Node Lifecycle Management](./07-node-lifecycle.md)
 8. [Operations and Maintenance](./08-operations.md)
+9. [Bare Metal Server OS Installation and Migration Guide](./09-bare-metal-os-setup.md)
 
 ## What are Hybrid Nodes?
 
