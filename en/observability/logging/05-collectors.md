@@ -1,6 +1,6 @@
 # Log Collectors Comparison
 
-> **Last Updated**: February 20, 2026
+> **Last Updated**: February 23, 2026
 
 Various tools exist for collecting logs in Kubernetes environments. This document provides an in-depth comparison of FluentBit, Promtail, Grafana Alloy, and OpenTelemetry Collector, explaining configuration methods and optimization strategies for each tool.
 
@@ -1049,6 +1049,19 @@ OpenTelemetry Collector is a vendor-neutral telemetry data collection, processin
 +---------------------------------------------------------+
 ```
 
+**OTLP Proto Encoding Performance Advantage:**
+
+OpenTelemetry Collector uses OTLP (OpenTelemetry Protocol) Proto encoding. Compared to JSON, field names are replaced with numeric tags, achieving **40-60% transmission size reduction**.
+
+| Metric | Filebeat/Fluentd (JSON) | OTel Collector (OTLP Proto) | Improvement |
+|--------|------------------------|---------------------------|-------------|
+| **Message encoding** | JSON (includes field names) | Proto (numeric tags) | 40-60% size reduction |
+| **Batch transmission** | 1,000 events = 1,000 messages | 1,000 events ≈ 7 messages (150/batch) | 143x message count reduction |
+| **Throughput** | 16.5 MB/s | 300 MB/s | 18x improvement |
+| **Per-core throughput** | 150 events/s (Fluentd) | 4,000 events/s | 26x improvement |
+
+> **Real-world case**: KakaoPay Securities' Pallas v2 project achieved 18x throughput improvement on identical hardware when migrating from Filebeat/Fluentd to OTel Collector.
+
 ### Architecture
 
 ```mermaid
@@ -1301,6 +1314,118 @@ service:
       exporters: [debug]
 ```
 
+### Routing Connector
+
+The OTel Collector's Routing Connector enables routing logs to different pipelines based on log type. This allows configuring different processing logic and destinations for each log category.
+
+```yaml
+# otel-collector-routing.yaml
+connectors:
+  routing:
+    table:
+      - statement: route() where resource.attributes["logtype"] == "mysql"
+        pipelines: [logs/mysql]
+      - statement: route() where resource.attributes["logtype"] == "nginx"
+        pipelines: [logs/nginx]
+      - statement: route() where resource.attributes["logtype"] == "app"
+        pipelines: [logs/app]
+
+service:
+  pipelines:
+    # Common ingestion pipeline
+    logs/ingestion:
+      receivers: [filelog, otlp]
+      processors: [memory_limiter, k8sattributes, resource]
+      exporters: [routing]
+
+    # MySQL-specific pipeline (slow query analysis)
+    logs/mysql:
+      receivers: [routing]
+      processors: [transform/mysql, batch]
+      exporters: [clickhouse/mysql]
+
+    # Nginx-specific pipeline (access log analysis)
+    logs/nginx:
+      receivers: [routing]
+      processors: [transform/nginx, batch]
+      exporters: [clickhouse/nginx]
+
+    # General app pipeline
+    logs/app:
+      receivers: [routing]
+      processors: [filter, transform, batch]
+      exporters: [clickhouse/app]
+```
+
+> **Kafka Topic Consolidation**: Using the Routing Connector, you can replace separate Kafka topics per log type with a single topic + in-Collector routing, reducing Kafka topic management overhead.
+
+### Log Level Pool Separation (Large-scale Environments)
+
+In environments processing TB+ of logs daily, treating all logs with equal priority can delay critical log collection during incidents. Separate OTel Collector pools by log level with differentiated SLAs.
+
+| Pool | Purpose | SLA | Scaling Strategy |
+|------|---------|-----|-----------------|
+| **Fast** | Critical events, ERROR/FATAL | Within 2 minutes | High priority, always reserve spare resources |
+| **Common** | General operational logs (INFO/WARN) | Within 15 minutes | Default autoscaling |
+| **Debug** | Debugging (DEBUG/TRACE) | Best-effort | Can scale down during peak |
+
+**Configuration Example:**
+
+```yaml
+# fast-pool (ERROR/FATAL only)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector-fast
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+        - name: otel-collector
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+---
+# common-pool (INFO/WARN)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector-common
+spec:
+  replicas: 5
+  template:
+    spec:
+      containers:
+        - name: otel-collector
+          resources:
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+---
+# debug-pool (DEBUG/TRACE)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector-debug
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: otel-collector
+          resources:
+            requests:
+              cpu: 500m
+              memory: "1Gi"
+```
+
+> **Operational Tip**: The Fast Pool must remain available even during outages, so set its PriorityClass to `system-cluster-critical` level and deploy it on dedicated node groups.
+
 ---
 
 ## Comparison and Selection Guide
@@ -1322,6 +1447,8 @@ service:
 | **CloudWatch support** | Native | Not supported | Not supported | Good |
 | **Metrics collection** | Supported | Limited | Excellent | Excellent |
 | **Traces collection** | Not supported | Not supported | Excellent | Native |
+| **OTLP Proto support** | Not supported | Not supported | Supported | Native |
+| **Per-core throughput** | ~3,000 events/s | ~500 events/s | ~2,000 events/s | ~4,000 events/s |
 | **Buffering** | Memory/File | Memory | Memory | Memory |
 
 ### Recommendations by Use Case

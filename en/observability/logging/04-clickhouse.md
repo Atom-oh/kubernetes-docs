@@ -1,6 +1,6 @@
 # ClickHouse for Log Analytics
 
-> **Last Updated**: February 20, 2026
+> **Last Updated**: February 23, 2026
 
 ClickHouse is an open-source columnar database optimized for OLAP (Online Analytical Processing) workloads. It provides excellent query performance and compression ratios for large-scale log analytics.
 
@@ -13,6 +13,8 @@ ClickHouse is an open-source columnar database optimized for OLAP (Online Analyt
 5. [SQL Queries](#sql-queries)
 6. [Grafana Integration](#grafana-integration)
 7. [Performance Optimization](#performance-optimization)
+8. [S3 Archiving and Long-term Retention](#s3-archiving-and-long-term-retention)
+9. [HyperDX (ClickHouse Native Viewer)](#hyperdx-clickhouse-native-viewer)
 
 ---
 
@@ -381,13 +383,66 @@ spec:
 
 ## Log Ingestion Pipeline
 
+### Buffer → Store → Distributed 3-Tier Design
+
+In large-scale log environments (TB+ per day), concentrated INSERT requests create many small Parts, causing Merge overhead to spike. A 3-tier design using the Buffer engine solves this problem.
+
+```
+Buffer Table (Memory)  →  Store Table (ReplicatedMergeTree)  →  Distributed Table (Query Router)
+    Receives INSERTs          Actual data storage                   Client query entry point
+    Accumulates in memory     Flushes as large Parts                Distributes across shards
+```
+
+**Buffer Engine Role:**
+- Accumulates INSERT requests in memory and flushes to the Store table when conditions (time/rows/bytes) are met
+- Batches many small INSERTs during peak into large Parts → minimizes Merge overhead
+- Prevents `Too many parts` errors from Part count explosion
+
+```sql
+-- 1. Store table (actual data storage)
+CREATE TABLE logs.store_application_logs ON CLUSTER logs
+(
+    -- Schema same as application_logs
+    ...
+)
+ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/logs.store_application_logs', '{replica}')
+PARTITION BY (toYYYYMMDD(timestamp) * 100 + toHour(timestamp))
+ORDER BY (namespace, service, timestamp)
+TTL timestamp + INTERVAL 90 DAY
+SETTINGS
+    index_granularity = 8192,
+    ttl_only_drop_parts = 1;
+
+-- 2. Buffer table (receives INSERTs)
+CREATE TABLE logs.buffer_application_logs AS logs.store_application_logs
+ENGINE = Buffer(
+    'logs',                    -- database
+    'store_application_logs',  -- target table
+    16,                        -- num_layers (parallel buffers)
+    1,                         -- min_time (seconds) - flush after minimum 1s
+    30,                        -- max_time (seconds) - flush after maximum 30s
+    500000,                    -- min_rows
+    5000000,                   -- max_rows
+    500000000,                 -- min_bytes (~500MB)
+    1000000000                 -- max_bytes (~1GB)
+);
+
+-- 3. Distributed table (query entry point)
+CREATE TABLE logs.application_logs_distributed ON CLUSTER logs
+AS logs.store_application_logs
+ENGINE = Distributed(logs, logs, store_application_logs, rand());
+```
+
+> **Note**: Buffer table data resides in memory, so unflushed data may be lost if ClickHouse terminates abnormally. When used with Kafka, data can be recovered through reprocessing.
+
 ### Log Table Schema
 
 ```sql
--- Create log table
+-- Create log table (production-optimized version)
 CREATE TABLE IF NOT EXISTS logs.application_logs ON CLUSTER logs
 (
-    timestamp DateTime64(3),
+    -- DoubleDelta CODEC: optimal compression for time-series timestamps
+    timestamp DateTime64(3) CODEC(DoubleDelta, LZ4),
     date Date DEFAULT toDate(timestamp),
     level LowCardinality(String),
     message String,
@@ -407,6 +462,12 @@ CREATE TABLE IF NOT EXISTS logs.application_logs ON CLUSTER logs
     service LowCardinality(String),
     environment LowCardinality(String),
 
+    -- Materialized columns: auto-extract frequently used fields from JSON at INSERT time
+    -- Enables direct column access without JSON parsing at query time → major performance gain
+    app_name String MATERIALIZED JSONExtractString(raw_json, 'app_name'),
+    error_code String MATERIALIZED JSONExtractString(raw_json, 'error_code'),
+    response_time Float64 MATERIALIZED JSONExtractFloat(raw_json, 'response_time_ms'),
+
     -- JSON raw (optional)
     raw_json String CODEC(ZSTD(3)),
 
@@ -414,10 +475,15 @@ CREATE TABLE IF NOT EXISTS logs.application_logs ON CLUSTER logs
     INDEX idx_message message TYPE tokenbf_v1(10240, 3, 0) GRANULARITY 4
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/logs.application_logs', '{replica}')
-PARTITION BY toYYYYMM(date)
+-- Hourly partitioning: finer granularity than monthly (toYYYYMM)
+-- → Enables whole-Part deletion for TTL, more precise data management
+PARTITION BY (toYYYYMMDD(date) * 100 + toHour(timestamp))
 ORDER BY (namespace, service, timestamp)
 TTL date + INTERVAL 90 DAY
-SETTINGS index_granularity = 8192;
+SETTINGS
+    index_granularity = 8192,
+    -- Drop whole Parts: dramatically more efficient TTL processing vs row-level deletion
+    ttl_only_drop_parts = 1;
 
 -- Create distributed table
 CREATE TABLE IF NOT EXISTS logs.application_logs_distributed ON CLUSTER logs
@@ -837,6 +903,34 @@ groups:
 
 ---
 
+## HyperDX (ClickHouse Native Viewer)
+
+HyperDX is a native log viewer that queries ClickHouse directly. Unlike Grafana or Signoz, it leverages ClickHouse's columnar storage structure directly, delivering high performance for field-specific searches.
+
+### Key Advantages
+
+| Feature | Description |
+|---------|-------------|
+| **Field-specific search** | `ServiceName:payment` style searches are 20x+ faster than LIKE queries |
+| **ClickHouse native** | Queries ClickHouse directly without separate indexing layers |
+| **Auto schema detection** | Automatically recognizes Buffer/Store/View separated structures |
+| **OTEL compatible** | Native support for OpenTelemetry log schema |
+
+### Log Viewer Comparison
+
+| Feature | Grafana | Signoz | HyperDX |
+|---------|---------|--------|---------|
+| **ClickHouse native** | Plugin required | Forces own schema | Native |
+| **Field search speed** | Good | Good | Excellent (20x) |
+| **Custom schema** | Supported | Limited | Full support |
+| **Buffer/Store structure** | Manual config | Not supported | Auto-detected |
+| **Deployment** | Standalone | Standalone | Standalone |
+| **License** | AGPL-3.0 | Custom license | MIT |
+
+> **Signoz Limitation**: Signoz enforces its own schema, which creates constraints in environments using Buffer → Store → Distributed 3-tier structures or custom Materialized columns.
+
+---
+
 ## Performance Optimization
 
 ### Table Design Optimization
@@ -873,6 +967,60 @@ SETTINGS
     index_granularity = 8192,
     min_bytes_for_wide_part = 10485760,
     min_rows_for_wide_part = 10000;
+```
+
+### Parts Optimization
+
+ClickHouse's MergeTree engine creates Parts on INSERT and merges them in the background. The balance between Part size and count determines query performance and system stability.
+
+**Part Size Trade-offs:**
+
+| Part Characteristic | Large Size + Few Parts | Small Size + Many Parts |
+|--------------------|----------------------|------------------------|
+| **Merge overhead** | Memory spikes during merge | Frequent merges, CPU load |
+| **Query performance** | Fewer Parts to scan = faster | Part-open overhead increases |
+| **INSERT impact** | Large batches needed | Small batches possible |
+| **Risk** | OOM possibility | `Too many parts` error |
+
+**Operational Recommendations:**
+
+| Item | Recommended Value |
+|------|-------------------|
+| Parts per partition | ~20 or fewer |
+| Size per Part | 2-3GB |
+| Active partitions | 24-48 with hourly partitioning |
+
+**Monitoring Queries:**
+
+```sql
+-- Check Part count and size per partition
+SELECT
+    database,
+    table,
+    partition,
+    count() AS part_count,
+    formatReadableSize(sum(bytes_on_disk)) AS total_size,
+    formatReadableSize(avg(bytes_on_disk)) AS avg_part_size,
+    min(modification_time) AS oldest_part,
+    max(modification_time) AS newest_part
+FROM system.parts
+WHERE active = 1
+  AND database = 'logs'
+GROUP BY database, table, partition
+ORDER BY part_count DESC
+LIMIT 20;
+
+-- Detect Too many parts warnings
+SELECT
+    database,
+    table,
+    partition,
+    count() AS part_count
+FROM system.parts
+WHERE active = 1
+GROUP BY database, table, partition
+HAVING part_count > 300
+ORDER BY part_count DESC;
 ```
 
 ### Query Optimization
@@ -974,6 +1122,79 @@ resources:
   storage: 5Ti+ (io2)
   # S3 tiering required
 ```
+
+---
+
+## S3 Archiving and Long-term Retention
+
+Archiving log data to S3 in Parquet format before TTL expiration can reduce storage costs by approximately 90% compared to the original.
+
+### Archiving Pipeline
+
+```
+ClickHouse (Hot)  ──Before TTL──▶  S3 Parquet + ZSTD  ──▶  Query directly via S3 engine
+    90-day retention                  Long-term (unlimited)     No separate table definition needed
+```
+
+### Direct S3 Archiving
+
+```sql
+-- Archive to S3 in Parquet format
+INSERT INTO FUNCTION s3(
+    'https://s3.ap-northeast-2.amazonaws.com/my-log-archive/logs/{_partition_id}/data.parquet',
+    'Parquet',
+    'timestamp DateTime64(3), level String, message String, namespace String, service String, raw_json String'
+)
+SETTINGS s3_truncate_on_insert=0
+SELECT timestamp, level, message, namespace, service, raw_json
+FROM logs.application_logs
+WHERE date >= '2025-01-01' AND date < '2025-02-01';
+```
+
+### Watermark-based Progress Tracking
+
+For large-scale archiving, track progress with a watermark table.
+
+```sql
+-- Watermark table
+CREATE TABLE logs.archive_watermark
+(
+    partition_id String,
+    status Enum8('pending'=0, 'processing'=1, 'completed'=2, 'failed'=3),
+    started_at DateTime DEFAULT now(),
+    completed_at Nullable(DateTime),
+    row_count UInt64 DEFAULT 0,
+    error_message String DEFAULT ''
+)
+ENGINE = MergeTree()
+ORDER BY (partition_id);
+```
+
+**Archiving Delay Strategy:**
+- Wait for Merge completion: 2 days (until Part merges stabilize)
+- Reprocessing buffer: 1 day (for potential data corrections/re-ingestion)
+- **Total delay: 3 days** — archive data only after 3 days from partition creation
+
+### Querying Archived Data Directly
+
+You can query archived Parquet files in S3 directly without creating separate tables.
+
+```sql
+-- Query S3 archive directly (no table creation needed)
+SELECT
+    toStartOfHour(timestamp) AS hour,
+    level,
+    count() AS log_count
+FROM s3(
+    'https://s3.ap-northeast-2.amazonaws.com/my-log-archive/logs/*/data.parquet',
+    'Parquet'
+)
+WHERE timestamp >= '2025-01-15' AND timestamp < '2025-01-16'
+GROUP BY hour, level
+ORDER BY hour;
+```
+
+> **Cost Impact**: 1TB raw logs → S3 Parquet + ZSTD compression ≈ 100GB (90% reduction). At S3 Standard pricing, long-term retention costs ~$2.3/TB per month.
 
 ---
 

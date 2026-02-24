@@ -1,6 +1,6 @@
 # 로그 수집기 비교
 
-> **마지막 업데이트**: 2026년 2월 20일
+> **마지막 업데이트**: 2026년 2월 23일
 
 Kubernetes 환경에서 로그를 수집하는 다양한 도구들이 있습니다. 이 문서에서는 FluentBit, Promtail, Grafana Alloy, OpenTelemetry Collector를 심층적으로 비교하고, 각 도구의 설정 방법과 최적화 전략을 설명합니다.
 
@@ -1224,6 +1224,19 @@ OpenTelemetry Collector는 벤더 중립적인 텔레메트리 데이터 수집,
 | 라이선스 | Apache 2.0 |
 | CNCF | Incubating |
 
+**OTLP Proto 인코딩의 성능 우위:**
+
+OpenTelemetry Collector는 OTLP(OpenTelemetry Protocol) Proto 인코딩을 사용합니다. JSON 대비 필드명을 숫자 태그로 치환하여 **40-60%의 전송 용량을 절감**합니다.
+
+| 지표 | Filebeat/Fluentd (JSON) | OTel Collector (OTLP Proto) | 개선 |
+|------|------------------------|---------------------------|------|
+| **메시지 인코딩** | JSON (필드명 포함) | Proto (숫자 태그) | 40-60% 용량 절감 |
+| **배치 전송** | 1,000건 = 1,000 메시지 | 1,000건 ≈ 7 메시지 (150건/배치) | 143배 메시지 수 감소 |
+| **처리량** | 16.5 MB/s | 300 MB/s | 18배 향상 |
+| **Core당 처리량** | 150건/초 (Fluentd) | 4,000건/초 | 26배 향상 |
+
+> **실사례**: 카카오페이증권 Pallas v2 프로젝트에서 Filebeat/Fluentd → OTel Collector 전환 시 동일 하드웨어로 18배 처리량 향상을 달성했습니다.
+
 ### 아키텍처
 
 ```mermaid
@@ -1484,6 +1497,118 @@ service:
       exporters: [debug]
 ```
 
+### Routing Connector
+
+OTel Collector의 Routing Connector를 사용하면 로그 타입별로 서로 다른 파이프라인으로 분기할 수 있습니다. 이를 통해 로그 종류에 따라 다른 처리 로직과 목적지를 설정할 수 있습니다.
+
+```yaml
+# otel-collector-routing.yaml
+connectors:
+  routing:
+    table:
+      - statement: route() where resource.attributes["logtype"] == "mysql"
+        pipelines: [logs/mysql]
+      - statement: route() where resource.attributes["logtype"] == "nginx"
+        pipelines: [logs/nginx]
+      - statement: route() where resource.attributes["logtype"] == "app"
+        pipelines: [logs/app]
+
+service:
+  pipelines:
+    # 공통 수집 파이프라인
+    logs/ingestion:
+      receivers: [filelog, otlp]
+      processors: [memory_limiter, k8sattributes, resource]
+      exporters: [routing]
+
+    # MySQL 전용 파이프라인 (느린 쿼리 분석)
+    logs/mysql:
+      receivers: [routing]
+      processors: [transform/mysql, batch]
+      exporters: [clickhouse/mysql]
+
+    # Nginx 전용 파이프라인 (액세스 로그 분석)
+    logs/nginx:
+      receivers: [routing]
+      processors: [transform/nginx, batch]
+      exporters: [clickhouse/nginx]
+
+    # 일반 앱 파이프라인
+    logs/app:
+      receivers: [routing]
+      processors: [filter, transform, batch]
+      exporters: [clickhouse/app]
+```
+
+> **Kafka 토픽 통합**: Routing Connector를 사용하면 기존의 로그 타입별 Kafka 토픽 분리 방식을 단일 토픽 + Collector 내 라우팅으로 대체할 수 있어, Kafka 토픽 관리 부담이 줄어듭니다.
+
+### 로그 레벨별 Pool 분리 (대규모 환경)
+
+일 TB 이상의 로그를 처리하는 환경에서는 모든 로그를 동일한 우선순위로 처리하면 장애 시 핵심 로그 수집이 지연될 수 있습니다. OTel Collector Pool을 로그 레벨별로 분리하여 SLA를 차등 적용합니다.
+
+| Pool | 용도 | SLA | 스케일링 전략 |
+|------|------|-----|-------------|
+| **Fast** | 핵심 이벤트, ERROR/FATAL | 2분 이내 수집 | 우선순위 높음, 항상 여유 리소스 확보 |
+| **Common** | 일반 운영 로그 (INFO/WARN) | 15분 이내 수집 | 기본 오토스케일링 |
+| **Debug** | 디버깅용 (DEBUG/TRACE) | 최선 노력 (Best-effort) | 피크 시 축소 가능 |
+
+**구성 예시:**
+
+```yaml
+# fast-pool (ERROR/FATAL 전용)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector-fast
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+        - name: otel-collector
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+---
+# common-pool (INFO/WARN)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector-common
+spec:
+  replicas: 5
+  template:
+    spec:
+      containers:
+        - name: otel-collector
+          resources:
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+---
+# debug-pool (DEBUG/TRACE)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector-debug
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: otel-collector
+          resources:
+            requests:
+              cpu: 500m
+              memory: "1Gi"
+```
+
+> **운영 팁**: Fast Pool은 장애 상황에서도 항상 가용해야 하므로, PriorityClass를 `system-cluster-critical` 수준으로 설정하고 전용 노드 그룹에 배치하는 것을 권장합니다.
+
 ---
 
 ## 비교 및 선택 가이드
@@ -1505,6 +1630,8 @@ service:
 | **CloudWatch 지원** | 네이티브 | 미지원 | 미지원 | 양호 |
 | **메트릭 수집** | 지원 | 제한적 | 우수 | 우수 |
 | **트레이스 수집** | 미지원 | 미지원 | 우수 | 네이티브 |
+| **OTLP Proto 지원** | 미지원 | 미지원 | 지원 | 네이티브 |
+| **Core당 처리량** | ~3,000건/초 | ~500건/초 | ~2,000건/초 | ~4,000건/초 |
 | **버퍼링** | 메모리/파일 | 메모리 | 메모리 | 메모리 |
 
 ### 사용 사례별 권장

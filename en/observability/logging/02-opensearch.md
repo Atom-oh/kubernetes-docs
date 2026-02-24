@@ -1,6 +1,6 @@
 # Amazon OpenSearch Service
 
-> **Last Updated**: February 20, 2026
+> **Last Updated**: February 23, 2026
 
 Amazon OpenSearch Service is a fully managed search and analytics service used for real-time application monitoring, log analytics, and website search. It's based on OpenSearch, a fork of Elasticsearch, and provides powerful full-text search capabilities.
 
@@ -14,7 +14,8 @@ Amazon OpenSearch Service is a fully managed search and analytics service used f
 6. [OpenSearch Dashboards](#opensearch-dashboards)
 7. [Security Configuration](#security-configuration)
 8. [Cost Optimization](#cost-optimization)
-9. [Comparison with Loki](#comparison-with-loki)
+9. [Limitations in Large-scale Log Environments](#limitations-in-large-scale-log-environments)
+10. [Comparison with Loki](#comparison-with-loki)
 
 ---
 
@@ -1082,6 +1083,74 @@ PUT _index_template/logs-optimized
 # - All Upfront option is cheapest (up to 36% savings)
 # - Partial Upfront: 24% savings
 # - No Upfront: 21% savings
+```
+
+---
+
+## Limitations in Large-scale Log Environments
+
+OpenSearch excels at full-text search, but structural limitations emerge when log volume grows rapidly.
+
+### Inverted Index Inefficiency
+
+| Aspect | OpenSearch (Inverted Index) | ClickHouse (Columnar) |
+|--------|---------------------------|---------------------|
+| **Compression ratio** | 1.5-2x size increase (including index) | 5-10x compression vs original |
+| **Aggregation queries** | Requires full document scan | Fast column-level scan |
+| **Storage cost** | High (index + original) | Low (columnar compression) |
+| **INSERT cost** | High indexing CPU overhead | Lightweight columnar append |
+
+### Aggregation Query Performance Degradation
+
+For frequently used aggregation queries in log analytics (ERROR count in last hour, error rate by service, etc.), OpenSearch must read all matching documents, causing performance to degrade sharply as data grows.
+
+```
+Query: "Aggregate ERROR log count by service for the last hour"
+
+OpenSearch: Look up document IDs from index → Read each document → Aggregate
+           100GB scale: ~2s / 1TB scale: ~25s / 10TB scale: timeout
+
+ClickHouse: Scan only timestamp, level, service columns → Aggregate
+           100GB scale: ~0.3s / 1TB scale: ~1s / 10TB scale: ~8s
+```
+
+### Scaling Cost Issues
+
+| Daily Log Volume | OpenSearch Monthly Cost (est.) | ClickHouse Monthly Cost (est.) | Ratio |
+|-----------------|-------------------------------|-------------------------------|-------|
+| 100GB | ~$970 | ~$400 | 2.4x |
+| 500GB | ~$4,500 | ~$1,200 | 3.8x |
+| 1TB | ~$9,000 | ~$2,000 | 4.5x |
+| 10TB | ~$80,000+ | ~$10,000 | 8x+ |
+
+> **Key Insight**: When analyzing log query patterns, over 90% of queries in most environments are "time range + field condition" based. This pattern is far more efficient with columnar storage than inverted indexes.
+
+### ClickHouse Migration Decision Criteria
+
+Use the following criteria to determine whether to keep OpenSearch or consider migrating to ClickHouse.
+
+| Criteria | Keep OpenSearch | Consider ClickHouse |
+|----------|----------------|-------------------|
+| **Daily log volume** | Under 100GB | Over 100GB |
+| **Primary query pattern** | Full-text search (keyword-based) | Time range + field conditions |
+| **Aggregation query ratio** | Low (under 20% of total) | High (over 50% of total) |
+| **Cost sensitivity** | Low | High |
+| **Full-text search need** | Essential (core feature) | Optional (nice to have) |
+| **Team SQL proficiency** | Low | High |
+
+**Migration Considerations:**
+
+```
+Phase 1: Query Pattern Analysis (2 weeks)
+  └── Analyze actual query logs for full-text search vs field-condition query ratio
+
+Phase 2: Parallel Operation (1-2 months)
+  └── Dual-write same logs to both OpenSearch + ClickHouse
+  └── Compare query performance and costs
+
+Phase 3: Gradual Migration
+  └── Aggregation/dashboard queries → Migrate to ClickHouse first
+  └── Queries requiring full-text search → Keep OpenSearch or use ClickHouse tokenbf index
 ```
 
 ---

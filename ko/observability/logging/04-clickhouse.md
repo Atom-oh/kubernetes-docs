@@ -1,6 +1,6 @@
 # ClickHouse for Log Analytics
 
-> **마지막 업데이트**: 2026년 2월 20일
+> **마지막 업데이트**: 2026년 2월 23일
 
 ClickHouse는 OLAP(Online Analytical Processing) 워크로드에 최적화된 오픈소스 컬럼 기반 데이터베이스입니다. 대규모 로그 분석에서 뛰어난 쿼리 성능과 압축률을 제공합니다.
 
@@ -13,6 +13,8 @@ ClickHouse는 OLAP(Online Analytical Processing) 워크로드에 최적화된 �
 5. [SQL 쿼리](#sql-쿼리)
 6. [Grafana 연동](#grafana-연동)
 7. [성능 최적화](#성능-최적화)
+8. [S3 아카이빙 및 장기 보관](#s3-아카이빙-및-장기-보관)
+9. [HyperDX (ClickHouse 네이티브 뷰어)](#hyperdx-clickhouse-네이티브-뷰어)
 
 ---
 
@@ -379,13 +381,66 @@ spec:
 
 ## 로그 수집 파이프라인
 
+### Buffer → Store → Distributed 3계층 설계
+
+대규모 로그 환경(일 TB 이상)에서는 INSERT 요청이 집중될 때 작은 Part가 대량 생성되어 Merge 부하가 급증합니다. Buffer 엔진을 활용한 3계층 설계로 이 문제를 해결할 수 있습니다.
+
+```
+Buffer 테이블 (메모리)  →  Store 테이블 (ReplicatedMergeTree)  →  Distributed 테이블 (분산 쿼리)
+    INSERT 수신              실제 데이터 저장                      클라이언트 쿼리 진입점
+    메모리에 누적             큰 Part 단위로 flush                  모든 샤드에 분산 쿼리
+```
+
+**Buffer 엔진 역할:**
+- INSERT 요청을 메모리에 모았다가 일정 조건(시간/행수/바이트) 충족 시 Store 테이블로 flush
+- 피크 시 대량의 작은 INSERT를 모아서 큰 Part로 생성 → Merge 부하 최소화
+- Part 수 폭증으로 인한 `Too many parts` 에러 방지
+
+```sql
+-- 1. Store 테이블 (실제 데이터 저장)
+CREATE TABLE logs.store_application_logs ON CLUSTER logs
+(
+    -- 스키마는 기존 application_logs와 동일
+    ...
+)
+ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/logs.store_application_logs', '{replica}')
+PARTITION BY (toYYYYMMDD(timestamp) * 100 + toHour(timestamp))
+ORDER BY (namespace, service, timestamp)
+TTL timestamp + INTERVAL 90 DAY
+SETTINGS
+    index_granularity = 8192,
+    ttl_only_drop_parts = 1;
+
+-- 2. Buffer 테이블 (INSERT 수신용)
+CREATE TABLE logs.buffer_application_logs AS logs.store_application_logs
+ENGINE = Buffer(
+    'logs',                    -- 데이터베이스
+    'store_application_logs',  -- 대상 테이블
+    16,                        -- num_layers (병렬 버퍼 수)
+    1,                         -- min_time (초) - 최소 1초 후 flush
+    30,                        -- max_time (초) - 최대 30초 후 flush
+    500000,                    -- min_rows
+    5000000,                   -- max_rows
+    500000000,                 -- min_bytes (~500MB)
+    1000000000                 -- max_bytes (~1GB)
+);
+
+-- 3. Distributed 테이블 (쿼리 진입점)
+CREATE TABLE logs.application_logs_distributed ON CLUSTER logs
+AS logs.store_application_logs
+ENGINE = Distributed(logs, logs, store_application_logs, rand());
+```
+
+> **주의**: Buffer 테이블의 데이터는 메모리에 있으므로, ClickHouse가 비정상 종료되면 flush되지 않은 데이터가 유실될 수 있습니다. Kafka와 함께 사용하면 재처리로 복구 가능합니다.
+
 ### 로그 테이블 스키마
 
 ```sql
--- 로그 테이블 생성
+-- 로그 테이블 생성 (운영 최적화 버전)
 CREATE TABLE IF NOT EXISTS logs.application_logs ON CLUSTER logs
 (
-    timestamp DateTime64(3),
+    -- DoubleDelta CODEC: 시계열 타임스탬프에 최적 압축
+    timestamp DateTime64(3) CODEC(DoubleDelta, LZ4),
     date Date DEFAULT toDate(timestamp),
     level LowCardinality(String),
     message String,
@@ -405,6 +460,12 @@ CREATE TABLE IF NOT EXISTS logs.application_logs ON CLUSTER logs
     service LowCardinality(String),
     environment LowCardinality(String),
 
+    -- Materialized 컬럼: INSERT 시점에 JSON에서 자주 사용하는 필드를 자동 추출
+    -- 쿼리 시 JSON 파싱 없이 직접 컬럼 접근 가능 → 성능 대폭 향상
+    app_name String MATERIALIZED JSONExtractString(raw_json, 'app_name'),
+    error_code String MATERIALIZED JSONExtractString(raw_json, 'error_code'),
+    response_time Float64 MATERIALIZED JSONExtractFloat(raw_json, 'response_time_ms'),
+
     -- JSON 원본 (선택)
     raw_json String CODEC(ZSTD(3)),
 
@@ -412,10 +473,15 @@ CREATE TABLE IF NOT EXISTS logs.application_logs ON CLUSTER logs
     INDEX idx_message message TYPE tokenbf_v1(10240, 3, 0) GRANULARITY 4
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/logs.application_logs', '{replica}')
-PARTITION BY toYYYYMM(date)
+-- 시간 단위 파티셔닝: 월 단위(toYYYYMM) 대신 시간 단위로 세분화
+-- → TTL 삭제 시 Part 단위 통째 삭제 가능, 더 정밀한 데이터 관리
+PARTITION BY (toYYYYMMDD(date) * 100 + toHour(timestamp))
 ORDER BY (namespace, service, timestamp)
 TTL date + INTERVAL 90 DAY
-SETTINGS index_granularity = 8192;
+SETTINGS
+    index_granularity = 8192,
+    -- Part 단위 통째 삭제: 행 단위 삭제 대비 TTL 처리 효율 극대화
+    ttl_only_drop_parts = 1;
 
 -- 분산 테이블 생성
 CREATE TABLE IF NOT EXISTS logs.application_logs_distributed ON CLUSTER logs
@@ -835,6 +901,34 @@ groups:
 
 ---
 
+## HyperDX (ClickHouse 네이티브 뷰어)
+
+HyperDX는 ClickHouse를 직접 쿼리하는 네이티브 로그 뷰어입니다. Grafana나 Signoz와 달리 ClickHouse의 컬럼형 저장 구조를 직접 활용하여 필드 지정 검색에서 높은 성능을 발휘합니다.
+
+### 핵심 장점
+
+| 기능 | 설명 |
+|------|------|
+| **필드 지정 검색** | `ServiceName:payment` 형태의 검색이 LIKE 검색보다 20배 이상 빠름 |
+| **ClickHouse 네이티브** | 별도 인덱싱 계층 없이 ClickHouse 직접 쿼리 |
+| **자동 스키마 감지** | Buffer/Store/View 분리 구조 자동 인식 |
+| **OTEL 호환** | OpenTelemetry 로그 스키마 네이티브 지원 |
+
+### 로그 뷰어 비교
+
+| 기능 | Grafana | Signoz | HyperDX |
+|------|---------|--------|---------|
+| **ClickHouse 네이티브** | 플러그인 필요 | 자체 스키마 강제 | 네이티브 |
+| **필드 검색 속도** | 양호 | 양호 | 우수 (20x) |
+| **커스텀 스키마** | 지원 | 제한적 | 완전 지원 |
+| **Buffer/Store 구조** | 수동 설정 | 미지원 | 자동 감지 |
+| **배포 방식** | 독립 서비스 | 독립 서비스 | 독립 서비스 |
+| **라이선스** | AGPL-3.0 | 자체 라이선스 | MIT |
+
+> **Signoz 한계**: Signoz는 자체 정의 스키마를 강제하므로, Buffer → Store → Distributed 3계층 구조나 커스텀 Materialized 컬럼을 사용하는 환경에서는 제약이 있습니다.
+
+---
+
 ## 성능 최적화
 
 ### 테이블 설계 최적화
@@ -871,6 +965,60 @@ SETTINGS
     index_granularity = 8192,
     min_bytes_for_wide_part = 10485760,
     min_rows_for_wide_part = 10000;
+```
+
+### Parts 최적화
+
+ClickHouse의 MergeTree 엔진은 INSERT 시 Part를 생성하고, 백그라운드에서 Part를 병합(Merge)합니다. Part 크기와 개수의 균형이 쿼리 성능과 시스템 안정성을 좌우합니다.
+
+**Part 크기별 트레이드오프:**
+
+| Part 특성 | 크기 큼 + 개수 적음 | 크기 작음 + 개수 많음 |
+|-----------|-------------------|--------------------|
+| **Merge 부하** | Merge 시 메모리 급증 | Merge 빈번, CPU 부하 |
+| **쿼리 성능** | 스캔할 Part 적어 빠름 | Part 열기 오버헤드 증가 |
+| **INSERT 영향** | 큰 배치 필요 | 작은 배치 가능 |
+| **위험** | OOM 가능성 | `Too many parts` 에러 |
+
+**운영 권장 기준:**
+
+| 항목 | 권장값 |
+|------|--------|
+| 파티션당 Part 수 | ~20개 이하 |
+| Part당 크기 | 2-3GB |
+| 활성 파티션 수 | 시간 단위 파티셔닝 시 최근 24-48개 |
+
+**모니터링 쿼리:**
+
+```sql
+-- 파티션별 Part 수와 크기 확인
+SELECT
+    database,
+    table,
+    partition,
+    count() AS part_count,
+    formatReadableSize(sum(bytes_on_disk)) AS total_size,
+    formatReadableSize(avg(bytes_on_disk)) AS avg_part_size,
+    min(modification_time) AS oldest_part,
+    max(modification_time) AS newest_part
+FROM system.parts
+WHERE active = 1
+  AND database = 'logs'
+GROUP BY database, table, partition
+ORDER BY part_count DESC
+LIMIT 20;
+
+-- Too many parts 경고 감지
+SELECT
+    database,
+    table,
+    partition,
+    count() AS part_count
+FROM system.parts
+WHERE active = 1
+GROUP BY database, table, partition
+HAVING part_count > 300
+ORDER BY part_count DESC;
 ```
 
 ### 쿼리 최적화
@@ -972,6 +1120,79 @@ resources:
   storage: 5Ti+ (io2)
   # S3 티어링 필수
 ```
+
+---
+
+## S3 아카이빙 및 장기 보관
+
+TTL로 삭제되기 전의 로그 데이터를 S3에 Parquet 형식으로 아카이빙하면 원본 대비 약 90%의 스토리지 비용을 절감할 수 있습니다.
+
+### 아카이빙 파이프라인
+
+```
+ClickHouse (Hot)  ──TTL 만료 전──▶  S3 Parquet + ZSTD  ──▶  필요시 S3 엔진으로 직접 쿼리
+    90일 보존                         장기 보관 (무제한)          별도 테이블 정의 불필요
+```
+
+### S3 직접 아카이빙
+
+```sql
+-- S3로 Parquet 형식 아카이빙
+INSERT INTO FUNCTION s3(
+    'https://s3.ap-northeast-2.amazonaws.com/my-log-archive/logs/{_partition_id}/data.parquet',
+    'Parquet',
+    'timestamp DateTime64(3), level String, message String, namespace String, service String, raw_json String'
+)
+SETTINGS s3_truncate_on_insert=0
+SELECT timestamp, level, message, namespace, service, raw_json
+FROM logs.application_logs
+WHERE date >= '2025-01-01' AND date < '2025-02-01';
+```
+
+### 워터마크 기반 진행 상태 추적
+
+대규모 아카이빙에서는 워터마크 테이블로 진행 상태를 추적합니다.
+
+```sql
+-- 워터마크 테이블
+CREATE TABLE logs.archive_watermark
+(
+    partition_id String,
+    status Enum8('pending'=0, 'processing'=1, 'completed'=2, 'failed'=3),
+    started_at DateTime DEFAULT now(),
+    completed_at Nullable(DateTime),
+    row_count UInt64 DEFAULT 0,
+    error_message String DEFAULT ''
+)
+ENGINE = MergeTree()
+ORDER BY (partition_id);
+```
+
+**아카이빙 지연 전략:**
+- Merge 완료 대기: 2일 (Part 병합이 안정화될 때까지)
+- 재처리 여유: 1일 (데이터 수정/재수집 가능성 대비)
+- **총 지연: 3일** — 파티션 생성 후 3일 경과한 데이터부터 아카이빙
+
+### 아카이브 데이터 직접 쿼리
+
+S3에 아카이빙된 Parquet 파일을 별도 테이블 정의 없이 직접 쿼리할 수 있습니다.
+
+```sql
+-- S3 아카이브 직접 쿼리 (테이블 생성 불필요)
+SELECT
+    toStartOfHour(timestamp) AS hour,
+    level,
+    count() AS log_count
+FROM s3(
+    'https://s3.ap-northeast-2.amazonaws.com/my-log-archive/logs/*/data.parquet',
+    'Parquet'
+)
+WHERE timestamp >= '2025-01-15' AND timestamp < '2025-01-16'
+GROUP BY hour, level
+ORDER BY hour;
+```
+
+> **비용 효과**: 1TB 원본 로그 → S3 Parquet + ZSTD 압축 시 약 100GB (90% 절감). S3 Standard 기준 월 $2.3/TB로 장기 보관 가능.
 
 ---
 
