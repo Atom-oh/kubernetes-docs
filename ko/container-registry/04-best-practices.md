@@ -230,6 +230,21 @@ docker build \
 
 ## 레지스트리 미러링 및 캐싱
 
+```mermaid
+flowchart TD
+    Need{"캐싱/미러링<br/>필요한가?"}
+    Need -->|Rate Limit 이슈| RL{"환경 확인"}
+    Need -->|가용성/성능| Perf{"인프라 확인"}
+
+    RL -->|AWS/EKS| ECR_PTC["ECR Pull-through Cache"]
+    RL -->|자체 인프라| Harbor_Proxy["Harbor Proxy Cache"]
+    RL -->|단순 미러| Containerd["containerd 미러 설정"]
+
+    Perf -->|에어갭| Harbor_Full["Harbor 전체 미러링"]
+    Perf -->|멀티 리전| ECR_Rep["ECR 멀티 리전 복제"]
+    Perf -->|엣지| Harbor_Rep["Harbor Pull Replication"]
+```
+
 ### containerd 레지스트리 미러 설정
 
 ```toml
@@ -798,17 +813,13 @@ deploy:
 
 ### Build-Push-Scan-Deploy 파이프라인
 
-```
-┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
-│  Code   │───▶│  Build  │───▶│  Push   │───▶│  Scan   │───▶│ Deploy  │
-│  Commit │    │  Image  │    │  to ECR │    │  Trivy  │    │  to K8s │
-└─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘
-                                                  │
-                                                  ▼
-                                            ┌─────────┐
-                                            │  FAIL   │───▶ Alert/Block
-                                            │ if HIGH │
-                                            └─────────┘
+```mermaid
+flowchart LR
+    Commit["Code Commit"] --> Build["Build Image"]
+    Build --> Push["Push to ECR"]
+    Push --> Scan{"Scan<br/>(Trivy)"}
+    Scan -->|Pass| Deploy["Deploy to K8s"]
+    Scan -->|Fail: HIGH/CRITICAL| Block["Alert / Block"]
 ```
 
 ### ArgoCD 이미지 업데이트 자동화
@@ -832,6 +843,136 @@ spec:
     path: apps/myapp
     targetRevision: main
 ```
+
+---
+
+## skopeo를 활용한 이미지 관리
+
+[skopeo](https://github.com/containers/skopeo)는 컨테이너 이미지를 검사, 복사, 동기화할 수 있는 CLI 도구입니다. Docker 데몬 없이 동작하며, root 권한이 필요하지 않아 CI/CD 파이프라인과 에어갭 환경에서 특히 유용합니다.
+
+### skopeo 설치
+
+```bash
+# RHEL/CentOS/Amazon Linux
+sudo yum install -y skopeo
+
+# Ubuntu/Debian
+sudo apt-get install -y skopeo
+
+# macOS
+brew install skopeo
+```
+
+### skopeo inspect — 원격 이미지 검사
+
+이미지를 pull하지 않고 메타데이터를 확인할 수 있습니다:
+
+```bash
+# Docker Hub 이미지 검사
+skopeo inspect docker://docker.io/library/nginx:1.25
+
+# ECR 이미지 검사 (AWS 인증 필요)
+skopeo inspect docker://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/myapp:v1.0.0
+
+# 원시 매니페스트 확인
+skopeo inspect --raw docker://docker.io/library/nginx:1.25 | jq .
+
+# 특정 아키텍처 매니페스트 확인
+skopeo inspect --override-arch arm64 docker://docker.io/library/nginx:1.25
+```
+
+### skopeo copy — 레지스트리 간 이미지 복사
+
+이미지를 로컬에 pull하지 않고 레지스트리 간 직접 복사합니다:
+
+```bash
+# Docker Hub → ECR 복사
+skopeo copy \
+  docker://docker.io/library/nginx:1.25 \
+  docker://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/nginx:1.25
+
+# ECR → Harbor 복사
+skopeo copy \
+  docker://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/myapp:v1.0.0 \
+  docker://harbor.example.com/myapp/backend:v1.0.0
+
+# 포맷 변환 (Docker → OCI)
+skopeo copy \
+  docker://docker.io/library/nginx:1.25 \
+  oci:nginx-oci:1.25
+
+# OCI archive로 저장
+skopeo copy \
+  docker://docker.io/library/nginx:1.25 \
+  oci-archive:nginx-1.25.tar
+```
+
+### skopeo sync — 대량 레지스트리 동기화
+
+여러 이미지를 한번에 동기화합니다:
+
+```bash
+# Docker Hub → ECR 동기화 (특정 이미지)
+skopeo sync --src docker --dest docker \
+  docker.io/library/nginx \
+  123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub
+
+# YAML 매니페스트 기반 동기화
+cat > sync-manifest.yaml << 'EOF'
+docker.io:
+  images:
+    nginx:
+      - "1.25"
+      - "1.24"
+    redis:
+      - "7-alpine"
+      - "6-alpine"
+  images-by-tag-regex:
+    busybox:
+      - "^1\\.3[5-6]"
+EOF
+
+skopeo sync --src yaml --dest docker \
+  sync-manifest.yaml \
+  123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/mirror
+```
+
+### 에어갭 환경 이미지 전송
+
+skopeo는 에어갭 환경으로의 이미지 전송에 최적화되어 있습니다:
+
+```bash
+# 1단계: 온라인 환경에서 이미지를 tar로 내보내기
+skopeo copy docker://nginx:1.25 oci-archive:nginx-1.25.tar
+skopeo copy docker://redis:7-alpine oci-archive:redis-7.tar
+skopeo copy docker://registry.k8s.io/pause:3.9 oci-archive:pause-3.9.tar
+
+# 2단계: USB/보안 전송으로 에어갭 환경에 전달
+
+# 3단계: 에어갭 환경에서 Harbor로 import
+skopeo copy oci-archive:nginx-1.25.tar \
+  docker://harbor.internal/library/nginx:1.25
+skopeo copy oci-archive:redis-7.tar \
+  docker://harbor.internal/library/redis:7-alpine
+skopeo copy oci-archive:pause-3.9.tar \
+  docker://harbor.internal/k8s/pause:3.9
+```
+
+> **팁:** `docker save/load`와 달리 skopeo는 Docker 데몬 없이 동작하므로, 서버에 Docker가 설치되지 않은 에어갭 환경에서도 사용할 수 있습니다.
+
+### 도구 비교
+
+| 기능 | skopeo | docker | crane | ctr |
+|------|--------|--------|-------|-----|
+| **데몬 필요** | No | Yes | No | Yes (containerd) |
+| **Root 권한** | No | Yes (기본) | No | Yes |
+| **원격 검사** | Yes | No (pull 필요) | Yes | No |
+| **레지스트리 간 복사** | Yes | pull+tag+push | Yes | No |
+| **대량 동기화** | Yes (sync) | No | No | No |
+| **OCI 지원** | Full | 부분적 | Full | Full |
+| **에어갭 전송** | oci-archive | docker save | - | export |
+| **멀티 아키텍처** | Yes | 제한적 | Yes | No |
+| **CI/CD 친화성** | 높음 | 중간 | 높음 | 낮음 |
 
 ---
 

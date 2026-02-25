@@ -10,19 +10,28 @@ Amazon Elastic Container Registry (ECR) is a fully managed container registry se
 
 ECR operates as a regional service with two distinct offerings:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Amazon ECR                                │
-├─────────────────────────────┬───────────────────────────────────┤
-│      ECR Private            │         ECR Public                 │
-├─────────────────────────────┼───────────────────────────────────┤
-│ • Private repositories      │ • Public repositories             │
-│ • IAM-based access control  │ • Anonymous read access           │
-│ • Regional scope            │ • Global (us-east-1 hosted)       │
-│ • VPC endpoints available   │ • Public gallery discovery        │
-│ • Cross-region replication  │ • No pull rate limits             │
-│ • Encryption at rest        │ • Free egress to internet         │
-└─────────────────────────────┴───────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph ECR["Amazon ECR"]
+        subgraph Private["ECR Private"]
+            direction LR
+            P1["Private repositories"]
+            P2["IAM-based access control"]
+            P3["Regional scope"]
+            P4["Cross-region replication"]
+        end
+        subgraph Public["ECR Public"]
+            direction LR
+            Pub1["Public repositories"]
+            Pub2["Anonymous read access"]
+            Pub3["Global (us-east-1 hosted)"]
+            Pub4["Public gallery discovery"]
+        end
+    end
+
+    style ECR fill:#FF9900,stroke:#cc7a00,color:#fff
+    style Private fill:#232F3E,stroke:#1a2332,color:#fff
+    style Public fill:#232F3E,stroke:#1a2332,color:#fff
 ```
 
 **ECR Private**: For internal container images with IAM-based access control. Images are stored regionally and can be replicated across regions.
@@ -401,43 +410,21 @@ Lifecycle policies evaluate rules in **priority order** (lowest number first). K
 3. Once an image matches a rule, subsequent rules do not evaluate that image
 4. Rules with the same priority are evaluated in an undefined order (avoid this)
 
-```
-Image Evaluation Flow:
-┌─────────────┐
-│   Image A   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────────────────────────────────────────────┐
-│ Rule Priority 1: tagPatternList = ["^\\d+\\.\\d+\\.\\d+$"]  │
-│                  (SemVer tags like 1.0.0)                   │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-               ┌───────────┴───────────┐
-               │ Matches?              │
-               ├───────────────────────┤
-               │ Yes → Apply Rule 1    │
-               │ No  → Continue        │
-               └───────────┬───────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│ Rule Priority 2: tagPatternList = ["*-dev*", "*-staging*"] │
-│                  (Dev/staging tags)                         │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-               ┌───────────┴───────────┐
-               │ Matches?              │
-               ├───────────────────────┤
-               │ Yes → Apply Rule 2    │
-               │ No  → Continue        │
-               └───────────┬───────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│ Rule Priority 10: tagStatus = "untagged"                    │
-│                   (Untagged images)                         │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Image["Image Evaluated"] --> R1{"Rule Priority 1<br/>SemVer tags?"}
+    R1 -->|Match| Apply1["Apply Rule 1"]
+    R1 -->|No Match| R2{"Rule Priority 2<br/>Dev/staging tags?"}
+    R2 -->|Match| Apply2["Apply Rule 2"]
+    R2 -->|No Match| R10{"Rule Priority 10<br/>Untagged?"}
+    R10 -->|Match| Apply10["Apply Rule 10"]
+    R10 -->|No Match| Keep["Image Retained"]
+
+    Apply1 --> Check{"Exceeds retention<br/>threshold?"}
+    Apply2 --> Check
+    Apply10 --> Check
+    Check -->|Yes| Expire["Image Expired"]
+    Check -->|No| Keep
 ```
 
 ### Selection Criteria
@@ -987,32 +974,120 @@ aws ec2 create-vpc-endpoint \
 
 ### Pull-Through Cache
 
-ECR Pull-Through Cache reduces latency and external dependencies:
+ECR Pull-Through Cache reduces latency, avoids external rate limits, and removes dependencies on external registry availability.
+
+```mermaid
+flowchart LR
+    Pod["kubelet pull<br/>request"] --> ECR{"ECR Endpoint"}
+    ECR -->|Cache Hit| Serve["Serve cached<br/>image instantly"]
+    ECR -->|Cache Miss| Upstream["Pull from<br/>upstream registry"]
+    Upstream --> Cache["Cache in ECR<br/>repository"]
+    Cache --> Serve
+```
+
+#### Supported Upstream Registries
+
+| Upstream Registry | ECR Prefix | Auth Required | Notes |
+|---|---|---|---|
+| Docker Hub | `docker-hub` | Yes (Secrets Manager) | Bypasses rate limits |
+| Quay.io | `quay` | No | Red Hat / CoreOS images |
+| GitHub Container Registry | `ghcr` | Yes (Secrets Manager) | GitHub Actions images |
+| registry.k8s.io | `k8s` | No | Kubernetes core components |
+| ECR Public | `ecr-public` | No | AWS public images |
+
+#### Secrets Manager Setup (for authenticated registries)
 
 ```bash
-# Create cache rule for Docker Hub
+# Store Docker Hub credentials
+aws secretsmanager create-secret \
+  --name ecr-pullthroughcache/docker-hub \
+  --secret-string '{"username":"your-dockerhub-username","accessToken":"dckr_pat_xxxxx"}'
+
+# Store GitHub Container Registry credentials
+aws secretsmanager create-secret \
+  --name ecr-pullthroughcache/ghcr \
+  --secret-string '{"username":"your-github-username","accessToken":"ghp_xxxxx"}'
+```
+
+#### Creating Pull-Through Cache Rules
+
+```bash
+# Docker Hub cache rule
 aws ecr create-pull-through-cache-rule \
   --ecr-repository-prefix docker-hub \
   --upstream-registry-url registry-1.docker.io \
-  --credential-arn arn:aws:secretsmanager:us-east-1:123456789012:secret:dockerhub-creds
+  --credential-arn arn:aws:secretsmanager:us-east-1:123456789012:secret:ecr-pullthroughcache/docker-hub
 
-# Create cache rule for Quay.io
+# Quay.io cache rule
 aws ecr create-pull-through-cache-rule \
   --ecr-repository-prefix quay \
   --upstream-registry-url quay.io
 
-# Create cache rule for GitHub Container Registry
+# GitHub Container Registry cache rule
 aws ecr create-pull-through-cache-rule \
   --ecr-repository-prefix ghcr \
-  --upstream-registry-url ghcr.io
+  --upstream-registry-url ghcr.io \
+  --credential-arn arn:aws:secretsmanager:us-east-1:123456789012:secret:ecr-pullthroughcache/ghcr
 
-# Create cache rule for Kubernetes registry
+# Kubernetes registry cache rule
 aws ecr create-pull-through-cache-rule \
   --ecr-repository-prefix k8s \
   --upstream-registry-url registry.k8s.io
+
+# ECR Public cache rule
+aws ecr create-pull-through-cache-rule \
+  --ecr-repository-prefix ecr-public \
+  --upstream-registry-url public.ecr.aws
 ```
 
-Configure containerd to use pull-through cache:
+#### IAM Policy for Pull-Through Cache
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PullThroughCachePermissions",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchImportUpstreamImage",
+        "ecr:CreateRepository",
+        "ecr:TagResource"
+      ],
+      "Resource": "arn:aws:ecr:us-east-1:123456789012:repository/*"
+    },
+    {
+      "Sid": "SecretsManagerAccess",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue"
+      ],
+      "Resource": "arn:aws:secretsmanager:us-east-1:123456789012:secret:ecr-pullthroughcache/*"
+    }
+  ]
+}
+```
+
+#### Validation
+
+```bash
+# Verify cache rules
+aws ecr describe-pull-through-cache-rules
+
+# Test pull (Docker Hub nginx)
+docker pull 123456789012.dkr.ecr.us-east-1.amazonaws.com/docker-hub/library/nginx:1.25
+
+# Verify cached repository was created
+aws ecr describe-repositories \
+  --repository-names docker-hub/library/nginx
+
+# Test Kubernetes registry image
+docker pull 123456789012.dkr.ecr.us-east-1.amazonaws.com/k8s/pause:3.9
+```
+
+#### Containerd Configuration (Transparent Pull-Through)
+
+Configure containerd mirrors so pods use the cache without changing image paths:
 
 ```toml
 # /etc/containerd/config.toml (EKS node configuration)
@@ -1022,9 +1097,14 @@ Configure containerd to use pull-through cache:
 [plugins."io.containerd.grpc.v1.cri".registry.mirrors."quay.io"]
   endpoint = ["https://123456789012.dkr.ecr.us-east-1.amazonaws.com/quay/"]
 
+[plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry.k8s.io"]
+  endpoint = ["https://123456789012.dkr.ecr.us-east-1.amazonaws.com/k8s/"]
+
 [plugins."io.containerd.grpc.v1.cri".registry.mirrors."ghcr.io"]
   endpoint = ["https://123456789012.dkr.ecr.us-east-1.amazonaws.com/ghcr/"]
 ```
+
+> **Note:** For EKS managed node groups, apply containerd configuration through Launch Template user data.
 
 ## Multi-Region Replication
 

@@ -8,32 +8,23 @@ Amazon Elastic Container Registry(ECR)는 AWS에서 제공하는 완전관리형
 
 ### 아키텍처
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           AWS Account                                    │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                    Amazon ECR Private                            │    │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │    │
-│  │  │ Repository  │  │ Repository  │  │ Repository  │              │    │
-│  │  │ myapp-prod  │  │ myapp-dev   │  │ backend     │              │    │
-│  │  │             │  │             │  │             │              │    │
-│  │  │ v1.0.0      │  │ dev-abc123  │  │ 2.1.0       │              │    │
-│  │  │ v1.1.0      │  │ dev-def456  │  │ 2.2.0       │              │    │
-│  │  │ v1.2.0      │  │ stage-xyz   │  │ latest      │              │    │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘              │    │
-│  │                                                                  │    │
-│  │  Features: IAM Auth, Lifecycle Policies, Encryption, Scanning   │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                          │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                    Amazon ECR Public                             │    │
-│  │  Public repositories accessible without authentication          │    │
-│  │  URL: public.ecr.aws/<alias>/<repo>                             │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Account["AWS Account"]
+        subgraph Private["Amazon ECR Private"]
+            R1["myapp-prod<br/>v1.0.0, v1.1.0, v1.2.0"]
+            R2["myapp-dev<br/>dev-abc123, dev-def456"]
+            R3["backend<br/>2.1.0, 2.2.0, latest"]
+            Features["IAM Auth · Lifecycle Policies<br/>Encryption · Scanning"]
+        end
+        subgraph Public["Amazon ECR Public"]
+            PubDesc["Public repositories<br/>public.ecr.aws/alias/repo"]
+        end
+    end
+
+    style Account fill:#FF9900,stroke:#cc7a00,color:#fff
+    style Private fill:#232F3E,stroke:#1a2332,color:#fff
+    style Public fill:#232F3E,stroke:#1a2332,color:#fff
 ```
 
 ### Private vs Public ECR
@@ -394,6 +385,24 @@ docker pull 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/myapp:v1.0.0
 ECR Lifecycle Policy는 이미지 보존 규칙을 자동화하여 스토리지 비용을 최적화합니다. 이 섹션에서는 다양한 전략과 그 장단점을 상세히 설명합니다.
 
 ### Lifecycle Policy 동작 원리
+
+```mermaid
+flowchart TD
+    Push["이미지 Push"] --> Eval["Lifecycle Policy 평가"]
+    Eval --> R1{"규칙 1: 태그 패턴<br/>매칭?"}
+    R1 -->|Yes| A1["규칙 1 적용"]
+    R1 -->|No| R2{"규칙 2: 태그 패턴<br/>매칭?"}
+    R2 -->|Yes| A2["규칙 2 적용"]
+    R2 -->|No| R3{"규칙 N: untagged?"}
+    R3 -->|Yes| A3["규칙 N 적용"]
+    R3 -->|No| Keep["보존"]
+
+    A1 --> Decision{"보존 기준 초과?"}
+    A2 --> Decision
+    A3 --> Decision
+    Decision -->|Yes| Delete["삭제"]
+    Decision -->|No| Keep
+```
 
 **규칙 평가 순서:**
 1. 규칙은 `rulePriority` 숫자가 낮은 것부터 평가
@@ -1051,7 +1060,42 @@ aws ec2 create-vpc-endpoint \
 
 ### ECR Pull-through Cache
 
-외부 레지스트리를 ECR을 통해 캐싱:
+외부 레지스트리를 ECR을 통해 캐싱하여 외부 의존성을 줄이고 pull 성능을 향상시킵니다.
+
+```mermaid
+flowchart LR
+    Pod["kubectl apply<br/>→ kubelet pull"] --> ECR{"ECR Endpoint"}
+    ECR -->|Cache Hit| Serve["캐시된 이미지<br/>즉시 제공"]
+    ECR -->|Cache Miss| Upstream["Upstream Registry<br/>에서 Pull"]
+    Upstream --> Cache["ECR에 캐시 저장"]
+    Cache --> Serve
+```
+
+#### 지원 Upstream 레지스트리
+
+| Upstream 레지스트리 | ECR Prefix | 인증 필요 | 비고 |
+|---|---|---|---|
+| Docker Hub | `docker-hub` | Yes (Secrets Manager) | rate limit 우회 |
+| Quay.io | `quay` | No | Red Hat / CoreOS 이미지 |
+| GitHub Container Registry | `ghcr` | Yes (Secrets Manager) | GitHub Actions 이미지 |
+| registry.k8s.io | `k8s` | No | Kubernetes 핵심 컴포넌트 |
+| ECR Public | `ecr-public` | No | AWS 공개 이미지 |
+
+#### Secrets Manager 설정 (인증 필요 레지스트리)
+
+```bash
+# Docker Hub 자격 증명 저장
+aws secretsmanager create-secret \
+  --name ecr-pullthroughcache/docker-hub \
+  --secret-string '{"username":"your-dockerhub-username","accessToken":"dckr_pat_xxxxx"}'
+
+# GitHub Container Registry 자격 증명 저장
+aws secretsmanager create-secret \
+  --name ecr-pullthroughcache/ghcr \
+  --secret-string '{"username":"your-github-username","accessToken":"ghp_xxxxx"}'
+```
+
+#### Pull-through Cache 규칙 생성
 
 ```bash
 # Docker Hub 캐시 규칙 생성
@@ -1070,9 +1114,86 @@ aws ecr create-pull-through-cache-rule \
   --ecr-repository-prefix ghcr \
   --upstream-registry-url ghcr.io \
   --credential-arn arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:ecr-pullthroughcache/ghcr
+
+# Kubernetes 레지스트리 캐시 규칙
+aws ecr create-pull-through-cache-rule \
+  --ecr-repository-prefix k8s \
+  --upstream-registry-url registry.k8s.io
+
+# ECR Public 캐시 규칙
+aws ecr create-pull-through-cache-rule \
+  --ecr-repository-prefix ecr-public \
+  --upstream-registry-url public.ecr.aws
 ```
 
+#### Pull-through Cache용 IAM 정책
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PullThroughCachePermissions",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchImportUpstreamImage",
+        "ecr:CreateRepository",
+        "ecr:TagResource"
+      ],
+      "Resource": "arn:aws:ecr:ap-northeast-2:123456789012:repository/*"
+    },
+    {
+      "Sid": "SecretsManagerAccess",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue"
+      ],
+      "Resource": "arn:aws:secretsmanager:ap-northeast-2:123456789012:secret:ecr-pullthroughcache/*"
+    }
+  ]
+}
+```
+
+#### 검증
+
+```bash
+# 캐시 규칙 확인
+aws ecr describe-pull-through-cache-rules
+
+# 테스트 pull (Docker Hub nginx)
+docker pull 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub/library/nginx:1.25
+
+# 캐시된 리포지토리 확인
+aws ecr describe-repositories \
+  --repository-names docker-hub/library/nginx
+
+# Kubernetes 레지스트리 이미지 테스트
+docker pull 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/k8s/pause:3.9
+```
+
+#### containerd 설정 (투명한 Pull-through)
+
+Pod의 이미지 경로를 변경하지 않고도 캐시를 사용할 수 있도록 containerd 미러를 구성합니다:
+
+```toml
+# /etc/containerd/config.toml
+[plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+  endpoint = ["https://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub/"]
+
+[plugins."io.containerd.grpc.v1.cri".registry.mirrors."quay.io"]
+  endpoint = ["https://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/quay/"]
+
+[plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry.k8s.io"]
+  endpoint = ["https://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/k8s/"]
+
+[plugins."io.containerd.grpc.v1.cri".registry.mirrors."ghcr.io"]
+  endpoint = ["https://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/ghcr/"]
+```
+
+> **참고:** EKS 관리형 노드 그룹에서는 Launch Template의 사용자 데이터를 통해 containerd 설정을 적용합니다.
+
 **사용 예시:**
+
 ```yaml
 # 원본 이미지 -> Pull-through 캐시
 # docker.io/library/nginx:1.25
