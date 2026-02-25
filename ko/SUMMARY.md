@@ -196,10 +196,10 @@
 ## Container Registry
 
 * [컨테이너 레지스트리 개요](container-registry/README.md)
-    * [Docker Hub](container-registry/01-docker-hub.md)
-    * [Amazon ECR](container-registry/02-amazon-ecr.md)
-    * [Harbor](container-registry/03-harbor.md)
-    * [컨테이너 레지스트리 모범 사례](container-registry/04-best-practices.md)
+* [Docker Hub](container-registry/01-docker-hub.md)
+* [Amazon ECR](container-registry/02-amazon-ecr.md)
+* [Harbor](container-registry/03-harbor.md)
+* [컨테이너 레지스트리 모범 사례](container-registry/04-best-practices.md)
 
 ## Platform Engineering
 

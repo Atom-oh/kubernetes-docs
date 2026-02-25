@@ -196,10 +196,10 @@
 ## Container Registry
 
 * [Container Registry Overview](container-registry/README.md)
-    * [Docker Hub](container-registry/01-docker-hub.md)
-    * [Amazon ECR](container-registry/02-amazon-ecr.md)
-    * [Harbor](container-registry/03-harbor.md)
-    * [Container Registry Best Practices](container-registry/04-best-practices.md)
+* [Docker Hub](container-registry/01-docker-hub.md)
+* [Amazon ECR](container-registry/02-amazon-ecr.md)
+* [Harbor](container-registry/03-harbor.md)
+* [Container Registry Best Practices](container-registry/04-best-practices.md)
 
 ## Platform Engineering
 
