@@ -1,5 +1,5 @@
 # Harbor 퀴즈
-> **마지막 업데이트**: 2025년 2월 25일
+> **마지막 업데이트**: 2026년 2월 25일
 
 1. Harbor의 CNCF(Cloud Native Computing Foundation) 프로젝트 상태는?
    - A) Sandbox 프로젝트

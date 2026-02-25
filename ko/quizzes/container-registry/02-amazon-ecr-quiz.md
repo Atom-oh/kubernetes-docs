@@ -1,5 +1,5 @@
 # Amazon ECR 퀴즈
-> **마지막 업데이트**: 2025년 2월 25일
+> **마지막 업데이트**: 2026년 2월 25일
 
 1. Amazon ECR Private과 ECR Public의 차이점으로 올바른 것은?
    - A) ECR Public은 AWS 계정 없이도 이미지를 푸시할 수 있다

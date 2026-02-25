@@ -1,5 +1,5 @@
 # Docker Hub Quiz
-> **Last Updated**: February 25, 2025
+> **Last Updated**: February 25, 2026
 
 1. What is the anonymous pull rate limit for Docker Hub?
    - A) 50 pulls per 6 hours per IP address

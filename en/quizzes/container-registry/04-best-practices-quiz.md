@@ -1,5 +1,5 @@
 # Container Registry Best Practices Quiz
-> **Last Updated**: February 25, 2025
+> **Last Updated**: February 25, 2026
 
 1. Why is tag immutability considered a best practice for container registries?
    - A) It reduces storage costs

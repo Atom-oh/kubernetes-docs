@@ -1,6 +1,6 @@
 # Amazon ECR (Elastic Container Registry)
 
-> **마지막 업데이트**: 2025년 2월 25일
+> **마지막 업데이트**: 2026년 2월 25일
 
 ## 개요
 

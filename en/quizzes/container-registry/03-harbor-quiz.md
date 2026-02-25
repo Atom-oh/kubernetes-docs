@@ -1,5 +1,5 @@
 # Harbor Quiz
-> **Last Updated**: February 25, 2025
+> **Last Updated**: February 25, 2026
 
 1. What is Harbor's status within the Cloud Native Computing Foundation (CNCF)?
    - A) Sandbox project

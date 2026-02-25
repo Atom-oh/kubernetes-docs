@@ -1,5 +1,5 @@
 # Amazon ECR Quiz
-> **Last Updated**: February 25, 2025
+> **Last Updated**: February 25, 2026
 
 1. What is the primary difference between Amazon ECR Private and Amazon ECR Public?
    - A) ECR Private is free, ECR Public is paid
