@@ -1244,6 +1244,10 @@ spec:
 
 Running AI/ML workloads on EKS provides robust infrastructure, flexible scaling, and various optimization options. It is important to select appropriate node types, storage configurations, and networking settings, leverage tools like Kubeflow to manage ML workflows, and optimize GPU memory and distributed training. Additionally, you can track workload performance through monitoring and logging, and optimize costs by utilizing Spot instances and auto scaling.
 
+## References
+
+- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - AWS guide and examples for deploying AI/ML workloads on EKS
+
 ## Quiz
 
 To test what you've learned in this chapter, try the [Topic Quiz](../quizzes/ai-ml/03-ai-ml-workloads-quiz.md).

@@ -2089,6 +2089,7 @@ Agentic AI 플랫폼에 대한 이해도를 확인하려면 다음 퀴즈를 풀
 
 ### 참고 자료
 
+- [AI on EKS](https://awslabs.github.io/ai-on-eks/ko/) - AWS에서 제공하는 EKS 기반 AI/ML 워크로드 배포 가이드 및 예제
 - [vLLM 공식 문서](https://docs.vllm.ai/)
 - [LangGraph 문서](https://langchain-ai.github.io/langgraph/)
 - [Milvus 문서](https://milvus.io/docs)

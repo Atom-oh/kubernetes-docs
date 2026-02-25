@@ -1283,6 +1283,10 @@ print(response.json())
 
 Deploying vLLM on EKS is a powerful method for efficiently serving Large Language Models. By properly selecting hardware, configuring storage, optimizing performance, implementing monitoring and logging, configuring autoscaling, and setting up security, you can build a stable and scalable LLM inference service. Additionally, following best practices can lead to better results in resource management, high availability, and cost optimization.
 
+## References
+
+- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - AWS guide and examples for deploying AI/ML workloads on EKS
+
 ## Quiz
 
 To test what you've learned in this chapter, try the [Topic Quiz](../quizzes/ai-ml/04-vllm-deployment-quiz.md).

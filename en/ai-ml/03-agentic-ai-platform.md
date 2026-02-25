@@ -2089,6 +2089,7 @@ To verify your understanding of the Agentic AI platform, take the following quiz
 
 ### References
 
+- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - AWS guide and examples for deploying AI/ML workloads on EKS
 - [vLLM Official Documentation](https://docs.vllm.ai/)
 - [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
 - [Milvus Documentation](https://milvus.io/docs)
