@@ -17,62 +17,48 @@ cd slide && bash build-presentation.sh
 
 ## Repository Structure
 
-```
-kubernetes-docs/
-├── README.md              # Language selector (root)
-├── CLAUDE.md
-├── assets/                # Shared images/diagrams (SVG, PNG, drawio)
-├── slide/                 # Marp presentation sources and build script
-├── ko/                    # Korean content
-│   ├── README.md          # Korean table of contents
-│   ├── SUMMARY.md         # GitBook navigation (Korean)
-│   ├── basics/            # Linux, containers, K8s intro (4 docs)
-│   ├── core/              # K8s core concepts (11 docs)
-│   ├── eks/               # Amazon EKS topics (multi-part, 22 docs)
-│   ├── cilium/            # Cilium CNI deep dive (10 docs)
-│   ├── ai-ml/             # AI/ML Workloads, vLLM, Agentic AI (3 docs)
-│   ├── networking/        # Cilium tool, VPC Lattice (2 docs)
-│   ├── service-mesh/      # Istio overview + istio/ subtree (49+ docs)
-│   ├── security/          # Kyverno, Auth/AuthZ (2 docs)
-│   ├── gitops/            # ArgoCD (1 doc)
-│   ├── autoscaling/       # KEDA, Karpenter (2 docs)
-│   ├── observability/     # Monitoring Stack, Logging Stack (2 docs)
-│   ├── scheduling/        # Custom Scheduler parts 1-3 (3 docs)
-│   ├── package-management/ # Helm, KRO (2 docs)
-│   ├── platform/          # ACK, K8s Extensions (2 docs)
-│   ├── quizzes/           # Mirrors content structure with -quiz suffix
-│   └── labs/              # Hands-on lab guides with step-by-step exercises (basics, core, eks)
-└── en/                    # English content (same structure as ko/)
-    ├── README.md
-    ├── SUMMARY.md
-    └── ...
-```
+The repo is organized as a bilingual mirror: `ko/` and `en/` have identical directory structures. The canonical source of navigation for each language is its `SUMMARY.md` — always consult these for the current content tree.
 
-`assets/` is shared at root level. From `ko/` or `en/` files, asset references use `../../assets/` (or `../../../assets/` for deeper nesting like `service-mesh/istio/`).
+**Top-level layout:**
+
+- `README.md` — Language selector (root)
+- `assets/` — Shared images/diagrams (SVG, PNG, HTML, drawio) used by both languages
+- `slide/` — Marp presentation sources and build script
+- `ko/` and `en/` — Mirrored content trees, each containing:
+  - `SUMMARY.md` — GitBook navigation (canonical structure)
+  - `README.md` — Table of contents with learning/quiz/lab link pairs
+  - Content directories: `basics/`, `core/`, `eks/`, `eks-hybrid-nodes/`, `eks-auto-mode/`, `ai-ml/`, `networking/` (with `cilium/`, `calico/` subtrees), `service-mesh/` (with `istio/`, `linkerd/`, `cilium-service-mesh/` subtrees), `security/`, `gitops/` (with `argocd/` subtree), `autoscaling/`, `observability/` (with `metrics/`, `logging/`, `tracing/`, `alerting/`, `grafana/` subtrees), `scheduling/`, `platform-engineering/`, `ops/`
+  - `quizzes/` — Mirrors content structure
+  - `labs/` — Hands-on lab guides (basics, core, eks, observability)
+
+**Asset path references** vary by nesting depth: `../../assets/` from `ko/basics/`, `../../../assets/` from `ko/service-mesh/istio/`, etc.
 
 ## Adding or Renaming Content — Files to Keep in Sync
 
 When adding, removing, or renaming any content page, update **all of these in both languages**:
 
-1. **`ko/SUMMARY.md`** and **`en/SUMMARY.md`** — GitBook navigation
-2. **`ko/README.md`** and **`en/README.md`** — Table of contents with learning/quiz link pairs
-3. **`ko/quizzes/`** and **`en/quizzes/`** — Every content file should have a corresponding quiz
+1. **`ko/SUMMARY.md`** and **`en/SUMMARY.md`** — GitBook navigation. Uses GitBook's indentation format: `*` for top-level, indented `*` for children. Multi-part topics use a parent entry linking to part 1, with indented child entries for each part.
+2. **`ko/README.md`** and **`en/README.md`** — Table of contents. Each entry follows the pattern: `[Title](./path.md) | [퀴즈/Quiz](./quizzes/path-quiz.md)` and optionally `| [실습/Lab](./labs/path-lab.md)`.
+3. **`ko/quizzes/`** and **`en/quizzes/`** — Every content file should have a corresponding quiz.
+4. **Subdirectory README files** — Some content sections have their own `README.md` (e.g., `observability/README.md`, `networking/README.md`, `gitops/README.md`). Update if adding a new subsection.
 
 ## Content Conventions
 
 ### Document Header Format
 
+Not all documents include "Supported Versions" — some only have "Last Updated". Use whichever fields are relevant.
+
 Korean:
 ```markdown
 # Document Title
-> **지원 버전**: ...
+> **지원 버전**: ...        <!-- optional, include if version-specific -->
 > **마지막 업데이트**: 2025년 X월 X일
 ```
 
 English:
 ```markdown
 # Document Title
-> **Supported Versions**: ...
+> **Supported Versions**: ...  <!-- optional, include if version-specific -->
 > **Last Updated**: Month Day, 2025
 ```
 
@@ -101,8 +87,9 @@ Explanation text here.
 - Multi-part topics: `NN-topic-name-partN.md` (e.g., `02-eks-cluster-creation-part1.md`)
 - Quiz files: mirror content path under `quizzes/` with `-quiz` suffix (e.g., `quizzes/basics/01-linux-basics-quiz.md`)
 - Lab files: mirror content path under `labs/` with `-lab` suffix (e.g., `labs/basics/01-linux-basics-lab.md`)
-- **Exception — Istio quizzes** use topic-based names without numbers: `quizzes/service-mesh/istio/traffic-management.md`, `security.md`, etc.
+- Subdirectory introductions: `README.md` within the subtree (e.g., `networking/cilium/README.md`)
+- **Exception — Istio, Linkerd, and Cilium Service Mesh quizzes** use topic-based names without numbers: `quizzes/service-mesh/istio/traffic-management.md`, `quizzes/service-mesh/linkerd/architecture.md`, etc.
 
-## Known Gaps
+### Bilingual Content Parity
 
-None - all content files have corresponding quizzes.
+Korean and English documents cover identical topics but are **not literal translations**. They may use different formatting for the same concept (e.g., tables vs. ASCII diagrams). When editing, ensure both languages convey the same information, but don't force identical formatting.
