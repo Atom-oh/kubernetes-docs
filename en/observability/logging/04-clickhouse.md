@@ -385,6 +385,8 @@ spec:
 
 ### Buffer → Store → Distributed 3-Tier Design
 
+> **Interactive Visualization**: See the [ClickHouse 3-Tier Pipeline Animation](../../../assets/clickhouse-3tier-pipeline.html) to visually explore the Buffer → Store → Distributed data flow.
+
 In large-scale log environments (TB+ per day), concentrated INSERT requests create many small Parts, causing Merge overhead to spike. A 3-tier design using the Buffer engine solves this problem.
 
 ```

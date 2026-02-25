@@ -383,6 +383,8 @@ spec:
 
 ### Buffer → Store → Distributed 3계층 설계
 
+> **인터랙티브 시각화**: [ClickHouse 3-Tier Pipeline 애니메이션](../../../assets/clickhouse-3tier-pipeline.html)을 통해 Buffer → Store → Distributed 데이터 흐름을 시각적으로 확인할 수 있습니다.
+
 대규모 로그 환경(일 TB 이상)에서는 INSERT 요청이 집중될 때 작은 Part가 대량 생성되어 Merge 부하가 급증합니다. Buffer 엔진을 활용한 3계층 설계로 이 문제를 해결할 수 있습니다.
 
 ```
