@@ -185,6 +185,17 @@
 * [컨테이너 이미지 보안](security/07-image-security.md)
 * [런타임 보안](security/08-runtime-security.md)
 * [OPA Gatekeeper](security/09-opa-gatekeeper.md)
+* [cert-manager](security/10-cert-manager.md)
+* [Kubescape](security/11-kubescape.md)
+* [SPIFFE/SPIRE](security/12-spiffe-spire.md)
+
+## Container Registry
+
+* [컨테이너 레지스트리 개요](container-registry/README.md)
+    * [Docker Hub](container-registry/01-docker-hub.md)
+    * [Amazon ECR](container-registry/02-amazon-ecr.md)
+    * [Harbor](container-registry/03-harbor.md)
+    * [컨테이너 레지스트리 모범 사례](container-registry/04-best-practices.md)
 
 ## Platform Engineering
 
@@ -404,6 +415,15 @@
     * [컨테이너 이미지 보안 퀴즈](quizzes/security/07-image-security-quiz.md)
     * [런타임 보안 퀴즈](quizzes/security/08-runtime-security-quiz.md)
     * [OPA Gatekeeper 퀴즈](quizzes/security/09-opa-gatekeeper-quiz.md)
+    * [cert-manager 퀴즈](quizzes/security/10-cert-manager-quiz.md)
+    * [Kubescape 퀴즈](quizzes/security/11-kubescape-quiz.md)
+    * [SPIFFE/SPIRE 퀴즈](quizzes/security/12-spiffe-spire-quiz.md)
+
+* Container Registry
+    * [Docker Hub 퀴즈](quizzes/container-registry/01-docker-hub-quiz.md)
+    * [Amazon ECR 퀴즈](quizzes/container-registry/02-amazon-ecr-quiz.md)
+    * [Harbor 퀴즈](quizzes/container-registry/03-harbor-quiz.md)
+    * [컨테이너 레지스트리 모범 사례 퀴즈](quizzes/container-registry/04-best-practices-quiz.md)
 
 * GitOps
     * [ArgoCD 퀴즈](quizzes/gitops/01-argocd-quiz.md)

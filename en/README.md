@@ -145,6 +145,16 @@ This training content provides quizzes for each topic along with the learning ma
 7. [Image Security](./security/07-image-security.md) | [Quiz](./quizzes/security/07-image-security-quiz.md)
 8. [Runtime Security](./security/08-runtime-security.md) | [Quiz](./quizzes/security/08-runtime-security-quiz.md)
 9. [OPA Gatekeeper](./security/09-opa-gatekeeper.md) | [Quiz](./quizzes/security/09-opa-gatekeeper-quiz.md)
+10. [cert-manager](./security/10-cert-manager.md) | [Quiz](./quizzes/security/10-cert-manager-quiz.md)
+11. [Kubescape](./security/11-kubescape.md) | [Quiz](./quizzes/security/11-kubescape-quiz.md)
+12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [Quiz](./quizzes/security/12-spiffe-spire-quiz.md)
+
+### Container Registry
+1. [Container Registry Overview](./container-registry/README.md)
+2. [Docker Hub](./container-registry/01-docker-hub.md) | [Quiz](./quizzes/container-registry/01-docker-hub-quiz.md)
+3. [Amazon ECR](./container-registry/02-amazon-ecr.md) | [Quiz](./quizzes/container-registry/02-amazon-ecr-quiz.md)
+4. [Harbor](./container-registry/03-harbor.md) | [Quiz](./quizzes/container-registry/03-harbor-quiz.md)
+5. [Container Registry Best Practices](./container-registry/04-best-practices.md) | [Quiz](./quizzes/container-registry/04-best-practices-quiz.md)
 
 ### GitOps
 1. [GitOps Overview](./gitops/README.md)

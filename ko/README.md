@@ -145,6 +145,16 @@
 7. [이미지 보안](./security/07-image-security.md) | [퀴즈](./quizzes/security/07-image-security-quiz.md)
 8. [런타임 보안](./security/08-runtime-security.md) | [퀴즈](./quizzes/security/08-runtime-security-quiz.md)
 9. [OPA Gatekeeper](./security/09-opa-gatekeeper.md) | [퀴즈](./quizzes/security/09-opa-gatekeeper-quiz.md)
+10. [cert-manager](./security/10-cert-manager.md) | [퀴즈](./quizzes/security/10-cert-manager-quiz.md)
+11. [Kubescape](./security/11-kubescape.md) | [퀴즈](./quizzes/security/11-kubescape-quiz.md)
+12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [퀴즈](./quizzes/security/12-spiffe-spire-quiz.md)
+
+### Container Registry
+1. [컨테이너 레지스트리 개요](./container-registry/README.md)
+2. [Docker Hub](./container-registry/01-docker-hub.md) | [퀴즈](./quizzes/container-registry/01-docker-hub-quiz.md)
+3. [Amazon ECR](./container-registry/02-amazon-ecr.md) | [퀴즈](./quizzes/container-registry/02-amazon-ecr-quiz.md)
+4. [Harbor](./container-registry/03-harbor.md) | [퀴즈](./quizzes/container-registry/03-harbor-quiz.md)
+5. [컨테이너 레지스트리 모범 사례](./container-registry/04-best-practices.md) | [퀴즈](./quizzes/container-registry/04-best-practices-quiz.md)
 
 ### GitOps
 1. [GitOps 개요](./gitops/README.md)

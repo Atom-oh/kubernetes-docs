@@ -185,6 +185,17 @@
 * [Image Security](security/07-image-security.md)
 * [Runtime Security](security/08-runtime-security.md)
 * [OPA Gatekeeper](security/09-opa-gatekeeper.md)
+* [cert-manager](security/10-cert-manager.md)
+* [Kubescape](security/11-kubescape.md)
+* [SPIFFE/SPIRE](security/12-spiffe-spire.md)
+
+## Container Registry
+
+* [Container Registry Overview](container-registry/README.md)
+    * [Docker Hub](container-registry/01-docker-hub.md)
+    * [Amazon ECR](container-registry/02-amazon-ecr.md)
+    * [Harbor](container-registry/03-harbor.md)
+    * [Container Registry Best Practices](container-registry/04-best-practices.md)
 
 ## Platform Engineering
 
@@ -404,6 +415,15 @@
     * [Image Security Quiz](quizzes/security/07-image-security-quiz.md)
     * [Runtime Security Quiz](quizzes/security/08-runtime-security-quiz.md)
     * [OPA Gatekeeper Quiz](quizzes/security/09-opa-gatekeeper-quiz.md)
+    * [cert-manager Quiz](quizzes/security/10-cert-manager-quiz.md)
+    * [Kubescape Quiz](quizzes/security/11-kubescape-quiz.md)
+    * [SPIFFE/SPIRE Quiz](quizzes/security/12-spiffe-spire-quiz.md)
+
+* Container Registry
+    * [Docker Hub Quiz](quizzes/container-registry/01-docker-hub-quiz.md)
+    * [Amazon ECR Quiz](quizzes/container-registry/02-amazon-ecr-quiz.md)
+    * [Harbor Quiz](quizzes/container-registry/03-harbor-quiz.md)
+    * [Container Registry Best Practices Quiz](quizzes/container-registry/04-best-practices-quiz.md)
 
 * GitOps
     * [ArgoCD Quiz](quizzes/gitops/01-argocd-quiz.md)
