@@ -84,6 +84,10 @@
 1. [AI/ML 워크로드](./ai-ml/01-ai-ml-workloads.md) | [퀴즈](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
 2. [vLLM 배포](./ai-ml/02-vllm-deployment.md) | [퀴즈](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 3. [Agentic AI 플랫폼](./ai-ml/03-agentic-ai-platform.md) | [퀴즈](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+4. [추론 프레임워크](./ai-ml/04-inference-frameworks.md) | [퀴즈](./quizzes/ai-ml/04-inference-frameworks-quiz.md)
+5. [모델 트레이닝](./ai-ml/05-model-training.md) | [퀴즈](./quizzes/ai-ml/05-model-training-quiz.md)
+6. [AI 인프라스트럭처](./ai-ml/06-ai-infrastructure.md) | [퀴즈](./quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+7. [AI/ML 모범 사례](./ai-ml/07-ai-ml-best-practices.md) | [퀴즈](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
 ### Networking
 1. [Networking 개요](./networking/README.md) | [퀴즈](./quizzes/networking/00-networking-overview-quiz.md)

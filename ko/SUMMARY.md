@@ -77,6 +77,10 @@
 * [AI/ML 워크로드](ai-ml/01-ai-ml-workloads.md)
 * [vLLM 배포](ai-ml/02-vllm-deployment.md)
 * [Agentic AI 플랫폼](ai-ml/03-agentic-ai-platform.md)
+* [추론 프레임워크](ai-ml/04-inference-frameworks.md)
+* [모델 트레이닝](ai-ml/05-model-training.md)
+* [AI 인프라스트럭처](ai-ml/06-ai-infrastructure.md)
+* [AI/ML 모범 사례](ai-ml/07-ai-ml-best-practices.md)
 
 ## Networking
 
@@ -353,6 +357,10 @@
     * [AI/ML 워크로드 퀴즈](quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
     * [vLLM 배포 퀴즈](quizzes/ai-ml/04-vllm-deployment-quiz.md)
     * [Agentic AI 플랫폼 퀴즈](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+    * [추론 프레임워크 퀴즈](quizzes/ai-ml/04-inference-frameworks-quiz.md)
+    * [모델 트레이닝 퀴즈](quizzes/ai-ml/05-model-training-quiz.md)
+    * [AI 인프라스트럭처 퀴즈](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+    * [AI/ML 모범 사례 퀴즈](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
 * Networking
     * [Networking 개요 퀴즈](quizzes/networking/00-networking-overview-quiz.md)

@@ -77,6 +77,10 @@
 * [AI/ML Workloads](ai-ml/01-ai-ml-workloads.md)
 * [vLLM Deployment](ai-ml/02-vllm-deployment.md)
 * [Agentic AI Platform on EKS](ai-ml/03-agentic-ai-platform.md)
+* [Inference Frameworks](ai-ml/04-inference-frameworks.md)
+* [Model Training on EKS](ai-ml/05-model-training.md)
+* [AI Infrastructure](ai-ml/06-ai-infrastructure.md)
+* [AI/ML Best Practices](ai-ml/07-ai-ml-best-practices.md)
 
 ## Networking
 
@@ -353,6 +357,10 @@
     * [AI/ML Workloads Quiz](quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
     * [vLLM Deployment Quiz](quizzes/ai-ml/04-vllm-deployment-quiz.md)
     * [Agentic AI Platform on EKS Quiz](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+    * [Inference Frameworks Quiz](quizzes/ai-ml/04-inference-frameworks-quiz.md)
+    * [Model Training Quiz](quizzes/ai-ml/05-model-training-quiz.md)
+    * [AI Infrastructure Quiz](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+    * [AI/ML Best Practices Quiz](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
 * Networking
     * [Networking Overview Quiz](quizzes/networking/00-networking-overview-quiz.md)
