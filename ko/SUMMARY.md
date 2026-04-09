@@ -75,11 +75,11 @@
 ## AI/ML
 
 * [AI/ML 워크로드](ai-ml/01-ai-ml-workloads.md)
-* [vLLM 배포](ai-ml/02-vllm-deployment.md)
-* [Agentic AI 플랫폼](ai-ml/03-agentic-ai-platform.md)
-* [추론 프레임워크](ai-ml/04-inference-frameworks.md)
-* [모델 트레이닝](ai-ml/05-model-training.md)
 * [AI 인프라스트럭처](ai-ml/06-ai-infrastructure.md)
+* [모델 트레이닝](ai-ml/05-model-training.md)
+* [추론 프레임워크](ai-ml/04-inference-frameworks.md)
+* [vLLM 배포 및 최적화](ai-ml/02-vllm-deployment.md)
+* [Agentic AI 플랫폼](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML 모범 사례](ai-ml/07-ai-ml-best-practices.md)
 
 ## Networking

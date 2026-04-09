@@ -75,11 +75,11 @@
 ## AI/ML
 
 * [AI/ML Workloads](ai-ml/01-ai-ml-workloads.md)
-* [vLLM Deployment](ai-ml/02-vllm-deployment.md)
-* [Agentic AI Platform on EKS](ai-ml/03-agentic-ai-platform.md)
-* [Inference Frameworks](ai-ml/04-inference-frameworks.md)
-* [Model Training on EKS](ai-ml/05-model-training.md)
 * [AI Infrastructure](ai-ml/06-ai-infrastructure.md)
+* [Model Training on EKS](ai-ml/05-model-training.md)
+* [Inference Frameworks](ai-ml/04-inference-frameworks.md)
+* [vLLM Deployment & Optimization](ai-ml/02-vllm-deployment.md)
+* [Agentic AI Platform on EKS](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML Best Practices](ai-ml/07-ai-ml-best-practices.md)
 
 ## Networking
