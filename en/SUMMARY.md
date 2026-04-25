@@ -75,11 +75,11 @@
 ## AI/ML
 
 * [AI/ML Workloads](ai-ml/01-ai-ml-workloads.md)
-* [vLLM Deployment](ai-ml/02-vllm-deployment.md)
-* [Agentic AI Platform on EKS](ai-ml/03-agentic-ai-platform.md)
-* [Inference Frameworks](ai-ml/04-inference-frameworks.md)
-* [Model Training on EKS](ai-ml/05-model-training.md)
 * [AI Infrastructure](ai-ml/06-ai-infrastructure.md)
+* [Model Training on EKS](ai-ml/05-model-training.md)
+* [Inference Frameworks](ai-ml/04-inference-frameworks.md)
+* [vLLM Deployment & Optimization](ai-ml/02-vllm-deployment.md)
+* [Agentic AI Platform on EKS](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML Best Practices](ai-ml/07-ai-ml-best-practices.md)
 
 ## Networking
@@ -206,9 +206,9 @@
 * [Platform Engineering Overview](platform-engineering/00-platform-engineering-overview.md)
 * [Helm](platform-engineering/01-helm.md)
 * [AWS Controllers for Kubernetes (ACK)](platform-engineering/02-ack.md)
-  * [S3 and IAM Examples](platform-engineering/ack/01-s3-iam.md)
-  * [SQS and SNS Examples](platform-engineering/ack/02-sqs-sns.md)
-  * [ELBv2, Route 53, RDS Examples](platform-engineering/ack/03-elbv2-route53-rds.md)
+    * [S3 and IAM Examples](platform-engineering/ack/01-s3-iam.md)
+    * [SQS and SNS Examples](platform-engineering/ack/02-sqs-sns.md)
+    * [ELBv2, Route 53, RDS Examples](platform-engineering/ack/03-elbv2-route53-rds.md)
 * [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
 * [Kubernetes Extension Mechanisms](platform-engineering/04-kubernetes-extensions.md)
 * [ExampleCorp: ACK + KRO Integration Example](platform-engineering/05-example-corp-app.md)
@@ -227,6 +227,9 @@
     * [Observability Stack](ops/09-observability-stack.md)
     * [Resource Optimization](ops/10-resource-optimization.md)
     * [Upgrade Operations](ops/11-upgrade-operations.md)
+
+## Observability
+
 * [Observability Overview](observability/README.md)
     * [Metrics](observability/metrics/README.md)
         * [Prometheus](observability/metrics/01-prometheus.md)
@@ -250,14 +253,22 @@
         * [CloudWatch Alarms](observability/alerting/02-cloudwatch-alarms.md)
         * [Grafana OnCall](observability/alerting/03-grafana-oncall.md)
     * [Grafana](observability/grafana/README.md)
-    * [Observability Optimization Guide](observability/09-observability-optimization.md)
+* [Observability Optimization Guide](observability/09-observability-optimization.md)
+
+## Scheduling
+
 * [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
     * [Part 1: Basic Concepts](scheduling/01-custom-scheduler-part1.md)
     * [Part 2: Implementation](scheduling/02-custom-scheduler-part2.md)
     * [Part 3: Advanced Features](scheduling/03-custom-scheduler-part3.md)
-* Scaling
-    * [KEDA](autoscaling/01-keda.md)
-    * [Karpenter](autoscaling/02-karpenter.md)
+
+## Autoscaling
+
+* [KEDA](autoscaling/01-keda.md)
+* [Karpenter](autoscaling/02-karpenter.md)
+
+## GitOps
+
 * [GitOps](gitops/README.md)
     * [ArgoCD](gitops/argocd/README.md)
         * [Installation](gitops/argocd/01-installation.md)
@@ -355,11 +366,11 @@
 
 * AI/ML
     * [AI/ML Workloads Quiz](quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+    * [AI Infrastructure Quiz](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+    * [Model Training Quiz](quizzes/ai-ml/05-model-training-quiz.md)
+    * [Inference Frameworks Quiz](quizzes/ai-ml/04-inference-frameworks-quiz.md)
     * [vLLM Deployment Quiz](quizzes/ai-ml/04-vllm-deployment-quiz.md)
     * [Agentic AI Platform on EKS Quiz](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
-    * [Inference Frameworks Quiz](quizzes/ai-ml/04-inference-frameworks-quiz.md)
-    * [Model Training Quiz](quizzes/ai-ml/05-model-training-quiz.md)
-    * [AI Infrastructure Quiz](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
     * [AI/ML Best Practices Quiz](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
 * Networking

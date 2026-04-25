@@ -75,11 +75,11 @@
 ## AI/ML
 
 * [AI/ML 워크로드](ai-ml/01-ai-ml-workloads.md)
-* [vLLM 배포](ai-ml/02-vllm-deployment.md)
-* [Agentic AI 플랫폼](ai-ml/03-agentic-ai-platform.md)
-* [추론 프레임워크](ai-ml/04-inference-frameworks.md)
-* [모델 트레이닝](ai-ml/05-model-training.md)
 * [AI 인프라스트럭처](ai-ml/06-ai-infrastructure.md)
+* [모델 트레이닝](ai-ml/05-model-training.md)
+* [추론 프레임워크](ai-ml/04-inference-frameworks.md)
+* [vLLM 배포 및 최적화](ai-ml/02-vllm-deployment.md)
+* [Agentic AI 플랫폼](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML 모범 사례](ai-ml/07-ai-ml-best-practices.md)
 
 ## Networking
@@ -206,9 +206,9 @@
 * [Platform Engineering 개요](platform-engineering/00-platform-engineering-overview.md)
 * [Helm](platform-engineering/01-helm.md)
 * [AWS Controllers for Kubernetes (ACK)](platform-engineering/02-ack.md)
-  * [S3 및 IAM 예제](platform-engineering/ack/01-s3-iam.md)
-  * [SQS 및 SNS 예제](platform-engineering/ack/02-sqs-sns.md)
-  * [ELBv2, Route 53, RDS 예제](platform-engineering/ack/03-elbv2-route53-rds.md)
+    * [S3 및 IAM 예제](platform-engineering/ack/01-s3-iam.md)
+    * [SQS 및 SNS 예제](platform-engineering/ack/02-sqs-sns.md)
+    * [ELBv2, Route 53, RDS 예제](platform-engineering/ack/03-elbv2-route53-rds.md)
 * [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
 * [Kubernetes 확장 메커니즘](platform-engineering/04-kubernetes-extensions.md)
 * [ExampleCorp: ACK + KRO 통합 예제](platform-engineering/05-example-corp-app.md)
@@ -227,6 +227,9 @@
     * [Observability 스택 구성](ops/09-observability-stack.md)
     * [리소스 최적화](ops/10-resource-optimization.md)
     * [EKS 업그레이드 운영](ops/11-upgrade-operations.md)
+
+## Observability
+
 * [Observability 개요](observability/README.md)
     * [Metrics](observability/metrics/README.md)
         * [Prometheus](observability/metrics/01-prometheus.md)
@@ -251,13 +254,21 @@
         * [Grafana OnCall](observability/alerting/03-grafana-oncall.md)
     * [Grafana](observability/grafana/README.md)
 * [관측성 최적화 가이드](observability/09-observability-optimization.md)
+
+## Scheduling
+
 * [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
     * [Part 1: 기본 개념](scheduling/01-custom-scheduler-part1.md)
     * [Part 2: 구현](scheduling/02-custom-scheduler-part2.md)
     * [Part 3: 고급 기능](scheduling/03-custom-scheduler-part3.md)
-* Scaling
-    * [KEDA](autoscaling/01-keda.md)
-    * [Karpenter](autoscaling/02-karpenter.md)
+
+## Autoscaling
+
+* [KEDA](autoscaling/01-keda.md)
+* [Karpenter](autoscaling/02-karpenter.md)
+
+## GitOps
+
 * [GitOps](gitops/README.md)
     * [ArgoCD](gitops/argocd/README.md)
         * [설치 및 구성](gitops/argocd/01-installation.md)
@@ -355,11 +366,11 @@
 
 * AI/ML
     * [AI/ML 워크로드 퀴즈](quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+    * [AI 인프라스트럭처 퀴즈](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+    * [모델 트레이닝 퀴즈](quizzes/ai-ml/05-model-training-quiz.md)
+    * [추론 프레임워크 퀴즈](quizzes/ai-ml/04-inference-frameworks-quiz.md)
     * [vLLM 배포 퀴즈](quizzes/ai-ml/04-vllm-deployment-quiz.md)
     * [Agentic AI 플랫폼 퀴즈](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
-    * [추론 프레임워크 퀴즈](quizzes/ai-ml/04-inference-frameworks-quiz.md)
-    * [모델 트레이닝 퀴즈](quizzes/ai-ml/05-model-training-quiz.md)
-    * [AI 인프라스트럭처 퀴즈](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
     * [AI/ML 모범 사례 퀴즈](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
 * Networking

@@ -1,9 +1,9 @@
-# vLLM Deployment
+# vLLM Deployment & Optimization
 
-> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 22, 2026
+> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33  
+> **Last Updated**: April 9, 2026
 
-vLLM is a high-performance inference engine for Large Language Models (LLMs). In this chapter, we will learn how to deploy and optimize vLLM on EKS.
+vLLM is the most widely adopted open-source high-performance inference engine for Large Language Models (LLMs). In this chapter, we will explore vLLM's latest features and architecture, and learn how to deploy and optimize it at production scale on EKS.
 
 ## Lab Environment Setup
 
@@ -105,21 +105,148 @@ vLLM supports the following models:
 
 | Model Family | Supported Models | Quantization Options |
 |-------------|-----------------|---------------------|
-| **LLaMA/LLaMA 2** | 7B, 13B, 70B | FP16, INT8, INT4 |
-| **Mistral** | 7B | FP16, INT8 |
-| **Vicuna** | 7B, 13B, 33B | FP16, INT8 |
-| **Falcon** | 7B, 40B | FP16, INT8 |
-| **MPT** | 7B, 30B | FP16 |
-| **Baichuan** | 7B, 13B | FP16 |
-| **StarCoder** | 15.5B | FP16 |
-| **BLOOM** | All sizes | FP16 |
-| **GPT-NeoX** | All sizes | FP16 |
+| **LLaMA 3 / 3.1 / 3.2 / 3.3** | 1B, 3B, 8B, 70B, 405B | FP16, BF16, FP8, INT8, INT4, AWQ, GPTQ |
+| **DeepSeek V3 / R1** | 7B, 67B, 671B (MoE) | FP16, BF16, FP8, AWQ, GPTQ |
+| **Qwen 2 / 2.5 / QwQ** | 0.5B ~ 72B | FP16, BF16, FP8, INT8, AWQ, GPTQ |
+| **Mistral / Mixtral** | 7B, 8x7B, 8x22B, Large 2 | FP16, BF16, FP8, AWQ, GPTQ |
+| **Gemma 2 / 3** | 2B, 9B, 27B | FP16, BF16, INT8 |
+| **Phi-3 / Phi-4** | 3.8B, 7B, 14B | FP16, BF16, INT8, AWQ |
+| **Command R / R+** | 35B, 104B | FP16, BF16 |
+| **DBRX** | 132B (MoE) | FP16, BF16 |
+| **StarCoder 2** | 3B, 7B, 15B | FP16, BF16 |
+| **Vision Models (VLM)** | LLaVA, Pixtral, Qwen2-VL, InternVL | FP16, BF16 |
 
 1. **PagedAttention**: Memory-efficient attention mechanism that optimizes memory usage when processing long sequences.
 2. **Continuous Batching**: Dynamically batches requests to improve throughput.
 3. **Distributed Inference**: Distributes models across multiple GPUs and nodes to handle large-scale models.
 4. **Quantization**: Supports INT8/INT4 quantization to reduce memory usage and improve throughput.
 5. **OpenAI Compatible API**: Provides an interface compatible with the OpenAI API.
+
+### Latest vLLM Features (v0.6+)
+
+vLLM is evolving rapidly with significant new capabilities in recent releases:
+
+#### Speculative Decoding
+
+Uses a smaller draft model to generate multiple candidate tokens, which the larger model verifies in a single pass, improving inference speed by 2-3x:
+
+```bash
+python -m vllm.entrypoints.openai.api_server \
+  --model meta-llama/Llama-3.1-70B-Instruct \
+  --speculative-model meta-llama/Llama-3.1-8B-Instruct \
+  --num-speculative-tokens 5
+```
+
+#### Prefix Caching
+
+Automatically reuses KV cache across requests that share the same system prompt or context, dramatically reducing TTFT (Time to First Token):
+
+```bash
+--enable-prefix-caching
+```
+
+#### Chunked Prefill
+
+Splits long prompt prefill into smaller chunks interleaved with decode steps, reducing the impact of long-context requests on other requests' latency:
+
+```bash
+--enable-chunked-prefill --max-num-batched-tokens 2048
+```
+
+#### Dynamic LoRA Adapter Loading
+
+Dynamically loads/unloads multiple LoRA adapters at runtime, serving many customized models from a single base model:
+
+```bash
+--enable-lora --max-loras 4 --max-lora-rank 64
+```
+
+```python
+# Specify LoRA model in API request
+response = client.chat.completions.create(
+    model="my-custom-lora-adapter",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+```
+
+#### Structured Output
+
+Supports constrained output generation via JSON Schema, regex patterns, and CFG (Context-Free Grammar) for reliable structured data generation:
+
+```python
+from openai import OpenAI
+client = OpenAI(base_url="http://vllm-service:8000/v1")
+
+response = client.chat.completions.create(
+    model="meta-llama/Llama-3.1-8B-Instruct",
+    messages=[{"role": "user", "content": "Return user information as JSON"}],
+    response_format={
+        "type": "json_schema",
+        "json_schema": {
+            "name": "user_info",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "age": {"type": "integer"},
+                    "email": {"type": "string"}
+                },
+                "required": ["name", "age", "email"]
+            }
+        }
+    }
+)
+```
+
+#### Tool Calling
+
+Supports OpenAI-compatible Tool/Function Calling for integration with agent workflows:
+
+```python
+response = client.chat.completions.create(
+    model="meta-llama/Llama-3.1-8B-Instruct",
+    messages=[{"role": "user", "content": "What's the weather in Seoul?"}],
+    tools=[{
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get the current weather for a specified location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {"type": "string", "description": "City name"}
+                },
+                "required": ["location"]
+            }
+        }
+    }]
+)
+```
+
+#### FP8 Quantization
+
+Supports FP8 quantization on Hopper (H100) and Ada Lovelace (L4, L40S) GPUs, halving memory usage while maintaining near-identical accuracy:
+
+```bash
+--quantization fp8 --kv-cache-dtype fp8
+```
+
+#### Vision-Language Model (VLM) Serving
+
+Supports multimodal models that process both images and text simultaneously:
+
+```python
+response = client.chat.completions.create(
+    model="llava-hf/llava-v1.6-mistral-7b-hf",
+    messages=[{
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "Describe this image"},
+            {"type": "image_url", "image_url": {"url": "data:image/png;base64,..."}}
+        ]
+    }]
+)
+```
 
 ## System Requirements
 
@@ -135,9 +262,9 @@ flowchart TD
         end
 
         subgraph Software [Software]
-            CUDA[CUDA 11.8+]
-            Python[Python 3.8+]
-            PyTorch[PyTorch 2.0.0+]
+            CUDA[CUDA 12.1+]
+            Python[Python 3.9+]
+            PyTorch[PyTorch 2.4.0+]
         end
 
         subgraph ModelSize [Requirements by Model Size]
@@ -169,15 +296,17 @@ flowchart TD
      - 70B model: Minimum 80GB GPU memory (or distributed across multiple GPUs)
 
 2. **Software**:
-   - CUDA 11.8 or higher
-   - Python 3.8 or higher
-   - PyTorch 2.0.0 or higher
+   - CUDA 12.1 or higher (CUDA 12.4 recommended for FP8)
+   - Python 3.9 or higher
+   - PyTorch 2.4.0 or higher
 
 3. **EKS Node Types**:
+   - p5.48xlarge: 8x NVIDIA H100 GPU, 80GB each (highest performance)
    - p4d.24xlarge: 8x NVIDIA A100 GPU, 40GB or 80GB each
-   - p3.16xlarge: 8x NVIDIA V100 GPU, 16GB each
+   - g6.12xlarge: 4x NVIDIA L4 GPU, 24GB each (cost-effective)
    - g5.12xlarge: 4x NVIDIA A10G GPU, 24GB each
-   - g4dn.12xlarge: 4x NVIDIA T4 GPU, 16GB each
+   - g6e.12xlarge: 4x NVIDIA L40S GPU, 48GB each
+   - trn1.32xlarge: 16x AWS Trainium, 32GB each (AWS silicon)
 
 ## EKS Infrastructure Configuration
 
@@ -311,8 +440,8 @@ spec:
           from huggingface_hub import snapshot_download
           import os
 
-          model_id = "meta-llama/Llama-2-70b-chat-hf"
-          dest_dir = "/models/llama-2-70b"
+          model_id = "meta-llama/Llama-3.1-70B-Instruct"
+          dest_dir = "/models/llama-3.1-70b"
 
           os.makedirs(dest_dir, exist_ok=True)
           snapshot_download(repo_id=model_id, local_dir=dest_dir, token=os.environ["HF_TOKEN"])
@@ -465,10 +594,12 @@ spec:
         - python
         - -m
         - vllm.entrypoints.openai.api_server
-        - --model=/models/llama-2-70b
+        - --model=/models/llama-3.1-70b
         - --tensor-parallel-size=8
-        - --gpu-memory-utilization=0.9
-        - --max-num-batched-tokens=8192
+        - --gpu-memory-utilization=0.95
+        - --max-num-batched-tokens=16384
+        - --enable-prefix-caching
+        - --enable-chunked-prefill
         - --port=8000
         ports:
         - containerPort: 8000
@@ -523,7 +654,7 @@ data:
     fi
 
     python -m vllm.entrypoints.openai.api_server \
-      --model=/models/llama-2-70b \
+      --model=/models/llama-3.1-70b \
       --tensor-parallel-size=16 \
       --pipeline-parallel-size=1 \
       --max-num-batched-tokens=8192 \
@@ -1220,7 +1351,7 @@ import json
 url = "http://api-gateway/v1/completions"
 
 payload = {
-    "model": "llama-2-70b",
+    "model": "llama-3.1-70b",
     "prompt": "Once upon a time",
     "max_tokens": 100,
     "temperature": 0.7
@@ -1281,10 +1412,11 @@ print(response.json())
 
 ## Conclusion
 
-Deploying vLLM on EKS is a powerful method for efficiently serving Large Language Models. By properly selecting hardware, configuring storage, optimizing performance, implementing monitoring and logging, configuring autoscaling, and setting up security, you can build a stable and scalable LLM inference service. Additionally, following best practices can lead to better results in resource management, high availability, and cost optimization.
+vLLM is the most actively developed open-source LLM inference engine, comprehensively supporting production-essential features including Speculative Decoding, Prefix Caching, dynamic LoRA loading, Structured Output, and Tool Calling. Combined with appropriate GPU instance selection, high-performance storage, network optimization, and auto-scaling on EKS, you can build a cost-effective and scalable LLM serving platform. For comparisons with other frameworks like SGLang and TGI, refer to the [Inference Frameworks](./04-inference-frameworks.md) chapter.
 
 ## References
 
+- [vLLM Official Documentation](https://docs.vllm.ai/) - Official vLLM documentation and latest feature guides
 - [AI on EKS](https://awslabs.github.io/ai-on-eks/) - AWS guide and examples for deploying AI/ML workloads on EKS
 
 ## Quiz

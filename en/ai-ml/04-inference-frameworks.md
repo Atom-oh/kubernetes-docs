@@ -1,9 +1,9 @@
 # Inference Frameworks for LLM Serving
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 25, 2026
+> **Last Updated**: April 9, 2026
 
-This chapter covers advanced inference frameworks beyond vLLM for deploying Large Language Models (LLMs) on Amazon EKS. We explore NVIDIA NIM, NVIDIA Dynamo, AIBrix, Ray Serve integration, and AWS Neuron for Inferentia2.
+This chapter covers the diverse inference framework ecosystem for deploying Large Language Models (LLMs) on Amazon EKS. We explore NVIDIA NIM, NVIDIA Dynamo, AIBrix, Ray Serve integration, and AWS Neuron, as well as rapidly growing open-source frameworks including SGLang, HuggingFace TGI, Ollama, and LiteLLM.
 
 ## Inference Framework Landscape
 
@@ -22,8 +22,15 @@ flowchart TD
         subgraph OpenSource [Open Source Frameworks]
             vLLM[vLLM]
             SGLang[SGLang]
+            TGI[HuggingFace TGI]
             AIBrix[AIBrix]
             RayServe[Ray Serve]
+        end
+
+        subgraph DevTools [Dev / Gateway Tools]
+            Ollama[Ollama]
+            LiteLLM[LiteLLM]
+            LlamaCpp[llama.cpp]
         end
 
         subgraph AWSNative [AWS Native]
@@ -48,6 +55,10 @@ flowchart TD
     AIBrix --> SGLang
 
     Neuron --> Inferentia
+    LiteLLM --> vLLM
+    LiteLLM --> SGLang
+    LiteLLM --> NIM
+    Ollama --> LlamaCpp
 
     KubeRay --> RayServe
     Karpenter --> NVIDIAStack
@@ -58,12 +69,14 @@ flowchart TD
     classDef ossNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
     classDef awsNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
     classDef orchNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef devToolNode fill:#9B59B6,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
 
     class NIM,Dynamo,TensorRTLLM,Triton,NVIDIAStack nvidiaNode;
-    class vLLM,SGLang,AIBrix,RayServe,OpenSource ossNode;
+    class vLLM,SGLang,TGI,AIBrix,RayServe,OpenSource ossNode;
     class Neuron,Inferentia,SageMaker,AWSNative awsNode;
     class KubeRay,Karpenter,KEDA,Orchestration orchNode;
+    class Ollama,LiteLLM,LlamaCpp,DevTools devToolNode;
     class Ecosystem default;
 ```
 
@@ -73,8 +86,12 @@ flowchart TD
 |----------|----------------------|-----|
 | Enterprise production with NVIDIA GPUs | NVIDIA NIM | Optimized containers, support, monitoring |
 | High-throughput with KV cache optimization | NVIDIA Dynamo | Disaggregated serving, intelligent routing |
+| Structured output, complex prompting pipelines | SGLang | RadixAttention, optimized structured output |
 | Multi-tenant with LoRA adapters | AIBrix | Native LoRA management, heterogeneous GPUs |
+| Quick HuggingFace model production deployment | HuggingFace TGI | HF ecosystem integration, easy setup |
 | Distributed inference at scale | Ray Serve + vLLM | Mature orchestration, auto-scaling |
+| Multi-LLM provider integration (gateway) | LiteLLM | 100+ model providers, cost tracking |
+| Local development and edge deployment | Ollama | One-click setup, GGUF support, lightweight |
 | Cost optimization with AWS silicon | AWS Neuron + Inferentia2 | 40-70% cost reduction vs GPUs |
 | Research and experimentation | vLLM standalone | Simple setup, active community |
 
@@ -1911,6 +1928,502 @@ spec:
         periodSeconds: 120
 ```
 
+## SGLang
+
+SGLang (Structured Generation Language) is a high-performance LLM serving framework developed at UC Berkeley, optimized for structured output generation and complex prompting pipelines. It is one of the fastest-growing open-source inference engines alongside vLLM.
+
+### SGLang Core Technology
+
+```mermaid
+flowchart TD
+    subgraph SGLangArch [SGLang Architecture]
+        subgraph Frontend [Frontend]
+            SGLangDSL[SGLang DSL]
+            OpenAICompat[OpenAI Compatible API]
+            NativeAPI[Native API]
+        end
+
+        subgraph Runtime [Runtime Engine]
+            RadixAttention[RadixAttention]
+            CompressedFSM[Compressed FSM Structured Output]
+            ChunkedPrefill[Chunked Prefill]
+            FlashInfer[FlashInfer Kernels]
+        end
+
+        subgraph Optimization [Optimization]
+            KVCacheReuse[KV Cache Reuse]
+            OverlapSchedule[Schedule Overlapping]
+            DataParallel[Data Parallelism]
+        end
+    end
+
+    SGLangDSL --> Runtime
+    OpenAICompat --> Runtime
+    RadixAttention --> KVCacheReuse
+    CompressedFSM --> OverlapSchedule
+
+    classDef featureNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef runtimeNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef optNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    class SGLangDSL,OpenAICompat,NativeAPI,Frontend featureNode;
+    class RadixAttention,CompressedFSM,ChunkedPrefill,FlashInfer,Runtime runtimeNode;
+    class KVCacheReuse,OverlapSchedule,DataParallel,Optimization optNode;
+    class SGLangArch default;
+```
+
+1. **RadixAttention**: Radix tree-based KV cache reuse that goes beyond prefix caching, efficiently sharing cache across partially overlapping prompts.
+2. **Compressed FSM Structured Output**: Compresses finite state machines for structured output (JSON Schema, regex, etc.), delivering up to 10x faster structured decoding vs vLLM.
+3. **FlashInfer Kernels**: Optimized attention kernels delivering peak performance across GPU architectures.
+
+### SGLang Deployment on EKS
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sglang-server
+  namespace: ai-inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sglang-server
+  template:
+    metadata:
+      labels:
+        app: sglang-server
+    spec:
+      containers:
+      - name: sglang
+        image: lmsysorg/sglang:latest
+        command:
+        - python3
+        - -m
+        - sglang.launch_server
+        - --model-path=meta-llama/Llama-3.1-8B-Instruct
+        - --host=0.0.0.0
+        - --port=30000
+        - --tp=1
+        - --mem-fraction-static=0.85
+        ports:
+        - containerPort: 30000
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            memory: 48Gi
+          requests:
+            nvidia.com/gpu: 1
+            memory: 32Gi
+        env:
+        - name: HF_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-token
+              key: token
+        volumeMounts:
+        - name: model-cache
+          mountPath: /root/.cache/huggingface
+      volumes:
+      - name: model-cache
+        persistentVolumeClaim:
+          claimName: model-cache-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sglang-server
+  namespace: ai-inference
+spec:
+  selector:
+    app: sglang-server
+  ports:
+  - port: 30000
+    targetPort: 30000
+  type: ClusterIP
+```
+
+### SGLang DSL Programming
+
+SGLang's key differentiator is its DSL for programmatically composing complex LLM pipelines:
+
+```python
+import sglang as sgl
+
+@sgl.function
+def multi_turn_qa(s, question_1, question_2):
+    s += sgl.system("You are a helpful AI assistant.")
+    s += sgl.user(question_1)
+    s += sgl.assistant(sgl.gen("answer_1", max_tokens=256))
+    s += sgl.user(question_2)
+    s += sgl.assistant(sgl.gen("answer_2", max_tokens=256))
+
+@sgl.function
+def json_extraction(s, text):
+    s += sgl.user(f"Extract information from the following text: {text}")
+    s += sgl.assistant(
+        sgl.gen("result", max_tokens=512,
+                regex=r'\{"name": "[^"]+", "age": \d+, "city": "[^"]+"\}')
+    )
+```
+
+### vLLM vs SGLang Selection Criteria
+
+| Criteria | vLLM | SGLang |
+|----------|------|--------|
+| **Structured output speed** | Good | Excellent (up to 10x) |
+| **Community/ecosystem** | Very large | Rapidly growing |
+| **Multi-turn pipelines** | API-level | DSL-level optimization |
+| **Prefix caching** | Supported | RadixAttention (more efficient) |
+| **Production stability** | Very high | High |
+| **VLM support** | Broad | Broad |
+| **Kubernetes integration** | Helm chart | Docker image |
+
+## HuggingFace TGI (Text Generation Inference)
+
+HuggingFace TGI is a production-ready LLM serving framework developed by HuggingFace, with native integration with the HuggingFace model hub as its key strength.
+
+### TGI Key Features
+
+- **Flash Attention 2 Integration**: Optimized attention operations for high throughput
+- **Continuous Batching**: Dynamic request batching to maximize GPU utilization
+- **Quantization Support**: GPTQ, AWQ, bitsandbytes, EETQ, Marlin and more
+- **Guidance Integration**: JSON schema-based structured output support
+- **HuggingFace Hub Integration**: Direct download and serving with just a model ID
+- **Rust-Based High-Performance Server**: Low memory overhead and high concurrency
+
+### TGI Deployment on EKS
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tgi-server
+  namespace: ai-inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tgi-server
+  template:
+    metadata:
+      labels:
+        app: tgi-server
+    spec:
+      containers:
+      - name: tgi
+        image: ghcr.io/huggingface/text-generation-inference:latest
+        args:
+        - --model-id=meta-llama/Llama-3.1-8B-Instruct
+        - --max-input-tokens=4096
+        - --max-total-tokens=8192
+        - --max-batch-prefill-tokens=16384
+        - --quantize=awq
+        - --port=8080
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            memory: 48Gi
+          requests:
+            nvidia.com/gpu: 1
+            memory: 32Gi
+        env:
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-token
+              key: token
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 180
+          periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tgi-server
+  namespace: ai-inference
+spec:
+  selector:
+    app: tgi-server
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+```
+
+### TGI API Usage Examples
+
+```bash
+# Text generation
+curl http://tgi-server:8080/generate \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "inputs": "The advantages of running AI workloads on Kubernetes are",
+    "parameters": {
+      "max_new_tokens": 200,
+      "temperature": 0.7,
+      "do_sample": true
+    }
+  }'
+
+# OpenAI-compatible API (TGI v2+)
+curl http://tgi-server:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "tgi",
+    "messages": [{"role": "user", "content": "Hello!"}],
+    "max_tokens": 100
+  }'
+```
+
+## Ollama
+
+Ollama is a tool for running LLMs locally with ease, ideal for development/testing environments and edge deployments. Using quantized models in GGUF format, it can run LLMs even on consumer-grade hardware.
+
+### Ollama Features
+
+- **One-Click Model Execution**: Download and run with a single command: `ollama run llama3.1`
+- **GGUF Quantized Models**: Efficient execution on CPU and consumer GPUs
+- **Modelfile**: Define custom models with Dockerfile-like syntax
+- **OpenAI Compatible API**: Integrate with existing code with minimal changes
+- **Lightweight Container**: Easy deployment on Docker/Kubernetes
+
+### Ollama Deployment on EKS
+
+Deploy Ollama on EKS for development/staging environments or lightweight inference:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: ai-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+      - name: ollama
+        image: ollama/ollama:latest
+        ports:
+        - containerPort: 11434
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            memory: 32Gi
+          requests:
+            nvidia.com/gpu: 1
+            memory: 16Gi
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /root/.ollama
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - |
+                sleep 10 && ollama pull llama3.1:8b
+      volumes:
+      - name: ollama-data
+        persistentVolumeClaim:
+          claimName: ollama-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: ai-dev
+spec:
+  selector:
+    app: ollama
+  ports:
+  - port: 11434
+    targetPort: 11434
+  type: ClusterIP
+```
+
+### Ollama Usage Examples
+
+```bash
+# Download and run models
+ollama pull llama3.1:8b
+ollama pull deepseek-r1:8b
+ollama pull qwen2.5:7b
+
+# Chat API (OpenAI compatible)
+curl http://ollama:11434/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "llama3.1:8b",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+
+# Create custom model with Modelfile
+cat <<EOF > Modelfile
+FROM llama3.1:8b
+SYSTEM "You are a Kubernetes expert assistant."
+PARAMETER temperature 0.3
+PARAMETER num_ctx 4096
+EOF
+ollama create k8s-expert -f Modelfile
+```
+
+## LiteLLM
+
+LiteLLM is a proxy/gateway that unifies 100+ LLM providers into a single OpenAI-compatible interface. It is useful when managing multiple model backends (vLLM, SGLang, NIM, cloud APIs, etc.) on EKS.
+
+### LiteLLM Key Features
+
+- **Unified API**: Single interface for OpenAI, Anthropic, Google, vLLM, Ollama, and 100+ providers
+- **Load Balancing**: Intelligent routing across multiple model instances
+- **Cost Tracking**: Usage and cost tracking per model, team, and project
+- **Rate Limiting**: Per API key and per user rate limit management
+- **Fallback Strategy**: Automatic fallback on model failures
+
+### LiteLLM Proxy Deployment on EKS
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+  namespace: ai-gateway
+data:
+  config.yaml: |
+    model_list:
+      - model_name: gpt-4-equivalent
+        litellm_params:
+          model: openai/meta-llama/Llama-3.1-70B-Instruct
+          api_base: http://vllm-inference.ai-inference:8000/v1
+          api_key: dummy
+      - model_name: gpt-4-equivalent
+        litellm_params:
+          model: openai/meta-llama/Llama-3.1-70B-Instruct
+          api_base: http://sglang-server.ai-inference:30000/v1
+          api_key: dummy
+      - model_name: fast-model
+        litellm_params:
+          model: openai/meta-llama/Llama-3.1-8B-Instruct
+          api_base: http://vllm-small.ai-inference:8000/v1
+          api_key: dummy
+      - model_name: dev-model
+        litellm_params:
+          model: ollama/llama3.1:8b
+          api_base: http://ollama.ai-dev:11434
+    
+    litellm_settings:
+      drop_params: true
+      set_verbose: false
+    
+    router_settings:
+      routing_strategy: least-busy
+      num_retries: 3
+      retry_after: 5
+      allowed_fails: 2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm-proxy
+  namespace: ai-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: litellm-proxy
+  template:
+    metadata:
+      labels:
+        app: litellm-proxy
+    spec:
+      containers:
+      - name: litellm
+        image: ghcr.io/berriai/litellm:main-latest
+        args:
+        - --config=/app/config.yaml
+        - --port=4000
+        ports:
+        - containerPort: 4000
+        resources:
+          requests:
+            cpu: "500m"
+            memory: 512Mi
+          limits:
+            cpu: "2"
+            memory: 2Gi
+        volumeMounts:
+        - name: config
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: config
+        configMap:
+          name: litellm-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm-proxy
+  namespace: ai-gateway
+spec:
+  selector:
+    app: litellm-proxy
+  ports:
+  - port: 4000
+    targetPort: 4000
+  type: ClusterIP
+```
+
+### LiteLLM Usage Examples
+
+```python
+from openai import OpenAI
+
+# Access various backends through LiteLLM proxy
+client = OpenAI(
+    base_url="http://litellm-proxy.ai-gateway:4000/v1",
+    api_key="sk-your-litellm-key"
+)
+
+# Auto load-balancing - distributes between vLLM and SGLang
+response = client.chat.completions.create(
+    model="gpt-4-equivalent",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+
+# Route to lightweight model
+response = client.chat.completions.create(
+    model="fast-model",
+    messages=[{"role": "user", "content": "Simple question"}]
+)
+```
+
 ## AWS Neuron and Inferentia2
 
 AWS Neuron SDK enables running LLMs on cost-effective Inferentia2 (inf2) instances, offering significant cost savings compared to GPU instances.
@@ -2235,20 +2748,20 @@ spec:
 
 ### Feature Comparison Matrix
 
-| Feature | NIM | Dynamo | AIBrix | vLLM | Ray+vLLM | Triton |
-|---------|-----|--------|--------|------|----------|--------|
-| **OpenAI API** | Yes | Yes | Yes | Yes | Yes | Via backend |
-| **Tensor Parallelism** | Yes | Yes | Yes | Yes | Yes | Yes |
-| **Pipeline Parallelism** | Yes | Yes | No | Yes | Yes | Yes |
-| **Disaggregated Serving** | No | Yes | No | No | No | No |
-| **KV Cache Routing** | No | Yes | No | No | No | No |
-| **LoRA Support** | Limited | Yes | Yes | Yes | Yes | Yes |
-| **Multi-Model** | Yes | Yes | Yes | No | Yes | Yes |
-| **Auto-Scaling** | Manual | Manual | Built-in | Manual | Built-in | Manual |
-| **GPU Memory Opt** | High | High | Medium | High | High | High |
-| **Multi-Backend** | TRT-LLM | vLLM/SGLang/TRT | vLLM/SGLang | - | - | Multiple |
-| **Enterprise Support** | Yes | Yes | Community | Community | Community | Yes |
-| **Neuron Support** | No | No | No | Yes | Yes | Yes |
+| Feature | NIM | Dynamo | SGLang | vLLM | TGI | AIBrix | Ollama |
+|---------|-----|--------|--------|------|-----|--------|--------|
+| **OpenAI API** | Yes | Yes | Yes | Yes | Yes (v2+) | Yes | Yes |
+| **Tensor Parallelism** | Yes | Yes | Yes | Yes | Yes | Yes | No |
+| **Disaggregated Serving** | No | Yes | No | No | No | No | No |
+| **Structured Output** | Limited | Yes | Very fast | Yes | Yes | Yes | Yes |
+| **LoRA Support** | Limited | Yes | Yes | Yes | Yes | Native | Yes |
+| **VLM (Vision)** | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
+| **Speculative Decoding** | Yes | Yes | Yes | Yes | Yes | No | No |
+| **FP8 Quantization** | Yes | Yes | Yes | Yes | No | Yes | No |
+| **GGUF Models** | No | No | No | No | No | No | Yes |
+| **CPU Inference** | No | No | No | Limited | No | No | Yes |
+| **Auto-Scaling** | Manual | Manual | Manual | Manual | Manual | Built-in | Manual |
+| **Enterprise Support** | Yes | Yes | Community | Community | HuggingFace | Community | Community |
 
 ### Performance Comparison (Llama 3.1 70B, 8x A100)
 
@@ -2256,9 +2769,13 @@ spec:
 |-----------|------------|-----------|-------------------|-----------------|
 | NIM | 450ms | 35ms | 2,800 | 128 |
 | Dynamo | 380ms | 30ms | 3,200 | 256 |
+| SGLang | 480ms | 36ms | 2,700 | 128 |
 | vLLM | 520ms | 40ms | 2,400 | 96 |
+| TGI | 540ms | 38ms | 2,200 | 96 |
 | Ray+vLLM | 550ms | 42ms | 2,300 | 128 |
 | Triton+TRT-LLM | 400ms | 32ms | 3,000 | 128 |
+
+> **Note**: SGLang delivers up to 5-10x faster performance than vLLM in structured output scenarios. The numbers above are for general text generation.
 
 ### Cost Comparison (Monthly, 1M requests/day)
 
@@ -2298,7 +2815,28 @@ spec:
    - Require Python-native deployment
    - Multi-model serving is needed
 
-5. **Choose Neuron when**:
+5. **Choose SGLang when**:
+   - Structured output (JSON, regex) is a core requirement
+   - Complex multi-turn prompting pipelines are needed
+   - Prefix caching efficiency is critical
+   - You need vLLM-like capabilities but better structured output performance
+
+6. **Choose TGI when**:
+   - Quick production deployment of HuggingFace models
+   - Need a stable Rust-based server
+   - Using HuggingFace Enterprise Hub
+
+7. **Choose Ollama when**:
+   - Quick LLM setup for development/testing
+   - Need to run LLMs on CPU without GPU
+   - Edge device or lightweight environment deployment
+
+8. **Choose LiteLLM when**:
+   - Managing multiple LLM backends in a unified way
+   - Need per-team/project cost tracking
+   - Require fallback strategies and load balancing
+
+9. **Choose Neuron when**:
    - Cost optimization is primary goal
    - Workload fits inf2 constraints
    - Can accept compilation overhead
@@ -2322,6 +2860,10 @@ spec:
 - [AI on EKS](https://awslabs.github.io/ai-on-eks/) - AWS guide and examples for deploying AI/ML workloads on EKS
 - [NVIDIA NIM Documentation](https://docs.nvidia.com/nim/)
 - [NVIDIA Dynamo GitHub](https://github.com/ai-dynamo/dynamo)
+- [SGLang Official Documentation](https://sgl-project.github.io/) - SGLang project docs and benchmarks
+- [HuggingFace TGI GitHub](https://github.com/huggingface/text-generation-inference)
+- [Ollama Official Site](https://ollama.com/) - Ollama downloads and model library
+- [LiteLLM Documentation](https://docs.litellm.ai/) - LiteLLM proxy setup and integration guide
 - [AIBrix GitHub](https://github.com/aibrix/aibrix)
 - [KubeRay Documentation](https://docs.ray.io/en/latest/cluster/kubernetes/)
 - [AWS Neuron Documentation](https://awsdocs-neuron.readthedocs-hosted.com/)
