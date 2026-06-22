@@ -396,6 +396,12 @@ module "eks_blueprints_addons" {
 |--------|------|
 | [ArgoCD vs FluxCD](03-gitops-comparison.md) | 상세 비교 분석 |
 
+### Feature Flag
+
+| 가이드 | 설명 |
+|--------|------|
+| [Feature Flags와 OpenFeature](05-feature-flags.md) | OpenFeature 표준, flagd, Kubernetes 네이티브 Feature Flag 관리 |
+
 ## 다음 단계
 
 1. **ArgoCD 시작하기**: [ArgoCD 개요](argocd/README.md)로 이동하여 ArgoCD의 아키텍처와 주요 개념을 학습하세요.

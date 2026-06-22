@@ -213,6 +213,7 @@
 * [Kubernetes Extension Mechanisms](platform-engineering/04-kubernetes-extensions.md)
 * [ExampleCorp: ACK + KRO Integration Example](platform-engineering/05-example-corp-app.md)
 * [Backstage IDP](platform-engineering/06-backstage-idp.md)
+* [Crossplane](platform-engineering/07-crossplane.md)
 
 ## Operations Guide
 
@@ -285,6 +286,8 @@
         * [Best Practices](gitops/argocd/09-best-practices.md)
     * [FluxCD](gitops/02-fluxcd.md)
     * [GitOps Tools Comparison](gitops/03-gitops-comparison.md)
+    * [Flagger Progressive Delivery](gitops/04-flagger.md)
+    * [Feature Flags and OpenFeature](gitops/05-feature-flags.md)
 
 ## Lab Guides
 
@@ -461,6 +464,8 @@
         * [Best Practices Quiz](quizzes/gitops/argocd/09-best-practices-quiz.md)
     * [FluxCD Quiz](quizzes/gitops/02-fluxcd-quiz.md)
     * [GitOps Tools Comparison Quiz](quizzes/gitops/03-gitops-comparison-quiz.md)
+    * [Flagger Progressive Delivery Quiz](quizzes/gitops/04-flagger-quiz.md)
+    * [Feature Flags and OpenFeature Quiz](quizzes/gitops/05-feature-flags-quiz.md)
 
 * Autoscaling
     * [KEDA Quiz](quizzes/autoscaling/05-keda-quiz.md)

@@ -175,6 +175,8 @@ This training content provides quizzes for each topic along with the learning ma
    - [Best Practices](./gitops/argocd/09-best-practices.md) | [Quiz](./quizzes/gitops/argocd/09-best-practices-quiz.md)
 3. [FluxCD](./gitops/02-fluxcd.md) | [Quiz](./quizzes/gitops/02-fluxcd-quiz.md)
 4. [GitOps Tools Comparison](./gitops/03-gitops-comparison.md) | [Quiz](./quizzes/gitops/03-gitops-comparison-quiz.md)
+5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [Quiz](./quizzes/gitops/04-flagger-quiz.md)
+6. [Feature Flags and OpenFeature](./gitops/05-feature-flags.md) | [Quiz](./quizzes/gitops/05-feature-flags-quiz.md)
 
 ### Autoscaling
 1. [KEDA](./autoscaling/01-keda.md) | [Quiz](./quizzes/autoscaling/05-keda-quiz.md)

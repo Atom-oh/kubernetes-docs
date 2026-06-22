@@ -285,6 +285,8 @@
         * [모범 사례](gitops/argocd/09-best-practices.md)
     * [FluxCD](gitops/02-fluxcd.md)
     * [GitOps 도구 비교](gitops/03-gitops-comparison.md)
+    * [Flagger Progressive Delivery](gitops/04-flagger.md)
+    * [Feature Flags와 OpenFeature](gitops/05-feature-flags.md)
 
 ## Lab Guides
 
@@ -461,6 +463,8 @@
         * [모범 사례 퀴즈](quizzes/gitops/argocd/09-best-practices-quiz.md)
     * [FluxCD 퀴즈](quizzes/gitops/02-fluxcd-quiz.md)
     * [GitOps 도구 비교 퀴즈](quizzes/gitops/03-gitops-comparison-quiz.md)
+    * [Flagger Progressive Delivery 퀴즈](quizzes/gitops/04-flagger-quiz.md)
+    * [Feature Flags와 OpenFeature 퀴즈](quizzes/gitops/05-feature-flags-quiz.md)
 
 * Autoscaling
     * [KEDA 퀴즈](quizzes/autoscaling/05-keda-quiz.md)

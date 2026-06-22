@@ -175,6 +175,8 @@
    - [모범 사례](./gitops/argocd/09-best-practices.md) | [퀴즈](./quizzes/gitops/argocd/09-best-practices-quiz.md)
 3. [FluxCD](./gitops/02-fluxcd.md) | [퀴즈](./quizzes/gitops/02-fluxcd-quiz.md)
 4. [GitOps 도구 비교](./gitops/03-gitops-comparison.md) | [퀴즈](./quizzes/gitops/03-gitops-comparison-quiz.md)
+5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [퀴즈](./quizzes/gitops/04-flagger-quiz.md)
+6. [Feature Flags와 OpenFeature](./gitops/05-feature-flags.md) | [퀴즈](./quizzes/gitops/05-feature-flags-quiz.md)
 
 ### Autoscaling
 1. [KEDA](./autoscaling/01-keda.md) | [퀴즈](./quizzes/autoscaling/05-keda-quiz.md)
