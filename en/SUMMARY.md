@@ -227,6 +227,7 @@
     * [Observability Stack](ops/09-observability-stack.md)
     * [Resource Optimization](ops/10-resource-optimization.md)
     * [Upgrade Operations](ops/11-upgrade-operations.md)
+    * [Event Capacity Planning](ops/12-event-capacity-planning.md)
 
 ## Observability
 
@@ -520,3 +521,4 @@
     * [Observability Stack Quiz](quizzes/ops/09-observability-stack-quiz.md)
     * [Resource Optimization Quiz](quizzes/ops/10-resource-optimization-quiz.md)
     * [Upgrade Operations Quiz](quizzes/ops/11-upgrade-operations-quiz.md)
+    * [Event Capacity Planning Quiz](quizzes/ops/12-event-capacity-planning-quiz.md)

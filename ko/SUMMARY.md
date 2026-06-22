@@ -227,6 +227,7 @@
     * [Observability 스택 구성](ops/09-observability-stack.md)
     * [리소스 최적화](ops/10-resource-optimization.md)
     * [EKS 업그레이드 운영](ops/11-upgrade-operations.md)
+    * [이벤트 용량 계획 플레이북](ops/12-event-capacity-planning.md)
 
 ## Observability
 
@@ -521,3 +522,4 @@
     * [Observability 스택 구성 퀴즈](quizzes/ops/09-observability-stack-quiz.md)
     * [리소스 최적화 퀴즈](quizzes/ops/10-resource-optimization-quiz.md)
     * [EKS 업그레이드 운영 퀴즈](quizzes/ops/11-upgrade-operations-quiz.md)
+    * [이벤트 용량 계획 퀴즈](quizzes/ops/12-event-capacity-planning-quiz.md)
