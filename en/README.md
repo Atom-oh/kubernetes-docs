@@ -223,6 +223,7 @@ This training content provides quizzes for each topic along with the learning ma
 3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [Quiz](./quizzes/platform-engineering/03-kro-quiz.md)
 4. [Kubernetes Extension Mechanisms](./platform-engineering/04-kubernetes-extensions.md) | [Quiz](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
 5. [ExampleCorp: ACK + KRO Integration Example](./platform-engineering/05-example-corp-app.md)
+6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [Quiz](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
 
 ### Operations Guide
 1. [Infrastructure Setup](./ops/01-infrastructure-setup.md) | [Quiz](./quizzes/ops/01-infrastructure-setup-quiz.md)
@@ -237,6 +238,7 @@ This training content provides quizzes for each topic along with the learning ma
 10. [Resource Optimization](./ops/10-resource-optimization.md) | [Quiz](./quizzes/ops/10-resource-optimization-quiz.md)
 11. [Upgrade Operations](./ops/11-upgrade-operations.md) | [Quiz](./quizzes/ops/11-upgrade-operations-quiz.md)
 12. [Event Capacity Planning Playbook](./ops/12-event-capacity-planning.md) | [Quiz](./quizzes/ops/12-event-capacity-planning-quiz.md)
+13. [FinOps Cost Visibility Platform](./ops/13-finops-cost-platform.md) | [Quiz](./quizzes/ops/13-finops-cost-platform-quiz.md)
 
 ## Lab Guides
 

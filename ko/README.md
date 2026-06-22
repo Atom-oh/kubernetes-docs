@@ -223,6 +223,7 @@
 3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [퀴즈](./quizzes/platform-engineering/03-kro-quiz.md)
 4. [Kubernetes 확장 메커니즘](./platform-engineering/04-kubernetes-extensions.md) | [퀴즈](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
 5. [ExampleCorp: ACK + KRO 통합 예제](./platform-engineering/05-example-corp-app.md)
+6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [퀴즈](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
 
 ### 운영 가이드
 1. [인프라 구성 기초](./ops/01-infrastructure-setup.md) | [퀴즈](./quizzes/ops/01-infrastructure-setup-quiz.md)
@@ -237,6 +238,7 @@
 10. [리소스 최적화](./ops/10-resource-optimization.md) | [퀴즈](./quizzes/ops/10-resource-optimization-quiz.md)
 11. [EKS 업그레이드 운영](./ops/11-upgrade-operations.md) | [퀴즈](./quizzes/ops/11-upgrade-operations-quiz.md)
 12. [이벤트 용량 계획 플레이북](./ops/12-event-capacity-planning.md) | [퀴즈](./quizzes/ops/12-event-capacity-planning-quiz.md)
+13. [FinOps 비용 가시성 플랫폼](./ops/13-finops-cost-platform.md) | [퀴즈](./quizzes/ops/13-finops-cost-platform-quiz.md)
 
 ## 실습 가이드
 

@@ -212,6 +212,7 @@
 * [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
 * [Kubernetes Extension Mechanisms](platform-engineering/04-kubernetes-extensions.md)
 * [ExampleCorp: ACK + KRO Integration Example](platform-engineering/05-example-corp-app.md)
+* [Backstage IDP](platform-engineering/06-backstage-idp.md)
 
 ## Operations Guide
 
@@ -228,6 +229,7 @@
     * [Resource Optimization](ops/10-resource-optimization.md)
     * [Upgrade Operations](ops/11-upgrade-operations.md)
     * [Event Capacity Planning](ops/12-event-capacity-planning.md)
+    * [FinOps Cost Visibility Platform](ops/13-finops-cost-platform.md)
 
 ## Observability
 
@@ -508,6 +510,7 @@
     * [ACK Quiz](quizzes/platform-engineering/02-ack-quiz.md)
     * [KRO Quiz](quizzes/platform-engineering/03-kro-quiz.md)
     * [Kubernetes Extension Mechanisms Quiz](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+    * [Backstage IDP Quiz](quizzes/platform-engineering/06-backstage-idp-quiz.md)
 
 * Operations Guide
     * [Infrastructure Setup Quiz](quizzes/ops/01-infrastructure-setup-quiz.md)
@@ -522,3 +525,4 @@
     * [Resource Optimization Quiz](quizzes/ops/10-resource-optimization-quiz.md)
     * [Upgrade Operations Quiz](quizzes/ops/11-upgrade-operations-quiz.md)
     * [Event Capacity Planning Quiz](quizzes/ops/12-event-capacity-planning-quiz.md)
+    * [FinOps Cost Visibility Platform Quiz](quizzes/ops/13-finops-cost-platform-quiz.md)
