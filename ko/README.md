@@ -181,6 +181,7 @@
 ### Autoscaling
 1. [KEDA](./autoscaling/01-keda.md) | [퀴즈](./quizzes/autoscaling/05-keda-quiz.md)
 2. [Karpenter](./autoscaling/02-karpenter.md) | [퀴즈](./quizzes/autoscaling/06-karpenter-quiz.md)
+3. [Knative](./autoscaling/03-knative.md) | [퀴즈](./quizzes/autoscaling/03-knative-quiz.md)
 
 ### Observability
 1. [Observability 개요](./observability/README.md)
@@ -227,6 +228,7 @@
 5. [ExampleCorp: ACK + KRO 통합 예제](./platform-engineering/05-example-corp-app.md)
 6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [퀴즈](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
 7. [Crossplane](./platform-engineering/07-crossplane.md) | [퀴즈](./quizzes/platform-engineering/07-crossplane-quiz.md)
+8. [vCluster](./platform-engineering/08-vcluster.md) | [퀴즈](./quizzes/platform-engineering/08-vcluster-quiz.md)
 
 ### 운영 가이드
 1. [인프라 구성 기초](./ops/01-infrastructure-setup.md) | [퀴즈](./quizzes/ops/01-infrastructure-setup-quiz.md)
@@ -242,6 +244,7 @@
 11. [EKS 업그레이드 운영](./ops/11-upgrade-operations.md) | [퀴즈](./quizzes/ops/11-upgrade-operations-quiz.md)
 12. [이벤트 용량 계획 플레이북](./ops/12-event-capacity-planning.md) | [퀴즈](./quizzes/ops/12-event-capacity-planning-quiz.md)
 13. [FinOps 비용 가시성 플랫폼](./ops/13-finops-cost-platform.md) | [퀴즈](./quizzes/ops/13-finops-cost-platform-quiz.md)
+14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [퀴즈](./quizzes/ops/14-tekton-pipelines-quiz.md)
 
 ## 실습 가이드
 

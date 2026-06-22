@@ -214,6 +214,7 @@
 * [ExampleCorp: ACK + KRO 통합 예제](platform-engineering/05-example-corp-app.md)
 * [Backstage IDP](platform-engineering/06-backstage-idp.md)
 * [Crossplane](platform-engineering/07-crossplane.md)
+* [vCluster](platform-engineering/08-vcluster.md)
 
 ## Operations Guide
 
@@ -231,6 +232,7 @@
     * [EKS 업그레이드 운영](ops/11-upgrade-operations.md)
     * [이벤트 용량 계획 플레이북](ops/12-event-capacity-planning.md)
     * [FinOps 비용 가시성 플랫폼](ops/13-finops-cost-platform.md)
+    * [Tekton Pipelines](ops/14-tekton-pipelines.md)
 
 ## Observability
 
@@ -471,6 +473,7 @@
 * Autoscaling
     * [KEDA 퀴즈](quizzes/autoscaling/05-keda-quiz.md)
     * [Karpenter 퀴즈](quizzes/autoscaling/06-karpenter-quiz.md)
+    * [Knative 퀴즈](quizzes/autoscaling/03-knative-quiz.md)
 
 * Observability
     * Metrics
@@ -519,6 +522,7 @@
     * [Kubernetes 확장 메커니즘 퀴즈](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
     * [Backstage IDP 퀴즈](quizzes/platform-engineering/06-backstage-idp-quiz.md)
     * [Crossplane 퀴즈](quizzes/platform-engineering/07-crossplane-quiz.md)
+    * [vCluster 퀴즈](quizzes/platform-engineering/08-vcluster-quiz.md)
 
 * 운영 가이드
     * [인프라 구성 기초 퀴즈](quizzes/ops/01-infrastructure-setup-quiz.md)
@@ -534,3 +538,4 @@
     * [EKS 업그레이드 운영 퀴즈](quizzes/ops/11-upgrade-operations-quiz.md)
     * [이벤트 용량 계획 퀴즈](quizzes/ops/12-event-capacity-planning-quiz.md)
     * [FinOps 비용 가시성 플랫폼 퀴즈](quizzes/ops/13-finops-cost-platform-quiz.md)
+    * [Tekton Pipelines 퀴즈](quizzes/ops/14-tekton-pipelines-quiz.md)

@@ -232,6 +232,7 @@
     * [Upgrade Operations](ops/11-upgrade-operations.md)
     * [Event Capacity Planning](ops/12-event-capacity-planning.md)
     * [FinOps Cost Visibility Platform](ops/13-finops-cost-platform.md)
+    * [Tekton Pipelines](ops/14-tekton-pipelines.md)
 
 ## Observability
 
@@ -472,6 +473,7 @@
 * Autoscaling
     * [KEDA Quiz](quizzes/autoscaling/05-keda-quiz.md)
     * [Karpenter Quiz](quizzes/autoscaling/06-karpenter-quiz.md)
+    * [Knative Quiz](quizzes/autoscaling/03-knative-quiz.md)
 
 * Observability
     * Metrics
@@ -519,6 +521,7 @@
     * [Kubernetes Extension Mechanisms Quiz](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
     * [Backstage IDP Quiz](quizzes/platform-engineering/06-backstage-idp-quiz.md)
     * [Crossplane Quiz](quizzes/platform-engineering/07-crossplane-quiz.md)
+    * [vCluster Quiz](quizzes/platform-engineering/08-vcluster-quiz.md)
 
 * Operations Guide
     * [Infrastructure Setup Quiz](quizzes/ops/01-infrastructure-setup-quiz.md)
@@ -534,3 +537,4 @@
     * [Upgrade Operations Quiz](quizzes/ops/11-upgrade-operations-quiz.md)
     * [Event Capacity Planning Quiz](quizzes/ops/12-event-capacity-planning-quiz.md)
     * [FinOps Cost Visibility Platform Quiz](quizzes/ops/13-finops-cost-platform-quiz.md)
+    * [Tekton Pipelines Quiz](quizzes/ops/14-tekton-pipelines-quiz.md)
