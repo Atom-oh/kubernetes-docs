@@ -2290,4 +2290,5 @@ helm upgrade backstage backstage/backstage \
 - [Kubernetes Resource Operator (KRO)](./03-kro.md) -- Resource graph orchestration for self-service claims
 - [Kubernetes Extension Mechanisms](./04-kubernetes-extensions.md) -- CRDs and operators that power Backstage plugins
 - [ExampleCorp Integration Example](./05-example-corp-app.md) -- End-to-end ACK + KRO deployment example
+- [Crossplane](./07-crossplane.md) -- Infrastructure as Code via Kubernetes API; integrates with Backstage for self-service
 - [ArgoCD Applications](../gitops/argocd/02-applications.md) -- GitOps deployment integrated with Backstage templates

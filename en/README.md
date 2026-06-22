@@ -226,6 +226,7 @@ This training content provides quizzes for each topic along with the learning ma
 4. [Kubernetes Extension Mechanisms](./platform-engineering/04-kubernetes-extensions.md) | [Quiz](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
 5. [ExampleCorp: ACK + KRO Integration Example](./platform-engineering/05-example-corp-app.md)
 6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [Quiz](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
+7. [Crossplane](./platform-engineering/07-crossplane.md) | [Quiz](./quizzes/platform-engineering/07-crossplane-quiz.md)
 
 ### Operations Guide
 1. [Infrastructure Setup](./ops/01-infrastructure-setup.md) | [Quiz](./quizzes/ops/01-infrastructure-setup-quiz.md)

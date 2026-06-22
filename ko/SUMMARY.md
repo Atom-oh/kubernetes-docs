@@ -213,6 +213,7 @@
 * [Kubernetes 확장 메커니즘](platform-engineering/04-kubernetes-extensions.md)
 * [ExampleCorp: ACK + KRO 통합 예제](platform-engineering/05-example-corp-app.md)
 * [Backstage IDP](platform-engineering/06-backstage-idp.md)
+* [Crossplane](platform-engineering/07-crossplane.md)
 
 ## Operations Guide
 
@@ -516,6 +517,7 @@
     * [KRO 퀴즈](quizzes/platform-engineering/03-kro-quiz.md)
     * [Kubernetes 확장 메커니즘 퀴즈](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
     * [Backstage IDP 퀴즈](quizzes/platform-engineering/06-backstage-idp-quiz.md)
+    * [Crossplane 퀴즈](quizzes/platform-engineering/07-crossplane-quiz.md)
 
 * 운영 가이드
     * [인프라 구성 기초 퀴즈](quizzes/ops/01-infrastructure-setup-quiz.md)

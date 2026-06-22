@@ -226,6 +226,7 @@
 4. [Kubernetes 확장 메커니즘](./platform-engineering/04-kubernetes-extensions.md) | [퀴즈](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
 5. [ExampleCorp: ACK + KRO 통합 예제](./platform-engineering/05-example-corp-app.md)
 6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [퀴즈](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
+7. [Crossplane](./platform-engineering/07-crossplane.md) | [퀴즈](./quizzes/platform-engineering/07-crossplane-quiz.md)
 
 ### 운영 가이드
 1. [인프라 구성 기초](./ops/01-infrastructure-setup.md) | [퀴즈](./quizzes/ops/01-infrastructure-setup-quiz.md)

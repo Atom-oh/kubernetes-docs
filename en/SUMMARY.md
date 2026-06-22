@@ -516,6 +516,7 @@
     * [KRO Quiz](quizzes/platform-engineering/03-kro-quiz.md)
     * [Kubernetes Extension Mechanisms Quiz](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
     * [Backstage IDP Quiz](quizzes/platform-engineering/06-backstage-idp-quiz.md)
+    * [Crossplane Quiz](quizzes/platform-engineering/07-crossplane-quiz.md)
 
 * Operations Guide
     * [Infrastructure Setup Quiz](quizzes/ops/01-infrastructure-setup-quiz.md)
