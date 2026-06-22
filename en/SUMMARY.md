@@ -214,6 +214,7 @@
 * [ExampleCorp: ACK + KRO Integration Example](platform-engineering/05-example-corp-app.md)
 * [Backstage IDP](platform-engineering/06-backstage-idp.md)
 * [Crossplane](platform-engineering/07-crossplane.md)
+* [vCluster](platform-engineering/08-vcluster.md)
 
 ## Operations Guide
 

@@ -1955,4 +1955,4 @@ Establish consistent naming conventions across all Crossplane resources:
 
 ---
 
-[Previous: Backstage IDP](./06-backstage-idp.md) | Next: None
+[Previous: Backstage IDP](./06-backstage-idp.md) | [Next: vCluster](./08-vcluster.md)
