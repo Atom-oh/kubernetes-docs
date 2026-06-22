@@ -3,7 +3,7 @@
 > **Supported Versions**: Kubernetes 1.28+, Kubecost 2.x, OpenCost 1.x
 > **Last Updated**: April 25, 2026
 
-< [Previous: Event Capacity Planning](./12-event-capacity-planning.md) | [Table of Contents](./README.md) | [Next: None] >
+< [Previous: Event Capacity Planning](./12-event-capacity-planning.md) | [Table of Contents](./README.md) | [Next: Tekton Pipelines](./14-tekton-pipelines.md) >
 
 ---
 

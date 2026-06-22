@@ -270,6 +270,7 @@
 
 * [KEDA](autoscaling/01-keda.md)
 * [Karpenter](autoscaling/02-karpenter.md)
+* [Knative](autoscaling/03-knative.md)
 
 ## GitOps
 
