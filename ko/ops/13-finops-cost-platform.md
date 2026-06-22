@@ -9,88 +9,125 @@
 
 ## 개요
 
-Kubernetes 환경에서 비용 관리는 단순히 클라우드 청구서를 확인하는 것 이상의 체계적인 접근이 필요합니다. 컨테이너화된 워크로드는 동적으로 스케일링되고, 여러 팀이 공유 인프라를 사용하며, 비용 귀속이 복잡해지기 때문입니다.
+Kubernetes 환경에서 컨테이너화된 워크로드가 증가하면 비용 구조는 점점 복잡해집니다. 전통적인 VM 기반 환경에서는 서버 단위로 비용을 추적할 수 있었지만, Kubernetes에서는 하나의 노드에 여러 팀의 워크로드가 동시에 실행되므로 **비용 귀속(cost attribution)**이 어려워집니다.
 
-**FinOps**(Cloud Financial Operations)는 엔지니어링, 재무, 비즈니스 팀이 협력하여 클라우드 비용을 최적화하는 운영 프레임워크입니다. FinOps의 핵심 사이클은 **Inform(인지) -> Optimize(최적화) -> Operate(운영)**으로 구성됩니다.
+FinOps는 클라우드 비용을 엔지니어링 조직이 주도적으로 관리하는 운영 프레임워크입니다. 단순히 비용을 절감하는 것이 아니라, **비용에 대한 가시성을 확보하고, 데이터 기반으로 의사결정하며, 지속적으로 최적화하는 문화**를 구축하는 것이 핵심입니다.
 
-이 문서는 Kubernetes 클러스터에 FinOps 원칙을 적용하여 비용 가시성을 확보하고, 팀별 비용 책임을 명확히 하며, 지속적인 비용 최적화를 달성하기 위한 실전 가이드를 제공합니다. OpenCost와 Kubecost를 중심으로 비용 측정 인프라를 구축하고, Showback/Chargeback 체계, 이상 탐지, 셀프서비스 비용 관리까지 포괄합니다.
+이 문서에서는 OpenCost와 Kubecost를 중심으로 Kubernetes 비용 가시성 플랫폼을 구축하고, Showback/Chargeback 체계를 구현하며, 비용 이상 탐지와 셀프서비스 비용 관리를 통해 조직 전체의 비용 효율성을 높이는 방법을 다룹니다.
 
 ### 학습 목표
 
-- FinOps 운영 모델과 Inform -> Optimize -> Operate 사이클 이해
-- OpenCost/Kubecost를 활용한 Kubernetes 비용 측정 인프라 구축
-- Showback/Chargeback 체계를 통한 팀별 비용 귀속 구현
-- Prometheus와 Grafana 기반 비용 이상 탐지 및 알림 설정
-- 팀 셀프서비스 비용 대시보드 및 Slack 리포트 자동화
-- Kyverno 정책을 통한 비용 최적화 거버넌스 적용
+- FinOps 운영 모델(Inform → Optimize → Operate)의 개념과 실무 적용 방법 이해
+- OpenCost/Kubecost를 활용한 Kubernetes 비용 모니터링 플랫폼 구축
+- AWS Cost and Usage Report(CUR)와 Kubecost 통합으로 정확한 비용 데이터 확보
+- Showback/Chargeback 체계 설계 및 팀별 비용 할당 구현
+- 비용 이상 탐지 자동화 및 Slack 기반 알림 파이프라인 구성
+- 리소스 라이트사이징 자동화를 통한 지속적 비용 최적화 워크플로우 구축
 
 ---
 
 ## 1. FinOps 운영 모델
 
-### 1.1 Inform -> Optimize -> Operate 사이클
-
-FinOps는 반복적인 사이클을 통해 비용 효율성을 지속적으로 개선합니다.
+FinOps Foundation에서 정의한 FinOps 프레임워크는 세 가지 반복적 단계로 구성됩니다. 이 사이클은 한 번으로 끝나는 것이 아니라, 조직의 성숙도가 높아짐에 따라 점점 정교해지는 **지속적 개선 루프**입니다.
 
 ```mermaid
 graph LR
-    subgraph "FinOps Lifecycle"
-        A[Inform<br/>비용 가시성 확보] --> B[Optimize<br/>비용 최적화 실행]
-        B --> C[Operate<br/>거버넌스 운영]
-        C --> A
+    subgraph "FinOps 라이프사이클"
+        Inform["📊 Inform<br/>가시성 확보"]
+        Optimize["⚡ Optimize<br/>비용 최적화"]
+        Operate["🔄 Operate<br/>운영 체계화"]
+        
+        Inform --> Optimize
+        Optimize --> Operate
+        Operate --> Inform
     end
-
-    subgraph "Inform 단계"
-        A1[비용 할당 및 태깅]
-        A2[Showback 리포트]
-        A3[비용 이상 탐지]
+    
+    subgraph "Inform 활동"
+        I1["비용 할당"]
+        I2["태깅 전략"]
+        I3["대시보드"]
+        I4["리포팅"]
     end
-
-    subgraph "Optimize 단계"
-        B1[리소스 라이트사이징]
-        B2[유휴 리소스 제거]
-        B3[Spot/Savings Plans 활용]
+    
+    subgraph "Optimize 활동"
+        O1["라이트사이징"]
+        O2["Spot 활용"]
+        O3["유휴 리소스 제거"]
+        O4["예약 인스턴스"]
     end
-
-    subgraph "Operate 단계"
-        C1[예산 정책 적용]
-        C2[자동화된 워크플로우]
-        C3[정기 리뷰 프로세스]
+    
+    subgraph "Operate 활동"
+        P1["예산 관리"]
+        P2["정책 자동화"]
+        P3["비용 리뷰"]
+        P4["거버넌스"]
     end
-
-    A --> A1
-    A --> A2
-    A --> A3
-    B --> B1
-    B --> B2
-    B --> B3
-    C --> C1
-    C --> C2
-    C --> C3
+    
+    Inform --> I1
+    Inform --> I2
+    Inform --> I3
+    Inform --> I4
+    
+    Optimize --> O1
+    Optimize --> O2
+    Optimize --> O3
+    Optimize --> O4
+    
+    Operate --> P1
+    Operate --> P2
+    Operate --> P3
+    Operate --> P4
+    
+    style Inform fill:#3498DB,color:#fff
+    style Optimize fill:#E67E22,color:#fff
+    style Operate fill:#2ECC71,color:#fff
 ```
 
-| 단계 | 목표 | 주요 활동 | 도구 |
-|------|------|----------|------|
-| **Inform** | 비용 가시성 확보 | 비용 할당, 태깅, Showback 리포트 생성 | OpenCost, Kubecost, Grafana |
-| **Optimize** | 비용 효율성 개선 | 라이트사이징, 유휴 리소스 제거, 할인 활용 | VPA, Goldilocks, Spot Instances |
-| **Operate** | 지속 가능한 운영 | 예산 정책, 자동화, 정기 리뷰 | Kyverno, CI/CD, Slack Bot |
+### 1.1 각 단계의 핵심 활동
 
-### 1.2 조직 역할
+**Inform (가시성 확보)**
 
-| 역할 | 책임 | 주요 활동 |
-|------|------|----------|
-| **FinOps Team** | 비용 최적화 전략 수립 및 조율 | 비용 할당 정책 설계, 도구 운영, 리뷰 주관 |
-| **Engineering** | 리소스 효율적 사용 | 적절한 Requests/Limits 설정, 라이트사이징 적용 |
-| **Finance** | 예산 관리 및 예측 | 예산 승인, 비용 예측, 할인 협상 |
-| **Leadership** | 의사결정 및 우선순위 | 비용 목표 설정, 투자 대비 효과 평가 |
+가시성이 없으면 최적화도 불가능합니다. 이 단계에서는 클러스터, 네임스페이스, 워크로드 수준에서 비용을 정확하게 측정하고, 팀별로 귀속시키는 체계를 구축합니다.
 
-### 1.3 성숙도 수준
+- 비용 할당 모델 설계 (Namespace, Label 기반)
+- 공유 비용(컨트롤 플레인, 네트워킹 등) 분배 규칙 정의
+- 팀별/서비스별 비용 대시보드 구축
+- 정기 비용 리포트 자동화
 
-| 수준 | 설명 | 비용 가시성 | 최적화 | 거버넌스 |
-|------|------|-----------|--------|---------|
-| **Crawl** | 기본 비용 인지 | 클러스터 전체 비용 확인 | 수동 리소스 조정 | 비용 리포트 공유 |
-| **Walk** | 팀별 비용 귀속 | Namespace/Label 기반 비용 할당 | VPA 추천 기반 라이트사이징 | 예산 알림 설정 |
-| **Run** | 자동화된 비용 최적화 | 실시간 비용 대시보드 + 이상 탐지 | 자동 라이트사이징 + Spot 활용 | 정책 기반 자동 거버넌스 |
+**Optimize (비용 최적화)**
+
+가시성 데이터를 기반으로 실제 비용을 줄이는 단계입니다. 리소스 라이트사이징, Spot Instance 활용, 유휴 리소스 제거 등을 수행합니다.
+
+- VPA 추천 기반 리소스 라이트사이징
+- Spot Instance / Savings Plans / Reserved Instance 활용
+- 유휴 리소스(미사용 PVC, 비활성 Deployment 등) 자동 탐지 및 정리
+- 스토리지 계층 최적화 (EBS 타입, S3 Lifecycle Policy)
+
+**Operate (운영 체계화)**
+
+최적화를 일회성이 아닌 지속적 프로세스로 만드는 단계입니다. 정책, 자동화, 거버넌스를 통해 비용 효율성을 조직 문화에 내재화합니다.
+
+- 비용 예산 설정 및 초과 알림
+- 비용 관련 정책 자동 적용 (Kyverno/OPA)
+- 주간/월간 비용 리뷰 프로세스 운영
+- FinOps 성숙도 측정 및 개선
+
+### 1.2 조직 역할 정의
+
+| 역할 | 책임 | 주요 활동 | 도구/접근 권한 |
+|------|------|----------|---------------|
+| **FinOps Team** | 비용 가시성 플랫폼 운영, 정책 수립 | 대시보드 구축, 비용 리포트 생성, 최적화 추천 | Kubecost Admin, AWS Cost Explorer, Grafana |
+| **Engineering** | 리소스 효율적 사용, 라이트사이징 실행 | VPA 추천 적용, 비용 라벨 준수, 유휴 리소스 정리 | Kubecost Viewer, Grafana 팀 대시보드 |
+| **Finance** | 예산 승인, 비용 분석 | 월간 비용 리뷰, 예산 대비 실적 분석, 비용 예측 | Kubecost Viewer, AWS Billing 콘솔 |
+| **Leadership** | 비용 문화 주도, 투자 결정 | 분기별 비용 리뷰, ROI 분석, 예산 배분 | 경영진 대시보드, 월간 요약 리포트 |
+
+### 1.3 성숙도 모델
+
+| 단계 | 설명 | Inform | Optimize | Operate |
+|------|------|--------|----------|---------|
+| **Crawl** | 기초 단계 | 클러스터 수준 비용 확인, 기본 태깅 | 수동 라이트사이징, On-Demand만 사용 | 월간 비용 확인, 임의적 리뷰 |
+| **Walk** | 중급 단계 | 네임스페이스별 비용 할당, Showback 리포트 | VPA 추천 활용, Spot 일부 사용 | 주간 비용 리뷰, 기본 예산 설정 |
+| **Run** | 고급 단계 | 실시간 비용 대시보드, 자동 Chargeback | 자동 라이트사이징, Spot + RI 최적화 | 정책 자동화, 비용 거버넌스 내재화 |
 
 ---
 
@@ -98,24 +135,22 @@ graph LR
 
 ### 2.1 OpenCost 설치 (오픈소스)
 
-OpenCost는 CNCF 프로젝트로, Kubernetes 비용을 측정하는 오픈소스 도구입니다. Prometheus와 연동하여 비용 메트릭을 수집합니다.
+OpenCost는 CNCF 프로젝트로, Kubernetes 비용 모니터링의 오픈소스 표준입니다. Kubecost의 비용 할당 엔진 기반으로 만들어졌으며, 기본적인 비용 가시성을 무료로 제공합니다.
 
 ```yaml
 # opencost-values.yaml
 # OpenCost Helm Chart 설정
-opencost:
-  exporter:
-    defaultClusterId: "production-eks"
-    aws:
-      spot_data_region: "ap-northeast-2"
-      spot_data_prefix: "spot-data-feed"
-      spot_data_bucket: "my-company-spot-feed"
-    extraEnv:
-      EMIT_KSM_V1_METRICS: "false"
-      EMIT_KSM_V1_METRICS_ONLY: "true"
-      PROM_CLUSTER_ID_LABEL: "cluster"
-      LOG_LEVEL: "info"
+# helm repo add opencost https://opencost.github.io/opencost-helm-chart
+# helm install opencost opencost/opencost -n opencost --create-namespace -f opencost-values.yaml
 
+opencost:
+  # Prometheus 연동 설정
+  exporter:
+    defaultClusterId: "eks-production"
+    image:
+      registry: ghcr.io
+      repository: opencost/opencost
+      tag: "1.112.0"
     resources:
       requests:
         cpu: "100m"
@@ -123,13 +158,18 @@ opencost:
       limits:
         cpu: "500m"
         memory: "512Mi"
-
+    extraEnv:
+      # AWS 비용 데이터 통합
+      CLOUD_PROVIDER_API_KEY: ""
+      EMIT_KSM_V1_METRICS: "false"
+      EMIT_KSM_V1_METRICS_ONLY: "true"
+      PROM_CLUSTER_ID_LABEL: "cluster"
+      LOG_LEVEL: "info"
     persistence:
       enabled: true
       size: "10Gi"
       storageClass: "gp3"
-
-    # Prometheus 연동 설정
+    # Prometheus 엔드포인트 설정
     prometheus:
       internal:
         enabled: true
@@ -139,8 +179,13 @@ opencost:
       external:
         enabled: false
 
+  # UI 설정
   ui:
     enabled: true
+    image:
+      registry: ghcr.io
+      repository: opencost/opencost-ui
+      tag: "1.112.0"
     resources:
       requests:
         cpu: "50m"
@@ -169,210 +214,242 @@ opencost:
       additionalLabels:
         release: "prometheus"
 
-  networkPolicies:
-    enabled: true
-
+  # 커스텀 가격 설정 (AWS ap-northeast-2 기준)
   customPricing:
     enabled: true
     configmapName: "opencost-custom-pricing"
+    configPath: "/tmp/custom-config"
     provider: "aws"
-```
+    costModel:
+      description: "AWS ap-northeast-2 커스텀 가격"
+      CPU: "0.0464"          # m6i.xlarge vCPU 시간당 가격 (서울 리전)
+      RAM: "0.00580"         # GB 시간당 가격
+      GPU: "0.526"           # GPU 시간당 가격
+      storage: "0.000127397" # GP3 GB 시간당 가격
+      spotCPU: "0.0139"      # Spot vCPU 시간당 가격 (약 70% 할인)
+      spotRAM: "0.00174"     # Spot RAM GB 시간당 가격
+      zoneNetworkEgress: "0.01"
+      regionNetworkEgress: "0.01"
+      internetNetworkEgress: "0.09"
 
-**설치 명령:**
-
-```bash
-# Helm 저장소 추가
-helm repo add opencost https://opencost.github.io/opencost-helm-chart
-helm repo update
-
-# 네임스페이스 생성 및 설치
-kubectl create namespace opencost
-helm install opencost opencost/opencost \
-  -n opencost \
-  -f opencost-values.yaml \
-  --version 1.42.0
+# ServiceAccount 설정 (Pod Identity 사용)
+serviceAccount:
+  create: true
+  name: "opencost"
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/opencost-role"
 ```
 
 ### 2.2 Kubecost Enterprise
 
-Kubecost Enterprise는 멀티 클러스터 비용 집계, S3 ETL 스토리지, SSO 등 엔터프라이즈 기능을 제공합니다.
+Kubecost Enterprise는 OpenCost의 상용 확장 버전으로, 멀티 클러스터 연합, S3 ETL 스토리지, SSO, RBAC 등 엔터프라이즈 기능을 제공합니다.
 
 ```yaml
 # kubecost-values.yaml
-# Kubecost Enterprise Helm Chart 설정
+# helm repo add kubecost https://kubecost.github.io/cost-analyzer-helm-chart
+# helm install kubecost kubecost/cost-analyzer -n kubecost --create-namespace -f kubecost-values.yaml
+
 global:
   prometheus:
-    enabled: false  # 기존 Prometheus 사용
+    enabled: false  # 외부 Prometheus 사용
     fqdn: "http://prometheus-server.monitoring.svc.cluster.local:9090"
-
   grafana:
-    enabled: false  # 기존 Grafana 사용
+    enabled: false  # 외부 Grafana 사용
     proxy: false
-
   notifications:
     alertmanager:
       enabled: true
       fqdn: "http://alertmanager.monitoring.svc.cluster.local:9093"
 
-kubecostProductConfigs:
-  clusterName: "production-eks"
-  currencyCode: "USD"
-  defaultModelPricing:
-    enabled: true
-    CPU: "0.031611"
-    RAM: "0.004237"
-    storage: "0.000138"
-    GPU: "0.95"
-
-  # S3 ETL 스토리지 설정 (장기 비용 데이터 보관)
-  etlBucketConfigSecret: "kubecost-etl-bucket"
-
-  # 멀티 클러스터 설정
-  federatedETL:
-    enabled: true
-    primaryCluster: true
-    federatedCluster: true
-    agentKeySecretName: "kubecost-agent-key"
-
-  # SAML/OIDC SSO 설정
-  saml:
-    enabled: true
-    appRootURL: "https://kubecost.internal.example.com"
-    idpMetadataURL: "https://login.example.com/saml/metadata"
-    rbac:
-      enabled: true
-      groups:
-        - name: "admin"
-          enabled: true
-          clusterRoles: "*"
-        - name: "team-leads"
-          enabled: true
-          allClusters: true
-        - name: "engineers"
-          enabled: true
-          allClusters: false
-
-# S3 ETL 스토리지 시크릿
+# 비용 분석 엔진 설정
 kubecostModel:
-  etlBucketConfig:
-    region: "ap-northeast-2"
-    bucket: "my-company-kubecost-etl"
-    path: "etl"
-
+  image: "gcr.io/kubecost1/cost-model:2.3.0"
   resources:
     requests:
       cpu: "200m"
       memory: "512Mi"
     limits:
-      cpu: "1"
+      cpu: "1000m"
       memory: "2Gi"
-
+  # ETL 스토리지 설정 (S3)
+  etlBucketConfigSecret: "kubecost-etl-bucket"
+  # 멀티 클러스터 설정
+  federatedETL:
+    enabled: true
+    primaryCluster: true  # 이 클러스터가 Primary Hub
+    federator:
+      enabled: true
+      primaryClusterID: "eks-production"
+  # 할당 설정
   allocation:
-    nodeLabels:
-      - "team"
-      - "environment"
-      - "cost-center"
+    nodeEnabled: true
+    # 공유 비용 설정
+    sharedNamespaces: "kube-system,monitoring,istio-system,kubecost"
+    sharedOverhead: "500"  # 월 $500 공유 인프라 비용
+    shareIdle: true
+    shareTenancyCosts: true
 
 # 프론트엔드 설정
 kubecostFrontend:
+  image: "gcr.io/kubecost1/frontend:2.3.0"
   resources:
     requests:
       cpu: "100m"
-      memory: "128Mi"
+      memory: "256Mi"
     limits:
       cpu: "500m"
-      memory: "256Mi"
+      memory: "512Mi"
 
-  ingress:
+# S3 ETL 버킷 설정
+kubecostProductConfigs:
+  clusterName: "eks-production"
+  clusterProfile: "production"
+  currencyCode: "USD"
+  defaultModelPricing:
     enabled: true
-    className: "alb"
-    annotations:
-      alb.ingress.kubernetes.io/scheme: "internal"
-      alb.ingress.kubernetes.io/target-type: "ip"
-      alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-      alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:123456789012:certificate/abc-123"
-    hosts:
-      - host: "kubecost.internal.example.com"
-        paths:
-          - path: "/"
-            pathType: "Prefix"
+    region: "ap-northeast-2"
+    provider: "aws"
+  productKey:
+    key: ""        # Enterprise 라이선스 키
+    enabled: true
+  # SAML/OIDC SSO 설정
+  saml:
+    enabled: true
+    idpMetadataURL: "https://sso.example.com/metadata"
+    appRootURL: "https://kubecost.internal.example.com"
+    rbac:
+      enabled: true
+      groups:
+        - name: "finops-admin"
+          enabled: true
+          allClusters: true
+        - name: "team-platform"
+          enabled: true
+          clusters:
+            - "eks-production"
+          namespaces:
+            - "platform-*"
+        - name: "team-backend"
+          enabled: true
+          clusters:
+            - "eks-production"
+          namespaces:
+            - "backend-*"
 
-# 네트워크 비용 모니터링
-networkCosts:
+# Ingress 설정
+ingress:
   enabled: true
-  config:
-    services:
-      amazon-web-services: true
-    destinations:
-      direct-classification:
-        - region: "ap-northeast-2"
-          zone: "ap-northeast-2a"
+  className: "alb"
+  annotations:
+    alb.ingress.kubernetes.io/scheme: "internal"
+    alb.ingress.kubernetes.io/target-type: "ip"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:123456789012:certificate/abc-123"
+    alb.ingress.kubernetes.io/group.name: "internal"
+  hosts:
+    - host: "kubecost.internal.example.com"
+      paths:
+        - path: "/"
+          pathType: "Prefix"
 
-# Prometheus ServiceMonitor
-serviceMonitor:
+# 영구 스토리지
+persistentVolume:
   enabled: true
-  namespace: "monitoring"
-  additionalLabels:
-    release: "prometheus"
+  size: "50Gi"
+  storageClass: "gp3"
+
+# ServiceAccount (Pod Identity)
+serviceAccount:
+  create: true
+  name: "kubecost"
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/kubecost-role"
+
+# NetworkPolicy
+networkPolicy:
+  enabled: true
+  costAnalyzer:
+    enabled: true
+    annotations: {}
+    additionalLabels: {}
 ```
 
-**설치 명령:**
+S3 ETL 버킷 Secret은 다음과 같이 생성합니다:
 
-```bash
-# ETL 버킷 시크릿 생성
-kubectl create namespace kubecost
-
-kubectl create secret generic kubecost-etl-bucket \
-  -n kubecost \
-  --from-literal=AWS_ACCESS_KEY_ID="AKIA..." \
-  --from-literal=AWS_SECRET_ACCESS_KEY="..." \
-  --from-literal=BUCKET_NAME="my-company-kubecost-etl" \
-  --from-literal=S3_REGION="ap-northeast-2"
-
-# Kubecost Enterprise 설치
-helm repo add kubecost https://kubecost.github.io/cost-analyzer/
-helm repo update
-
-helm install kubecost kubecost/cost-analyzer \
-  -n kubecost \
-  -f kubecost-values.yaml \
-  --version 2.5.0
+```yaml
+# kubecost-etl-bucket-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kubecost-etl-bucket
+  namespace: kubecost
+type: Opaque
+stringData:
+  bucket.json: |
+    {
+      "bucket": "kubecost-etl-production",
+      "region": "ap-northeast-2",
+      "path": "etl"
+    }
 ```
 
 ### 2.3 AWS Cost and Usage Report (CUR) 통합
 
-AWS CUR을 Kubecost와 통합하면 실제 AWS 청구 데이터를 기반으로 비용 정확도를 크게 향상시킬 수 있습니다.
+Kubecost가 실제 AWS 청구 데이터를 사용하면 비용 정확도가 크게 향상됩니다. EDP 할인, Savings Plans, Reserved Instances 등의 실제 할인율이 반영됩니다.
 
-**Terraform 인프라 구성:**
+**Terraform으로 CUR 인프라 구성:**
 
 ```hcl
 # cur-infrastructure.tf
-# AWS Cost and Usage Report용 S3 버킷 및 IAM 역할
+# AWS Cost and Usage Report + S3 버킷 + IAM 역할 구성
 
-# CUR 데이터 저장용 S3 버킷
-resource "aws_s3_bucket" "cur_bucket" {
-  bucket = "my-company-cur-data"
-
-  tags = {
-    Purpose     = "AWS Cost and Usage Report"
-    ManagedBy   = "terraform"
-    Environment = "production"
+terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
   }
 }
 
-resource "aws_s3_bucket_versioning" "cur_bucket_versioning" {
-  bucket = aws_s3_bucket.cur_bucket.id
+# CUR용 S3 버킷
+resource "aws_s3_bucket" "cur_bucket" {
+  bucket = "company-cur-reports-${data.aws_caller_identity.current.account_id}"
 
+  tags = {
+    Name        = "CUR Reports Bucket"
+    Environment = "production"
+    ManagedBy   = "terraform"
+    Purpose     = "cost-and-usage-reports"
+  }
+}
+
+# S3 버킷 버전관리 활성화
+resource "aws_s3_bucket_versioning" "cur_bucket" {
+  bucket = aws_s3_bucket.cur_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "cur_bucket_lifecycle" {
+# S3 버킷 암호화 설정
+resource "aws_s3_bucket_server_side_encryption_configuration" "cur_bucket" {
+  bucket = aws_s3_bucket.cur_bucket.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "aws:kms"
+    }
+    bucket_key_enabled = true
+  }
+}
+
+# S3 수명 주기 정책 (오래된 CUR 데이터 자동 정리)
+resource "aws_s3_bucket_lifecycle_configuration" "cur_bucket" {
   bucket = aws_s3_bucket.cur_bucket.id
 
   rule {
-    id     = "cur-data-lifecycle"
+    id     = "cur-lifecycle"
     status = "Enabled"
 
     transition {
@@ -386,58 +463,39 @@ resource "aws_s3_bucket_lifecycle_configuration" "cur_bucket_lifecycle" {
     }
 
     expiration {
-      days = 730
+      days = 730  # 2년 후 삭제
     }
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "cur_bucket_sse" {
-  bucket = aws_s3_bucket.cur_bucket.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "aws:kms"
-    }
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "cur_bucket_public_access" {
-  bucket = aws_s3_bucket.cur_bucket.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-# CUR 데이터 전달을 위한 S3 버킷 정책
-resource "aws_s3_bucket_policy" "cur_bucket_policy" {
+# CUR 전용 버킷 정책 (AWS CUR 서비스 접근 허용)
+resource "aws_s3_bucket_policy" "cur_bucket" {
   bucket = aws_s3_bucket.cur_bucket.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "AllowCURDelivery"
-        Effect = "Allow"
+        Sid       = "AllowCURDelivery"
+        Effect    = "Allow"
         Principal = {
           Service = "billingreports.amazonaws.com"
         }
-        Action = [
+        Action   = [
           "s3:GetBucketAcl",
           "s3:GetBucketPolicy"
         ]
         Resource = aws_s3_bucket.cur_bucket.arn
         Condition = {
           StringEquals = {
-            "aws:SourceArn"    = "arn:aws:cur:us-east-1:${data.aws_caller_identity.current.account_id}:definition/*"
             "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+            "aws:SourceArn"     = "arn:aws:cur:us-east-1:${data.aws_caller_identity.current.account_id}:definition/*"
           }
         }
       },
       {
-        Sid    = "AllowCURWrite"
-        Effect = "Allow"
+        Sid       = "AllowCURWrite"
+        Effect    = "Allow"
         Principal = {
           Service = "billingreports.amazonaws.com"
         }
@@ -445,8 +503,8 @@ resource "aws_s3_bucket_policy" "cur_bucket_policy" {
         Resource = "${aws_s3_bucket.cur_bucket.arn}/*"
         Condition = {
           StringEquals = {
-            "aws:SourceArn"    = "arn:aws:cur:us-east-1:${data.aws_caller_identity.current.account_id}:definition/*"
             "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+            "aws:SourceArn"     = "arn:aws:cur:us-east-1:${data.aws_caller_identity.current.account_id}:definition/*"
           }
         }
       }
@@ -454,23 +512,26 @@ resource "aws_s3_bucket_policy" "cur_bucket_policy" {
   })
 }
 
-# CUR 리포트 정의
-resource "aws_cur_report_definition" "cost_report" {
-  report_name                = "kubecost-cur-report"
+# CUR 리포트 정의 (us-east-1에서만 생성 가능)
+resource "aws_cur_report_definition" "main" {
+  provider = aws.us_east_1
+
+  report_name                = "company-hourly-cur"
   time_unit                  = "HOURLY"
   format                     = "Parquet"
   compression                = "Parquet"
-  additional_schema_elements = ["RESOURCES", "SPLIT_COST_ALLOCATION_DATA"]
-  s3_bucket                  = aws_s3_bucket.cur_bucket.bucket
-  s3_region                  = "us-east-1"
-  s3_prefix                  = "cur-data"
+  additional_schema_elements = ["RESOURCES"]
+  s3_bucket                  = aws_s3_bucket.cur_bucket.id
+  s3_region                  = "ap-northeast-2"
+  s3_prefix                  = "cur-reports"
   report_versioning          = "OVERWRITE_REPORT"
+  additional_artifacts       = ["ATHENA"]
   refresh_closed_reports     = true
 }
 
-# Kubecost가 CUR 데이터를 읽기 위한 IAM 역할 (IRSA)
-resource "aws_iam_role" "kubecost_cur_role" {
-  name = "kubecost-cur-reader"
+# Kubecost IAM 역할 (Pod Identity 사용)
+resource "aws_iam_role" "kubecost" {
+  name = "kubecost-cost-analyzer"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -478,32 +539,37 @@ resource "aws_iam_role" "kubecost_cur_role" {
       {
         Effect = "Allow"
         Principal = {
-          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer, "https://", "")}"
+          Service = "pods.eks.amazonaws.com"
         }
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Condition = {
-          StringEquals = {
-            "${replace(data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer, "https://", "")}:sub" = "system:serviceaccount:kubecost:kubecost-cost-analyzer"
-            "${replace(data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer, "https://", "")}:aud" = "sts.amazonaws.com"
-          }
-        }
+        Action = [
+          "sts:AssumeRole",
+          "sts:TagSession"
+        ]
       }
     ]
   })
+
+  tags = {
+    Name      = "kubecost-cost-analyzer"
+    ManagedBy = "terraform"
+  }
 }
 
-resource "aws_iam_role_policy" "kubecost_cur_policy" {
-  name = "kubecost-cur-access"
-  role = aws_iam_role.kubecost_cur_role.id
+# Kubecost IAM 정책
+resource "aws_iam_role_policy" "kubecost" {
+  name = "kubecost-cost-analyzer-policy"
+  role = aws_iam_role.kubecost.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
+        Sid    = "ReadCURBucket"
         Effect = "Allow"
         Action = [
           "s3:GetObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
         ]
         Resource = [
           aws_s3_bucket.cur_bucket.arn,
@@ -511,21 +577,69 @@ resource "aws_iam_role_policy" "kubecost_cur_policy" {
         ]
       },
       {
+        Sid    = "ReadETLBucket"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket",
+          "s3:DeleteObject",
+          "s3:GetBucketLocation"
+        ]
+        Resource = [
+          "arn:aws:s3:::kubecost-etl-production",
+          "arn:aws:s3:::kubecost-etl-production/*"
+        ]
+      },
+      {
+        Sid    = "CostExplorerAccess"
+        Effect = "Allow"
+        Action = [
+          "ce:GetCostAndUsage",
+          "ce:GetCostForecast",
+          "ce:GetReservationUtilization",
+          "ce:GetSavingsPlansUtilization",
+          "ce:GetReservationPurchaseRecommendation",
+          "ce:GetRightsizingRecommendation"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "AthenaAccess"
         Effect = "Allow"
         Action = [
           "athena:StartQueryExecution",
           "athena:GetQueryExecution",
           "athena:GetQueryResults",
-          "athena:StopQueryExecution"
+          "athena:GetWorkGroup"
         ]
-        Resource = "*"
+        Resource = [
+          "arn:aws:athena:ap-northeast-2:${data.aws_caller_identity.current.account_id}:workgroup/primary"
+        ]
       },
       {
+        Sid    = "GlueAccess"
         Effect = "Allow"
         Action = [
           "glue:GetDatabase",
           "glue:GetTable",
           "glue:GetPartitions"
+        ]
+        Resource = [
+          "arn:aws:glue:ap-northeast-2:${data.aws_caller_identity.current.account_id}:catalog",
+          "arn:aws:glue:ap-northeast-2:${data.aws_caller_identity.current.account_id}:database/athenacurcfn_company_hourly_cur",
+          "arn:aws:glue:ap-northeast-2:${data.aws_caller_identity.current.account_id}:table/athenacurcfn_company_hourly_cur/*"
+        ]
+      },
+      {
+        Sid    = "EC2Describe"
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeInstances",
+          "ec2:DescribeRegions",
+          "ec2:DescribeReservedInstances",
+          "ec2:DescribeVolumes",
+          "ec2:DescribeAddresses"
         ]
         Resource = "*"
       }
@@ -533,188 +647,156 @@ resource "aws_iam_role_policy" "kubecost_cur_policy" {
   })
 }
 
-# Athena 쿼리 결과 저장용 S3 버킷
-resource "aws_s3_bucket" "athena_results" {
-  bucket = "my-company-athena-results"
-
-  tags = {
-    Purpose   = "Athena Query Results"
-    ManagedBy = "terraform"
-  }
+# Pod Identity Association
+resource "aws_eks_pod_identity_association" "kubecost" {
+  cluster_name    = "eks-production"
+  namespace       = "kubecost"
+  service_account = "kubecost"
+  role_arn        = aws_iam_role.kubecost.arn
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "athena_results_lifecycle" {
-  bucket = aws_s3_bucket.athena_results.id
-
-  rule {
-    id     = "cleanup-old-results"
-    status = "Enabled"
-
-    expiration {
-      days = 30
-    }
-  }
-}
-
+# 현재 계정 정보
 data "aws_caller_identity" "current" {}
-
-data "aws_eks_cluster" "cluster" {
-  name = "production-eks"
-}
-
-output "kubecost_role_arn" {
-  value       = aws_iam_role.kubecost_cur_role.arn
-  description = "Kubecost ServiceAccount에 연결할 IAM Role ARN"
-}
-
-output "cur_bucket_name" {
-  value       = aws_s3_bucket.cur_bucket.bucket
-  description = "CUR 데이터가 저장되는 S3 버킷"
-}
 ```
 
-**Kubecost CUR 통합 설정:**
+**Kubecost Cloud Integration 설정:**
 
 ```yaml
-# kubecost-cloud-integration.yaml
-# Kubecost values.yaml에 추가할 CUR 통합 설정
+# kubecost-cloud-integration 값을 values.yaml에 추가
 kubecostProductConfigs:
-  cloudIntegrationSecret: "kubecost-cloud-integration"
-
-  athenaProjectID: "123456789012"
-  athenaBucketName: "s3://my-company-athena-results"
-  athenaRegion: "us-east-1"
-  athenaDatabase: "athenacurcfn_kubecost_cur_report"
-  athenaTable: "kubecost_cur_report"
-  athenaWorkgroup: "primary"
-
-serviceAccount:
-  create: true
-  name: "kubecost-cost-analyzer"
-  annotations:
-    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/kubecost-cur-reader"
-```
-
-```bash
-# Cloud Integration 시크릿 생성
-cat <<EOF > cloud-integration.json
-{
-  "aws": [
+  cloudIntegrationJSON: |
     {
-      "athenaBucketName": "s3://my-company-athena-results",
-      "athenaRegion": "us-east-1",
-      "athenaDatabase": "athenacurcfn_kubecost_cur_report",
-      "athenaTable": "kubecost_cur_report",
-      "athenaWorkgroup": "primary",
-      "projectID": "123456789012",
-      "serviceKeyName": "",
-      "serviceKeySecret": "",
-      "masterPayerARN": ""
+      "aws": [
+        {
+          "athenaBucketName": "company-cur-reports-123456789012",
+          "athenaRegion": "ap-northeast-2",
+          "athenaDatabase": "athenacurcfn_company_hourly_cur",
+          "athenaTable": "company_hourly_cur",
+          "athenaWorkgroup": "primary",
+          "projectID": "123456789012",
+          "serviceKeyName": "",
+          "serviceKeySecret": ""
+        }
+      ]
     }
-  ]
-}
-EOF
-
-kubectl create secret generic kubecost-cloud-integration \
-  -n kubecost \
-  --from-file=cloud-integration.json
 ```
 
 ### 2.4 비용 정확도 튜닝
 
-기본 비용 모델은 On-Demand 가격을 사용하지만, 실제 협상 가격이나 Savings Plans 할인을 반영해야 정확한 비용을 산출할 수 있습니다.
+클라우드 제공자의 공식 가격표는 일반적인 비용을 반영하지만, EDP(Enterprise Discount Program), 볼륨 할인, 협상 가격 등을 반영하려면 커스텀 가격 설정이 필요합니다.
 
 ```yaml
-# custom-pricing-configmap.yaml
-# 커스텀 가격 설정 ConfigMap
+# kubecost-custom-pricing.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: opencost-custom-pricing
-  namespace: opencost
+  name: kubecost-custom-pricing
+  namespace: kubecost
 data:
-  default.json: |
+  # 협상된 가격을 반영한 커스텀 가격표
+  pricing.json: |
     {
       "provider": "aws",
-      "description": "프로덕션 클러스터 커스텀 가격",
-      "regionOverrides": {
-        "ap-northeast-2": {
-          "cpu": "0.0280",
-          "ram": "0.0038",
-          "gpu": "0.85",
-          "storage": "0.000127"
-        }
-      },
-      "CPU": "0.031611",
-      "spotCPU": "0.010537",
-      "RAM": "0.004237",
-      "spotRAM": "0.001412",
-      "GPU": "0.95",
-      "storage": "0.000138",
+      "region": "ap-northeast-2",
+      "description": "EDP 15% 할인이 적용된 커스텀 가격표",
+      "CPU": "0.03944",
+      "RAM": "0.00493",
+      "GPU": "0.4471",
+      "storage": "0.000108",
+      "spotCPU": "0.01183",
+      "spotRAM": "0.00148",
       "zoneNetworkEgress": "0.01",
       "regionNetworkEgress": "0.01",
-      "internetNetworkEgress": "0.09",
+      "internetNetworkEgress": "0.076",
       "spotLabel": "karpenter.sh/capacity-type",
-      "spotLabelValue": "spot"
+      "spotLabelValue": "spot",
+      "gpuLabel": "karpenter.k8s.aws/instance-gpu-count",
+      "gpuLabelValue": "1",
+      "sharedOverheadCostPerMonth": "500",
+      "sharedNamespaces": "kube-system,monitoring,istio-system,kubecost,cert-manager"
     }
 ```
 
+**공유 비용 할당 설정:**
+
 ```yaml
 # kubecost-shared-cost-config.yaml
-# 공유 비용 할당 설정
-kubecostProductConfigs:
-  # 공유 네임스페이스 비용 분배
-  sharedNamespaces: "kube-system,monitoring,istio-system,cert-manager,external-dns"
-
-  # 공유 비용 분배 방법
-  sharedOverhead:
-    cpu: "2000m"      # 컨트롤 플레인 CPU 오버헤드
-    ram: "8Gi"        # 컨트롤 플레인 메모리 오버헤드
-    monthly: "500"    # 월간 고정 비용 (관리형 서비스 등)
-
-  # 분배 가중치 (비율 기반)
-  shareBy: "weighted"  # weighted | even | proportional
-
-  # Idle 비용 할당
-  shareTenancyCosts: true
-  idleByNode: false
-
-  # 네임스페이스별 할인 적용
-  discount:
-    defaultDiscount: "0.25"  # Savings Plans 25% 할인 기본 적용
-    negotiatedDiscount:
-      - namespace: "production"
-        discount: "0.30"    # 프로덕션은 30% 할인 (Reserved Instance)
-      - namespace: "staging"
-        discount: "0.20"    # 스테이징은 20% 할인
-
-  # 라벨 기반 비용 집계
-  labelMappingConfigs:
-    enabled: true
-    owner_label: "team"
-    product_label: "service"
-    environment_label: "environment"
-    department_label: "cost-center"
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubecost-allocation-config
+  namespace: kubecost
+data:
+  allocation.json: |
+    {
+      "sharedCosts": [
+        {
+          "name": "control-plane",
+          "type": "weighted",
+          "weight": "cpuCost",
+          "filter": {
+            "namespace": "kube-system"
+          }
+        },
+        {
+          "name": "monitoring",
+          "type": "weighted",
+          "weight": "totalCost",
+          "filter": {
+            "namespace": "monitoring"
+          }
+        },
+        {
+          "name": "service-mesh",
+          "type": "weighted",
+          "weight": "cpuCost",
+          "filter": {
+            "namespace": "istio-system"
+          }
+        },
+        {
+          "name": "networking",
+          "type": "even",
+          "filter": {
+            "namespace": "aws-load-balancer-controller,external-dns,cert-manager"
+          }
+        }
+      ],
+      "idleCosts": {
+        "shareByNode": true,
+        "shareByCluster": false
+      }
+    }
 ```
 
 ---
 
 ## 3. Showback/Chargeback 구현
 
+Showback은 각 팀에게 비용 정보를 보여주는 것이고, Chargeback은 실제로 내부 예산에서 차감하는 것입니다. 대부분의 조직은 Showback에서 시작하여 점차 Chargeback으로 진화합니다.
+
 ### 3.1 레이블 전략
 
-효과적인 비용 귀속을 위해 모든 워크로드에 표준화된 레이블을 적용해야 합니다.
+비용 할당의 정확도는 레이블링 전략의 일관성에 달려 있습니다. 모든 워크로드에 비용 관련 레이블이 빠짐없이 적용되어야 합니다.
 
 **필수 레이블:**
 
-| 레이블 | 설명 | 예시 값 |
-|--------|------|--------|
-| `team` | 소유 팀 | `platform`, `backend`, `frontend`, `data` |
-| `service` | 서비스 이름 | `api-gateway`, `user-service`, `payment` |
-| `environment` | 환경 구분 | `production`, `staging`, `development` |
-| `cost-center` | 비용 센터 코드 | `CC-1001`, `CC-2001`, `CC-3001` |
+| 레이블 | 설명 | 예시 |
+|--------|------|------|
+| `team` | 워크로드를 소유한 팀 | `backend`, `frontend`, `data` |
+| `service` | 서비스 이름 | `user-api`, `payment-service` |
+| `environment` | 환경 구분 | `production`, `staging`, `dev` |
+| `cost-center` | 비용 센터 코드 | `CC-1001`, `CC-2003` |
 
-**Kyverno 레이블 강제 정책:**
+**권장 레이블:**
+
+| 레이블 | 설명 | 예시 |
+|--------|------|------|
+| `product` | 제품/프로젝트 이름 | `marketplace`, `admin-portal` |
+| `tier` | 서비스 등급 | `critical`, `standard`, `batch` |
+| `managed-by` | 관리 도구 | `argocd`, `helm`, `kubectl` |
+
+**Kyverno 정책으로 비용 레이블 강제:**
 
 ```yaml
 # kyverno-cost-labels-policy.yaml
@@ -723,18 +805,18 @@ kind: ClusterPolicy
 metadata:
   name: require-cost-labels
   annotations:
-    policies.kyverno.io/title: 비용 관련 필수 레이블 강제
-    policies.kyverno.io/category: FinOps
-    policies.kyverno.io/severity: high
-    policies.kyverno.io/subject: Deployment
+    policies.kyverno.io/title: "비용 할당 레이블 필수 적용"
     policies.kyverno.io/description: >-
-      모든 Deployment에 비용 귀속을 위한 필수 레이블(team, service,
-      environment, cost-center)을 요구합니다.
+      모든 Deployment에 비용 할당에 필요한 레이블(team, service, environment, cost-center)이
+      반드시 포함되어야 합니다. 이 레이블은 Kubecost 비용 할당과 Showback 리포트에 사용됩니다.
+    policies.kyverno.io/category: "FinOps"
+    policies.kyverno.io/severity: "high"
 spec:
   validationFailureAction: Enforce
   background: true
   rules:
-    - name: check-cost-labels-on-deployment
+    # 시스템 네임스페이스는 제외
+    - name: require-cost-labels-on-deployments
       match:
         any:
           - resources:
@@ -744,21 +826,31 @@ spec:
                 - "!kube-system"
                 - "!kube-public"
                 - "!kube-node-lease"
-                - "!kyverno"
+                - "!monitoring"
+                - "!istio-system"
+                - "!kubecost"
+                - "!cert-manager"
+                - "!argocd"
       validate:
         message: >-
-          Deployment에 필수 비용 레이블이 누락되었습니다.
-          다음 레이블을 모두 포함해야 합니다:
-          team, service, environment, cost-center.
-          누락된 레이블: {{request.object.metadata.labels}}
+          Deployment에 비용 할당 레이블이 누락되었습니다.
+          다음 레이블을 모두 포함해야 합니다: team, service, environment, cost-center.
+          예시:
+            metadata:
+              labels:
+                team: "backend"
+                service: "user-api"
+                environment: "production"
+                cost-center: "CC-1001"
         pattern:
           metadata:
             labels:
               team: "?*"
               service: "?*"
-              environment: "?*"
-              cost-center: "?*"
-    - name: check-cost-labels-on-pod-template
+              environment: "production | staging | development"
+              cost-center: "CC-?*"
+    # Pod 템플릿에도 레이블 전파 확인
+    - name: require-cost-labels-on-pod-template
       match:
         any:
           - resources:
@@ -768,11 +860,15 @@ spec:
                 - "!kube-system"
                 - "!kube-public"
                 - "!kube-node-lease"
-                - "!kyverno"
+                - "!monitoring"
+                - "!istio-system"
+                - "!kubecost"
+                - "!cert-manager"
+                - "!argocd"
       validate:
         message: >-
-          Deployment의 Pod template에도 비용 레이블을 포함해야 합니다.
-          Pod 레벨 메트릭 수집에 필요합니다.
+          Deployment의 Pod 템플릿에 비용 할당 레이블이 누락되었습니다.
+          spec.template.metadata.labels에 team, service 레이블을 포함해야 합니다.
         pattern:
           spec:
             template:
@@ -780,88 +876,100 @@ spec:
                 labels:
                   team: "?*"
                   service: "?*"
-                  environment: "?*"
-                  cost-center: "?*"
-    - name: validate-cost-center-format
+    # StatefulSet에도 동일 적용
+    - name: require-cost-labels-on-statefulsets
       match:
         any:
           - resources:
               kinds:
-                - Deployment
+                - StatefulSet
               namespaces:
                 - "!kube-system"
                 - "!kube-public"
                 - "!kube-node-lease"
-                - "!kyverno"
+                - "!monitoring"
+                - "!istio-system"
+                - "!kubecost"
+                - "!cert-manager"
+                - "!argocd"
       validate:
         message: >-
-          cost-center 레이블은 'CC-' 접두사와 4자리 숫자 형식이어야 합니다.
-          예: CC-1001
+          StatefulSet에 비용 할당 레이블이 누락되었습니다.
+          다음 레이블을 모두 포함해야 합니다: team, service, environment, cost-center.
         pattern:
           metadata:
             labels:
-              cost-center: "CC-????"
+              team: "?*"
+              service: "?*"
+              environment: "production | staging | development"
+              cost-center: "CC-?*"
 ```
 
 ### 3.2 Namespace 기반 비용 할당
 
-**Kubecost Allocation API 활용:**
+Kubecost Allocation API를 사용하면 프로그래밍 방식으로 비용 데이터를 조회할 수 있습니다. 이를 통해 자동화된 리포트, 대시보드, Slack 알림 등을 구축할 수 있습니다.
+
+**네임스페이스별 비용 조회:**
 
 ```bash
-# 팀별 월간 비용 조회
-curl -s "http://kubecost.internal.example.com/model/allocation" \
-  --data-urlencode 'window=month' \
-  --data-urlencode 'aggregate=label:team' \
-  --data-urlencode 'idle=true' \
-  --data-urlencode 'shareIdle=weighted' \
-  | jq '.data[0] | to_entries[] | {
-      team: .key,
-      totalCost: (.value.totalCost | round),
-      cpuCost: (.value.cpuCost | round),
-      ramCost: (.value.ramCost | round),
-      pvCost: (.value.pvCost | round),
-      networkCost: (.value.networkCost | round)
-    }'
-
-# 네임스페이스별 일일 비용 추이 (최근 7일)
-curl -s "http://kubecost.internal.example.com/model/allocation" \
-  --data-urlencode 'window=7d' \
-  --data-urlencode 'aggregate=namespace' \
-  --data-urlencode 'accumulate=false' \
-  --data-urlencode 'idle=true' \
+# 지난 7일간 네임스페이스별 비용 조회
+curl -s "http://kubecost.kubecost.svc.cluster.local:9090/model/allocation?window=7d&aggregate=namespace&accumulate=true" \
   | jq '.data[] | to_entries[] | {
-      namespace: .key,
-      date: .value.start,
-      totalCost: (.value.totalCost | round)
-    }'
-
-# 특정 팀의 서비스별 비용 상세 조회
-curl -s "http://kubecost.internal.example.com/model/allocation" \
-  --data-urlencode 'window=lastweek' \
-  --data-urlencode 'aggregate=label:service' \
-  --data-urlencode 'filterLabels=team:backend' \
-  --data-urlencode 'idle=false' \
-  | jq '.data[0] | to_entries | sort_by(-.value.totalCost) | .[:10] | .[] | {
-      service: .key,
-      totalCost: (.value.totalCost * 100 | round / 100),
-      cpuEfficiency: ((.value.cpuEfficiency // 0) * 100 | round),
-      ramEfficiency: ((.value.ramEfficiency // 0) * 100 | round)
-    }'
+    namespace: .key,
+    cpuCost: .value.cpuCost,
+    ramCost: .value.ramCost,
+    pvCost: .value.pvCost,
+    networkCost: .value.networkCost,
+    totalCost: .value.totalCost,
+    cpuEfficiency: .value.cpuEfficiency,
+    ramEfficiency: .value.ramEfficiency
+  }' | jq -s 'sort_by(-.totalCost) | .[:10]'
 ```
 
-**팀 네임스페이스 ResourceQuota:**
+**팀별 비용 조회 (레이블 기반):**
+
+```bash
+# team 레이블 기준 비용 조회 (지난 30일)
+curl -s "http://kubecost.kubecost.svc.cluster.local:9090/model/allocation?window=30d&aggregate=label:team&accumulate=true&shareIdle=true&shareSplit=weighted&shareNamespaces=kube-system,monitoring,istio-system" \
+  | jq '.data[] | to_entries[] | {
+    team: .key,
+    cpuCost: (.value.cpuCost | . * 100 | round / 100),
+    ramCost: (.value.ramCost | . * 100 | round / 100),
+    totalCost: (.value.totalCost | . * 100 | round / 100),
+    cpuEfficiency: (.value.cpuEfficiency | . * 10000 | round / 100),
+    ramEfficiency: (.value.ramEfficiency | . * 10000 | round / 100)
+  }'
+```
+
+**서비스별 비용 상세 조회:**
+
+```bash
+# 특정 팀(backend)의 서비스별 비용 상세 (지난 7일)
+curl -s "http://kubecost.kubecost.svc.cluster.local:9090/model/allocation?window=7d&aggregate=label:service&accumulate=true&filterLabels=team:backend" \
+  | jq '.data[] | to_entries[] | {
+    service: .key,
+    totalCost: (.value.totalCost | . * 100 | round / 100),
+    cpuRequest: (.value.cpuCoreRequestAverage | . * 1000 | round),
+    ramRequestMB: (.value.ramByteRequestAverage / 1048576 | round),
+    cpuEfficiency: (.value.cpuEfficiency | . * 10000 | round / 100),
+    ramEfficiency: (.value.ramEfficiency | . * 10000 | round / 100),
+    totalEfficiency: (.value.totalEfficiency | . * 10000 | round / 100)
+  }' | jq -s 'sort_by(-.totalCost)'
+```
+
+**팀 네임스페이스 ResourceQuota 설정:**
 
 ```yaml
-# team-resource-quotas.yaml
-# backend 팀 프로덕션 네임스페이스 쿼터
+# team-backend-quota.yaml
+# 백엔드 팀 네임스페이스의 리소스 한도 설정
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: team-backend-quota
+  name: cost-quota
   namespace: backend-production
   labels:
     team: "backend"
-    cost-center: "CC-2001"
+    cost-center: "CC-1001"
 spec:
   hard:
     requests.cpu: "20"
@@ -871,18 +979,17 @@ spec:
     persistentvolumeclaims: "20"
     requests.storage: "200Gi"
     pods: "100"
-    services: "30"
     services.loadbalancers: "3"
 ---
-# frontend 팀 프로덕션 네임스페이스 쿼터
+# 프론트엔드 팀 네임스페이스의 리소스 한도 설정
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: team-frontend-quota
+  name: cost-quota
   namespace: frontend-production
   labels:
     team: "frontend"
-    cost-center: "CC-2002"
+    cost-center: "CC-1002"
 spec:
   hard:
     requests.cpu: "10"
@@ -891,235 +998,386 @@ spec:
     limits.memory: "40Gi"
     persistentvolumeclaims: "10"
     requests.storage: "100Gi"
-    pods: "60"
-    services: "20"
+    pods: "50"
     services.loadbalancers: "2"
 ---
-# data 팀 프로덕션 네임스페이스 쿼터
+# 데이터 팀 네임스페이스의 리소스 한도 설정
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: team-data-quota
+  name: cost-quota
   namespace: data-production
   labels:
     team: "data"
-    cost-center: "CC-3001"
+    cost-center: "CC-2003"
 spec:
   hard:
-    requests.cpu: "40"
-    requests.memory: "160Gi"
-    limits.cpu: "80"
-    limits.memory: "320Gi"
-    persistentvolumeclaims: "30"
-    requests.storage: "1Ti"
-    pods: "150"
-    services: "20"
+    requests.cpu: "30"
+    requests.memory: "60Gi"
+    limits.cpu: "60"
+    limits.memory: "120Gi"
+    persistentvolumeclaims: "50"
+    requests.storage: "500Gi"
+    pods: "200"
     services.loadbalancers: "2"
 ```
 
 ### 3.3 공유 비용 분배
 
-클러스터에는 특정 팀에 귀속되지 않는 공유 비용이 존재합니다. 이를 공정하게 분배하는 전략이 필요합니다.
+Kubernetes 클러스터에는 모든 팀이 공유하는 인프라 비용이 존재합니다. 이 비용을 공정하게 분배하는 것이 Showback/Chargeback의 핵심 과제입니다.
+
+**공유 비용 유형과 분배 방식:**
+
+| 공유 비용 항목 | 포함 리소스 | 권장 분배 방식 | 근거 |
+|---------------|-----------|---------------|------|
+| 컨트롤 플레인 | kube-system, EKS 관리 비용 | CPU 비용 가중치 | 컴퓨팅 사용량에 비례 |
+| 모니터링 | Prometheus, Grafana, Loki | 총 비용 가중치 | 전체 리소스 사용에 비례 |
+| 서비스 메시 | Istio, Envoy 사이드카 | CPU 비용 가중치 | 네트워크 처리량에 비례 |
+| 네트워킹 | ALB Controller, External DNS | 균등 분배 | 팀 수에 상관없이 동일 |
+| 보안 | cert-manager, OPA, Falco | 균등 분배 | 모든 팀이 동일하게 혜택 |
+| 유휴 비용 | 미사용 노드 리소스 | 노드별 가중치 | 노드 사용량에 비례 |
 
 ```mermaid
-graph TD
-    A[총 클러스터 비용] --> B[직접 비용<br/>팀 워크로드]
-    A --> C[공유 비용]
-
-    C --> D[컨트롤 플레인<br/>EKS 관리 비용]
-    C --> E[공유 인프라<br/>Monitoring, Ingress]
-    C --> F[네트워크 비용<br/>NAT Gateway, LB]
-    C --> G[유휴 리소스<br/>미사용 할당량]
-
-    D --> H{분배 방법}
-    E --> H
-    F --> H
-    G --> H
-
-    H --> I[균등 분배<br/>팀 수로 나눔]
-    H --> J[비례 분배<br/>리소스 사용 비율]
-    H --> K[가중 분배<br/>커스텀 가중치]
-```
-
-**공유 비용 분배 유형:**
-
-| 비용 유형 | 분배 방법 | 근거 |
-|----------|----------|------|
-| EKS Control Plane ($73/월) | 균등 분배 | 모든 팀이 동등하게 사용 |
-| Monitoring Stack | CPU/Memory 비례 | 메트릭 양에 비례 |
-| Ingress Controller | 트래픽 비례 | 요청 수에 비례 |
-| NAT Gateway | 아웃바운드 비례 | 외부 트래픽에 비례 |
-| 유휴 리소스 | CPU/Memory 비례 | 할당량에 비례하여 책임 |
-
-```yaml
-# kubecost-shared-costs.yaml
-# Kubecost 공유 비용 분배 상세 설정
-kubecostProductConfigs:
-  sharedCosts:
-    # 컨트롤 플레인 비용 - 균등 분배
-    - name: "EKS Control Plane"
-      type: "recurring"
-      monthly: "73.00"
-      allocation: "even"
-
-    # 모니터링 스택 - 비례 분배
-    - name: "Monitoring Infrastructure"
-      type: "namespace"
-      namespaces:
-        - "monitoring"
-        - "logging"
-      allocation: "proportional"
-
-    # Ingress / Load Balancer 비용 - 비례 분배
-    - name: "Ingress Infrastructure"
-      type: "namespace"
-      namespaces:
-        - "ingress-nginx"
-        - "external-dns"
-      allocation: "proportional"
-
-    # 보안 인프라 - 균등 분배
-    - name: "Security Infrastructure"
-      type: "namespace"
-      namespaces:
-        - "cert-manager"
-        - "kyverno"
-        - "falco"
-      allocation: "even"
-
-    # NAT Gateway 비용 - 비례 분배
-    - name: "NAT Gateway"
-      type: "recurring"
-      monthly: "150.00"
-      allocation: "proportional"
+graph TB
+    subgraph "공유 비용 분배 흐름"
+        Total["총 클러스터 비용<br/>$10,000/월"]
+        
+        Direct["직접 비용<br/>$6,500 (65%)"]
+        Shared["공유 비용<br/>$2,500 (25%)"]
+        Idle["유휴 비용<br/>$1,000 (10%)"]
+        
+        Total --> Direct
+        Total --> Shared
+        Total --> Idle
+        
+        TeamA["팀 A<br/>$3,000 + $800 + $320<br/>= $4,120"]
+        TeamB["팀 B<br/>$2,000 + $600 + $240<br/>= $2,840"]
+        TeamC["팀 C<br/>$1,500 + $1,100 + $440<br/>= $3,040"]
+        
+        Direct --> TeamA
+        Direct --> TeamB
+        Direct --> TeamC
+        Shared --> TeamA
+        Shared --> TeamB
+        Shared --> TeamC
+        Idle --> TeamA
+        Idle --> TeamB
+        Idle --> TeamC
+    end
+    
+    style Total fill:#E74C3C,color:#fff
+    style Direct fill:#3498DB,color:#fff
+    style Shared fill:#E67E22,color:#fff
+    style Idle fill:#95A5A6,color:#fff
+    style TeamA fill:#2ECC71,color:#fff
+    style TeamB fill:#2ECC71,color:#fff
+    style TeamC fill:#2ECC71,color:#fff
 ```
 
 ### 3.4 Grafana Showback 대시보드
 
-팀별/서비스별 비용을 시각화하는 Grafana 대시보드 설정입니다.
+팀별/서비스별 비용을 실시간으로 확인할 수 있는 Grafana 대시보드를 구성합니다. Kubecost가 Prometheus에 노출하는 메트릭을 활용합니다.
 
 ```json
 {
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "id": null,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
-      "title": "Total Monthly Cost by Team",
-      "type": "barchart",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 0 },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyUSD",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "USD / day",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "unit": "currencyUSD"
+        }
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "table",
+          "placement": "right",
+          "sortBy": "Total",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "팀별 일일 비용 추이",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (label_team) (\n  label_replace(\n    container_cpu_allocation{namespace!~\"kube-system|monitoring|istio-system|kubecost\"} * on(node) group_left() node_cpu_hourly_cost * 24,\n    \"label_team\", \"$1\", \"label_team\", \"(.+)\"\n  )\n  +\n  label_replace(\n    container_memory_allocation_bytes{namespace!~\"kube-system|monitoring|istio-system|kubecost\"} / 1024 / 1024 / 1024 * on(node) group_left() node_ram_hourly_cost * 24,\n    \"label_team\", \"$1\", \"label_team\", \"(.+)\"\n  )\n)",
+          "legendFormat": "{{label_team}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "USD / day",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "unit": "currencyUSD"
+        }
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "table",
+          "placement": "right",
+          "sortBy": "Total",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "서비스별 일일 비용 추이",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (label_service) (\n  label_replace(\n    container_cpu_allocation{namespace!~\"kube-system|monitoring|istio-system|kubecost\"} * on(node) group_left() node_cpu_hourly_cost * 24,\n    \"label_service\", \"$1\", \"label_service\", \"(.+)\"\n  )\n  +\n  label_replace(\n    container_memory_allocation_bytes{namespace!~\"kube-system|monitoring|istio-system|kubecost\"} / 1024 / 1024 / 1024 * on(node) group_left() node_ram_hourly_cost * 24,\n    \"label_service\", \"$1\", \"label_service\", \"(.+)\"\n  )\n)",
+          "legendFormat": "{{label_service}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 1000 },
-              { "color": "red", "value": 5000 }
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 40},
+              {"color": "orange", "value": 60},
+              {"color": "red", "value": 80}
             ]
-          }
-        },
-        "overrides": []
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        }
       },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "id": 3,
       "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
         "orientation": "horizontal",
-        "showValue": "always",
-        "barWidth": 0.7,
-        "groupWidth": 0.7
+        "showUnfilled": true
       },
+      "title": "팀별 CPU 효율성 (Request 대비 실사용)",
+      "type": "bargauge",
       "targets": [
         {
-          "expr": "sum by (label_team) (avg_over_time(kubecost_cluster_costs{cluster=\"production-eks\"}[30d]) * 730)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (label_team) (\n  rate(container_cpu_usage_seconds_total{namespace!~\"kube-system|monitoring|istio-system|kubecost\"}[1h])\n) \n/ \nsum by (label_team) (\n  container_cpu_allocation{namespace!~\"kube-system|monitoring|istio-system|kubecost\"}\n)",
           "legendFormat": "{{label_team}}",
           "refId": "A"
         }
       ]
     },
     {
-      "title": "Daily Cost Trend by Team",
-      "type": "timeseries",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 40},
+              {"color": "orange", "value": 60},
+              {"color": "red", "value": 80}
+            ]
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 4,
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "showUnfilled": true
+      },
+      "title": "팀별 메모리 효율성 (Request 대비 실사용)",
+      "type": "bargauge",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (label_team) (\n  container_memory_working_set_bytes{namespace!~\"kube-system|monitoring|istio-system|kubecost\"}\n) \n/ \nsum by (label_team) (\n  container_memory_allocation_bytes{namespace!~\"kube-system|monitoring|istio-system|kubecost\"}\n)",
+          "legendFormat": "{{label_team}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "currencyUSD",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 15,
-            "pointSize": 5,
-            "stacking": { "mode": "normal" }
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "mean"] },
-        "tooltip": { "mode": "multi" }
-      },
-      "targets": [
-        {
-          "expr": "sum by (label_team) (kubecost_namespace_daily_cost{cluster=\"production-eks\"})",
-          "legendFormat": "{{label_team}}",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "title": "Cost per Service (Top 15)",
-      "type": "table",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": { "h": 12, "w": 12, "x": 0, "y": 10 },
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "Total Cost" },
-            "properties": [{ "id": "unit", "value": "currencyUSD" }]
+          "color": {
+            "mode": "thresholds"
           },
-          {
-            "matcher": { "id": "byName", "options": "CPU Efficiency" },
-            "properties": [
-              { "id": "unit", "value": "percentunit" },
-              { "id": "thresholds", "value": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "red", "value": null },
-                  { "color": "yellow", "value": 0.4 },
-                  { "color": "green", "value": 0.65 }
-                ]
-              }}
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 100},
+              {"color": "red", "value": 500}
             ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 5,
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Total Cost"
           }
         ]
       },
-      "options": {
-        "sortBy": [{ "displayName": "Total Cost", "desc": true }],
-        "showHeader": true
-      },
+      "title": "네임스페이스별 월간 비용 요약",
+      "type": "table",
       "targets": [
         {
-          "expr": "topk(15, sum by (label_service) (avg_over_time(kubecost_namespace_costs{cluster=\"production-eks\"}[30d]) * 730))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (namespace) (\n  (container_cpu_allocation * on(node) group_left() node_cpu_hourly_cost + container_memory_allocation_bytes / 1024 / 1024 / 1024 * on(node) group_left() node_ram_hourly_cost) * 730\n)",
           "format": "table",
+          "instant": true,
           "legendFormat": "",
-          "refId": "A",
-          "instant": true
+          "refId": "A"
         }
       ],
       "transformations": [
@@ -1127,123 +1385,56 @@ kubecostProductConfigs:
           "id": "organize",
           "options": {
             "renameByName": {
-              "label_service": "Service",
-              "Value": "Total Cost"
+              "namespace": "Namespace",
+              "Value": "Monthly Cost (USD)"
             }
           }
-        }
-      ]
-    },
-    {
-      "title": "Resource Efficiency by Namespace",
-      "type": "gauge",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 10 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "min": 0,
-          "max": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "orange", "value": 0.3 },
-              { "color": "yellow", "value": 0.5 },
-              { "color": "green", "value": 0.65 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "orientation": "auto"
-      },
-      "targets": [
-        {
-          "expr": "avg by (namespace) (kubecost_container_cpu_usage / kubecost_container_cpu_request)",
-          "legendFormat": "{{namespace}}",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "title": "Cost Breakdown (CPU / Memory / Storage / Network)",
-      "type": "piechart",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 16 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "currencyUSD"
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
-        "pieType": "donut",
-        "reduceOptions": { "calcs": ["lastNotNull"] }
-      },
-      "targets": [
-        {
-          "expr": "sum(kubecost_cluster_cpu_cost{cluster=\"production-eks\"}) * 730",
-          "legendFormat": "CPU",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(kubecost_cluster_ram_cost{cluster=\"production-eks\"}) * 730",
-          "legendFormat": "Memory",
-          "refId": "B"
-        },
-        {
-          "expr": "sum(kubecost_cluster_pv_cost{cluster=\"production-eks\"}) * 730",
-          "legendFormat": "Storage",
-          "refId": "C"
-        },
-        {
-          "expr": "sum(kubecost_cluster_network_cost{cluster=\"production-eks\"}) * 730",
-          "legendFormat": "Network",
-          "refId": "D"
         }
       ]
     }
   ],
   "refresh": "5m",
-  "schemaVersion": 39,
-  "tags": ["finops", "cost", "kubecost"],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["finops", "cost", "kubernetes"],
   "templating": {
     "list": [
       {
-        "name": "cluster",
+        "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values(container_cpu_allocation, namespace)",
+        "name": "namespace",
+        "query": "label_values(container_cpu_allocation, namespace)",
+        "refresh": 2,
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(kubecost_cluster_costs, cluster)",
-        "current": { "text": "production-eks", "value": "production-eks" },
-        "refresh": 2
+        "multi": true,
+        "includeAll": true
       },
       {
+        "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values(kube_pod_labels{label_team!=\"\"}, label_team)",
         "name": "team",
+        "query": "label_values(kube_pod_labels{label_team!=\"\"}, label_team)",
+        "refresh": 2,
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(kube_pod_labels{cluster=\"$cluster\"}, label_team)",
-        "includeAll": true,
         "multi": true,
-        "refresh": 2
+        "includeAll": true
       }
     ]
   },
-  "time": { "from": "now-30d", "to": "now" },
-  "timepicker": {},
-  "timezone": "Asia/Seoul",
-  "title": "FinOps - Team Cost Showback",
-  "uid": "finops-showback-001",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "title": "FinOps - Showback Dashboard",
+  "uid": "finops-showback",
   "version": 1
 }
 ```
@@ -1252,365 +1443,480 @@ kubecostProductConfigs:
 
 ## 4. 비용 이상 탐지
 
+비용 이상을 조기에 탐지하면 예산 초과를 방지하고, 리소스 낭비나 잘못된 설정을 빠르게 수정할 수 있습니다.
+
 ### 4.1 Kubecost 알림 구성
 
-Kubecost의 내장 알림 기능을 활용하여 비용 이상을 탐지합니다.
+Kubecost는 비용 기반 알림을 네이티브로 지원합니다. 예산 초과, 효율성 저하, 비용 급증 등 다양한 시나리오에 대한 알림을 구성할 수 있습니다.
 
 ```yaml
-# kubecost-alerts-values.yaml
-# Kubecost Helm values에 추가할 알림 설정
-kubecostProductConfigs:
-  alerts:
-    # 일일 예산 초과 알림
-    - type: budget
-      threshold: 150         # 일일 $150 초과 시
-      window: daily
-      aggregation: cluster
-      filter: ""
-      ownerContact:
-        - "finops-team@example.com"
-        - "slack:finops-alerts"
-
-    # 팀별 주간 예산 초과
-    - type: budget
-      threshold: 500         # 주간 $500 초과 시
-      window: weekly
-      aggregation: label:team
-      filter: ""
-      ownerContact:
-        - "finops-team@example.com"
-
-    # 비용 급증 알림 (전주 대비 30% 이상 증가)
-    - type: recurringUpdate
-      threshold: 0.30        # 30% 증가 시
-      window: weekly
-      aggregation: namespace
-      filter: ""
-      ownerContact:
-        - "finops-team@example.com"
-        - "slack:finops-alerts"
-
-    # 리소스 효율성 저하 알림
-    - type: efficiency
-      threshold: 0.40        # 효율성 40% 미만
-      window: 48h
-      aggregation: label:team
-      filter: ""
-      ownerContact:
-        - "finops-team@example.com"
-
-    # Spot Instance 중단 비용 영향
-    - type: recurringUpdate
-      threshold: 0.50        # 비용 50% 이상 변동
-      window: daily
-      aggregation: label:karpenter.sh/capacity-type
-      filter: "spot"
-      ownerContact:
-        - "platform-team@example.com"
-
-    # 새로운 고비용 워크로드 탐지
-    - type: budget
-      threshold: 50          # 일일 $50 초과하는 새 워크로드
-      window: daily
-      aggregation: controller
-      filter: ""
-      ownerContact:
-        - "finops-team@example.com"
-
-  # Slack Webhook 연동
-  notifications:
-    slack:
-      enabled: true
-      webhookURL: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
-      channel: "#finops-alerts"
-      username: "Kubecost Alert"
-    email:
-      enabled: true
-      smtpHost: "smtp.example.com"
-      smtpPort: 587
-      smtpUsername: "alerts@example.com"
-      smtpPasswordSecret: "kubecost-smtp-secret"
-      fromAddress: "kubecost@example.com"
+# kubecost-alerts-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubecost-alerts
+  namespace: kubecost
+data:
+  alerts.json: |
+    {
+      "alerts": [
+        {
+          "type": "budget",
+          "threshold": 10000,
+          "window": "30d",
+          "aggregation": "cluster",
+          "filter": "",
+          "ownerContact": [
+            {
+              "type": "slack",
+              "url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+            },
+            {
+              "type": "email",
+              "url": "finops@example.com"
+            }
+          ],
+          "slackWebhookUrl": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+          "name": "월간 클러스터 예산 초과",
+          "description": "클러스터 월간 비용이 $10,000을 초과했습니다."
+        },
+        {
+          "type": "budget",
+          "threshold": 3000,
+          "window": "30d",
+          "aggregation": "namespace",
+          "filter": "backend-production",
+          "ownerContact": [
+            {
+              "type": "slack",
+              "url": "https://hooks.slack.com/services/T00000000/B00000000/YYYYYYYYYYYYYYYYYYYYYYYY"
+            }
+          ],
+          "name": "백엔드팀 월간 예산 초과",
+          "description": "백엔드팀 네임스페이스 월간 비용이 $3,000을 초과했습니다."
+        },
+        {
+          "type": "efficiency",
+          "threshold": 0.4,
+          "window": "48h",
+          "aggregation": "namespace",
+          "filter": "",
+          "ownerContact": [
+            {
+              "type": "slack",
+              "url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+          ],
+          "name": "리소스 효율성 저하",
+          "description": "네임스페이스의 리소스 효율성이 40% 미만으로 떨어졌습니다."
+        },
+        {
+          "type": "recurringUpdate",
+          "window": "7d",
+          "aggregation": "namespace",
+          "filter": "",
+          "ownerContact": [
+            {
+              "type": "slack",
+              "url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+          ],
+          "name": "주간 비용 리포트",
+          "description": "주간 네임스페이스별 비용 변화 리포트입니다."
+        },
+        {
+          "type": "spendChange",
+          "relativeThreshold": 0.3,
+          "window": "1d",
+          "baselineWindow": "7d",
+          "aggregation": "namespace",
+          "filter": "",
+          "ownerContact": [
+            {
+              "type": "slack",
+              "url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+          ],
+          "name": "비용 급증 감지",
+          "description": "지난 7일 평균 대비 일일 비용이 30% 이상 증가했습니다."
+        }
+      ],
+      "globalAlertConfigs": {
+        "enabled": true,
+        "slackWebhookUrl": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+        "alertFrequencyMinutes": 1440
+      }
+    }
 ```
 
 ### 4.2 Prometheus 기반 비용 알림
 
-Prometheus 규칙을 사용하여 더 세밀한 비용 이상 탐지를 구현합니다.
+Kubecost가 Prometheus에 노출하는 메트릭을 활용하면 기존 Alertmanager 파이프라인에 비용 알림을 통합할 수 있습니다.
 
 ```yaml
 # cost-anomaly-prometheus-rules.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: cost-anomaly-detection
+  name: cost-anomaly-rules
   namespace: monitoring
   labels:
     release: prometheus
     app: kube-prometheus-stack
 spec:
   groups:
-    - name: cost-anomaly-alerts
-      interval: 5m
+    - name: cost-anomaly-detection
+      interval: 15m
       rules:
-        # 일일 클러스터 비용이 평균 대비 2배 이상 증가
+        # 일일 클러스터 비용이 7일 평균 대비 50% 이상 급증
         - alert: ClusterCostSpike
           expr: |
             (
-              sum(kubecost_cluster_costs) * 24
-            ) > 2 * (
-              avg_over_time(sum(kubecost_cluster_costs)[7d:1h]) * 24
+              sum(
+                container_cpu_allocation * on(node) group_left() node_cpu_hourly_cost
+                + container_memory_allocation_bytes / 1024 / 1024 / 1024 * on(node) group_left() node_ram_hourly_cost
+              ) * 24
             )
+            /
+            (
+              avg_over_time(
+                sum(
+                  container_cpu_allocation * on(node) group_left() node_cpu_hourly_cost
+                  + container_memory_allocation_bytes / 1024 / 1024 / 1024 * on(node) group_left() node_ram_hourly_cost
+                )[7d:1d]
+              ) * 24
+            ) > 1.5
           for: 30m
           labels:
-            severity: critical
+            severity: warning
             team: finops
             category: cost
           annotations:
-            summary: "클러스터 일일 비용 급증 감지"
-            description: |
-              현재 일일 예상 비용: ${{ $value | printf "%.2f" }}
-              최근 7일 평균 대비 2배 이상 증가했습니다.
-            runbook_url: "https://wiki.example.com/runbook/cost-spike"
+            summary: "클러스터 일일 비용 50% 이상 급증"
+            description: >
+              클러스터 일일 비용이 지난 7일 평균 대비 50% 이상 증가했습니다.
+              현재 비용 비율: {{ $value | humanizePercentage }}
+            runbook_url: "https://wiki.example.com/runbooks/cost-spike"
 
-        # 네임스페이스 비용이 전주 대비 50% 이상 증가
-        - alert: NamespaceCostIncrease
+        # 네임스페이스 비용이 설정된 예산 초과
+        - alert: NamespaceBudgetExceeded
           expr: |
             (
-              sum by (namespace) (kubecost_namespace_daily_cost) -
-              sum by (namespace) (kubecost_namespace_daily_cost offset 7d)
-            ) / sum by (namespace) (kubecost_namespace_daily_cost offset 7d) > 0.5
+              sum by (namespace) (
+                container_cpu_allocation * on(node) group_left() node_cpu_hourly_cost
+                + container_memory_allocation_bytes / 1024 / 1024 / 1024 * on(node) group_left() node_ram_hourly_cost
+              ) * 730
+            )
+            > on(namespace) group_left()
+            (
+              kube_namespace_annotations{annotation_budget_monthly_usd!=""} * 0
+              + on(namespace) group_left(annotation_budget_monthly_usd)
+              label_replace(
+                kube_namespace_annotations{annotation_budget_monthly_usd!=""},
+                "budget", "$1", "annotation_budget_monthly_usd", "(.*)"
+              )
+            )
           for: 1h
           labels:
             severity: warning
             team: finops
             category: cost
           annotations:
-            summary: "네임스페이스 {{ $labels.namespace }} 비용 50% 이상 증가"
-            description: |
-              네임스페이스 {{ $labels.namespace }}의 일일 비용이 전주 대비
-              {{ $value | humanizePercentage }} 증가했습니다.
+            summary: "{{ $labels.namespace }} 네임스페이스 월간 예산 초과"
+            description: >
+              네임스페이스 {{ $labels.namespace }}의 예상 월간 비용이 설정된 예산을 초과했습니다.
 
-        # CPU 리소스 효율성 30% 미만
-        - alert: LowCPUEfficiency
+        # CPU 효율성이 30% 미만인 네임스페이스 감지
+        - alert: LowCpuEfficiency
           expr: |
             (
-              sum by (namespace) (rate(container_cpu_usage_seconds_total{namespace!~"kube-system|monitoring|istio-system"}[1h]))
+              sum by (namespace) (
+                rate(container_cpu_usage_seconds_total{namespace!~"kube-system|monitoring|istio-system|kubecost"}[6h])
+              )
               /
-              sum by (namespace) (kube_pod_container_resource_requests{resource="cpu", namespace!~"kube-system|monitoring|istio-system"})
+              sum by (namespace) (
+                container_cpu_allocation{namespace!~"kube-system|monitoring|istio-system|kubecost"}
+              )
             ) < 0.3
-          for: 6h
-          labels:
-            severity: warning
-            team: finops
-            category: efficiency
-          annotations:
-            summary: "네임스페이스 {{ $labels.namespace }} CPU 효율성 30% 미만"
-            description: |
-              CPU 사용률이 요청량의 {{ $value | humanizePercentage }}입니다.
-              리소스 라이트사이징을 검토하세요.
-
-        # 메모리 리소스 효율성 30% 미만
-        - alert: LowMemoryEfficiency
-          expr: |
-            (
-              sum by (namespace) (container_memory_working_set_bytes{namespace!~"kube-system|monitoring|istio-system"})
-              /
-              sum by (namespace) (kube_pod_container_resource_requests{resource="memory", namespace!~"kube-system|monitoring|istio-system"})
-            ) < 0.3
-          for: 6h
-          labels:
-            severity: warning
-            team: finops
-            category: efficiency
-          annotations:
-            summary: "네임스페이스 {{ $labels.namespace }} 메모리 효율성 30% 미만"
-            description: |
-              메모리 사용률이 요청량의 {{ $value | humanizePercentage }}입니다.
-              리소스 라이트사이징을 검토하세요.
-
-        # PVC 사용률 10% 미만 (유휴 스토리지)
-        - alert: UnderutilizedPVC
-          expr: |
-            (
-              kubelet_volume_stats_used_bytes
-              /
-              kubelet_volume_stats_capacity_bytes
-            ) < 0.1
+            and
+            sum by (namespace) (
+              container_cpu_allocation{namespace!~"kube-system|monitoring|istio-system|kubecost"}
+            ) > 2
           for: 24h
           labels:
             severity: info
             team: finops
-            category: waste
+            category: efficiency
           annotations:
-            summary: "PVC {{ $labels.persistentvolumeclaim }} 사용률 10% 미만"
-            description: |
-              네임스페이스 {{ $labels.namespace }}의 PVC {{ $labels.persistentvolumeclaim }}
-              사용률: {{ $value | humanizePercentage }}. 축소 또는 삭제를 검토하세요.
+            summary: "{{ $labels.namespace }} CPU 효율성 30% 미만"
+            description: >
+              네임스페이스 {{ $labels.namespace }}의 CPU 효율성이 24시간 동안
+              30% 미만입니다. 리소스 라이트사이징을 검토하세요.
+              현재 효율성: {{ $value | humanizePercentage }}
 
-        # 예상 월간 비용이 예산 초과
-        - alert: MonthlyBudgetExceeded
+        # 메모리 효율성이 30% 미만인 네임스페이스 감지
+        - alert: LowMemoryEfficiency
           expr: |
-            (sum(kubecost_cluster_costs) * 730) > 10000
-          for: 2h
+            (
+              sum by (namespace) (
+                container_memory_working_set_bytes{namespace!~"kube-system|monitoring|istio-system|kubecost"}
+              )
+              /
+              sum by (namespace) (
+                container_memory_allocation_bytes{namespace!~"kube-system|monitoring|istio-system|kubecost"}
+              )
+            ) < 0.3
+            and
+            sum by (namespace) (
+              container_memory_allocation_bytes{namespace!~"kube-system|monitoring|istio-system|kubecost"}
+            ) > 4294967296
+          for: 24h
           labels:
-            severity: critical
+            severity: info
             team: finops
-            category: budget
+            category: efficiency
           annotations:
-            summary: "예상 월간 비용이 예산($10,000)을 초과합니다"
-            description: |
-              현재 추세 기반 예상 월간 비용: ${{ $value | printf "%.0f" }}
-              즉시 비용 리뷰를 진행하세요.
+            summary: "{{ $labels.namespace }} 메모리 효율성 30% 미만"
+            description: >
+              네임스페이스 {{ $labels.namespace }}의 메모리 효율성이 24시간 동안
+              30% 미만입니다. 리소스 라이트사이징을 검토하세요.
+              현재 효율성: {{ $value | humanizePercentage }}
+
+        # 유휴 노드 비용이 클러스터 전체의 20% 초과
+        - alert: HighIdleCost
+          expr: |
+            (
+              sum(node_cpu_hourly_cost * (1 - instance:node_cpu_utilisation:rate5m)) * 730
+              + sum(node_ram_hourly_cost * (1 - instance:node_memory_utilisation:rate5m)) * 730
+            )
+            /
+            (
+              sum(node_cpu_hourly_cost + node_ram_hourly_cost) * 730
+            ) > 0.20
+          for: 6h
+          labels:
+            severity: warning
+            team: finops
+            category: cost
+          annotations:
+            summary: "유휴 리소스 비용이 전체의 20% 초과"
+            description: >
+              클러스터의 유휴 리소스(미사용 CPU/메모리) 비용이 전체 비용의 20%를
+              초과하고 있습니다. 노드 스케일 다운이나 워크로드 통합을 검토하세요.
+              현재 유휴 비용 비율: {{ $value | humanizePercentage }}
 ```
 
-**Alertmanager 라우팅 설정:**
+**Alertmanager 라우팅 및 Slack 수신기 설정:**
 
 ```yaml
-# alertmanager-cost-routes.yaml
+# alertmanager-cost-config.yaml
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: AlertmanagerConfig
 metadata:
-  name: cost-alert-routing
+  name: cost-alerts
   namespace: monitoring
   labels:
     release: prometheus
 spec:
   route:
-    groupBy: ["category", "namespace"]
+    receiver: "cost-alerts-slack"
+    groupBy:
+      - "alertname"
+      - "namespace"
+      - "category"
     groupWait: "30s"
     groupInterval: "5m"
-    repeatInterval: "4h"
-    receiver: "finops-slack"
+    repeatInterval: "12h"
+    matchers:
+      - name: category
+        matchType: "=~"
+        value: "cost|efficiency"
     routes:
-      - match:
-          severity: critical
-          category: cost
-        receiver: "finops-slack-critical"
+      # 심각한 비용 알림은 즉시 전송
+      - receiver: "cost-alerts-slack-urgent"
+        matchers:
+          - name: severity
+            matchType: "="
+            value: "critical"
         repeatInterval: "1h"
-      - match:
-          severity: critical
-          category: budget
-        receiver: "finops-slack-critical"
-        repeatInterval: "2h"
-      - match:
-          severity: warning
-          category: cost
-        receiver: "finops-slack"
-        repeatInterval: "6h"
-      - match:
-          category: efficiency
-        receiver: "finops-slack"
-        repeatInterval: "12h"
-      - match:
-          category: waste
-        receiver: "finops-slack"
+      # 효율성 관련 알림은 일 1회
+      - receiver: "cost-alerts-slack"
+        matchers:
+          - name: category
+            matchType: "="
+            value: "efficiency"
         repeatInterval: "24h"
 
   receivers:
-    - name: "finops-slack"
+    - name: "cost-alerts-slack"
       slackConfigs:
         - apiURL:
-            name: "slack-webhook-secret"
-            key: "webhook-url"
+            name: slack-webhook-secret
+            key: cost-channel-url
           channel: "#finops-alerts"
           sendResolved: true
           title: |
             [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}
           text: |
-            *Alert:* {{ .CommonAnnotations.summary }}
-            *Description:* {{ .CommonAnnotations.description }}
-            *Severity:* {{ .CommonLabels.severity }}
-            *Namespace:* {{ .CommonLabels.namespace }}
-          actions:
-            - type: "button"
-              text: "Runbook"
-              url: "{{ .CommonAnnotations.runbook_url }}"
-            - type: "button"
-              text: "Kubecost Dashboard"
-              url: "https://kubecost.internal.example.com"
-
-    - name: "finops-slack-critical"
+            *알림 이름*: {{ .CommonLabels.alertname }}
+            *심각도*: {{ .CommonLabels.severity }}
+            *카테고리*: {{ .CommonLabels.category }}
+            {{ range .Alerts }}
+            *설명*: {{ .Annotations.description }}
+            *네임스페이스*: {{ .Labels.namespace }}
+            *런북*: {{ .Annotations.runbook_url }}
+            {{ end }}
+          iconEmoji: ":money_with_wings:"
+          username: "FinOps Alert Bot"
+    - name: "cost-alerts-slack-urgent"
       slackConfigs:
         - apiURL:
-            name: "slack-webhook-secret"
-            key: "webhook-url"
-          channel: "#finops-critical"
+            name: slack-webhook-secret
+            key: cost-urgent-channel-url
+          channel: "#finops-urgent"
           sendResolved: true
           title: |
             :rotating_light: [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}
           text: |
-            *CRITICAL COST ALERT*
-            *Alert:* {{ .CommonAnnotations.summary }}
-            *Description:* {{ .CommonAnnotations.description }}
-            *Action Required:* 즉시 확인이 필요합니다.
-          actions:
-            - type: "button"
-              text: "Runbook"
-              url: "{{ .CommonAnnotations.runbook_url }}"
-            - type: "button"
-              text: "Kubecost Dashboard"
-              url: "https://kubecost.internal.example.com"
+            *긴급 비용 알림*
+            *알림 이름*: {{ .CommonLabels.alertname }}
+            {{ range .Alerts }}
+            *설명*: {{ .Annotations.description }}
+            *즉시 확인이 필요합니다.*
+            {{ end }}
+          iconEmoji: ":rotating_light:"
+          username: "FinOps URGENT"
+---
+# Slack Webhook Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: slack-webhook-secret
+  namespace: monitoring
+type: Opaque
+stringData:
+  cost-channel-url: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+  cost-urgent-channel-url: "https://hooks.slack.com/services/T00000000/B00000000/ZZZZZZZZZZZZZZZZZZZZZZZZ"
 ```
 
 ### 4.3 AWS Cost Anomaly Detection 통합
 
-AWS Cost Anomaly Detection은 ML 기반으로 AWS 비용 이상을 자동 탐지합니다. Kubecost와 별도로 AWS 레벨에서 추가 안전망을 제공합니다.
+AWS Cost Anomaly Detection은 기계 학습을 사용하여 AWS 계정 수준의 비용 이상을 자동으로 탐지합니다. Kubernetes 비용 모니터링과 병행하면 더 넓은 범위의 비용 이상을 포착할 수 있습니다.
 
-```bash
-# AWS Cost Anomaly Detection 모니터 생성
-aws ce create-anomaly-monitor \
-  --anomaly-monitor '{
-    "MonitorName": "EKS-Cost-Monitor",
-    "MonitorType": "DIMENSIONAL",
-    "MonitorDimension": "SERVICE",
-    "MonitorSpecification": {
-      "AND": null,
-      "CostCategories": null,
-      "Dimensions": {
-        "Key": "SERVICE",
-        "MatchOptions": ["EQUALS"],
-        "Values": ["Amazon Elastic Kubernetes Service", "Amazon EC2", "Amazon ECR"]
-      },
-      "NOT": null,
-      "OR": null,
-      "Tags": null
+**Terraform으로 AWS Cost Anomaly Detection 구성:**
+
+```hcl
+# cost-anomaly-detection.tf
+
+# 비용 이상 모니터 생성 (EKS 서비스 비용)
+resource "aws_ce_anomaly_monitor" "eks_cost" {
+  name              = "eks-cost-anomaly-monitor"
+  monitor_type      = "DIMENSIONAL"
+  monitor_dimension = "SERVICE"
+
+  tags = {
+    Name      = "eks-cost-anomaly-monitor"
+    ManagedBy = "terraform"
+  }
+}
+
+# 커스텀 모니터 (태그 기반 필터링)
+resource "aws_ce_anomaly_monitor" "kubernetes_tagged" {
+  name         = "kubernetes-tagged-resources"
+  monitor_type = "CUSTOM"
+
+  monitor_specification = jsonencode({
+    And = null
+    Or  = null
+    Not = null
+    Dimensions = {
+      Key           = "SERVICE"
+      Values        = ["Amazon Elastic Kubernetes Service", "Amazon EC2", "Amazon Elastic Block Store"]
+      MatchOptions  = ["EQUALS"]
     }
-  }'
+    Tags = null
+    CostCategories = null
+  })
 
-# SNS 토픽을 통한 알림 구독 생성
-aws ce create-anomaly-subscription \
-  --anomaly-subscription '{
-    "SubscriptionName": "EKS-Cost-Alerts",
-    "MonitorArnList": ["arn:aws:ce::123456789012:anomalymonitor/monitor-id"],
-    "Subscribers": [
+  tags = {
+    Name      = "kubernetes-tagged-resources"
+    ManagedBy = "terraform"
+  }
+}
+
+# 알림 구독 (이메일 + SNS)
+resource "aws_ce_anomaly_subscription" "eks_alerts" {
+  name = "eks-cost-anomaly-alerts"
+
+  monitor_arn_list = [
+    aws_ce_anomaly_monitor.eks_cost.arn,
+    aws_ce_anomaly_monitor.kubernetes_tagged.arn
+  ]
+
+  frequency = "DAILY"
+
+  threshold_expression {
+    dimension {
+      key           = "ANOMALY_TOTAL_IMPACT_ABSOLUTE"
+      match_options = ["GREATER_THAN_OR_EQUAL"]
+      values        = ["100"]
+    }
+  }
+
+  subscriber {
+    type    = "EMAIL"
+    address = "finops@example.com"
+  }
+
+  subscriber {
+    type    = "SNS"
+    address = aws_sns_topic.cost_anomaly.arn
+  }
+}
+
+# SNS 토픽 (Lambda/Slack 연동용)
+resource "aws_sns_topic" "cost_anomaly" {
+  name = "cost-anomaly-alerts"
+
+  tags = {
+    Name      = "cost-anomaly-alerts"
+    ManagedBy = "terraform"
+  }
+}
+
+# SNS 정책 (Cost Anomaly Detection이 게시 허용)
+resource "aws_sns_topic_policy" "cost_anomaly" {
+  arn = aws_sns_topic.cost_anomaly.arn
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
       {
-        "Address": "arn:aws:sns:ap-northeast-2:123456789012:finops-alerts",
-        "Type": "SNS"
+        Sid       = "AllowCostAnomalyPublish"
+        Effect    = "Allow"
+        Principal = {
+          Service = "costalerts.amazonaws.com"
+        }
+        Action   = "SNS:Publish"
+        Resource = aws_sns_topic.cost_anomaly.arn
       }
-    ],
-    "Threshold": 50.0,
-    "Frequency": "DAILY",
-    "ThresholdExpression": {
-      "Dimensions": {
-        "Key": "ANOMALY_TOTAL_IMPACT_ABSOLUTE",
-        "MatchOptions": ["GREATER_THAN_OR_EQUAL"],
-        "Values": ["50"]
-      }
-    }
-  }'
+    ]
+  })
+}
 ```
 
 ---
 
 ## 5. 팀 셀프서비스 비용 관리
 
+엔지니어링 팀이 자신의 비용을 직접 모니터링하고 관리할 수 있는 셀프서비스 체계를 구축합니다. FinOps 팀에 의존하지 않고 각 팀이 자율적으로 비용을 최적화할 수 있어야 합니다.
+
 ### 5.1 팀별 비용 대시보드
 
-각 팀이 자신의 비용을 독립적으로 모니터링할 수 있는 Grafana 대시보드를 제공합니다. Grafana 변수를 활용하여 팀을 선택하면 해당 팀의 비용만 필터링됩니다.
+Grafana의 변수(variable) 기능을 활용하면 하나의 대시보드 정의로 팀별 맞춤 뷰를 제공할 수 있습니다.
 
 ```yaml
-# grafana-team-dashboard-provisioning.yaml
-# Grafana 대시보드 프로비저닝 ConfigMap
+# grafana-team-dashboard-configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -1621,100 +1927,121 @@ metadata:
 data:
   team-cost-dashboard.json: |
     {
-      "title": "My Team Cost Dashboard",
-      "uid": "team-cost-self-service",
-      "tags": ["finops", "self-service"],
       "templating": {
         "list": [
           {
             "name": "team",
+            "label": "Team",
             "type": "query",
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
-            "query": "label_values(kube_pod_labels, label_team)",
-            "current": {},
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "query": "label_values(kube_pod_labels{label_team!=\"\"}, label_team)",
             "refresh": 2,
+            "current": {},
+            "multi": false,
+            "includeAll": false,
             "sort": 1
           },
           {
-            "name": "period",
+            "name": "timerange",
+            "label": "Cost Period",
             "type": "custom",
-            "options": [
-              {"text": "Last 7 Days", "value": "7d"},
-              {"text": "Last 30 Days", "value": "30d"},
-              {"text": "Last 90 Days", "value": "90d"}
-            ],
-            "current": {"text": "Last 30 Days", "value": "30d"}
+            "query": "7d : 7 Days, 14d : 14 Days, 30d : 30 Days",
+            "current": {
+              "selected": true,
+              "text": "7 Days",
+              "value": "7d"
+            },
+            "multi": false,
+            "includeAll": false
           }
         ]
       },
       "panels": [
         {
-          "title": "Current Month Estimated Cost",
+          "title": "${team} 팀 - 일일 비용 추이",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "sum by (label_service) (\n  container_cpu_allocation{label_team=\"$team\"} * on(node) group_left() node_cpu_hourly_cost * 24\n  +\n  container_memory_allocation_bytes{label_team=\"$team\"} / 1024 / 1024 / 1024 * on(node) group_left() node_ram_hourly_cost * 24\n)",
+              "legendFormat": "{{label_service}}"
+            }
+          ]
+        },
+        {
+          "title": "${team} 팀 - 서비스별 월 추정 비용",
           "type": "stat",
-          "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
-          "targets": [{
-            "expr": "sum(kubecost_namespace_daily_cost{label_team=\"$team\"}) * 30",
-            "legendFormat": "Monthly Estimate"
-          }],
+          "gridPos": {"h": 4, "w": 24, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "sum(\n  container_cpu_allocation{label_team=\"$team\"} * on(node) group_left() node_cpu_hourly_cost\n  +\n  container_memory_allocation_bytes{label_team=\"$team\"} / 1024 / 1024 / 1024 * on(node) group_left() node_ram_hourly_cost\n) * 730",
+              "legendFormat": "월 추정 비용"
+            }
+          ],
           "fieldConfig": {
             "defaults": {
               "unit": "currencyUSD",
               "thresholds": {
                 "steps": [
                   {"color": "green", "value": null},
-                  {"color": "yellow", "value": 1000},
-                  {"color": "red", "value": 3000}
+                  {"color": "yellow", "value": 2000},
+                  {"color": "red", "value": 4000}
                 ]
               }
             }
           }
         },
         {
-          "title": "Cost Trend",
-          "type": "timeseries",
-          "gridPos": {"h": 8, "w": 18, "x": 6, "y": 0},
-          "targets": [{
-            "expr": "sum by (label_service) (kubecost_namespace_daily_cost{label_team=\"$team\"})",
-            "legendFormat": "{{label_service}}"
-          }],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "currencyUSD",
-              "custom": {"drawStyle": "line", "fillOpacity": 20, "stacking": {"mode": "normal"}}
-            }
-          }
-        },
-        {
-          "title": "Budget Remaining",
+          "title": "${team} 팀 - 리소스 효율성",
           "type": "gauge",
-          "gridPos": {"h": 4, "w": 6, "x": 0, "y": 4},
-          "targets": [{
-            "expr": "1 - (sum(kubecost_namespace_daily_cost{label_team=\"$team\"}) * 30) / kubecost_team_budget{team=\"$team\"}",
-            "legendFormat": "Budget Remaining"
-          }],
+          "gridPos": {"h": 6, "w": 12, "x": 0, "y": 12},
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{label_team=\"$team\"}[1h])) / sum(container_cpu_allocation{label_team=\"$team\"})",
+              "legendFormat": "CPU 효율성"
+            }
+          ],
           "fieldConfig": {
             "defaults": {
               "unit": "percentunit",
-              "min": 0, "max": 1,
+              "min": 0,
+              "max": 1,
               "thresholds": {
                 "steps": [
                   {"color": "red", "value": null},
-                  {"color": "yellow", "value": 0.2},
-                  {"color": "green", "value": 0.5}
+                  {"color": "yellow", "value": 0.3},
+                  {"color": "green", "value": 0.6}
                 ]
               }
             }
           }
+        },
+        {
+          "title": "${team} 팀 - 라이트사이징 추천",
+          "type": "table",
+          "gridPos": {"h": 6, "w": 12, "x": 12, "y": 12},
+          "targets": [
+            {
+              "expr": "sum by (container, namespace) (\n  container_cpu_allocation{label_team=\"$team\"}\n  - on(container, namespace, pod) \n  rate(container_cpu_usage_seconds_total{label_team=\"$team\"}[24h])\n) > 0.1",
+              "legendFormat": "{{namespace}}/{{container}}",
+              "format": "table",
+              "instant": true
+            }
+          ]
         }
       ],
-      "time": {"from": "now-$period", "to": "now"},
-      "schemaVersion": 39
+      "title": "팀 비용 셀프서비스 대시보드",
+      "uid": "team-cost-selfservice",
+      "tags": ["finops", "team", "self-service"]
     }
 ```
 
 ### 5.2 Slack 비용 리포트 봇
 
-매주 월요일 아침에 각 팀의 비용 요약을 Slack으로 자동 전송하는 CronJob입니다.
+CronJob으로 주간 비용 리포트를 자동 생성하여 Slack 채널에 전송합니다. 각 팀이 자신의 비용 현황을 별도의 도구 접근 없이도 확인할 수 있습니다.
 
 ```yaml
 # cost-report-cronjob.yaml
@@ -1724,10 +2051,11 @@ metadata:
   name: weekly-cost-report
   namespace: kubecost
   labels:
-    app: cost-report-bot
+    app: cost-report
     team: finops
 spec:
-  schedule: "0 9 * * 1"  # 매주 월요일 09:00 KST
+  # 매주 월요일 오전 9시 (KST, UTC+9이므로 일요일 자정)
+  schedule: "0 0 * * 1"
   timeZone: "Asia/Seoul"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 4
@@ -1735,134 +2063,30 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 3
-      activeDeadlineSeconds: 300
+      activeDeadlineSeconds: 600
       template:
         metadata:
           labels:
-            app: cost-report-bot
+            app: cost-report
         spec:
-          serviceAccountName: cost-report-bot
+          serviceAccountName: cost-report
           restartPolicy: OnFailure
           containers:
             - name: cost-reporter
               image: curlimages/curl:8.7.1
-              command: ["/bin/sh", "-c"]
-              args:
-                - |
-                  #!/bin/sh
-                  set -e
-
-                  KUBECOST_URL="http://kubecost-cost-analyzer.kubecost.svc.cluster.local:9090"
-                  SLACK_WEBHOOK="${SLACK_WEBHOOK_URL}"
-
-                  echo "=== Weekly Cost Report Generator ==="
-                  echo "Kubecost URL: ${KUBECOST_URL}"
-
-                  # 팀별 주간 비용 조회
-                  TEAM_COSTS=$(curl -sf "${KUBECOST_URL}/model/allocation" \
-                    --data-urlencode 'window=lastweek' \
-                    --data-urlencode 'aggregate=label:team' \
-                    --data-urlencode 'idle=true' \
-                    --data-urlencode 'shareIdle=weighted')
-
-                  if [ -z "${TEAM_COSTS}" ]; then
-                    echo "ERROR: Failed to fetch cost data"
-                    exit 1
-                  fi
-
-                  # 전체 주간 비용 계산
-                  TOTAL_WEEKLY=$(echo "${TEAM_COSTS}" | \
-                    jq '[.data[0] | to_entries[].value.totalCost] | add | round')
-
-                  # 전주 대비 변화율
-                  PREV_COSTS=$(curl -sf "${KUBECOST_URL}/model/allocation" \
-                    --data-urlencode 'window=2d ago,9d ago' \
-                    --data-urlencode 'aggregate=cluster' \
-                    --data-urlencode 'idle=true')
-
-                  PREV_TOTAL=$(echo "${PREV_COSTS}" | \
-                    jq '[.data[0] | to_entries[].value.totalCost] | add | round')
-
-                  if [ "${PREV_TOTAL}" -gt 0 ] 2>/dev/null; then
-                    CHANGE_PCT=$(echo "scale=1; (${TOTAL_WEEKLY} - ${PREV_TOTAL}) * 100 / ${PREV_TOTAL}" | bc)
-                  else
-                    CHANGE_PCT="N/A"
-                  fi
-
-                  # 팀별 비용 테이블 생성
-                  TEAM_TABLE=$(echo "${TEAM_COSTS}" | jq -r '
-                    .data[0] | to_entries
-                    | sort_by(-.value.totalCost)
-                    | .[]
-                    | "| " + .key + " | $" + (.value.totalCost | round | tostring) +
-                      " | " + ((.value.cpuEfficiency // 0) * 100 | round | tostring) + "%" +
-                      " | " + ((.value.ramEfficiency // 0) * 100 | round | tostring) + "% |"
-                  ')
-
-                  # 월간 예상 비용
-                  MONTHLY_ESTIMATE=$(echo "scale=0; ${TOTAL_WEEKLY} * 4.33 / 1" | bc)
-
-                  # Slack 메시지 전송
-                  PAYLOAD=$(cat <<EOFPAYLOAD
-                  {
-                    "blocks": [
-                      {
-                        "type": "header",
-                        "text": {
-                          "type": "plain_text",
-                          "text": "Weekly Kubernetes Cost Report"
-                        }
-                      },
-                      {
-                        "type": "section",
-                        "fields": [
-                          {"type": "mrkdwn", "text": "*Total Weekly Cost:*\n\$${TOTAL_WEEKLY}"},
-                          {"type": "mrkdwn", "text": "*Week-over-Week:*\n${CHANGE_PCT}%"},
-                          {"type": "mrkdwn", "text": "*Monthly Estimate:*\n\$${MONTHLY_ESTIMATE}"},
-                          {"type": "mrkdwn", "text": "*Report Period:*\nLast 7 Days"}
-                        ]
-                      },
-                      {
-                        "type": "divider"
-                      },
-                      {
-                        "type": "section",
-                        "text": {
-                          "type": "mrkdwn",
-                          "text": "*Team Cost Breakdown:*\n| Team | Cost | CPU Eff | RAM Eff |\n|------|------|---------|---------|${TEAM_TABLE}"
-                        }
-                      },
-                      {
-                        "type": "actions",
-                        "elements": [
-                          {
-                            "type": "button",
-                            "text": {"type": "plain_text", "text": "View Kubecost"},
-                            "url": "https://kubecost.internal.example.com"
-                          },
-                          {
-                            "type": "button",
-                            "text": {"type": "plain_text", "text": "View Grafana"},
-                            "url": "https://grafana.internal.example.com/d/finops-showback-001"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                  EOFPAYLOAD
-                  )
-
-                  curl -sf -X POST "${SLACK_WEBHOOK}" \
-                    -H "Content-Type: application/json" \
-                    -d "${PAYLOAD}"
-
-                  echo "Cost report sent successfully"
+              command:
+                - /bin/sh
+                - /scripts/weekly-cost-report.sh
               env:
+                - name: KUBECOST_URL
+                  value: "http://kubecost-cost-analyzer.kubecost.svc.cluster.local:9090"
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
-                      name: slack-webhook-secret
-                      key: webhook-url
+                      name: cost-report-secrets
+                      key: slack-webhook-url
+                - name: REPORT_WINDOW
+                  value: "7d"
               resources:
                 requests:
                   cpu: "50m"
@@ -1870,231 +2094,432 @@ spec:
                 limits:
                   cpu: "200m"
                   memory: "128Mi"
-```
-
-### 5.3 비용 예산 설정 및 알림
-
-팀별 월간 예산을 설정하고, 임계값 도달 시 자동으로 알림을 보냅니다.
-
-```yaml
-# team-budget-configmap.yaml
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: cost-report-scripts
+                defaultMode: 0755
+---
+# 비용 리포트 스크립트
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: team-budgets
+  name: cost-report-scripts
   namespace: kubecost
-  labels:
-    app: cost-management
 data:
-  budgets.json: |
+  weekly-cost-report.sh: |
+    #!/bin/sh
+    set -e
+
+    # Kubecost API에서 비용 데이터 조회
+    echo "[INFO] Kubecost API에서 비용 데이터를 조회합니다..."
+
+    # 네임스페이스별 비용 조회
+    NAMESPACE_COSTS=$(curl -s "${KUBECOST_URL}/model/allocation?window=${REPORT_WINDOW}&aggregate=namespace&accumulate=true&shareIdle=true&shareSplit=weighted&shareNamespaces=kube-system,monitoring,istio-system,kubecost")
+
+    # 팀별 비용 조회 (label:team 기준)
+    TEAM_COSTS=$(curl -s "${KUBECOST_URL}/model/allocation?window=${REPORT_WINDOW}&aggregate=label:team&accumulate=true&shareIdle=true&shareSplit=weighted&shareNamespaces=kube-system,monitoring,istio-system,kubecost")
+
+    # 총 비용 계산
+    TOTAL_COST=$(echo "${NAMESPACE_COSTS}" | jq '[.data[0] | to_entries[] | .value.totalCost] | add | . * 100 | round / 100')
+
+    # 팀별 비용 상위 5개 추출
+    TEAM_SUMMARY=$(echo "${TEAM_COSTS}" | jq -r '
+      .data[0] | to_entries
+      | sort_by(-.value.totalCost)
+      | .[:5]
+      | .[]
+      | "\(.key): $\(.value.totalCost * 100 | round / 100) (CPU효율: \(.value.cpuEfficiency * 10000 | round / 100)%, MEM효율: \(.value.ramEfficiency * 10000 | round / 100)%)"
+    ')
+
+    # 효율성이 낮은 네임스페이스 추출 (40% 미만)
+    LOW_EFFICIENCY=$(echo "${NAMESPACE_COSTS}" | jq -r '
+      .data[0] | to_entries
+      | map(select(.value.totalEfficiency < 0.4 and .value.totalCost > 10))
+      | sort_by(.value.totalEfficiency)
+      | .[:5]
+      | .[]
+      | "\(.key): 효율성 \(.value.totalEfficiency * 10000 | round / 100)%, 비용 $\(.value.totalCost * 100 | round / 100)"
+    ')
+
+    # 전주 대비 비용 변화 계산
+    PREV_COSTS=$(curl -s "${KUBECOST_URL}/model/allocation?window=${REPORT_WINDOW}&aggregate=cluster&accumulate=true&offset=${REPORT_WINDOW}")
+    PREV_TOTAL=$(echo "${PREV_COSTS}" | jq '[.data[0] | to_entries[] | .value.totalCost] | add | . * 100 | round / 100')
+
+    if [ -n "${PREV_TOTAL}" ] && [ "${PREV_TOTAL}" != "null" ] && [ "${PREV_TOTAL}" != "0" ]; then
+      CHANGE_PCT=$(echo "${TOTAL_COST} ${PREV_TOTAL}" | awk '{printf "%.1f", ($1 - $2) / $2 * 100}')
+      CHANGE_INDICATOR="전주 대비 ${CHANGE_PCT}%"
+    else
+      CHANGE_INDICATOR="전주 데이터 없음"
+    fi
+
+    # 보고 기간
+    REPORT_DATE=$(date '+%Y-%m-%d')
+
+    # Slack 메시지 구성
+    SLACK_PAYLOAD=$(cat <<PAYLOAD
     {
-      "budgets": [
+      "blocks": [
         {
-          "team": "backend",
-          "namespace": "backend-production",
-          "monthlyBudget": 3000,
-          "alertThresholds": [0.50, 0.75, 0.90, 1.00],
-          "contacts": {
-            "slack": "#backend-team",
-            "email": "backend-leads@example.com"
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": "주간 Kubernetes 비용 리포트 (${REPORT_DATE})"
           }
         },
         {
-          "team": "frontend",
-          "namespace": "frontend-production",
-          "monthlyBudget": 1500,
-          "alertThresholds": [0.50, 0.75, 0.90, 1.00],
-          "contacts": {
-            "slack": "#frontend-team",
-            "email": "frontend-leads@example.com"
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*리포트 기간*: 최근 7일\n*총 비용*: \$${TOTAL_COST}\n*변화*: ${CHANGE_INDICATOR}"
           }
         },
         {
-          "team": "data",
-          "namespace": "data-production",
-          "monthlyBudget": 5000,
-          "alertThresholds": [0.50, 0.75, 0.90, 1.00],
-          "contacts": {
-            "slack": "#data-team",
-            "email": "data-leads@example.com"
+          "type": "divider"
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*팀별 비용 (Top 5)*\n\`\`\`\n${TEAM_SUMMARY}\n\`\`\`"
           }
         },
         {
-          "team": "platform",
-          "namespace": "platform-production",
-          "monthlyBudget": 2000,
-          "alertThresholds": [0.50, 0.75, 0.90, 1.00],
-          "contacts": {
-            "slack": "#platform-team",
-            "email": "platform-leads@example.com"
+          "type": "divider"
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*효율성 낮은 네임스페이스 (< 40%)*\n\`\`\`\n${LOW_EFFICIENCY}\n\`\`\`"
+          }
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "<https://kubecost.internal.example.com|Kubecost 대시보드에서 자세히 보기>"
           }
         }
       ]
     }
+    PAYLOAD
+    )
+
+    # Slack 전송
+    echo "[INFO] Slack으로 비용 리포트를 전송합니다..."
+    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+      -X POST \
+      -H "Content-Type: application/json" \
+      -d "${SLACK_PAYLOAD}" \
+      "${SLACK_WEBHOOK_URL}")
+
+    if [ "${HTTP_STATUS}" = "200" ]; then
+      echo "[INFO] 비용 리포트 전송 성공"
+    else
+      echo "[ERROR] 비용 리포트 전송 실패 (HTTP ${HTTP_STATUS})"
+      exit 1
+    fi
 ---
-# budget-alert-prometheus-rule.yaml
+# Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cost-report-secrets
+  namespace: kubecost
+type: Opaque
+stringData:
+  slack-webhook-url: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+---
+# ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cost-report
+  namespace: kubecost
+```
+
+### 5.3 비용 예산 설정 및 알림
+
+네임스페이스 수준에서 월간 예산을 설정하고, 예산 소진율에 따라 단계적 알림을 발송합니다.
+
+```yaml
+# namespace-budget-config.yaml
+# 네임스페이스 어노테이션으로 예산 설정
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: backend-production
+  labels:
+    team: "backend"
+    cost-center: "CC-1001"
+  annotations:
+    budget.finops/monthly-usd: "3000"
+    budget.finops/alert-threshold-warning: "70"
+    budget.finops/alert-threshold-critical: "90"
+    budget.finops/owner-email: "backend-team@example.com"
+    budget.finops/slack-channel: "#backend-costs"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: frontend-production
+  labels:
+    team: "frontend"
+    cost-center: "CC-1002"
+  annotations:
+    budget.finops/monthly-usd: "2000"
+    budget.finops/alert-threshold-warning: "70"
+    budget.finops/alert-threshold-critical: "90"
+    budget.finops/owner-email: "frontend-team@example.com"
+    budget.finops/slack-channel: "#frontend-costs"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-production
+  labels:
+    team: "data"
+    cost-center: "CC-2003"
+  annotations:
+    budget.finops/monthly-usd: "5000"
+    budget.finops/alert-threshold-warning: "70"
+    budget.finops/alert-threshold-critical: "90"
+    budget.finops/owner-email: "data-team@example.com"
+    budget.finops/slack-channel: "#data-costs"
+```
+
+**예산 모니터링 PrometheusRule:**
+
+```yaml
+# budget-monitoring-rules.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: team-budget-alerts
+  name: namespace-budget-rules
   namespace: monitoring
   labels:
     release: prometheus
 spec:
   groups:
-    - name: team-budget-alerts
+    - name: namespace-budget-alerts
+      interval: 30m
       rules:
-        # 각 팀의 예산 소진률 메트릭
-        - record: team:monthly_cost_ratio:budget
+        # 예산 70% 소진 경고
+        - alert: BudgetWarning
           expr: |
             (
-              sum by (label_team) (kubecost_namespace_daily_cost) * 30
-            ) / on(label_team) group_left() kubecost_team_budget
-
-        # 예산 75% 도달 경고
-        - alert: TeamBudget75Percent
-          expr: team:monthly_cost_ratio:budget > 0.75
+              sum by (namespace) (
+                container_cpu_allocation * on(node) group_left() node_cpu_hourly_cost
+                + container_memory_allocation_bytes / 1024 / 1024 / 1024 * on(node) group_left() node_ram_hourly_cost
+              ) * 730
+            )
+            /
+            on(namespace)
+            (
+              kube_namespace_annotations{annotation_budget_finops_monthly_usd!=""}
+              * on(namespace) group_left(annotation_budget_finops_monthly_usd)
+              0 + ignoring(annotation_budget_finops_monthly_usd)
+              kube_namespace_annotations{annotation_budget_finops_monthly_usd!=""}
+            ) > 0.7
           for: 1h
           labels:
             severity: warning
             category: budget
           annotations:
-            summary: "팀 {{ $labels.label_team }} 월간 예산 75% 도달"
-            description: |
-              팀 {{ $labels.label_team }}의 예상 월간 비용이 예산의
-              {{ $value | humanizePercentage }}에 도달했습니다.
-              비용 최적화를 검토하세요.
+            summary: "{{ $labels.namespace }} 예산 70% 소진"
+            description: >
+              네임스페이스 {{ $labels.namespace }}의 월 추정 비용이
+              설정된 예산의 70%를 초과했습니다.
 
-        # 예산 90% 도달 심각 경고
-        - alert: TeamBudget90Percent
-          expr: team:monthly_cost_ratio:budget > 0.90
-          for: 1h
-          labels:
-            severity: critical
-            category: budget
-          annotations:
-            summary: "팀 {{ $labels.label_team }} 월간 예산 90% 도달"
-            description: |
-              팀 {{ $labels.label_team }}의 예상 월간 비용이 예산의
-              {{ $value | humanizePercentage }}에 도달했습니다.
-              즉시 조치가 필요합니다.
-
-        # 예산 초과
-        - alert: TeamBudgetExceeded
-          expr: team:monthly_cost_ratio:budget > 1.0
+        # 예산 90% 소진 긴급
+        - alert: BudgetCritical
+          expr: |
+            (
+              sum by (namespace) (
+                container_cpu_allocation * on(node) group_left() node_cpu_hourly_cost
+                + container_memory_allocation_bytes / 1024 / 1024 / 1024 * on(node) group_left() node_ram_hourly_cost
+              ) * 730
+            )
+            /
+            on(namespace)
+            (
+              kube_namespace_annotations{annotation_budget_finops_monthly_usd!=""}
+              * on(namespace) group_left(annotation_budget_finops_monthly_usd)
+              0 + ignoring(annotation_budget_finops_monthly_usd)
+              kube_namespace_annotations{annotation_budget_finops_monthly_usd!=""}
+            ) > 0.9
           for: 30m
           labels:
             severity: critical
             category: budget
           annotations:
-            summary: "팀 {{ $labels.label_team }} 월간 예산 초과!"
-            description: |
-              팀 {{ $labels.label_team }}의 예상 월간 비용이 예산을
-              {{ $value | humanizePercentage }} 초과했습니다.
-              비용 리뷰 미팅을 즉시 소집하세요.
+            summary: "{{ $labels.namespace }} 예산 90% 소진 - 긴급"
+            description: >
+              네임스페이스 {{ $labels.namespace }}의 월 추정 비용이
+              설정된 예산의 90%를 초과했습니다. 즉시 검토가 필요합니다.
 ```
 
 ---
 
 ## 6. 리소스 라이트사이징 자동화
 
+리소스 라이트사이징은 비용 최적화에서 가장 효과적인 방법 중 하나입니다. VPA(Vertical Pod Autoscaler) 추천과 Goldilocks를 활용하여 체계적으로 리소스를 최적화합니다.
+
 ### 6.1 VPA 추천 워크플로우
 
-VPA(Vertical Pod Autoscaler)를 `Off` 모드로 설정하면 실제로 리소스를 변경하지 않고 추천값만 제공합니다.
+VPA를 `updateMode: "Off"`로 설정하면 실제 리소스를 변경하지 않고 추천값만 제공합니다. 이를 통해 안전하게 라이트사이징 기회를 발견할 수 있습니다.
 
 ```yaml
 # vpa-recommendation-only.yaml
+# 백엔드 API 서비스에 대한 VPA 추천
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: api-gateway-vpa
+  name: user-api-vpa
   namespace: backend-production
   labels:
-    team: backend
-    service: api-gateway
+    team: "backend"
+    service: "user-api"
+    purpose: "rightsizing-recommendation"
 spec:
   targetRef:
-    apiVersion: apps/v1
+    apiVersion: "apps/v1"
     kind: Deployment
-    name: api-gateway
+    name: user-api
   updatePolicy:
-    updateMode: "Off"  # 추천만 제공, 자동 적용 안 함
-  resourcePolicy:
-    containerPolicies:
-      - containerName: api-gateway
-        minAllowed:
-          cpu: "100m"
-          memory: "128Mi"
-        maxAllowed:
-          cpu: "4"
-          memory: "8Gi"
-        controlledResources: ["cpu", "memory"]
-        controlledValues: RequestsAndLimits
----
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: user-service-vpa
-  namespace: backend-production
-  labels:
-    team: backend
-    service: user-service
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: user-service
-  updatePolicy:
+    # Off 모드: 추천만 제공하고 실제 Pod 리소스는 변경하지 않음
     updateMode: "Off"
   resourcePolicy:
     containerPolicies:
-      - containerName: user-service
+      - containerName: "user-api"
         minAllowed:
           cpu: "50m"
           memory: "64Mi"
         maxAllowed:
+          cpu: "4"
+          memory: "8Gi"
+        controlledResources:
+          - cpu
+          - memory
+        controlledValues: RequestsAndLimits
+---
+# 결제 서비스에 대한 VPA 추천
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: payment-service-vpa
+  namespace: backend-production
+  labels:
+    team: "backend"
+    service: "payment-service"
+    purpose: "rightsizing-recommendation"
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: payment-service
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: "payment-service"
+        minAllowed:
+          cpu: "100m"
+          memory: "128Mi"
+        maxAllowed:
           cpu: "2"
           memory: "4Gi"
-        controlledResources: ["cpu", "memory"]
+        controlledResources:
+          - cpu
+          - memory
+        controlledValues: RequestsAndLimits
+---
+# 프론트엔드 BFF 서비스에 대한 VPA 추천
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: bff-service-vpa
+  namespace: frontend-production
+  labels:
+    team: "frontend"
+    service: "bff-service"
+    purpose: "rightsizing-recommendation"
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: bff-service
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: "bff-service"
+        minAllowed:
+          cpu: "25m"
+          memory: "32Mi"
+        maxAllowed:
+          cpu: "2"
+          memory: "4Gi"
+        controlledResources:
+          - cpu
+          - memory
         controlledValues: RequestsAndLimits
 ```
 
-**VPA 추천 확인:**
+VPA 추천값 확인:
 
 ```bash
-# VPA 추천값 조회
-kubectl get vpa api-gateway-vpa -n backend-production -o jsonpath='{.status.recommendation}' | jq .
+# VPA 추천값 확인
+kubectl get vpa -n backend-production -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.recommendation.containerRecommendations[0].target.cpu}{"\t"}{.status.recommendation.containerRecommendations[0].target.memory}{"\n"}{end}'
 
-# 모든 VPA 추천 요약
-kubectl get vpa -A -o custom-columns=\
-'NAMESPACE:.metadata.namespace,'\
-'NAME:.metadata.name,'\
-'TARGET:.spec.targetRef.name,'\
-'CPU_REQ:.status.recommendation.containerRecommendations[0].target.cpu,'\
-'MEM_REQ:.status.recommendation.containerRecommendations[0].target.memory,'\
-'CPU_LOWER:.status.recommendation.containerRecommendations[0].lowerBound.cpu,'\
-'MEM_LOWER:.status.recommendation.containerRecommendations[0].lowerBound.memory,'\
-'CPU_UPPER:.status.recommendation.containerRecommendations[0].upperBound.cpu,'\
-'MEM_UPPER:.status.recommendation.containerRecommendations[0].upperBound.memory'
+# 상세 추천 (lower/target/upper bound)
+kubectl describe vpa user-api-vpa -n backend-production | grep -A 20 "Recommendation"
 ```
 
 ### 6.2 Goldilocks 대시보드
 
-Goldilocks는 VPA 추천을 웹 대시보드로 시각화하여 팀이 직접 적절한 리소스 설정을 확인할 수 있게 합니다.
+Goldilocks는 네임스페이스 내 모든 Deployment에 자동으로 VPA를 생성하고, 웹 대시보드에서 추천값을 한눈에 확인할 수 있게 해줍니다.
 
 ```yaml
 # goldilocks-values.yaml
+# helm repo add fairwinds-stable https://charts.fairwinds.com/stable
+# helm install goldilocks fairwinds-stable/goldilocks -n goldilocks --create-namespace -f goldilocks-values.yaml
+
+image:
+  repository: us-docker.pkg.dev/fairwinds-ops/oss/goldilocks
+  tag: "v4.13.0"
+
+controller:
+  enabled: true
+  resources:
+    requests:
+      cpu: "25m"
+      memory: "64Mi"
+    limits:
+      cpu: "100m"
+      memory: "128Mi"
+  flags:
+    on-by-default: false
+    exclude-containers: "istio-proxy,istio-init,linkerd-proxy,linkerd-init"
+
 dashboard:
   enabled: true
   replicaCount: 2
   resources:
     requests:
-      cpu: "50m"
+      cpu: "25m"
       memory: "64Mi"
     limits:
-      cpu: "200m"
+      cpu: "100m"
       memory: "128Mi"
-
   ingress:
     enabled: true
     ingressClassName: "alb"
@@ -2102,137 +2527,121 @@ dashboard:
       alb.ingress.kubernetes.io/scheme: "internal"
       alb.ingress.kubernetes.io/target-type: "ip"
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+      alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:123456789012:certificate/abc-123"
     hosts:
       - host: "goldilocks.internal.example.com"
         paths:
           - path: "/"
             pathType: "Prefix"
 
-controller:
-  enabled: true
-  resources:
-    requests:
-      cpu: "50m"
-      memory: "64Mi"
-    limits:
-      cpu: "200m"
-      memory: "128Mi"
-
-  # VPA 자동 생성 설정
-  flags:
-    on-by-default: false
-    exclude-containers: "istio-proxy,linkerd-proxy"
-
 vpa:
   enabled: true
   updater:
-    enabled: false  # Updater 비활성화 (추천만 사용)
+    enabled: false  # Goldilocks는 추천만, 실제 업데이트는 하지 않음
+
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+  name: "goldilocks"
 ```
 
-**Goldilocks 모니터링 대상 네임스페이스 설정:**
+**Goldilocks 활성화 (네임스페이스 레이블링):**
 
 ```bash
-# 네임스페이스에 Goldilocks 레이블 추가 (모니터링 활성화)
+# 비용 추적 대상 네임스페이스에 Goldilocks 활성화
 kubectl label namespace backend-production goldilocks.fairwinds.com/enabled=true
 kubectl label namespace frontend-production goldilocks.fairwinds.com/enabled=true
 kubectl label namespace data-production goldilocks.fairwinds.com/enabled=true
 
-# Goldilocks 설치
-helm repo add fairwinds-stable https://charts.fairwinds.com/stable
-helm repo update
+# VPA 자동 생성 확인
+kubectl get vpa -n backend-production
+kubectl get vpa -n frontend-production
+kubectl get vpa -n data-production
 
-helm install goldilocks fairwinds-stable/goldilocks \
-  -n goldilocks --create-namespace \
-  -f goldilocks-values.yaml
-
-# 모니터링 상태 확인
-kubectl get vpa -A | grep goldilocks
+# 특정 네임스페이스에서 Goldilocks 비활성화
+# kubectl label namespace test-namespace goldilocks.fairwinds.com/enabled-
 ```
 
 ### 6.3 자동 리소스 조정 파이프라인
 
-VPA 추천을 기반으로 자동으로 PR을 생성하고, 리뷰 후 적용하는 CI/CD 파이프라인입니다.
+VPA 추천을 수동으로 적용하는 대신, CI/CD 파이프라인을 통해 추천값을 PR로 생성하고 리뷰 후 적용하는 자동화 워크플로우를 구축합니다.
 
 ```mermaid
-graph LR
-    A[VPA<br/>추천 수집] --> B[추천값 분석<br/>임계값 비교]
-    B --> C{변경 필요?}
-    C -->|Yes| D[매니페스트<br/>자동 수정]
-    C -->|No| E[스킵]
-    D --> F[PR 생성]
-    F --> G[팀 리뷰]
-    G --> H{승인?}
-    H -->|Yes| I[자동 배포]
-    H -->|No| J[의견 반영]
-    J --> D
+sequenceDiagram
+    participant CronJob as CronJob<br/>(주간 실행)
+    participant VPA as VPA<br/>(추천 엔진)
+    participant Script as 라이트사이징<br/>스크립트
+    participant Git as Git Repository
+    participant CI as CI/CD Pipeline
+    participant Reviewer as 팀 리더<br/>(리뷰어)
+    
+    CronJob->>VPA: VPA 추천값 조회
+    VPA->>Script: 추천 데이터 반환
+    Script->>Script: 현재 리소스 vs 추천 비교
+    Script->>Script: 임계값 초과 시 변경 생성
+    Script->>Git: 변경된 매니페스트 PR 생성
+    Git->>CI: PR 트리거
+    CI->>CI: 린트 + 검증 실행
+    Git->>Reviewer: PR 리뷰 요청
+    Reviewer->>Git: 승인 + 머지
+    Git->>CI: ArgoCD 동기화
+    
+    Note over CronJob,CI: 주간 자동 실행 → PR 기반 리뷰 → 안전한 적용
 ```
 
+**라이트사이징 자동화 CronJob:**
+
 ```yaml
-# rightsizing-cronjob.yaml
+# rightsizing-automation-cronjob.yaml
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: vpa-rightsizing-pr
-  namespace: platform-tools
+  name: rightsizing-pr-generator
+  namespace: kubecost
   labels:
-    app: vpa-rightsizing
+    app: rightsizing-automation
 spec:
-  schedule: "0 2 * * 3"  # 매주 수요일 02:00
+  # 매주 수요일 오전 10시 (KST)
+  schedule: "0 1 * * 3"
   timeZone: "Asia/Seoul"
   concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 4
+  failedJobsHistoryLimit: 2
   jobTemplate:
     spec:
-      backoffLimit: 1
-      activeDeadlineSeconds: 600
+      backoffLimit: 2
+      activeDeadlineSeconds: 900
       template:
+        metadata:
+          labels:
+            app: rightsizing-automation
         spec:
-          serviceAccountName: vpa-rightsizing-bot
+          serviceAccountName: rightsizing-automation
           restartPolicy: OnFailure
           containers:
-            - name: rightsizing-bot
+            - name: rightsizing
               image: bitnami/kubectl:1.30
-              command: ["/bin/bash", "-c"]
-              args:
-                - |
-                  #!/bin/bash
-                  set -euo pipefail
-
-                  echo "=== VPA Rightsizing PR Generator ==="
-
-                  THRESHOLD=0.20  # 20% 이상 차이가 나면 PR 생성
-                  CHANGES_FOUND=false
-                  REPORT=""
-
-                  # 모든 VPA 추천 수집
-                  for vpa in $(kubectl get vpa -A -o json | jq -r '.items[] | select(.status.recommendation != null) | "\(.metadata.namespace)/\(.metadata.name)"'); do
-                    NS=$(echo "$vpa" | cut -d'/' -f1)
-                    NAME=$(echo "$vpa" | cut -d'/' -f2)
-
-                    # 현재 설정값과 추천값 비교
-                    TARGET_REF=$(kubectl get vpa "$NAME" -n "$NS" -o jsonpath='{.spec.targetRef.name}')
-                    TARGET_KIND=$(kubectl get vpa "$NAME" -n "$NS" -o jsonpath='{.spec.targetRef.kind}')
-
-                    CURRENT_CPU=$(kubectl get "$TARGET_KIND" "$TARGET_REF" -n "$NS" \
-                      -o jsonpath='{.spec.template.spec.containers[0].resources.requests.cpu}' 2>/dev/null || echo "0")
-                    RECOMMENDED_CPU=$(kubectl get vpa "$NAME" -n "$NS" \
-                      -o jsonpath='{.status.recommendation.containerRecommendations[0].target.cpu}' 2>/dev/null || echo "0")
-
-                    CURRENT_MEM=$(kubectl get "$TARGET_KIND" "$TARGET_REF" -n "$NS" \
-                      -o jsonpath='{.spec.template.spec.containers[0].resources.requests.memory}' 2>/dev/null || echo "0")
-                    RECOMMENDED_MEM=$(kubectl get vpa "$NAME" -n "$NS" \
-                      -o jsonpath='{.status.recommendation.containerRecommendations[0].target.memory}' 2>/dev/null || echo "0")
-
-                    REPORT="${REPORT}\n| ${NS} | ${TARGET_REF} | ${CURRENT_CPU} -> ${RECOMMENDED_CPU} | ${CURRENT_MEM} -> ${RECOMMENDED_MEM} |"
-                    CHANGES_FOUND=true
-                  done
-
-                  if [ "$CHANGES_FOUND" = true ]; then
-                    echo -e "Rightsizing recommendations:\n${REPORT}"
-                    # 실제 환경에서는 여기서 Git clone -> manifest 수정 -> PR 생성
-                    echo "PR creation would happen here via GitHub API"
-                  else
-                    echo "No significant rightsizing changes needed"
-                  fi
+              command:
+                - /bin/bash
+                - /scripts/generate-rightsizing-pr.sh
+              env:
+                - name: NAMESPACES
+                  value: "backend-production,frontend-production,data-production"
+                - name: CHANGE_THRESHOLD_PERCENT
+                  value: "20"
+                - name: MIN_SAVINGS_USD
+                  value: "5"
+                - name: GIT_REPO
+                  value: "github.com/company/k8s-manifests.git"
+                - name: GIT_BRANCH
+                  value: "main"
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: rightsizing-secrets
+                      key: github-token
               resources:
                 requests:
                   cpu: "100m"
@@ -2240,82 +2649,218 @@ spec:
                 limits:
                   cpu: "500m"
                   memory: "256Mi"
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: rightsizing-scripts
+                defaultMode: 0755
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rightsizing-scripts
+  namespace: kubecost
+data:
+  generate-rightsizing-pr.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    echo "=== 리소스 라이트사이징 PR 생성기 ==="
+    echo "대상 네임스페이스: ${NAMESPACES}"
+    echo "변경 임계값: ${CHANGE_THRESHOLD_PERCENT}%"
+    echo "최소 절감 금액: $${MIN_SAVINGS_USD}/월"
+
+    CHANGES_FOUND=0
+    REPORT=""
+
+    IFS=',' read -ra NS_ARRAY <<< "${NAMESPACES}"
+    for NS in "${NS_ARRAY[@]}"; do
+      echo ""
+      echo "--- 네임스페이스: ${NS} ---"
+
+      # VPA 목록 조회
+      VPAS=$(kubectl get vpa -n "${NS}" -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || true)
+
+      if [ -z "${VPAS}" ]; then
+        echo "[SKIP] VPA가 없습니다."
+        continue
+      fi
+
+      for VPA_NAME in ${VPAS}; do
+        # VPA 추천값 조회
+        TARGET_CPU=$(kubectl get vpa "${VPA_NAME}" -n "${NS}" \
+          -o jsonpath='{.status.recommendation.containerRecommendations[0].target.cpu}' 2>/dev/null || echo "")
+        TARGET_MEM=$(kubectl get vpa "${VPA_NAME}" -n "${NS}" \
+          -o jsonpath='{.status.recommendation.containerRecommendations[0].target.memory}' 2>/dev/null || echo "")
+
+        if [ -z "${TARGET_CPU}" ] || [ -z "${TARGET_MEM}" ]; then
+          echo "[SKIP] ${VPA_NAME}: 추천값이 없습니다."
+          continue
+        fi
+
+        # 현재 Deployment 리소스 조회
+        DEPLOY_NAME=$(kubectl get vpa "${VPA_NAME}" -n "${NS}" \
+          -o jsonpath='{.spec.targetRef.name}' 2>/dev/null || echo "")
+
+        if [ -z "${DEPLOY_NAME}" ]; then
+          continue
+        fi
+
+        CURRENT_CPU=$(kubectl get deployment "${DEPLOY_NAME}" -n "${NS}" \
+          -o jsonpath='{.spec.template.spec.containers[0].resources.requests.cpu}' 2>/dev/null || echo "")
+        CURRENT_MEM=$(kubectl get deployment "${DEPLOY_NAME}" -n "${NS}" \
+          -o jsonpath='{.spec.template.spec.containers[0].resources.requests.memory}' 2>/dev/null || echo "")
+
+        echo "[CHECK] ${DEPLOY_NAME}: 현재 CPU=${CURRENT_CPU}, MEM=${CURRENT_MEM} → 추천 CPU=${TARGET_CPU}, MEM=${TARGET_MEM}"
+
+        REPORT="${REPORT}\n| ${NS} | ${DEPLOY_NAME} | ${CURRENT_CPU} | ${TARGET_CPU} | ${CURRENT_MEM} | ${TARGET_MEM} |"
+        CHANGES_FOUND=$((CHANGES_FOUND + 1))
+      done
+    done
+
+    if [ ${CHANGES_FOUND} -eq 0 ]; then
+      echo ""
+      echo "[INFO] 변경이 필요한 워크로드가 없습니다."
+      exit 0
+    fi
+
+    echo ""
+    echo "=== ${CHANGES_FOUND}개 워크로드에 대한 라이트사이징 추천이 발견되었습니다 ==="
+    echo ""
+    echo "| Namespace | Deployment | Current CPU | Rec. CPU | Current Mem | Rec. Mem |"
+    echo "|-----------|------------|-------------|----------|-------------|----------|"
+    echo -e "${REPORT}"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rightsizing-automation
+  namespace: kubecost
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rightsizing-reader
+rules:
+  - apiGroups: ["autoscaling.k8s.io"]
+    resources: ["verticalpodautoscalers"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: rightsizing-reader-binding
+subjects:
+  - kind: ServiceAccount
+    name: rightsizing-automation
+    namespace: kubecost
+roleRef:
+  kind: ClusterRole
+  name: rightsizing-reader
+  apiGroup: rbac.authorization.k8s.io
 ```
 
 ---
 
 ## 7. 비용 최적화 거버넌스
 
+거버넌스는 비용 최적화를 일회성 활동이 아닌 지속적인 조직 프로세스로 만드는 핵심 요소입니다. 정책 자동화와 정기 리뷰를 통해 비용 효율성을 조직 문화에 내재화합니다.
+
 ### 7.1 유휴 리소스 자동 탐지
 
-PromQL 쿼리를 사용하여 유휴 또는 과다 프로비저닝된 리소스를 탐지합니다.
+유휴 리소스는 비용 낭비의 가장 큰 원인 중 하나입니다. PromQL 쿼리를 활용하여 다양한 유형의 유휴 리소스를 자동으로 탐지합니다.
 
-**유휴 Deployment 탐지 (CPU 사용률 5% 미만):**
+**CPU 사용률이 5% 미만인 Deployment:**
 
 ```promql
-# 최근 24시간 동안 CPU 사용률이 5% 미만인 Deployment
+# 24시간 동안 평균 CPU 사용률이 요청량의 5% 미만인 Deployment 탐지
+# 최소 CPU Request가 100m 이상인 워크로드만 대상 (너무 작은 것은 제외)
 sum by (namespace, deployment) (
   rate(container_cpu_usage_seconds_total{
-    namespace!~"kube-system|monitoring|istio-system|kyverno",
+    namespace!~"kube-system|monitoring|istio-system|kubecost",
     container!=""
   }[24h])
 )
 /
 sum by (namespace, deployment) (
   kube_pod_container_resource_requests{
+    namespace!~"kube-system|monitoring|istio-system|kubecost",
     resource="cpu",
-    namespace!~"kube-system|monitoring|istio-system|kyverno"
+    container!=""
   }
 ) < 0.05
-```
-
-**유휴 메모리 탐지 (사용률 20% 미만):**
-
-```promql
-# 최근 24시간 동안 메모리 사용률이 20% 미만인 Pod
-sum by (namespace, pod) (
-  avg_over_time(container_memory_working_set_bytes{
-    namespace!~"kube-system|monitoring|istio-system",
-    container!=""
-  }[24h])
-)
-/
-sum by (namespace, pod) (
-  kube_pod_container_resource_requests{
-    resource="memory",
-    namespace!~"kube-system|monitoring|istio-system"
-  }
-) < 0.20
-```
-
-**스케일-투-제로 후보 (복제본은 있지만 트래픽 없음):**
-
-```promql
-# 최근 6시간 동안 수신 요청이 없는 Deployment
-sum by (namespace, deployment) (
-  rate(http_requests_total{
-    namespace!~"kube-system|monitoring"
-  }[6h])
-) == 0
 and
 sum by (namespace, deployment) (
-  kube_deployment_spec_replicas{
-    namespace!~"kube-system|monitoring"
+  kube_pod_container_resource_requests{
+    namespace!~"kube-system|monitoring|istio-system|kubecost",
+    resource="cpu",
+    container!=""
   }
-) > 0
+) > 0.1
+```
+
+**메모리 사용률이 20% 미만인 Deployment:**
+
+```promql
+# 24시간 동안 평균 메모리 사용률이 요청량의 20% 미만인 Deployment 탐지
+# 최소 Memory Request가 256Mi 이상인 워크로드만 대상
+sum by (namespace, deployment) (
+  container_memory_working_set_bytes{
+    namespace!~"kube-system|monitoring|istio-system|kubecost",
+    container!=""
+  }
+)
+/
+sum by (namespace, deployment) (
+  kube_pod_container_resource_requests{
+    namespace!~"kube-system|monitoring|istio-system|kubecost",
+    resource="memory",
+    container!=""
+  }
+) < 0.2
+and
+sum by (namespace, deployment) (
+  kube_pod_container_resource_requests{
+    namespace!~"kube-system|monitoring|istio-system|kubecost",
+    resource="memory",
+    container!=""
+  }
+) > 268435456
 ```
 
 **미사용 PersistentVolumeClaim 탐지:**
 
 ```promql
-# 어떤 Pod에도 마운트되지 않은 PVC
-kube_persistentvolumeclaim_info
-unless on (namespace, persistentvolumeclaim) (
-  kube_pod_spec_volumes_persistentvolumeclaims_info
-)
+# Pod에 마운트되지 않은 PVC 탐지 (bound 상태이지만 실제로 사용되지 않음)
+kube_persistentvolumeclaim_status_phase{phase="Bound"}
+unless on(namespace, persistentvolumeclaim)
+kube_pod_spec_volumes_persistentvolumeclaims_info
+```
+
+**Replica가 0인 Deployment (장기 비활성):**
+
+```promql
+# 7일 이상 replica가 0인 Deployment 탐지
+# 스케일 다운된 상태로 방치된 리소스를 찾아 정리 검토
+kube_deployment_spec_replicas{
+  namespace!~"kube-system|monitoring|istio-system"
+} == 0
+and
+time() - kube_deployment_created{
+  namespace!~"kube-system|monitoring|istio-system"
+} > 604800
 ```
 
 ### 7.2 비용 정책 (Kyverno)
+
+Kyverno 정책을 통해 비용 관련 규칙을 자동으로 적용합니다. 리소스 한도 미설정 방지, 과다 프로비저닝 경고 등을 자동화합니다.
 
 **리소스 Limits 필수 정책:**
 
@@ -2326,34 +2871,72 @@ kind: ClusterPolicy
 metadata:
   name: require-resource-limits
   annotations:
-    policies.kyverno.io/title: 리소스 Limits 필수
-    policies.kyverno.io/category: FinOps
-    policies.kyverno.io/severity: high
+    policies.kyverno.io/title: "리소스 Limits 필수 설정"
     policies.kyverno.io/description: >-
-      모든 컨테이너에 CPU와 메모리 리소스 requests 및 limits를 설정해야 합니다.
-      리소스 제한 없이 배포하면 비용 예측이 불가능하고 다른 워크로드에 영향을 줄 수 있습니다.
+      모든 컨테이너에 CPU와 Memory Limits가 설정되어야 합니다.
+      Limits가 없으면 노드의 리소스를 무제한으로 사용하여 비용 초과와
+      다른 워크로드에 영향을 줄 수 있습니다.
+    policies.kyverno.io/category: "FinOps"
+    policies.kyverno.io/severity: "high"
 spec:
   validationFailureAction: Enforce
   background: true
   rules:
-    - name: validate-resources
+    - name: check-resource-limits
       match:
         any:
           - resources:
               kinds:
-                - Pod
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
               namespaces:
                 - "!kube-system"
                 - "!kube-public"
                 - "!kube-node-lease"
-                - "!kyverno"
       validate:
         message: >-
-          모든 컨테이너에 resources.requests와 resources.limits를 설정해야 합니다.
-          CPU와 메모리 모두 지정해야 합니다.
-          컨테이너: {{request.object.spec.containers[*].name}}
+          모든 컨테이너에 CPU와 Memory Limits를 설정해야 합니다.
+          비용 관리와 노드 안정성을 위해 필수 설정입니다.
+          예시:
+            resources:
+              requests:
+                cpu: "100m"
+                memory: "128Mi"
+              limits:
+                cpu: "500m"
+                memory: "512Mi"
         foreach:
-          - list: "request.object.spec.containers"
+          - list: "request.object.spec.template.spec.containers[]"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.resources.limits.cpu || '' }}"
+                    operator: Equals
+                    value: ""
+                  - key: "{{ element.resources.limits.memory || '' }}"
+                    operator: Equals
+                    value: ""
+    - name: check-resource-requests
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
+              namespaces:
+                - "!kube-system"
+                - "!kube-public"
+                - "!kube-node-lease"
+      validate:
+        message: >-
+          모든 컨테이너에 CPU와 Memory Requests를 설정해야 합니다.
+          스케줄러가 적절한 노드에 배치하고, 비용을 정확하게 할당하기 위해 필수입니다.
+        foreach:
+          - list: "request.object.spec.template.spec.containers[]"
             deny:
               conditions:
                 any:
@@ -2361,12 +2944,6 @@ spec:
                     operator: Equals
                     value: ""
                   - key: "{{ element.resources.requests.memory || '' }}"
-                    operator: Equals
-                    value: ""
-                  - key: "{{ element.resources.limits.cpu || '' }}"
-                    operator: Equals
-                    value: ""
-                  - key: "{{ element.resources.limits.memory || '' }}"
                     operator: Equals
                     value: ""
 ```
@@ -2380,182 +2957,179 @@ kind: ClusterPolicy
 metadata:
   name: warn-over-provisioned-resources
   annotations:
-    policies.kyverno.io/title: 과다 프로비저닝 경고
-    policies.kyverno.io/category: FinOps
-    policies.kyverno.io/severity: medium
+    policies.kyverno.io/title: "과다 프로비저닝 리소스 경고"
     policies.kyverno.io/description: >-
-      단일 컨테이너에 과도한 리소스를 요청하면 경고합니다.
-      CPU 4코어 또는 메모리 8Gi를 초과하는 요청은 검토가 필요합니다.
+      컨테이너의 CPU Limits가 4 코어를 초과하거나 Memory Limits가 8Gi를 초과하는 경우
+      경고를 발생시킵니다. 대부분의 마이크로서비스는 이보다 적은 리소스로 충분하며,
+      과다 프로비저닝은 비용 낭비의 주요 원인입니다.
+    policies.kyverno.io/category: "FinOps"
+    policies.kyverno.io/severity: "medium"
 spec:
-  validationFailureAction: Audit  # 경고만 (차단하지 않음)
+  validationFailureAction: Audit
   background: true
   rules:
-    - name: check-cpu-over-provisioning
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - "!kube-system"
-                - "!monitoring"
-      validate:
-        message: >-
-          CPU requests가 4코어를 초과합니다 (현재: {{ request.object.spec.containers[0].resources.requests.cpu }}).
-          이 수준의 리소스가 정말 필요한지 확인하세요.
-          VPA 추천을 참고하여 적절한 값으로 조정하세요.
-        foreach:
-          - list: "request.object.spec.containers"
-            deny:
-              conditions:
-                all:
-                  - key: "{{ regex_match('^[0-9]+$', element.resources.requests.cpu || '0') }}"
-                    operator: Equals
-                    value: true
-                  - key: "{{ to_number(element.resources.requests.cpu || '0') }}"
-                    operator: GreaterThan
-                    value: 4
-    - name: check-memory-over-provisioning
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - "!kube-system"
-                - "!monitoring"
-      validate:
-        message: >-
-          메모리 requests가 8Gi를 초과합니다.
-          이 수준의 리소스가 정말 필요한지 확인하세요.
-        foreach:
-          - list: "request.object.spec.containers"
-            deny:
-              conditions:
-                all:
-                  - key: "{{ regex_match('.*Gi$', element.resources.requests.memory || '0Mi') }}"
-                    operator: Equals
-                    value: true
-                  - key: "{{ to_number(regex_replace_all('Gi', element.resources.requests.memory || '0Gi', '')) }}"
-                    operator: GreaterThan
-                    value: 8
-    - name: warn-limits-too-high-ratio
+    - name: warn-high-cpu-limits
       match:
         any:
           - resources:
               kinds:
                 - Deployment
+                - StatefulSet
+              namespaces:
+                - "!kube-system"
+                - "!monitoring"
+                - "!data-production"
+      validate:
+        message: >-
+          컨테이너 {{ element.name }}의 CPU Limits가 4 코어를 초과합니다 (현재: {{ element.resources.limits.cpu }}).
+          대부분의 마이크로서비스는 4 코어 미만으로 충분합니다.
+          이 설정이 필요한 경우 FinOps 팀(#finops-support)에 문의하세요.
+        foreach:
+          - list: "request.object.spec.template.spec.containers[]"
+            deny:
+              conditions:
+                all:
+                  - key: "{{ element.resources.limits.cpu || '0' }}"
+                    operator: GreaterThan
+                    value: "4000m"
+    - name: warn-high-memory-limits
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+              namespaces:
+                - "!kube-system"
+                - "!monitoring"
+                - "!data-production"
+      validate:
+        message: >-
+          컨테이너 {{ element.name }}의 Memory Limits가 8Gi를 초과합니다 (현재: {{ element.resources.limits.memory }}).
+          대부분의 마이크로서비스는 8Gi 미만으로 충분합니다.
+          이 설정이 필요한 경우 FinOps 팀(#finops-support)에 문의하세요.
+        foreach:
+          - list: "request.object.spec.template.spec.containers[]"
+            deny:
+              conditions:
+                all:
+                  - key: "{{ element.resources.limits.memory || '0' }}"
+                    operator: GreaterThan
+                    value: "8Gi"
+    - name: warn-limits-much-higher-than-requests
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
               namespaces:
                 - "!kube-system"
                 - "!monitoring"
       validate:
         message: >-
-          CPU limits가 requests의 5배를 초과합니다.
-          Limits/Requests 비율이 너무 크면 노드 과부하의 원인이 됩니다.
-          적절한 비율(2-3x)로 조정하세요.
-        pattern:
-          spec:
-            template:
-              spec:
-                containers:
-                  - resources:
-                      requests:
-                        cpu: "?*"
-                      limits:
-                        cpu: "?*"
+          컨테이너의 CPU Limits가 Requests의 10배를 초과합니다.
+          이는 과다 프로비저닝의 징후일 수 있습니다. Limits/Requests 비율을 검토하세요.
+          일반적으로 2-4배 이내가 권장됩니다.
+        foreach:
+          - list: "request.object.spec.template.spec.containers[]"
+            deny:
+              conditions:
+                all:
+                  - key: "{{ divide('{{ element.resources.limits.cpu || `0m` }}', '{{ element.resources.requests.cpu || `1m` }}') }}"
+                    operator: GreaterThan
+                    value: 10
 ```
 
 ### 7.3 정기 비용 리뷰 프로세스
 
-| 주기 | 참석자 | 안건 | 산출물 |
-|------|--------|------|--------|
-| **주간** (30분) | FinOps + 팀 리드 | 주간 비용 트렌드, 이상 항목 검토, 긴급 최적화 항목 | 주간 비용 리포트, 액션 아이템 |
-| **월간** (1시간) | FinOps + Engineering + Finance | 월간 비용 대비 예산, 팀별 비용 리뷰, 최적화 성과 | 월간 비용 리포트, 다음 달 예산 |
-| **분기** (2시간) | FinOps + Leadership | 분기 비용 추이, RI/SP 구매 검토, 비용 목표 재설정 | 분기 비용 보고서, 전략 업데이트 |
+주간과 월간 비용 리뷰를 통해 지속적으로 비용을 관리합니다.
 
-**월간 비용 리뷰 템플릿:**
+**주간 비용 리뷰 (매주 월요일):**
 
-```
-## 월간 Kubernetes 비용 리뷰 - [YYYY년 MM월]
+| 항목 | 담당 | 활동 내용 | 도구 |
+|------|------|----------|------|
+| 비용 추이 확인 | FinOps Lead | 전주 대비 비용 변화 분석, 이상 항목 식별 | Kubecost Dashboard |
+| 효율성 리뷰 | FinOps Lead | CPU/Memory 효율성 40% 미만 네임스페이스 식별 | Grafana Showback |
+| 유휴 리소스 점검 | 팀 리더 | 미사용 PVC, 비활성 Deployment 확인 | PromQL Queries |
+| 라이트사이징 검토 | 팀 리더 | VPA 추천 검토, PR 생성 요청 여부 결정 | Goldilocks |
+| 신규 워크로드 비용 | 팀 리더 | 이번 주 신규 배포 워크로드의 예상 비용 확인 | Kubecost Allocation |
+| 액션 아이템 생성 | FinOps Lead | 최적화 기회를 Jira 티켓으로 생성 | Jira/Linear |
 
-### 1. 비용 요약
-| 항목 | 이번 달 | 지난 달 | 변화율 | 예산 대비 |
-|------|---------|---------|--------|----------|
-| 총 비용 | $X,XXX | $X,XXX | +X% | X% |
-| CPU 비용 | $X,XXX | $X,XXX | +X% | - |
-| 메모리 비용 | $X,XXX | $X,XXX | +X% | - |
-| 스토리지 비용 | $XXX | $XXX | +X% | - |
-| 네트워크 비용 | $XXX | $XXX | +X% | - |
+**월간 비용 리뷰 (매월 첫째 주):**
 
-### 2. 팀별 비용
-| 팀 | 비용 | 예산 | 소진률 | CPU 효율 | 메모리 효율 |
-|----|------|------|--------|---------|-----------|
-| backend | $X,XXX | $X,XXX | X% | X% | X% |
-| frontend | $X,XXX | $X,XXX | X% | X% | X% |
-| data | $X,XXX | $X,XXX | X% | X% | X% |
+| 항목 | 담당 | 활동 내용 | 도구 |
+|------|------|----------|------|
+| 월간 비용 분석 | FinOps Team | 전월 대비 비용 변화, 팀별 비용 추이 분석 | Kubecost + AWS CUR |
+| 예산 대비 실적 | Finance | 팀별 예산 소진율, 초과/절감 내역 정리 | Kubecost Budget |
+| 최적화 성과 측정 | FinOps Lead | 라이트사이징, Spot 전환 등 최적화 효과 정량화 | Kubecost Savings |
+| RI/SP 활용률 | FinOps Team | Reserved Instances, Savings Plans 활용률 점검 | AWS Cost Explorer |
+| 다음 달 예산 조정 | Finance + 팀 리더 | 트렌드 기반 예산 조정, 신규 프로젝트 비용 반영 | Spreadsheet |
+| 경영진 보고 | FinOps Lead | 월간 요약, ROI 분석, 추천 사항 리포트 작성 | 프레젠테이션 |
 
-### 3. 주요 변동 사항
-- [변동 사항 1]
-- [변동 사항 2]
+**분기별 비용 전략 리뷰:**
 
-### 4. 최적화 성과
-- [성과 1: 라이트사이징으로 월 $XXX 절감]
-- [성과 2: 유휴 리소스 제거로 월 $XXX 절감]
-
-### 5. 다음 달 액션 아이템
-- [ ] [액션 1]
-- [ ] [액션 2]
-- [ ] [액션 3]
-```
+| 항목 | 담당 | 활동 내용 |
+|------|------|----------|
+| 아키텍처 비용 리뷰 | 아키텍트 + FinOps | 서비스 아키텍처의 비용 효율성 평가 |
+| 구매 옵션 최적화 | FinOps Team | RI/SP 구매 또는 갱신 계획 수립 |
+| 도구/플랫폼 ROI | FinOps Lead | Kubecost, 모니터링 도구 등의 투자 대비 효과 분석 |
+| FinOps 성숙도 평가 | 전체 | Crawl → Walk → Run 성숙도 현황 평가 및 다음 단계 계획 |
+| 연간 예산 계획 입력 | Finance | 다음 분기/연간 인프라 비용 예측 및 예산 요청 |
 
 ---
 
 ## 8. 베스트 프랙티스
 
-### 핵심 원칙
+### 실전 운영 가이드
 
-1. **Day 1부터 비용 레이블 적용**: 나중에 레이블을 추가하는 것은 매우 어렵습니다. 초기부터 Kyverno 정책으로 필수 레이블(team, service, environment, cost-center)을 강제하세요. 레이블 없는 리소스가 누적되면 비용 귀속이 불가능해집니다.
+1. **태깅부터 시작하라**: 비용 가시성의 정확도는 레이블/태그의 일관성에 100% 의존합니다. Kyverno 등으로 태깅 정책을 강제하고, CI/CD 파이프라인에서 태그 검증을 포함하세요. 태그 없는 리소스는 비용 할당이 불가능합니다.
 
-2. **Requests = 실제 사용량, Limits = 피크 사용량 기준**: CPU requests는 P50 사용량, limits는 P99 사용량을 기준으로 설정하세요. 메모리 requests는 정상 운영 시 사용량, limits는 최대 사용량 + 여유분(20%)으로 설정합니다. VPA 추천을 참고하되 맹목적으로 따르지 마세요.
+2. **Showback에서 시작하여 Chargeback으로 진화하라**: 처음부터 Chargeback을 도입하면 정확도 논쟁으로 시간을 낭비합니다. Showback으로 팀에게 비용 인식을 심어주고, 데이터 정확도가 검증된 후에 Chargeback으로 전환하세요. 일반적으로 3-6개월의 Showback 기간이 필요합니다.
 
-3. **공유 비용을 무시하지 말 것**: 모니터링, 네트워킹, 컨트롤 플레인 비용은 전체 비용의 15-30%를 차지할 수 있습니다. 이를 공정하게 분배하지 않으면 팀별 비용 비교가 왜곡됩니다. 분배 방법(균등/비례/가중)을 명확히 정의하세요.
+3. **공유 비용 분배 규칙을 투명하게 공개하라**: 컨트롤 플레인, 모니터링, 서비스 메시 등 공유 인프라 비용의 분배 방식을 문서화하고 모든 팀에 공유하세요. 불투명한 비용 분배는 신뢰를 떨어뜨리고, FinOps 문화 정착을 방해합니다.
 
-4. **효율성과 안정성의 균형**: 리소스 효율성 100%를 목표로 하지 마세요. 65-80% 효율성이 현실적인 목표입니다. 과도한 최적화는 서비스 안정성을 해칩니다. 프로덕션 환경에서는 안전 마진(20-30%)을 항상 유지하세요.
+4. **VPA 추천을 자동화하되 적용은 사람이 검토하라**: VPA의 `updateMode: "Off"` 모드로 추천만 수집하고, PR 기반 워크플로우로 팀 리더가 검토 후 적용하세요. 자동 적용(`Auto` 모드)은 프로덕션 서비스에서 예기치 않은 Pod 재시작을 유발할 수 있습니다.
 
-5. **셀프서비스 도구 제공**: FinOps 팀이 모든 최적화를 직접 수행할 수 없습니다. Goldilocks 대시보드, 팀별 Grafana 대시보드, Slack 비용 리포트 등 셀프서비스 도구를 제공하여 각 팀이 자율적으로 비용을 관리하도록 하세요.
+5. **비용 알림의 노이즈를 관리하라**: 알림 임계값을 너무 낮게 설정하면 경보 피로(alert fatigue)가 발생합니다. 시작은 보수적으로(50% 이상 급증만) 설정하고, 운영 경험에 따라 점차 정교화하세요. 심각도별 채널 분리도 중요합니다.
 
-6. **비용 리뷰를 문화로 정착**: 주간/월간 비용 리뷰를 정기적으로 실시하고, 비용 절감 성과를 공유하세요. 비용 의식이 엔지니어링 문화에 내재화되어야 지속적인 최적화가 가능합니다.
+6. **비용 최적화의 ROI를 정량적으로 측정하라**: "비용이 줄었다"는 정성적 보고가 아닌, "VPA 라이트사이징으로 월 $1,200 절감", "Spot 전환으로 월 $3,500 절감" 등 정량적 성과를 추적하세요. 이것이 FinOps 투자의 정당성을 유지하는 핵심입니다.
 
-7. **CUR 통합으로 비용 정확도 확보**: OpenCost/Kubecost의 기본 가격 모델은 On-Demand 기준입니다. AWS CUR과 통합하면 실제 청구 가격(Savings Plans, Reserved Instance 할인 포함)을 반영하여 비용 정확도를 높일 수 있습니다.
+7. **비용 데이터의 정확도를 지속적으로 검증하라**: Kubecost의 비용 추정치와 실제 AWS 청구서를 월간으로 비교하세요. CUR 통합 없이는 10-30%의 오차가 발생할 수 있습니다. 정확도 격차를 발견하면 커스텀 가격 설정이나 CUR 통합을 보완하세요.
 
-8. **점진적으로 성숙도 향상**: Crawl(기본 비용 확인) -> Walk(팀별 비용 귀속) -> Run(자동화된 최적화) 단계로 점진적으로 발전하세요. 처음부터 모든 것을 자동화하려 하면 복잡성만 증가합니다.
+8. **팀 자율성을 존중하면서 가드레일을 설정하라**: 각 팀이 예산 범위 내에서 자유롭게 리소스를 사용하도록 하되, 최대 리소스 한도(ResourceQuota), 필수 레이블(Kyverno), 예산 알림 등의 가드레일은 자동으로 적용하세요. 마이크로매니지먼트는 엔지니어링 문화를 해칩니다.
 
 ### 안티패턴
 
-| 안티패턴 | 문제 | 해결 방법 |
-|---------|------|----------|
-| **레이블 없는 배포 허용** | 비용 귀속 불가, "미분류" 비용 증가 | Kyverno 정책으로 필수 레이블 강제 |
-| **리소스 Limits 미설정** | 비용 예측 불가, 노이지 네이버 문제 | Admission Controller로 Limits 필수 적용 |
-| **월 1회 청구서만 확인** | 이상 비용 발견 지연, 사후 대응만 가능 | 일일 비용 모니터링 + 실시간 이상 탐지 |
-| **모든 최적화를 FinOps 팀이 수행** | 병목 현상, 팀 자율성 저하 | 셀프서비스 도구 + 팀 예산 책임제 |
+| 안티패턴 | 문제점 | 권장 해결책 |
+|---------|--------|-----------|
+| **비용 최적화 = 무조건 줄이기** | 비용만 줄이다가 성능/안정성 문제 발생. SLA 위반, 장애 대응 지연 등 | 비용과 성능의 균형을 추구. 효율성(비용 대비 성과)을 핵심 지표로 사용 |
+| **FinOps = 인프라팀만의 일** | 엔지니어링 팀의 참여 없이 인프라팀만 비용 관리. 실제 최적화 실행이 안됨 | 팀별 비용 대시보드, 셀프서비스 도구, 비용 리뷰 참여를 통해 전 조직 참여 유도 |
+| **월 1회 비용 확인** | 한 달이 지난 후에야 비용 초과 발견. 이미 늦음 | 실시간 대시보드, 일일/주간 자동 리포트, 예산 초과 즉시 알림 체계 구축 |
+| **모든 리소스에 동일한 정책 적용** | 배치 작업과 실시간 서비스에 동일한 리소스 제한 적용. 비효율 또는 장애 발생 | 워크로드 특성(실시간/배치/ML 등)에 맞는 차별화된 정책과 예산 기준 수립 |
 
 ---
 
 ## 9. 참고 자료
 
-### 외부 자료
+### 외부 리소스
 
-- [OpenCost Documentation](https://www.opencost.io/docs/)
-- [Kubecost Documentation](https://docs.kubecost.com/)
-- [AWS Cost and Usage Report Guide](https://docs.aws.amazon.com/cur/latest/userguide/what-is-cur.html)
-- [FinOps Foundation Framework](https://www.finops.org/framework/)
-- [FinOps for Kubernetes](https://www.finops.org/wg/containers-kubernetes/)
-- [CNCF FinOps Landscape](https://landscape.finops.org/)
-- [Goldilocks Documentation](https://goldilocks.docs.fairwinds.com/)
+- [OpenCost 공식 문서](https://www.opencost.io/docs/)
+- [Kubecost 공식 문서](https://docs.kubecost.com/)
+- [AWS Cost and Usage Report 가이드](https://docs.aws.amazon.com/cur/latest/userguide/what-is-cur.html)
+- [FinOps Foundation](https://www.finops.org/)
+- [FinOps Framework](https://www.finops.org/framework/)
+- [Goldilocks 공식 문서](https://goldilocks.docs.fairwinds.com/)
+- [Vertical Pod Autoscaler 문서](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)
+- [Kyverno 정책 라이브러리](https://kyverno.io/policies/)
+- [AWS Cost Anomaly Detection](https://docs.aws.amazon.com/cost-management/latest/userguide/getting-started-ad.html)
 
-### 내부 참고 문서
+### 내부 관련 문서
 
-- [EKS 비용 최적화](../eks/07-eks-cost-optimization.md) - EKS 특화 비용 최적화 전략
-- [리소스 최적화](./10-resource-optimization.md) - Requests/Limits 설정, VPA/HPA 활용
-- [스케일링 전략](./06-scaling-strategies.md) - HPA, KEDA, Karpenter 기반 스케일링
-- [이벤트 용량 계획](./12-event-capacity-planning.md) - 이벤트 기반 용량 계획 및 비용 예측
+- [EKS 비용 최적화](../eks/07-eks-cost-optimization.md) - AWS EKS 환경에서의 비용 최적화 전략
+- [리소스 최적화](./10-resource-optimization.md) - Requests/Limits 설정, JVM 튜닝, 프레임워크별 가이드
+- [스케일링 전략](./06-scaling-strategies.md) - HPA, VPA, KEDA를 활용한 효율적 스케일링
+
+---
+
+< [이전: 이벤트 용량 계획](./12-event-capacity-planning.md) | [목차](./README.md) | [다음: 없음] >
