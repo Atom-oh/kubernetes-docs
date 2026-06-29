@@ -16,6 +16,7 @@ Amazon EKS Hybrid Nodes는 온프레미스 서버를 AWS EKS 컨트롤 플레인
 7. [노드 라이프사이클 관리](./07-node-lifecycle.md)
 8. [운영 및 유지보수](./08-operations.md)
 9. [베어메탈 서버 OS 설치 및 마이그레이션 가이드](./09-bare-metal-os-setup.md)
+10. [Hybrid Nodes Gateway](./10-hybrid-nodes-gateway.md)
 
 ## EKS Hybrid Nodes 개요
 

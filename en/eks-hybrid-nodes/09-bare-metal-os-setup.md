@@ -1,6 +1,6 @@
 # Bare Metal Server OS Installation and Migration Guide
 
-< [Previous: Operations and Maintenance](./08-operations.md) | [Table of Contents](./README.md) >
+< [Previous: Operations and Maintenance](./08-operations.md) | [Table of Contents](./README.md) | [Next: Hybrid Nodes Gateway](./10-hybrid-nodes-gateway.md) >
 
 > **Supported Versions**: EKS 1.31+, nodeadm 0.1+
 > **Last Updated**: February 23, 2026
@@ -469,4 +469,4 @@ For detailed bootstrap process information, refer to [04-node-bootstrap.md](./04
 
 ---
 
-< [Previous: Operations and Maintenance](./08-operations.md) | [Table of Contents](./README.md) >
+< [Previous: Operations and Maintenance](./08-operations.md) | [Table of Contents](./README.md) | [Next: Hybrid Nodes Gateway](./10-hybrid-nodes-gateway.md) >

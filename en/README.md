@@ -57,6 +57,7 @@ This training content provides quizzes for each topic along with the learning ma
 9. [EKS Troubleshooting](./eks/09-eks-troubleshooting.md) | [Quiz](./quizzes/eks/09-eks-troubleshooting-quiz.md)
 10. [EKS Resiliency and High Availability](./eks/10-eks-resiliency.md) | [Quiz](./quizzes/eks/10-eks-resiliency-quiz.md)
 11. [EKS Advanced Debugging](./eks/11-eks-advanced-debugging.md) | [Quiz](./quizzes/eks/11-eks-advanced-debugging-quiz.md)
+12. [Kubernetes Version Features and Roadmap](./eks/12-kubernetes-version-roadmap.md) | [Quiz](./quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
 
 ### EKS Hybrid Nodes
 1. [EKS Hybrid Nodes Introduction](./eks-hybrid-nodes/README.md)
@@ -67,6 +68,8 @@ This training content provides quizzes for each topic along with the learning ma
 6. [GPU Server Integration](./eks-hybrid-nodes/05-gpu-integration.md) | [Quiz](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
 7. [Workload Placement Strategies](./eks-hybrid-nodes/06-workload-placement.md) | [Quiz](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
 8. [Operations and Maintenance](./eks-hybrid-nodes/08-operations.md) | [Quiz](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+9. [Bare Metal OS Setup](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [Quiz](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+10. [Hybrid Nodes Gateway](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [Quiz](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 
 ### EKS Auto Mode
 1. [EKS Auto Mode Introduction](./eks-auto-mode/README.md)

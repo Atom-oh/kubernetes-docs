@@ -16,6 +16,7 @@ Amazon EKS Hybrid Nodes is a feature that allows you to manage on-premises serve
 7. [Node Lifecycle Management](./07-node-lifecycle.md)
 8. [Operations and Maintenance](./08-operations.md)
 9. [Bare Metal Server OS Installation and Migration Guide](./09-bare-metal-os-setup.md)
+10. [Hybrid Nodes Gateway](./10-hybrid-nodes-gateway.md)
 
 ## What are Hybrid Nodes?
 

@@ -51,6 +51,7 @@
 * [EKS 문제 해결](eks/09-eks-troubleshooting.md)
 * [EKS 복원력과 고가용성](eks/10-eks-resiliency.md)
 * [EKS 고급 디버깅](eks/11-eks-advanced-debugging.md)
+* [Kubernetes 버전별 신규 기능과 로드맵](eks/12-kubernetes-version-roadmap.md)
 * [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
     * [사전 요구 사항](eks-hybrid-nodes/01-prerequisites.md)
     * [네트워크 구성](eks-hybrid-nodes/02-network-configuration.md)
@@ -61,6 +62,7 @@
     * [노드 라이프사이클 관리](eks-hybrid-nodes/07-node-lifecycle.md)
     * [운영 및 유지보수](eks-hybrid-nodes/08-operations.md)
     * [베어메탈 서버 OS 설치](eks-hybrid-nodes/09-bare-metal-os-setup.md)
+    * [Hybrid Nodes Gateway](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
 * [EKS Auto Mode](eks-auto-mode/README.md)
     * [Auto Mode 시작하기](eks-auto-mode/01-getting-started.md)
     * [NodePool 구성](eks-auto-mode/02-nodepool-configuration.md)
@@ -350,6 +352,7 @@
     * [EKS 문제 해결 퀴즈](quizzes/eks/09-eks-troubleshooting-quiz.md)
     * [EKS 복원력과 고가용성 퀴즈](quizzes/eks/10-eks-resiliency-quiz.md)
     * [EKS 고급 디버깅 퀴즈](quizzes/eks/11-eks-advanced-debugging-quiz.md)
+    * [Kubernetes 버전별 신규 기능과 로드맵 퀴즈](quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
 
 * EKS Hybrid Nodes
     * [사전 요구 사항 퀴즈](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
@@ -361,6 +364,7 @@
     * [노드 라이프사이클 관리 퀴즈](quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
     * [운영 및 유지보수 퀴즈](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
     * [베어메탈 서버 OS 설치 퀴즈](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+    * [Hybrid Nodes Gateway 퀴즈](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 
 * EKS Auto Mode
     * [Auto Mode 시작하기 퀴즈](quizzes/eks-auto-mode/01-getting-started-quiz.md)

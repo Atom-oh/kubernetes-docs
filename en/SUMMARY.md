@@ -51,6 +51,7 @@
 * [EKS Troubleshooting](eks/09-eks-troubleshooting.md)
 * [EKS Resiliency and High Availability](eks/10-eks-resiliency.md)
 * [EKS Advanced Debugging](eks/11-eks-advanced-debugging.md)
+* [Kubernetes Version Features and Roadmap](eks/12-kubernetes-version-roadmap.md)
 * [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
     * [Prerequisites](eks-hybrid-nodes/01-prerequisites.md)
     * [Network Configuration](eks-hybrid-nodes/02-network-configuration.md)
@@ -61,6 +62,7 @@
     * [Node Lifecycle Management](eks-hybrid-nodes/07-node-lifecycle.md)
     * [Operations and Maintenance](eks-hybrid-nodes/08-operations.md)
     * [Bare Metal OS Setup](eks-hybrid-nodes/09-bare-metal-os-setup.md)
+    * [Hybrid Nodes Gateway](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
 * [EKS Auto Mode](eks-auto-mode/README.md)
     * [Getting Started](eks-auto-mode/01-getting-started.md)
     * [NodePool Configuration](eks-auto-mode/02-nodepool-configuration.md)
@@ -350,6 +352,7 @@
     * [EKS Troubleshooting Quiz](quizzes/eks/09-eks-troubleshooting-quiz.md)
     * [EKS Resiliency and High Availability Quiz](quizzes/eks/10-eks-resiliency-quiz.md)
     * [EKS Advanced Debugging Quiz](quizzes/eks/11-eks-advanced-debugging-quiz.md)
+    * [Kubernetes Version Features and Roadmap Quiz](quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
 
 * EKS Hybrid Nodes
     * [Prerequisites Quiz](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
@@ -361,6 +364,7 @@
     * [Node Lifecycle Management Quiz](quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
     * [Operations and Maintenance Quiz](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
     * [Bare Metal OS Setup Quiz](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+    * [Hybrid Nodes Gateway Quiz](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 
 * EKS Auto Mode
     * [Getting Started Quiz](quizzes/eks-auto-mode/01-getting-started-quiz.md)
