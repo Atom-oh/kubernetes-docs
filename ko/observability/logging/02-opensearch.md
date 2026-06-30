@@ -1,6 +1,6 @@
 # Amazon OpenSearch Service
 
-> **마지막 업데이트**: 2026년 2월 23일
+> **마지막 업데이트**: 2026년 6월 30일
 
 Amazon OpenSearch Service는 완전관리형 검색 및 분석 서비스로, 실시간 애플리케이션 모니터링, 로그 분석, 웹사이트 검색 등에 활용됩니다. Elasticsearch의 포크인 OpenSearch를 기반으로 하며, 강력한 전문 검색(Full-text Search) 기능을 제공합니다.
 
@@ -118,6 +118,8 @@ flowchart TB
 ```
 
 ### 노드 유형
+
+> **참고**: AWS 인스턴스 타입별 성능 벤치마크는 [AWS Instance Benchmark](https://benchmark.aws.atomai.click/)에서 확인할 수 있습니다.
 
 | 노드 유형 | 역할 | 권장 인스턴스 |
 |----------|------|--------------|

@@ -1,7 +1,7 @@
 # Kubernetes 버전별 신규 기능과 로드맵
 
 > **지원 버전**: Kubernetes 1.29 - 1.36
-> **마지막 업데이트**: 2026년 6월 28일
+> **마지막 업데이트**: 2026년 6월 30일
 
 Kubernetes는 연 3회 릴리스 주기를 통해 빠르게 진화하고 있으며, 각 버전마다 중요한 기능이 추가되거나 졸업(GA)합니다. 기업 환경에서 EKS 클러스터를 운영하는 팀에게 버전별 변경 사항을 체계적으로 파악하는 것은 안정적인 업그레이드 계획 수립과 새로운 기능의 적시 채택을 위해 필수적입니다.
 
@@ -1681,126 +1681,532 @@ spec:
 
 ### 4.8 Kubernetes 1.36 "ハル (Haru)" (2026년 4월)
 
-Kubernetes 1.36은 일본어 "ハル"(봄, Haru)을 코드네임으로 사용한 최신 릴리스입니다. Pod-level 리소스 관리와 KYAML의 안정화가 진행되고 있습니다.
+Kubernetes 1.36은 일본어 "ハル"(봄, Haru)을 코드네임으로 사용한 릴리스입니다. **보안 강화, AI/ML 워크로드 지원, API 확장성**을 핵심 테마로, 18개 Stable(GA) / 25개 Beta / 25개 Alpha 기능이 포함되었습니다. EKS는 GovCloud(US)를 포함한 모든 가용 리전에서 1.36을 지원합니다.
 
 ```mermaid
 pie title "Kubernetes 1.36 Enhancement 분포"
-    "Stable (GA)" : 14
-    "Beta" : 19
-    "Alpha" : 21
+    "Stable (GA)" : 18
+    "Beta" : 25
+    "Alpha" : 25
 ```
 
-#### 핵심 기능
+#### 한눈에 보기
 
-##### Pod-level In-Place Scaling Beta (KEP-2837)
+| 기능 | 단계 | 핵심 가치 |
+|------|------|-----------|
+| Mutating Admission Policies | **GA** | Webhook 서버 제거 → 운영 단순화·성능·가용성 |
+| In-Place Pod Vertical Scaling | **확장** | 무중단 리소스 조정 → 비용 효율·SLA 보호 |
+| User Namespaces | **GA** | 컨테이너 root ≠ 노드 root → 권한 격리 강화 |
+| Fine-Grained Kubelet API Authorization | **GA** | kubelet 접근 최소권한화 |
+| Legacy ServiceAccount Token Cleanup | **GA** | 미사용 토큰 자동 정리 → 공격면 축소 |
+| Resource Health Status (DRA) | 개선 | GPU 등 디바이스 헬스 → 장애 원인 식별 |
 
-개별 컨테이너가 아닌 Pod 레벨에서의 리소스 제한을 설정하고 동적으로 변경할 수 있습니다. 이를 통해 Pod 내 컨테이너 간 리소스 공유가 더욱 유연해집니다.
+#### 핵심 기능 심층
+
+##### Mutating Admission Policies GA (KEP-3962)
+
+CEL(Common Expression Language) 기반 mutation 로직을 네이티브 Kubernetes 객체로 선언할 수 있습니다. 별도 webhook 서버 없이 API Server 내부에서 mutation이 처리됩니다.
+
+**핵심 장점:**
+
+- **API Server 내부 처리** — webhook 네트워크 왕복 제거로 latency 감소
+- **운영 복잡성 감소** — webhook 서버의 인증서 관리, HA 구성, 스케일링 부담 제거
+- **멱등성 보장** — CEL 표현식은 동일 입력에 항상 동일 결과를 반환
+- **제약사항** — 외부 API 호출이 필요한 mutation은 여전히 webhook 필요
+
+**MutatingAdmissionPolicy 예시 — resizePolicy 자동 주입:**
+
+```yaml
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicy
+metadata:
+  name: inject-resizepolicy
+spec:
+  failurePolicy: Fail
+  reinvocationPolicy: Never
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE"]
+        resources: ["pods"]
+  matchConditions:
+    - name: only-resize-enabled
+      expression: >-
+        has(object.metadata.annotations) &&
+        ("resize.example.com/enabled" in object.metadata.annotations) &&
+        object.metadata.annotations["resize.example.com/enabled"] == "true"
+  mutations:
+    - patchType: JSONPatch
+      jsonPatch:
+        expression: >-
+          object.spec.containers.map(c, JSONPatch{
+            op: "add",
+            path: "/spec/containers/" + string(object.spec.containers.indexOf(c)) + "/resizePolicy",
+            value: [
+              {"resourceName": "cpu",    "restartPolicy": "NotRequired"},
+              {"resourceName": "memory", "restartPolicy": "RestartContainer"}
+            ]
+          })
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicyBinding
+metadata:
+  name: inject-resizepolicy-binding
+spec:
+  policyName: inject-resizepolicy
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        map-demo: "true"
+```
+
+> **안전 참고**: MAP의 `jsonPatch` 표현식은 **atomic list**(예: `resizePolicy`)에 대해 전체 교체를 수행합니다. 기존 값이 있을 경우 덮어씌워지므로, `matchConditions`으로 대상을 정확히 한정하는 것이 중요합니다. Strategic Merge Patch는 atomic list에서는 merge가 아닌 replace 동작을 하므로, JSONPatch를 사용하여 명시적으로 경로를 지정하는 방식이 권장됩니다.
+
+##### In-Place Pod Vertical Scaling 확장
+
+1.35에서 GA로 졸업한 In-Place Pod Resize가 1.36에서 추가 확장되었습니다.
+
+**1.36에서 추가된 개선 사항:**
+
+- **Pod-level 공유 예산 리사이즈** — Pod 레벨의 aggregate 리소스 제한을 동적으로 변경 가능
+- **CPUManager 체크포인트 개선** — 원본 할당과 리사이즈 할당을 모두 추적하여 NUMA 정렬 유지
+- **리사이즈 정책** — CPU: `NotRequired` (무중단), Memory: 축소 시 `RestartContainer` 가능
+
+##### User Namespaces (Feature Gate 제거)
+
+컨테이너 내부의 UID 0(root)을 호스트의 비특권 UID로 매핑하여 보안 격리를 강화합니다. 1.34에서 GA로 졸업했으며, **1.36에서 feature gate가 완전히 제거**되어 프로덕션 레디 상태입니다. 더 이상 feature gate로 비활성화할 수 없으므로, 모든 클러스터에서 기본 동작으로 포함됩니다.
+
+##### KYAML 안정화 (GA)
+
+KYAML이 **GA로 승격**되어 YAML 1.2 기반 처리가 모든 Kubernetes 컴포넌트에서 기본으로 사용됩니다. KYAML 검증은 이제 위험한 YAML 패턴(anchors, merge keys, 암시적 boolean 등)을 기본적으로 거부합니다.
+
+```bash
+# KYAML은 이제 기본 적용
+$ kubectl apply -f bad-manifest.yaml
+Error from server: error parsing bad-manifest.yaml: KYAML validation failed:
+  line 5: YAML anchors are not permitted
+  line 12: implicit boolean value "yes" is not permitted; use "true" or "false"
+```
+
+**마이그레이션 고려사항:**
+- `yes/no`, `on/off`, `y/n` 같은 값이 boolean이 아닌 문자열로 처리됩니다
+- 0으로 시작하는 숫자가 더 이상 8진수로 해석되지 않습니다
+- 기존 매니페스트의 호환성을 `kubectl apply --dry-run=server --validate=strict`로 사전 검증하는 것이 좋습니다
+
+##### Gang Scheduling GA (KEP-4832)
+
+1.35에서 Alpha로 도입된 Gang Scheduling이 **GA로 졸업**하여 기본 활성화됩니다. 여러 Pod가 동시에 스케줄링되어야 하는 "all-or-nothing" 스케줄링을 지원합니다.
+
+```yaml
+# GA-level Gang Scheduling
+apiVersion: scheduling.k8s.io/v1
+kind: PodGroup
+metadata:
+  name: mpi-job
+spec:
+  minMember: 8
+  scheduleTimeoutSeconds: 600
+  priorityClassName: high-priority
+```
+
+**기타 GA 기능:**
+- `AnonymousAuthConfigurableEndpoints` — 엔드포인트별 익명 인증 제어
+- `SELinuxMount` — 볼륨의 SELinux 레이블 관리
+- `NodeInclusionPolicyInPodTopologySpread` — 토폴로지 스프레드 노드 포함 정책
+- `RecoverVolumeExpansionFailure` — 볼륨 확장 실패 시 자동 복구
+
+#### 활용 시나리오 — Phase-Aware 리소스 관리 (annotation 기반)
+
+##### 문제 정의
+
+같은 컨테이너의 lifecycle에서 **startup 단계**와 **steady-state 단계**는 모두 `Running` 상태입니다. `resources` 필드는 하나뿐이며, probe 상태에 연동한 자동 리소스 전환 메커니즘이 Kubernetes에 내장되어 있지 않습니다.
+
+대표적인 워크로드 예시:
+- **JVM 애플리케이션** — JIT 컴파일 시 높은 CPU 필요, 이후 안정화
+- **LLM 모델 서빙** — 모델 로딩 시 대량 메모리/CPU, 추론 시 감소
+- **데이터베이스** — 인덱스/캐시 프리필 시 높은 CPU, 이후 쿼리 처리로 전환
+
+##### 동작 흐름
+
+```
+Pod 생성 (startup용 큰 CPU로 시작)
+  → controller가 pod.status.containerStatuses[].started 를 watch
+  → started: true 감지 (= startup probe 통과)
+  → resize subresource로 steady-state CPU 값으로 in-place patch (무중단)
+```
+
+##### 핵심 가치 — QoS 보존
+
+QoS 클래스는 Pod 생성 시 확정되고 **resize로 변경이 불가능**합니다 (KEP-1287 설계상 제한). startup 단계와 steady-state 단계 양쪽 모두 `requests == limits`를 유지하면 **Guaranteed QoS가 보존**됩니다. memory는 고정하고 CPU만 축소하는 전략이 가장 안전합니다.
+
+##### Annotation 방식 — CRD 불필요
+
+별도의 CRD를 정의하지 않고, **annotation만으로 리사이즈 정책을 선언**합니다.
+
+```yaml
+spec:
+  template:
+    metadata:
+      annotations:
+        resize.example.com/enabled:          "true"
+        resize.example.com/trigger:          "StartupProbePassed"
+        resize.example.com/steady-resources: |
+          {"app":{"requests":{"cpu":"50m"},"limits":{"cpu":"50m"}}}
+    spec:
+      containers:
+        - name: app
+          resizePolicy:
+            - { resourceName: cpu, restartPolicy: NotRequired }
+            - { resourceName: memory, restartPolicy: RestartContainer }
+          resources:
+            requests: { cpu: "200m", memory: 64Mi }
+            limits:   { cpu: "200m", memory: 64Mi }
+```
+
+##### 컨트롤러 전체 코드 (main.go)
+
+```go
+// pod-resizer — annotation 기반 무중단 in-place 다운스케일 컨트롤러.
+// 워크로드 종류(Deployment/StatefulSet/DaemonSet/Rollout)를 알 필요가 없다.
+// Pod 만 watch 하다, startup 통과 시점에 pods/resize 서브리소스로 steady 리소스로
+// 무중단 패치한다. req==limit 을 양쪽 단계에서 유지하면 Guaranteed QoS 가 보존된다(KEP-1287).
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"strconv"
+	"sync"
+	"time"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
+)
+
+const (
+	annEnabled = "resize.example.com/enabled"
+	annTrigger = "resize.example.com/trigger"
+	annDelay   = "resize.example.com/delay-seconds"
+	annSteady  = "resize.example.com/steady-resources"
+	annResized = "resize.example.com/resized"
+)
+
+type resVals struct {
+	Requests map[string]string `json:"requests,omitempty"`
+	Limits   map[string]string `json:"limits,omitempty"`
+}
+
+var clientset *kubernetes.Clientset
+var processed sync.Map
+
+func main() {
+	cfg, err := rest.InClusterConfig()
+	if err != nil {
+		log.Fatalf("in-cluster config: %v", err)
+	}
+	clientset, err = kubernetes.NewForConfig(cfg)
+	if err != nil {
+		log.Fatalf("clientset: %v", err)
+	}
+
+	factory := informers.NewSharedInformerFactory(clientset, 15*time.Second)
+	podInformer := factory.Core().V1().Pods().Informer()
+	podInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    func(obj interface{}) { handle(obj) },
+		UpdateFunc: func(_, obj interface{}) { handle(obj) },
+	})
+
+	stop := make(chan struct{})
+	defer close(stop)
+	log.Printf("pod-resizer starting; watching pods annotated %s=true", annEnabled)
+	factory.Start(stop)
+	factory.WaitForCacheSync(stop)
+	log.Printf("informer cache synced; ready")
+	select {}
+}
+
+func handle(obj interface{}) {
+	pod, ok := obj.(*corev1.Pod)
+	if !ok {
+		return
+	}
+	a := pod.Annotations
+	if a == nil || a[annEnabled] != "true" || a[annResized] == "true" {
+		return
+	}
+	if pod.DeletionTimestamp != nil || pod.Status.Phase != corev1.PodRunning {
+		return
+	}
+
+	trigger := a[annTrigger]
+	if trigger == "" {
+		trigger = "StartupProbePassed"
+	}
+	if !triggerMet(pod, trigger, a[annDelay]) {
+		return
+	}
+
+	steady := map[string]resVals{}
+	if err := json.Unmarshal([]byte(a[annSteady]), &steady); err != nil {
+		log.Printf("ERROR %s/%s: bad %s: %v", pod.Namespace, pod.Name, annSteady, err)
+		return
+	}
+	patch := buildResizePatch(steady)
+	if patch == nil {
+		return
+	}
+	pb, _ := json.Marshal(patch)
+
+	key := string(pod.UID)
+	if _, loaded := processed.LoadOrStore(key, true); loaded {
+		return
+	}
+
+	if _, err := clientset.CoreV1().Pods(pod.Namespace).Patch(
+		context.TODO(), pod.Name, types.StrategicMergePatchType, pb,
+		metav1.PatchOptions{}, "resize"); err != nil {
+		processed.Delete(key)
+		log.Printf("ERROR %s/%s: resize patch failed: %v", pod.Namespace, pod.Name, err)
+		return
+	}
+	log.Printf("RESIZED %s/%s [%s] trigger=%s patch=%s",
+		pod.Namespace, pod.Name, ownerKind(pod), trigger, string(pb))
+
+	mark := []byte(fmt.Sprintf(`{"metadata":{"annotations":{%q:"true"}}}`, annResized))
+	if _, err := clientset.CoreV1().Pods(pod.Namespace).Patch(
+		context.TODO(), pod.Name, types.MergePatchType, mark, metav1.PatchOptions{}); err != nil {
+		log.Printf("WARN %s/%s: marker patch failed: %v", pod.Namespace, pod.Name, err)
+	}
+}
+
+func triggerMet(pod *corev1.Pod, trigger, delayStr string) bool {
+	switch trigger {
+	case "Ready":
+		for _, c := range pod.Status.Conditions {
+			if c.Type == corev1.PodReady {
+				return c.Status == corev1.ConditionTrue
+			}
+		}
+		return false
+	case "Delay":
+		delay, _ := strconv.Atoi(delayStr)
+		for _, cs := range pod.Status.ContainerStatuses {
+			if cs.State.Running != nil {
+				return time.Since(cs.State.Running.StartedAt.Time) >= time.Duration(delay)*time.Second
+			}
+		}
+		return false
+	default:
+		if len(pod.Status.ContainerStatuses) == 0 {
+			return false
+		}
+		for _, cs := range pod.Status.ContainerStatuses {
+			if cs.Started == nil || !*cs.Started {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func buildResizePatch(steady map[string]resVals) map[string]interface{} {
+	var containers []map[string]interface{}
+	for name, rv := range steady {
+		res := map[string]interface{}{}
+		if len(rv.Requests) > 0 {
+			res["requests"] = rv.Requests
+		}
+		if len(rv.Limits) > 0 {
+			res["limits"] = rv.Limits
+		}
+		containers = append(containers, map[string]interface{}{"name": name, "resources": res})
+	}
+	if len(containers) == 0 {
+		return nil
+	}
+	return map[string]interface{}{"spec": map[string]interface{}{"containers": containers}}
+}
+
+func ownerKind(pod *corev1.Pod) string {
+	if len(pod.OwnerReferences) > 0 {
+		return pod.OwnerReferences[0].Kind
+	}
+	return "Pod"
+}
+```
+
+##### RBAC 매니페스트
+
+컨트롤러가 `pods/resize` 서브리소스에 접근하기 위한 RBAC 설정입니다. `pods/resize`는 Pod의 리소스를 in-place로 변경하는 핵심 서브리소스입니다.
 
 ```yaml
 apiVersion: v1
-kind: Pod
+kind: ServiceAccount
 metadata:
-  name: shared-resource-pod
-spec:
-  # Pod 레벨 리소스 (컨테이너 간 공유)
-  resources:
-    limits:
-      cpu: "4"
-      memory: 8Gi
-    requests:
-      cpu: "2"
-      memory: 4Gi
-  containers:
-    - name: main-app
-      image: app:v6.0
-      resources:
-        requests:
-          cpu: "1"
-          memory: 2Gi
-        # limits는 Pod 레벨에서 관리
-    - name: sidecar
-      image: envoy:v1.30
-      restartPolicy: Always
-      resources:
-        requests:
-          cpu: 250m
-          memory: 256Mi
+  name: pod-resizer
+  namespace: pod-resizer
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-resizer
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: [""]
+    resources: ["pods/resize"]
+    verbs: ["patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pod-resizer
+subjects:
+  - kind: ServiceAccount
+    name: pod-resizer
+    namespace: pod-resizer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pod-resizer
 ```
 
-**Pod-level vs Container-level 리소스의 차이:**
+##### 데모 워크로드 — Deployment 예시
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                  Container-level 리소스 (기존)                    │
-│                                                                   │
-│  Pod Total = Container A limits + Container B limits              │
-│  ┌──────────────┐ ┌──────────────┐                               │
-│  │ Container A  │ │ Container B  │                               │
-│  │ CPU: 2 core  │ │ CPU: 1 core  │  Pod Total: 3 cores          │
-│  │ Mem: 4Gi     │ │ Mem: 2Gi     │  Pod Total: 6Gi              │
-│  └──────────────┘ └──────────────┘                               │
-│  → 각 컨테이너가 자신의 한도 내에서만 사용 가능                       │
-├─────────────────────────────────────────────────────────────────┤
-│                  Pod-level 리소스 (1.36)                          │
-│                                                                   │
-│  Pod-level limits: CPU 4 cores, Memory 8Gi                       │
-│  ┌──────────────────────────────────────────┐                    │
-│  │              Pod Resource Pool            │                    │
-│  │  ┌──────────┐ ┌──────────┐               │                    │
-│  │  │ Cont. A  │ │ Cont. B  │  유휴 리소스    │                    │
-│  │  │ ~2.5 core│ │ ~1.5 core│  공유 가능      │                    │
-│  │  └──────────┘ └──────────┘               │                    │
-│  └──────────────────────────────────────────┘                    │
-│  → Pod 한도 내에서 컨테이너 간 유연한 리소스 사용                     │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-##### KYAML 안정화 진행
-
-KYAML이 지속적으로 안정화되며, 1.36에서는 대부분의 매니페스트 처리에 KYAML이 기본으로 사용됩니다.
-
-```bash
-# KYAML 관련 매니페스트 검증
-# 기존 매니페스트가 KYAML 호환인지 사전 확인
-kubectl apply --dry-run=server -f manifests/ --validate=strict 2>&1 | grep -i "yaml"
-```
-
-##### Gang Scheduling Beta
-
-1.35에서 Alpha로 도입된 Gang Scheduling이 Beta로 승격되어 기본 활성화됩니다.
+annotation이 설정된 Deployment를 배포하면, 컨트롤러가 startup probe 통과 후 자동으로 CPU를 축소합니다.
 
 ```yaml
-# Gang Scheduling을 활용한 MPI 분산 학습
-apiVersion: batch/v1
-kind: Job
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: mpi-training
-  annotations:
-    scheduling.k8s.io/gang-min-size: "4"     # 최소 4개 Pod 동시 배치 필요
+  name: demo-resize
+  namespace: resize-demo
 spec:
-  completionMode: Indexed
-  completions: 8
-  parallelism: 8
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-resize
   template:
+    metadata:
+      labels:
+        app: demo-resize
+      annotations:
+        resize.example.com/enabled:          "true"
+        resize.example.com/trigger:          "StartupProbePassed"
+        resize.example.com/steady-resources: |
+          {"app":{"requests":{"cpu":"50m"},"limits":{"cpu":"50m"}}}
     spec:
       containers:
-        - name: mpi-worker
-          image: horovod:v0.30
+        - name: app
+          image: nginx:1.27
+          resizePolicy:
+            - { resourceName: cpu,    restartPolicy: NotRequired }
+            - { resourceName: memory, restartPolicy: RestartContainer }
           resources:
-            limits:
-              nvidia.com/gpu: 2
-            claims:
-              - name: gpu
-      resourceClaims:
-        - name: gpu
-          resourceClaimTemplateName: a100-claim
+            requests: { cpu: "200m", memory: 64Mi }
+            limits:   { cpu: "200m", memory: 64Mi }
+          startupProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 1
+            periodSeconds: 2
+            failureThreshold: 5
 ```
+
+##### Argo Rollouts 호환성
+
+Argo Rollouts의 구조는 `Rollout → ReplicaSet → Pod`입니다. 본 컨트롤러는 **Pod만 watch**하므로, 상위 리소스가 Deployment인지 Rollout인지 구분 없이 동일하게 동작합니다. `ownerReferences`에서 `ReplicaSet`을 확인하며, 로그에는 `[ReplicaSet]`으로 표시됩니다.
+
+##### 실측 결과 (EKS 1.36.1)
+
+**테스트 환경:**
+- EKS v1.36.1 노드, containerd 2.2.3
+- Amazon Linux 2023 (cgroup v2, arm64/Graviton)
+
+**컨트롤러 로그:**
+
+```
+RESIZED resize-demo/demo-deploy-xxxxx-aaaaa [ReplicaSet] trigger=StartupProbePassed patch={"spec":{"containers":[{"name":"app","resources":{"limits":{"cpu":"50m"},"requests":{"cpu":"50m"}}}]}}
+RESIZED resize-demo/demo-deploy-xxxxx-bbbbb [ReplicaSet] trigger=StartupProbePassed patch={"spec":{"containers":[{"name":"app","resources":{"limits":{"cpu":"50m"},"requests":{"cpu":"50m"}}}]}}
+RESIZED resize-demo/demo-ds-yyyyy [DaemonSet] trigger=StartupProbePassed patch={"spec":{"containers":[{"name":"app","resources":{"limits":{"cpu":"50m"},"requests":{"cpu":"50m"}}}]}}
+RESIZED resize-demo/demo-sts-0 [StatefulSet] trigger=StartupProbePassed patch={"spec":{"containers":[{"name":"app","resources":{"limits":{"cpu":"50m"},"requests":{"cpu":"50m"}}}]}}
+```
+
+**BEFORE → AFTER 결과:**
+
+| 워크로드 | QoS | CPU (req/lim) | restartCount | containerID |
+|----------|-----|---------------|--------------|-------------|
+| Deployment (x2) | Guaranteed → **Guaranteed** | 200m → **50m** | 0 → **0** | **동일(IDENTICAL)** |
+| DaemonSet | Guaranteed → **Guaranteed** | 200m → **50m** | 0 → **0** | **동일(IDENTICAL)** |
+| StatefulSet | Guaranteed → **Guaranteed** | 200m → **50m** | 0 → **0** | **동일(IDENTICAL)** |
+
+**결정적 근거:** `restartCount` 0 유지 + `containerID` 동일 → 컨테이너 재생성 없이 cgroup CPU 할당만 변경된 **진짜 무중단 in-place resize**입니다.
+
+##### MAP 주입 테스트 결과
+
+MutatingAdmissionPolicy(MAP)를 활용한 `resizePolicy` 자동 주입 테스트 결과입니다.
+
+| 케이스 | annotation | 주입된 resizePolicy | 판정 |
+|--------|-----------|-------------------|------|
+| with-annotation | 有 | `[{cpu:NotRequired},{memory:RestartContainer}]` | ✅ 주입됨 (webhook 없이) |
+| without-annotation | 無 | `[]` (없음) | ✅ 주입 안 됨 (matchCondition 동작) |
+
+##### annotation 방식의 이점
+
+| 항목 | annotation 방식의 이점 |
+|------|----------------------|
+| 운영 부담 | CRD/CR 설치·관리 없이 기존 워크로드에 annotation만 추가 |
+| 워크로드 범용성 | 컨트롤러가 Pod만 watch → Deployment/STS/DS/Rollout 구분 없이 동일 적용 |
+| 코드 복잡도 | type 분기·child 생성·owner-reference 모두 불필요 |
+| 기존 워크로드 적용 | 운영 중인 워크로드에 annotation patch만으로 적용 (재작성 불필요) |
+| resizePolicy 자동화 | MAP(GA)로 생성 시 자동 주입 → webhook 서버 없이 완전 자동화 |
+
+##### 주의사항
+
+- **CPU만 무중단 전환이 안전합니다.** memory 축소는 `RestartContainer` 정책에 따라 재시작이 동반될 수 있습니다.
+- **kubectl ≥ 1.32 필요 (디버깅용).** 컨트롤러 자체는 client-go를 사용하므로 kubectl 버전과 무관하게 동작합니다.
+- **HPA / CPUManager NUMA 정렬 상호작용**은 워크로드별로 검증이 필요합니다. 특히 NUMA-aware 토폴로지를 사용하는 환경에서는 resize 후 CPU 배치를 확인하는 것이 좋습니다.
+- **운영 환경에서는 leader election 추가를 권장합니다.** 컨트롤러 다중 인스턴스 실행 시 중복 패치를 방지합니다.
+
+#### 보안·운영 추가 기능
+
+##### Fine-Grained Kubelet API Authorization (GA)
+
+kubelet API에 대한 세분화된 권한 제어가 GA로 졸업했습니다. 기존에는 kubelet API 접근이 노드 단위로 제어되었으나, 이제 개별 API 엔드포인트별로 권한을 설정할 수 있습니다. 이를 통해 모니터링 시스템이 `/metrics`에만 접근하고, 디버깅 도구가 `/logs`에만 접근하는 등 최소 권한 원칙을 적용할 수 있습니다.
+
+##### Legacy ServiceAccount Token Cleanup (GA)
+
+Secret 기반 미사용 ServiceAccount 토큰을 자동으로 정리하는 기능이 GA로 졸업했습니다. Kubernetes 1.24 이전에 생성된 Secret 기반 SA 토큰 중, 사용되지 않는 토큰을 자동으로 감지하고 삭제하여 공격면을 축소합니다.
+
+##### Resource Health Status (DRA) 개선
+
+DRA(Dynamic Resource Allocation)에서 GPU 등 디바이스의 헬스 상태를 Pod status에 보고하는 기능이 개선되었습니다. 디바이스 장애 시 원인을 신속하게 식별할 수 있으며, `pod.status.resourceClaimStatuses`를 통해 디바이스 상태를 확인할 수 있습니다.
+
+#### 업그레이드 시 점검 사항
+
+- **Ingress-NGINX 은퇴 (2026-03-24)**: 공식 보안 패치가 중단되었습니다. Gateway API 호환 컨트롤러(예: Envoy Gateway, Istio Gateway, Cilium Gateway API)로 마이그레이션을 계획하는 것이 좋습니다.
+- **IPVS 모드 / externalIPs 서비스 감사 권장**: kube-proxy IPVS 모드 사용 시 보안 설정을 점검하고, `externalIPs`를 사용하는 서비스의 접근 제어를 확인하는 것이 좋습니다.
+- **EKS Cluster Insights**: EKS 콘솔의 Cluster Insights 기능을 활용하여 업그레이드 전 호환성 이슈를 사전에 점검할 수 있습니다. deprecated API 사용, 애드온 호환성 등을 자동으로 감지합니다.
 
 #### 기타 주요 변경 사항 (1.36)
 
 | 기능 | 단계 | 설명 |
 |------|------|------|
-| KYAML | GA 진행 중 | YAML 1.2 기반 처리 안정화 |
+| Mutating Admission Policies | GA | CEL 기반 네이티브 mutation, webhook 서버 불필요 |
+| User Namespaces (Gate 제거) | GA | Feature gate 제거, 프로덕션 레디 |
+| Fine-Grained Kubelet API Auth | GA | kubelet API 최소권한 접근 제어 |
+| Legacy SA Token Cleanup | GA | 미사용 Secret 기반 SA 토큰 자동 정리 |
+| KYAML | GA | YAML 1.2 기반 처리 안정화 |
 | DRA: Device Health Monitoring | Beta | DRA 디바이스 상태 모니터링 |
 | Node Maintenance Mode | Beta | 노드 유지보수 모드 |
 | Streaming List | GA | 대규모 리스트의 스트리밍 응답 |
@@ -1863,7 +2269,8 @@ spec:
 ├───────┼────────────────────────────────────────────────────────────────────┤
 │ 1.35  │ ★ In-Place Pod Resize                                            │
 ├───────┼────────────────────────────────────────────────────────────────────┤
-│ 1.36  │ Streaming List, Pod Disruption Conditions                         │
+│ 1.36  │ ★ Mutating Admission Policies, KYAML, Gang Scheduling,           │
+│       │   Streaming List, Pod Disruption Conditions                      │
 ├───────┴────────────────────────────────────────────────────────────────────┤
 │ ★ = 특히 운영 영향이 큰 기능                                                │
 └────────────────────────────────────────────────────────────────────────────┘
@@ -1897,9 +2304,14 @@ gantt
     Beta (1.28)      :active, b_vap, 2023-08, 2024-04
     GA (1.30)        :crit, g_vap, 2024-04, 2024-08
 
+    section MutatingAdmissionPolicy
+    Alpha (1.33)     :a_map, 2025-04, 2025-08
+    Beta (1.34-1.35) :active, b_map, 2025-08, 2026-04
+    GA (1.36)        :crit, g_map, 2026-04, 2026-08
+
     section Gang Scheduling
     Alpha (1.35)     :a_gs, 2025-12, 2026-04
-    Beta (1.36)      :active, b_gs, 2026-04, 2026-08
+    GA (1.36)         :crit, g_gs, 2026-04, 2026-08
 ```
 
 ---

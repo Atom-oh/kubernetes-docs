@@ -1,6 +1,6 @@
 # ClickHouse for Log Analytics
 
-> **마지막 업데이트**: 2026년 2월 23일
+> **마지막 업데이트**: 2026년 6월 30일
 
 ClickHouse는 OLAP(Online Analytical Processing) 워크로드에 최적화된 오픈소스 컬럼 기반 데이터베이스입니다. 대규모 로그 분석에서 뛰어난 쿼리 성능과 압축률을 제공합니다.
 
@@ -1094,6 +1094,8 @@ GROUP BY service;
 ```
 
 ### 리소스 가이드라인
+
+> **참고**: AWS 인스턴스 타입별 성능 벤치마크는 [AWS Instance Benchmark](https://benchmark.aws.atomai.click/)에서 확인할 수 있습니다. ClickHouse 워크로드 특성(CPU 집약적 쿼리, 대용량 메모리 캐시, 높은 디스크 I/O)에 맞는 인스턴스를 선택하세요.
 
 ```yaml
 # 규모별 권장 설정
