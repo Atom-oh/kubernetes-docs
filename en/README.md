@@ -57,6 +57,7 @@ This training content provides quizzes for each topic along with the learning ma
 9. [EKS Troubleshooting](./eks/09-eks-troubleshooting.md) | [Quiz](./quizzes/eks/09-eks-troubleshooting-quiz.md)
 10. [EKS Resiliency and High Availability](./eks/10-eks-resiliency.md) | [Quiz](./quizzes/eks/10-eks-resiliency-quiz.md)
 11. [EKS Advanced Debugging](./eks/11-eks-advanced-debugging.md) | [Quiz](./quizzes/eks/11-eks-advanced-debugging-quiz.md)
+12. [Kubernetes Version Features and Roadmap](./eks/12-kubernetes-version-roadmap.md) | [Quiz](./quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
 
 ### EKS Hybrid Nodes
 1. [EKS Hybrid Nodes Introduction](./eks-hybrid-nodes/README.md)
@@ -67,6 +68,8 @@ This training content provides quizzes for each topic along with the learning ma
 6. [GPU Server Integration](./eks-hybrid-nodes/05-gpu-integration.md) | [Quiz](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
 7. [Workload Placement Strategies](./eks-hybrid-nodes/06-workload-placement.md) | [Quiz](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
 8. [Operations and Maintenance](./eks-hybrid-nodes/08-operations.md) | [Quiz](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+9. [Bare Metal OS Setup](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [Quiz](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+10. [Hybrid Nodes Gateway](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [Quiz](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 
 ### EKS Auto Mode
 1. [EKS Auto Mode Introduction](./eks-auto-mode/README.md)
@@ -175,10 +178,13 @@ This training content provides quizzes for each topic along with the learning ma
    - [Best Practices](./gitops/argocd/09-best-practices.md) | [Quiz](./quizzes/gitops/argocd/09-best-practices-quiz.md)
 3. [FluxCD](./gitops/02-fluxcd.md) | [Quiz](./quizzes/gitops/02-fluxcd-quiz.md)
 4. [GitOps Tools Comparison](./gitops/03-gitops-comparison.md) | [Quiz](./quizzes/gitops/03-gitops-comparison-quiz.md)
+5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [Quiz](./quizzes/gitops/04-flagger-quiz.md)
+6. [Feature Flags and OpenFeature](./gitops/05-feature-flags.md) | [Quiz](./quizzes/gitops/05-feature-flags-quiz.md)
 
 ### Autoscaling
 1. [KEDA](./autoscaling/01-keda.md) | [Quiz](./quizzes/autoscaling/05-keda-quiz.md)
 2. [Karpenter](./autoscaling/02-karpenter.md) | [Quiz](./quizzes/autoscaling/06-karpenter-quiz.md)
+3. [Knative](./autoscaling/03-knative.md) | [Quiz](./quizzes/autoscaling/03-knative-quiz.md)
 
 ### Observability
 1. [Observability Overview](./observability/README.md)
@@ -223,6 +229,9 @@ This training content provides quizzes for each topic along with the learning ma
 3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [Quiz](./quizzes/platform-engineering/03-kro-quiz.md)
 4. [Kubernetes Extension Mechanisms](./platform-engineering/04-kubernetes-extensions.md) | [Quiz](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
 5. [ExampleCorp: ACK + KRO Integration Example](./platform-engineering/05-example-corp-app.md)
+6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [Quiz](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
+7. [Crossplane](./platform-engineering/07-crossplane.md) | [Quiz](./quizzes/platform-engineering/07-crossplane-quiz.md)
+8. [vCluster](./platform-engineering/08-vcluster.md) | [Quiz](./quizzes/platform-engineering/08-vcluster-quiz.md)
 
 ### Operations Guide
 1. [Infrastructure Setup](./ops/01-infrastructure-setup.md) | [Quiz](./quizzes/ops/01-infrastructure-setup-quiz.md)
@@ -236,6 +245,9 @@ This training content provides quizzes for each topic along with the learning ma
 9. [Observability Stack](./ops/09-observability-stack.md) | [Quiz](./quizzes/ops/09-observability-stack-quiz.md)
 10. [Resource Optimization](./ops/10-resource-optimization.md) | [Quiz](./quizzes/ops/10-resource-optimization-quiz.md)
 11. [Upgrade Operations](./ops/11-upgrade-operations.md) | [Quiz](./quizzes/ops/11-upgrade-operations-quiz.md)
+12. [Event Capacity Planning Playbook](./ops/12-event-capacity-planning.md) | [Quiz](./quizzes/ops/12-event-capacity-planning-quiz.md)
+13. [FinOps Cost Visibility Platform](./ops/13-finops-cost-platform.md) | [Quiz](./quizzes/ops/13-finops-cost-platform-quiz.md)
+14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [Quiz](./quizzes/ops/14-tekton-pipelines-quiz.md)
 
 ## Lab Guides
 

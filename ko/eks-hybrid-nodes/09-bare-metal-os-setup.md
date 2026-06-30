@@ -1,6 +1,6 @@
 # 베어메탈 서버 OS 설치 및 마이그레이션 가이드
 
-< [이전: 운영 및 유지보수](./08-operations.md) | [목차](./README.md) >
+< [이전: 운영 및 유지보수](./08-operations.md) | [목차](./README.md) | [다음: Hybrid Nodes Gateway](./10-hybrid-nodes-gateway.md) >
 
 > **지원 버전**: EKS 1.31+, nodeadm 0.1+
 > **마지막 업데이트**: 2026년 2월 23일
@@ -469,4 +469,4 @@ kubectl describe node <node-name> | grep -A 5 "Labels:"
 
 ---
 
-< [이전: 운영 및 유지보수](./08-operations.md) | [목차](./README.md) >
+< [이전: 운영 및 유지보수](./08-operations.md) | [목차](./README.md) | [다음: Hybrid Nodes Gateway](./10-hybrid-nodes-gateway.md) >

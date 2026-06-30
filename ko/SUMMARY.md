@@ -51,6 +51,7 @@
 * [EKS 문제 해결](eks/09-eks-troubleshooting.md)
 * [EKS 복원력과 고가용성](eks/10-eks-resiliency.md)
 * [EKS 고급 디버깅](eks/11-eks-advanced-debugging.md)
+* [Kubernetes 버전별 신규 기능과 로드맵](eks/12-kubernetes-version-roadmap.md)
 * [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
     * [사전 요구 사항](eks-hybrid-nodes/01-prerequisites.md)
     * [네트워크 구성](eks-hybrid-nodes/02-network-configuration.md)
@@ -61,6 +62,7 @@
     * [노드 라이프사이클 관리](eks-hybrid-nodes/07-node-lifecycle.md)
     * [운영 및 유지보수](eks-hybrid-nodes/08-operations.md)
     * [베어메탈 서버 OS 설치](eks-hybrid-nodes/09-bare-metal-os-setup.md)
+    * [Hybrid Nodes Gateway](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
 * [EKS Auto Mode](eks-auto-mode/README.md)
     * [Auto Mode 시작하기](eks-auto-mode/01-getting-started.md)
     * [NodePool 구성](eks-auto-mode/02-nodepool-configuration.md)
@@ -212,6 +214,9 @@
 * [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
 * [Kubernetes 확장 메커니즘](platform-engineering/04-kubernetes-extensions.md)
 * [ExampleCorp: ACK + KRO 통합 예제](platform-engineering/05-example-corp-app.md)
+* [Backstage IDP](platform-engineering/06-backstage-idp.md)
+* [Crossplane](platform-engineering/07-crossplane.md)
+* [vCluster](platform-engineering/08-vcluster.md)
 
 ## Operations Guide
 
@@ -227,6 +232,9 @@
     * [Observability 스택 구성](ops/09-observability-stack.md)
     * [리소스 최적화](ops/10-resource-optimization.md)
     * [EKS 업그레이드 운영](ops/11-upgrade-operations.md)
+    * [이벤트 용량 계획 플레이북](ops/12-event-capacity-planning.md)
+    * [FinOps 비용 가시성 플랫폼](ops/13-finops-cost-platform.md)
+    * [Tekton Pipelines](ops/14-tekton-pipelines.md)
 
 ## Observability
 
@@ -266,6 +274,7 @@
 
 * [KEDA](autoscaling/01-keda.md)
 * [Karpenter](autoscaling/02-karpenter.md)
+* [Knative](autoscaling/03-knative.md)
 
 ## GitOps
 
@@ -282,6 +291,8 @@
         * [모범 사례](gitops/argocd/09-best-practices.md)
     * [FluxCD](gitops/02-fluxcd.md)
     * [GitOps 도구 비교](gitops/03-gitops-comparison.md)
+    * [Flagger Progressive Delivery](gitops/04-flagger.md)
+    * [Feature Flags와 OpenFeature](gitops/05-feature-flags.md)
 
 ## Lab Guides
 
@@ -341,6 +352,7 @@
     * [EKS 문제 해결 퀴즈](quizzes/eks/09-eks-troubleshooting-quiz.md)
     * [EKS 복원력과 고가용성 퀴즈](quizzes/eks/10-eks-resiliency-quiz.md)
     * [EKS 고급 디버깅 퀴즈](quizzes/eks/11-eks-advanced-debugging-quiz.md)
+    * [Kubernetes 버전별 신규 기능과 로드맵 퀴즈](quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
 
 * EKS Hybrid Nodes
     * [사전 요구 사항 퀴즈](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
@@ -352,6 +364,7 @@
     * [노드 라이프사이클 관리 퀴즈](quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
     * [운영 및 유지보수 퀴즈](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
     * [베어메탈 서버 OS 설치 퀴즈](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+    * [Hybrid Nodes Gateway 퀴즈](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 
 * EKS Auto Mode
     * [Auto Mode 시작하기 퀴즈](quizzes/eks-auto-mode/01-getting-started-quiz.md)
@@ -458,10 +471,13 @@
         * [모범 사례 퀴즈](quizzes/gitops/argocd/09-best-practices-quiz.md)
     * [FluxCD 퀴즈](quizzes/gitops/02-fluxcd-quiz.md)
     * [GitOps 도구 비교 퀴즈](quizzes/gitops/03-gitops-comparison-quiz.md)
+    * [Flagger Progressive Delivery 퀴즈](quizzes/gitops/04-flagger-quiz.md)
+    * [Feature Flags와 OpenFeature 퀴즈](quizzes/gitops/05-feature-flags-quiz.md)
 
 * Autoscaling
     * [KEDA 퀴즈](quizzes/autoscaling/05-keda-quiz.md)
     * [Karpenter 퀴즈](quizzes/autoscaling/06-karpenter-quiz.md)
+    * [Knative 퀴즈](quizzes/autoscaling/03-knative-quiz.md)
 
 * Observability
     * Metrics
@@ -508,6 +524,9 @@
     * [ACK 퀴즈](quizzes/platform-engineering/02-ack-quiz.md)
     * [KRO 퀴즈](quizzes/platform-engineering/03-kro-quiz.md)
     * [Kubernetes 확장 메커니즘 퀴즈](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+    * [Backstage IDP 퀴즈](quizzes/platform-engineering/06-backstage-idp-quiz.md)
+    * [Crossplane 퀴즈](quizzes/platform-engineering/07-crossplane-quiz.md)
+    * [vCluster 퀴즈](quizzes/platform-engineering/08-vcluster-quiz.md)
 
 * 운영 가이드
     * [인프라 구성 기초 퀴즈](quizzes/ops/01-infrastructure-setup-quiz.md)
@@ -521,3 +540,6 @@
     * [Observability 스택 구성 퀴즈](quizzes/ops/09-observability-stack-quiz.md)
     * [리소스 최적화 퀴즈](quizzes/ops/10-resource-optimization-quiz.md)
     * [EKS 업그레이드 운영 퀴즈](quizzes/ops/11-upgrade-operations-quiz.md)
+    * [이벤트 용량 계획 퀴즈](quizzes/ops/12-event-capacity-planning-quiz.md)
+    * [FinOps 비용 가시성 플랫폼 퀴즈](quizzes/ops/13-finops-cost-platform-quiz.md)
+    * [Tekton Pipelines 퀴즈](quizzes/ops/14-tekton-pipelines-quiz.md)

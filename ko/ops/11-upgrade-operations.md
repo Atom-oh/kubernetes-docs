@@ -3,7 +3,7 @@
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
 > **마지막 업데이트**: 2026년 2월 21일
 
-< [이전: 리소스 최적화](./10-resource-optimization.md) | [목차](./README.md) | [다음: 없음] >
+< [이전: 리소스 최적화](./10-resource-optimization.md) | [목차](./README.md) | [다음: 이벤트 용량 계획](./12-event-capacity-planning.md) >
 
 ---
 
@@ -1622,4 +1622,4 @@ panels:
 
 ---
 
-< [이전: 리소스 최적화](./10-resource-optimization.md) | [목차](./README.md) | [다음: 없음] >
+< [이전: 리소스 최적화](./10-resource-optimization.md) | [목차](./README.md) | [다음: 이벤트 용량 계획](./12-event-capacity-planning.md) >

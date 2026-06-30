@@ -51,6 +51,7 @@
 * [EKS Troubleshooting](eks/09-eks-troubleshooting.md)
 * [EKS Resiliency and High Availability](eks/10-eks-resiliency.md)
 * [EKS Advanced Debugging](eks/11-eks-advanced-debugging.md)
+* [Kubernetes Version Features and Roadmap](eks/12-kubernetes-version-roadmap.md)
 * [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
     * [Prerequisites](eks-hybrid-nodes/01-prerequisites.md)
     * [Network Configuration](eks-hybrid-nodes/02-network-configuration.md)
@@ -61,6 +62,7 @@
     * [Node Lifecycle Management](eks-hybrid-nodes/07-node-lifecycle.md)
     * [Operations and Maintenance](eks-hybrid-nodes/08-operations.md)
     * [Bare Metal OS Setup](eks-hybrid-nodes/09-bare-metal-os-setup.md)
+    * [Hybrid Nodes Gateway](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
 * [EKS Auto Mode](eks-auto-mode/README.md)
     * [Getting Started](eks-auto-mode/01-getting-started.md)
     * [NodePool Configuration](eks-auto-mode/02-nodepool-configuration.md)
@@ -212,6 +214,9 @@
 * [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
 * [Kubernetes Extension Mechanisms](platform-engineering/04-kubernetes-extensions.md)
 * [ExampleCorp: ACK + KRO Integration Example](platform-engineering/05-example-corp-app.md)
+* [Backstage IDP](platform-engineering/06-backstage-idp.md)
+* [Crossplane](platform-engineering/07-crossplane.md)
+* [vCluster](platform-engineering/08-vcluster.md)
 
 ## Operations Guide
 
@@ -227,6 +232,9 @@
     * [Observability Stack](ops/09-observability-stack.md)
     * [Resource Optimization](ops/10-resource-optimization.md)
     * [Upgrade Operations](ops/11-upgrade-operations.md)
+    * [Event Capacity Planning](ops/12-event-capacity-planning.md)
+    * [FinOps Cost Visibility Platform](ops/13-finops-cost-platform.md)
+    * [Tekton Pipelines](ops/14-tekton-pipelines.md)
 
 ## Observability
 
@@ -266,6 +274,7 @@
 
 * [KEDA](autoscaling/01-keda.md)
 * [Karpenter](autoscaling/02-karpenter.md)
+* [Knative](autoscaling/03-knative.md)
 
 ## GitOps
 
@@ -282,6 +291,8 @@
         * [Best Practices](gitops/argocd/09-best-practices.md)
     * [FluxCD](gitops/02-fluxcd.md)
     * [GitOps Tools Comparison](gitops/03-gitops-comparison.md)
+    * [Flagger Progressive Delivery](gitops/04-flagger.md)
+    * [Feature Flags and OpenFeature](gitops/05-feature-flags.md)
 
 ## Lab Guides
 
@@ -341,6 +352,7 @@
     * [EKS Troubleshooting Quiz](quizzes/eks/09-eks-troubleshooting-quiz.md)
     * [EKS Resiliency and High Availability Quiz](quizzes/eks/10-eks-resiliency-quiz.md)
     * [EKS Advanced Debugging Quiz](quizzes/eks/11-eks-advanced-debugging-quiz.md)
+    * [Kubernetes Version Features and Roadmap Quiz](quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
 
 * EKS Hybrid Nodes
     * [Prerequisites Quiz](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
@@ -352,6 +364,7 @@
     * [Node Lifecycle Management Quiz](quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
     * [Operations and Maintenance Quiz](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
     * [Bare Metal OS Setup Quiz](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+    * [Hybrid Nodes Gateway Quiz](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 
 * EKS Auto Mode
     * [Getting Started Quiz](quizzes/eks-auto-mode/01-getting-started-quiz.md)
@@ -458,10 +471,13 @@
         * [Best Practices Quiz](quizzes/gitops/argocd/09-best-practices-quiz.md)
     * [FluxCD Quiz](quizzes/gitops/02-fluxcd-quiz.md)
     * [GitOps Tools Comparison Quiz](quizzes/gitops/03-gitops-comparison-quiz.md)
+    * [Flagger Progressive Delivery Quiz](quizzes/gitops/04-flagger-quiz.md)
+    * [Feature Flags and OpenFeature Quiz](quizzes/gitops/05-feature-flags-quiz.md)
 
 * Autoscaling
     * [KEDA Quiz](quizzes/autoscaling/05-keda-quiz.md)
     * [Karpenter Quiz](quizzes/autoscaling/06-karpenter-quiz.md)
+    * [Knative Quiz](quizzes/autoscaling/03-knative-quiz.md)
 
 * Observability
     * Metrics
@@ -507,6 +523,9 @@
     * [ACK Quiz](quizzes/platform-engineering/02-ack-quiz.md)
     * [KRO Quiz](quizzes/platform-engineering/03-kro-quiz.md)
     * [Kubernetes Extension Mechanisms Quiz](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+    * [Backstage IDP Quiz](quizzes/platform-engineering/06-backstage-idp-quiz.md)
+    * [Crossplane Quiz](quizzes/platform-engineering/07-crossplane-quiz.md)
+    * [vCluster Quiz](quizzes/platform-engineering/08-vcluster-quiz.md)
 
 * Operations Guide
     * [Infrastructure Setup Quiz](quizzes/ops/01-infrastructure-setup-quiz.md)
@@ -520,3 +539,6 @@
     * [Observability Stack Quiz](quizzes/ops/09-observability-stack-quiz.md)
     * [Resource Optimization Quiz](quizzes/ops/10-resource-optimization-quiz.md)
     * [Upgrade Operations Quiz](quizzes/ops/11-upgrade-operations-quiz.md)
+    * [Event Capacity Planning Quiz](quizzes/ops/12-event-capacity-planning-quiz.md)
+    * [FinOps Cost Visibility Platform Quiz](quizzes/ops/13-finops-cost-platform-quiz.md)
+    * [Tekton Pipelines Quiz](quizzes/ops/14-tekton-pipelines-quiz.md)

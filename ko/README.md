@@ -57,6 +57,7 @@
 9. [EKS 문제 해결](./eks/09-eks-troubleshooting.md) | [퀴즈](./quizzes/eks/09-eks-troubleshooting-quiz.md)
 10. [EKS 복원력과 고가용성](./eks/10-eks-resiliency.md) | [퀴즈](./quizzes/eks/10-eks-resiliency-quiz.md)
 11. [EKS 고급 디버깅](./eks/11-eks-advanced-debugging.md) | [퀴즈](./quizzes/eks/11-eks-advanced-debugging-quiz.md)
+12. [Kubernetes 버전별 신규 기능과 로드맵](./eks/12-kubernetes-version-roadmap.md) | [퀴즈](./quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
 
 ### EKS Hybrid Nodes
 1. [EKS Hybrid Nodes 소개](./eks-hybrid-nodes/README.md)
@@ -67,6 +68,8 @@
 6. [GPU 서버 통합](./eks-hybrid-nodes/05-gpu-integration.md) | [퀴즈](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
 7. [워크로드 배치 전략](./eks-hybrid-nodes/06-workload-placement.md) | [퀴즈](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
 8. [운영 및 유지보수](./eks-hybrid-nodes/08-operations.md) | [퀴즈](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+9. [베어메탈 서버 OS 설치](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [퀴즈](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+10. [Hybrid Nodes Gateway](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [퀴즈](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 
 ### EKS Auto Mode
 1. [EKS Auto Mode 소개](./eks-auto-mode/README.md)
@@ -175,10 +178,13 @@
    - [모범 사례](./gitops/argocd/09-best-practices.md) | [퀴즈](./quizzes/gitops/argocd/09-best-practices-quiz.md)
 3. [FluxCD](./gitops/02-fluxcd.md) | [퀴즈](./quizzes/gitops/02-fluxcd-quiz.md)
 4. [GitOps 도구 비교](./gitops/03-gitops-comparison.md) | [퀴즈](./quizzes/gitops/03-gitops-comparison-quiz.md)
+5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [퀴즈](./quizzes/gitops/04-flagger-quiz.md)
+6. [Feature Flags와 OpenFeature](./gitops/05-feature-flags.md) | [퀴즈](./quizzes/gitops/05-feature-flags-quiz.md)
 
 ### Autoscaling
 1. [KEDA](./autoscaling/01-keda.md) | [퀴즈](./quizzes/autoscaling/05-keda-quiz.md)
 2. [Karpenter](./autoscaling/02-karpenter.md) | [퀴즈](./quizzes/autoscaling/06-karpenter-quiz.md)
+3. [Knative](./autoscaling/03-knative.md) | [퀴즈](./quizzes/autoscaling/03-knative-quiz.md)
 
 ### Observability
 1. [Observability 개요](./observability/README.md)
@@ -223,6 +229,9 @@
 3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [퀴즈](./quizzes/platform-engineering/03-kro-quiz.md)
 4. [Kubernetes 확장 메커니즘](./platform-engineering/04-kubernetes-extensions.md) | [퀴즈](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
 5. [ExampleCorp: ACK + KRO 통합 예제](./platform-engineering/05-example-corp-app.md)
+6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [퀴즈](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
+7. [Crossplane](./platform-engineering/07-crossplane.md) | [퀴즈](./quizzes/platform-engineering/07-crossplane-quiz.md)
+8. [vCluster](./platform-engineering/08-vcluster.md) | [퀴즈](./quizzes/platform-engineering/08-vcluster-quiz.md)
 
 ### 운영 가이드
 1. [인프라 구성 기초](./ops/01-infrastructure-setup.md) | [퀴즈](./quizzes/ops/01-infrastructure-setup-quiz.md)
@@ -236,6 +245,9 @@
 9. [Observability 스택 구성](./ops/09-observability-stack.md) | [퀴즈](./quizzes/ops/09-observability-stack-quiz.md)
 10. [리소스 최적화](./ops/10-resource-optimization.md) | [퀴즈](./quizzes/ops/10-resource-optimization-quiz.md)
 11. [EKS 업그레이드 운영](./ops/11-upgrade-operations.md) | [퀴즈](./quizzes/ops/11-upgrade-operations-quiz.md)
+12. [이벤트 용량 계획 플레이북](./ops/12-event-capacity-planning.md) | [퀴즈](./quizzes/ops/12-event-capacity-planning-quiz.md)
+13. [FinOps 비용 가시성 플랫폼](./ops/13-finops-cost-platform.md) | [퀴즈](./quizzes/ops/13-finops-cost-platform-quiz.md)
+14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [퀴즈](./quizzes/ops/14-tekton-pipelines-quiz.md)
 
 ## 실습 가이드
 

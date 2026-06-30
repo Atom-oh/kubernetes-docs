@@ -3,7 +3,7 @@
 > **Supported Versions**: EKS 1.28+, Terraform 1.5+, Karpenter 1.0+
 > **Last Updated**: February 22, 2026
 
-< [Previous: Resource Optimization](./10-resource-optimization.md) | [Table of Contents](./README.md) | [Next: None] >
+< [Previous: Resource Optimization](./10-resource-optimization.md) | [Table of Contents](./README.md) | [Next: Event Capacity Planning](./12-event-capacity-planning.md) >
 
 ---
 
@@ -1903,4 +1903,4 @@ After successful upgrade, update operational documentation:
 
 ---
 
-< [Previous: Resource Optimization](./10-resource-optimization.md) | [Table of Contents](./README.md) | [Next: None] >
+< [Previous: Resource Optimization](./10-resource-optimization.md) | [Table of Contents](./README.md) | [Next: Event Capacity Planning](./12-event-capacity-planning.md) >
