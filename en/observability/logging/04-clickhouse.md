@@ -1,6 +1,6 @@
 # ClickHouse for Log Analytics
 
-> **Last Updated**: February 23, 2026
+> **Last Updated**: June 30, 2026
 
 ClickHouse is an open-source columnar database optimized for OLAP (Online Analytical Processing) workloads. It provides excellent query performance and compression ratios for large-scale log analytics.
 
@@ -1096,6 +1096,8 @@ GROUP BY service;
 ```
 
 ### Resource Guidelines
+
+> **Reference**: For AWS instance type performance benchmarks, see [AWS Instance Benchmark](https://benchmark.aws.atomai.click/). Choose instances that match ClickHouse workload characteristics (CPU-intensive queries, large memory cache, high disk I/O).
 
 ```yaml
 # Recommended settings by scale

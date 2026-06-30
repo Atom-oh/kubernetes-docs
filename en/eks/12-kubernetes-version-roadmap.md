@@ -1,7 +1,7 @@
 # Kubernetes Version Features and Roadmap
 
 > **Supported Versions**: Kubernetes 1.29 - 1.36
-> **Last Updated**: June 28, 2026
+> **Last Updated**: June 30, 2026
 
 Kubernetes evolves rapidly, with three releases per year introducing new features, graduating existing ones, and deprecating old APIs. For enterprise teams running Amazon EKS, understanding the version landscape is essential for planning upgrades, adopting new capabilities at the right time, and avoiding disruptions from deprecations. This document provides a comprehensive, version-by-version reference covering Kubernetes 1.29 through 1.36, with EKS-specific guidance for each release.
 
@@ -1553,7 +1553,6 @@ kubectl get pod production-app -o json | jq '{
 
 **Other GA Features in 1.35**:
 - `CRDValidationRatcheting` -- progressive CRD validation
-- `MutatingAdmissionPolicy` -- CEL-based mutation
 - `DeviceHealthConditions` -- DRA device health reporting
 - `PodLifecycleSleepActionGracePeriod` -- configurable grace period for sleep actions
 - `ContextualLogging` -- fully graduated structured logging
@@ -1628,16 +1627,106 @@ spec:
 
 **Theme**: Named with the Japanese word for "spring" (ハル/Haru), symbolizing new beginnings and growth.
 
-**Release Stats**: Currently the latest version in standard support on EKS.
+**Release Stats**: 68 enhancements -- 18 Stable, 25 Beta, 25 Alpha. Major themes include security hardening, AI/ML workload support, and API extensibility. EKS supports 1.36 across all available regions including GovCloud (US).
 
 ```mermaid
-pie title 1.36 Enhancement Breakdown (Estimated)
-    "Stable (GA)" : 20
-    "Beta" : 18
-    "Alpha" : 15
+pie title 1.36 Enhancement Breakdown
+    "Stable (GA)" : 18
+    "Beta" : 25
+    "Alpha" : 25
 ```
 
+**Overview of Key Features**:
+
+| Feature | Stage | Key Value |
+|---------|-------|-----------|
+| Mutating Admission Policies | **GA** | Eliminate webhook servers -- operational simplicity, performance, availability |
+| In-Place Pod Vertical Scaling | **Enhanced** | Zero-downtime resource adjustment -- cost efficiency, SLA protection |
+| User Namespaces | **GA** | Container root ≠ node root -- privilege isolation |
+| Fine-Grained Kubelet API Authorization | **GA** | Least-privilege kubelet API access |
+| Legacy ServiceAccount Token Cleanup | **GA** | Auto-cleanup unused tokens -- reduced attack surface |
+| Resource Health Status (DRA) | Improved | GPU device health -- faster failure root-cause identification |
+
 #### Key Graduated Features (GA)
+
+**Mutating Admission Policies (GA)**
+
+Mutating Admission Policies (MAP) bring CEL-based mutation to native Kubernetes objects, eliminating the need for external webhook servers. With MAP, mutation logic is defined declaratively using `MutatingAdmissionPolicy` and `MutatingAdmissionPolicyBinding` resources and evaluated in-process by the API server.
+
+Key characteristics:
+
+- **In-process API server evaluation**: No webhook network round-trips, no external server latency. Mutation executes inside the API server process itself.
+- **Operational simplicity**: No certificate management, no high-availability deployment, no scaling concerns for webhook servers. The API server handles everything.
+- **Idempotency guaranteed**: CEL expressions produce deterministic results, eliminating ordering and re-invocation edge cases.
+- **Limitation**: Mutations that require external data lookups (e.g., consulting an OPA server or image registry) still need traditional webhooks. MAP is for self-contained, policy-driven mutations.
+
+> **Impact**: Webhook servers for admission control have historically been single points of failure in Kubernetes clusters. A misconfigured or unavailable webhook can block all pod creation across the entire cluster. MAP eliminates this class of operational risk for the majority of mutation use cases.
+
+The following example demonstrates a `MutatingAdmissionPolicy` that auto-injects `resizePolicy` into pods annotated for in-place resize. This is a practical pattern that combines MAP (GA in 1.36) with In-Place Pod Vertical Scaling (GA in 1.35):
+
+```yaml
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicy
+metadata:
+  name: inject-resizepolicy
+spec:
+  failurePolicy: Fail
+  reinvocationPolicy: Never
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE"]
+        resources: ["pods"]
+  matchConditions:
+    - name: only-resize-enabled
+      expression: >-
+        has(object.metadata.annotations) &&
+        ("resize.example.com/enabled" in object.metadata.annotations) &&
+        object.metadata.annotations["resize.example.com/enabled"] == "true"
+  mutations:
+    - patchType: JSONPatch
+      jsonPatch:
+        expression: >-
+          object.spec.containers.map(c, JSONPatch{
+            op: "add",
+            path: "/spec/containers/" + string(object.spec.containers.indexOf(c)) + "/resizePolicy",
+            value: [
+              {"resourceName": "cpu",    "restartPolicy": "NotRequired"},
+              {"resourceName": "memory", "restartPolicy": "RestartContainer"}
+            ]
+          })
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicyBinding
+metadata:
+  name: inject-resizepolicy-binding
+spec:
+  policyName: inject-resizepolicy
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        map-demo: "true"
+```
+
+> **Safety Note**: MAP `matchConstraints` is cluster-wide by default. Always scope mutations using a `namespaceSelector` in the binding to prevent unintended modifications across the cluster.
+
+> **Technical Note**: `resizePolicy` is defined as an atomic list in the Kubernetes API schema. This means you must use `JSONPatch` (as shown above). Attempting to use `ApplyConfiguration` will fail with `"may not mutate atomic arrays"`.
+
+**In-Place Pod Vertical Scaling Enhancements**
+
+Building on the GA graduation of per-container in-place resize in 1.35, Kubernetes 1.36 adds several enhancements:
+
+- **Pod-level shared budget resize**: Pod-level resources can now be resized without restarting the pod, allowing aggregate resource adjustments across all containers in a pod.
+- **CPUManager checkpoint tracking**: The CPUManager now tracks checkpoint state during live resize operations, maintaining NUMA alignment for performance-sensitive workloads.
+- **CPU resize (NotRequired)**: CPU changes with `restartPolicy: NotRequired` are applied via cgroup updates with zero downtime -- no container restart, no connection drops.
+- **Memory shrink behavior**: Memory shrink operations may trigger `RestartContainer` depending on actual memory usage at the time of resize. Per-workload validation is essential before enabling memory resize in production.
+
+**User Namespaces (Feature Gate Removed)**
+
+User Namespaces have reached full production readiness with the feature gate removed in 1.36. Container UID 0 (root inside the container) is mapped to an unprivileged host UID, providing privilege isolation without any application changes.
+
+With the gate removed, user namespaces are available on all clusters running 1.36 without any feature gate configuration. This eliminates the need for third-party solutions to achieve container-to-host privilege isolation.
 
 **KYAML (GA)**
 
@@ -1651,7 +1740,7 @@ KYAML has reached GA, making the safer YAML subset the standard for all Kubernet
 | Non-string map keys | No | Ambiguity |
 | Duplicate keys | No | Silent override |
 | Comments | Yes | Essential for documentation |
-| Multi-line strings (`\|`, `>`) | Yes | Commonly needed |
+| Multi-line strings (`|`, `>`) | Yes | Commonly needed |
 | Flow sequences/mappings | Yes | Standard YAML usage |
 
 ```bash
@@ -1683,6 +1772,414 @@ spec:
 - `SELinuxMount` -- SELinux label management for volumes
 - `NodeInclusionPolicyInPodTopologySpread` -- topology spread node inclusion
 - `RecoverVolumeExpansionFailure` -- automated recovery from failed expansions
+- `FineGrainedKubeletAPIAuthorization` -- least-privilege kubelet API access, restricting which nodes can access which kubelet endpoints
+- `LegacyServiceAccountTokenCleanUp` -- auto-cleanup of unused Secret-based ServiceAccount tokens, reducing attack surface from long-lived credentials
+
+#### Phase-Aware Resource Management Pattern
+
+This section presents a practical pattern that combines In-Place Pod Vertical Scaling (GA in 1.35) with Mutating Admission Policies (GA in 1.36) to implement phase-aware resource management -- automatically adjusting container resources based on application lifecycle phase.
+
+**Problem Definition**
+
+Many containerized workloads have distinct lifecycle phases that demand different resource profiles:
+
+- **Startup (warmup) phase**: High CPU for JVM JIT compilation, LLM model loading, index/cache prefill
+- **Steady-state (serving) phase**: Lower CPU sufficient for normal request handling
+
+Both phases show the container as `Running` in Kubernetes. There is no native mechanism to auto-switch resources when the application transitions from warmup to serving. The typical workaround -- over-provisioning for the startup phase -- wastes resources during the much longer steady-state phase.
+
+Target workloads include JVM applications with JIT warmup, ML inference servers loading models into memory, and services that build caches or indexes on startup.
+
+**Flow**:
+
+```
+Pod Create (startup: large CPU, req==limit -> Guaranteed QoS)
+  -> Controller watches pod.status.containerStatuses[].started
+  -> started:true detected (= startup probe passed)
+  -> Resize via pods/resize subresource to steady-state CPU (zero-downtime)
+```
+
+**Key Insight -- QoS Preservation**
+
+QoS class is determined at Pod creation time and does not change on resize (KEP-1287). By setting `requests == limits` in both the startup and steady-state phases, the pod maintains `Guaranteed` QoS throughout its lifecycle. Memory stays fixed (avoiding restart risk); only CPU changes.
+
+**Annotation-Based Approach (No CRD Required)**
+
+Instead of defining a Custom Resource, this pattern uses annotations on existing workloads. A lightweight controller watches pods and acts on the annotations:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phase-aware-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: phase-aware-app
+  template:
+    metadata:
+      annotations:
+        resize.example.com/enabled:          "true"
+        resize.example.com/trigger:          "StartupProbePassed"
+        resize.example.com/steady-resources: |
+          {"app":{"requests":{"cpu":"50m"},"limits":{"cpu":"50m"}}}
+      labels:
+        app: phase-aware-app
+    spec:
+      containers:
+        - name: app
+          image: myapp:latest
+          resizePolicy:
+            - resourceName: cpu
+              restartPolicy: NotRequired
+            - resourceName: memory
+              restartPolicy: RestartContainer
+          resources:
+            requests:
+              cpu: "200m"
+              memory: 64Mi
+            limits:
+              cpu: "200m"
+              memory: 64Mi
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            failureThreshold: 30
+```
+
+**Controller Implementation (Go)**
+
+The following controller watches annotated pods and patches them to steady-state resources when the startup probe passes. It works identically for Deployments, StatefulSets, DaemonSets, and Argo Rollouts because it watches Pods only -- no workload-type branching required.
+
+```go
+// pod-resizer — annotation-based zero-downtime in-place downscale controller.
+// Watches Pods only — works identically for Deployment/StatefulSet/DaemonSet/Rollout.
+// On startup probe pass, patches to steady resources via pods/resize subresource.
+// Maintains req==limit on both phases to preserve Guaranteed QoS (KEP-1287).
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"strconv"
+	"sync"
+	"time"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
+)
+
+const (
+	annEnabled = "resize.example.com/enabled"
+	annTrigger = "resize.example.com/trigger"
+	annDelay   = "resize.example.com/delay-seconds"
+	annSteady  = "resize.example.com/steady-resources"
+	annResized = "resize.example.com/resized"
+)
+
+type resVals struct {
+	Requests map[string]string `json:"requests,omitempty"`
+	Limits   map[string]string `json:"limits,omitempty"`
+}
+
+var clientset *kubernetes.Clientset
+var processed sync.Map
+
+func main() {
+	cfg, err := rest.InClusterConfig()
+	if err != nil {
+		log.Fatalf("in-cluster config: %v", err)
+	}
+	clientset, err = kubernetes.NewForConfig(cfg)
+	if err != nil {
+		log.Fatalf("clientset: %v", err)
+	}
+
+	factory := informers.NewSharedInformerFactory(clientset, 15*time.Second)
+	podInformer := factory.Core().V1().Pods().Informer()
+	podInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    func(obj interface{}) { handle(obj) },
+		UpdateFunc: func(_, obj interface{}) { handle(obj) },
+	})
+
+	stop := make(chan struct{})
+	defer close(stop)
+	log.Printf("pod-resizer starting; watching pods annotated %s=true", annEnabled)
+	factory.Start(stop)
+	factory.WaitForCacheSync(stop)
+	log.Printf("informer cache synced; ready")
+	select {}
+}
+
+func handle(obj interface{}) {
+	pod, ok := obj.(*corev1.Pod)
+	if !ok {
+		return
+	}
+	a := pod.Annotations
+	if a == nil || a[annEnabled] != "true" || a[annResized] == "true" {
+		return
+	}
+	if pod.DeletionTimestamp != nil || pod.Status.Phase != corev1.PodRunning {
+		return
+	}
+
+	trigger := a[annTrigger]
+	if trigger == "" {
+		trigger = "StartupProbePassed"
+	}
+	if !triggerMet(pod, trigger, a[annDelay]) {
+		return
+	}
+
+	steady := map[string]resVals{}
+	if err := json.Unmarshal([]byte(a[annSteady]), &steady); err != nil {
+		log.Printf("ERROR %s/%s: bad %s: %v", pod.Namespace, pod.Name, annSteady, err)
+		return
+	}
+	patch := buildResizePatch(steady)
+	if patch == nil {
+		return
+	}
+	pb, _ := json.Marshal(patch)
+
+	key := string(pod.UID)
+	if _, loaded := processed.LoadOrStore(key, true); loaded {
+		return
+	}
+
+	if _, err := clientset.CoreV1().Pods(pod.Namespace).Patch(
+		context.TODO(), pod.Name, types.StrategicMergePatchType, pb,
+		metav1.PatchOptions{}, "resize"); err != nil {
+		processed.Delete(key)
+		log.Printf("ERROR %s/%s: resize patch failed: %v", pod.Namespace, pod.Name, err)
+		return
+	}
+	log.Printf("RESIZED %s/%s [%s] trigger=%s patch=%s",
+		pod.Namespace, pod.Name, ownerKind(pod), trigger, string(pb))
+
+	mark := []byte(fmt.Sprintf(`{"metadata":{"annotations":{%q:"true"}}}`, annResized))
+	if _, err := clientset.CoreV1().Pods(pod.Namespace).Patch(
+		context.TODO(), pod.Name, types.MergePatchType, mark, metav1.PatchOptions{}); err != nil {
+		log.Printf("WARN %s/%s: marker patch failed: %v", pod.Namespace, pod.Name, err)
+	}
+}
+
+func triggerMet(pod *corev1.Pod, trigger, delayStr string) bool {
+	switch trigger {
+	case "Ready":
+		for _, c := range pod.Status.Conditions {
+			if c.Type == corev1.PodReady {
+				return c.Status == corev1.ConditionTrue
+			}
+		}
+		return false
+	case "Delay":
+		delay, _ := strconv.Atoi(delayStr)
+		for _, cs := range pod.Status.ContainerStatuses {
+			if cs.State.Running != nil {
+				return time.Since(cs.State.Running.StartedAt.Time) >= time.Duration(delay)*time.Second
+			}
+		}
+		return false
+	default:
+		if len(pod.Status.ContainerStatuses) == 0 {
+			return false
+		}
+		for _, cs := range pod.Status.ContainerStatuses {
+			if cs.Started == nil || !*cs.Started {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func buildResizePatch(steady map[string]resVals) map[string]interface{} {
+	var containers []map[string]interface{}
+	for name, rv := range steady {
+		res := map[string]interface{}{}
+		if len(rv.Requests) > 0 {
+			res["requests"] = rv.Requests
+		}
+		if len(rv.Limits) > 0 {
+			res["limits"] = rv.Limits
+		}
+		containers = append(containers, map[string]interface{}{"name": name, "resources": res})
+	}
+	if len(containers) == 0 {
+		return nil
+	}
+	return map[string]interface{}{"spec": map[string]interface{}{"containers": containers}}
+}
+
+func ownerKind(pod *corev1.Pod) string {
+	if len(pod.OwnerReferences) > 0 {
+		return pod.OwnerReferences[0].Kind
+	}
+	return "Pod"
+}
+```
+
+**Controller RBAC**
+
+The controller requires access to the `pods/resize` subresource for patching, plus standard pod watch/list permissions:
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pod-resizer
+  namespace: pod-resizer-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-resizer
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: [""]
+    resources: ["pods/resize"]          # Required for resize subresource
+    verbs: ["patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pod-resizer
+subjects:
+  - kind: ServiceAccount
+    name: pod-resizer
+    namespace: pod-resizer-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pod-resizer
+```
+
+**Demo Workload**
+
+A minimal workload to test the phase-aware resize pattern:
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: resize-demo
+  labels:
+    map-demo: "true"        # Enables MAP resizePolicy injection
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-resize-demo
+  namespace: resize-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: busybox-resize-demo
+  template:
+    metadata:
+      labels:
+        app: busybox-resize-demo
+      annotations:
+        resize.example.com/enabled:          "true"
+        resize.example.com/trigger:          "StartupProbePassed"
+        resize.example.com/steady-resources: |
+          {"busybox":{"requests":{"cpu":"50m"},"limits":{"cpu":"50m"}}}
+    spec:
+      containers:
+        - name: busybox
+          image: busybox:1.36
+          command: ["sh", "-c", "echo 'starting warmup'; sleep 10; echo 'ready'; while true; do sleep 3600; done"]
+          resources:
+            requests:
+              cpu: "200m"
+              memory: 64Mi
+            limits:
+              cpu: "200m"
+              memory: 64Mi
+          startupProbe:
+            exec:
+              command: ["sh", "-c", "test -f /tmp/ready || (sleep 8 && touch /tmp/ready)"]
+            initialDelaySeconds: 2
+            periodSeconds: 3
+            failureThreshold: 10
+```
+
+**Argo Rollouts Compatibility**
+
+The controller works with Argo Rollouts without modification. The ownership chain is Rollout -> ReplicaSet -> Pod, identical in structure to Deployment -> ReplicaSet -> Pod. Since the controller watches Pods only and does not inspect owner references for type-specific logic, any workload controller that creates pods with the appropriate annotations is supported.
+
+**Test Results (EKS 1.36.1)**
+
+Tested on EKS v1.36.1, containerd 2.2.3, Amazon Linux 2023 (cgroup v2, arm64/Graviton).
+
+Controller log output:
+
+```
+2026/06/28 09:12:03 pod-resizer starting; watching pods annotated resize.example.com/enabled=true
+2026/06/28 09:12:03 informer cache synced; ready
+2026/06/28 09:12:41 RESIZED resize-demo/busybox-resize-demo-7f8b9c6d4-k2xnm [ReplicaSet] trigger=StartupProbePassed patch={"spec":{"containers":[{"name":"busybox","resources":{"limits":{"cpu":"50m"},"requests":{"cpu":"50m"}}}]}}
+2026/06/28 09:12:41 RESIZED resize-demo/busybox-resize-demo-7f8b9c6d4-p9wvj [ReplicaSet] trigger=StartupProbePassed patch={"spec":{"containers":[{"name":"busybox","resources":{"limits":{"cpu":"50m"},"requests":{"cpu":"50m"}}}]}}
+2026/06/28 09:13:05 RESIZED resize-demo/busybox-resize-ds-xq7zt [DaemonSet] trigger=StartupProbePassed patch={"spec":{"containers":[{"name":"busybox","resources":{"limits":{"cpu":"50m"},"requests":{"cpu":"50m"}}}]}}
+2026/06/28 09:13:22 RESIZED resize-demo/busybox-resize-sts-0 [StatefulSet] trigger=StartupProbePassed patch={"spec":{"containers":[{"name":"busybox","resources":{"limits":{"cpu":"50m"},"requests":{"cpu":"50m"}}}]}}
+```
+
+In-place resize verification:
+
+| Workload | QoS | CPU (req/lim) | restartCount | containerID |
+|----------|-----|---------------|--------------|-------------|
+| Deployment (x2) | Guaranteed -> **Guaranteed** | 200m -> **50m** | 0 -> **0** | **Identical** |
+| DaemonSet | Guaranteed -> **Guaranteed** | 200m -> **50m** | 0 -> **0** | **Identical** |
+| StatefulSet | Guaranteed -> **Guaranteed** | 200m -> **50m** | 0 -> **0** | **Identical** |
+
+> **Key Evidence**: `restartCount=0` AND `containerID` identical before and after resize confirms true in-place cgroup CPU reallocation. No container was recreated. QoS class preserved as `Guaranteed` throughout the resize.
+
+**MAP Injection Test Results**
+
+Verifying that the `MutatingAdmissionPolicy` correctly injects `resizePolicy` based on annotation presence:
+
+| Case | Annotation Present | Injected resizePolicy | Verdict |
+|------|-------------------|----------------------|---------|
+| with-annotation | Yes | `[{cpu:NotRequired},{memory:RestartContainer}]` | Injected (no webhook needed) |
+| without-annotation | No | `[]` (none) | Not injected (matchCondition working) |
+
+**Advantages of the Annotation-Based Approach**
+
+| Aspect | Benefit |
+|--------|---------|
+| Operational overhead | No CRD/CR -- just add annotations to existing workloads |
+| Workload universality | Controller watches Pods only -- identical behavior for Deployment/StatefulSet/DaemonSet/Rollout |
+| Code complexity | No type branching, child creation, or owner-reference handling |
+| Existing workloads | Apply via annotation patch (no manifest rewrite needed) |
+| resizePolicy automation | MAP (GA) auto-injects at pod creation -- fully automated without webhooks |
+
+**Caveats**
+
+- CPU-only zero-downtime resize is safe and verified. Memory shrink may trigger container restart depending on actual usage -- validate per workload before enabling.
+- `kubectl` version 1.32 or later is required for `--subresource resize` (debugging only; the controller uses client-go which handles subresources natively).
+- Interactions with HPA and CPUManager static NUMA alignment policy need per-workload validation. Concurrent HPA scaling and in-place resize can produce conflicting resource targets.
+- For production deployments, add leader election to the controller for multi-replica high availability.
+
+#### Upgrade Checklist
+
+- **Ingress-NGINX retired (2026-03-24)**: Security patches have stopped. Migrate to a Gateway API compatible controller (e.g., Envoy Gateway, Istio Gateway, Cilium Gateway API).
+- **IPVS mode / externalIPs service audit**: Review services using IPVS mode or `externalIPs` for compatibility with 1.36 networking changes. Audit recommended before upgrade.
+- **EKS Cluster Insights**: Run EKS Cluster Insights before initiating the upgrade to identify deprecated API usage, incompatible add-on versions, and other compatibility issues.
 
 #### Key Beta Features
 
@@ -1767,7 +2264,7 @@ The following table provides a comprehensive cross-version view of major feature
 | Feature | KEP | Alpha | Beta | GA | Description |
 |---------|-----|-------|------|-----|-------------|
 | ValidatingAdmissionPolicy (CEL) | KEP-3488 | 1.26 | 1.28 | **1.30** | Native admission control with CEL |
-| MutatingAdmissionPolicy (CEL) | KEP-3962 | 1.33 | 1.34 | **1.35** | Native mutation with CEL |
+| MutatingAdmissionPolicy (CEL) | KEP-3962 | 1.33 | 1.34/1.35 | **1.36** | Native mutation with CEL |
 | StructuredAuthorizationConfiguration | KEP-3221 | 1.29 | 1.30 | **1.32** | Ordered authorization chain configuration |
 | AppArmor GA | KEP-24 | 1.4 | 1.28 | **1.31** | Native AppArmor profile API field |
 | User Namespaces | KEP-127 | 1.25 | 1.30/1.33 | **1.34** | UID/GID remapping for security isolation |
@@ -1845,6 +2342,11 @@ gantt
     Alpha (1.25)              :done, u1, 2022-05, 2024-04
     Beta (1.30-1.33)          :done, u2, 2024-04, 2025-08
     GA (1.34)                 :done, u3, 2025-08, 2025-12
+
+    section MutatingAdmissionPolicy
+    Alpha (1.33)              :done, m1, 2025-04, 2025-08
+    Beta (1.34-1.35)          :done, m2, 2025-08, 2026-04
+    GA (1.36)                 :active, m3, 2026-04, 2026-08
 
     section Gang Scheduling
     Alpha (1.35)              :done, g1, 2025-12, 2026-04
@@ -2457,7 +2959,7 @@ The Kubernetes community continues to push the boundaries of container orchestra
 | Feature | Current State | Expected Timeline | Impact |
 |---------|--------------|-------------------|--------|
 | **Pod-Level In-Place Scaling GA** | Beta (1.36) | 1.37 | Aggregate pod resource management |
-| **MutatingAdmissionPolicy enhancements** | GA (1.35) | Ongoing | Richer CEL mutation patterns |
+| **MutatingAdmissionPolicy enhancements** | GA (1.36) | Ongoing | Richer CEL mutation patterns |
 | **Improved DRA partitioning** | Beta (1.36) | 1.37 | Fine-grained GPU sharing |
 | **Scheduler improvements** | Various | Ongoing | Better bin-packing, queue management |
 
