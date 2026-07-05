@@ -1,7 +1,7 @@
 # Amazon EKS Security
 
 > **Supported Versions**: Amazon EKS 1.31, 1.32, 1.33
-> **Last Updated**: February 19, 2026
+> **Last Updated**: July 3, 2026
 
 To securely run workloads on Amazon EKS (Elastic Kubernetes Service), you need to understand and implement various security layers and best practices. This document covers key concepts, components, and best practices for strengthening the security of your EKS cluster.
 
@@ -831,6 +831,52 @@ for service in ec2 ecr.api ecr.dkr s3 logs sts elasticloadbalancing autoscaling;
 done
 ```
 
+### Customer-Routed Control Plane Egress (June 2026)
+
+> **Announced**: June 18, 2026 · [Source](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-customer-routed-control-plane-egress/)
+
+Previously, when the EKS Kubernetes API server needed to reach external endpoints (admission webhooks, private OIDC providers, aggregated API servers), that egress traffic left through an AWS-managed path. With Customer-Routed Control Plane Egress, you can route this control plane egress traffic directly through your own VPC instead.
+
+**Supported traffic**:
+- Admission webhook calls (OPA/Gatekeeper, Kyverno)
+- Private OIDC provider access
+- Aggregated API server access (e.g., Metrics Server, custom APIs)
+
+**Key characteristics**:
+- Because control plane egress traverses the customer VPC, you can implement a data perimeter and monitor/inspect traffic within your own network
+- Enforceable at the organization level using the `eks:controlPlaneEgressMode` IAM condition key in an SCP
+- Can be applied to existing clusters, no additional cost, available in all regions
+
+```bash
+# Enable customer-routed control plane egress on a cluster
+aws eks update-cluster-config \
+  --name my-cluster \
+  --resources-vpc-config controlPlaneEgressMode=CUSTOMER_ROUTED
+```
+
+```json
+// SCP example: enforce customer-routed egress mode
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "RequireCustomerRoutedControlPlaneEgress",
+      "Effect": "Deny",
+      "Action": [
+        "eks:CreateCluster",
+        "eks:UpdateClusterConfig"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "eks:controlPlaneEgressMode": "CUSTOMER_ROUTED"
+        }
+      }
+    }
+  ]
+}
+```
+
 ## Network Security
 
 ### Security Groups
@@ -1576,6 +1622,69 @@ aws iam put-role-permissions-boundary \
 aws iam get-role --role-name EKSNodeRole --query "Role.PermissionsBoundary"
 ```
 
+### Proactive Governance with 7 New IAM Condition Keys (April 2026)
+
+> **Announced**: April 20, 2026 · [Source](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-iam-condition-keys/)
+
+Amazon EKS added seven new IAM condition keys that let you enforce policy-based, proactive governance at cluster creation and update time. These conditions can be applied to the `CreateCluster`, `UpdateClusterConfig`, `UpdateClusterVersion`, and `AssociateEncryptionConfig` APIs, and integrated with AWS Organizations SCPs.
+
+| Condition Key | Purpose |
+|----------------|---------|
+| `eks:endpointPublicAccess` / `eks:endpointPrivateAccess` | Enforce use of the private endpoint |
+| `eks:encryptionConfigProviderKeyArns` | Require KMS-based secrets encryption |
+| `eks:kubernetesVersion` | Restrict cluster creation/upgrade to approved Kubernetes versions |
+| `eks:controlPlaneScalingTier` | Restrict the control plane scaling tier |
+| `eks:deletionProtection` | Enforce cluster deletion protection |
+| `eks:zonalShiftEnabled` | Control whether zonal shift is enabled |
+
+```json
+// SCP example: require private endpoint and KMS encryption
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "RequirePrivateEndpointAndKmsEncryption",
+      "Effect": "Deny",
+      "Action": [
+        "eks:CreateCluster",
+        "eks:UpdateClusterConfig"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "Bool": {
+          "eks:endpointPublicAccess": "true"
+        }
+      }
+    },
+    {
+      "Sid": "RequireEncryptionConfig",
+      "Effect": "Deny",
+      "Action": "eks:CreateCluster",
+      "Resource": "*",
+      "Condition": {
+        "Null": {
+          "eks:encryptionConfigProviderKeyArns": "true"
+        }
+      }
+    },
+    {
+      "Sid": "RestrictKubernetesVersion",
+      "Effect": "Deny",
+      "Action": [
+        "eks:CreateCluster",
+        "eks:UpdateClusterVersion"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "eks:kubernetesVersion": ["1.32", "1.33"]
+        }
+      }
+    }
+  ]
+}
+```
+
 ## Encryption and Secrets Management
 
 ### EKS Encryption Options
@@ -2054,6 +2163,8 @@ In industries with strict regulations such as financial services, additional sec
 - [CIS Kubernetes Benchmark](https://www.cisecurity.org/benchmark/kubernetes)
 - [AWS Security Hub](https://aws.amazon.com/security-hub/)
 - [Amazon GuardDuty](https://aws.amazon.com/guardduty/)
+- [Amazon EKS Customer-Routed Control Plane Egress (2026-06-18)](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-customer-routed-control-plane-egress/)
+- [Amazon EKS New IAM Condition Keys (2026-04-20)](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-iam-condition-keys/)
 
 ## Quiz
 

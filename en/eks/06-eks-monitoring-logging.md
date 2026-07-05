@@ -1,5 +1,7 @@
 # Amazon EKS Monitoring and Logging
 
+> **Last Updated**: July 3, 2026
+
 Effective monitoring and logging are essential for maintaining the reliability, availability, and performance of Amazon EKS clusters. This document covers various tools, techniques, and best practices for implementing monitoring and logging in EKS clusters.
 
 ## Table of Contents
@@ -164,6 +166,18 @@ aws logs put-retention-policy \
   --log-group-name /aws/eks/my-cluster/cluster \
   --retention-in-days 30
 ```
+
+### EKS Capabilities Logging (GitOps, ACK, kro)
+
+EKS Capabilities runs Argo CD, AWS Controllers for Kubernetes (ACK), and kro as managed controllers on the EKS control plane. Their controller logs can now be delivered directly to CloudWatch Logs, S3, or Kinesis Data Firehose, the same delivery options used for control plane logging, without running a separate log collector in the cluster to scrape the controller pods.
+
+This closes a visibility gap that previously required inspecting controller pods directly:
+
+- **GitOps sync errors** from Argo CD
+- **Failed resource reconciliation** from ACK
+- **Workflow state transitions** from kro
+
+Enable log delivery for the capabilities you run alongside standard control plane logging, then query the results with CloudWatch Logs Insights the same way you would query API server or audit logs. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-capabilities-logging/) (June 4, 2026) for the current list of supported capability log types.
 
 ## Container Logging
 
@@ -514,6 +528,41 @@ aws cloudwatch put-metric-alarm \
   --evaluation-periods 2 \
   --alarm-actions arn:aws:sns:us-west-2:123456789012:my-topic
 ```
+
+#### CloudWatch Observability Add-on 5.0.0
+
+Starting with version 5.0.0 (February 2026) of the `amazon-cloudwatch-observability` EKS add-on, Application Signals (APM) ships **enabled by default** instead of requiring manual opt-in. The add-on now bundles Enhanced Container Insights, Container Logs, and Application Signals into a single package, and instruments workloads for traces, metrics, and logs without requiring pod annotations:
+
+```bash
+aws eks update-addon \
+  --cluster-name my-cluster \
+  --addon-name amazon-cloudwatch-observability \
+  --addon-version v5.0.0-eksbuild.1
+```
+
+See the [release notes](https://aws.amazon.com/about-aws/whats-new/2026/02/application-performance-monitoring-cloudwatch-eks/) (February 26, 2026) for upgrade guidance if you're moving from an add-on version where Application Signals was opt-in. For the newer OTel-based evolution of Container Insights metric collection, see [CloudWatch Metrics](../observability/metrics/04-cloudwatch-metrics.md#opentelemetry-based-container-insights-preview).
+
+### EKS Node Monitoring Agent
+
+The EKS Node Monitoring Agent watches worker nodes for system, storage, network, and accelerator (GPU) issues and publishes them as Kubernetes Node Conditions, which the EKS auto node repair feature can act on automatically. As of February 2026, the agent's source is public on GitHub, so it can be customized or extended beyond the built-in checks.
+
+The agent is included by default in EKS Auto Mode and is also available as a standalone add-on for standard managed node groups:
+
+```bash
+aws eks create-addon \
+  --cluster-name my-cluster \
+  --addon-name eks-node-monitoring-agent
+```
+
+Check the conditions it reports with:
+
+```bash
+kubectl get nodes -o custom-columns='NAME:.metadata.name,CONDITIONS:.status.conditions[*].type'
+kubectl describe node <node-name>
+```
+
+See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/02/amazon-eks-node-monitoring-agent-open-source/) (February 24, 2026) for the GitHub repository and supported condition types.
+
 ### Prometheus and Grafana
 
 Prometheus is a time-series database and monitoring system, and Grafana is a dashboard tool for visualizing metrics. You can use these two tools together for comprehensive monitoring of your EKS cluster.

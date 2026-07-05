@@ -1,7 +1,7 @@
 # AWS Load Balancer Controller
 
 > **Supported Versions**: AWS Load Balancer Controller v2.8+
-> **Last Updated**: February 22, 2026
+> **Last Updated**: July 3, 2026
 
 ## Overview
 
@@ -1142,6 +1142,29 @@ spec:
                 port:
                   number: 80
 ```
+
+## Notable Version Updates
+
+### v2.16 (December 2025)
+
+- **ALB Target Optimizer**: A sidecar container collects real-time target throughput metrics and routes traffic based on target capacity
+- **NLB Weighted Target Groups**: Enables Blue/Green and Canary deployments through a single NLB
+- **ALB JWT Validation**: Performs ALB-level JWT validation via the `alb.ingress.kubernetes.io/jwt-validation` annotation
+- **NLB QUIC Passthrough**: Support for passing through QUIC protocol traffic
+
+```yaml
+# ALB JWT Validation example
+alb.ingress.kubernetes.io/jwt-validation: >-
+  {"issuer":"https://accounts.example.com","jwksUri":"https://accounts.example.com/.well-known/jwks.json"}
+```
+
+### v2.17 (v2.17.0 / v2.17.1, December 2025 - January 2026, Kubernetes 1.22+)
+
+- **AWS Global Accelerator Controller introduced**: Declaratively manage Global Accelerator as Kubernetes resources via `Accelerator`/`Listener`/`EndpointGroup`/`Endpoint` CRDs
+- Expanded QUIC protocol support
+- Added `--default-load-balancer-scheme` flag (sets a default scheme when the annotation is not specified)
+
+> Starting with this release, Gateway API support matured to Release Candidate status ahead of GA. See the [Gateway API documentation](./04-gateway-api.md) for Gateway API GA (v3.0.0) and the subsequent migration tooling.
 
 ## Annotation Reference
 

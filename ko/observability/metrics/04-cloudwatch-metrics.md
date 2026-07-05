@@ -1,6 +1,6 @@
 # CloudWatch Metrics
 
-> **마지막 업데이트**: 2026년 2월 20일
+> **마지막 업데이트**: 2026년 7월 3일
 
 ## 목차
 
@@ -141,6 +141,23 @@ eksctl utils update-cluster-logging \
   --enable-types all \
   --approve
 ```
+
+### OTel 기반 Container Insights (Preview)
+
+2026년 4월 2일 발표된 CloudWatch의 OpenTelemetry(OTLP) 기반 Container Insights 후속 버전이 프리뷰로 제공됩니다. 위에서 설명한 기존 CloudWatch Agent 기반 Container Insights와 병행 사용이 가능하므로, 클러스터 단위로 점진적으로 전환할 수 있습니다.
+
+기존 에이전트 기반 수집과 비교했을 때:
+
+- **더 넓은 메트릭 수집 범위**: CloudWatch Agent의 고정된 메트릭 세트 대신 OTLP로 수집
+- **높은 카디널리티 필터링**: 메트릭당 최대 150개 라벨 지원으로, 기존 차원(dimension) 모델로는 비용 효율적으로 표현하기 어려운 파드/네임스페이스별 세분화 조회 가능
+- **CloudWatch Query Studio에서 PromQL 지원**: 별도의 Prometheus나 Amazon Managed Service for Prometheus 워크스페이스 없이 OTel로 수집한 메트릭을 PromQL로 바로 쿼리
+- **가속기 자동 감지**: NVIDIA GPU, EFA, AWS Trainium/Inferentia를 자동으로 감지하여 AI/ML 워크로드 관측에 유용 (관련 GPU 워크로드 내용은 [AI/ML 강의 트랙](../../ai-ml/) 참고)
+
+프리뷰 리전: 미국 동부(버지니아 북부), 미국 서부(오레곤), 아시아 태평양(시드니), 아시아 태평양(싱가포르), 유럽(아일랜드)
+
+> 출처: [CloudWatch OTel 기반 Container Insights for EKS (Preview)](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
+
+`amazon-cloudwatch-observability` EKS 애드온 및 Application Signals와의 관계는 [EKS 모니터링 및 로깅](../../eks/06-eks-monitoring-logging.md#cloudwatch-observability-add-on-500) 문서를 참고하세요.
 
 ## CloudWatch Agent 구성
 

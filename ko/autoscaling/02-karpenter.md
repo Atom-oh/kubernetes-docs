@@ -1,7 +1,7 @@
 # Karpenter
 
-> **지원 버전**: Karpenter 1.6, Kubernetes 1.31, 1.32, 1.33  
-> **마지막 업데이트**: 2026년 2월 22일
+> **지원 버전**: Karpenter 1.6 ~ 1.13, Kubernetes 1.29+ (v1.13 기준)  
+> **마지막 업데이트**: 2026년 7월 3일
 
 ## 목차
 - [소개](#소개)
@@ -41,6 +41,8 @@ Karpenter는 Kubernetes 클러스터의 노드 프로비저닝을 자동화하�
 | 클라우드 통합 | 네이티브 | 제한적 | 네이티브 |
 | 노드 그룹 관리 | 불필요 | 필요 | 필요 |
 | 인터럽션 처리 | 통합 | 제한적 | 제한적 |
+
+> **참고**: Karpenter 대신 전통적인 EKS Managed Node Group과 Cluster Autoscaler 조합을 유지하는 경우, 2026년 4월부터 EC2 Auto Scaling Warm Pool을 활용해 사전 초기화된 인스턴스를 대기시켜 콜드 스타트 없이 스케일 아웃할 수 있습니다. Stopped(비용 절감) 또는 Running(빠른 전환) 상태를 선택할 수 있고 Cluster Autoscaler와 자동으로 연동되지만, 이는 Karpenter가 아닌 Managed Node Group 전용 기능입니다.
 
 ## 아키텍처
 
@@ -367,6 +369,10 @@ limits:
   nvidia.com/gpu: 10
 ```
 
+### Dynamic Resource Allocation(DRA) 지원 (v1.13)
+
+Karpenter v1.13(2026년 6월 릴리스)부터 Kubernetes DRA(Dynamic Resource Allocation) 기반 디바이스 할당 추적을 지원합니다. GPU, 특수 가속기 등 클레임 기반으로 할당되는 리소스를 Karpenter가 인식해 프로비저닝 결정에 반영할 수 있어, `nvidia.com/gpu`와 같은 확장 리소스뿐 아니라 DRA `ResourceClaim`/`DeviceClass`를 사용하는 AI/HPC 워크로드에도 정확한 스케일링이 가능합니다. DRA 기반 추적을 사용하려면 Kubernetes 1.29 이상이 필요합니다.
+
 ### 노드 만료 구성
 
 노드 만료 설정은 Karpenter가 노드를 제거하는 시기를 정의합니다:
@@ -382,6 +388,11 @@ disruption:
   # 노드 생성 후 제거하기까지의 최대 시간
   expireAfter: 720h  # 30일
 ```
+
+### NodeReadinessController를 통한 초기화 Taint 자동 무시 (v1.13)
+
+Karpenter v1.13에 추가된 NodeReadinessController는 노드가 초기화되는 동안 붙는 준비성(readiness) 관련 Taint를 자동으로 무시해 불필요한 스케줄링 차단을 줄입니다. 기존에는 `startupTaints`로 수동 처리해야 했던 초기화 지연 문제가 완화되어, 신규 노드가 프로비저닝 후 Ready 상태에 도달하는 과정에서의 스케줄링 안정성과 프로비저닝 신뢰성이 향상됩니다.
+
 ## 노드 클래스
 
 노드 클래스는 Karpenter가 프로비저닝하는 노드의 구성을 정의합니다. AWS에서는 EC2NodeClass CRD를 사용합니다.
@@ -1053,6 +1064,12 @@ spec:
     karpenter.sh/discovery: "${CLUSTER_NAME}"
 ```
 
+### AZ 장애 대응: Amazon ARC Zonal Shift 통합 (2026년 5월)
+
+Karpenter는 Amazon ARC(Application Recovery Controller)의 Zonal Shift를 지원합니다. 특정 가용 영역(AZ)에 장애가 발생하면 Karpenter는 해당 AZ로의 신규 노드 프로비저닝을 자동으로 중단하고, 정상 AZ를 중심으로 스케줄링을 수행합니다. AWS가 AZ 상태를 자동으로 감지해 트래픽 전환과 복구까지 처리하는 Zonal Autoshift도 함께 지원됩니다.
+
+장애가 감지되면 Karpenter의 voluntary disruption(consolidation, drift 처리 등)도 자동으로 중단되어, 장애 상황에서 불필요한 노드 교체로 클러스터가 더 불안정해지는 것을 방지합니다. 기존 EKS ARC 리소스를 그대로 활용하므로 별도의 커스텀 리소스를 만들 필요가 없으며, `ENABLE_ZONAL_SHIFT` 옵션으로 활성화합니다.
+
 ### EKS 비용 최적화
 
 Karpenter를 사용하여 EKS 클러스터의 비용을 최적화할 수 있습니다:
@@ -1453,6 +1470,9 @@ Karpenter를 사용하면 클러스터 관리를 간소화하고, 리소스 활�
 - [Amazon EKS 워크숍 - Karpenter](https://www.eksworkshop.com/docs/autoscaling/compute/karpenter/)
 - [AWS 블로그 - Karpenter](https://aws.amazon.com/blogs/containers/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
 - [Karpenter 모범 사례](https://aws.github.io/aws-eks-best-practices/karpenter/)
+- [Karpenter GitHub Releases](https://github.com/aws/karpenter-provider-aws/releases)
+- [AWS What's New - Karpenter ARC Zonal Shift 지원](https://aws.amazon.com/about-aws/whats-new/2026/05/karpenter-arc-zonal-shift/)
+- [AWS What's New - Amazon EKS Managed Node Group Warm Pool 지원](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-managed-node-groups-ec2-warm-pools/)
 
 ## 퀴즈
 

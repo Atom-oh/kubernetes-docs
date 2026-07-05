@@ -1,7 +1,7 @@
 # NodePool 구성 및 최적화
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 2월 19일
+> **마지막 업데이트**: 2026년 7월 3일
 
 < [이전: Auto Mode 시작하기](./01-getting-started.md) | [목차](./README.md) | [다음: 스케일링 동작](./03-scaling-behavior.md) >
 
@@ -244,6 +244,55 @@ spec:
     Environment: production
     ManagedBy: eks-auto-mode
 ```
+
+### 보안 및 네트워킹 확장 필드
+
+NodeClass는 아래 필드로 디스크 암호화, 커스텀 CA 신뢰 체인, Pod 트래픽 분리를 추가로 제어할 수 있습니다.
+
+```yaml
+# secure-network-nodeclass.yaml
+apiVersion: eks.amazonaws.com/v1
+kind: NodeClass
+metadata:
+  name: secure-network-nodeclass
+spec:
+  amiFamily: AL2023
+
+  # 고객 관리형 KMS 키로 ephemeral instance storage + root EBS volume 전체 암호화
+  # (커스텀 AMI 없이 적용 가능)
+  kmsKeyID: arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
+
+  # 엔터프라이즈 PKI/프록시 신뢰 체인을 위한 커스텀 CA 인증서 bundle
+  certificateBundles:
+    - name: corporate-ca
+      content: |
+        -----BEGIN CERTIFICATE-----
+        MIIDXTCCAkWgAwIBAgIJAK...
+        -----END CERTIFICATE-----
+
+  # 인프라 트래픽과 애플리케이션 Pod 트래픽을 분리된 서브넷/보안 그룹(secondary ENI)으로 구성
+  subnetSelectorTerms:
+    - tags:
+        kubernetes.io/role/internal-elb: "1"
+  securityGroupSelectorTerms:
+    - tags:
+        kubernetes.io/cluster/my-cluster: owned
+  podSubnetSelectorTerms:
+    - tags:
+        Purpose: pod-network
+  podSecurityGroupSelectorTerms:
+    - tags:
+        Purpose: pod-network
+```
+
+| 필드 | 설명 |
+|------|------|
+| `kmsKeyID` | 고객 관리형 KMS 키 ARN. ephemeral instance storage와 root EBS volume을 암호화 |
+| `certificateBundles` | 커스텀 CA 인증서 bundle 목록. 프록시/PKI 신뢰 체인이 필요한 엔터프라이즈 환경에서 사용 |
+| `podSubnetSelectorTerms` | Pod 트래픽 전용 서브넷 지정 (secondary ENI로 분리) |
+| `podSecurityGroupSelectorTerms` | Pod 트래픽 전용 보안 그룹 지정 (secondary ENI로 분리) |
+
+`podSubnetSelectorTerms`/`podSecurityGroupSelectorTerms`를 설정하면 노드 자체의 인프라 트래픽(kubelet, 컨트롤 플레인 통신 등)과 Pod가 발생시키는 애플리케이션 트래픽이 서로 다른 서브넷·보안 그룹을 사용하도록 분리되어, 보안 그룹 규칙과 네트워크 ACL을 트래픽 유형별로 독립적으로 설계할 수 있습니다.
 
 ## NodePool 분리 전략
 

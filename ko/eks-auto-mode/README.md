@@ -140,3 +140,5 @@ EKS Auto Mode를 성공적으로 구성한 후 다음 주제를 학습하는 것
 - [Karpenter 공식 문서](https://karpenter.sh/)
 - [EKS Best Practices Guide](https://aws.github.io/aws-eks-best-practices/)
 - [AWS 비용 최적화 가이드](https://aws.amazon.com/ko/pricing/cost-optimization/)
+- [New EKS Auto Mode features for enhanced security, network control, and performance (AWS Containers Blog, 2025-10-16)](https://aws.amazon.com/blogs/containers/new-amazon-eks-auto-mode-features-for-enhanced-security-network-control-and-performance/)
+- [Migrate from self-managed Karpenter to EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-karpenter.html)

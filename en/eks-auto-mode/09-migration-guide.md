@@ -1,7 +1,7 @@
 # Migrating from Managed Node Groups to Auto Mode
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 19, 2026
+> **Last Updated**: July 3, 2026
 
 This guide covers how to migrate from existing EKS Managed Node Groups to Auto Mode, including step-by-step instructions, coexistence strategies, and important cautions.
 
@@ -310,6 +310,61 @@ spec:
 | Monitor both | Track metrics from both node types |
 | Test thoroughly | Validate behavior before full migration |
 | Rollback plan | Keep node groups scaled down, not deleted initially |
+
+---
+
+## Migrating from Self-Managed Karpenter (Official kubectl-Based Path)
+
+If you are running **self-managed Karpenter directly** rather than managed node groups, AWS provides an officially supported kubectl-based migration path as an alternative to the node group cutover procedure described above.
+
+### Prerequisites
+
+- Self-managed Karpenter **v1.1 or later** must already be installed on the cluster
+- Document your existing Karpenter NodePool/EC2NodeClass configuration
+
+### Migration Steps
+
+1. **Enable Auto Mode**: Enable Auto Mode while leaving the existing Karpenter controller and NodePools in place.
+
+2. **Create a tainted Auto Mode NodePool**: Add a taint so workloads aren't scheduled onto Auto Mode nodes unintentionally.
+
+   ```yaml
+   apiVersion: karpenter.sh/v1
+   kind: NodePool
+   metadata:
+     name: auto-mode-migration
+   spec:
+     template:
+       spec:
+         taints:
+           - key: eks.amazonaws.com/auto-mode
+             value: "true"
+             effect: NoSchedule
+         nodeClassRef:
+           group: eks.amazonaws.com
+           kind: NodeClass
+           name: default
+   ```
+
+3. **Add matching tolerations/nodeSelector to workloads**: Add a toleration for the taint above and a `nodeSelector` targeting the Auto Mode NodePool to the workloads you want to migrate.
+
+   ```yaml
+   spec:
+     template:
+       spec:
+         tolerations:
+           - key: eks.amazonaws.com/auto-mode
+             value: "true"
+             effect: NoSchedule
+         nodeSelector:
+           karpenter.sh/nodepool: auto-mode-migration
+   ```
+
+4. **Migrate incrementally**: Add the toleration/nodeSelector to one workload group at a time, moving workloads onto Auto Mode nodes while Karpenter-managed nodes and Auto Mode nodes run side by side in the same cluster.
+
+5. **Remove self-managed Karpenter**: Once all workloads are confirmed running on Auto Mode nodes, remove the self-managed Karpenter controller and its associated resources (NodePools, EC2NodeClasses, IAM roles, Helm release, etc.).
+
+This path is intended for clusters already running self-managed Karpenter. If you are migrating directly from managed node groups, follow Steps 1-7 above instead.
 
 ---
 

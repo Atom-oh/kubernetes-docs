@@ -1,7 +1,7 @@
 # 네트워크 정책 (Network Policies)
 
 > **지원 버전**: Kubernetes 1.31, 1.32, 1.33
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 7월 3일
 
 Kubernetes 네트워크 정책은 Pod 간 트래픽을 제어하는 방화벽 규칙입니다. 이 문서에서는 기본 NetworkPolicy부터 Cilium과 Calico의 확장 기능까지 상세히 다룹니다.
 
@@ -1418,6 +1418,67 @@ kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master
 kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml
 ```
 
+### EKS Enhanced Network Security Policies (2025년 12월)
+
+> **발표일**: 2025년 12월 15일 · [출처](https://aws.amazon.com/ko/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
+
+EKS는 기존 네임스페이스 범위의 `NetworkPolicy`에 더해 두 가지 기능을 추가했습니다.
+
+- **ClusterNetworkPolicy**: 네임스페이스별로 정책을 개별 관리하는 대신, 클러스터 전체에 일관된 네트워크 정책을 중앙에서 한 번에 적용할 수 있는 신규 리소스입니다.
+- **DNS(FQDN) 기반 Egress 제어**: 목적지 IP 대신 도메인 이름을 기준으로 egress 트래픽을 허용/차단합니다. SaaS API나 외부 엔드포인트처럼 IP가 자주 바뀌는 대상을 IP 기반 `ipBlock`보다 안정적으로 제어할 수 있습니다.
+
+**요구사항**:
+- Kubernetes 1.29+ 신규 클러스터에서 사용 가능
+- `ClusterNetworkPolicy`는 VPC CNI v1.21.0+에서 모든 launch mode(IP/Prefix 등)를 지원
+- DNS 기반 정책은 **EKS Auto Mode로 생성된 EC2 노드**에서만 지원
+- 추가 비용 없음
+
+```yaml
+# ClusterNetworkPolicy 예시: 클러스터 전체 기본 거부 + DNS 허용
+apiVersion: policy.networking.k8s.io/v1alpha1
+kind: ClusterNetworkPolicy
+metadata:
+  name: cluster-default-deny
+spec:
+  priority: 100
+  subject:
+    namespaces: {}
+  egress:
+    - name: allow-dns
+      action: Allow
+      to:
+        - namespaces:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+```
+
+```yaml
+# DNS(FQDN) 기반 Egress 정책 예시: 특정 SaaS 도메인만 허용
+apiVersion: policy.networking.k8s.io/v1alpha1
+kind: ClusterNetworkPolicy
+metadata:
+  name: allow-saas-fqdn-egress
+spec:
+  priority: 200
+  subject:
+    namespaces:
+      matchLabels:
+        team: payments
+  egress:
+    - name: allow-external-api
+      action: Allow
+      to:
+        - fqdns:
+            - "api.stripe.com"
+            - "*.datadoghq.com"
+      ports:
+        - protocol: TCP
+          port: 443
+```
+
 ### Security Groups for Pods
 
 EKS에서 Pod에 직접 Security Group을 적용할 수 있습니다:
@@ -1696,7 +1757,7 @@ Kubernetes 네트워크 정책은 클러스터 내 Pod 통신을 제어하는 �
 1. **기본 NetworkPolicy**: 네임스페이스 범위, podSelector/namespaceSelector/ipBlock 지원
 2. **Cilium 확장**: L7 정책, DNS FQDN 기반 정책, 클러스터 와이드 정책
 3. **Calico 확장**: GlobalNetworkPolicy, NetworkSet, Tier 기반 정책
-4. **EKS 고려사항**: VPC CNI NetworkPolicy 활성화, Security Groups for Pods
+4. **EKS 고려사항**: VPC CNI NetworkPolicy 활성화, Security Groups for Pods, ClusterNetworkPolicy 및 DNS(FQDN) 기반 Egress 제어
 
 ### 권장 사항
 
@@ -1713,3 +1774,4 @@ Kubernetes 네트워크 정책은 클러스터 내 Pod 통신을 제어하는 �
 - [Cilium Network Policy 문서](https://docs.cilium.io/en/stable/security/policy/)
 - [Calico Network Policy 문서](https://docs.tigera.io/calico/latest/network-policy/)
 - [EKS Security Best Practices - Network Security](https://aws.github.io/aws-eks-best-practices/security/docs/network/)
+- [Amazon EKS Enhanced Network Security Policies (2025-12-15)](https://aws.amazon.com/ko/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)

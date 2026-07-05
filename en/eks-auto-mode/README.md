@@ -142,6 +142,8 @@ To test your learning, try the [EKS Auto Mode Quiz](../quizzes/eks-auto-mode/01-
 - [Karpenter Official Documentation](https://karpenter.sh/)
 - [EKS Best Practices Guide](https://aws.github.io/aws-eks-best-practices/)
 - [AWS Cost Optimization Guide](https://aws.amazon.com/pricing/cost-optimization/)
+- [New EKS Auto Mode features for enhanced security, network control, and performance (AWS Containers Blog, 2025-10-16)](https://aws.amazon.com/blogs/containers/new-amazon-eks-auto-mode-features-for-enhanced-security-network-control-and-performance/)
+- [Migrate from self-managed Karpenter to EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-karpenter.html)
 
 ---
 

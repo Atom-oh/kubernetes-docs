@@ -1,7 +1,7 @@
 # Certificate Management with cert-manager
 
 > **Supported Versions**: cert-manager 1.16+, Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 25, 2026
+> **Last Updated**: July 3, 2026
 
 cert-manager is a powerful and extensible X.509 certificate controller for Kubernetes. It automates the management and issuance of TLS certificates from various sources, including Let's Encrypt, HashiCorp Vault, Venafi, and private PKI systems.
 
@@ -13,11 +13,12 @@ cert-manager is a powerful and extensible X.509 certificate controller for Kuber
 4. [Core Concepts](#core-concepts)
 5. [Issuer Types](#issuer-types)
 6. [EKS Integration Patterns](#eks-integration-patterns)
-7. [Service Mesh Integration](#service-mesh-integration)
-8. [trust-manager](#trust-manager)
-9. [Monitoring and Troubleshooting](#monitoring-and-troubleshooting)
-10. [Best Practices](#best-practices)
-11. [Summary and References](#summary-and-references)
+7. [AWS-Native Alternative: ACM + ACK](#aws-native-alternative-acm--ack)
+8. [Service Mesh Integration](#service-mesh-integration)
+9. [trust-manager](#trust-manager)
+10. [Monitoring and Troubleshooting](#monitoring-and-troubleshooting)
+11. [Best Practices](#best-practices)
+12. [Summary and References](#summary-and-references)
 
 ---
 
@@ -835,6 +836,8 @@ spec:
 | **NLB + Pod** | At Pod | cert-manager | End-to-end encryption |
 | **Gateway API** | At Gateway | cert-manager | Modern API, future-proof |
 
+> ACM certificates can now be defined and reconciled as native Kubernetes resources too. See [AWS-Native Alternative: ACM + ACK](#aws-native-alternative-acm--ack) below.
+
 ### ALB Ingress with ACM vs cert-manager
 
 ```yaml
@@ -982,6 +985,62 @@ spec:
         - name: app-service
           port: 80
 ```
+
+---
+
+## AWS-Native Alternative: ACM + ACK
+
+### Overview
+
+On December 15, 2025, AWS announced [automated certificate management for Kubernetes with AWS Certificate Manager (ACM)](https://aws.amazon.com/about-aws/whats-new/2025/12/acm-automated-certificate-management-kubernetes), integrating ACM with AWS Controllers for Kubernetes (ACK). With the ACM ACK controller installed in a cluster, certificates can be defined as native Kubernetes custom resources (YAML), and the ACK controller handles the full lifecycle automatically: requesting issuance, completing domain/ownership validation, and creating and renewing the corresponding Kubernetes Secret.
+
+Where cert-manager is a CNCF open-source solution supporting a wide range of issuers (Let's Encrypt and other ACME issuers, Vault, AWS Private CA, self-signed, and more), the ACM+ACK integration is an **AWS-native alternative**. For organizations already invested in the IAM/ACM ecosystem, it delivers the same kind of automation without operating a separate open-source controller.
+
+### Supported Certificate Types
+
+| Type | Use Case |
+|------|----------|
+| **ACM Exportable Public Certificates** | Public-domain certificates exported to a Kubernetes Secret for direct use by Pods/Ingress |
+| **AWS Private CA** | Internal services and service-mesh (Istio, Linkerd) mTLS workloads that require a private PKI |
+
+### Applicable Scenarios
+
+- TLS termination directly in an application Pod (NGINX, custom applications)
+- Service mesh (Istio, Linkerd) workload certificates
+- Third-party Ingress Controllers (NGINX Ingress, Traefik) where ALB/NLB-native certificate integration isn't used
+- Multi-cluster/hybrid environments that need consistent certificate management
+
+### Example: Defining a Certificate via ACK
+
+```yaml
+apiVersion: acm.services.k8s.aws/v1alpha1
+kind: Certificate
+metadata:
+  name: example-com-tls
+  namespace: default
+spec:
+  domainName: example.com
+  subjectAlternativeNames:
+    - "*.example.com"
+  validationMethod: DNS
+  tags:
+    - key: managed-by
+      value: ack
+```
+
+The ACK controller watches this resource, requests the certificate from ACM, and creates/renews the resulting Kubernetes Secret once issuance completes. Exact field names and the Secret-export mechanism can vary by ACM ACK controller version, so check the official documentation before installing.
+
+### Comparison with cert-manager
+
+| Aspect | cert-manager | ACM + ACK |
+|--------|--------------|-----------|
+| **Issuers** | Let's Encrypt, Vault, AWS PCA, and more | ACM (public), AWS Private CA |
+| **Ecosystem** | CNCF open source, vendor-neutral | AWS-native, IAM-based access control |
+| **What you install** | cert-manager controller | ACK service controller for ACM |
+| **Cost** | Free (infrastructure cost only) | Standard ACM/AWS Private CA pricing; no additional charge for the Kubernetes integration itself |
+| **Best fit** | Multi-cloud, or ACME issuers required | AWS-centric organizations already using ACM/IAM |
+
+The two approaches aren't mutually exclusive — for example, public-domain certificates can be managed via ACM+ACK while internal mTLS certificates continue to use cert-manager with the AWS PCA Issuer.
 
 ---
 
@@ -1586,6 +1645,7 @@ spec:
 | ACME Protocol RFC | https://datatracker.ietf.org/doc/html/rfc8555 |
 | Let's Encrypt Documentation | https://letsencrypt.org/docs/ |
 | AWS PCA Issuer | https://github.com/cert-manager/aws-privateca-issuer |
+| ACM Automated Certificate Management for Kubernetes (Dec 15, 2025) | https://aws.amazon.com/about-aws/whats-new/2025/12/acm-automated-certificate-management-kubernetes |
 | istio-csr | https://github.com/cert-manager/istio-csr |
 | trust-manager | https://github.com/cert-manager/trust-manager |
 | cmctl CLI | https://cert-manager.io/docs/reference/cmctl/ |

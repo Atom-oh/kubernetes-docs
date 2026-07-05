@@ -1,7 +1,7 @@
 # Karpenter
 
-> **Supported Versions**: Karpenter 1.6, Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 22, 2026
+> **Supported Versions**: Karpenter 1.6 - 1.13, Kubernetes 1.29+ (as of v1.13)
+> **Last Updated**: July 3, 2026
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -41,6 +41,8 @@ Karpenter is an open-source cluster autoscaler that automates node provisioning 
 | Cloud Integration | Native | Limited | Native |
 | Node Group Management | Not Required | Required | Required |
 | Interruption Handling | Integrated | Limited | Limited |
+
+> **Note**: If you stick with traditional EKS Managed Node Groups and Cluster Autoscaler instead of Karpenter, EC2 Auto Scaling Warm Pools (available since April 2026) let you keep pre-initialized instances on standby for cold-start-free scale-out. You can choose a Stopped state (lower cost) or Running state (faster transition), and it integrates automatically with Cluster Autoscaler — but this is a Managed Node Group feature, not something Karpenter uses.
 
 ## Architecture
 
@@ -373,6 +375,10 @@ limits:
   nvidia.com/gpu: 10
 ```
 
+### Dynamic Resource Allocation (DRA) Support (v1.13)
+
+Starting with Karpenter v1.13 (released June 2026), Karpenter supports device allocation tracking based on Kubernetes Dynamic Resource Allocation (DRA). Karpenter can now recognize claim-based resources such as GPUs and specialized accelerators and factor them into provisioning decisions, enabling accurate scaling not only for extended resources like `nvidia.com/gpu` but also for AI/HPC workloads that use DRA `ResourceClaim`/`DeviceClass` objects. DRA-based tracking requires Kubernetes 1.29 or later.
+
 ### Node Expiration Configuration
 
 Node expiration settings define when Karpenter removes nodes:
@@ -388,6 +394,11 @@ disruption:
   # Maximum time before removing node after creation
   expireAfter: 720h  # 30 days
 ```
+
+### Automatic Ignoring of Initialization Taints via NodeReadinessController (v1.13)
+
+The NodeReadinessController, added in Karpenter v1.13, automatically ignores readiness-related taints (such as those applied while a node is initializing) to reduce unnecessary scheduling blocks. This eases the initialization-delay problem that previously required manual handling via `startupTaints`, improving scheduling stability and provisioning reliability while a new node is coming up to Ready.
+
 ## Node Classes
 
 Node classes define the configuration of nodes that Karpenter provisions. On AWS, it uses the EC2NodeClass CRD.
@@ -1065,6 +1076,12 @@ spec:
         karpenter.sh/discovery: "${CLUSTER_NAME}"
 ```
 
+### AZ Failure Response: Amazon ARC Zonal Shift Integration (May 2026)
+
+Karpenter supports Zonal Shift from Amazon ARC (Application Recovery Controller). When an Availability Zone (AZ) fails, Karpenter automatically stops provisioning new nodes in that AZ and schedules workloads toward healthy AZs instead. Zonal Autoshift, where AWS automatically detects AZ health and handles traffic shifting and recovery, is also supported.
+
+When a failure is detected, Karpenter also automatically suspends voluntary disruption (consolidation, drift handling, etc.) so that unnecessary node replacement doesn't further destabilize the cluster during an outage. This uses your existing EKS ARC resources directly — no custom resources are required — and is enabled with the `ENABLE_ZONAL_SHIFT` option.
+
 ### EKS Cost Optimization
 
 You can use Karpenter to optimize costs for EKS clusters:
@@ -1469,6 +1486,9 @@ Using Karpenter, you can simplify cluster management, optimize resource utilizat
 - [Amazon EKS Workshop - Karpenter](https://www.eksworkshop.com/docs/autoscaling/compute/karpenter/)
 - [AWS Blog - Karpenter](https://aws.amazon.com/blogs/containers/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
 - [Karpenter Best Practices](https://aws.github.io/aws-eks-best-practices/karpenter/)
+- [Karpenter GitHub Releases](https://github.com/aws/karpenter-provider-aws/releases)
+- [AWS What's New - Karpenter ARC Zonal Shift Support](https://aws.amazon.com/about-aws/whats-new/2026/05/karpenter-arc-zonal-shift/)
+- [AWS What's New - Amazon EKS Managed Node Group Warm Pool Support](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-managed-node-groups-ec2-warm-pools/)
 
 ## Quiz
 

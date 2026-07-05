@@ -1,5 +1,7 @@
 # Amazon EKS Upgrades
 
+> **Last Updated**: July 3, 2026
+
 Keeping your Amazon EKS cluster up to date is important for security, stability, and leveraging new features. This document provides strategies, best practices, and step-by-step guides for safely upgrading EKS clusters.
 
 ## Table of Contents
@@ -63,6 +65,11 @@ Amazon EKS follows Kubernetes version management policy:
 - **Version Support**: EKS supports a minimum of 4 Kubernetes versions simultaneously.
 - **Support Period**: Each Kubernetes version is supported for approximately 14 months after release on EKS.
 - **Version Deprecation**: A minimum of 60 days notice is provided before a version is deprecated.
+
+### Recent EKS Upgrade Announcements (2026)
+
+- **Kubernetes version rollback support (July 1, 2026)**: If an upgrade causes problems, you can now roll the control plane back to the previous minor version within 7 days. EKS runs an automated Rollback Readiness check beforehand, covering API compatibility, version skew, add-on compatibility, and cluster health. EKS Auto Mode clusters roll back automatically -- worker nodes revert on their own and the control plane is restored in sequence. There is no additional charge, and it's available in all regions. See [Rollback Procedure](#rollback-procedure) below for details. (Source: [Amazon EKS announces Kubernetes version rollback](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-version-rollback))
+- **99.99% SLA and 8XL control plane tier (March 20, 2026)**: The SLA for Provisioned Control Plane clusters increased from 99.95% to 99.99%, measured at one-minute granularity. A new 8XL scaling tier doubles the API request-handling capacity of the previous 4XL tier, targeting very large clusters and AI/ML/HPC workloads. (Source: [Amazon EKS announces SLA and 8XL scaling tier](https://aws.amazon.com/about-aws/whats-new/2026/03/amazon-eks-announces-sla-8xl-scaling-tier/))
 
 ### Upgrade Components
 
@@ -1024,8 +1031,8 @@ kubectl api-versions
 If upgrade issues cannot be resolved, consider rollback:
 
 1. **Control Plane Rollback**:
-   - EKS control plane cannot be rolled back to a previous version.
-   - For serious issues, you must create a new cluster and migrate workloads.
+   - As of July 2026, Amazon EKS supports rolling the control plane back to the previous minor version within 7 days of an upgrade. An automated Rollback Readiness check runs beforehand, covering API compatibility, version skew, add-on compatibility, and cluster health. EKS Auto Mode clusters roll back automatically -- worker nodes revert on their own and the control plane is restored in sequence. There is no additional charge, and it's available in all regions. (Source: [Amazon EKS announces Kubernetes version rollback](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-version-rollback))
+   - If more than 7 days have passed or this feature isn't available, and the issue is serious, you must create a new cluster and migrate workloads.
 
 2. **Node Group Rollback**:
    - Rollback to previous version node group:

@@ -1,7 +1,7 @@
 # 관리형 노드 그룹에서 Auto Mode로 마이그레이션
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 2월 19일
+> **마지막 업데이트**: 2026년 7월 3일
 
 < [이전: 워크로드 최적화](./08-workload-optimization.md) | [목차](./README.md) | [다음: 목차](./README.md) >
 
@@ -184,6 +184,59 @@ spec:
         - name: app
           image: new-app:latest
 ```
+
+## Self-managed Karpenter에서 마이그레이션 (공식 kubectl 기반 경로)
+
+관리형 노드 그룹이 아니라 **기존에 self-managed Karpenter를 직접 운영 중**이라면, 위의 노드 그룹 전환 절차 대신 AWS가 공식 지원하는 kubectl 기반 마이그레이션 경로를 사용할 수 있습니다.
+
+### 사전 조건
+
+- Self-managed Karpenter **v1.1 이상**이 클러스터에 이미 설치되어 있어야 함
+- 기존 Karpenter NodePool/EC2NodeClass 구성을 문서화해 둘 것
+
+### 마이그레이션 절차
+
+1. **Auto Mode 활성화**: 기존 Karpenter 컨트롤러와 NodePool은 그대로 둔 채 Auto Mode를 활성화합니다.
+
+2. **Taint가 설정된 Auto Mode 전용 NodePool 생성**: 워크로드가 의도치 않게 Auto Mode 노드로 스케줄되지 않도록 Taint를 설정합니다.
+
+   ```yaml
+   apiVersion: karpenter.sh/v1
+   kind: NodePool
+   metadata:
+     name: auto-mode-migration
+   spec:
+     template:
+       spec:
+         taints:
+           - key: eks.amazonaws.com/auto-mode
+             value: "true"
+             effect: NoSchedule
+         nodeClassRef:
+           group: eks.amazonaws.com
+           kind: NodeClass
+           name: default
+   ```
+
+3. **워크로드에 matching toleration/nodeSelector 추가**: 전환할 워크로드에 위 Taint를 허용하는 toleration과 Auto Mode NodePool을 지정하는 nodeSelector를 추가합니다.
+
+   ```yaml
+   spec:
+     template:
+       spec:
+         tolerations:
+           - key: eks.amazonaws.com/auto-mode
+             value: "true"
+             effect: NoSchedule
+         nodeSelector:
+           karpenter.sh/nodepool: auto-mode-migration
+   ```
+
+4. **점진적 전환**: 워크로드 그룹 단위로 toleration/nodeSelector를 추가해 하나씩 Auto Mode 노드로 옮기면서, 기존 Karpenter가 관리하는 노드와 Auto Mode 노드가 같은 클러스터에서 병행 운영되도록 합니다.
+
+5. **기존 Karpenter 제거**: 모든 워크로드가 Auto Mode 노드로 전환된 것을 확인한 뒤, 기존 self-managed Karpenter 컨트롤러와 관련 리소스(NodePool, EC2NodeClass, IAM 역할, Helm 릴리스 등)를 제거합니다.
+
+이 경로는 self-managed Karpenter를 이미 운영 중인 클러스터를 위한 것이며, 관리형 노드 그룹에서 곧바로 전환하는 경우에는 위의 1~7단계 절차를 따르면 됩니다.
 
 ## 주의 사항
 
