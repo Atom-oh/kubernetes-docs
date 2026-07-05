@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="app.diagrams.net" modified="2025-08-05T11:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
   <diagram name="EKS Console Cluster Creation Workflow" id="eks-console-cluster-creation-workflow">
     <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
@@ -6,93 +5,93 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         
-        
-        <mxCell id="title" value="AWS Management Console을 통한 EKS 클러스터 생성 워크플로우" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Title -->
+        <mxCell id="title" value="AWS Management Console을 통한 EKS 클러스터 생성 워크플로우" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="300" y="40" width="600" height="30" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="start" value="시작" style="ellipse;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Initial Steps -->
+        <mxCell id="start" value="시작" style="ellipse;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="80" y="100" width="80" height="50" as="geometry" />
         </mxCell>
         
-        <mxCell id="login" value="AWS Management&#10;Console 로그인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="login" value="AWS Management&#xa;Console 로그인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="220" y="100" width="120" height="50" as="geometry" />
         </mxCell>
         
-        <mxCell id="eks-service" value="EKS 서비스 선택" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_cloud;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="eks-service" value="EKS 서비스 선택" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_cloud;" vertex="1" parent="1">
           <mxGeometry x="400" y="95" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="create-button" value="클러스터 생성&#10;버튼 클릭" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="create-button" value="클러스터 생성&#xa;버튼 클릭" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="520" y="100" width="100" height="50" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="cluster-steps-container" value="클러스터 생성 단계" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Cluster Creation Steps Container -->
+        <mxCell id="cluster-steps-container" value="클러스터 생성 단계" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
           <mxGeometry x="80" y="200" width="540" height="180" as="geometry" />
         </mxCell>
         
-        <mxCell id="config" value="클러스터 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="config" value="클러스터 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="100" y="240" width="80" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="network" value="네트워킹 지정" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="network" value="네트워킹 지정" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="200" y="240" width="80" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="logging" value="로깅 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="logging" value="로깅 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="300" y="240" width="80" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="addons" value="애드온 선택" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="addons" value="애드온 선택" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="400" y="240" width="80" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="review" value="검토 및 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="review" value="검토 및 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="500" y="240" width="80" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="wait-cluster" value="클러스터&#10;생성 대기" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="wait-cluster" value="클러스터&#xa;생성 대기" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="300" y="320" width="80" height="40" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="nodegroup-start" value="노드 그룹 추가" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Node Group Creation -->
+        <mxCell id="nodegroup-start" value="노드 그룹 추가" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="700" y="200" width="100" height="40" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="nodegroup-steps-container" value="노드 그룹 생성 단계" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Node Group Steps Container -->
+        <mxCell id="nodegroup-steps-container" value="노드 그룹 생성 단계" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
           <mxGeometry x="680" y="280" width="420" height="180" as="geometry" />
         </mxCell>
         
-        <mxCell id="ng-config" value="노드 그룹 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="ng-config" value="노드 그룹 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="700" y="320" width="80" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="compute" value="컴퓨팅 및&#10;크기 조정 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="compute" value="컴퓨팅 및&#xa;크기 조정 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="800" y="320" width="80" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="ng-network" value="네트워킹 지정" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="ng-network" value="네트워킹 지정" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="900" y="320" width="80" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="ng-review" value="검토 및 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="ng-review" value="검토 및 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="1000" y="320" width="80" height="40" as="geometry" />
         </mxCell>
         
-        <mxCell id="ng-wait" value="노드 그룹&#10;생성 대기" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="ng-wait" value="노드 그룹&#xa;생성 대기" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="850" y="400" width="80" height="40" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="connect" value="클러스터 연결" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=k8s;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Final Step -->
+        <mxCell id="connect" value="클러스터 연결" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=k8s;" vertex="1" parent="1">
           <mxGeometry x="500" y="500" width="60" height="58" as="geometry" />
         </mxCell>
         
-        
+        <!-- Main Flow Connections -->
         <mxCell id="start-to-login" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="start" target="login">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -114,7 +113,7 @@
           </mxGeometry>
         </mxCell>
         
-        
+        <!-- Cluster Creation Flow -->
         <mxCell id="config-to-network" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="config" target="network">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -135,7 +134,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         
-        
+        <!-- To Node Group -->
         <mxCell id="wait-to-nodegroup" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="wait-cluster" target="nodegroup-start">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -145,7 +144,7 @@
           </mxGeometry>
         </mxCell>
         
-        
+        <!-- Node Group Flow -->
         <mxCell id="nodegroup-to-config" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="nodegroup-start" target="ng-config">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -176,7 +175,7 @@
           </mxGeometry>
         </mxCell>
         
-        
+        <!-- Final Connection -->
         <mxCell id="ng-wait-to-connect" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="ng-wait" target="connect">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">

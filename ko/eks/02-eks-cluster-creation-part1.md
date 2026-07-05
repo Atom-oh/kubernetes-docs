@@ -14,7 +14,7 @@ Amazon EKS 클러스터를 생성하는 방법은 여러 가지가 있습니다.
 
 EKS 클러스터를 생성하기 전에 다음과 같은 사전 요구 사항이 필요합니다:
 
-![EKS 클러스터 사전 요구 사항](<../.gitbook/assets/eks_cluster_prerequisites (1).svg>)
+![EKS 클러스터 사전 요구 사항](../.gitbook/assets/eks_cluster_prerequisites.svg)
 
 ### 1. AWS 계정
 

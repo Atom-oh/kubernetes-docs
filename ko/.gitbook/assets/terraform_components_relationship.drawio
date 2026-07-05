@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="app.diagrams.net" modified="2025-08-05T11:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
   <diagram name="Terraform Components Relationship" id="terraform-components-relationship">
     <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
@@ -6,56 +5,56 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         
-        
-        <mxCell id="title" value="Terraform 구성 요소 관계" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Title -->
+        <mxCell id="title" value="Terraform 구성 요소 관계" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="450" y="40" width="300" height="30" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="providers-tf" value="providers.tf" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#F58536;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.document;strokeWidth=2;" vertex="1" parent="1">
+        <!-- Terraform Configuration Files -->
+        <mxCell id="providers-tf" value="providers.tf" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#F58536;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.document;" vertex="1" parent="1">
           <mxGeometry x="80" y="120" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="variables-tf" value="variables.tf" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#F58536;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.document;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="variables-tf" value="variables.tf" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#F58536;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.document;" vertex="1" parent="1">
           <mxGeometry x="80" y="220" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="vpc-tf" value="vpc.tf" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#F58536;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.document;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="vpc-tf" value="vpc.tf" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#F58536;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.document;" vertex="1" parent="1">
           <mxGeometry x="80" y="320" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="eks-tf" value="eks.tf" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#F58536;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.document;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="eks-tf" value="eks.tf" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#F58536;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.document;" vertex="1" parent="1">
           <mxGeometry x="80" y="420" width="60" height="60" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="terraform" value="Terraform" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7B42BC;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.terraform;strokeWidth=2;" vertex="1" parent="1">
+        <!-- Terraform Engine -->
+        <mxCell id="terraform" value="Terraform" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7B42BC;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.terraform;" vertex="1" parent="1">
           <mxGeometry x="300" y="270" width="78" height="78" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="aws-api" value="AWS API" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.api_gateway;strokeWidth=2;" vertex="1" parent="1">
+        <!-- AWS API -->
+        <mxCell id="aws-api" value="AWS API" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.api_gateway;" vertex="1" parent="1">
           <mxGeometry x="520" y="270" width="78" height="78" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="vpc" value="VPC" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.vpc;strokeWidth=2;" vertex="1" parent="1">
+        <!-- AWS Resources -->
+        <mxCell id="vpc" value="VPC" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.vpc;" vertex="1" parent="1">
           <mxGeometry x="740" y="120" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="eks-cluster" value="EKS 클러스터" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_cloud;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="eks-cluster" value="EKS 클러스터" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_cloud;" vertex="1" parent="1">
           <mxGeometry x="740" y="220" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="node-group" value="노드 그룹" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_nodegroup;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="node-group" value="노드 그룹" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_nodegroup;" vertex="1" parent="1">
           <mxGeometry x="740" y="320" width="60" height="60" as="geometry" />
         </mxCell>
         
-        <mxCell id="fargate-profile" value="Fargate 프로필" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.fargate;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="fargate-profile" value="Fargate 프로필" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.fargate;" vertex="1" parent="1">
           <mxGeometry x="740" y="420" width="60" height="60" as="geometry" />
         </mxCell>
         
-        
+        <!-- Connections from Config Files to Terraform -->
         <mxCell id="providers-to-terraform" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#7B42BC;" edge="1" parent="1" source="providers-tf" target="terraform">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -92,12 +91,12 @@
           </mxGeometry>
         </mxCell>
         
-        
+        <!-- Connection from Terraform to AWS API -->
         <mxCell id="terraform-to-api" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=3;strokeColor=#FF9900;" edge="1" parent="1" source="terraform" target="aws-api">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         
-        
+        <!-- Connections from AWS API to Resources -->
         <mxCell id="api-to-vpc" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="aws-api" target="vpc">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -134,20 +133,20 @@
           </mxGeometry>
         </mxCell>
         
-        
-        <mxCell id="config-label" value="구성 파일" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Labels -->
+        <mxCell id="config-label" value="구성 파일" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="80" y="80" width="80" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="engine-label" value="실행 엔진" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="engine-label" value="실행 엔진" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="299" y="230" width="80" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="api-label" value="클라우드 API" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="api-label" value="클라우드 API" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="519" y="230" width="80" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="resources-label" value="AWS 리소스" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="resources-label" value="AWS 리소스" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="730" y="80" width="80" height="30" as="geometry" />
         </mxCell>
         

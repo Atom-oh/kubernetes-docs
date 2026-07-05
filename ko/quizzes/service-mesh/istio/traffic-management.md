@@ -984,6 +984,24 @@ Traffic Mirroring을 사용하여 새 버전을 안전하게 테스트하는 방
 
 **1. 작동 원리**
 
+```mermaid
+flowchart LR
+    User[사용자] --> Envoy[Envoy Proxy]
+    Envoy -->|주 요청| V1[Version 1<br/>프로덕션]
+    Envoy -.->|미러 요청<br/>응답 무시| V2[Version 2<br/>테스트]
+
+    V1 -->|응답| User
+    V2 -.->|응답 폐기| Envoy
+
+    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    classDef envoy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef version fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+
+    class User user;
+    class Envoy envoy;
+    class V1,V2 version;
+```
+
 **핵심 특징:**
 
 * 사용자는 v1의 응답만 받음

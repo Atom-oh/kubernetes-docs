@@ -43,7 +43,7 @@ AWS Controllers for Kubernetes(ACK)는 Kubernetes 사용자가 Kubernetes API를
 
 ACK는 Kubernetes 운영자 패턴을 기반으로 하며, 각 AWS 서비스에 대한 컨트롤러를 제공합니다.
 
-![](<../.gitbook/assets/ack_architecture (1).svg>)
+![](../.gitbook/assets/ack_architecture.svg)
 
 ### 주요 구성 요소
 

@@ -45,7 +45,7 @@
 
 ### 가상 머신 아키텍처 vs 컨테이너 아키텍쳐
 
-![가상 머신 아키텍처 vs 컨테이너 아키텍쳐](<../.gitbook/assets/container-vs-vm (1).avif>)
+![가상 머신 아키텍처 vs 컨테이너 아키텍쳐](../.gitbook/assets/container-vs-vm.avif)
 
 ### 주요 차이점
 
@@ -182,7 +182,7 @@ docker rm test-container
 
 Kubernetes는 CRI(Container Runtime Interface)를 통해 다양한 컨테이너 런타임과 통합됩니다. CRI는 Kubernetes와 컨테이너 런타임 사이의 표준화된 인터페이스를 제공합니다.
 
-![Kubernetes CRI](<../.gitbook/assets/kubernetes-cri (1).webp>)
+![Kubernetes CRI](../.gitbook/assets/kubernetes-cri.webp)
 
 ## 컨테이너 이미지
 
@@ -192,7 +192,7 @@ Kubernetes는 CRI(Container Runtime Interface)를 통해 다양한 컨테이너 
 
 컨테이너 이미지는 여러 레이어의 스택으로 구성됩니다. 각 레이어는 이전 레이어에 대한 변경사항을 나타냅니다. 이 레이어 방식은 이미지 공유와 캐싱을 효율적으로 만듭니다.
 
-![컨테이너 레이어](<../.gitbook/assets/container-layers (1).webp>)
+![컨테이너 레이어](../.gitbook/assets/container-layers.webp)
 
 ```mermaid
 flowchart TB

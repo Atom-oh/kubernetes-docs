@@ -37,7 +37,7 @@ go get k8s.io/klog/v2
 
 Kubernetes 스케줄링 프로세스는 다음과 같은 단계로 이루어집니다:
 
-![kubernetes\_scheduling\_process](<../.gitbook/assets/kubernetes_scheduling_process (1).svg>)
+![kubernetes\_scheduling\_process](../.gitbook/assets/kubernetes_scheduling_process.svg)
 
 ### 스케줄링 단계 상세 설명
 
@@ -98,7 +98,7 @@ Kubernetes 스케줄링 프로세스는 다음과 같은 단계로 이루어집�
 
 다중 스케줄러 접근 방식에서는 기본 스케줄러와 함께 커스텀 스케줄러를 실행합니다. 포드를 생성할 때 `schedulerName` 필드를 사용하여 어떤 스케줄러를 사용할지 지정할 수 있습니다.
 
-![multi\_scheduler\_approach](<../.gitbook/assets/multi_scheduler_approach (1).svg>)
+![multi\_scheduler\_approach](../.gitbook/assets/multi_scheduler_approach.svg)
 
 #### 커스텀 스케줄러 구현
 
@@ -298,7 +298,7 @@ Amazon EKS에서 커스텀 스케줄러를 구현할 때는 다음과 같은 사
 
 다음 다이어그램은 EKS 클러스터에서 커스텀 스케줄러를 구현하는 방법을 보여줍니다:
 
-![EKS 커스텀 스케줄러 아키텍처](<../.gitbook/assets/eks_custom_scheduler_architecture (1).svg>)
+![EKS 커스텀 스케줄러 아키텍처](../.gitbook/assets/eks_custom_scheduler_architecture.svg)
 
 ### EKS 특화 스케줄링 고려 사항
 

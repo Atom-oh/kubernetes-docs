@@ -27,7 +27,7 @@ Istio의 내부 아키텍처와 네트워킹 메커니즘을 심층적으로 다
 
 ### 전체 구조
 
-![istio-overview](<../../.gitbook/assets/istio-overview (1).png>)
+![istio-overview](../../.gitbook/assets/istio-overview.png)
 
 ### Control Plane vs Data Plane
 

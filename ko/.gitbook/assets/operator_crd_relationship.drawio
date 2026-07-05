@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='UTF-8'?>
 <mxfile host="app.diagrams.net" modified="2025-08-05T11:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
   <diagram name="Operator and CRD Relationship" id="operator-crd-relationship">
     <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
@@ -6,74 +5,74 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         
-        
-        <mxCell id="title" value="Operator와 CRD의 관계" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Title -->
+        <mxCell id="title" value="Operator와 CRD의 관계" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="450" y="40" width="300" height="30" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="crd-definition" value="CRD 정의" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1F497D;fontColor=white;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Step 1: CRD Definition -->
+        <mxCell id="crd-definition" value="CRD 정의" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1F497D;fontColor=white;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="80" y="120" width="100" height="60" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="cr-creation" value="Custom Resource&#10;생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1F497D;fontColor=white;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Step 2: Custom Resource Creation -->
+        <mxCell id="cr-creation" value="Custom Resource&#xa;생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#326CE5;strokeColor=#1F497D;fontColor=white;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="280" y="120" width="120" height="60" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="operator-deployment" value="Operator 배포" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Step 3: Operator Deployment -->
+        <mxCell id="operator-deployment" value="Operator 배포" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="80" y="280" width="100" height="60" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="controller-execution" value="Controller 실행" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Step 4: Controller Execution -->
+        <mxCell id="controller-execution" value="Controller 실행" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="280" y="280" width="120" height="60" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="operator-watches" value="Operator가&#10;CR 감시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Step 5: Operator Watches CR -->
+        <mxCell id="operator-watches" value="Operator가&#xa;CR 감시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="500" y="200" width="120" height="60" as="geometry" />
         </mxCell>
         
-        
+        <!-- Step 6: Reconciliation Loop -->
         <mxCell id="reconciliation" value="Reconciliation Loop" style="ellipse;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="720" y="200" width="120" height="60" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="resource-management" value="리소스&#10;생성/수정/삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Step 7: Resource Management -->
+        <mxCell id="resource-management" value="리소스&#xa;생성/수정/삭제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="920" y="200" width="120" height="60" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="crd-example" value="CRD 예시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- CRD Example -->
+        <mxCell id="crd-example" value="CRD 예시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
           <mxGeometry x="80" y="400" width="300" height="150" as="geometry" />
         </mxCell>
         
-        <mxCell id="crd-yaml" value="apiVersion: apiextensions.k8s.io/v1&#10;kind: CustomResourceDefinition&#10;metadata:&#10;  name: databases.example.com&#10;spec:&#10;  group: example.com&#10;  versions:&#10;  - name: v1&#10;    served: true&#10;    storage: true" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=14;fontFamily=Courier New;spacingTop=10;spacingLeft=10;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="crd-yaml" value="apiVersion: apiextensions.k8s.io/v1&#xa;kind: CustomResourceDefinition&#xa;metadata:&#xa;  name: databases.example.com&#xa;spec:&#xa;  group: example.com&#xa;  versions:&#xa;  - name: v1&#xa;    served: true&#xa;    storage: true" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Courier New;spacingTop=10;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="90" y="430" width="280" height="110" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="cr-example" value="Custom Resource 예시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Custom Resource Example -->
+        <mxCell id="cr-example" value="Custom Resource 예시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
           <mxGeometry x="420" y="400" width="300" height="150" as="geometry" />
         </mxCell>
         
-        <mxCell id="cr-yaml" value="apiVersion: example.com/v1&#10;kind: Database&#10;metadata:&#10;  name: my-database&#10;spec:&#10;  size: 10Gi&#10;  version: &quot;13&quot;&#10;  replicas: 3&#10;status:&#10;  phase: Running" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=14;fontFamily=Courier New;spacingTop=10;spacingLeft=10;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="cr-yaml" value="apiVersion: example.com/v1&#xa;kind: Database&#xa;metadata:&#xa;  name: my-database&#xa;spec:&#xa;  size: 10Gi&#xa;  version: &quot;13&quot;&#xa;  replicas: 3&#xa;status:&#xa;  phase: Running" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Courier New;spacingTop=10;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="430" y="430" width="280" height="110" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="operator-logic" value="Operator 로직 예시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Operator Logic Example -->
+        <mxCell id="operator-logic" value="Operator 로직 예시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;spacingTop=10;" vertex="1" parent="1">
           <mxGeometry x="760" y="400" width="300" height="150" as="geometry" />
         </mxCell>
         
-        <mxCell id="operator-code" value="func (r *DatabaseReconciler) Reconcile() {&#10;  // 1. Custom Resource 상태 확인&#10;  // 2. 실제 데이터베이스 상태 확인&#10;  // 3. 차이점 식별&#10;  // 4. 필요한 작업 수행&#10;  //    - Pod 생성/업데이트&#10;  //    - Service 생성&#10;  //    - PVC 생성&#10;  // 5. 상태 업데이트&#10;}" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=14;fontFamily=Noto Sans CJK KR;spacingTop=10;spacingLeft=10;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="operator-code" value="func (r *DatabaseReconciler) Reconcile() {&#xa;  // 1. Custom Resource 상태 확인&#xa;  // 2. 실제 데이터베이스 상태 확인&#xa;  // 3. 차이점 식별&#xa;  // 4. 필요한 작업 수행&#xa;  //    - Pod 생성/업데이트&#xa;  //    - Service 생성&#xa;  //    - PVC 생성&#xa;  // 5. 상태 업데이트&#xa;}" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;fontFamily=Courier New;spacingTop=10;spacingLeft=10;" vertex="1" parent="1">
           <mxGeometry x="770" y="430" width="280" height="110" as="geometry" />
         </mxCell>
         
-        
+        <!-- Flow Connections -->
         <mxCell id="crd-to-cr" value="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="crd-definition" target="cr-creation">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -108,8 +107,8 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         
-        
-        <mxCell id="feedback-loop" value="지속적 감시" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF6B6B;dashed=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="resource-management" target="operator-watches">
+        <!-- Feedback Loop -->
+        <mxCell id="feedback-loop" value="지속적 감시" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF6B6B;dashed=1;" edge="1" parent="1" source="resource-management" target="operator-watches">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="980" y="350" />
@@ -118,20 +117,20 @@
           </mxGeometry>
         </mxCell>
         
-        
-        <mxCell id="definition-phase" value="정의 단계" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#326CE5;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <!-- Process Labels -->
+        <mxCell id="definition-phase" value="정의 단계" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#326CE5;" vertex="1" parent="1">
           <mxGeometry x="200" y="80" width="80" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="deployment-phase" value="배포 단계" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#00C7B7;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="deployment-phase" value="배포 단계" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#00C7B7;" vertex="1" parent="1">
           <mxGeometry x="200" y="360" width="80" height="30" as="geometry" />
         </mxCell>
         
-        <mxCell id="runtime-phase" value="실행 단계" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#00C7B7;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+        <mxCell id="runtime-phase" value="실행 단계" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#00C7B7;" vertex="1" parent="1">
           <mxGeometry x="720" y="160" width="80" height="30" as="geometry" />
         </mxCell>
         
-      <mxCell id="icon_2000" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=crd;" vertex="1" parent="1"><mxGeometry x="454.0" y="44.0" width="24" height="22" as="geometry" /></mxCell><mxCell id="icon_2001" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pod;" vertex="1" parent="1"><mxGeometry x="774.0" y="474.0" width="24" height="22" as="geometry" /></mxCell></root>
+      </root>
     </mxGraphModel>
   </diagram>
 </mxfile>

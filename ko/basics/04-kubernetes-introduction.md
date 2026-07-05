@@ -116,7 +116,7 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 컨트롤 플레인 (마스터) 구성 요소
 
-![Kubernetes 컨트롤 플레인](<../.gitbook/assets/kubernetes_control_plane (1).png>)
+![Kubernetes 컨트롤 플레인](../.gitbook/assets/kubernetes_control_plane.png)
 
 1. **kube-apiserver**: Kubernetes API를 노출하는 컨트롤 플레인의 프론트엔드
 2. **etcd**: 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소
@@ -134,7 +134,7 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 노드 구성 요소
 
-![Kubernetes 워커 노드](<../.gitbook/assets/kubernetes_worker_node (1).png>)
+![Kubernetes 워커 노드](../.gitbook/assets/kubernetes_worker_node.png)
 
 1. **kubelet**: 각 노드에서 실행되는 에이전트로, 파드 내 컨테이너가 실행되도록 관리
 2. **kube-proxy**: 각 노드에서 실행되는 네트워크 프록시로, Kubernetes 서비스 개념의 구현을 담당
@@ -142,7 +142,7 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 전체 아키텍처
 
-![Kubernetes 아키텍처](<../.gitbook/assets/kubernetes_architecture (1).svg>)
+![Kubernetes 아키텍처](../.gitbook/assets/kubernetes_architecture.svg)
 
 ## Kubernetes 주요 구성 요소
 
@@ -666,7 +666,7 @@ Kubernetes의 네트워킹 모델은 모든 파드가 고유한 IP 주소를 가
 * **LoadBalancer**: 클라우드 제공자의 로드 밸런서를 사용하여 외부에서 접근 가능
 * **ExternalName**: 외부 서비스에 대한 CNAME 레코드 생성
 
-![Kubernetes 서비스](<../.gitbook/assets/kubernetes_services (1).svg>)
+![Kubernetes 서비스](../.gitbook/assets/kubernetes_services.svg)
 
 **서비스 예시**:
 
@@ -767,7 +767,7 @@ spec:
 
 ### 네트워크 정책 (NetworkPolicy)
 
-네트워크 정책은 파드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 모든 파드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다. ![Kubernetes 네임스페이스](<../.gitbook/assets/kubernetes_namespaces (1).svg>)
+네트워크 정책은 파드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 모든 파드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다. ![Kubernetes 네임스페이스](../.gitbook/assets/kubernetes_namespaces.svg)
 
 **주요 기능**:
 
@@ -884,7 +884,7 @@ spec:
 
 Kubernetes는 컨테이너화된 애플리케이션에 다양한 스토리지 옵션을 제공합니다. 파드가 재시작되거나 재스케줄링되더라도 데이터를 유지할 수 있는 방법을 제공합니다.
 
-![Kubernetes 스토리지](<../.gitbook/assets/kubernetes_storage (1).svg>)
+![Kubernetes 스토리지](../.gitbook/assets/kubernetes_storage.svg)
 
 ### 볼륨 (Volume)
 

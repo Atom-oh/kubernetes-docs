@@ -47,7 +47,7 @@ Cilium은 Linux 커널의 강력한 eBPF 기술을 활용하여 컨테이너화�
 
 ### Cilium 아키텍처
 
-![cilium-architecture](<../../.gitbook/assets/cilium_arch (1).png>)
+![cilium-architecture](../../.gitbook/assets/cilium_arch.png)
 
 ## 컨테이너 네트워킹 기초
 

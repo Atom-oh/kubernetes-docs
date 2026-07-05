@@ -12,13 +12,13 @@ AI/ML 워크로드를 실행하는 EKS 클러스터에서는 GPU 리소스를 �
 
 다음 다이어그램은 GPU 워크로드 최적화 스케줄러의 아키텍처를 보여줍니다:
 
-![](<../.gitbook/assets/gpu_scheduler_architecture (1).svg>)
+![](../.gitbook/assets/gpu_scheduler_architecture.svg)
 
 #### GPU 워크로드 스케줄링 워크플로우
 
 다음 다이어그램은 GPU 워크로드 스케줄링 워크플로우를 보여줍니다:
 
-![](<../.gitbook/assets/gpu_workload_scheduling_workflow (1).svg>)
+![](../.gitbook/assets/gpu_workload_scheduling_workflow.svg)
 
 #### 요구 사항
 
@@ -169,13 +169,13 @@ EKS 클러스터에서 네트워크 비용을 최적화하기 위해 네트워�
 
 다음 다이어그램은 네트워크 지역성 최적화 스케줄러의 아키텍처를 보여줍니다.
 
-![](<../.gitbook/assets/network_locality_scheduler_architecture (1).svg>)
+![](../.gitbook/assets/network_locality_scheduler_architecture.svg)
 
 #### 네트워크 지역성 최적화 워크플로우
 
 다음 다이어그램은 네트워크 지역성 최적화 스케줄러의 워크플로우를 보여줍니다.
 
-![](<../.gitbook/assets/network_locality_workflow (1).svg>)
+![](../.gitbook/assets/network_locality_workflow.svg)
 
 ## Pod Deletion Cost를 이용한 스케일 다운 최적화
 
@@ -679,13 +679,13 @@ spec:
 
 다음 다이어그램은 EKS에서 커스텀 스케줄러를 모니터링하기 위한 아키텍처를 보여줍니다.
 
-![](<../.gitbook/assets/custom_scheduler_monitoring_architecture (1).svg>)
+![](../.gitbook/assets/custom_scheduler_monitoring_architecture.svg)
 
 ### 주요 모니터링 메트릭
 
 다음 다이어그램은 커스텀 스케줄러의 주요 모니터링 메트릭과 그 관계를 보여줍니다:
 
-![](<../.gitbook/assets/custom_scheduler_monitoring_metrics (1).svg>)
+![](../.gitbook/assets/custom_scheduler_monitoring_metrics.svg)
 
 ### 로깅
 
