@@ -4,10 +4,10 @@
 
 ## 목차
 
-1. [AWS Load Balancer 통합](#aws-load-balancer-통합)
-2. [Istio vs 다른 솔루션 비교](#istio-vs-다른-솔루션-비교)
-3. [EKS 특화 최적화](#eks-특화-최적화)
-4. [모범 사례](#모범-사례)
+1. [AWS Load Balancer 통합](04-aws-integration.md#aws-load-balancer-통합)
+2. [Istio vs 다른 솔루션 비교](04-aws-integration.md#istio-vs-다른-솔루션-비교)
+3. [EKS 특화 최적화](04-aws-integration.md#eks-특화-최적화)
+4. [모범 사례](04-aws-integration.md#모범-사례)
 
 ## AWS Load Balancer 통합
 
@@ -173,18 +173,18 @@ spec:
 
 #### NLB 장점
 
-- **높은 성능**: 초당 수백만 요청 처리
-- **낮은 지연시간**: Layer 4에서 동작하여 빠른 응답
-- **고정 IP**: Elastic IP 할당 가능
-- **프로토콜 지원**: TCP, UDP, TLS
-- **비용 효율적**: ALB보다 저렴
+* **높은 성능**: 초당 수백만 요청 처리
+* **낮은 지연시간**: Layer 4에서 동작하여 빠른 응답
+* **고정 IP**: Elastic IP 할당 가능
+* **프로토콜 지원**: TCP, UDP, TLS
+* **비용 효율적**: ALB보다 저렴
 
 #### NLB 사용 시나리오
 
-- WebSocket, gRPC 등 장시간 연결이 필요한 경우
-- 초당 수백만 요청을 처리해야 하는 경우
-- 고정 IP가 필요한 경우
-- TLS 종료를 Istio에서 수행하려는 경우
+* WebSocket, gRPC 등 장시간 연결이 필요한 경우
+* 초당 수백만 요청을 처리해야 하는 경우
+* 고정 IP가 필요한 경우
+* TLS 종료를 Istio에서 수행하려는 경우
 
 ### Application Load Balancer (ALB) 통합
 
@@ -320,34 +320,34 @@ spec:
 
 #### ALB 장점
 
-- **고급 라우팅**: Path, Header, Query String 기반 라우팅
-- **WAF 통합**: AWS WAF로 보안 강화
-- **인증 통합**: Cognito, OIDC 통합
-- **ACM 통합**: 인증서 자동 관리
-- **컨테이너 최적화**: ECS, EKS에 최적화
+* **고급 라우팅**: Path, Header, Query String 기반 라우팅
+* **WAF 통합**: AWS WAF로 보안 강화
+* **인증 통합**: Cognito, OIDC 통합
+* **ACM 통합**: 인증서 자동 관리
+* **컨테이너 최적화**: ECS, EKS에 최적화
 
 #### ALB 사용 시나리오
 
-- HTTP/HTTPS 전용 트래픽
-- 경로 기반 라우팅이 필요한 경우
-- WAF 보안이 필요한 경우
-- 여러 도메인을 단일 로드 밸런서에서 처리하는 경우
+* HTTP/HTTPS 전용 트래픽
+* 경로 기반 라우팅이 필요한 경우
+* WAF 보안이 필요한 경우
+* 여러 도메인을 단일 로드 밸런서에서 처리하는 경우
 
 ### NLB vs ALB 비교
 
-| 특성 | NLB | ALB |
-|------|-----|-----|
-| **OSI Layer** | Layer 4 (TCP/UDP) | Layer 7 (HTTP/HTTPS) |
-| **성능** | 초당 수백만 요청 | 초당 수만 요청 |
-| **지연시간** | 매우 낮음 | 낮음 |
-| **고정 IP** | 지원 (Elastic IP) | 미지원 |
-| **TLS 종료** | TCP로 전달 (Istio에서 처리) | ALB에서 처리 가능 |
-| **라우팅** | IP/Port 기반 | Path, Host, Header 기반 |
-| **WAF 통합** | 불가 | 가능 |
-| **비용** | 저렴 | 상대적으로 비쌈 |
-| **WebSocket** | 네이티브 지원 | 지원 |
-| **gRPC** | 네이티브 지원 | HTTP/2 필요 |
-| **권장 사용** | 높은 성능, WebSocket, gRPC | HTTP 라우팅, WAF, 인증 |
+| 특성            | NLB                    | ALB                   |
+| ------------- | ---------------------- | --------------------- |
+| **OSI Layer** | Layer 4 (TCP/UDP)      | Layer 7 (HTTP/HTTPS)  |
+| **성능**        | 초당 수백만 요청              | 초당 수만 요청              |
+| **지연시간**      | 매우 낮음                  | 낮음                    |
+| **고정 IP**     | 지원 (Elastic IP)        | 미지원                   |
+| **TLS 종료**    | TCP로 전달 (Istio에서 처리)   | ALB에서 처리 가능           |
+| **라우팅**       | IP/Port 기반             | Path, Host, Header 기반 |
+| **WAF 통합**    | 불가                     | 가능                    |
+| **비용**        | 저렴                     | 상대적으로 비쌈              |
+| **WebSocket** | 네이티브 지원                | 지원                    |
+| **gRPC**      | 네이티브 지원                | HTTP/2 필요             |
+| **권장 사용**     | 높은 성능, WebSocket, gRPC | HTTP 라우팅, WAF, 인증     |
 
 ## Istio vs 다른 솔루션 비교
 
@@ -402,52 +402,48 @@ flowchart TB
 
 #### 기능 비교
 
-| 특성 | Istio | VPC Lattice |
-|------|-------|-------------|
-| **관리 주체** | 자체 관리 (Self-managed) | AWS 관리형 (Fully-managed) |
-| **사이드카** | 필요 (Sidecar 또는 Ambient) | 불필요 |
-| **리소스 오버헤드** | 높음 (각 파드에 Envoy) | 낮음 (사이드카 없음) |
-| **복잡도** | 높음 | 낮음 |
-| **학습 곡선** | 가파름 | 완만함 |
-| **트래픽 관리** | 매우 고급 (세밀한 제어) | 기본적 (충분한 기능) |
-| **mTLS** | 자동, 세밀한 제어 | 지원 |
-| **Observability** | 풍부한 메트릭, 트레이스 | 기본 메트릭 |
-| **Fault Injection** | 지원 | 미지원 |
-| **Circuit Breaker** | 세밀한 제어 | 기본 기능 |
-| **Rate Limiting** | Local + Global | 기본 기능 |
-| **Multi-cluster** | 강력한 지원 | VPC 간 연결 |
-| **크로스 계정** | 복잡 | 간단 (네이티브 지원) |
-| **비용** | 컴퓨팅 비용 (EC2) | 서비스 사용 비용 |
-| **벤더 종속** | 없음 (오픈소스) | AWS 종속 |
-| **Kubernetes 전용** | 예 | 아니오 (EC2, Lambda 등) |
+| 특성                  | Istio                   | VPC Lattice             |
+| ------------------- | ----------------------- | ----------------------- |
+| **관리 주체**           | 자체 관리 (Self-managed)    | AWS 관리형 (Fully-managed) |
+| **사이드카**            | 필요 (Sidecar 또는 Ambient) | 불필요                     |
+| **리소스 오버헤드**        | 높음 (각 파드에 Envoy)        | 낮음 (사이드카 없음)            |
+| **복잡도**             | 높음                      | 낮음                      |
+| **학습 곡선**           | 가파름                     | 완만함                     |
+| **트래픽 관리**          | 매우 고급 (세밀한 제어)          | 기본적 (충분한 기능)            |
+| **mTLS**            | 자동, 세밀한 제어              | 지원                      |
+| **Observability**   | 풍부한 메트릭, 트레이스           | 기본 메트릭                  |
+| **Fault Injection** | 지원                      | 미지원                     |
+| **Circuit Breaker** | 세밀한 제어                  | 기본 기능                   |
+| **Rate Limiting**   | Local + Global          | 기본 기능                   |
+| **Multi-cluster**   | 강력한 지원                  | VPC 간 연결                |
+| **크로스 계정**          | 복잡                      | 간단 (네이티브 지원)            |
+| **비용**              | 컴퓨팅 비용 (EC2)            | 서비스 사용 비용               |
+| **벤더 종속**           | 없음 (오픈소스)               | AWS 종속                  |
+| **Kubernetes 전용**   | 예                       | 아니오 (EC2, Lambda 등)     |
 
 #### 언제 Istio를 선택할까?
 
 **Istio가 적합한 경우:**
 
 1. **세밀한 트래픽 제어 필요**
-   - Canary 배포, A/B 테스트, Traffic Mirroring
-   - 복잡한 라우팅 규칙 (Header, Cookie 기반 등)
-   - Fault Injection으로 Chaos Engineering
-
+   * Canary 배포, A/B 테스트, Traffic Mirroring
+   * 복잡한 라우팅 규칙 (Header, Cookie 기반 등)
+   * Fault Injection으로 Chaos Engineering
 2. **강력한 보안 요구사항**
-   - 서비스 간 자동 mTLS 암호화
-   - 세밀한 권한 부여 정책
-   - JWT 검증, RBAC
-
+   * 서비스 간 자동 mTLS 암호화
+   * 세밀한 권한 부여 정책
+   * JWT 검증, RBAC
 3. **고급 관찰성 필요**
-   - 상세한 메트릭 (Latency P50/P95/P99)
-   - 분산 추적 (Jaeger, Zipkin)
-   - 서비스 토폴로지 시각화 (Kiali)
-
+   * 상세한 메트릭 (Latency P50/P95/P99)
+   * 분산 추적 (Jaeger, Zipkin)
+   * 서비스 토폴로지 시각화 (Kiali)
 4. **멀티 클러스터 메시**
-   - 여러 EKS 클러스터 간 통신
-   - 클러스터 간 페일오버
-   - 글로벌 로드 밸런싱
-
+   * 여러 EKS 클러스터 간 통신
+   * 클러스터 간 페일오버
+   * 글로벌 로드 밸런싱
 5. **벤더 독립성**
-   - 다른 클라우드 또는 온프레미스로 이동 가능성
-   - Kubernetes 표준 사용
+   * 다른 클라우드 또는 온프레미스로 이동 가능성
+   * Kubernetes 표준 사용
 
 **예제: Istio의 고급 트래픽 관리**
 
@@ -500,24 +496,20 @@ spec:
 **VPC Lattice가 적합한 경우:**
 
 1. **간단한 서비스 연결**
-   - 기본적인 로드 밸런싱과 라우팅만 필요
-   - 빠른 구현이 중요
-
+   * 기본적인 로드 밸런싱과 라우팅만 필요
+   * 빠른 구현이 중요
 2. **낮은 운영 오버헤드**
-   - AWS 관리형 서비스 선호
-   - 사이드카 관리 부담 없음
-
+   * AWS 관리형 서비스 선호
+   * 사이드카 관리 부담 없음
 3. **크로스 VPC/계정 통신**
-   - 여러 AWS 계정 간 서비스 연결
-   - VPC 피어링 없이 통신
-
+   * 여러 AWS 계정 간 서비스 연결
+   * VPC 피어링 없이 통신
 4. **혼합 환경**
-   - EKS + EC2 + Lambda 혼합 환경
-   - Kubernetes만이 아닌 다양한 컴퓨팅 사용
-
+   * EKS + EC2 + Lambda 혼합 환경
+   * Kubernetes만이 아닌 다양한 컴퓨팅 사용
 5. **비용 최적화**
-   - 사이드카 리소스 비용 절감
-   - 작은 규모의 서비스
+   * 사이드카 리소스 비용 절감
+   * 작은 규모의 서비스
 
 #### Istio + VPC Lattice 함께 사용하기
 
@@ -564,9 +556,9 @@ flowchart TB
 
 **사용 사례:**
 
-- **클러스터 내부**: Istio로 세밀한 트래픽 관리와 보안
-- **클러스터 간/크로스 계정**: VPC Lattice로 간단한 연결
-- **혼합 환경**: Istio 클러스터와 Lambda/EC2 연결에 VPC Lattice 사용
+* **클러스터 내부**: Istio로 세밀한 트래픽 관리와 보안
+* **클러스터 간/크로스 계정**: VPC Lattice로 간단한 연결
+* **혼합 환경**: Istio 클러스터와 Lambda/EC2 연결에 VPC Lattice 사용
 
 ### Istio vs Cilium (eBPF 기반)
 
@@ -574,46 +566,49 @@ Cilium은 eBPF를 사용하는 Kubernetes 네트워킹 및 보안 솔루션입�
 
 #### 아키텍처 비교
 
-| 특성 | Istio | Cilium |
-|------|-------|--------|
-| **기술 스택** | Envoy Proxy (사이드카) | eBPF (커널 레벨) |
-| **주요 목적** | Service Mesh | CNI + Service Mesh |
-| **네트워킹** | Kubernetes CNI 위에 동작 | CNI 자체를 제공 |
-| **성능** | 좋음 | 매우 우수 (커널 레벨) |
-| **리소스 사용** | 높음 (사이드카) | 낮음 (커널 레벨) |
-| **L7 기능** | 매우 강력 | 기본적 |
-| **관찰성** | 풍부함 | Hubble (기본적) |
-| **학습 곡선** | 가파름 | 가파름 |
-| **성숙도** | 높음 | 중간 (Service Mesh 기능) |
+| 특성         | Istio                | Cilium               |
+| ---------- | -------------------- | -------------------- |
+| **기술 스택**  | Envoy Proxy (사이드카)   | eBPF (커널 레벨)         |
+| **주요 목적**  | Service Mesh         | CNI + Service Mesh   |
+| **네트워킹**   | Kubernetes CNI 위에 동작 | CNI 자체를 제공           |
+| **성능**     | 좋음                   | 매우 우수 (커널 레벨)        |
+| **리소스 사용** | 높음 (사이드카)            | 낮음 (커널 레벨)           |
+| **L7 기능**  | 매우 강력                | 기본적                  |
+| **관찰성**    | 풍부함                  | Hubble (기본적)         |
+| **학습 곡선**  | 가파름                  | 가파름                  |
+| **성숙도**    | 높음                   | 중간 (Service Mesh 기능) |
 
 #### 기능 비교
 
-| 기능 | Istio | Cilium |
-|------|-------|--------|
-| **Network Policy** | Kubernetes + Istio | Kubernetes + Cilium (더 강력) |
-| **L7 Load Balancing** | 매우 세밀함 | 기본적 |
-| **mTLS** | 자동, 세밀한 제어 | 지원 |
-| **Traffic Management** | 매우 고급 | 기본적 |
-| **Observability** | Prometheus, Jaeger, Kiali | Hubble |
-| **성능** | 좋음 | 우수 |
-| **Multi-cluster** | 강력함 | Cluster Mesh |
+| 기능                     | Istio                     | Cilium                     |
+| ---------------------- | ------------------------- | -------------------------- |
+| **Network Policy**     | Kubernetes + Istio        | Kubernetes + Cilium (더 강력) |
+| **L7 Load Balancing**  | 매우 세밀함                    | 기본적                        |
+| **mTLS**               | 자동, 세밀한 제어                | 지원                         |
+| **Traffic Management** | 매우 고급                     | 기본적                        |
+| **Observability**      | Prometheus, Jaeger, Kiali | Hubble                     |
+| **성능**                 | 좋음                        | 우수                         |
+| **Multi-cluster**      | 강력함                       | Cluster Mesh               |
 
 #### 언제 무엇을 선택할까?
 
 **Istio 선택:**
-- L7 트래픽 관리가 핵심 요구사항
-- 강력한 서비스 메시 기능 필요
-- 풍부한 관찰성과 디버깅 도구 필요
+
+* L7 트래픽 관리가 핵심 요구사항
+* 강력한 서비스 메시 기능 필요
+* 풍부한 관찰성과 디버깅 도구 필요
 
 **Cilium 선택:**
-- CNI 교체를 고려 중
-- 네트워크 보안이 주 관심사
-- 성능 최적화가 중요
-- eBPF 기술 활용 원함
+
+* CNI 교체를 고려 중
+* 네트워크 보안이 주 관심사
+* 성능 최적화가 중요
+* eBPF 기술 활용 원함
 
 **함께 사용:**
-- Cilium을 CNI로, Istio를 Service Mesh로 사용 가능
-- 단, 기능 중복과 복잡도 증가 고려 필요
+
+* Cilium을 CNI로, Istio를 Service Mesh로 사용 가능
+* 단, 기능 중복과 복잡도 증가 고려 필요
 
 ## EKS 특화 최적화
 
@@ -925,62 +920,66 @@ spec:
 ### 1. 로드 밸런서 선택 가이드
 
 **NLB 사용:**
-- gRPC, WebSocket 등 장시간 연결
-- 초당 수백만 요청 처리
-- 고정 IP 필요
-- TLS 종료를 Istio에서 수행
+
+* gRPC, WebSocket 등 장시간 연결
+* 초당 수백만 요청 처리
+* 고정 IP 필요
+* TLS 종료를 Istio에서 수행
 
 **ALB 사용:**
-- HTTP/HTTPS 전용
-- 경로 기반 라우팅
-- WAF 보안 필요
-- Cognito 인증 통합
+
+* HTTP/HTTPS 전용
+* 경로 기반 라우팅
+* WAF 보안 필요
+* Cognito 인증 통합
 
 ### 2. TLS 종료 위치
 
 **로드 밸런서에서 종료 (권장):**
-- ACM 인증서 자동 갱신
-- 관리 용이
-- Istio 부하 감소
+
+* ACM 인증서 자동 갱신
+* 관리 용이
+* Istio 부하 감소
 
 **Istio에서 종료:**
-- 엔드 투 엔드 암호화 필요
-- 세밀한 TLS 정책 제어
-- mTLS 사용
+
+* 엔드 투 엔드 암호화 필요
+* 세밀한 TLS 정책 제어
+* mTLS 사용
 
 ### 3. 비용 최적화
 
-- **Spot 인스턴스**: Istio Gateway 워크로드에 활용
-- **Graviton 인스턴스**: ARM 기반으로 비용 절감
-- **리소스 제한**: 사이드카 리소스 적절히 설정
-- **Ambient Mode**: 사이드카 오버헤드 제거 고려
+* **Spot 인스턴스**: Istio Gateway 워크로드에 활용
+* **Graviton 인스턴스**: ARM 기반으로 비용 절감
+* **리소스 제한**: 사이드카 리소스 적절히 설정
+* **Ambient Mode**: 사이드카 오버헤드 제거 고려
 
 ### 4. 보안
 
-- **IRSA**: IAM 역할로 AWS 서비스 접근
-- **Security Group**: 최소 권한 원칙
-- **mTLS**: 서비스 간 암호화 활성화
-- **Network Policy**: Cilium 또는 Calico와 함께 사용
+* **IRSA**: IAM 역할로 AWS 서비스 접근
+* **Security Group**: 최소 권한 원칙
+* **mTLS**: 서비스 간 암호화 활성화
+* **Network Policy**: Cilium 또는 Calico와 함께 사용
 
 ### 5. 모니터링
 
-- **CloudWatch**: 통합 로그 및 메트릭
-- **X-Ray**: 분산 추적
-- **Prometheus + Grafana**: 상세 메트릭
-- **Kiali**: 서비스 메시 시각화
+* **CloudWatch**: 통합 로그 및 메트릭
+* **X-Ray**: 분산 추적
+* **Prometheus + Grafana**: 상세 메트릭
+* **Kiali**: 서비스 메시 시각화
 
 ## 다음 단계
 
 AWS 통합을 완료했다면 다음 문서를 참고하세요:
 
-1. **[Traffic Management](traffic-management/README.md)**: 고급 트래픽 관리 기능
-2. **[Security](security/README.md)**: mTLS 및 인증/권한 부여
-3. **[Observability](observability/README.md)**: 메트릭, 로그, 트레이스 수집
+1. [**Traffic Management**](traffic-management/): 고급 트래픽 관리 기능
+2. [**Security**](security/): mTLS 및 인증/권한 부여
+3. [**Observability**](https://github.com/Atom-oh/kubernetes-docs/blob/main/tools/istio/observability/README.md): 메트릭, 로그, 트레이스 수집
 
 ## 참고 자료
 
-- [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
-- [EKS Best Practices - Networking](https://aws.github.io/aws-eks-best-practices/networking/)
-- [VPC Lattice Documentation](https://docs.aws.amazon.com/vpc-lattice/)
-- [Cilium Documentation](https://docs.cilium.io/)
-- [AWS Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html)
+* [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
+* [EKS Best Practices - Networking](https://aws.github.io/aws-eks-best-practices/networking/)
+* [VPC Lattice Documentation](https://docs.aws.amazon.com/vpc-lattice/)
+* [Cilium Documentation](https://docs.cilium.io/)
+* [AWS Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html)

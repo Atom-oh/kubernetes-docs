@@ -1,8 +1,6 @@
-# Istio 트래픽 관리 퀴즈
+# Traffic Management 퀴즈
 
-> **지원 버전**: Istio 1.28.0
-> **EKS 버전**: 1.34 (Kubernetes 1.28+)
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Istio 1.28.0 **EKS 버전**: 1.34 (Kubernetes 1.28+) **마지막 업데이트**: 2026년 2월 23일
 
 이 퀴즈는 Istio의 트래픽 관리 기능에 대한 이해도를 테스트합니다.
 
@@ -12,12 +10,13 @@
 
 VirtualService에 대한 설명으로 **올바른** 것은?
 
-A. Kubernetes Service를 대체하는 리소스이다  
-B. 로드 밸런싱 알고리즘만 정의할 수 있다  
-C. 라우팅 규칙을 정의하고 트래픽을 제어한다  
-D. Control Plane에서만 작동한다  
+A. Kubernetes Service를 대체하는 리소스이다\
+B. 로드 밸런싱 알고리즘만 정의할 수 있다\
+C. 라우팅 규칙을 정의하고 트래픽을 제어한다\
+D. Control Plane에서만 작동한다
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: C**
@@ -25,17 +24,19 @@ D. Control Plane에서만 작동한다
 VirtualService는 **라우팅 규칙**을 정의하여 트래픽을 제어하는 Istio의 핵심 CRD입니다.
 
 **해설:**
-- A (X): VirtualService는 Kubernetes Service를 대체하지 않고, Service 위에서 라우팅 규칙을 추가합니다
-- B (X): 로드 밸런싱은 DestinationRule이 담당하고, VirtualService는 라우팅 규칙을 정의합니다
-- C (O): VirtualService는 다음을 정의합니다:
-  - HTTP/TCP 라우팅 규칙
-  - URL 경로 기반 라우팅
-  - Header 기반 라우팅
-  - 가중치 기반 트래픽 분할
-  - Timeout, Retry 설정
-- D (X): VirtualService는 Data Plane의 Envoy에서 실행됩니다
+
+* A (X): VirtualService는 Kubernetes Service를 대체하지 않고, Service 위에서 라우팅 규칙을 추가합니다
+* B (X): 로드 밸런싱은 DestinationRule이 담당하고, VirtualService는 라우팅 규칙을 정의합니다
+* C (O): VirtualService는 다음을 정의합니다:
+  * HTTP/TCP 라우팅 규칙
+  * URL 경로 기반 라우팅
+  * Header 기반 라우팅
+  * 가중치 기반 트래픽 분할
+  * Timeout, Retry 설정
+* D (X): VirtualService는 Data Plane의 Envoy에서 실행됩니다
 
 **예제:**
+
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
@@ -60,22 +61,25 @@ spec:
 ```
 
 **참고 자료:**
-- [라우팅](../../../service-mesh/istio/traffic-management/02-routing.md)
-- [VirtualService 개념](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
+
+* [라우팅](../../../service-mesh/istio/traffic-management/02-routing.md)
+* [VirtualService 개념](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
+
 </details>
 
----
+***
 
 ### 문제 2: DestinationRule의 기능
 
 DestinationRule이 수행하는 작업이 **아닌** 것은?
 
-A. 서브셋(Subset) 정의  
-B. 로드 밸런싱 알고리즘 설정  
-C. HTTP 경로 기반 라우팅  
-D. Connection Pool 설정  
+A. 서브셋(Subset) 정의\
+B. 로드 밸런싱 알고리즘 설정\
+C. HTTP 경로 기반 라우팅\
+D. Connection Pool 설정
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: C**
@@ -87,6 +91,7 @@ HTTP 경로 기반 라우팅은 **VirtualService**의 역할입니다.
 **DestinationRule의 주요 기능:**
 
 1. **서브셋 정의 (A - O)**
+
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
@@ -104,6 +109,7 @@ spec:
 ```
 
 2. **로드 밸런싱 설정 (B - O)**
+
 ```yaml
 spec:
   trafficPolicy:
@@ -112,6 +118,7 @@ spec:
 ```
 
 3. **Connection Pool 설정 (D - O)**
+
 ```yaml
 spec:
   trafficPolicy:
@@ -123,7 +130,9 @@ spec:
 ```
 
 4. **HTTP 경로 기반 라우팅 (C - X)**
-- 이것은 VirtualService의 역할입니다:
+
+* 이것은 VirtualService의 역할입니다:
+
 ```yaml
 # VirtualService에서 처리
 apiVersion: networking.istio.io/v1beta1
@@ -140,20 +149,22 @@ spec:
 
 **비교표:**
 
-| 기능 | VirtualService | DestinationRule |
-|------|---------------|----------------|
-| 라우팅 규칙 | ✅ | ❌ |
-| 경로 매칭 | ✅ | ❌ |
-| 서브셋 정의 | ❌ | ✅ |
-| 로드 밸런싱 | ❌ | ✅ |
-| Connection Pool | ❌ | ✅ |
+| 기능              | VirtualService | DestinationRule |
+| --------------- | -------------- | --------------- |
+| 라우팅 규칙          | ✅              | ❌               |
+| 경로 매칭           | ✅              | ❌               |
+| 서브셋 정의          | ❌              | ✅               |
+| 로드 밸런싱          | ❌              | ✅               |
+| Connection Pool | ❌              | ✅               |
 
 **참고 자료:**
-- [로드 밸런싱](../../../service-mesh/istio/traffic-management/05-load-balancing.md)
-- [Connection Pool](../../../service-mesh/istio/traffic-management/08-connection-pool.md)
+
+* [로드 밸런싱](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/05-load-balancing.md)
+* [Connection Pool](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/08-connection-pool.md)
+
 </details>
 
----
+***
 
 ### 문제 3: Canary 배포의 트래픽 분할
 
@@ -179,12 +190,13 @@ spec:
       weight: 20
 ```
 
-A. v1: 50%, v2: 50%  
-B. v1: 80%, v2: 20%  
-C. v1: 20%, v2: 80%  
-D. v1: 100%, v2: 0%  
+A. v1: 50%, v2: 50%\
+B. v1: 80%, v2: 20%\
+C. v1: 20%, v2: 80%\
+D. v1: 100%, v2: 0%
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: B**
@@ -194,12 +206,14 @@ weight 값이 **v1: 80, v2: 20**이므로 트래픽은 **80%가 v1**, **20%가 v
 **해설:**
 
 **Weight 기반 트래픽 분할:**
-- `weight` 필드는 상대적 비율을 의미합니다
-- 총 weight: 80 + 20 = 100
-- v1 비율: 80/100 = 80%
-- v2 비율: 20/100 = 20%
+
+* `weight` 필드는 상대적 비율을 의미합니다
+* 총 weight: 80 + 20 = 100
+* v1 비율: 80/100 = 80%
+* v2 비율: 20/100 = 20%
 
 **Canary 배포 단계:**
+
 ```yaml
 # 1단계: 10% Canary
 - weight: 90  # v1
@@ -219,6 +233,7 @@ weight 값이 **v1: 80, v2: 20**이므로 트래픽은 **80%가 v1**, **20%가 v
 ```
 
 **Argo Rollouts를 사용한 자동 Canary:**
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
@@ -239,22 +254,25 @@ spec:
 ```
 
 **참고 자료:**
-- [트래픽 분할](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md)
-- [Argo Rollouts 통합](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+
+* [트래픽 분할](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Argo Rollouts 통합](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+
 </details>
 
----
+***
 
 ### 문제 4: Gateway의 용도
 
 Istio Gateway의 주요 역할로 **적절하지 않은** 것은?
 
-A. 클러스터 외부에서 내부로의 트래픽 진입점  
-B. TLS 종료 및 인증서 관리  
-C. 서비스 간 mTLS 암호화  
-D. 외부 트래픽의 로드 밸런싱  
+A. 클러스터 외부에서 내부로의 트래픽 진입점\
+B. TLS 종료 및 인증서 관리\
+C. 서비스 간 mTLS 암호화\
+D. 외부 트래픽의 로드 밸런싱
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: C**
@@ -266,6 +284,7 @@ D. 외부 트래픽의 로드 밸런싱
 **Gateway의 주요 역할:**
 
 1. **Ingress/Egress 트래픽 진입점 (A - O)**
+
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
@@ -284,6 +303,7 @@ spec:
 ```
 
 2. **TLS 종료 (B - O)**
+
 ```yaml
 spec:
   servers:
@@ -299,11 +319,14 @@ spec:
 ```
 
 3. **외부 트래픽 로드 밸런싱 (D - O)**
-- Gateway는 Kubernetes LoadBalancer Service와 연동
-- 외부 트래픽을 클러스터 내부로 분산
+
+* Gateway는 Kubernetes LoadBalancer Service와 연동
+* 외부 트래픽을 클러스터 내부로 분산
 
 4. **서비스 간 mTLS (C - X)**
-- 이것은 Sidecar Envoy의 역할입니다:
+
+* 이것은 Sidecar Envoy의 역할입니다:
+
 ```yaml
 # PeerAuthentication으로 mTLS 활성화
 apiVersion: security.istio.io/v1beta1
@@ -317,19 +340,21 @@ spec:
 
 **Gateway vs Sidecar 역할:**
 
-| 기능 | Gateway | Sidecar Envoy |
-|------|---------|--------------|
-| 외부 → 내부 트래픽 | ✅ | ❌ |
-| TLS 종료 | ✅ | ❌ |
-| 서비스 간 mTLS | ❌ | ✅ |
-| 내부 라우팅 | ❌ | ✅ |
+| 기능          | Gateway | Sidecar Envoy |
+| ----------- | ------- | ------------- |
+| 외부 → 내부 트래픽 | ✅       | ❌             |
+| TLS 종료      | ✅       | ❌             |
+| 서비스 간 mTLS  | ❌       | ✅             |
+| 내부 라우팅      | ❌       | ✅             |
 
 **참고 자료:**
-- [Gateway](../../../service-mesh/istio/traffic-management/01-gateway.md)
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+
+* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/01-gateway.md)
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+
 </details>
 
----
+***
 
 ### 문제 5: Timeout 및 Retry 정책
 
@@ -353,12 +378,13 @@ spec:
       perTryTimeout: 2s
 ```
 
-A. 총 10초 동안 3번 재시도, 각 시도는 2초 제한  
-B. 총 2초 동안 3번 재시도, 각 시도는 10초 제한  
-C. 총 10초 동안 무제한 재시도, 각 시도는 2초 제한  
-D. 재시도 없이 10초 후 실패  
+A. 총 10초 동안 3번 재시도, 각 시도는 2초 제한\
+B. 총 2초 동안 3번 재시도, 각 시도는 10초 제한\
+C. 총 10초 동안 무제한 재시도, 각 시도는 2초 제한\
+D. 재시도 없이 10초 후 실패
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: A**
@@ -368,6 +394,7 @@ D. 재시도 없이 10초 후 실패
 **해설:**
 
 **구성 해석:**
+
 ```yaml
 timeout: 10s           # 전체 요청의 최대 시간
 retries:
@@ -376,6 +403,7 @@ retries:
 ```
 
 **실행 시나리오:**
+
 ```
 시나리오 1: 첫 시도 성공
 ├─ 1번째 시도: 1.5초 소요 → 성공
@@ -401,6 +429,7 @@ retries:
 ```
 
 **Retry 조건 설정:**
+
 ```yaml
 retries:
   attempts: 3
@@ -409,6 +438,7 @@ retries:
 ```
 
 **모범 사례:**
+
 ```yaml
 # 일반적인 설정
 timeout: 30s
@@ -419,15 +449,18 @@ retries:
 ```
 
 **주의사항:**
-- `timeout` ≥ `attempts × perTryTimeout`이어야 모든 재시도 가능
-- 너무 많은 재시도는 cascading failure 유발 가능
-- Idempotent 작업에만 재시도 권장
+
+* `timeout` ≥ `attempts × perTryTimeout`이어야 모든 재시도 가능
+* 너무 많은 재시도는 cascading failure 유발 가능
+* Idempotent 작업에만 재시도 권장
 
 **참고 자료:**
-- [Timeout과 Retry](../../../service-mesh/istio/traffic-management/06-timeout-retry.md)
+
+* [Timeout과 Retry](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/06-timeout-retry.md)
+
 </details>
 
----
+***
 
 ## 주관식 문제 (6-10번)
 
@@ -436,13 +469,14 @@ retries:
 Argo Rollouts와 Istio를 함께 사용하여 자동화된 Canary 배포를 구현하는 과정을 설명하세요. **필수 리소스**(Rollout, VirtualService, DestinationRule, AnalysisTemplate)와 **자동 롤백 조건**을 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **Argo Rollouts + Istio Canary 배포 구현:**
 
----
+***
 
 **1. Service 생성 (기본 Kubernetes Service)**
 
@@ -459,7 +493,7 @@ spec:
     app: reviews  # Rollout의 모든 Pod 선택
 ```
 
----
+***
 
 **2. DestinationRule 정의 (서브셋 정의)**
 
@@ -479,7 +513,7 @@ spec:
 
 **중요**: Rollout은 Pod에 `rollouts-pod-template-hash` 레이블을 자동으로 추가하고, 이 레이블로 서브셋을 구분합니다.
 
----
+***
 
 **3. VirtualService 정의 (트래픽 분할)**
 
@@ -505,14 +539,16 @@ spec:
 ```
 
 **주요 포인트**:
-- `http[].name` 필드는 필수
-- Rollout은 이 VirtualService의 `weight` 값만 자동으로 업데이트
 
----
+* `http[].name` 필드는 필수
+* Rollout은 이 VirtualService의 `weight` 값만 자동으로 업데이트
+
+***
 
 **4. AnalysisTemplate 정의 (자동 롤백 조건)**
 
 **성공률 분석:**
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
@@ -547,6 +583,7 @@ spec:
 ```
 
 **지연시간 분석:**
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
@@ -575,7 +612,7 @@ spec:
           )
 ```
 
----
+***
 
 **5. Rollout 리소스 정의 (Canary 전략)**
 
@@ -645,7 +682,7 @@ spec:
           value: reviews
 ```
 
----
+***
 
 **6. 배포 실행 및 모니터링**
 
@@ -672,11 +709,12 @@ kubectl argo rollouts get rollout reviews --watch
 kubectl argo rollouts dashboard
 ```
 
----
+***
 
 **자동 롤백 시나리오:**
 
 **시나리오 1: 에러율 > 5%**
+
 ```
 10% Canary → Analysis 시작
 ├─ 측정 1 (30초): 에러율 6% → 실패 (1/2)
@@ -685,6 +723,7 @@ kubectl argo rollouts dashboard
 ```
 
 **시나리오 2: 지연시간 > 500ms**
+
 ```
 25% Canary → Analysis 시작
 ├─ 측정 1 (30초): P95 600ms → 실패 (1/2)
@@ -693,6 +732,7 @@ kubectl argo rollouts dashboard
 ```
 
 **시나리오 3: 모든 메트릭 정상**
+
 ```
 10% Canary → Analysis 통과 → 25% Canary
 25% Canary → Analysis 통과 → 50% Canary
@@ -700,7 +740,7 @@ kubectl argo rollouts dashboard
 75% Canary → Analysis 통과 → 100% Canary
 ```
 
----
+***
 
 **주요 이점:**
 
@@ -710,28 +750,32 @@ kubectl argo rollouts dashboard
 4. **일관된 프로세스**: 표준화된 배포 전략
 
 **참고 자료:**
-- [트래픽 분할](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md)
-- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+
+* [트래픽 분할](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+
 </details>
 
----
+***
 
 ### 문제 7: Blue/Green 배포 vs Canary 배포
 
 Blue/Green 배포와 Canary 배포의 **차이점**을 비교하고, 각각의 **장단점** 및 **사용 시나리오**를 설명하세요.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **Blue/Green 배포 vs Canary 배포 비교:**
 
----
+***
 
 **1. 배포 방식 차이**
 
 **Blue/Green 배포:**
+
 ```
 Blue (현재 버전) ──┐
                    ├─→ [100% 트래픽]
@@ -744,6 +788,7 @@ Green (새 버전) ───┘
 ```
 
 **Canary 배포:**
+
 ```
 Stable (현재 버전) ─→ 90% → 75% → 50% → 0%
 Canary (새 버전) ───→ 10% → 25% → 50% → 100%
@@ -751,25 +796,26 @@ Canary (새 버전) ───→ 10% → 25% → 50% → 100%
 점진적으로 트래픽 증가
 ```
 
----
+***
 
 **2. 상세 비교표**
 
-| 항목 | Blue/Green | Canary |
-|------|-----------|--------|
-| **트래픽 전환** | 즉시 100% 전환 | 점진적 증가 (10% → 100%) |
-| **롤백 속도** | 즉시 (단일 전환) | 빠름 (현재 단계에서만) |
+| 항목         | Blue/Green        | Canary                    |
+| ---------- | ----------------- | ------------------------- |
+| **트래픽 전환** | 즉시 100% 전환        | 점진적 증가 (10% → 100%)       |
+| **롤백 속도**  | 즉시 (단일 전환)        | 빠름 (현재 단계에서만)             |
 | **리소스 사용** | 2배 (Blue + Green) | 1배 + 소량 (Stable + Canary) |
-| **위험도** | 중간 (한 번에 모든 사용자) | 낮음 (소수 사용자부터) |
-| **테스트 기간** | 배포 전 충분히 테스트 | 프로덕션에서 점진적 검증 |
-| **복잡도** | 낮음 | 중간 (메트릭 분석 필요) |
-| **사용자 영향** | 모든 사용자 동시 영향 | 소수 사용자부터 점진적 |
+| **위험도**    | 중간 (한 번에 모든 사용자)  | 낮음 (소수 사용자부터)             |
+| **테스트 기간** | 배포 전 충분히 테스트      | 프로덕션에서 점진적 검증             |
+| **복잡도**    | 낮음                | 중간 (메트릭 분석 필요)            |
+| **사용자 영향** | 모든 사용자 동시 영향      | 소수 사용자부터 점진적              |
 
----
+***
 
 **3. Istio 구현 예제**
 
 **Blue/Green 배포 (Argo Rollouts):**
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
@@ -796,6 +842,7 @@ spec:
 ```
 
 **Canary 배포 (Argo Rollouts):**
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
@@ -825,39 +872,44 @@ spec:
       - setWeight: 100
 ```
 
----
+***
 
 **4. 장단점 비교**
 
 **Blue/Green 장점:**
-- ✅ 간단한 구조 (Blue ↔ Green 전환만)
-- ✅ 즉시 롤백 가능 (스위치 전환)
-- ✅ 배포 전 충분한 테스트 가능
-- ✅ 예측 가능한 동작
+
+* ✅ 간단한 구조 (Blue ↔ Green 전환만)
+* ✅ 즉시 롤백 가능 (스위치 전환)
+* ✅ 배포 전 충분한 테스트 가능
+* ✅ 예측 가능한 동작
 
 **Blue/Green 단점:**
-- ❌ 2배의 리소스 필요
-- ❌ 전체 사용자에게 동시 영향
-- ❌ 데이터베이스 마이그레이션 복잡
-- ❌ 점진적 검증 불가
+
+* ❌ 2배의 리소스 필요
+* ❌ 전체 사용자에게 동시 영향
+* ❌ 데이터베이스 마이그레이션 복잡
+* ❌ 점진적 검증 불가
 
 **Canary 장점:**
-- ✅ 소수 사용자부터 점진적 검증
-- ✅ 리소스 효율적 (1배 + 소량)
-- ✅ 프로덕션 환경에서 실제 검증
-- ✅ 자동 롤백 가능 (메트릭 기반)
+
+* ✅ 소수 사용자부터 점진적 검증
+* ✅ 리소스 효율적 (1배 + 소량)
+* ✅ 프로덕션 환경에서 실제 검증
+* ✅ 자동 롤백 가능 (메트릭 기반)
 
 **Canary 단점:**
-- ❌ 복잡한 구성 (메트릭, 분석)
-- ❌ 모니터링 필수
-- ❌ 긴 배포 시간
-- ❌ 버전 혼재 기간 존재
 
----
+* ❌ 복잡한 구성 (메트릭, 분석)
+* ❌ 모니터링 필수
+* ❌ 긴 배포 시간
+* ❌ 버전 혼재 기간 존재
+
+***
 
 **5. 사용 시나리오**
 
 **Blue/Green 권장 시나리오:**
+
 1. **중요한 릴리스**: 충분한 테스트 후 빠른 전환
 2. **데이터베이스 변경 없음**: 스키마 변경이 없는 경우
 3. **즉시 롤백 필요**: 문제 발생 시 빠른 복구 필요
@@ -865,6 +917,7 @@ spec:
 5. **예측 가능한 변경**: 사전 테스트로 충분히 검증 가능
 
 **예시:**
+
 ```
 - 주요 기능 릴리스
 - UI 전면 개편
@@ -873,6 +926,7 @@ spec:
 ```
 
 **Canary 권장 시나리오:**
+
 1. **실험적 기능**: 소수 사용자에게 먼저 테스트
 2. **리소스 제약**: 2배 리소스를 사용할 수 없는 경우
 3. **점진적 검증**: 프로덕션 환경에서 실제 데이터로 검증
@@ -880,6 +934,7 @@ spec:
 5. **마이크로서비스**: 서비스 간 의존성이 복잡한 경우
 
 **예시:**
+
 ```
 - A/B 테스트
 - 성능 최적화
@@ -888,7 +943,7 @@ spec:
 - 일일 배포 (Continuous Deployment)
 ```
 
----
+***
 
 **6. 하이브리드 접근**
 
@@ -903,17 +958,20 @@ spec:
 ```
 
 **참고 자료:**
-- [트래픽 분할](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md)
-- [Blue/Green 배포](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-배포)
+
+* [트래픽 분할](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Blue/Green 배포](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-%EB%B0%B0%ED%8F%AC)
+
 </details>
 
----
+***
 
 ### 문제 8: Traffic Mirroring (섀도우 테스트)
 
 Traffic Mirroring을 사용하여 새 버전을 안전하게 테스트하는 방법을 설명하세요. **사용 사례**, **구성 방법**, **주의사항**을 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
@@ -922,38 +980,22 @@ Traffic Mirroring을 사용하여 새 버전을 안전하게 테스트하는 방
 
 트래픽 미러링은 프로덕션 트래픽을 복제하여 새 버전으로 전송하되, **응답은 무시**하는 기법입니다. "섀도우 테스트"라고도 합니다.
 
----
+***
 
 **1. 작동 원리**
 
-```mermaid
-flowchart LR
-    User[사용자] --> Envoy[Envoy Proxy]
-    Envoy -->|주 요청| V1[Version 1<br/>프로덕션]
-    Envoy -.->|미러 요청<br/>응답 무시| V2[Version 2<br/>테스트]
-
-    V1 -->|응답| User
-    V2 -.->|응답 폐기| Envoy
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef version fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class User user;
-    class Envoy envoy;
-    class V1,V2 version;
-```
-
 **핵심 특징:**
-- 사용자는 v1의 응답만 받음
-- v2의 응답은 Envoy가 폐기
-- v2의 에러는 사용자에게 영향 없음
 
----
+* 사용자는 v1의 응답만 받음
+* v2의 응답은 Envoy가 폐기
+* v2의 에러는 사용자에게 영향 없음
+
+***
 
 **2. 구성 방법**
 
 **기본 미러링 (100%):**
+
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
@@ -976,6 +1018,7 @@ spec:
 ```
 
 **부분 미러링 (50%):**
+
 ```yaml
 spec:
   http:
@@ -992,6 +1035,7 @@ spec:
 ```
 
 **미러링 + Canary 조합:**
+
 ```yaml
 spec:
   http:
@@ -1014,11 +1058,12 @@ spec:
       value: 100
 ```
 
----
+***
 
 **3. 사용 사례**
 
 **사례 1: 새 버전 성능 테스트**
+
 ```
 목적: v2의 성능이 v1보다 나은지 확인
 
@@ -1029,6 +1074,7 @@ spec:
 ```
 
 **사례 2: 데이터베이스 마이그레이션 검증**
+
 ```
 목적: 새 데이터베이스 스키마 검증
 
@@ -1039,6 +1085,7 @@ spec:
 ```
 
 **사례 3: 버그 수정 검증**
+
 ```
 목적: 버그 수정이 실제로 작동하는지 확인
 
@@ -1048,6 +1095,7 @@ spec:
 ```
 
 **사례 4: 캐시 워밍**
+
 ```
 목적: 새 버전의 캐시를 사전에 채움
 
@@ -1056,11 +1104,12 @@ spec:
 3. v2로 전환 시 cold start 없음
 ```
 
----
+***
 
 **4. 모니터링 구성**
 
 **Prometheus 쿼리로 미러 트래픽 모니터링:**
+
 ```promql
 # v2 (미러)의 에러율
 sum(rate(
@@ -1085,6 +1134,7 @@ histogram_quantile(0.95,
 ```
 
 **Grafana 대시보드:**
+
 ```yaml
 # 패널 1: 에러율 비교 (v1 vs v2)
 # 패널 2: 지연시간 비교 (P50, P95, P99)
@@ -1092,11 +1142,12 @@ histogram_quantile(0.95,
 # 패널 4: 요청 수 (v1: 실제, v2: 미러)
 ```
 
----
+***
 
 **5. 주의사항**
 
 **⚠️ 부하 증가:**
+
 ```
 미러링은 서비스 부하를 증가시킵니다.
 
@@ -1109,6 +1160,7 @@ histogram_quantile(0.95,
 ```
 
 **⚠️ 부작용 주의:**
+
 ```yaml
 # 쓰기 작업은 미러링하지 마세요!
 
@@ -1120,6 +1172,7 @@ GET /api/orders   # 읽기 전용 작업만 미러링
 ```
 
 **⚠️ 비용:**
+
 ```
 미러링은 리소스와 비용을 증가시킵니다.
 
@@ -1131,6 +1184,7 @@ GET /api/orders   # 읽기 전용 작업만 미러링
 ```
 
 **⚠️ 응답 검증 불가:**
+
 ```
 미러 트래픽의 응답은 폐기되므로
 응답 내용을 검증할 수 없습니다.
@@ -1145,7 +1199,7 @@ GET /api/orders   # 읽기 전용 작업만 미러링
 - ❌ 비즈니스 로직 검증
 ```
 
----
+***
 
 **6. 모범 사례**
 
@@ -1164,16 +1218,19 @@ GET /api/orders   # 읽기 전용 작업만 미러링
 ```
 
 **참고 자료:**
-- [트래픽 미러링](../../../service-mesh/istio/traffic-management/04-traffic-mirroring.md)
+
+* [트래픽 미러링](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/04-traffic-mirroring.md)
+
 </details>
 
----
+***
 
 ### 문제 9: Locality Load Balancing (Zone Aware Routing)
 
 AWS EKS에서 Istio의 Locality Load Balancing을 사용하여 **크로스 AZ 비용을 절감**하는 방법을 설명하세요. 구성 예시와 **예상 비용 절감액**을 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
@@ -1182,11 +1239,12 @@ AWS EKS에서 Istio의 Locality Load Balancing을 사용하여 **크로스 AZ �
 
 Locality Load Balancing은 **같은 가용 영역(AZ) 내 서비스를 우선적으로 라우팅**하여 네트워크 지연시간을 줄이고 크로스 AZ 비용을 절감하는 기능입니다.
 
----
+***
 
 **1. AWS EKS에서 크로스 AZ 비용**
 
 **비용 구조:**
+
 ```
 같은 AZ 트래픽: 무료
 크로스 AZ 트래픽: GB당 $0.01-0.02
@@ -1194,6 +1252,7 @@ Locality Load Balancing은 **같은 가용 영역(AZ) 내 서비스를 우선적
 ```
 
 **예시 계산:**
+
 ```
 서비스 A (us-east-1a) → 서비스 B (us-east-1b)
 - 월간 트래픽: 1TB = 1000GB
@@ -1205,7 +1264,7 @@ Locality Load Balancing은 **같은 가용 영역(AZ) 내 서비스를 우선적
 - 절감: $8/월 (80%)
 ```
 
----
+***
 
 **2. EKS Pod Topology 레이블**
 
@@ -1219,11 +1278,12 @@ topology.kubernetes.io/zone: us-east-1a
 # Pod는 노드의 레이블을 상속
 ```
 
----
+***
 
 **3. Locality Load Balancing 구성**
 
 **기본 구성 (같은 AZ 우선):**
+
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
@@ -1240,6 +1300,7 @@ spec:
 ```
 
 **고급 구성 (가중치 분배):**
+
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
@@ -1266,6 +1327,7 @@ spec:
 ```
 
 **장애 조치 정책:**
+
 ```yaml
 spec:
   trafficPolicy:
@@ -1282,7 +1344,7 @@ spec:
           to: us-west-2
 ```
 
----
+***
 
 **4. Outlier Detection과 결합**
 
@@ -1308,6 +1370,7 @@ spec:
 ```
 
 **동작:**
+
 ```
 1. 같은 AZ (us-east-1a) 내 Pod 우선 선택
 2. 5회 연속 실패하면 해당 Pod 제외
@@ -1315,11 +1378,12 @@ spec:
 4. 30초 후 제외된 Pod 재시도
 ```
 
----
+***
 
 **5. 비용 절감 계산**
 
 **시나리오: 대규모 마이크로서비스 아키텍처**
+
 ```
 가정:
 - 서비스 수: 20개
@@ -1330,12 +1394,14 @@ spec:
 ```
 
 **Locality LB 없음:**
+
 ```
 크로스 AZ 트래픽: 200TB × 70% = 140TB
 비용: 140,000GB × $0.01 = $1,400/월
 ```
 
 **Locality LB 적용:**
+
 ```
 크로스 AZ 트래픽: 200TB × 20% = 40TB
 비용: 40,000GB × $0.01 = $400/월
@@ -1344,11 +1410,12 @@ spec:
 연간 절감액: $1,000 × 12 = $12,000/년
 ```
 
----
+***
 
 **6. 성능 향상**
 
 **지연시간 개선:**
+
 ```
 같은 AZ 내 통신: ~1ms
 크로스 AZ 통신: ~2-3ms
@@ -1359,6 +1426,7 @@ Locality LB 적용 시:
 ```
 
 **실제 측정 예시:**
+
 ```bash
 # us-east-1a → us-east-1a (같은 AZ)
 $ kubectl exec -it pod-a -- curl -w "%{time_total}\n" http://service-b
@@ -1369,11 +1437,12 @@ $ kubectl exec -it pod-a -- curl -w "%{time_total}\n" http://service-b
 0.003s
 ```
 
----
+***
 
 **7. 모니터링**
 
 **Prometheus 쿼리:**
+
 ```promql
 # Locality별 트래픽 분포
 sum(rate(
@@ -1395,6 +1464,7 @@ sum(rate(istio_requests_total[5m]))
 ```
 
 **Grafana 대시보드:**
+
 ```yaml
 패널 1: Locality별 요청 수 (us-east-1a, us-east-1b, us-east-1c)
 패널 2: 크로스 AZ 트래픽 비율 (목표: <20%)
@@ -1402,11 +1472,12 @@ sum(rate(istio_requests_total[5m]))
 패널 4: 예상 비용 (크로스 AZ 트래픽 × $0.01/GB)
 ```
 
----
+***
 
 **8. 주의사항**
 
 **⚠️ 불균형 로드:**
+
 ```
 한 AZ에만 모든 트래픽이 집중되면 과부하 발생 가능
 
@@ -1417,6 +1488,7 @@ sum(rate(istio_requests_total[5m]))
 ```
 
 **⚠️ AZ 장애:**
+
 ```
 한 AZ 전체가 장애나면 트래픽이 다른 AZ로 이동
 
@@ -1426,6 +1498,7 @@ failover 정책 설정 필수:
 ```
 
 **⚠️ Cold Start:**
+
 ```
 장애 조치 시 다른 AZ의 Pod가 cold start 상태일 수 있음
 
@@ -1434,7 +1507,7 @@ failover 정책 설정 필수:
 - Readiness Probe로 준비 상태 확인
 ```
 
----
+***
 
 **9. 모범 사례**
 
@@ -1470,24 +1543,27 @@ spec:
 ```
 
 **참고 자료:**
-- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
-- [AWS EKS 비용 최적화](../../../service-mesh/istio/best-practices.md#비용-최적화)
+
+* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+* [AWS EKS 비용 최적화](../../../service-mesh/istio/best-practices.md#비용-최적화)
+
 </details>
 
----
+***
 
 ### 문제 10: Gateway TLS 구성
 
 Istio Gateway에서 **TLS 종료**를 구성하고, **HTTPS 리다이렉트**를 설정하는 방법을 설명하세요. ACM (AWS Certificate Manager) 인증서를 사용하는 경우와 자체 인증서를 사용하는 경우를 모두 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **Istio Gateway TLS 구성:**
 
----
+***
 
 **1. 자체 인증서 사용 (Kubernetes Secret)**
 
@@ -1591,7 +1667,7 @@ curl -v http://bookinfo.example.com/productpage
 # location: https://bookinfo.example.com/productpage
 ```
 
----
+***
 
 **2. AWS ACM 인증서 사용 (NLB Annotation)**
 
@@ -1672,7 +1748,7 @@ spec:
     - bookinfo.example.com
 ```
 
----
+***
 
 **3. Mutual TLS (mTLS) - 클라이언트 인증**
 
@@ -1700,12 +1776,13 @@ spec:
 ```
 
 **클라이언트 인증서로 접속:**
+
 ```bash
 curl --cert client.crt --key client.key \
   https://secure.example.com/api
 ```
 
----
+***
 
 **4. 와일드카드 인증서**
 
@@ -1745,6 +1822,7 @@ spec:
 ```
 
 **VirtualService로 서브도메인별 라우팅:**
+
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
@@ -1782,7 +1860,7 @@ spec:
         host: admin-service
 ```
 
----
+***
 
 **5. TLS 버전 및 Cipher Suite 설정**
 
@@ -1812,7 +1890,7 @@ spec:
     - bookinfo.example.com
 ```
 
----
+***
 
 **6. 인증서 자동 갱신 (cert-manager)**
 
@@ -1855,7 +1933,7 @@ spec:
 EOF
 ```
 
----
+***
 
 **7. 모범 사례**
 
@@ -1893,37 +1971,41 @@ spec:
 ```
 
 **주의사항:**
-- ✅ TLS 1.2 이상 사용
-- ✅ 강력한 Cipher Suite 설정
-- ✅ 인증서 자동 갱신 (cert-manager)
-- ✅ HTTP → HTTPS 리다이렉트 활성화
-- ❌ 자체 서명 인증서는 프로덕션에 사용 금지
-- ❌ TLS 1.0/1.1 사용 금지
+
+* ✅ TLS 1.2 이상 사용
+* ✅ 강력한 Cipher Suite 설정
+* ✅ 인증서 자동 갱신 (cert-manager)
+* ✅ HTTP → HTTPS 리다이렉트 활성화
+* ❌ 자체 서명 인증서는 프로덕션에 사용 금지
+* ❌ TLS 1.0/1.1 사용 금지
 
 **참고 자료:**
-- [Gateway](../../../service-mesh/istio/traffic-management/01-gateway.md)
-- [TLS 구성](../../../service-mesh/istio/traffic-management/01-gateway.md#tls-구성)
+
+* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/01-gateway.md)
+* [TLS 구성](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/01-gateway.md#tls-%EA%B5%AC%EC%84%B1)
+
 </details>
 
----
+***
 
 ## 점수 계산
 
-- 객관식 1-5번: 각 10점 (총 50점)
-- 주관식 6-10번: 각 10점 (총 50점)
-- **총점: 100점**
+* 객관식 1-5번: 각 10점 (총 50점)
+* 주관식 6-10번: 각 10점 (총 50점)
+* **총점: 100점**
 
 **평가 기준:**
-- 90-100점: 우수 (Istio 트래픽 관리 전문가)
-- 80-89점: 양호 (프로덕션 운영 가능)
-- 70-79점: 보통 (추가 학습 권장)
-- 60-69점: 미흡 (기본 개념 복습 필요)
-- 0-59점: 재학습 필요
+
+* 90-100점: 우수 (Istio 트래픽 관리 전문가)
+* 80-89점: 양호 (프로덕션 운영 가능)
+* 70-79점: 보통 (추가 학습 권장)
+* 60-69점: 미흡 (기본 개념 복습 필요)
+* 0-59점: 재학습 필요
 
 ## 학습 자료
 
-- [트래픽 관리 문서](../../../service-mesh/istio/traffic-management/)
-- [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
-- [Gateway](../../../service-mesh/istio/traffic-management/01-gateway.md)
-- [트래픽 분할](../../../service-mesh/istio/traffic-management/03-traffic-splitting.md)
-- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+* [트래픽 관리 문서](../../../service-mesh/istio/traffic-management/)
+* [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
+* [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/01-gateway.md)
+* [트래픽 분할](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)

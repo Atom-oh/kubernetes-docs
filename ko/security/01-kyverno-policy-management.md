@@ -1,6 +1,6 @@
 # Kyverno를 사용한 정책 관리
 
-> **지원 버전**: Kubernetes 1.31, 1.32, 1.33  
+> **지원 버전**: Kubernetes 1.31, 1.32, 1.33\
 > **마지막 업데이트**: 2026년 2월 19일
 
 Kyverno는 Kubernetes 네이티브 정책 엔진으로, 클러스터 내에서 정책을 관리하고 적용하는 데 사용됩니다. 이 장에서는 Kyverno를 사용하여 EKS 클러스터에서 정책을 관리하는 방법을 알아보겠습니다.
@@ -10,9 +10,10 @@ Kyverno는 Kubernetes 네이티브 정책 엔진으로, 클러스터 내에서 �
 이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
 
 ### 필수 도구
-- kubectl v1.31 이상
-- Helm v3.10 이상
-- 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
+
+* kubectl v1.31 이상
+* Helm v3.10 이상
+* 작동하는 Kubernetes 클러스터 (EKS, minikube, kind 등)
 
 ### Kyverno 설치
 
@@ -40,21 +41,21 @@ Kyverno는 Kubernetes 리소스로 정책을 정의하고 관리할 수 있는 �
 
 ### Kyverno 아키텍처 및 작동 방식
 
-![kyverno_architecture](../assets/kyverno_architecture.svg)
+![kyverno\_architecture](<../.gitbook/assets/kyverno_architecture (1).svg>)
 
 ### Kyverno vs OPA Gatekeeper
 
 Kyverno와 OPA Gatekeeper는 모두 Kubernetes 정책 관리를 위한 도구이지만, 몇 가지 중요한 차이점이 있습니다:
 
-| 기능 | Kyverno | OPA Gatekeeper |
-|------|---------|----------------|
-| 정책 언어 | Kubernetes YAML | Rego (전용 언어) |
-| 학습 곡선 | 낮음 (Kubernetes 사용자에게 친숙) | 높음 (Rego 학습 필요) |
-| 변형 정책 | 기본 지원 | 제한적 지원 |
-| 리소스 생성 | 지원 | 미지원 |
-| 이미지 검증 | 기본 지원 | 사용자 정의 필요 |
-| 정책 예외 처리 | 간단함 | 복잡함 |
-| 성능 | 좋음 | 매우 좋음 (대규모 클러스터) |
+| 기능       | Kyverno                  | OPA Gatekeeper   |
+| -------- | ------------------------ | ---------------- |
+| 정책 언어    | Kubernetes YAML          | Rego (전용 언어)     |
+| 학습 곡선    | 낮음 (Kubernetes 사용자에게 친숙) | 높음 (Rego 학습 필요)  |
+| 변형 정책    | 기본 지원                    | 제한적 지원           |
+| 리소스 생성   | 지원                       | 미지원              |
+| 이미지 검증   | 기본 지원                    | 사용자 정의 필요        |
+| 정책 예외 처리 | 간단함                      | 복잡함              |
+| 성능       | 좋음                       | 매우 좋음 (대규모 클러스터) |
 
 Kyverno는 Kubernetes의 Admission Controller로 작동하여 API 서버로 들어오는 모든 요청을 가로채고 정의된 정책에 따라 검증, 변형, 생성 또는 정리 작업을 수행합니다. 또한 백그라운드 스캐너를 통해 기존 리소스에 대한 정책 준수 여부를 확인하고, 보고서 컨트롤러를 통해 정책 위반 사항을 보고합니다.
 
@@ -183,7 +184,7 @@ EKS 클러스터에서 Kyverno를 활용하면 보안, 비용 최적화, 규정 
 
 다음 다이어그램은 EKS 클러스터에서 Kyverno가 어떻게 통합되어 작동하는지 보여줍니다:
 
-![eks_kyverno_integration](../assets/eks_kyverno_integration.svg)
+![eks\_kyverno\_integration](<../.gitbook/assets/eks_kyverno_integration (1).svg>)
 
 이 아키텍처에서 Kyverno는 EKS 클러스터 내에서 Admission Webhook으로 작동하여 API 서버로 들어오는 모든 요청을 가로채고 정의된 정책에 따라 처리합니다. 정책 위반 사항은 CloudWatch로 전송되어 모니터링 및 알림에 활용될 수 있습니다.
 
@@ -368,7 +369,7 @@ Kyverno는 정책을 테스트하고 검증하기 위한 도구를 제공합니�
 
 다음 다이어그램은 Kyverno 정책의 일반적인 개발 및 적용 워크플로우를 보여줍니다:
 
-![kyverno_policy_workflow](../assets/kyverno_policy_workflow.svg)
+![kyverno\_policy\_workflow](<../.gitbook/assets/kyverno_policy_workflow (1).svg>)
 
 ### 정책 시뮬레이션
 

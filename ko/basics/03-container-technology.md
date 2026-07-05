@@ -1,23 +1,23 @@
 # 컨테이너 기술
 
-> **지원 버전**: Docker 20.10+, containerd 1.6+, CRI-O 1.24+
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Docker 20.10+, containerd 1.6+, CRI-O 1.24+ **마지막 업데이트**: 2026년 2월 23일
 
 컨테이너는 애플리케이션과 그 종속성을 함께 패키징하여 다양한 환경에서 일관되게 실행할 수 있게 해주는 기술입니다. 이 문서에서는 컨테이너의 기본 개념, 작동 원리, 그리고 Kubernetes와의 관계에 대해 설명합니다.
 
 ## 목차
-- [컨테이너란?](#컨테이너란)
-- [컨테이너 vs 가상 머신](#컨테이너-vs-가상-머신)
-- [컨테이너의 기술적 기반](#컨테이너의-기술적-기반)
-- [컨테이너 런타임](#컨테이너-런타임)
-- [컨테이너 이미지](#컨테이너-이미지)
-- [Dockerfile](#dockerfile)
-- [컨테이너 네트워킹](#컨테이너-네트워킹)
-- [컨테이너 스토리지](#컨테이너-스토리지)
-- [컨테이너 보안](#컨테이너-보안)
-- [컨테이너 라이프사이클 관리](#컨테이너-라이프사이클-관리)
-- [컨테이너 오케스트레이션](#컨테이너-오케스트레이션)
-- [AWS에서의 컨테이너](#aws에서의-컨테이너)
+
+* [컨테이너란?](03-container-technology.md#컨테이너란)
+* [컨테이너 vs 가상 머신](03-container-technology.md#컨테이너-vs-가상-머신)
+* [컨테이너의 기술적 기반](03-container-technology.md#컨테이너의-기술적-기반)
+* [컨테이너 런타임](03-container-technology.md#컨테이너-런타임)
+* [컨테이너 이미지](03-container-technology.md#컨테이너-이미지)
+* [Dockerfile](03-container-technology.md#dockerfile)
+* [컨테이너 네트워킹](03-container-technology.md#컨테이너-네트워킹)
+* [컨테이너 스토리지](03-container-technology.md#컨테이너-스토리지)
+* [컨테이너 보안](03-container-technology.md#컨테이너-보안)
+* [컨테이너 라이프사이클 관리](03-container-technology.md#컨테이너-라이프사이클-관리)
+* [컨테이너 오케스트레이션](03-container-technology.md#컨테이너-오케스트레이션)
+* [AWS에서의 컨테이너](03-container-technology.md#aws에서의-컨테이너)
 
 ## 컨테이너란?
 
@@ -34,30 +34,31 @@
 
 ### 컨테이너 기술의 역사
 
-- **2000년대 초**: Linux VServer, OpenVZ 등의 초기 컨테이너 기술 등장
-- **2007년**: cgroups(Control Groups)가 Linux 커널에 통합
-- **2008년**: LXC(Linux Containers) 프로젝트 시작
-- **2013년**: Docker 출시, 컨테이너 기술 대중화
-- **2015년**: Open Container Initiative(OCI) 설립, 컨테이너 표준화
-- **2017년**: containerd가 CNCF 프로젝트로 기부됨
+* **2000년대 초**: Linux VServer, OpenVZ 등의 초기 컨테이너 기술 등장
+* **2007년**: cgroups(Control Groups)가 Linux 커널에 통합
+* **2008년**: LXC(Linux Containers) 프로젝트 시작
+* **2013년**: Docker 출시, 컨테이너 기술 대중화
+* **2015년**: Open Container Initiative(OCI) 설립, 컨테이너 표준화
+* **2017년**: containerd가 CNCF 프로젝트로 기부됨
 
 ## 컨테이너 vs 가상 머신
 
 ### 가상 머신 아키텍처 vs 컨테이너 아키텍쳐
-![가상 머신 아키텍처 vs 컨테이너 아키텍쳐](../assets/container-vs-vm.avif)
+
+![가상 머신 아키텍처 vs 컨테이너 아키텍쳐](<../.gitbook/assets/container-vs-vm (1).avif>)
 
 ### 주요 차이점
 
-| 특성 | 컨테이너 | 가상 머신 |
-|------|---------|---------|
-| 크기 | 일반적으로 수십 MB | 일반적으로 수 GB |
-| 시작 시간 | 초 단위 또는 그 이하 | 분 단위 |
-| 격리 수준 | 프로세스 수준 격리 | 하드웨어 수준 격리 |
-| OS | 호스트 OS 커널 공유 | 각 VM마다 전체 OS 필요 |
-| 성능 | 거의 네이티브 | 약간의 오버헤드 |
-| 보안 | 상대적으로 낮음 (공유 커널) | 상대적으로 높음 (완전 격리) |
-| 리소스 효율성 | 높음 | 중간 |
-| 사용 사례 | 마이크로서비스, CI/CD, 개발/테스트 | 레거시 앱, 다양한 OS 요구사항, 높은 보안 요구 |
+| 특성      | 컨테이너                   | 가상 머신                        |
+| ------- | ---------------------- | ---------------------------- |
+| 크기      | 일반적으로 수십 MB            | 일반적으로 수 GB                   |
+| 시작 시간   | 초 단위 또는 그 이하           | 분 단위                         |
+| 격리 수준   | 프로세스 수준 격리             | 하드웨어 수준 격리                   |
+| OS      | 호스트 OS 커널 공유           | 각 VM마다 전체 OS 필요              |
+| 성능      | 거의 네이티브                | 약간의 오버헤드                     |
+| 보안      | 상대적으로 낮음 (공유 커널)       | 상대적으로 높음 (완전 격리)             |
+| 리소스 효율성 | 높음                     | 중간                           |
+| 사용 사례   | 마이크로서비스, CI/CD, 개발/테스트 | 레거시 앱, 다양한 OS 요구사항, 높은 보안 요구 |
 
 ## 컨테이너의 기술적 기반
 
@@ -80,12 +81,13 @@ ps aux | grep <process-name>
 ```
 
 **컨테이너가 사용하는 네임스페이스**:
-- **PID**: 컨테이너는 자신만의 프로세스 트리를 가짐 (PID 1부터 시작)
-- **Network**: 독립적인 네트워크 스택 (IP 주소, 라우팅 테이블, 포트)
-- **Mount**: 독립적인 파일 시스템 뷰
-- **UTS**: 독립적인 호스트네임
-- **IPC**: 독립적인 프로세스 간 통신 공간
-- **User**: 독립적인 사용자 ID 매핑 (선택적)
+
+* **PID**: 컨테이너는 자신만의 프로세스 트리를 가짐 (PID 1부터 시작)
+* **Network**: 독립적인 네트워크 스택 (IP 주소, 라우팅 테이블, 포트)
+* **Mount**: 독립적인 파일 시스템 뷰
+* **UTS**: 독립적인 호스트네임
+* **IPC**: 독립적인 프로세스 간 통신 공간
+* **User**: 독립적인 사용자 ID 매핑 (선택적)
 
 ### cgroups를 통한 리소스 제한
 
@@ -107,11 +109,12 @@ cat /sys/fs/cgroup/system.slice/docker-<container-id>.scope/memory.max
 ```
 
 **컨테이너가 사용하는 cgroup 리소스 제어**:
-- **CPU**: CPU 시간 제한 및 CPU 코어 할당
-- **Memory**: 메모리 사용량 제한 및 OOM 동작 제어
-- **Block I/O**: 디스크 I/O 대역폭 제한
-- **Network**: 네트워크 대역폭 제한 (tc와 결합)
-- **PIDs**: 컨테이너 내 프로세스 수 제한
+
+* **CPU**: CPU 시간 제한 및 CPU 코어 할당
+* **Memory**: 메모리 사용량 제한 및 OOM 동작 제어
+* **Block I/O**: 디스크 I/O 대역폭 제한
+* **Network**: 네트워크 대역폭 제한 (tc와 결합)
+* **PIDs**: 컨테이너 내 프로세스 수 제한
 
 ### OverlayFS를 통한 레이어 관리
 
@@ -129,10 +132,11 @@ mount | grep overlay
 ```
 
 **OverlayFS 구조**:
-- **LowerDir**: 읽기 전용 이미지 레이어들 (하위 레이어 → 상위 레이어)
-- **UpperDir**: 읽기/쓰기 가능한 컨테이너 레이어
-- **WorkDir**: OverlayFS 작업 디렉토리
-- **MergedDir**: 통합된 뷰 (컨테이너가 보는 파일 시스템)
+
+* **LowerDir**: 읽기 전용 이미지 레이어들 (하위 레이어 → 상위 레이어)
+* **UpperDir**: 읽기/쓰기 가능한 컨테이너 레이어
+* **WorkDir**: OverlayFS 작업 디렉토리
+* **MergedDir**: 통합된 뷰 (컨테이너가 보는 파일 시스템)
 
 ### 실습: 컨테이너의 기술적 기반 이해하기
 
@@ -165,21 +169,20 @@ docker rm test-container
 ### 컨테이너 런타임 계층 구조
 
 1. **저수준 런타임 (OCI 호환)**
-   - **runc**: Docker의 기본 런타임, OCI 표준 구현체
-   - **crun**: C로 작성된 경량 OCI 런타임
-   - **kata-containers**: 하드웨어 가상화를 사용한 보안 강화 런타임
-   - **gVisor**: 사용자 공간에서 커널 기능을 에뮬레이션하는 보안 런타임
-
+   * **runc**: Docker의 기본 런타임, OCI 표준 구현체
+   * **crun**: C로 작성된 경량 OCI 런타임
+   * **kata-containers**: 하드웨어 가상화를 사용한 보안 강화 런타임
+   * **gVisor**: 사용자 공간에서 커널 기능을 에뮬레이션하는 보안 런타임
 2. **고수준 런타임**
-   - **containerd**: Docker에서 분리된 산업 표준 컨테이너 런타임
-   - **CRI-O**: Kubernetes를 위해 특별히 설계된 경량 런타임
-   - **Docker Engine**: 가장 널리 사용되는 컨테이너 플랫폼
+   * **containerd**: Docker에서 분리된 산업 표준 컨테이너 런타임
+   * **CRI-O**: Kubernetes를 위해 특별히 설계된 경량 런타임
+   * **Docker Engine**: 가장 널리 사용되는 컨테이너 플랫폼
 
 ### Kubernetes의 컨테이너 런타임 인터페이스 (CRI)
 
 Kubernetes는 CRI(Container Runtime Interface)를 통해 다양한 컨테이너 런타임과 통합됩니다. CRI는 Kubernetes와 컨테이너 런타임 사이의 표준화된 인터페이스를 제공합니다.
 
-![Kubernetes CRI](../assets/kubernetes-cri.webp)
+![Kubernetes CRI](<../.gitbook/assets/kubernetes-cri (1).webp>)
 
 ## 컨테이너 이미지
 
@@ -189,7 +192,8 @@ Kubernetes는 CRI(Container Runtime Interface)를 통해 다양한 컨테이너 
 
 컨테이너 이미지는 여러 레이어의 스택으로 구성됩니다. 각 레이어는 이전 레이어에 대한 변경사항을 나타냅니다. 이 레이어 방식은 이미지 공유와 캐싱을 효율적으로 만듭니다.
 
-![컨테이너 레이어](../assets/container-layers.webp)
+![컨테이너 레이어](<../.gitbook/assets/container-layers (1).webp>)
+
 ```mermaid
 flowchart TB
     app["응용 프로그램 레이어<br/>애플리케이션 코드"]
@@ -210,17 +214,17 @@ flowchart TB
 
 컨테이너 이미지는 레지스트리에 저장되고 공유됩니다. 주요 레지스트리는 다음과 같습니다:
 
-- **Docker Hub**: 가장 큰 공개 레지스트리
-- **Amazon ECR**: AWS의 컨테이너 레지스트리 서비스
-- **Google Container Registry**: Google Cloud의 레지스트리
-- **Azure Container Registry**: Microsoft Azure의 레지스트리
-- **GitHub Container Registry**: GitHub의 컨테이너 레지스트리
-- **Harbor**: 오픈소스 엔터프라이즈급 레지스트리
+* **Docker Hub**: 가장 큰 공개 레지스트리
+* **Amazon ECR**: AWS의 컨테이너 레지스트리 서비스
+* **Google Container Registry**: Google Cloud의 레지스트리
+* **Azure Container Registry**: Microsoft Azure의 레지스트리
+* **GitHub Container Registry**: GitHub의 컨테이너 레지스트리
+* **Harbor**: 오픈소스 엔터프라이즈급 레지스트리
 
 ### 이미지 태그와 다이제스트
 
-- **태그**: 이미지의 특정 버전을 식별하는 사람이 읽을 수 있는 이름 (예: `nginx:1.21.0`)
-- **다이제스트**: 이미지 내용의 SHA256 해시로, 이미지의 고유한 식별자 (예: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`)
+* **태그**: 이미지의 특정 버전을 식별하는 사람이 읽을 수 있는 이름 (예: `nginx:1.21.0`)
+* **다이제스트**: 이미지 내용의 SHA256 해시로, 이미지의 고유한 식별자 (예: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`)
 
 ## Dockerfile
 
@@ -380,12 +384,12 @@ docker run -v /host/path:/container/path:ro nginx
 
 컨테이너는 여러 상태를 가질 수 있습니다:
 
-- **Created**: 컨테이너가 생성되었으나 아직 시작되지 않음
-- **Running**: 컨테이너가 실행 중
-- **Paused**: 컨테이너의 모든 프로세스가 일시 중지됨
-- **Restarting**: 컨테이너가 재시작 중
-- **Exited**: 컨테이너가 종료됨
-- **Dead**: 컨테이너 데몬이 제거하려 했지만 실패함
+* **Created**: 컨테이너가 생성되었으나 아직 시작되지 않음
+* **Running**: 컨테이너가 실행 중
+* **Paused**: 컨테이너의 모든 프로세스가 일시 중지됨
+* **Restarting**: 컨테이너가 재시작 중
+* **Exited**: 컨테이너가 종료됨
+* **Dead**: 컨테이너 데몬이 제거하려 했지만 실패함
 
 ```bash
 # 컨테이너 상태 확인
@@ -637,58 +641,62 @@ AWS는 컨테이너 워크로드를 위한 다양한 서비스를 제공합니�
 AWS의 자체 컨테이너 오케스트레이션 서비스로, EC2 인스턴스 또는 AWS Fargate에서 컨테이너를 실행할 수 있습니다.
 
 **주요 특징**:
-- AWS 서비스와의 긴밀한 통합
-- 서버리스 컨테이너 실행 (Fargate)
-- 간단한 설정 및 관리
-- 자동 확장 및 로드 밸런싱
+
+* AWS 서비스와의 긴밀한 통합
+* 서버리스 컨테이너 실행 (Fargate)
+* 간단한 설정 및 관리
+* 자동 확장 및 로드 밸런싱
 
 ### Amazon EKS (Elastic Kubernetes Service)
 
 AWS에서 관리하는 Kubernetes 서비스로, 표준 Kubernetes API를 사용하여 AWS 인프라에서 Kubernetes를 실행할 수 있습니다.
 
 **주요 특징**:
-- 관리형 Kubernetes 컨트롤 플레인
-- 여러 가용 영역에 걸친 고가용성
-- AWS 서비스와의 통합
-- EC2 및 Fargate 지원
+
+* 관리형 Kubernetes 컨트롤 플레인
+* 여러 가용 영역에 걸친 고가용성
+* AWS 서비스와의 통합
+* EC2 및 Fargate 지원
 
 ### AWS Fargate
 
 서버리스 컨테이너 실행 환경으로, 서버를 관리하지 않고도 컨테이너를 실행할 수 있습니다.
 
 **주요 특징**:
-- 서버 관리 불필요
-- 컨테이너 단위 과금
-- ECS 및 EKS와 통합
-- 보안 격리
+
+* 서버 관리 불필요
+* 컨테이너 단위 과금
+* ECS 및 EKS와 통합
+* 보안 격리
 
 ### Amazon ECR (Elastic Container Registry)
 
 AWS의 관리형 컨테이너 이미지 레지스트리 서비스입니다.
 
 **주요 특징**:
-- 이미지 취약점 스캐닝
-- IAM과의 통합
-- 이미지 라이프사이클 관리
-- 고가용성 및 확장성
+
+* 이미지 취약점 스캐닝
+* IAM과의 통합
+* 이미지 라이프사이클 관리
+* 고가용성 및 확장성
 
 ## 용어집
 
-| 용어 | 설명 |
-|------|------|
-| **컨테이너** | 애플리케이션과 그 종속성을 함께 패키징한 표준화된 소프트웨어 유닛으로, 어디서나 일관되게 실행할 수 있습니다. |
-| **이미지** | 컨테이너를 생성하는 데 사용되는 읽기 전용 템플릿으로, 애플리케이션 코드, 라이브러리, 종속성, 도구 및 기타 파일을 포함합니다. |
-| **Dockerfile** | 컨테이너 이미지를 빌드하기 위한 지시사항이 포함된 텍스트 파일입니다. |
-| **레지스트리** | 컨테이너 이미지를 저장하고 배포하는 저장소입니다. (예: Docker Hub, Amazon ECR) |
-| **컨테이너 런타임** | 컨테이너를 실행하는 소프트웨어입니다. (예: Docker, containerd, CRI-O) |
-| **네임스페이스** | Linux 커널 기능으로, 프로세스가 시스템의 다른 부분을 볼 수 없도록 격리합니다. |
-| **cgroups** | Linux 커널 기능으로, 프로세스 그룹의 리소스 사용(CPU, 메모리 등)을 제한하고 모니터링합니다. |
-| **레이어** | 컨테이너 이미지는 여러 레이어로 구성되며, 각 레이어는 Dockerfile의 명령에 해당합니다. |
-| **볼륨** | 컨테이너의 데이터를 영구적으로 저장하기 위한 메커니즘입니다. |
-| **오케스트레이션** | 여러 컨테이너의 배포, 관리, 확장, 네트워킹을 자동화하는 프로세스입니다. |
-| **ECS** | Amazon Elastic Container Service의 약자로, AWS의 컨테이너 오케스트레이션 서비스입니다. |
-| **ECR** | Amazon Elastic Container Registry의 약자로, AWS의 컨테이너 이미지 레지스트리 서비스입니다. |
-| **Fargate** | AWS의 서버리스 컨테이너 실행 환경으로, 인프라 관리 없이 컨테이너를 실행할 수 있습니다. |
+| 용어             | 설명                                                                       |
+| -------------- | ------------------------------------------------------------------------ |
+| **컨테이너**       | 애플리케이션과 그 종속성을 함께 패키징한 표준화된 소프트웨어 유닛으로, 어디서나 일관되게 실행할 수 있습니다.            |
+| **이미지**        | 컨테이너를 생성하는 데 사용되는 읽기 전용 템플릿으로, 애플리케이션 코드, 라이브러리, 종속성, 도구 및 기타 파일을 포함합니다. |
+| **Dockerfile** | 컨테이너 이미지를 빌드하기 위한 지시사항이 포함된 텍스트 파일입니다.                                   |
+| **레지스트리**      | 컨테이너 이미지를 저장하고 배포하는 저장소입니다. (예: Docker Hub, Amazon ECR)                  |
+| **컨테이너 런타임**   | 컨테이너를 실행하는 소프트웨어입니다. (예: Docker, containerd, CRI-O)                      |
+| **네임스페이스**     | Linux 커널 기능으로, 프로세스가 시스템의 다른 부분을 볼 수 없도록 격리합니다.                          |
+| **cgroups**    | Linux 커널 기능으로, 프로세스 그룹의 리소스 사용(CPU, 메모리 등)을 제한하고 모니터링합니다.                |
+| **레이어**        | 컨테이너 이미지는 여러 레이어로 구성되며, 각 레이어는 Dockerfile의 명령에 해당합니다.                    |
+| **볼륨**         | 컨테이너의 데이터를 영구적으로 저장하기 위한 메커니즘입니다.                                        |
+| **오케스트레이션**    | 여러 컨테이너의 배포, 관리, 확장, 네트워킹을 자동화하는 프로세스입니다.                                |
+| **ECS**        | Amazon Elastic Container Service의 약자로, AWS의 컨테이너 오케스트레이션 서비스입니다.         |
+| **ECR**        | Amazon Elastic Container Registry의 약자로, AWS의 컨테이너 이미지 레지스트리 서비스입니다.      |
+| **Fargate**    | AWS의 서버리스 컨테이너 실행 환경으로, 인프라 관리 없이 컨테이너를 실행할 수 있습니다.                      |
 
 ## 결론
 
@@ -702,8 +710,8 @@ AWS의 관리형 컨테이너 이미지 레지스트리 서비스입니다.
 
 ## 참고 자료
 
-- [Docker 공식 문서](https://docs.docker.com/)
-- [OCI (Open Container Initiative)](https://opencontainers.org/)
-- [containerd 프로젝트](https://containerd.io/)
-- [CNCF 컨테이너 런타임 개요](https://www.cncf.io/blog/2019/06/27/an-introduction-to-container-runtimes/)
-- [AWS 컨테이너 서비스](https://aws.amazon.com/containers/)
+* [Docker 공식 문서](https://docs.docker.com/)
+* [OCI (Open Container Initiative)](https://opencontainers.org/)
+* [containerd 프로젝트](https://containerd.io/)
+* [CNCF 컨테이너 런타임 개요](https://www.cncf.io/blog/2019/06/27/an-introduction-to-container-runtimes/)
+* [AWS 컨테이너 서비스](https://aws.amazon.com/containers/)

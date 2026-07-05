@@ -1,23 +1,22 @@
-# NLB 가중치 라우팅과 블루/그린 클러스터
+# 인프라 구성 고급
 
-> **지원 버전**: EKS 1.29+, Terraform 1.5+, AWS Provider 5.x
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: EKS 1.29+, Terraform 1.5+, AWS Provider 5.x **마지막 업데이트**: 2026년 2월 23일
 
-< [이전: Terraform 3-Layer 인프라](./01-infrastructure-setup.md) | [목차](./README.md) | [다음: CI 파이프라인](./03-ci-pipelines.md) >
+< [이전: Terraform 3-Layer 인프라](01-infrastructure-setup.md) | [목차](./) | [다음: CI 파이프라인](03-ci-pipelines.md) >
 
----
+***
 
 이 문서에서는 두 개의 싱글존 EKS 클러스터(Blue/Green)를 공유 NLB(Network Load Balancer)로 연결하여 트래픽을 분배하고, 장애 발생 시 자동으로 트래픽을 전환하는 방법을 설명합니다.
 
 ## 목차
 
-1. [블루/그린 아키텍처 개요](#블루그린-아키텍처-개요)
-2. [NLB 가중치 타겟 그룹](#nlb-가중치-타겟-그룹)
-3. [DNS 기반 트래픽 전환](#dns-기반-트래픽-전환)
-4. [데이터 노드 배치](#데이터-노드-배치)
-5. [장애 조치 자동화](#장애-조치-자동화)
+1. [블루/그린 아키텍처 개요](02-infrastructure-advanced.md#블루그린-아키텍처-개요)
+2. [NLB 가중치 타겟 그룹](02-infrastructure-advanced.md#nlb-가중치-타겟-그룹)
+3. [DNS 기반 트래픽 전환](02-infrastructure-advanced.md#dns-기반-트래픽-전환)
+4. [데이터 노드 배치](02-infrastructure-advanced.md#데이터-노드-배치)
+5. [장애 조치 자동화](02-infrastructure-advanced.md#장애-조치-자동화)
 
----
+***
 
 ## 블루/그린 아키텍처 개요
 
@@ -25,40 +24,37 @@
 
 전통적인 멀티 AZ 클러스터 대신 두 개의 싱글존 클러스터를 운영하는 이유:
 
-| 관점 | 멀티 AZ 클러스터 | 블루/그린 싱글존 |
-|------|-----------------|------------------|
-| **데이터 로컬리티** | Cross-AZ 트래픽 발생 | 동일 AZ 내 통신 |
-| **비용** | Cross-AZ 데이터 전송 비용 | AZ 내 무료 |
-| **장애 격리** | AZ 장애 시 부분 영향 | 클러스터 단위 완전 격리 |
-| **업그레이드** | 롤링 업데이트 복잡 | 클러스터 단위 전환 |
-| **복잡도** | 단일 클러스터 관리 | 2개 클러스터 동기화 필요 |
+| 관점           | 멀티 AZ 클러스터         | 블루/그린 싱글존      |
+| ------------ | ------------------ | -------------- |
+| **데이터 로컬리티** | Cross-AZ 트래픽 발생    | 동일 AZ 내 통신     |
+| **비용**       | Cross-AZ 데이터 전송 비용 | AZ 내 무료        |
+| **장애 격리**    | AZ 장애 시 부분 영향      | 클러스터 단위 완전 격리  |
+| **업그레이드**    | 롤링 업데이트 복잡         | 클러스터 단위 전환     |
+| **복잡도**      | 단일 클러스터 관리         | 2개 클러스터 동기화 필요 |
 
 ### 아키텍처 다이어그램
 
-![NLB 블루/그린 아키텍처](../assets/generated-diagrams/nlb_bluegreen_architecture.png)
+![NLB 블루/그린 아키텍처](../.gitbook/assets/nlb_bluegreen_architecture.png)
 
 ### 싱글존 설계의 이점
 
 1. **데이터 로컬리티 최적화**
-   - StatefulSet의 Pod와 PersistentVolume이 동일 AZ에 위치
-   - EBS 볼륨 접근 지연 시간 최소화
-   - Cross-AZ 데이터 전송 비용 제거
-
+   * StatefulSet의 Pod와 PersistentVolume이 동일 AZ에 위치
+   * EBS 볼륨 접근 지연 시간 최소화
+   * Cross-AZ 데이터 전송 비용 제거
 2. **비용 최적화**
-   - AZ 간 데이터 전송 비용: $0.01/GB (양방향)
-   - 월 10TB 트래픽 기준: 약 $200 절감
-
+   * AZ 간 데이터 전송 비용: $0.01/GB (양방향)
+   * 월 10TB 트래픽 기준: 약 $200 절감
 3. **장애 격리**
-   - AZ 장애 시 해당 클러스터만 영향
-   - 다른 클러스터로 100% 트래픽 전환 가능
-   - 복구 시간 최소화 (DNS TTL 또는 NLB 가중치 조정)
-
+   * AZ 장애 시 해당 클러스터만 영향
+   * 다른 클러스터로 100% 트래픽 전환 가능
+   * 복구 시간 최소화 (DNS TTL 또는 NLB 가중치 조정)
 4. **간편한 클러스터 업그레이드**
-   - Green 클러스터 먼저 업그레이드
-   - 검증 후 Blue 클러스터 업그레이드
-   - 문제 발생 시 이전 버전 클러스터로 즉시 전환
+   * Green 클러스터 먼저 업그레이드
+   * 검증 후 Blue 클러스터 업그레이드
+   * 문제 발생 시 이전 버전 클러스터로 즉시 전환
 
----
+***
 
 ## NLB 가중치 타겟 그룹
 
@@ -405,7 +401,7 @@ output "current_weights" {
 }
 ```
 
----
+***
 
 ## DNS 기반 트래픽 전환
 
@@ -554,11 +550,11 @@ resource "aws_route53_record" "api_failover_secondary" {
 
 DNS 기반 트래픽 전환의 속도는 TTL에 의해 결정됩니다.
 
-| TTL 값 | 전환 시간 | 적용 시나리오 |
-|--------|----------|--------------|
-| 60초 | ~1분 | 빠른 장애 조치 필요 |
-| 300초 | ~5분 | 일반 운영 |
-| 3600초 | ~1시간 | 안정적 운영, DNS 쿼리 비용 절감 |
+| TTL 값 | 전환 시간 | 적용 시나리오              |
+| ----- | ----- | -------------------- |
+| 60초   | \~1분  | 빠른 장애 조치 필요          |
+| 300초  | \~5분  | 일반 운영                |
+| 3600초 | \~1시간 | 안정적 운영, DNS 쿼리 비용 절감 |
 
 ```hcl
 # TTL 설정이 필요한 경우 (CNAME 사용)
@@ -578,7 +574,7 @@ variable "dns_ttl" {
 }
 ```
 
----
+***
 
 ## 데이터 노드 배치
 
@@ -586,8 +582,7 @@ variable "dns_ttl" {
 
 데이터 집약적 워크로드(데이터베이스, 캐시, 메시지 큐)는 스토리지와 동일한 AZ에 배치해야 합니다.
 
-> **참고**: 실제 Kubernetes 리소스(NodePool, Pod)의 배포는 ArgoCD를 통한 GitOps로 관리합니다.
-> 이 섹션에서는 설계 개념과 YAML 예시를 제공합니다.
+> **참고**: 실제 Kubernetes 리소스(NodePool, Pod)의 배포는 ArgoCD를 통한 GitOps로 관리합니다. 이 섹션에서는 설계 개념과 YAML 예시를 제공합니다.
 
 ### TopologySpreadConstraints
 
@@ -880,7 +875,7 @@ spec:
     consolidateAfter: 30m
 ```
 
----
+***
 
 ## 장애 조치 자동화
 
@@ -1411,21 +1406,21 @@ esac
 - [ ] 중요 기능 장애
 ```
 
----
+***
 
 ## 다음 단계
 
 이 문서를 완료한 후 다음을 참조하세요:
 
-- **[CI 파이프라인](./03-ci-pipelines.md)**: GitHub Actions를 사용한 CI 구성
-- **[GitOps 멀티 클러스터](./04-gitops-multi-cluster.md)**: ArgoCD로 블루/그린 클러스터 배포
-- **[모니터링 설정](./07-observability-alerts.md)**: Prometheus/Grafana 통합
+* [**CI 파이프라인**](03-ci-pipelines.md): GitHub Actions를 사용한 CI 구성
+* [**GitOps 멀티 클러스터**](04-gitops-multi-cluster.md): ArgoCD로 블루/그린 클러스터 배포
+* [**모니터링 설정**](07-observability-alerts.md): Prometheus/Grafana 통합
 
----
+***
 
 ## 참고 자료
 
-- [AWS NLB 가중치 타겟 그룹](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-target-groups.html)
-- [Route53 라우팅 정책](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html)
-- [EKS 멀티 클러스터 모범 사례](https://aws.github.io/aws-eks-best-practices/reliability/docs/multicluster/)
-- [Kubernetes Topology Spread Constraints](https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/)
+* [AWS NLB 가중치 타겟 그룹](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-target-groups.html)
+* [Route53 라우팅 정책](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html)
+* [EKS 멀티 클러스터 모범 사례](https://aws.github.io/aws-eks-best-practices/reliability/docs/multicluster/)
+* [Kubernetes Topology Spread Constraints](https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/)

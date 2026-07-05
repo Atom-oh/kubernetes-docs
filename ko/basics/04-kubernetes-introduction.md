@@ -1,7 +1,6 @@
 # Kubernetes 소개
 
-> **지원 버전**: Kubernetes 1.31, 1.32, 1.33
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Kubernetes 1.31, 1.32, 1.33 **마지막 업데이트**: 2026년 2월 23일
 
 Kubernetes(K8s)는 컨테이너화된 애플리케이션의 배포, 확장 및 관리를 자동화하는 오픈소스 컨테이너 오케스트레이션 플랫폼입니다. 이 문서에서는 Kubernetes의 기본 개념, 아키텍처, 주요 구성 요소 및 기능에 대해 설명합니다.
 
@@ -10,13 +9,15 @@ Kubernetes(K8s)는 컨테이너화된 애플리케이션의 배포, 확장 및 �
 이 문서의 예제를 따라하기 위해서는 다음과 같은 도구와 환경이 필요합니다:
 
 ### 필수 도구
-- **kubectl**: Kubernetes 클러스터와 상호 작용하는 명령줄 도구
-- **컨테이너 런타임**: Docker, containerd, CRI-O 등
-- **minikube** 또는 **kind**: 로컬 Kubernetes 클러스터 (개발 및 학습용)
+
+* **kubectl**: Kubernetes 클러스터와 상호 작용하는 명령줄 도구
+* **컨테이너 런타임**: Docker, containerd, CRI-O 등
+* **minikube** 또는 **kind**: 로컬 Kubernetes 클러스터 (개발 및 학습용)
 
 ### 설치 방법
 
 **kubectl 설치**:
+
 ```bash
 # macOS
 brew install kubectl
@@ -31,6 +32,7 @@ curl -LO "https://dl.k8s.io/release/v1.28.0/bin/windows/amd64/kubectl.exe"
 ```
 
 **minikube 설치**:
+
 ```bash
 # macOS
 brew install minikube
@@ -46,22 +48,24 @@ Invoke-WebRequest -OutFile 'c:\minikube\minikube.exe' -Uri 'https://github.com/k
 ```
 
 ### 로컬 클러스터 시작
+
 ```bash
 minikube start
 ```
 
 ## 목차
-- [Kubernetes란?](#kubernetes란)
-- [Kubernetes의 역사](#kubernetes의-역사)
-- [Kubernetes 아키텍처](#kubernetes-아키텍처)
-- [Kubernetes 주요 구성 요소](#kubernetes-주요-구성-요소)
-- [Kubernetes 기본 객체](#kubernetes-기본-객체)
-- [Kubernetes 워크로드 리소스](#kubernetes-워크로드-리소스)
-- [Kubernetes 서비스와 네트워킹](#kubernetes-서비스와-네트워킹)
-- [Kubernetes 스토리지](#kubernetes-스토리지)
-- [Kubernetes 구성 및 보안](#kubernetes-구성-및-보안)
-- [Kubernetes vs Amazon EKS](#kubernetes-vs-amazon-eks)
-- [Kubernetes 시작하기](#kubernetes-시작하기)
+
+* [Kubernetes란?](04-kubernetes-introduction.md#kubernetes란)
+* [Kubernetes의 역사](04-kubernetes-introduction.md#kubernetes의-역사)
+* [Kubernetes 아키텍처](04-kubernetes-introduction.md#kubernetes-아키텍처)
+* [Kubernetes 주요 구성 요소](04-kubernetes-introduction.md#kubernetes-주요-구성-요소)
+* [Kubernetes 기본 객체](04-kubernetes-introduction.md#kubernetes-기본-객체)
+* [Kubernetes 워크로드 리소스](04-kubernetes-introduction.md#kubernetes-워크로드-리소스)
+* [Kubernetes 서비스와 네트워킹](04-kubernetes-introduction.md#kubernetes-서비스와-네트워킹)
+* [Kubernetes 스토리지](04-kubernetes-introduction.md#kubernetes-스토리지)
+* [Kubernetes 구성 및 보안](04-kubernetes-introduction.md#kubernetes-구성-및-보안)
+* [Kubernetes vs Amazon EKS](04-kubernetes-introduction.md#kubernetes-vs-amazon-eks)
+* [Kubernetes 시작하기](04-kubernetes-introduction.md#kubernetes-시작하기)
 
 ## Kubernetes란?
 
@@ -80,23 +84,23 @@ Kubernetes는 그리스어로 '조타수' 또는 '파일럿'을 의미하며, �
 
 ### Kubernetes가 해결하는 문제
 
-- **컨테이너 오케스트레이션**: 수백, 수천 개의 컨테이너를 효율적으로 관리
-- **고가용성**: 애플리케이션의 중단 없는 운영 보장
-- **확장성**: 트래픽 증가에 따른 자동 확장
-- **재해 복구**: 장애 발생 시 자동 복구
-- **리소스 효율성**: 하드웨어 리소스를 효율적으로 활용
-- **선언적 구성**: 인프라를 코드로 관리
-- **멀티 클라우드 및 하이브리드 클라우드**: 다양한 환경에서 일관된 배포 및 관리
+* **컨테이너 오케스트레이션**: 수백, 수천 개의 컨테이너를 효율적으로 관리
+* **고가용성**: 애플리케이션의 중단 없는 운영 보장
+* **확장성**: 트래픽 증가에 따른 자동 확장
+* **재해 복구**: 장애 발생 시 자동 복구
+* **리소스 효율성**: 하드웨어 리소스를 효율적으로 활용
+* **선언적 구성**: 인프라를 코드로 관리
+* **멀티 클라우드 및 하이브리드 클라우드**: 다양한 환경에서 일관된 배포 및 관리
 
 ## Kubernetes의 역사
 
 ### 탄생 배경
 
-- **2003-2013**: Google은 내부적으로 Borg라는 컨테이너 오케스트레이션 시스템을 사용
-- **2014년 6월**: Google이 Kubernetes 프로젝트를 오픈소스로 공개
-- **2015년 7월**: Kubernetes 1.0 출시 및 Cloud Native Computing Foundation(CNCF)에 기부
-- **2016-2017**: 주요 클라우드 제공업체들이 관리형 Kubernetes 서비스 출시
-- **2018년 이후**: 컨테이너 오케스트레이션의 사실상 표준으로 자리매김
+* **2003-2013**: Google은 내부적으로 Borg라는 컨테이너 오케스트레이션 시스템을 사용
+* **2014년 6월**: Google이 Kubernetes 프로젝트를 오픈소스로 공개
+* **2015년 7월**: Kubernetes 1.0 출시 및 Cloud Native Computing Foundation(CNCF)에 기부
+* **2016-2017**: 주요 클라우드 제공업체들이 관리형 Kubernetes 서비스 출시
+* **2018년 이후**: 컨테이너 오케스트레이션의 사실상 표준으로 자리매김
 
 ### 이름의 유래
 
@@ -112,25 +116,25 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 컨트롤 플레인 (마스터) 구성 요소
 
-![Kubernetes 컨트롤 플레인](../assets/kubernetes_control_plane.png)
+![Kubernetes 컨트롤 플레인](<../.gitbook/assets/kubernetes_control_plane (1).png>)
 
 1. **kube-apiserver**: Kubernetes API를 노출하는 컨트롤 플레인의 프론트엔드
 2. **etcd**: 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소
 3. **kube-scheduler**: 노드에 파드를 할당하는 구성 요소
 4. **kube-controller-manager**: 컨트롤러 프로세스를 실행하는 구성 요소
-   - 노드 컨트롤러: 노드가 다운되었을 때 알림 및 대응
-   - 레플리케이션 컨트롤러: 파드 복제본의 올바른 수를 유지
-   - 엔드포인트 컨트롤러: 서비스와 파드를 연결
-   - 서비스 어카운트 & 토큰 컨트롤러: 새 네임스페이스에 대한 기본 계정 및 API 접근 토큰 생성
+   * 노드 컨트롤러: 노드가 다운되었을 때 알림 및 대응
+   * 레플리케이션 컨트롤러: 파드 복제본의 올바른 수를 유지
+   * 엔드포인트 컨트롤러: 서비스와 파드를 연결
+   * 서비스 어카운트 & 토큰 컨트롤러: 새 네임스페이스에 대한 기본 계정 및 API 접근 토큰 생성
 5. **cloud-controller-manager**: 클라우드별 컨트롤 로직을 포함하는 구성 요소
-   - 노드 컨트롤러: 클라우드 제공자에게 노드가 삭제되었는지 확인
-   - 라우트 컨트롤러: 클라우드 인프라에서 라우트 설정
-   - 서비스 컨트롤러: 클라우드 제공자 로드 밸런서 생성, 업데이트, 삭제
-   - 볼륨 컨트롤러: 볼륨 생성, 연결, 마운트
+   * 노드 컨트롤러: 클라우드 제공자에게 노드가 삭제되었는지 확인
+   * 라우트 컨트롤러: 클라우드 인프라에서 라우트 설정
+   * 서비스 컨트롤러: 클라우드 제공자 로드 밸런서 생성, 업데이트, 삭제
+   * 볼륨 컨트롤러: 볼륨 생성, 연결, 마운트
 
 ### 노드 구성 요소
 
-![Kubernetes 워커 노드](../assets/kubernetes_worker_node.png)
+![Kubernetes 워커 노드](<../.gitbook/assets/kubernetes_worker_node (1).png>)
 
 1. **kubelet**: 각 노드에서 실행되는 에이전트로, 파드 내 컨테이너가 실행되도록 관리
 2. **kube-proxy**: 각 노드에서 실행되는 네트워크 프록시로, Kubernetes 서비스 개념의 구현을 담당
@@ -138,7 +142,7 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 전체 아키텍처
 
-![Kubernetes 아키텍처](../assets/kubernetes_architecture.svg)
+![Kubernetes 아키텍처](<../.gitbook/assets/kubernetes_architecture (1).svg>)
 
 ## Kubernetes 주요 구성 요소
 
@@ -147,88 +151,97 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 API 서버는 Kubernetes API를 노출하는 컨트롤 플레인의 프론트엔드입니다. 모든 내부 및 외부 요청은 API 서버를 통해 처리됩니다.
 
 **주요 기능**:
-- REST API 제공
-- 인증 및 권한 부여
-- 요청 검증
-- etcd와의 통신
-- 수평적 확장 가능
+
+* REST API 제공
+* 인증 및 권한 부여
+* 요청 검증
+* etcd와의 통신
+* 수평적 확장 가능
 
 ### etcd
 
 etcd는 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소입니다.
 
 **주요 특징**:
-- 분산 시스템
-- 강한 일관성
-- 고가용성
-- 안전한 데이터 저장
-- 워치(watch) 기능으로 변경 사항 모니터링
+
+* 분산 시스템
+* 강한 일관성
+* 고가용성
+* 안전한 데이터 저장
+* 워치(watch) 기능으로 변경 사항 모니터링
 
 ### 스케줄러 (kube-scheduler)
 
 스케줄러는 새로 생성된 파드를 실행할 노드를 선택하는 컨트롤 플레인 구성 요소입니다.
 
 **스케줄링 과정**:
+
 1. **필터링**: 파드를 실행할 수 있는 노드 식별
 2. **스코어링**: 적합한 노드에 점수 부여
 3. **바인딩**: 최적의 노드에 파드 할당
 
 **고려 요소**:
-- 리소스 요구사항 (CPU, 메모리)
-- 하드웨어/소프트웨어/정책 제약 조건
-- 어피니티/안티-어피니티 명세
-- 데이터 지역성
-- 워크로드 간섭
+
+* 리소스 요구사항 (CPU, 메모리)
+* 하드웨어/소프트웨어/정책 제약 조건
+* 어피니티/안티-어피니티 명세
+* 데이터 지역성
+* 워크로드 간섭
 
 ### 컨트롤러 매니저 (kube-controller-manager)
 
 컨트롤러 매니저는 여러 컨트롤러 프로세스를 실행하는 컨트롤 플레인 구성 요소입니다.
 
 **주요 컨트롤러**:
-- **노드 컨트롤러**: 노드 상태 모니터링 및 대응
-- **레플리케이션 컨트롤러**: 파드 복제본 수 유지
-- **엔드포인트 컨트롤러**: 서비스와 파드 연결
-- **서비스 어카운트 & 토큰 컨트롤러**: 네임스페이스에 대한 기본 계정 및 API 토큰 생성
-- **잡 컨트롤러**: 일회성 작업 관리
-- **크론잡 컨트롤러**: 예약된 작업 관리
-- **데몬셋 컨트롤러**: 모든 노드에 특정 파드 실행 보장
-- **스테이트풀셋 컨트롤러**: 상태 유지 애플리케이션 관리
-- **PV 컨트롤러**: 영구 볼륨 관리
+
+* **노드 컨트롤러**: 노드 상태 모니터링 및 대응
+* **레플리케이션 컨트롤러**: 파드 복제본 수 유지
+* **엔드포인트 컨트롤러**: 서비스와 파드 연결
+* **서비스 어카운트 & 토큰 컨트롤러**: 네임스페이스에 대한 기본 계정 및 API 토큰 생성
+* **잡 컨트롤러**: 일회성 작업 관리
+* **크론잡 컨트롤러**: 예약된 작업 관리
+* **데몬셋 컨트롤러**: 모든 노드에 특정 파드 실행 보장
+* **스테이트풀셋 컨트롤러**: 상태 유지 애플리케이션 관리
+* **PV 컨트롤러**: 영구 볼륨 관리
 
 ### 클라우드 컨트롤러 매니저 (cloud-controller-manager)
 
 클라우드 컨트롤러 매니저는 클라우드별 컨트롤 로직을 포함하는 컨트롤 플레인 구성 요소입니다.
 
 **주요 컨트롤러**:
-- **노드 컨트롤러**: 클라우드 제공자 API를 통해 노드 상태 확인
-- **라우트 컨트롤러**: 클라우드 환경에서 라우트 설정
-- **서비스 컨트롤러**: 클라우드 로드 밸런서 생성, 업데이트, 삭제
-- **볼륨 컨트롤러**: 클라우드 스토리지 볼륨 생성, 연결, 마운트
+
+* **노드 컨트롤러**: 클라우드 제공자 API를 통해 노드 상태 확인
+* **라우트 컨트롤러**: 클라우드 환경에서 라우트 설정
+* **서비스 컨트롤러**: 클라우드 로드 밸런서 생성, 업데이트, 삭제
+* **볼륨 컨트롤러**: 클라우드 스토리지 볼륨 생성, 연결, 마운트
 
 ### kubelet
 
 kubelet은 각 노드에서 실행되는 에이전트로, 파드 내 컨테이너가 실행되도록 관리합니다.
 
 **주요 기능**:
-- PodSpec(파드 명세)에 따라 컨테이너 실행
-- 컨테이너 상태 보고
-- 컨테이너 헬스 체크 수행
-- 컨테이너 라이프사이클 관리
-- 노드 상태 보고
+
+* PodSpec(파드 명세)에 따라 컨테이너 실행
+* 컨테이너 상태 보고
+* 컨테이너 헬스 체크 수행
+* 컨테이너 라이프사이클 관리
+* 노드 상태 보고
 
 ### kube-proxy
 
 kube-proxy는 각 노드에서 실행되는 네트워크 프록시로, Kubernetes 서비스 개념의 구현을 담당합니다.
 
 **주요 기능**:
-- 서비스 IP 및 포트에 대한 네트워크 규칙 유지
-- 연결 포워딩
-- 로드 밸런싱 구현
+
+* 서비스 IP 및 포트에 대한 네트워크 규칙 유지
+* 연결 포워딩
+* 로드 밸런싱 구현
 
 **작동 모드**:
-- **userspace 모드**: 사용자 공간에서 프록시 실행 (레거시)
-- **iptables 모드**: 리눅스 iptables를 사용한 NAT 구현 (기본)
-- **IPVS 모드**: 리눅스 커널의 IP Virtual Server 사용 (고성능)
+
+* **userspace 모드**: 사용자 공간에서 프록시 실행 (레거시)
+* **iptables 모드**: 리눅스 iptables를 사용한 NAT 구현 (기본)
+* **IPVS 모드**: 리눅스 커널의 IP Virtual Server 사용 (고성능)
 
 ## Kubernetes 기본 객체
 
@@ -239,13 +252,15 @@ Kubernetes 객체는 클러스터의 상태를 나타내는 영구적인 엔티�
 파드는 Kubernetes의 가장 작은 배포 단위로, 하나 이상의 컨테이너 그룹을 나타냅니다. 파드 내의 컨테이너는 스토리지와 네트워크를 공유하며, 항상 같은 노드에서 함께 스케줄링됩니다.
 
 **주요 특징**:
-- 고유한 IP 주소 보유
-- 공유 네트워크 네임스페이스 (동일한 IP 및 포트 공간)
-- 공유 IPC 네임스페이스
-- 공유 호스트네임
-- 컨테이너 간 로컬호스트 통신 가능
+
+* 고유한 IP 주소 보유
+* 공유 네트워크 네임스페이스 (동일한 IP 및 포트 공간)
+* 공유 IPC 네임스페이스
+* 공유 호스트네임
+* 컨테이너 간 로컬호스트 통신 가능
 
 **파드 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -275,12 +290,14 @@ spec:
 네임스페이스는 단일 클러스터 내에서 리소스 그룹을 격리하는 방법을 제공합니다. 이는 여러 팀이나 프로젝트가 동일한 클러스터를 사용할 때 유용합니다.
 
 **기본 네임스페이스**:
-- **default**: 기본 네임스페이스
-- **kube-system**: Kubernetes 시스템에서 생성한 객체를 위한 네임스페이스
-- **kube-public**: 모든 사용자가 읽을 수 있는 객체를 위한 네임스페이스
-- **kube-node-lease**: 노드 하트비트를 위한 네임스페이스
+
+* **default**: 기본 네임스페이스
+* **kube-system**: Kubernetes 시스템에서 생성한 객체를 위한 네임스페이스
+* **kube-public**: 모든 사용자가 읽을 수 있는 객체를 위한 네임스페이스
+* **kube-node-lease**: 노드 하트비트를 위한 네임스페이스
 
 **네임스페이스 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -293,6 +310,7 @@ metadata:
 레이블은 객체에 연결된 키-값 쌍으로, 객체를 식별하고 선택하는 데 사용됩니다. 셀렉터는 레이블을 기반으로 객체를 필터링하는 방법을 제공합니다.
 
 **레이블 예시**:
+
 ```yaml
 metadata:
   labels:
@@ -302,10 +320,12 @@ metadata:
 ```
 
 **셀렉터 유형**:
-- **동등성 기반**: `=`, `!=`
-- **집합 기반**: `in`, `notin`, `exists`
+
+* **동등성 기반**: `=`, `!=`
+* **집합 기반**: `in`, `notin`, `exists`
 
 **셀렉터 예시**:
+
 ```yaml
 selector:
   matchLabels:
@@ -320,6 +340,7 @@ selector:
 어노테이션은 객체에 대한 비식별 메타데이터를 저장하는 키-값 쌍입니다. 어노테이션은 도구나 라이브러리에서 사용하는 정보를 저장하는 데 유용합니다.
 
 **어노테이션 예시**:
+
 ```yaml
 metadata:
   annotations:
@@ -334,12 +355,14 @@ metadata:
 노드는 Kubernetes 클러스터의 워커 머신으로, 파드를 실행합니다. 노드는 물리적 머신이나 가상 머신일 수 있습니다.
 
 **노드 상태**:
-- **주소**: 호스트 이름, 내부 IP, 외부 IP
-- **컨디션**: Ready, DiskPressure, MemoryPressure, PIDPressure, NetworkUnavailable
-- **용량**: CPU, 메모리, 최대 파드 수
-- **정보**: 커널 버전, 컨테이너 런타임 버전, kubelet 버전
+
+* **주소**: 호스트 이름, 내부 IP, 외부 IP
+* **컨디션**: Ready, DiskPressure, MemoryPressure, PIDPressure, NetworkUnavailable
+* **용량**: CPU, 메모리, 최대 파드 수
+* **정보**: 커널 버전, 컨테이너 런타임 버전, kubelet 버전
 
 **노드 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Node
@@ -371,11 +394,13 @@ status:
 레플리카셋은 지정된 수의 파드 복제본이 항상 실행되도록 보장합니다. 파드가 실패하거나 삭제되면 레플리카셋은 자동으로 대체 파드를 생성합니다.
 
 **주요 기능**:
-- 지정된 수의 파드 복제본 유지
-- 파드 템플릿 정의
-- 셀렉터를 통한 파드 식별
+
+* 지정된 수의 파드 복제본 유지
+* 파드 템플릿 정의
+* 셀렉터를 통한 파드 식별
 
 **레플리카셋 예시**:
+
 ```yaml
 apiVersion: apps/v1
 kind: ReplicaSet
@@ -405,12 +430,14 @@ spec:
 디플로이먼트는 레플리카셋을 한 단계 더 추상화하여 애플리케이션의 선언적 업데이트를 제공합니다. 디플로이먼트는 롤링 업데이트, 롤백, 스케일링 등의 기능을 제공합니다.
 
 **주요 기능**:
-- 선언적 애플리케이션 업데이트
-- 롤링 업데이트 및 롤백
-- 배포 이력 관리
-- 스케일링
+
+* 선언적 애플리케이션 업데이트
+* 롤링 업데이트 및 롤백
+* 배포 이력 관리
+* 스케일링
 
 **디플로이먼트 예시**:
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -458,12 +485,14 @@ spec:
 스테이트풀셋은 상태 유지가 필요한 애플리케이션을 위한 워크로드 리소스입니다. 각 파드에 고유한 식별자를 부여하고, 안정적인 네트워크 식별자와 영구 스토리지를 제공합니다.
 
 **주요 기능**:
-- 안정적이고 고유한 네트워크 식별자
-- 안정적이고 영구적인 스토리지
-- 순차적인 배포 및 스케일링
-- 순차적인 업데이트
+
+* 안정적이고 고유한 네트워크 식별자
+* 안정적이고 영구적인 스토리지
+* 순차적인 배포 및 스케일링
+* 순차적인 업데이트
 
 **스테이트풀셋 예시**:
+
 ```yaml
 apiVersion: apps/v1
 kind: StatefulSet
@@ -511,12 +540,14 @@ spec:
 데몬셋은 모든 노드(또는 특정 노드)에서 파드의 복사본을 실행하도록 보장합니다. 노드가 클러스터에 추가되면 파드가 자동으로 추가되고, 노드가 제거되면 파드도 제거됩니다.
 
 **주요 사용 사례**:
-- 로그 수집기 (Fluentd, Logstash)
-- 모니터링 에이전트 (Prometheus Node Exporter)
-- 네트워크 플러그인 (Calico, Cilium)
-- 스토리지 데몬 (Ceph)
+
+* 로그 수집기 (Fluentd, Logstash)
+* 모니터링 에이전트 (Prometheus Node Exporter)
+* 네트워크 플러그인 (Calico, Cilium)
+* 스토리지 데몬 (Ceph)
 
 **데몬셋 예시**:
+
 ```yaml
 apiVersion: apps/v1
 kind: DaemonSet
@@ -558,12 +589,14 @@ spec:
 잡은 하나 이상의 파드를 생성하고 지정된 수의 파드가 성공적으로 종료될 때까지 실행을 계속합니다. 배치 처리 작업에 적합합니다.
 
 **주요 기능**:
-- 일회성 작업 실행
-- 병렬 작업 실행
-- 작업 완료 보장
-- 실패 시 재시도
+
+* 일회성 작업 실행
+* 병렬 작업 실행
+* 작업 완료 보장
+* 실패 시 재시도
 
 **잡 예시**:
+
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -587,12 +620,14 @@ spec:
 크론잡은 지정된 일정에 따라 잡을 주기적으로 실행합니다. 리눅스 크론 작업과 유사한 방식으로 작동합니다.
 
 **주요 기능**:
-- 일정에 따른 작업 실행
-- 크론 표현식 지원
-- 동시성 정책 설정
-- 이력 제한
+
+* 일정에 따른 작업 실행
+* 크론 표현식 지원
+* 동시성 정책 설정
+* 이력 제한
 
 **크론잡 예시**:
+
 ```yaml
 apiVersion: batch/v1
 kind: CronJob
@@ -615,6 +650,7 @@ spec:
               value: "db.example.com"
           restartPolicy: OnFailure
 ```
+
 ## Kubernetes 서비스와 네트워킹
 
 Kubernetes의 네트워킹 모델은 모든 파드가 고유한 IP 주소를 가지며, 특별한 구성 없이도 서로 통신할 수 있다는 것을 기본 전제로 합니다. 서비스는 파드 집합에 대한 안정적인 엔드포인트를 제공합니다.
@@ -624,15 +660,16 @@ Kubernetes의 네트워킹 모델은 모든 파드가 고유한 IP 주소를 가
 서비스는 파드 집합에 대한 단일 엔드포인트와 로드 밸런싱을 제공합니다. 파드는 동적으로 생성되고 삭제되므로, 서비스는 이러한 변화에도 불구하고 안정적인 네트워크 주소를 제공합니다.
 
 **서비스 유형**:
-- **ClusterIP**: 클러스터 내부에서만 접근 가능한 서비스 (기본값)
-- **NodePort**: 각 노드의 IP와 특정 포트를 통해 외부에서 접근 가능
-- **LoadBalancer**: 클라우드 제공자의 로드 밸런서를 사용하여 외부에서 접근 가능
-- **ExternalName**: 외부 서비스에 대한 CNAME 레코드 생성
 
+* **ClusterIP**: 클러스터 내부에서만 접근 가능한 서비스 (기본값)
+* **NodePort**: 각 노드의 IP와 특정 포트를 통해 외부에서 접근 가능
+* **LoadBalancer**: 클라우드 제공자의 로드 밸런서를 사용하여 외부에서 접근 가능
+* **ExternalName**: 외부 서비스에 대한 CNAME 레코드 생성
 
-![Kubernetes 서비스](../assets/kubernetes_services.svg)
+![Kubernetes 서비스](<../.gitbook/assets/kubernetes_services (1).svg>)
 
 **서비스 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -648,6 +685,7 @@ spec:
 ```
 
 **NodePort 서비스 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -664,6 +702,7 @@ spec:
 ```
 
 **LoadBalancer 서비스 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -685,12 +724,14 @@ spec:
 인그레스는 클러스터 외부에서 클러스터 내부 서비스로의 HTTP 및 HTTPS 라우팅을 관리하는 API 객체입니다. 인그레스는 로드 밸런싱, SSL 종료, 이름 기반 가상 호스팅 등을 제공합니다.
 
 **인그레스 컨트롤러**:
-- **NGINX Ingress Controller**: NGINX 기반 인그레스 컨트롤러
-- **AWS ALB Ingress Controller**: AWS Application Load Balancer 기반 인그레스 컨트롤러
-- **Traefik**: 클라우드 네이티브 엣지 라우터
-- **Istio Ingress**: 서비스 메시 기반 인그레스
+
+* **NGINX Ingress Controller**: NGINX 기반 인그레스 컨트롤러
+* **AWS ALB Ingress Controller**: AWS Application Load Balancer 기반 인그레스 컨트롤러
+* **Traefik**: 클라우드 네이티브 엣지 라우터
+* **Istio Ingress**: 서비스 메시 기반 인그레스
 
 **인그레스 예시**:
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -726,16 +767,17 @@ spec:
 
 ### 네트워크 정책 (NetworkPolicy)
 
-네트워크 정책은 파드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 모든 파드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다.
-![Kubernetes 네임스페이스](../assets/kubernetes_namespaces.svg)
+네트워크 정책은 파드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 모든 파드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다. ![Kubernetes 네임스페이스](<../.gitbook/assets/kubernetes_namespaces (1).svg>)
 
 **주요 기능**:
-- 파드 간 통신 제어
-- 네임스페이스 간 통신 제어
-- 인그레스(수신) 및 이그레스(송신) 트래픽 제어
-- 포트 및 프로토콜 기반 필터링
+
+* 파드 간 통신 제어
+* 네임스페이스 간 통신 제어
+* 인그레스(수신) 및 이그레스(송신) 트래픽 제어
+* 포트 및 프로토콜 기반 필터링
 
 **네트워크 정책 예시**:
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -772,10 +814,12 @@ spec:
 Kubernetes는 클러스터 내에서 DNS 서비스를 제공하여 서비스 디스커버리를 지원합니다. 기본적으로 CoreDNS가 사용됩니다.
 
 **DNS 이름 형식**:
-- **서비스**: `<서비스명>.<네임스페이스>.svc.cluster.local`
-- **파드**: `<파드-IP-주소-점으로-구분>.pod.cluster.local`
+
+* **서비스**: `<서비스명>.<네임스페이스>.svc.cluster.local`
+* **파드**: `<파드-IP-주소-점으로-구분>.pod.cluster.local`
 
 **DNS 구성 예시**:
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -806,11 +850,13 @@ data:
 서비스 메시는 마이크로서비스 간의 통신을 관리하는 인프라 레이어입니다. 서비스 메시는 트래픽 관리, 보안, 관찰성 등을 제공합니다.
 
 **주요 서비스 메시**:
-- **Istio**: 가장 널리 사용되는 서비스 메시
-- **Linkerd**: 경량화된 서비스 메시
-- **AWS App Mesh**: AWS의 관리형 서비스 메시
+
+* **Istio**: 가장 널리 사용되는 서비스 메시
+* **Linkerd**: 경량화된 서비스 메시
+* **AWS App Mesh**: AWS의 관리형 서비스 메시
 
 **Istio 가상 서비스 예시**:
+
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -833,24 +879,27 @@ spec:
         host: reviews
         subset: v1
 ```
+
 ## Kubernetes 스토리지
 
 Kubernetes는 컨테이너화된 애플리케이션에 다양한 스토리지 옵션을 제공합니다. 파드가 재시작되거나 재스케줄링되더라도 데이터를 유지할 수 있는 방법을 제공합니다.
 
-![Kubernetes 스토리지](../assets/kubernetes_storage.svg)
+![Kubernetes 스토리지](<../.gitbook/assets/kubernetes_storage (1).svg>)
 
 ### 볼륨 (Volume)
 
 볼륨은 파드 내의 컨테이너에 마운트할 수 있는 디렉토리로, 파드의 수명 주기 동안 데이터를 유지합니다. 볼륨은 파드 내의 컨테이너 간에 데이터를 공유하는 데도 사용됩니다.
 
 **주요 볼륨 유형**:
-- **emptyDir**: 빈 디렉토리로 시작하며, 파드가 삭제되면 함께 삭제됨
-- **hostPath**: 호스트 노드의 파일 시스템에서 파드로 마운트
-- **configMap**: ConfigMap을 볼륨으로 마운트
-- **secret**: Secret을 볼륨으로 마운트
-- **persistentVolumeClaim**: 영구 볼륨을 파드에 마운트
+
+* **emptyDir**: 빈 디렉토리로 시작하며, 파드가 삭제되면 함께 삭제됨
+* **hostPath**: 호스트 노드의 파일 시스템에서 파드로 마운트
+* **configMap**: ConfigMap을 볼륨으로 마운트
+* **secret**: Secret을 볼륨으로 마운트
+* **persistentVolumeClaim**: 영구 볼륨을 파드에 마운트
 
 **emptyDir 볼륨 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -873,11 +922,13 @@ spec:
 영구 볼륨은 클러스터의 스토리지 리소스를 나타내는 API 객체입니다. 파드와 독립적으로 존재하며, 클러스터 관리자가 프로비저닝합니다.
 
 **접근 모드**:
-- **ReadWriteOnce (RWO)**: 단일 노드에서 읽기/쓰기 가능
-- **ReadOnlyMany (ROX)**: 여러 노드에서 읽기 전용으로 마운트 가능
-- **ReadWriteMany (RWX)**: 여러 노드에서 읽기/쓰기 가능
+
+* **ReadWriteOnce (RWO)**: 단일 노드에서 읽기/쓰기 가능
+* **ReadOnlyMany (ROX)**: 여러 노드에서 읽기 전용으로 마운트 가능
+* **ReadWriteMany (RWX)**: 여러 노드에서 읽기/쓰기 가능
 
 **영구 볼륨 예시**:
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -900,6 +951,7 @@ spec:
 영구 볼륨 클레임은 사용자의 스토리지 요청을 나타내는 API 객체입니다. 파드는 PVC를 통해 PV에 접근합니다.
 
 **영구 볼륨 클레임 예시**:
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -915,6 +967,7 @@ spec:
 ```
 
 **PVC를 사용하는 파드 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -938,6 +991,7 @@ spec:
 스토리지 클래스는 관리자가 제공하는 스토리지의 "클래스"를 설명합니다. 다양한 서비스 품질 수준, 백업 정책, 또는 클러스터 관리자가 결정한 임의의 정책을 제공할 수 있습니다.
 
 **스토리지 클래스 예시**:
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -956,6 +1010,7 @@ allowVolumeExpansion: true
 동적 프로비저닝은 스토리지 클래스를 사용하여 PVC가 요청될 때 자동으로 PV를 생성하는 기능입니다.
 
 **동적 프로비저닝 예시**:
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -975,13 +1030,15 @@ spec:
 CSI는 Kubernetes와 스토리지 시스템 간의 표준 인터페이스를 제공합니다. 이를 통해 스토리지 제공업체는 Kubernetes 코드를 수정하지 않고도 자체 스토리지 드라이버를 개발할 수 있습니다.
 
 **주요 CSI 드라이버**:
-- **AWS EBS CSI Driver**: Amazon EBS 볼륨 관리
-- **AWS EFS CSI Driver**: Amazon EFS 파일 시스템 관리
-- **AWS FSx for Lustre CSI Driver**: FSx for Lustre 파일 시스템 관리
-- **GCE PD CSI Driver**: Google Compute Engine 영구 디스크 관리
-- **Azure Disk CSI Driver**: Azure 디스크 관리
+
+* **AWS EBS CSI Driver**: Amazon EBS 볼륨 관리
+* **AWS EFS CSI Driver**: Amazon EFS 파일 시스템 관리
+* **AWS FSx for Lustre CSI Driver**: FSx for Lustre 파일 시스템 관리
+* **GCE PD CSI Driver**: Google Compute Engine 영구 디스크 관리
+* **Azure Disk CSI Driver**: Azure 디스크 관리
 
 **CSI 드라이버 배포 예시**:
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -994,6 +1051,7 @@ parameters:
   encrypted: "true"
 volumeBindingMode: WaitForFirstConsumer
 ```
+
 ## Kubernetes 구성 및 보안
 
 Kubernetes는 애플리케이션 구성과 보안을 관리하기 위한 다양한 객체와 메커니즘을 제공합니다.
@@ -1003,6 +1061,7 @@ Kubernetes는 애플리케이션 구성과 보안을 관리하기 위한 다양�
 ConfigMap은 키-값 쌍의 형태로 구성 데이터를 저장하는 API 객체입니다. 파드는 환경 변수, 명령줄 인수 또는 구성 파일로 ConfigMap의 데이터를 사용할 수 있습니다.
 
 **ConfigMap 예시**:
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -1018,6 +1077,7 @@ data:
 ```
 
 **ConfigMap을 사용하는 파드 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1047,15 +1107,17 @@ spec:
 Secret은 암호, 토큰, 키와 같은 민감한 정보를 저장하는 API 객체입니다. ConfigMap과 유사하지만, 민감한 데이터를 위해 설계되었습니다.
 
 **Secret 유형**:
-- **Opaque**: 임의의 사용자 정의 데이터 (기본값)
-- **kubernetes.io/service-account-token**: 서비스 계정 토큰
-- **kubernetes.io/dockercfg**: 직렬화된 ~/.dockercfg 파일
-- **kubernetes.io/dockerconfigjson**: 직렬화된 ~/.docker/config.json 파일
-- **kubernetes.io/basic-auth**: 기본 인증을 위한 자격 증명
-- **kubernetes.io/ssh-auth**: SSH 인증을 위한 자격 증명
-- **kubernetes.io/tls**: TLS 클라이언트 또는 서버를 위한 데이터
+
+* **Opaque**: 임의의 사용자 정의 데이터 (기본값)
+* **kubernetes.io/service-account-token**: 서비스 계정 토큰
+* **kubernetes.io/dockercfg**: 직렬화된 \~/.dockercfg 파일
+* **kubernetes.io/dockerconfigjson**: 직렬화된 \~/.docker/config.json 파일
+* **kubernetes.io/basic-auth**: 기본 인증을 위한 자격 증명
+* **kubernetes.io/ssh-auth**: SSH 인증을 위한 자격 증명
+* **kubernetes.io/tls**: TLS 클라이언트 또는 서버를 위한 데이터
 
 **Secret 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -1068,6 +1130,7 @@ data:
 ```
 
 **Secret을 사용하는 파드 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1095,12 +1158,14 @@ spec:
 RBAC는 Kubernetes API에 대한 접근을 제어하는 메커니즘입니다. 역할(Role)과 역할 바인딩(RoleBinding)을 사용하여 사용자나 서비스 계정에 특정 권한을 부여합니다.
 
 **주요 RBAC 객체**:
-- **Role**: 네임스페이스 내에서 권한 집합을 정의
-- **ClusterRole**: 클러스터 전체에서 권한 집합을 정의
-- **RoleBinding**: 역할을 사용자, 그룹 또는 서비스 계정에 바인딩
-- **ClusterRoleBinding**: 클러스터 역할을 사용자, 그룹 또는 서비스 계정에 바인딩
+
+* **Role**: 네임스페이스 내에서 권한 집합을 정의
+* **ClusterRole**: 클러스터 전체에서 권한 집합을 정의
+* **RoleBinding**: 역할을 사용자, 그룹 또는 서비스 계정에 바인딩
+* **ClusterRoleBinding**: 클러스터 역할을 사용자, 그룹 또는 서비스 계정에 바인딩
 
 **Role 예시**:
+
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -1114,6 +1179,7 @@ rules:
 ```
 
 **RoleBinding 예시**:
+
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -1135,6 +1201,7 @@ roleRef:
 서비스 계정은 파드 내에서 실행되는 프로세스의 ID를 제공합니다. 파드는 서비스 계정을 사용하여 Kubernetes API와 통신합니다.
 
 **서비스 계정 예시**:
+
 ```yaml
 apiVersion: v1
 kind: ServiceAccount
@@ -1144,6 +1211,7 @@ metadata:
 ```
 
 **서비스 계정을 사용하는 파드 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1161,6 +1229,7 @@ spec:
 네트워크 정책은 파드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 모든 파드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다.
 
 **네트워크 정책 예시**:
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -1197,6 +1266,7 @@ spec:
 파드 보안 정책은 파드 생성 및 업데이트에 대한 보안 관련 조건을 정의합니다. 이는 Kubernetes 1.21부터 사용 중단되었으며, 파드 보안 표준(Pod Security Standards)으로 대체되었습니다.
 
 **파드 보안 컨텍스트 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1226,6 +1296,7 @@ spec:
 3. **Restricted**: 강력한 제한으로 모범 사례 적용
 
 **파드 보안 표준 적용 예시**:
+
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -1236,24 +1307,25 @@ metadata:
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn: restricted
 ```
+
 ## Kubernetes vs Amazon EKS
 
 Amazon EKS(Elastic Kubernetes Service)는 AWS에서 제공하는 관리형 Kubernetes 서비스입니다. EKS는 Kubernetes의 기본 기능을 모두 제공하면서도 AWS 서비스와의 통합과 관리 편의성을 추가로 제공합니다.
 
 ### 주요 차이점
 
-| 특성 | 자체 관리형 Kubernetes | Amazon EKS |
-|------|----------------------|------------|
-| 컨트롤 플레인 관리 | 사용자가 직접 관리 | AWS에서 관리 |
-| 고가용성 | 사용자가 구성 필요 | 기본 제공 (여러 가용 영역에 걸쳐 배포) |
-| 업그레이드 | 사용자가 직접 수행 | AWS에서 관리 (사용자가 시작 가능) |
-| 보안 패치 | 사용자가 직접 적용 | AWS에서 자동 적용 |
-| 인증 | 다양한 옵션 구성 필요 | AWS IAM과 통합 |
-| 네트워킹 | CNI 플러그인 선택 및 구성 필요 | Amazon VPC CNI 기본 제공 |
-| 로드 밸런싱 | 수동 구성 필요 | AWS Load Balancer Controller 통합 |
-| 스토리지 | 스토리지 드라이버 구성 필요 | EBS, EFS, FSx CSI 드라이버 통합 |
-| 모니터링 | 수동 설정 필요 | CloudWatch Container Insights 통합 |
-| 비용 | 인프라 비용만 발생 | 컨트롤 플레인 비용 + 인프라 비용 |
+| 특성         | 자체 관리형 Kubernetes   | Amazon EKS                       |
+| ---------- | ------------------- | -------------------------------- |
+| 컨트롤 플레인 관리 | 사용자가 직접 관리          | AWS에서 관리                         |
+| 고가용성       | 사용자가 구성 필요          | 기본 제공 (여러 가용 영역에 걸쳐 배포)          |
+| 업그레이드      | 사용자가 직접 수행          | AWS에서 관리 (사용자가 시작 가능)            |
+| 보안 패치      | 사용자가 직접 적용          | AWS에서 자동 적용                      |
+| 인증         | 다양한 옵션 구성 필요        | AWS IAM과 통합                      |
+| 네트워킹       | CNI 플러그인 선택 및 구성 필요 | Amazon VPC CNI 기본 제공             |
+| 로드 밸런싱     | 수동 구성 필요            | AWS Load Balancer Controller 통합  |
+| 스토리지       | 스토리지 드라이버 구성 필요     | EBS, EFS, FSx CSI 드라이버 통합        |
+| 모니터링       | 수동 설정 필요            | CloudWatch Container Insights 통합 |
+| 비용         | 인프라 비용만 발생          | 컨트롤 플레인 비용 + 인프라 비용              |
 
 ### EKS의 추가 기능
 
@@ -1308,6 +1380,7 @@ Kubernetes를 시작하는 방법은 여러 가지가 있습니다. 여기서는
 Minikube는 로컬 머신에서 단일 노드 Kubernetes 클러스터를 실행하는 도구입니다.
 
 **설치 및 시작**:
+
 ```bash
 # 설치
 brew install minikube
@@ -1327,6 +1400,7 @@ minikube dashboard
 Kind는 Docker 컨테이너를 노드로 사용하여 로컬에서 Kubernetes 클러스터를 실행하는 도구입니다.
 
 **설치 및 시작**:
+
 ```bash
 # 설치
 brew install kind
@@ -1344,6 +1418,7 @@ kubectl cluster-info --context kind-my-cluster
 Docker Desktop은 Mac 및 Windows에서 Kubernetes를 쉽게 실행할 수 있는 기능을 제공합니다.
 
 **설정**:
+
 1. Docker Desktop 설치
 2. 설정 > Kubernetes > "Enable Kubernetes" 체크
 3. "Apply & Restart" 클릭
@@ -1355,6 +1430,7 @@ Docker Desktop은 Mac 및 Windows에서 Kubernetes를 쉽게 실행할 수 있�
 eksctl은 EKS 클러스터를 생성하고 관리하기 위한 간단한 CLI 도구입니다.
 
 **설치 및 클러스터 생성**:
+
 ```bash
 # eksctl 설치
 brew tap weaveworks/tap
@@ -1383,6 +1459,7 @@ kubectl get nodes
 AWS Management Console을 통해 EKS 클러스터를 생성할 수도 있습니다.
 
 **단계**:
+
 1. AWS Management Console에 로그인
 2. EKS 서비스로 이동
 3. "클러스터 생성" 클릭
@@ -1397,6 +1474,7 @@ AWS Management Console을 통해 EKS 클러스터를 생성할 수도 있습니�
 kubectl은 Kubernetes 클러스터와 상호 작용하기 위한 명령줄 도구입니다.
 
 **설치**:
+
 ```bash
 # macOS
 brew install kubectl
@@ -1411,6 +1489,7 @@ curl -LO "https://dl.k8s.io/release/v1.28.0/bin/windows/amd64/kubectl.exe"
 ```
 
 **기본 명령어**:
+
 ```bash
 # 클러스터 정보 확인
 kubectl cluster-info
@@ -1439,6 +1518,7 @@ kubectl exec -it <pod-name> -- /bin/bash
 Kubernetes 대시보드는 클러스터를 관리하기 위한 웹 기반 UI를 제공합니다.
 
 **설치 및 접근**:
+
 ```bash
 # 대시보드 설치
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
@@ -1479,59 +1559,65 @@ kubectl proxy
 Kubernetes는 컨테이너화된 애플리케이션의 배포, 확장 및 관리를 자동화하는 강력한 플랫폼입니다. 이 문서에서 다룬 핵심 내용을 정리하면:
 
 ### 핵심 아키텍처
-- **컨트롤 플레인**: 클러스터의 두뇌 역할 (API Server, etcd, Scheduler, Controller Manager)
-- **워커 노드**: 실제 애플리케이션을 실행하는 노드 (kubelet, kube-proxy, Container Runtime)
-- **선언적 구성**: 원하는 상태를 정의하면 Kubernetes가 현재 상태를 원하는 상태로 맞춤
+
+* **컨트롤 플레인**: 클러스터의 두뇌 역할 (API Server, etcd, Scheduler, Controller Manager)
+* **워커 노드**: 실제 애플리케이션을 실행하는 노드 (kubelet, kube-proxy, Container Runtime)
+* **선언적 구성**: 원하는 상태를 정의하면 Kubernetes가 현재 상태를 원하는 상태로 맞춤
 
 ### 주요 객체 및 리소스
-- **기본 객체**: Pod, Service, Volume, Namespace
-- **워크로드 리소스**: Deployment, StatefulSet, DaemonSet, Job, CronJob
-- **구성 및 보안**: ConfigMap, Secret, RBAC, ServiceAccount
-- **네트워킹**: Service, Ingress, NetworkPolicy
-- **스토리지**: PersistentVolume, PersistentVolumeClaim, StorageClass
+
+* **기본 객체**: Pod, Service, Volume, Namespace
+* **워크로드 리소스**: Deployment, StatefulSet, DaemonSet, Job, CronJob
+* **구성 및 보안**: ConfigMap, Secret, RBAC, ServiceAccount
+* **네트워킹**: Service, Ingress, NetworkPolicy
+* **스토리지**: PersistentVolume, PersistentVolumeClaim, StorageClass
 
 ### 학습 경로 권장사항
 
 **1단계: 로컬 환경 구축**
-- minikube 또는 kind로 로컬 클러스터 생성
-- kubectl 명령어 익히기
-- 기본 객체(Pod, Deployment, Service) 실습
+
+* minikube 또는 kind로 로컬 클러스터 생성
+* kubectl 명령어 익히기
+* 기본 객체(Pod, Deployment, Service) 실습
 
 **2단계: 핵심 개념 마스터**
-- 워크로드 리소스 이해 및 실습
-- ConfigMap과 Secret으로 구성 관리
-- Service와 Ingress로 네트워킹 구성
-- PV와 PVC로 스토리지 관리
+
+* 워크로드 리소스 이해 및 실습
+* ConfigMap과 Secret으로 구성 관리
+* Service와 Ingress로 네트워킹 구성
+* PV와 PVC로 스토리지 관리
 
 **3단계: 고급 기능 학습**
-- RBAC와 보안 정책
-- 자동 확장 (HPA, VPA, Cluster Autoscaler)
-- 모니터링 및 로깅 (Prometheus, Grafana)
-- 서비스 메시 (Istio, Linkerd)
+
+* RBAC와 보안 정책
+* 자동 확장 (HPA, VPA, Cluster Autoscaler)
+* 모니터링 및 로깅 (Prometheus, Grafana)
+* 서비스 메시 (Istio, Linkerd)
 
 **4단계: 프로덕션 운영**
-- Amazon EKS 또는 다른 관리형 Kubernetes 사용
-- CI/CD 파이프라인 통합
-- 재해 복구 및 백업 전략
-- 비용 최적화 및 리소스 관리
+
+* Amazon EKS 또는 다른 관리형 Kubernetes 사용
+* CI/CD 파이프라인 통합
+* 재해 복구 및 백업 전략
+* 비용 최적화 및 리소스 관리
 
 ### 다음 단계
 
-- **EKS 심화 학습**: EKS 특화 기능 (Fargate, VPC CNI, ALB Controller)
-- **고급 네트워킹**: CNI 플러그인 (Calico, Cilium)
-- **옵저버빌리티**: 메트릭, 로그, 트레이싱
-- **GitOps**: ArgoCD, Flux
-- **보안 강화**: Pod Security Standards, Network Policies, OPA/Gatekeeper
+* **EKS 심화 학습**: EKS 특화 기능 (Fargate, VPC CNI, ALB Controller)
+* **고급 네트워킹**: CNI 플러그인 (Calico, Cilium)
+* **옵저버빌리티**: 메트릭, 로그, 트레이싱
+* **GitOps**: ArgoCD, Flux
+* **보안 강화**: Pod Security Standards, Network Policies, OPA/Gatekeeper
 
 Kubernetes는 계속 발전하고 있으며, 클라우드 네이티브 애플리케이션 개발 및 운영의 핵심 요소가 되었습니다. 이 문서가 Kubernetes 여정을 시작하는 데 도움이 되기를 바랍니다.
 
 ### 추가 학습 리소스
 
-- **공식 문서**: [Kubernetes 공식 문서](https://kubernetes.io/docs/)는 가장 정확하고 최신의 정보를 제공합니다
-- **인터랙티브 튜토리얼**: [Kubernetes Tutorials](https://kubernetes.io/docs/tutorials/)에서 실습 가능
-- **커뮤니티**: [Kubernetes Slack](https://slack.k8s.io/), [Reddit r/kubernetes](https://reddit.com/r/kubernetes)
-- **인증**: CKA(Certified Kubernetes Administrator), CKAD(Certified Kubernetes Application Developer)
-- **한국 커뮤니티**: Kubernetes Korea User Group, AWS Korea User Group
+* **공식 문서**: [Kubernetes 공식 문서](https://kubernetes.io/docs/)는 가장 정확하고 최신의 정보를 제공합니다
+* **인터랙티브 튜토리얼**: [Kubernetes Tutorials](https://kubernetes.io/docs/tutorials/)에서 실습 가능
+* **커뮤니티**: [Kubernetes Slack](https://slack.k8s.io/), [Reddit r/kubernetes](https://reddit.com/r/kubernetes)
+* **인증**: CKA(Certified Kubernetes Administrator), CKAD(Certified Kubernetes Application Developer)
+* **한국 커뮤니티**: Kubernetes Korea User Group, AWS Korea User Group
 
 ## 퀴즈
 
@@ -1539,9 +1625,9 @@ Kubernetes는 계속 발전하고 있으며, 클라우드 네이티브 애플리
 
 ## 참고 자료
 
-- [Kubernetes 공식 문서](https://kubernetes.io/docs/)
-- [Amazon EKS 문서](https://docs.aws.amazon.com/eks/)
-- [Kubernetes GitHub 저장소](https://github.com/kubernetes/kubernetes)
-- [CNCF(Cloud Native Computing Foundation)](https://www.cncf.io/)
-- [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way)
-- [Kubernetes Patterns](https://www.oreilly.com/library/view/kubernetes-patterns/9781492050278/)
+* [Kubernetes 공식 문서](https://kubernetes.io/docs/)
+* [Amazon EKS 문서](https://docs.aws.amazon.com/eks/)
+* [Kubernetes GitHub 저장소](https://github.com/kubernetes/kubernetes)
+* [CNCF(Cloud Native Computing Foundation)](https://www.cncf.io/)
+* [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way)
+* [Kubernetes Patterns](https://www.oreilly.com/library/view/kubernetes-patterns/9781492050278/)

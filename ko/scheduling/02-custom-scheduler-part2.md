@@ -1,4 +1,4 @@
-# Part 2: 스케줄러 확장 및 프레임워크
+# Part 2: 구현
 
 ## 스케줄러 확장(Extender) 접근 방식
 
@@ -8,7 +8,7 @@
 
 다음 다이어그램은 스케줄러 확장 접근 방식의 아키텍처를 보여줍니다:
 
-![스케줄러 확장 아키텍처](../assets/scheduler_extender_architecture.svg)
+![스케줄러 확장 아키텍처](<../.gitbook/assets/scheduler_extender_architecture (1).svg>)
 
 ### 스케줄러 확장 워크플로우
 
@@ -311,13 +311,13 @@ Kubernetes 1.15부터 도입된 스케줄러 프레임워크는 플러그인 기
 
 다음 다이어그램은 스케줄러 프레임워크의 아키텍처를 보여줍니다:
 
-![스케줄러 프레임워크 아키텍처](../assets/custom-scheduler-framework-architecture.svg)
+![스케줄러 프레임워크 아키텍처](<../.gitbook/assets/custom-scheduler-framework-architecture (1).svg>)
 
 ### 스케줄러 프레임워크 플러그인 구성
 
 다음 다이어그램은 스케줄러 프레임워크 플러그인의 구성을 보여줍니다:
 
-![](../assets/kubernetes-scheduler-architecture.svg)
+![](<../.gitbook/assets/kubernetes-scheduler-architecture (1).svg>)
 
 ### 스케줄링 프레임워크 확장 포인트
 
@@ -488,8 +488,7 @@ Amazon EKS에서 스케줄러 프레임워크를 구현할 때는 다음과 같�
 
 ### EKS 스케줄러 프레임워크 아키텍처
 
-다음 다이어그램은 EKS에서 스케줄러 프레임워크를 구현하는 방법을 보여줍니다:
-![](../assets/eks_scheduler_framework_architecture.svg)
+다음 다이어그램은 EKS에서 스케줄러 프레임워크를 구현하는 방법을 보여줍니다: ![](<../.gitbook/assets/eks_scheduler_framework_architecture (1).svg>)
 
 ### EKS 스케줄러 프레임워크 구현 단계
 

@@ -1,18 +1,16 @@
 # Part 1: 인프라 구성
 
-> **난이도**: 중급 (Intermediate)
-> **예상 소요 시간**: 60분
-> **마지막 업데이트**: 2026년 2월 23일
+> **난이도**: 중급 (Intermediate) **예상 소요 시간**: 60분 **마지막 업데이트**: 2026년 2월 23일
 
 ## 학습 목표
 
-- 2개의 EKS 클러스터(Managed Cluster, Service Cluster) 프로비저닝
-- AWS Managed Services(Aurora, SQS/SNS, MWAA, AMP, AMG, OpenSearch) 구성
-- ArgoCD 멀티 클러스터 등록 및 Argo Rollouts 설치
+* 2개의 EKS 클러스터(Managed Cluster, Service Cluster) 프로비저닝
+* AWS Managed Services(Aurora, SQS/SNS, MWAA, AMP, AMG, OpenSearch) 구성
+* ArgoCD 멀티 클러스터 등록 및 Argo Rollouts 설치
 
 ## 아키텍처 개요
 
-![Infrastructure Architecture](../../../assets/labs/observability/architecture-overview.png)
+![Infrastructure Architecture](../../.gitbook/assets/architecture-overview.png)
 
 ```mermaid
 flowchart TB
@@ -49,24 +47,24 @@ flowchart TB
     MC --> OS
 ```
 
----
+***
 
 ## 구성 단계 요약
 
-| Step | 리소스 | 도구 | 상세 |
-|------|--------|------|------|
-| 1.1 | Managed Cluster (EKS) | Terraform/eksctl | VPC, EKS, IRSA |
-| 1.2 | Service Cluster (EKS) | Terraform/eksctl | VPC, EKS, Karpenter IRSA |
-| 1.3 | SQS 큐 + SNS 토픽 | Terraform | 메시지 큐 구성 |
-| 1.4 | Aurora PostgreSQL | Terraform | 데이터베이스 |
-| 1.5 | MWAA 환경 | Terraform | Airflow 환경 |
-| 1.6 | AMP 워크스페이스 | Terraform/CLI | Prometheus 백엔드 |
-| 1.7 | AMG 워크스페이스 | Terraform/CLI | Grafana 백엔드 |
-| 1.8 | OpenSearch 도메인 | Terraform | 로그 저장소 |
-| 1.9 | ArgoCD | Helm | GitOps 컨트롤러 |
-| 1.10 | Argo Rollouts | Helm | Progressive Delivery |
+| Step | 리소스                   | 도구               | 상세                       |
+| ---- | --------------------- | ---------------- | ------------------------ |
+| 1.1  | Managed Cluster (EKS) | Terraform/eksctl | VPC, EKS, IRSA           |
+| 1.2  | Service Cluster (EKS) | Terraform/eksctl | VPC, EKS, Karpenter IRSA |
+| 1.3  | SQS 큐 + SNS 토픽        | Terraform        | 메시지 큐 구성                 |
+| 1.4  | Aurora PostgreSQL     | Terraform        | 데이터베이스                   |
+| 1.5  | MWAA 환경               | Terraform        | Airflow 환경               |
+| 1.6  | AMP 워크스페이스            | Terraform/CLI    | Prometheus 백엔드           |
+| 1.7  | AMG 워크스페이스            | Terraform/CLI    | Grafana 백엔드              |
+| 1.8  | OpenSearch 도메인        | Terraform        | 로그 저장소                   |
+| 1.9  | ArgoCD                | Helm             | GitOps 컨트롤러              |
+| 1.10 | Argo Rollouts         | Helm             | Progressive Delivery     |
 
----
+***
 
 ## Step 1.1: Managed Cluster 생성
 
@@ -264,7 +262,7 @@ terraform plan
 terraform apply -auto-approve
 ```
 
----
+***
 
 ## Step 1.2: Service Cluster 생성
 
@@ -377,7 +375,7 @@ spec:
 EOF
 ```
 
----
+***
 
 ## Step 1.3: SQS 큐 + SNS 토픽 생성
 
@@ -517,7 +515,7 @@ eksctl create iamserviceaccount \
   --approve
 ```
 
----
+***
 
 ## Step 1.4: Aurora PostgreSQL 생성
 
@@ -644,7 +642,7 @@ CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_payments_order ON payments(order_id);
 ```
 
----
+***
 
 ## Step 1.5: MWAA 환경 생성
 
@@ -738,7 +736,7 @@ output "mwaa_webserver_url" {
 }
 ```
 
----
+***
 
 ## Step 1.6: AMP 워크스페이스 생성
 
@@ -809,7 +807,7 @@ aws amp describe-workspace \
   --output text
 ```
 
----
+***
 
 ## Step 1.7: AMG 워크스페이스 생성
 
@@ -875,7 +873,7 @@ output "amg_workspace_url" {
 }
 ```
 
----
+***
 
 ## Step 1.8: OpenSearch 도메인 생성
 
@@ -972,7 +970,7 @@ output "opensearch_dashboard_endpoint" {
 }
 ```
 
----
+***
 
 ## Step 1.9: ArgoCD 설치 및 멀티 클러스터 등록
 
@@ -1092,7 +1090,7 @@ spec:
 kubectl apply -f argocd-project.yaml
 ```
 
----
+***
 
 ## Step 1.10: Argo Rollouts 설치
 
@@ -1141,7 +1139,7 @@ sudo mv kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
 kubectl argo rollouts version
 ```
 
----
+***
 
 ## 검증 (Verification)
 
@@ -1204,36 +1202,36 @@ aws mwaa get-environment \
 
 ### 예상 결과
 
-| 리소스 | 예상 상태 |
-|--------|----------|
-| Managed Cluster Nodes | 3/3 Ready |
-| Service Cluster Nodes | 3/3 Ready |
-| ArgoCD Pods | Running |
-| Argo Rollouts Pods | Running |
-| Aurora | available |
-| SQS Queue | Active |
-| AMP | ACTIVE |
-| AMG | ACTIVE |
-| OpenSearch | false (Processing=false means ready) |
-| MWAA | AVAILABLE |
+| 리소스                   | 예상 상태                                |
+| --------------------- | ------------------------------------ |
+| Managed Cluster Nodes | 3/3 Ready                            |
+| Service Cluster Nodes | 3/3 Ready                            |
+| ArgoCD Pods           | Running                              |
+| Argo Rollouts Pods    | Running                              |
+| Aurora                | available                            |
+| SQS Queue             | Active                               |
+| AMP                   | ACTIVE                               |
+| AMG                   | ACTIVE                               |
+| OpenSearch            | false (Processing=false means ready) |
+| MWAA                  | AVAILABLE                            |
 
----
+***
 
 ## 정리 (이 Part에서 정리하지 않음)
 
-> **참고**: 인프라는 전체 실습이 완료될 때까지 유지합니다. 정리는 [Part 6](./06-distributed-tracing-lab.md)의 마지막에서 진행합니다.
+> **참고**: 인프라는 전체 실습이 완료될 때까지 유지합니다. 정리는 [Part 6](06-distributed-tracing-lab.md)의 마지막에서 진행합니다.
 
----
+***
 
 ## 참조 문서
 
-- [EKS 클러스터 생성 Part 1](../../eks/02-eks-cluster-creation-part1.md)
-- [EKS 클러스터 생성 Part 2](../../eks/02-eks-cluster-creation-part2.md)
-- [Karpenter 오토스케일링](../../autoscaling/02-karpenter.md)
-- [ArgoCD 설치](../../gitops/argocd/01-installation.md)
+* [EKS 클러스터 생성 Part 1](../../eks/02-eks-cluster-creation-part1.md)
+* [EKS 클러스터 생성 Part 2](../../eks/02-eks-cluster-creation-part2.md)
+* [Karpenter 오토스케일링](../../autoscaling/02-karpenter.md)
+* [ArgoCD 설치](../../gitops/argocd/01-installation.md)
 
----
+***
 
 ## 다음 단계
 
-인프라 구성이 완료되었습니다. [Part 2: Observability 스택 배포](./02-observability-stack-lab.md)로 진행하여 메트릭, 로그, 트레이스 수집 파이프라인을 구축합니다.
+인프라 구성이 완료되었습니다. [Part 2: Observability 스택 배포](02-observability-stack-lab.md)로 진행하여 메트릭, 로그, 트레이스 수집 파이프라인을 구축합니다.

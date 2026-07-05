@@ -1,7 +1,6 @@
 # Linux 기초
 
-> **지원 버전**: 모든 주요 Linux 배포판 (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+)
-> **마지막 업데이트**: 2026년 2월 11일
+> **지원 버전**: 모든 주요 Linux 배포판 (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+) **마지막 업데이트**: 2026년 2월 11일
 
 Kubernetes와 컨테이너 기술을 이해하기 위해서는 Linux에 대한 기본적인 이해가 필수적입니다. 이 문서에서는 Kubernetes 환경에서 특히 중요한 Linux의 핵심 개념들을 다룹니다.
 
@@ -10,12 +9,15 @@ Kubernetes와 컨테이너 기술을 이해하기 위해서는 Linux에 대한 �
 이 문서의 예제를 따라하기 위해서는 다음과 같은 환경이 필요합니다:
 
 ### 필수 환경
-- Linux 운영체제 (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+ 권장)
-- 터미널 액세스
-- sudo 권한
+
+* Linux 운영체제 (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+ 권장)
+* 터미널 액세스
+* sudo 권한
 
 ### 클라우드 환경 설정 (선택 사항)
+
 AWS EC2 인스턴스를 사용하는 경우:
+
 ```bash
 # Amazon Linux 2 인스턴스 시작
 aws ec2 run-instances \
@@ -30,29 +32,31 @@ ssh -i your-key.pem ec2-user@your-instance-public-ip
 ```
 
 ### 로컬 환경 설정 (선택 사항)
+
 로컬 환경에서 실습하려면 다음 중 하나를 사용할 수 있습니다:
-- **VirtualBox + Vagrant**: 가상 머신 환경 구성
-- **WSL2**: Windows에서 Linux 환경 사용
-- **Docker**: 컨테이너 환경에서 실습
+
+* **VirtualBox + Vagrant**: 가상 머신 환경 구성
+* **WSL2**: Windows에서 Linux 환경 사용
+* **Docker**: 컨테이너 환경에서 실습
 
 ## 목차
 
-* [Linux 커널과 사용자 공간](#linux-커널과-사용자-공간)
-* [프로세스 관리](#프로세스-관리)
-* [네임스페이스](#네임스페이스)
-* [cgroups (Control Groups)](#cgroups-control-groups)
-* [파일 시스템](#파일-시스템)
-* [네트워킹 기초](#네트워킹-기초)
-* [보안 컨텍스트](#보안-컨텍스트)
-* [systemd와 서비스 관리](#systemd와-서비스-관리)
-* [커널 파라미터와 모듈](#커널-파라미터와-모듈)
-* [시스템 리소스 제한](#시스템-리소스-제한)
-* [로그 관리](#로그-관리)
-* [DNS와 네트워크 설정](#dns와-네트워크-설정)
-* [시간 동기화](#시간-동기화)
-* [패키지 관리](#패키지-관리)
-* [주요 Linux 명령어](#주요-linux-명령어)
-* [컨테이너 관련 Linux 기능](#컨테이너-관련-linux-기능)
+* [Linux 커널과 사용자 공간](01-linux-basics.md#linux-커널과-사용자-공간)
+* [프로세스 관리](01-linux-basics.md#프로세스-관리)
+* [네임스페이스](01-linux-basics.md#네임스페이스)
+* [cgroups (Control Groups)](01-linux-basics.md#cgroups-control-groups)
+* [파일 시스템](01-linux-basics.md#파일-시스템)
+* [네트워킹 기초](01-linux-basics.md#네트워킹-기초)
+* [보안 컨텍스트](01-linux-basics.md#보안-컨텍스트)
+* [systemd와 서비스 관리](01-linux-basics.md#systemd와-서비스-관리)
+* [커널 파라미터와 모듈](01-linux-basics.md#커널-파라미터와-모듈)
+* [시스템 리소스 제한](01-linux-basics.md#시스템-리소스-제한)
+* [로그 관리](01-linux-basics.md#로그-관리)
+* [DNS와 네트워크 설정](01-linux-basics.md#dns와-네트워크-설정)
+* [시간 동기화](01-linux-basics.md#시간-동기화)
+* [패키지 관리](01-linux-basics.md#패키지-관리)
+* [주요 Linux 명령어](01-linux-basics.md#주요-linux-명령어)
+* [컨테이너 관련 Linux 기능](01-linux-basics.md#컨테이너-관련-linux-기능)
 
 ## Linux 커널과 사용자 공간
 
@@ -71,24 +75,23 @@ Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 �
 
 사용자 공간은 일반 응용 프로그램이 실행되는 메모리 영역입니다. 사용자 공간 프로그램은 시스템 호출을 통해 커널 서비스에 접근합니다.
 
-![Linux 아키텍처](../assets/linux_architecture.svg)
+![Linux 아키텍처](<../.gitbook/assets/linux_architecture (1).svg>)
 
 ### 시스템 호출 예시
 
-| 시스템 호출 | 설명 | 관련 명령어 |
-|------------|------|------------|
-| `fork()` | 새 프로세스 생성 | `ps`, `top` |
-| `exec()` | 프로그램 실행 | `bash`, `sh` |
-| `open()` | 파일 열기 | `cat`, `less` |
-| `read()` | 파일에서 데이터 읽기 | `cat`, `grep` |
-| `write()` | 파일에 데이터 쓰기 | `echo`, `tee` |
-| `socket()` | 네트워크 소켓 생성 | `netstat`, `ss` |
-| `clone()` | 네임스페이스 생성 | `unshare`, `docker` |
+| 시스템 호출     | 설명          | 관련 명령어              |
+| ---------- | ----------- | ------------------- |
+| `fork()`   | 새 프로세스 생성   | `ps`, `top`         |
+| `exec()`   | 프로그램 실행     | `bash`, `sh`        |
+| `open()`   | 파일 열기       | `cat`, `less`       |
+| `read()`   | 파일에서 데이터 읽기 | `cat`, `grep`       |
+| `write()`  | 파일에 데이터 쓰기  | `echo`, `tee`       |
+| `socket()` | 네트워크 소켓 생성  | `netstat`, `ss`     |
+| `clone()`  | 네임스페이스 생성   | `unshare`, `docker` |
 
 ### 리눅스 커널 아키텍처
 
-![리눅스 커널 아키텍처](../assets/linux_kernel_architecture.svg)
-
+![리눅스 커널 아키텍처](<../.gitbook/assets/linux_kernel_architecture (1).svg>)
 
 ## 프로세스 관리
 
@@ -306,7 +309,7 @@ ip link set <veth2> netns <네임스페이스명>
 
 Linux 파일 권한은 소유자, 그룹, 기타 사용자에 대한 읽기(r), 쓰기(w), 실행(x) 권한으로 구성됩니다.
 
-![파일 권한 구조](../assets/file_permissions.svg)
+![파일 권한 구조](<../.gitbook/assets/file_permissions (1).svg>)
 
 ### 권한 관련 명령어
 
@@ -1001,7 +1004,7 @@ journalctl -u <서비스> # 서비스 로그 확인
 
 OverlayFS는 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현하는 유니온 마운트 파일 시스템입니다. Docker와 같은 컨테이너 런타임에서 이미지 레이어를 구현하는 데 사용됩니다.
 
-![](../assets/linux_basics_overlayfs.svg)
+![](<../.gitbook/assets/linux_basics_overlayfs (1).svg>)
 
 ### 네트워크 브릿지와 NAT
 
@@ -1075,17 +1078,20 @@ Linux 기능은 전통적인 root 권한을 더 작은 권한 단위로 나눈 �
 Linux의 기본 개념과 기능은 Kubernetes와 컨테이너 기술을 이해하는 데 필수적입니다. 이 문서에서 다룬 주요 내용을 정리하면:
 
 ### 핵심 기술
+
 * **네임스페이스와 cgroups**: 컨테이너 격리와 자원 관리의 기반
 * **OverlayFS**: 컨테이너 이미지 레이어링의 핵심
 * **systemd**: Kubernetes 노드 서비스 관리
 
 ### 운영 필수 지식
+
 * **커널 파라미터 튜닝**: sysctl을 통한 네트워킹 및 시스템 최적화
 * **모듈 관리**: CNI 플러그인과 스토리지 드라이버 지원
 * **로그 관리**: journald를 통한 시스템 및 서비스 로그 분석
 * **시간 동기화**: 분산 시스템의 일관성 유지
 
 ### 문제 해결
+
 * **리소스 제한**: ulimit과 cgroups를 통한 리소스 관리
 * **네트워킹**: DNS, 브릿지, iptables 설정
 * **패키지 관리**: Kubernetes 구성 요소의 버전 관리

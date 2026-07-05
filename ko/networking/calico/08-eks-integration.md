@@ -1,7 +1,6 @@
-# Part 8: Amazon EKS 환경에서의 Calico
+# Part 8: EKS 통합
 
-> **지원 버전**: Calico v3.29+ / Kubernetes 1.28+ / EKS 1.28+
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Calico v3.29+ / Kubernetes 1.28+ / EKS 1.28+ **마지막 업데이트**: 2026년 2월 23일
 
 ## 개요
 
@@ -9,7 +8,7 @@
 
 ## VPC CNI + Calico 아키텍처
 
-![Calico on Amazon EKS](../../../assets/calico_eks_integration.png)
+![Calico on Amazon EKS](../../.gitbook/assets/calico_eks_integration.png)
 
 ### 통합 아키텍처 상세
 
@@ -87,12 +86,12 @@ sequenceDiagram
 
 ### 설치 옵션 개요
 
-| 방법 | 복잡도 | 기능 범위 | 업그레이드 | 권장 사용 사례 |
-|------|--------|----------|-----------|---------------|
-| **EKS 애드온** | 낮음 | 기본 | AWS 관리 | 간단한 Policy 요구 |
-| **Tigera Operator** | 중간 | 전체 | 수동 | 프로덕션, 전체 기능 |
-| **Helm** | 중간 | 전체 | 수동 | GitOps, 커스터마이징 |
-| **Manifest** | 높음 | 전체 | 수동 | 고급 커스터마이징 |
+| 방법                  | 복잡도 | 기능 범위 | 업그레이드  | 권장 사용 사례       |
+| ------------------- | --- | ----- | ------ | -------------- |
+| **EKS 애드온**         | 낮음  | 기본    | AWS 관리 | 간단한 Policy 요구  |
+| **Tigera Operator** | 중간  | 전체    | 수동     | 프로덕션, 전체 기능    |
+| **Helm**            | 중간  | 전체    | 수동     | GitOps, 커스터마이징 |
+| **Manifest**        | 높음  | 전체    | 수동     | 고급 커스터마이징      |
 
 ### 방법 1: EKS 애드온 (AWS 관리)
 
@@ -289,18 +288,18 @@ graph TB
 
 ### 기능 비교
 
-| 기능 | EKS Native Policy | Calico |
-|------|-------------------|--------|
-| **Kubernetes NetworkPolicy** | 완전 지원 | 완전 지원 |
-| **GlobalNetworkPolicy** | 미지원 | 지원 |
-| **NetworkSet** | 미지원 | 지원 |
-| **Tier 기반 정책** | 미지원 | 지원 |
-| **L7 정책** | 미지원 | Enterprise |
-| **DNS 기반 정책** | 미지원 | Enterprise |
-| **Host Endpoint** | 미지원 | 지원 |
-| **eBPF 데이터플레인** | 지원 | 지원 |
-| **관측성** | CloudWatch | Prometheus |
-| **비용** | 무료 | 무료 (OSS) |
+| 기능                           | EKS Native Policy | Calico     |
+| ---------------------------- | ----------------- | ---------- |
+| **Kubernetes NetworkPolicy** | 완전 지원             | 완전 지원      |
+| **GlobalNetworkPolicy**      | 미지원               | 지원         |
+| **NetworkSet**               | 미지원               | 지원         |
+| **Tier 기반 정책**               | 미지원               | 지원         |
+| **L7 정책**                    | 미지원               | Enterprise |
+| **DNS 기반 정책**                | 미지원               | Enterprise |
+| **Host Endpoint**            | 미지원               | 지원         |
+| **eBPF 데이터플레인**              | 지원                | 지원         |
+| **관측성**                      | CloudWatch        | Prometheus |
+| **비용**                       | 무료                | 무료 (OSS)   |
 
 ### 마이그레이션 고려사항
 
@@ -346,15 +345,15 @@ spec:
 
 ### Managed Node Group vs Self-managed vs Fargate
 
-| 특성 | Managed Node Group | Self-managed | Fargate |
-|------|-------------------|--------------|---------|
-| **Calico 전체 기능** | 지원 | 지원 | 미지원 |
-| **eBPF 모드** | 지원 | 지원 | 미지원 |
-| **GlobalNetworkPolicy** | 지원 | 지원 | 미지원 |
-| **Host Endpoint** | 지원 | 지원 | 미지원 |
-| **K8s NetworkPolicy** | 지원 | 지원 | 지원 (VPC CNI) |
-| **WireGuard** | 지원 | 지원 | 미지원 |
-| **커스텀 AMI** | 제한적 | 완전 | 불가 |
+| 특성                      | Managed Node Group | Self-managed | Fargate      |
+| ----------------------- | ------------------ | ------------ | ------------ |
+| **Calico 전체 기능**        | 지원                 | 지원           | 미지원          |
+| **eBPF 모드**             | 지원                 | 지원           | 미지원          |
+| **GlobalNetworkPolicy** | 지원                 | 지원           | 미지원          |
+| **Host Endpoint**       | 지원                 | 지원           | 미지원          |
+| **K8s NetworkPolicy**   | 지원                 | 지원           | 지원 (VPC CNI) |
+| **WireGuard**           | 지원                 | 지원           | 미지원          |
+| **커스텀 AMI**             | 제한적                | 완전           | 불가           |
 
 ```yaml
 # 혼합 노드 그룹 ClusterConfig
@@ -474,15 +473,15 @@ graph TB
 
 ### 사용 가이드
 
-| 보안 요구사항 | Security Group | Calico Policy |
-|--------------|----------------|---------------|
-| **VPC 외부 트래픽 제어** | 권장 | 보조 |
-| **서브넷 간 통신** | 권장 | 보조 |
-| **Pod-to-Pod 통신** | 제한적 | 권장 |
-| **네임스페이스 격리** | 불가 | 권장 |
-| **레이블 기반 정책** | 불가 | 권장 |
-| **동적 정책** | 느림 | 빠름 |
-| **감사/로깅** | CloudTrail | Flow Logs |
+| 보안 요구사항           | Security Group | Calico Policy |
+| ----------------- | -------------- | ------------- |
+| **VPC 외부 트래픽 제어** | 권장             | 보조            |
+| **서브넷 간 통신**      | 권장             | 보조            |
+| **Pod-to-Pod 통신** | 제한적            | 권장            |
+| **네임스페이스 격리**     | 불가             | 권장            |
+| **레이블 기반 정책**     | 불가             | 권장            |
+| **동적 정책**         | 느림             | 빠름            |
+| **감사/로깅**         | CloudTrail     | Flow Logs     |
 
 ```yaml
 # 권장: 계층형 보안 구성
@@ -547,12 +546,12 @@ spec:
 
 ### 버전 호환성 매트릭스
 
-| EKS 버전 | Calico 최소 | Calico 권장 | 참고 |
-|---------|------------|------------|------|
-| 1.29 | 3.27+ | 3.29 | 최신 |
-| 1.28 | 3.26+ | 3.28+ | LTS |
-| 1.27 | 3.25+ | 3.27+ | - |
-| 1.26 | 3.24+ | 3.26+ | - |
+| EKS 버전 | Calico 최소 | Calico 권장 | 참고  |
+| ------ | --------- | --------- | --- |
+| 1.29   | 3.27+     | 3.29      | 최신  |
+| 1.28   | 3.26+     | 3.28+     | LTS |
+| 1.27   | 3.25+     | 3.27+     | -   |
+| 1.26   | 3.24+     | 3.26+     | -   |
 
 ### 업그레이드 절차
 
@@ -610,11 +609,11 @@ eksctl delete nodegroup --cluster my-cluster --name standard-workers
 
 ### 리소스 오버헤드
 
-| 컴포넌트 | CPU (요청/제한) | Memory (요청/제한) | 노드당 비용 영향 |
-|---------|----------------|-------------------|-----------------|
-| calico-node | 200m/1000m | 256Mi/512Mi | ~$3-5/월 |
-| Typha (3개) | 100m/500m | 128Mi/256Mi | ~$2-4/월 (클러스터) |
-| kube-controllers | 100m/500m | 128Mi/256Mi | ~$1-2/월 |
+| 컴포넌트             | CPU (요청/제한) | Memory (요청/제한) | 노드당 비용 영향       |
+| ---------------- | ----------- | -------------- | --------------- |
+| calico-node      | 200m/1000m  | 256Mi/512Mi    | \~$3-5/월        |
+| Typha (3개)       | 100m/500m   | 128Mi/256Mi    | \~$2-4/월 (클러스터) |
+| kube-controllers | 100m/500m   | 128Mi/256Mi    | \~$1-2/월        |
 
 ### 비용 최적화 전략
 
@@ -868,19 +867,19 @@ kubectl get pods -n calico-system
 calicoctl node status
 ```
 
----
+***
 
 ## 다음 단계
 
-- [Part 9: 운영 가이드](09-operations.md)에서 Calico 운영 방법을 학습합니다
-- [용어집](glossary.md)에서 용어를 확인합니다
-- [Part 7: 고급 주제](07-advanced-topics.md)로 돌아가 고급 기능을 복습합니다
+* [Part 9: 운영 가이드](09-operations.md)에서 Calico 운영 방법을 학습합니다
+* [용어집](glossary.md)에서 용어를 확인합니다
+* [Part 7: 고급 주제](07-advanced-topics.md)로 돌아가 고급 기능을 복습합니다
 
 ## 참고 자료
 
-- [Calico on EKS 공식 가이드](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
-- [EKS VPC CNI 문서](https://docs.aws.amazon.com/eks/latest/userguide/pod-networking.html)
-- [EKS Network Policy 문서](https://docs.aws.amazon.com/eks/latest/userguide/network-policy.html)
+* [Calico on EKS 공식 가이드](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
+* [EKS VPC CNI 문서](https://docs.aws.amazon.com/eks/latest/userguide/pod-networking.html)
+* [EKS Network Policy 문서](https://docs.aws.amazon.com/eks/latest/userguide/network-policy.html)
 
 ## 퀴즈
 

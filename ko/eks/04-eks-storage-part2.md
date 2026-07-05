@@ -1,23 +1,23 @@
-# Amazon EKS 스토리지 - Part 2: FSx for Lustre, S3, 스냅샷, 볼륨 확장, 성능 최적화
+# Part 2: 스토리지 클래스
 
 이 문서는 Amazon EKS 스토리지 시리즈의 두 번째 부분으로, FSx for Lustre, Amazon S3, 스냅샷, 볼륨 확장 및 성능 최적화에 대해 다룹니다.
 
 ## 목차
 
-1. [Amazon FSx for Lustre](#amazon-fsx-for-lustre)
-2. [Amazon S3 스토리지 통합](#amazon-s3-스토리지-통합)
-3. [스냅샷 및 백업](#스냅샷-및-백업)
-4. [볼륨 확장 및 크기 조정](#볼륨-확장-및-크기-조정)
-5. [볼륨 클로닝](#볼륨-클로닝)
-6. [다중 연결 EBS (Multi-Attach)](#다중-연결-ebs-multi-attach)
-7. [Mountpoint for S3 CSI 심화](#mountpoint-for-s3-csi-심화)
-8. [스토리지 성능 최적화](#스토리지-성능-최적화)
+1. [Amazon FSx for Lustre](04-eks-storage-part2.md#amazon-fsx-for-lustre)
+2. [Amazon S3 스토리지 통합](04-eks-storage-part2.md#amazon-s3-스토리지-통합)
+3. [스냅샷 및 백업](04-eks-storage-part2.md#스냅샷-및-백업)
+4. [볼륨 확장 및 크기 조정](04-eks-storage-part2.md#볼륨-확장-및-크기-조정)
+5. [볼륨 클로닝](04-eks-storage-part2.md#볼륨-클로닝)
+6. [다중 연결 EBS (Multi-Attach)](04-eks-storage-part2.md#다중-연결-ebs-multi-attach)
+7. [Mountpoint for S3 CSI 심화](04-eks-storage-part2.md#mountpoint-for-s3-csi-심화)
+8. [스토리지 성능 최적화](04-eks-storage-part2.md#스토리지-성능-최적화)
 
 ## Amazon FSx for Lustre
 
 Amazon FSx for Lustre는 고성능 컴퓨팅(HPC), 기계 학습, 빅 데이터 처리와 같은 컴퓨팅 집약적 워크로드를 위한 고성능 파일 시스템입니다. Lustre는 병렬 분산 파일 시스템으로, 수천 개의 클라이언트에서 동시에 액세스할 수 있는 높은 처리량과 낮은 지연 시간을 제공합니다.
 
-![FSx for Lustre CSI 아키텍처](../assets/generated-diagrams/fsx_lustre_csi_architecture.png)
+![FSx for Lustre CSI 아키텍처](../.gitbook/assets/fsx_lustre_csi_architecture.png)
 
 ### FSx for Lustre CSI 드라이버 설치
 
@@ -181,12 +181,11 @@ spec:
 FSx for Lustre는 다양한 워크로드 요구사항을 충족하기 위해 여러 배포 유형을 제공합니다:
 
 1. **Scratch 파일 시스템**:
-   - **Scratch 1**: 단기 스토리지 및 처리를 위한 비용 최적화된 파일 시스템
-   - **Scratch 2**: Scratch 1보다 높은 버스트 처리량과 더 나은 데이터 내구성 제공
-
+   * **Scratch 1**: 단기 스토리지 및 처리를 위한 비용 최적화된 파일 시스템
+   * **Scratch 2**: Scratch 1보다 높은 버스트 처리량과 더 나은 데이터 내구성 제공
 2. **영구 파일 시스템**:
-   - **영구 1**: 장기 스토리지 및 처리량이 중요한 워크로드를 위한 파일 시스템
-   - **영구 2**: 영구 1보다 높은 처리량 제공
+   * **영구 1**: 장기 스토리지 및 처리량이 중요한 워크로드를 위한 파일 시스템
+   * **영구 2**: 영구 1보다 높은 처리량 제공
 
 ### vLLM을 위한 FSx for Lustre 구성
 
@@ -207,15 +206,16 @@ parameters:
 ```
 
 이 구성은 다음과 같은 이점을 제공합니다:
-- 높은 처리량으로 모델 로딩 시간 단축
-- 데이터 압축을 통한 스토리지 효율성 향상
-- 여러 노드에서 동일한 모델 파일에 동시 액세스 가능
+
+* 높은 처리량으로 모델 로딩 시간 단축
+* 데이터 압축을 통한 스토리지 효율성 향상
+* 여러 노드에서 동일한 모델 파일에 동시 액세스 가능
 
 ## Amazon S3 스토리지 통합
 
 Amazon S3는 객체 스토리지 서비스로, 무제한 양의 데이터를 저장하고 검색할 수 있습니다. Kubernetes에서는 S3를 직접 볼륨으로 마운트할 수는 없지만, 다양한 방법으로 S3와 통합할 수 있습니다.
 
-![S3 통합 방법](../assets/generated-diagrams/s3_integration_methods.png)
+![S3 통합 방법](../.gitbook/assets/s3_integration_methods.png)
 
 ### S3 액세스를 위한 IRSA 설정
 
@@ -371,7 +371,7 @@ Amazon S3는 다음과 같은 사용 사례에 적합합니다:
 
 Kubernetes에서는 볼륨 스냅샷을 사용하여 PV의 데이터를 백업하고 복원할 수 있습니다.
 
-![볼륨 스냅샷 시스템](../assets/generated-diagrams/volume_snapshot_system.png)
+![볼륨 스냅샷 시스템](../.gitbook/assets/volume_snapshot_system.png)
 
 ### 볼륨 스냅샷 컨트롤러 설치
 
@@ -477,7 +477,7 @@ velero restore create --from-backup daily-backup-20250710010000
 
 Kubernetes에서는 PVC의 크기를 확장하여 스토리지 용량을 늘릴 수 있습니다.
 
-![볼륨 확장 프로세스](../assets/generated-diagrams/volume_expansion_process.png)
+![볼륨 확장 프로세스](../.gitbook/assets/volume_expansion_process.png)
 
 ### 볼륨 확장 활성화
 
@@ -517,10 +517,9 @@ spec:
 볼륨 확장 후 파일 시스템을 확장해야 할 수 있습니다:
 
 1. 온라인 확장(파드가 실행 중인 경우):
-   - EBS CSI 드라이버는 자동으로 파일 시스템을 확장합니다.
-
+   * EBS CSI 드라이버는 자동으로 파일 시스템을 확장합니다.
 2. 오프라인 확장(수동 확장이 필요한 경우):
-   - 파드에 접속하여 파일 시스템 확장 명령 실행:
+   * 파드에 접속하여 파일 시스템 확장 명령 실행:
 
 ```bash
 # ext4 파일 시스템의 경우
@@ -648,13 +647,13 @@ spec:
 
 ### 스냅샷 기반 복원 vs 클론 비교
 
-| 특성 | 볼륨 클로닝 | 스냅샷 기반 복원 |
-|------|------------|-----------------|
-| **소스** | 기존 PVC | VolumeSnapshot |
-| **속도** | 즉시 사용 가능 (백그라운드 복사) | 스냅샷 생성 후 복원 |
-| **스토리지 클래스** | 동일해야 함 | 다른 스토리지 클래스 가능 |
-| **사용 사례** | 개발/테스트 환경 복제, 데이터 마이그레이션 | 백업/복구, 재해 복구, 장기 보존 |
-| **비용** | 클론 볼륨 전체 비용 | 스냅샷 저장 비용 (증분) + 복원 볼륨 비용 |
+| 특성           | 볼륨 클로닝                   | 스냅샷 기반 복원                 |
+| ------------ | ------------------------ | ------------------------- |
+| **소스**       | 기존 PVC                   | VolumeSnapshot            |
+| **속도**       | 즉시 사용 가능 (백그라운드 복사)      | 스냅샷 생성 후 복원               |
+| **스토리지 클래스** | 동일해야 함                   | 다른 스토리지 클래스 가능            |
+| **사용 사례**    | 개발/테스트 환경 복제, 데이터 마이그레이션 | 백업/복구, 재해 복구, 장기 보존       |
+| **비용**       | 클론 볼륨 전체 비용              | 스냅샷 저장 비용 (증분) + 복원 볼륨 비용 |
 
 ## 다중 연결 EBS (Multi-Attach)
 
@@ -664,8 +663,8 @@ spec:
 
 다중 연결은 다음 볼륨 유형에서만 지원됩니다:
 
-- **io1**: 프로비저닝된 IOPS SSD
-- **io2 Block Express**: 차세대 고성능 IOPS SSD
+* **io1**: 프로비저닝된 IOPS SSD
+* **io2 Block Express**: 차세대 고성능 IOPS SSD
 
 > **주의**: gp3, gp2, st1, sc1 볼륨 유형은 다중 연결을 지원하지 않습니다.
 
@@ -673,9 +672,9 @@ spec:
 
 EBS 다중 연결은 Kubernetes의 `ReadWriteMany` 액세스 모드와 다릅니다:
 
-- EBS 다중 연결은 **Block 모드**에서만 작동합니다
-- Filesystem 모드의 동시 쓰기는 파일 시스템 손상을 초래할 수 있습니다
-- 애플리케이션 수준에서 동시 액세스 조정이 필요합니다 (클러스터 파일 시스템 또는 분산 잠금)
+* EBS 다중 연결은 **Block 모드**에서만 작동합니다
+* Filesystem 모드의 동시 쓰기는 파일 시스템 손상을 초래할 수 있습니다
+* 애플리케이션 수준에서 동시 액세스 조정이 필요합니다 (클러스터 파일 시스템 또는 분산 잠금)
 
 ```mermaid
 flowchart TD
@@ -709,9 +708,9 @@ flowchart TD
 
 ### 사용 사례
 
-- 고가용성이 필요한 데이터베이스 클러스터 (Oracle RAC 등)
-- 분산 스토리지 시스템
-- 장애 조치(failover) 시나리오
+* 고가용성이 필요한 데이터베이스 클러스터 (Oracle RAC 등)
+* 분산 스토리지 시스템
+* 장애 조치(failover) 시나리오
 
 ### 다중 연결 EBS 구성 예제
 
@@ -819,13 +818,13 @@ flowchart TD
     style Limited fill:#ffe6e6,stroke:#cc0000
 ```
 
-| 작업 | 성능 | 설명 |
-|------|------|------|
-| 순차 읽기 | 우수 | 멀티파트 다운로드로 높은 처리량 달성 |
-| 순차 쓰기 | 양호 | 새 파일 생성 시 멀티파트 업로드 |
-| 랜덤 읽기 | 보통 | 바이트 범위 요청 지원, 지연 시간 존재 |
-| 랜덤 쓰기 | 미지원 | S3 특성상 기존 파일 수정 불가 |
-| 메타데이터 작업 | 양호 | ListObjects API 활용 |
+| 작업       | 성능  | 설명                     |
+| -------- | --- | ---------------------- |
+| 순차 읽기    | 우수  | 멀티파트 다운로드로 높은 처리량 달성   |
+| 순차 쓰기    | 양호  | 새 파일 생성 시 멀티파트 업로드     |
+| 랜덤 읽기    | 보통  | 바이트 범위 요청 지원, 지연 시간 존재 |
+| 랜덤 쓰기    | 미지원 | S3 특성상 기존 파일 수정 불가     |
+| 메타데이터 작업 | 양호  | ListObjects API 활용     |
 
 ### 제한사항
 
@@ -842,11 +841,11 @@ Mountpoint for S3는 POSIX 파일 시스템과 완전히 호환되지 않습니�
 
 **지원되는 기능:**
 
-- 파일 및 디렉토리 생성
-- 파일 읽기 (순차/랜덤)
-- 새 파일 쓰기 (전체 쓰기)
-- 파일 삭제
-- 디렉토리 목록 조회
+* 파일 및 디렉토리 생성
+* 파일 읽기 (순차/랜덤)
+* 새 파일 쓰기 (전체 쓰기)
+* 파일 삭제
+* 디렉토리 목록 조회
 
 ### 캐시 설정
 
@@ -986,29 +985,28 @@ spec:
 
 학습 워크로드에서 스토리지 옵션 선택 가이드:
 
-| 특성 | S3 (Mountpoint) | EFS | FSx for Lustre |
-|------|----------------|-----|----------------|
-| **처리량** | 높음 (S3 한도) | 중간 | 매우 높음 |
-| **지연 시간** | 높음 | 중간 | 낮음 |
-| **비용** | 낮음 | 중간 | 높음 |
-| **동시 접근** | 무제한 | 수천 클라이언트 | 수천 클라이언트 |
-| **랜덤 읽기** | 느림 | 빠름 | 매우 빠름 |
-| **쓰기 패턴** | 새 파일만 | 모든 패턴 | 모든 패턴 |
-| **사용 사례** | 대용량 데이터셋 읽기 | 범용 | HPC, ML 학습 |
+| 특성        | S3 (Mountpoint) | EFS      | FSx for Lustre |
+| --------- | --------------- | -------- | -------------- |
+| **처리량**   | 높음 (S3 한도)      | 중간       | 매우 높음          |
+| **지연 시간** | 높음              | 중간       | 낮음             |
+| **비용**    | 낮음              | 중간       | 높음             |
+| **동시 접근** | 무제한             | 수천 클라이언트 | 수천 클라이언트       |
+| **랜덤 읽기** | 느림              | 빠름       | 매우 빠름          |
+| **쓰기 패턴** | 새 파일만           | 모든 패턴    | 모든 패턴          |
+| **사용 사례** | 대용량 데이터셋 읽기     | 범용       | HPC, ML 학습     |
 
 ## 스토리지 성능 최적화
 
 EKS에서 스토리지 성능을 최적화하기 위한 다양한 전략을 살펴보겠습니다.
 
-![스토리지 성능 최적화](../assets/generated-diagrams/storage_performance_optimization.png)
+![스토리지 성능 최적화](../.gitbook/assets/storage_performance_optimization.png)
 
 ### EBS 성능 최적화
 
 1. **적절한 볼륨 유형 선택**:
-   - 일반 워크로드: gp3
-   - 고성능 데이터베이스: io2
-   - 처리량 중심 워크로드: st1
-
+   * 일반 워크로드: gp3
+   * 고성능 데이터베이스: io2
+   * 처리량 중심 워크로드: st1
 2. **gp3 볼륨 성능 조정**:
 
 ```yaml
@@ -1024,11 +1022,10 @@ parameters:
 ```
 
 3. **인스턴스 유형 고려**:
-   - EBS 최적화 인스턴스 사용
-   - 충분한 네트워크 대역폭을 가진 인스턴스 선택
-
+   * EBS 최적화 인스턴스 사용
+   * 충분한 네트워크 대역폭을 가진 인스턴스 선택
 4. **볼륨 초기화**:
-   - 새 볼륨의 경우 사용 전 초기화 고려:
+   * 새 볼륨의 경우 사용 전 초기화 고려:
 
 ```bash
 dd if=/dev/zero of=/dev/xvdf bs=1M count=1000 oflag=direct
@@ -1037,17 +1034,14 @@ dd if=/dev/zero of=/dev/xvdf bs=1M count=1000 oflag=direct
 ### EFS 성능 최적화
 
 1. **적절한 성능 모드 선택**:
-   - 대부분의 워크로드: 범용 모드
-   - 높은 동시성 워크로드: 최대 I/O 모드
-
+   * 대부분의 워크로드: 범용 모드
+   * 높은 동시성 워크로드: 최대 I/O 모드
 2. **처리량 모드 선택**:
-   - 예측 가능한 워크로드: 프로비저닝된 처리량
-   - 가변적인 워크로드: 버스팅 또는 탄력적 처리량
-
+   * 예측 가능한 워크로드: 프로비저닝된 처리량
+   * 가변적인 워크로드: 버스팅 또는 탄력적 처리량
 3. **액세스 패턴 최적화**:
-   - 큰 파일 작업: 큰 I/O 크기 사용
-   - 병렬 액세스: 여러 스레드 또는 프로세스 사용
-
+   * 큰 파일 작업: 큰 I/O 크기 사용
+   * 병렬 액세스: 여러 스레드 또는 프로세스 사용
 4. **마운트 옵션 최적화**:
 
 ```yaml
@@ -1078,13 +1072,11 @@ spec:
 ### FSx for Lustre 성능 최적화
 
 1. **적절한 배포 유형 및 처리량 선택**:
-   - 높은 처리량 요구사항: PERSISTENT_2 + 높은 처리량
-   - 비용 효율적인 임시 워크로드: SCRATCH_2
-
+   * 높은 처리량 요구사항: PERSISTENT\_2 + 높은 처리량
+   * 비용 효율적인 임시 워크로드: SCRATCH\_2
 2. **스트라이핑 최적화**:
-   - 큰 파일: 여러 OST(Object Storage Target)에 스트라이핑
-   - 작은 파일: 단일 OST에 저장
-
+   * 큰 파일: 여러 OST(Object Storage Target)에 스트라이핑
+   * 작은 파일: 단일 OST에 저장
 3. **클라이언트 마운트 옵션**:
 
 ```yaml
@@ -1106,9 +1098,8 @@ parameters:
 vLLM과 같은 대규모 언어 모델 워크로드를 위한 스토리지 최적화:
 
 1. **FSx for Lustre 사용**:
-   - 높은 처리량으로 모델 로딩 시간 단축
-   - 여러 노드에서 동일한 모델 파일에 동시 액세스
-
+   * 높은 처리량으로 모델 로딩 시간 단축
+   * 여러 노드에서 동일한 모델 파일에 동시 액세스
 2. **최적의 구성**:
 
 ```yaml
@@ -1125,13 +1116,12 @@ parameters:
 ```
 
 3. **모델 파일 최적화**:
-   - 모델 파일을 메모리에 미리 로드
-   - 모델 양자화 고려
-   - 모델 샤딩 구현
-
+   * 모델 파일을 메모리에 미리 로드
+   * 모델 양자화 고려
+   * 모델 샤딩 구현
 4. **노드 인스턴스 유형 선택**:
-   - 충분한 메모리와 네트워크 대역폭을 가진 인스턴스 선택
-   - GPU 인스턴스의 경우 EFA(Elastic Fabric Adapter) 지원 고려
+   * 충분한 메모리와 네트워크 대역폭을 가진 인스턴스 선택
+   * GPU 인스턴스의 경우 EFA(Elastic Fabric Adapter) 지원 고려
 
 ## 결론
 
@@ -1141,11 +1131,11 @@ parameters:
 
 ## 참고 자료
 
-- [Amazon FSx for Lustre CSI 드라이버](https://github.com/kubernetes-sigs/aws-fsx-csi-driver)
-- [Amazon S3 CSI 드라이버](https://github.com/awslabs/mountpoint-s3-csi-driver)
-- [Kubernetes 볼륨 스냅샷](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
-- [Velero 백업 및 복원](https://velero.io/docs/)
-- [Amazon EKS 스토리지 모범 사례](https://aws.github.io/aws-eks-best-practices/storage/)
+* [Amazon FSx for Lustre CSI 드라이버](https://github.com/kubernetes-sigs/aws-fsx-csi-driver)
+* [Amazon S3 CSI 드라이버](https://github.com/awslabs/mountpoint-s3-csi-driver)
+* [Kubernetes 볼륨 스냅샷](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
+* [Velero 백업 및 복원](https://velero.io/docs/)
+* [Amazon EKS 스토리지 모범 사례](https://aws.github.io/aws-eks-best-practices/storage/)
 
 ## 퀴즈
 

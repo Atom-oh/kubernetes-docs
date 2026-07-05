@@ -1,6 +1,6 @@
-# Amazon EKS 소개
+# EKS 소개
 
-> **지원 버전**: Amazon EKS 1.31, 1.32, 1.33  
+> **지원 버전**: Amazon EKS 1.31, 1.32, 1.33\
 > **마지막 업데이트**: 2026년 2월 23일
 
 Amazon Elastic Kubernetes Service(EKS)는 AWS에서 Kubernetes를 실행하기 위한 관리형 서비스입니다. 이 장에서는 EKS의 기본 개념, 아키텍처, 그리고 일반 Kubernetes와의 차이점을 살펴보겠습니다.
@@ -22,16 +22,16 @@ EKS는 표준 Kubernetes API를 제공하는 관리형 서비스입니다. Kuber
 
 Amazon EKS의 전체 아키텍처는 다음과 같습니다:
 
-![EKS 전체 아키텍처](../assets/eks_overall_architecture.svg)
+![EKS 전체 아키텍처](<../.gitbook/assets/eks_overall_architecture (1).svg>)
 
 ### 컨트롤 플레인
 
 EKS는 고가용성 컨트롤 플레인을 제공합니다. 컨트롤 플레인은 여러 가용 영역에 걸쳐 실행되며, 다음과 같은 구성 요소로 이루어져 있습니다:
 
-- **API 서버**: Kubernetes API를 노출하고 클러스터와의 상호 작용을 처리합니다.
-- **etcd**: 클러스터의 상태를 저장하는 분산 키-값 저장소입니다.
-- **컨트롤러 매니저**: 클러스터의 상태를 관리하는 컨트롤러를 실행합니다.
-- **스케줄러**: 포드를 노드에 할당합니다.
+* **API 서버**: Kubernetes API를 노출하고 클러스터와의 상호 작용을 처리합니다.
+* **etcd**: 클러스터의 상태를 저장하는 분산 키-값 저장소입니다.
+* **컨트롤러 매니저**: 클러스터의 상태를 관리하는 컨트롤러를 실행합니다.
+* **스케줄러**: 포드를 노드에 할당합니다.
 
 EKS에서는 이러한 컨트롤 플레인 구성 요소가 AWS에 의해 관리되므로, 사용자는 이를 직접 관리할 필요가 없습니다.
 
@@ -39,7 +39,7 @@ EKS에서는 이러한 컨트롤 플레인 구성 요소가 AWS에 의해 관리
 
 EKS 데이터 플레인은 다음과 같은 옵션으로 구성할 수 있습니다:
 
-![EKS 데이터 플레인 옵션](../assets/eks_data_plane_options.svg)
+![EKS 데이터 플레인 옵션](<../.gitbook/assets/eks_data_plane_options (1).svg>)
 
 1. **관리형 노드 그룹**: EC2 인스턴스로 구성된 노드 그룹으로, AWS에서 노드 수명 주기를 관리합니다.
 2. **자체 관리형 노드**: 사용자가 직접 관리하는 EC2 인스턴스입니다.
@@ -49,29 +49,29 @@ EKS 데이터 플레인은 다음과 같은 옵션으로 구성할 수 있습니
 
 EKS는 Amazon VPC CNI 플러그인을 사용하여 포드 네트워킹을 제공합니다. 이 플러그인은 각 포드에 VPC IP 주소를 할당하여 AWS 네트워킹 기능을 활용할 수 있게 합니다.
 
-![EKS VPC 네트워킹](../assets/eks_vpc_networking.svg)
+![EKS VPC 네트워킹](<../.gitbook/assets/eks_vpc_networking (1).svg>)
 
 ## 일반 Kubernetes와 EKS의 차이점
 
 ### 관리 책임
 
-- **일반 Kubernetes**: 사용자가 컨트롤 플레인과 데이터 플레인을 모두 관리해야 합니다.
-- **EKS**: AWS가 컨트롤 플레인을 관리하고, 사용자는 데이터 플레인만 관리하면 됩니다.
+* **일반 Kubernetes**: 사용자가 컨트롤 플레인과 데이터 플레인을 모두 관리해야 합니다.
+* **EKS**: AWS가 컨트롤 플레인을 관리하고, 사용자는 데이터 플레인만 관리하면 됩니다.
 
 ### 네트워킹
 
-- **일반 Kubernetes**: 다양한 CNI 플러그인 중에서 선택할 수 있습니다.
-- **EKS**: 기본적으로 Amazon VPC CNI를 사용하며, 각 포드는 VPC IP 주소를 할당받습니다.
+* **일반 Kubernetes**: 다양한 CNI 플러그인 중에서 선택할 수 있습니다.
+* **EKS**: 기본적으로 Amazon VPC CNI를 사용하며, 각 포드는 VPC IP 주소를 할당받습니다.
 
 ### 로드 밸런싱
 
-- **일반 Kubernetes**: `LoadBalancer` 타입의 서비스를 사용하려면 별도의 컨트롤러를 설치해야 합니다.
-- **EKS**: `LoadBalancer` 타입의 서비스는 자동으로 AWS Network Load Balancer(NLB)를 생성합니다. Application Load Balancer(ALB)를 사용하려면 AWS Load Balancer Controller를 설치해야 합니다.
+* **일반 Kubernetes**: `LoadBalancer` 타입의 서비스를 사용하려면 별도의 컨트롤러를 설치해야 합니다.
+* **EKS**: `LoadBalancer` 타입의 서비스는 자동으로 AWS Network Load Balancer(NLB)를 생성합니다. Application Load Balancer(ALB)를 사용하려면 AWS Load Balancer Controller를 설치해야 합니다.
 
 ### 스토리지
 
-- **일반 Kubernetes**: 다양한 스토리지 드라이버를 수동으로 설치하고 구성해야 합니다.
-- **EKS**: AWS EBS CSI 드라이버가 기본적으로 제공되며, EFS 및 FSx와 같은 다른 AWS 스토리지 서비스를 위한 드라이버도 쉽게 설치할 수 있습니다.
+* **일반 Kubernetes**: 다양한 스토리지 드라이버를 수동으로 설치하고 구성해야 합니다.
+* **EKS**: AWS EBS CSI 드라이버가 기본적으로 제공되며, EFS 및 FSx와 같은 다른 AWS 스토리지 서비스를 위한 드라이버도 쉽게 설치할 수 있습니다.
 
 ## EKS 비용 구조
 
@@ -79,8 +79,8 @@ EKS 클러스터를 운영할 때 발생하는 비용은 다음과 같습니다:
 
 1. **EKS 컨트롤 플레인 비용**: 클러스터당 시간당 요금이 부과됩니다.
 2. **컴퓨팅 비용**:
-   - EC2 인스턴스(관리형 또는 자체 관리형 노드)
-   - Fargate(포드 실행 시간 및 리소스 사용량에 따라 요금 부과)
+   * EC2 인스턴스(관리형 또는 자체 관리형 노드)
+   * Fargate(포드 실행 시간 및 리소스 사용량에 따라 요금 부과)
 3. **스토리지 비용**: EBS, EFS, FSx 등의 스토리지 서비스 사용 비용
 4. **네트워크 비용**: 데이터 전송 및 로드 밸런서 사용 비용
 
@@ -97,7 +97,7 @@ EKS 클러스터를 운영할 때 발생하는 비용은 다음과 같습니다:
 
 EKS는 다음과 같은 AWS 서비스와 통합됩니다:
 
-![EKS AWS 서비스 통합](../assets/generated-diagrams/eks_aws_services_integration.png)
+![EKS AWS 서비스 통합](../.gitbook/assets/eks_aws_services_integration.png)
 
 1. **IAM**: Kubernetes RBAC와 통합하여 인증 및 권한 부여를 관리합니다.
 2. **VPC**: 네트워킹 인프라를 제공합니다.
@@ -114,30 +114,26 @@ EKS는 다음과 같은 AWS 서비스와 통합됩니다:
 ## EKS 모범 사례
 
 1. **클러스터 설계**:
-   - 다중 가용 영역에 노드 배포
-   - 적절한 인스턴스 유형 선택
-   - 노드 그룹 전략 수립
-
+   * 다중 가용 영역에 노드 배포
+   * 적절한 인스턴스 유형 선택
+   * 노드 그룹 전략 수립
 2. **보안**:
-   - 최소 권한 원칙 적용
-   - 네트워크 정책 구현
-   - 포드 보안 정책 적용
-   - 이미지 스캐닝 및 취약점 관리
-
+   * 최소 권한 원칙 적용
+   * 네트워크 정책 구현
+   * 포드 보안 정책 적용
+   * 이미지 스캐닝 및 취약점 관리
 3. **네트워킹**:
-   - 적절한 서브넷 설계
-   - 보안 그룹 구성
-   - Locality Routing 활용
-
+   * 적절한 서브넷 설계
+   * 보안 그룹 구성
+   * Locality Routing 활용
 4. **모니터링 및 로깅**:
-   - CloudWatch 컨테이너 인사이트 활성화
-   - 컨트롤 플레인 로깅 구성
-   - 프로메테우스 및 그라파나 활용
-
+   * CloudWatch 컨테이너 인사이트 활성화
+   * 컨트롤 플레인 로깅 구성
+   * 프로메테우스 및 그라파나 활용
 5. **업그레이드 전략**:
-   - 정기적인 업그레이드 계획
-   - 블루/그린 배포 전략 고려
-   - 업그레이드 전 테스트 수행
+   * 정기적인 업그레이드 계획
+   * 블루/그린 배포 전략 고려
+   * 업그레이드 전 테스트 수행
 
 ## 퀴즈
 

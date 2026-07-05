@@ -1,22 +1,21 @@
-# 운영 알림 구성: 핵심 메트릭 모니터링
+# Observability 알림 설정
 
-> **지원 버전**: Prometheus 2.50+, Alertmanager 0.27+, kube-prometheus-stack 50+
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Prometheus 2.50+, Alertmanager 0.27+, kube-prometheus-stack 50+ **마지막 업데이트**: 2026년 2월 23일
 
-< [이전: 스케일링 전략](./06-scaling-strategies.md) | [목차](./README.md) | [다음: 관측성 분석](./08-observability-analysis.md) >
+< [이전: 스케일링 전략](06-scaling-strategies.md) | [목차](./) | [다음: 관측성 분석](08-observability-analysis.md) >
 
----
+***
 
 ## 목차
 
-1. [알림 아키텍처](#알림-아키텍처)
-2. [네트워크 알림](#네트워크-알림)
-3. [CPU 알림](#cpu-알림)
-4. [디스크 알림](#디스크-알림)
-5. [Auto Mode 노드 종료 알림](#auto-mode-노드-종료-알림)
-6. [Alertmanager 설정](#alertmanager-설정)
+1. [알림 아키텍처](07-observability-alerts.md#알림-아키텍처)
+2. [네트워크 알림](07-observability-alerts.md#네트워크-알림)
+3. [CPU 알림](07-observability-alerts.md#cpu-알림)
+4. [디스크 알림](07-observability-alerts.md#디스크-알림)
+5. [Auto Mode 노드 종료 알림](07-observability-alerts.md#auto-mode-노드-종료-알림)
+6. [Alertmanager 설정](07-observability-alerts.md#alertmanager-설정)
 
----
+***
 
 ## 알림 아키텍처
 
@@ -24,26 +23,26 @@
 
 Kubernetes 환경에서 효과적인 알림 시스템은 운영 가시성과 신속한 장애 대응의 핵심입니다. Prometheus와 Alertmanager를 기반으로 한 알림 아키텍처는 다음과 같은 흐름으로 동작합니다.
 
-![알림 아키텍처](../assets/generated-diagrams/alerting_architecture.png)
+![알림 아키텍처](../.gitbook/assets/alerting_architecture.png)
 
 ### Alert Severity 레벨
 
 알림 심각도(Severity)는 운영 팀의 대응 우선순위를 결정합니다.
 
-| Severity | 설명 | 대응 시간 | 알림 채널 |
-|----------|------|-----------|-----------|
+| Severity     | 설명                  | 대응 시간      | 알림 채널            |
+| ------------ | ------------------- | ---------- | ---------------- |
 | **critical** | 서비스 중단 또는 데이터 손실 위험 | 즉시 (5분 이내) | PagerDuty, Phone |
-| **warning** | 성능 저하 또는 잠재적 문제 | 업무 시간 내 | Slack, Email |
-| **info** | 정보성 알림, 모니터링 목적 | 주간 리뷰 | Email, Dashboard |
+| **warning**  | 성능 저하 또는 잠재적 문제     | 업무 시간 내    | Slack, Email     |
+| **info**     | 정보성 알림, 모니터링 목적     | 주간 리뷰      | Email, Dashboard |
 
 ### 알림 라이프사이클
 
-![알림 라이프사이클](../assets/generated-diagrams/alert_lifecycle.png)
+![알림 라이프사이클](../.gitbook/assets/alert_lifecycle.png)
 
-- **Inactive**: 알림 조건이 충족되지 않은 상태
-- **Pending**: 알림 조건이 충족되었지만 `for` 기간이 경과하지 않은 상태
-- **Firing**: 알림이 발생하여 Alertmanager로 전송된 상태
-- **Resolved**: 알림 조건이 해소되어 종료된 상태
+* **Inactive**: 알림 조건이 충족되지 않은 상태
+* **Pending**: 알림 조건이 충족되었지만 `for` 기간이 경과하지 않은 상태
+* **Firing**: 알림이 발생하여 Alertmanager로 전송된 상태
+* **Resolved**: 알림 조건이 해소되어 종료된 상태
 
 ### PrometheusRule CRD 개요
 
@@ -73,7 +72,7 @@ spec:
         runbook_url: "https://runbook.example.com/example"
 ```
 
----
+***
 
 ## 네트워크 알림
 
@@ -437,7 +436,7 @@ spec:
         description: "DNS 오류율이 1%를 초과했습니다"
 ```
 
----
+***
 
 ## CPU 알림
 
@@ -781,7 +780,7 @@ spec:
         description: "kubelet CPU 사용량: {{ printf \"%.2f\" $value }} cores"
 ```
 
----
+***
 
 ## 디스크 알림
 
@@ -1078,7 +1077,7 @@ spec:
         description: "현재 추세로 24시간 내 용량 고갈 예상"
 ```
 
----
+***
 
 ## Auto Mode 노드 종료 알림
 
@@ -1483,7 +1482,7 @@ spec:
         description: "NodePool이 용량 한도에 근접했습니다"
 ```
 
----
+***
 
 ## Alertmanager 설정
 
@@ -1855,24 +1854,24 @@ route:
       group_by: ['alertname', 'nodepool', 'reason']
 ```
 
----
+***
 
 ## 참고 자료
 
-- [Prometheus Alerting Rules 문서](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/)
-- [Alertmanager Configuration](https://prometheus.io/docs/alerting/latest/configuration/)
-- [PrometheusRule CRD 스펙](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule)
-- [EKS Karpenter Metrics](https://karpenter.sh/docs/reference/metrics/)
-- [VPC CNI Metrics](https://docs.aws.amazon.com/eks/latest/userguide/cni-metrics-helper.html)
+* [Prometheus Alerting Rules 문서](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/)
+* [Alertmanager Configuration](https://prometheus.io/docs/alerting/latest/configuration/)
+* [PrometheusRule CRD 스펙](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule)
+* [EKS Karpenter Metrics](https://karpenter.sh/docs/reference/metrics/)
+* [VPC CNI Metrics](https://docs.aws.amazon.com/eks/latest/userguide/cni-metrics-helper.html)
 
----
+***
 
 ## 관련 문서
 
-- [모니터링 스택](../observability/README.md) - Prometheus, VictoriaMetrics, Grafana 설정
-- [로깅 스택](../observability/logging/README.md) - Loki, Tempo 설정
-- [EKS Auto Mode 노드 라이프사이클](../eks-auto-mode/07-node-lifecycle.md) - Karpenter 노드 관리
+* [모니터링 스택](../observability/) - Prometheus, VictoriaMetrics, Grafana 설정
+* [로깅 스택](../observability/logging/) - Loki, Tempo 설정
+* [EKS Auto Mode 노드 라이프사이클](../eks-auto-mode/07-node-lifecycle.md) - Karpenter 노드 관리
 
----
+***
 
-< [이전: 스케일링 전략](./06-scaling-strategies.md) | [목차](./README.md) | [다음: 관측성 분석](./08-observability-analysis.md) >
+< [이전: 스케일링 전략](06-scaling-strategies.md) | [목차](./) | [다음: 관측성 분석](08-observability-analysis.md) >

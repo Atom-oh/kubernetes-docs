@@ -1,7 +1,6 @@
-# Part 3: Calico 네트워킹 모드
+# Part 3: 네트워킹 모드
 
-> **지원 버전**: Calico v3.29+ / Kubernetes 1.28+
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Calico v3.29+ / Kubernetes 1.28+ **마지막 업데이트**: 2026년 2월 23일
 
 ## 개요
 
@@ -9,7 +8,7 @@ Calico는 다양한 네트워킹 환경에 맞는 여러 모드를 제공합니�
 
 ## 네트워킹 모드 개요
 
-![Calico 네트워킹 모드 비교](../../../assets/calico_networking_modes.png)
+![Calico 네트워킹 모드 비교](../../.gitbook/assets/calico_networking_modes.png)
 
 ```mermaid
 graph TB
@@ -42,17 +41,17 @@ graph TB
 
 ### 모드별 특성 비교표
 
-| 특성 | IPIP | VXLAN | Direct | CrossSubnet |
-|------|------|-------|--------|-------------|
-| **캡슐화** | IP-in-IP | UDP/VXLAN | 없음 | 조건부 |
-| **오버헤드** | 20 bytes | 50 bytes | 0 bytes | 가변 |
-| **권장 MTU** | 1480 | 1450 | 1500 | 가변 |
-| **프로토콜** | IP Protocol 4 | UDP 4789 | Native IP | 혼합 |
-| **AWS 지원** | 지원 | 지원 | VPC 설정 필요 | 권장 |
-| **Azure 지원** | 제한적 | 권장 | 어려움 | VXLAN과 함께 |
-| **GCP 지원** | 지원 | 지원 | VPC 설정 필요 | 권장 |
-| **온프레미스** | 지원 | 지원 | BGP 필요 | BGP와 함께 |
-| **성능** | 좋음 | 보통 | 최고 | 최적화됨 |
+| 특성           | IPIP          | VXLAN     | Direct    | CrossSubnet |
+| ------------ | ------------- | --------- | --------- | ----------- |
+| **캡슐화**      | IP-in-IP      | UDP/VXLAN | 없음        | 조건부         |
+| **오버헤드**     | 20 bytes      | 50 bytes  | 0 bytes   | 가변          |
+| **권장 MTU**   | 1480          | 1450      | 1500      | 가변          |
+| **프로토콜**     | IP Protocol 4 | UDP 4789  | Native IP | 혼합          |
+| **AWS 지원**   | 지원            | 지원        | VPC 설정 필요 | 권장          |
+| **Azure 지원** | 제한적           | 권장        | 어려움       | VXLAN과 함께   |
+| **GCP 지원**   | 지원            | 지원        | VPC 설정 필요 | 권장          |
+| **온프레미스**    | 지원            | 지원        | BGP 필요    | BGP와 함께     |
+| **성능**       | 좋음            | 보통        | 최고        | 최적화됨        |
 
 ## IPIP (IP-in-IP) 모드
 
@@ -111,11 +110,11 @@ MTU 계산:
 
 ### IPIP 모드 옵션
 
-| 옵션 | 설명 | 트래픽 패턴 |
-|------|------|-------------|
-| `Always` | 모든 Pod 간 트래픽 캡슐화 | Node → IPIP → Node |
-| `CrossSubnet` | 다른 서브넷만 캡슐화 | 같은 서브넷: Direct, 다른 서브넷: IPIP |
-| `Never` | IPIP 비활성화 | Direct 또는 VXLAN 사용 |
+| 옵션            | 설명               | 트래픽 패턴                       |
+| ------------- | ---------------- | ---------------------------- |
+| `Always`      | 모든 Pod 간 트래픽 캡슐화 | Node → IPIP → Node           |
+| `CrossSubnet` | 다른 서브넷만 캡슐화      | 같은 서브넷: Direct, 다른 서브넷: IPIP |
+| `Never`       | IPIP 비활성화        | Direct 또는 VXLAN 사용           |
 
 ### IPIP IPPool 설정
 
@@ -295,16 +294,16 @@ spec:
 
 ### IPIP vs VXLAN 상세 비교
 
-| 특성 | IPIP | VXLAN |
-|------|------|-------|
-| **캡슐화 계층** | L3 (IP-in-IP) | L2 over L4 (UDP) |
-| **오버헤드** | 20 bytes | 50 bytes |
-| **성능** | 더 좋음 (낮은 오버헤드) | 약간 낮음 |
-| **방화벽 통과** | Protocol 4 허용 필요 | UDP 4789 허용 (쉬움) |
-| **Azure 지원** | 제한적 (UDR 필요) | 완전 지원 |
-| **하드웨어 오프로드** | 제한적 | 광범위 (NIC 지원) |
-| **멀티캐스트 필요** | 아니오 | 아니오 (Calico는 유니캐스트) |
-| **ECMP 지원** | 제한적 | 좋음 (UDP 해시) |
+| 특성            | IPIP             | VXLAN               |
+| ------------- | ---------------- | ------------------- |
+| **캡슐화 계층**    | L3 (IP-in-IP)    | L2 over L4 (UDP)    |
+| **오버헤드**      | 20 bytes         | 50 bytes            |
+| **성능**        | 더 좋음 (낮은 오버헤드)   | 약간 낮음               |
+| **방화벽 통과**    | Protocol 4 허용 필요 | UDP 4789 허용 (쉬움)    |
+| **Azure 지원**  | 제한적 (UDR 필요)     | 완전 지원               |
+| **하드웨어 오프로드** | 제한적              | 광범위 (NIC 지원)        |
+| **멀티캐스트 필요**  | 아니오              | 아니오 (Calico는 유니캐스트) |
+| **ECMP 지원**   | 제한적              | 좋음 (UDP 해시)         |
 
 ## Direct / Unencapsulated 모드
 
@@ -494,12 +493,12 @@ flowchart TD
 
 ### 모드별 성능 비교
 
-| 측정 항목 | Direct | IPIP | VXLAN | 측정 환경 |
-|-----------|--------|------|-------|-----------|
-| **처리량 (Gbps)** | 9.8 | 9.2 | 8.5 | iperf3, MTU 1500 |
-| **지연 시간 (us)** | 35 | 42 | 55 | netperf, TCP_RR |
-| **CPU 사용률** | 낮음 | 중간 | 중간-높음 | 10Gbps 전송 시 |
-| **PPS (백만)** | 1.8 | 1.5 | 1.2 | 64byte 패킷 |
+| 측정 항목          | Direct | IPIP | VXLAN | 측정 환경            |
+| -------------- | ------ | ---- | ----- | ---------------- |
+| **처리량 (Gbps)** | 9.8    | 9.2  | 8.5   | iperf3, MTU 1500 |
+| **지연 시간 (us)** | 35     | 42   | 55    | netperf, TCP\_RR |
+| **CPU 사용률**    | 낮음     | 중간   | 중간-높음 | 10Gbps 전송 시      |
+| **PPS (백만)**   | 1.8    | 1.5  | 1.2   | 64byte 패킷        |
 
 ### 벤치마크 테스트 방법
 
@@ -523,12 +522,12 @@ kubectl exec -it pod-a -- netperf -H <pod-b-ip> -t TCP_RR -l 60
 
 ### AWS (EKS)
 
-| 모드 | 지원 | 권장 | 비고 |
-|------|------|------|------|
-| IPIP | 지원 | CrossSubnet | Security Group에서 Protocol 4 허용 필요 |
-| VXLAN | 지원 | CrossSubnet | UDP 4789 허용 필요 |
-| Direct | 조건부 | BGP 환경만 | VPC 라우팅 테이블 수동 설정 또는 BGP |
-| CrossSubnet | 권장 | 예 | AZ 간 트래픽만 캡슐화 |
+| 모드          | 지원  | 권장          | 비고                                |
+| ----------- | --- | ----------- | --------------------------------- |
+| IPIP        | 지원  | CrossSubnet | Security Group에서 Protocol 4 허용 필요 |
+| VXLAN       | 지원  | CrossSubnet | UDP 4789 허용 필요                    |
+| Direct      | 조건부 | BGP 환경만     | VPC 라우팅 테이블 수동 설정 또는 BGP          |
+| CrossSubnet | 권장  | 예           | AZ 간 트래픽만 캡슐화                     |
 
 ```yaml
 # AWS EKS용 CrossSubnet 설정
@@ -545,12 +544,12 @@ spec:
 
 ### Azure (AKS)
 
-| 모드 | 지원 | 권장 | 비고 |
-|------|------|------|------|
-| IPIP | 제한적 | 아니오 | UDR 필요, 복잡함 |
-| VXLAN | 완전 지원 | 예 | Azure 네이티브 지원 |
-| Direct | 어려움 | 아니오 | Azure는 BGP 제한적 |
-| CrossSubnet | VXLAN과 함께 | 예 | VXLAN CrossSubnet 권장 |
+| 모드          | 지원        | 권장  | 비고                   |
+| ----------- | --------- | --- | -------------------- |
+| IPIP        | 제한적       | 아니오 | UDR 필요, 복잡함          |
+| VXLAN       | 완전 지원     | 예   | Azure 네이티브 지원        |
+| Direct      | 어려움       | 아니오 | Azure는 BGP 제한적       |
+| CrossSubnet | VXLAN과 함께 | 예   | VXLAN CrossSubnet 권장 |
 
 ```yaml
 # Azure AKS용 VXLAN 설정
@@ -567,33 +566,33 @@ spec:
 
 ### GCP (GKE)
 
-| 모드 | 지원 | 권장 | 비고 |
-|------|------|------|------|
-| IPIP | 지원 | CrossSubnet | Firewall에서 Protocol 4 허용 |
-| VXLAN | 지원 | 대안 | UDP 4789 허용 필요 |
-| Direct | 조건부 | VPC Native | GCP VPC 라우팅 활용 |
-| CrossSubnet | 권장 | 예 | 리전 간 트래픽 캡슐화 |
+| 모드          | 지원  | 권장          | 비고                       |
+| ----------- | --- | ----------- | ------------------------ |
+| IPIP        | 지원  | CrossSubnet | Firewall에서 Protocol 4 허용 |
+| VXLAN       | 지원  | 대안          | UDP 4789 허용 필요           |
+| Direct      | 조건부 | VPC Native  | GCP VPC 라우팅 활용           |
+| CrossSubnet | 권장  | 예           | 리전 간 트래픽 캡슐화             |
 
 ### 온프레미스
 
-| 모드 | 지원 | 권장 | 비고 |
-|------|------|------|------|
-| IPIP | 지원 | L3 네트워크 | 방화벽 Protocol 4 허용 |
-| VXLAN | 지원 | 방화벽 환경 | UDP 통과 용이 |
-| Direct | 완전 지원 | BGP 환경 | 최고 성능 |
-| CrossSubnet | 지원 | 하이브리드 | L2/L3 혼합 환경 |
+| 모드          | 지원    | 권장      | 비고                |
+| ----------- | ----- | ------- | ----------------- |
+| IPIP        | 지원    | L3 네트워크 | 방화벽 Protocol 4 허용 |
+| VXLAN       | 지원    | 방화벽 환경  | UDP 통과 용이         |
+| Direct      | 완전 지원 | BGP 환경  | 최고 성능             |
+| CrossSubnet | 지원    | 하이브리드   | L2/L3 혼합 환경       |
 
 ## MTU 최적화 가이드
 
 ### MTU 오버헤드 계산
 
-| 모드 | 오버헤드 | 계산 | 권장 MTU |
-|------|----------|------|----------|
-| Direct | 0 bytes | 1500 - 0 | 1500 |
-| IPIP | 20 bytes | 1500 - 20 | 1480 |
-| VXLAN | 50 bytes | 1500 - 50 | 1450 |
-| WireGuard | 60 bytes | 1500 - 60 | 1440 |
-| IPIP + WireGuard | 80 bytes | 1500 - 80 | 1420 |
+| 모드               | 오버헤드     | 계산        | 권장 MTU |
+| ---------------- | -------- | --------- | ------ |
+| Direct           | 0 bytes  | 1500 - 0  | 1500   |
+| IPIP             | 20 bytes | 1500 - 20 | 1480   |
+| VXLAN            | 50 bytes | 1500 - 50 | 1450   |
+| WireGuard        | 60 bytes | 1500 - 60 | 1440   |
+| IPIP + WireGuard | 80 bytes | 1500 - 80 | 1420   |
 
 ### MTU 자동 감지 설정
 
@@ -730,7 +729,7 @@ spec:
   natOutgoing: true
 ```
 
----
+***
 
 ## 요약
 
@@ -745,9 +744,9 @@ spec:
 
 다음 장에서는 **BGP 심층 분석**을 다룹니다.
 
----
+***
 
-[← 이전: 아키텍처 심층 분석](02-architecture.md) | [메인 페이지](README.md) | [다음: BGP 심층 분석 →](04-bgp-deep-dive.md)
+[← 이전: 아키텍처 심층 분석](02-architecture.md) | [메인 페이지](./) | [다음: BGP 심층 분석 →](04-bgp-deep-dive.md)
 
 ## 퀴즈
 

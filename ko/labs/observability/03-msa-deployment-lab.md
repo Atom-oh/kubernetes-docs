@@ -1,18 +1,16 @@
 # Part 3: MSA 배포 및 카나리
 
-> **난이도**: 고급 (Advanced)
-> **예상 소요 시간**: 60분
-> **마지막 업데이트**: 2026년 2월 23일
+> **난이도**: 고급 (Advanced) **예상 소요 시간**: 60분 **마지막 업데이트**: 2026년 2월 23일
 
 ## 학습 목표
 
-- ArgoCD 멀티 클러스터 MSA 배포
-- Argo Rollouts Canary 배포 및 AnalysisTemplate 구성
-- OpenTelemetry auto-instrumentation 적용
+* ArgoCD 멀티 클러스터 MSA 배포
+* Argo Rollouts Canary 배포 및 AnalysisTemplate 구성
+* OpenTelemetry auto-instrumentation 적용
 
 ## 아키텍처 개요
 
-![MSA Service Map](../../../assets/labs/observability/msa-service-map.png)
+![MSA Service Map](../../.gitbook/assets/msa-service-map.png)
 
 ```mermaid
 flowchart TB
@@ -45,19 +43,19 @@ flowchart TB
     Batch --> Aurora
 ```
 
----
+***
 
 ## Step 3.1: MSA 애플리케이션 소개
 
 ### 서비스 구성
 
-| 서비스 | 언어/프레임워크 | 포트 | 역할 | OTel SDK |
-|--------|----------------|------|------|----------|
-| api-gateway | Go / Gin | 8080 | API 라우팅, 인증 | Manual |
-| order-service | Python / FastAPI | 8000 | 주문 CRUD | Auto (opentelemetry-instrument) |
-| payment-service | Java / Spring Boot | 8080 | 결제 처리 | Auto (javaagent) |
-| notification-service | Node.js / Express | 3000 | 알림 발송 | Auto (@opentelemetry/auto-instrumentations-node) |
-| analytics-batch | Python / Pandas | - | 배치 분석 | Auto (opentelemetry-instrument) |
+| 서비스                  | 언어/프레임워크           | 포트   | 역할          | OTel SDK                                         |
+| -------------------- | ------------------ | ---- | ----------- | ------------------------------------------------ |
+| api-gateway          | Go / Gin           | 8080 | API 라우팅, 인증 | Manual                                           |
+| order-service        | Python / FastAPI   | 8000 | 주문 CRUD     | Auto (opentelemetry-instrument)                  |
+| payment-service      | Java / Spring Boot | 8080 | 결제 처리       | Auto (javaagent)                                 |
+| notification-service | Node.js / Express  | 3000 | 알림 발송       | Auto (@opentelemetry/auto-instrumentations-node) |
+| analytics-batch      | Python / Pandas    | -    | 배치 분석       | Auto (opentelemetry-instrument)                  |
 
 ### Git 저장소 구조
 
@@ -508,7 +506,7 @@ COPY --from=builder /app/target/*.jar app.jar
 ENTRYPOINT ["java", "-javaagent:/app/opentelemetry-javaagent.jar", "-jar", "app.jar"]
 ```
 
----
+***
 
 ## Step 3.2: Karpenter NodePool 구성
 
@@ -592,14 +590,14 @@ spec:
 kubectl apply -f karpenter-nodepool.yaml
 ```
 
----
+***
 
 ## Step 3.3: KEDA ScaledObject 구성
 
-| Scaler | Target Service | Trigger | Scale 기준 |
-|--------|---------------|---------|-----------|
-| SQS | notification-service | SQS Queue Depth | 메시지 > 10개 |
-| Prometheus | order-service | Request Rate | RPS > 100 |
+| Scaler     | Target Service       | Trigger         | Scale 기준  |
+| ---------- | -------------------- | --------------- | --------- |
+| SQS        | notification-service | SQS Queue Depth | 메시지 > 10개 |
+| Prometheus | order-service        | Request Rate    | RPS > 100 |
 
 **Step 3.3.1: KEDA 설치**
 
@@ -679,7 +677,7 @@ envsubst < keda-sqs-scaler.yaml | kubectl apply -f -
 kubectl apply -f keda-prometheus-scaler.yaml
 ```
 
----
+***
 
 ## Step 3.4: ArgoCD Application/ApplicationSet
 
@@ -765,7 +763,7 @@ kubectl config use-context managed
 kubectl apply -f argocd/app-of-apps.yaml
 ```
 
----
+***
 
 ## Step 3.5: 초기 배포 확인
 
@@ -782,24 +780,24 @@ kubectl --context service wait --for=condition=Ready pod -l app.kubernetes.io/pa
 
 ### 예상 결과
 
-| Application | Sync Status | Health Status |
-|-------------|-------------|---------------|
-| api-gateway | Synced | Healthy |
-| order-service | Synced | Healthy |
-| payment-service | Synced | Healthy |
-| notification-service | Synced | Healthy |
+| Application          | Sync Status | Health Status |
+| -------------------- | ----------- | ------------- |
+| api-gateway          | Synced      | Healthy       |
+| order-service        | Synced      | Healthy       |
+| payment-service      | Synced      | Healthy       |
+| notification-service | Synced      | Healthy       |
 
----
+***
 
 ## Step 3.6: OTel Auto-Instrumentation 구성
 
-| 서비스 | 언어 | Instrumentation 방식 | 설정 방법 |
-|--------|------|---------------------|----------|
-| api-gateway | Go | Manual SDK | 코드에 직접 통합 |
-| order-service | Python | Auto (opentelemetry-instrument) | Dockerfile ENTRYPOINT |
-| payment-service | Java | Auto (javaagent) | -javaagent JVM 옵션 |
-| notification-service | Node.js | Auto (auto-instrumentations-node) | -r 플래그 |
-| analytics-batch | Python | Auto (opentelemetry-instrument) | Dockerfile ENTRYPOINT |
+| 서비스                  | 언어      | Instrumentation 방식                | 설정 방법                 |
+| -------------------- | ------- | --------------------------------- | --------------------- |
+| api-gateway          | Go      | Manual SDK                        | 코드에 직접 통합             |
+| order-service        | Python  | Auto (opentelemetry-instrument)   | Dockerfile ENTRYPOINT |
+| payment-service      | Java    | Auto (javaagent)                  | -javaagent JVM 옵션     |
+| notification-service | Node.js | Auto (auto-instrumentations-node) | -r 플래그                |
+| analytics-batch      | Python  | Auto (opentelemetry-instrument)   | Dockerfile ENTRYPOINT |
 
 **Step 3.6.1: OTel 환경 변수 ConfigMap**
 
@@ -939,7 +937,7 @@ spec:
               memory: 1Gi
 ```
 
----
+***
 
 ## Step 3.7: Argo Rollouts Canary 배포
 
@@ -1118,7 +1116,7 @@ spec:
 kubectl --context service apply -f rollouts/
 ```
 
----
+***
 
 ## Step 3.8: 의도적 실패 주입 및 자동 롤백
 
@@ -1158,7 +1156,7 @@ Events:
 RolloutAborted   Rollout is aborted due to AnalysisRun 'order-service-6b7d8f9c5d-2-analysis-1' failure
 ```
 
----
+***
 
 ## 검증 (Verification)
 
@@ -1184,25 +1182,25 @@ sum(rate(http_requests_total{service="order-service"}[5m]))
 
 ### 검증 항목
 
-| 항목 | 확인 방법 | 예상 결과 |
-|------|----------|----------|
-| ArgoCD Sync | `argocd app list` | All Synced/Healthy |
-| MSA Pods | `kubectl get pods -n msa` | All Running |
-| OTel Traces | Grafana Tempo | Traces visible |
-| KEDA ScaledObject | `kubectl get scaledobject -n msa` | Active |
-| Rollout Status | `kubectl argo rollouts status` | Healthy |
+| 항목                | 확인 방법                             | 예상 결과              |
+| ----------------- | --------------------------------- | ------------------ |
+| ArgoCD Sync       | `argocd app list`                 | All Synced/Healthy |
+| MSA Pods          | `kubectl get pods -n msa`         | All Running        |
+| OTel Traces       | Grafana Tempo                     | Traces visible     |
+| KEDA ScaledObject | `kubectl get scaledobject -n msa` | Active             |
+| Rollout Status    | `kubectl argo rollouts status`    | Healthy            |
 
----
+***
 
 ## 참조 문서
 
-- [ArgoCD 설치](../../gitops/argocd/01-installation.md)
-- [트래픽 관리](../../gitops/argocd/05-traffic-management.md)
-- [KEDA 이벤트 기반 스케일링](../../autoscaling/01-keda.md)
-- [Karpenter 오토스케일링](../../autoscaling/02-karpenter.md)
+* [ArgoCD 설치](../../gitops/argocd/01-installation.md)
+* [트래픽 관리](../../gitops/argocd/05-traffic-management.md)
+* [KEDA 이벤트 기반 스케일링](../../autoscaling/01-keda.md)
+* [Karpenter 오토스케일링](../../autoscaling/02-karpenter.md)
 
----
+***
 
 ## 다음 단계
 
-MSA 배포가 완료되었습니다. [Part 4: 부하 테스트 및 스케일링](./04-load-testing-scaling-lab.md)로 진행하여 실제 부하 상황에서의 Observability를 확인합니다.
+MSA 배포가 완료되었습니다. [Part 4: 부하 테스트 및 스케일링](04-load-testing-scaling-lab.md)로 진행하여 실제 부하 상황에서의 Observability를 확인합니다.

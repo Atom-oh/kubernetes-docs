@@ -1,7 +1,6 @@
-# Part 6: Calico eBPF 데이터플레인 심층 분석
+# Part 6: eBPF 데이터플레인
 
-> **지원 버전**: Calico v3.29+ / Kubernetes 1.28+ / Linux Kernel 5.3+
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Calico v3.29+ / Kubernetes 1.28+ / Linux Kernel 5.3+ **마지막 업데이트**: 2026년 2월 23일
 
 ## 개요
 
@@ -71,13 +70,13 @@ flowchart TD
 
 ### eBPF 핵심 구성 요소
 
-| 구성 요소 | 역할 | 설명 |
-|-----------|------|------|
-| **Verifier** | 안전성 검증 | 무한 루프, 메모리 위반 방지 |
-| **JIT Compiler** | 성능 최적화 | 바이트코드를 네이티브 코드로 변환 |
-| **BPF Maps** | 데이터 저장 | 커널-사용자 공간 데이터 공유 |
-| **Helper Functions** | 커널 기능 접근 | 안전한 커널 API 호출 |
-| **Hook Points** | 실행 지점 | XDP, TC, Socket 등 |
+| 구성 요소                | 역할       | 설명                 |
+| -------------------- | -------- | ------------------ |
+| **Verifier**         | 안전성 검증   | 무한 루프, 메모리 위반 방지   |
+| **JIT Compiler**     | 성능 최적화   | 바이트코드를 네이티브 코드로 변환 |
+| **BPF Maps**         | 데이터 저장   | 커널-사용자 공간 데이터 공유   |
+| **Helper Functions** | 커널 기능 접근 | 안전한 커널 API 호출      |
+| **Hook Points**      | 실행 지점    | XDP, TC, Socket 등  |
 
 ### eBPF Hook Points
 
@@ -116,17 +115,17 @@ flowchart LR
 
 **Hook Point별 특징:**
 
-| Hook Point | 위치 | 성능 | 컨텍스트 | 사용 사례 |
-|------------|------|------|----------|-----------|
-| **XDP** | 드라이버 레벨 | 최고 | 제한적 | DDoS 방어, 패킷 드롭 |
-| **TC Ingress** | 네트워크 스택 진입 | 높음 | 풍부함 | NAT, 정책, 라우팅 |
-| **TC Egress** | 네트워크 스택 출구 | 높음 | 풍부함 | NAT, 정책, 터널링 |
-| **Socket Ops** | 소켓 레벨 | 보통 | 소켓 정보 | 연결 시간 LB |
-| **Cgroup** | cgroup 레벨 | 보통 | 컨테이너 정보 | 컨테이너별 정책 |
+| Hook Point     | 위치         | 성능 | 컨텍스트    | 사용 사례          |
+| -------------- | ---------- | -- | ------- | -------------- |
+| **XDP**        | 드라이버 레벨    | 최고 | 제한적     | DDoS 방어, 패킷 드롭 |
+| **TC Ingress** | 네트워크 스택 진입 | 높음 | 풍부함     | NAT, 정책, 라우팅   |
+| **TC Egress**  | 네트워크 스택 출구 | 높음 | 풍부함     | NAT, 정책, 터널링   |
+| **Socket Ops** | 소켓 레벨      | 보통 | 소켓 정보   | 연결 시간 LB       |
+| **Cgroup**     | cgroup 레벨  | 보통 | 컨테이너 정보 | 컨테이너별 정책       |
 
 ## Calico eBPF vs iptables 아키텍처
 
-![Calico 데이터플레인: iptables vs eBPF](../../../assets/calico_ebpf_vs_iptables.png)
+![Calico 데이터플레인: iptables vs eBPF](../../.gitbook/assets/calico_ebpf_vs_iptables.png)
 
 ### iptables 모드 아키텍처
 
@@ -251,14 +250,14 @@ flowchart TD
 
 **상세 성능 비교표:**
 
-| 항목 | iptables | eBPF | 개선율 |
-|------|----------|------|--------|
-| **처리량** | 1.2M pps | 2.0M pps | +67% |
-| **지연 시간** | 120µs | 75µs | -38% |
-| **CPU 사용량 (1000 서비스)** | 70% | 30% | -57% |
-| **메모리 사용량** | 높음 (규칙 수 비례) | 낮음 (일정) | 가변 |
-| **규칙 확장성** | O(n) 검색 | O(1) 검색 | 크게 향상 |
-| **연결 설정 시간** | 느림 | 빠름 | -50% |
+| 항목                     | iptables     | eBPF     | 개선율   |
+| ---------------------- | ------------ | -------- | ----- |
+| **처리량**                | 1.2M pps     | 2.0M pps | +67%  |
+| **지연 시간**              | 120µs        | 75µs     | -38%  |
+| **CPU 사용량 (1000 서비스)** | 70%          | 30%      | -57%  |
+| **메모리 사용량**            | 높음 (규칙 수 비례) | 낮음 (일정)  | 가변    |
+| **규칙 확장성**             | O(n) 검색      | O(1) 검색  | 크게 향상 |
+| **연결 설정 시간**           | 느림           | 빠름       | -50%  |
 
 ## Calico eBPF 프로그램 구조
 
@@ -366,13 +365,13 @@ sequenceDiagram
 
 ### DSR 모드 비교
 
-| 항목 | Non-DSR | DSR |
-|------|---------|-----|
-| **응답 경로** | LB 노드 경유 | 직접 클라이언트로 |
-| **LB 노드 부하** | 양방향 트래픽 처리 | 요청만 처리 |
-| **지연 시간** | 높음 (추가 홉) | 낮음 |
-| **비대칭 라우팅** | 없음 | 있음 |
-| **MTU 고려** | 불필요 | 터널링 오버헤드 고려 |
+| 항목           | Non-DSR    | DSR         |
+| ------------ | ---------- | ----------- |
+| **응답 경로**    | LB 노드 경유   | 직접 클라이언트로   |
+| **LB 노드 부하** | 양방향 트래픽 처리 | 요청만 처리      |
+| **지연 시간**    | 높음 (추가 홉)  | 낮음          |
+| **비대칭 라우팅**  | 없음         | 있음          |
+| **MTU 고려**   | 불필요        | 터널링 오버헤드 고려 |
 
 ### DSR 설정
 
@@ -447,11 +446,11 @@ XDP(eXpress Data Path)는 네트워크 드라이버 레벨에서 패킷을 처�
 
 ### XDP 모드
 
-| 모드 | 설명 | 성능 | 호환성 |
-|------|------|------|--------|
-| **Native** | 드라이버 내장 XDP | 최고 | 드라이버 지원 필요 |
-| **Generic** | 커널 네트워크 스택 | 낮음 | 모든 드라이버 |
-| **Offload** | NIC 하드웨어 | 매우 높음 | 특정 NIC만 |
+| 모드          | 설명          | 성능    | 호환성        |
+| ----------- | ----------- | ----- | ---------- |
+| **Native**  | 드라이버 내장 XDP | 최고    | 드라이버 지원 필요 |
+| **Generic** | 커널 네트워크 스택  | 낮음    | 모든 드라이버    |
+| **Offload** | NIC 하드웨어    | 매우 높음 | 특정 NIC만    |
 
 ### XDP 설정
 
@@ -490,13 +489,13 @@ bpftool net show
 
 ### 시스템 요구사항
 
-| 요구사항 | 최소 | 권장 | 비고 |
-|----------|------|------|------|
-| **Linux 커널** | 5.3 | 5.8+ | 5.10+ LTS 권장 |
-| **아키텍처** | x86_64 / ARM64 | x86_64 | ARM64 완전 지원 |
-| **BTF 지원** | 필수 | 필수 | CONFIG_DEBUG_INFO_BTF=y |
-| **BPF 파일시스템** | 필수 | 필수 | /sys/fs/bpf 마운트 |
-| **cgroup v2** | 권장 | 권장 | Connect-time LB용 |
+| 요구사항          | 최소              | 권장      | 비고                         |
+| ------------- | --------------- | ------- | -------------------------- |
+| **Linux 커널**  | 5.3             | 5.8+    | 5.10+ LTS 권장               |
+| **아키텍처**      | x86\_64 / ARM64 | x86\_64 | ARM64 완전 지원                |
+| **BTF 지원**    | 필수              | 필수      | CONFIG\_DEBUG\_INFO\_BTF=y |
+| **BPF 파일시스템** | 필수              | 필수      | /sys/fs/bpf 마운트            |
+| **cgroup v2** | 권장              | 권장      | Connect-time LB용           |
 
 ### 커널 설정 확인
 
@@ -547,12 +546,12 @@ cat /boot/config-$(uname -r) | grep -E "(BPF|BTF)"
 
 ### 마이그레이션 전 체크리스트
 
-- [ ] 커널 버전 5.3+ 확인
-- [ ] BTF 지원 확인
-- [ ] /sys/fs/bpf 마운트 확인
-- [ ] 모든 노드 동일 커널 버전
-- [ ] 백업 및 롤백 계획 수립
-- [ ] 테스트 환경에서 검증
+* [ ] 커널 버전 5.3+ 확인
+* [ ] BTF 지원 확인
+* [ ] /sys/fs/bpf 마운트 확인
+* [ ] 모든 노드 동일 커널 버전
+* [ ] 백업 및 롤백 계획 수립
+* [ ] 테스트 환경에서 검증
 
 ### 단계별 마이그레이션
 
@@ -769,14 +768,14 @@ bpftool prog show id <prog_id> --json | jq '.run_cnt, .run_time_ns'
 
 Calico eBPF는 kube-proxy의 모든 기능을 대체할 수 있습니다:
 
-| kube-proxy 기능 | Calico eBPF 구현 |
-|-----------------|------------------|
-| ClusterIP 서비스 | BPF NAT Map |
-| NodePort 서비스 | BPF + XDP |
-| LoadBalancer 서비스 | BPF + DSR |
-| ExternalIP | BPF NAT |
+| kube-proxy 기능    | Calico eBPF 구현   |
+| ---------------- | ---------------- |
+| ClusterIP 서비스    | BPF NAT Map      |
+| NodePort 서비스     | BPF + XDP        |
+| LoadBalancer 서비스 | BPF + DSR        |
+| ExternalIP       | BPF NAT          |
 | Session Affinity | BPF Affinity Map |
-| IPVS 모드 기능 | BPF Hash LB |
+| IPVS 모드 기능       | BPF Hash LB      |
 
 ### 서비스 처리 흐름
 
@@ -828,13 +827,13 @@ spec:
 
 ### 알려진 제한사항
 
-| 제한사항 | 설명 | 대안 |
-|----------|------|------|
-| **externalTrafficPolicy: Local** | NodePort에서 제한적 지원 | Tunnel 모드 사용 |
-| **Host-networked Pods** | 일부 시나리오 제한 | 별도 정책 적용 |
-| **IPv6 전용 클러스터** | 완전 지원 아님 | Dual-stack 사용 |
-| **특정 커널 버전** | 5.3 이전 버전 미지원 | 커널 업그레이드 |
-| **Windows 노드** | eBPF 미지원 | iptables 모드 |
+| 제한사항                             | 설명                | 대안            |
+| -------------------------------- | ----------------- | ------------- |
+| **externalTrafficPolicy: Local** | NodePort에서 제한적 지원 | Tunnel 모드 사용  |
+| **Host-networked Pods**          | 일부 시나리오 제한        | 별도 정책 적용      |
+| **IPv6 전용 클러스터**                 | 완전 지원 아님          | Dual-stack 사용 |
+| **특정 커널 버전**                     | 5.3 이전 버전 미지원     | 커널 업그레이드      |
+| **Windows 노드**                   | eBPF 미지원          | iptables 모드   |
 
 ### 주의사항
 
@@ -890,13 +889,13 @@ spec:
     icmp: 30s
 ```
 
----
+***
 
 ## 참고 자료
 
-- [Calico eBPF 공식 문서](https://docs.tigera.io/calico/latest/operations/ebpf/)
-- [eBPF 소개](https://ebpf.io/)
-- [Linux Kernel BPF 문서](https://www.kernel.org/doc/html/latest/bpf/)
-- [Calico eBPF 성능 벤치마크](https://www.tigera.io/blog/calico-ebpf-dataplane/)
+* [Calico eBPF 공식 문서](https://docs.tigera.io/calico/latest/operations/ebpf/)
+* [eBPF 소개](https://ebpf.io/)
+* [Linux Kernel BPF 문서](https://www.kernel.org/doc/html/latest/bpf/)
+* [Calico eBPF 성능 벤치마크](https://www.tigera.io/blog/calico-ebpf-dataplane/)
 
-[이전: Part 5 - Network Policy 심화](05-network-policy.md) | [다음: Part 7 - 운영 및 트러블슈팅](07-operations.md) | [메인 페이지로 돌아가기](README.md)
+[이전: Part 5 - Network Policy 심화](05-network-policy.md) | [다음: Part 7 - 운영 및 트러블슈팅](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/networking/calico/07-operations.md) | [메인 페이지로 돌아가기](./)

@@ -1,0 +1,2 @@
+# EKS Auto Mode
+

@@ -1,4 +1,4 @@
-# Part 3: 커스텀 스케줄러 구현 사례 및 모니터링
+# Part 3: 고급 기능
 
 ## EKS에서의 커스텀 스케줄러 구현 사례
 
@@ -12,13 +12,13 @@ AI/ML 워크로드를 실행하는 EKS 클러스터에서는 GPU 리소스를 �
 
 다음 다이어그램은 GPU 워크로드 최적화 스케줄러의 아키텍처를 보여줍니다:
 
-![](../assets/gpu_scheduler_architecture.svg)
+![](<../.gitbook/assets/gpu_scheduler_architecture (1).svg>)
 
 #### GPU 워크로드 스케줄링 워크플로우
 
 다음 다이어그램은 GPU 워크로드 스케줄링 워크플로우를 보여줍니다:
 
-![](../assets/gpu_workload_scheduling_workflow.svg)
+![](<../.gitbook/assets/gpu_workload_scheduling_workflow (1).svg>)
 
 #### 요구 사항
 
@@ -169,13 +169,13 @@ EKS 클러스터에서 네트워크 비용을 최적화하기 위해 네트워�
 
 다음 다이어그램은 네트워크 지역성 최적화 스케줄러의 아키텍처를 보여줍니다.
 
-![](../assets/network_locality_scheduler_architecture.svg)
+![](<../.gitbook/assets/network_locality_scheduler_architecture (1).svg>)
 
 #### 네트워크 지역성 최적화 워크플로우
 
 다음 다이어그램은 네트워크 지역성 최적화 스케줄러의 워크플로우를 보여줍니다.
 
-![](../assets/network_locality_workflow.svg)
+![](<../.gitbook/assets/network_locality_workflow (1).svg>)
 
 ## Pod Deletion Cost를 이용한 스케일 다운 최적화
 
@@ -186,10 +186,11 @@ Kubernetes 1.22부터 도입된 Pod Deletion Cost는 ReplicaSet, Deployment, Sta
 Pod Deletion Cost는 `controller.kubernetes.io/pod-deletion-cost` 어노테이션을 통해 각 Pod에 비용 값을 할당합니다. 스케일 다운 시 낮은 비용의 Pod이 먼저 삭제됩니다.
 
 **주요 특징**:
-- 기본값: 0
-- 범위: -2147483648 ~ 2147483647 (int32 범위)
-- 더 높은 값 = 더 중요한 Pod (나중에 삭제)
-- 더 낮은 값 = 덜 중요한 Pod (먼저 삭제)
+
+* 기본값: 0
+* 범위: -2147483648 \~ 2147483647 (int32 범위)
+* 더 높은 값 = 더 중요한 Pod (나중에 삭제)
+* 더 낮은 값 = 덜 중요한 Pod (먼저 삭제)
 
 ### Pod Deletion Cost 아키텍처
 
@@ -653,27 +654,22 @@ spec:
 ### 모범 사례
 
 1. **일관된 비용 범위 사용**: 팀 내에서 일관된 비용 범위를 정의하여 사용합니다.
-   - `-100 ~ -1`: 우선 삭제 (새로운 Pod, 워밍업 중인 Pod)
-   - `0`: 기본값 (일반 Pod)
-   - `1 ~ 100`: 보통 중요도 (활성 연결이 있는 Pod)
-   - `100 ~ 1000`: 높은 중요도 (캐시가 워밍업된 Pod, 많은 연결이 있는 Pod)
-
+   * `-100 ~ -1`: 우선 삭제 (새로운 Pod, 워밍업 중인 Pod)
+   * `0`: 기본값 (일반 Pod)
+   * `1 ~ 100`: 보통 중요도 (활성 연결이 있는 Pod)
+   * `100 ~ 1000`: 높은 중요도 (캐시가 워밍업된 Pod, 많은 연결이 있는 Pod)
 2. **동적 업데이트**: Pod의 상태가 변경될 때 deletion cost를 동적으로 업데이트합니다.
-
 3. **상한선 설정**: deletion cost에 상한선을 설정하여 너무 큰 값으로 인한 문제를 방지합니다.
-
 4. **모니터링**: deletion cost의 분포를 모니터링하여 예상대로 작동하는지 확인합니다.
-
 5. **테스트**: 프로덕션에 적용하기 전에 스테이징 환경에서 스케일 다운 동작을 테스트합니다.
-
 6. **문서화**: 각 비용 범위가 의미하는 바를 문서화합니다.
 
 ### 제한사항
 
-- **Pod Disruption Budget과의 상호작용**: PDB와 함께 사용할 때는 PDB가 우선됩니다.
-- **Kubernetes 버전**: 1.22 이상에서만 사용 가능합니다.
-- **워크로드 유형 제한**: ReplicaSet 컨트롤러를 사용하는 워크로드(Deployment, ReplicaSet)에서만 작동합니다.
-- **Node 장애 시**: Node가 완전히 장애가 발생한 경우에는 deletion cost가 고려되지 않습니다.
+* **Pod Disruption Budget과의 상호작용**: PDB와 함께 사용할 때는 PDB가 우선됩니다.
+* **Kubernetes 버전**: 1.22 이상에서만 사용 가능합니다.
+* **워크로드 유형 제한**: ReplicaSet 컨트롤러를 사용하는 워크로드(Deployment, ReplicaSet)에서만 작동합니다.
+* **Node 장애 시**: Node가 완전히 장애가 발생한 경우에는 deletion cost가 고려되지 않습니다.
 
 ## 커스텀 스케줄러 모니터링 및 디버깅
 
@@ -683,13 +679,13 @@ spec:
 
 다음 다이어그램은 EKS에서 커스텀 스케줄러를 모니터링하기 위한 아키텍처를 보여줍니다.
 
-![](../assets/custom_scheduler_monitoring_architecture.svg)
+![](<../.gitbook/assets/custom_scheduler_monitoring_architecture (1).svg>)
 
 ### 주요 모니터링 메트릭
 
 다음 다이어그램은 커스텀 스케줄러의 주요 모니터링 메트릭과 그 관계를 보여줍니다:
 
-![](../assets/custom_scheduler_monitoring_metrics.svg)
+![](<../.gitbook/assets/custom_scheduler_monitoring_metrics (1).svg>)
 
 ### 로깅
 

@@ -1,19 +1,19 @@
-# Istio 설치 및 초기 설정
+# 설치 및 초기 설정
 
 이 문서에서는 Amazon EKS 클러스터에 Istio를 설치하고 초기 설정하는 방법을 다룹니다.
 
 ## 목차
 
-1. [사전 요구 사항](#사전-요구-사항)
-2. [설치 방법 선택](#설치-방법-선택)
-3. [istioctl을 사용한 설치](#istioctl을-사용한-설치)
-4. [Helm을 사용한 설치](#helm을-사용한-설치)
-5. [Istio Operator를 사용한 설치](#istio-operator를-사용한-설치)
-6. [설치 프로필](#설치-프로필)
-7. [설치 검증](#설치-검증)
-8. [샘플 애플리케이션 배포](#샘플-애플리케이션-배포)
-9. [Istio 제거](#istio-제거)
-10. [문제 해결](#문제-해결)
+1. [사전 요구 사항](01-installation.md#사전-요구-사항)
+2. [설치 방법 선택](01-installation.md#설치-방법-선택)
+3. [istioctl을 사용한 설치](01-installation.md#istioctl을-사용한-설치)
+4. [Helm을 사용한 설치](01-installation.md#helm을-사용한-설치)
+5. [Istio Operator를 사용한 설치](01-installation.md#istio-operator를-사용한-설치)
+6. [설치 프로필](01-installation.md#설치-프로필)
+7. [설치 검증](01-installation.md#설치-검증)
+8. [샘플 애플리케이션 배포](01-installation.md#샘플-애플리케이션-배포)
+9. [Istio 제거](01-installation.md#istio-제거)
+10. [문제 해결](01-installation.md#문제-해결)
 
 ## 사전 요구 사항
 
@@ -21,9 +21,9 @@ Istio를 설치하기 전에 다음 요구 사항을 충족해야 합니다:
 
 ### 1. Amazon EKS 클러스터
 
-- **Kubernetes 버전**: 1.28 이상 (권장: 1.34)
-- **노드 유형**: 최소 2개의 워커 노드 (권장: 3개 이상)
-- **노드 크기**: 최소 2 vCPU, 4GB RAM (권장: t3.medium 이상)
+* **Kubernetes 버전**: 1.28 이상 (권장: 1.34)
+* **노드 유형**: 최소 2개의 워커 노드 (권장: 3개 이상)
+* **노드 크기**: 최소 2 vCPU, 4GB RAM (권장: t3.medium 이상)
 
 ### 2. kubectl 설치 및 구성
 
@@ -37,25 +37,26 @@ kubectl get nodes
 
 ### 3. 필요한 도구
 
-- **AWS CLI**: 2.x 이상
-- **eksctl**: (선택 사항) 클러스터 관리를 위해
-- **Helm**: 3.x 이상 (Helm 설치 방법을 사용하는 경우)
+* **AWS CLI**: 2.x 이상
+* **eksctl**: (선택 사항) 클러스터 관리를 위해
+* **Helm**: 3.x 이상 (Helm 설치 방법을 사용하는 경우)
 
 ### 4. 클러스터 리소스
 
 최소 리소스 요구 사항:
-- **Control Plane**: 1 vCPU, 1.5GB RAM
-- **Sidecar (per pod)**: 0.1 vCPU, 128MB RAM
+
+* **Control Plane**: 1 vCPU, 1.5GB RAM
+* **Sidecar (per pod)**: 0.1 vCPU, 128MB RAM
 
 ## 설치 방법 선택
 
 Istio는 세 가지 주요 설치 방법을 제공합니다:
 
-| 방법 | 장점 | 단점 | 권장 사용 사례 |
-|------|------|------|---------------|
-| **istioctl** | 간단하고 빠름, 검증 기능 제공 | 자동화 어려움 | 개발 및 테스트 환경 |
-| **Helm** | GitOps 친화적, 버전 관리 용이 | 구성 복잡할 수 있음 | 프로덕션 환경, CI/CD 파이프라인 |
-| **Istio Operator** | 선언적 관리, 자동 업그레이드 | 추가 리소스 필요 | 대규모 프로덕션 환경 |
+| 방법                 | 장점                   | 단점          | 권장 사용 사례             |
+| ------------------ | -------------------- | ----------- | -------------------- |
+| **istioctl**       | 간단하고 빠름, 검증 기능 제공    | 자동화 어려움     | 개발 및 테스트 환경          |
+| **Helm**           | GitOps 친화적, 버전 관리 용이 | 구성 복잡할 수 있음 | 프로덕션 환경, CI/CD 파이프라인 |
+| **Istio Operator** | 선언적 관리, 자동 업그레이드     | 추가 리소스 필요   | 대규모 프로덕션 환경          |
 
 ## istioctl을 사용한 설치
 
@@ -250,14 +251,14 @@ Istio는 다양한 사용 사례에 맞는 여러 프로필을 제공합니다.
 
 ### 사용 가능한 프로필
 
-| 프로필 | 설명 | 구성 요소 | 권장 사용 |
-|-------|------|----------|----------|
-| **default** | 프로덕션 배포용 기본 설정 | istiod, ingress gateway | 대부분의 프로덕션 환경 |
-| **demo** | 모든 기능 활성화, 학습용 | istiod, ingress gateway, egress gateway, 높은 추적 샘플링 | 개발 및 데모 |
-| **minimal** | 최소한의 구성 요소만 설치 | istiod only | 리소스 제약 환경 |
-| **remote** | Multi-cluster 환경의 원격 클러스터 | - | Multi-cluster 설정 |
-| **empty** | 기본 구성 없음 | - | 완전한 커스텀 설정 |
-| **preview** | 실험적 기능 포함 | 다양한 실험적 기능 | 테스트 환경 |
+| 프로필         | 설명                        | 구성 요소                                              | 권장 사용            |
+| ----------- | ------------------------- | -------------------------------------------------- | ---------------- |
+| **default** | 프로덕션 배포용 기본 설정            | istiod, ingress gateway                            | 대부분의 프로덕션 환경     |
+| **demo**    | 모든 기능 활성화, 학습용            | istiod, ingress gateway, egress gateway, 높은 추적 샘플링 | 개발 및 데모          |
+| **minimal** | 최소한의 구성 요소만 설치            | istiod only                                        | 리소스 제약 환경        |
+| **remote**  | Multi-cluster 환경의 원격 클러스터 | -                                                  | Multi-cluster 설정 |
+| **empty**   | 기본 구성 없음                  | -                                                  | 완전한 커스텀 설정       |
+| **preview** | 실험적 기능 포함                 | 다양한 실험적 기능                                         | 테스트 환경           |
 
 ### 프로필 확인
 
@@ -463,6 +464,7 @@ kubectl delete namespace istio-operator
 **증상**: 파드에 Envoy sidecar가 주입되지 않음
 
 **해결 방법**:
+
 ```bash
 # 네임스페이스 레이블 확인
 kubectl get namespace -L istio-injection
@@ -479,6 +481,7 @@ kubectl get mutatingwebhookconfiguration
 **증상**: istiod 파드가 Pending 또는 CrashLoopBackOff 상태
 
 **해결 방법**:
+
 ```bash
 # 파드 상태 확인
 kubectl get pods -n istio-system
@@ -499,6 +502,7 @@ kubectl describe nodes
 **증상**: LoadBalancer 타입 서비스가 Pending 상태
 
 **해결 방법**:
+
 ```bash
 # 서비스 상태 확인
 kubectl get svc -n istio-system istio-ingressgateway
@@ -568,13 +572,13 @@ istioctl bug-report
 
 Istio 설치가 완료되었습니다! 이제 다음 문서를 참고하여 Istio를 활용해보세요:
 
-1. **[기본 개념](02-basic-concepts.md)**: Istio의 핵심 개념과 아키텍처 이해
-2. **[Traffic Management](traffic-management/README.md)**: Gateway, VirtualService, DestinationRule 학습
-3. **[Security](security/README.md)**: mTLS, 인증, 권한 부여 설정
+1. [**기본 개념**](/broken/pages/ducaju4XiXAIssAYkJ8h): Istio의 핵심 개념과 아키텍처 이해
+2. [**Traffic Management**](/broken/pages/KbABk4V1immX9KTfw6H7): Gateway, VirtualService, DestinationRule 학습
+3. [**Security**](/broken/pages/3c3ksbHxkXoGxJXLSp3m): mTLS, 인증, 권한 부여 설정
 
 ## 참고 자료
 
-- [Istio 공식 설치 가이드](https://istio.io/latest/docs/setup/install/)
-- [Istio 프로필 문서](https://istio.io/latest/docs/setup/additional-setup/config-profiles/)
-- [AWS EKS 워크숍 - Istio](https://www.eksworkshop.com/intermediate/330_servicemesh_using_istio/)
-- [Istio 문제 해결 가이드](https://istio.io/latest/docs/ops/diagnostic-tools/)
+* [Istio 공식 설치 가이드](https://istio.io/latest/docs/setup/install/)
+* [Istio 프로필 문서](https://istio.io/latest/docs/setup/additional-setup/config-profiles/)
+* [AWS EKS 워크숍 - Istio](https://www.eksworkshop.com/intermediate/330_servicemesh_using_istio/)
+* [Istio 문제 해결 가이드](https://istio.io/latest/docs/ops/diagnostic-tools/)

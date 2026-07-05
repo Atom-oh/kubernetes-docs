@@ -1,25 +1,24 @@
-# Terraform 3-Layer로 EKS Auto Mode 인프라 구축
+# 인프라 구성 기초
 
-> **지원 버전**: EKS 1.29+, Terraform 1.10+, AWS Provider 5.x
-> **마지막 업데이트**: 2026년 2월 19일
+> **지원 버전**: EKS 1.29+, Terraform 1.10+, AWS Provider 5.x **마지막 업데이트**: 2026년 2월 19일
 
-< [이전: 목차](./README.md) | [목차](./README.md) | [다음: NLB 가중치 라우팅](./02-infrastructure-advanced.md) >
+< [이전: 목차](./) | [목차](./) | [다음: NLB 가중치 라우팅](02-infrastructure-advanced.md) >
 
----
+***
 
 이 문서에서는 Terraform을 사용하여 EKS Auto Mode 클러스터 인프라를 3개의 독립적인 레이어로 구성하는 방법을 설명합니다. 각 레이어는 변경 빈도, 팀 오너십, 그리고 장애 영향 범위(Blast Radius)에 따라 분리되어 있어 운영 안정성과 팀 협업 효율성을 높입니다.
 
 ## 목차
 
-1. [3-Layer 아키텍처 소개](#3-layer-아키텍처-소개)
-2. [00-shared: 공통 설정](#00-shared-공통-설정)
-3. [01-network: VPC 구성](#01-network-vpc-구성)
-4. [02-cluster: EKS Auto Mode](#02-cluster-eks-auto-mode)
-5. [03-platform: Add-ons & Pod Identity](#03-platform-add-ons--pod-identity)
-6. [레이어 간 연계](#레이어-간-연계)
-7. [검증](#검증)
+1. [3-Layer 아키텍처 소개](01-infrastructure-setup.md#3-layer-아키텍처-소개)
+2. [00-shared: 공통 설정](01-infrastructure-setup.md#00-shared-공통-설정)
+3. [01-network: VPC 구성](01-infrastructure-setup.md#01-network-vpc-구성)
+4. [02-cluster: EKS Auto Mode](01-infrastructure-setup.md#02-cluster-eks-auto-mode)
+5. [03-platform: Add-ons & Pod Identity](01-infrastructure-setup.md#03-platform-add-ons--pod-identity)
+6. [레이어 간 연계](01-infrastructure-setup.md#레이어-간-연계)
+7. [검증](01-infrastructure-setup.md#검증)
 
----
+***
 
 ## 3-Layer 아키텍처 소개
 
@@ -34,12 +33,12 @@
 
 ### 레이어별 특성 비교
 
-| Layer | 이름 | 변경 빈도 | 주요 오너 | Blast Radius | 롤백 난이도 |
-|-------|------|----------|----------|--------------|------------|
-| 00 | shared | 거의 없음 | DevOps | 전체 | 매우 높음 |
-| 01 | network | 월 1-2회 | 네트워크 팀 | VPC 전체 | 높음 |
-| 02 | cluster | 월 1-2회 | 플랫폼 팀 | EKS 클러스터 | 중간 |
-| 03 | platform | 주 1-2회 | 플랫폼 팀 | Add-ons만 | 낮음 |
+| Layer | 이름       | 변경 빈도  | 주요 오너  | Blast Radius | 롤백 난이도 |
+| ----- | -------- | ------ | ------ | ------------ | ------ |
+| 00    | shared   | 거의 없음  | DevOps | 전체           | 매우 높음  |
+| 01    | network  | 월 1-2회 | 네트워크 팀 | VPC 전체       | 높음     |
+| 02    | cluster  | 월 1-2회 | 플랫폼 팀  | EKS 클러스터     | 중간     |
+| 03    | platform | 주 1-2회 | 플랫폼 팀  | Add-ons만     | 낮음     |
 
 ### 디렉토리 구조
 
@@ -82,18 +81,15 @@ eks-terraform/
 
 > **Terraform은 AWS 인프라만 관리합니다.**
 >
-> Kubernetes 리소스(NodePool, Deployment, Service 등)는 ArgoCD를 통한 GitOps 방식으로 관리합니다.
-> 자세한 내용은 [GitOps 멀티 클러스터 배포](./04-gitops-multi-cluster.md)를 참조하세요.
+> Kubernetes 리소스(NodePool, Deployment, Service 등)는 ArgoCD를 통한 GitOps 방식으로 관리합니다. 자세한 내용은 [GitOps 멀티 클러스터 배포](04-gitops-multi-cluster.md)를 참조하세요.
 
----
+***
 
 ## 00-shared: 공통 설정
 
 ### S3 Backend 구성 (네이티브 S3 잠금)
 
-> **참고**: Terraform 1.10부터 S3 backend에서 `use_lockfile = true` 옵션을 통해
-> DynamoDB 없이 네이티브 S3 잠금을 사용할 수 있습니다. S3의 conditional writes를
-> 활용하여 상태 파일 잠금을 처리하므로, DynamoDB 테이블 생성 및 관리가 불필요합니다.
+> **참고**: Terraform 1.10부터 S3 backend에서 `use_lockfile = true` 옵션을 통해 DynamoDB 없이 네이티브 S3 잠금을 사용할 수 있습니다. S3의 conditional writes를 활용하여 상태 파일 잠금을 처리하므로, DynamoDB 테이블 생성 및 관리가 불필요합니다.
 
 모든 레이어가 공유하는 Terraform 상태 저장소를 먼저 구성합니다.
 
@@ -257,7 +253,7 @@ common_tags = {
 }
 ```
 
----
+***
 
 ## 01-network: VPC 구성
 
@@ -648,7 +644,7 @@ output "project_name" {
 }
 ```
 
----
+***
 
 ## 02-cluster: EKS Auto Mode
 
@@ -1085,7 +1081,7 @@ output "kubernetes_version" {
 }
 ```
 
----
+***
 
 ## 03-platform: Add-ons & Pod Identity
 
@@ -1636,11 +1632,11 @@ output "ebs_csi_addon_status_green" {
 }
 ```
 
----
+***
 
 ## 레이어 간 연계
 
-### terraform_remote_state 데이터 소스 패턴
+### terraform\_remote\_state 데이터 소스 패턴
 
 각 레이어는 이전 레이어의 출력값을 `terraform_remote_state` 데이터 소스를 통해 참조합니다.
 
@@ -1664,33 +1660,30 @@ local {
 
 ### 데이터 흐름 다이어그램
 
-![Terraform 3-Layer 데이터 흐름](../assets/generated-diagrams/terraform_3layer_dataflow.png)
+![Terraform 3-Layer 데이터 흐름](../.gitbook/assets/terraform_3layer_dataflow.png)
 
 ### 상태 관리 모범 사례
 
 1. **절대 수동으로 상태 파일을 편집하지 마세요**
-   - `terraform state mv`, `terraform import` 명령 사용
-
+   * `terraform state mv`, `terraform import` 명령 사용
 2. **상태 파일 버전 관리**
-   - S3 버전 관리 활성화로 롤백 가능
-   - 주기적인 상태 백업 권장
+   * S3 버전 관리 활성화로 롤백 가능
+   * 주기적인 상태 백업 권장
+3.  **Lock 충돌 해결**
 
-3. **Lock 충돌 해결**
-   ```bash
-   # Lock 강제 해제 (주의: 다른 작업이 없는지 확인 후)
-   terraform force-unlock LOCK_ID
-   ```
-
+    ```bash
+    # Lock 강제 해제 (주의: 다른 작업이 없는지 확인 후)
+    terraform force-unlock LOCK_ID
+    ```
 4. **출력값 변경 시 주의**
-   - 하위 레이어에서 참조하는 출력값 변경 시 영향 범위 확인
-   - 출력값 삭제 전 의존성 제거 필요
-
+   * 하위 레이어에서 참조하는 출력값 변경 시 영향 범위 확인
+   * 출력값 삭제 전 의존성 제거 필요
 5. **S3 네이티브 잠금 사용** (Terraform 1.10+)
-   - `use_lockfile = true` 설정으로 S3 conditional writes 기반 잠금 활성화
-   - DynamoDB 테이블 생성/관리 불필요
-   - 기존 DynamoDB 잠금에서 마이그레이션 시 `terraform init -migrate-state` 실행
+   * `use_lockfile = true` 설정으로 S3 conditional writes 기반 잠금 활성화
+   * DynamoDB 테이블 생성/관리 불필요
+   * 기존 DynamoDB 잠금에서 마이그레이션 시 `terraform init -migrate-state` 실행
 
----
+***
 
 ## 검증
 
@@ -1892,12 +1885,12 @@ echo "========================================="
 
 #### 일반적인 문제와 해결 방법
 
-| 문제 | 원인 | 해결 방법 |
-|------|------|----------|
-| `terraform_remote_state` 오류 | S3 버킷 접근 권한 없음 | IAM 정책 확인, 버킷 이름 확인 |
-| EKS 클러스터 생성 실패 | 서브넷 태그 누락 | 01-network에서 EKS 태그 확인 |
-| NodePool이 노드를 생성하지 않음 | Auto Mode 미활성화 | `cluster_compute_config.enabled = true` 확인 |
-| Pod Identity 연결 실패 | OIDC Provider 없음 | `enable_irsa = true` 확인 |
+| 문제                          | 원인               | 해결 방법                                      |
+| --------------------------- | ---------------- | ------------------------------------------ |
+| `terraform_remote_state` 오류 | S3 버킷 접근 권한 없음   | IAM 정책 확인, 버킷 이름 확인                        |
+| EKS 클러스터 생성 실패              | 서브넷 태그 누락        | 01-network에서 EKS 태그 확인                     |
+| NodePool이 노드를 생성하지 않음       | Auto Mode 미활성화   | `cluster_compute_config.enabled = true` 확인 |
+| Pod Identity 연결 실패          | OIDC Provider 없음 | `enable_irsa = true` 확인                    |
 
 #### 디버깅 명령어
 
@@ -1921,23 +1914,23 @@ aws logs describe-log-groups \
     --log-group-name-prefix /aws/eks/eks-platform-prod
 ```
 
----
+***
 
 ## 다음 단계
 
 이 인프라 구성을 완료한 후 다음 문서를 참조하세요:
 
-- **[NLB 가중치 라우팅과 블루/그린 클러스터](./02-infrastructure-advanced.md)**: NLB를 사용한 트래픽 분배 및 장애 조치
-- **[GitOps 멀티 클러스터 배포](./04-gitops-multi-cluster.md)**: ArgoCD를 사용한 Kubernetes 리소스 관리
-- **[EKS Auto Mode 시작하기](../eks-auto-mode/01-getting-started.md)**: Auto Mode 상세 설정
-- **[EKS 보안](../eks/05-eks-security.md)**: 클러스터 보안 모범 사례
+* [**NLB 가중치 라우팅과 블루/그린 클러스터**](02-infrastructure-advanced.md): NLB를 사용한 트래픽 분배 및 장애 조치
+* [**GitOps 멀티 클러스터 배포**](04-gitops-multi-cluster.md): ArgoCD를 사용한 Kubernetes 리소스 관리
+* [**EKS Auto Mode 시작하기**](../eks-auto-mode/01-getting-started.md): Auto Mode 상세 설정
+* [**EKS 보안**](../eks/05-eks-security.md): 클러스터 보안 모범 사례
 
----
+***
 
 ## 참고 자료
 
-- [Terraform AWS EKS Module](https://registry.terraform.io/modules/terraform-aws-modules/eks/aws/latest)
-- [Terraform AWS VPC Module](https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/latest)
-- [EKS Auto Mode 공식 문서](https://docs.aws.amazon.com/eks/latest/userguide/automode.html)
-- [EKS Pod Identity 문서](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
-- [Terraform Backend Configuration](https://developer.hashicorp.com/terraform/language/settings/backends/s3)
+* [Terraform AWS EKS Module](https://registry.terraform.io/modules/terraform-aws-modules/eks/aws/latest)
+* [Terraform AWS VPC Module](https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/latest)
+* [EKS Auto Mode 공식 문서](https://docs.aws.amazon.com/eks/latest/userguide/automode.html)
+* [EKS Pod Identity 문서](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
+* [Terraform Backend Configuration](https://developer.hashicorp.com/terraform/language/settings/backends/s3)

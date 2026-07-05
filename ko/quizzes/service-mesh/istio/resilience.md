@@ -1,8 +1,6 @@
-# Istio Resilience 퀴즈
+# Resilience 퀴즈
 
-> **지원 버전**: Istio 1.28.0
-> **EKS 버전**: 1.34 (Kubernetes 1.28+)
-> **마지막 업데이트**: 2026년 2월 19일
+> **지원 버전**: Istio 1.28.0 **EKS 버전**: 1.34 (Kubernetes 1.28+) **마지막 업데이트**: 2026년 2월 19일
 
 이 퀴즈는 Istio의 복원력(Resilience) 기능에 대한 이해도를 테스트합니다.
 
@@ -12,12 +10,13 @@
 
 Outlier Detection의 주요 목적으로 옳지 **않은** 것은?
 
-A. 비정상적으로 동작하는 인스턴스를 자동으로 감지  
-B. 임계값 초과 시 트래픽 풀에서 자동 제외  
-C. 제외된 인스턴스를 영구적으로 삭제  
-D. 일정 시간 후 자동으로 복구 시도  
+A. 비정상적으로 동작하는 인스턴스를 자동으로 감지\
+B. 임계값 초과 시 트래픽 풀에서 자동 제외\
+C. 제외된 인스턴스를 영구적으로 삭제\
+D. 일정 시간 후 자동으로 복구 시도
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: C**
@@ -28,41 +27,6 @@ Outlier Detection은 **인스턴스를 삭제하지 않고** 트래픽 풀에서
 
 **Outlier Detection의 작동 원리:**
 
-```mermaid
-flowchart LR
-    Start[요청 시작]
-    Check{에러 확인}
-    Count[에러 카운트 증가]
-    Threshold{임계값 초과?}
-    Eject[인스턴스 제외]
-    Normal[정상 처리]
-    Wait[대기 시간]
-    Retry[복구 시도]
-
-    Start --> Check
-    Check -->|에러| Count
-    Check -->|성공| Normal
-    Count --> Threshold
-    Threshold -->|Yes| Eject
-    Threshold -->|No| Normal
-    Eject --> Wait
-    Wait --> Retry
-    Retry --> Start
-
-    %% 스타일 정의
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef process fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef eject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Start start;
-    class Check,Threshold decision;
-    class Count,Wait,Retry process;
-    class Eject eject;
-    class Normal process;
-```
-
 **주요 기능:**
 
 1. **자동 감지**: 에러율, 지연시간, 응답 실패를 자동으로 모니터링
@@ -71,26 +35,30 @@ flowchart LR
 4. **일시적 조치**: 인스턴스를 삭제하지 않고 트래픽만 차단
 
 **잘못된 선택지 C의 문제점:**
-- Outlier Detection은 Circuit Breaker 패턴
-- 인스턴스를 **일시적으로 제외**하되 삭제하지 않음
-- 복구 시도를 통해 정상화되면 다시 트래픽 수신
+
+* Outlier Detection은 Circuit Breaker 패턴
+* 인스턴스를 **일시적으로 제외**하되 삭제하지 않음
+* 복구 시도를 통해 정상화되면 다시 트래픽 수신
 
 **참고 자료:**
-- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+
+* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+
 </details>
 
----
+***
 
 ### 문제 2: Rate Limiting 유형 비교
 
 로컬 Rate Limiting과 글로벌 Rate Limiting의 비교로 옳은 것은?
 
-A. 로컬 Rate Limiting이 정확도가 더 높다  
-B. 글로벌 Rate Limiting이 성능이 더 빠르다  
-C. 로컬 Rate Limiting은 각 Envoy 프록시가 독립적으로 제한한다  
-D. 글로벌 Rate Limiting은 외부 서비스 없이 동작한다  
+A. 로컬 Rate Limiting이 정확도가 더 높다\
+B. 글로벌 Rate Limiting이 성능이 더 빠르다\
+C. 로컬 Rate Limiting은 각 Envoy 프록시가 독립적으로 제한한다\
+D. 글로벌 Rate Limiting은 외부 서비스 없이 동작한다
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: C**
@@ -101,12 +69,12 @@ D. 글로벌 Rate Limiting은 외부 서비스 없이 동작한다
 
 **로컬 vs 글로벌 Rate Limiting 비교:**
 
-| 특성 | 로컬 Rate Limiting | 글로벌 Rate Limiting |
-|------|-------------------|---------------------|
-| **정확도** | ❌ 낮음 (인스턴스별) | ✅ 높음 (전체) |
-| **성능** | ✅ 매우 빠름 | ⚠️ 약간 느림 |
-| **복잡도** | ✅ 낮음 | ⚠️ 높음 (외부 서비스 필요) |
-| **사용 사례** | 일반적인 보호 | 정확한 제한 필요 시 |
+| 특성        | 로컬 Rate Limiting | 글로벌 Rate Limiting |
+| --------- | ---------------- | ----------------- |
+| **정확도**   | ❌ 낮음 (인스턴스별)     | ✅ 높음 (전체)         |
+| **성능**    | ✅ 매우 빠름          | ⚠️ 약간 느림          |
+| **복잡도**   | ✅ 낮음             | ⚠️ 높음 (외부 서비스 필요) |
+| **사용 사례** | 일반적인 보호          | 정확한 제한 필요 시       |
 
 **로컬 Rate Limiting의 특징:**
 
@@ -146,51 +114,25 @@ spec:
 
 **Token Bucket 알고리즘:**
 
-```mermaid
-flowchart TB
-    Bucket[Token Bucket<br/>최대: 100 tokens]
-    Refill[Refill<br/>10 tokens/sec]
-    Request[요청 도착]
-    Check{토큰<br/>있음?}
-    Allow[요청 허용<br/>토큰 1개 소비]
-    Reject[요청 거부<br/>429 반환]
-
-    Refill -.->|매초 10개 추가| Bucket
-    Request --> Check
-    Bucket --> Check
-    Check -->|Yes| Allow
-    Check -->|No| Reject
-    Allow -.->|토큰 감소| Bucket
-
-    %% 스타일 정의
-    classDef bucket fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef reject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Bucket,Refill bucket;
-    class Request,Allow process;
-    class Check decision;
-    class Reject reject;
-```
-
 **참고 자료:**
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
+* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
 </details>
 
----
+***
 
 ### 문제 3: Zone Aware Routing의 이점
 
 Zone Aware Routing을 사용할 때 얻을 수 있는 이점으로 옳지 **않은** 것은?
 
-A. 같은 AZ 내 통신으로 지연시간 감소  
-B. 크로스 AZ 데이터 전송 비용 절감  
-C. 모든 트래픽을 단일 AZ로 집중하여 성능 향상  
-D. 장애 시 자동으로 다른 AZ로 장애조치  
+A. 같은 AZ 내 통신으로 지연시간 감소\
+B. 크로스 AZ 데이터 전송 비용 절감\
+C. 모든 트래픽을 단일 AZ로 집중하여 성능 향상\
+D. 장애 시 자동으로 다른 AZ로 장애조치
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: C**
@@ -201,56 +143,20 @@ Zone Aware Routing은 **트래픽을 단일 AZ에 집중하는 것이 아니라*
 
 **Zone Aware Routing의 올바른 동작:**
 
-```mermaid
-flowchart TB
-    subgraph AZ1["Availability Zone A"]
-        Client1[클라이언트 Pod<br/>Zone A]
-        Service1[Service Pod 1<br/>Zone A]
-        Service2[Service Pod 2<br/>Zone A]
-    end
-
-    subgraph AZ2["Availability Zone B"]
-        Service3[Service Pod 3<br/>Zone B]
-        Service4[Service Pod 4<br/>Zone B]
-    end
-
-    subgraph AZ3["Availability Zone C"]
-        Service5[Service Pod 5<br/>Zone C]
-    end
-
-    Client1 -->|80%<br/>같은 AZ 우선<br/>무료| Service1
-    Client1 -->|80%<br/>같은 AZ 우선<br/>무료| Service2
-    Client1 -.->|10%<br/>장애조치<br/>크로스 AZ 비용| Service3
-    Client1 -.->|10%<br/>장애조치<br/>크로스 AZ 비용| Service5
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef sameZone fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef otherZone fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client1 client;
-    class Service1,Service2 sameZone;
-    class Service3,Service4,Service5 otherZone;
-```
-
 **Zone Aware Routing의 실제 이점:**
 
 1. **지연시간 감소**:
-   - 같은 AZ 내 통신: ~0.5ms
-   - 크로스 AZ 통신: ~1-2ms
-
+   * 같은 AZ 내 통신: \~0.5ms
+   * 크로스 AZ 통신: \~1-2ms
 2. **비용 절감**:
-   - AWS 크로스 AZ 전송: GB당 $0.01-0.02
-   - 대용량 트래픽 환경에서 월 수백~수천 달러 절감
-
+   * AWS 크로스 AZ 전송: GB당 $0.01-0.02
+   * 대용량 트래픽 환경에서 월 수백\~수천 달러 절감
 3. **가용성 향상**:
-   - 같은 AZ 파드 장애 시 자동으로 다른 AZ로 전환
-   - 단일 AZ 집중은 **잘못된 접근** (가용성 저하)
-
+   * 같은 AZ 파드 장애 시 자동으로 다른 AZ로 전환
+   * 단일 AZ 집중은 **잘못된 접근** (가용성 저하)
 4. **성능 최적화**:
-   - 네트워크 홉 감소
-   - 대역폭 최적화
+   * 네트워크 홉 감소
+   * 대역폭 최적화
 
 **DestinationRule 설정 예시:**
 
@@ -274,10 +180,12 @@ spec:
 ```
 
 **참고 자료:**
-- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+
+* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+
 </details>
 
----
+***
 
 ### 문제 4: Outlier Detection 파라미터
 
@@ -291,12 +199,13 @@ outlierDetection:
   maxEjectionPercent: 50
 ```
 
-A. 5초 동안 에러 발생 시  
-B. 연속으로 5번 에러 발생 시  
-C. 30초 동안 에러율 50% 초과 시  
-D. 30초마다 무조건 제외  
+A. 5초 동안 에러 발생 시\
+B. 연속으로 5번 에러 발생 시\
+C. 30초 동안 에러율 50% 초과 시\
+D. 30초마다 무조건 제외
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: B**
@@ -307,16 +216,17 @@ D. 30초마다 무조건 제외
 
 **Outlier Detection 주요 파라미터:**
 
-| 파라미터 | 설명 | 기본값 | 권장값 |
-|---------|------|--------|--------|
-| **consecutiveErrors** | 연속 에러 임계값 | 5 | 3-10 |
-| **interval** | 분석 주기 | 10s | 10s-60s |
-| **baseEjectionTime** | 최소 제외 시간 | 30s | 30s-300s |
-| **maxEjectionPercent** | 최대 제외 비율 | 10% | 10%-50% |
+| 파라미터                   | 설명        | 기본값 | 권장값      |
+| ---------------------- | --------- | --- | -------- |
+| **consecutiveErrors**  | 연속 에러 임계값 | 5   | 3-10     |
+| **interval**           | 분석 주기     | 10s | 10s-60s  |
+| **baseEjectionTime**   | 최소 제외 시간  | 30s | 30s-300s |
+| **maxEjectionPercent** | 최대 제외 비율  | 10% | 10%-50%  |
 
 **파라미터 상세 설명:**
 
-#### consecutiveErrors
+**consecutiveErrors**
+
 ```yaml
 # 민감한 서비스 (빠른 감지)
 consecutiveErrors: 3
@@ -328,7 +238,8 @@ consecutiveErrors: 5
 consecutiveErrors: 10
 ```
 
-#### interval
+**interval**
+
 ```yaml
 # 빠른 감지 (높은 부하)
 interval: 10s
@@ -340,7 +251,8 @@ interval: 30s
 interval: 60s
 ```
 
-#### baseEjectionTime
+**baseEjectionTime**
+
 ```yaml
 # 빠른 복구 시도
 baseEjectionTime: 30s
@@ -352,7 +264,8 @@ baseEjectionTime: 60s
 baseEjectionTime: 300s
 ```
 
-#### maxEjectionPercent
+**maxEjectionPercent**
+
 ```yaml
 # 보수적 (안정성 우선)
 maxEjectionPercent: 10
@@ -393,10 +306,12 @@ T=30s: Pod-1이 여전히 에러 → 추가 30s 제외 (누적)
 ```
 
 **참고 자료:**
-- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+
+* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+
 </details>
 
----
+***
 
 ### 문제 5: Token Bucket 알고리즘
 
@@ -409,12 +324,13 @@ token_bucket:
   fill_interval: 1s
 ```
 
-A. 10 req/s  
-B. 100 req/s  
-C. 110 req/s  
-D. 1000 req/s  
+A. 10 req/s\
+B. 100 req/s\
+C. 110 req/s\
+D. 1000 req/s
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: A**
@@ -425,9 +341,9 @@ D. 1000 req/s
 
 **Token Bucket 알고리즘 파라미터:**
 
-- **max_tokens**: 버킷에 저장할 수 있는 최대 토큰 수 (버스트 허용량)
-- **tokens_per_fill**: 매 fill_interval마다 추가할 토큰 수 (**평균 처리량**)
-- **fill_interval**: 토큰 추가 주기
+* **max\_tokens**: 버킷에 저장할 수 있는 최대 토큰 수 (버스트 허용량)
+* **tokens\_per\_fill**: 매 fill\_interval마다 추가할 토큰 수 (**평균 처리량**)
+* **fill\_interval**: 토큰 추가 주기
 
 **계산 방식:**
 
@@ -522,10 +438,12 @@ spec:
 ```
 
 **참고 자료:**
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
+* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
 </details>
 
----
+***
 
 ## 주관식 문제 (6-10번)
 
@@ -534,13 +452,15 @@ spec:
 프로덕션 환경에서 실행 중인 `product-service`가 간헐적으로 느려지고 타임아웃이 발생합니다. Outlier Detection을 구현하여 문제있는 인스턴스를 자동으로 제외하고 싶습니다. 다음 요구사항을 만족하는 DestinationRule을 작성하세요:
 
 **요구사항:**
-- 연속 3번 에러 발생 시 제외
-- 20초마다 평가
-- 제외된 인스턴스는 60초 후 복구 시도
-- 최대 30%까지만 제외 가능
-- 502, 503, 504 게이트웨이 에러도 감지
+
+* 연속 3번 에러 발생 시 제외
+* 20초마다 평가
+* 제외된 인스턴스는 60초 후 복구 시도
+* 최대 30%까지만 제외 가능
+* 502, 503, 504 게이트웨이 에러도 감지
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
@@ -579,34 +499,38 @@ spec:
 
 **해설:**
 
-#### 1. consecutiveErrors vs consecutive5xxErrors vs consecutiveGatewayErrors
+**1. consecutiveErrors vs consecutive5xxErrors vs consecutiveGatewayErrors**
 
-| 파라미터 | 감지 대상 | 사용 사례 |
-|---------|-----------|-----------|
-| **consecutiveErrors** | 모든 에러 (5xx, 연결 실패 등) | 일반적인 에러 감지 |
-| **consecutive5xxErrors** | 5xx 에러만 | 서버 에러만 감지 |
-| **consecutiveGatewayErrors** | 502, 503, 504만 | 게이트웨이 문제 감지 |
+| 파라미터                         | 감지 대상                | 사용 사례       |
+| ---------------------------- | -------------------- | ----------- |
+| **consecutiveErrors**        | 모든 에러 (5xx, 연결 실패 등) | 일반적인 에러 감지  |
+| **consecutive5xxErrors**     | 5xx 에러만              | 서버 에러만 감지   |
+| **consecutiveGatewayErrors** | 502, 503, 504만       | 게이트웨이 문제 감지 |
 
-#### 2. 파라미터 설명
+**2. 파라미터 설명**
 
 **interval: 20s**
-- Outlier Detection을 20초마다 실행
-- 각 인스턴스의 에러율을 평가
+
+* Outlier Detection을 20초마다 실행
+* 각 인스턴스의 에러율을 평가
 
 **baseEjectionTime: 60s**
-- 제외된 인스턴스는 최소 60초 동안 트래픽 수신 안 함
-- 반복 제외 시 시간이 증가 (60s → 120s → 180s...)
+
+* 제외된 인스턴스는 최소 60초 동안 트래픽 수신 안 함
+* 반복 제외 시 시간이 증가 (60s → 120s → 180s...)
 
 **maxEjectionPercent: 30**
-- 동시에 최대 30%의 인스턴스만 제외 가능
-- 예: 10개 파드면 최대 3개까지만 제외
-- 가용성 보장
+
+* 동시에 최대 30%의 인스턴스만 제외 가능
+* 예: 10개 파드면 최대 3개까지만 제외
+* 가용성 보장
 
 **minHealthPercent: 70**
-- 최소 70%의 인스턴스는 정상 상태 유지
-- maxEjectionPercent와 보완 관계
 
-#### 3. 동작 예시
+* 최소 70%의 인스턴스는 정상 상태 유지
+* maxEjectionPercent와 보완 관계
+
+**3. 동작 예시**
 
 ```
 초기 상태: 10개 파드 모두 정상
@@ -628,7 +552,7 @@ T=60s: Pod-1 복구 시도
        → 정상이면 트래픽 수신 재개
 ```
 
-#### 4. 모니터링
+**4. 모니터링**
 
 ```bash
 # Outlier Detection 이벤트 확인
@@ -639,9 +563,10 @@ envoy_cluster_outlier_detection_ejections_active
 envoy_cluster_outlier_detection_ejections_total
 ```
 
-#### 5. 프로덕션 고려사항
+**5. 프로덕션 고려사항**
 
 **민감한 서비스 (빠른 감지):**
+
 ```yaml
 outlierDetection:
   consecutiveErrors: 3
@@ -651,6 +576,7 @@ outlierDetection:
 ```
 
 **안정적인 서비스 (오탐 방지):**
+
 ```yaml
 outlierDetection:
   consecutiveErrors: 10
@@ -660,20 +586,24 @@ outlierDetection:
 ```
 
 **참고 자료:**
-- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+
+* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+
 </details>
 
----
+***
 
 ### 문제 7: 로컬 Rate Limiting 적용
 
 `api-gateway` 서비스가 DDoS 공격을 받고 있습니다. 로컬 Rate Limiting을 적용하여 각 Envoy 프록시에서 초당 50개 요청으로 제한하고, 버스트로 최대 200개까지 허용하려고 합니다. EnvoyFilter를 작성하세요.
 
 추가 요구사항:
-- Rate limit이 적용될 때 `X-RateLimit-Limit` 헤더 추가
-- 429 응답 시 `Retry-After: 1` 헤더 포함
+
+* Rate limit이 적용될 때 `X-RateLimit-Limit` 헤더 추가
+* 429 응답 시 `Retry-After: 1` 헤더 포함
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
@@ -768,7 +698,7 @@ spec:
 
 **해설:**
 
-#### 1. Token Bucket 계산
+**1. Token Bucket 계산**
 
 ```
 평균 처리율: tokens_per_fill / fill_interval
@@ -779,15 +709,17 @@ spec:
           = 200 req (짧은 순간)
 ```
 
-#### 2. 시나리오별 동작
+**2. 시나리오별 동작**
 
 **정상 트래픽 (40 req/s):**
+
 ```
 초당 50개 토큰 추가, 40개 사용
 → 항상 여유 있음 ✅
 ```
 
 **버스트 트래픽 (순간 200 req/s):**
+
 ```
 T=0: 200개 토큰 있음
      200개 요청 모두 처리 ✅
@@ -800,15 +732,17 @@ T=1s: 50개 토큰 추가
 ```
 
 **지속적인 과부하 (100 req/s):**
+
 ```
 초당 50개 토큰 추가
 100개 요청 중 50개만 처리
 나머지 50개는 429 반환 ❌
 ```
 
-#### 3. 응답 헤더 예시
+**3. 응답 헤더 예시**
 
 **정상 요청:**
+
 ```http
 HTTP/1.1 200 OK
 X-RateLimit-Limit: 50
@@ -817,6 +751,7 @@ X-Local-Rate-Limit: true
 ```
 
 **Rate limit 초과:**
+
 ```http
 HTTP/1.1 429 Too Many Requests
 X-RateLimit-Limit: 50
@@ -825,7 +760,7 @@ X-Local-Rate-Limit: true
 Retry-After: 1
 ```
 
-#### 4. 경로별 Rate Limiting
+**4. 경로별 Rate Limiting**
 
 더 세밀한 제어가 필요하면 경로별로 다른 제한 설정:
 
@@ -869,7 +804,7 @@ spec:
               fill_interval: 1s
 ```
 
-#### 5. 모니터링
+**5. 모니터링**
 
 ```bash
 # Prometheus 메트릭
@@ -882,22 +817,26 @@ sum(rate(istio_requests_total{response_code="429"}[5m]))
 ```
 
 **참고 자료:**
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
+* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
 </details>
 
----
+***
 
 ### 문제 8: Zone Aware Routing 설정
 
 AWS EKS 클러스터가 3개의 AZ (us-east-1a, us-east-1b, us-east-1c)에 분산되어 있습니다. `order-service`에 Zone Aware Routing을 설정하여 크로스 AZ 데이터 전송 비용을 절감하려고 합니다.
 
 **요구사항:**
-- 같은 AZ 파드에 70% 트래픽 전송
-- 다른 AZ에 각각 15%씩 분산
-- AZ 전체 장애 시 다른 AZ로 자동 장애조치
-- 최소 50% 이상의 파드가 정상일 때만 Zone Aware 적용
+
+* 같은 AZ 파드에 70% 트래픽 전송
+* 다른 AZ에 각각 15%씩 분산
+* AZ 전체 장애 시 다른 AZ로 자동 장애조치
+* 최소 50% 이상의 파드가 정상일 때만 Zone Aware 적용
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
@@ -965,7 +904,7 @@ spec:
 
 **해설:**
 
-#### 1. Kubernetes 노드 레이블 확인
+**1. Kubernetes 노드 레이블 확인**
 
 AWS EKS는 자동으로 Topology 레이블을 추가합니다:
 
@@ -979,7 +918,7 @@ kubectl get nodes -L topology.kubernetes.io/zone -L topology.kubernetes.io/regio
 # ip-10-0-3-30.ec2.internal     us-east-1c   us-east-1
 ```
 
-#### 2. Locality 계층 구조
+**2. Locality 계층 구조**
 
 ```
 Region/Zone/SubZone
@@ -990,46 +929,14 @@ us-east-1/us-east-1b/*
 us-east-1/us-east-1c/*
 ```
 
-#### 3. 트래픽 흐름 다이어그램
+**3. 트래픽 흐름 다이어그램**
 
-```mermaid
-flowchart TB
-    subgraph AZ1["us-east-1a"]
-        Client1[Client Pod<br/>Zone A]
-        Service1[Order Service<br/>Pod 1]
-        Service2[Order Service<br/>Pod 2]
-    end
-
-    subgraph AZ2["us-east-1b"]
-        Service3[Order Service<br/>Pod 3]
-        Service4[Order Service<br/>Pod 4]
-    end
-
-    subgraph AZ3["us-east-1c"]
-        Service5[Order Service<br/>Pod 5]
-    end
-
-    Client1 -->|70%<br/>무료| Service1
-    Client1 -->|70%<br/>무료| Service2
-    Client1 -.->|15%<br/>$0.01/GB| Service3
-    Client1 -.->|15%<br/>$0.01/GB| Service5
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef sameZone fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef otherZone fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client1 client;
-    class Service1,Service2 sameZone;
-    class Service3,Service4,Service5 otherZone;
-```
-
-#### 4. 비용 절감 계산
+**4. 비용 절감 계산**
 
 **시나리오**: 월 1TB 트래픽
 
 **Zone Aware 없음 (균등 분산):**
+
 ```
 전체 트래픽: 1TB
 크로스 AZ: 66.7% (667GB)
@@ -1037,6 +944,7 @@ flowchart TB
 ```
 
 **Zone Aware 적용 (70% 같은 AZ):**
+
 ```
 전체 트래픽: 1TB
 크로스 AZ: 30% (300GB)
@@ -1046,6 +954,7 @@ flowchart TB
 ```
 
 **대용량 환경 (월 100TB):**
+
 ```
 Zone Aware 없음: $667
 Zone Aware 적용: $300
@@ -1053,9 +962,10 @@ Zone Aware 적용: $300
 절감액: $367/월 = $4,404/년
 ```
 
-#### 5. 장애조치 시나리오
+**5. 장애조치 시나리오**
 
 **정상 상태:**
+
 ```
 us-east-1a의 Client
 → 70% us-east-1a 파드
@@ -1064,6 +974,7 @@ us-east-1a의 Client
 ```
 
 **us-east-1a 전체 장애:**
+
 ```
 us-east-1a의 Client
 → failover: us-east-1b로 전환
@@ -1073,6 +984,7 @@ us-east-1a의 Client
 ```
 
 **일부 파드 비정상 (Outlier Detection):**
+
 ```
 us-east-1a: 2개 파드 (1개 정상, 1개 제외)
 us-east-1b: 2개 파드 (모두 정상)
@@ -1082,7 +994,7 @@ us-east-1b: 2개 파드 (모두 정상)
 → 비정상 파드는 트래픽 수신 안 함
 ```
 
-#### 6. 모니터링
+**6. 모니터링**
 
 ```bash
 # Locality별 트래픽 확인
@@ -1098,7 +1010,7 @@ sum(rate(istio_requests_total{
 }[5m])) by (source_cluster_zone, destination_cluster_zone)
 ```
 
-#### 7. AWS EKS 특화 설정
+**7. AWS EKS 특화 설정**
 
 **EKS 노드 그룹을 AZ별로 구성:**
 
@@ -1142,10 +1054,12 @@ spec:
 ```
 
 **참고 자료:**
-- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+
+* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+
 </details>
 
----
+***
 
 ### 문제 9: 복합 Resilience 전략
 
@@ -1159,6 +1073,7 @@ spec:
 DestinationRule과 VirtualService를 작성하세요.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
@@ -1246,20 +1161,23 @@ spec:
 
 **해설:**
 
-#### 1. Outlier Detection (인스턴스 수준)
+**1. Outlier Detection (인스턴스 수준)**
 
 **연속 에러 감지:**
+
 ```yaml
 consecutiveErrors: 3
 consecutive5xxErrors: 3
 consecutiveGatewayErrors: 3
 ```
-- 특정 파드가 3번 연속 에러 → 해당 파드만 제외
-- 다른 정상 파드는 계속 트래픽 수신
 
-#### 2. Circuit Breaker (서비스 수준)
+* 특정 파드가 3번 연속 에러 → 해당 파드만 제외
+* 다른 정상 파드는 계속 트래픽 수신
+
+**2. Circuit Breaker (서비스 수준)**
 
 **에러율 기반 차단:**
+
 ```yaml
 successRateStdevFactor: 1900  # 50% 에러율
 successRateMinimumHosts: 3    # 최소 3개 파드
@@ -1267,6 +1185,7 @@ successRateRequestVolume: 10  # 최소 10개 요청
 ```
 
 **동작 방식:**
+
 ```
 에러율 < 50%: 정상 동작
 에러율 ≥ 50%: 서비스 전체 차단 (Circuit Open)
@@ -1276,19 +1195,20 @@ Circuit Open 상태:
 - baseEjectionTime 후 복구 시도 (Circuit Half-Open)
 ```
 
-#### 3. Retry 전략
+**3. Retry 전략**
 
 **재시도 조건 (retryOn):**
 
-| 조건 | 설명 |
-|------|------|
-| **5xx** | 모든 5xx 에러 |
-| **reset** | 연결 리셋 |
-| **connect-failure** | 연결 실패 |
-| **refused-stream** | HTTP/2 스트림 거부 |
-| **retriable-4xx** | 재시도 가능한 4xx (409, 429) |
+| 조건                  | 설명                     |
+| ------------------- | ---------------------- |
+| **5xx**             | 모든 5xx 에러              |
+| **reset**           | 연결 리셋                  |
+| **connect-failure** | 연결 실패                  |
+| **refused-stream**  | HTTP/2 스트림 거부          |
+| **retriable-4xx**   | 재시도 가능한 4xx (409, 429) |
 
 **재시도 타임라인:**
+
 ```
 T=0:    첫 번째 시도 (2s timeout)
 T=2s:   타임아웃 → 2번째 시도
@@ -1299,7 +1219,7 @@ T=6s:   타임아웃 → 최종 실패 (503 반환)
 → 5초 후 최종 실패
 ```
 
-#### 4. Timeout 계층
+**4. Timeout 계층**
 
 ```
 VirtualService timeout: 5s
@@ -1310,15 +1230,17 @@ DestinationRule connectionPool
 ```
 
 **전체 타임라인:**
+
 ```
 attempt=1: 2s timeout
 attempt=2: 2s timeout
 attempt=3: 1s timeout (5s 전체 제한 도달)
 ```
 
-#### 5. 완전한 동작 예시
+**5. 완전한 동작 예시**
 
 **시나리오 1: 일시적인 네트워크 문제**
+
 ```
 Pod-1: 502 에러 (1번째)
 → Retry → Pod-2: 200 OK ✅
@@ -1328,6 +1250,7 @@ Pod-1: 에러 카운트 1 (아직 제외 안 됨)
 ```
 
 **시나리오 2: 특정 파드 문제**
+
 ```
 Pod-1: 503 에러 (1번째)
 → Retry → Pod-1: 503 에러 (2번째)
@@ -1341,6 +1264,7 @@ Pod-1: 30초 동안 트래픽 차단
 ```
 
 **시나리오 3: 서비스 전체 장애 (Circuit Breaker)**
+
 ```
 모든 파드에서 에러율 50% 초과
 → Circuit Breaker Open
@@ -1353,7 +1277,7 @@ baseEjectionTime 후:
 → 실패하면 다시 Circuit Open
 ```
 
-#### 6. Connection Pool (추가 보호)
+**6. Connection Pool (추가 보호)**
 
 ```yaml
 connectionPool:
@@ -1365,11 +1289,12 @@ connectionPool:
 ```
 
 **동작:**
-- 동시 연결 수 100개 초과 → 새 연결 거부
-- 대기 요청 50개 초과 → 503 반환
-- 서비스 과부하 방지
 
-#### 7. 모니터링
+* 동시 연결 수 100개 초과 → 새 연결 거부
+* 대기 요청 50개 초과 → 503 반환
+* 서비스 과부하 방지
+
+**7. 모니터링**
 
 ```bash
 # Circuit Breaker 상태
@@ -1390,9 +1315,10 @@ sum(rate(envoy_cluster_circuit_breakers_default_rq_pending_open[5m]))
 sum(rate(istio_requests_total{response_flags=~".*UT.*"}[5m]))
 ```
 
-#### 8. 프로덕션 고려사항
+**8. 프로덕션 고려사항**
 
 **외부 API 호출 시:**
+
 ```yaml
 # 더 관대한 설정
 timeout: 10s
@@ -1405,6 +1331,7 @@ outlierDetection:
 ```
 
 **내부 서비스 간:**
+
 ```yaml
 # 더 엄격한 설정
 timeout: 1s
@@ -1417,35 +1344,40 @@ outlierDetection:
 ```
 
 **참고 자료:**
-- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
-- [Traffic Management](../../../service-mesh/istio/traffic/README.md)
+
+* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+* [Traffic Management](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic/README.md)
+
 </details>
 
----
+***
 
 ### 문제 10: 성능 최적화 및 비용 절감
 
 대규모 마이크로서비스 환경에서 월 네트워크 비용이 $5,000입니다. Istio Resilience 기능을 활용하여 성능을 최적화하고 비용을 절감하는 종합 전략을 수립하세요.
 
 **현재 상황:**
-- 3개 AZ에 균등 분산된 100개 서비스
-- 월 트래픽: 500TB
-- 평균 응답 시간: 150ms
-- 에러율: 3%
+
+* 3개 AZ에 균등 분산된 100개 서비스
+* 월 트래픽: 500TB
+* 평균 응답 시간: 150ms
+* 에러율: 3%
 
 **목표:**
-- 크로스 AZ 비용 50% 절감
-- 평균 응답 시간 100ms 이하
-- 에러율 1% 이하
+
+* 크로스 AZ 비용 50% 절감
+* 평균 응답 시간 100ms 이하
+* 에러율 1% 이하
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
-## 종합 Resilience 전략
+### 종합 Resilience 전략
 
-### 1. Zone Aware Routing (비용 절감 + 성능 향상)
+#### 1. Zone Aware Routing (비용 절감 + 성능 향상)
 
 **DestinationRule 템플릿:**
 
@@ -1507,7 +1439,7 @@ Zone Aware 적용:
 개선: 1.5ms → 0.54ms (64% 개선)
 ```
 
-### 2. Outlier Detection (에러율 감소)
+#### 2. Outlier Detection (에러율 감소)
 
 **민감한 감지 설정:**
 
@@ -1552,7 +1484,7 @@ Outlier Detection 적용:
 - 응답 시간 개선
 ```
 
-### 3. Rate Limiting (서비스 보호)
+#### 3. Rate Limiting (서비스 보호)
 
 **티어별 Rate Limiting:**
 
@@ -1603,7 +1535,7 @@ spec:
             fill_interval: 1s
 ```
 
-### 4. 종합 성능 최적화
+#### 4. 종합 성능 최적화
 
 **응답 시간 개선 전략:**
 
@@ -1662,9 +1594,9 @@ spec:
       retryOn: 5xx,reset,connect-failure
 ```
 
-### 5. 구현 로드맵
+#### 5. 구현 로드맵
 
-#### Phase 1: Zone Aware Routing (Week 1-2)
+**Phase 1: Zone Aware Routing (Week 1-2)**
 
 ```bash
 # 1. 노드 Topology 확인
@@ -1681,10 +1613,11 @@ kubectl apply -f zone-aware-template.yaml
 ```
 
 **예상 효과:**
-- 비용: $5,000 → $1,500 (70% 절감)
-- 지연시간: 150ms → 120ms (20% 개선)
 
-#### Phase 2: Outlier Detection (Week 3-4)
+* 비용: $5,000 → $1,500 (70% 절감)
+* 지연시간: 150ms → 120ms (20% 개선)
+
+**Phase 2: Outlier Detection (Week 3-4)**
 
 ```bash
 # 1. 각 서비스에 Outlier Detection 적용
@@ -1697,10 +1630,11 @@ kubectl apply -f strict-outlier-detection.yaml
 ```
 
 **예상 효과:**
-- 에러율: 3% → 1.5% (50% 감소)
-- 지연시간: 120ms → 100ms (추가 개선)
 
-#### Phase 3: Rate Limiting (Week 5-6)
+* 에러율: 3% → 1.5% (50% 감소)
+* 지연시간: 120ms → 100ms (추가 개선)
+
+**Phase 3: Rate Limiting (Week 5-6)**
 
 ```bash
 # 1. 티어별 Rate Limiting 적용
@@ -1712,11 +1646,12 @@ kubectl apply -f standard-service-ratelimit.yaml
 ```
 
 **예상 효과:**
-- DDoS 보호
-- 서비스 안정성 향상
-- 불필요한 리소스 소비 방지
 
-### 6. 모니터링 및 검증
+* DDoS 보호
+* 서비스 안정성 향상
+* 불필요한 리소스 소비 방지
+
+#### 6. 모니터링 및 검증
 
 **Grafana 대시보드:**
 
@@ -1749,24 +1684,26 @@ sum(rate(envoy_cluster_outlier_detection_ejections_active[5m]))
 sum(rate(envoy_http_local_rate_limit_rate_limited[5m]))
 ```
 
-### 7. 최종 결과 예측
+#### 7. 최종 결과 예측
 
-| 지표 | 현재 | 목표 | 예상 결과 |
-|------|------|------|-----------|
-| **월 네트워크 비용** | $5,000 | $2,500 | $1,500 (✅ 70% 절감) |
-| **평균 응답 시간** | 150ms | 100ms | 95ms (✅ 37% 개선) |
-| **에러율** | 3% | 1% | 0.8% (✅ 73% 감소) |
-| **크로스 AZ 트래픽** | 66.7% | 33% | 20% (✅ 70% 감소) |
+| 지표             | 현재     | 목표     | 예상 결과             |
+| -------------- | ------ | ------ | ----------------- |
+| **월 네트워크 비용**  | $5,000 | $2,500 | $1,500 (✅ 70% 절감) |
+| **평균 응답 시간**   | 150ms  | 100ms  | 95ms (✅ 37% 개선)   |
+| **에러율**        | 3%     | 1%     | 0.8% (✅ 73% 감소)   |
+| **크로스 AZ 트래픽** | 66.7%  | 33%    | 20% (✅ 70% 감소)    |
 
-### 8. 추가 최적화 기회
+#### 8. 추가 최적화 기회
 
 **캐싱 전략:**
+
 ```yaml
 # Redis/Memcached를 동일 AZ에 배치
 # 캐시 히트율 향상 + 네트워크 비용 절감
 ```
 
 **Service Mesh 최적화:**
+
 ```yaml
 # Ambient Mode 고려 (Sidecar 오버헤드 감소)
 # 리소스 사용량 30-50% 감소
@@ -1774,6 +1711,7 @@ sum(rate(envoy_http_local_rate_limit_rate_limited[5m]))
 ```
 
 **Auto Scaling:**
+
 ```yaml
 # HPA + Zone Aware Routing
 # 트래픽 패턴에 따라 AZ별로 독립적 스케일링
@@ -1781,28 +1719,31 @@ sum(rate(envoy_http_local_rate_limit_rate_limited[5m]))
 ```
 
 **참고 자료:**
-- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
-- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
+* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
 </details>
 
----
+***
 
 ## 점수 계산
 
-- 객관식 1-5번: 각 10점 (총 50점)
-- 주관식 6-10번: 각 10점 (총 50점)
-- **총점: 100점**
+* 객관식 1-5번: 각 10점 (총 50점)
+* 주관식 6-10번: 각 10점 (총 50점)
+* **총점: 100점**
 
 **평가 기준:**
-- 90-100점: 우수 (Istio Resilience 전문가)
-- 80-89점: 양호 (프로덕션 적용 가능)
-- 70-79점: 보통 (추가 학습 권장)
-- 60-69점: 미흡 (기본 개념 복습 필요)
-- 0-59점: 재학습 필요
+
+* 90-100점: 우수 (Istio Resilience 전문가)
+* 80-89점: 양호 (프로덕션 적용 가능)
+* 70-79점: 보통 (추가 학습 권장)
+* 60-69점: 미흡 (기본 개념 복습 필요)
+* 0-59점: 재학습 필요
 
 ## 학습 자료
 
-- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
-- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)

@@ -1,7 +1,6 @@
-# Part 5: Calico Network Policy 심화
+# Part 5: Network Policy
 
-> **지원 버전**: Calico v3.29+ / Kubernetes 1.28+
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Calico v3.29+ / Kubernetes 1.28+ **마지막 업데이트**: 2026년 2월 23일
 
 ## 개요
 
@@ -98,16 +97,16 @@ spec:
 
 ### Kubernetes NetworkPolicy의 한계
 
-| 한계 | 설명 | Calico 해결책 |
-|------|------|---------------|
-| **명시적 Deny 없음** | Allow 규칙만 가능, Deny 규칙 불가 | `action: Deny` 지원 |
-| **L7 정책 없음** | HTTP 메서드, 경로 기반 필터링 불가 | HTTP/gRPC 프로토콜 인식 |
-| **클러스터 전역 정책 없음** | 네임스페이스 범위로 제한 | GlobalNetworkPolicy |
-| **FQDN 기반 정책 없음** | IP 주소만 사용 가능 | `domains` 필드 지원 |
-| **정책 순서 없음** | 순서 지정 불가 | `order` 필드로 우선순위 |
-| **로깅 없음** | 정책 매치 로깅 불가 | `action: Log` 지원 |
-| **ICMP 제어 제한** | ICMP 유형별 제어 불가 | ICMP 유형/코드 지정 |
-| **호스트 엔드포인트 보호 없음** | 노드 자체 보호 불가 | HostEndpoint 지원 |
+| 한계                  | 설명                       | Calico 해결책          |
+| ------------------- | ------------------------ | ------------------- |
+| **명시적 Deny 없음**     | Allow 규칙만 가능, Deny 규칙 불가 | `action: Deny` 지원   |
+| **L7 정책 없음**        | HTTP 메서드, 경로 기반 필터링 불가   | HTTP/gRPC 프로토콜 인식   |
+| **클러스터 전역 정책 없음**   | 네임스페이스 범위로 제한            | GlobalNetworkPolicy |
+| **FQDN 기반 정책 없음**   | IP 주소만 사용 가능             | `domains` 필드 지원     |
+| **정책 순서 없음**        | 순서 지정 불가                 | `order` 필드로 우선순위    |
+| **로깅 없음**           | 정책 매치 로깅 불가              | `action: Log` 지원    |
+| **ICMP 제어 제한**      | ICMP 유형별 제어 불가           | ICMP 유형/코드 지정       |
+| **호스트 엔드포인트 보호 없음** | 노드 자체 보호 불가              | HostEndpoint 지원     |
 
 ## Calico NetworkPolicy
 
@@ -559,7 +558,7 @@ spec:
 
 ## Tier 기반 정책
 
-![Calico Network Policy Tier 평가 흐름](../../../assets/calico_network_policy_tiers.png)
+![Calico Network Policy Tier 평가 흐름](../../.gitbook/assets/calico_network_policy_tiers.png)
 
 Tier는 정책을 계층화하여 관리합니다. 보안팀, 플랫폼팀, 애플리케이션팀이 각자의 영역에서 정책을 관리할 수 있습니다.
 
@@ -1069,9 +1068,10 @@ spec:
 ```
 
 **DoNotTrack 사용 사례:**
-- 고성능 DNS 서버
-- 대량 UDP 트래픽 처리
-- 상태 비저장 서비스
+
+* 고성능 DNS 서버
+* 대량 UDP 트래픽 처리
+* 상태 비저장 서비스
 
 ### PreDNAT 정책
 
@@ -1412,12 +1412,12 @@ spec:
 
 ### 정책 수와 성능
 
-| 정책 수 | Felix 처리 시간 | 권장 사항 |
-|---------|-----------------|-----------|
-| < 100 | 빠름 | 문제 없음 |
-| 100-500 | 보통 | 모니터링 권장 |
-| 500-1000 | 느림 | 최적화 필요 |
-| > 1000 | 매우 느림 | 정책 통합 필수 |
+| 정책 수     | Felix 처리 시간 | 권장 사항    |
+| -------- | ----------- | -------- |
+| < 100    | 빠름          | 문제 없음    |
+| 100-500  | 보통          | 모니터링 권장  |
+| 500-1000 | 느림          | 최적화 필요   |
+| > 1000   | 매우 느림       | 정책 통합 필수 |
 
 ### 최적화 전략
 
@@ -1447,13 +1447,13 @@ kubectl exec -n calico-system <calico-node-pod> -c calico-node -- \
   curl -s http://localhost:9091/metrics | grep felix_calc
 ```
 
----
+***
 
 ## 참고 자료
 
-- [Calico Network Policy 레퍼런스](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
-- [GlobalNetworkPolicy 레퍼런스](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy)
-- [Policy Tiers](https://docs.tigera.io/calico/latest/reference/resources/tier)
-- [NetworkSet 레퍼런스](https://docs.tigera.io/calico/latest/reference/resources/networkset)
+* [Calico Network Policy 레퍼런스](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
+* [GlobalNetworkPolicy 레퍼런스](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy)
+* [Policy Tiers](https://docs.tigera.io/calico/latest/reference/resources/tier)
+* [NetworkSet 레퍼런스](https://docs.tigera.io/calico/latest/reference/resources/networkset)
 
-[이전: Part 4 - BGP 아키텍처 심화](04-bgp-deep-dive.md) | [다음: Part 6 - eBPF 데이터플레인](06-ebpf-dataplane.md) | [메인 페이지로 돌아가기](README.md)
+[이전: Part 4 - BGP 아키텍처 심화](04-bgp-deep-dive.md) | [다음: Part 6 - eBPF 데이터플레인](06-ebpf-dataplane.md) | [메인 페이지로 돌아가기](./)

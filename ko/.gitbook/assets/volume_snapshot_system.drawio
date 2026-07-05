@@ -1,0 +1,203 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mxfile host="app.diagrams.net" modified="2025-08-05T13:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
+  <diagram name="Volume Snapshot System" id="volume-snapshot-system">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        
+        <mxCell id="title" value="Kubernetes 볼륨 스냅샷 시스템" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="400" y="30" width="350" height="30" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="k8s-snapshot" value="Kubernetes 스냅샷 시스템" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="400" height="200" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="vsc" value="볼륨 스냅샷 클래스&#10;(VolumeSnapshotClass)" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=sc;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="120" y="120" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="vs" value="볼륨 스냅샷&#10;(VolumeSnapshot)" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=vol;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="220" y="120" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="vscontent" value="볼륨 스냅샷 컨텐츠&#10;(VolumeSnapshotContent)" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=14;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pv;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="320" y="120" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="sc" value="스토리지 클래스&#10;(StorageClass)" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=sc;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="420" y="120" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="k8s-resources" value="Kubernetes 리소스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="520" y="80" width="300" height="200" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="pvc1" value="영구 볼륨 클레임&#10;(원본)" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pvc;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="560" y="120" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="pvc2" value="영구 볼륨 클레임&#10;(복원)" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pvc;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="660" y="120" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="pv1" value="영구 볼륨&#10;(원본)" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pv;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="560" y="200" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="pv2" value="영구 볼륨&#10;(복원)" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#00C7B7;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=pv;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="660" y="200" width="50" height="48" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="aws-services" value="AWS 서비스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="80" y="320" width="300" height="150" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="ebs-vol" value="EBS 볼륨" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ebs_volume;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="140" y="360" width="60" height="60" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="ebs-snap" value="EBS 스냅샷" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ebs_snapshot;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="260" y="360" width="60" height="60" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="backup-tools" value="백업 도구" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="420" y="320" width="400" height="150" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="velero" value="Velero" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7B1FA2;strokeColor=#333;fontSize=11;fontStyle=1;fontColor=white;" vertex="1" parent="1">
+          <mxGeometry x="460" y="360" width="80" height="40" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="schedule" value="백업 스케줄" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7B1FA2;strokeColor=#333;fontSize=11;fontStyle=1;fontColor=white;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="580" y="360" width="80" height="40" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="restore" value="복원 작업" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7B1FA2;strokeColor=#333;fontSize=11;fontStyle=1;fontColor=white;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="700" y="360" width="80" height="40" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="pvc1-to-pv1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="pvc1" target="pv1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pv1-to-ebs" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="pv1" target="ebs-vol">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="224" />
+              <mxPoint x="400" y="378" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="vs-to-vsc" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="vs" target="vsc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="vs-to-pvc1" value="스냅샷 생성" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;fontSize=10;fontStyle=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="vs" target="pvc1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="500" y="144" />
+              <mxPoint x="500" y="144" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="vs-to-vscontent" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="vs" target="vscontent">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="vscontent-to-snap" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#FF9900;" edge="1" parent="1" source="vscontent" target="ebs-snap">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="345" y="290" />
+              <mxPoint x="290" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="ebs-to-snap" value="스냅샷 생성" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=2;strokeColor=#FF9900;fontSize=10;fontStyle=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="ebs-vol" target="ebs-snap">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="pvc2-to-vs" value="스냅샷 참조" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;fontSize=10;fontStyle=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="pvc2" target="vs">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="500" y="135" />
+              <mxPoint x="500" y="135" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="pvc2-to-sc" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="pvc2" target="sc">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="500" y="153" />
+              <mxPoint x="500" y="153" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="pvc2-to-pv2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="pvc2" target="pv2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="velero-to-schedule" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#7B1FA2;" edge="1" parent="1" source="velero" target="schedule">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="schedule-to-vs" value="자동 스냅샷" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#7B1FA2;fontSize=10;fontStyle=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="schedule" target="vs">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="620" y="300" />
+              <mxPoint x="245" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="velero-to-restore" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#7B1FA2;" edge="1" parent="1" source="velero" target="restore">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="560" y="380" />
+              <mxPoint x="560" y="420" />
+              <mxPoint x="680" y="420" />
+              <mxPoint x="680" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="restore-to-pvc2" value="복원" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#7B1FA2;fontSize=10;fontStyle=1;fontFamily=Noto Sans CJK KR;" edge="1" parent="1" source="restore" target="pvc2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="740" y="300" />
+              <mxPoint x="685" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

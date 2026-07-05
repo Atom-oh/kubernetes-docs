@@ -1,8 +1,6 @@
-# Istio 고급 주제 퀴즈
+# Advanced 퀴즈
 
-> **지원 버전**: Istio 1.28.0
-> **EKS 버전**: 1.34 (Kubernetes 1.28+)
-> **마지막 업데이트**: 2026년 2월 19일
+> **지원 버전**: Istio 1.28.0 **EKS 버전**: 1.34 (Kubernetes 1.28+) **마지막 업데이트**: 2026년 2월 19일
 
 이 퀴즈는 Istio의 고급 기능에 대한 이해도를 테스트합니다.
 
@@ -12,12 +10,13 @@
 
 Istio Ambient Mode의 **가장 큰 장점**은?
 
-A. 더 많은 기능 제공  
-B. 리소스 사용량 대폭 감소  
-C. 더 빠른 설치 속도  
-D. 더 나은 보안  
+A. 더 많은 기능 제공\
+B. 리소스 사용량 대폭 감소\
+C. 더 빠른 설치 속도\
+D. 더 나은 보안
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: B**
@@ -28,12 +27,12 @@ Ambient Mode의 가장 큰 장점은 **리소스 사용량이 98% 이상 감소*
 
 **Sidecar Mode vs Ambient Mode 비교:**
 
-| 항목 | Sidecar Mode | Ambient Mode | 개선 |
-|------|-------------|-------------|------|
-| **메모리** | 50MB × Pod 수 | ztunnel + waypoint만 | 98%+ 감소 |
-| **CPU** | 0.1 vCPU × Pod 수 | ztunnel + waypoint만 | 98%+ 감소 |
-| **Pod 재시작** | 필요 | 불필요 | 운영 간소화 |
-| **배포 속도** | 느림 (Sidecar 주입) | 빠름 | 5-10배 향상 |
+| 항목          | Sidecar Mode     | Ambient Mode        | 개선       |
+| ----------- | ---------------- | ------------------- | -------- |
+| **메모리**     | 50MB × Pod 수     | ztunnel + waypoint만 | 98%+ 감소  |
+| **CPU**     | 0.1 vCPU × Pod 수 | ztunnel + waypoint만 | 98%+ 감소  |
+| **Pod 재시작** | 필요               | 불필요                 | 운영 간소화   |
+| **배포 속도**   | 느림 (Sidecar 주입)  | 빠름                  | 5-10배 향상 |
 
 **1000개 Pod 규모에서 리소스 비교:**
 
@@ -51,42 +50,6 @@ Ambient Mode (10개 노드):
 
 **Ambient Mode 아키텍처:**
 
-```mermaid
-flowchart TB
-    subgraph Node1[Node 1]
-        Pod1[Pod A]
-        Pod2[Pod B]
-        ztunnel1[ztunnel<br/>L4 Proxy]
-    end
-
-    subgraph Node2[Node 2]
-        Pod3[Pod C]
-        Pod4[Pod D]
-        ztunnel2[ztunnel<br/>L4 Proxy]
-    end
-
-    subgraph Waypoint[Waypoint Proxy]
-        waypoint[waypoint<br/>L7 Proxy<br/>선택적]
-    end
-
-    Pod1 --> ztunnel1
-    Pod2 --> ztunnel1
-    Pod3 --> ztunnel2
-    Pod4 --> ztunnel2
-
-    ztunnel1 <-->|mTLS| ztunnel2
-    ztunnel1 -->|L7 필요시| waypoint
-    ztunnel2 -->|L7 필요시| waypoint
-
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef waypoint fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Pod1,Pod2,Pod3,Pod4 pod;
-    class ztunnel1,ztunnel2 ztunnel;
-    class waypoint waypoint;
-```
-
 **Ambient Mode 활성화:**
 
 ```bash
@@ -101,27 +64,31 @@ kubectl get pods -n istio-system | grep ztunnel
 ```
 
 **각 옵션 분석:**
-- A (X): 기능은 Sidecar와 동일 (일부 고급 기능은 waypoint 필요)
-- B (O): 리소스 사용량이 98% 이상 감소
-- C (X): 설치 속도는 부차적 이점
-- D (X): 보안 수준은 동일 (mTLS, AuthorizationPolicy 모두 지원)
+
+* A (X): 기능은 Sidecar와 동일 (일부 고급 기능은 waypoint 필요)
+* B (O): 리소스 사용량이 98% 이상 감소
+* C (X): 설치 속도는 부차적 이점
+* D (X): 보안 수준은 동일 (mTLS, AuthorizationPolicy 모두 지원)
 
 **참고 자료:**
-- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+
+* [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+
 </details>
 
----
+***
 
 ### 문제 2: Multi-cluster Mesh
 
 Istio Multi-cluster Mesh에서 **클러스터 간 서비스 검색**을 담당하는 것은?
 
-A. Istiod  
-B. CoreDNS  
-C. East-West Gateway  
-D. Service Entry  
+A. Istiod\
+B. CoreDNS\
+C. East-West Gateway\
+D. Service Entry
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: A**
@@ -132,55 +99,18 @@ D. Service Entry
 
 **Multi-cluster Mesh 아키텍처:**
 
-```mermaid
-flowchart TB
-    subgraph Cluster1[클러스터 1]
-        Istiod1[Istiod<br/>Primary]
-        Service1[Service A]
-        Pod1[Pod A]
-    end
-
-    subgraph Cluster2[클러스터 2]
-        Istiod2[Istiod<br/>Remote]
-        Service2[Service B]
-        Pod2[Pod B]
-    end
-
-    subgraph SharedCP[Shared Control Plane]
-        PrimaryIstiod[Primary Istiod<br/>서비스 검색 총괄]
-    end
-
-    PrimaryIstiod -->|구성 배포| Istiod1
-    PrimaryIstiod -->|구성 배포| Istiod2
-
-    Istiod1 -->|서비스 정보 수집| Service1
-    Istiod2 -->|서비스 정보 수집| Service2
-
-    Pod1 <-->|Cross-cluster| Pod2
-
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Istiod1,Istiod2 istiod;
-    class Service1,Service2 service;
-    class PrimaryIstiod primary;
-```
-
 **Istiod의 역할:**
 
 1. **서비스 검색 (Service Discovery)**:
-   - 모든 클러스터의 Kubernetes Service 수집
-   - 통합된 서비스 레지스트리 유지
-   - Envoy에 엔드포인트 정보 배포
-
+   * 모든 클러스터의 Kubernetes Service 수집
+   * 통합된 서비스 레지스트리 유지
+   * Envoy에 엔드포인트 정보 배포
 2. **구성 배포**:
-   - VirtualService, DestinationRule을 모든 클러스터에 배포
-   - Cross-cluster 라우팅 규칙 관리
-
+   * VirtualService, DestinationRule을 모든 클러스터에 배포
+   * Cross-cluster 라우팅 규칙 관리
 3. **인증서 관리**:
-   - 모든 클러스터의 mTLS 인증서 발급
-   - Root CA를 공유하여 신뢰 체인 구축
+   * 모든 클러스터의 mTLS 인증서 발급
+   * Root CA를 공유하여 신뢰 체인 구축
 
 **Multi-cluster 설정 예시:**
 
@@ -211,27 +141,31 @@ data:
 ```
 
 **각 옵션 분석:**
-- A (O): Istiod가 모든 클러스터의 서비스 정보를 수집하고 배포
-- B (X): CoreDNS는 클러스터 내부 DNS만 담당
-- C (X): East-West Gateway는 트래픽 라우팅만 담당 (서비스 검색 아님)
-- D (X): ServiceEntry는 외부 서비스를 수동으로 등록하는 리소스
+
+* A (O): Istiod가 모든 클러스터의 서비스 정보를 수집하고 배포
+* B (X): CoreDNS는 클러스터 내부 DNS만 담당
+* C (X): East-West Gateway는 트래픽 라우팅만 담당 (서비스 검색 아님)
+* D (X): ServiceEntry는 외부 서비스를 수동으로 등록하는 리소스
 
 **참고 자료:**
-- [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+
+* [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+
 </details>
 
----
+***
 
 ### 문제 3: EnvoyFilter 사용 목적
 
 EnvoyFilter를 사용하는 **주요 목적**은?
 
-A. Kubernetes Service 생성  
-B. VirtualService 자동 생성  
-C. Envoy 프록시 동작 커스터마이징  
-D. Istiod 구성 변경  
+A. Kubernetes Service 생성\
+B. VirtualService 자동 생성\
+C. Envoy 프록시 동작 커스터마이징\
+D. Istiod 구성 변경
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: C**
@@ -243,6 +177,7 @@ D. Istiod 구성 변경
 **EnvoyFilter 사용 사례:**
 
 1. **커스텀 헤더 추가**:
+
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
@@ -276,6 +211,7 @@ spec:
 ```
 
 2. **Wasm 확장 통합**:
+
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
@@ -301,6 +237,7 @@ spec:
 ```
 
 3. **Rate Limiting 통합**:
+
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
@@ -348,38 +285,44 @@ spec:
 **주의사항:**
 
 ⚠️ **EnvoyFilter는 매우 강력하지만 위험합니다:**
-- Envoy 내부 구조에 대한 깊은 이해 필요
-- Istio 버전 업그레이드 시 호환성 문제 가능
-- 잘못된 구성으로 전체 메시 장애 가능
+
+* Envoy 내부 구조에 대한 깊은 이해 필요
+* Istio 버전 업그레이드 시 호환성 문제 가능
+* 잘못된 구성으로 전체 메시 장애 가능
 
 **모범 사례:**
+
 1. 가능하면 VirtualService, DestinationRule 사용
 2. EnvoyFilter는 최후의 수단으로만 사용
 3. 테스트 환경에서 충분히 검증
 4. workloadSelector로 범위 제한
 
 **각 옵션 분석:**
-- A (X): Kubernetes Service 생성은 kubectl로 수행
-- B (X): VirtualService는 수동으로 생성
-- C (O): Envoy 프록시의 동작을 세밀하게 커스터마이징
-- D (X): Istiod 구성은 IstioOperator로 변경
+
+* A (X): Kubernetes Service 생성은 kubectl로 수행
+* B (X): VirtualService는 수동으로 생성
+* C (O): Envoy 프록시의 동작을 세밀하게 커스터마이징
+* D (X): Istiod 구성은 IstioOperator로 변경
 
 **참고 자료:**
-- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
+
+* [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
+
 </details>
 
----
+***
 
 ### 문제 4: Sidecar Injection
 
 Istio에서 **자동 Sidecar 주입을 비활성화**하는 방법은?
 
-A. Namespace에서 `istio-injection=enabled` 레이블 제거  
-B. Pod에 `sidecar.istio.io/inject="false"` annotation 추가  
-C. Istiod 재시작  
-D. A와 B 모두 가능  
+A. Namespace에서 `istio-injection=enabled` 레이블 제거\
+B. Pod에 `sidecar.istio.io/inject="false"` annotation 추가\
+C. Istiod 재시작\
+D. A와 B 모두 가능
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: D**
@@ -498,27 +441,28 @@ spec:
 ```
 
 **각 옵션 분석:**
-- A (O): Namespace 레벨에서 Sidecar 주입 제어 가능
-- B (O): Pod 레벨에서 Sidecar 주입 제어 가능
-- C (X): Istiod 재시작은 불필요
-- D (O): A와 B 모두 유효한 방법
+
+* A (O): Namespace 레벨에서 Sidecar 주입 제어 가능
+* B (O): Pod 레벨에서 Sidecar 주입 제어 가능
+* C (X): Istiod 재시작은 불필요
+* D (O): A와 B 모두 유효한 방법
 
 **참고 자료:**
-- [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
+
+* [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
+
 </details>
 
----
+***
 
 ### 문제 5: Argo Rollouts 통합
 
 Argo Rollouts와 Istio를 함께 사용할 때 **트래픽 분할을 담당**하는 것은?
 
-A. Argo Rollouts Controller
-B. Istio VirtualService
-C. Kubernetes Service
-D. Istio Gateway
+A. Argo Rollouts Controller B. Istio VirtualService C. Kubernetes Service D. Istio Gateway
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: B**
@@ -528,33 +472,6 @@ D. Istio Gateway
 **해설:**
 
 **Argo Rollouts + Istio 통합 아키텍처:**
-
-```mermaid
-flowchart TB
-    User[사용자] --> Gateway[Istio Gateway]
-    Gateway --> VS[VirtualService<br/>트래픽 분할]
-
-    VS -->|90% weight| Stable[Stable Pod<br/>v1]
-    VS -->|10% weight| Canary[Canary Pod<br/>v2]
-
-    Rollout[Argo Rollouts<br/>Controller] -->|weight 업데이트| VS
-    Rollout -->|Pod 관리| Stable
-    Rollout -->|Pod 관리| Canary
-
-    Prometheus[Prometheus] -->|메트릭| Analysis[AnalysisTemplate]
-    Analysis -->|성공/실패| Rollout
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef argo fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class User user;
-    class Gateway,VS istio;
-    class Rollout,Analysis argo;
-    class Stable,Canary pod;
-    class Prometheus argo;
-```
 
 **VirtualService 역할:**
 
@@ -631,12 +548,12 @@ spec:
 
 **책임 분담:**
 
-| 컴포넌트 | 역할 |
-|---------|------|
-| **Argo Rollouts** | - Pod 생성/삭제<br/>- VirtualService weight 업데이트<br/>- 배포 전략 실행<br/>- 자동 롤백 |
-| **Istio VirtualService** | - 실제 트래픽 분할<br/>- 라우팅 규칙 적용<br/>- Envoy 구성 생성 |
-| **Envoy Proxy** | - 트래픽 라우팅 실행<br/>- 메트릭 수집 |
-| **Prometheus** | - 메트릭 저장<br/>- AnalysisTemplate에 데이터 제공 |
+| 컴포넌트                     | 역할                                                                          |
+| ------------------------ | --------------------------------------------------------------------------- |
+| **Argo Rollouts**        | <p>- Pod 생성/삭제<br>- VirtualService weight 업데이트<br>- 배포 전략 실행<br>- 자동 롤백</p> |
+| **Istio VirtualService** | <p>- 실제 트래픽 분할<br>- 라우팅 규칙 적용<br>- Envoy 구성 생성</p>                          |
+| **Envoy Proxy**          | <p>- 트래픽 라우팅 실행<br>- 메트릭 수집</p>                                             |
+| **Prometheus**           | <p>- 메트릭 저장<br>- AnalysisTemplate에 데이터 제공</p>                               |
 
 **실제 트래픽 흐름:**
 
@@ -654,16 +571,19 @@ spec:
 ```
 
 **각 옵션 분석:**
-- A (X): Argo Rollouts는 VirtualService를 업데이트만 함 (직접 트래픽 분할 안함)
-- B (O): VirtualService가 실제 트래픽 분할 수행
-- C (X): Kubernetes Service는 로드 밸런싱만 담당 (트래픽 분할 안함)
-- D (X): Gateway는 외부 트래픽 진입점 (트래픽 분할 안함)
+
+* A (X): Argo Rollouts는 VirtualService를 업데이트만 함 (직접 트래픽 분할 안함)
+* B (O): VirtualService가 실제 트래픽 분할 수행
+* C (X): Kubernetes Service는 로드 밸런싱만 담당 (트래픽 분할 안함)
+* D (X): Gateway는 외부 트래픽 진입점 (트래픽 분할 안함)
 
 **참고 자료:**
-- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+
+* [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+
 </details>
 
----
+***
 
 ## 주관식 문제 (6-10번)
 
@@ -672,13 +592,14 @@ spec:
 AWS EKS 클러스터에서 Sidecar Mode에서 Ambient Mode로 전환할 때의 **비용 절감 효과**를 계산하세요. (가정: 500개 Pod, 5개 노드, r5.xlarge 인스턴스, 월 730시간 운영)
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **비용 절감 분석:**
 
----
+***
 
 **1. 가정 조건**
 
@@ -699,7 +620,7 @@ AWS EKS 클러스터에서 Sidecar Mode에서 Ambient Mode로 전환할 때의 *
 - waypoint CPU: 0.5 vCPU
 ```
 
----
+***
 
 **2. Sidecar Mode 리소스 계산**
 
@@ -737,7 +658,7 @@ CPU 기준:
 = $2,395.56/월
 ```
 
----
+***
 
 **3. Ambient Mode 리소스 계산**
 
@@ -776,7 +697,7 @@ CPU 기준:
 = $183.96/월
 ```
 
----
+***
 
 **4. 비용 절감 효과**
 
@@ -794,37 +715,40 @@ CPU 기준:
 = $26,539.20/년
 ```
 
----
+***
 
 **5. 리소스 절감 요약**
 
-| 항목 | Sidecar Mode | Ambient Mode | 절감 |
-|------|-------------|-------------|------|
-| **메모리** | 25GB | 0.45GB | 24.55GB (98.2%) |
-| **CPU** | 50 vCPU | 1.0 vCPU | 49 vCPU (98.0%) |
-| **인스턴스** | 13대 | 1대 | 12대 (92.3%) |
-| **월간 비용** | $2,395.56 | $183.96 | $2,211.60 (92.3%) |
-| **연간 비용** | $28,746.72 | $2,207.52 | $26,539.20 (92.3%) |
+| 항목        | Sidecar Mode | Ambient Mode | 절감                 |
+| --------- | ------------ | ------------ | ------------------ |
+| **메모리**   | 25GB         | 0.45GB       | 24.55GB (98.2%)    |
+| **CPU**   | 50 vCPU      | 1.0 vCPU     | 49 vCPU (98.0%)    |
+| **인스턴스**  | 13대          | 1대           | 12대 (92.3%)        |
+| **월간 비용** | $2,395.56    | $183.96      | $2,211.60 (92.3%)  |
+| **연간 비용** | $28,746.72   | $2,207.52    | $26,539.20 (92.3%) |
 
----
+***
 
 **6. 추가 비용 절감 요인**
 
 **네트워크 비용:**
-- Sidecar Mode: localhost 통신 없음 (모든 트래픽이 네트워크 통과)
-- Ambient Mode: ztunnel 간 직접 통신으로 효율 향상
+
+* Sidecar Mode: localhost 통신 없음 (모든 트래픽이 네트워크 통과)
+* Ambient Mode: ztunnel 간 직접 통신으로 효율 향상
 
 **운영 비용:**
-- Pod 재시작 불필요 (배포 시간 단축)
-- Sidecar 주입 오류 없음
-- 관리 복잡도 감소
+
+* Pod 재시작 불필요 (배포 시간 단축)
+* Sidecar 주입 오류 없음
+* 관리 복잡도 감소
 
 **성능 향상:**
-- 메모리 압박 감소로 Pod 성능 향상
-- OOMKilled 빈도 감소
-- 노드 자원 여유 확보
 
----
+* 메모리 압박 감소로 Pod 성능 향상
+* OOMKilled 빈도 감소
+* 노드 자원 여유 확보
+
+***
 
 **7. ROI (Return on Investment)**
 
@@ -843,76 +767,49 @@ Ambient Mode 전환 비용 (1회):
 = $73,617.60
 ```
 
----
+***
 
 **8. 실전 고려사항**
 
 **장점:**
-- ✅ 92% 이상 비용 절감
-- ✅ 운영 간소화
-- ✅ 배포 속도 향상
-- ✅ 리소스 효율 극대화
+
+* ✅ 92% 이상 비용 절감
+* ✅ 운영 간소화
+* ✅ 배포 속도 향상
+* ✅ 리소스 효율 극대화
 
 **주의사항:**
-- ⚠️ Istio 1.28+ 베타 기능
-- ⚠️ L7 기능 필요 시 waypoint 추가 배포
-- ⚠️ 일부 고급 기능은 Sidecar 모드 필요
-- ⚠️ 충분한 테스트 필요
+
+* ⚠️ Istio 1.28+ 베타 기능
+* ⚠️ L7 기능 필요 시 waypoint 추가 배포
+* ⚠️ 일부 고급 기능은 Sidecar 모드 필요
+* ⚠️ 충분한 테스트 필요
 
 **참고 자료:**
-- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+
+* [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+
 </details>
 
----
+***
 
 ### 문제 7: Multi-cluster Service Mesh 구성
 
 2개의 EKS 클러스터(us-east-1, us-west-2)를 **하나의 Istio Mesh**로 통합하는 방법을 설명하세요. **Primary-Remote 모델**을 사용하고, 클러스터 간 서비스 호출 예시를 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **Multi-cluster Istio Mesh 구성:**
 
----
+***
 
 **1. 아키텍처 개요**
 
-```mermaid
-flowchart TB
-    subgraph USEast1[클러스터 1: us-east-1<br/>Primary]
-        Istiod1[Istiod<br/>Primary Control Plane]
-        ServiceA[Service A]
-        PodA[Pod A]
-        EWG1[East-West Gateway]
-    end
-
-    subgraph USWest2[클러스터 2: us-west-2<br/>Remote]
-        Istiod2[Istiod<br/>Remote Control Plane]
-        ServiceB[Service B]
-        PodB[Pod B]
-        EWG2[East-West Gateway]
-    end
-
-    Istiod1 -->|구성 배포| Istiod2
-    Istiod1 -->|서비스 검색| ServiceA
-    Istiod1 -->|서비스 검색| ServiceB
-
-    PodA <-->|mTLS| EWG1
-    EWG1 <-->|Cross-cluster| EWG2
-    EWG2 <-->|mTLS| PodB
-
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef remote fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class Istiod1,ServiceA,PodA,EWG1 primary;
-    class Istiod2,ServiceB,PodB,EWG2 remote;
-```
-
----
+***
 
 **2. 사전 준비**
 
@@ -936,7 +833,7 @@ make -f ../istio-1.28.0/tools/certs/Makefile.selfsigned.mk cluster1-cacerts
 make -f ../istio-1.28.0/tools/certs/Makefile.selfsigned.mk cluster2-cacerts
 ```
 
----
+***
 
 **3. 클러스터 1 (Primary) 설정**
 
@@ -996,7 +893,7 @@ kubectl apply --context="${CTX_CLUSTER1}" -n istio-system -f \
   samples/multicluster/expose-services.yaml
 ```
 
----
+***
 
 **4. 클러스터 2 (Remote) 설정**
 
@@ -1055,7 +952,7 @@ spec:
 EOF
 ```
 
----
+***
 
 **5. 서비스 배포 및 검증**
 
@@ -1145,7 +1042,7 @@ spec:
 kubectl apply --context="${CTX_CLUSTER2}" -f service-b.yaml
 ```
 
----
+***
 
 **6. Cross-cluster 서비스 호출 테스트**
 
@@ -1161,7 +1058,7 @@ kubectl exec --context="${CTX_CLUSTER2}" -it \
   -- curl http://service-a.default.svc.cluster.local:8080
 ```
 
----
+***
 
 **7. 서비스 검색 확인**
 
@@ -1175,7 +1072,7 @@ istioctl --context="${CTX_CLUSTER1}" proxy-config endpoints \
 # service-b.default.svc.cluster.local:8080  HEALTHY  <cluster2-pod-ip>:8080
 ```
 
----
+***
 
 **8. 트래픽 정책 적용**
 
@@ -1217,7 +1114,7 @@ spec:
         enabled: true  # Locality-aware 라우팅
 ```
 
----
+***
 
 **9. 모니터링 및 검증**
 
@@ -1233,62 +1130,49 @@ kubectl port-forward --context="${CTX_CLUSTER1}" -n istio-system \
 istioctl dashboard kiali --context="${CTX_CLUSTER1}"
 ```
 
----
+***
 
 **10. 주의사항 및 모범 사례**
 
 **주의사항:**
-- ⚠️ 공유 Root CA 필수
-- ⚠️ 네트워크 레이턴시 고려
-- ⚠️ East-West Gateway 보안 강화
-- ⚠️ DNS 해석 올바르게 설정
+
+* ⚠️ 공유 Root CA 필수
+* ⚠️ 네트워크 레이턴시 고려
+* ⚠️ East-West Gateway 보안 강화
+* ⚠️ DNS 해석 올바르게 설정
 
 **모범 사례:**
-- ✅ Locality-aware 라우팅 활성화
-- ✅ Circuit Breaker 설정
-- ✅ 클러스터별 replica 유지
-- ✅ Cross-cluster 트래픽 모니터링
+
+* ✅ Locality-aware 라우팅 활성화
+* ✅ Circuit Breaker 설정
+* ✅ 클러스터별 replica 유지
+* ✅ Cross-cluster 트래픽 모니터링
 
 **참고 자료:**
-- [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+
+* [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+
 </details>
 
----
+***
 
 ### 문제 8: EnvoyFilter로 커스텀 Rate Limiting
 
 EnvoyFilter를 사용하여 특정 경로(`/api/premium/*`)에만 **사용자별 Rate Limiting**(분당 100 요청)을 적용하는 방법을 구현하세요.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **EnvoyFilter 기반 Rate Limiting 구현:**
 
----
+***
 
 **1. 아키텍처 개요**
 
-```mermaid
-flowchart LR
-    Client[클라이언트] --> Envoy[Envoy Proxy]
-    Envoy -->|Rate Limit 체크| Redis[(Redis<br/>Rate Limit Store)]
-    Envoy -->|허용된 요청| Backend[Backend Service]
-    Envoy -->|거부된 요청| Reject[429 Too Many Requests]
-
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef backend fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef reject fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-
-    class Client client;
-    class Envoy envoy;
-    class Backend backend;
-    class Reject,Redis reject;
-```
-
----
+***
 
 **2. Redis Rate Limit 서버 배포**
 
@@ -1420,7 +1304,7 @@ spec:
 kubectl apply -f redis-ratelimit.yaml
 ```
 
----
+***
 
 **3. EnvoyFilter 구성**
 
@@ -1511,7 +1395,7 @@ spec:
 kubectl apply -f envoyfilter-ratelimit.yaml
 ```
 
----
+***
 
 **4. VirtualService 구성**
 
@@ -1548,7 +1432,7 @@ spec:
           number: 8080
 ```
 
----
+***
 
 **5. 테스트 애플리케이션**
 
@@ -1592,7 +1476,7 @@ spec:
 kubectl apply -f backend.yaml
 ```
 
----
+***
 
 **6. 테스트**
 
@@ -1626,7 +1510,7 @@ curl -H "x-user-id: user456" \
 # 출력: 200 OK
 ```
 
----
+***
 
 **7. Rate Limit 헤더 확인**
 
@@ -1641,7 +1525,7 @@ curl -I -H "x-user-id: user123" \
 # X-RateLimit-Reset: 1735689600
 ```
 
----
+***
 
 **8. Redis 모니터링**
 
@@ -1662,7 +1546,7 @@ TTL "premium-ratelimit_user123_..."
 # 출력: "42" (초 단위 TTL)
 ```
 
----
+***
 
 **9. Prometheus 메트릭**
 
@@ -1677,71 +1561,50 @@ sum(rate(envoy_http_ratelimit_ok_total[5m])) by (pod)
 sum(rate(envoy_http_ratelimit_error_total[5m])) by (pod)
 ```
 
----
+***
 
 **10. 주의사항 및 모범 사례**
 
 **주의사항:**
-- ⚠️ Redis 고가용성 구성 필요 (프로덕션)
-- ⚠️ Rate Limit 서버 장애 시 동작 정의 (`failure_mode_deny`)
-- ⚠️ 사용자 식별 헤더 (`x-user-id`) 신뢰성 확보
-- ⚠️ EnvoyFilter는 Istio 버전 업그레이드 시 호환성 확인 필요
+
+* ⚠️ Redis 고가용성 구성 필요 (프로덕션)
+* ⚠️ Rate Limit 서버 장애 시 동작 정의 (`failure_mode_deny`)
+* ⚠️ 사용자 식별 헤더 (`x-user-id`) 신뢰성 확보
+* ⚠️ EnvoyFilter는 Istio 버전 업그레이드 시 호환성 확인 필요
 
 **모범 사례:**
-- ✅ Redis Sentinel 또는 Cluster 사용
-- ✅ Rate Limit 서버 replica ≥ 2
-- ✅ 적절한 모니터링 및 알림
-- ✅ 사용자별 예외 처리 (VIP 사용자 등)
+
+* ✅ Redis Sentinel 또는 Cluster 사용
+* ✅ Rate Limit 서버 replica ≥ 2
+* ✅ 적절한 모니터링 및 알림
+* ✅ 사용자별 예외 처리 (VIP 사용자 등)
 
 **참고 자료:**
-- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
+* [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
+* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
 </details>
 
----
+***
 
 ### 문제 9: Argo Rollouts Blue/Green 배포
 
 Argo Rollouts와 Istio를 사용하여 **Blue/Green 배포**를 구현하세요. **자동 분석**(AnalysisTemplate)을 포함하고, 실패 시 자동 롤백되도록 구성해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **Argo Rollouts Blue/Green 배포 구현:**
 
----
+***
 
 **1. Blue/Green 배포 개념**
 
-```mermaid
-flowchart TB
-    User[사용자] --> Gateway[Istio Gateway]
-    Gateway --> ActiveService[Active Service<br/>프로덕션 트래픽]
-    Gateway -.->|미리보기| PreviewService[Preview Service<br/>테스트 트래픽]
-
-    ActiveService --> Blue[Blue<br/>현재 버전 v1]
-    PreviewService --> Green[Green<br/>새 버전 v2]
-
-    Analysis[AnalysisTemplate] -->|메트릭 분석| Green
-    Analysis -->|성공| Promote[트래픽 전환]
-    Analysis -->|실패| Rollback[롤백]
-
-    Promote --> Swap[Active ↔ Preview 교체]
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef version fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef argo fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class User user;
-    class Gateway,ActiveService,PreviewService istio;
-    class Blue,Green version;
-    class Analysis,Promote,Rollback,Swap argo;
-```
-
----
+***
 
 **2. Kubernetes Service 생성**
 
@@ -1777,7 +1640,7 @@ spec:
 kubectl apply -f services.yaml
 ```
 
----
+***
 
 **3. Istio Gateway 및 VirtualService**
 
@@ -1847,7 +1710,7 @@ spec:
 kubectl apply -f gateway.yaml
 ```
 
----
+***
 
 **4. AnalysisTemplate 정의**
 
@@ -1951,7 +1814,7 @@ spec:
 kubectl apply -f analysis-template.yaml
 ```
 
----
+***
 
 **5. Rollout 리소스 정의**
 
@@ -2026,7 +1889,7 @@ spec:
 kubectl apply -f rollout.yaml
 ```
 
----
+***
 
 **6. 새 버전 배포**
 
@@ -2054,7 +1917,7 @@ kubectl argo rollouts get rollout myapp --watch
 # Analysis:        Running
 ```
 
----
+***
 
 **7. 배포 프로세스**
 
@@ -2086,7 +1949,7 @@ kubectl argo rollouts get rollout myapp --watch
    └─ 실패 → 즉시 롤백 (Active를 Blue로 복구)
 ```
 
----
+***
 
 **8. 수동 승격**
 
@@ -2101,7 +1964,7 @@ kubectl argo rollouts promote myapp
 curl http://myapp.example.com
 ```
 
----
+***
 
 **9. 자동 롤백 시나리오**
 
@@ -2139,7 +2002,7 @@ kubectl argo rollouts get rollout myapp
 # Message: PostPromotionAnalysis Failed
 ```
 
----
+***
 
 **10. 모니터링 및 대시보드**
 
@@ -2167,39 +2030,44 @@ argo_rollouts_analysis_run_metric_phase{name="myapp", metric="success-rate"}
 sum(rate(istio_requests_total{destination_service_name="myapp"}[5m])) by (destination_version)
 ```
 
----
+***
 
 **11. 모범 사례**
 
 **장점:**
-- ✅ 즉시 롤백 가능 (스위치 전환)
-- ✅ 프로덕션 영향 최소화
-- ✅ 충분한 테스트 시간 확보
-- ✅ 자동 분석 및 롤백
+
+* ✅ 즉시 롤백 가능 (스위치 전환)
+* ✅ 프로덕션 영향 최소화
+* ✅ 충분한 테스트 시간 확보
+* ✅ 자동 분석 및 롤백
 
 **주의사항:**
-- ⚠️ 2배 리소스 필요 (Blue + Green)
-- ⚠️ 데이터베이스 스키마 호환성 확인
-- ⚠️ 세션 관리 (Sticky Session 필요 시)
+
+* ⚠️ 2배 리소스 필요 (Blue + Green)
+* ⚠️ 데이터베이스 스키마 호환성 확인
+* ⚠️ 세션 관리 (Sticky Session 필요 시)
 
 **참고 자료:**
-- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+
+* [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+
 </details>
 
----
+***
 
 ### 문제 10: DNS Caching 성능 최적화
 
 Istio에서 **DNS Caching**을 활성화하여 외부 서비스 호출 성능을 개선하는 방법을 설명하세요. **벤치마크 결과**를 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **Istio DNS Caching 구현 및 성능 측정:**
 
----
+***
 
 **1. DNS Caching 필요성**
 
@@ -2226,7 +2094,7 @@ DNS Caching 후:
 총 지연시간: 100-200ms (33-50% 개선)
 ```
 
----
+***
 
 **2. ServiceEntry로 외부 서비스 등록**
 
@@ -2251,7 +2119,7 @@ spec:
 kubectl apply -f external-api-serviceentry.yaml
 ```
 
----
+***
 
 **3. DestinationRule로 DNS Caching 활성화**
 
@@ -2288,7 +2156,7 @@ spec:
 kubectl apply -f destinationrule-dns-cache.yaml
 ```
 
----
+***
 
 **4. EnvoyFilter로 고급 DNS 설정**
 
@@ -2349,7 +2217,7 @@ spec:
 kubectl apply -f envoyfilter-dns-cache.yaml
 ```
 
----
+***
 
 **5. 테스트 애플리케이션 배포**
 
@@ -2373,7 +2241,7 @@ spec:
 kubectl apply -f test-app.yaml
 ```
 
----
+***
 
 **6. 성능 벤치마크**
 
@@ -2413,7 +2281,7 @@ done' | awk '{sum+=$1; count++} END {print "평균 응답 시간:", sum/count, "
 DNS 조회 시간: ~135ms 절감
 ```
 
----
+***
 
 **7. Envoy 통계 확인**
 
@@ -2430,16 +2298,17 @@ kubectl exec -it test-app -c istio-proxy -- \
 # 캐시 히트율: 99 / (99 + 1) = 99%
 ```
 
----
+***
 
 **8. 상세 벤치마크 결과**
 
 **테스트 환경:**
-- 클러스터: AWS EKS 1.34
-- Istio: 1.28.0
-- 노드: r5.xlarge
-- 위치: us-east-1
-- 외부 API: api.github.com
+
+* 클러스터: AWS EKS 1.34
+* Istio: 1.28.0
+* 노드: r5.xlarge
+* 위치: us-east-1
+* 외부 API: api.github.com
 
 **벤치마크 도구: Apache Bench**
 
@@ -2465,20 +2334,20 @@ kubectl exec -it test-app -- ab -n 1000 -c 10 \
 # 처리량 개선: 23.15 / 12.34 = 1.88배 (88% 향상)
 ```
 
----
+***
 
 **9. 비교표**
 
-| 항목 | DNS Caching 비활성화 | DNS Caching 활성화 | 개선 |
-|------|---------------------|-------------------|------|
-| **평균 응답 시간** | 287ms | 152ms | 47% ↓ |
-| **P95 응답 시간** | 350ms | 180ms | 49% ↓ |
-| **P99 응답 시간** | 420ms | 210ms | 50% ↓ |
-| **처리량 (RPS)** | 12.34 | 23.15 | 88% ↑ |
-| **DNS 캐시 히트율** | 0% | 99% | - |
-| **연결 재사용률** | 0% | 95% | - |
+| 항목             | DNS Caching 비활성화 | DNS Caching 활성화 | 개선    |
+| -------------- | ---------------- | --------------- | ----- |
+| **평균 응답 시간**   | 287ms            | 152ms           | 47% ↓ |
+| **P95 응답 시간**  | 350ms            | 180ms           | 49% ↓ |
+| **P99 응답 시간**  | 420ms            | 210ms           | 50% ↓ |
+| **처리량 (RPS)**  | 12.34            | 23.15           | 88% ↑ |
+| **DNS 캐시 히트율** | 0%               | 99%             | -     |
+| **연결 재사용률**    | 0%               | 95%             | -     |
 
----
+***
 
 **10. Prometheus 모니터링**
 
@@ -2506,47 +2375,52 @@ rate(envoy_cluster_upstream_cx_active[5m])
 rate(envoy_cluster_upstream_cx_total[5m])
 ```
 
----
+***
 
 **11. 모범 사례**
 
 **권장 설정:**
-- ✅ DNS 리프레시 간격: 5-15분 (외부 서비스 TTL 고려)
-- ✅ Connection Pool 활성화 (연결 재사용)
-- ✅ HTTP/2 사용 (멀티플렉싱)
-- ✅ Keep-Alive 활성화
+
+* ✅ DNS 리프레시 간격: 5-15분 (외부 서비스 TTL 고려)
+* ✅ Connection Pool 활성화 (연결 재사용)
+* ✅ HTTP/2 사용 (멀티플렉싱)
+* ✅ Keep-Alive 활성화
 
 **주의사항:**
-- ⚠️ TTL이 짧은 서비스는 리프레시 간격 줄이기
-- ⚠️ DNS 변경 시 캐시 무효화 시간 고려
-- ⚠️ 장애 조치 시나리오 테스트
+
+* ⚠️ TTL이 짧은 서비스는 리프레시 간격 줄이기
+* ⚠️ DNS 변경 시 캐시 무효화 시간 고려
+* ⚠️ 장애 조치 시나리오 테스트
 
 **참고 자료:**
-- [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
+
+* [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
+
 </details>
 
----
+***
 
 ## 점수 계산
 
-- 객관식 1-5번: 각 10점 (총 50점)
-- 주관식 6-10번: 각 10점 (총 50점)
-- **총점: 100점**
+* 객관식 1-5번: 각 10점 (총 50점)
+* 주관식 6-10번: 각 10점 (총 50점)
+* **총점: 100점**
 
 **평가 기준:**
-- 90-100점: 우수 (Istio 고급 기능 전문가)
-- 80-89점: 양호 (고급 기능 활용 가능)
-- 70-79점: 보통 (추가 학습 권장)
-- 60-69점: 미흡 (기본 개념 복습 필요)
-- 0-59점: 재학습 필요
+
+* 90-100점: 우수 (Istio 고급 기능 전문가)
+* 80-89점: 양호 (고급 기능 활용 가능)
+* 70-79점: 보통 (추가 학습 권장)
+* 60-69점: 미흡 (기본 개념 복습 필요)
+* 0-59점: 재학습 필요
 
 ## 학습 자료
 
-- [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
-- [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
-- [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
-- [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
-- [gRPC](../../../service-mesh/istio/advanced/05-grpc.md)
-- [WebSocket](../../../service-mesh/istio/advanced/06-websocket.md)
-- [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
-- [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+* [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
+* [Multi-cluster](../../../service-mesh/istio/advanced/02-multi-cluster.md)
+* [EnvoyFilter](../../../service-mesh/istio/advanced/03-envoy-filter.md)
+* [DNS Caching](../../../service-mesh/istio/advanced/04-dns-cache.md)
+* [gRPC](../../../service-mesh/istio/advanced/05-grpc.md)
+* [WebSocket](../../../service-mesh/istio/advanced/06-websocket.md)
+* [Sidecar Injection](../../../service-mesh/istio/advanced/07-sidecar-injection.md)
+* [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)

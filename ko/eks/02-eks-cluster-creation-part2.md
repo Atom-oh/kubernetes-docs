@@ -1,4 +1,4 @@
-# EKS 클러스터 생성 - 2부
+# Part 2: eksctl을 사용한 클러스터 생성
 
 ## eksctl을 사용한 클러스터 생성
 
@@ -6,7 +6,7 @@ eksctl은 EKS 클러스터를 생성하고 관리하기 위한 가장 간단한 
 
 다음 다이어그램은 eksctl을 사용한 EKS 클러스터 생성 프로세스를 보여줍니다:
 
-![eksctl 클러스터 생성 프로세스](../assets/generated-diagrams/eksctl_cluster_creation_process.png)
+![eksctl 클러스터 생성 프로세스](../.gitbook/assets/eksctl_cluster_creation_process.png)
 
 ### 기본 클러스터 생성
 
@@ -17,10 +17,11 @@ eksctl create cluster --name my-cluster --region us-west-2
 ```
 
 이 명령은 다음과 같은 기본 설정으로 클러스터를 생성합니다:
-- 2개의 m5.large 노드
-- 새로운 VPC 및 서브넷
-- 기본 Amazon Linux 2 AMI
-- 최신 Kubernetes 버전
+
+* 2개의 m5.large 노드
+* 새로운 VPC 및 서브넷
+* 기본 Amazon Linux 2 AMI
+* 최신 Kubernetes 버전
 
 ### 구성 파일을 사용한 클러스터 생성
 
@@ -107,7 +108,7 @@ eksctl create cluster -f cluster.yaml
 
 다음 다이어그램은 EKS 클러스터의 관리형 노드 그룹 아키텍처를 보여줍니다:
 
-![EKS 관리형 노드 그룹 아키텍처](../assets/generated-diagrams/eks_managed_node_group_detailed.png)
+![EKS 관리형 노드 그룹 아키텍처](../.gitbook/assets/eks_managed_node_group_detailed.png)
 
 기존 클러스터에 관리형 노드 그룹을 추가하려면 다음 명령을 실행합니다:
 
@@ -156,7 +157,7 @@ eksctl create nodegroup -f nodegroup.yaml
 
 다음 다이어그램은 EKS Fargate 프로필 아키텍처를 보여줍니다:
 
-![EKS Fargate 프로필 아키텍처](../assets/generated-diagrams/eks_fargate_profile_architecture.png)
+![EKS Fargate 프로필 아키텍처](../.gitbook/assets/eks_fargate_profile_architecture.png)
 
 Fargate 프로필을 생성하려면 다음 명령을 실행합니다:
 
@@ -217,7 +218,7 @@ eksctl delete cluster --name=my-cluster --region=us-west-2
 
 다음 다이어그램은 EKS 클러스터의 전체 라이프사이클 관리 프로세스를 보여줍니다:
 
-![EKS 클러스터 라이프사이클 관리](../assets/generated-diagrams/eks_cluster_lifecycle_management.png)
+![EKS 클러스터 라이프사이클 관리](../.gitbook/assets/eks_cluster_lifecycle_management.png)
 
 ## 퀴즈
 

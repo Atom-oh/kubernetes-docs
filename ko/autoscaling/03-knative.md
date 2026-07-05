@@ -1,23 +1,22 @@
 # Knative
 
-> **지원 버전**: Knative v1.16+, Kourier v1.16+
-> **마지막 업데이트**: 2025년 6월
+> **지원 버전**: Knative v1.16+, Kourier v1.16+ **마지막 업데이트**: 2025년 6월
 
-< [이전: Karpenter](./02-karpenter.md) | 다음: 없음 >
+< [이전: Karpenter](02-karpenter.md) | 다음: 없음 >
 
 ## 목차
 
-- [개요 및 학습 목표](#개요-및-학습-목표)
-- [Knative 아키텍처](#knative-아키텍처)
-- [EKS 설치 및 구성](#eks-설치-및-구성)
-- [Knative Serving 심화](#knative-serving-심화)
-- [Knative Eventing 심화](#knative-eventing-심화)
-- [KEDA와 Knative 비교](#keda와-knative-비교)
-- [프로덕션 운영](#프로덕션-운영)
-- [모범 사례](#모범-사례)
-- [참고 문서](#참고-문서)
+* [개요 및 학습 목표](03-knative.md#개요-및-학습-목표)
+* [Knative 아키텍처](03-knative.md#knative-아키텍처)
+* [EKS 설치 및 구성](03-knative.md#eks-설치-및-구성)
+* [Knative Serving 심화](03-knative.md#knative-serving-심화)
+* [Knative Eventing 심화](03-knative.md#knative-eventing-심화)
+* [KEDA와 Knative 비교](03-knative.md#keda와-knative-비교)
+* [프로덕션 운영](03-knative.md#프로덕션-운영)
+* [모범 사례](03-knative.md#모범-사례)
+* [참고 문서](03-knative.md#참고-문서)
 
----
+***
 
 ## 개요 및 학습 목표
 
@@ -27,8 +26,8 @@ Knative는 Kubernetes 위에서 서버리스(Serverless) 워크로드를 배포,
 
 Knative는 개발자가 컨테이너 기반 애플리케이션을 서버리스 방식으로 운영할 수 있도록 두 가지 핵심 컴포넌트를 제공합니다:
 
-- **Knative Serving**: HTTP 요청 기반의 서버리스 워크로드 배포 및 오토스케일링 (Scale-to-Zero 포함)
-- **Knative Eventing**: 이벤트 드리븐 아키텍처를 위한 이벤트 소싱, 라우팅, 필터링 프레임워크
+* **Knative Serving**: HTTP 요청 기반의 서버리스 워크로드 배포 및 오토스케일링 (Scale-to-Zero 포함)
+* **Knative Eventing**: 이벤트 드리븐 아키텍처를 위한 이벤트 소싱, 라우팅, 필터링 프레임워크
 
 ### Serverless on Kubernetes
 
@@ -41,30 +40,30 @@ Knative는 개발자가 컨테이너 기반 애플리케이션을 서버리스 �
 
 ### Knative Serving vs Eventing
 
-| 구분 | Knative Serving | Knative Eventing |
-|------|----------------|-----------------|
-| **목적** | HTTP 요청 기반 서버리스 워크로드 | 이벤트 드리븐 아키텍처 |
-| **트리거** | HTTP 요청 | CloudEvents (Kafka, SQS, API Server 등) |
-| **스케일링** | 동시 요청 수 기반 자동 스케일링 | 이벤트 소스에 따라 다름 |
-| **Scale-to-Zero** | 네이티브 지원 | 소비자 워크로드에 따라 다름 |
-| **주요 사용처** | API 서버, 웹 앱, ML 추론 | 비동기 처리, 데이터 파이프라인, 워크플로 |
-| **리소스 모델** | Service, Configuration, Revision, Route | Source, Broker, Trigger, Channel, Subscription |
+| 구분                | Knative Serving                         | Knative Eventing                               |
+| ----------------- | --------------------------------------- | ---------------------------------------------- |
+| **목적**            | HTTP 요청 기반 서버리스 워크로드                    | 이벤트 드리븐 아키텍처                                   |
+| **트리거**           | HTTP 요청                                 | CloudEvents (Kafka, SQS, API Server 등)         |
+| **스케일링**          | 동시 요청 수 기반 자동 스케일링                      | 이벤트 소스에 따라 다름                                  |
+| **Scale-to-Zero** | 네이티브 지원                                 | 소비자 워크로드에 따라 다름                                |
+| **주요 사용처**        | API 서버, 웹 앱, ML 추론                      | 비동기 처리, 데이터 파이프라인, 워크플로                        |
+| **리소스 모델**        | Service, Configuration, Revision, Route | Source, Broker, Trigger, Channel, Subscription |
 
 ### Knative vs AWS Lambda/Fargate 비교
 
-| 기능 | Knative (EKS) | AWS Lambda | AWS Fargate |
-|------|--------------|------------|-------------|
-| **실행 환경** | 모든 컨테이너 | 특정 런타임 + 컨테이너 이미지 | 모든 컨테이너 |
-| **최대 실행 시간** | 제한 없음 | 15분 | 제한 없음 |
-| **Scale-to-Zero** | 지원 | 지원 | 미지원 |
-| **콜드 스타트** | 컨테이너 시작 시간 (초~분) | 밀리초~초 | 분 단위 |
-| **최대 메모리** | 노드 리소스에 따라 유연 | 10GB | 120GB |
-| **GPU 지원** | 지원 | 미지원 | 미지원 |
-| **네트워킹** | Kubernetes 네이티브 (VPC CNI) | VPC 연결 필요 | VPC 네이티브 |
-| **벤더 종속** | 없음 (CNCF 표준) | AWS 전용 | AWS 전용 |
-| **비용 모델** | 노드 비용 (Scale-to-Zero로 절감) | 요청 + 실행시간 | vCPU + 메모리 시간 |
-| **로컬 개발** | Docker + Kubernetes로 동일 환경 | SAM/LocalStack 필요 | 로컬 재현 어려움 |
-| **이벤트 소스** | CloudEvents 표준 (확장 가능) | AWS 서비스 네이티브 연동 | 해당 없음 |
+| 기능                | Knative (EKS)              | AWS Lambda        | AWS Fargate   |
+| ----------------- | -------------------------- | ----------------- | ------------- |
+| **실행 환경**         | 모든 컨테이너                    | 특정 런타임 + 컨테이너 이미지 | 모든 컨테이너       |
+| **최대 실행 시간**      | 제한 없음                      | 15분               | 제한 없음         |
+| **Scale-to-Zero** | 지원                         | 지원                | 미지원           |
+| **콜드 스타트**        | 컨테이너 시작 시간 (초\~분)          | 밀리초\~초            | 분 단위          |
+| **최대 메모리**        | 노드 리소스에 따라 유연              | 10GB              | 120GB         |
+| **GPU 지원**        | 지원                         | 미지원               | 미지원           |
+| **네트워킹**          | Kubernetes 네이티브 (VPC CNI)  | VPC 연결 필요         | VPC 네이티브      |
+| **벤더 종속**         | 없음 (CNCF 표준)               | AWS 전용            | AWS 전용        |
+| **비용 모델**         | 노드 비용 (Scale-to-Zero로 절감)  | 요청 + 실행시간         | vCPU + 메모리 시간 |
+| **로컬 개발**         | Docker + Kubernetes로 동일 환경 | SAM/LocalStack 필요 | 로컬 재현 어려움     |
+| **이벤트 소스**        | CloudEvents 표준 (확장 가능)     | AWS 서비스 네이티브 연동   | 해당 없음         |
 
 ### 학습 목표
 
@@ -77,7 +76,7 @@ Knative는 개발자가 컨테이너 기반 애플리케이션을 서버리스 �
 5. KEDA와 Knative의 차이점과 적절한 사용 시나리오
 6. 프로덕션 환경에서의 운영, 모니터링, 문제 해결 방법
 
----
+***
 
 ## Knative 아키텍처
 
@@ -154,26 +153,31 @@ flowchart TD
 #### 핵심 컴포넌트 설명
 
 **1. Activator**
-- Scale-to-Zero 상태에서 들어오는 첫 번째 요청을 버퍼링
-- Autoscaler에 스케일업을 요청하고, 파드가 준비되면 요청을 전달
-- 버스트 트래픽 시 요청 큐잉을 통한 과부하 방지
+
+* Scale-to-Zero 상태에서 들어오는 첫 번째 요청을 버퍼링
+* Autoscaler에 스케일업을 요청하고, 파드가 준비되면 요청을 전달
+* 버스트 트래픽 시 요청 큐잉을 통한 과부하 방지
 
 **2. Autoscaler**
-- **KPA (Knative Pod Autoscaler)**: Knative 기본 오토스케일러. 동시 요청 수(concurrency) 또는 RPS(requests per second) 기반 스케일링. Scale-to-Zero 지원
-- **HPA (Horizontal Pod Autoscaler)**: Kubernetes 기본 HPA 사용. CPU/메모리 기반 스케일링 가능하나 Scale-to-Zero 미지원
+
+* **KPA (Knative Pod Autoscaler)**: Knative 기본 오토스케일러. 동시 요청 수(concurrency) 또는 RPS(requests per second) 기반 스케일링. Scale-to-Zero 지원
+* **HPA (Horizontal Pod Autoscaler)**: Kubernetes 기본 HPA 사용. CPU/메모리 기반 스케일링 가능하나 Scale-to-Zero 미지원
 
 **3. Queue Proxy**
-- 모든 Knative 파드에 사이드카로 주입되는 프록시 컨테이너
-- 요청 큐잉, 동시성 제한(concurrency enforcement), 메트릭 수집 수행
-- Autoscaler에 실시간 동시성 메트릭 보고
-- 헬스체크 프로브 처리
+
+* 모든 Knative 파드에 사이드카로 주입되는 프록시 컨테이너
+* 요청 큐잉, 동시성 제한(concurrency enforcement), 메트릭 수집 수행
+* Autoscaler에 실시간 동시성 메트릭 보고
+* 헬스체크 프로브 처리
 
 **4. Controller**
-- Knative Service, Configuration, Revision, Route 리소스의 생명주기 관리
-- Kubernetes Deployment, Service, Ingress 등 하위 리소스 생성 및 동기화
+
+* Knative Service, Configuration, Revision, Route 리소스의 생명주기 관리
+* Kubernetes Deployment, Service, Ingress 등 하위 리소스 생성 및 동기화
 
 **5. Webhook**
-- Knative 리소스의 생성/수정 시 유효성 검사(Validation) 및 기본값 설정(Defaulting)
+
+* Knative 리소스의 생성/수정 시 유효성 검사(Validation) 및 기본값 설정(Defaulting)
 
 ### Eventing 아키텍처
 
@@ -251,22 +255,22 @@ flowchart LR
 
 #### Broker/Trigger 패턴
 
-- **Broker**: 이벤트를 수신하고 등록된 Trigger에 따라 적절한 소비자에게 라우팅하는 이벤트 허브
-- **Trigger**: Broker에 등록되는 이벤트 필터. CloudEvents 속성(type, source 등)으로 필터링하여 특정 서비스로 전달
+* **Broker**: 이벤트를 수신하고 등록된 Trigger에 따라 적절한 소비자에게 라우팅하는 이벤트 허브
+* **Trigger**: Broker에 등록되는 이벤트 필터. CloudEvents 속성(type, source 등)으로 필터링하여 특정 서비스로 전달
 
 #### Channel/Subscription 패턴
 
-- **Channel**: 이벤트를 임시 저장하고 전달하는 메시징 채널 (InMemoryChannel, KafkaChannel 등)
-- **Subscription**: Channel의 이벤트를 특정 서비스로 구독하여 전달
+* **Channel**: 이벤트를 임시 저장하고 전달하는 메시징 채널 (InMemoryChannel, KafkaChannel 등)
+* **Subscription**: Channel의 이벤트를 특정 서비스로 구독하여 전달
 
 #### Event Source
 
-- **ApiServerSource**: Kubernetes API Server의 이벤트(리소스 생성/수정/삭제)를 CloudEvents로 변환
-- **SinkBinding**: 기존 Kubernetes 워크로드에 이벤트 전송 기능을 주입
-- **KafkaSource**: Apache Kafka 토픽의 메시지를 CloudEvents로 변환
-- **SQSSource**: Amazon SQS 큐의 메시지를 CloudEvents로 변환
+* **ApiServerSource**: Kubernetes API Server의 이벤트(리소스 생성/수정/삭제)를 CloudEvents로 변환
+* **SinkBinding**: 기존 Kubernetes 워크로드에 이벤트 전송 기능을 주입
+* **KafkaSource**: Apache Kafka 토픽의 메시지를 CloudEvents로 변환
+* **SQSSource**: Amazon SQS 큐의 메시지를 CloudEvents로 변환
 
----
+***
 
 ## EKS 설치 및 구성
 
@@ -485,13 +489,13 @@ kubectl patch configmap/config-certmanager \
 
 ### HPA vs KPA 오토스케일러 선택
 
-| 기준 | KPA (Knative Pod Autoscaler) | HPA (Horizontal Pod Autoscaler) |
-|------|-------|------|
-| **Scale-to-Zero** | 지원 | 미지원 (최소 1 파드) |
-| **메트릭** | 동시 요청 수, RPS | CPU, 메모리, 커스텀 메트릭 |
-| **반응 속도** | 빠름 (초 단위) | 보통 (15-30초) |
-| **안정 구간** | 60초 (설정 가능) | 5분 (기본) |
-| **사용 사례** | HTTP 워크로드, Scale-to-Zero 필요 | CPU/메모리 바운드 워크로드 |
+| 기준                | KPA (Knative Pod Autoscaler) | HPA (Horizontal Pod Autoscaler) |
+| ----------------- | ---------------------------- | ------------------------------- |
+| **Scale-to-Zero** | 지원                           | 미지원 (최소 1 파드)                   |
+| **메트릭**           | 동시 요청 수, RPS                 | CPU, 메모리, 커스텀 메트릭               |
+| **반응 속도**         | 빠름 (초 단위)                    | 보통 (15-30초)                     |
+| **안정 구간**         | 60초 (설정 가능)                  | 5분 (기본)                         |
+| **사용 사례**         | HTTP 워크로드, Scale-to-Zero 필요  | CPU/메모리 바운드 워크로드                |
 
 ```yaml
 # KPA 사용 (기본값)
@@ -532,7 +536,7 @@ spec:
               cpu: "1"
 ```
 
----
+***
 
 ## Knative Serving 심화
 
@@ -569,10 +573,10 @@ flowchart TD
     class REV1,REV2,REV3 rev
 ```
 
-- **Service**: 전체 서버리스 워크로드를 정의하는 최상위 리소스. Configuration과 Route를 자동으로 관리
-- **Configuration**: 배포할 컨테이너의 원하는 상태를 정의. 변경 시 새 Revision 자동 생성
-- **Revision**: Configuration의 특정 시점 불변(Immutable) 스냅샷. 코드 및 설정의 버전 관리 단위
-- **Route**: 트래픽을 하나 이상의 Revision으로 라우팅. 비율 기반 트래픽 분할 지원
+* **Service**: 전체 서버리스 워크로드를 정의하는 최상위 리소스. Configuration과 Route를 자동으로 관리
+* **Configuration**: 배포할 컨테이너의 원하는 상태를 정의. 변경 시 새 Revision 자동 생성
+* **Revision**: Configuration의 특정 시점 불변(Immutable) 스냅샷. 코드 및 설정의 버전 관리 단위
+* **Route**: 트래픽을 하나 이상의 Revision으로 라우팅. 비율 기반 트래픽 분할 지원
 
 ### 완전한 Knative Service YAML
 
@@ -804,14 +808,15 @@ spec:
 
 **소프트 타겟 vs 하드 리밋:**
 
-- `autoscaling.knative.dev/target` (소프트): Autoscaler의 스케일링 목표. 이 값을 기준으로 파드 수 계산
-- `containerConcurrency` (하드): Queue Proxy가 강제하는 절대 최대 동시성. 초과 요청은 큐잉되거나 503 반환
+* `autoscaling.knative.dev/target` (소프트): Autoscaler의 스케일링 목표. 이 값을 기준으로 파드 수 계산
+* `containerConcurrency` (하드): Queue Proxy가 강제하는 절대 최대 동시성. 초과 요청은 큐잉되거나 503 반환
 
 **스케일링 계산 예시:**
-- 현재 동시 요청: 70
-- Target: 10, Utilization: 70%
-- 실제 타겟: 10 * 0.7 = 7
-- 필요 파드 수: 70 / 7 = 10개
+
+* 현재 동시 요청: 70
+* Target: 10, Utilization: 70%
+* 실제 타겟: 10 \* 0.7 = 7
+* 필요 파드 수: 70 / 7 = 10개
 
 ### 콜드 스타트 최적화
 
@@ -853,14 +858,14 @@ spec:
 
 **콜드 스타트 최적화 전략:**
 
-| 전략 | 설정 | 효과 |
-|------|------|------|
-| 최소 인스턴스 유지 | `min-scale: 1+` | 콜드 스타트 완전 방지 (비용 증가) |
-| 초기 스케일 설정 | `initial-scale: N` | 첫 배포 시 빠른 응답 |
-| 스케일 다운 지연 | `scale-down-delay: 5m` | 간헐적 트래픽에서 불필요한 스케일 다운 방지 |
-| 컨테이너 이미지 최적화 | 경량 베이스 이미지 사용 | 이미지 풀 시간 단축 |
-| Readiness 프로브 최적화 | 짧은 `initialDelaySeconds` | 트래픽 수신 시작 시간 단축 |
-| 이미지 사전 풀 | DaemonSet으로 노드에 이미지 캐싱 | 이미지 풀 시간 제거 |
+| 전략                | 설정                       | 효과                       |
+| ----------------- | ------------------------ | ------------------------ |
+| 최소 인스턴스 유지        | `min-scale: 1+`          | 콜드 스타트 완전 방지 (비용 증가)     |
+| 초기 스케일 설정         | `initial-scale: N`       | 첫 배포 시 빠른 응답             |
+| 스케일 다운 지연         | `scale-down-delay: 5m`   | 간헐적 트래픽에서 불필요한 스케일 다운 방지 |
+| 컨테이너 이미지 최적화      | 경량 베이스 이미지 사용            | 이미지 풀 시간 단축              |
+| Readiness 프로브 최적화 | 짧은 `initialDelaySeconds` | 트래픽 수신 시작 시간 단축          |
+| 이미지 사전 풀          | DaemonSet으로 노드에 이미지 캐싱   | 이미지 풀 시간 제거              |
 
 ### Private/Public 서비스
 
@@ -898,7 +903,7 @@ spec:
 curl http://internal-processor.production.svc.cluster.local
 ```
 
----
+***
 
 ## Knative Eventing 심화
 
@@ -957,7 +962,7 @@ roleRef:
 
 #### SinkBinding
 
-기존 Kubernetes 워크로드에 이벤트 전송 기능(K_SINK 환경 변수)을 주입합니다.
+기존 Kubernetes 워크로드에 이벤트 전송 기능(K\_SINK 환경 변수)을 주입합니다.
 
 ```yaml
 apiVersion: sources.knative.dev/v1
@@ -1436,7 +1441,7 @@ spec:
       name: order-lifecycle-handler
 ```
 
----
+***
 
 ## KEDA와 Knative 비교
 
@@ -1465,52 +1470,52 @@ flowchart LR
     class KEDA_SRC,KEDA_OP,KEDA_HPA,KEDA_DEPLOY keda
 ```
 
-| 비교 항목 | Knative | KEDA |
-|-----------|---------|------|
-| **스케일링 트리거** | HTTP 동시성/RPS (Queue Proxy 기반) | 50+ 외부 메트릭 소스 |
-| **스케일링 주체** | Knative Autoscaler (KPA) | Kubernetes HPA (KEDA가 관리) |
-| **메트릭 수집** | Queue Proxy 사이드카 | KEDA Metrics Server |
-| **최소 스케일** | 0 (Scale-to-Zero 네이티브) | 0 (ScaledObject로 구현) |
-| **스케일링 대상** | Knative Revision (Deployment) | 모든 Deployment, StatefulSet, Job |
-| **네트워킹** | Ingress 포함 (Kourier/Istio) | 네트워킹 불포함 |
-| **서비스 모델** | Knative Service (Revision, Route 포함) | 기존 Kubernetes 워크로드 그대로 사용 |
-| **프로토콜** | HTTP/gRPC | 프로토콜 무관 |
+| 비교 항목        | Knative                              | KEDA                            |
+| ------------ | ------------------------------------ | ------------------------------- |
+| **스케일링 트리거** | HTTP 동시성/RPS (Queue Proxy 기반)        | 50+ 외부 메트릭 소스                   |
+| **스케일링 주체**  | Knative Autoscaler (KPA)             | Kubernetes HPA (KEDA가 관리)       |
+| **메트릭 수집**   | Queue Proxy 사이드카                     | KEDA Metrics Server             |
+| **최소 스케일**   | 0 (Scale-to-Zero 네이티브)               | 0 (ScaledObject로 구현)            |
+| **스케일링 대상**  | Knative Revision (Deployment)        | 모든 Deployment, StatefulSet, Job |
+| **네트워킹**     | Ingress 포함 (Kourier/Istio)           | 네트워킹 불포함                        |
+| **서비스 모델**   | Knative Service (Revision, Route 포함) | 기존 Kubernetes 워크로드 그대로 사용       |
+| **프로토콜**     | HTTP/gRPC                            | 프로토콜 무관                         |
 
 ### Scale-to-Zero 동작 차이
 
-| 측면 | Knative Scale-to-Zero | KEDA Scale-to-Zero |
-|------|----------------------|-------------------|
-| **구현 방식** | Activator가 트래픽을 버퍼링하고 파드 기동 후 전달 | 외부 메트릭이 임계값 이하일 때 replicas=0 |
-| **콜드 스타트 처리** | Activator가 요청을 대기시킴 (클라이언트에 투명) | 요청 손실 가능 (메시지 큐일 경우 재처리) |
-| **트리거 방식** | HTTP 요청이 직접 스케일업 트리거 | 메트릭 폴링으로 감지 (pollingInterval 지연) |
-| **스케일업 지연** | 컨테이너 시작 시간 | pollingInterval + 컨테이너 시작 시간 |
-| **적합한 워크로드** | 동기 HTTP API, 웹 서비스 | 비동기 큐 처리, 배치 작업 |
+| 측면            | Knative Scale-to-Zero            | KEDA Scale-to-Zero               |
+| ------------- | -------------------------------- | -------------------------------- |
+| **구현 방식**     | Activator가 트래픽을 버퍼링하고 파드 기동 후 전달 | 외부 메트릭이 임계값 이하일 때 replicas=0     |
+| **콜드 스타트 처리** | Activator가 요청을 대기시킴 (클라이언트에 투명)  | 요청 손실 가능 (메시지 큐일 경우 재처리)         |
+| **트리거 방식**    | HTTP 요청이 직접 스케일업 트리거             | 메트릭 폴링으로 감지 (pollingInterval 지연) |
+| **스케일업 지연**   | 컨테이너 시작 시간                       | pollingInterval + 컨테이너 시작 시간     |
+| **적합한 워크로드**  | 동기 HTTP API, 웹 서비스               | 비동기 큐 처리, 배치 작업                  |
 
 ### 이벤트 드리븐 아키텍처에서의 역할
 
 **Knative Eventing**: 이벤트 라우팅 및 전달 프레임워크
 
-- CloudEvents 표준 기반 이벤트 소싱
-- Broker/Trigger 패턴으로 이벤트 필터링 및 라우팅
-- 이벤트 소스에서 소비자까지의 전체 파이프라인 관리
+* CloudEvents 표준 기반 이벤트 소싱
+* Broker/Trigger 패턴으로 이벤트 필터링 및 라우팅
+* 이벤트 소스에서 소비자까지의 전체 파이프라인 관리
 
 **KEDA**: 이벤트 기반 스케일링 엔진
 
-- 이벤트 큐 깊이에 따른 워커 스케일링
-- 다양한 메시지 브로커(SQS, Kafka, RabbitMQ 등) 직접 연동
-- 메트릭 기반으로 워크로드 수를 동적으로 조절
+* 이벤트 큐 깊이에 따른 워커 스케일링
+* 다양한 메시지 브로커(SQS, Kafka, RabbitMQ 등) 직접 연동
+* 메트릭 기반으로 워크로드 수를 동적으로 조절
 
 ### 사용 시나리오 가이드
 
-| 시나리오 | 권장 도구 | 이유 |
-|---------|---------|------|
-| HTTP API 서버리스 배포 | **Knative Serving** | Scale-to-Zero + HTTP 라우팅 + 트래픽 분할 |
-| SQS 큐 메시지 처리 워커 | **KEDA** | SQS 큐 깊이 기반 스케일링에 최적화 |
-| Kafka 이벤트 스트림 처리 | **KEDA** 또는 **Knative Eventing** | 단순 스케일링: KEDA, 이벤트 라우팅 필요: Knative |
-| ML 추론 서비스 | **Knative Serving** | HTTP 기반 + Scale-to-Zero로 GPU 비용 절감 |
-| Cron 기반 배치 작업 | **KEDA** | ScaledJob으로 Cron 기반 Job 스케일링 |
-| 마이크로서비스 이벤트 파이프라인 | **Knative Eventing** | CloudEvents + Broker/Trigger로 복잡한 이벤트 흐름 관리 |
-| Prometheus 메트릭 기반 스케일링 | **KEDA** | Prometheus 스케일러로 커스텀 메트릭 연동 |
+| 시나리오                   | 권장 도구                            | 이유                                          |
+| ---------------------- | -------------------------------- | ------------------------------------------- |
+| HTTP API 서버리스 배포       | **Knative Serving**              | Scale-to-Zero + HTTP 라우팅 + 트래픽 분할           |
+| SQS 큐 메시지 처리 워커        | **KEDA**                         | SQS 큐 깊이 기반 스케일링에 최적화                       |
+| Kafka 이벤트 스트림 처리       | **KEDA** 또는 **Knative Eventing** | 단순 스케일링: KEDA, 이벤트 라우팅 필요: Knative          |
+| ML 추론 서비스              | **Knative Serving**              | HTTP 기반 + Scale-to-Zero로 GPU 비용 절감          |
+| Cron 기반 배치 작업          | **KEDA**                         | ScaledJob으로 Cron 기반 Job 스케일링                |
+| 마이크로서비스 이벤트 파이프라인      | **Knative Eventing**             | CloudEvents + Broker/Trigger로 복잡한 이벤트 흐름 관리 |
+| Prometheus 메트릭 기반 스케일링 | **KEDA**                         | Prometheus 스케일러로 커스텀 메트릭 연동                 |
 
 ### 함께 사용하는 시나리오
 
@@ -1558,7 +1563,7 @@ spec:
         identityOwner: pod
 ```
 
----
+***
 
 ## 프로덕션 운영
 
@@ -1595,9 +1600,9 @@ spec:
 
 **QoS 클래스 권장사항:**
 
-- **프로덕션 API**: `Guaranteed` (requests = limits) 또는 `Burstable` (limits > requests)
-- **배치 처리**: `Burstable` (유연한 리소스 사용)
-- **개발/테스트**: `BestEffort` 가능 (리소스 제한 없음)
+* **프로덕션 API**: `Guaranteed` (requests = limits) 또는 `Burstable` (limits > requests)
+* **배치 처리**: `Burstable` (유연한 리소스 사용)
+* **개발/테스트**: `BestEffort` 가능 (리소스 제한 없음)
 
 ### Revision GC (가비지 컬렉션) 정책
 
@@ -1618,12 +1623,12 @@ kubectl patch configmap/config-gc \
   }'
 ```
 
-| 설정 | 기본값 | 설명 |
-|------|--------|------|
-| `max-non-active-revisions` | 무제한 | 비활성 Revision 최대 보관 수 |
-| `retain-since-create-time` | 48h | 생성 후 최소 보존 시간 |
-| `retain-since-last-active-time` | 15h | 마지막 활성 후 최소 보존 시간 |
-| `min-non-active-revisions` | 0 | 최소 보관할 비활성 Revision 수 |
+| 설정                              | 기본값 | 설명                    |
+| ------------------------------- | --- | --------------------- |
+| `max-non-active-revisions`      | 무제한 | 비활성 Revision 최대 보관 수  |
+| `retain-since-create-time`      | 48h | 생성 후 최소 보존 시간         |
+| `retain-since-last-active-time` | 15h | 마지막 활성 후 최소 보존 시간     |
+| `min-non-active-revisions`      | 0   | 최소 보관할 비활성 Revision 수 |
 
 ### 고가용성 구성
 
@@ -1714,17 +1719,17 @@ spec:
 
 **주요 Knative 메트릭:**
 
-| 메트릭 | 설명 | 용도 |
-|--------|------|------|
-| `revision_request_count` | Revision별 총 요청 수 | 트래픽 모니터링 |
-| `revision_request_latencies` | 요청 지연 시간 (히스토그램) | 성능 모니터링 |
-| `revision_app_request_count` | 앱 컨테이너 요청 수 | 앱 레벨 모니터링 |
-| `desired_pods` | Autoscaler가 원하는 파드 수 | 스케일링 동작 확인 |
-| `requested_pods` | 실제 요청된 파드 수 | 스케일링 지연 확인 |
-| `actual_pods` | 현재 실행 중인 파드 수 | 스케일링 결과 확인 |
-| `stable_request_concurrency` | 안정 윈도우 내 평균 동시성 | 스케일링 입력값 확인 |
-| `panic_request_concurrency` | 패닉 윈도우 내 평균 동시성 | 패닉 모드 감지 |
-| `target_concurrency_per_pod` | 파드당 목표 동시성 | 설정 확인 |
+| 메트릭                          | 설명                   | 용도          |
+| ---------------------------- | -------------------- | ----------- |
+| `revision_request_count`     | Revision별 총 요청 수     | 트래픽 모니터링    |
+| `revision_request_latencies` | 요청 지연 시간 (히스토그램)     | 성능 모니터링     |
+| `revision_app_request_count` | 앱 컨테이너 요청 수          | 앱 레벨 모니터링   |
+| `desired_pods`               | Autoscaler가 원하는 파드 수 | 스케일링 동작 확인  |
+| `requested_pods`             | 실제 요청된 파드 수          | 스케일링 지연 확인  |
+| `actual_pods`                | 현재 실행 중인 파드 수        | 스케일링 결과 확인  |
+| `stable_request_concurrency` | 안정 윈도우 내 평균 동시성      | 스케일링 입력값 확인 |
+| `panic_request_concurrency`  | 패닉 윈도우 내 평균 동시성      | 패닉 모드 감지    |
+| `target_concurrency_per_pod` | 파드당 목표 동시성           | 설정 확인       |
 
 ### Grafana 대시보드
 
@@ -1920,7 +1925,7 @@ curl -X POST http://broker-ingress.knative-eventing.svc.cluster.local/production
   }'
 ```
 
----
+***
 
 ## 모범 사례
 
@@ -2075,11 +2080,11 @@ spec:
 
 **2. 비용 절감 효과 추정**
 
-| 환경 | 서비스 수 | 기존 방식 (Always-On) | Knative (Scale-to-Zero) | 절감률 |
-|------|----------|---------------------|------------------------|--------|
-| 개발 | 30 | 30 파드 x 24시간 | 평균 5 파드 x 8시간 | ~83% |
-| 스테이징 | 20 | 20 파드 x 24시간 | 평균 3 파드 x 12시간 | ~92% |
-| 프로덕션 (야간) | 10 | 10 파드 x 24시간 | 야간 2 파드 x 8시간 | ~33% |
+| 환경        | 서비스 수 | 기존 방식 (Always-On) | Knative (Scale-to-Zero) | 절감률   |
+| --------- | ----- | ----------------- | ----------------------- | ----- |
+| 개발        | 30    | 30 파드 x 24시간      | 평균 5 파드 x 8시간           | \~83% |
+| 스테이징      | 20    | 20 파드 x 24시간      | 평균 3 파드 x 12시간          | \~92% |
+| 프로덕션 (야간) | 10    | 10 파드 x 24시간      | 야간 2 파드 x 8시간           | \~33% |
 
 ### GPU 워크로드에서의 Knative
 
@@ -2141,41 +2146,41 @@ spec:
 
 **GPU Scale-to-Zero 비용 절감 예시:**
 
-- GPU 인스턴스 (p3.2xlarge): 약 $3.06/시간
-- 하루 추론 요청: 8시간 x 불규칙적 (실제 GPU 사용 약 4시간)
-- Always-On: $3.06 x 24 = $73.44/일
-- Scale-to-Zero: $3.06 x 4 = $12.24/일 (약 83% 절감)
+* GPU 인스턴스 (p3.2xlarge): 약 $3.06/시간
+* 하루 추론 요청: 8시간 x 불규칙적 (실제 GPU 사용 약 4시간)
+* Always-On: $3.06 x 24 = $73.44/일
+* Scale-to-Zero: $3.06 x 4 = $12.24/일 (약 83% 절감)
 
----
+***
 
 ## 참고 문서
 
 ### 공식 문서
 
-- [Knative 공식 문서](https://knative.dev/docs/)
-- [Knative GitHub 저장소](https://github.com/knative)
-- [Knative Serving API 명세](https://knative.dev/docs/reference/api/serving-api/)
-- [Knative Eventing API 명세](https://knative.dev/docs/reference/api/eventing-api/)
-- [Kourier GitHub 저장소](https://github.com/knative-extensions/net-kourier)
-- [CloudEvents 사양](https://cloudevents.io/)
-- [CNCF Knative 프로젝트 페이지](https://www.cncf.io/projects/knative/)
+* [Knative 공식 문서](https://knative.dev/docs/)
+* [Knative GitHub 저장소](https://github.com/knative)
+* [Knative Serving API 명세](https://knative.dev/docs/reference/api/serving-api/)
+* [Knative Eventing API 명세](https://knative.dev/docs/reference/api/eventing-api/)
+* [Kourier GitHub 저장소](https://github.com/knative-extensions/net-kourier)
+* [CloudEvents 사양](https://cloudevents.io/)
+* [CNCF Knative 프로젝트 페이지](https://www.cncf.io/projects/knative/)
 
 ### AWS 관련 문서
 
-- [Amazon EKS에서 Knative 실행](https://aws.amazon.com/blogs/containers/)
-- [AWS Controllers for Kubernetes (ACK)](https://aws-controllers-k8s.github.io/community/)
-- [Amazon SQS CloudEvents 연동](https://github.com/triggermesh/triggermesh)
+* [Amazon EKS에서 Knative 실행](https://aws.amazon.com/blogs/containers/)
+* [AWS Controllers for Kubernetes (ACK)](https://aws-controllers-k8s.github.io/community/)
+* [Amazon SQS CloudEvents 연동](https://github.com/triggermesh/triggermesh)
 
 ### 관련 내부 문서
 
-- [KEDA (Kubernetes Event-driven Autoscaling)](./01-keda.md) - 이벤트 기반 스케일링 도구
-- [Karpenter](./02-karpenter.md) - 노드 레벨 오토스케일링
-- [EKS 비용 최적화](../eks/07-eks-cost-optimization.md) - EKS 환경에서의 비용 최적화 전략
-- [Istio Traffic Management](../service-mesh/istio/traffic-management/README.md) - 서비스 메시 기반 트래픽 관리
-- [Prometheus](../observability/metrics/01-prometheus.md) - Knative 메트릭 수집 및 모니터링
-- [cert-manager](../security/10-cert-manager.md) - TLS 인증서 자동 관리
+* [KEDA (Kubernetes Event-driven Autoscaling)](01-keda.md) - 이벤트 기반 스케일링 도구
+* [Karpenter](02-karpenter.md) - 노드 레벨 오토스케일링
+* [EKS 비용 최적화](../eks/07-eks-cost-optimization.md) - EKS 환경에서의 비용 최적화 전략
+* [Istio Traffic Management](../service-mesh/istio/traffic-management/) - 서비스 메시 기반 트래픽 관리
+* [Prometheus](../observability/metrics/01-prometheus.md) - Knative 메트릭 수집 및 모니터링
+* [cert-manager](../security/10-cert-manager.md) - TLS 인증서 자동 관리
 
----
+***
 
 ## 결론
 
@@ -2185,13 +2190,13 @@ Knative는 Kubernetes 위에서 서버리스 워크로드를 운영하기 위한
 
 ### 다음 단계
 
-- Knative Serving을 사용한 서버리스 API 배포 실습
-- Knative Eventing을 사용한 이벤트 드리븐 마이크로서비스 파이프라인 구축
-- KEDA와 Knative를 함께 사용하는 하이브리드 아키텍처 설계
-- GPU 워크로드에서의 Scale-to-Zero를 통한 비용 최적화
+* Knative Serving을 사용한 서버리스 API 배포 실습
+* Knative Eventing을 사용한 이벤트 드리븐 마이크로서비스 파이프라인 구축
+* KEDA와 Knative를 함께 사용하는 하이브리드 아키텍처 설계
+* GPU 워크로드에서의 Scale-to-Zero를 통한 비용 최적화
 
 ## 퀴즈
 
-이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/autoscaling/07-knative-quiz.md)를 풀어보세요.
+이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/autoscaling/07-knative-quiz.md)를 풀어보세요.
 
-< [이전: Karpenter](./02-karpenter.md) | 다음: 없음 >
+< [이전: Karpenter](02-karpenter.md) | 다음: 없음 >

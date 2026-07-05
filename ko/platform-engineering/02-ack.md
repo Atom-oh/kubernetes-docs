@@ -1,18 +1,19 @@
 # AWS Controllers for Kubernetes (ACK)
 
 ## 목차
-- [소개](#소개)
-- [아키텍처](#아키텍처)
-- [설치 및 구성](#설치-및-구성)
-- [지원되는 AWS 서비스](#지원되는-aws-서비스)
-- [ACK의 탄생 배경과 진화](#ack의-탄생-배경과-진화)
-- [리소스 생성 예제](#리소스-생성-예제)
-- [리소스 관리](#리소스-관리)
-- [보안 고려사항](#보안-고려사항)
-- [모니터링 및 로깅](#모니터링-및-로깅)
-- [모범 사례](#모범-사례)
-- [문제 해결](#문제-해결)
-- [결론](#결론)
+
+* [소개](02-ack.md#소개)
+* [아키텍처](02-ack.md#아키텍처)
+* [설치 및 구성](02-ack.md#설치-및-구성)
+* [지원되는 AWS 서비스](02-ack.md#지원되는-aws-서비스)
+* [ACK의 탄생 배경과 진화](02-ack.md#ack의-탄생-배경과-진화)
+* [리소스 생성 예제](02-ack.md#리소스-생성-예제)
+* [리소스 관리](02-ack.md#리소스-관리)
+* [보안 고려사항](02-ack.md#보안-고려사항)
+* [모니터링 및 로깅](02-ack.md#모니터링-및-로깅)
+* [모범 사례](02-ack.md#모범-사례)
+* [문제 해결](02-ack.md#문제-해결)
+* [결론](02-ack.md#결론)
 
 ## 소개
 
@@ -20,29 +21,29 @@ AWS Controllers for Kubernetes(ACK)는 Kubernetes 사용자가 Kubernetes API를
 
 ### ACK의 주요 이점
 
-- **통합된 경험**: Kubernetes와 AWS 리소스를 동일한 도구와 워크플로우로 관리
-- **GitOps 지원**: AWS 리소스를 코드로 정의하고 Git 저장소에서 관리
-- **선언적 구성**: 원하는 상태를 정의하고 컨트롤러가 실제 상태를 조정
-- **Kubernetes 네이티브 접근 방식**: 표준 Kubernetes 개념과 API 사용
-- **멀티 클러스터 지원**: 여러 클러스터에서 동일한 AWS 리소스 참조 가능
-- **IAM 통합**: Kubernetes 서비스 계정과 AWS IAM 역할 통합
+* **통합된 경험**: Kubernetes와 AWS 리소스를 동일한 도구와 워크플로우로 관리
+* **GitOps 지원**: AWS 리소스를 코드로 정의하고 Git 저장소에서 관리
+* **선언적 구성**: 원하는 상태를 정의하고 컨트롤러가 실제 상태를 조정
+* **Kubernetes 네이티브 접근 방식**: 표준 Kubernetes 개념과 API 사용
+* **멀티 클러스터 지원**: 여러 클러스터에서 동일한 AWS 리소스 참조 가능
+* **IAM 통합**: Kubernetes 서비스 계정과 AWS IAM 역할 통합
 
 ### 기존 접근 방식과의 비교
 
-| 기능 | ACK | AWS CloudFormation | Terraform | AWS SDK/CLI |
-|------|-----|-------------------|-----------|-------------|
-| 인터페이스 | Kubernetes API | CloudFormation 템플릿 | HCL | 프로그래밍 API/명령줄 |
-| 선언적 | ✅ | ✅ | ✅ | ❌ |
-| 상태 관리 | Kubernetes etcd | CloudFormation 스택 | Terraform 상태 | 수동 관리 |
-| 드리프트 감지 | ✅ | ✅ | ✅ | ❌ |
-| Kubernetes 통합 | 네이티브 | 제한적 | 제한적 | 제한적 |
-| 지원되는 서비스 | 제한적 (확장 중) | 광범위 | 광범위 | 모든 서비스 |
+| 기능            | ACK             | AWS CloudFormation | Terraform    | AWS SDK/CLI   |
+| ------------- | --------------- | ------------------ | ------------ | ------------- |
+| 인터페이스         | Kubernetes API  | CloudFormation 템플릿 | HCL          | 프로그래밍 API/명령줄 |
+| 선언적           | ✅               | ✅                  | ✅            | ❌             |
+| 상태 관리         | Kubernetes etcd | CloudFormation 스택  | Terraform 상태 | 수동 관리         |
+| 드리프트 감지       | ✅               | ✅                  | ✅            | ❌             |
+| Kubernetes 통합 | 네이티브            | 제한적                | 제한적          | 제한적           |
+| 지원되는 서비스      | 제한적 (확장 중)      | 광범위                | 광범위          | 모든 서비스        |
 
 ## 아키텍처
 
 ACK는 Kubernetes 운영자 패턴을 기반으로 하며, 각 AWS 서비스에 대한 컨트롤러를 제공합니다.
 
-![](../assets/ack_architecture.svg)
+![](<../.gitbook/assets/ack_architecture (1).svg>)
 
 ### 주요 구성 요소
 
@@ -62,10 +63,10 @@ ACK는 Kubernetes 운영자 패턴을 기반으로 하며, 각 AWS 서비스에 
 
 ### 사전 요구 사항
 
-- Kubernetes 클러스터 (v1.16 이상)
-- kubectl 설정
-- AWS 계정 및 적절한 IAM 권한
-- Helm 3 (선택 사항)
+* Kubernetes 클러스터 (v1.16 이상)
+* kubectl 설정
+* AWS 계정 및 적절한 IAM 권한
+* Helm 3 (선택 사항)
 
 ### 설치 방법
 
@@ -157,33 +158,33 @@ ACK는 다양한 AWS 서비스에 대한 컨트롤러를 제공합니다. 각 �
 
 ### 현재 지원되는 서비스 (2025년 7월 기준)
 
-- Amazon API Gateway (apigatewayv2)
-- Amazon DynamoDB
-- Amazon ECR
-- Amazon EKS
-- Amazon ElastiCache
-- Amazon MemoryDB
-- Amazon MQ
-- Amazon RDS
-- Amazon S3
-- Amazon SageMaker
-- AWS IAM
-- AWS Lambda
-- AWS SNS
-- AWS SQS
-- Amazon EventBridge
-- Amazon MSK
-- Amazon OpenSearch Service
-- AWS ACM
-- AWS Route 53
+* Amazon API Gateway (apigatewayv2)
+* Amazon DynamoDB
+* Amazon ECR
+* Amazon EKS
+* Amazon ElastiCache
+* Amazon MemoryDB
+* Amazon MQ
+* Amazon RDS
+* Amazon S3
+* Amazon SageMaker
+* AWS IAM
+* AWS Lambda
+* AWS SNS
+* AWS SQS
+* Amazon EventBridge
+* Amazon MSK
+* Amazon OpenSearch Service
+* AWS ACM
+* AWS Route 53
 
 ### 서비스 컨트롤러 상태
 
 각 서비스 컨트롤러는 다음 상태 중 하나를 가집니다:
 
-- **알파(Alpha)**: 초기 개발 단계, API 변경 가능
-- **베타(Beta)**: 기능 완성, 안정적이지만 API 변경 가능
-- **GA(Generally Available)**: 프로덕션 사용 준비 완료
+* **알파(Alpha)**: 초기 개발 단계, API 변경 가능
+* **베타(Beta)**: 기능 완성, 안정적이지만 API 변경 가능
+* **GA(Generally Available)**: 프로덕션 사용 준비 완료
 
 최신 상태는 [ACK GitHub 저장소](https://github.com/aws-controllers-k8s/community)에서 확인할 수 있습니다.
 
@@ -202,10 +203,10 @@ AWS 리소스 관리 방식은 다음과 같이 진화해 왔습니다:
 
 기존 접근 방식의 한계:
 
-- **도구 분리**: Terraform/CloudFormation과 kubectl을 별도로 운영해야 하는 이중 관리 부담
-- **상태 불일치**: IaC 도구의 상태와 Kubernetes 클러스터 상태가 분리되어 드리프트 발생 가능
-- **GitOps 통합 어려움**: ArgoCD/Flux 같은 GitOps 도구로 AWS 리소스까지 관리하기 어려움
-- **팀 경험 단절**: 인프라 팀과 앱 팀이 서로 다른 도구와 워크플로우 사용
+* **도구 분리**: Terraform/CloudFormation과 kubectl을 별도로 운영해야 하는 이중 관리 부담
+* **상태 불일치**: IaC 도구의 상태와 Kubernetes 클러스터 상태가 분리되어 드리프트 발생 가능
+* **GitOps 통합 어려움**: ArgoCD/Flux 같은 GitOps 도구로 AWS 리소스까지 관리하기 어려움
+* **팀 경험 단절**: 인프라 팀과 앱 팀이 서로 다른 도구와 워크플로우 사용
 
 ACK는 이러한 문제를 해결하여 Kubernetes 하나의 제어 평면으로 AWS 인프라와 애플리케이션을 통합 관리할 수 있게 합니다.
 
@@ -213,9 +214,9 @@ ACK는 이러한 문제를 해결하여 Kubernetes 하나의 제어 평면으로
 
 ACK를 사용한 AWS 리소스 생성 상세 예제는 아래 문서를 참조하세요:
 
-- [S3 및 IAM](./ack/01-s3-iam.md)
-- [SQS 및 SNS](./ack/02-sqs-sns.md)
-- [ELBv2, Route 53, RDS (NLB + Aurora PostgreSQL)](./ack/03-elbv2-route53-rds.md)
+* [S3 및 IAM](ack/01-s3-iam.md)
+* [SQS 및 SNS](ack/02-sqs-sns.md)
+* [ELBv2, Route 53, RDS (NLB + Aurora PostgreSQL)](ack/03-elbv2-route53-rds.md)
 
 ## 리소스 관리
 
@@ -398,9 +399,9 @@ spec:
 
 주요 메트릭:
 
-- `ack_reconcile_success_total`: 성공적인 조정 횟수
-- `ack_reconcile_failure_total`: 실패한 조정 횟수
-- `ack_api_call_duration_seconds`: AWS API 호출 지연 시간
+* `ack_reconcile_success_total`: 성공적인 조정 횟수
+* `ack_reconcile_failure_total`: 실패한 조정 횟수
+* `ack_api_call_duration_seconds`: AWS API 호출 지연 시간
 
 ### AWS CloudTrail 통합
 
@@ -502,9 +503,10 @@ spec:
 **증상**: ACK 리소스가 생성되지만 AWS 리소스는 생성되지 않음
 
 **해결 방법**:
-- 컨트롤러 로그 확인
-- IAM 권한 확인
-- 리소스 상태 및 이벤트 확인
+
+* 컨트롤러 로그 확인
+* IAM 권한 확인
+* 리소스 상태 및 이벤트 확인
 
 ```bash
 kubectl logs -n ack-system -l app.kubernetes.io/name=ack-s3-controller
@@ -516,17 +518,19 @@ kubectl describe bucket my-sample-bucket
 **증상**: "AccessDenied" 오류 메시지
 
 **해결 방법**:
-- IAM 정책 및 역할 확인
-- IRSA 구성 확인
-- CloudTrail 로그 검토
+
+* IAM 정책 및 역할 확인
+* IRSA 구성 확인
+* CloudTrail 로그 검토
 
 #### 3. 리소스 삭제 중단
 
 **증상**: 리소스가 "Terminating" 상태에서 멈춤
 
 **해결 방법**:
-- 종속성 확인
-- 파이널라이저 제거 (필요한 경우)
+
+* 종속성 확인
+* 파이널라이저 제거 (필요한 경우)
 
 ```bash
 kubectl patch bucket my-sample-bucket -p '{"metadata":{"finalizers":[]}}' --type=merge
@@ -558,18 +562,18 @@ ACK는 지속적으로 발전하고 있으며, 더 많은 AWS 서비스에 대�
 
 ### 다음 단계
 
-- ACK를 사용한 GitOps 파이프라인 구축
-- 여러 AWS 서비스 컨트롤러 통합
-- 사용자 정의 리소스 정의 확장
-- 다중 계정 및 다중 리전 전략 개발
+* ACK를 사용한 GitOps 파이프라인 구축
+* 여러 AWS 서비스 컨트롤러 통합
+* 사용자 정의 리소스 정의 확장
+* 다중 계정 및 다중 리전 전략 개발
 
 ## 참고 자료
 
-- [ACK 공식 문서](https://aws-controllers-k8s.github.io/community/)
-- [ACK GitHub 저장소](https://github.com/aws-controllers-k8s/community)
-- [AWS 서비스 컨트롤러 목록](https://aws-controllers-k8s.github.io/community/docs/community/services/)
-- [ACK 설계 원칙](https://aws-controllers-k8s.github.io/community/docs/community/design/)
-- [EKS 워크숍 - ACK](https://www.eksworkshop.com/intermediate/290_ack/)
+* [ACK 공식 문서](https://aws-controllers-k8s.github.io/community/)
+* [ACK GitHub 저장소](https://github.com/aws-controllers-k8s/community)
+* [AWS 서비스 컨트롤러 목록](https://aws-controllers-k8s.github.io/community/docs/community/services/)
+* [ACK 설계 원칙](https://aws-controllers-k8s.github.io/community/docs/community/design/)
+* [EKS 워크숍 - ACK](https://www.eksworkshop.com/intermediate/290_ack/)
 
 ## 퀴즈
 

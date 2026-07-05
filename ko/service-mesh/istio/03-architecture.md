@@ -1,44 +1,43 @@
-# Istio 아키텍처
+# 아키텍처
 
-> **지원 버전**: Istio 1.28+
-> **API 버전**: `networking.istio.io/v1`, `security.istio.io/v1`
-> **마지막 업데이트**: 2026년 2월 19일
+> **지원 버전**: Istio 1.28+ **API 버전**: `networking.istio.io/v1`, `security.istio.io/v1` **마지막 업데이트**: 2026년 2월 19일
 
 Istio의 내부 아키텍처와 네트워킹 메커니즘을 심층적으로 다룹니다.
 
 **배경 및 역사**는 [기본 개념](02-basic-concepts.md#배경과-역사) 문서를 참고하세요.
 
 **중요 변경사항 (Istio 1.5+)**:
-- Pilot, Citadel, Galley, Mixer는 별도 컴포넌트가 **아닙니다**
-- Istiod라는 **단일 바이너리**(`pilot-discovery`)로 통합되었습니다
-- Pilot/Citadel/Galley 용어는 **기능을 설명하기 위한 역사적 명칭**입니다
+
+* Pilot, Citadel, Galley, Mixer는 별도 컴포넌트가 **아닙니다**
+* Istiod라는 **단일 바이너리**(`pilot-discovery`)로 통합되었습니다
+* Pilot/Citadel/Galley 용어는 **기능을 설명하기 위한 역사적 명칭**입니다
 
 ## 목차
 
-1. [Istio 아키텍처 개요](#istio-아키텍처-개요)
-2. [Control Plane: Istiod](#control-plane-istiod)
-3. [Data Plane: Envoy Proxy](#data-plane-envoy-proxy)
-4. [Sidecar Injection 메커니즘](#sidecar-injection-메커니즘)
-5. [iptables와 트래픽 가로채기](#iptables와-트래픽-가로채기)
-6. [DNS 처리 메커니즘](#dns-처리-메커니즘)
-7. [xDS API 통신](#xds-api-통신)
-8. [Sidecar 리소스를 통한 최적화](#sidecar-리소스를-통한-최적화)
+1. [Istio 아키텍처 개요](03-architecture.md#istio-아키텍처-개요)
+2. [Control Plane: Istiod](03-architecture.md#control-plane-istiod)
+3. [Data Plane: Envoy Proxy](03-architecture.md#data-plane-envoy-proxy)
+4. [Sidecar Injection 메커니즘](03-architecture.md#sidecar-injection-메커니즘)
+5. [iptables와 트래픽 가로채기](03-architecture.md#iptables와-트래픽-가로채기)
+6. [DNS 처리 메커니즘](03-architecture.md#dns-처리-메커니즘)
+7. [xDS API 통신](03-architecture.md#xds-api-통신)
+8. [Sidecar 리소스를 통한 최적화](03-architecture.md#sidecar-리소스를-통한-최적화)
 
 ## Istio 아키텍처 개요
 
 ### 전체 구조
 
-![istio-overview](../../assets/istio-overview.png)
+![istio-overview](<../../.gitbook/assets/istio-overview (1).png>)
 
 ### Control Plane vs Data Plane
 
-| 구분 | Control Plane (Istiod) | Data Plane (Envoy) |
-|------|------------------------|-------------------|
-| **역할** | 정책 관리, 구성 배포 | 실제 트래픽 처리 |
-| **위치** | 별도 파드 (일반적으로 1-3개) | 모든 애플리케이션 파드 |
-| **언어** | Go | C++ |
-| **부하** | 낮음 | 높음 (모든 트래픽) |
-| **확장성** | 수평 확장 (HA) | 자동 (파드당 1개) |
+| 구분      | Control Plane (Istiod) | Data Plane (Envoy) |
+| ------- | ---------------------- | ------------------ |
+| **역할**  | 정책 관리, 구성 배포           | 실제 트래픽 처리          |
+| **위치**  | 별도 파드 (일반적으로 1-3개)     | 모든 애플리케이션 파드       |
+| **언어**  | Go                     | C++                |
+| **부하**  | 낮음                     | 높음 (모든 트래픽)        |
+| **확장성** | 수평 확장 (HA)             | 자동 (파드당 1개)        |
 
 ## Control Plane: Istiod
 
@@ -125,10 +124,11 @@ spec:
 ```
 
 Istiod는 다음을 추적합니다:
-- Kubernetes Service
-- Endpoints (파드 IP)
-- Pod 상태 변화
-- 외부 서비스 (ServiceEntry)
+
+* Kubernetes Service
+* Endpoints (파드 IP)
+* Pod 상태 변화
+* 외부 서비스 (ServiceEntry)
 
 #### 2. Traffic Management (Pilot 기능)
 
@@ -192,6 +192,7 @@ sequenceDiagram
 ```
 
 **SPIFFE ID 형식**:
+
 ```
 spiffe://cluster.local/ns/default/sa/reviews
 ```
@@ -214,6 +215,7 @@ spec:
 ```
 
 Istiod는 적용 전에 검증:
+
 ```bash
 $ kubectl apply -f invalid-vs.yaml
 Error from server: admission webhook "validation.istio.io" denied the request:
@@ -234,19 +236,20 @@ istio-p+     1  /usr/local/bin/pilot-discovery discovery
 ```
 
 **주요 포인트**:
-- Istiod는 `pilot-discovery`라는 **단일 Go 바이너리**로 실행됩니다
-- Pilot, Citadel, Galley는 **코드 레벨의 패키지/모듈**로 존재하지만, 별도 프로세스가 아닙니다
-- 모든 기능이 하나의 프로세스 내에서 goroutine으로 실행됩니다
+
+* Istiod는 `pilot-discovery`라는 **단일 Go 바이너리**로 실행됩니다
+* Pilot, Citadel, Galley는 **코드 레벨의 패키지/모듈**로 존재하지만, 별도 프로세스가 아닙니다
+* 모든 기능이 하나의 프로세스 내에서 goroutine으로 실행됩니다
 
 **Istiod가 제공하는 주요 포트**:
 
-| 포트 | 프로토콜 | 용도 | 기능 |
-|------|----------|------|------|
-| **15010** | gRPC | xDS (legacy) | 이전 버전 호환성 |
-| **15012** | gRPC | xDS over TLS | 주요 xDS API 엔드포인트 |
-| **15014** | HTTP | Control plane monitoring | 메트릭 및 헬스 체크 |
-| **15017** | HTTPS | Webhook | Sidecar injection |
-| **8080** | HTTP | Debug | 디버깅 인터페이스 |
+| 포트        | 프로토콜  | 용도                       | 기능                |
+| --------- | ----- | ------------------------ | ----------------- |
+| **15010** | gRPC  | xDS (legacy)             | 이전 버전 호환성         |
+| **15012** | gRPC  | xDS over TLS             | 주요 xDS API 엔드포인트  |
+| **15014** | HTTP  | Control plane monitoring | 메트릭 및 헬스 체크       |
+| **15017** | HTTPS | Webhook                  | Sidecar injection |
+| **8080**  | HTTP  | Debug                    | 디버깅 인터페이스         |
 
 ### Istiod 배포
 
@@ -278,9 +281,10 @@ spec:
 ```
 
 **리소스 사용량** (일반적):
-- CPU: 0.5 - 2 cores
-- Memory: 2 - 4 GB
-- 수천 개의 서비스와 파드 처리 가능
+
+* CPU: 0.5 - 2 cores
+* Memory: 2 - 4 GB
+* 수천 개의 서비스와 파드 처리 가능
 
 ## Data Plane: Envoy Proxy
 
@@ -336,10 +340,11 @@ flowchart TB
 ```
 
 **Istio의 기본 Listeners**:
-- `0.0.0.0:15001`: 모든 아웃바운드 TCP 트래픽
-- `0.0.0.0:15006`: 모든 인바운드 TCP 트래픽
-- `0.0.0.0:15021`: Health check
-- `0.0.0.0:15090`: Prometheus 메트릭
+
+* `0.0.0.0:15001`: 모든 아웃바운드 TCP 트래픽
+* `0.0.0.0:15006`: 모든 인바운드 TCP 트래픽
+* `0.0.0.0:15021`: Health check
+* `0.0.0.0:15090`: Prometheus 메트릭
 
 #### 2. Filters
 
@@ -407,10 +412,11 @@ flowchart LR
 ### Envoy 성능
 
 **벤치마크** (일반적인 환경):
-- 처리량: 10,000+ RPS per core
-- 지연 시간 추가: < 1ms (P99)
-- 메모리: 50-100 MB (기본 구성)
-- CPU: 0.1-0.5 cores (일반적인 부하)
+
+* 처리량: 10,000+ RPS per core
+* 지연 시간 추가: < 1ms (P99)
+* 메모리: 50-100 MB (기본 구성)
+* CPU: 0.1-0.5 cores (일반적인 부하)
 
 ## Sidecar Injection 메커니즘
 
@@ -462,6 +468,7 @@ flowchart TB
 ### 원본 vs Injection 후
 
 **원본 Deployment**:
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -478,6 +485,7 @@ spec:
 ```
 
 **Injection 후**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -507,6 +515,7 @@ spec:
 #### 자동 주입 (권장)
 
 **Namespace 레벨**:
+
 ```bash
 # 네임스페이스에 레이블 추가
 kubectl label namespace default istio-injection=enabled
@@ -516,6 +525,7 @@ kubectl apply -f deployment.yaml
 ```
 
 **Pod 레벨** (Annotation):
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -542,9 +552,10 @@ kubectl apply -f deployment-injected.yaml
 ```
 
 **수동 주입 사용 시나리오**:
-- 자동 주입을 사용할 수 없는 환경
-- CI/CD 파이프라인에서 명시적으로 제어하고 싶을 때
-- 디버깅 목적으로 주입된 YAML을 확인하고 싶을 때
+
+* 자동 주입을 사용할 수 없는 환경
+* CI/CD 파이프라인에서 명시적으로 제어하고 싶을 때
+* 디버깅 목적으로 주입된 YAML을 확인하고 싶을 때
 
 ## iptables와 트래픽 가로채기
 
@@ -684,10 +695,10 @@ REDIRECT   tcp  --  0.0.0.0/0  0.0.0.0/0           redir ports 15006
 
 Istio는 두 가지 트래픽 가로채기 방식을 지원합니다:
 
-| 방식 | 장점 | 단점 | 사용 시나리오 |
-|------|------|------|--------------|
-| **iptables** | 간단, 범용적 | Init Container 필요 | 기본 설정 |
-| **eBPF (CNI)** | Init 불필요, 빠름 | 최신 커널 필요 | 고성능, Ambient Mode |
+| 방식             | 장점           | 단점                | 사용 시나리오           |
+| -------------- | ------------ | ----------------- | ----------------- |
+| **iptables**   | 간단, 범용적      | Init Container 필요 | 기본 설정             |
+| **eBPF (CNI)** | Init 불필요, 빠름 | 최신 커널 필요          | 고성능, Ambient Mode |
 
 ## DNS 처리 메커니즘
 
@@ -720,6 +731,7 @@ flowchart LR
 ```
 
 **/etc/resolv.conf** (파드 내부):
+
 ```bash
 nameserver 10.96.0.10  # kube-dns ClusterIP
 search default.svc.cluster.local svc.cluster.local cluster.local
@@ -765,9 +777,10 @@ flowchart TB
 ```
 
 **장점**:
-- CoreDNS 호출 불필요 (성능 향상)
-- 동적 Endpoint 업데이트
-- 고급 라우팅 (버전, 가중치 등)
+
+* CoreDNS 호출 불필요 (성능 향상)
+* 동적 Endpoint 업데이트
+* 고급 라우팅 (버전, 가중치 등)
 
 ### DNS Proxy (선택 사항)
 
@@ -854,13 +867,13 @@ flowchart LR
 
 ### xDS API 종류
 
-| API | 이름 | 역할 | 예시 |
-|-----|------|------|------|
-| **LDS** | Listener Discovery | 수신 포트 구성 | 15001, 15006 |
-| **RDS** | Route Discovery | HTTP 라우팅 규칙 | VirtualService |
-| **CDS** | Cluster Discovery | 업스트림 서비스 | DestinationRule |
-| **EDS** | Endpoint Discovery | 파드 IP 목록 | Service Endpoints |
-| **SDS** | Secret Discovery | TLS 인증서 | mTLS 인증서 |
+| API     | 이름                 | 역할          | 예시                |
+| ------- | ------------------ | ----------- | ----------------- |
+| **LDS** | Listener Discovery | 수신 포트 구성    | 15001, 15006      |
+| **RDS** | Route Discovery    | HTTP 라우팅 규칙 | VirtualService    |
+| **CDS** | Cluster Discovery  | 업스트림 서비스    | DestinationRule   |
+| **EDS** | Endpoint Discovery | 파드 IP 목록    | Service Endpoints |
+| **SDS** | Secret Discovery   | TLS 인증서     | mTLS 인증서          |
 
 ### xDS 통신 흐름
 
@@ -970,10 +983,11 @@ flowchart TB
 ```
 
 **문제점**:
-- 메모리 사용량 증가
-- CPU 사용량 증가 (구성 처리)
-- 네트워크 대역폭 낭비
-- Istiod 부하 증가
+
+* 메모리 사용량 증가
+* CPU 사용량 증가 (구성 처리)
+* 네트워크 대역폭 낭비
+* Istiod 부하 증가
 
 ### 해결책: Sidecar 리소스
 
@@ -1057,14 +1071,16 @@ spec:
 ### Sidecar 리소스 효과
 
 **Before (Sidecar 없음)**:
-- 1000개 서비스 → 1000개 Cluster 구성
-- Envoy 메모리: ~500 MB
-- 구성 푸시 시간: 5-10초
+
+* 1000개 서비스 → 1000개 Cluster 구성
+* Envoy 메모리: \~500 MB
+* 구성 푸시 시간: 5-10초
 
 **After (Sidecar 적용)**:
-- 10개 서비스 → 10개 Cluster 구성
-- Envoy 메모리: ~80 MB
-- 구성 푸시 시간: < 1초
+
+* 10개 서비스 → 10개 Cluster 구성
+* Envoy 메모리: \~80 MB
+* 구성 푸시 시간: < 1초
 
 ### DNS와 Sidecar 통합
 
@@ -1084,24 +1100,28 @@ spec:
 ```
 
 **결과**:
-- Envoy는 `reviews`, `ratings`만 해석
-- `google.com` 등 외부 도메인은 CoreDNS로 전달
-- 메모리 및 CPU 절약
+
+* Envoy는 `reviews`, `ratings`만 해석
+* `google.com` 등 외부 도메인은 CoreDNS로 전달
+* 메모리 및 CPU 절약
 
 ## 참고 자료
 
 ### 공식 문서
-- [Istio Architecture](https://istio.io/latest/docs/ops/deployment/architecture/)
-- [Envoy Proxy](https://www.envoyproxy.io/docs/envoy/latest/intro/intro)
-- [xDS Protocol](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol)
-- [SPIFFE](https://spiffe.io/)
+
+* [Istio Architecture](https://istio.io/latest/docs/ops/deployment/architecture/)
+* [Envoy Proxy](https://www.envoyproxy.io/docs/envoy/latest/intro/intro)
+* [xDS Protocol](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol)
+* [SPIFFE](https://spiffe.io/)
 
 ### 역사 및 배경
-- [Envoy Origin Story - Matt Klein](https://blog.envoyproxy.io/the-universal-data-plane-api-d15cec7a)
-- [Istio Announcement - Google Cloud Blog](https://cloud.google.com/blog/products/gcp/istio-service-mesh-for-microservices)
-- [Service Mesh 역사](https://www.nginx.com/blog/what-is-a-service-mesh/)
+
+* [Envoy Origin Story - Matt Klein](https://blog.envoyproxy.io/the-universal-data-plane-api-d15cec7a)
+* [Istio Announcement - Google Cloud Blog](https://cloud.google.com/blog/products/gcp/istio-service-mesh-for-microservices)
+* [Service Mesh 역사](https://www.nginx.com/blog/what-is-a-service-mesh/)
 
 ### 심화 학습
-- [Envoy Architecture Overview](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/arch_overview)
-- [Istio Performance and Scalability](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
-- [iptables Tutorial](https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html)
+
+* [Envoy Architecture Overview](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/arch_overview)
+* [Istio Performance and Scalability](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
+* [iptables Tutorial](https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html)

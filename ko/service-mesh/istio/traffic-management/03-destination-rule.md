@@ -1,23 +1,21 @@
 # DestinationRule
 
-> **지원 버전**: Istio 1.28+
-> **API 버전**: `networking.istio.io/v1`
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Istio 1.28+ **API 버전**: `networking.istio.io/v1` **마지막 업데이트**: 2026년 2월 23일
 
 DestinationRule은 VirtualService가 트래픽을 라우팅한 후, 해당 트래픽을 어떻게 처리할지 정의하는 Istio의 핵심 리소스입니다.
 
 ## 목차
 
-1. [DestinationRule이란?](#destinationrule이란)
-2. [VirtualService vs DestinationRule](#virtualservice-vs-destinationrule)
-3. [Subset 개념](#subset-개념)
-4. [기본 구조](#기본-구조)
-5. [Subset 정의하기](#subset-정의하기)
-6. [Traffic Policy 개요](#traffic-policy-개요)
-7. [VirtualService와 함께 사용](#virtualservice와-함께-사용)
-8. [실전 예제](#실전-예제)
-9. [모범 사례](#모범-사례)
-10. [문제 해결](#문제-해결)
+1. [DestinationRule이란?](03-destination-rule.md#destinationrule이란)
+2. [VirtualService vs DestinationRule](03-destination-rule.md#virtualservice-vs-destinationrule)
+3. [Subset 개념](03-destination-rule.md#subset-개념)
+4. [기본 구조](03-destination-rule.md#기본-구조)
+5. [Subset 정의하기](03-destination-rule.md#subset-정의하기)
+6. [Traffic Policy 개요](03-destination-rule.md#traffic-policy-개요)
+7. [VirtualService와 함께 사용](03-destination-rule.md#virtualservice와-함께-사용)
+8. [실전 예제](03-destination-rule.md#실전-예제)
+9. [모범 사례](03-destination-rule.md#모범-사례)
+10. [문제 해결](03-destination-rule.md#문제-해결)
 
 ## DestinationRule이란?
 
@@ -61,13 +59,13 @@ flowchart LR
 
 ### DestinationRule의 주요 역할
 
-| 역할 | 설명 | 예시 |
-|------|------|------|
-| **Subset 정의** | 서비스 버전 그룹화 | v1, v2, canary, stable |
-| **Load Balancing** | 부하 분산 알고리즘 | ROUND_ROBIN, LEAST_REQUEST |
-| **Connection Pool** | 연결 풀 설정 | 최대 연결 수, Timeout |
-| **Circuit Breaker** | 장애 격리 | Outlier Detection |
-| **TLS 설정** | 암호화 정책 | mTLS, SIMPLE TLS |
+| 역할                  | 설명         | 예시                           |
+| ------------------- | ---------- | ---------------------------- |
+| **Subset 정의**       | 서비스 버전 그룹화 | v1, v2, canary, stable       |
+| **Load Balancing**  | 부하 분산 알고리즘 | ROUND\_ROBIN, LEAST\_REQUEST |
+| **Connection Pool** | 연결 풀 설정    | 최대 연결 수, Timeout             |
+| **Circuit Breaker** | 장애 격리      | Outlier Detection            |
+| **TLS 설정**          | 암호화 정책     | mTLS, SIMPLE TLS             |
 
 ## VirtualService vs DestinationRule
 
@@ -120,6 +118,7 @@ flowchart TD
 ### 책임 분리
 
 **VirtualService (어디로?)**:
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -144,6 +143,7 @@ spec:
 ```
 
 **DestinationRule (어떻게?)**:
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -321,24 +321,28 @@ spec:
 ### Host 지정 방법
 
 **1. 서비스 이름 (같은 네임스페이스)**
+
 ```yaml
 spec:
   host: reviews
 ```
 
 **2. FQDN (다른 네임스페이스)**
+
 ```yaml
 spec:
   host: reviews.production.svc.cluster.local
 ```
 
 **3. 와일드카드**
+
 ```yaml
 spec:
   host: "*.example.com"
 ```
 
 **4. 외부 서비스 (ServiceEntry와 함께)**
+
 ```yaml
 spec:
   host: api.external.com
@@ -685,9 +689,10 @@ spec:
 ```
 
 **사용 시나리오**:
-- v1: 안정 버전 (대부분의 트래픽)
-- v2: Canary 버전 (10% 트래픽)
-- v3: 테스트 버전 (개발자만)
+
+* v1: 안정 버전 (대부분의 트래픽)
+* v2: Canary 버전 (10% 트래픽)
+* v3: 테스트 버전 (개발자만)
 
 ### 예제 2: Multi-Region 배포
 
@@ -997,6 +1002,7 @@ spec:
 ### Subset이 작동하지 않음
 
 **증상**:
+
 ```bash
 # VirtualService는 있지만 트래픽이 라우팅되지 않음
 kubectl get virtualservice reviews -o yaml
@@ -1032,6 +1038,7 @@ istioctl proxy-config cluster <pod-name> -o json | jq '.[] | select(.name=="outb
 ### Subset 충돌
 
 **문제**:
+
 ```yaml
 # 같은 host에 여러 DestinationRule이 있으면 충돌
 apiVersion: networking.istio.io/v1
@@ -1059,6 +1066,7 @@ spec:
 ```
 
 **해결**:
+
 ```yaml
 # ✅ 하나의 DestinationRule에 모든 subset 정의
 apiVersion: networking.istio.io/v1
@@ -1093,13 +1101,13 @@ istioctl analyze -n production
 
 DestinationRule을 이해했다면 다음 주제로 넘어가세요:
 
-1. **[트래픽 분할](03-traffic-splitting.md)**: Canary, Blue/Green 배포
-2. **[로드 밸런싱](06-load-balancing.md)**: 다양한 알고리즘과 정책
-3. **[Circuit Breaker](07-circuit-breaker.md)**: 장애 격리 및 복원력
-4. **[Retry 및 Timeout](04-retry-timeout.md)**: 재시도 및 타임아웃 설정
+1. [**트래픽 분할**](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md): Canary, Blue/Green 배포
+2. [**로드 밸런싱**](06-load-balancing.md): 다양한 알고리즘과 정책
+3. [**Circuit Breaker**](07-circuit-breaker.md): 장애 격리 및 복원력
+4. [**Retry 및 Timeout**](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/04-retry-timeout.md): 재시도 및 타임아웃 설정
 
 ## 참고 자료
 
-- [Istio DestinationRule Reference](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
-- [Istio Traffic Management](https://istio.io/latest/docs/concepts/traffic-management/)
-- [Envoy Cluster Configuration](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/upstream)
+* [Istio DestinationRule Reference](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
+* [Istio Traffic Management](https://istio.io/latest/docs/concepts/traffic-management/)
+* [Envoy Cluster Configuration](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/upstream)

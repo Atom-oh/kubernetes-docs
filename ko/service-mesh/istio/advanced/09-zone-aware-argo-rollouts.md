@@ -1,20 +1,18 @@
 # Zone-Aware Argo Rollouts
 
-> **지원 버전**: Istio 1.18+, Argo Rollouts 1.6+
-> **마지막 업데이트**: 2026년 2월 19일
-> **난이도**: ⭐⭐⭐⭐⭐ (고급)
+> **지원 버전**: Istio 1.18+, Argo Rollouts 1.6+ **마지막 업데이트**: 2026년 2월 19일 **난이도**: ⭐⭐⭐⭐⭐ (고급)
 
 이 문서는 AWS 가용 영역(Availability Zone)별로 독립적인 Argo Rollouts Canary 배포를 설정하면서, Istio의 locality-aware 라우팅을 활용하여 자동 failover를 구현하는 방법을 설명합니다.
 
 ## 목차
 
-1. [문제 정의](#문제-정의)
-2. [아키텍처 개요](#아키텍처-개요)
-3. [핵심 설계 결정](#핵심-설계-결정)
-4. [구현 가이드](#구현-가이드)
-5. [트래픽 흐름](#트래픽-흐름)
-6. [문제 해결](#문제-해결)
-7. [모범 사례](#모범-사례)
+1. [문제 정의](09-zone-aware-argo-rollouts.md#문제-정의)
+2. [아키텍처 개요](09-zone-aware-argo-rollouts.md#아키텍처-개요)
+3. [핵심 설계 결정](09-zone-aware-argo-rollouts.md#핵심-설계-결정)
+4. [구현 가이드](09-zone-aware-argo-rollouts.md#구현-가이드)
+5. [트래픽 흐름](09-zone-aware-argo-rollouts.md#트래픽-흐름)
+6. [문제 해결](09-zone-aware-argo-rollouts.md#문제-해결)
+7. [모범 사례](09-zone-aware-argo-rollouts.md#모범-사례)
 
 ## 문제 정의
 
@@ -58,17 +56,15 @@ flowchart TD
 **왜 Zone별 Rollout이 필요한가?**
 
 1. **Rollout당 독립적인 PDB 관리**
-   - 각 Zone의 Rollout이 자체 PDB를 관리
-   - Zone C가 완전히 사라져도 Zone A, B의 PDB는 영향 없음
-
+   * 각 Zone의 Rollout이 자체 PDB를 관리
+   * Zone C가 완전히 사라져도 Zone A, B의 PDB는 영향 없음
 2. **Zone 단위 복구**
-   - Zone C가 복구되면 해당 Rollout만 재시작
-   - 다른 Zone의 배포 상태에 영향 없음
-
+   * Zone C가 복구되면 해당 Rollout만 재시작
+   * 다른 Zone의 배포 상태에 영향 없음
 3. **Spot Instance 중단 대응**
-   - 특정 Zone의 Spot Instance가 모두 중단되어도
-   - 다른 Zone의 서비스는 계속 운영
-   - Istio locality failover로 자동 트래픽 전환
+   * 특정 Zone의 Spot Instance가 모두 중단되어도
+   * 다른 Zone의 서비스는 계속 운영
+   * Istio locality failover로 자동 트래픽 전환
 
 **PDB 설정 예시** (Zone별):
 
@@ -114,9 +110,10 @@ spec:
 ```
 
 **장점**:
-- Zone C 전체 중단 시에도 Zone A, B의 PDB는 정상 동작
-- 각 Zone이 독립적으로 복구 가능
-- Canary 배포도 Zone별로 독립적으로 진행
+
+* Zone C 전체 중단 시에도 Zone A, B의 PDB는 정상 동작
+* 각 Zone이 독립적으로 복구 가능
+* Canary 배포도 Zone별로 독립적으로 진행
 
 ### 요구사항
 
@@ -254,25 +251,29 @@ http:
 ```
 
 **핵심 원리**:
-- 각 Rollout은 **서로 다른 route 이름**을 참조 (`zone-a-route`, `zone-b-route`, `zone-c-route`)
-- 각 route는 **sourceLabels match**를 통해 해당 Zone의 트래픽만 처리
-- Locality-aware 라우팅이 자동으로 zone-local 엔드포인트를 우선 선택
+
+* 각 Rollout은 **서로 다른 route 이름**을 참조 (`zone-a-route`, `zone-b-route`, `zone-c-route`)
+* 각 route는 **sourceLabels match**를 통해 해당 Zone의 트래픽만 처리
+* Locality-aware 라우팅이 자동으로 zone-local 엔드포인트를 우선 선택
 
 ### 2. Locality-aware 라우팅
 
 **기본 동작**:
-- Zone A의 클라이언트 → Zone A의 Pod (100%)
-- Zone B의 클라이언트 → Zone B의 Pod (100%)
-- Zone C의 클라이언트 → Zone C의 Pod (100%)
+
+* Zone A의 클라이언트 → Zone A의 Pod (100%)
+* Zone B의 클라이언트 → Zone B의 Pod (100%)
+* Zone C의 클라이언트 → Zone C의 Pod (100%)
 
 **Failover 시**:
-- Zone A 장애 → Zone B로 자동 전환
-- Zone B 장애 → Zone C로 자동 전환
-- Zone C 장애 → Zone A로 자동 전환
+
+* Zone A 장애 → Zone B로 자동 전환
+* Zone B 장애 → Zone C로 자동 전환
+* Zone C 장애 → Zone A로 자동 전환
 
 ### 3. 통합 서비스 호출
 
 클라이언트는 단일 DNS 이름 사용:
+
 ```bash
 # 이렇게 호출
 curl http://test.default.svc.cluster.local:8080
@@ -457,11 +458,13 @@ spec:
 ```
 
 **중요 변경사항**:
-- ❌ 이전: 모든 Zone이 같은 `primary` route 공유 → **충돌 발생**
-- ✅ 수정: 각 Zone이 독립적인 route 이름 사용 (`zone-a-route`, `zone-b-route`, `zone-c-route`)
-- ✅ 추가: `sourceLabels.topology.kubernetes.io/zone` match로 Zone별 트래픽 분리
+
+* ❌ 이전: 모든 Zone이 같은 `primary` route 공유 → **충돌 발생**
+* ✅ 수정: 각 Zone이 독립적인 route 이름 사용 (`zone-a-route`, `zone-b-route`, `zone-c-route`)
+* ✅ 추가: `sourceLabels.topology.kubernetes.io/zone` match로 Zone별 트래픽 분리
 
 **동작 방식**:
+
 1. Zone A의 파드에서 발생한 요청 → `zone-a-route` 매칭
 2. Rollout A는 `zone-a-route`의 weight만 수정 (다른 Zone 영향 없음)
 3. Locality-aware 라우팅이 자동으로 zone-local 엔드포인트 우선 선택
@@ -835,6 +838,7 @@ sequenceDiagram
 ### 1. VirtualService 충돌 오류
 
 **증상**:
+
 ```bash
 Error: VirtualService update conflict
 ```
@@ -842,6 +846,7 @@ Error: VirtualService update conflict
 **원인**: 여러 Rollout이 같은 route를 동시에 수정 시도
 
 **해결**:
+
 ```yaml
 # ✅ 각 Rollout이 고유한 subset 관리하도록 설정
 spec:
@@ -861,6 +866,7 @@ spec:
 **원인**: `distribute` 설정이 잘못됨
 
 **해결**:
+
 ```yaml
 # ✅ 올바른 distribute 설정
 distribute:
@@ -876,6 +882,7 @@ distribute:
 **원인**: Outlier detection이 비활성화되어 있거나 설정이 너무 느림
 
 **해결**:
+
 ```yaml
 # ✅ 빠른 장애 감지
 outlierDetection:
@@ -889,6 +896,7 @@ outlierDetection:
 **증상**: Canary 배포가 진행되지 않음
 
 **확인**:
+
 ```bash
 # Rollout 상태 확인
 kubectl argo rollouts get rollout test-a -n default
@@ -927,6 +935,7 @@ kubectl logs -n argo-rollouts deployment/argo-rollouts
 **문제**: 여러 zone의 Rollout을 동시에 배포하면 복잡도 증가
 
 **권장**:
+
 ```bash
 # Zone별 순차 배포
 kubectl argo rollouts promote test-a -n default
@@ -1054,48 +1063,53 @@ spec:
 
 ### 6. 배포 체크리스트
 
-- [ ] 모든 zone의 Node가 준비됨
-- [ ] VirtualService가 모든 subset 포함
-- [ ] DestinationRule의 locality 설정 확인
-- [ ] Outlier detection 활성화
-- [ ] 각 Rollout이 고유한 subset 관리
-- [ ] Zone별 Service 정의됨
-- [ ] Prometheus 메트릭 수집 확인
-- [ ] 알림 규칙 설정됨
+* [ ] 모든 zone의 Node가 준비됨
+* [ ] VirtualService가 모든 subset 포함
+* [ ] DestinationRule의 locality 설정 확인
+* [ ] Outlier detection 활성화
+* [ ] 각 Rollout이 고유한 subset 관리
+* [ ] Zone별 Service 정의됨
+* [ ] Prometheus 메트릭 수집 확인
+* [ ] 알림 규칙 설정됨
 
 ## 성능 고려사항
 
 ### 리소스 요구사항
 
 **Control Plane**:
-- Istiod: CPU 500m, Memory 2GB (추가 VirtualService/DestinationRule로 인한 부하)
+
+* Istiod: CPU 500m, Memory 2GB (추가 VirtualService/DestinationRule로 인한 부하)
 
 **Data Plane**:
-- Envoy Sidecar: CPU 100-500m, Memory 50-150MB (zone 정보 및 locality 라우팅 오버헤드)
+
+* Envoy Sidecar: CPU 100-500m, Memory 50-150MB (zone 정보 및 locality 라우팅 오버헤드)
 
 **Argo Rollouts Controller**:
-- CPU 100m, Memory 128MB (3개 Rollout 관리)
+
+* CPU 100m, Memory 128MB (3개 Rollout 관리)
 
 ### 네트워크 오버헤드
 
-- **Zone-local 트래픽**: 추가 latency 1-2ms (Envoy overhead)
-- **Cross-zone 트래픽** (failover 시): 추가 latency 5-10ms (zone 간 네트워크)
+* **Zone-local 트래픽**: 추가 latency 1-2ms (Envoy overhead)
+* **Cross-zone 트래픽** (failover 시): 추가 latency 5-10ms (zone 간 네트워크)
 
 ## 참고 자료
 
 ### 관련 문서
-- [Argo Rollouts 통합](08-argo-rollouts.md)
-- [Zone Aware Routing](../resilience/03-zone-aware-routing.md)
-- [Outlier Detection](../resilience/01-outlier-detection.md)
-- [DestinationRule](../traffic-management/03-destination-rule.md)
+
+* [Argo Rollouts 통합](08-argo-rollouts.md)
+* [Zone Aware Routing](../resilience/03-zone-aware-routing.md)
+* [Outlier Detection](../resilience/01-outlier-detection.md)
+* [DestinationRule](../traffic-management/03-destination-rule.md)
 
 ### 외부 링크
-- [Istio Locality Load Balancing](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
-- [Argo Rollouts Istio Integration](https://argoproj.github.io/argo-rollouts/features/traffic-management/istio/)
-- [AWS Availability Zones](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
+
+* [Istio Locality Load Balancing](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+* [Argo Rollouts Istio Integration](https://argoproj.github.io/argo-rollouts/features/traffic-management/istio/)
+* [AWS Availability Zones](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
 
 ## 다음 단계
 
-1. [Lab: Zone-aware Rollout 실습](../../labs/zone-aware-rollout/)
+1. [Lab: Zone-aware Rollout 실습](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/labs/zone-aware-rollout/README.md)
 2. [Multi-cluster](02-multi-cluster.md)로 확장하여 region 간 failover 구현
-3. [Progressive Delivery](../../advanced/progressive-delivery.md)로 자동화된 분석 및 롤백
+3. [Progressive Delivery](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/advanced/progressive-delivery.md)로 자동화된 분석 및 롤백

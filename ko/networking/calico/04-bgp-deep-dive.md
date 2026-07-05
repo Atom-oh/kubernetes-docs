@@ -1,7 +1,6 @@
-# Part 4: BGP 아키텍처 심화
+# Part 4: BGP 심화
 
-> **지원 버전**: Calico v3.29+ / Kubernetes 1.28+
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Calico v3.29+ / Kubernetes 1.28+ **마지막 업데이트**: 2026년 2월 23일
 
 ## 개요
 
@@ -50,14 +49,14 @@ graph TB
 
 AS 번호는 BGP에서 네트워크를 식별하는 고유 번호입니다.
 
-| 범위 | 용도 | 설명 |
-|------|------|------|
-| 1-64495 | 공용 AS | IANA에서 할당, 인터넷 라우팅용 |
-| 64496-64511 | 문서/예시용 | RFC 5398에 예약 |
-| **64512-65534** | **프라이빗 AS** | **내부 네트워크용 (Calico 권장)** |
-| 65535 | 예약됨 | 사용 불가 |
-| 65536-4199999999 | 4바이트 공용 AS | 확장된 AS 번호 공간 |
-| 4200000000-4294967294 | 4바이트 프라이빗 AS | 대규모 내부 네트워크용 |
+| 범위                    | 용도           | 설명                       |
+| --------------------- | ------------ | ------------------------ |
+| 1-64495               | 공용 AS        | IANA에서 할당, 인터넷 라우팅용      |
+| 64496-64511           | 문서/예시용       | RFC 5398에 예약             |
+| **64512-65534**       | **프라이빗 AS**  | **내부 네트워크용 (Calico 권장)** |
+| 65535                 | 예약됨          | 사용 불가                    |
+| 65536-4199999999      | 4바이트 공용 AS   | 확장된 AS 번호 공간             |
+| 4200000000-4294967294 | 4바이트 프라이빗 AS | 대규모 내부 네트워크용             |
 
 **Calico에서의 AS 번호 사용 권장사항:**
 
@@ -75,14 +74,14 @@ spec:
 
 BGP는 두 가지 모드로 운영됩니다:
 
-| 특성 | iBGP (Internal BGP) | eBGP (External BGP) |
-|------|---------------------|---------------------|
-| AS 관계 | 동일 AS 내 | 서로 다른 AS 간 |
-| TTL 기본값 | 255 | 1 (멀티홉 필요) |
-| 경로 전파 | Full-mesh 또는 RR 필요 | 자동 전파 |
-| Next-hop | 변경하지 않음 | 자신으로 변경 |
-| Administrative Distance | 200 | 20 |
-| 사용 사례 | 클러스터 내부 | 외부 라우터 연결 |
+| 특성                      | iBGP (Internal BGP) | eBGP (External BGP) |
+| ----------------------- | ------------------- | ------------------- |
+| AS 관계                   | 동일 AS 내             | 서로 다른 AS 간          |
+| TTL 기본값                 | 255                 | 1 (멀티홉 필요)          |
+| 경로 전파                   | Full-mesh 또는 RR 필요  | 자동 전파               |
+| Next-hop                | 변경하지 않음             | 자신으로 변경             |
+| Administrative Distance | 200                 | 20                  |
+| 사용 사례                   | 클러스터 내부             | 외부 라우터 연결           |
 
 ```mermaid
 graph LR
@@ -146,20 +145,20 @@ flowchart TD
 
 **주요 경로 속성 상세:**
 
-| 순서 | 속성 | 범위 | 설명 |
-|------|------|------|------|
-| 1 | Weight | 0-65535 | Cisco 전용, 로컬 라우터만 적용 |
-| 2 | Local Preference | 0-4294967295 | AS 내 경로 선호도 (기본값: 100) |
-| 3 | Locally Originated | - | 로컬에서 생성된 경로 우선 |
-| 4 | AS Path Length | - | 경유하는 AS 수 |
-| 5 | Origin | i/e/? | IGP(i) > EGP(e) > Incomplete(?) |
-| 6 | MED | 0-4294967295 | Multi-Exit Discriminator |
-| 7 | Path Type | eBGP/iBGP | 외부 경로 우선 |
-| 8 | IGP Metric | - | 내부 라우팅 메트릭 |
+| 순서 | 속성                 | 범위           | 설명                              |
+| -- | ------------------ | ------------ | ------------------------------- |
+| 1  | Weight             | 0-65535      | Cisco 전용, 로컬 라우터만 적용            |
+| 2  | Local Preference   | 0-4294967295 | AS 내 경로 선호도 (기본값: 100)          |
+| 3  | Locally Originated | -            | 로컬에서 생성된 경로 우선                  |
+| 4  | AS Path Length     | -            | 경유하는 AS 수                       |
+| 5  | Origin             | i/e/?        | IGP(i) > EGP(e) > Incomplete(?) |
+| 6  | MED                | 0-4294967295 | Multi-Exit Discriminator        |
+| 7  | Path Type          | eBGP/iBGP    | 외부 경로 우선                        |
+| 8  | IGP Metric         | -            | 내부 라우팅 메트릭                      |
 
 ## Calico BGP 아키텍처
 
-![Calico BGP 토폴로지](../../../assets/calico_bgp_topology.png)
+![Calico BGP 토폴로지](../../.gitbook/assets/calico_bgp_topology.png)
 
 ### Full-Mesh 토폴로지
 
@@ -198,13 +197,13 @@ graph TB
 세션 수 = N × (N-1) / 2
 
 | 노드 수 | BGP 세션 수 | 확장성 평가 |
-|---------|-------------|-------------|
-| 5 | 10 | 적합 |
-| 10 | 45 | 적합 |
-| 20 | 190 | 주의 필요 |
-| 50 | 1,225 | 비권장 |
-| 100 | 4,950 | 불가 |
-| 200 | 19,900 | 불가 |
+| ---- | -------- | ------ |
+| 5    | 10       | 적합     |
+| 10   | 45       | 적합     |
+| 20   | 190      | 주의 필요  |
+| 50   | 1,225    | 비권장    |
+| 100  | 4,950    | 불가     |
+| 200  | 19,900   | 불가     |
 
 **50개 이상의 노드에서는 Route Reflector 사용을 강력히 권장합니다.**
 
@@ -256,11 +255,11 @@ graph TB
 
 **Route Reflector 설계 권장사항:**
 
-| 클러스터 크기 | RR 수 | 배치 전략 |
-|---------------|-------|-----------|
-| ~100 노드 | 2-3 | 다른 가용 영역에 분산 |
-| ~500 노드 | 3-5 | 다른 랙/가용 영역에 분산 |
-| ~1000+ 노드 | 5+ 또는 계층형 | 계층형 RR 구조 고려 |
+| 클러스터 크기    | RR 수      | 배치 전략          |
+| ---------- | --------- | -------------- |
+| \~100 노드   | 2-3       | 다른 가용 영역에 분산   |
+| \~500 노드   | 3-5       | 다른 랙/가용 영역에 분산 |
+| \~1000+ 노드 | 5+ 또는 계층형 | 계층형 RR 구조 고려   |
 
 ### Route Reflector 구성
 
@@ -503,11 +502,11 @@ spec:
 
 **Service IP 광고 사용 사례:**
 
-| IP 유형 | 광고 권장 | 사용 사례 |
-|---------|-----------|-----------|
-| ExternalIP | 필요 시 | 고정 외부 IP가 필요한 서비스 |
-| LoadBalancerIP | 권장 | MetalLB 대체, 온프레미스 LB |
-| ClusterIP | 비권장 | 외부에서 직접 클러스터 IP 접근 필요 시만 |
+| IP 유형          | 광고 권장 | 사용 사례                    |
+| -------------- | ----- | ------------------------ |
+| ExternalIP     | 필요 시  | 고정 외부 IP가 필요한 서비스        |
+| LoadBalancerIP | 권장    | MetalLB 대체, 온프레미스 LB     |
+| ClusterIP      | 비권장   | 외부에서 직접 클러스터 IP 접근 필요 시만 |
 
 ### 접두사 광고 및 커뮤니티 태깅
 
@@ -877,12 +876,12 @@ spec:
 
 **타이머 권장 값:**
 
-| 환경 | Keepalive | Hold | 사용 사례 |
-|------|-----------|------|-----------|
-| 안정적 네트워크 | 60s | 180s | 기본값, 대부분의 환경 |
-| 빠른 장애 감지 | 10s | 30s | 고가용성 요구 환경 |
-| 초고속 장애 감지 | 3s | 9s | 금융, 실시간 시스템 |
-| BFD 사용 시 | 60s | 180s | BFD가 빠른 감지 담당 |
+| 환경        | Keepalive | Hold | 사용 사례         |
+| --------- | --------- | ---- | ------------- |
+| 안정적 네트워크  | 60s       | 180s | 기본값, 대부분의 환경  |
+| 빠른 장애 감지  | 10s       | 30s  | 고가용성 요구 환경    |
+| 초고속 장애 감지 | 3s        | 9s   | 금융, 실시간 시스템   |
+| BFD 사용 시  | 60s       | 180s | BFD가 빠른 감지 담당 |
 
 ### Graceful Restart
 
@@ -1190,31 +1189,31 @@ spec:
 
 ### BGP 설계 체크리스트
 
-- [ ] **AS 번호**: 프라이빗 AS 범위(64512-65534) 사용
-- [ ] **토폴로지**: 50+ 노드 시 Route Reflector 사용
-- [ ] **보안**: MD5 인증 및 접두사 필터링 적용
-- [ ] **타이머**: 환경에 맞는 Keepalive/Hold 타이머 설정
-- [ ] **Graceful Restart**: 유지보수 시 트래픽 중단 최소화
-- [ ] **모니터링**: BGP 세션 상태 및 경로 수 모니터링
-- [ ] **문서화**: AS 번호, IP 할당, 피어링 관계 문서화
+* [ ] **AS 번호**: 프라이빗 AS 범위(64512-65534) 사용
+* [ ] **토폴로지**: 50+ 노드 시 Route Reflector 사용
+* [ ] **보안**: MD5 인증 및 접두사 필터링 적용
+* [ ] **타이머**: 환경에 맞는 Keepalive/Hold 타이머 설정
+* [ ] **Graceful Restart**: 유지보수 시 트래픽 중단 최소화
+* [ ] **모니터링**: BGP 세션 상태 및 경로 수 모니터링
+* [ ] **문서화**: AS 번호, IP 할당, 피어링 관계 문서화
 
 ### 권장 아키텍처
 
-| 클러스터 규모 | 권장 토폴로지 | BGP 모드 |
-|---------------|---------------|----------|
-| < 50 노드 | Full-mesh | iBGP |
-| 50-200 노드 | Route Reflector (2-3개) | iBGP + RR |
-| 200-1000 노드 | 계층형 Route Reflector | iBGP + 계층형 RR |
-| Multi-DC | AS-per-Rack 또는 AS-per-DC | eBGP + iBGP |
+| 클러스터 규모     | 권장 토폴로지                  | BGP 모드        |
+| ----------- | ------------------------ | ------------- |
+| < 50 노드     | Full-mesh                | iBGP          |
+| 50-200 노드   | Route Reflector (2-3개)   | iBGP + RR     |
+| 200-1000 노드 | 계층형 Route Reflector      | iBGP + 계층형 RR |
+| Multi-DC    | AS-per-Rack 또는 AS-per-DC | eBGP + iBGP   |
 
----
+***
 
 ## 참고 자료
 
-- [Calico BGP 공식 문서](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
-- [BGP Route Reflector 설정](https://docs.tigera.io/calico/latest/networking/configuring/bgp#route-reflectors)
-- [BIRD Routing Daemon](https://bird.network.cz/)
-- [RFC 4271 - BGP-4](https://tools.ietf.org/html/rfc4271)
-- [RFC 4456 - BGP Route Reflection](https://tools.ietf.org/html/rfc4456)
+* [Calico BGP 공식 문서](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
+* [BGP Route Reflector 설정](https://docs.tigera.io/calico/latest/networking/configuring/bgp#route-reflectors)
+* [BIRD Routing Daemon](https://bird.network.cz/)
+* [RFC 4271 - BGP-4](https://tools.ietf.org/html/rfc4271)
+* [RFC 4456 - BGP Route Reflection](https://tools.ietf.org/html/rfc4456)
 
-[이전: Part 3 - IPAM 및 IP Pool](03-ipam-ip-pools.md) | [다음: Part 5 - Network Policy 심화](05-network-policy.md) | [메인 페이지로 돌아가기](README.md)
+[이전: Part 3 - IPAM 및 IP Pool](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/networking/calico/03-ipam-ip-pools.md) | [다음: Part 5 - Network Policy 심화](05-network-policy.md) | [메인 페이지로 돌아가기](./)

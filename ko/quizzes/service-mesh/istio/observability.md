@@ -1,8 +1,6 @@
-# Istio 관찰성 퀴즈
+# Observability 퀴즈
 
-> **지원 버전**: Istio 1.28.0
-> **EKS 버전**: 1.34 (Kubernetes 1.28+)
-> **마지막 업데이트**: 2026년 2월 19일
+> **지원 버전**: Istio 1.28.0 **EKS 버전**: 1.34 (Kubernetes 1.28+) **마지막 업데이트**: 2026년 2월 19일
 
 이 퀴즈는 Istio의 관찰성 기능에 대한 이해도를 테스트합니다.
 
@@ -12,12 +10,13 @@
 
 Istio에서 Prometheus가 기본적으로 수집하는 메트릭이 **아닌** 것은?
 
-A. istio_requests_total (총 요청 수)  
-B. istio_request_duration_milliseconds (요청 지연시간)  
-C. istio_request_bytes (요청 크기)  
-D. istio_pod_cpu_usage (Pod CPU 사용률)  
+A. istio\_requests\_total (총 요청 수)\
+B. istio\_request\_duration\_milliseconds (요청 지연시간)\
+C. istio\_request\_bytes (요청 크기)\
+D. istio\_pod\_cpu\_usage (Pod CPU 사용률)
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: D**
@@ -28,13 +27,15 @@ Istio Envoy는 **트래픽 관련 메트릭**만 수집하며, Pod CPU 사용률
 
 **Istio가 수집하는 메트릭:**
 
-1. **istio_requests_total (A - O)**
+1. **istio\_requests\_total (A - O)**
+
 ```promql
 # 서비스별 총 요청 수
 sum(rate(istio_requests_total[5m])) by (destination_service_name)
 ```
 
-2. **istio_request_duration_milliseconds (B - O)**
+2. **istio\_request\_duration\_milliseconds (B - O)**
+
 ```promql
 # P95 지연시간
 histogram_quantile(0.95,
@@ -42,25 +43,27 @@ histogram_quantile(0.95,
 )
 ```
 
-3. **istio_request_bytes (C - O)**
+3. **istio\_request\_bytes (C - O)**
+
 ```promql
 # 요청 크기
 sum(rate(istio_request_bytes_sum[5m])) by (destination_service_name)
 ```
 
-4. **istio_pod_cpu_usage (D - X)**
-- 이것은 Istio 메트릭이 아닙니다
-- Kubernetes 메트릭: `container_cpu_usage_seconds_total`
-- Prometheus에서 수집하려면 kube-state-metrics 필요
+4. **istio\_pod\_cpu\_usage (D - X)**
+
+* 이것은 Istio 메트릭이 아닙니다
+* Kubernetes 메트릭: `container_cpu_usage_seconds_total`
+* Prometheus에서 수집하려면 kube-state-metrics 필요
 
 **Istio 메트릭 카테고리:**
 
-| 카테고리 | 메트릭 예시 | 설명 |
-|---------|------------|------|
-| **Request** | istio_requests_total | 요청 수, 응답 코드 |
-| **Duration** | istio_request_duration_milliseconds | 지연시간 분포 |
-| **Size** | istio_request_bytes, istio_response_bytes | 트래픽 크기 |
-| **TCP** | istio_tcp_connections_opened_total | TCP 연결 |
+| 카테고리         | 메트릭 예시                                        | 설명          |
+| ------------ | --------------------------------------------- | ----------- |
+| **Request**  | istio\_requests\_total                        | 요청 수, 응답 코드 |
+| **Duration** | istio\_request\_duration\_milliseconds        | 지연시간 분포     |
+| **Size**     | istio\_request\_bytes, istio\_response\_bytes | 트래픽 크기      |
+| **TCP**      | istio\_tcp\_connections\_opened\_total        | TCP 연결      |
 
 **Golden Signals 예제:**
 
@@ -116,21 +119,24 @@ kubectl port-forward -n istio-system svc/prometheus 9090:9090
 ```
 
 **참고 자료:**
-- [메트릭](../../../service-mesh/istio/observability/01-metrics.md)
+
+* [메트릭](../../../service-mesh/istio/observability/01-metrics.md)
+
 </details>
 
----
+***
 
 ### 문제 2: 분산 추적 (Distributed Tracing)
 
 Istio에서 분산 추적을 위해 필요한 **최소 구성**은?
 
-A. 애플리케이션이 trace ID를 생성해야 한다  
-B. 애플리케이션이 HTTP 헤더를 전파(propagate)해야 한다  
-C. 모든 서비스에 Jaeger 클라이언트를 설치해야 한다  
-D. Envoy가 자동으로 모든 것을 처리한다  
+A. 애플리케이션이 trace ID를 생성해야 한다\
+B. 애플리케이션이 HTTP 헤더를 전파(propagate)해야 한다\
+C. 모든 서비스에 Jaeger 클라이언트를 설치해야 한다\
+D. Envoy가 자동으로 모든 것을 처리한다
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: B**
@@ -140,29 +146,6 @@ Istio Envoy는 trace ID를 자동으로 생성하지만, **애플리케이션이
 **해설:**
 
 **분산 추적 동작 원리:**
-
-```mermaid
-flowchart LR
-    User[사용자] --> Gateway[Ingress Gateway]
-    Gateway -->|x-request-id: abc123<br/>x-b3-traceid: xyz| ServiceA[Service A]
-    ServiceA -->|헤더 전파 필수| ServiceB[Service B]
-    ServiceB -->|헤더 전파 필수| ServiceC[Service C]
-
-    Gateway -.->|Span 전송| Jaeger[Jaeger]
-    ServiceA -.->|Span 전송| Jaeger
-    ServiceB -.->|Span 전송| Jaeger
-    ServiceC -.->|Span 전송| Jaeger
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef jaeger fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    class User user;
-    class Gateway gateway;
-    class ServiceA,ServiceB,ServiceC service;
-    class Jaeger jaeger;
-```
 
 **전파해야 하는 HTTP 헤더:**
 
@@ -238,10 +221,10 @@ app.get('/api/users', async (req, res) => {
 
 **각 옵션 분석:**
 
-- **A (X)**: Envoy가 자동으로 trace ID 생성
-- **B (O)**: 애플리케이션이 HTTP 헤더를 전파해야 함 (필수)
-- **C (X)**: Jaeger 클라이언트 불필요, Envoy가 Span 전송
-- **D (X)**: Envoy는 Span 생성/전송하지만, 헤더 전파는 애플리케이션 책임
+* **A (X)**: Envoy가 자동으로 trace ID 생성
+* **B (O)**: 애플리케이션이 HTTP 헤더를 전파해야 함 (필수)
+* **C (X)**: Jaeger 클라이언트 불필요, Envoy가 Span 전송
+* **D (X)**: Envoy는 Span 생성/전송하지만, 헤더 전파는 애플리케이션 책임
 
 **샘플링 설정:**
 
@@ -263,21 +246,24 @@ istioctl dashboard jaeger
 ```
 
 **참고 자료:**
-- [분산 추적](../../../service-mesh/istio/observability/02-distributed-tracing.md)
+
+* [분산 추적](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/observability/02-distributed-tracing.md)
+
 </details>
 
----
+***
 
 ### 문제 3: Kiali 시각화
 
 Kiali가 제공하는 기능이 **아닌** 것은?
 
-A. 서비스 토폴로지 시각화  
-B. 트래픽 흐름 분석  
-C. 자동 Canary 배포 실행  
-D. Istio 구성 검증  
+A. 서비스 토폴로지 시각화\
+B. 트래픽 흐름 분석\
+C. 자동 Canary 배포 실행\
+D. Istio 구성 검증
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: C**
@@ -302,6 +288,7 @@ istioctl dashboard kiali
 ```
 
 **Graph 뷰 예시:**
+
 ```
 Frontend → Backend → Database
    ↓
@@ -316,16 +303,17 @@ External API
 **2. 트래픽 흐름 분석 (B - O)**
 
 Kiali는 다음을 표시합니다:
-- 요청 수 (RPS)
-- 에러율 (%)
-- P50/P95/P99 지연시간
-- TCP 연결 수
+
+* 요청 수 (RPS)
+* 에러율 (%)
+* P50/P95/P99 지연시간
+* TCP 연결 수
 
 **3. 자동 Canary 배포 실행 (C - X)**
 
-- ❌ Kiali는 배포를 실행하지 않습니다
-- ✅ Kiali는 트래픽 분할 상태를 **시각화**만 합니다
-- ✅ 배포 실행: Argo Rollouts, Flagger
+* ❌ Kiali는 배포를 실행하지 않습니다
+* ✅ Kiali는 트래픽 분할 상태를 **시각화**만 합니다
+* ✅ 배포 실행: Argo Rollouts, Flagger
 
 **4. Istio 구성 검증 (D - O)**
 
@@ -375,13 +363,13 @@ helm install kiali-server kiali/kiali-server \
 
 **Kiali vs 다른 도구:**
 
-| 도구 | 역할 | 배포 실행 |
-|------|------|----------|
-| **Kiali** | 시각화, 분석, 검증 | ❌ |
-| **Argo Rollouts** | Progressive Delivery | ✅ |
-| **Flagger** | 자동 Canary 배포 | ✅ |
-| **Grafana** | 메트릭 대시보드 | ❌ |
-| **Jaeger** | 분산 추적 | ❌ |
+| 도구                | 역할                   | 배포 실행 |
+| ----------------- | -------------------- | ----- |
+| **Kiali**         | 시각화, 분석, 검증          | ❌     |
+| **Argo Rollouts** | Progressive Delivery | ✅     |
+| **Flagger**       | 자동 Canary 배포         | ✅     |
+| **Grafana**       | 메트릭 대시보드             | ❌     |
+| **Jaeger**        | 분산 추적                | ❌     |
 
 **실전 사용 예시:**
 
@@ -403,22 +391,25 @@ istioctl dashboard kiali
 ```
 
 **참고 자료:**
-- [시각화](../../../service-mesh/istio/observability/04-visualization.md)
-- [Kiali 공식 문서](https://kiali.io/docs/)
+
+* [시각화](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/observability/04-visualization.md)
+* [Kiali 공식 문서](https://kiali.io/docs/)
+
 </details>
 
----
+***
 
 ### 문제 4: Access Log 구성
 
 Istio에서 Access Log를 **JSON 형식**으로 출력하도록 설정하는 방법은?
 
-A. IstioOperator의 meshConfig.accessLogEncoding을 JSON으로 설정  
-B. Envoy ConfigMap을 직접 수정  
-C. 각 Pod에 annotation 추가  
-D. Prometheus 쿼리로 JSON 변환  
+A. IstioOperator의 meshConfig.accessLogEncoding을 JSON으로 설정\
+B. Envoy ConfigMap을 직접 수정\
+C. 각 Pod에 annotation 추가\
+D. Prometheus 쿼리로 JSON 변환
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: A**
@@ -560,13 +551,13 @@ kubectl logs <pod-name> -c istio-proxy | \
 
 **TEXT 형식 vs JSON 형식:**
 
-| 항목 | TEXT | JSON |
-|------|------|------|
-| **가독성** | 높음 (사람) | 낮음 (사람) |
-| **파싱** | 어려움 | 쉬움 (기계) |
-| **크기** | 작음 | 큼 |
-| **구조화** | 비구조화 | 구조화 |
-| **쿼리** | 어려움 | 쉬움 (jq 등) |
+| 항목      | TEXT    | JSON      |
+| ------- | ------- | --------- |
+| **가독성** | 높음 (사람) | 낮음 (사람)   |
+| **파싱**  | 어려움     | 쉬움 (기계)   |
+| **크기**  | 작음      | 큼         |
+| **구조화** | 비구조화    | 구조화       |
+| **쿼리**  | 어려움     | 쉬움 (jq 등) |
 
 **TEXT 형식 예시:**
 
@@ -575,22 +566,25 @@ kubectl logs <pod-name> -c istio-proxy | \
 ```
 
 **참고 자료:**
-- [로깅](../../../service-mesh/istio/observability/03-logging.md)
-- [Envoy Access Log Format](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
+
+* [로깅](../../../service-mesh/istio/observability/03-logging.md)
+* [Envoy Access Log Format](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
+
 </details>
 
----
+***
 
 ### 문제 5: Grafana 대시보드
 
 Istio 설치 시 기본 제공되는 Grafana 대시보드가 **아닌** 것은?
 
-A. Istio Service Dashboard  
-B. Istio Workload Dashboard  
-C. Istio Performance Dashboard  
-D. Istio Cost Dashboard  
+A. Istio Service Dashboard\
+B. Istio Workload Dashboard\
+C. Istio Performance Dashboard\
+D. Istio Cost Dashboard
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: D**
@@ -602,6 +596,7 @@ Istio는 **Cost Dashboard**를 기본 제공하지 않습니다.
 **Istio 기본 Grafana 대시보드:**
 
 **1. Istio Service Dashboard (A - O)**
+
 ```
 서비스 수준 메트릭:
 - Request Volume (요청 수)
@@ -612,6 +607,7 @@ Istio는 **Cost Dashboard**를 기본 제공하지 않습니다.
 ```
 
 **2. Istio Workload Dashboard (B - O)**
+
 ```
 워크로드(Pod) 수준 메트릭:
 - Incoming Request Volume
@@ -623,6 +619,7 @@ Istio는 **Cost Dashboard**를 기본 제공하지 않습니다.
 ```
 
 **3. Istio Performance Dashboard (C - O)**
+
 ```
 Istio 자체 성능 메트릭:
 - Pilot 성능 (xDS 푸시 시간)
@@ -633,6 +630,7 @@ Istio 자체 성능 메트릭:
 ```
 
 **4. Istio Control Plane Dashboard**
+
 ```
 Control Plane 메트릭:
 - Istiod 리소스 사용량
@@ -642,6 +640,7 @@ Control Plane 메트릭:
 ```
 
 **5. Istio Mesh Dashboard**
+
 ```
 전체 메시 메트릭:
 - 총 요청 수
@@ -728,11 +727,13 @@ expr: |
 ```
 
 **참고 자료:**
-- [시각화](../../../service-mesh/istio/observability/04-visualization.md)
-- [Grafana 공식 문서](https://grafana.com/docs/)
+
+* [시각화](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/observability/04-visualization.md)
+* [Grafana 공식 문서](https://grafana.com/docs/)
+
 </details>
 
----
+***
 
 ## 주관식 문제 (6-10번)
 
@@ -741,17 +742,19 @@ expr: |
 Google SRE의 **Golden Signals**(Latency, Traffic, Errors, Saturation)를 Istio와 Prometheus를 사용하여 모니터링하는 방법을 설명하세요. 각 신호에 대한 **Prometheus 쿼리**와 **알림 규칙**을 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **Golden Signals 모니터링 구현:**
 
----
+***
 
 **1. Latency (지연시간)**
 
 **Prometheus 쿼리:**
+
 ```promql
 # P95 지연시간
 histogram_quantile(0.95,
@@ -782,6 +785,7 @@ histogram_quantile(0.50,
 ```
 
 **알림 규칙:**
+
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -823,11 +827,12 @@ spec:
         summary: "Critical latency on {{ $labels.destination_service_name }}"
 ```
 
----
+***
 
 **2. Traffic (트래픽)**
 
 **Prometheus 쿼리:**
+
 ```promql
 # 초당 요청 수 (RPS)
 sum(rate(
@@ -848,6 +853,7 @@ sum(rate(
 ```
 
 **알림 규칙:**
+
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -880,11 +886,12 @@ spec:
         severity: warning
 ```
 
----
+***
 
 **3. Errors (에러)**
 
 **Prometheus 쿼리:**
+
 ```promql
 # 에러율 (5xx)
 sum(rate(
@@ -921,6 +928,7 @@ sum(rate(
 ```
 
 **알림 규칙:**
+
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -958,11 +966,12 @@ spec:
         severity: critical
 ```
 
----
+***
 
 **4. Saturation (포화도)**
 
 **Prometheus 쿼리:**
+
 ```promql
 # Envoy CPU 사용률
 sum(rate(
@@ -992,6 +1001,7 @@ sum(
 ```
 
 **알림 규칙:**
+
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -1051,7 +1061,7 @@ spec:
         severity: critical
 ```
 
----
+***
 
 **Grafana 대시보드 구성:**
 
@@ -1092,24 +1102,27 @@ spec:
 ```
 
 **참고 자료:**
-- [메트릭](../../../service-mesh/istio/observability/01-metrics.md)
-- [Google SRE Book - Monitoring](https://sre.google/sre-book/monitoring-distributed-systems/)
+
+* [메트릭](../../../service-mesh/istio/observability/01-metrics.md)
+* [Google SRE Book - Monitoring](https://sre.google/sre-book/monitoring-distributed-systems/)
+
 </details>
 
----
+***
 
 ### 문제 7: Jaeger를 사용한 성능 병목 지점 찾기
 
 분산 추적 도구인 Jaeger를 사용하여 마이크로서비스 아키텍처에서 **성능 병목 지점**을 찾는 방법을 설명하세요. **Trace 분석 방법**과 **실전 디버깅 시나리오**를 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **Jaeger를 사용한 성능 병목 지점 분석:**
 
----
+***
 
 **1. Jaeger 설치 및 구성**
 
@@ -1134,7 +1147,7 @@ spec:
           address: jaeger-collector.istio-system:9411
 ```
 
----
+***
 
 **2. Trace 구조 이해**
 
@@ -1149,18 +1162,20 @@ Trace (추적)
 ```
 
 **Span 정보:**
-- **Duration**: Span 소요 시간
-- **Tags**: 메타데이터 (HTTP 메서드, URL, 응답 코드)
-- **Logs**: 이벤트 (에러, 경고)
-- **Parent-Child 관계**: 호출 계층
 
----
+* **Duration**: Span 소요 시간
+* **Tags**: 메타데이터 (HTTP 메서드, URL, 응답 코드)
+* **Logs**: 이벤트 (에러, 경고)
+* **Parent-Child 관계**: 호출 계층
+
+***
 
 **3. 실전 디버깅 시나리오**
 
 **시나리오 1: 높은 P99 지연시간**
 
 **증상:**
+
 ```promql
 # P99 지연시간이 2초
 histogram_quantile(0.99,
@@ -1186,6 +1201,7 @@ Limit Results: 20
 ```
 
 **발견된 문제:**
+
 ```
 Trace ID: abc-123-def
 Total Duration: 2.1초
@@ -1197,6 +1213,7 @@ Total Duration: 2.1초
 ```
 
 **해결 방법:**
+
 ```yaml
 # 1. MongoDB 쿼리 최적화
 # - 인덱스 추가
@@ -1228,7 +1245,7 @@ spec:
       perTryTimeout: 200ms
 ```
 
----
+***
 
 **시나리오 2: 간헐적 타임아웃**
 
@@ -1252,6 +1269,7 @@ Duration: 10,000ms  ← 이상!
 ```
 
 **Span Details 확인:**
+
 ```json
 {
   "traceID": "timeout-001",
@@ -1277,6 +1295,7 @@ Duration: 10,000ms  ← 이상!
 ```
 
 **해결 방법:**
+
 ```yaml
 # Connection Pool 증가
 apiVersion: networking.istio.io/v1beta1
@@ -1294,7 +1313,7 @@ spec:
         maxRequestsPerConnection: 2
 ```
 
----
+***
 
 **시나리오 3: 캐스케이딩 지연**
 
@@ -1341,11 +1360,12 @@ async def get_user_data(user_id):
 # 총 시간: 2초 (가장 긴 호출)
 ```
 
----
+***
 
 **4. Jaeger UI 활용 팁**
 
 **Service Dependencies (서비스 의존성 그래프):**
+
 ```bash
 # Jaeger UI → Dependencies 탭
 # - 서비스 간 호출 관계 시각화
@@ -1354,6 +1374,7 @@ async def get_user_data(user_id):
 ```
 
 **Compare Traces (트레이스 비교):**
+
 ```bash
 # 1. 정상 Trace 선택
 # 2. 느린 Trace 선택
@@ -1362,6 +1383,7 @@ async def get_user_data(user_id):
 ```
 
 **Deep Dependency Graph:**
+
 ```bash
 # 특정 Trace의 상세 의존성 확인
 # - 각 Span의 소요 시간
@@ -1369,7 +1391,7 @@ async def get_user_data(user_id):
 # - Critical Path (주요 경로)
 ```
 
----
+***
 
 **5. 성능 최적화 체크리스트**
 
@@ -1400,7 +1422,7 @@ async def get_user_data(user_id):
 # - 읽기 전용 복제본 사용
 ```
 
----
+***
 
 **6. Prometheus + Jaeger 연동**
 
@@ -1416,30 +1438,34 @@ histogram_quantile(0.99,
 ```
 
 **참고 자료:**
-- [분산 추적](../../../service-mesh/istio/observability/02-distributed-tracing.md)
-- [Jaeger 공식 문서](https://www.jaegertracing.io/docs/)
+
+* [분산 추적](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/observability/02-distributed-tracing.md)
+* [Jaeger 공식 문서](https://www.jaegertracing.io/docs/)
+
 </details>
 
----
+***
 
 ### 문제 8: Kiali를 사용한 서비스 메시 문제 해결
 
 Kiali를 사용하여 Istio 서비스 메시에서 발생하는 **일반적인 문제**(구성 오류, 트래픽 이상, 보안 정책 충돌)를 진단하고 해결하는 방법을 설명하세요.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **Kiali를 사용한 서비스 메시 문제 해결:**
 
----
+***
 
 **1. 구성 오류 진단**
 
 **문제 1: VirtualService 호스트 오류**
 
 **증상:**
+
 ```bash
 # 서비스 호출 실패
 curl http://reviews:9080
@@ -1459,6 +1485,7 @@ istioctl dashboard kiali
 ```
 
 **Kiali 오류 메시지:**
+
 ```
 ⚠️ VirtualService 'reviews-vs' has issues:
 - Host 'reviews.default.svc.cluster.local' references service 'reviews'
@@ -1512,7 +1539,7 @@ spec:
       version: v1
 ```
 
----
+***
 
 **문제 2: DestinationRule Subset 레이블 불일치**
 
@@ -1530,6 +1557,7 @@ Istio Config 탭:
 ```
 
 **문제 확인:**
+
 ```bash
 # Pod 레이블 확인
 kubectl get pods -l app=reviews --show-labels
@@ -1540,6 +1568,7 @@ reviews-v1-xxx  app=reviews,version=1.0  ← version=1.0 (잘못됨)
 ```
 
 **해결 방법:**
+
 ```yaml
 # ❌ 잘못된 DestinationRule
 apiVersion: networking.istio.io/v1beta1
@@ -1560,7 +1589,7 @@ spec:
       version: "1.0"  # Pod 레이블과 일치
 ```
 
----
+***
 
 **2. 트래픽 이상 진단**
 
@@ -1603,7 +1632,7 @@ kubectl edit deployment backend-v2
 # 몇 분 후: 50% / 50%로 정상화
 ```
 
----
+***
 
 **문제 4: 순환 의존성 (Circular Dependency)**
 
@@ -1618,6 +1647,7 @@ service-a → service-b
 ```
 
 **Kiali 알림:**
+
 ```
 ⚠️ Circular dependency detected:
 service-a → service-b → service-a
@@ -1635,13 +1665,14 @@ service-a → service-c (공통 서비스)
 service-b → service-c
 ```
 
----
+***
 
 **3. 보안 정책 충돌 진단**
 
 **문제 5: AuthorizationPolicy 충돌**
 
 **증상:**
+
 ```bash
 # frontend → backend 호출 실패
 curl http://backend:8080
@@ -1712,7 +1743,7 @@ spec:
         principals: ["cluster.local/ns/default/sa/frontend"]
 ```
 
----
+***
 
 **문제 6: mTLS 모드 불일치**
 
@@ -1743,11 +1774,12 @@ spec:
     mode: STRICT  # 모든 서비스에 STRICT 적용
 ```
 
----
+***
 
 **4. Kiali 고급 기능 활용**
 
 **Custom Time Range:**
+
 ```bash
 # Kiali → Graph 뷰
 # Time Range: Last 1 hour
@@ -1759,6 +1791,7 @@ spec:
 ```
 
 **Traffic Animation:**
+
 ```bash
 # Kiali → Graph 뷰
 # Display: Traffic Animation 활성화
@@ -1769,6 +1802,7 @@ spec:
 ```
 
 **Edge Labels:**
+
 ```bash
 # Kiali → Graph 뷰
 # Edge Labels:
@@ -1782,6 +1816,7 @@ frontend → backend-v2: 20% (2 rps)
 ```
 
 **Service Details:**
+
 ```bash
 # Kiali → Services → backend
 
@@ -1793,65 +1828,32 @@ frontend → backend-v2: 20% (2 rps)
 5. Envoy: Envoy 구성 확인
 ```
 
----
+***
 
 **5. 문제 해결 워크플로우**
 
-```mermaid
-flowchart TD
-    Start[문제 발생] --> Kiali[Kiali 대시보드]
-    Kiali --> Graph[Graph 뷰로 이동]
-    Graph --> Issue{문제 유형?}
-
-    Issue -->|트래픽 없음| Config[Istio Config 확인]
-    Issue -->|에러 발생| Logs[Logs 확인]
-    Issue -->|느린 응답| Traces[Traces 확인]
-    Issue -->|보안 거부| Security[Security 확인]
-
-    Config --> Validate[구성 검증]
-    Logs --> Debug[로그 분석]
-    Traces --> Jaeger[Jaeger 연동]
-    Security --> Policy[정책 확인]
-
-    Validate --> Fix[구성 수정]
-    Debug --> Fix
-    Jaeger --> Fix
-    Policy --> Fix
-
-    Fix --> Test[테스트]
-    Test --> Verify{해결됨?}
-    Verify -->|예| Done[완료]
-    Verify -->|아니오| Start
-
-    classDef problem fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef kiali fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Start,Issue problem;
-    class Kiali,Graph,Config,Logs,Traces,Security kiali;
-    class Validate,Debug,Jaeger,Policy,Fix,Test action;
-```
-
 **참고 자료:**
-- [시각화](../../../service-mesh/istio/observability/04-visualization.md)
-- [Kiali 공식 문서](https://kiali.io/docs/)
+
+* [시각화](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/observability/04-visualization.md)
+* [Kiali 공식 문서](https://kiali.io/docs/)
+
 </details>
 
----
+***
 
 ### 문제 9: 프로덕션 환경 관찰성 스택 구축
 
 프로덕션 Kubernetes 클러스터에서 Istio 관찰성 스택(Prometheus, Grafana, Jaeger, Kiali)을 **고가용성(HA)** 구성으로 배포하는 방법을 설명하세요. **영속성 스토리지**, **스케일링**, **백업** 전략을 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **프로덕션 관찰성 스택 구축:**
 
----
+***
 
 **1. Prometheus 고가용성 구성**
 
@@ -1983,7 +1985,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
   -f prometheus-values.yaml
 ```
 
----
+***
 
 **2. Thanos로 장기 메트릭 보관**
 
@@ -2099,7 +2101,7 @@ spec:
           storage: 10Gi
 ```
 
----
+***
 
 **3. Jaeger 고가용성 구성**
 
@@ -2171,7 +2173,7 @@ spec:
         memory: 512Mi
 ```
 
----
+***
 
 **4. Kiali 고가용성 구성**
 
@@ -2217,7 +2219,7 @@ spec:
     strategy: token
 ```
 
----
+***
 
 **5. 백업 및 복구 전략**
 
@@ -2293,7 +2295,7 @@ spec:
           restartPolicy: OnFailure
 ```
 
----
+***
 
 **6. 모니터링 및 알림**
 
@@ -2344,25 +2346,28 @@ spec:
 ```
 
 **참고 자료:**
-- [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator)
-- [Thanos](https://thanos.io/tip/thanos/getting-started.md/)
-- [Jaeger Operator](https://www.jaegertracing.io/docs/latest/operator/)
+
+* [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator)
+* [Thanos](https://thanos.io/tip/thanos/getting-started.md/)
+* [Jaeger Operator](https://www.jaegertracing.io/docs/latest/operator/)
+
 </details>
 
----
+***
 
 ### 문제 10: 커스텀 메트릭 및 대시보드 생성
 
 Istio Envoy가 수집하는 기본 메트릭 외에 **비즈니스 메트릭**(예: 주문 수, 결제 성공률)을 수집하고, Grafana 커스텀 대시보드를 생성하는 방법을 설명하세요.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **커스텀 메트릭 및 대시보드 생성:**
 
----
+***
 
 **1. 애플리케이션에서 메트릭 노출**
 
@@ -2507,7 +2512,7 @@ app.get('/metrics', (req, res) => {
 app.listen(8080);
 ```
 
----
+***
 
 **2. Kubernetes ServiceMonitor 설정**
 
@@ -2547,7 +2552,7 @@ spec:
     interval: 30s
 ```
 
----
+***
 
 **3. Prometheus 쿼리**
 
@@ -2579,7 +2584,7 @@ sum(rate(orders_total{status="payment_failed"}[5m]))
 sum(rate(orders_total[5m]))
 ```
 
----
+***
 
 **4. Grafana 커스텀 대시보드**
 
@@ -2699,7 +2704,7 @@ sum(rate(orders_total[5m]))
 }
 ```
 
----
+***
 
 **5. 대시보드 프로비저닝**
 
@@ -2742,7 +2747,7 @@ grafana:
     business-metrics: "order-service-dashboard"
 ```
 
----
+***
 
 **6. 알림 설정**
 
@@ -2799,29 +2804,32 @@ spec:
 ```
 
 **참고 자료:**
-- [메트릭](../../../service-mesh/istio/observability/01-metrics.md)
-- [Prometheus Client Libraries](https://prometheus.io/docs/instrumenting/clientlibs/)
-- [Grafana Provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
+
+* [메트릭](../../../service-mesh/istio/observability/01-metrics.md)
+* [Prometheus Client Libraries](https://prometheus.io/docs/instrumenting/clientlibs/)
+* [Grafana Provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
+
 </details>
 
----
+***
 
 ## 점수 계산
 
-- 객관식 1-5번: 각 10점 (총 50점)
-- 주관식 6-10번: 각 10점 (총 50점)
-- **총점: 100점**
+* 객관식 1-5번: 각 10점 (총 50점)
+* 주관식 6-10번: 각 10점 (총 50점)
+* **총점: 100점**
 
 **평가 기준:**
-- 90-100점: 우수 (Istio 관찰성 전문가)
-- 80-89점: 양호 (프로덕션 모니터링 가능)
-- 70-79점: 보통 (추가 학습 권장)
-- 60-69점: 미흡 (기본 개념 복습 필요)
-- 0-59점: 재학습 필요
+
+* 90-100점: 우수 (Istio 관찰성 전문가)
+* 80-89점: 양호 (프로덕션 모니터링 가능)
+* 70-79점: 보통 (추가 학습 권장)
+* 60-69점: 미흡 (기본 개념 복습 필요)
+* 0-59점: 재학습 필요
 
 ## 학습 자료
 
-- [메트릭](../../../service-mesh/istio/observability/01-metrics.md)
-- [분산 추적](../../../service-mesh/istio/observability/02-distributed-tracing.md)
-- [로깅](../../../service-mesh/istio/observability/03-logging.md)
-- [시각화](../../../service-mesh/istio/observability/04-visualization.md)
+* [메트릭](../../../service-mesh/istio/observability/01-metrics.md)
+* [분산 추적](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/observability/02-distributed-tracing.md)
+* [로깅](../../../service-mesh/istio/observability/03-logging.md)
+* [시각화](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/observability/04-visualization.md)

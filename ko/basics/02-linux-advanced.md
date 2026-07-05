@@ -1,24 +1,23 @@
-# Linux 운영 기술 (Kubernetes 실무자를 위한)
+# Linux 운영 기술
 
-> **지원 버전**: 모든 주요 Linux 배포판
-> **마지막 업데이트**: 2026년 2월 11일
+> **지원 버전**: 모든 주요 Linux 배포판 **마지막 업데이트**: 2026년 2월 11일
 
 이 문서는 Kubernetes 환경에서 효과적으로 작업하기 위한 필수 Linux 운영 기술을 다룹니다.
 
----
+***
 
 ## 목차
 
-1. [환경 변수와 쉘 설정](#1-환경-변수와-쉘-설정)
-2. [쉘 스크립팅 기초](#2-쉘-스크립팅-기초)
-3. [텍스트 처리 도구](#3-텍스트-처리-도구)
-4. [SSH와 원격 접속](#4-ssh와-원격-접속)
-5. [성능 모니터링 및 트러블슈팅](#5-성능-모니터링-및-트러블슈팅)
-6. [스토리지 관리 기초](#6-스토리지-관리-기초)
-7. [curl과 API 호출](#7-curl과-api-호출)
-8. [실용적인 원라이너 모음](#8-실용적인-원라이너-모음)
+1. [환경 변수와 쉘 설정](02-linux-advanced.md#1-환경-변수와-쉘-설정)
+2. [쉘 스크립팅 기초](02-linux-advanced.md#2-쉘-스크립팅-기초)
+3. [텍스트 처리 도구](02-linux-advanced.md#3-텍스트-처리-도구)
+4. [SSH와 원격 접속](02-linux-advanced.md#4-ssh와-원격-접속)
+5. [성능 모니터링 및 트러블슈팅](02-linux-advanced.md#5-성능-모니터링-및-트러블슈팅)
+6. [스토리지 관리 기초](02-linux-advanced.md#6-스토리지-관리-기초)
+7. [curl과 API 호출](02-linux-advanced.md#7-curl과-api-호출)
+8. [실용적인 원라이너 모음](02-linux-advanced.md#8-실용적인-원라이너-모음)
 
----
+***
 
 ## 1. 환경 변수와 쉘 설정
 
@@ -53,7 +52,7 @@ SCRIPT
 source ~/my-env.sh
 ```
 
-### 1.4 .bashrc와 .bash_profile
+### 1.4 .bashrc와 .bash\_profile
 
 ```bash
 cat >> ~/.bashrc << 'SCRIPT'
@@ -89,7 +88,7 @@ spec:
         name: app-config
 ```
 
----
+***
 
 ## 2. 쉘 스크립팅 기초
 
@@ -155,7 +154,7 @@ spec:
     image: myapp:1.0
 ```
 
----
+***
 
 ## 3. 텍스트 처리 도구
 
@@ -193,7 +192,7 @@ yq '.metadata.name' deployment.yaml
 yq -i '.spec.replicas = 5' deployment.yaml
 ```
 
----
+***
 
 ## 4. SSH와 원격 접속
 
@@ -222,7 +221,7 @@ ssh -J bastion user@internal-server
 rsync -avzP ./local/ user@remote:/path/
 ```
 
----
+***
 
 ## 5. 성능 모니터링 및 트러블슈팅
 
@@ -253,7 +252,7 @@ kubectl top nodes
 kubectl top pods --sort-by=memory
 ```
 
----
+***
 
 ## 6. 스토리지 관리 기초
 
@@ -287,7 +286,7 @@ spec:
     path: /mnt/disks/vol1
 ```
 
----
+***
 
 ## 7. curl과 API 호출
 
@@ -311,7 +310,7 @@ curl -s --cacert $CACERT -H "Authorization: Bearer $TOKEN" \
 curl -s -o /dev/null -w "%{http_code}" https://api.example.com/health
 ```
 
----
+***
 
 ## 8. 실용적인 원라이너 모음
 
@@ -335,7 +334,7 @@ nslookup kubernetes.default.svc.cluster.local
 nc -zv service-name 80
 ```
 
----
+***
 
 ## 결론
 
@@ -345,6 +344,6 @@ nc -zv service-name 80
 4. **SSH**: 노드 디버깅에 중요
 5. **성능 모니터링**: 트러블슈팅의 기초
 
----
+***
 
-[이전: Linux 기초](01-linux-basics.md) | [다음: 컨테이너 기초](03-container-basics.md)
+[이전: Linux 기초](01-linux-basics.md) | [다음: 컨테이너 기초](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/basics/03-container-basics.md)

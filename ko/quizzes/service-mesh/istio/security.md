@@ -1,8 +1,6 @@
-# Istio 보안 퀴즈
+# Security 퀴즈
 
-> **지원 버전**: Istio 1.28.0
-> **EKS 버전**: 1.34 (Kubernetes 1.28+)
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Istio 1.28.0 **EKS 버전**: 1.34 (Kubernetes 1.28+) **마지막 업데이트**: 2026년 2월 23일
 
 이 퀴즈는 Istio의 보안 기능에 대한 이해도를 테스트합니다.
 
@@ -12,12 +10,13 @@
 
 PeerAuthentication의 mTLS 모드 중 **PERMISSIVE**의 특징으로 옳은 것은?
 
-A. mTLS와 평문 트래픽을 모두 허용한다  
-B. mTLS만 허용하고 평문은 거부한다  
-C. 모든 트래픽을 거부한다  
-D. mTLS를 비활성화한다  
+A. mTLS와 평문 트래픽을 모두 허용한다\
+B. mTLS만 허용하고 평문은 거부한다\
+C. 모든 트래픽을 거부한다\
+D. mTLS를 비활성화한다
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: A**
@@ -28,13 +27,14 @@ PERMISSIVE 모드는 **mTLS와 평문 트래픽을 모두 허용**하여 점진�
 
 **PeerAuthentication의 mTLS 모드:**
 
-| 모드 | 설명 | 사용 시나리오 |
-|------|------|--------------|
+| 모드             | 설명              | 사용 시나리오           |
+| -------------- | --------------- | ----------------- |
 | **PERMISSIVE** | mTLS + 평문 모두 허용 | 점진적 마이그레이션, 혼합 환경 |
-| **STRICT** | mTLS만 허용 | 프로덕션 보안 강화 |
-| **DISABLE** | mTLS 비활성화 (평문만) | 디버깅, 레거시 시스템 |
+| **STRICT**     | mTLS만 허용        | 프로덕션 보안 강화        |
+| **DISABLE**    | mTLS 비활성화 (평문만) | 디버깅, 레거시 시스템      |
 
 **PERMISSIVE 모드 예제:**
+
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -47,12 +47,14 @@ spec:
 ```
 
 **동작 방식:**
+
 ```
 클라이언트 A (Istio Sidecar) → [mTLS] → 서버 (PERMISSIVE)  ✅ 허용
 클라이언트 B (No Sidecar)     → [평문] → 서버 (PERMISSIVE)  ✅ 허용
 ```
 
 **STRICT 모드와 비교:**
+
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -70,6 +72,7 @@ spec:
 ```
 
 **마이그레이션 전략:**
+
 ```
 1단계: PERMISSIVE (혼합 트래픽 허용)
   ↓
@@ -79,11 +82,13 @@ spec:
 ```
 
 **참고 자료:**
-- [PeerAuthentication](../../../service-mesh/istio/security/04-peer-authentication.md)
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+
+* [PeerAuthentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/security/04-peer-authentication.md)
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+
 </details>
 
----
+***
 
 ### 문제 2: AuthorizationPolicy의 action
 
@@ -98,12 +103,13 @@ spec:
   {}
 ```
 
-A. 모든 요청을 허용한다  
-B. 모든 요청을 거부한다  
-C. 정책을 적용하지 않는다  
-D. mTLS만 허용한다  
+A. 모든 요청을 허용한다\
+B. 모든 요청을 거부한다\
+C. 정책을 적용하지 않는다\
+D. mTLS만 허용한다
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: B**
@@ -119,6 +125,7 @@ D. mTLS만 허용한다
 3. **rules가 있으면**: rules에 따라 허용/거부
 
 **Deny-by-default 패턴:**
+
 ```yaml
 # 1단계: 모든 요청 거부
 apiVersion: security.istio.io/v1beta1
@@ -151,14 +158,15 @@ spec:
 
 **AuthorizationPolicy의 action 종류:**
 
-| action | 설명 | 우선순위 |
-|--------|------|----------|
-| **DENY** | 명시적 거부 | 1 (최우선) |
-| **ALLOW** | 명시적 허용 | 2 |
-| **AUDIT** | 로그만 기록 | 3 |
-| **CUSTOM** | 외부 인증 서비스 | 4 |
+| action     | 설명        | 우선순위    |
+| ---------- | --------- | ------- |
+| **DENY**   | 명시적 거부    | 1 (최우선) |
+| **ALLOW**  | 명시적 허용    | 2       |
+| **AUDIT**  | 로그만 기록    | 3       |
+| **CUSTOM** | 외부 인증 서비스 | 4       |
 
 **평가 순서:**
+
 ```
 1. DENY 정책 평가 → 매칭되면 즉시 거부
    ↓ (통과)
@@ -170,6 +178,7 @@ spec:
 ```
 
 **실전 예제:**
+
 ```yaml
 # 시나리오: HTTP 메서드 제한
 ---
@@ -209,6 +218,7 @@ spec:
 ```
 
 **테스트:**
+
 ```bash
 # GET 요청 → ALLOW 정책 매칭 → ✅ 허용
 curl http://backend/api
@@ -224,21 +234,24 @@ curl -X PUT http://backend/api
 ```
 
 **참고 자료:**
-- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
+
+* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/security/02-authorization-policy.md)
+
 </details>
 
----
+***
 
 ### 문제 3: JWT 인증
 
 RequestAuthentication에서 JWT 토큰을 검증할 때 사용하는 필드는?
 
-A. issuer와 audiences  
-B. principals와 namespaces  
-C. methods와 paths  
-D. hosts와 ports  
+A. issuer와 audiences\
+B. principals와 namespaces\
+C. methods와 paths\
+D. hosts와 ports
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: A**
@@ -248,6 +261,7 @@ RequestAuthentication은 **issuer**와 **audiences** 필드를 사용하여 JWT 
 **해설:**
 
 **JWT 토큰 구조:**
+
 ```
 Header.Payload.Signature
 
@@ -262,6 +276,7 @@ Payload 예시:
 ```
 
 **RequestAuthentication 구성:**
+
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: RequestAuthentication
@@ -281,24 +296,9 @@ spec:
 ```
 
 **JWT 검증 프로세스:**
-```mermaid
-flowchart LR
-    Request[클라이언트 요청] --> Header{Authorization<br/>헤더 존재?}
-    Header -->|없음| NoToken[토큰 없음<br/>검증 건너뜀]
-    Header -->|있음| Extract[JWT 추출]
-    Extract --> Decode[토큰 디코딩]
-    Decode --> ValidateIss{issuer 검증}
-    ValidateIss -->|실패| Reject[❌ 거부<br/>401 Unauthorized]
-    ValidateIss -->|성공| ValidateAud{audiences 검증}
-    ValidateAud -->|실패| Reject
-    ValidateAud -->|성공| ValidateSig{서명 검증<br/>JWKS}
-    ValidateSig -->|실패| Reject
-    ValidateSig -->|성공| ValidateExp{만료 시간 검증}
-    ValidateExp -->|만료됨| Reject
-    ValidateExp -->|유효함| Allow[✅ 허용]
-```
 
 **OIDC 제공자와 통합:**
+
 ```yaml
 # Google OAuth2 예제
 apiVersion: security.istio.io/v1beta1
@@ -327,6 +327,7 @@ spec:
 ```
 
 **AuthorizationPolicy와 결합:**
+
 ```yaml
 # 1. RequestAuthentication: JWT 검증
 apiVersion: security.istio.io/v1beta1
@@ -378,6 +379,7 @@ spec:
 ```
 
 **테스트:**
+
 ```bash
 # JWT 없이 요청 → RequestAuthentication은 통과, AuthorizationPolicy에서 거부
 curl http://backend/api
@@ -390,21 +392,24 @@ curl -H "Authorization: Bearer $TOKEN" http://backend/api
 ```
 
 **참고 자료:**
-- [Request Authentication](../../../service-mesh/istio/security/03-request-authentication.md)
+
+* [Request Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/security/03-request-authentication.md)
+
 </details>
 
----
+***
 
 ### 문제 4: mTLS 인증서 관리
 
 Istio에서 mTLS 인증서의 기본 유효 기간은?
 
-A. 1시간  
-B. 24시간  
-C. 7일  
-D. 90일  
+A. 1시간\
+B. 24시간\
+C. 7일\
+D. 90일
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: B**
@@ -428,50 +433,16 @@ spec:
 ```
 
 **기본 설정:**
-- **인증서 유효 기간**: 24시간 (1일)
-- **갱신 시점**: 만료 전 8시간
-- **갱신 방식**: 자동 (Istiod가 관리)
-- **인증서 형식**: X.509
+
+* **인증서 유효 기간**: 24시간 (1일)
+* **갱신 시점**: 만료 전 8시간
+* **갱신 방식**: 자동 (Istiod가 관리)
+* **인증서 형식**: X.509
 
 **인증서 라이프사이클:**
 
-```mermaid
-sequenceDiagram
-    autonumber
-    box rgba(0, 199, 183, 0.1) Pod
-    participant Envoy as Envoy Sidecar
-    end
-    box rgba(255, 153, 0, 0.1) Control Plane
-    participant Istiod as Istiod (CA)
-    end
-
-    Note over Envoy,Istiod: ⏰ T=0시간: 초기 인증서 발급
-    Istiod->>+Envoy: ✅ 새 인증서 발급
-    Note right of Envoy: 유효기간: 24시간<br/>형식: X.509<br/>SPIFFE ID 포함
-
-    rect rgba(144, 238, 144, 0.1)
-        Note over Envoy: ✓ T=0~16시간: 인증서 사용 중
-    end
-
-    Note over Envoy,Istiod: ⏰ T=16시간: 자동 갱신 시작 (만료 8시간 전)
-    Envoy->>Istiod: 🔄 새 인증서 요청 (CSR)
-    activate Istiod
-    Note right of Istiod: SPIFFE ID 검증<br/>새 인증서 생성
-    Istiod->>Envoy: ✅ 새 인증서 발급
-    deactivate Istiod
-
-    Envoy->>Envoy: 🔄 인증서 교체 (Hot Reload)
-    Note right of Envoy: 무중단으로<br/>새 인증서 적용
-
-    rect rgba(144, 238, 144, 0.1)
-        Note over Envoy: ✓ T=16~24시간: 새 인증서로 사용 중
-    end
-
-    Note over Envoy,Istiod: ⏰ T=24시간: 이전 인증서 만료 (영향 없음)
-    deactivate Envoy
-```
-
 **인증서 확인:**
+
 ```bash
 # Pod의 mTLS 인증서 확인
 istioctl proxy-config secret <pod-name> -o json
@@ -509,6 +480,7 @@ Certificate:
 ```
 
 **유효 기간 커스터마이징:**
+
 ```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
@@ -521,6 +493,7 @@ spec:
 ```
 
 **인증서 갱신 실패 시나리오:**
+
 ```bash
 # Istiod 로그 확인
 kubectl logs -n istio-system -l app=istiod
@@ -535,6 +508,7 @@ kubectl delete pod <pod-name>  # Pod 재시작으로 인증서 재발급
 ```
 
 **SPIFFE ID:**
+
 ```
 Istio의 mTLS 인증서는 SPIFFE (Secure Production Identity Framework For Everyone) 표준을 따릅니다.
 
@@ -543,6 +517,7 @@ Istio의 mTLS 인증서는 SPIFFE (Secure Production Identity Framework For Ever
 ```
 
 **CA 계층 구조:**
+
 ```
 Root CA (Istiod)
   ├─ Intermediate CA (자동 생성)
@@ -553,6 +528,7 @@ Root CA (Istiod)
 ```
 
 **외부 CA 통합:**
+
 ```yaml
 # Cert-Manager로 외부 CA 사용
 apiVersion: install.istio.io/v1alpha1
@@ -567,22 +543,25 @@ spec:
 ```
 
 **참고 자료:**
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [인증서 관리](../../../service-mesh/istio/03-architecture.md#인증서-관리)
+
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+* [인증서 관리](../../../service-mesh/istio/03-architecture.md#인증서-관리)
+
 </details>
 
----
+***
 
 ### 문제 5: Service Account 기반 인증
 
 Istio에서 서비스 간 인증에 사용되는 identity는?
 
-A. Pod 이름  
-B. Service 이름  
-C. Service Account  
-D. Namespace 이름  
+A. Pod 이름\
+B. Service 이름\
+C. Service Account\
+D. Namespace 이름
 
 <details>
+
 <summary>정답 및 해설</summary>
 
 **정답: C**
@@ -617,6 +596,7 @@ spec:
 ```
 
 **SPIFFE ID 형식:**
+
 ```
 spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
 
@@ -626,6 +606,7 @@ spiffe://cluster.local/ns/production/sa/backend
 ```
 
 **AuthorizationPolicy에서 Service Account 사용:**
+
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -657,14 +638,15 @@ spec:
 
 **Service Account vs Pod/Service 이름:**
 
-| 항목 | Service Account | Pod 이름 | Service 이름 |
-|------|----------------|----------|-------------|
-| **안정성** | ✅ 안정적 | ❌ 동적 변경 | ✅ 안정적 |
-| **보안** | ✅ 인증서 기반 | ❌ 신뢰 불가 | ❌ 신뢰 불가 |
-| **RBAC 통합** | ✅ Kubernetes RBAC | ❌ 불가능 | ❌ 불가능 |
-| **mTLS** | ✅ 인증서에 포함 | ❌ 포함 안됨 | ❌ 포함 안됨 |
+| 항목          | Service Account   | Pod 이름  | Service 이름 |
+| ----------- | ----------------- | ------- | ---------- |
+| **안정성**     | ✅ 안정적             | ❌ 동적 변경 | ✅ 안정적      |
+| **보안**      | ✅ 인증서 기반          | ❌ 신뢰 불가 | ❌ 신뢰 불가    |
+| **RBAC 통합** | ✅ Kubernetes RBAC | ❌ 불가능   | ❌ 불가능      |
+| **mTLS**    | ✅ 인증서에 포함         | ❌ 포함 안됨 | ❌ 포함 안됨    |
 
 **실전 예제: 3-Tier 애플리케이션:**
+
 ```yaml
 # Frontend → Backend만 허용
 ---
@@ -724,6 +706,7 @@ spec:
 ```
 
 **Service Account 확인:**
+
 ```bash
 # Pod의 Service Account 확인
 kubectl get pod <pod-name> -o jsonpath='{.spec.serviceAccountName}'
@@ -738,6 +721,7 @@ istioctl proxy-config secret <pod-name> -o json | \
 ```
 
 **Namespace 간 통신:**
+
 ```yaml
 # Production namespace의 frontend → Staging namespace의 backend 접근
 apiVersion: security.istio.io/v1beta1
@@ -760,11 +744,13 @@ spec:
 ```
 
 **참고 자료:**
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
+
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/security/02-authorization-policy.md)
+
 </details>
 
----
+***
 
 ## 주관식 문제 (6-10번)
 
@@ -773,13 +759,14 @@ spec:
 Kubernetes 클러스터에서 Istio를 사용하여 **deny-by-default** 보안 정책을 구현하는 방법을 단계별로 설명하세요. **필수 리소스**(PeerAuthentication, AuthorizationPolicy)와 **예외 처리** 방법을 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **Deny-by-default 보안 정책 구현:**
 
----
+***
 
 **1단계: mTLS STRICT 모드 활성화**
 
@@ -797,11 +784,12 @@ spec:
 ```
 
 **적용 범위:**
-- `istio-system` namespace에 배포 → 전체 메시에 적용
-- 특정 namespace에 배포 → 해당 namespace만 적용
-- selector 사용 → 특정 workload만 적용
 
----
+* `istio-system` namespace에 배포 → 전체 메시에 적용
+* 특정 namespace에 배포 → 해당 namespace만 적용
+* selector 사용 → 특정 workload만 적용
+
+***
 
 **2단계: 모든 트래픽 거부 (Deny-by-default)**
 
@@ -815,15 +803,16 @@ spec: {}  # 빈 spec = 모든 요청 거부
 ```
 
 **이 정책 이후:**
-- ❌ 모든 inbound 트래픽 거부
-- ❌ 서비스 간 통신 불가
-- ❌ 외부에서 접근 불가
 
----
+* ❌ 모든 inbound 트래픽 거부
+* ❌ 서비스 간 통신 불가
+* ❌ 외부에서 접근 불가
+
+***
 
 **3단계: 필요한 통신만 선택적 허용**
 
-#### 예시 1: Frontend → Backend 통신 허용
+**예시 1: Frontend → Backend 통신 허용**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -847,7 +836,7 @@ spec:
         paths: ["/api/*"]
 ```
 
-#### 예시 2: Backend → Database 통신 허용
+**예시 2: Backend → Database 통신 허용**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -870,7 +859,7 @@ spec:
         ports: ["5432"]  # PostgreSQL 포트
 ```
 
----
+***
 
 **4단계: Ingress Gateway 정책**
 
@@ -912,7 +901,7 @@ spec:
         - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
 ```
 
----
+***
 
 **5단계: Health Check 및 Readiness Probe 예외 처리**
 
@@ -953,7 +942,7 @@ spec:
       mode: DISABLE  # Health check 포트는 mTLS 비활성화
 ```
 
----
+***
 
 **6단계: 모니터링 및 로깅 예외**
 
@@ -978,7 +967,7 @@ spec:
         methods: ["GET"]
 ```
 
----
+***
 
 **완전한 예제: 3-Tier 애플리케이션**
 
@@ -1090,7 +1079,7 @@ spec:
         paths: ["/stats/prometheus"]
 ```
 
----
+***
 
 **테스트 및 검증:**
 
@@ -1112,43 +1101,43 @@ curl http://<ingress-gateway>/frontend
 # 200 OK
 ```
 
----
+***
 
 **모범 사례:**
 
 1. **점진적 적용**:
-   - 먼저 PERMISSIVE 모드로 mTLS 활성화
-   - 모든 서비스에 Sidecar 주입 확인
-   - STRICT 모드로 전환
-   - Deny-by-default 정책 적용
-
+   * 먼저 PERMISSIVE 모드로 mTLS 활성화
+   * 모든 서비스에 Sidecar 주입 확인
+   * STRICT 모드로 전환
+   * Deny-by-default 정책 적용
 2. **최소 권한 원칙**:
-   - 필요한 최소한의 통신만 허용
-   - HTTP 메서드 제한 (GET만, POST만 등)
-   - 경로 제한 (/api/*만 등)
-
+   * 필요한 최소한의 통신만 허용
+   * HTTP 메서드 제한 (GET만, POST만 등)
+   * 경로 제한 (/api/\*만 등)
 3. **예외 처리**:
-   - Health check는 반드시 예외 처리
-   - 모니터링 시스템 접근 허용
-   - Ingress Gateway 정책 설정
-
+   * Health check는 반드시 예외 처리
+   * 모니터링 시스템 접근 허용
+   * Ingress Gateway 정책 설정
 4. **테스트**:
-   - 각 정책 적용 후 테스트
-   - 부작용 확인 (로그, 메트릭)
-   - 롤백 계획 준비
+   * 각 정책 적용 후 테스트
+   * 부작용 확인 (로그, 메트릭)
+   * 롤백 계획 준비
 
 **참고 자료:**
-- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
-- [PeerAuthentication](../../../service-mesh/istio/security/04-peer-authentication.md)
+
+* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/security/02-authorization-policy.md)
+* [PeerAuthentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/security/04-peer-authentication.md)
+
 </details>
 
----
+***
 
 ### 문제 7: JWT + mTLS 이중 인증
 
-Istio에서 **최종 사용자 인증(JWT)**과 **서비스 간 인증(mTLS)**을 함께 사용하는 시나리오를 구현하세요. OAuth2/OIDC 제공자(예: Keycloak)와 통합하는 방법을 포함해야 합니다.
+Istio에서 \*\*최종 사용자 인증(JWT)\*\*과 \*\*서비스 간 인증(mTLS)\*\*을 함께 사용하는 시나리오를 구현하세요. OAuth2/OIDC 제공자(예: Keycloak)와 통합하는 방법을 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
@@ -1165,7 +1154,7 @@ Frontend (PeerAuthentication으로 mTLS 검증)
 Backend
 ```
 
----
+***
 
 **1단계: Keycloak 설정**
 
@@ -1182,7 +1171,7 @@ Valid Redirect URIs: http://myapp.example.com/*
 https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
 ```
 
----
+***
 
 **2단계: mTLS 활성화 (서비스 간 인증)**
 
@@ -1198,7 +1187,7 @@ spec:
     mode: STRICT
 ```
 
----
+***
 
 **3단계: JWT 인증 설정 (최종 사용자 인증)**
 
@@ -1222,11 +1211,11 @@ spec:
     outputPayloadToHeader: "x-jwt-payload"  # Payload를 헤더로 추출
 ```
 
----
+***
 
 **4단계: AuthorizationPolicy 설정**
 
-#### Ingress Gateway 정책
+**Ingress Gateway 정책**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -1254,7 +1243,7 @@ spec:
         paths: ["/health", "/ready"]
 ```
 
-#### Backend 정책
+**Backend 정책**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -1279,7 +1268,7 @@ spec:
         methods: ["GET", "POST"]
 ```
 
----
+***
 
 **5단계: Role 기반 접근 제어**
 
@@ -1324,7 +1313,7 @@ spec:
         paths: ["/api/users/*"]
 ```
 
----
+***
 
 **6단계: JWT Payload 활용**
 
@@ -1373,11 +1362,11 @@ spec:
             end
 ```
 
----
+***
 
 **7단계: 완전한 예제**
 
-#### Ingress Gateway
+**Ingress Gateway**
 
 ```yaml
 ---
@@ -1415,7 +1404,7 @@ spec:
         requestPrincipals: ["*"]
 ```
 
-#### Frontend
+**Frontend**
 
 ```yaml
 ---
@@ -1451,7 +1440,7 @@ spec:
         requestPrincipals: ["*"]
 ```
 
-#### Backend
+**Backend**
 
 ```yaml
 ---
@@ -1487,7 +1476,7 @@ spec:
         requestPrincipals: ["https://keycloak.example.com/realms/myrealm/*"]
 ```
 
----
+***
 
 **테스트:**
 
@@ -1516,42 +1505,43 @@ curl -H "Authorization: Bearer invalid-token" \
 # 401 Unauthorized
 ```
 
----
+***
 
 **보안 이점:**
 
 1. **이중 인증**:
-   - JWT: 최종 사용자 신원 확인
-   - mTLS: 서비스 간 신원 확인
-
+   * JWT: 최종 사용자 신원 확인
+   * mTLS: 서비스 간 신원 확인
 2. **깊은 방어 (Defense in Depth)**:
-   - Gateway에서 JWT 검증
-   - 서비스 간 mTLS로 통신 암호화
-   - AuthorizationPolicy로 세밀한 권한 제어
-
+   * Gateway에서 JWT 검증
+   * 서비스 간 mTLS로 통신 암호화
+   * AuthorizationPolicy로 세밀한 권한 제어
 3. **역할 기반 접근 제어 (RBAC)**:
-   - JWT claims 기반 권한 관리
-   - 동적 권한 업데이트 (Keycloak에서 관리)
+   * JWT claims 기반 권한 관리
+   * 동적 권한 업데이트 (Keycloak에서 관리)
 
 **참고 자료:**
-- [Request Authentication](../../../service-mesh/istio/security/03-request-authentication.md)
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+
+* [Request Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/security/03-request-authentication.md)
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+
 </details>
 
----
+***
 
 ### 문제 8: 외부 서비스 접근 제어
 
 Istio에서 **Egress 트래픽**을 제어하여 특정 외부 서비스만 접근을 허용하는 방법을 설명하세요. **ServiceEntry**, **VirtualService**, **AuthorizationPolicy**를 사용한 완전한 예제를 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **Egress 트래픽 제어 전략:**
 
----
+***
 
 **1단계: Egress 트래픽 기본 모드 확인**
 
@@ -1568,21 +1558,22 @@ spec:
 
 **모드 비교:**
 
-| 모드 | 설명 | 보안 |
-|------|------|------|
-| **ALLOW_ANY** | 모든 외부 트래픽 허용 (기본값) | ⚠️ 낮음 |
-| **REGISTRY_ONLY** | ServiceEntry에 등록된 서비스만 허용 | ✅ 높음 |
+| 모드                 | 설명                        | 보안    |
+| ------------------ | ------------------------- | ----- |
+| **ALLOW\_ANY**     | 모든 외부 트래픽 허용 (기본값)        | ⚠️ 낮음 |
+| **REGISTRY\_ONLY** | ServiceEntry에 등록된 서비스만 허용 | ✅ 높음  |
 
-**REGISTRY_ONLY 모드로 변경:**
+**REGISTRY\_ONLY 모드로 변경:**
+
 ```bash
 istioctl install --set meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY
 ```
 
----
+***
 
 **2단계: ServiceEntry로 외부 서비스 등록**
 
-#### 예제 1: HTTPS API (GitHub)
+**예제 1: HTTPS API (GitHub)**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1601,7 +1592,7 @@ spec:
   resolution: DNS
 ```
 
-#### 예제 2: HTTP API (httpbin)
+**예제 2: HTTP API (httpbin)**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1623,7 +1614,7 @@ spec:
   resolution: DNS
 ```
 
-#### 예제 3: 특정 IP 주소
+**예제 3: 특정 IP 주소**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1646,11 +1637,11 @@ spec:
   - address: 203.0.113.10
 ```
 
----
+***
 
 **3단계: VirtualService로 트래픽 제어**
 
-#### 타임아웃 및 재시도 설정
+**타임아웃 및 재시도 설정**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1672,7 +1663,7 @@ spec:
         host: api.github.com
 ```
 
-#### 헤더 추가 (API Key)
+**헤더 추가 (API Key)**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1693,11 +1684,11 @@ spec:
         host: api.example.com
 ```
 
----
+***
 
 **4단계: AuthorizationPolicy로 접근 제어**
 
-#### 특정 Service Account만 허용
+**특정 Service Account만 허용**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -1717,7 +1708,7 @@ spec:
         hosts: ["api.github.com"]
 ```
 
-#### 특정 경로만 허용
+**특정 경로만 허용**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -1738,7 +1729,7 @@ spec:
         methods: ["GET"]
 ```
 
----
+***
 
 **5단계: Egress Gateway 사용 (선택사항)**
 
@@ -1824,11 +1815,12 @@ spec:
 ```
 
 **트래픽 흐름:**
+
 ```
 Pod → Sidecar → Egress Gateway → 외부 서비스
 ```
 
----
+***
 
 **6단계: 완전한 예제**
 
@@ -1919,7 +1911,7 @@ spec:
         hosts: ["*"]
 ```
 
----
+***
 
 **테스트:**
 
@@ -1940,7 +1932,7 @@ kubectl exec -it <backend-pod> -- \
 # Connection refused (ServiceEntry 없음)
 ```
 
----
+***
 
 **모니터링:**
 
@@ -1953,7 +1945,7 @@ kubectl exec -it <backend-pod> -c istio-proxy -- \
 istioctl proxy-config clusters <backend-pod> | grep github
 ```
 
----
+***
 
 **보안 이점:**
 
@@ -1963,30 +1955,33 @@ istioctl proxy-config clusters <backend-pod> | grep github
 4. **중앙 집중식 관리**: Egress Gateway로 모든 외부 트래픽 모니터링
 
 **참고 자료:**
-- [ServiceEntry](https://istio.io/latest/docs/reference/config/networking/service-entry/)
-- [Egress Traffic](https://istio.io/latest/docs/tasks/traffic-management/egress/)
+
+* [ServiceEntry](https://istio.io/latest/docs/reference/config/networking/service-entry/)
+* [Egress Traffic](https://istio.io/latest/docs/tasks/traffic-management/egress/)
+
 </details>
 
----
+***
 
 ### 문제 9: 보안 감사 및 로깅
 
-Istio에서 보안 관련 이벤트를 **감사(Audit)**하고 로깅하는 방법을 설명하세요. **AuthorizationPolicy의 AUDIT action**과 **Access Log** 구성을 포함해야 합니다.
+Istio에서 보안 관련 이벤트를 \*\*감사(Audit)\*\*하고 로깅하는 방법을 설명하세요. **AuthorizationPolicy의 AUDIT action**과 **Access Log** 구성을 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
 
 **Istio 보안 감사 및 로깅 전략:**
 
----
+***
 
 **1. AuthorizationPolicy AUDIT Action**
 
 AUDIT action은 트래픽을 차단하지 않고 로그만 기록합니다.
 
-#### 기본 AUDIT 정책
+**기본 AUDIT 정책**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -2003,7 +1998,7 @@ spec:
   - {}  # 모든 요청 감사
 ```
 
-#### 특정 조건만 감사
+**특정 조건만 감사**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -2033,11 +2028,11 @@ spec:
         notNamespaces: ["default", "production"]
 ```
 
----
+***
 
 **2. Access Log 활성화**
 
-#### 전체 메시에 Access Log 활성화
+**전체 메시에 Access Log 활성화**
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -2072,7 +2067,7 @@ spec:
       }
 ```
 
-#### 특정 Namespace에만 적용
+**특정 Namespace에만 적용**
 
 ```yaml
 apiVersion: telemetry.istio.io/v1alpha1
@@ -2086,11 +2081,11 @@ spec:
     - name: envoy
 ```
 
----
+***
 
 **3. 보안 감사를 위한 커스텀 로그 필터**
 
-#### mTLS 정보 포함
+**mTLS 정보 포함**
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -2108,7 +2103,7 @@ spec:
       mtls=%DOWNSTREAM_PEER_ISSUER% peer=%DOWNSTREAM_PEER_URI_SAN%
 ```
 
-#### Authorization 정보 포함
+**Authorization 정보 포함**
 
 ```yaml
 apiVersion: telemetry.istio.io/v1alpha1
@@ -2124,11 +2119,11 @@ spec:
       expression: response.code >= 400  # 에러만 로깅
 ```
 
----
+***
 
 **4. 외부 로깅 시스템 통합**
 
-#### FluentBit으로 CloudWatch 전송
+**FluentBit으로 CloudWatch 전송**
 
 ```yaml
 apiVersion: v1
@@ -2163,7 +2158,7 @@ data:
         auto_create_group true
 ```
 
-#### Elasticsearch 통합
+**Elasticsearch 통합**
 
 ```yaml
 apiVersion: telemetry.istio.io/v1alpha1
@@ -2181,7 +2176,7 @@ spec:
         request.headers['x-audit'] == 'true'
 ```
 
----
+***
 
 **5. 완전한 보안 감사 구성**
 
@@ -2253,11 +2248,11 @@ spec:
         request.url_path.startsWith("/api/admin")
 ```
 
----
+***
 
 **6. 로그 분석 쿼리**
 
-#### Prometheus 쿼리
+**Prometheus 쿼리**
 
 ```promql
 # Authorization 거부 횟수
@@ -2278,7 +2273,7 @@ sum(rate(
 )) by (destination_service_name)
 ```
 
-#### CloudWatch Insights 쿼리
+**CloudWatch Insights 쿼리**
 
 ```sql
 # DELETE 작업 감사
@@ -2298,7 +2293,7 @@ fields @timestamp, path, response_code, response_flags
 | stats count() by bin(5m)
 ```
 
----
+***
 
 **7. Grafana 대시보드**
 
@@ -2320,7 +2315,7 @@ sum by (destination_service_name) (
 )
 ```
 
----
+***
 
 **8. 알림 설정**
 
@@ -2362,38 +2357,38 @@ spec:
         summary: "Unauthorized admin API access attempt"
 ```
 
----
+***
 
 **모범 사례:**
 
 1. **AUDIT 먼저, DENY 나중에**:
-   - 새 정책은 AUDIT로 시작
-   - 로그 분석 후 DENY로 전환
-
+   * 새 정책은 AUDIT로 시작
+   * 로그 분석 후 DENY로 전환
 2. **선택적 로깅**:
-   - 모든 트래픽 로깅은 비용 증가
-   - 민감한 작업만 로깅
-
+   * 모든 트래픽 로깅은 비용 증가
+   * 민감한 작업만 로깅
 3. **로그 보존**:
-   - 보안 감사: 최소 90일
-   - 규정 준수: 1년 이상
-
+   * 보안 감사: 최소 90일
+   * 규정 준수: 1년 이상
 4. **실시간 알림**:
-   - 무단 접근 시도 즉시 알림
-   - 비정상 패턴 탐지
+   * 무단 접근 시도 즉시 알림
+   * 비정상 패턴 탐지
 
 **참고 자료:**
-- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
-- [Access Logging](../../../service-mesh/istio/observability/03-logging.md)
+
+* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/security/02-authorization-policy.md)
+* [Access Logging](../../../service-mesh/istio/observability/03-logging.md)
+
 </details>
 
----
+***
 
 ### 문제 10: Zero Trust 네트워크 구현
 
 Istio를 사용하여 **Zero Trust 네트워크** 원칙을 구현하는 방법을 설명하세요. **mTLS STRICT**, **deny-by-default**, **least privilege** 원칙을 적용한 완전한 예제를 포함해야 합니다.
 
 <details>
+
 <summary>예시 답안</summary>
 
 **답변:**
@@ -2404,7 +2399,7 @@ Istio를 사용하여 **Zero Trust 네트워크** 원칙을 구현하는 방법�
 2. **Least Privilege**: 최소 권한만 부여
 3. **Assume Breach**: 침해를 가정하고 설계
 
----
+***
 
 **Istio Zero Trust 아키텍처:**
 
@@ -2416,7 +2411,7 @@ Istio를 사용하여 **Zero Trust 네트워크** 원칙을 구현하는 방법�
 # 5. Fine-grained (경로/메서드 수준 제어)
 ```
 
----
+***
 
 **1단계: mTLS STRICT 모드**
 
@@ -2434,6 +2429,7 @@ spec:
 ```
 
 **검증:**
+
 ```bash
 # mTLS 상태 확인
 istioctl authn tls-check <pod-name>.<namespace>
@@ -2443,11 +2439,11 @@ istioctl authn tls-check <pod-name>.<namespace>
 # backend.default.svc.cluster.local    OK         mTLS       mTLS       default/default
 ```
 
----
+***
 
 **2단계: Deny-by-default 정책**
 
-#### 전역 Deny 정책
+**전역 Deny 정책**
 
 ```yaml
 # 모든 Namespace에 적용
@@ -2468,17 +2464,17 @@ metadata:
 spec: {}
 ```
 
----
+***
 
 **3단계: Least Privilege (최소 권한)**
 
-#### 시나리오: 3-Tier 웹 애플리케이션
+**시나리오: 3-Tier 웹 애플리케이션**
 
 ```
 User → Ingress Gateway → Frontend → Backend → Database
 ```
 
-#### Service Account 생성
+**Service Account 생성**
 
 ```yaml
 ---
@@ -2503,7 +2499,7 @@ metadata:
   namespace: app
 ```
 
-#### Ingress Gateway → Frontend
+**Ingress Gateway → Frontend**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -2523,7 +2519,7 @@ spec:
         - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
 ```
 
-#### Frontend → Backend
+**Frontend → Backend**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -2548,7 +2544,7 @@ spec:
         ports: ["8080"]  # 특정 포트만
 ```
 
-#### Backend → Database
+**Backend → Database**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -2571,7 +2567,7 @@ spec:
         ports: ["5432"]  # PostgreSQL만
 ```
 
----
+***
 
 **4단계: 네임스페이스 격리**
 
@@ -2592,7 +2588,7 @@ spec:
         notNamespaces: ["production", "istio-system"]
 ```
 
----
+***
 
 **5단계: 시간 기반 접근 제어**
 
@@ -2631,7 +2627,7 @@ spec:
             end
 ```
 
----
+***
 
 **6단계: Egress 트래픽 제어**
 
@@ -2681,7 +2677,7 @@ spec:
         hosts: ["api.approved-vendor.com"]
 ```
 
----
+***
 
 **7단계: 완전한 Zero Trust 구성**
 
@@ -2869,7 +2865,7 @@ spec:
         hosts: ["api.approved-vendor.com"]
 ```
 
----
+***
 
 **8단계: 검증 및 모니터링**
 
@@ -2896,45 +2892,48 @@ sum(rate(envoy_http_rbac_denied_total[5m])) by (namespace, pod)
 # - 서비스 간 통신 매트릭스
 ```
 
----
+***
 
 **Zero Trust 체크리스트:**
 
-- ✅ mTLS STRICT 모드 (모든 통신 암호화)
-- ✅ Deny-by-default (기본 모든 거부)
-- ✅ Explicit Allow (필요한 것만 허용)
-- ✅ Service Account 기반 identity
-- ✅ 최소 권한 (메서드/경로/포트 제한)
-- ✅ Namespace 격리
-- ✅ Egress 트래픽 제어
-- ✅ Health check 예외 처리
-- ✅ 모니터링 및 감사
-- ✅ 정기적인 정책 검토
+* ✅ mTLS STRICT 모드 (모든 통신 암호화)
+* ✅ Deny-by-default (기본 모든 거부)
+* ✅ Explicit Allow (필요한 것만 허용)
+* ✅ Service Account 기반 identity
+* ✅ 최소 권한 (메서드/경로/포트 제한)
+* ✅ Namespace 격리
+* ✅ Egress 트래픽 제어
+* ✅ Health check 예외 처리
+* ✅ 모니터링 및 감사
+* ✅ 정기적인 정책 검토
 
 **참고 자료:**
-- [Zero Trust with Istio](https://istio.io/latest/blog/2021/zero-trust/)
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
+
+* [Zero Trust with Istio](https://istio.io/latest/blog/2021/zero-trust/)
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/security/02-authorization-policy.md)
+
 </details>
 
----
+***
 
 ## 점수 계산
 
-- 객관식 1-5번: 각 10점 (총 50점)
-- 주관식 6-10번: 각 10점 (총 50점)
-- **총점: 100점**
+* 객관식 1-5번: 각 10점 (총 50점)
+* 주관식 6-10번: 각 10점 (총 50점)
+* **총점: 100점**
 
 **평가 기준:**
-- 90-100점: 우수 (Istio 보안 전문가)
-- 80-89점: 양호 (프로덕션 보안 구성 가능)
-- 70-79점: 보통 (추가 학습 권장)
-- 60-69점: 미흡 (기본 개념 복습 필요)
-- 0-59점: 재학습 필요
+
+* 90-100점: 우수 (Istio 보안 전문가)
+* 80-89점: 양호 (프로덕션 보안 구성 가능)
+* 70-79점: 보통 (추가 학습 권장)
+* 60-69점: 미흡 (기본 개념 복습 필요)
+* 0-59점: 재학습 필요
 
 ## 학습 자료
 
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
-- [Request Authentication](../../../service-mesh/istio/security/03-request-authentication.md)
-- [Peer Authentication](../../../service-mesh/istio/security/04-peer-authentication.md)
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/security/02-authorization-policy.md)
+* [Request Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/security/03-request-authentication.md)
+* [Peer Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/security/04-peer-authentication.md)

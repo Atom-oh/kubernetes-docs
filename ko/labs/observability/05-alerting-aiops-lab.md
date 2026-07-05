@@ -1,19 +1,17 @@
 # Part 5: 알림 및 AIOps
 
-> **난이도**: 고급 (Advanced)
-> **예상 소요 시간**: 60분
-> **마지막 업데이트**: 2026년 2월 23일
+> **난이도**: 고급 (Advanced) **예상 소요 시간**: 60분 **마지막 업데이트**: 2026년 2월 23일
 
 ## 학습 목표
 
-- AlertManager PrometheusRule을 통한 이상 감지
-- Grafana OnCall 인시던트 관리 구성
-- CloudWatch Investigations AI 분석 활용
-- AIOps Agent (Lambda + Bedrock Claude) 구현
+* AlertManager PrometheusRule을 통한 이상 감지
+* Grafana OnCall 인시던트 관리 구성
+* CloudWatch Investigations AI 분석 활용
+* AIOps Agent (Lambda + Bedrock Claude) 구현
 
 ## 아키텍처 개요
 
-![AIOps Architecture](../../../assets/labs/observability/aiops-architecture.png)
+![AIOps Architecture](../../.gitbook/assets/aiops-architecture.png)
 
 ```mermaid
 flowchart TB
@@ -44,19 +42,19 @@ flowchart TB
     SNS --> Response
 ```
 
----
+***
 
 ## Step 5.1: AlertManager PrometheusRule 구성
 
 ### 알림 규칙 목록
 
-| 알림 이름 | 조건 | Severity | For |
-|----------|------|----------|-----|
-| HighErrorRate | 5xx > 5% | critical | 2m |
-| HighLatency | p99 > 2s | warning | 5m |
-| PodCrashLoopBackOff | restarts > 5 | critical | 5m |
-| SQSQueueBacklog | messages > 1000 | warning | 10m |
-| NodeNotReady | node not ready | critical | 5m |
+| 알림 이름               | 조건              | Severity | For |
+| ------------------- | --------------- | -------- | --- |
+| HighErrorRate       | 5xx > 5%        | critical | 2m  |
+| HighLatency         | p99 > 2s        | warning  | 5m  |
+| PodCrashLoopBackOff | restarts > 5    | critical | 5m  |
+| SQSQueueBacklog     | messages > 1000 | warning  | 10m |
+| NodeNotReady        | node not ready  | critical | 5m  |
 
 **Step 5.1.1: PrometheusRule 생성**
 
@@ -216,7 +214,7 @@ kubectl apply -f alerting/prometheus-rules.yaml
 kubectl get prometheusrules -n monitoring
 ```
 
----
+***
 
 ## Step 5.2: CloudWatch Alarms 구성
 
@@ -300,7 +298,7 @@ aws cloudwatch put-metric-alarm \
   --alarm-actions ${SNS_ALERTS_TOPIC_ARN}
 ```
 
----
+***
 
 ## Step 5.3: Grafana OnCall 구성
 
@@ -389,7 +387,7 @@ resource "grafana_oncall_route" "critical" {
 }
 ```
 
----
+***
 
 ## Step 5.4: SNS 토픽 + 이메일 구독
 
@@ -413,7 +411,7 @@ aws sns subscribe \
 aws sns list-subscriptions-by-topic --topic-arn ${SNS_ALERTS_TOPIC_ARN}
 ```
 
----
+***
 
 ## Step 5.5: CloudWatch Investigations
 
@@ -454,15 +452,15 @@ CloudWatch Console에서:
 
 **Step 5.5.3: Investigation 결과 분석**
 
-| 분석 항목 | 설명 |
-|----------|------|
-| Timeline | 이벤트 발생 타임라인 |
-| Key Findings | AI가 식별한 주요 발견 사항 |
-| Related Resources | 영향받은 리소스 목록 |
-| Hypothesis | 근본 원인에 대한 AI 가설 |
-| Suggestions | 권장 조치 사항 |
+| 분석 항목             | 설명               |
+| ----------------- | ---------------- |
+| Timeline          | 이벤트 발생 타임라인      |
+| Key Findings      | AI가 식별한 주요 발견 사항 |
+| Related Resources | 영향받은 리소스 목록      |
+| Hypothesis        | 근본 원인에 대한 AI 가설  |
+| Suggestions       | 권장 조치 사항         |
 
----
+***
 
 ## Step 5.6: AIOps Agent (Lambda + Bedrock Claude)
 
@@ -885,7 +883,7 @@ aws lambda add-permission \
   --source-arn ${SNS_ALERTS_TOPIC_ARN}
 ```
 
----
+***
 
 ## Step 5.7: 부하 + Fault Injection 테스트
 
@@ -921,7 +919,7 @@ kubectl --context service set image deployment/payment-service \
 k6 run --vus 50 --duration 5m load-test/k6-scenario.js
 ```
 
----
+***
 
 ## Step 5.8: AIOps 동작 확인
 
@@ -946,10 +944,10 @@ aws logs filter-log-events \
 
 **Step 5.8.3: SNS 이메일 확인**
 
-- 이메일 수신함에서 AIOps 분석 결과 확인
-- Alert Name, Root Cause Analysis, Recommendations 검토
+* 이메일 수신함에서 AIOps 분석 결과 확인
+* Alert Name, Root Cause Analysis, Recommendations 검토
 
----
+***
 
 ## Step 5.9: (심화) A2A 멀티 에이전트 패턴
 
@@ -967,29 +965,29 @@ flowchart TB
     Collab --> Report["종합 근본 원인 보고서"]
 ```
 
-| Agent | 역할 | 데이터 소스 |
-|-------|------|------------|
-| Collaborator | 조율 및 종합 | 다른 에이전트 결과 |
-| Metric Agent | 메트릭 분석 | Prometheus, AMP, CloudWatch |
-| Log Agent | 로그 분석 | Loki, CloudWatch Logs |
-| Trace Agent | 트레이스 분석 | Tempo, X-Ray |
+| Agent        | 역할      | 데이터 소스                      |
+| ------------ | ------- | --------------------------- |
+| Collaborator | 조율 및 종합 | 다른 에이전트 결과                  |
+| Metric Agent | 메트릭 분석  | Prometheus, AMP, CloudWatch |
+| Log Agent    | 로그 분석   | Loki, CloudWatch Logs       |
+| Trace Agent  | 트레이스 분석 | Tempo, X-Ray                |
 
 > **참고**: A2A 멀티 에이전트 패턴 구현은 고급 주제로, Amazon Bedrock Agents 또는 LangGraph를 사용하여 구현할 수 있습니다.
 
----
+***
 
 ## 검증 (Verification)
 
 ### 알림 흐름 확인
 
-| 단계 | 확인 방법 | 예상 결과 |
-|------|----------|----------|
-| AlertManager | Prometheus UI Alerts | Alert firing |
-| Grafana OnCall | OnCall Dashboard | Incident created |
-| SNS | Email inbox | Alert email received |
-| Lambda | CloudWatch Logs | Analysis executed |
-| AIOps | Email inbox | Analysis report |
-| CW Investigations | Console | Hypothesis generated |
+| 단계                | 확인 방법                | 예상 결과                |
+| ----------------- | -------------------- | -------------------- |
+| AlertManager      | Prometheus UI Alerts | Alert firing         |
+| Grafana OnCall    | OnCall Dashboard     | Incident created     |
+| SNS               | Email inbox          | Alert email received |
+| Lambda            | CloudWatch Logs      | Analysis executed    |
+| AIOps             | Email inbox          | Analysis report      |
+| CW Investigations | Console              | Hypothesis generated |
 
 ```bash
 # AlertManager 알람 확인
@@ -1007,7 +1005,7 @@ aws cloudwatch get-metric-statistics \
   --statistics Sum
 ```
 
----
+***
 
 ## 정리 (이 Part에서 정리하지 않음)
 
@@ -1028,16 +1026,16 @@ kubectl --context service set image deployment/payment-service \
   -n msa
 ```
 
----
+***
 
 ## 참조 문서
 
-- [Alertmanager](../../observability/alerting/01-alertmanager.md)
-- [CloudWatch Alarms](../../observability/alerting/02-cloudwatch-alarms.md)
-- [Grafana OnCall](../../observability/alerting/03-grafana-oncall.md)
+* [Alertmanager](../../observability/alerting/01-alertmanager.md)
+* [CloudWatch Alarms](../../observability/alerting/02-cloudwatch-alarms.md)
+* [Grafana OnCall](../../observability/alerting/03-grafana-oncall.md)
 
----
+***
 
 ## 다음 단계
 
-알림 및 AIOps 구성이 완료되었습니다. [Part 6: 분산 추적 분석](./06-distributed-tracing-lab.md)로 진행하여 Tempo와 Grafana를 활용한 end-to-end 트레이스 분석을 수행합니다.
+알림 및 AIOps 구성이 완료되었습니다. [Part 6: 분산 추적 분석](06-distributed-tracing-lab.md)로 진행하여 Tempo와 Grafana를 활용한 end-to-end 트레이스 분석을 수행합니다.

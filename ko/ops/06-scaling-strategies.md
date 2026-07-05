@@ -1,11 +1,10 @@
-# 스케일링 전략: HPA 커스텀 메트릭, KEDA, VPA, Spot 활용
+# 스케일링 전략
 
-> **지원 버전**: Kubernetes 1.28+, KEDA 2.14+, VPA 1.0+
-> **마지막 업데이트**: 2026년 2월 21일
+> **지원 버전**: Kubernetes 1.28+, KEDA 2.14+, VPA 1.0+ **마지막 업데이트**: 2026년 2월 21일
 
-< [이전: GitOps 자동화](./05-gitops-automation.md) | [목차](./README.md) | [다음: 운영 알림 구성](./07-observability-alerts.md) >
+< [이전: GitOps 자동화](05-gitops-automation.md) | [목차](./) | [다음: 운영 알림 구성](07-observability-alerts.md) >
 
----
+***
 
 ## 개요
 
@@ -13,13 +12,13 @@ EKS 클러스터의 효율적인 스케일링은 성능, 비용, 안정성의 �
 
 ### 학습 목표
 
-- Prometheus 메트릭 기반 HPA 커스텀 메트릭 구성
-- KEDA를 활용한 다양한 이벤트 소스 기반 스케일링
-- VPA와 HPA의 효과적인 조합 전략 이해
-- Pod Deletion Cost를 활용한 스케일링 우선순위 제어
-- Spot 인스턴스의 안전한 활용 및 Fallback 전략
+* Prometheus 메트릭 기반 HPA 커스텀 메트릭 구성
+* KEDA를 활용한 다양한 이벤트 소스 기반 스케일링
+* VPA와 HPA의 효과적인 조합 전략 이해
+* Pod Deletion Cost를 활용한 스케일링 우선순위 제어
+* Spot 인스턴스의 안전한 활용 및 Fallback 전략
 
----
+***
 
 ## 1. HPA Custom Metrics
 
@@ -549,7 +548,7 @@ kubectl get hpa -n production -w
 kubectl get hpa myapp-detailed -n production -o yaml
 ```
 
----
+***
 
 ## 2. KEDA 이벤트 드리븐 스케일링
 
@@ -926,7 +925,7 @@ Deployment replica 조정
 - 기존 HPA가 있다면 ScaledObject로 마이그레이션 필요
 ```
 
----
+***
 
 ## 3. VPA Pod Resize
 
@@ -989,12 +988,12 @@ updater:
 
 ### 3.2 UpdateMode 비교
 
-| UpdateMode | 동작 | 사용 사례 |
-|------------|------|----------|
-| **Off** | 추천만 제공, 실제 변경 없음 | 분석 및 검토 단계 |
-| **Initial** | Pod 생성 시에만 적용 | 기존 Pod 영향 최소화 |
-| **Recreate** | Pod 재시작하여 적용 | 즉시 적용 필요 시 |
-| **Auto** | Initial + Recreate 조합 | 완전 자동화 |
+| UpdateMode   | 동작                    | 사용 사례         |
+| ------------ | --------------------- | ------------- |
+| **Off**      | 추천만 제공, 실제 변경 없음      | 분석 및 검토 단계    |
+| **Initial**  | Pod 생성 시에만 적용         | 기존 Pod 영향 최소화 |
+| **Recreate** | Pod 재시작하여 적용          | 즉시 적용 필요 시    |
+| **Auto**     | Initial + Recreate 조합 | 완전 자동화        |
 
 ### 3.3 VPA CRD 예시
 
@@ -1255,13 +1254,13 @@ spec:
 └───────────────────────────────────────────────────────────────┘
 ```
 
----
+***
 
 ## 4. Custom Scheduler & Pod Deletion Cost
 
 스케일 다운 시 어떤 Pod를 먼저 종료할지 제어할 수 있습니다.
 
-> 상세 스케줄러 내용은 [스케줄링 가이드](../scheduling/)를 참조하세요.
+> 상세 스케줄러 내용은 [스케줄링 가이드](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/scheduling/README.md)를 참조하세요.
 
 ### 4.1 Pod Deletion Cost 개념
 
@@ -1287,9 +1286,9 @@ metadata:
 
 **범위:**
 
-- 최소값: -2147483648 (먼저 삭제)
-- 최대값: 2147483647 (마지막에 삭제)
-- 기본값: 0
+* 최소값: -2147483648 (먼저 삭제)
+* 최대값: 2147483647 (마지막에 삭제)
+* 기본값: 0
 
 ### 4.2 사용 사례
 
@@ -1533,7 +1532,7 @@ if __name__ == '__main__':
     t2.join()
 ```
 
----
+***
 
 ## 5. Spot 노드 활용 전략
 
@@ -2050,20 +2049,20 @@ spec:
 # }
 ```
 
----
+***
 
 ## 요약
 
 ### 스케일링 전략 선택 가이드
 
-| 상황 | 권장 전략 |
-|------|----------|
-| 웹 트래픽 기반 스케일링 | HPA + Prometheus Adapter (RPS 메트릭) |
-| 큐 기반 워커 스케일링 | KEDA + SQS/Kafka 트리거 |
-| 예측 가능한 트래픽 | KEDA Cron 트리거 + 메트릭 백업 |
-| 리소스 최적화 | VPA (추천 모드) + Goldilocks |
-| 비용 최적화 | Spot NodePool + Deletion Cost |
-| 고가용성 요구 | TopologySpread + PDB + On-Demand 백업 |
+| 상황            | 권장 전략                               |
+| ------------- | ----------------------------------- |
+| 웹 트래픽 기반 스케일링 | HPA + Prometheus Adapter (RPS 메트릭)  |
+| 큐 기반 워커 스케일링  | KEDA + SQS/Kafka 트리거                |
+| 예측 가능한 트래픽    | KEDA Cron 트리거 + 메트릭 백업              |
+| 리소스 최적화       | VPA (추천 모드) + Goldilocks            |
+| 비용 최적화        | Spot NodePool + Deletion Cost       |
+| 고가용성 요구       | TopologySpread + PDB + On-Demand 백업 |
 
 ### 핵심 포인트
 
@@ -2073,19 +2072,19 @@ spec:
 4. **Pod Deletion Cost**: 스케일 다운 시 중요 Pod 보호
 5. **Spot 활용**: 70%+ 비용 절감 가능, 적절한 Fallback 필수
 
----
+***
 
 ## 참고 자료
 
-- [Kubernetes HPA 공식 문서](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
-- [Prometheus Adapter](https://github.com/kubernetes-sigs/prometheus-adapter)
-- [KEDA 공식 문서](https://keda.sh/docs/)
-- [VPA 공식 문서](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)
-- [EKS Spot Best Practices](https://aws.github.io/aws-eks-best-practices/cost_optimization/spot/)
-- [Pod Deletion Cost](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)
-- [KEDA 가이드](../autoscaling/01-keda.md)
-- [스케줄링 가이드](../scheduling/)
+* [Kubernetes HPA 공식 문서](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+* [Prometheus Adapter](https://github.com/kubernetes-sigs/prometheus-adapter)
+* [KEDA 공식 문서](https://keda.sh/docs/)
+* [VPA 공식 문서](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)
+* [EKS Spot Best Practices](https://aws.github.io/aws-eks-best-practices/cost_optimization/spot/)
+* [Pod Deletion Cost](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)
+* [KEDA 가이드](../autoscaling/01-keda.md)
+* [스케줄링 가이드](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/scheduling/README.md)
 
----
+***
 
-< [이전: GitOps 자동화](./05-gitops-automation.md) | [목차](./README.md) | [다음: 운영 알림 구성](./07-observability-alerts.md) >
+< [이전: GitOps 자동화](05-gitops-automation.md) | [목차](./) | [다음: 운영 알림 구성](07-observability-alerts.md) >

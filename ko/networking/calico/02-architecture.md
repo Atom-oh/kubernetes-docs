@@ -1,7 +1,6 @@
-# Part 2: Calico 아키텍처 심층 분석
+# Part 2: 아키텍처
 
-> **지원 버전**: Calico v3.29+ / Kubernetes 1.28+
-> **마지막 업데이트**: 2026년 2월 23일
+> **지원 버전**: Calico v3.29+ / Kubernetes 1.28+ **마지막 업데이트**: 2026년 2월 23일
 
 ## 개요
 
@@ -9,7 +8,7 @@ Calico의 아키텍처는 확장성, 성능, 유연성을 중심으로 설계되
 
 ## 전체 아키텍처 다이어그램
 
-![Calico 아키텍처](../../../assets/calico_architecture.png)
+![Calico 아키텍처](../../.gitbook/assets/calico_architecture.png)
 
 ```mermaid
 graph TB
@@ -565,13 +564,13 @@ graph LR
 
 ### Typha 스케일링 계산
 
-| 노드 수 | 권장 Typha 복제본 | 계산 공식 |
-|---------|-------------------|-----------|
-| 1-49 | 0 (불필요) | - |
-| 50-199 | 3 | 최소 3 |
-| 200-499 | 3-5 | nodes / 100 |
-| 500-999 | 5-10 | nodes / 100 |
-| 1000+ | 10+ | nodes / 200 (최대) |
+| 노드 수    | 권장 Typha 복제본 | 계산 공식            |
+| ------- | ------------ | ---------------- |
+| 1-49    | 0 (불필요)      | -                |
+| 50-199  | 3            | 최소 3             |
+| 200-499 | 3-5          | nodes / 100      |
+| 500-999 | 5-10         | nodes / 100      |
+| 1000+   | 10+          | nodes / 200 (최대) |
 
 **권장 공식**: `max(3, ceil(nodes / 200))`
 
@@ -783,13 +782,13 @@ graph TB
 
 ### 컨트롤러별 역할
 
-| 컨트롤러 | 역할 | Watch 대상 |
-|----------|------|------------|
-| **Policy** | K8s NetworkPolicy → Calico Policy 변환 | NetworkPolicy |
-| **Namespace** | 네임스페이스 라벨 기반 프로필 관리 | Namespace |
-| **ServiceAccount** | SA 라벨을 프로필에 반영 | ServiceAccount |
-| **WorkloadEndpoint** | 삭제된 Pod의 엔드포인트 정리 | Pod, WorkloadEndpoint |
-| **Node** | 노드 정보 동기화, 제거된 노드 정리 | Node |
+| 컨트롤러                 | 역할                                   | Watch 대상              |
+| -------------------- | ------------------------------------ | --------------------- |
+| **Policy**           | K8s NetworkPolicy → Calico Policy 변환 | NetworkPolicy         |
+| **Namespace**        | 네임스페이스 라벨 기반 프로필 관리                  | Namespace             |
+| **ServiceAccount**   | SA 라벨을 프로필에 반영                       | ServiceAccount        |
+| **WorkloadEndpoint** | 삭제된 Pod의 엔드포인트 정리                    | Pod, WorkloadEndpoint |
+| **Node**             | 노드 정보 동기화, 제거된 노드 정리                 | Node                  |
 
 ### kube-controllers 설정
 
@@ -864,14 +863,14 @@ Calico는 두 가지 데이터스토어 백엔드를 지원합니다.
 
 ### etcd vs Kubernetes API 비교
 
-| 특성 | Kubernetes API (권장) | etcd 직접 연결 |
-|------|----------------------|----------------|
-| **설정 복잡도** | 낮음 (기본 연동) | 높음 (별도 etcd 클러스터) |
-| **운영 오버헤드** | 낮음 | 높음 (etcd 관리 필요) |
-| **확장성** | 좋음 (Typha와 함께) | 매우 좋음 |
-| **일관성** | K8s와 자연스러운 통합 | 독립적 관리 |
-| **백업/복원** | K8s 백업에 포함 | 별도 백업 필요 |
-| **권장 환경** | 대부분의 환경 | 초대규모 (5000+ 노드) |
+| 특성          | Kubernetes API (권장) | etcd 직접 연결        |
+| ----------- | ------------------- | ----------------- |
+| **설정 복잡도**  | 낮음 (기본 연동)          | 높음 (별도 etcd 클러스터) |
+| **운영 오버헤드** | 낮음                  | 높음 (etcd 관리 필요)   |
+| **확장성**     | 좋음 (Typha와 함께)      | 매우 좋음             |
+| **일관성**     | K8s와 자연스러운 통합       | 독립적 관리            |
+| **백업/복원**   | K8s 백업에 포함          | 별도 백업 필요          |
+| **권장 환경**   | 대부분의 환경             | 초대규모 (5000+ 노드)   |
 
 ### Kubernetes API 데이터스토어 (권장)
 
@@ -976,7 +975,7 @@ sequenceDiagram
     Veth2->>PodB: 패킷 전달
 ```
 
----
+***
 
 ## 요약
 
@@ -991,9 +990,9 @@ sequenceDiagram
 
 다음 장에서는 [네트워킹 모드](03-networking-modes.md)를 심층적으로 분석합니다.
 
----
+***
 
-[← 이전: 소개 및 기본 개념](01-introduction.md) | [메인 페이지](README.md) | [다음: 네트워킹 모드 →](03-networking-modes.md)
+[← 이전: 소개 및 기본 개념](01-introduction.md) | [메인 페이지](./) | [다음: 네트워킹 모드 →](03-networking-modes.md)
 
 ## 퀴즈
 
