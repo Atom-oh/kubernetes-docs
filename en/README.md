@@ -34,6 +34,17 @@ This training content provides quizzes for each topic along with the learning ma
 10. [Windows in Kubernetes](./core/10-windows-in-kubernetes.md) | [Quiz](./quizzes/core/10-windows-in-kubernetes-quiz.md)
 11. [Extending Kubernetes](./core/11-extending-kubernetes.md) | [Quiz](./quizzes/core/11-extending-kubernetes-quiz.md)
 
+### Scheduling
+1. Custom Scheduler
+   - [Part 1: Custom Scheduler Basics](./scheduling/01-custom-scheduler-part1.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+   - [Part 2: Scheduler Extensions and Framework](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+   - [Part 3: Custom Scheduler Implementation Examples and Monitoring](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+
+### Autoscaling
+1. [KEDA](./autoscaling/01-keda.md) | [Quiz](./quizzes/autoscaling/05-keda-quiz.md)
+2. [Karpenter](./autoscaling/02-karpenter.md) | [Quiz](./quizzes/autoscaling/06-karpenter-quiz.md)
+3. [Knative](./autoscaling/03-knative.md) | [Quiz](./quizzes/autoscaling/03-knative-quiz.md)
+
 ### Amazon EKS
 1. [Introduction to EKS](./eks/01-eks-introduction.md) | [Quiz](./quizzes/eks/01-eks-introduction-quiz.md)
 2. EKS Cluster Creation
@@ -163,6 +174,17 @@ This training content provides quizzes for each topic along with the learning ma
 4. [Harbor](./container-registry/03-harbor.md) | [Quiz](./quizzes/container-registry/03-harbor-quiz.md)
 5. [Container Registry Best Practices](./container-registry/04-best-practices.md) | [Quiz](./quizzes/container-registry/04-best-practices-quiz.md)
 
+### Platform Engineering
+0. [Platform Engineering Overview](./platform-engineering/00-platform-engineering-overview.md) | [Quiz](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
+1. [Helm](./platform-engineering/01-helm.md) | [Quiz](./quizzes/platform-engineering/01-helm-quiz.md)
+2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [Quiz](./quizzes/platform-engineering/02-ack-quiz.md)
+3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [Quiz](./quizzes/platform-engineering/03-kro-quiz.md)
+4. [Kubernetes Extension Mechanisms](./platform-engineering/04-kubernetes-extensions.md) | [Quiz](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+5. [ExampleCorp: ACK + KRO Integration Example](./platform-engineering/05-example-corp-app.md)
+6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [Quiz](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
+7. [Crossplane](./platform-engineering/07-crossplane.md) | [Quiz](./quizzes/platform-engineering/07-crossplane-quiz.md)
+8. [vCluster](./platform-engineering/08-vcluster.md) | [Quiz](./quizzes/platform-engineering/08-vcluster-quiz.md)
+
 ### GitOps
 1. [GitOps Overview](./gitops/README.md)
 2. **ArgoCD**
@@ -181,10 +203,21 @@ This training content provides quizzes for each topic along with the learning ma
 5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [Quiz](./quizzes/gitops/04-flagger-quiz.md)
 6. [Feature Flags and OpenFeature](./gitops/05-feature-flags.md) | [Quiz](./quizzes/gitops/05-feature-flags-quiz.md)
 
-### Autoscaling
-1. [KEDA](./autoscaling/01-keda.md) | [Quiz](./quizzes/autoscaling/05-keda-quiz.md)
-2. [Karpenter](./autoscaling/02-karpenter.md) | [Quiz](./quizzes/autoscaling/06-karpenter-quiz.md)
-3. [Knative](./autoscaling/03-knative.md) | [Quiz](./quizzes/autoscaling/03-knative-quiz.md)
+### Operations Guide
+1. [Infrastructure Setup](./ops/01-infrastructure-setup.md) | [Quiz](./quizzes/ops/01-infrastructure-setup-quiz.md)
+2. [Infrastructure Advanced](./ops/02-infrastructure-advanced.md) | [Quiz](./quizzes/ops/02-infrastructure-advanced-quiz.md)
+3. [CI Pipelines](./ops/03-ci-pipelines.md) | [Quiz](./quizzes/ops/03-ci-pipelines-quiz.md)
+4. [GitOps Multi-Cluster](./ops/04-gitops-multi-cluster.md) | [Quiz](./quizzes/ops/04-gitops-multi-cluster-quiz.md)
+5. [GitOps Automation](./ops/05-gitops-automation.md) | [Quiz](./quizzes/ops/05-gitops-automation-quiz.md)
+6. [Scaling Strategies](./ops/06-scaling-strategies.md) | [Quiz](./quizzes/ops/06-scaling-strategies-quiz.md)
+7. [Observability Alerts](./ops/07-observability-alerts.md) | [Quiz](./quizzes/ops/07-observability-alerts-quiz.md)
+8. [Observability Analysis](./ops/08-observability-analysis.md) | [Quiz](./quizzes/ops/08-observability-analysis-quiz.md)
+9. [Observability Stack](./ops/09-observability-stack.md) | [Quiz](./quizzes/ops/09-observability-stack-quiz.md)
+10. [Resource Optimization](./ops/10-resource-optimization.md) | [Quiz](./quizzes/ops/10-resource-optimization-quiz.md)
+11. [Upgrade Operations](./ops/11-upgrade-operations.md) | [Quiz](./quizzes/ops/11-upgrade-operations-quiz.md)
+12. [Event Capacity Planning Playbook](./ops/12-event-capacity-planning.md) | [Quiz](./quizzes/ops/12-event-capacity-planning-quiz.md)
+13. [FinOps Cost Visibility Platform](./ops/13-finops-cost-platform.md) | [Quiz](./quizzes/ops/13-finops-cost-platform-quiz.md)
+14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [Quiz](./quizzes/ops/14-tekton-pipelines-quiz.md)
 
 ### Observability
 1. [Observability Overview](./observability/README.md)
@@ -215,39 +248,6 @@ This training content provides quizzes for each topic along with the learning ma
    - [Grafana OnCall](./observability/alerting/03-grafana-oncall.md) | [Quiz](./quizzes/observability/alerting/03-grafana-oncall-quiz.md)
 6. [Grafana](./observability/grafana/README.md) | [Quiz](./quizzes/observability/grafana/grafana-quiz.md)
 7. [Observability Optimization Guide](./observability/09-observability-optimization.md) | [Quiz](./quizzes/observability/09-observability-optimization-quiz.md)
-
-### Scheduling
-1. Custom Scheduler
-   - [Part 1: Custom Scheduler Basics](./scheduling/01-custom-scheduler-part1.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
-   - [Part 2: Scheduler Extensions and Framework](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
-   - [Part 3: Custom Scheduler Implementation Examples and Monitoring](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
-
-### Platform Engineering
-0. [Platform Engineering Overview](./platform-engineering/00-platform-engineering-overview.md) | [Quiz](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
-1. [Helm](./platform-engineering/01-helm.md) | [Quiz](./quizzes/platform-engineering/01-helm-quiz.md)
-2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [Quiz](./quizzes/platform-engineering/02-ack-quiz.md)
-3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [Quiz](./quizzes/platform-engineering/03-kro-quiz.md)
-4. [Kubernetes Extension Mechanisms](./platform-engineering/04-kubernetes-extensions.md) | [Quiz](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
-5. [ExampleCorp: ACK + KRO Integration Example](./platform-engineering/05-example-corp-app.md)
-6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [Quiz](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
-7. [Crossplane](./platform-engineering/07-crossplane.md) | [Quiz](./quizzes/platform-engineering/07-crossplane-quiz.md)
-8. [vCluster](./platform-engineering/08-vcluster.md) | [Quiz](./quizzes/platform-engineering/08-vcluster-quiz.md)
-
-### Operations Guide
-1. [Infrastructure Setup](./ops/01-infrastructure-setup.md) | [Quiz](./quizzes/ops/01-infrastructure-setup-quiz.md)
-2. [Infrastructure Advanced](./ops/02-infrastructure-advanced.md) | [Quiz](./quizzes/ops/02-infrastructure-advanced-quiz.md)
-3. [CI Pipelines](./ops/03-ci-pipelines.md) | [Quiz](./quizzes/ops/03-ci-pipelines-quiz.md)
-4. [GitOps Multi-Cluster](./ops/04-gitops-multi-cluster.md) | [Quiz](./quizzes/ops/04-gitops-multi-cluster-quiz.md)
-5. [GitOps Automation](./ops/05-gitops-automation.md) | [Quiz](./quizzes/ops/05-gitops-automation-quiz.md)
-6. [Scaling Strategies](./ops/06-scaling-strategies.md) | [Quiz](./quizzes/ops/06-scaling-strategies-quiz.md)
-7. [Observability Alerts](./ops/07-observability-alerts.md) | [Quiz](./quizzes/ops/07-observability-alerts-quiz.md)
-8. [Observability Analysis](./ops/08-observability-analysis.md) | [Quiz](./quizzes/ops/08-observability-analysis-quiz.md)
-9. [Observability Stack](./ops/09-observability-stack.md) | [Quiz](./quizzes/ops/09-observability-stack-quiz.md)
-10. [Resource Optimization](./ops/10-resource-optimization.md) | [Quiz](./quizzes/ops/10-resource-optimization-quiz.md)
-11. [Upgrade Operations](./ops/11-upgrade-operations.md) | [Quiz](./quizzes/ops/11-upgrade-operations-quiz.md)
-12. [Event Capacity Planning Playbook](./ops/12-event-capacity-planning.md) | [Quiz](./quizzes/ops/12-event-capacity-planning-quiz.md)
-13. [FinOps Cost Visibility Platform](./ops/13-finops-cost-platform.md) | [Quiz](./quizzes/ops/13-finops-cost-platform-quiz.md)
-14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [Quiz](./quizzes/ops/14-tekton-pipelines-quiz.md)
 
 ## Lab Guides
 

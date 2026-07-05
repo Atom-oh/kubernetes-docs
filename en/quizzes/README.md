@@ -66,8 +66,12 @@ All quiz questions include answers in toggle format, so you can attempt the ques
 
 ### AI/ML
 - [AI/ML Workloads Quiz](./ai-ml/03-ai-ml-workloads-quiz.md)
+- [AI Infrastructure Quiz](./ai-ml/06-ai-infrastructure-quiz.md)
+- [Model Training Quiz](./ai-ml/05-model-training-quiz.md)
+- [Inference Frameworks Quiz](./ai-ml/04-inference-frameworks-quiz.md)
 - [vLLM Deployment Quiz](./ai-ml/04-vllm-deployment-quiz.md)
 - [Agentic AI Platform on EKS Quiz](./ai-ml/08-agentic-ai-platform-quiz.md)
+- [AI/ML Best Practices Quiz](./ai-ml/07-ai-ml-best-practices-quiz.md)
 
 ### Networking
 - [Networking Overview Quiz](./networking/00-networking-overview-quiz.md)
