@@ -1,7 +1,7 @@
 # Kubernetes Version Features and Roadmap
 
 > **Supported Versions**: Kubernetes 1.29 - 1.36
-> **Last Updated**: June 30, 2026
+> **Last Updated**: July 3, 2026
 
 Kubernetes evolves rapidly, with three releases per year introducing new features, graduating existing ones, and deprecating old APIs. For enterprise teams running Amazon EKS, understanding the version landscape is essential for planning upgrades, adopting new capabilities at the right time, and avoiding disruptions from deprecations. This document provides a comprehensive, version-by-version reference covering Kubernetes 1.29 through 1.36, with EKS-specific guidance for each release.
 
@@ -282,6 +282,40 @@ flowchart TD
 ```
 
 **Important**: Auto-upgrades only update the control plane. You must still upgrade your node groups, add-ons, and self-managed components manually. A forced control plane upgrade without corresponding node and add-on upgrades can cause workload disruptions.
+
+### Recent EKS Version Support Announcements (2026)
+
+AWS made several announcements in 2026 affecting EKS version support:
+
+| Date | Announcement | Highlights |
+|:---:|------|------|
+| 2026-06-02 | EKS & EKS Distro begin supporting Kubernetes 1.36 | User Namespaces GA, Mutating Admission Policies, In-Place Pod Vertical Scaling, Resource Health Status, EKS Cluster Insights pre-upgrade checks |
+| 2026-01-28 | EKS & EKS Distro begin supporting Kubernetes 1.35 | In-Place Pod Resource Updates, PreferSameNode Traffic Distribution, Node Topology Labels via Downward API, Image Volumes |
+
+#### Kubernetes 1.36 Support (June 2, 2026)
+
+Amazon EKS and EKS Distro began supporting Kubernetes 1.36. The announcement highlighted (see section 4.8 below for implementation detail):
+
+- **User Namespaces (GA)**: Maps the container's root user to an unprivileged host user, strengthening multi-tenant isolation
+- **Mutating Admission Policies**: CEL-based mutation with no webhook server required
+- **In-Place Pod Vertical Scaling**: Adjust CPU/memory without restarting the pod
+- **Resource Health Status**: Surfaces device health and hardware failure conditions in Pod status
+- **EKS Cluster Insights**: Pre-upgrade checks for deprecated API usage and add-on compatibility
+
+> Source: [Amazon EKS Distro now supports Kubernetes version 1.36](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-distro-kubernetes-version-1-36/)
+
+#### Kubernetes 1.35 Support (January 28, 2026)
+
+Amazon EKS and EKS Distro began supporting Kubernetes 1.35, adding:
+
+- **In-Place Pod Resource Updates** -- the same restart-free resource adjustment capability covered as In-Place Pod Vertical Scaling GA in section 4.7
+- **PreferSameNode Traffic Distribution** -- prefer routing traffic to endpoints on the same node
+- **Node Topology Labels via Downward API** -- expose node topology labels to pods
+- **Image Volumes** -- mount OCI images as volumes to deliver data and ML models
+
+> Source: [Amazon EKS Distro now supports Kubernetes version 1.35](https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-eks-distro-kubernetes-version-1-35)
+
+> **Related announcements**: EKS version rollback support (July 1, 2026) and the new control plane 99.99% SLA / 8XL scaling tier (March 20, 2026) are covered in the [EKS Upgrades](08-eks-upgrades.md) document, since they relate directly to the upgrade process rather than Kubernetes version features.
 
 ---
 
@@ -2944,6 +2978,45 @@ flowchart TD
 
     style Complete fill:#6bcb77,stroke:#333,color:black
     style CPRollback fill:#ff6b6b,stroke:#333,color:black
+```
+
+### Rollback Strategy
+
+> **Update (2026-07-01)**: Amazon EKS announced Kubernetes version rollback support. Within 7 days of an upgrade, you can roll the control plane back to the previous minor version. An automated Rollback Readiness check runs first, covering API compatibility, version skew, add-on compatibility, and cluster health. EKS Auto Mode clusters roll back automatically -- worker nodes revert on their own and the control plane is restored in sequence. There's no additional charge, and it's available in all regions. The strategy below is the fallback for cases where more than 7 days have passed or this feature isn't available. (Source: [Amazon EKS announces Kubernetes version rollback](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-version-rollback))
+
+```yaml
+# Upgrade rollback strategy
+rollback_strategy:
+
+  control_plane:
+    note: "Within 7 days: use EKS native version rollback / Beyond 7 days: blue-green cluster strategy"
+    mitigation:
+      - "Use EKS version rollback to restore the previous minor version immediately (within 7 days, no additional cost)"
+      - "Beyond 7 days, fall back to a blue/green cluster strategy established before the upgrade"
+      - "Shift traffic via Route 53 weighted routing"
+      - "Migrate workloads to the new cluster"
+
+  node_groups:
+    strategy: "Create new node group + retain previous node group"
+    steps:
+      - "Do not immediately delete the previous version's node group"
+      - "If issues arise, remove the taint from the previous node group"
+      - "Add a taint to the new node group to shift traffic"
+
+  workloads:
+    strategy: "GitOps-based rollback"
+    steps:
+      - "Roll back to the previous commit in ArgoCD/Flux"
+      - "Run a Helm rollback"
+
+  addons:
+    strategy: "Downgrade to the previous version"
+    command: |
+      aws eks update-addon \
+        --cluster-name my-cluster \
+        --addon-name vpc-cni \
+        --addon-version <previous-version> \
+        --resolve-conflicts OVERWRITE
 ```
 
 ---

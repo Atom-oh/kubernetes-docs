@@ -1,7 +1,7 @@
 # Kubernetes Gateway API
 
 > **Supported Versions**: Gateway API v1.2+
-> **Last Updated**: February 22, 2026
+> **Last Updated**: July 3, 2026
 
 ## Overview
 
@@ -856,6 +856,27 @@ spec:
 | Header Modification | Yes | Yes | Yes | Partial | Yes |
 | URL Rewrite | Yes | Yes | Yes | Partial | Yes |
 | Mirroring | Yes | Partial | Yes | No | Yes |
+
+## AWS Load Balancer Controller Gateway API Support (v3.0 GA)
+
+Starting with AWS Load Balancer Controller v3.0.0 (January 2026), Gateway API support reached GA, enabling declarative management of ALB/NLB through the GatewayClass/Gateway/HTTPRoute role-separation model.
+
+- **Background**: With NGINX Ingress Controller reaching end of support in March 2026, AWS positions LBC v3.0 + Gateway API as the native alternative.
+- **Backward compatibility**: Existing Ingress/Service resources remain fully supported — immediate cutover isn't required, and migration can happen gradually.
+- **Benefits**: Header/query-based routing, weighted traffic distribution (Blue/Green, Canary), and a multi-protocol design covering TCP/UDP/gRPC.
+- **Upgrade caution**: If you install via Helm with `enableCertManager=true`, set `keepTLSSecret=false` before upgrading (this is handled automatically from v3.0.0 onward).
+
+### v3.4.0 Migration Tooling (June 2026)
+
+Tooling was added to migrate existing ALB-based Ingress to Gateway API without downtime.
+
+- **Ingress to Gateway Migration Tool**: Creates new Gateway API resources alongside the existing ALB, enabling a zero-downtime transition
+- **lbc-migrate CLI**: Automatically converts existing Ingress annotations, routing rules, and IngressGroups into Gateway API resources; the `--from-cluster` option analyzes the cluster directly
+- **Migration Console**: A web UI for validating the converted configuration before migrating
+
+> **Caution**: Behavior changed for Gateway API + NLB combinations. If multiple TCP/UDP/TLS Routes attach to a single Listener, only the oldest Route receives traffic. Review your L4 Route configuration before upgrading.
+
+(Common source: [AWS Load Balancer Controller Releases](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases))
 
 ## Migrating from Ingress to Gateway API
 

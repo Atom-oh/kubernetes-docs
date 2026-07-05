@@ -1,4 +1,5 @@
 # Amazon EKS Storage - Part 1: Basic Concepts, EBS, EFS
+> **Last Updated**: July 3, 2026
 
 When running applications on Amazon EKS, there are various storage options for storing and managing data. This document covers the basic concepts of EKS storage and how to use Amazon EBS (Elastic Block Store) and Amazon EFS (Elastic File System).
 
@@ -69,6 +70,12 @@ In Amazon EKS, you can leverage various AWS storage services to provide storage 
    - Cannot be directly mounted as a volume, but accessible through S3 API
    - Suitable for large-scale data storage
 
+5. **EC2 Instance Store (Local NVMe)**
+   - Ephemeral local NVMe storage physically attached to the EC2 instance, offering very low latency
+   - The EC2 Instance Store CSI Driver reached general availability (GA) as an Amazon EKS add-on in May 2026, so it can now be installed and managed as a standard add-on from the EKS Console/CLI (previously required manual installation via community manifests). The driver automatically manages volume lifecycle, reducing operational overhead
+   - Suitable for AI/ML ephemeral data processing, Spark/Hadoop local caching, high-throughput log processing, and database cache tiers
+   - Cost: the driver itself is free; you only pay for the underlying EC2 instance that includes instance store ([source](https://aws.amazon.com/about-aws/whats-new/2026/05/ec2-csi-eks/))
+
 ### Storage Options Comparison
 
 | Storage Option | Type | Access Mode | Performance | Use Cases |
@@ -77,6 +84,7 @@ In Amazon EKS, you can leverage various AWS storage services to provide storage 
 | Amazon EFS | File | RWX | Medium | Shared files, web servers, CMS |
 | FSx for Lustre | File | RWX | Very High | HPC, ML training, big data |
 | Amazon S3 | Object | API Access | Medium | Backup, archive, static content |
+| EC2 Instance Store | Block (local NVMe) | RWO, ephemeral | Very High (ultra-low latency) | AI/ML ephemeral data, local caching, high-throughput log processing |
 
 ## Storage with Amazon EBS
 

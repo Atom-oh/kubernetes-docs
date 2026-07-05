@@ -1,7 +1,7 @@
 # cert-manager를 활용한 인증서 관리
 
 > **지원 버전**: cert-manager 1.16+, Kubernetes 1.31, 1.32, 1.33
-> **마지막 업데이트**: 2026년 2월 25일
+> **마지막 업데이트**: 2026년 7월 3일
 
 cert-manager는 Kubernetes 클러스터 내에서 TLS 인증서의 발급, 갱신, 폐기를 자동화하는 CNCF Graduated 프로젝트입니다. X.509 인증서의 전체 수명주기를 Kubernetes 네이티브 방식으로 관리할 수 있습니다.
 
@@ -13,11 +13,12 @@ cert-manager는 Kubernetes 클러스터 내에서 TLS 인증서의 발급, 갱�
 4. [핵심 개념](#핵심-개념)
 5. [Issuer 유형](#issuer-유형)
 6. [EKS 통합 패턴](#eks-통합-패턴)
-7. [서비스 메시 통합](#서비스-메시-통합)
-8. [trust-manager](#trust-manager)
-9. [모니터링 및 트러블슈팅](#모니터링-및-트러블슈팅)
-10. [모범 사례](#모범-사례)
-11. [요약 및 참고 자료](#요약-및-참고-자료)
+7. [AWS 네이티브 대안: ACM + ACK](#aws-네이티브-대안-acm--ack)
+8. [서비스 메시 통합](#서비스-메시-통합)
+9. [trust-manager](#trust-manager)
+10. [모니터링 및 트러블슈팅](#모니터링-및-트러블슈팅)
+11. [모범 사례](#모범-사례)
+12. [요약 및 참고 자료](#요약-및-참고-자료)
 
 ---
 
@@ -813,9 +814,11 @@ vault write auth/kubernetes/role/cert-manager-role \
 | **프라이빗 인증서** | ACM PCA (유료) | CA Issuer (무료) |
 | **와일드카드** | 지원 | DNS-01로 지원 |
 | **자동 갱신** | 자동 | 자동 |
-| **Kubernetes 네이티브** | 아니오 | 예 |
+| **Kubernetes 네이티브** | ACK 사용 시 가능 (아래 참조) | 예 |
 | **멀티 클러스터** | 리전별 관리 | GitOps로 통합 관리 |
 | **서비스 메시** | 별도 구성 필요 | istio-csr 통합 |
+
+> ACM을 Kubernetes 리소스(YAML)로 직접 정의하고 발급/갱신/Secret 생성까지 자동화하려면 [AWS 네이티브 대안: ACM + ACK](#aws-네이티브-대안-acm--ack) 절을 참고하십시오.
 
 ### ALB Ingress + ACM
 
@@ -949,6 +952,62 @@ spec:
         - name: app-service
           port: 80
 ```
+
+---
+
+## AWS 네이티브 대안: ACM + ACK
+
+### 개요
+
+2025년 12월 15일, AWS는 [AWS Certificate Manager(ACM)와 AWS Controllers for Kubernetes(ACK)를 통합](https://aws.amazon.com/about-aws/whats-new/2025/12/acm-automated-certificate-management-kubernetes)하여 Kubernetes 환경에서 인증서 발급/갱신을 자동화하는 기능을 발표했습니다. 클러스터에 ACM용 ACK 컨트롤러를 설치하면 인증서를 Kubernetes 커스텀 리소스(YAML)로 정의할 수 있고, ACK 컨트롤러가 발급 요청 → 소유권/도메인 검증 → Kubernetes Secret 생성 및 갱신까지 전체 라이프사이클을 자동으로 처리합니다.
+
+cert-manager가 Let's Encrypt 등 다양한 ACME 발급자를 지원하는 CNCF 오픈소스 솔루션인 반면, ACM+ACK 통합은 **AWS 네이티브 대안**입니다. 이미 IAM/ACM 생태계를 사용 중인 조직이라면 별도의 오픈소스 컨트롤러 운영 없이도 동일한 자동화를 얻을 수 있어 관리 부담을 줄일 수 있습니다.
+
+### 지원 인증서 유형
+
+| 유형 | 용도 |
+|------|------|
+| **ACM Exportable Public Certificates** | 퍼블릭 도메인 인증서를 Kubernetes Secret으로 내보내 Pod/Ingress에서 직접 사용 |
+| **AWS Private CA** | 내부 서비스, 서비스 메시(Istio, Linkerd) mTLS 등 프라이빗 PKI가 필요한 워크로드 |
+
+### 적용 시나리오
+
+- 애플리케이션 Pod에서 직접 TLS 종료 (NGINX, 커스텀 애플리케이션)
+- 서비스 메시(Istio, Linkerd) 워크로드 인증서
+- 서드파티 Ingress Controller(NGINX Ingress, Traefik) 등 ALB/NLB 네이티브 인증서 통합을 쓰지 않는 환경
+- 멀티 클러스터/하이브리드 환경에서 인증서를 일관되게 관리해야 하는 경우
+
+### 예시: ACK를 통한 Certificate 리소스 정의
+
+```yaml
+apiVersion: acm.services.k8s.aws/v1alpha1
+kind: Certificate
+metadata:
+  name: example-com-tls
+  namespace: default
+spec:
+  domainName: example.com
+  subjectAlternativeNames:
+    - "*.example.com"
+  validationMethod: DNS
+  tags:
+    - key: managed-by
+      value: ack
+```
+
+ACK 컨트롤러가 이 리소스를 감시하여 ACM에 인증서를 요청하고, 발급이 완료되면 Kubernetes Secret을 생성/갱신합니다. 실제 필드명과 Secret 내보내기 방식은 ACM ACK 컨트롤러 버전에 따라 달라질 수 있으므로 설치 전 공식 문서를 확인하십시오.
+
+### cert-manager와 비교
+
+| 항목 | cert-manager | ACM + ACK |
+|------|--------------|-----------|
+| **발급자** | Let's Encrypt, Vault, AWS PCA 등 다양 | ACM(퍼블릭), AWS Private CA |
+| **생태계** | CNCF 오픈소스, 벤더 중립 | AWS 네이티브, IAM 기반 권한 관리 |
+| **설치 대상** | cert-manager 컨트롤러 | ACM용 ACK 서비스 컨트롤러 |
+| **비용** | 무료 (인프라 비용만) | ACM/AWS Private CA 기존 요금 그대로, Kubernetes 연동 자체는 추가 비용 없음 |
+| **적합한 조직** | 멀티 클라우드, ACME 발급자가 필요한 조직 | 이미 ACM/IAM 생태계를 사용 중인 AWS 중심 조직 |
+
+두 방식은 상호 배타적이지 않습니다. 예를 들어 퍼블릭 도메인 인증서는 ACM+ACK로, 내부 mTLS 인증서는 cert-manager+AWS PCA Issuer로 관리하는 등 혼용도 가능합니다.
 
 ---
 
@@ -1518,6 +1577,7 @@ spec:
 **AWS 관련:**
 - [AWS PCA Issuer](https://github.com/cert-manager/aws-privateca-issuer)
 - [EKS Workshop - cert-manager](https://www.eksworkshop.com/docs/security/cert-manager/)
+- [ACM 자동 인증서 관리 for Kubernetes (2025-12-15)](https://aws.amazon.com/about-aws/whats-new/2025/12/acm-automated-certificate-management-kubernetes)
 
 **Let's Encrypt:**
 - [Let's Encrypt 문서](https://letsencrypt.org/docs/)

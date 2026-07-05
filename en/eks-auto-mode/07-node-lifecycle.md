@@ -1,7 +1,7 @@
 # Node Lifecycle Management
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 19, 2026
+> **Last Updated**: July 3, 2026
 
 This guide covers node lifecycle management in EKS Auto Mode, including expiration policies, AMI management, drift detection, and node freshness monitoring.
 
@@ -41,14 +41,20 @@ spec:
 4. Workloads migrated respecting PDBs
 5. Old node drained and terminated
 
+### Auto Mode's 21-Day Maximum Node Lifetime
+
+EKS Auto Mode uses the Karpenter-based `expireAfter` default, and nodes are automatically replaced once they reach a maximum age of **21 days (504h)** after creation. You can set `expireAfter` shorter than 21 days for more frequent replacement, but setting it longer than 21 days has no effect — Auto Mode enforces 21 days as the hard ceiling. Unlike managed node groups or self-managed Karpenter, nodes cannot be kept indefinitely.
+
+If you run workloads that hold state for extended periods (services with long cache warm-up times, stateful workloads relying on local storage, etc.), plan Pod rescheduling and data rebalancing procedures around this 21-day ceiling in advance.
+
 ### Recommended expireAfter Values
 
 | Use Case | expireAfter | Rationale |
 |----------|-------------|-----------|
 | **Security-critical** | 24h - 72h | Frequent patching, compliance requirements |
 | **Standard production** | 168h (7 days) | Balance between freshness and stability |
-| **Cost-sensitive** | 336h (14 days) | Minimize replacement overhead |
-| **Development/Test** | 720h (30 days) | Maximize node reuse, reduce churn |
+| **Cost-sensitive** | 336h (14 days) | Minimize replacement overhead (within the 21-day ceiling) |
+| **Development/Test** | 504h (21 days, maximum) | Maximize node reuse; this is the enforced upper bound |
 | **Compliance (PCI/HIPAA)** | 72h - 168h | Meet audit requirements |
 
 ### expireAfter Configuration Examples

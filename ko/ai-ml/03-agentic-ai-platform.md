@@ -2084,8 +2084,8 @@ Agentic AI 플랫폼에 대한 이해도를 확인하려면 다음 퀴즈를 풀
 
 ### 관련 문서
 
-- [vLLM 배포 상세 가이드](./04-vllm-deployment.md) - vLLM 설치 및 최적화에 대한 상세 내용
-- [AI/ML 워크로드](./03-ai-ml-workloads.md) - Kubernetes에서의 AI/ML 워크로드 관리
+- [vLLM 배포 상세 가이드](./02-vllm-deployment.md) - vLLM 설치 및 최적화에 대한 상세 내용
+- [AI/ML 워크로드](./01-ai-ml-workloads.md) - Kubernetes에서의 AI/ML 워크로드 관리
 
 ### 참고 자료
 

@@ -1,7 +1,7 @@
 # Amazon EKS 보안
 
 > **지원 버전**: Amazon EKS 1.31, 1.32, 1.33  
-> **마지막 업데이트**: 2026년 2월 19일
+> **마지막 업데이트**: 2026년 7월 3일
 
 Amazon EKS(Elastic Kubernetes Service)에서 워크로드를 안전하게 실행하기 위해서는 다양한 보안 계층과 모범 사례를 이해하고 구현해야 합니다. 이 문서에서는 EKS 클러스터의 보안을 강화하기 위한 주요 개념, 구성 요소 및 모범 사례를 다룹니다.
 
@@ -796,6 +796,52 @@ eksctl create cluster -f cluster-config.yaml
 kubectl cluster-info
 ```
 
+### Customer-Routed Control Plane Egress (2026년 6월)
+
+> **발표일**: 2026년 6월 18일 · [출처](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-customer-routed-control-plane-egress/)
+
+기존에는 EKS Kubernetes API 서버가 외부(Admission Webhook, Private OIDC Provider, Aggregated API Server 등)와 통신할 때 AWS가 관리하는 경로로 egress 트래픽이 나갔습니다. Customer-Routed Control Plane Egress를 사용하면 이 egress 트래픽을 AWS 대신 고객의 VPC로 직접 라우팅할 수 있습니다.
+
+**지원 대상 트래픽**:
+- OPA/Gatekeeper, Kyverno 등 Admission Webhook 호출
+- Private OIDC Provider 접근
+- Aggregated API Server(예: Metrics Server, 커스텀 API) 접근
+
+**핵심 특징**:
+- 컨트롤 플레인 egress가 고객 VPC를 경유하므로 데이터 경계(Data Perimeter)를 구현하고 트래픽을 VPC 내에서 모니터링/검사할 수 있음
+- `eks:controlPlaneEgressMode` IAM 조건 키를 SCP에 사용하여 조직 전체에 강제 적용 가능
+- 기존 클러스터에도 적용 가능하며 추가 비용 없음, 모든 리전에서 사용 가능
+
+```bash
+# 클러스터에 고객 라우팅 컨트롤 플레인 egress 활성화
+aws eks update-cluster-config \
+  --name my-cluster \
+  --resources-vpc-config controlPlaneEgressMode=CUSTOMER_ROUTED
+```
+
+```json
+// SCP 예시: 고객 라우팅 egress 모드를 강제 적용
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "RequireCustomerRoutedControlPlaneEgress",
+      "Effect": "Deny",
+      "Action": [
+        "eks:CreateCluster",
+        "eks:UpdateClusterConfig"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "eks:controlPlaneEgressMode": "CUSTOMER_ROUTED"
+        }
+      }
+    }
+  ]
+}
+```
+
 ## 네트워크 보안
 
 ### 보안 그룹
@@ -1504,6 +1550,69 @@ aws iam put-role-permissions-boundary \
   --permissions-boundary arn:aws:iam::123456789012:policy/PodPermissionBoundary
 ```
 
+### 신규 IAM Condition Key 7종을 통한 사전 통제 (2026년 4월)
+
+> **발표일**: 2026년 4월 20일 · [출처](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-iam-condition-keys/)
+
+Amazon EKS는 클러스터를 생성하거나 업데이트하는 시점에 정책 기반으로 사전에 통제(Proactive Governance)할 수 있는 IAM 조건 키 7종을 새롭게 제공합니다. `CreateCluster`, `UpdateClusterConfig`, `UpdateClusterVersion`, `AssociateEncryptionConfig` API에 조건을 걸어 AWS Organizations SCP와 통합할 수 있습니다.
+
+| 조건 키 | 용도 |
+|---------|------|
+| `eks:endpointPublicAccess` / `eks:endpointPrivateAccess` | Private Endpoint 사용을 강제 |
+| `eks:encryptionConfigProviderKeyArns` | KMS를 통한 시크릿 암호화를 필수화 |
+| `eks:kubernetesVersion` | 허용된 Kubernetes 버전으로 클러스터 생성/업그레이드 제한 |
+| `eks:controlPlaneScalingTier` | 컨트롤 플레인 스케일링 티어 제한 |
+| `eks:deletionProtection` | 클러스터 삭제 보호 강제 |
+| `eks:zonalShiftEnabled` | Zonal Shift 활성화 여부 통제 |
+
+```json
+// SCP 예시: Private Endpoint와 KMS 암호화를 강제
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "RequirePrivateEndpointAndKmsEncryption",
+      "Effect": "Deny",
+      "Action": [
+        "eks:CreateCluster",
+        "eks:UpdateClusterConfig"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "Bool": {
+          "eks:endpointPublicAccess": "true"
+        }
+      }
+    },
+    {
+      "Sid": "RequireEncryptionConfig",
+      "Effect": "Deny",
+      "Action": "eks:CreateCluster",
+      "Resource": "*",
+      "Condition": {
+        "Null": {
+          "eks:encryptionConfigProviderKeyArns": "true"
+        }
+      }
+    },
+    {
+      "Sid": "RestrictKubernetesVersion",
+      "Effect": "Deny",
+      "Action": [
+        "eks:CreateCluster",
+        "eks:UpdateClusterVersion"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "eks:kubernetesVersion": ["1.32", "1.33"]
+        }
+      }
+    }
+  ]
+}
+```
+
 ## 암호화 및 비밀 관리
 
 ### EKS 암호화 옵션
@@ -1982,6 +2091,8 @@ Amazon EKS의 보안은 여러 계층에 걸친 방어 전략을 통해 구현�
 - [CIS Kubernetes Benchmark](https://www.cisecurity.org/benchmark/kubernetes)
 - [AWS Security Hub](https://aws.amazon.com/security-hub/)
 - [Amazon GuardDuty](https://aws.amazon.com/guardduty/)
+- [Amazon EKS Customer-Routed Control Plane Egress (2026-06-18)](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-customer-routed-control-plane-egress/)
+- [Amazon EKS 신규 IAM Condition Key 7종 (2026-04-20)](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-iam-condition-keys/)
 
 ## 퀴즈
 

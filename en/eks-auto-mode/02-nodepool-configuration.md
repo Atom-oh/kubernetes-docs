@@ -1,7 +1,7 @@
 # NodePool Configuration and Optimization
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 19, 2026
+> **Last Updated**: July 3, 2026
 
 This guide covers the default NodePools provided by EKS Auto Mode and how to create custom NodePools tailored to your workload requirements.
 
@@ -246,6 +246,56 @@ spec:
     Environment: production
     ManagedBy: eks-auto-mode
 ```
+
+### Extended Security and Networking Fields
+
+NodeClass supports additional fields for full-disk encryption, custom CA trust chains, and Pod traffic isolation.
+
+```yaml
+# secure-network-nodeclass.yaml
+apiVersion: eks.amazonaws.com/v1
+kind: NodeClass
+metadata:
+  name: secure-network-nodeclass
+spec:
+  amiFamily: AL2023
+
+  # Encrypt ephemeral instance storage + root EBS volume with a customer-managed KMS key
+  # (no custom AMI required)
+  kmsKeyID: arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
+
+  # Custom CA certificate bundle for enterprise PKI/proxy trust chains
+  certificateBundles:
+    - name: corporate-ca
+      content: |
+        -----BEGIN CERTIFICATE-----
+        MIIDXTCCAkWgAwIBAgIJAK...
+        -----END CERTIFICATE-----
+
+  # Separate infrastructure traffic from application Pod traffic using
+  # dedicated subnets/security groups (secondary ENI)
+  subnetSelectorTerms:
+    - tags:
+        kubernetes.io/role/internal-elb: "1"
+  securityGroupSelectorTerms:
+    - tags:
+        kubernetes.io/cluster/my-cluster: owned
+  podSubnetSelectorTerms:
+    - tags:
+        Purpose: pod-network
+  podSecurityGroupSelectorTerms:
+    - tags:
+        Purpose: pod-network
+```
+
+| Field | Description |
+|-------|--------------|
+| `kmsKeyID` | Customer-managed KMS key ARN. Encrypts ephemeral instance storage and the root EBS volume |
+| `certificateBundles` | List of custom CA certificate bundles. Used for enterprise proxy/PKI trust chains |
+| `podSubnetSelectorTerms` | Dedicated subnet for Pod traffic, isolated via a secondary ENI |
+| `podSecurityGroupSelectorTerms` | Dedicated security group for Pod traffic, isolated via a secondary ENI |
+
+With `podSubnetSelectorTerms`/`podSecurityGroupSelectorTerms` configured, node infrastructure traffic (kubelet, control plane communication, etc.) and Pod-originated application traffic use separate subnets and security groups, so you can design security group rules and network ACLs independently per traffic type.
 
 ---
 

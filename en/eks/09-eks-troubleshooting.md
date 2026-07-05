@@ -1,5 +1,7 @@
 # Amazon EKS Troubleshooting
 
+> **Last Updated**: July 3, 2026
+
 When operating Amazon EKS clusters, various issues can arise. This document provides common problems that can occur in EKS clusters and their solutions.
 
 ## Table of Contents
@@ -505,6 +507,10 @@ aws ec2 create-vpc-endpoint \
   --subnet-ids <subnet-id-1> <subnet-id-2> \
   --security-group-ids <security-group-id>
 ```
+
+5. **Use One-Click Cluster Access via CloudShell** (released April 30, 2026):
+
+When local kubeconfig setup or network access issues are blocking cluster access, the EKS console offers a direct alternative. Clicking **Connect** on the cluster list automatically launches AWS CloudShell with kubectl pre-configured for that cluster, so you can start troubleshooting from the browser immediately — no local kubectl install, AWS CLI credential setup, or kubeconfig configuration required. It supports clusters with either public or private API endpoints, is available in all regions, and incurs no additional cost beyond existing CloudShell/EKS charges. (Source: [Amazon EKS one-click cluster access](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-one-click-cluster-access/))
 
 ### Cluster Deletion Issues
 

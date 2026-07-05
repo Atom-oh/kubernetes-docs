@@ -34,6 +34,17 @@
 10. [Windows in Kubernetes](./core/10-windows-in-kubernetes.md) | [퀴즈](./quizzes/core/10-windows-in-kubernetes-quiz.md)
 11. [Kubernetes 확장](./core/11-extending-kubernetes.md) | [퀴즈](./quizzes/core/11-extending-kubernetes-quiz.md)
 
+### Scheduling
+1. Custom Scheduler
+   - [Part 1: Custom Scheduler 기초](./scheduling/01-custom-scheduler-part1.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+   - [Part 2: 스케줄러 확장 및 프레임워크](./scheduling/02-custom-scheduler-part2.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+   - [Part 3: 커스텀 스케줄러 구현 사례 및 모니터링](./scheduling/03-custom-scheduler-part3.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+
+### Autoscaling
+1. [KEDA](./autoscaling/01-keda.md) | [퀴즈](./quizzes/autoscaling/05-keda-quiz.md)
+2. [Karpenter](./autoscaling/02-karpenter.md) | [퀴즈](./quizzes/autoscaling/06-karpenter-quiz.md)
+3. [Knative](./autoscaling/03-knative.md) | [퀴즈](./quizzes/autoscaling/03-knative-quiz.md)
+
 ### Amazon EKS
 1. [EKS 소개](./eks/01-eks-introduction.md) | [퀴즈](./quizzes/eks/01-eks-introduction-quiz.md)
 2. EKS 클러스터 생성
@@ -163,6 +174,17 @@
 4. [Harbor](./container-registry/03-harbor.md) | [퀴즈](./quizzes/container-registry/03-harbor-quiz.md)
 5. [컨테이너 레지스트리 모범 사례](./container-registry/04-best-practices.md) | [퀴즈](./quizzes/container-registry/04-best-practices-quiz.md)
 
+### Platform Engineering
+0. [Platform Engineering 개요](./platform-engineering/00-platform-engineering-overview.md) | [퀴즈](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
+1. [Helm](./platform-engineering/01-helm.md) | [퀴즈](./quizzes/platform-engineering/01-helm-quiz.md)
+2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [퀴즈](./quizzes/platform-engineering/02-ack-quiz.md)
+3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [퀴즈](./quizzes/platform-engineering/03-kro-quiz.md)
+4. [Kubernetes 확장 메커니즘](./platform-engineering/04-kubernetes-extensions.md) | [퀴즈](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+5. [ExampleCorp: ACK + KRO 통합 예제](./platform-engineering/05-example-corp-app.md)
+6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [퀴즈](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
+7. [Crossplane](./platform-engineering/07-crossplane.md) | [퀴즈](./quizzes/platform-engineering/07-crossplane-quiz.md)
+8. [vCluster](./platform-engineering/08-vcluster.md) | [퀴즈](./quizzes/platform-engineering/08-vcluster-quiz.md)
+
 ### GitOps
 1. [GitOps 개요](./gitops/README.md)
 2. **ArgoCD**
@@ -181,10 +203,21 @@
 5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [퀴즈](./quizzes/gitops/04-flagger-quiz.md)
 6. [Feature Flags와 OpenFeature](./gitops/05-feature-flags.md) | [퀴즈](./quizzes/gitops/05-feature-flags-quiz.md)
 
-### Autoscaling
-1. [KEDA](./autoscaling/01-keda.md) | [퀴즈](./quizzes/autoscaling/05-keda-quiz.md)
-2. [Karpenter](./autoscaling/02-karpenter.md) | [퀴즈](./quizzes/autoscaling/06-karpenter-quiz.md)
-3. [Knative](./autoscaling/03-knative.md) | [퀴즈](./quizzes/autoscaling/03-knative-quiz.md)
+### 운영 가이드
+1. [인프라 구성 기초](./ops/01-infrastructure-setup.md) | [퀴즈](./quizzes/ops/01-infrastructure-setup-quiz.md)
+2. [인프라 구성 고급](./ops/02-infrastructure-advanced.md) | [퀴즈](./quizzes/ops/02-infrastructure-advanced-quiz.md)
+3. [CI 파이프라인 구성](./ops/03-ci-pipelines.md) | [퀴즈](./quizzes/ops/03-ci-pipelines-quiz.md)
+4. [GitOps 멀티 클러스터](./ops/04-gitops-multi-cluster.md) | [퀴즈](./quizzes/ops/04-gitops-multi-cluster-quiz.md)
+5. [GitOps 자동화](./ops/05-gitops-automation.md) | [퀴즈](./quizzes/ops/05-gitops-automation-quiz.md)
+6. [스케일링 전략](./ops/06-scaling-strategies.md) | [퀴즈](./quizzes/ops/06-scaling-strategies-quiz.md)
+7. [Observability 알림 설정](./ops/07-observability-alerts.md) | [퀴즈](./quizzes/ops/07-observability-alerts-quiz.md)
+8. [Observability 분석 방법](./ops/08-observability-analysis.md) | [퀴즈](./quizzes/ops/08-observability-analysis-quiz.md)
+9. [Observability 스택 구성](./ops/09-observability-stack.md) | [퀴즈](./quizzes/ops/09-observability-stack-quiz.md)
+10. [리소스 최적화](./ops/10-resource-optimization.md) | [퀴즈](./quizzes/ops/10-resource-optimization-quiz.md)
+11. [EKS 업그레이드 운영](./ops/11-upgrade-operations.md) | [퀴즈](./quizzes/ops/11-upgrade-operations-quiz.md)
+12. [이벤트 용량 계획 플레이북](./ops/12-event-capacity-planning.md) | [퀴즈](./quizzes/ops/12-event-capacity-planning-quiz.md)
+13. [FinOps 비용 가시성 플랫폼](./ops/13-finops-cost-platform.md) | [퀴즈](./quizzes/ops/13-finops-cost-platform-quiz.md)
+14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [퀴즈](./quizzes/ops/14-tekton-pipelines-quiz.md)
 
 ### Observability
 1. [Observability 개요](./observability/README.md)
@@ -215,39 +248,6 @@
    - [Grafana OnCall](./observability/alerting/03-grafana-oncall.md) | [퀴즈](./quizzes/observability/alerting/03-grafana-oncall-quiz.md)
 6. [Grafana](./observability/grafana/README.md) | [퀴즈](./quizzes/observability/grafana/grafana-quiz.md)
 7. [관측성 최적화 가이드](./observability/09-observability-optimization.md) | [퀴즈](./quizzes/observability/09-observability-optimization-quiz.md)
-
-### Scheduling
-1. Custom Scheduler
-   - [Part 1: Custom Scheduler 기초](./scheduling/01-custom-scheduler-part1.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
-   - [Part 2: 스케줄러 확장 및 프레임워크](./scheduling/02-custom-scheduler-part2.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
-   - [Part 3: 커스텀 스케줄러 구현 사례 및 모니터링](./scheduling/03-custom-scheduler-part3.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
-
-### Platform Engineering
-0. [Platform Engineering 개요](./platform-engineering/00-platform-engineering-overview.md) | [퀴즈](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
-1. [Helm](./platform-engineering/01-helm.md) | [퀴즈](./quizzes/platform-engineering/01-helm-quiz.md)
-2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [퀴즈](./quizzes/platform-engineering/02-ack-quiz.md)
-3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [퀴즈](./quizzes/platform-engineering/03-kro-quiz.md)
-4. [Kubernetes 확장 메커니즘](./platform-engineering/04-kubernetes-extensions.md) | [퀴즈](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
-5. [ExampleCorp: ACK + KRO 통합 예제](./platform-engineering/05-example-corp-app.md)
-6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [퀴즈](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
-7. [Crossplane](./platform-engineering/07-crossplane.md) | [퀴즈](./quizzes/platform-engineering/07-crossplane-quiz.md)
-8. [vCluster](./platform-engineering/08-vcluster.md) | [퀴즈](./quizzes/platform-engineering/08-vcluster-quiz.md)
-
-### 운영 가이드
-1. [인프라 구성 기초](./ops/01-infrastructure-setup.md) | [퀴즈](./quizzes/ops/01-infrastructure-setup-quiz.md)
-2. [인프라 구성 고급](./ops/02-infrastructure-advanced.md) | [퀴즈](./quizzes/ops/02-infrastructure-advanced-quiz.md)
-3. [CI 파이프라인 구성](./ops/03-ci-pipelines.md) | [퀴즈](./quizzes/ops/03-ci-pipelines-quiz.md)
-4. [GitOps 멀티 클러스터](./ops/04-gitops-multi-cluster.md) | [퀴즈](./quizzes/ops/04-gitops-multi-cluster-quiz.md)
-5. [GitOps 자동화](./ops/05-gitops-automation.md) | [퀴즈](./quizzes/ops/05-gitops-automation-quiz.md)
-6. [스케일링 전략](./ops/06-scaling-strategies.md) | [퀴즈](./quizzes/ops/06-scaling-strategies-quiz.md)
-7. [Observability 알림 설정](./ops/07-observability-alerts.md) | [퀴즈](./quizzes/ops/07-observability-alerts-quiz.md)
-8. [Observability 분석 방법](./ops/08-observability-analysis.md) | [퀴즈](./quizzes/ops/08-observability-analysis-quiz.md)
-9. [Observability 스택 구성](./ops/09-observability-stack.md) | [퀴즈](./quizzes/ops/09-observability-stack-quiz.md)
-10. [리소스 최적화](./ops/10-resource-optimization.md) | [퀴즈](./quizzes/ops/10-resource-optimization-quiz.md)
-11. [EKS 업그레이드 운영](./ops/11-upgrade-operations.md) | [퀴즈](./quizzes/ops/11-upgrade-operations-quiz.md)
-12. [이벤트 용량 계획 플레이북](./ops/12-event-capacity-planning.md) | [퀴즈](./quizzes/ops/12-event-capacity-planning-quiz.md)
-13. [FinOps 비용 가시성 플랫폼](./ops/13-finops-cost-platform.md) | [퀴즈](./quizzes/ops/13-finops-cost-platform-quiz.md)
-14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [퀴즈](./quizzes/ops/14-tekton-pipelines-quiz.md)
 
 ## 실습 가이드
 

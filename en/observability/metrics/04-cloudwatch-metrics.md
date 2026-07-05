@@ -1,6 +1,6 @@
 # CloudWatch Metrics
 
-> **Last Updated**: February 20, 2026
+> **Last Updated**: July 3, 2026
 
 ## Table of Contents
 
@@ -141,6 +141,23 @@ eksctl utils update-cluster-logging \
   --enable-types all \
   --approve
 ```
+
+### OpenTelemetry-based Container Insights (Preview)
+
+CloudWatch is previewing an OpenTelemetry (OTLP)-based successor to Container Insights for EKS, announced April 2, 2026. It runs alongside the classic CloudWatch Agent-based Container Insights described above, so you can adopt it incrementally per cluster rather than cutting over all at once.
+
+Compared to the classic agent-based collection:
+
+- **Broader metric collection** via OTLP instead of the CloudWatch Agent's fixed metric set
+- **High-cardinality filtering** — up to 150 labels per metric, useful for per-pod or per-namespace breakdowns that the classic dimension model can't cheaply express
+- **PromQL support in CloudWatch Query Studio** — query OTel-collected metrics with PromQL directly, without standing up a separate Prometheus or Amazon Managed Service for Prometheus workspace
+- **Automatic accelerator detection** — NVIDIA GPUs, EFA, and AWS Trainium/Inferentia devices are detected automatically, which matters for AI/ML workload observability (see the [AI/ML lecture track](../../ai-ml/) for related GPU workload content)
+
+Preview regions: US East (N. Virginia), US West (Oregon), Asia Pacific (Sydney), Asia Pacific (Singapore), and Europe (Ireland).
+
+> Reference: [CloudWatch OTel-based Container Insights for EKS (Preview)](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
+
+For how this relates to the `amazon-cloudwatch-observability` EKS add-on and Application Signals, see [EKS Monitoring and Logging](../../eks/06-eks-monitoring-logging.md#cloudwatch-observability-add-on-500).
 
 ## CloudWatch Agent Configuration
 

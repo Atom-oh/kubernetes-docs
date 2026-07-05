@@ -26,6 +26,19 @@
 * [Windows in Kubernetes](core/10-windows-in-kubernetes.md)
 * [Extending Kubernetes](core/11-extending-kubernetes.md)
 
+## Scheduling
+
+* [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
+    * [Part 1: Basic Concepts](scheduling/01-custom-scheduler-part1.md)
+    * [Part 2: Implementation](scheduling/02-custom-scheduler-part2.md)
+    * [Part 3: Advanced Features](scheduling/03-custom-scheduler-part3.md)
+
+## Autoscaling
+
+* [KEDA](autoscaling/01-keda.md)
+* [Karpenter](autoscaling/02-karpenter.md)
+* [Knative](autoscaling/03-knative.md)
+
 ## Amazon EKS
 
 * [Introduction to EKS](eks/01-eks-introduction.md)
@@ -218,6 +231,24 @@
 * [Crossplane](platform-engineering/07-crossplane.md)
 * [vCluster](platform-engineering/08-vcluster.md)
 
+## GitOps
+
+* [GitOps](gitops/README.md)
+    * [ArgoCD](gitops/argocd/README.md)
+        * [Installation](gitops/argocd/01-installation.md)
+        * [Applications](gitops/argocd/02-applications.md)
+        * [Sync Strategies](gitops/argocd/03-sync-strategies.md)
+        * [ApplicationSets](gitops/argocd/04-applicationsets.md)
+        * [Traffic Management](gitops/argocd/05-traffic-management.md)
+        * [Projects & RBAC](gitops/argocd/06-projects-rbac.md)
+        * [Security](gitops/argocd/07-security.md)
+        * [Notifications](gitops/argocd/08-notifications.md)
+        * [Best Practices](gitops/argocd/09-best-practices.md)
+    * [FluxCD](gitops/02-fluxcd.md)
+    * [GitOps Tools Comparison](gitops/03-gitops-comparison.md)
+    * [Flagger Progressive Delivery](gitops/04-flagger.md)
+    * [Feature Flags and OpenFeature](gitops/05-feature-flags.md)
+
 ## Operations Guide
 
 * [Operations Guide](ops/README.md)
@@ -263,37 +294,6 @@
     * [Grafana](observability/grafana/README.md)
 * [Observability Optimization Guide](observability/09-observability-optimization.md)
 
-## Scheduling
-
-* [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
-    * [Part 1: Basic Concepts](scheduling/01-custom-scheduler-part1.md)
-    * [Part 2: Implementation](scheduling/02-custom-scheduler-part2.md)
-    * [Part 3: Advanced Features](scheduling/03-custom-scheduler-part3.md)
-
-## Autoscaling
-
-* [KEDA](autoscaling/01-keda.md)
-* [Karpenter](autoscaling/02-karpenter.md)
-* [Knative](autoscaling/03-knative.md)
-
-## GitOps
-
-* [GitOps](gitops/README.md)
-    * [ArgoCD](gitops/argocd/README.md)
-        * [Installation](gitops/argocd/01-installation.md)
-        * [Applications](gitops/argocd/02-applications.md)
-        * [Sync Strategies](gitops/argocd/03-sync-strategies.md)
-        * [ApplicationSets](gitops/argocd/04-applicationsets.md)
-        * [Traffic Management](gitops/argocd/05-traffic-management.md)
-        * [Projects & RBAC](gitops/argocd/06-projects-rbac.md)
-        * [Security](gitops/argocd/07-security.md)
-        * [Notifications](gitops/argocd/08-notifications.md)
-        * [Best Practices](gitops/argocd/09-best-practices.md)
-    * [FluxCD](gitops/02-fluxcd.md)
-    * [GitOps Tools Comparison](gitops/03-gitops-comparison.md)
-    * [Flagger Progressive Delivery](gitops/04-flagger.md)
-    * [Feature Flags and OpenFeature](gitops/05-feature-flags.md)
-
 ## Lab Guides
 
 * [Lab Guides Introduction](labs/README.md)
@@ -332,6 +332,17 @@
     * [Cluster Administration Quiz](quizzes/core/09-cluster-administration-quiz.md)
     * [Windows in Kubernetes Quiz](quizzes/core/10-windows-in-kubernetes-quiz.md)
     * [Extending Kubernetes Quiz](quizzes/core/11-extending-kubernetes-quiz.md)
+
+* Scheduling
+    * [Custom Scheduler Quiz - Part 1](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+    * [Custom Scheduler Quiz - Part 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+    * [Custom Scheduler Quiz - Part 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+
+* Autoscaling
+    * [KEDA Quiz](quizzes/autoscaling/05-keda-quiz.md)
+    * [Karpenter Quiz](quizzes/autoscaling/06-karpenter-quiz.md)
+    * [Knative Quiz](quizzes/autoscaling/03-knative-quiz.md)
+
 * Amazon EKS
     * [Introduction to EKS Quiz](quizzes/eks/01-eks-introduction-quiz.md)
     * [EKS Cluster Creation Quiz - Part 1](quizzes/eks/02-eks-cluster-creation-part1-quiz.md)
@@ -474,11 +485,6 @@
     * [Flagger Progressive Delivery Quiz](quizzes/gitops/04-flagger-quiz.md)
     * [Feature Flags and OpenFeature Quiz](quizzes/gitops/05-feature-flags-quiz.md)
 
-* Autoscaling
-    * [KEDA Quiz](quizzes/autoscaling/05-keda-quiz.md)
-    * [Karpenter Quiz](quizzes/autoscaling/06-karpenter-quiz.md)
-    * [Knative Quiz](quizzes/autoscaling/03-knative-quiz.md)
-
 * Observability
     * Metrics
         * [Metrics Overview Quiz](quizzes/observability/metrics/00-metrics-overview-quiz.md)
@@ -511,11 +517,6 @@
         * [Load Testing and Autoscaling Quiz](quizzes/observability/labs/04-load-testing-scaling-quiz.md)
         * [Alerting and AIOps Quiz](quizzes/observability/labs/05-alerting-aiops-quiz.md)
         * [Distributed Tracing Analysis Quiz](quizzes/observability/labs/06-distributed-tracing-quiz.md)
-
-* Scheduling
-    * [Custom Scheduler Quiz - Part 1](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
-    * [Custom Scheduler Quiz - Part 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
-    * [Custom Scheduler Quiz - Part 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
 * Platform Engineering
     * [Platform Engineering Overview Quiz](quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)

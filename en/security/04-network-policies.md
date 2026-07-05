@@ -1,7 +1,7 @@
 # Network Policies
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 22, 2026
+> **Last Updated**: July 3, 2026
 
 Kubernetes Network Policies are firewall rules that control traffic between Pods. This document covers everything from basic NetworkPolicy to Cilium and Calico extensions.
 
@@ -1417,6 +1417,67 @@ kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master
 kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml
 ```
 
+### EKS Enhanced Network Security Policies (December 2025)
+
+> **Announced**: December 15, 2025 · [Source](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
+
+EKS added two capabilities on top of namespace-scoped `NetworkPolicy`:
+
+- **ClusterNetworkPolicy**: A new resource that lets you apply a consistent network policy across the entire cluster from a central place, instead of managing policies namespace by namespace.
+- **DNS (FQDN)-based egress control**: Allows or blocks egress traffic based on domain name instead of destination IP. This is more reliable than IP-based `ipBlock` rules for targets whose IPs change frequently, such as SaaS APIs or external endpoints.
+
+**Requirements**:
+- Available on new Kubernetes 1.29+ clusters
+- `ClusterNetworkPolicy` supports all launch modes on VPC CNI v1.21.0+
+- DNS-based policies are supported only on **EC2 nodes created by EKS Auto Mode**
+- No additional cost
+
+```yaml
+# ClusterNetworkPolicy example: cluster-wide default deny + allow DNS
+apiVersion: policy.networking.k8s.io/v1alpha1
+kind: ClusterNetworkPolicy
+metadata:
+  name: cluster-default-deny
+spec:
+  priority: 100
+  subject:
+    namespaces: {}
+  egress:
+    - name: allow-dns
+      action: Allow
+      to:
+        - namespaces:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+```
+
+```yaml
+# DNS (FQDN)-based egress policy example: allow only specific SaaS domains
+apiVersion: policy.networking.k8s.io/v1alpha1
+kind: ClusterNetworkPolicy
+metadata:
+  name: allow-saas-fqdn-egress
+spec:
+  priority: 200
+  subject:
+    namespaces:
+      matchLabels:
+        team: payments
+  egress:
+    - name: allow-external-api
+      action: Allow
+      to:
+        - fqdns:
+            - "api.stripe.com"
+            - "*.datadoghq.com"
+      ports:
+        - protocol: TCP
+          port: 443
+```
+
 ### Security Groups for Pods
 
 In EKS, you can apply Security Groups directly to Pods:
@@ -1695,7 +1756,7 @@ Kubernetes Network Policies are a core security mechanism for controlling Pod co
 1. **Basic NetworkPolicy**: Namespace-scoped, supports podSelector/namespaceSelector/ipBlock
 2. **Cilium Extensions**: L7 policies, DNS FQDN-based policies, cluster-wide policies
 3. **Calico Extensions**: GlobalNetworkPolicy, NetworkSet, Tier-based policies
-4. **EKS Considerations**: VPC CNI NetworkPolicy activation, Security Groups for Pods
+4. **EKS Considerations**: VPC CNI NetworkPolicy activation, Security Groups for Pods, ClusterNetworkPolicy and DNS (FQDN)-based egress control
 
 ### Recommendations
 
@@ -1712,3 +1773,4 @@ Kubernetes Network Policies are a core security mechanism for controlling Pod co
 - [Cilium Network Policy Documentation](https://docs.cilium.io/en/stable/security/policy/)
 - [Calico Network Policy Documentation](https://docs.tigera.io/calico/latest/network-policy/)
 - [EKS Security Best Practices - Network Security](https://aws.github.io/aws-eks-best-practices/security/docs/network/)
+- [Amazon EKS Enhanced Network Security Policies (2025-12-15)](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)

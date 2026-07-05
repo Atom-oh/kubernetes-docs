@@ -1,7 +1,7 @@
 # Kubernetes 버전별 신규 기능과 로드맵
 
 > **지원 버전**: Kubernetes 1.29 - 1.36
-> **마지막 업데이트**: 2026년 6월 30일
+> **마지막 업데이트**: 2026년 7월 3일
 
 Kubernetes는 연 3회 릴리스 주기를 통해 빠르게 진화하고 있으며, 각 버전마다 중요한 기능이 추가되거나 졸업(GA)합니다. 기업 환경에서 EKS 클러스터를 운영하는 팀에게 버전별 변경 사항을 체계적으로 파악하는 것은 안정적인 업그레이드 계획 수립과 새로운 기능의 적시 채택을 위해 필수적입니다.
 
@@ -405,6 +405,40 @@ sequenceDiagram
 - Deprecated API를 사용하는 매니페스트가 갑자기 동작하지 않을 수 있음
 - 애드온 호환성 문제 발생 가능
 - **권장**: 자동 업그레이드에 의존하지 말고, 반드시 사전에 계획된 업그레이드를 수행
+
+### 3.6 최근 EKS 버전 지원 발표 (2026년)
+
+AWS는 2026년에 EKS 버전 지원과 관련해 다음과 같은 발표를 진행했습니다.
+
+| 발표일 | 내용 | 핵심 요약 |
+|:---:|------|------|
+| 2026-06-02 | EKS & EKS Distro, Kubernetes 1.36 지원 시작 | User Namespaces GA, Mutating Admission Policies, In-Place Pod Vertical Scaling, Resource Health Status, EKS Cluster Insights 사전 점검 |
+| 2026-01-28 | EKS & EKS Distro, Kubernetes 1.35 지원 시작 | In-Place Pod Resource Updates, PreferSameNode Traffic Distribution, Downward API 기반 Node Topology Labels, Image Volumes |
+
+#### Kubernetes 1.36 지원 시작 (2026-06-02)
+
+Amazon EKS와 EKS Distro가 Kubernetes 1.36 지원을 시작했습니다. 발표에서 강조된 기능은 다음과 같습니다 (상세 내용은 4.8절 참조).
+
+- **User Namespaces GA**: 컨테이너의 root 사용자를 호스트의 비특권 사용자로 매핑하여 멀티테넌트 환경의 보안을 강화
+- **Mutating Admission Policies**: CEL 기반으로 동작하며 별도 webhook 서버가 불필요
+- **In-Place Pod Vertical Scaling**: Pod를 재시작하지 않고 CPU/메모리를 조정
+- **Resource Health Status**: Device Health, Hardware Failure 등의 상태를 Pod Status에 노출
+- **EKS Cluster Insights**: 업그레이드 전 Deprecated API 사용 여부와 애드온 호환성을 사전 점검
+
+> 출처: [Amazon EKS Distro Kubernetes version 1.36 지원 발표](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-distro-kubernetes-version-1-36/)
+
+#### Kubernetes 1.35 지원 시작 (2026-01-28)
+
+Amazon EKS와 EKS Distro가 Kubernetes 1.35 지원을 시작하며 다음 기능이 함께 제공되었습니다.
+
+- **In-Place Pod Resource Updates**: 4.7절의 In-Place Pod Vertical Scaling GA와 동일한 재시작 없는 리소스 조정 기능
+- **PreferSameNode Traffic Distribution**: 동일 노드 내 엔드포인트로 트래픽 우선 라우팅
+- **Node Topology Labels via Downward API**: Downward API를 통해 노드 토폴로지 레이블을 Pod에 노출
+- **Image Volumes**: OCI 이미지를 볼륨으로 마운트하여 데이터·모델 파일을 전달
+
+> 출처: [Amazon EKS Distro Kubernetes version 1.35 지원 발표](https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-eks-distro-kubernetes-version-1-35)
+
+> **관련 발표**: EKS 버전 롤백 지원(2026-07-01)과 컨트롤 플레인 99.99% SLA·8XL 스케일링 티어(2026-03-20)는 업그레이드 프로세스와 직결되는 내용이므로 [EKS 업그레이드 문서](08-eks-upgrades.md)에서 다룹니다.
 
 ---
 
@@ -2866,14 +2900,17 @@ echo "=== 검증 완료 ==="
 
 ### 8.6 롤백 전략
 
+> **2026-07-01 업데이트**: Amazon EKS가 Kubernetes 버전 롤백 기능을 발표했습니다. 업그레이드 후 7일 이내라면 컨트롤 플레인을 이전 마이너 버전으로 롤백할 수 있으며, 롤백 전 API 호환성·version skew·애드온 호환성·클러스터 상태를 점검하는 Rollback Readiness 검사가 자동으로 수행됩니다. EKS Auto Mode는 워커 노드 자동 롤백과 컨트롤 플레인 순차 복원을 포함한 완전 자동 롤백을 지원하며, 추가 비용 없이 모든 리전에서 사용할 수 있습니다. 아래 전략은 7일이 지났거나 이 기능을 사용할 수 없는 경우의 대안입니다. (출처: [Amazon EKS 버전 롤백 발표](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-version-rollback))
+
 ```yaml
 # 업그레이드 롤백 전략
 rollback_strategy:
   
   control_plane:
-    note: "EKS 컨트롤 플레인은 롤백 불가"
+    note: "7일 이내: EKS 네이티브 버전 롤백 / 7일 초과: Blue-Green 클러스터 전략"
     mitigation:
-      - "업그레이드 전 Blue/Green 클러스터 전략 사용"
+      - "EKS 버전 롤백 기능으로 이전 마이너 버전으로 즉시 복원 (7일 이내, 추가 비용 없음)"
+      - "7일 초과 시 업그레이드 전 Blue/Green 클러스터 전략 사용"
       - "Route 53 가중치 기반 라우팅으로 트래픽 전환"
       - "새 클러스터로 워크로드 마이그레이션"
     

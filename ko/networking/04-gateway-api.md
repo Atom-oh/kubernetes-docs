@@ -1,7 +1,7 @@
 # Kubernetes Gateway API
 
 > **지원 버전**: Gateway API v1.2+
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 7월 3일
 
 ## 개요
 
@@ -856,6 +856,27 @@ spec:
 | 헤더 수정 | ✅ | ✅ | ✅ | ⚠️ | ✅ |
 | URL 리라이트 | ✅ | ✅ | ✅ | ⚠️ | ✅ |
 | 미러링 | ✅ | ⚠️ | ✅ | ❌ | ✅ |
+
+## AWS Load Balancer Controller의 Gateway API 지원 (v3.0 GA)
+
+AWS Load Balancer Controller v3.0.0(2026년 1월)부터 Gateway API가 정식 GA로 전환되어, ALB/NLB를 GatewayClass/Gateway/HTTPRoute 역할 분리 모델로 선언적으로 관리할 수 있습니다.
+
+- **배경**: NGINX Ingress Controller가 2026년 3월 지원 종료를 앞두고 있어, AWS는 LBC v3.0 + Gateway API를 네이티브 대안으로 제시했습니다.
+- **하위 호환성**: 기존 Ingress/Service 리소스는 계속 지원되며, 즉시 전환이 필요하지 않고 점진적 이전이 가능합니다.
+- **장점**: 헤더/쿼리 기반 라우팅, 가중치 분산(Blue/Green, Canary), TCP/UDP/gRPC까지 포괄하는 멀티프로토콜 설계
+- **업그레이드 주의사항**: Helm으로 설치하고 `enableCertManager=true`를 사용 중이라면 업그레이드 전 `keepTLSSecret=false`로 설정해야 합니다(v3.0.0부터는 자동으로 처리됨).
+
+### v3.4.0 마이그레이션 도구 (2026년 6월)
+
+기존 ALB 기반 Ingress를 무중단으로 Gateway API로 전환하기 위한 도구가 추가되었습니다.
+
+- **Ingress to Gateway Migration Tool**: 기존 ALB를 유지한 채 신규 Gateway API 리소스를 병행 생성해 무중단 전환을 지원
+- **lbc-migrate CLI**: 기존 Ingress의 annotation, 라우팅 규칙, IngressGroup을 자동으로 Gateway API 리소스로 변환. `--from-cluster` 옵션으로 클러스터를 직접 분석 가능
+- **Migration Console**: 웹 UI에서 마이그레이션 전 변환 결과를 검증
+
+> **주의**: Gateway API + NLB 조합에서 동작이 변경되었습니다. 하나의 Listener에 여러 TCP/UDP/TLS Route가 연결되면 가장 오래된 Route만 트래픽을 수신합니다. 업그레이드 전 L4 Route 구성을 점검하세요.
+
+(공통 출처: [AWS Load Balancer Controller Releases](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases))
 
 ## Ingress에서 Gateway API로 마이그레이션
 

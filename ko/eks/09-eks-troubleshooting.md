@@ -1,5 +1,7 @@
 # Amazon EKS 문제 해결
 
+> **마지막 업데이트**: 2026년 7월 3일
+
 Amazon EKS 클러스터를 운영하다 보면 다양한 문제가 발생할 수 있습니다. 이 문서에서는 EKS 클러스터에서 발생할 수 있는 일반적인 문제와 그 해결 방법을 제공합니다.
 
 ## 목차
@@ -505,6 +507,10 @@ aws ec2 create-vpc-endpoint \
   --subnet-ids <subnet-id-1> <subnet-id-2> \
   --security-group-ids <security-group-id>
 ```
+
+5. **CloudShell 원클릭 클러스터 접속 활용** (2026년 4월 30일 출시):
+
+로컬 환경의 kubeconfig 구성이나 네트워크 접근 문제로 클러스터 접속이 막힌 경우, EKS 콘솔에서 곧바로 접속할 수 있는 대안입니다. 클러스터 목록에서 **Connect** 버튼을 클릭하면 AWS CloudShell이 자동으로 실행되고 kubectl이 해당 클러스터에 맞게 사전 구성된 상태로 즉시 사용할 수 있습니다. 로컬에 kubectl을 설치하거나 AWS CLI 자격 증명·kubeconfig를 별도로 구성할 필요가 없어, 브라우저만으로 바로 트러블슈팅을 시작할 수 있습니다. Public/Private API 엔드포인트 클러스터를 모두 지원하며, 모든 리전에서 사용 가능하고 CloudShell/EKS 기존 과금 외 추가 비용은 없습니다. (출처: [Amazon EKS one-click cluster access](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-one-click-cluster-access/))
 
 ### 클러스터 삭제 문제
 

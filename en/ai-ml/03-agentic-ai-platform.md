@@ -2084,8 +2084,8 @@ To verify your understanding of the Agentic AI platform, take the following quiz
 
 ### Related Documents
 
-- [vLLM Deployment Detailed Guide](./04-vllm-deployment.md) - Detailed vLLM installation and optimization
-- [AI/ML Workloads](./03-ai-ml-workloads.md) - AI/ML workload management in Kubernetes
+- [vLLM Deployment Detailed Guide](./02-vllm-deployment.md) - Detailed vLLM installation and optimization
+- [AI/ML Workloads](./01-ai-ml-workloads.md) - AI/ML workload management in Kubernetes
 
 ### References
 

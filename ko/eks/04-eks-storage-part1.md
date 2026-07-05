@@ -1,4 +1,5 @@
 # Amazon EKS 스토리지 - Part 1: 기본 개념, EBS, EFS
+> **마지막 업데이트**: 2026년 7월 3일
 
 Amazon EKS에서 애플리케이션을 실행할 때 데이터를 저장하고 관리하기 위한 다양한 스토리지 옵션이 있습니다. 이 문서에서는 EKS 스토리지의 기본 개념과 Amazon EBS(Elastic Block Store) 및 Amazon EFS(Elastic File System)를 사용하는 방법에 대해 알아보겠습니다.
 
@@ -69,6 +70,12 @@ Amazon EKS에서는 다양한 AWS 스토리지 서비스를 활용하여 컨테�
    - 직접 볼륨으로 마운트할 수 없지만, S3 API를 통해 액세스 가능
    - 대용량 데이터 저장에 적합
 
+5. **EC2 Instance Store(로컬 NVMe)**
+   - EC2 인스턴스에 물리적으로 직접 연결된 임시(ephemeral) 로컬 NVMe 스토리지, 매우 낮은 지연시간
+   - EC2 Instance Store CSI 드라이버가 2026년 5월 Amazon EKS 애드온으로 정식 출시(GA)되어, EKS Console/CLI에서 표준 애드온 형태로 설치·관리 가능(이전에는 커뮤니티 매니페스트로 수동 설치 필요). 볼륨 lifecycle을 드라이버가 자동 관리해 운영 부담을 줄여줌
+   - AI/ML 임시 데이터 처리, Spark/Hadoop 로컬 캐시, 고속 로그 처리, DB 캐시 계층에 적합
+   - 비용: 드라이버 자체는 무료이며, Instance Store가 포함된 EC2 인스턴스 사용 비용만 과금됨 ([출처](https://aws.amazon.com/about-aws/whats-new/2026/05/ec2-csi-eks/))
+
 ### 스토리지 옵션 비교
 
 | 스토리지 옵션 | 유형 | 액세스 모드 | 성능 | 사용 사례 |
@@ -77,6 +84,7 @@ Amazon EKS에서는 다양한 AWS 스토리지 서비스를 활용하여 컨테�
 | Amazon EFS | 파일 | RWX | 중간 | 공유 파일, 웹 서버, CMS |
 | FSx for Lustre | 파일 | RWX | 매우 높음 | HPC, ML 훈련, 빅 데이터 |
 | Amazon S3 | 객체 | API 액세스 | 중간 | 백업, 아카이브, 정적 콘텐츠 |
+| EC2 Instance Store | 블록(로컬 NVMe) | RWO, ephemeral | 매우 높음(초저지연) | AI/ML 임시 데이터, 로컬 캐시, 고속 로그 처리 |
 
 ## Amazon EBS를 사용한 스토리지
 

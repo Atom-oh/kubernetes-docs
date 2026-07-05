@@ -1,5 +1,7 @@
 # Amazon EKS 모니터링 및 로깅
 
+> **마지막 업데이트**: 2026년 7월 3일
+
 효과적인 모니터링 및 로깅은 Amazon EKS 클러스터의 안정성, 가용성 및 성능을 유지하는 데 필수적입니다. 이 문서에서는 EKS 클러스터에서 모니터링 및 로깅을 구현하기 위한 다양한 도구, 기술 및 모범 사례를 다룹니다.
 
 ## 목차
@@ -164,6 +166,18 @@ aws logs put-retention-policy \
   --log-group-name /aws/eks/my-cluster/cluster \
   --retention-in-days 30
 ```
+
+### EKS Capabilities 로깅 (GitOps, ACK, kro)
+
+EKS Capabilities는 Argo CD, AWS Controllers for Kubernetes(ACK), kro를 EKS 컨트롤 플레인에서 실행되는 관리형 컨트롤러로 제공합니다. 이제 이 컨트롤러들의 로그를 컨트롤 플레인 로깅과 동일한 방식으로 CloudWatch Logs, S3, Kinesis Data Firehose에 직접 전송할 수 있습니다. 컨트롤러 파드를 직접 스크래핑하는 별도의 로그 수집기를 클러스터에 배치할 필요가 없습니다.
+
+기존에는 컨트롤러 파드를 직접 확인해야 했던 다음과 같은 가시성 공백을 해소합니다:
+
+- **Argo CD**의 GitOps 동기화 오류
+- **ACK**의 리소스 생성/조정 실패
+- **kro**의 워크플로우 상태 전환
+
+사용 중인 Capabilities에 대해 컨트롤 플레인 로깅과 함께 로그 전송을 활성화하면, API 서버나 감사 로그를 조회할 때와 동일하게 CloudWatch Logs Insights로 조회할 수 있습니다. 지원되는 Capability 로그 유형은 [발표 내용](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-capabilities-logging/)(2026년 6월 4일)을 참고하세요.
 
 ## 컨테이너 로깅
 
@@ -514,6 +528,41 @@ aws cloudwatch put-metric-alarm \
   --evaluation-periods 2 \
   --alarm-actions arn:aws:sns:us-west-2:123456789012:my-topic
 ```
+
+#### CloudWatch Observability Add-on 5.0.0
+
+`amazon-cloudwatch-observability` EKS 애드온 버전 5.0.0(2026년 2월)부터 Application Signals(APM)가 별도의 opt-in 설정 없이 **기본적으로 활성화**됩니다. 이 애드온은 Enhanced Container Insights, Container Logs, Application Signals를 하나로 통합했으며, 워크로드에 별도 어노테이션을 추가하지 않아도 trace/메트릭/로그를 자동으로 계측합니다:
+
+```bash
+aws eks update-addon \
+  --cluster-name my-cluster \
+  --addon-name amazon-cloudwatch-observability \
+  --addon-version v5.0.0-eksbuild.1
+```
+
+Application Signals가 opt-in이었던 이전 버전에서 업그레이드하는 경우 [릴리스 노트](https://aws.amazon.com/about-aws/whats-new/2026/02/application-performance-monitoring-cloudwatch-eks/)(2026년 2월 26일)를 참고하세요. Container Insights 메트릭 수집이 OTel 기반으로 전환되는 내용은 [CloudWatch Metrics 문서](../observability/metrics/04-cloudwatch-metrics.md#otel-기반-container-insights-preview)를 참고하세요.
+
+### EKS Node Monitoring Agent
+
+EKS Node Monitoring Agent는 워커 노드의 시스템/스토리지/네트워크/가속기(GPU) 이슈를 감지해 Kubernetes Node Condition으로 게시하며, EKS 자동 노드 복구 기능이 이를 참고해 자동으로 조치할 수 있습니다. 2026년 2월부터 이 에이전트의 소스가 GitHub에 공개되어, 기본 제공 점검 항목 이상으로 커스터마이징하거나 기여할 수 있습니다.
+
+이 에이전트는 EKS Auto Mode에 기본 포함되며, 표준 관리형 노드 그룹에서도 독립 애드온으로 설치할 수 있습니다:
+
+```bash
+aws eks create-addon \
+  --cluster-name my-cluster \
+  --addon-name eks-node-monitoring-agent
+```
+
+에이전트가 게시하는 조건은 다음으로 확인합니다:
+
+```bash
+kubectl get nodes -o custom-columns='NAME:.metadata.name,CONDITIONS:.status.conditions[*].type'
+kubectl describe node <node-name>
+```
+
+GitHub 저장소와 지원되는 조건 유형은 [발표 내용](https://aws.amazon.com/about-aws/whats-new/2026/02/amazon-eks-node-monitoring-agent-open-source/)(2026년 2월 24일)을 참고하세요.
+
 ### Prometheus 및 Grafana
 
 Prometheus는 시계열 데이터베이스 및 모니터링 시스템이며, Grafana는 지표를 시각화하기 위한 대시보드 도구입니다. 이 두 도구를 함께 사용하여 EKS 클러스터를 포괄적으로 모니터링할 수 있습니다.

@@ -26,6 +26,19 @@
 * [Windows in Kubernetes](core/10-windows-in-kubernetes.md)
 * [Kubernetes 확장](core/11-extending-kubernetes.md)
 
+## Scheduling
+
+* [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
+    * [Part 1: 기본 개념](scheduling/01-custom-scheduler-part1.md)
+    * [Part 2: 구현](scheduling/02-custom-scheduler-part2.md)
+    * [Part 3: 고급 기능](scheduling/03-custom-scheduler-part3.md)
+
+## Autoscaling
+
+* [KEDA](autoscaling/01-keda.md)
+* [Karpenter](autoscaling/02-karpenter.md)
+* [Knative](autoscaling/03-knative.md)
+
 ## Amazon EKS
 
 * [EKS 소개](eks/01-eks-introduction.md)
@@ -218,6 +231,24 @@
 * [Crossplane](platform-engineering/07-crossplane.md)
 * [vCluster](platform-engineering/08-vcluster.md)
 
+## GitOps
+
+* [GitOps](gitops/README.md)
+    * [ArgoCD](gitops/argocd/README.md)
+        * [설치 및 구성](gitops/argocd/01-installation.md)
+        * [애플리케이션](gitops/argocd/02-applications.md)
+        * [동기화 전략](gitops/argocd/03-sync-strategies.md)
+        * [ApplicationSets](gitops/argocd/04-applicationsets.md)
+        * [트래픽 관리](gitops/argocd/05-traffic-management.md)
+        * [프로젝트와 RBAC](gitops/argocd/06-projects-rbac.md)
+        * [보안](gitops/argocd/07-security.md)
+        * [알림](gitops/argocd/08-notifications.md)
+        * [모범 사례](gitops/argocd/09-best-practices.md)
+    * [FluxCD](gitops/02-fluxcd.md)
+    * [GitOps 도구 비교](gitops/03-gitops-comparison.md)
+    * [Flagger Progressive Delivery](gitops/04-flagger.md)
+    * [Feature Flags와 OpenFeature](gitops/05-feature-flags.md)
+
 ## Operations Guide
 
 * [운영 가이드 소개](ops/README.md)
@@ -263,37 +294,6 @@
     * [Grafana](observability/grafana/README.md)
 * [관측성 최적화 가이드](observability/09-observability-optimization.md)
 
-## Scheduling
-
-* [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
-    * [Part 1: 기본 개념](scheduling/01-custom-scheduler-part1.md)
-    * [Part 2: 구현](scheduling/02-custom-scheduler-part2.md)
-    * [Part 3: 고급 기능](scheduling/03-custom-scheduler-part3.md)
-
-## Autoscaling
-
-* [KEDA](autoscaling/01-keda.md)
-* [Karpenter](autoscaling/02-karpenter.md)
-* [Knative](autoscaling/03-knative.md)
-
-## GitOps
-
-* [GitOps](gitops/README.md)
-    * [ArgoCD](gitops/argocd/README.md)
-        * [설치 및 구성](gitops/argocd/01-installation.md)
-        * [애플리케이션](gitops/argocd/02-applications.md)
-        * [동기화 전략](gitops/argocd/03-sync-strategies.md)
-        * [ApplicationSets](gitops/argocd/04-applicationsets.md)
-        * [트래픽 관리](gitops/argocd/05-traffic-management.md)
-        * [프로젝트와 RBAC](gitops/argocd/06-projects-rbac.md)
-        * [보안](gitops/argocd/07-security.md)
-        * [알림](gitops/argocd/08-notifications.md)
-        * [모범 사례](gitops/argocd/09-best-practices.md)
-    * [FluxCD](gitops/02-fluxcd.md)
-    * [GitOps 도구 비교](gitops/03-gitops-comparison.md)
-    * [Flagger Progressive Delivery](gitops/04-flagger.md)
-    * [Feature Flags와 OpenFeature](gitops/05-feature-flags.md)
-
 ## Lab Guides
 
 * [실습 가이드 소개](labs/README.md)
@@ -332,6 +332,17 @@
     * [클러스터 관리 퀴즈](quizzes/core/09-cluster-administration-quiz.md)
     * [Windows in Kubernetes 퀴즈](quizzes/core/10-windows-in-kubernetes-quiz.md)
     * [Kubernetes 확장 퀴즈](quizzes/core/11-extending-kubernetes-quiz.md)
+
+* Scheduling
+    * [Custom Scheduler 퀴즈 - Part 1](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+    * [Custom Scheduler 퀴즈 - Part 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+    * [Custom Scheduler 퀴즈 - Part 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+
+* Autoscaling
+    * [KEDA 퀴즈](quizzes/autoscaling/05-keda-quiz.md)
+    * [Karpenter 퀴즈](quizzes/autoscaling/06-karpenter-quiz.md)
+    * [Knative 퀴즈](quizzes/autoscaling/03-knative-quiz.md)
+
 * Amazon EKS
     * [EKS 소개 퀴즈](quizzes/eks/01-eks-introduction-quiz.md)
     * [EKS 클러스터 생성 퀴즈 - Part 1](quizzes/eks/02-eks-cluster-creation-part1-quiz.md)
@@ -474,11 +485,6 @@
     * [Flagger Progressive Delivery 퀴즈](quizzes/gitops/04-flagger-quiz.md)
     * [Feature Flags와 OpenFeature 퀴즈](quizzes/gitops/05-feature-flags-quiz.md)
 
-* Autoscaling
-    * [KEDA 퀴즈](quizzes/autoscaling/05-keda-quiz.md)
-    * [Karpenter 퀴즈](quizzes/autoscaling/06-karpenter-quiz.md)
-    * [Knative 퀴즈](quizzes/autoscaling/03-knative-quiz.md)
-
 * Observability
     * Metrics
         * [메트릭 개요 퀴즈](quizzes/observability/metrics/00-metrics-overview-quiz.md)
@@ -512,11 +518,6 @@
         * [부하 테스트 및 스케일링 퀴즈](quizzes/observability/labs/04-load-testing-scaling-quiz.md)
         * [알림 및 AIOps 퀴즈](quizzes/observability/labs/05-alerting-aiops-quiz.md)
         * [분산 추적 분석 퀴즈](quizzes/observability/labs/06-distributed-tracing-quiz.md)
-
-* Scheduling
-    * [Custom Scheduler 퀴즈 - Part 1](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
-    * [Custom Scheduler 퀴즈 - Part 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
-    * [Custom Scheduler 퀴즈 - Part 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
 * Platform Engineering
     * [Platform Engineering 개요 퀴즈](quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
