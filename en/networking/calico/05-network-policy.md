@@ -1,6 +1,6 @@
-# Part 5: Calico Network Policy Deep Dive
-> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 23, 2026
+# Part 5: Network Policy
+
+> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+ **Last Updated**: February 23, 2026
 
 ## Introduction
 
@@ -8,7 +8,7 @@ Network policies are fundamental to Kubernetes security, controlling traffic flo
 
 This deep dive covers both Kubernetes standard policies and Calico's extended capabilities, providing patterns and examples for enterprise security requirements.
 
----
+***
 
 ## Kubernetes Standard NetworkPolicy
 
@@ -80,17 +80,17 @@ spec:
 
 ### Kubernetes NetworkPolicy Limitations
 
-| Limitation | Description | Calico Solution |
-|------------|-------------|-----------------|
-| Namespace-scoped only | Cannot create cluster-wide policies | GlobalNetworkPolicy |
-| No policy ordering | All policies evaluated equally | Tiered policies |
-| No deny rules | Only allow (implicit deny) | Explicit Deny actions |
-| Limited L4 filtering | Basic port/protocol only | Port ranges, named ports |
-| No L7 filtering | Cannot filter by HTTP methods | HTTP match rules |
-| No FQDN support | Cannot use domain names | DNS policy |
-| Pod-centric only | Cannot protect nodes | Host endpoints |
+| Limitation            | Description                         | Calico Solution          |
+| --------------------- | ----------------------------------- | ------------------------ |
+| Namespace-scoped only | Cannot create cluster-wide policies | GlobalNetworkPolicy      |
+| No policy ordering    | All policies evaluated equally      | Tiered policies          |
+| No deny rules         | Only allow (implicit deny)          | Explicit Deny actions    |
+| Limited L4 filtering  | Basic port/protocol only            | Port ranges, named ports |
+| No L7 filtering       | Cannot filter by HTTP methods       | HTTP match rules         |
+| No FQDN support       | Cannot use domain names             | DNS policy               |
+| Pod-centric only      | Cannot protect nodes                | Host endpoints           |
 
----
+***
 
 ## Calico NetworkPolicy Extensions
 
@@ -221,7 +221,7 @@ spec:
         selector: app == 'authorized-client'
 ```
 
----
+***
 
 ## GlobalNetworkPolicy
 
@@ -340,7 +340,7 @@ spec:
     # Deny everything else (implicit)
 ```
 
----
+***
 
 ## NetworkSet and GlobalNetworkSet
 
@@ -430,11 +430,11 @@ spec:
         selector: network-group == 'blocked'
 ```
 
----
+***
 
 ## Tiered Policies
 
-![Calico Network Policy Tier Evaluation](../../../assets/calico_network_policy_tiers.png)
+![Calico Network Policy Tier Evaluation](../../.gitbook/assets/calico_network_policy_tiers.png)
 
 Tiers provide hierarchical policy evaluation, enabling separation of concerns between platform, security, and application teams.
 
@@ -612,7 +612,7 @@ rules:
     resourceNames: ["application"]
 ```
 
----
+***
 
 ## FQDN-Based Egress Policy
 
@@ -700,7 +700,7 @@ spec:
     # deep.sub.example.com (multiple levels)
 ```
 
----
+***
 
 ## HTTP Method Filtering (Layer 7)
 
@@ -789,7 +789,7 @@ spec:
           - prefix: /api/
 ```
 
----
+***
 
 ## Host Endpoint Protection
 
@@ -887,7 +887,7 @@ spec:
     hostPorts: Enabled  # Creates auto host endpoints
 ```
 
----
+***
 
 ## DoNotTrack and PreDNAT Policies
 
@@ -959,7 +959,7 @@ spec:
           - 30000:32767
 ```
 
----
+***
 
 ## Policy Debugging
 
@@ -1025,7 +1025,7 @@ calicoctl get networkpolicy -A -o yaml | grep -B20 "app.*web"
 kubectl exec -it test-pod -- nc -zv target-pod 8080
 ```
 
----
+***
 
 ## Common Policy Patterns Library
 
@@ -1288,19 +1288,19 @@ spec:
         namespaceSelector: kubernetes.io/metadata.name == 'ingress-nginx'
 ```
 
----
+***
 
 ## Policy Performance Impact
 
 ### Performance Considerations
 
-| Factor | Impact | Mitigation |
-|--------|--------|------------|
-| Number of policies | Linear rule evaluation | Use tiered policies, optimize selectors |
-| Selector complexity | Increased matching time | Use simple label matches |
-| IP set size | Memory usage | Aggregate IP ranges |
-| Log frequency | CPU and storage | Use sampling for high-volume |
-| Connection tracking | Memory for stateful | DoNotTrack for stateless |
+| Factor              | Impact                  | Mitigation                              |
+| ------------------- | ----------------------- | --------------------------------------- |
+| Number of policies  | Linear rule evaluation  | Use tiered policies, optimize selectors |
+| Selector complexity | Increased matching time | Use simple label matches                |
+| IP set size         | Memory usage            | Aggregate IP ranges                     |
+| Log frequency       | CPU and storage         | Use sampling for high-volume            |
+| Connection tracking | Memory for stateful     | DoNotTrack for stateless                |
 
 ### Optimization Tips
 
@@ -1325,7 +1325,7 @@ kubectl logs -n kube-system -l k8s-app=calico-node -c calico-node | \
 iptables -L -n | wc -l
 ```
 
----
+***
 
 ## Best Practices Summary
 
@@ -1353,11 +1353,11 @@ iptables -L -n | wc -l
 4. **Enable logging**: Audit denied connections
 5. **Use FQDN policies**: Control access to external services by name
 
----
+***
 
 ## References
 
-- [Calico Network Policy Documentation](https://docs.tigera.io/calico/latest/network-policy/)
-- [Kubernetes Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [Calico Policy Tutorial](https://docs.tigera.io/calico/latest/network-policy/get-started/calico-policy/calico-policy-tutorial)
-- [Tigera Policy Best Practices](https://docs.tigera.io/calico/latest/network-policy/policy-best-practices)
+* [Calico Network Policy Documentation](https://docs.tigera.io/calico/latest/network-policy/)
+* [Kubernetes Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+* [Calico Policy Tutorial](https://docs.tigera.io/calico/latest/network-policy/get-started/calico-policy/calico-policy-tutorial)
+* [Tigera Policy Best Practices](https://docs.tigera.io/calico/latest/network-policy/policy-best-practices)

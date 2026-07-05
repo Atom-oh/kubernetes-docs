@@ -1,19 +1,19 @@
-# Istio Basic Concepts
+# Basic Concepts
 
 This document explains Istio's core concepts and architecture. Understanding these basic concepts is important for effectively using Istio.
 
 ## Table of Contents
 
-1. [Background and History](#background-and-history)
-2. [Why Istio?](#why-istio)
-3. [Istio Architecture](#istio-architecture)
-4. [Deployment Modes: Sidecar vs Ambient](#deployment-modes-sidecar-vs-ambient)
-5. [Core Resources](#core-resources)
-6. [Traffic Management Concepts](#traffic-management-concepts)
-7. [Security Concepts](#security-concepts)
-8. [Observability Concepts](#observability-concepts)
-9. [Namespaces and Service Mesh](#namespaces-and-service-mesh)
-10. [Next Steps](#next-steps)
+1. [Background and History](02-basic-concepts.md#background-and-history)
+2. [Why Istio?](02-basic-concepts.md#why-istio)
+3. [Istio Architecture](02-basic-concepts.md#istio-architecture)
+4. [Deployment Modes: Sidecar vs Ambient](02-basic-concepts.md#deployment-modes-sidecar-vs-ambient)
+5. [Core Resources](02-basic-concepts.md#core-resources)
+6. [Traffic Management Concepts](02-basic-concepts.md#traffic-management-concepts)
+7. [Security Concepts](02-basic-concepts.md#security-concepts)
+8. [Observability Concepts](02-basic-concepts.md#observability-concepts)
+9. [Namespaces and Service Mesh](02-basic-concepts.md#namespaces-and-service-mesh)
+10. [Next Steps](02-basic-concepts.md#next-steps)
 
 ## Background and History
 
@@ -57,21 +57,22 @@ flowchart TB
 
 **New Problems**:
 
-| Problem | Description | Impact |
-|------|------|------|
-| **Inter-service Communication** | Increased network calls | Latency, failure propagation |
-| **Observability** | Need for distributed tracing | Difficult debugging |
-| **Security** | Service-to-service authentication/encryption | mTLS implementation complexity |
-| **Traffic Control** | Canary deployments, A/B testing | Application code modifications |
-| **Failure Handling** | Circuit Breaker, Retry | Implementation per service |
+| Problem                         | Description                                  | Impact                         |
+| ------------------------------- | -------------------------------------------- | ------------------------------ |
+| **Inter-service Communication** | Increased network calls                      | Latency, failure propagation   |
+| **Observability**               | Need for distributed tracing                 | Difficult debugging            |
+| **Security**                    | Service-to-service authentication/encryption | mTLS implementation complexity |
+| **Traffic Control**             | Canary deployments, A/B testing              | Application code modifications |
+| **Failure Handling**            | Circuit Breaker, Retry                       | Implementation per service     |
 
 #### Early Solution: Libraries
 
 **Problems**:
-- Need to develop libraries for each language (Hystrix for Java, separate library for Go...)
-- Tightly coupled to application code
-- Requires redeployment of all services for updates
-- Complex version management
+
+* Need to develop libraries for each language (Hystrix for Java, separate library for Go...)
+* Tightly coupled to application code
+* Requires redeployment of all services for updates
+* Complex version management
 
 ```mermaid
 flowchart LR
@@ -111,12 +112,12 @@ flowchart LR
 
 **In 2015, Lyft** was experiencing the following problems:
 
-- Operating 200+ microservices
-- Various languages and frameworks (Python, Go, Java, etc.)
-- Existing proxies (HAProxy, NGINX) were insufficient
-  - Difficult dynamic configuration changes
-  - Lack of observability
-  - Limited advanced routing features
+* Operating 200+ microservices
+* Various languages and frameworks (Python, Go, Java, etc.)
+* Existing proxies (HAProxy, NGINX) were insufficient
+  * Difficult dynamic configuration changes
+  * Lack of observability
+  * Limited advanced routing features
 
 #### Matt Klein and Envoy
 
@@ -165,9 +166,10 @@ flowchart TB
 #### CNCF Adoption
 
 **Timeline**:
-- **September 2016**: Envoy open-sourced
-- **September 2017**: Accepted as CNCF project (Incubating)
-- **November 2018**: Promoted to CNCF Graduated project
+
+* **September 2016**: Envoy open-sourced
+* **September 2017**: Accepted as CNCF project (Incubating)
+* **November 2018**: Promoted to CNCF Graduated project
 
 ### The Birth and History of Istio
 
@@ -203,11 +205,11 @@ flowchart LR
 
 **Contributions from Each Company**:
 
-| Company | Main Contribution | Reason |
-|------|----------|------|
-| **Google** | Control Plane design | Borg, Kubernetes experience |
-| **IBM** | Enterprise features | Enterprise customer requirements |
-| **Lyft** | Envoy Proxy | Production-proven proxy |
+| Company    | Main Contribution    | Reason                           |
+| ---------- | -------------------- | -------------------------------- |
+| **Google** | Control Plane design | Borg, Kubernetes experience      |
+| **IBM**    | Enterprise features  | Enterprise customer requirements |
+| **Lyft**   | Envoy Proxy          | Production-proven proxy          |
 
 #### Istio Version History
 
@@ -230,6 +232,7 @@ timeline
 **Version 1.5 (March 2020) - Important Turning Point**:
 
 Previous architecture (Istio 1.4 and earlier):
+
 ```
 Separated into individual components:
 - Mixer (policy/telemetry)
@@ -239,6 +242,7 @@ Separated into individual components:
 ```
 
 New architecture (Istio 1.5+, current 1.28):
+
 ```
 Istiod (consolidated into single binary)
 ├── Pilot functionality (Service Discovery, Traffic Management)
@@ -249,10 +253,11 @@ Mixer completely removed (functionality moved to Envoy)
 ```
 
 **Reasons for Change**:
-- Reduced complexity (4 components → 1)
-- Improved performance (50% latency reduction with Mixer removal)
-- Simplified operations (single process management)
-- Resource efficiency (reduced memory, CPU usage)
+
+* Reduced complexity (4 components → 1)
+* Improved performance (50% latency reduction with Mixer removal)
+* Simplified operations (single process management)
+* Resource efficiency (reduced memory, CPU usage)
 
 ## Why Istio?
 
@@ -307,6 +312,7 @@ flowchart TB
 **Problem**: Want to safely transition traffic when deploying new versions.
 
 **Istio Solution**:
+
 ```yaml
 # Canary deployment without code changes
 apiVersion: networking.istio.io/v1
@@ -329,16 +335,18 @@ spec:
 ```
 
 **Benefits**:
-- No application code modification required
-- Real-time traffic split adjustment
-- Automatic rollback possible
-- A/B testing, Blue/Green deployment support
+
+* No application code modification required
+* Real-time traffic split adjustment
+* Automatic rollback possible
+* A/B testing, Blue/Green deployment support
 
 #### 2. Security
 
 **Problem**: Want to encrypt and authenticate inter-service communication.
 
 **Istio Solution**:
+
 ```yaml
 # Automatic mTLS enablement
 apiVersion: security.istio.io/v1
@@ -352,30 +360,34 @@ spec:
 ```
 
 **Benefits**:
-- Automatic certificate issuance and renewal
-- Automatic service identity verification
-- Fine-grained permission control
-- Zero Trust network implementation
+
+* Automatic certificate issuance and renewal
+* Automatic service identity verification
+* Fine-grained permission control
+* Zero Trust network implementation
 
 #### 3. Observability
 
 **Problem**: Difficult to trace request flow across dozens of microservices.
 
 **Istio Solution**:
-- Automatic metric generation (Latency, Traffic, Errors, Saturation)
-- Distributed Tracing
-- Service topology visualization
+
+* Automatic metric generation (Latency, Traffic, Errors, Saturation)
+* Distributed Tracing
+* Service topology visualization
 
 **Benefits**:
-- Automatic identification of bottlenecks
-- Quick error root cause identification
-- Real-time service status monitoring
+
+* Automatic identification of bottlenecks
+* Quick error root cause identification
+* Real-time service status monitoring
 
 #### 4. Resilience
 
 **Problem**: Failure of one service propagates to the entire system.
 
 **Istio Solution**:
+
 ```yaml
 # Automatic Circuit Breaker configuration
 apiVersion: networking.istio.io/v1
@@ -392,86 +404,84 @@ spec:
 ```
 
 **Benefits**:
-- Failure isolation (Circuit Breaker)
-- Automatic retry and timeout
-- Automatic removal of unhealthy instances
-- Traffic limiting (Rate Limiting)
+
+* Failure isolation (Circuit Breaker)
+* Automatic retry and timeout
+* Automatic removal of unhealthy instances
+* Traffic limiting (Rate Limiting)
 
 ### When to Use Istio
 
 **✅ When Istio is Suitable:**
 
 1. **Microservices Architecture**
-   - 10 or more services
-   - Complex dependencies between services
-   - Frequent deployments
-
+   * 10 or more services
+   * Complex dependencies between services
+   * Frequent deployments
 2. **Advanced Traffic Management Needed**
-   - Canary deployments, A/B testing
-   - Fine-grained routing control
-   - Traffic Mirroring
-
+   * Canary deployments, A/B testing
+   * Fine-grained routing control
+   * Traffic Mirroring
 3. **Strong Security Requirements**
-   - Inter-service encryption mandatory
-   - Fine-grained access control
-   - Regulatory compliance
-
+   * Inter-service encryption mandatory
+   * Fine-grained access control
+   * Regulatory compliance
 4. **Observability and Debugging**
-   - Complex inter-service problem tracking
-   - Performance bottleneck identification
-   - SLO/SLA monitoring
+   * Complex inter-service problem tracking
+   * Performance bottleneck identification
+   * SLO/SLA monitoring
 
 **❌ When Istio May Be Overkill:**
 
 1. **Simple Applications**
-   - Few services (less than 5)
-   - Simple requirements
-   - Kubernetes Ingress is sufficient
-
+   * Few services (less than 5)
+   * Simple requirements
+   * Kubernetes Ingress is sufficient
 2. **Resource Constraints**
-   - Small cluster
-   - Cannot handle resource overhead
-   - Sidecar memory cost burden
-
+   * Small cluster
+   * Cannot handle resource overhead
+   * Sidecar memory cost burden
 3. **Lack of Operations Capability**
-   - Insufficient learning time
-   - No dedicated platform team
-   - Prefer simpler solutions
+   * Insufficient learning time
+   * No dedicated platform team
+   * Prefer simpler solutions
 
 ### Alternatives Comparison
 
 #### Kubernetes Ingress vs Istio
 
-| Feature | Kubernetes Ingress | Istio |
-|------|-------------------|-------|
-| **Scope** | External → Cluster | External + Internal inter-service |
-| **Routing** | Basic (Path, Host) | Advanced (Header, Cookie, etc.) |
-| **mTLS** | Manual setup | Automatic |
-| **Observability** | Limited | Rich |
-| **Complexity** | Low | High |
-| **Use Case** | Simple apps | Microservices |
+| Feature           | Kubernetes Ingress | Istio                             |
+| ----------------- | ------------------ | --------------------------------- |
+| **Scope**         | External → Cluster | External + Internal inter-service |
+| **Routing**       | Basic (Path, Host) | Advanced (Header, Cookie, etc.)   |
+| **mTLS**          | Manual setup       | Automatic                         |
+| **Observability** | Limited            | Rich                              |
+| **Complexity**    | Low                | High                              |
+| **Use Case**      | Simple apps        | Microservices                     |
 
 #### AWS VPC Lattice vs Istio
 
 For detailed comparison, refer to the [AWS Integration](04-aws-integration.md#istio-vs-other-solutions-comparison) document.
 
 **Quick Summary:**
-- **VPC Lattice**: AWS managed, simple, cross-VPC/account communication
-- **Istio**: Open source, powerful features, Kubernetes-only, fine-grained control
+
+* **VPC Lattice**: AWS managed, simple, cross-VPC/account communication
+* **Istio**: Open source, powerful features, Kubernetes-only, fine-grained control
 
 #### Linkerd vs Istio
 
-| Property | Istio | Linkerd |
-|------|-------|---------|
-| **Complexity** | High | Low |
-| **Features** | Very rich | Core features only |
-| **Resources** | High | Low |
-| **Learning Curve** | Steep | Gentle |
-| **Community** | Large | Small |
+| Property           | Istio     | Linkerd            |
+| ------------------ | --------- | ------------------ |
+| **Complexity**     | High      | Low                |
+| **Features**       | Very rich | Core features only |
+| **Resources**      | High      | Low                |
+| **Learning Curve** | Steep     | Gentle             |
+| **Community**      | Large     | Small              |
 
 **Selection Guide:**
-- Need advanced features and flexibility → **Istio**
-- Need simple and lightweight mesh → **Linkerd**
+
+* Need advanced features and flexibility → **Istio**
+* Need simple and lightweight mesh → **Linkerd**
 
 ## Deployment Modes: Sidecar vs Ambient
 
@@ -505,14 +515,16 @@ flowchart LR
 ```
 
 **Advantages:**
-- Mature and stable
-- All Istio features supported
-- Fine-grained control per pod
+
+* Mature and stable
+* All Istio features supported
+* Fine-grained control per pod
 
 **Disadvantages:**
-- Resource overhead (Envoy per pod)
-- Increased startup time (Init Container)
-- Complex permission setup (iptables)
+
+* Resource overhead (Envoy per pod)
+* Increased startup time (Init Container)
+* Complex permission setup (iptables)
 
 ### Ambient Mode (New Approach)
 
@@ -547,40 +559,44 @@ flowchart TB
 ```
 
 **Advantages:**
-- Low resource usage (1 per node)
-- Fast pod startup
-- Simple operations
-- Gradual L7 feature application possible
+
+* Low resource usage (1 per node)
+* Fast pod startup
+* Simple operations
+* Gradual L7 feature application possible
 
 **Disadvantages:**
-- Relatively new technology (less mature)
-- Some advanced features limited
-- Difficult fine-grained control per pod
+
+* Relatively new technology (less mature)
+* Some advanced features limited
+* Difficult fine-grained control per pod
 
 ### Comparison Table
 
-| Property | Sidecar Mode | Ambient Mode |
-|------|-------------|--------------|
-| **Resource Usage** | High (per pod) | Low (per node) |
-| **Startup Time** | Slow (Init Container) | Fast |
-| **Operational Complexity** | High | Low |
-| **L4 Features** | Supported | Supported |
-| **L7 Features** | Full support | Optional (Waypoint) |
-| **Maturity** | High | Medium |
-| **Migration** | - | Possible from existing sidecar |
-| **Recommended Use** | Advanced L7 features needed | Resource efficiency priority |
+| Property                   | Sidecar Mode                | Ambient Mode                   |
+| -------------------------- | --------------------------- | ------------------------------ |
+| **Resource Usage**         | High (per pod)              | Low (per node)                 |
+| **Startup Time**           | Slow (Init Container)       | Fast                           |
+| **Operational Complexity** | High                        | Low                            |
+| **L4 Features**            | Supported                   | Supported                      |
+| **L7 Features**            | Full support                | Optional (Waypoint)            |
+| **Maturity**               | High                        | Medium                         |
+| **Migration**              | -                           | Possible from existing sidecar |
+| **Recommended Use**        | Advanced L7 features needed | Resource efficiency priority   |
 
 ### Selection Guide
 
 **Choose Sidecar Mode:**
-- Need to utilize all Istio features
-- Need fine-grained policy control per pod
-- Need production-proven stability
+
+* Need to utilize all Istio features
+* Need fine-grained policy control per pod
+* Need production-proven stability
 
 **Choose Ambient Mode:**
-- Resource efficiency is important
-- Only simple L4 features needed
-- Planning to gradually add L7 features
+
+* Resource efficiency is important
+* Only simple L4 features needed
+* Planning to gradually add L7 features
 
 **For details**, refer to the [Advanced: Ambient Mode](advanced/01-ambient-mode.md) document.
 
@@ -588,10 +604,10 @@ flowchart TB
 
 Istio consists of two main components: **Control Plane** and **Data Plane**.
 
-| Component | Description |
-|----------|------|
-| **Control Plane (istiod)** | Central control system responsible for service discovery, configuration distribution, certificate management |
-| **Data Plane (Envoy Proxy)** | Deployed as sidecar in each pod, handles actual traffic (routing, mTLS, metrics) |
+| Component                    | Description                                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Control Plane (istiod)**   | Central control system responsible for service discovery, configuration distribution, certificate management |
+| **Data Plane (Envoy Proxy)** | Deployed as sidecar in each pod, handles actual traffic (routing, mTLS, metrics)                             |
 
 **For detailed architecture structure, internal operation principles, and traffic interception mechanisms**, refer to the [Architecture document](03-architecture.md).
 
@@ -627,10 +643,11 @@ spec:
 ```
 
 **Key Features**:
-- Path-based routing (Path, Header, Query Parameter)
-- Traffic splitting (Canary, A/B testing)
-- Retry, Timeout, Fault Injection
-- URL Rewrite, Header manipulation
+
+* Path-based routing (Path, Header, Query Parameter)
+* Traffic splitting (Canary, A/B testing)
+* Retry, Timeout, Fault Injection
+* URL Rewrite, Header manipulation
 
 ### 2. DestinationRule
 
@@ -669,11 +686,12 @@ spec:
 ```
 
 **Key Features**:
-- Service version (subset) definition
-- Load balancing algorithm
-- Connection Pool settings
-- Circuit Breaker (Outlier Detection)
-- TLS settings
+
+* Service version (subset) definition
+* Load balancing algorithm
+* Connection Pool settings
+* Circuit Breaker (Outlier Detection)
+* TLS settings
 
 ### 3. Gateway
 
@@ -706,10 +724,11 @@ spec:
 ```
 
 **Key Features**:
-- Define external traffic entry point
-- Host, port, protocol settings
-- TLS termination
-- SNI routing
+
+* Define external traffic entry point
+* Host, port, protocol settings
+* TLS termination
+* SNI routing
 
 ### 4. ServiceEntry
 
@@ -732,9 +751,10 @@ spec:
 ```
 
 **Key Features**:
-- External service registration
-- Traffic control for external services
-- Egress traffic management
+
+* External service registration
+* Traffic control for external services
+* Egress traffic management
 
 ### 5. PeerAuthentication
 
@@ -883,9 +903,10 @@ flowchart LR
 ```
 
 **mTLS Modes**:
-- **STRICT**: mTLS only allowed
-- **PERMISSIVE**: Both mTLS and plaintext allowed (for migration)
-- **DISABLE**: mTLS disabled
+
+* **STRICT**: mTLS only allowed
+* **PERMISSIVE**: Both mTLS and plaintext allowed (for migration)
+* **DISABLE**: mTLS disabled
 
 ### Authentication and Authorization
 
@@ -953,13 +974,13 @@ flowchart TB
 
 ### Key Metrics
 
-| Metric | Description |
-|-------|------|
-| `istio_requests_total` | Total request count |
-| `istio_request_duration_milliseconds` | Request latency |
-| `istio_request_bytes` | Request size |
-| `istio_response_bytes` | Response size |
-| `istio_tcp_connections_opened_total` | TCP connection count |
+| Metric                                | Description          |
+| ------------------------------------- | -------------------- |
+| `istio_requests_total`                | Total request count  |
+| `istio_request_duration_milliseconds` | Request latency      |
+| `istio_request_bytes`                 | Request size         |
+| `istio_response_bytes`                | Response size        |
+| `istio_tcp_connections_opened_total`  | TCP connection count |
 
 ### Distributed Tracing
 
@@ -1082,10 +1103,11 @@ flowchart TB
 ```
 
 **Usage Scenarios**:
-- Gradual migration of legacy applications
-- Including database servers in the mesh
-- Integration of services outside the cluster
-- Hybrid cloud environment configuration
+
+* Gradual migration of legacy applications
+* Including database servers in the mesh
+* Integration of services outside the cluster
+* Hybrid cloud environment configuration
 
 ### VM Registration Architecture
 
@@ -1148,10 +1170,11 @@ spec:
 ```
 
 **WorkloadEntry Key Fields**:
-- `address`: VM IP address
-- `labels`: Matches with service selector
-- `serviceAccount`: Service account for mTLS authentication
-- `ports`: Exposed port definition
+
+* `address`: VM IP address
+* `labels`: Matches with service selector
+* `serviceAccount`: Service account for mTLS authentication
+* `ports`: Exposed port definition
 
 ### Integration with ServiceEntry
 
@@ -1192,15 +1215,15 @@ spec:
 
 ### VM Registration vs Multi-Cluster Comparison
 
-| Feature | VM Workload Registration | Multi-Cluster | Kubernetes Pod |
-|------|----------------|---------------|----------------|
-| **Workload Location** | VM outside cluster | Different Kubernetes cluster | Inside cluster |
-| **Envoy Installation** | Manual installation | Automatic (sidecar) | Automatic (sidecar) |
-| **Registration Method** | WorkloadEntry | ServiceEntry + EndpointSlice | Service + Pod |
-| **mTLS** | Supported | Supported | Supported |
-| **Service Discovery** | Manual (IP specified) | Automatic | Automatic |
-| **Usage Scenario** | Legacy apps, DB | Multi-cloud, disaster recovery | Cloud-native apps |
-| **Operational Complexity** | High | Medium | Low |
+| Feature                    | VM Workload Registration | Multi-Cluster                  | Kubernetes Pod      |
+| -------------------------- | ------------------------ | ------------------------------ | ------------------- |
+| **Workload Location**      | VM outside cluster       | Different Kubernetes cluster   | Inside cluster      |
+| **Envoy Installation**     | Manual installation      | Automatic (sidecar)            | Automatic (sidecar) |
+| **Registration Method**    | WorkloadEntry            | ServiceEntry + EndpointSlice   | Service + Pod       |
+| **mTLS**                   | Supported                | Supported                      | Supported           |
+| **Service Discovery**      | Manual (IP specified)    | Automatic                      | Automatic           |
+| **Usage Scenario**         | Legacy apps, DB          | Multi-cloud, disaster recovery | Cloud-native apps   |
+| **Operational Complexity** | High                     | Medium                         | Low                 |
 
 ### Benefits of VM Registration
 
@@ -1241,9 +1264,10 @@ flowchart LR
 ```
 
 **Benefits**:
-- Integrate existing VM applications into mesh without modification
-- Migrate to Kubernetes in stages
-- Maintain consistent security and observability during migration
+
+* Integrate existing VM applications into mesh without modification
+* Migrate to Kubernetes in stages
+* Maintain consistent security and observability during migration
 
 #### 2. Unified Security Policy
 
@@ -1365,10 +1389,11 @@ spec:
 ```
 
 **Result**:
-- Kubernetes pods access database via `postgres.production.svc.cluster.local`
-- Automatic mTLS encryption between VM and pods
-- Access control policy applied
-- Metrics and distributed tracing automatically collected
+
+* Kubernetes pods access database via `postgres.production.svc.cluster.local`
+* Automatic mTLS encryption between VM and pods
+* Access control policy applied
+* Metrics and distributed tracing automatically collected
 
 ### Workload Registration Comparison Summary
 
@@ -1402,9 +1427,10 @@ flowchart TB
 ```
 
 Through Istio's flexible workload registration capabilities:
-- **Kubernetes Pod**: Cloud-native applications
-- **Multi-Cluster**: Multi-cloud, regional distribution, disaster recovery
-- **Virtual Machine**: Legacy apps, databases, hybrid environments
+
+* **Kubernetes Pod**: Cloud-native applications
+* **Multi-Cluster**: Multi-cloud, regional distribution, disaster recovery
+* **Virtual Machine**: Legacy apps, databases, hybrid environments
 
 All workloads receive consistent security, traffic management, and observability features.
 
@@ -1414,48 +1440,45 @@ You now understand Istio's basic concepts. Learn how to use them in practice thr
 
 ### Core Features
 
-1. **[Traffic Management](traffic-management/README.md)**
-   - Gateway and VirtualService usage
-   - DestinationRule and subset definition
-   - ServiceEntry and WorkloadEntry (VM registration)
-   - Advanced routing patterns (Canary, A/B testing)
-   - Traffic Mirroring and Shadowing
-
-2. **[Security](security/README.md)**
-   - mTLS configuration and PeerAuthentication
-   - Authentication (RequestAuthentication, JWT)
-   - Authorization (AuthorizationPolicy)
-   - Security policy management
-   - External authentication integration
-
-3. **[Observability](observability/README.md)**
-   - Metric collection (Prometheus)
-   - Distributed tracing (Jaeger, Zipkin)
-   - Logging configuration
-   - Kiali service mesh visualization
-   - Grafana dashboards
-
-4. **[Resilience](resilience/README.md)**
-   - Circuit Breaker pattern
-   - Retry and Timeout settings
-   - Rate Limiting
-   - Outlier Detection
-   - Fault Injection testing
+1. [**Traffic Management**](traffic-management/)
+   * Gateway and VirtualService usage
+   * DestinationRule and subset definition
+   * ServiceEntry and WorkloadEntry (VM registration)
+   * Advanced routing patterns (Canary, A/B testing)
+   * Traffic Mirroring and Shadowing
+2. [**Security**](security/)
+   * mTLS configuration and PeerAuthentication
+   * Authentication (RequestAuthentication, JWT)
+   * Authorization (AuthorizationPolicy)
+   * Security policy management
+   * External authentication integration
+3. [**Observability**](/broken/pages/HT0uW6gT7EfVN0LF8wU5)
+   * Metric collection (Prometheus)
+   * Distributed tracing (Jaeger, Zipkin)
+   * Logging configuration
+   * Kiali service mesh visualization
+   * Grafana dashboards
+4. [**Resilience**](resilience/)
+   * Circuit Breaker pattern
+   * Retry and Timeout settings
+   * Rate Limiting
+   * Outlier Detection
+   * Fault Injection testing
 
 ### Advanced Topics
 
-5. **[Advanced Topics](advanced/README.md)**
-   - Ambient Mode (sidecar-less mesh)
-   - Multi-Cluster configuration
-   - EnvoyFilter customization
-   - DNS Proxy and Caching
-   - VM workload detailed configuration
-   - WASM plugin development
+5. [**Advanced Topics**](advanced/)
+   * Ambient Mode (sidecar-less mesh)
+   * Multi-Cluster configuration
+   * EnvoyFilter customization
+   * DNS Proxy and Caching
+   * VM workload detailed configuration
+   * WASM plugin development
 
 ## References
 
-- [Istio Official Documentation - Concepts](https://istio.io/latest/docs/concepts/)
-- [Istio Official Documentation - Traffic Management](https://istio.io/latest/docs/concepts/traffic-management/)
-- [Istio Official Documentation - Security](https://istio.io/latest/docs/concepts/security/)
-- [Istio Official Documentation - Observability](https://istio.io/latest/docs/concepts/observability/)
-- [Envoy Proxy Official Documentation](https://www.envoyproxy.io/docs/envoy/latest/)
+* [Istio Official Documentation - Concepts](https://istio.io/latest/docs/concepts/)
+* [Istio Official Documentation - Traffic Management](https://istio.io/latest/docs/concepts/traffic-management/)
+* [Istio Official Documentation - Security](https://istio.io/latest/docs/concepts/security/)
+* [Istio Official Documentation - Observability](https://istio.io/latest/docs/concepts/observability/)
+* [Envoy Proxy Official Documentation](https://www.envoyproxy.io/docs/envoy/latest/)

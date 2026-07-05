@@ -1,6 +1,6 @@
-# Part 4: BGP Architecture Deep Dive
-> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 23, 2026
+# Part 4: BGP Deep Dive
+
+> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+ **Last Updated**: February 23, 2026
 
 ## Introduction
 
@@ -8,7 +8,7 @@ Border Gateway Protocol (BGP) is the routing protocol that powers the internet, 
 
 This deep dive covers BGP fundamentals, Calico's BGP architecture options, configuration resources, and advanced deployment patterns for enterprise environments.
 
----
+***
 
 ## BGP Fundamentals
 
@@ -18,14 +18,14 @@ BGP (Border Gateway Protocol) is a path-vector routing protocol designed to exch
 
 ### Key BGP Concepts
 
-| Concept | Description |
-|---------|-------------|
-| **Autonomous System (AS)** | A collection of IP networks under a single administrative domain |
-| **AS Number (ASN)** | Unique identifier for an AS (16-bit: 1-65534, 32-bit: 1-4294967294) |
-| **iBGP** | Internal BGP - sessions between routers in the same AS |
-| **eBGP** | External BGP - sessions between routers in different ASes |
-| **NLRI** | Network Layer Reachability Information - the routes being advertised |
-| **BGP Speaker** | A router or software that participates in BGP |
+| Concept                    | Description                                                          |
+| -------------------------- | -------------------------------------------------------------------- |
+| **Autonomous System (AS)** | A collection of IP networks under a single administrative domain     |
+| **AS Number (ASN)**        | Unique identifier for an AS (16-bit: 1-65534, 32-bit: 1-4294967294)  |
+| **iBGP**                   | Internal BGP - sessions between routers in the same AS               |
+| **eBGP**                   | External BGP - sessions between routers in different ASes            |
+| **NLRI**                   | Network Layer Reachability Information - the routes being advertised |
+| **BGP Speaker**            | A router or software that participates in BGP                        |
 
 ### Private AS Number Ranges
 
@@ -59,19 +59,19 @@ flowchart TD
 
 ### iBGP vs eBGP Behavior
 
-| Attribute | iBGP | eBGP |
-|-----------|------|------|
-| AS_PATH modification | Not modified | Prepends local AS |
-| Next-hop | Not changed by default | Changed to peering address |
-| Default TTL | 255 | 1 (multihop required for non-adjacent) |
-| Route advertisement | Only to eBGP peers (split-horizon) | To all peers |
-| Administrative Distance | 200 | 20 |
+| Attribute               | iBGP                               | eBGP                                   |
+| ----------------------- | ---------------------------------- | -------------------------------------- |
+| AS\_PATH modification   | Not modified                       | Prepends local AS                      |
+| Next-hop                | Not changed by default             | Changed to peering address             |
+| Default TTL             | 255                                | 1 (multihop required for non-adjacent) |
+| Route advertisement     | Only to eBGP peers (split-horizon) | To all peers                           |
+| Administrative Distance | 200                                | 20                                     |
 
----
+***
 
 ## Calico BGP Architecture
 
-![Calico BGP Topologies](../../../assets/calico_bgp_topology.png)
+![Calico BGP Topologies](../../.gitbook/assets/calico_bgp_topology.png)
 
 ### BIRD: Calico's BGP Implementation
 
@@ -97,7 +97,7 @@ Calico supports two primary BGP topologies:
 1. **Node-to-Node Mesh (Full Mesh)** - Default configuration
 2. **Route Reflectors** - Recommended for larger clusters
 
----
+***
 
 ## Full-Mesh Topology
 
@@ -137,12 +137,12 @@ Examples:
 
 ### Full-Mesh Scaling Limitations
 
-| Cluster Size | BGP Sessions | Memory per Node | CPU Impact | Recommendation |
-|--------------|--------------|-----------------|------------|----------------|
-| < 50 nodes | < 1,225 | ~50 MB | Minimal | Full-mesh OK |
-| 50-100 nodes | 1,225-4,950 | ~100 MB | Low | Consider RR |
-| 100-200 nodes | 4,950-19,900 | ~200 MB | Moderate | Use RR |
-| > 200 nodes | > 19,900 | > 400 MB | High | Require RR |
+| Cluster Size  | BGP Sessions | Memory per Node | CPU Impact | Recommendation |
+| ------------- | ------------ | --------------- | ---------- | -------------- |
+| < 50 nodes    | < 1,225      | \~50 MB         | Minimal    | Full-mesh OK   |
+| 50-100 nodes  | 1,225-4,950  | \~100 MB        | Low        | Consider RR    |
+| 100-200 nodes | 4,950-19,900 | \~200 MB        | Moderate   | Use RR         |
+| > 200 nodes   | > 19,900     | > 400 MB        | High       | Require RR     |
 
 ### Enabling/Disabling Node-to-Node Mesh
 
@@ -164,7 +164,7 @@ spec:
   asNumber: 64512
 ```
 
----
+***
 
 ## Route Reflector Topology
 
@@ -209,10 +209,10 @@ graph TB
 
 ### Route Reflector Key Attributes
 
-| Attribute | Description |
-|-----------|-------------|
-| **Cluster ID** | Identifies a set of RRs serving the same clients |
-| **Originator ID** | Prevents routing loops (set to the router ID of originator) |
+| Attribute            | Description                                                   |
+| -------------------- | ------------------------------------------------------------- |
+| **Cluster ID**       | Identifies a set of RRs serving the same clients              |
+| **Originator ID**    | Prevents routing loops (set to the router ID of originator)   |
 | **Route Reflection** | RR re-advertises routes learned from clients to other clients |
 
 ### Session Count with Route Reflectors
@@ -362,7 +362,7 @@ graph TB
     R3N1 & R3N2 --> RRR3
 ```
 
----
+***
 
 ## BGPPeer Resource
 
@@ -370,11 +370,11 @@ The `BGPPeer` resource defines BGP peering relationships between Calico nodes an
 
 ### BGPPeer Scope Types
 
-| Type | Description | Use Case |
-|------|-------------|----------|
-| **Global** | Applies to all nodes | External router peering |
-| **Node-specific** | Uses nodeSelector | Rack-local peering |
-| **Per-node** | Specifies exact node | Special configurations |
+| Type              | Description          | Use Case                |
+| ----------------- | -------------------- | ----------------------- |
+| **Global**        | Applies to all nodes | External router peering |
+| **Node-specific** | Uses nodeSelector    | Rack-local peering      |
+| **Per-node**      | Specifies exact node | Special configurations  |
 
 ### Global BGPPeer Example
 
@@ -467,7 +467,7 @@ spec:
       cidr: 10.0.0.0/8
 ```
 
----
+***
 
 ## BGPConfiguration Resource
 
@@ -564,17 +564,17 @@ spec:
     asNumber: 65001  # Override cluster default
 ```
 
----
+***
 
 ## Service IP Advertisement
 
 ### Advertisement Types
 
-| Type | Description | Use Case |
-|------|-------------|----------|
-| **ClusterIP** | Internal service IP | Internal load balancing |
-| **ExternalIP** | User-assigned external IP | Direct external access |
-| **LoadBalancerIP** | Cloud provider assigned | Cloud integration |
+| Type               | Description               | Use Case                |
+| ------------------ | ------------------------- | ----------------------- |
+| **ClusterIP**      | Internal service IP       | Internal load balancing |
+| **ExternalIP**     | User-assigned external IP | Direct external access  |
+| **LoadBalancerIP** | Cloud provider assigned   | Cloud integration       |
 
 ### ExternalIP Advertisement Example
 
@@ -651,7 +651,7 @@ spec:
   ...
 ```
 
----
+***
 
 ## Physical Network Integration
 
@@ -846,19 +846,19 @@ spec:
   asNumber: 65003
 ```
 
----
+***
 
 ## BGP Community Tagging Strategy
 
 ### Community Design Patterns
 
-| Community | Meaning | Action |
-|-----------|---------|--------|
-| `64512:100` | Pod Networks | Accept, normal routing |
-| `64512:200` | Service IPs | Accept, may apply special policy |
-| `64512:300` | Infrastructure | Higher priority routing |
-| `65535:65281` | NO_EXPORT | Do not advertise outside AS |
-| `65535:65282` | NO_ADVERTISE | Do not advertise to any peer |
+| Community     | Meaning        | Action                           |
+| ------------- | -------------- | -------------------------------- |
+| `64512:100`   | Pod Networks   | Accept, normal routing           |
+| `64512:200`   | Service IPs    | Accept, may apply special policy |
+| `64512:300`   | Infrastructure | Higher priority routing          |
+| `65535:65281` | NO\_EXPORT     | Do not advertise outside AS      |
+| `65535:65282` | NO\_ADVERTISE  | Do not advertise to any peer     |
 
 ### Community-Based Traffic Engineering
 
@@ -896,7 +896,7 @@ spec:
         - production
 ```
 
----
+***
 
 ## BGP Security
 
@@ -984,7 +984,7 @@ spec:
   ttlSecurity: 1  # Expect TTL of 254 or higher
 ```
 
----
+***
 
 ## Performance Tuning
 
@@ -1042,7 +1042,7 @@ spec:
   nodeMeshMaxRestartTime: 120
 ```
 
----
+***
 
 ## Debugging BGP
 
@@ -1075,12 +1075,12 @@ birdcl -s /var/run/calico/bird.ctl show protocols all Mesh_10_0_1_11
 
 ### Common BGP Issues and Solutions
 
-| Issue | Symptoms | Solution |
-|-------|----------|----------|
-| Sessions stuck in Active | No routes learned | Check firewall (TCP 179), AS numbers |
-| Routes not propagating | Pods unreachable across racks | Verify node-to-node mesh or RR config |
-| Route flapping | Intermittent connectivity | Check BGP timers, network stability |
-| Session resets | Frequent Established->Active | Check MTU, MD5 passwords |
+| Issue                    | Symptoms                      | Solution                              |
+| ------------------------ | ----------------------------- | ------------------------------------- |
+| Sessions stuck in Active | No routes learned             | Check firewall (TCP 179), AS numbers  |
+| Routes not propagating   | Pods unreachable across racks | Verify node-to-node mesh or RR config |
+| Route flapping           | Intermittent connectivity     | Check BGP timers, network stability   |
+| Session resets           | Frequent Established->Active  | Check MTU, MD5 passwords              |
 
 ### Diagnostic Commands
 
@@ -1101,7 +1101,7 @@ kubectl logs -n kube-system calico-node-xxxxx -c calico-node | grep -i bird
 ip route show | grep bird
 ```
 
----
+***
 
 ## Multi-Rack and Multi-Datacenter Design
 
@@ -1207,7 +1207,7 @@ spec:
   asNumber: 65000
 ```
 
----
+***
 
 ## Best Practices Summary
 
@@ -1235,12 +1235,12 @@ spec:
 4. Test failover scenarios regularly
 5. Keep BGP timers consistent across peers
 
----
+***
 
 ## References
 
-- [Calico BGP Documentation](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
-- [BIRD Internet Routing Daemon](https://bird.network.cz/)
-- [RFC 4271 - BGP-4](https://tools.ietf.org/html/rfc4271)
-- [RFC 4456 - BGP Route Reflection](https://tools.ietf.org/html/rfc4456)
-- [RFC 5765 - GTSM for BGP](https://tools.ietf.org/html/rfc5082)
+* [Calico BGP Documentation](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
+* [BIRD Internet Routing Daemon](https://bird.network.cz/)
+* [RFC 4271 - BGP-4](https://tools.ietf.org/html/rfc4271)
+* [RFC 4456 - BGP Route Reflection](https://tools.ietf.org/html/rfc4456)
+* [RFC 5765 - GTSM for BGP](https://tools.ietf.org/html/rfc5082)

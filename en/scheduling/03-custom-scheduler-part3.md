@@ -1,4 +1,4 @@
-# Part 3: Custom Scheduler Implementation Cases and Monitoring
+# Part 3: Advanced Features
 
 ## Custom Scheduler Implementation Cases in EKS
 
@@ -12,13 +12,9 @@ In EKS clusters running AI/ML workloads, efficient utilization of GPU resources 
 
 The following diagram shows the architecture of the GPU workload optimization scheduler:
 
-![](../assets/gpu_scheduler_architecture.svg)
-
 #### GPU Workload Scheduling Workflow
 
 The following diagram shows the GPU workload scheduling workflow:
-
-![](../assets/gpu_workload_scheduling_workflow.svg)
 
 #### Requirements
 
@@ -169,13 +165,9 @@ In EKS clusters, you can implement a custom scheduler that considers network loc
 
 The following diagram shows the architecture of the network locality optimization scheduler.
 
-![](../assets/network_locality_scheduler_architecture.svg)
-
 #### Network Locality Optimization Workflow
 
 The following diagram shows the workflow of the network locality optimization scheduler.
-
-![](../assets/network_locality_workflow.svg)
 
 ## Scale-Down Optimization with Pod Deletion Cost
 
@@ -186,10 +178,11 @@ Pod Deletion Cost, introduced in Kubernetes 1.22, is a feature that allows you t
 Pod Deletion Cost assigns a cost value to each pod through the `controller.kubernetes.io/pod-deletion-cost` annotation. During scale-down, pods with lower costs are deleted first.
 
 **Key Features**:
-- Default value: 0
-- Range: -2147483648 to 2147483647 (int32 range)
-- Higher value = More important pod (deleted later)
-- Lower value = Less important pod (deleted first)
+
+* Default value: 0
+* Range: -2147483648 to 2147483647 (int32 range)
+* Higher value = More important pod (deleted later)
+* Lower value = Less important pod (deleted first)
 
 ### Pod Deletion Cost Architecture
 
@@ -653,27 +646,22 @@ spec:
 ### Best Practices
 
 1. **Use Consistent Cost Ranges**: Define and use consistent cost ranges within your team.
-   - `-100 to -1`: Delete first (new pods, pods warming up)
-   - `0`: Default (normal pods)
-   - `1 to 100`: Medium importance (pods with active connections)
-   - `100 to 1000`: High importance (pods with warmed cache, pods with many connections)
-
+   * `-100 to -1`: Delete first (new pods, pods warming up)
+   * `0`: Default (normal pods)
+   * `1 to 100`: Medium importance (pods with active connections)
+   * `100 to 1000`: High importance (pods with warmed cache, pods with many connections)
 2. **Dynamic Updates**: Dynamically update deletion cost when pod state changes.
-
 3. **Set Upper Limits**: Set upper limits on deletion cost to prevent issues with excessively large values.
-
 4. **Monitoring**: Monitor the distribution of deletion costs to verify they work as expected.
-
 5. **Testing**: Test scale-down behavior in a staging environment before applying to production.
-
 6. **Documentation**: Document what each cost range means.
 
 ### Limitations
 
-- **Interaction with Pod Disruption Budget**: PDB takes precedence when used together.
-- **Kubernetes Version**: Only available in 1.22 and above.
-- **Workload Type Limitation**: Only works with workloads using ReplicaSet controller (Deployment, ReplicaSet).
-- **Node Failure**: Deletion cost is not considered when a node completely fails.
+* **Interaction with Pod Disruption Budget**: PDB takes precedence when used together.
+* **Kubernetes Version**: Only available in 1.22 and above.
+* **Workload Type Limitation**: Only works with workloads using ReplicaSet controller (Deployment, ReplicaSet).
+* **Node Failure**: Deletion cost is not considered when a node completely fails.
 
 ## Custom Scheduler Monitoring and Debugging
 
@@ -683,13 +671,9 @@ After implementing a custom scheduler, monitoring and debugging are important. T
 
 The following diagram shows the architecture for monitoring custom schedulers in EKS.
 
-![](../assets/custom_scheduler_monitoring_architecture.svg)
-
 ### Key Monitoring Metrics
 
 The following diagram shows the key monitoring metrics for custom schedulers and their relationships:
-
-![](../assets/custom_scheduler_monitoring_metrics.svg)
 
 ### Logging
 

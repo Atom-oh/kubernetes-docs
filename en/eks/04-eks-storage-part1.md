@@ -1,21 +1,22 @@
-# Amazon EKS Storage - Part 1: Basic Concepts, EBS, EFS
+# EKS Storage
+
 > **Last Updated**: July 3, 2026
 
 When running applications on Amazon EKS, there are various storage options for storing and managing data. This document covers the basic concepts of EKS storage and how to use Amazon EBS (Elastic Block Store) and Amazon EFS (Elastic File System).
 
 ## Table of Contents
 
-1. [Kubernetes Storage Basic Concepts](#kubernetes-storage-basic-concepts)
-2. [Amazon EKS Storage Options Overview](#amazon-eks-storage-options-overview)
-3. [Storage with Amazon EBS](#storage-with-amazon-ebs)
-4. [Storage with Amazon EFS](#storage-with-amazon-efs)
-5. [Storage Classes and Dynamic Provisioning](#storage-classes-and-dynamic-provisioning)
+1. [Kubernetes Storage Basic Concepts](04-eks-storage-part1.md#kubernetes-storage-basic-concepts)
+2. [Amazon EKS Storage Options Overview](04-eks-storage-part1.md#amazon-eks-storage-options-overview)
+3. [Storage with Amazon EBS](04-eks-storage-part1.md#storage-with-amazon-ebs)
+4. [Storage with Amazon EFS](04-eks-storage-part1.md#storage-with-amazon-efs)
+5. [Storage Classes and Dynamic Provisioning](04-eks-storage-part1.md#storage-classes-and-dynamic-provisioning)
 
 ## Kubernetes Storage Basic Concepts
 
 Let's first understand the key concepts for managing storage in Kubernetes.
 
-![Kubernetes Storage Concepts](../assets/generated-diagrams/kubernetes_storage_concepts.png)
+![Kubernetes Storage Concepts](../.gitbook/assets/kubernetes_storage_concepts.png)
 
 ### Volume
 
@@ -37,60 +38,56 @@ A storage class describes the "class" of storage offered by the administrator. U
 
 Kubernetes supports the following access modes:
 
-- **ReadWriteOnce (RWO)**: Can be mounted as read/write by a single node
-- **ReadOnlyMany (ROX)**: Can be mounted as read-only by many nodes
-- **ReadWriteMany (RWX)**: Can be mounted as read/write by many nodes
-- **ReadWriteOncePod (RWOP)**: Can be mounted as read/write by only a single pod (Kubernetes 1.22+)
+* **ReadWriteOnce (RWO)**: Can be mounted as read/write by a single node
+* **ReadOnlyMany (ROX)**: Can be mounted as read-only by many nodes
+* **ReadWriteMany (RWX)**: Can be mounted as read/write by many nodes
+* **ReadWriteOncePod (RWOP)**: Can be mounted as read/write by only a single pod (Kubernetes 1.22+)
 
 ## Amazon EKS Storage Options Overview
 
 In Amazon EKS, you can leverage various AWS storage services to provide storage for containerized applications.
 
-![EKS Storage Options](../assets/generated-diagrams/eks_storage_options.png)
+![EKS Storage Options](../.gitbook/assets/eks_storage_options.png)
 
 ### Main Storage Options
 
 1. **Amazon EBS (Elastic Block Store)**
-   - Block storage, mountable to a single node (RWO)
-   - High-performance, durable block storage
-   - Suitable for databases, stateful applications
-
+   * Block storage, mountable to a single node (RWO)
+   * High-performance, durable block storage
+   * Suitable for databases, stateful applications
 2. **Amazon EFS (Elastic File System)**
-   - Fully managed NFS file system
-   - Can be mounted simultaneously from multiple nodes (RWX)
-   - Suitable for workloads requiring shared file systems
-
+   * Fully managed NFS file system
+   * Can be mounted simultaneously from multiple nodes (RWX)
+   * Suitable for workloads requiring shared file systems
 3. **Amazon FSx for Lustre**
-   - High-performance file system
-   - Suitable for machine learning, HPC, big data analytics
-   - Can be mounted simultaneously from multiple nodes (RWX)
-
+   * High-performance file system
+   * Suitable for machine learning, HPC, big data analytics
+   * Can be mounted simultaneously from multiple nodes (RWX)
 4. **Amazon S3 (Simple Storage Service)**
-   - Object storage
-   - Cannot be directly mounted as a volume, but accessible through S3 API
-   - Suitable for large-scale data storage
-
+   * Object storage
+   * Cannot be directly mounted as a volume, but accessible through S3 API
+   * Suitable for large-scale data storage
 5. **EC2 Instance Store (Local NVMe)**
-   - Ephemeral local NVMe storage physically attached to the EC2 instance, offering very low latency
-   - The EC2 Instance Store CSI Driver reached general availability (GA) as an Amazon EKS add-on in May 2026, so it can now be installed and managed as a standard add-on from the EKS Console/CLI (previously required manual installation via community manifests). The driver automatically manages volume lifecycle, reducing operational overhead
-   - Suitable for AI/ML ephemeral data processing, Spark/Hadoop local caching, high-throughput log processing, and database cache tiers
-   - Cost: the driver itself is free; you only pay for the underlying EC2 instance that includes instance store ([source](https://aws.amazon.com/about-aws/whats-new/2026/05/ec2-csi-eks/))
+   * Ephemeral local NVMe storage physically attached to the EC2 instance, offering very low latency
+   * The EC2 Instance Store CSI Driver reached general availability (GA) as an Amazon EKS add-on in May 2026, so it can now be installed and managed as a standard add-on from the EKS Console/CLI (previously required manual installation via community manifests). The driver automatically manages volume lifecycle, reducing operational overhead
+   * Suitable for AI/ML ephemeral data processing, Spark/Hadoop local caching, high-throughput log processing, and database cache tiers
+   * Cost: the driver itself is free; you only pay for the underlying EC2 instance that includes instance store ([source](https://aws.amazon.com/about-aws/whats-new/2026/05/ec2-csi-eks/))
 
 ### Storage Options Comparison
 
-| Storage Option | Type | Access Mode | Performance | Use Cases |
-|---------------|------|-------------|-------------|-----------|
-| Amazon EBS | Block | RWO | High | Databases, stateful applications |
-| Amazon EFS | File | RWX | Medium | Shared files, web servers, CMS |
-| FSx for Lustre | File | RWX | Very High | HPC, ML training, big data |
-| Amazon S3 | Object | API Access | Medium | Backup, archive, static content |
+| Storage Option     | Type               | Access Mode    | Performance                   | Use Cases                                                           |
+| ------------------ | ------------------ | -------------- | ----------------------------- | ------------------------------------------------------------------- |
+| Amazon EBS         | Block              | RWO            | High                          | Databases, stateful applications                                    |
+| Amazon EFS         | File               | RWX            | Medium                        | Shared files, web servers, CMS                                      |
+| FSx for Lustre     | File               | RWX            | Very High                     | HPC, ML training, big data                                          |
+| Amazon S3          | Object             | API Access     | Medium                        | Backup, archive, static content                                     |
 | EC2 Instance Store | Block (local NVMe) | RWO, ephemeral | Very High (ultra-low latency) | AI/ML ephemeral data, local caching, high-throughput log processing |
 
 ## Storage with Amazon EBS
 
 Amazon EBS provides block-level storage volumes that can be attached to EC2 instances. In EKS, you can mount EBS volumes to Kubernetes pods through the EBS CSI (Container Storage Interface) driver.
 
-![EBS CSI Driver Architecture](../assets/generated-diagrams/ebs_csi_architecture.png)
+![EBS CSI Driver Architecture](../.gitbook/assets/ebs_csi_architecture.png)
 
 ### Installing EBS CSI Driver
 
@@ -198,12 +195,12 @@ spec:
 
 Amazon EBS provides various volume types:
 
-| Volume Type | Description | Use Cases |
-|-------------|-------------|-----------|
-| gp3 | General Purpose SSD | Suitable for most workloads, cost-effective |
-| io2 | Provisioned IOPS SSD | High-performance databases |
-| st1 | Throughput Optimized HDD | Big data, log processing |
-| sc1 | Cold HDD | Infrequently accessed data |
+| Volume Type | Description              | Use Cases                                   |
+| ----------- | ------------------------ | ------------------------------------------- |
+| gp3         | General Purpose SSD      | Suitable for most workloads, cost-effective |
+| io2         | Provisioned IOPS SSD     | High-performance databases                  |
+| st1         | Throughput Optimized HDD | Big data, log processing                    |
+| sc1         | Cold HDD                 | Infrequently accessed data                  |
 
 For EKS, the gp3 volume type is recommended. gp3 is cost-effective while providing consistent performance.
 
@@ -211,7 +208,7 @@ For EKS, the gp3 volume type is recommended. gp3 is cost-effective while providi
 
 Amazon EFS is a fully managed NFS file system that can be accessed simultaneously from multiple EC2 instances. In EKS, you can mount EFS file systems to multiple pods simultaneously through the EFS CSI driver.
 
-![EFS CSI Driver Architecture](../assets/generated-diagrams/efs_csi_architecture.png)
+![EFS CSI Driver Architecture](../.gitbook/assets/efs_csi_architecture.png)
 
 ### Installing EFS CSI Driver
 
@@ -358,26 +355,28 @@ spec:
 Amazon EFS provides two performance modes and three throughput modes:
 
 **Performance Modes**:
-- **General Purpose**: Recommended for most workloads
-- **Max I/O**: Suitable for workloads requiring high parallel processing
+
+* **General Purpose**: Recommended for most workloads
+* **Max I/O**: Suitable for workloads requiring high parallel processing
 
 **Throughput Modes**:
-- **Bursting**: Default mode, provides burst credits based on file system size
-- **Provisioned**: Use when consistent throughput is needed
-- **Elastic**: Automatically adjusts throughput based on workload (recommended)
+
+* **Bursting**: Default mode, provides burst credits based on file system size
+* **Provisioned**: Use when consistent throughput is needed
+* **Elastic**: Automatically adjusts throughput based on workload (recommended)
 
 ## Storage Classes and Dynamic Provisioning
 
 Using Kubernetes storage classes allows persistent volumes to be dynamically provisioned. In EKS, you can configure storage classes for various AWS storage services.
 
-![Kubernetes Storage Workflow](../assets/generated-diagrams/storage_workflow.png)
+![Kubernetes Storage Workflow](../.gitbook/assets/storage_workflow.png)
 
 ### Volume Binding Modes
 
 The `volumeBindingMode` field in a storage class determines how PVs are bound when PVCs are created:
 
-- **Immediate**: Provisions and binds PV immediately when PVC is created.
-- **WaitForFirstConsumer**: Delays PV provisioning until a pod tries to use the PVC.
+* **Immediate**: Provisions and binds PV immediately when PVC is created.
+* **WaitForFirstConsumer**: Delays PV provisioning until a pod tries to use the PVC.
 
 For node-local storage like EBS, it is recommended to use `WaitForFirstConsumer`. This ensures the volume is created in the same availability zone as the node where the pod is scheduled.
 
@@ -453,9 +452,9 @@ parameters:
 
 The reclaim policy of a persistent volume determines how the PV and its data are handled when the PVC is deleted:
 
-- **Delete**: When PVC is deleted, the PV and its data are also deleted.
-- **Retain**: When PVC is deleted, the PV and data are retained. Administrator must manually clean up.
-- **Recycle**: Deprecated policy, use dynamic provisioning and storage classes instead.
+* **Delete**: When PVC is deleted, the PV and its data are also deleted.
+* **Retain**: When PVC is deleted, the PV and data are retained. Administrator must manually clean up.
+* **Recycle**: Deprecated policy, use dynamic provisioning and storage classes instead.
 
 You can set the reclaim policy using the `persistentVolumeReclaimPolicy` field in the storage class:
 

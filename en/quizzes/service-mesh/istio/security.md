@@ -1,8 +1,6 @@
-# Istio Security Quiz
+# Security Quiz
 
-> **Supported Version**: Istio 1.28.0
-> **EKS Version**: 1.34 (Kubernetes 1.28+)
-> **Last Updated**: February 23, 2026
+> **Supported Version**: Istio 1.28.0 **EKS Version**: 1.34 (Kubernetes 1.28+) **Last Updated**: February 23, 2026
 
 This quiz tests your understanding of Istio's security features.
 
@@ -12,12 +10,10 @@ This quiz tests your understanding of Istio's security features.
 
 Which statement correctly describes the **PERMISSIVE** mTLS mode in PeerAuthentication?
 
-A. It allows both mTLS and plaintext traffic
-B. It only allows mTLS and rejects plaintext
-C. It rejects all traffic
-D. It disables mTLS
+A. It allows both mTLS and plaintext traffic B. It only allows mTLS and rejects plaintext C. It rejects all traffic D. It disables mTLS
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: A**
@@ -28,13 +24,14 @@ PERMISSIVE mode **allows both mTLS and plaintext traffic** to support gradual mi
 
 **PeerAuthentication mTLS Modes:**
 
-| Mode | Description | Use Scenario |
-|------|-------------|--------------|
-| **PERMISSIVE** | Allows both mTLS + plaintext | Gradual migration, mixed environments |
-| **STRICT** | Only allows mTLS | Production security hardening |
-| **DISABLE** | Disables mTLS (plaintext only) | Debugging, legacy systems |
+| Mode           | Description                    | Use Scenario                          |
+| -------------- | ------------------------------ | ------------------------------------- |
+| **PERMISSIVE** | Allows both mTLS + plaintext   | Gradual migration, mixed environments |
+| **STRICT**     | Only allows mTLS               | Production security hardening         |
+| **DISABLE**    | Disables mTLS (plaintext only) | Debugging, legacy systems             |
 
 **PERMISSIVE Mode Example:**
+
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -47,12 +44,14 @@ spec:
 ```
 
 **Behavior:**
+
 ```
 Client A (Istio Sidecar) -> [mTLS] -> Server (PERMISSIVE)  Allowed
 Client B (No Sidecar)    -> [Plaintext] -> Server (PERMISSIVE)  Allowed
 ```
 
 **Comparison with STRICT Mode:**
+
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -70,6 +69,7 @@ Client B (No Sidecar)    -> [Plaintext] -> Server (STRICT)  Rejected
 ```
 
 **Migration Strategy:**
+
 ```
 Step 1: PERMISSIVE (Allow mixed traffic)
   |
@@ -79,11 +79,13 @@ Step 3: STRICT (Enforce mTLS)
 ```
 
 **Reference:**
-- [PeerAuthentication](../../../service-mesh/istio/security/04-peer-authentication.md)
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+
+* [PeerAuthentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/04-peer-authentication.md)
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+
 </details>
 
----
+***
 
 ### Question 2: AuthorizationPolicy Action
 
@@ -98,12 +100,10 @@ spec:
   {}
 ```
 
-A. It allows all requests
-B. It denies all requests
-C. It does not apply any policy
-D. It only allows mTLS
+A. It allows all requests B. It denies all requests C. It does not apply any policy D. It only allows mTLS
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: B**
@@ -119,6 +119,7 @@ An AuthorizationPolicy with an empty spec **denies all requests** (deny-by-defau
 3. **Has rules**: Allow/deny based on rules
 
 **Deny-by-default Pattern:**
+
 ```yaml
 # Step 1: Deny all requests
 apiVersion: security.istio.io/v1beta1
@@ -151,14 +152,15 @@ spec:
 
 **AuthorizationPolicy Action Types:**
 
-| action | Description | Priority |
-|--------|-------------|----------|
-| **DENY** | Explicit deny | 1 (Highest) |
-| **ALLOW** | Explicit allow | 2 |
-| **AUDIT** | Log only | 3 |
-| **CUSTOM** | External auth service | 4 |
+| action     | Description           | Priority    |
+| ---------- | --------------------- | ----------- |
+| **DENY**   | Explicit deny         | 1 (Highest) |
+| **ALLOW**  | Explicit allow        | 2           |
+| **AUDIT**  | Log only              | 3           |
+| **CUSTOM** | External auth service | 4           |
 
 **Evaluation Order:**
+
 ```
 1. Evaluate DENY policies -> If matched, immediately deny
    | (pass)
@@ -170,6 +172,7 @@ spec:
 ```
 
 **Practical Example:**
+
 ```yaml
 # Scenario: Restrict HTTP methods
 ---
@@ -209,6 +212,7 @@ spec:
 ```
 
 **Test:**
+
 ```bash
 # GET request -> Matches ALLOW policy -> Allowed
 curl http://backend/api
@@ -224,21 +228,21 @@ curl -X PUT http://backend/api
 ```
 
 **Reference:**
-- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
+
+* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
+
 </details>
 
----
+***
 
 ### Question 3: JWT Authentication
 
 Which fields are used to validate JWT tokens in RequestAuthentication?
 
-A. issuer and audiences
-B. principals and namespaces
-C. methods and paths
-D. hosts and ports
+A. issuer and audiences B. principals and namespaces C. methods and paths D. hosts and ports
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: A**
@@ -248,6 +252,7 @@ RequestAuthentication uses the **issuer** and **audiences** fields to validate J
 **Explanation:**
 
 **JWT Token Structure:**
+
 ```
 Header.Payload.Signature
 
@@ -262,6 +267,7 @@ Payload example:
 ```
 
 **RequestAuthentication Configuration:**
+
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: RequestAuthentication
@@ -281,6 +287,7 @@ spec:
 ```
 
 **JWT Validation Process:**
+
 ```mermaid
 flowchart LR
     Request[Client Request] --> Header{Authorization<br/>header exists?}
@@ -299,6 +306,7 @@ flowchart LR
 ```
 
 **Integration with OIDC Providers:**
+
 ```yaml
 # Google OAuth2 example
 apiVersion: security.istio.io/v1beta1
@@ -327,6 +335,7 @@ spec:
 ```
 
 **Combining with AuthorizationPolicy:**
+
 ```yaml
 # 1. RequestAuthentication: Validate JWT
 apiVersion: security.istio.io/v1beta1
@@ -378,6 +387,7 @@ spec:
 ```
 
 **Test:**
+
 ```bash
 # Request without JWT -> Passes RequestAuthentication, denied by AuthorizationPolicy
 curl http://backend/api
@@ -390,21 +400,21 @@ curl -H "Authorization: Bearer $TOKEN" http://backend/api
 ```
 
 **Reference:**
-- [Request Authentication](../../../service-mesh/istio/security/03-request-authentication.md)
+
+* [Request Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/03-request-authentication.md)
+
 </details>
 
----
+***
 
 ### Question 4: mTLS Certificate Management
 
 What is the default validity period for mTLS certificates in Istio?
 
-A. 1 hour
-B. 24 hours
-C. 7 days
-D. 90 days
+A. 1 hour B. 24 hours C. 7 days D. 90 days
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: B**
@@ -428,10 +438,11 @@ spec:
 ```
 
 **Default Settings:**
-- **Certificate validity period**: 24 hours (1 day)
-- **Renewal timing**: 8 hours before expiration
-- **Renewal method**: Automatic (managed by Istiod)
-- **Certificate format**: X.509
+
+* **Certificate validity period**: 24 hours (1 day)
+* **Renewal timing**: 8 hours before expiration
+* **Renewal method**: Automatic (managed by Istiod)
+* **Certificate format**: X.509
 
 **Certificate Lifecycle:**
 
@@ -472,6 +483,7 @@ sequenceDiagram
 ```
 
 **Checking Certificates:**
+
 ```bash
 # Check pod's mTLS certificate
 istioctl proxy-config secret <pod-name> -o json
@@ -509,6 +521,7 @@ Certificate:
 ```
 
 **Customizing Validity Period:**
+
 ```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
@@ -521,6 +534,7 @@ spec:
 ```
 
 **Certificate Renewal Failure Scenarios:**
+
 ```bash
 # Check Istiod logs
 kubectl logs -n istio-system -l app=istiod
@@ -535,6 +549,7 @@ kubectl delete pod <pod-name>  # Pod restart reissues certificate
 ```
 
 **SPIFFE ID:**
+
 ```
 Istio's mTLS certificates follow the SPIFFE (Secure Production Identity Framework For Everyone) standard.
 
@@ -543,6 +558,7 @@ Example: spiffe://cluster.local/ns/default/sa/frontend
 ```
 
 **CA Hierarchy:**
+
 ```
 Root CA (Istiod)
   +- Intermediate CA (auto-generated)
@@ -553,6 +569,7 @@ Root CA (Istiod)
 ```
 
 **External CA Integration:**
+
 ```yaml
 # Using external CA with Cert-Manager
 apiVersion: install.istio.io/v1alpha1
@@ -567,22 +584,22 @@ spec:
 ```
 
 **Reference:**
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [Certificate Management](../../../service-mesh/istio/03-architecture.md#certificate-management)
+
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+* [Certificate Management](../../../service-mesh/istio/03-architecture.md#certificate-management)
+
 </details>
 
----
+***
 
 ### Question 5: Service Account-based Authentication
 
 What identity is used for service-to-service authentication in Istio?
 
-A. Pod name
-B. Service name
-C. Service Account
-D. Namespace name
+A. Pod name B. Service name C. Service Account D. Namespace name
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: C**
@@ -617,6 +634,7 @@ spec:
 ```
 
 **SPIFFE ID Format:**
+
 ```
 spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
 
@@ -626,6 +644,7 @@ spiffe://cluster.local/ns/production/sa/backend
 ```
 
 **Using Service Account in AuthorizationPolicy:**
+
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -657,14 +676,15 @@ spec:
 
 **Service Account vs Pod/Service Name:**
 
-| Item | Service Account | Pod Name | Service Name |
-|------|----------------|----------|--------------|
-| **Stability** | Stable | Dynamically changes | Stable |
-| **Security** | Certificate-based | Not trustworthy | Not trustworthy |
-| **RBAC Integration** | Kubernetes RBAC | Not possible | Not possible |
-| **mTLS** | Included in certificate | Not included | Not included |
+| Item                 | Service Account         | Pod Name            | Service Name    |
+| -------------------- | ----------------------- | ------------------- | --------------- |
+| **Stability**        | Stable                  | Dynamically changes | Stable          |
+| **Security**         | Certificate-based       | Not trustworthy     | Not trustworthy |
+| **RBAC Integration** | Kubernetes RBAC         | Not possible        | Not possible    |
+| **mTLS**             | Included in certificate | Not included        | Not included    |
 
 **Practical Example: 3-Tier Application:**
+
 ```yaml
 # Frontend -> Backend only allowed
 ---
@@ -724,6 +744,7 @@ spec:
 ```
 
 **Checking Service Account:**
+
 ```bash
 # Check pod's Service Account
 kubectl get pod <pod-name> -o jsonpath='{.spec.serviceAccountName}'
@@ -738,6 +759,7 @@ istioctl proxy-config secret <pod-name> -o json | \
 ```
 
 **Cross-Namespace Communication:**
+
 ```yaml
 # Allow production namespace's frontend -> staging namespace's backend access
 apiVersion: security.istio.io/v1beta1
@@ -760,11 +782,13 @@ spec:
 ```
 
 **Reference:**
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
+
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
+
 </details>
 
----
+***
 
 ## Short Answer Questions (6-10)
 
@@ -773,13 +797,14 @@ spec:
 Explain step by step how to implement a **deny-by-default** security policy using Istio in a Kubernetes cluster. Include **required resources** (PeerAuthentication, AuthorizationPolicy) and **exception handling** methods.
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
 
 **Implementing Deny-by-default Security Policy:**
 
----
+***
 
 **Step 1: Enable mTLS STRICT Mode**
 
@@ -797,11 +822,12 @@ spec:
 ```
 
 **Scope:**
-- Deployed in `istio-system` namespace -> Applies to entire mesh
-- Deployed in specific namespace -> Applies to that namespace only
-- Using selector -> Applies to specific workloads only
 
----
+* Deployed in `istio-system` namespace -> Applies to entire mesh
+* Deployed in specific namespace -> Applies to that namespace only
+* Using selector -> Applies to specific workloads only
+
+***
 
 **Step 2: Deny All Traffic (Deny-by-default)**
 
@@ -815,15 +841,16 @@ spec: {}  # Empty spec = deny all requests
 ```
 
 **After this policy:**
-- All inbound traffic denied
-- Service-to-service communication blocked
-- External access blocked
 
----
+* All inbound traffic denied
+* Service-to-service communication blocked
+* External access blocked
+
+***
 
 **Step 3: Selectively Allow Required Communication**
 
-#### Example 1: Allow Frontend -> Backend Communication
+**Example 1: Allow Frontend -> Backend Communication**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -847,7 +874,7 @@ spec:
         paths: ["/api/*"]
 ```
 
-#### Example 2: Allow Backend -> Database Communication
+**Example 2: Allow Backend -> Database Communication**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -870,7 +897,7 @@ spec:
         ports: ["5432"]  # PostgreSQL port
 ```
 
----
+***
 
 **Step 4: Ingress Gateway Policy**
 
@@ -912,7 +939,7 @@ spec:
         - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
 ```
 
----
+***
 
 **Step 5: Health Check and Readiness Probe Exceptions**
 
@@ -953,7 +980,7 @@ spec:
       mode: DISABLE  # Disable mTLS for health check port
 ```
 
----
+***
 
 **Step 6: Monitoring and Logging Exceptions**
 
@@ -978,7 +1005,7 @@ spec:
         methods: ["GET"]
 ```
 
----
+***
 
 **Complete Example: 3-Tier Application**
 
@@ -1090,7 +1117,7 @@ spec:
         paths: ["/stats/prometheus"]
 ```
 
----
+***
 
 **Testing and Validation:**
 
@@ -1112,43 +1139,43 @@ curl http://<ingress-gateway>/frontend
 # 200 OK
 ```
 
----
+***
 
 **Best Practices:**
 
 1. **Gradual Application**:
-   - First enable mTLS in PERMISSIVE mode
-   - Verify all services have Sidecars injected
-   - Switch to STRICT mode
-   - Apply deny-by-default policy
-
+   * First enable mTLS in PERMISSIVE mode
+   * Verify all services have Sidecars injected
+   * Switch to STRICT mode
+   * Apply deny-by-default policy
 2. **Principle of Least Privilege**:
-   - Allow only minimum required communication
-   - Restrict HTTP methods (GET only, POST only, etc.)
-   - Restrict paths (/api/* only, etc.)
-
+   * Allow only minimum required communication
+   * Restrict HTTP methods (GET only, POST only, etc.)
+   * Restrict paths (/api/\* only, etc.)
 3. **Exception Handling**:
-   - Always handle health check exceptions
-   - Allow monitoring system access
-   - Configure Ingress Gateway policy
-
+   * Always handle health check exceptions
+   * Allow monitoring system access
+   * Configure Ingress Gateway policy
 4. **Testing**:
-   - Test after each policy is applied
-   - Check for side effects (logs, metrics)
-   - Prepare rollback plan
+   * Test after each policy is applied
+   * Check for side effects (logs, metrics)
+   * Prepare rollback plan
 
 **Reference:**
-- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
-- [PeerAuthentication](../../../service-mesh/istio/security/04-peer-authentication.md)
+
+* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
+* [PeerAuthentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/04-peer-authentication.md)
+
 </details>
 
----
+***
 
 ### Question 7: JWT + mTLS Dual Authentication
 
 Implement a scenario where **end-user authentication (JWT)** and **service-to-service authentication (mTLS)** are used together in Istio. Include how to integrate with OAuth2/OIDC providers (e.g., Keycloak).
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
@@ -1165,7 +1192,7 @@ Frontend (Validate mTLS with PeerAuthentication)
 Backend
 ```
 
----
+***
 
 **Step 1: Keycloak Setup**
 
@@ -1182,7 +1209,7 @@ Valid Redirect URIs: http://myapp.example.com/*
 https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
 ```
 
----
+***
 
 **Step 2: Enable mTLS (Service-to-Service Authentication)**
 
@@ -1198,7 +1225,7 @@ spec:
     mode: STRICT
 ```
 
----
+***
 
 **Step 3: Configure JWT Authentication (End-User Authentication)**
 
@@ -1222,11 +1249,11 @@ spec:
     outputPayloadToHeader: "x-jwt-payload"  # Extract payload to header
 ```
 
----
+***
 
 **Step 4: Configure AuthorizationPolicy**
 
-#### Ingress Gateway Policy
+**Ingress Gateway Policy**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -1254,7 +1281,7 @@ spec:
         paths: ["/health", "/ready"]
 ```
 
-#### Backend Policy
+**Backend Policy**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -1279,7 +1306,7 @@ spec:
         methods: ["GET", "POST"]
 ```
 
----
+***
 
 **Step 5: Role-Based Access Control**
 
@@ -1324,7 +1351,7 @@ spec:
         paths: ["/api/users/*"]
 ```
 
----
+***
 
 **Step 6: Utilizing JWT Payload**
 
@@ -1373,11 +1400,11 @@ spec:
             end
 ```
 
----
+***
 
 **Step 7: Complete Example**
 
-#### Ingress Gateway
+**Ingress Gateway**
 
 ```yaml
 ---
@@ -1415,7 +1442,7 @@ spec:
         requestPrincipals: ["*"]
 ```
 
-#### Frontend
+**Frontend**
 
 ```yaml
 ---
@@ -1451,7 +1478,7 @@ spec:
         requestPrincipals: ["*"]
 ```
 
-#### Backend
+**Backend**
 
 ```yaml
 ---
@@ -1487,7 +1514,7 @@ spec:
         requestPrincipals: ["https://keycloak.example.com/realms/myrealm/*"]
 ```
 
----
+***
 
 **Test:**
 
@@ -1516,42 +1543,43 @@ curl -H "Authorization: Bearer invalid-token" \
 # 401 Unauthorized
 ```
 
----
+***
 
 **Security Benefits:**
 
 1. **Dual Authentication**:
-   - JWT: Verify end-user identity
-   - mTLS: Verify service identity
-
+   * JWT: Verify end-user identity
+   * mTLS: Verify service identity
 2. **Defense in Depth**:
-   - JWT validation at Gateway
-   - Encrypted communication with mTLS between services
-   - Fine-grained authorization with AuthorizationPolicy
-
+   * JWT validation at Gateway
+   * Encrypted communication with mTLS between services
+   * Fine-grained authorization with AuthorizationPolicy
 3. **Role-Based Access Control (RBAC)**:
-   - Authorization management based on JWT claims
-   - Dynamic permission updates (managed in Keycloak)
+   * Authorization management based on JWT claims
+   * Dynamic permission updates (managed in Keycloak)
 
 **Reference:**
-- [Request Authentication](../../../service-mesh/istio/security/03-request-authentication.md)
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+
+* [Request Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/03-request-authentication.md)
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+
 </details>
 
----
+***
 
 ### Question 8: External Service Access Control
 
 Explain how to control **Egress traffic** in Istio to allow access only to specific external services. Include complete examples using **ServiceEntry**, **VirtualService**, and **AuthorizationPolicy**.
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
 
 **Egress Traffic Control Strategy:**
 
----
+***
 
 **Step 1: Check Egress Traffic Default Mode**
 
@@ -1568,21 +1596,22 @@ spec:
 
 **Mode Comparison:**
 
-| Mode | Description | Security |
-|------|-------------|----------|
-| **ALLOW_ANY** | Allow all external traffic (default) | Low |
-| **REGISTRY_ONLY** | Only allow services registered in ServiceEntry | High |
+| Mode               | Description                                    | Security |
+| ------------------ | ---------------------------------------------- | -------- |
+| **ALLOW\_ANY**     | Allow all external traffic (default)           | Low      |
+| **REGISTRY\_ONLY** | Only allow services registered in ServiceEntry | High     |
 
-**Switch to REGISTRY_ONLY Mode:**
+**Switch to REGISTRY\_ONLY Mode:**
+
 ```bash
 istioctl install --set meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY
 ```
 
----
+***
 
 **Step 2: Register External Services with ServiceEntry**
 
-#### Example 1: HTTPS API (GitHub)
+**Example 1: HTTPS API (GitHub)**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1601,7 +1630,7 @@ spec:
   resolution: DNS
 ```
 
-#### Example 2: HTTP API (httpbin)
+**Example 2: HTTP API (httpbin)**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1623,7 +1652,7 @@ spec:
   resolution: DNS
 ```
 
-#### Example 3: Specific IP Address
+**Example 3: Specific IP Address**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1646,11 +1675,11 @@ spec:
   - address: 203.0.113.10
 ```
 
----
+***
 
 **Step 3: Control Traffic with VirtualService**
 
-#### Timeout and Retry Settings
+**Timeout and Retry Settings**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1672,7 +1701,7 @@ spec:
         host: api.github.com
 ```
 
-#### Add Headers (API Key)
+**Add Headers (API Key)**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1693,11 +1722,11 @@ spec:
         host: api.example.com
 ```
 
----
+***
 
 **Step 4: Access Control with AuthorizationPolicy**
 
-#### Allow Only Specific Service Account
+**Allow Only Specific Service Account**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -1717,7 +1746,7 @@ spec:
         hosts: ["api.github.com"]
 ```
 
-#### Allow Only Specific Paths
+**Allow Only Specific Paths**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -1738,7 +1767,7 @@ spec:
         methods: ["GET"]
 ```
 
----
+***
 
 **Step 5: Using Egress Gateway (Optional)**
 
@@ -1824,11 +1853,12 @@ spec:
 ```
 
 **Traffic Flow:**
+
 ```
 Pod -> Sidecar -> Egress Gateway -> External Service
 ```
 
----
+***
 
 **Step 6: Complete Example**
 
@@ -1919,7 +1949,7 @@ spec:
         hosts: ["*"]
 ```
 
----
+***
 
 **Test:**
 
@@ -1940,7 +1970,7 @@ kubectl exec -it <backend-pod> -- \
 # Connection refused (No ServiceEntry)
 ```
 
----
+***
 
 **Monitoring:**
 
@@ -1953,7 +1983,7 @@ kubectl exec -it <backend-pod> -c istio-proxy -- \
 istioctl proxy-config clusters <backend-pod> | grep github
 ```
 
----
+***
 
 **Security Benefits:**
 
@@ -1963,30 +1993,33 @@ istioctl proxy-config clusters <backend-pod> | grep github
 4. **Centralized management**: Monitor all external traffic through Egress Gateway
 
 **Reference:**
-- [ServiceEntry](https://istio.io/latest/docs/reference/config/networking/service-entry/)
-- [Egress Traffic](https://istio.io/latest/docs/tasks/traffic-management/egress/)
+
+* [ServiceEntry](https://istio.io/latest/docs/reference/config/networking/service-entry/)
+* [Egress Traffic](https://istio.io/latest/docs/tasks/traffic-management/egress/)
+
 </details>
 
----
+***
 
 ### Question 9: Security Auditing and Logging
 
 Explain how to **audit** and log security-related events in Istio. Include **AuthorizationPolicy's AUDIT action** and **Access Log** configuration.
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
 
 **Istio Security Auditing and Logging Strategy:**
 
----
+***
 
 **1. AuthorizationPolicy AUDIT Action**
 
 AUDIT action logs traffic without blocking it.
 
-#### Basic AUDIT Policy
+**Basic AUDIT Policy**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -2003,7 +2036,7 @@ spec:
   - {}  # Audit all requests
 ```
 
-#### Audit Only Specific Conditions
+**Audit Only Specific Conditions**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -2033,11 +2066,11 @@ spec:
         notNamespaces: ["default", "production"]
 ```
 
----
+***
 
 **2. Enable Access Logging**
 
-#### Enable Access Logging for Entire Mesh
+**Enable Access Logging for Entire Mesh**
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -2072,7 +2105,7 @@ spec:
       }
 ```
 
-#### Apply Only to Specific Namespace
+**Apply Only to Specific Namespace**
 
 ```yaml
 apiVersion: telemetry.istio.io/v1alpha1
@@ -2086,11 +2119,11 @@ spec:
     - name: envoy
 ```
 
----
+***
 
 **3. Custom Log Filters for Security Audit**
 
-#### Include mTLS Information
+**Include mTLS Information**
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -2108,7 +2141,7 @@ spec:
       mtls=%DOWNSTREAM_PEER_ISSUER% peer=%DOWNSTREAM_PEER_URI_SAN%
 ```
 
-#### Include Authorization Information
+**Include Authorization Information**
 
 ```yaml
 apiVersion: telemetry.istio.io/v1alpha1
@@ -2124,11 +2157,11 @@ spec:
       expression: response.code >= 400  # Log only errors
 ```
 
----
+***
 
 **4. Integration with External Logging Systems**
 
-#### Send to CloudWatch with FluentBit
+**Send to CloudWatch with FluentBit**
 
 ```yaml
 apiVersion: v1
@@ -2163,7 +2196,7 @@ data:
         auto_create_group true
 ```
 
-#### Elasticsearch Integration
+**Elasticsearch Integration**
 
 ```yaml
 apiVersion: telemetry.istio.io/v1alpha1
@@ -2181,7 +2214,7 @@ spec:
         request.headers['x-audit'] == 'true'
 ```
 
----
+***
 
 **5. Complete Security Audit Configuration**
 
@@ -2253,11 +2286,11 @@ spec:
         request.url_path.startsWith("/api/admin")
 ```
 
----
+***
 
 **6. Log Analysis Queries**
 
-#### Prometheus Queries
+**Prometheus Queries**
 
 ```promql
 # Authorization deny count
@@ -2278,7 +2311,7 @@ sum(rate(
 )) by (destination_service_name)
 ```
 
-#### CloudWatch Insights Queries
+**CloudWatch Insights Queries**
 
 ```sql
 # Audit DELETE operations
@@ -2298,7 +2331,7 @@ fields @timestamp, path, response_code, response_flags
 | stats count() by bin(5m)
 ```
 
----
+***
 
 **7. Grafana Dashboard**
 
@@ -2320,7 +2353,7 @@ sum by (destination_service_name) (
 )
 ```
 
----
+***
 
 **8. Alert Configuration**
 
@@ -2362,38 +2395,38 @@ spec:
         summary: "Unauthorized admin API access attempt"
 ```
 
----
+***
 
 **Best Practices:**
 
 1. **AUDIT First, DENY Later**:
-   - Start new policies with AUDIT
-   - Analyze logs then switch to DENY
-
+   * Start new policies with AUDIT
+   * Analyze logs then switch to DENY
 2. **Selective Logging**:
-   - Logging all traffic increases costs
-   - Log only sensitive operations
-
+   * Logging all traffic increases costs
+   * Log only sensitive operations
 3. **Log Retention**:
-   - Security audit: minimum 90 days
-   - Compliance: 1 year or more
-
+   * Security audit: minimum 90 days
+   * Compliance: 1 year or more
 4. **Real-time Alerting**:
-   - Immediate alerts for unauthorized access attempts
-   - Detect abnormal patterns
+   * Immediate alerts for unauthorized access attempts
+   * Detect abnormal patterns
 
 **Reference:**
-- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
-- [Access Logging](../../../service-mesh/istio/observability/03-logging.md)
+
+* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
+* [Access Logging](../../../service-mesh/istio/observability/03-logging.md)
+
 </details>
 
----
+***
 
 ### Question 10: Implementing Zero Trust Network
 
 Explain how to implement **Zero Trust Network** principles using Istio. Include complete examples applying **mTLS STRICT**, **deny-by-default**, and **least privilege** principles.
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
@@ -2404,7 +2437,7 @@ Explain how to implement **Zero Trust Network** principles using Istio. Include 
 2. **Least Privilege**: Grant only minimum required permissions
 3. **Assume Breach**: Design assuming compromise
 
----
+***
 
 **Istio Zero Trust Architecture:**
 
@@ -2416,7 +2449,7 @@ Explain how to implement **Zero Trust Network** principles using Istio. Include 
 # 5. Fine-grained (Path/method level control)
 ```
 
----
+***
 
 **Step 1: mTLS STRICT Mode**
 
@@ -2434,6 +2467,7 @@ spec:
 ```
 
 **Validation:**
+
 ```bash
 # Check mTLS status
 istioctl authn tls-check <pod-name>.<namespace>
@@ -2443,11 +2477,11 @@ istioctl authn tls-check <pod-name>.<namespace>
 # backend.default.svc.cluster.local    OK         mTLS       mTLS       default/default
 ```
 
----
+***
 
 **Step 2: Deny-by-default Policy**
 
-#### Global Deny Policy
+**Global Deny Policy**
 
 ```yaml
 # Apply to all Namespaces
@@ -2468,17 +2502,17 @@ metadata:
 spec: {}
 ```
 
----
+***
 
 **Step 3: Least Privilege**
 
-#### Scenario: 3-Tier Web Application
+**Scenario: 3-Tier Web Application**
 
 ```
 User -> Ingress Gateway -> Frontend -> Backend -> Database
 ```
 
-#### Create Service Accounts
+**Create Service Accounts**
 
 ```yaml
 ---
@@ -2503,7 +2537,7 @@ metadata:
   namespace: app
 ```
 
-#### Ingress Gateway -> Frontend
+**Ingress Gateway -> Frontend**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -2523,7 +2557,7 @@ spec:
         - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
 ```
 
-#### Frontend -> Backend
+**Frontend -> Backend**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -2548,7 +2582,7 @@ spec:
         ports: ["8080"]  # Specific port only
 ```
 
-#### Backend -> Database
+**Backend -> Database**
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -2571,7 +2605,7 @@ spec:
         ports: ["5432"]  # PostgreSQL only
 ```
 
----
+***
 
 **Step 4: Namespace Isolation**
 
@@ -2592,7 +2626,7 @@ spec:
         notNamespaces: ["production", "istio-system"]
 ```
 
----
+***
 
 **Step 5: Time-based Access Control**
 
@@ -2631,7 +2665,7 @@ spec:
             end
 ```
 
----
+***
 
 **Step 6: Egress Traffic Control**
 
@@ -2681,7 +2715,7 @@ spec:
         hosts: ["api.approved-vendor.com"]
 ```
 
----
+***
 
 **Step 7: Complete Zero Trust Configuration**
 
@@ -2869,7 +2903,7 @@ spec:
         hosts: ["api.approved-vendor.com"]
 ```
 
----
+***
 
 **Step 8: Validation and Monitoring**
 
@@ -2896,45 +2930,48 @@ sum(rate(envoy_http_rbac_denied_total[5m])) by (namespace, pod)
 # - Service-to-service communication matrix
 ```
 
----
+***
 
 **Zero Trust Checklist:**
 
-- mTLS STRICT mode (Encrypt all communication)
-- Deny-by-default (Deny all by default)
-- Explicit Allow (Allow only what's needed)
-- Service Account-based identity
-- Least privilege (Restrict methods/paths/ports)
-- Namespace isolation
-- Egress traffic control
-- Health check exception handling
-- Monitoring and auditing
-- Regular policy review
+* mTLS STRICT mode (Encrypt all communication)
+* Deny-by-default (Deny all by default)
+* Explicit Allow (Allow only what's needed)
+* Service Account-based identity
+* Least privilege (Restrict methods/paths/ports)
+* Namespace isolation
+* Egress traffic control
+* Health check exception handling
+* Monitoring and auditing
+* Regular policy review
 
 **Reference:**
-- [Zero Trust with Istio](https://istio.io/latest/blog/2021/zero-trust/)
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
+
+* [Zero Trust with Istio](https://istio.io/latest/blog/2021/zero-trust/)
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
+
 </details>
 
----
+***
 
 ## Score Calculation
 
-- Multiple Choice 1-5: 10 points each (50 points total)
-- Short Answer 6-10: 10 points each (50 points total)
-- **Total: 100 points**
+* Multiple Choice 1-5: 10 points each (50 points total)
+* Short Answer 6-10: 10 points each (50 points total)
+* **Total: 100 points**
 
 **Evaluation Criteria:**
-- 90-100 points: Excellent (Istio Security Expert)
-- 80-89 points: Good (Production Security Configuration Ready)
-- 70-79 points: Average (Additional Study Recommended)
-- 60-69 points: Below Average (Basic Concept Review Needed)
-- 0-59 points: Needs Re-study
+
+* 90-100 points: Excellent (Istio Security Expert)
+* 80-89 points: Good (Production Security Configuration Ready)
+* 70-79 points: Average (Additional Study Recommended)
+* 60-69 points: Below Average (Basic Concept Review Needed)
+* 0-59 points: Needs Re-study
 
 ## Learning Resources
 
-- [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-- [Authorization Policy](../../../service-mesh/istio/security/02-authorization-policy.md)
-- [Request Authentication](../../../service-mesh/istio/security/03-request-authentication.md)
-- [Peer Authentication](../../../service-mesh/istio/security/04-peer-authentication.md)
+* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
+* [Request Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/03-request-authentication.md)
+* [Peer Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/04-peer-authentication.md)

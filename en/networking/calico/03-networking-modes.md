@@ -1,7 +1,6 @@
-# Part 3: Calico Networking Modes
+# Part 3: Networking Modes
 
-> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 23, 2026
+> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+ **Last Updated**: February 23, 2026
 
 ## Overview
 
@@ -9,7 +8,7 @@ Calico supports multiple networking modes to accommodate different infrastructur
 
 ## Networking Mode Summary
 
-![Calico Networking Modes Comparison](../../../assets/calico_networking_modes.png)
+![Calico Networking Modes Comparison](../../.gitbook/assets/calico_networking_modes.png)
 
 ```mermaid
 flowchart TD
@@ -69,11 +68,11 @@ IPIP Encapsulated Packet (1500 bytes outer MTU):
 
 ### IPIP Mode Options
 
-| Mode | Description | Use Case |
-|------|-------------|----------|
-| **Always** | All pod-to-pod traffic is encapsulated | Cloud environments, simple setup |
+| Mode            | Description                               | Use Case                                   |
+| --------------- | ----------------------------------------- | ------------------------------------------ |
+| **Always**      | All pod-to-pod traffic is encapsulated    | Cloud environments, simple setup           |
 | **CrossSubnet** | Only cross-subnet traffic is encapsulated | Hybrid environments, optimized performance |
-| **Never** | IPIP disabled (use with Direct routing) | On-premises with BGP |
+| **Never**       | IPIP disabled (use with Direct routing)   | On-premises with BGP                       |
 
 ### IPIP CrossSubnet Mode
 
@@ -193,12 +192,12 @@ VXLAN Encapsulated Packet:
 
 ### VXLAN Components
 
-| Component | Description |
-|-----------|-------------|
-| **VTEP** | VXLAN Tunnel Endpoint - encap/decap point |
-| **VNI** | VXLAN Network Identifier (Calico uses fixed VNI) |
-| **UDP Port** | 4789 (IANA assigned) |
-| **Multicast/Unicast** | Calico uses unicast with known peer VTEPs |
+| Component             | Description                                      |
+| --------------------- | ------------------------------------------------ |
+| **VTEP**              | VXLAN Tunnel Endpoint - encap/decap point        |
+| **VNI**               | VXLAN Network Identifier (Calico uses fixed VNI) |
+| **UDP Port**          | 4789 (IANA assigned)                             |
+| **Multicast/Unicast** | Calico uses unicast with known peer VTEPs        |
 
 ### VXLAN IPPool Configuration
 
@@ -294,11 +293,11 @@ Direct routing mode uses native IP routing without any encapsulation, providing 
 
 ### Requirements for Direct Mode
 
-| Requirement | Description |
-|-------------|-------------|
-| **L2 Adjacency** | Nodes must be on the same L2 network, OR |
-| **BGP Routing** | External routers must learn pod routes via BGP |
-| **Route Propagation** | Physical network must route pod CIDRs |
+| Requirement           | Description                                    |
+| --------------------- | ---------------------------------------------- |
+| **L2 Adjacency**      | Nodes must be on the same L2 network, OR       |
+| **BGP Routing**       | External routers must learn pod routes via BGP |
+| **Route Propagation** | Physical network must route pod CIDRs          |
 
 ### Direct Mode Topology
 
@@ -403,17 +402,17 @@ ip route
 
 ### IPIP vs VXLAN vs Direct
 
-| Feature | IPIP | VXLAN | Direct |
-|---------|------|-------|--------|
-| **Protocol** | IP Protocol 4 | UDP Port 4789 | Native IP |
-| **Overhead** | 20 bytes | 50 bytes | 0 bytes |
-| **MTU** | 1480 | 1450 | 1500 |
-| **Firewall Friendly** | May need IP proto 4 | UDP pass-through | Native |
-| **Hardware Offload** | Limited | Better support | Full support |
-| **L2 Requirement** | No | No | Yes (or BGP) |
-| **Multicast** | Not needed | Not needed (unicast) | Not needed |
-| **Performance** | Good | Good | Best |
-| **Complexity** | Low | Low | Medium |
+| Feature               | IPIP                | VXLAN                | Direct       |
+| --------------------- | ------------------- | -------------------- | ------------ |
+| **Protocol**          | IP Protocol 4       | UDP Port 4789        | Native IP    |
+| **Overhead**          | 20 bytes            | 50 bytes             | 0 bytes      |
+| **MTU**               | 1480                | 1450                 | 1500         |
+| **Firewall Friendly** | May need IP proto 4 | UDP pass-through     | Native       |
+| **Hardware Offload**  | Limited             | Better support       | Full support |
+| **L2 Requirement**    | No                  | No                   | Yes (or BGP) |
+| **Multicast**         | Not needed          | Not needed (unicast) | Not needed   |
+| **Performance**       | Good                | Good                 | Best         |
+| **Complexity**        | Low                 | Low                  | Medium       |
 
 ### Performance Benchmark Comparison
 
@@ -496,15 +495,15 @@ flowchart TD
 
 ## Cloud Provider Compatibility
 
-| Provider | IPIP | VXLAN | Direct | Recommended |
-|----------|------|-------|--------|-------------|
-| **AWS EC2** | Yes | Yes | With VPC routing | VXLAN or IPIP CrossSubnet |
-| **AWS EKS** | Yes | Yes | Limited | VXLAN (default) |
-| **Azure** | Yes | Yes | With UDR | VXLAN |
-| **GCP** | Yes | Yes | With VPC routes | IPIP CrossSubnet |
-| **On-Premises** | Yes | Yes | Yes (BGP) | Direct (with BGP) |
-| **Bare Metal** | Yes | Yes | Yes | Direct (with BGP) |
-| **OpenStack** | Yes | Yes | Yes | Depends on neutron config |
+| Provider        | IPIP | VXLAN | Direct           | Recommended               |
+| --------------- | ---- | ----- | ---------------- | ------------------------- |
+| **AWS EC2**     | Yes  | Yes   | With VPC routing | VXLAN or IPIP CrossSubnet |
+| **AWS EKS**     | Yes  | Yes   | Limited          | VXLAN (default)           |
+| **Azure**       | Yes  | Yes   | With UDR         | VXLAN                     |
+| **GCP**         | Yes  | Yes   | With VPC routes  | IPIP CrossSubnet          |
+| **On-Premises** | Yes  | Yes   | Yes (BGP)        | Direct (with BGP)         |
+| **Bare Metal**  | Yes  | Yes   | Yes              | Direct (with BGP)         |
+| **OpenStack**   | Yes  | Yes   | Yes              | Depends on neutron config |
 
 ### AWS-Specific Configuration
 
@@ -615,13 +614,13 @@ spec:
 
 ### MTU Calculation by Mode
 
-| Mode | Base MTU | Overhead | Effective MTU | Configuration |
-|------|----------|----------|---------------|---------------|
-| Direct | 1500 | 0 | 1500 | No change needed |
-| IPIP | 1500 | 20 | 1480 | `ipipMTU: 1480` |
-| VXLAN | 1500 | 50 | 1450 | `vxlanMTU: 1450` |
-| WireGuard | 1500 | 60 | 1440 | `wireguardMTU: 1440` |
-| IPIP + WireGuard | 1500 | 80 | 1420 | Combined overhead |
+| Mode             | Base MTU | Overhead | Effective MTU | Configuration        |
+| ---------------- | -------- | -------- | ------------- | -------------------- |
+| Direct           | 1500     | 0        | 1500          | No change needed     |
+| IPIP             | 1500     | 20       | 1480          | `ipipMTU: 1480`      |
+| VXLAN            | 1500     | 50       | 1450          | `vxlanMTU: 1450`     |
+| WireGuard        | 1500     | 60       | 1440          | `wireguardMTU: 1440` |
+| IPIP + WireGuard | 1500     | 80       | 1420          | Combined overhead    |
 
 ### MTU Configuration
 
@@ -714,14 +713,15 @@ Choosing the right networking mode is critical for optimal Calico performance:
 3. **Direct Mode**: Maximum performance for on-premises with BGP infrastructure
 
 Key considerations:
-- **Cloud deployments**: Use VXLAN or IPIP CrossSubnet
-- **On-premises with BGP**: Use Direct mode for best performance
-- **Mixed environments**: IPIP or VXLAN CrossSubnet provides good balance
-- **Performance critical**: Direct mode with proper BGP configuration
+
+* **Cloud deployments**: Use VXLAN or IPIP CrossSubnet
+* **On-premises with BGP**: Use Direct mode for best performance
+* **Mixed environments**: IPIP or VXLAN CrossSubnet provides good balance
+* **Performance critical**: Direct mode with proper BGP configuration
 
 [Previous: Part 2 - Calico Architecture Deep Dive](02-architecture.md)
 
-[Return to Calico Overview](README.md)
+[Return to Calico Overview](./)
 
 ## Quiz
 

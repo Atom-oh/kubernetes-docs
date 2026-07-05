@@ -1,8 +1,6 @@
-# Istio Resilience Quiz
+# Resilience Quiz
 
-> **Supported Version**: Istio 1.28.0
-> **EKS Version**: 1.34 (Kubernetes 1.28+)
-> **Last Updated**: February 19, 2026
+> **Supported Version**: Istio 1.28.0 **EKS Version**: 1.34 (Kubernetes 1.28+) **Last Updated**: February 19, 2026
 
 This quiz tests your understanding of Istio's Resilience features.
 
@@ -12,12 +10,10 @@ This quiz tests your understanding of Istio's Resilience features.
 
 Which of the following is **NOT** a primary purpose of Outlier Detection?
 
-A. Automatically detect instances behaving abnormally
-B. Automatically remove from traffic pool when threshold exceeded
-C. Permanently delete removed instances
-D. Automatically attempt recovery after a period of time
+A. Automatically detect instances behaving abnormally B. Automatically remove from traffic pool when threshold exceeded C. Permanently delete removed instances D. Automatically attempt recovery after a period of time
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: C**
@@ -71,26 +67,27 @@ flowchart LR
 4. **Temporary Measure**: Only blocks traffic without deleting instances
 
 **Why Option C is Incorrect:**
-- Outlier Detection is a Circuit Breaker pattern
-- It **temporarily ejects** instances without deleting them
-- If recovery attempts succeed, traffic reception resumes
+
+* Outlier Detection is a Circuit Breaker pattern
+* It **temporarily ejects** instances without deleting them
+* If recovery attempts succeed, traffic reception resumes
 
 **Reference:**
-- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+
+* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+
 </details>
 
----
+***
 
 ### Question 2: Rate Limiting Type Comparison
 
 Which statement correctly compares Local Rate Limiting and Global Rate Limiting?
 
-A. Local Rate Limiting has higher accuracy
-B. Global Rate Limiting has faster performance
-C. Local Rate Limiting limits requests independently at each Envoy proxy
-D. Global Rate Limiting operates without external services
+A. Local Rate Limiting has higher accuracy B. Global Rate Limiting has faster performance C. Local Rate Limiting limits requests independently at each Envoy proxy D. Global Rate Limiting operates without external services
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: C**
@@ -101,12 +98,12 @@ Local Rate Limiting limits requests **independently at each Envoy proxy**.
 
 **Local vs Global Rate Limiting Comparison:**
 
-| Characteristic | Local Rate Limiting | Global Rate Limiting |
-|----------------|---------------------|----------------------|
-| **Accuracy** | Low (per instance) | High (cluster-wide) |
-| **Performance** | Very fast | Slightly slower |
-| **Complexity** | Low | High (requires external service) |
-| **Use Case** | General protection | When precise limiting is needed |
+| Characteristic  | Local Rate Limiting | Global Rate Limiting             |
+| --------------- | ------------------- | -------------------------------- |
+| **Accuracy**    | Low (per instance)  | High (cluster-wide)              |
+| **Performance** | Very fast           | Slightly slower                  |
+| **Complexity**  | Low                 | High (requires external service) |
+| **Use Case**    | General protection  | When precise limiting is needed  |
 
 **Characteristics of Local Rate Limiting:**
 
@@ -176,21 +173,21 @@ flowchart TB
 ```
 
 **Reference:**
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
+* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
 </details>
 
----
+***
 
 ### Question 3: Benefits of Zone Aware Routing
 
 Which is **NOT** a benefit of using Zone Aware Routing?
 
-A. Reduced latency through same-AZ communication
-B. Cross-AZ data transfer cost savings
-C. Performance improvement by concentrating all traffic to a single AZ
-D. Automatic failover to other AZs during failures
+A. Reduced latency through same-AZ communication B. Cross-AZ data transfer cost savings C. Performance improvement by concentrating all traffic to a single AZ D. Automatic failover to other AZs during failures
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: C**
@@ -237,20 +234,17 @@ flowchart TB
 **Actual Benefits of Zone Aware Routing:**
 
 1. **Reduced Latency**:
-   - Same AZ communication: ~0.5ms
-   - Cross-AZ communication: ~1-2ms
-
+   * Same AZ communication: \~0.5ms
+   * Cross-AZ communication: \~1-2ms
 2. **Cost Savings**:
-   - AWS cross-AZ transfer: $0.01-0.02 per GB
-   - Saves hundreds to thousands of dollars per month in high-traffic environments
-
+   * AWS cross-AZ transfer: $0.01-0.02 per GB
+   * Saves hundreds to thousands of dollars per month in high-traffic environments
 3. **Improved Availability**:
-   - Automatic failover to other AZs when same-AZ pods fail
-   - Single AZ concentration is an **incorrect approach** (reduces availability)
-
+   * Automatic failover to other AZs when same-AZ pods fail
+   * Single AZ concentration is an **incorrect approach** (reduces availability)
 4. **Performance Optimization**:
-   - Reduced network hops
-   - Bandwidth optimization
+   * Reduced network hops
+   * Bandwidth optimization
 
 **DestinationRule Configuration Example:**
 
@@ -274,10 +268,12 @@ spec:
 ```
 
 **Reference:**
-- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+
+* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+
 </details>
 
----
+***
 
 ### Question 4: Outlier Detection Parameters
 
@@ -291,12 +287,10 @@ outlierDetection:
   maxEjectionPercent: 50
 ```
 
-A. When errors occur for 5 seconds
-B. When 5 consecutive errors occur
-C. When error rate exceeds 50% over 30 seconds
-D. Unconditionally eject every 30 seconds
+A. When errors occur for 5 seconds B. When 5 consecutive errors occur C. When error rate exceeds 50% over 30 seconds D. Unconditionally eject every 30 seconds
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: B**
@@ -307,16 +301,17 @@ D. Unconditionally eject every 30 seconds
 
 **Key Outlier Detection Parameters:**
 
-| Parameter | Description | Default | Recommended |
-|-----------|-------------|---------|-------------|
-| **consecutiveErrors** | Consecutive error threshold | 5 | 3-10 |
-| **interval** | Analysis interval | 10s | 10s-60s |
-| **baseEjectionTime** | Minimum ejection time | 30s | 30s-300s |
-| **maxEjectionPercent** | Maximum ejection ratio | 10% | 10%-50% |
+| Parameter              | Description                 | Default | Recommended |
+| ---------------------- | --------------------------- | ------- | ----------- |
+| **consecutiveErrors**  | Consecutive error threshold | 5       | 3-10        |
+| **interval**           | Analysis interval           | 10s     | 10s-60s     |
+| **baseEjectionTime**   | Minimum ejection time       | 30s     | 30s-300s    |
+| **maxEjectionPercent** | Maximum ejection ratio      | 10%     | 10%-50%     |
 
 **Detailed Parameter Explanation:**
 
-#### consecutiveErrors
+**consecutiveErrors**
+
 ```yaml
 # Sensitive service (fast detection)
 consecutiveErrors: 3
@@ -328,7 +323,8 @@ consecutiveErrors: 5
 consecutiveErrors: 10
 ```
 
-#### interval
+**interval**
+
 ```yaml
 # Fast detection (high load)
 interval: 10s
@@ -340,7 +336,8 @@ interval: 30s
 interval: 60s
 ```
 
-#### baseEjectionTime
+**baseEjectionTime**
+
 ```yaml
 # Quick recovery attempt
 baseEjectionTime: 30s
@@ -352,7 +349,8 @@ baseEjectionTime: 60s
 baseEjectionTime: 300s
 ```
 
-#### maxEjectionPercent
+**maxEjectionPercent**
+
 ```yaml
 # Conservative (stability priority)
 maxEjectionPercent: 10
@@ -393,10 +391,12 @@ T=30s: If Pod-1 still has errors → Additional 30s ejection (cumulative)
 ```
 
 **Reference:**
-- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+
+* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+
 </details>
 
----
+***
 
 ### Question 5: Token Bucket Algorithm
 
@@ -409,12 +409,10 @@ token_bucket:
   fill_interval: 1s
 ```
 
-A. 10 req/s
-B. 100 req/s
-C. 110 req/s
-D. 1000 req/s
+A. 10 req/s B. 100 req/s C. 110 req/s D. 1000 req/s
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: A**
@@ -425,9 +423,9 @@ With `tokens_per_fill: 10` and `fill_interval: 1s`, **10 tokens are added per se
 
 **Token Bucket Algorithm Parameters:**
 
-- **max_tokens**: Maximum tokens that can be stored in the bucket (burst allowance)
-- **tokens_per_fill**: Tokens to add per fill_interval (**average throughput**)
-- **fill_interval**: Token addition interval
+* **max\_tokens**: Maximum tokens that can be stored in the bucket (burst allowance)
+* **tokens\_per\_fill**: Tokens to add per fill\_interval (**average throughput**)
+* **fill\_interval**: Token addition interval
 
 **Calculation Method:**
 
@@ -522,10 +520,12 @@ spec:
 ```
 
 **Reference:**
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
+* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
 </details>
 
----
+***
 
 ## Short Answer Questions (6-10)
 
@@ -534,13 +534,15 @@ spec:
 A `product-service` running in production is intermittently becoming slow and experiencing timeouts. You want to implement Outlier Detection to automatically eject problematic instances. Write a DestinationRule that satisfies the following requirements:
 
 **Requirements:**
-- Eject after 3 consecutive errors
-- Evaluate every 20 seconds
-- Ejected instances attempt recovery after 60 seconds
-- Allow ejection of maximum 30%
-- Also detect 502, 503, 504 gateway errors
+
+* Eject after 3 consecutive errors
+* Evaluate every 20 seconds
+* Ejected instances attempt recovery after 60 seconds
+* Allow ejection of maximum 30%
+* Also detect 502, 503, 504 gateway errors
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
@@ -579,34 +581,38 @@ spec:
 
 **Explanation:**
 
-#### 1. consecutiveErrors vs consecutive5xxErrors vs consecutiveGatewayErrors
+**1. consecutiveErrors vs consecutive5xxErrors vs consecutiveGatewayErrors**
 
-| Parameter | Detection Target | Use Case |
-|-----------|------------------|----------|
-| **consecutiveErrors** | All errors (5xx, connection failures, etc.) | General error detection |
-| **consecutive5xxErrors** | 5xx errors only | Server errors only |
-| **consecutiveGatewayErrors** | 502, 503, 504 only | Gateway problem detection |
+| Parameter                    | Detection Target                            | Use Case                  |
+| ---------------------------- | ------------------------------------------- | ------------------------- |
+| **consecutiveErrors**        | All errors (5xx, connection failures, etc.) | General error detection   |
+| **consecutive5xxErrors**     | 5xx errors only                             | Server errors only        |
+| **consecutiveGatewayErrors** | 502, 503, 504 only                          | Gateway problem detection |
 
-#### 2. Parameter Explanation
+**2. Parameter Explanation**
 
 **interval: 20s**
-- Run Outlier Detection every 20 seconds
-- Evaluate error rate for each instance
+
+* Run Outlier Detection every 20 seconds
+* Evaluate error rate for each instance
 
 **baseEjectionTime: 60s**
-- Ejected instances don't receive traffic for minimum 60 seconds
-- Time increases on repeated ejection (60s -> 120s -> 180s...)
+
+* Ejected instances don't receive traffic for minimum 60 seconds
+* Time increases on repeated ejection (60s -> 120s -> 180s...)
 
 **maxEjectionPercent: 30**
-- Allow ejection of maximum 30% of instances simultaneously
-- Example: With 10 pods, only up to 3 can be ejected
-- Ensures availability
+
+* Allow ejection of maximum 30% of instances simultaneously
+* Example: With 10 pods, only up to 3 can be ejected
+* Ensures availability
 
 **minHealthPercent: 70**
-- Maintain minimum 70% of instances in healthy state
-- Complementary to maxEjectionPercent
 
-#### 3. Operation Example
+* Maintain minimum 70% of instances in healthy state
+* Complementary to maxEjectionPercent
+
+**3. Operation Example**
 
 ```
 Initial state: All 10 pods healthy
@@ -628,7 +634,7 @@ T=60s: Pod-1 recovery attempt
        -> If healthy, traffic reception resumes
 ```
 
-#### 4. Monitoring
+**4. Monitoring**
 
 ```bash
 # Check Outlier Detection events
@@ -639,9 +645,10 @@ envoy_cluster_outlier_detection_ejections_active
 envoy_cluster_outlier_detection_ejections_total
 ```
 
-#### 5. Production Considerations
+**5. Production Considerations**
 
 **Sensitive service (fast detection):**
+
 ```yaml
 outlierDetection:
   consecutiveErrors: 3
@@ -651,6 +658,7 @@ outlierDetection:
 ```
 
 **Stable service (prevent false positives):**
+
 ```yaml
 outlierDetection:
   consecutiveErrors: 10
@@ -660,20 +668,24 @@ outlierDetection:
 ```
 
 **Reference:**
-- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+
+* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+
 </details>
 
----
+***
 
 ### Question 7: Applying Local Rate Limiting
 
 The `api-gateway` service is under DDoS attack. You want to apply Local Rate Limiting to limit each Envoy proxy to 50 requests per second with a burst of up to 200. Write the EnvoyFilter.
 
 Additional requirements:
-- Add `X-RateLimit-Limit` header when rate limit is applied
-- Include `Retry-After: 1` header on 429 responses
+
+* Add `X-RateLimit-Limit` header when rate limit is applied
+* Include `Retry-After: 1` header on 429 responses
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
@@ -768,7 +780,7 @@ spec:
 
 **Explanation:**
 
-#### 1. Token Bucket Calculation
+**1. Token Bucket Calculation**
 
 ```
 Average processing rate: tokens_per_fill / fill_interval
@@ -779,15 +791,17 @@ Burst processing: max_tokens
                 = 200 req (for brief moment)
 ```
 
-#### 2. Scenario-based Behavior
+**2. Scenario-based Behavior**
 
 **Normal traffic (40 req/s):**
+
 ```
 50 tokens added per second, 40 used
 -> Always has capacity
 ```
 
 **Burst traffic (instantaneous 200 req/s):**
+
 ```
 T=0: 200 tokens available
      All 200 requests processed
@@ -800,15 +814,17 @@ T=1s: 50 tokens added
 ```
 
 **Continuous overload (100 req/s):**
+
 ```
 50 tokens added per second
 Only 50 of 100 requests processed
 Remaining 50 return 429
 ```
 
-#### 3. Response Header Examples
+**3. Response Header Examples**
 
 **Normal request:**
+
 ```http
 HTTP/1.1 200 OK
 X-RateLimit-Limit: 50
@@ -817,6 +833,7 @@ X-Local-Rate-Limit: true
 ```
 
 **Rate limit exceeded:**
+
 ```http
 HTTP/1.1 429 Too Many Requests
 X-RateLimit-Limit: 50
@@ -825,7 +842,7 @@ X-Local-Rate-Limit: true
 Retry-After: 1
 ```
 
-#### 4. Path-based Rate Limiting
+**4. Path-based Rate Limiting**
 
 For more granular control, set different limits per path:
 
@@ -869,7 +886,7 @@ spec:
               fill_interval: 1s
 ```
 
-#### 5. Monitoring
+**5. Monitoring**
 
 ```bash
 # Prometheus metrics
@@ -882,22 +899,26 @@ sum(rate(istio_requests_total{response_code="429"}[5m]))
 ```
 
 **Reference:**
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
+* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
 </details>
 
----
+***
 
 ### Question 8: Zone Aware Routing Configuration
 
 Your AWS EKS cluster is distributed across 3 AZs (us-east-1a, us-east-1b, us-east-1c). You want to configure Zone Aware Routing for `order-service` to reduce cross-AZ data transfer costs.
 
 **Requirements:**
-- Send 70% traffic to same-AZ pods
-- Distribute 15% each to other AZs
-- Automatic failover to other AZs on complete AZ failure
-- Apply Zone Aware only when 50% or more pods are healthy
+
+* Send 70% traffic to same-AZ pods
+* Distribute 15% each to other AZs
+* Automatic failover to other AZs on complete AZ failure
+* Apply Zone Aware only when 50% or more pods are healthy
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
@@ -965,7 +986,7 @@ spec:
 
 **Explanation:**
 
-#### 1. Kubernetes Node Label Verification
+**1. Kubernetes Node Label Verification**
 
 AWS EKS automatically adds Topology labels:
 
@@ -979,7 +1000,7 @@ kubectl get nodes -L topology.kubernetes.io/zone -L topology.kubernetes.io/regio
 # ip-10-0-3-30.ec2.internal     us-east-1c   us-east-1
 ```
 
-#### 2. Locality Hierarchy
+**2. Locality Hierarchy**
 
 ```
 Region/Zone/SubZone
@@ -990,7 +1011,7 @@ us-east-1/us-east-1b/*
 us-east-1/us-east-1c/*
 ```
 
-#### 3. Traffic Flow Diagram
+**3. Traffic Flow Diagram**
 
 ```mermaid
 flowchart TB
@@ -1025,11 +1046,12 @@ flowchart TB
     class Service3,Service4,Service5 otherZone;
 ```
 
-#### 4. Cost Savings Calculation
+**4. Cost Savings Calculation**
 
 **Scenario**: 1TB monthly traffic
 
 **Without Zone Aware (even distribution):**
+
 ```
 Total traffic: 1TB
 Cross-AZ: 66.7% (667GB)
@@ -1037,6 +1059,7 @@ Cost: 667GB x $0.01 = $6.67
 ```
 
 **With Zone Aware (70% same AZ):**
+
 ```
 Total traffic: 1TB
 Cross-AZ: 30% (300GB)
@@ -1046,6 +1069,7 @@ Savings: $6.67 - $3.00 = $3.67 (55% savings)
 ```
 
 **High-volume environment (100TB/month):**
+
 ```
 Without Zone Aware: $667
 With Zone Aware: $300
@@ -1053,9 +1077,10 @@ With Zone Aware: $300
 Savings: $367/month = $4,404/year
 ```
 
-#### 5. Failover Scenarios
+**5. Failover Scenarios**
 
 **Normal state:**
+
 ```
 Client in us-east-1a
 -> 70% us-east-1a pods
@@ -1064,6 +1089,7 @@ Client in us-east-1a
 ```
 
 **Complete us-east-1a failure:**
+
 ```
 Client in us-east-1a
 -> failover: switch to us-east-1b
@@ -1073,6 +1099,7 @@ Client in us-east-1a
 ```
 
 **Some pods unhealthy (Outlier Detection):**
+
 ```
 us-east-1a: 2 pods (1 healthy, 1 ejected)
 us-east-1b: 2 pods (all healthy)
@@ -1082,7 +1109,7 @@ us-east-1b: 2 pods (all healthy)
 -> Unhealthy pod doesn't receive traffic
 ```
 
-#### 6. Monitoring
+**6. Monitoring**
 
 ```bash
 # Check locality-based traffic
@@ -1098,7 +1125,7 @@ sum(rate(istio_requests_total{
 }[5m])) by (source_cluster_zone, destination_cluster_zone)
 ```
 
-#### 7. AWS EKS Specific Configuration
+**7. AWS EKS Specific Configuration**
 
 **Configure EKS node groups per AZ:**
 
@@ -1142,10 +1169,12 @@ spec:
 ```
 
 **Reference:**
-- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+
+* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+
 </details>
 
----
+***
 
 ### Question 9: Combined Resilience Strategy
 
@@ -1159,6 +1188,7 @@ spec:
 Write the DestinationRule and VirtualService.
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
@@ -1246,20 +1276,23 @@ spec:
 
 **Explanation:**
 
-#### 1. Outlier Detection (Instance Level)
+**1. Outlier Detection (Instance Level)**
 
 **Consecutive error detection:**
+
 ```yaml
 consecutiveErrors: 3
 consecutive5xxErrors: 3
 consecutiveGatewayErrors: 3
 ```
-- When a specific pod has 3 consecutive errors -> only that pod is ejected
-- Other healthy pods continue to receive traffic
 
-#### 2. Circuit Breaker (Service Level)
+* When a specific pod has 3 consecutive errors -> only that pod is ejected
+* Other healthy pods continue to receive traffic
+
+**2. Circuit Breaker (Service Level)**
 
 **Error rate based blocking:**
+
 ```yaml
 successRateStdevFactor: 1900  # 50% error rate
 successRateMinimumHosts: 3    # Minimum 3 pods
@@ -1267,6 +1300,7 @@ successRateRequestVolume: 10  # Minimum 10 requests
 ```
 
 **Behavior:**
+
 ```
 Error rate < 50%: Normal operation
 Error rate >= 50%: Entire service blocked (Circuit Open)
@@ -1276,19 +1310,20 @@ Circuit Open state:
 - Recovery attempt after baseEjectionTime (Circuit Half-Open)
 ```
 
-#### 3. Retry Strategy
+**3. Retry Strategy**
 
 **Retry conditions (retryOn):**
 
-| Condition | Description |
-|-----------|-------------|
-| **5xx** | All 5xx errors |
-| **reset** | Connection reset |
-| **connect-failure** | Connection failure |
-| **refused-stream** | HTTP/2 stream refused |
-| **retriable-4xx** | Retriable 4xx (409, 429) |
+| Condition           | Description              |
+| ------------------- | ------------------------ |
+| **5xx**             | All 5xx errors           |
+| **reset**           | Connection reset         |
+| **connect-failure** | Connection failure       |
+| **refused-stream**  | HTTP/2 stream refused    |
+| **retriable-4xx**   | Retriable 4xx (409, 429) |
 
 **Retry timeline:**
+
 ```
 T=0:    First attempt (2s timeout)
 T=2s:   Timeout -> 2nd attempt
@@ -1299,7 +1334,7 @@ Total time: 6s (but VirtualService timeout: 5s)
 -> Final failure after 5 seconds
 ```
 
-#### 4. Timeout Hierarchy
+**4. Timeout Hierarchy**
 
 ```
 VirtualService timeout: 5s
@@ -1310,15 +1345,17 @@ DestinationRule connectionPool
 ```
 
 **Full timeline:**
+
 ```
 attempt=1: 2s timeout
 attempt=2: 2s timeout
 attempt=3: 1s timeout (5s total limit reached)
 ```
 
-#### 5. Complete Operation Example
+**5. Complete Operation Example**
 
 **Scenario 1: Temporary network issue**
+
 ```
 Pod-1: 502 error (1st)
 -> Retry -> Pod-2: 200 OK
@@ -1328,6 +1365,7 @@ Pod-1: Error count 1 (not yet ejected)
 ```
 
 **Scenario 2: Specific pod issue**
+
 ```
 Pod-1: 503 error (1st)
 -> Retry -> Pod-1: 503 error (2nd)
@@ -1341,6 +1379,7 @@ Pod-1: Traffic blocked for 30 seconds
 ```
 
 **Scenario 3: Complete service failure (Circuit Breaker)**
+
 ```
 Error rate exceeds 50% on all pods
 -> Circuit Breaker Open
@@ -1353,7 +1392,7 @@ After baseEjectionTime:
 -> If failed, Circuit Open again
 ```
 
-#### 6. Connection Pool (Additional Protection)
+**6. Connection Pool (Additional Protection)**
 
 ```yaml
 connectionPool:
@@ -1365,11 +1404,12 @@ connectionPool:
 ```
 
 **Behavior:**
-- Over 100 concurrent connections -> new connections rejected
-- Over 50 pending requests -> 503 returned
-- Prevents service overload
 
-#### 7. Monitoring
+* Over 100 concurrent connections -> new connections rejected
+* Over 50 pending requests -> 503 returned
+* Prevents service overload
+
+**7. Monitoring**
 
 ```bash
 # Circuit Breaker status
@@ -1390,9 +1430,10 @@ sum(rate(envoy_cluster_circuit_breakers_default_rq_pending_open[5m]))
 sum(rate(istio_requests_total{response_flags=~".*UT.*"}[5m]))
 ```
 
-#### 8. Production Considerations
+**8. Production Considerations**
 
 **For external API calls:**
+
 ```yaml
 # More lenient settings
 timeout: 10s
@@ -1405,6 +1446,7 @@ outlierDetection:
 ```
 
 **For internal service-to-service:**
+
 ```yaml
 # Stricter settings
 timeout: 1s
@@ -1417,35 +1459,40 @@ outlierDetection:
 ```
 
 **Reference:**
-- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
-- [Traffic Management](../../../service-mesh/istio/traffic/README.md)
+
+* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+* [Traffic Management](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic/README.md)
+
 </details>
 
----
+***
 
 ### Question 10: Performance Optimization and Cost Reduction
 
 In a large-scale microservices environment, monthly network costs are $5,000. Develop a comprehensive strategy to optimize performance and reduce costs using Istio Resilience features.
 
 **Current Situation:**
-- 100 services evenly distributed across 3 AZs
-- Monthly traffic: 500TB
-- Average response time: 150ms
-- Error rate: 3%
+
+* 100 services evenly distributed across 3 AZs
+* Monthly traffic: 500TB
+* Average response time: 150ms
+* Error rate: 3%
 
 **Goals:**
-- 50% reduction in cross-AZ costs
-- Average response time under 100ms
-- Error rate under 1%
+
+* 50% reduction in cross-AZ costs
+* Average response time under 100ms
+* Error rate under 1%
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
 
-## Comprehensive Resilience Strategy
+### Comprehensive Resilience Strategy
 
-### 1. Zone Aware Routing (Cost Savings + Performance Improvement)
+#### 1. Zone Aware Routing (Cost Savings + Performance Improvement)
 
 **DestinationRule Template:**
 
@@ -1507,7 +1554,7 @@ With Zone Aware:
 Improvement: 1.5ms -> 0.54ms (64% improvement)
 ```
 
-### 2. Outlier Detection (Error Rate Reduction)
+#### 2. Outlier Detection (Error Rate Reduction)
 
 **Sensitive Detection Settings:**
 
@@ -1552,7 +1599,7 @@ Additional effects:
 - Response time improvement
 ```
 
-### 3. Rate Limiting (Service Protection)
+#### 3. Rate Limiting (Service Protection)
 
 **Tier-based Rate Limiting:**
 
@@ -1603,7 +1650,7 @@ spec:
             fill_interval: 1s
 ```
 
-### 4. Comprehensive Performance Optimization
+#### 4. Comprehensive Performance Optimization
 
 **Response Time Improvement Strategy:**
 
@@ -1662,9 +1709,9 @@ spec:
       retryOn: 5xx,reset,connect-failure
 ```
 
-### 5. Implementation Roadmap
+#### 5. Implementation Roadmap
 
-#### Phase 1: Zone Aware Routing (Week 1-2)
+**Phase 1: Zone Aware Routing (Week 1-2)**
 
 ```bash
 # 1. Check node Topology
@@ -1681,10 +1728,11 @@ kubectl apply -f zone-aware-template.yaml
 ```
 
 **Expected Effect:**
-- Cost: $5,000 -> $1,500 (70% savings)
-- Latency: 150ms -> 120ms (20% improvement)
 
-#### Phase 2: Outlier Detection (Week 3-4)
+* Cost: $5,000 -> $1,500 (70% savings)
+* Latency: 150ms -> 120ms (20% improvement)
+
+**Phase 2: Outlier Detection (Week 3-4)**
 
 ```bash
 # 1. Apply Outlier Detection to each service
@@ -1697,10 +1745,11 @@ kubectl apply -f strict-outlier-detection.yaml
 ```
 
 **Expected Effect:**
-- Error rate: 3% -> 1.5% (50% reduction)
-- Latency: 120ms -> 100ms (additional improvement)
 
-#### Phase 3: Rate Limiting (Week 5-6)
+* Error rate: 3% -> 1.5% (50% reduction)
+* Latency: 120ms -> 100ms (additional improvement)
+
+**Phase 3: Rate Limiting (Week 5-6)**
 
 ```bash
 # 1. Apply tier-based Rate Limiting
@@ -1712,11 +1761,12 @@ kubectl apply -f standard-service-ratelimit.yaml
 ```
 
 **Expected Effect:**
-- DDoS protection
-- Improved service stability
-- Prevent unnecessary resource consumption
 
-### 6. Monitoring and Validation
+* DDoS protection
+* Improved service stability
+* Prevent unnecessary resource consumption
+
+#### 6. Monitoring and Validation
 
 **Grafana Dashboard:**
 
@@ -1749,24 +1799,26 @@ sum(rate(envoy_cluster_outlier_detection_ejections_active[5m]))
 sum(rate(envoy_http_local_rate_limit_rate_limited[5m]))
 ```
 
-### 7. Final Results Prediction
+#### 7. Final Results Prediction
 
-| Metric | Current | Target | Expected Result |
-|--------|---------|--------|-----------------|
-| **Monthly Network Cost** | $5,000 | $2,500 | $1,500 (70% savings) |
-| **Average Response Time** | 150ms | 100ms | 95ms (37% improvement) |
-| **Error Rate** | 3% | 1% | 0.8% (73% reduction) |
-| **Cross-AZ Traffic** | 66.7% | 33% | 20% (70% reduction) |
+| Metric                    | Current | Target | Expected Result        |
+| ------------------------- | ------- | ------ | ---------------------- |
+| **Monthly Network Cost**  | $5,000  | $2,500 | $1,500 (70% savings)   |
+| **Average Response Time** | 150ms   | 100ms  | 95ms (37% improvement) |
+| **Error Rate**            | 3%      | 1%     | 0.8% (73% reduction)   |
+| **Cross-AZ Traffic**      | 66.7%   | 33%    | 20% (70% reduction)    |
 
-### 8. Additional Optimization Opportunities
+#### 8. Additional Optimization Opportunities
 
 **Caching Strategy:**
+
 ```yaml
 # Place Redis/Memcached in same AZ
 # Improved cache hit rate + Network cost savings
 ```
 
 **Service Mesh Optimization:**
+
 ```yaml
 # Consider Ambient Mode (Reduce Sidecar overhead)
 # 30-50% reduction in resource usage
@@ -1774,6 +1826,7 @@ sum(rate(envoy_http_local_rate_limit_rate_limited[5m]))
 ```
 
 **Auto Scaling:**
+
 ```yaml
 # HPA + Zone Aware Routing
 # Independent scaling per AZ based on traffic patterns
@@ -1781,28 +1834,31 @@ sum(rate(envoy_http_local_rate_limit_rate_limited[5m]))
 ```
 
 **Reference:**
-- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
-- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
+* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+
 </details>
 
----
+***
 
 ## Score Calculation
 
-- Multiple Choice 1-5: 10 points each (50 points total)
-- Short Answer 6-10: 10 points each (50 points total)
-- **Total: 100 points**
+* Multiple Choice 1-5: 10 points each (50 points total)
+* Short Answer 6-10: 10 points each (50 points total)
+* **Total: 100 points**
 
 **Evaluation Criteria:**
-- 90-100 points: Excellent (Istio Resilience Expert)
-- 80-89 points: Good (Production Ready)
-- 70-79 points: Average (Additional Study Recommended)
-- 60-69 points: Below Average (Basic Concept Review Needed)
-- 0-59 points: Needs Re-study
+
+* 90-100 points: Excellent (Istio Resilience Expert)
+* 80-89 points: Good (Production Ready)
+* 70-79 points: Average (Additional Study Recommended)
+* 60-69 points: Below Average (Basic Concept Review Needed)
+* 0-59 points: Needs Re-study
 
 ## Learning Resources
 
-- [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
-- [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
-- [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+* [Outlier Detection](../../../service-mesh/istio/resilience/01-outlier-detection.md)
+* [Rate Limiting](../../../service-mesh/istio/resilience/02-rate-limiting.md)
+* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)

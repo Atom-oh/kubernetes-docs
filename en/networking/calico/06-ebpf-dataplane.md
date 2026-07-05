@@ -1,6 +1,6 @@
-# Part 6: Calico eBPF Dataplane Deep Dive
-> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 23, 2026
+# Part 6: eBPF Dataplane
+
+> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+ **Last Updated**: February 23, 2026
 
 ## Introduction
 
@@ -8,7 +8,7 @@ Calico's eBPF dataplane represents a significant evolution in Kubernetes network
 
 This deep dive explores eBPF fundamentals from a networking perspective, Calico's eBPF architecture, migration strategies, and performance optimization techniques.
 
----
+***
 
 ## eBPF Fundamentals
 
@@ -41,30 +41,30 @@ flowchart TB
 
 ### Key eBPF Concepts for Networking
 
-| Concept | Description | Use in Calico |
-|---------|-------------|---------------|
-| **Programs** | Bytecode executed at kernel hooks | Packet filtering, routing |
-| **Maps** | Key-value stores shared between programs | Route tables, policy rules |
-| **Hooks** | Attachment points in kernel | XDP, TC, socket |
-| **Helpers** | Kernel functions callable from eBPF | Packet manipulation, map operations |
-| **BTF** | Type information for maps/programs | Debug info, CO-RE |
+| Concept      | Description                              | Use in Calico                       |
+| ------------ | ---------------------------------------- | ----------------------------------- |
+| **Programs** | Bytecode executed at kernel hooks        | Packet filtering, routing           |
+| **Maps**     | Key-value stores shared between programs | Route tables, policy rules          |
+| **Hooks**    | Attachment points in kernel              | XDP, TC, socket                     |
+| **Helpers**  | Kernel functions callable from eBPF      | Packet manipulation, map operations |
+| **BTF**      | Type information for maps/programs       | Debug info, CO-RE                   |
 
 ### eBPF vs iptables
 
-| Aspect | iptables | eBPF |
-|--------|----------|------|
-| **Architecture** | Sequential rule chains | Direct execution |
-| **Complexity** | O(n) rule matching | O(1) map lookup |
-| **Kernel Crossings** | Multiple per packet | Minimal |
-| **Programmability** | Fixed rule types | Flexible programs |
-| **Observability** | Limited counters | Rich metrics |
-| **CPU Efficiency** | Higher interrupt overhead | Lower overhead |
+| Aspect               | iptables                  | eBPF              |
+| -------------------- | ------------------------- | ----------------- |
+| **Architecture**     | Sequential rule chains    | Direct execution  |
+| **Complexity**       | O(n) rule matching        | O(1) map lookup   |
+| **Kernel Crossings** | Multiple per packet       | Minimal           |
+| **Programmability**  | Fixed rule types          | Flexible programs |
+| **Observability**    | Limited counters          | Rich metrics      |
+| **CPU Efficiency**   | Higher interrupt overhead | Lower overhead    |
 
----
+***
 
 ## Calico eBPF Architecture
 
-![Calico Dataplane: iptables vs eBPF](../../../assets/calico_ebpf_vs_iptables.png)
+![Calico Dataplane: iptables vs eBPF](../../.gitbook/assets/calico_ebpf_vs_iptables.png)
 
 ### Architecture Comparison
 
@@ -162,19 +162,19 @@ Socket-level eBPF for service mesh integration:
 - recvmsg() -> Inspect response
 ```
 
----
+***
 
 ## BPF Map Structures
 
 ### Map Types Used by Calico
 
-| Map Type | Purpose | Example Use |
-|----------|---------|-------------|
-| **Hash Map** | Key-value lookup | Connection tracking |
-| **LRU Hash** | Auto-evicting cache | NAT table |
-| **Array** | Fixed-size indexed | Endpoint config |
-| **LPM Trie** | Longest prefix match | Route lookup |
-| **Per-CPU Array** | Scalable counters | Statistics |
+| Map Type          | Purpose              | Example Use         |
+| ----------------- | -------------------- | ------------------- |
+| **Hash Map**      | Key-value lookup     | Connection tracking |
+| **LRU Hash**      | Auto-evicting cache  | NAT table           |
+| **Array**         | Fixed-size indexed   | Endpoint config     |
+| **LPM Trie**      | Longest prefix match | Route lookup        |
+| **Per-CPU Array** | Scalable counters    | Statistics          |
 
 ### Route Map Structure
 
@@ -236,7 +236,7 @@ struct calico_policy_value {
 };
 ```
 
----
+***
 
 ## Direct Server Return (DSR)
 
@@ -262,11 +262,11 @@ flowchart LR
 
 ### DSR Modes in Calico
 
-| Mode | Description | Use Case |
-|------|-------------|----------|
-| **Disabled** | All traffic through LB | Default, all environments |
-| **IPIP** | Response via IPIP tunnel | Cross-subnet |
-| **DSR** | Direct response | Same L2 network |
+| Mode         | Description              | Use Case                  |
+| ------------ | ------------------------ | ------------------------- |
+| **Disabled** | All traffic through LB   | Default, all environments |
+| **IPIP**     | Response via IPIP tunnel | Cross-subnet              |
+| **DSR**      | Direct response          | Same L2 network           |
 
 ### Enabling DSR
 
@@ -282,12 +282,12 @@ spec:
 
 ### DSR Requirements
 
-- Server and client must be on same L2 network OR
-- Use IPIP/VXLAN encapsulation for cross-subnet
-- External client IP must be routable from servers
-- No SNAT on ingress path
+* Server and client must be on same L2 network OR
+* Use IPIP/VXLAN encapsulation for cross-subnet
+* External client IP must be routable from servers
+* No SNAT on ingress path
 
----
+***
 
 ## Connect-Time Load Balancing
 
@@ -311,12 +311,12 @@ flowchart TB
 
 ### Benefits of Connect-Time LB
 
-| Aspect | Per-Packet | Connect-Time |
-|--------|------------|--------------|
-| **NAT overhead** | Every packet | Connection setup only |
-| **Connection tracking** | Required | Minimal |
-| **Latency** | Higher (NAT lookup) | Lower (direct) |
-| **CPU usage** | Higher | Lower |
+| Aspect                  | Per-Packet          | Connect-Time          |
+| ----------------------- | ------------------- | --------------------- |
+| **NAT overhead**        | Every packet        | Connection setup only |
+| **Connection tracking** | Required            | Minimal               |
+| **Latency**             | Higher (NAT lookup) | Lower (direct)        |
+| **CPU usage**           | Higher              | Lower                 |
 
 ### How Connect-Time LB Works
 
@@ -336,7 +336,7 @@ int bpf_connect4(struct bpf_sock_addr *ctx) {
 }
 ```
 
----
+***
 
 ## XDP Acceleration
 
@@ -357,11 +357,11 @@ flowchart TB
 
 ### XDP Modes
 
-| Mode | Location | Performance | Requirements |
-|------|----------|-------------|--------------|
-| **Offload** | NIC hardware | Fastest | SmartNIC |
-| **Native** | NIC driver | Fast | Driver support |
-| **Generic** | Network stack | Baseline | Any NIC |
+| Mode        | Location      | Performance | Requirements   |
+| ----------- | ------------- | ----------- | -------------- |
+| **Offload** | NIC hardware  | Fastest     | SmartNIC       |
+| **Native**  | NIC driver    | Fast        | Driver support |
+| **Generic** | Network stack | Baseline    | Any NIC        |
 
 ### Enabling XDP in Calico
 
@@ -387,18 +387,18 @@ spec:
 3. **Rate Limiting**: Packet rate limits before stack
 4. **Metrics Collection**: Wire-speed packet counting
 
----
+***
 
 ## eBPF Mode Requirements
 
 ### Kernel Requirements
 
-| Requirement | Minimum Version | Notes |
-|-------------|-----------------|-------|
-| **Linux Kernel** | 5.3+ | 5.8+ recommended |
-| **BTF Support** | Required | `CONFIG_DEBUG_INFO_BTF=y` |
-| **BPF Syscall** | Required | `CONFIG_BPF_SYSCALL=y` |
-| **BPF JIT** | Required | `CONFIG_BPF_JIT=y` |
+| Requirement      | Minimum Version | Notes                     |
+| ---------------- | --------------- | ------------------------- |
+| **Linux Kernel** | 5.3+            | 5.8+ recommended          |
+| **BTF Support**  | Required        | `CONFIG_DEBUG_INFO_BTF=y` |
+| **BPF Syscall**  | Required        | `CONFIG_BPF_SYSCALL=y`    |
+| **BPF JIT**      | Required        | `CONFIG_BPF_JIT=y`        |
 
 ### Verify Kernel Support
 
@@ -421,14 +421,14 @@ cat /boot/config-$(uname -r) | grep -E "CONFIG_BPF|CONFIG_DEBUG_INFO_BTF"
 
 ### Distribution Support
 
-| Distribution | eBPF Ready | Notes |
-|--------------|------------|-------|
-| Ubuntu 20.04+ | Yes | Kernel 5.4+ |
-| Ubuntu 22.04+ | Yes | Kernel 5.15+ (recommended) |
-| RHEL/CentOS 8.2+ | Yes | Kernel 4.18+ with backports |
-| Amazon Linux 2 | Partial | May need kernel upgrade |
-| Amazon Linux 2023 | Yes | Kernel 6.1+ |
-| Bottlerocket | Yes | Purpose-built for containers |
+| Distribution      | eBPF Ready | Notes                        |
+| ----------------- | ---------- | ---------------------------- |
+| Ubuntu 20.04+     | Yes        | Kernel 5.4+                  |
+| Ubuntu 22.04+     | Yes        | Kernel 5.15+ (recommended)   |
+| RHEL/CentOS 8.2+  | Yes        | Kernel 4.18+ with backports  |
+| Amazon Linux 2    | Partial    | May need kernel upgrade      |
+| Amazon Linux 2023 | Yes        | Kernel 6.1+                  |
+| Bottlerocket      | Yes        | Purpose-built for containers |
 
 ### Calico Version Requirements
 
@@ -470,7 +470,7 @@ spec:
   bpfConnectTimeLoadBalancingEnabled: true
 ```
 
----
+***
 
 ## iptables to eBPF Migration
 
@@ -600,27 +600,27 @@ kubectl rollout status ds/calico-node -n kube-system
 iptables -L -n -v
 ```
 
----
+***
 
 ## Performance Benchmarks
 
 ### Latency Comparison
 
-| Scenario | iptables | eBPF | Improvement |
-|----------|----------|------|-------------|
-| Pod-to-Pod (same node) | 45 μs | 25 μs | 44% |
-| Pod-to-Pod (cross node) | 120 μs | 80 μs | 33% |
-| Service (ClusterIP) | 150 μs | 60 μs | 60% |
-| Service (NodePort) | 180 μs | 70 μs | 61% |
+| Scenario                | iptables | eBPF  | Improvement |
+| ----------------------- | -------- | ----- | ----------- |
+| Pod-to-Pod (same node)  | 45 μs    | 25 μs | 44%         |
+| Pod-to-Pod (cross node) | 120 μs   | 80 μs | 33%         |
+| Service (ClusterIP)     | 150 μs   | 60 μs | 60%         |
+| Service (NodePort)      | 180 μs   | 70 μs | 61%         |
 
 ### Throughput Comparison
 
-| Scenario | iptables | eBPF | Improvement |
-|----------|----------|------|-------------|
-| TCP single stream | 15 Gbps | 23 Gbps | 53% |
-| TCP multi-stream | 35 Gbps | 48 Gbps | 37% |
-| UDP single stream | 8 Gbps | 18 Gbps | 125% |
-| Small packets (64B) | 2M pps | 5M pps | 150% |
+| Scenario            | iptables | eBPF    | Improvement |
+| ------------------- | -------- | ------- | ----------- |
+| TCP single stream   | 15 Gbps  | 23 Gbps | 53%         |
+| TCP multi-stream    | 35 Gbps  | 48 Gbps | 37%         |
+| UDP single stream   | 8 Gbps   | 18 Gbps | 125%        |
+| Small packets (64B) | 2M pps   | 5M pps  | 150%        |
 
 ### CPU Efficiency
 
@@ -659,7 +659,7 @@ kubectl exec client-pod -- netperf -H service-cluster-ip -t TCP_RR -l 30
 kubectl exec client-pod -- iperf3 -c server-pod-ip -t 30
 ```
 
----
+***
 
 ## eBPF Debugging
 
@@ -754,19 +754,19 @@ kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
   calico-bpf nat frontend list
 ```
 
----
+***
 
 ## Limitations and Known Issues
 
 ### Current Limitations
 
-| Limitation | Description | Workaround |
-|------------|-------------|------------|
-| **Host-networked pods** | Limited policy support | Use iptables for host pods |
-| **IPv6** | Partial support | Use dual-stack mode |
-| **Wireguard** | Not with eBPF | Use IPsec or disable encryption |
-| **Service topology** | Limited support | Use standard kube-proxy |
-| **Windows nodes** | Not supported | Use iptables dataplane |
+| Limitation              | Description            | Workaround                      |
+| ----------------------- | ---------------------- | ------------------------------- |
+| **Host-networked pods** | Limited policy support | Use iptables for host pods      |
+| **IPv6**                | Partial support        | Use dual-stack mode             |
+| **Wireguard**           | Not with eBPF          | Use IPsec or disable encryption |
+| **Service topology**    | Limited support        | Use standard kube-proxy         |
+| **Windows nodes**       | Not supported          | Use iptables dataplane          |
 
 ### Known Issues
 
@@ -801,7 +801,7 @@ kubectl logs -n kube-system -l k8s-app=calico-node -c calico-node | grep -i erro
 cat /proc/sys/kernel/bpf_map_max_entries
 ```
 
----
+***
 
 ## Kube-proxy Replacement
 
@@ -853,17 +853,17 @@ kubectl run test --image=busybox --rm -it -- wget -O- http://kubernetes.default.
 
 ### Service Features Comparison
 
-| Feature | kube-proxy (iptables) | kube-proxy (IPVS) | Calico eBPF |
-|---------|----------------------|-------------------|-------------|
-| ClusterIP | Yes | Yes | Yes |
-| NodePort | Yes | Yes | Yes |
-| LoadBalancer | Yes | Yes | Yes |
-| ExternalIPs | Yes | Yes | Yes |
-| SessionAffinity | Yes | Yes | Yes |
-| Topology | Yes | Yes | Limited |
-| ProxyMode | iptables | IPVS | eBPF |
+| Feature         | kube-proxy (iptables) | kube-proxy (IPVS) | Calico eBPF |
+| --------------- | --------------------- | ----------------- | ----------- |
+| ClusterIP       | Yes                   | Yes               | Yes         |
+| NodePort        | Yes                   | Yes               | Yes         |
+| LoadBalancer    | Yes                   | Yes               | Yes         |
+| ExternalIPs     | Yes                   | Yes               | Yes         |
+| SessionAffinity | Yes                   | Yes               | Yes         |
+| Topology        | Yes                   | Yes               | Limited     |
+| ProxyMode       | iptables              | IPVS              | eBPF        |
 
----
+***
 
 ## Best Practices
 
@@ -912,42 +912,42 @@ calico_bpf_nat_backend_entries         # Service backends
 felix_bpf_dataplane_apply_time_seconds # Dataplane sync time
 ```
 
----
+***
 
 ## Summary
 
 Calico's eBPF dataplane represents a significant advancement in Kubernetes networking:
 
-| Benefit | Impact |
-|---------|--------|
-| **Performance** | Up to 60% latency reduction |
-| **Scalability** | O(1) rule lookup vs O(n) |
-| **Efficiency** | Lower CPU usage |
-| **Observability** | Rich BPF-based metrics |
-| **Simplicity** | Replaces kube-proxy |
+| Benefit           | Impact                      |
+| ----------------- | --------------------------- |
+| **Performance**   | Up to 60% latency reduction |
+| **Scalability**   | O(1) rule lookup vs O(n)    |
+| **Efficiency**    | Lower CPU usage             |
+| **Observability** | Rich BPF-based metrics      |
+| **Simplicity**    | Replaces kube-proxy         |
 
 ### When to Use eBPF Dataplane
 
-- High-throughput workloads
-- Latency-sensitive applications
-- Large clusters with many services
-- Environments requiring detailed observability
-- Linux kernel 5.3+ available
+* High-throughput workloads
+* Latency-sensitive applications
+* Large clusters with many services
+* Environments requiring detailed observability
+* Linux kernel 5.3+ available
 
 ### When to Stay with iptables
 
-- Windows node support required
-- Older kernel versions
-- Wireguard encryption needed
-- Complex service topology requirements
-- Risk-averse environments requiring proven technology
+* Windows node support required
+* Older kernel versions
+* Wireguard encryption needed
+* Complex service topology requirements
+* Risk-averse environments requiring proven technology
 
----
+***
 
 ## References
 
-- [Calico eBPF Documentation](https://docs.tigera.io/calico/latest/operations/ebpf/)
-- [Linux eBPF Documentation](https://ebpf.io/what-is-ebpf/)
-- [BPF and XDP Reference Guide](https://docs.cilium.io/en/stable/bpf/)
-- [Calico eBPF Migration Guide](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
-- [bpftool Manual](https://man7.org/linux/man-pages/man8/bpftool.8.html)
+* [Calico eBPF Documentation](https://docs.tigera.io/calico/latest/operations/ebpf/)
+* [Linux eBPF Documentation](https://ebpf.io/what-is-ebpf/)
+* [BPF and XDP Reference Guide](https://docs.cilium.io/en/stable/bpf/)
+* [Calico eBPF Migration Guide](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
+* [bpftool Manual](https://man7.org/linux/man-pages/man8/bpftool.8.html)

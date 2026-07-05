@@ -1,4 +1,4 @@
-# EKS Cluster Creation - Part 5
+# Part 5: Cluster Access, Validation, Upgrade and Deletion
 
 ## Configuring Cluster Access
 
@@ -6,7 +6,7 @@ After creating an EKS cluster, configuration is required to access the cluster. 
 
 ### Cluster Access Configuration Process
 
-![EKS Cluster Access Configuration Process](../assets/generated-diagrams/eks_cluster_access_configuration.png)
+![EKS Cluster Access Configuration Process](../.gitbook/assets/eks_cluster_access_configuration.png)
 
 ### kubeconfig Configuration
 
@@ -24,7 +24,7 @@ This command updates the `~/.kube/config` file to enable access to the EKS clust
 
 By default, only the IAM entity (user or role) that created the EKS cluster can access the cluster. There are two methods to grant cluster access to other IAM users or roles: the traditional aws-auth ConfigMap method and the new EKS Access Entry method.
 
-![EKS IAM Access Methods Comparison](../assets/generated-diagrams/eks_iam_access_methods.png)
+![EKS IAM Access Methods Comparison](../.gitbook/assets/eks_iam_access_methods.png)
 
 #### Method 1: EKS Access Entry (Recommended)
 
@@ -180,7 +180,7 @@ After creating an EKS cluster, you need to verify that the cluster is working co
 
 ### Cluster Validation Process
 
-![EKS Cluster Validation Process](../assets/generated-diagrams/eks_cluster_validation_process.png)
+![EKS Cluster Validation Process](../.gitbook/assets/eks_cluster_validation_process.png)
 
 ### Verify Nodes
 
@@ -274,7 +274,7 @@ To keep an EKS cluster up to date, regular upgrades are required. In this sectio
 
 ### Cluster Upgrade Process
 
-![EKS Cluster Upgrade Process](../assets/generated-diagrams/eks_cluster_upgrade_process.png)
+![EKS Cluster Upgrade Process](../.gitbook/assets/eks_cluster_upgrade_process.png)
 
 ### Control Plane Upgrade
 
@@ -347,7 +347,7 @@ When an EKS cluster is no longer needed, you can delete it to save costs. In thi
 
 ### Cluster Deletion Process
 
-![EKS Cluster Deletion Process](../assets/generated-diagrams/eks_cluster_deletion_process.png)
+![EKS Cluster Deletion Process](../.gitbook/assets/eks_cluster_deletion_process.png)
 
 ### Resource Cleanup
 

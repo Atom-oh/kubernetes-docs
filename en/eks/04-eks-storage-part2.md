@@ -1,23 +1,23 @@
-# Amazon EKS Storage - Part 2: FSx for Lustre, S3, Snapshots, Volume Expansion, Performance Optimization
+# Part 2: Storage Classes
 
 This document is the second part of the Amazon EKS storage series, covering FSx for Lustre, Amazon S3, snapshots, volume expansion, and performance optimization.
 
 ## Table of Contents
 
-1. [Amazon FSx for Lustre](#amazon-fsx-for-lustre)
-2. [Amazon S3 Storage Integration](#amazon-s3-storage-integration)
-3. [Snapshots and Backups](#snapshots-and-backups)
-4. [Volume Expansion and Resizing](#volume-expansion-and-resizing)
-5. [Volume Cloning](#volume-cloning)
-6. [Multi-Attach EBS](#multi-attach-ebs)
-7. [Mountpoint for S3 CSI Deep Dive](#mountpoint-for-s3-csi-deep-dive)
-8. [Storage Performance Optimization](#storage-performance-optimization)
+1. [Amazon FSx for Lustre](04-eks-storage-part2.md#amazon-fsx-for-lustre)
+2. [Amazon S3 Storage Integration](04-eks-storage-part2.md#amazon-s3-storage-integration)
+3. [Snapshots and Backups](04-eks-storage-part2.md#snapshots-and-backups)
+4. [Volume Expansion and Resizing](04-eks-storage-part2.md#volume-expansion-and-resizing)
+5. [Volume Cloning](04-eks-storage-part2.md#volume-cloning)
+6. [Multi-Attach EBS](04-eks-storage-part2.md#multi-attach-ebs)
+7. [Mountpoint for S3 CSI Deep Dive](04-eks-storage-part2.md#mountpoint-for-s3-csi-deep-dive)
+8. [Storage Performance Optimization](04-eks-storage-part2.md#storage-performance-optimization)
 
 ## Amazon FSx for Lustre
 
 Amazon FSx for Lustre is a high-performance file system for compute-intensive workloads such as high-performance computing (HPC), machine learning, and big data processing. Lustre is a parallel distributed file system that provides high throughput and low latency accessible simultaneously from thousands of clients.
 
-![FSx for Lustre CSI Architecture](../assets/generated-diagrams/fsx_lustre_csi_architecture.png)
+![FSx for Lustre CSI Architecture](../.gitbook/assets/fsx_lustre_csi_architecture.png)
 
 ### Installing FSx for Lustre CSI Driver
 
@@ -181,12 +181,11 @@ spec:
 FSx for Lustre offers various deployment types to meet different workload requirements:
 
 1. **Scratch File Systems**:
-   - **Scratch 1**: Cost-optimized file system for short-term storage and processing
-   - **Scratch 2**: Provides higher burst throughput and better data durability than Scratch 1
-
+   * **Scratch 1**: Cost-optimized file system for short-term storage and processing
+   * **Scratch 2**: Provides higher burst throughput and better data durability than Scratch 1
 2. **Persistent File Systems**:
-   - **Persistent 1**: File system for long-term storage and throughput-critical workloads
-   - **Persistent 2**: Provides higher throughput than Persistent 1
+   * **Persistent 1**: File system for long-term storage and throughput-critical workloads
+   * **Persistent 2**: Provides higher throughput than Persistent 1
 
 ### FSx for Lustre Configuration for vLLM
 
@@ -207,15 +206,16 @@ parameters:
 ```
 
 This configuration provides the following benefits:
-- High throughput reduces model loading time
-- Data compression improves storage efficiency
-- Simultaneous access to the same model files from multiple nodes
+
+* High throughput reduces model loading time
+* Data compression improves storage efficiency
+* Simultaneous access to the same model files from multiple nodes
 
 ## Amazon S3 Storage Integration
 
 Amazon S3 is an object storage service that can store and retrieve unlimited amounts of data. In Kubernetes, S3 cannot be directly mounted as a volume, but there are various ways to integrate with S3.
 
-![S3 Integration Methods](../assets/generated-diagrams/s3_integration_methods.png)
+![S3 Integration Methods](../.gitbook/assets/s3_integration_methods.png)
 
 ### IRSA Setup for S3 Access
 
@@ -371,7 +371,7 @@ Amazon S3 is suitable for the following use cases:
 
 In Kubernetes, you can use volume snapshots to backup and restore PV data.
 
-![Volume Snapshot System](../assets/generated-diagrams/volume_snapshot_system.png)
+![Volume Snapshot System](../.gitbook/assets/volume_snapshot_system.png)
 
 ### Installing Volume Snapshot Controller
 
@@ -477,7 +477,7 @@ velero restore create --from-backup daily-backup-20250710010000
 
 In Kubernetes, you can expand PVC size to increase storage capacity.
 
-![Volume Expansion Process](../assets/generated-diagrams/volume_expansion_process.png)
+![Volume Expansion Process](../.gitbook/assets/volume_expansion_process.png)
 
 ### Enabling Volume Expansion
 
@@ -517,10 +517,9 @@ spec:
 After volume expansion, you may need to expand the file system:
 
 1. Online expansion (when pod is running):
-   - EBS CSI driver automatically expands the file system.
-
+   * EBS CSI driver automatically expands the file system.
 2. Offline expansion (when manual expansion is required):
-   - Connect to the pod and run file system expansion command:
+   * Connect to the pod and run file system expansion command:
 
 ```bash
 # For ext4 file system
@@ -547,10 +546,11 @@ Volume cloning allows you to create a new PVC from an existing PVC without going
 The EBS CSI driver supports PVC cloning using the `dataSource` field. When you clone a volume, the CSI driver creates a new EBS volume from a snapshot of the source volume, but this process is abstracted away from the user.
 
 Key characteristics of volume cloning:
-- The clone is independent of the source PVC
-- Changes to the clone do not affect the source
-- The clone inherits the storage class of the source unless specified otherwise
-- Both source and clone must be in the same namespace
+
+* The clone is independent of the source PVC
+* Changes to the clone do not affect the source
+* The clone inherits the storage class of the source unless specified otherwise
+* Both source and clone must be in the same namespace
 
 ### Using the dataSource Field
 
@@ -575,13 +575,13 @@ spec:
 
 ### Clone vs Snapshot Comparison
 
-| Feature | Volume Clone | Volume Snapshot |
-|---------|--------------|-----------------|
-| Creation Speed | Fast (single step) | Two steps (create snapshot, then restore) |
-| Storage Overhead | Immediate full copy | Incremental storage |
-| Cross-Namespace | No | Yes (with VolumeSnapshotContent) |
-| Point-in-Time | At clone creation | Any saved snapshot |
-| Use Case | Quick duplication | Backup and recovery |
+| Feature          | Volume Clone        | Volume Snapshot                           |
+| ---------------- | ------------------- | ----------------------------------------- |
+| Creation Speed   | Fast (single step)  | Two steps (create snapshot, then restore) |
+| Storage Overhead | Immediate full copy | Incremental storage                       |
+| Cross-Namespace  | No                  | Yes (with VolumeSnapshotContent)          |
+| Point-in-Time    | At clone creation   | Any saved snapshot                        |
+| Use Case         | Quick duplication   | Backup and recovery                       |
 
 ### Volume Clone YAML Example
 
@@ -648,13 +648,15 @@ Multi-Attach enables a single EBS volume to be attached to multiple EC2 instance
 ### io1/io2 Block Express Multi-Attachment
 
 Multi-Attach is supported only on Provisioned IOPS SSD volumes:
-- **io1**: Up to 16 simultaneous attachments
-- **io2 Block Express**: Up to 16 simultaneous attachments with higher performance
+
+* **io1**: Up to 16 simultaneous attachments
+* **io2 Block Express**: Up to 16 simultaneous attachments with higher performance
 
 Requirements:
-- Instances must be in the same Availability Zone as the volume
-- Instances must be Nitro-based EC2 instances
-- Volume must use Block device mode (not Filesystem mode)
+
+* Instances must be in the same Availability Zone as the volume
+* Instances must be Nitro-based EC2 instances
+* Volume must use Block device mode (not Filesystem mode)
 
 ### Why Not ReadWriteMany?
 
@@ -668,18 +670,19 @@ The Kubernetes access mode for Multi-Attach EBS is `ReadWriteOncePod` or through
 
 ### Limitations
 
-- **Same AZ Only**: All attached instances must be in the same Availability Zone
-- **Block Mode Only**: Cannot be used as a shared filesystem without cluster-aware filesystem
-- **Nitro Instances**: Only supported on Nitro-based instance types
-- **No Online Resize**: Cannot resize while attached to multiple instances
-- **Application Coordination**: Applications must implement their own locking/coordination
+* **Same AZ Only**: All attached instances must be in the same Availability Zone
+* **Block Mode Only**: Cannot be used as a shared filesystem without cluster-aware filesystem
+* **Nitro Instances**: Only supported on Nitro-based instance types
+* **No Online Resize**: Cannot resize while attached to multiple instances
+* **Application Coordination**: Applications must implement their own locking/coordination
 
 ### Multi-Attach Use Cases and YAML Example
 
 Common use cases:
-- Clustered databases (Oracle RAC, SQL Server FCI)
-- High-availability applications with shared state
-- Distributed storage systems
+
+* Clustered databases (Oracle RAC, SQL Server FCI)
+* High-availability applications with shared state
+* Distributed storage systems
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -749,56 +752,62 @@ Mountpoint for Amazon S3 is a file client that translates file system operations
 Mountpoint for S3 is optimized for specific access patterns:
 
 **Sequential Read Optimization**:
-- Excellent performance for large sequential reads
-- Automatic prefetching for predictable access patterns
-- Throughput scales with object size
-- Ideal for data analytics and ML training workloads
+
+* Excellent performance for large sequential reads
+* Automatic prefetching for predictable access patterns
+* Throughput scales with object size
+* Ideal for data analytics and ML training workloads
 
 **Random Write Limitations**:
-- S3 is an object store, not a block store
-- Random writes require rewriting entire objects
-- Append operations create new object versions
-- Not suitable for database workloads or applications requiring random I/O
+
+* S3 is an object store, not a block store
+* Random writes require rewriting entire objects
+* Append operations create new object versions
+* Not suitable for database workloads or applications requiring random I/O
 
 Performance benchmarks (approximate):
-| Operation | Performance |
-|-----------|-------------|
-| Sequential Read (large files) | Up to 100 Gbps aggregate |
-| Sequential Write (new files) | Up to 50 Gbps aggregate |
-| Random Read (small files) | Higher latency, lower throughput |
-| Random Write | Not recommended |
+
+| Operation                     | Performance                      |
+| ----------------------------- | -------------------------------- |
+| Sequential Read (large files) | Up to 100 Gbps aggregate         |
+| Sequential Write (new files)  | Up to 50 Gbps aggregate          |
+| Random Read (small files)     | Higher latency, lower throughput |
+| Random Write                  | Not recommended                  |
 
 ### Limitations
 
 Mountpoint for S3 has several POSIX compatibility limitations:
 
-- **No hard links**: Hard links are not supported
-- **No symbolic links**: Symbolic links are not supported
-- **No chmod/chown**: File permissions cannot be changed after creation
-- **No file locking**: Advisory and mandatory locks are not available
-- **No sparse files**: Sparse file operations are not supported
-- **No extended attributes**: xattr operations are not supported
-- **Eventual consistency**: List operations may not immediately reflect recent writes
-- **No rename across directories**: Rename is only supported within the same directory
-- **No append to existing files**: Must rewrite the entire object
+* **No hard links**: Hard links are not supported
+* **No symbolic links**: Symbolic links are not supported
+* **No chmod/chown**: File permissions cannot be changed after creation
+* **No file locking**: Advisory and mandatory locks are not available
+* **No sparse files**: Sparse file operations are not supported
+* **No extended attributes**: xattr operations are not supported
+* **Eventual consistency**: List operations may not immediately reflect recent writes
+* **No rename across directories**: Rename is only supported within the same directory
+* **No append to existing files**: Must rewrite the entire object
 
 ### Cache Settings
 
 Mountpoint for S3 provides caching options to improve performance:
 
 **Metadata Cache**:
+
 ```yaml
 parameters:
   mountOptions: "--metadata-ttl 60"  # Cache metadata for 60 seconds
 ```
 
 **Data Cache** (for read-heavy workloads):
+
 ```yaml
 parameters:
   mountOptions: "--cache /tmp/s3-cache --max-cache-size 10737418240"  # 10GB cache
 ```
 
 Complete cache configuration example:
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -888,24 +897,24 @@ spec:
 ```
 
 Key optimizations in this example:
-- **ReadOnlyMany access**: Multiple training pods can read simultaneously
-- **Large prefetch**: 50MB prefetch reduces read latency
-- **Local cache**: 100GB cache for frequently accessed data
-- **Appropriate instance type**: GPU instance with high network bandwidth
+
+* **ReadOnlyMany access**: Multiple training pods can read simultaneously
+* **Large prefetch**: 50MB prefetch reduces read latency
+* **Local cache**: 100GB cache for frequently accessed data
+* **Appropriate instance type**: GPU instance with high network bandwidth
 
 ## Storage Performance Optimization
 
 Let's explore various strategies for optimizing storage performance in EKS.
 
-![Storage Performance Optimization](../assets/generated-diagrams/storage_performance_optimization.png)
+![Storage Performance Optimization](../.gitbook/assets/storage_performance_optimization.png)
 
 ### EBS Performance Optimization
 
 1. **Select appropriate volume type**:
-   - General workloads: gp3
-   - High-performance databases: io2
-   - Throughput-centric workloads: st1
-
+   * General workloads: gp3
+   * High-performance databases: io2
+   * Throughput-centric workloads: st1
 2. **gp3 volume performance tuning**:
 
 ```yaml
@@ -921,11 +930,10 @@ parameters:
 ```
 
 3. **Consider instance type**:
-   - Use EBS-optimized instances
-   - Select instances with sufficient network bandwidth
-
+   * Use EBS-optimized instances
+   * Select instances with sufficient network bandwidth
 4. **Volume initialization**:
-   - Consider initializing new volumes before use:
+   * Consider initializing new volumes before use:
 
 ```bash
 dd if=/dev/zero of=/dev/xvdf bs=1M count=1000 oflag=direct
@@ -934,17 +942,14 @@ dd if=/dev/zero of=/dev/xvdf bs=1M count=1000 oflag=direct
 ### EFS Performance Optimization
 
 1. **Select appropriate performance mode**:
-   - Most workloads: General Purpose mode
-   - High concurrency workloads: Max I/O mode
-
+   * Most workloads: General Purpose mode
+   * High concurrency workloads: Max I/O mode
 2. **Select throughput mode**:
-   - Predictable workloads: Provisioned throughput
-   - Variable workloads: Bursting or Elastic throughput
-
+   * Predictable workloads: Provisioned throughput
+   * Variable workloads: Bursting or Elastic throughput
 3. **Optimize access patterns**:
-   - Large file operations: Use large I/O sizes
-   - Parallel access: Use multiple threads or processes
-
+   * Large file operations: Use large I/O sizes
+   * Parallel access: Use multiple threads or processes
 4. **Optimize mount options**:
 
 ```yaml
@@ -975,13 +980,11 @@ spec:
 ### FSx for Lustre Performance Optimization
 
 1. **Select appropriate deployment type and throughput**:
-   - High throughput requirements: PERSISTENT_2 + high throughput
-   - Cost-effective temporary workloads: SCRATCH_2
-
+   * High throughput requirements: PERSISTENT\_2 + high throughput
+   * Cost-effective temporary workloads: SCRATCH\_2
 2. **Optimize striping**:
-   - Large files: Stripe across multiple OSTs (Object Storage Targets)
-   - Small files: Store on a single OST
-
+   * Large files: Stripe across multiple OSTs (Object Storage Targets)
+   * Small files: Store on a single OST
 3. **Client mount options**:
 
 ```yaml
@@ -1003,9 +1006,8 @@ parameters:
 Storage optimization for large language model workloads like vLLM:
 
 1. **Use FSx for Lustre**:
-   - High throughput reduces model loading time
-   - Simultaneous access to the same model files from multiple nodes
-
+   * High throughput reduces model loading time
+   * Simultaneous access to the same model files from multiple nodes
 2. **Optimal configuration**:
 
 ```yaml
@@ -1022,13 +1024,12 @@ parameters:
 ```
 
 3. **Model file optimization**:
-   - Pre-load model files into memory
-   - Consider model quantization
-   - Implement model sharding
-
+   * Pre-load model files into memory
+   * Consider model quantization
+   * Implement model sharding
 4. **Node instance type selection**:
-   - Select instances with sufficient memory and network bandwidth
-   - Consider EFA (Elastic Fabric Adapter) support for GPU instances
+   * Select instances with sufficient memory and network bandwidth
+   * Consider EFA (Elastic Fabric Adapter) support for GPU instances
 
 ## Conclusion
 
@@ -1038,11 +1039,11 @@ The next part will cover monitoring, troubleshooting, cost optimization, and sec
 
 ## References
 
-- [Amazon FSx for Lustre CSI Driver](https://github.com/kubernetes-sigs/aws-fsx-csi-driver)
-- [Amazon S3 CSI Driver](https://github.com/awslabs/mountpoint-s3-csi-driver)
-- [Kubernetes Volume Snapshots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
-- [Velero Backup and Restore](https://velero.io/docs/)
-- [Amazon EKS Storage Best Practices](https://aws.github.io/aws-eks-best-practices/storage/)
+* [Amazon FSx for Lustre CSI Driver](https://github.com/kubernetes-sigs/aws-fsx-csi-driver)
+* [Amazon S3 CSI Driver](https://github.com/awslabs/mountpoint-s3-csi-driver)
+* [Kubernetes Volume Snapshots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
+* [Velero Backup and Restore](https://velero.io/docs/)
+* [Amazon EKS Storage Best Practices](https://aws.github.io/aws-eks-best-practices/storage/)
 
 ## Quiz
 

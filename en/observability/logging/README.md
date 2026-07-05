@@ -1,4 +1,4 @@
-# Logging Overview
+# Logging
 
 > **Last Updated**: February 20, 2026
 
@@ -6,13 +6,13 @@ Effective logging in Kubernetes environments is essential for system visibility,
 
 ## Table of Contents
 
-1. [Logging Fundamentals](#logging-fundamentals)
-2. [Log Collection Pipeline Architecture](#log-collection-pipeline-architecture)
-3. [Log Storage Selection Criteria](#log-storage-selection-criteria)
-4. [EKS Logging Strategy](#eks-logging-strategy)
-5. [Solution Comparison](#solution-comparison)
+1. [Logging Fundamentals](./#logging-fundamentals)
+2. [Log Collection Pipeline Architecture](./#log-collection-pipeline-architecture)
+3. [Log Storage Selection Criteria](./#log-storage-selection-criteria)
+4. [EKS Logging Strategy](./#eks-logging-strategy)
+5. [Solution Comparison](./#solution-comparison)
 
----
+***
 
 ## Logging Fundamentals
 
@@ -42,26 +42,26 @@ Structured logging outputs log messages in a consistent format, making parsing a
 
 #### Benefits of Structured Logging
 
-| Benefit | Description |
-|---------|-------------|
-| **Search Efficiency** | Fast filtering by specific fields |
-| **Consistency** | Same format across all services |
-| **Correlation Analysis** | Track requests via trace_id, request_id |
-| **Automation** | Immediately usable in analysis tools without parsing |
-| **Alert Configuration** | Easy to create alert rules based on specific field values |
+| Benefit                  | Description                                               |
+| ------------------------ | --------------------------------------------------------- |
+| **Search Efficiency**    | Fast filtering by specific fields                         |
+| **Consistency**          | Same format across all services                           |
+| **Correlation Analysis** | Track requests via trace\_id, request\_id                 |
+| **Automation**           | Immediately usable in analysis tools without parsing      |
+| **Alert Configuration**  | Easy to create alert rules based on specific field values |
 
 ### Log Levels
 
 Log levels indicate the importance and severity of messages. Proper use of log levels is crucial for effective troubleshooting and noise reduction.
 
-| Level | Number | Purpose | Example |
-|-------|--------|---------|---------|
-| **TRACE** | 0 | Most detailed debugging information | Function entry/exit, variable values |
-| **DEBUG** | 1 | Debugging information during development | SQL queries, request parameters |
-| **INFO** | 2 | General operational information | Service startup, request completion |
-| **WARN** | 3 | Potential problem situations | Retries occurring, performance degradation |
-| **ERROR** | 4 | Error occurred (recoverable) | API call failure, validation failure |
-| **FATAL** | 5 | Critical error (unrecoverable) | Service startup failure, missing required dependency |
+| Level     | Number | Purpose                                  | Example                                              |
+| --------- | ------ | ---------------------------------------- | ---------------------------------------------------- |
+| **TRACE** | 0      | Most detailed debugging information      | Function entry/exit, variable values                 |
+| **DEBUG** | 1      | Debugging information during development | SQL queries, request parameters                      |
+| **INFO**  | 2      | General operational information          | Service startup, request completion                  |
+| **WARN**  | 3      | Potential problem situations             | Retries occurring, performance degradation           |
+| **ERROR** | 4      | Error occurred (recoverable)             | API call failure, validation failure                 |
+| **FATAL** | 5      | Critical error (unrecoverable)           | Service startup failure, missing required dependency |
 
 #### Recommended Log Levels by Environment
 
@@ -109,16 +109,16 @@ In Kubernetes environments, JSON format is the de facto standard. Most log colle
 
 #### Key Field Descriptions
 
-| Field Group | Field | Description |
-|-------------|-------|-------------|
-| **Basic** | timestamp | ISO 8601 format timestamp |
-| | level | Log level |
-| | message | Human-readable message |
-| **Context** | context.* | Business logic related information |
-| **Kubernetes** | kubernetes.* | K8s metadata like pod, namespace |
-| **Trace** | trace.* | Distributed tracing IDs (OpenTelemetry integration) |
+| Field Group    | Field         | Description                                         |
+| -------------- | ------------- | --------------------------------------------------- |
+| **Basic**      | timestamp     | ISO 8601 format timestamp                           |
+|                | level         | Log level                                           |
+|                | message       | Human-readable message                              |
+| **Context**    | context.\*    | Business logic related information                  |
+| **Kubernetes** | kubernetes.\* | K8s metadata like pod, namespace                    |
+| **Trace**      | trace.\*      | Distributed tracing IDs (OpenTelemetry integration) |
 
----
+***
 
 ## Log Collection Pipeline Architecture
 
@@ -202,11 +202,11 @@ flowchart TB
 
 Responsible for collecting raw logs from log sources.
 
-| Method | Advantages | Disadvantages | Best For |
-|--------|------------|---------------|----------|
-| **DaemonSet** | Resource efficient, centralized management | Only one per node | Most standard workloads |
-| **Sidecar** | Per-application isolation, custom processing | Resource overhead | Special log formats, multi-tenant |
-| **Direct Push** | Real-time, flexible delivery | Requires application modification | High-performance requirements |
+| Method          | Advantages                                   | Disadvantages                     | Best For                          |
+| --------------- | -------------------------------------------- | --------------------------------- | --------------------------------- |
+| **DaemonSet**   | Resource efficient, centralized management   | Only one per node                 | Most standard workloads           |
+| **Sidecar**     | Per-application isolation, custom processing | Resource overhead                 | Special log formats, multi-tenant |
+| **Direct Push** | Real-time, flexible delivery                 | Requires application modification | High-performance requirements     |
 
 #### 2. Processing Layer
 
@@ -241,7 +241,7 @@ Stores and indexes processed logs. Storage methods vary by solution characterist
 
 Searches and visualizes stored logs.
 
----
+***
 
 ## Log Storage Selection Criteria
 
@@ -264,12 +264,12 @@ Monthly log volume: Estimated cost based on 1TB (2025)
 
 #### 2. Query Performance
 
-| Solution | Real-time Query | Aggregation | Full-text Search | Dashboard |
-|----------|-----------------|-------------|------------------|-----------|
-| **Loki** | Excellent | Good | Limited | Grafana |
-| **OpenSearch** | Excellent | Excellent | Excellent | OpenSearch Dashboards |
-| **CloudWatch** | Good | Good | Good | CloudWatch Console |
-| **ClickHouse** | Excellent | Excellent | Good | Grafana |
+| Solution       | Real-time Query | Aggregation | Full-text Search | Dashboard             |
+| -------------- | --------------- | ----------- | ---------------- | --------------------- |
+| **Loki**       | Excellent       | Good        | Limited          | Grafana               |
+| **OpenSearch** | Excellent       | Excellent   | Excellent        | OpenSearch Dashboards |
+| **CloudWatch** | Good            | Good        | Good             | CloudWatch Console    |
+| **ClickHouse** | Excellent       | Excellent   | Good             | Grafana               |
 
 #### 3. Retention Period
 
@@ -288,14 +288,14 @@ operational:
 
 #### 4. Operational Complexity
 
-| Solution | Installation | Operations | Scalability |
-|----------|--------------|------------|-------------|
-| **Loki** | Low | Low | High |
-| **OpenSearch** | Medium | High | Medium |
-| **CloudWatch** | Very Low | Very Low | High |
-| **ClickHouse** | High | Medium | High |
+| Solution       | Installation | Operations | Scalability |
+| -------------- | ------------ | ---------- | ----------- |
+| **Loki**       | Low          | Low        | High        |
+| **OpenSearch** | Medium       | High       | Medium      |
+| **CloudWatch** | Very Low     | Very Low   | High        |
+| **ClickHouse** | High         | Medium     | High        |
 
----
+***
 
 ## EKS Logging Strategy
 
@@ -320,12 +320,14 @@ spec:
 ```
 
 **Advantages:**
-- Kubernetes native approach
-- Automatic log rotation management (`/var/log/containers/`)
-- `kubectl logs` command available
-- No separate volume mount required
+
+* Kubernetes native approach
+* Automatic log rotation management (`/var/log/containers/`)
+* `kubectl logs` command available
+* No separate volume mount required
 
 **Log file locations:**
+
 ```bash
 # Actual log files
 /var/log/containers/<pod-name>_<namespace>_<container-name>-<container-id>.log
@@ -369,10 +371,11 @@ spec:
 ```
 
 **Use Cases:**
-- Legacy applications (file logging only)
-- Log isolation in multi-tenant environments
-- Special parsing required per application
-- High security requirements
+
+* Legacy applications (file logging only)
+* Log isolation in multi-tenant environments
+* Special parsing required per application
+* High security requirements
 
 #### 3. DaemonSet Pattern (Most Common)
 
@@ -433,13 +436,13 @@ aws eks update-cluster-config \
   --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
 ```
 
-| Log Type | Description | Recommended |
-|----------|-------------|-------------|
-| **api** | API server logs | Required |
-| **audit** | Kubernetes audit logs | Required (security) |
-| **authenticator** | IAM authentication logs | Recommended |
-| **controllerManager** | Controller manager logs | Optional |
-| **scheduler** | Scheduler logs | Optional |
+| Log Type              | Description             | Recommended         |
+| --------------------- | ----------------------- | ------------------- |
+| **api**               | API server logs         | Required            |
+| **audit**             | Kubernetes audit logs   | Required (security) |
+| **authenticator**     | IAM authentication logs | Recommended         |
+| **controllerManager** | Controller manager logs | Optional            |
+| **scheduler**         | Scheduler logs          | Optional            |
 
 ### Container Insights Logging
 
@@ -465,23 +468,23 @@ data:
     }
 ```
 
----
+***
 
 ## Solution Comparison
 
 ### Feature Comparison Table
 
-| Feature | Loki | OpenSearch | CloudWatch | ClickHouse |
-|---------|------|------------|------------|------------|
-| **Installation Complexity** | Low | Medium | None (managed) | High |
-| **Query Language** | LogQL | Lucene/DQL | Insights QL | SQL |
-| **Full-text Search** | Limited | Excellent | Good | Good |
-| **Schema** | Schemaless | Schemaless | Schemaless | Schema defined |
-| **Compression** | High | Medium | N/A | Very High |
-| **Real-time Tailing** | Supported | Supported | Limited | Supported |
-| **Alerting** | Grafana | Built-in | Built-in | Grafana |
-| **Multi-tenancy** | Supported | Supported | Supported | Supported |
-| **S3 Backend** | Native | Snapshots only | N/A | Native |
+| Feature                     | Loki       | OpenSearch     | CloudWatch     | ClickHouse     |
+| --------------------------- | ---------- | -------------- | -------------- | -------------- |
+| **Installation Complexity** | Low        | Medium         | None (managed) | High           |
+| **Query Language**          | LogQL      | Lucene/DQL     | Insights QL    | SQL            |
+| **Full-text Search**        | Limited    | Excellent      | Good           | Good           |
+| **Schema**                  | Schemaless | Schemaless     | Schemaless     | Schema defined |
+| **Compression**             | High       | Medium         | N/A            | Very High      |
+| **Real-time Tailing**       | Supported  | Supported      | Limited        | Supported      |
+| **Alerting**                | Grafana    | Built-in       | Built-in       | Grafana        |
+| **Multi-tenancy**           | Supported  | Supported      | Supported      | Supported      |
+| **S3 Backend**              | Native     | Snapshots only | N/A            | Native         |
 
 ### Recommended Solutions by Use Case
 
@@ -558,20 +561,20 @@ flowchart TD
     class OS,LOKI,CW solution
 ```
 
----
+***
 
 ## Next Steps
 
 For detailed information on each log storage solution, see the following documents:
 
-- [Grafana Loki](./01-loki.md) - Cost-effective log aggregation
-- [Amazon OpenSearch Service](./02-opensearch.md) - Powerful search and analytics
-- [CloudWatch Logs](./03-cloudwatch-logs.md) - AWS native logging
-- [ClickHouse](./04-clickhouse.md) - High-performance log analytics
-- [Log Collectors Comparison](./05-collectors.md) - FluentBit, Promtail, Alloy, OTEL
+* [Grafana Loki](01-loki.md) - Cost-effective log aggregation
+* [Amazon OpenSearch Service](02-opensearch.md) - Powerful search and analytics
+* [CloudWatch Logs](03-cloudwatch-logs.md) - AWS native logging
+* [ClickHouse](04-clickhouse.md) - High-performance log analytics
+* [Log Collectors Comparison](05-collectors.md) - FluentBit, Promtail, Alloy, OTEL
 
----
+***
 
 ## Quiz
 
-Test your knowledge with the [Logging Overview Quiz](../../quizzes/observability/logging/README-quiz.md).
+Test your knowledge with the [Logging Overview Quiz](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/observability/logging/README-quiz.md).

@@ -1,7 +1,6 @@
-# EKS High Availability and Resiliency Architecture
+# EKS Resiliency and High Availability
 
-> **Supported Versions**: EKS 1.28+, Istio 1.20+, Karpenter 1.0+
-> **Last Updated**: February 23, 2026
+> **Supported Versions**: EKS 1.28+, Istio 1.20+, Karpenter 1.0+ **Last Updated**: February 23, 2026
 
 ## Resiliency Overview
 
@@ -9,16 +8,16 @@ Resiliency is **the ability to minimize impact during failures while recovering 
 
 ### Resiliency Maturity Model
 
-| Level | Name | Scope | Key Technologies | RTO Target |
-|-------|------|-------|-----------------|------------|
-| 1 | Basic | Pod | Probes, Resource Limits, PDB | Minutes |
-| 2 | Multi-AZ | Availability Zone | Topology Spread, ARC Zonal Shift | Seconds |
-| 3 | Cell-Based | Service Unit | Shuffle Sharding, Cell Router | Seconds (partial) |
-| 4 | Multi-Region | Region | Global Accelerator, Data Replication | Near Zero |
+| Level | Name         | Scope             | Key Technologies                     | RTO Target        |
+| ----- | ------------ | ----------------- | ------------------------------------ | ----------------- |
+| 1     | Basic        | Pod               | Probes, Resource Limits, PDB         | Minutes           |
+| 2     | Multi-AZ     | Availability Zone | Topology Spread, ARC Zonal Shift     | Seconds           |
+| 3     | Cell-Based   | Service Unit      | Shuffle Sharding, Cell Router        | Seconds (partial) |
+| 4     | Multi-Region | Region            | Global Accelerator, Data Replication | Near Zero         |
 
 > Not all services require Level 4. Choose the appropriate level based on SLA requirements, regulations, and budget.
 
----
+***
 
 ## Level 1: Basic Resiliency (Pod Level)
 
@@ -113,7 +112,7 @@ spec:
 
 > The reason for waiting 5 seconds in `preStop`: If the Pod terminates before endpoint removal propagates, traffic loss occurs. The sleep ensures propagation time.
 
----
+***
 
 ## Level 2: Multi-AZ Strategy
 
@@ -157,12 +156,12 @@ spec:
         image: web-app:1.0
 ```
 
-| Parameter | Description |
-|-----------|-------------|
-| `maxSkew` | Maximum difference in Pod count between topology domains |
-| `topologyKey` | Distribution basis (zone, hostname, etc.) |
-| `whenUnsatisfiable` | `DoNotSchedule` (Hard) or `ScheduleAnyway` (Soft) |
-| `minDomains` | Minimum number of domains (3 for 3 AZs) |
+| Parameter           | Description                                              |
+| ------------------- | -------------------------------------------------------- |
+| `maxSkew`           | Maximum difference in Pod count between topology domains |
+| `topologyKey`       | Distribution basis (zone, hostname, etc.)                |
+| `whenUnsatisfiable` | `DoNotSchedule` (Hard) or `ScheduleAnyway` (Soft)        |
+| `minDomains`        | Minimum number of domains (3 for 3 AZs)                  |
 
 ### Karpenter Multi-AZ NodePool
 
@@ -263,7 +262,7 @@ spec:
   # Based on Pod's topology.kubernetes.io/zone label
 ```
 
----
+***
 
 ## Level 3: Cell-Based Architecture
 
@@ -273,12 +272,12 @@ A Cell is **a self-contained service unit with its own data store, cache, and qu
 
 ### Cell Partitioning Strategies
 
-| Strategy | Description | Suitable For |
-|----------|-------------|--------------|
-| Customer-based | Assign Cell by customer ID hash | SaaS multi-tenant |
-| Region-based | Partition by geographic location | Global services |
-| Capacity-based | New Cell when capacity is reached | Even load distribution |
-| Tier-based | Cell by service tier | Premium/Standard differentiation |
+| Strategy       | Description                       | Suitable For                     |
+| -------------- | --------------------------------- | -------------------------------- |
+| Customer-based | Assign Cell by customer ID hash   | SaaS multi-tenant                |
+| Region-based   | Partition by geographic location  | Global services                  |
+| Capacity-based | New Cell when capacity is reached | Even load distribution           |
+| Tier-based     | Cell by service tier              | Premium/Standard differentiation |
 
 ### Namespace-based Cell Implementation
 
@@ -351,18 +350,18 @@ When Cell 1 fails:
 
 Number of combinations: C(8,2) = 28, making the probability of two customers sharing the same combination very low.
 
----
+***
 
 ## Level 4: Multi-Cluster / Multi-Region
 
 ### Architecture Pattern Comparison
 
-| Pattern | RTO | RPO | Cost | Complexity |
-|---------|-----|-----|------|------------|
-| Active-Active | ~0 | ~0 | 2x+ | Very High |
-| Active-Passive | Min~Hours | Minutes | 1.5x | High |
-| Regional Isolation | N/A | N/A | 1x per region | Medium |
-| Hub-Spoke | Minutes | Minutes | 1.3x | Medium |
+| Pattern            | RTO        | RPO     | Cost          | Complexity |
+| ------------------ | ---------- | ------- | ------------- | ---------- |
+| Active-Active      | \~0        | \~0     | 2x+           | Very High  |
+| Active-Passive     | Min\~Hours | Minutes | 1.5x          | High       |
+| Regional Isolation | N/A        | N/A     | 1x per region | Medium     |
+| Hub-Spoke          | Minutes    | Minutes | 1.3x          | Medium     |
 
 ### Multi-Cluster Deployment with ArgoCD ApplicationSet
 
@@ -437,7 +436,7 @@ spec:
       http: 80
 ```
 
----
+***
 
 ## Chaos Engineering
 
@@ -527,61 +526,65 @@ spec:
 
 ### Game Day Framework
 
-| Phase | Activity | Deliverable |
-|-------|----------|-------------|
-| 1. Record Steady State | Collect metric baselines | Dashboard snapshot |
-| 2. Inject Failure | Run FIS/Litmus experiments | Experiment logs |
-| 3. Observe Recovery | Monitor automatic recovery process | Recovery time measurement |
-| 4. Analyze Impact | Analyze error rate, latency changes | Impact report |
-| 5. Post-mortem Review | Identify improvements, Action Items | Improvement plan |
+| Phase                  | Activity                            | Deliverable               |
+| ---------------------- | ----------------------------------- | ------------------------- |
+| 1. Record Steady State | Collect metric baselines            | Dashboard snapshot        |
+| 2. Inject Failure      | Run FIS/Litmus experiments          | Experiment logs           |
+| 3. Observe Recovery    | Monitor automatic recovery process  | Recovery time measurement |
+| 4. Analyze Impact      | Analyze error rate, latency changes | Impact report             |
+| 5. Post-mortem Review  | Identify improvements, Action Items | Improvement plan          |
 
----
+***
 
 ## Implementation Checklist
 
 ### Level 1 Basic
-- [ ] Set Liveness/Readiness Probe for all containers
-- [ ] Set Resource requests/limits
-- [ ] Configure PodDisruptionBudget
-- [ ] Implement Graceful shutdown (preStop hook)
-- [ ] Set appropriate terminationGracePeriodSeconds
+
+* [ ] Set Liveness/Readiness Probe for all containers
+* [ ] Set Resource requests/limits
+* [ ] Configure PodDisruptionBudget
+* [ ] Implement Graceful shutdown (preStop hook)
+* [ ] Set appropriate terminationGracePeriodSeconds
 
 ### Level 2 Multi-AZ
-- [ ] Apply Pod Topology Spread Constraints
-- [ ] Configure 3 AZ distribution in Karpenter NodePool
-- [ ] Set `WaitForFirstConsumer` in StorageClass
-- [ ] Enable ARC Zonal Shift
-- [ ] Monitor Cross-AZ traffic costs
+
+* [ ] Apply Pod Topology Spread Constraints
+* [ ] Configure 3 AZ distribution in Karpenter NodePool
+* [ ] Set `WaitForFirstConsumer` in StorageClass
+* [ ] Enable ARC Zonal Shift
+* [ ] Monitor Cross-AZ traffic costs
 
 ### Level 3 Cell-Based
-- [ ] Define Cell boundaries (Namespace or Cluster)
-- [ ] Implement Cell Router
-- [ ] Isolate Cells with NetworkPolicy
-- [ ] Implement Shuffle Sharding
-- [ ] Set ResourceQuota per Cell
+
+* [ ] Define Cell boundaries (Namespace or Cluster)
+* [ ] Implement Cell Router
+* [ ] Isolate Cells with NetworkPolicy
+* [ ] Implement Shuffle Sharding
+* [ ] Set ResourceQuota per Cell
 
 ### Level 4 Multi-Region
-- [ ] Decide on Multi-Region architecture pattern
-- [ ] Configure Global Accelerator
-- [ ] Deploy multi-cluster with ArgoCD ApplicationSet
-- [ ] Establish data replication strategy
-- [ ] Maintain consistency with GitOps
 
----
+* [ ] Decide on Multi-Region architecture pattern
+* [ ] Configure Global Accelerator
+* [ ] Deploy multi-cluster with ArgoCD ApplicationSet
+* [ ] Establish data replication strategy
+* [ ] Maintain consistency with GitOps
+
+***
 
 ## Cost Considerations
 
-| Item | Cost Impact | Cost Reduction Strategy |
-|------|-------------|------------------------|
-| Multi-Region Active-Active | 2x+ compared to single region | Reduce Passive by 50-70% with Active-Passive |
-| Cross-AZ Traffic | $0.01/GB (within same region) | Reduce 60-80% with Locality-aware routing |
-| Spot Instance | 60-90% savings compared to On-Demand | Apply to stateless workloads |
-| Chaos Engineering | FIS experiment costs | ROI through failure prevention |
+| Item                       | Cost Impact                          | Cost Reduction Strategy                      |
+| -------------------------- | ------------------------------------ | -------------------------------------------- |
+| Multi-Region Active-Active | 2x+ compared to single region        | Reduce Passive by 50-70% with Active-Passive |
+| Cross-AZ Traffic           | $0.01/GB (within same region)        | Reduce 60-80% with Locality-aware routing    |
+| Spot Instance              | 60-90% savings compared to On-Demand | Apply to stateless workloads                 |
+| Chaos Engineering          | FIS experiment costs                 | ROI through failure prevention               |
 
----
+***
 
 ## Next Steps
 
-- [EKS Advanced Debugging and Incident Response](./11-eks-advanced-debugging.md)
-- [EKS High Availability Quiz](../quizzes/eks/10-eks-resiliency-quiz.md)
-- [Istio Service Mesh](../service-mesh/02-istio.md) - Circuit Breaker, Retry Deep Dive
+* [EKS Advanced Debugging and Incident Response](11-eks-advanced-debugging.md)
+* [EKS High Availability Quiz](../quizzes/eks/10-eks-resiliency-quiz.md)
+* [Istio Service Mesh](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/02-istio.md) - Circuit Breaker, Retry Deep Dive

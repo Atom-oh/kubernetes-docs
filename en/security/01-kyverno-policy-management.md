@@ -1,7 +1,6 @@
 # Policy Management with Kyverno
 
-> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 19, 2026
+> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33 **Last Updated**: February 19, 2026
 
 Kyverno is a Kubernetes-native policy engine used to manage and enforce policies within clusters. In this chapter, we will learn how to manage policies in EKS clusters using Kyverno.
 
@@ -10,9 +9,10 @@ Kyverno is a Kubernetes-native policy engine used to manage and enforce policies
 To follow along with the examples in this document, you will need the following tools and environment:
 
 ### Required Tools
-- kubectl v1.31 or higher
-- Helm v3.10 or higher
-- A working Kubernetes cluster (EKS, minikube, kind, etc.)
+
+* kubectl v1.31 or higher
+* Helm v3.10 or higher
+* A working Kubernetes cluster (EKS, minikube, kind, etc.)
 
 ### Installing Kyverno
 
@@ -40,21 +40,19 @@ Kyverno is a policy engine that allows you to define and manage policies as Kube
 
 ### Kyverno Architecture and How It Works
 
-![kyverno_architecture](../assets/kyverno_architecture.svg)
-
 ### Kyverno vs OPA Gatekeeper
 
 Kyverno and OPA Gatekeeper are both tools for Kubernetes policy management, but there are some important differences:
 
-| Feature | Kyverno | OPA Gatekeeper |
-|---------|---------|----------------|
-| Policy Language | Kubernetes YAML | Rego (dedicated language) |
-| Learning Curve | Low (familiar to Kubernetes users) | High (requires learning Rego) |
-| Mutation Policies | Native support | Limited support |
-| Resource Generation | Supported | Not supported |
-| Image Verification | Native support | Requires custom implementation |
-| Policy Exceptions | Simple | Complex |
-| Performance | Good | Very good (for large clusters) |
+| Feature             | Kyverno                            | OPA Gatekeeper                 |
+| ------------------- | ---------------------------------- | ------------------------------ |
+| Policy Language     | Kubernetes YAML                    | Rego (dedicated language)      |
+| Learning Curve      | Low (familiar to Kubernetes users) | High (requires learning Rego)  |
+| Mutation Policies   | Native support                     | Limited support                |
+| Resource Generation | Supported                          | Not supported                  |
+| Image Verification  | Native support                     | Requires custom implementation |
+| Policy Exceptions   | Simple                             | Complex                        |
+| Performance         | Good                               | Very good (for large clusters) |
 
 Kyverno operates as a Kubernetes Admission Controller, intercepting all requests to the API server and performing validation, mutation, generation, or cleanup operations according to defined policies. It also verifies policy compliance for existing resources through a background scanner and reports policy violations through a reporting controller.
 
@@ -182,8 +180,6 @@ Using Kyverno in EKS clusters allows you to apply policies across various aspect
 ### EKS and Kyverno Integration Architecture
 
 The following diagram shows how Kyverno integrates and operates within an EKS cluster:
-
-![eks_kyverno_integration](../assets/eks_kyverno_integration.svg)
 
 In this architecture, Kyverno operates as an Admission Webhook within the EKS cluster, intercepting all requests to the API server and processing them according to defined policies. Policy violations can be sent to CloudWatch for monitoring and alerting.
 
@@ -367,8 +363,6 @@ Kyverno provides tools for testing and validating policies.
 ### Policy Application Workflow
 
 The following diagram shows the typical development and application workflow for Kyverno policies:
-
-![kyverno_policy_workflow](../assets/kyverno_policy_workflow.svg)
 
 ### Policy Simulation
 

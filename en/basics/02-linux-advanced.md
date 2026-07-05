@@ -1,24 +1,23 @@
-# Linux Operations Skills (For Kubernetes Practitioners)
+# Linux Operations Skills
 
-> **Supported Versions**: All major Linux distributions
-> **Last Updated**: February 11, 2026
+> **Supported Versions**: All major Linux distributions **Last Updated**: February 11, 2026
 
 This document covers essential Linux operations skills for working effectively in Kubernetes environments.
 
----
+***
 
 ## Table of Contents
 
-1. [Environment Variables and Shell Configuration](#1-environment-variables-and-shell-configuration)
-2. [Shell Scripting Basics](#2-shell-scripting-basics)
-3. [Text Processing Tools](#3-text-processing-tools)
-4. [SSH and Remote Access](#4-ssh-and-remote-access)
-5. [Performance Monitoring and Troubleshooting](#5-performance-monitoring-and-troubleshooting)
-6. [Storage Management Basics](#6-storage-management-basics)
-7. [curl and API Calls](#7-curl-and-api-calls)
-8. [Practical One-Liners Collection](#8-practical-one-liners-collection)
+1. [Environment Variables and Shell Configuration](02-linux-advanced.md#1-environment-variables-and-shell-configuration)
+2. [Shell Scripting Basics](02-linux-advanced.md#2-shell-scripting-basics)
+3. [Text Processing Tools](02-linux-advanced.md#3-text-processing-tools)
+4. [SSH and Remote Access](02-linux-advanced.md#4-ssh-and-remote-access)
+5. [Performance Monitoring and Troubleshooting](02-linux-advanced.md#5-performance-monitoring-and-troubleshooting)
+6. [Storage Management Basics](02-linux-advanced.md#6-storage-management-basics)
+7. [curl and API Calls](02-linux-advanced.md#7-curl-and-api-calls)
+8. [Practical One-Liners Collection](02-linux-advanced.md#8-practical-one-liners-collection)
 
----
+***
 
 ## 1. Environment Variables and Shell Configuration
 
@@ -53,7 +52,7 @@ SCRIPT
 source ~/my-env.sh
 ```
 
-### 1.4 .bashrc and .bash_profile
+### 1.4 .bashrc and .bash\_profile
 
 ```bash
 cat >> ~/.bashrc << 'SCRIPT'
@@ -89,7 +88,7 @@ spec:
         name: app-config
 ```
 
----
+***
 
 ## 2. Shell Scripting Basics
 
@@ -155,7 +154,7 @@ spec:
     image: myapp:1.0
 ```
 
----
+***
 
 ## 3. Text Processing Tools
 
@@ -193,7 +192,7 @@ yq '.metadata.name' deployment.yaml
 yq -i '.spec.replicas = 5' deployment.yaml
 ```
 
----
+***
 
 ## 4. SSH and Remote Access
 
@@ -222,7 +221,7 @@ ssh -J bastion user@internal-server
 rsync -avzP ./local/ user@remote:/path/
 ```
 
----
+***
 
 ## 5. Performance Monitoring and Troubleshooting
 
@@ -253,7 +252,7 @@ kubectl top nodes
 kubectl top pods --sort-by=memory
 ```
 
----
+***
 
 ## 6. Storage Management Basics
 
@@ -287,7 +286,7 @@ spec:
     path: /mnt/disks/vol1
 ```
 
----
+***
 
 ## 7. curl and API Calls
 
@@ -311,7 +310,7 @@ curl -s --cacert $CACERT -H "Authorization: Bearer $TOKEN" \
 curl -s -o /dev/null -w "%{http_code}" https://api.example.com/health
 ```
 
----
+***
 
 ## 8. Practical One-Liners Collection
 
@@ -335,7 +334,7 @@ nslookup kubernetes.default.svc.cluster.local
 nc -zv service-name 80
 ```
 
----
+***
 
 ## Conclusion
 
@@ -345,6 +344,6 @@ nc -zv service-name 80
 4. **SSH**: Important for node debugging
 5. **Performance Monitoring**: Foundation of troubleshooting
 
----
+***
 
-[Previous: Linux Basics](01-linux-basics.md) | [Next: Container Basics](03-container-basics.md)
+[Previous: Linux Basics](01-linux-basics.md) | [Next: Container Basics](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/basics/03-container-basics.md)

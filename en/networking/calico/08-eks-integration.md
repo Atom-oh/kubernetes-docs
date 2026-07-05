@@ -1,7 +1,6 @@
-# Part 8: Calico on Amazon EKS
+# Part 8: EKS Integration
 
-> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+ / EKS 1.28+
-> **Last Updated**: February 23, 2026
+> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+ / EKS 1.28+ **Last Updated**: February 23, 2026
 
 ## Overview
 
@@ -48,7 +47,7 @@ graph TB
 
 ## VPC CNI + Calico Architecture
 
-![Calico on Amazon EKS](../../../assets/calico_eks_integration.png)
+![Calico on Amazon EKS](../../.gitbook/assets/calico_eks_integration.png)
 
 Amazon EKS uses AWS VPC CNI by default for pod networking. Calico can be added for advanced network policy capabilities while VPC CNI handles IP address management.
 
@@ -120,12 +119,12 @@ sequenceDiagram
 
 ### Methods Overview
 
-| Method | Complexity | Flexibility | Upgrade Path | EKS Integration |
-|--------|------------|-------------|--------------|-----------------|
-| EKS Add-on | Low | Limited | Automatic | Native |
-| Tigera Operator | Medium | High | Semi-auto | Good |
-| Helm | Medium | Highest | Manual | Good |
-| Manifest | High | Medium | Manual | Basic |
+| Method          | Complexity | Flexibility | Upgrade Path | EKS Integration |
+| --------------- | ---------- | ----------- | ------------ | --------------- |
+| EKS Add-on      | Low        | Limited     | Automatic    | Native          |
+| Tigera Operator | Medium     | High        | Semi-auto    | Good            |
+| Helm            | Medium     | Highest     | Manual       | Good            |
+| Manifest        | High       | Medium      | Manual       | Basic           |
 
 ### Method 1: EKS Add-on (Simplest)
 
@@ -165,15 +164,17 @@ addons:
 ```
 
 **Pros:**
-- Automatic updates with EKS
-- AWS support included
-- Simple configuration
-- Native CloudWatch integration
+
+* Automatic updates with EKS
+* AWS support included
+* Simple configuration
+* Native CloudWatch integration
 
 **Cons:**
-- Limited to Kubernetes NetworkPolicy
-- No Calico-specific features
-- Less configuration flexibility
+
+* Limited to Kubernetes NetworkPolicy
+* No Calico-specific features
+* Less configuration flexibility
 
 ### Method 2: Tigera Operator (Recommended)
 
@@ -233,14 +234,16 @@ kubectl get pods -n calico-system
 ```
 
 **Pros:**
-- Full Calico features (GlobalNetworkPolicy, Tiers, etc.)
-- Operator manages lifecycle
-- Automatic component reconciliation
-- eBPF dataplane support
+
+* Full Calico features (GlobalNetworkPolicy, Tiers, etc.)
+* Operator manages lifecycle
+* Automatic component reconciliation
+* eBPF dataplane support
 
 **Cons:**
-- Additional operator deployment
-- Requires separate upgrades from EKS
+
+* Additional operator deployment
+* Requires separate upgrades from EKS
 
 ### Method 3: Helm Installation
 
@@ -297,14 +300,16 @@ apiServer:
 ```
 
 **Pros:**
-- GitOps-friendly
-- Version control for configuration
-- Easy rollback
-- Customizable values
+
+* GitOps-friendly
+* Version control for configuration
+* Easy rollback
+* Customizable values
 
 **Cons:**
-- Requires Helm knowledge
-- Manual upgrade management
+
+* Requires Helm knowledge
+* Manual upgrade management
 
 ## EKS Network Policy Controller (v1.14+)
 
@@ -342,33 +347,33 @@ kubectl logs -n kube-system -l k8s-app=aws-node -c aws-network-policy-agent
 
 ### EKS Native vs Calico Network Policy
 
-| Feature | EKS Native (VPC CNI) | Calico |
-|---------|---------------------|--------|
-| Kubernetes NetworkPolicy | Yes | Yes |
-| GlobalNetworkPolicy | No | Yes |
-| Policy Tiers | No | Yes |
-| L7 Policy (HTTP) | No | Yes (Enterprise) |
-| DNS-based Policy | No | Yes |
-| FQDN Egress Rules | No | Yes |
-| Host Endpoint Policy | No | Yes |
-| Policy Preview | No | Yes (Enterprise) |
-| Flow Logs | CloudWatch | Prometheus/File |
-| Performance | eBPF-optimized | iptables/eBPF |
+| Feature                  | EKS Native (VPC CNI) | Calico           |
+| ------------------------ | -------------------- | ---------------- |
+| Kubernetes NetworkPolicy | Yes                  | Yes              |
+| GlobalNetworkPolicy      | No                   | Yes              |
+| Policy Tiers             | No                   | Yes              |
+| L7 Policy (HTTP)         | No                   | Yes (Enterprise) |
+| DNS-based Policy         | No                   | Yes              |
+| FQDN Egress Rules        | No                   | Yes              |
+| Host Endpoint Policy     | No                   | Yes              |
+| Policy Preview           | No                   | Yes (Enterprise) |
+| Flow Logs                | CloudWatch           | Prometheus/File  |
+| Performance              | eBPF-optimized       | iptables/eBPF    |
 
 ## Node Type Considerations
 
 ### Feature Matrix by Node Type
 
-| Feature | Managed Nodes | Self-Managed | Fargate |
-|---------|--------------|--------------|---------|
-| Calico CNI | No (VPC CNI) | Yes | No |
-| Calico Policy | Yes | Yes | Limited |
-| eBPF Dataplane | Yes | Yes | No |
-| BGP | No | Yes | No |
-| WireGuard | Yes | Yes | No |
-| Host Endpoints | Yes | Yes | No |
-| Custom IPAM | No | Yes | No |
-| Node Taints | Yes | Yes | N/A |
+| Feature        | Managed Nodes | Self-Managed | Fargate |
+| -------------- | ------------- | ------------ | ------- |
+| Calico CNI     | No (VPC CNI)  | Yes          | No      |
+| Calico Policy  | Yes           | Yes          | Limited |
+| eBPF Dataplane | Yes           | Yes          | No      |
+| BGP            | No            | Yes          | No      |
+| WireGuard      | Yes           | Yes          | No      |
+| Host Endpoints | Yes           | Yes          | No      |
+| Custom IPAM    | No            | Yes          | No      |
+| Node Taints    | Yes           | Yes          | N/A     |
 
 ### Managed Node Groups
 
@@ -465,11 +470,12 @@ fargateProfiles:
 ```
 
 **Fargate Limitations:**
-- Only Kubernetes standard NetworkPolicy
-- No Calico GlobalNetworkPolicy
-- No eBPF dataplane
-- No host endpoint policies
-- No custom IPAM
+
+* Only Kubernetes standard NetworkPolicy
+* No Calico GlobalNetworkPolicy
+* No eBPF dataplane
+* No host endpoint policies
+* No custom IPAM
 
 ## IRSA Configuration
 
@@ -576,16 +582,16 @@ graph TB
     style NP fill:#81c784
 ```
 
-| Aspect | Security Groups | Calico Policy |
-|--------|----------------|---------------|
-| Scope | Instance/ENI | Pod/Namespace/Cluster |
-| Granularity | IP/Port | Labels/Selectors/FQDN |
-| Layer | L3-L4 | L3-L7 |
-| Pod Selection | By Instance | By Labels |
-| Dynamic Updates | Limited | Real-time |
-| Audit | CloudTrail | Flow Logs |
-| Cross-AZ | Yes | Yes |
-| Cost | Free | Free (OSS) |
+| Aspect          | Security Groups | Calico Policy         |
+| --------------- | --------------- | --------------------- |
+| Scope           | Instance/ENI    | Pod/Namespace/Cluster |
+| Granularity     | IP/Port         | Labels/Selectors/FQDN |
+| Layer           | L3-L4           | L3-L7                 |
+| Pod Selection   | By Instance     | By Labels             |
+| Dynamic Updates | Limited         | Real-time             |
+| Audit           | CloudTrail      | Flow Logs             |
+| Cross-AZ        | Yes             | Yes                   |
+| Cost            | Free            | Free (OSS)            |
 
 ### Using Both Together
 
@@ -639,12 +645,12 @@ spec:
 ### Compatibility Matrix
 
 | EKS Version | Calico 3.26 | Calico 3.27 | Calico 3.28 | Calico 3.29 |
-|-------------|-------------|-------------|-------------|-------------|
-| 1.27 | Yes | Yes | Yes | Yes |
-| 1.28 | Yes | Yes | Yes | Yes |
-| 1.29 | Limited | Yes | Yes | Yes |
-| 1.30 | No | Yes | Yes | Yes |
-| 1.31 | No | Limited | Yes | Yes |
+| ----------- | ----------- | ----------- | ----------- | ----------- |
+| 1.27        | Yes         | Yes         | Yes         | Yes         |
+| 1.28        | Yes         | Yes         | Yes         | Yes         |
+| 1.29        | Limited     | Yes         | Yes         | Yes         |
+| 1.30        | No          | Yes         | Yes         | Yes         |
+| 1.31        | No          | Limited     | Yes         | Yes         |
 
 ### Upgrade Procedure
 
@@ -682,13 +688,13 @@ eksctl upgrade nodegroup \
 
 ### Cost Factors
 
-| Component | Cost Driver | Optimization |
-|-----------|------------|--------------|
-| VPC CNI IPs | ENI attachment, IP allocation | Use prefix delegation |
-| Calico Typha | Instance resources | Right-size replicas |
-| Flow Logs | Storage, processing | Aggregate, filter |
-| Cross-AZ | Data transfer | Zone affinity |
-| eBPF | CPU efficiency | Enable where supported |
+| Component    | Cost Driver                   | Optimization           |
+| ------------ | ----------------------------- | ---------------------- |
+| VPC CNI IPs  | ENI attachment, IP allocation | Use prefix delegation  |
+| Calico Typha | Instance resources            | Right-size replicas    |
+| Flow Logs    | Storage, processing           | Aggregate, filter      |
+| Cross-AZ     | Data transfer                 | Zone affinity          |
+| eBPF         | CPU efficiency                | Enable where supported |
 
 ### Cost Optimization Strategies
 
@@ -983,15 +989,15 @@ EOF
 echo "Calico installation complete!"
 ```
 
----
+***
 
 ## References
 
-- [EKS Best Practices - Networking](https://aws.github.io/aws-eks-best-practices/networking/)
-- [Calico on EKS Documentation](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
-- [VPC CNI Documentation](https://github.com/aws/amazon-vpc-cni-k8s)
-- [EKS Add-ons](https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
-- [Security Groups for Pods](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
+* [EKS Best Practices - Networking](https://aws.github.io/aws-eks-best-practices/networking/)
+* [Calico on EKS Documentation](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
+* [VPC CNI Documentation](https://github.com/aws/amazon-vpc-cni-k8s)
+* [EKS Add-ons](https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
+* [Security Groups for Pods](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
 
 ## Quiz
 

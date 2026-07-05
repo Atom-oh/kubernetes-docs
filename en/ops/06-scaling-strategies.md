@@ -1,17 +1,16 @@
-# Scaling Strategies: HPA Custom Metrics, KEDA, VPA, Spot Utilization
+# Scaling Strategies
 
-> **Supported Versions**: EKS 1.28+, Metrics Server 0.7+, KEDA 2.13+, VPA 1.0+
-> **Last Updated**: February 19, 2026
+> **Supported Versions**: EKS 1.28+, Metrics Server 0.7+, KEDA 2.13+, VPA 1.0+ **Last Updated**: February 19, 2026
 
-< [Previous: GitOps Automation](./05-gitops-automation.md) | [Table of Contents](./README.md) | [Next: Operational Alert Configuration](./07-observability-alerts.md) >
+< [Previous: GitOps Automation](05-gitops-automation.md) | [Table of Contents](./) | [Next: Operational Alert Configuration](07-observability-alerts.md) >
 
----
+***
 
 ## Introduction
 
 Effective scaling requires moving beyond basic CPU/memory metrics. This guide covers advanced scaling strategies including custom metrics with Prometheus Adapter, event-driven scaling with KEDA, vertical pod autoscaling, and optimizing Spot instance utilization.
 
----
+***
 
 ## 1. HPA with Custom Metrics
 
@@ -19,7 +18,7 @@ Horizontal Pod Autoscaler (HPA) can scale based on custom metrics from Prometheu
 
 ### 1.1 Prometheus Adapter Architecture
 
-![Custom Metrics Pipeline](../assets/generated-diagrams/custom_metrics_pipeline.png)
+![Custom Metrics Pipeline](../.gitbook/assets/custom_metrics_pipeline.png)
 
 ### 1.2 Prometheus Adapter Installation
 
@@ -521,7 +520,7 @@ kubectl describe hpa api-server -n production
 kubectl get hpa api-server -n production -w
 ```
 
----
+***
 
 ## 2. KEDA Event-Driven Scaling
 
@@ -1102,7 +1101,7 @@ spec:
         metricType: AverageValue
 ```
 
----
+***
 
 ## 3. VPA (Vertical Pod Autoscaler)
 
@@ -1510,7 +1509,7 @@ spec:
           averageUtilization: 60
 ```
 
----
+***
 
 ## 4. Custom Scheduler and Pod Deletion Cost
 
@@ -1902,7 +1901,7 @@ spec:
                     done &
 ```
 
----
+***
 
 ## 5. Spot Node Utilization
 
@@ -2557,17 +2556,17 @@ spec:
           image: myregistry/critical-app:v1.0
 ```
 
----
+***
 
 ## Summary
 
-| Strategy | Use Case | Key Configuration |
-|----------|----------|-------------------|
-| **HPA Custom Metrics** | RPS-based scaling, queue depth | Prometheus Adapter + Custom PromQL |
-| **KEDA** | Event-driven, scale-to-zero | ScaledObject + Triggers |
-| **VPA** | Right-sizing, memory optimization | UpdateMode + Resource Policies |
-| **Pod Deletion Cost** | Spot preference, job completion | Annotation + Custom Controller |
-| **Spot Utilization** | Cost optimization | NodePools + Topology Spread |
+| Strategy               | Use Case                          | Key Configuration                  |
+| ---------------------- | --------------------------------- | ---------------------------------- |
+| **HPA Custom Metrics** | RPS-based scaling, queue depth    | Prometheus Adapter + Custom PromQL |
+| **KEDA**               | Event-driven, scale-to-zero       | ScaledObject + Triggers            |
+| **VPA**                | Right-sizing, memory optimization | UpdateMode + Resource Policies     |
+| **Pod Deletion Cost**  | Spot preference, job completion   | Annotation + Custom Controller     |
+| **Spot Utilization**   | Cost optimization                 | NodePools + Topology Spread        |
 
 **Scaling Decision Matrix:**
 
@@ -2588,6 +2587,6 @@ spec:
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
----
+***
 
-< [Previous: GitOps Automation](./05-gitops-automation.md) | [Table of Contents](./README.md) | [Next: Operational Alert Configuration](./07-observability-alerts.md) >
+< [Previous: GitOps Automation](05-gitops-automation.md) | [Table of Contents](./) | [Next: Operational Alert Configuration](07-observability-alerts.md) >

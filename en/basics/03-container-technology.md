@@ -1,23 +1,23 @@
 # Container Technology
 
-> **Supported Versions**: Docker 20.10+, containerd 1.6+, CRI-O 1.24+
-> **Last Updated**: February 11, 2026
+> **Supported Versions**: Docker 20.10+, containerd 1.6+, CRI-O 1.24+ **Last Updated**: February 11, 2026
 
 Containers are a technology that packages applications and their dependencies together, enabling consistent execution across various environments. This document explains the fundamental concepts of containers, how they work, and their relationship with Kubernetes.
 
 ## Table of Contents
-- [What is a Container?](#what-is-a-container)
-- [Container vs Virtual Machine](#container-vs-virtual-machine)
-- [Technical Foundation of Containers](#technical-foundation-of-containers)
-- [Container Runtime](#container-runtime)
-- [Container Images](#container-images)
-- [Dockerfile](#dockerfile)
-- [Container Networking](#container-networking)
-- [Container Storage](#container-storage)
-- [Container Security](#container-security)
-- [Container Lifecycle Management](#container-lifecycle-management)
-- [Container Orchestration](#container-orchestration)
-- [Containers on AWS](#containers-on-aws)
+
+* [What is a Container?](03-container-technology.md#what-is-a-container)
+* [Container vs Virtual Machine](03-container-technology.md#container-vs-virtual-machine)
+* [Technical Foundation of Containers](03-container-technology.md#technical-foundation-of-containers)
+* [Container Runtime](03-container-technology.md#container-runtime)
+* [Container Images](03-container-technology.md#container-images)
+* [Dockerfile](03-container-technology.md#dockerfile)
+* [Container Networking](03-container-technology.md#container-networking)
+* [Container Storage](03-container-technology.md#container-storage)
+* [Container Security](03-container-technology.md#container-security)
+* [Container Lifecycle Management](03-container-technology.md#container-lifecycle-management)
+* [Container Orchestration](03-container-technology.md#container-orchestration)
+* [Containers on AWS](03-container-technology.md#containers-on-aws)
 
 ## What is a Container?
 
@@ -34,30 +34,29 @@ A container is a standardized unit of software that includes everything needed t
 
 ### History of Container Technology
 
-- **Early 2000s**: Early container technologies like Linux VServer and OpenVZ emerge
-- **2007**: cgroups (Control Groups) integrated into Linux kernel
-- **2008**: LXC (Linux Containers) project begins
-- **2013**: Docker release popularizes container technology
-- **2015**: Open Container Initiative (OCI) established, standardizing containers
-- **2017**: containerd donated to CNCF project
+* **Early 2000s**: Early container technologies like Linux VServer and OpenVZ emerge
+* **2007**: cgroups (Control Groups) integrated into Linux kernel
+* **2008**: LXC (Linux Containers) project begins
+* **2013**: Docker release popularizes container technology
+* **2015**: Open Container Initiative (OCI) established, standardizing containers
+* **2017**: containerd donated to CNCF project
 
 ## Container vs Virtual Machine
 
 ### Virtual Machine Architecture vs Container Architecture
-![Virtual Machine Architecture vs Container Architecture](../assets/container-vs-vm.avif)
 
 ### Key Differences
 
-| Characteristic | Container | Virtual Machine |
-|----------------|-----------|-----------------|
-| Size | Typically tens of MB | Typically several GB |
-| Startup Time | Seconds or less | Minutes |
-| Isolation Level | Process-level isolation | Hardware-level isolation |
-| OS | Shares host OS kernel | Each VM requires full OS |
-| Performance | Nearly native | Some overhead |
-| Security | Relatively lower (shared kernel) | Relatively higher (complete isolation) |
-| Resource Efficiency | High | Medium |
-| Use Cases | Microservices, CI/CD, dev/test | Legacy apps, diverse OS requirements, high security needs |
+| Characteristic      | Container                        | Virtual Machine                                           |
+| ------------------- | -------------------------------- | --------------------------------------------------------- |
+| Size                | Typically tens of MB             | Typically several GB                                      |
+| Startup Time        | Seconds or less                  | Minutes                                                   |
+| Isolation Level     | Process-level isolation          | Hardware-level isolation                                  |
+| OS                  | Shares host OS kernel            | Each VM requires full OS                                  |
+| Performance         | Nearly native                    | Some overhead                                             |
+| Security            | Relatively lower (shared kernel) | Relatively higher (complete isolation)                    |
+| Resource Efficiency | High                             | Medium                                                    |
+| Use Cases           | Microservices, CI/CD, dev/test   | Legacy apps, diverse OS requirements, high security needs |
 
 ## Technical Foundation of Containers
 
@@ -80,12 +79,13 @@ ps aux | grep <process-name>
 ```
 
 **Namespaces Used by Containers**:
-- **PID**: Container has its own process tree (starting from PID 1)
-- **Network**: Independent network stack (IP address, routing table, ports)
-- **Mount**: Independent file system view
-- **UTS**: Independent hostname
-- **IPC**: Independent inter-process communication space
-- **User**: Independent user ID mapping (optional)
+
+* **PID**: Container has its own process tree (starting from PID 1)
+* **Network**: Independent network stack (IP address, routing table, ports)
+* **Mount**: Independent file system view
+* **UTS**: Independent hostname
+* **IPC**: Independent inter-process communication space
+* **User**: Independent user ID mapping (optional)
 
 ### Resource Limiting Through cgroups
 
@@ -107,11 +107,12 @@ cat /sys/fs/cgroup/system.slice/docker-<container-id>.scope/memory.max
 ```
 
 **cgroup Resource Controls Used by Containers**:
-- **CPU**: CPU time limiting and CPU core allocation
-- **Memory**: Memory usage limiting and OOM behavior control
-- **Block I/O**: Disk I/O bandwidth limiting
-- **Network**: Network bandwidth limiting (combined with tc)
-- **PIDs**: Process count limit within container
+
+* **CPU**: CPU time limiting and CPU core allocation
+* **Memory**: Memory usage limiting and OOM behavior control
+* **Block I/O**: Disk I/O bandwidth limiting
+* **Network**: Network bandwidth limiting (combined with tc)
+* **PIDs**: Process count limit within container
 
 ### Layer Management Through OverlayFS
 
@@ -129,10 +130,11 @@ mount | grep overlay
 ```
 
 **OverlayFS Structure**:
-- **LowerDir**: Read-only image layers (lower layer → upper layer)
-- **UpperDir**: Read/write container layer
-- **WorkDir**: OverlayFS working directory
-- **MergedDir**: Unified view (file system seen by container)
+
+* **LowerDir**: Read-only image layers (lower layer → upper layer)
+* **UpperDir**: Read/write container layer
+* **WorkDir**: OverlayFS working directory
+* **MergedDir**: Unified view (file system seen by container)
 
 ### Lab: Understanding Container Technical Foundation
 
@@ -165,21 +167,18 @@ A container runtime is software that manages the lifecycle of containers. It run
 ### Container Runtime Hierarchy
 
 1. **Low-level Runtime (OCI Compatible)**
-   - **runc**: Docker's default runtime, OCI standard implementation
-   - **crun**: Lightweight OCI runtime written in C
-   - **kata-containers**: Security-enhanced runtime using hardware virtualization
-   - **gVisor**: Security runtime that emulates kernel functions in user space
-
+   * **runc**: Docker's default runtime, OCI standard implementation
+   * **crun**: Lightweight OCI runtime written in C
+   * **kata-containers**: Security-enhanced runtime using hardware virtualization
+   * **gVisor**: Security runtime that emulates kernel functions in user space
 2. **High-level Runtime**
-   - **containerd**: Industry-standard container runtime separated from Docker
-   - **CRI-O**: Lightweight runtime specifically designed for Kubernetes
-   - **Docker Engine**: Most widely used container platform
+   * **containerd**: Industry-standard container runtime separated from Docker
+   * **CRI-O**: Lightweight runtime specifically designed for Kubernetes
+   * **Docker Engine**: Most widely used container platform
 
 ### Kubernetes Container Runtime Interface (CRI)
 
 Kubernetes integrates with various container runtimes through CRI (Container Runtime Interface). CRI provides a standardized interface between Kubernetes and container runtimes.
-
-![Kubernetes CRI](../assets/kubernetes-cri.webp)
 
 ## Container Images
 
@@ -189,7 +188,6 @@ Container images are immutable templates containing applications and their depen
 
 Container images are composed of a stack of multiple layers. Each layer represents changes to the previous layer. This layering approach makes image sharing and caching efficient.
 
-![Container Layers](../assets/container-layers.webp)
 ```mermaid
 flowchart TB
     app["Application Layer<br/>Application code"]
@@ -210,17 +208,17 @@ flowchart TB
 
 Container images are stored and shared in registries. Major registries include:
 
-- **Docker Hub**: Largest public registry
-- **Amazon ECR**: AWS container registry service
-- **Google Container Registry**: Google Cloud registry
-- **Azure Container Registry**: Microsoft Azure registry
-- **GitHub Container Registry**: GitHub container registry
-- **Harbor**: Open-source enterprise-grade registry
+* **Docker Hub**: Largest public registry
+* **Amazon ECR**: AWS container registry service
+* **Google Container Registry**: Google Cloud registry
+* **Azure Container Registry**: Microsoft Azure registry
+* **GitHub Container Registry**: GitHub container registry
+* **Harbor**: Open-source enterprise-grade registry
 
 ### Image Tags and Digests
 
-- **Tag**: Human-readable name identifying a specific version of an image (e.g., `nginx:1.21.0`)
-- **Digest**: SHA256 hash of image contents, unique identifier for an image (e.g., `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`)
+* **Tag**: Human-readable name identifying a specific version of an image (e.g., `nginx:1.21.0`)
+* **Digest**: SHA256 hash of image contents, unique identifier for an image (e.g., `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`)
 
 ## Dockerfile
 
@@ -380,12 +378,12 @@ Understanding the complete container lifecycle is essential for effective contai
 
 Containers can have several states:
 
-- **Created**: Container created but not yet started
-- **Running**: Container is running
-- **Paused**: All processes in container are paused
-- **Restarting**: Container is restarting
-- **Exited**: Container has terminated
-- **Dead**: Container daemon tried to remove but failed
+* **Created**: Container created but not yet started
+* **Running**: Container is running
+* **Paused**: All processes in container are paused
+* **Restarting**: Container is restarting
+* **Exited**: Container has terminated
+* **Dead**: Container daemon tried to remove but failed
 
 ```bash
 # Check container status
@@ -637,58 +635,62 @@ AWS provides various services for container workloads.
 AWS's own container orchestration service that can run containers on EC2 instances or AWS Fargate.
 
 **Key Features**:
-- Tight integration with AWS services
-- Serverless container execution (Fargate)
-- Simple configuration and management
-- Auto-scaling and load balancing
+
+* Tight integration with AWS services
+* Serverless container execution (Fargate)
+* Simple configuration and management
+* Auto-scaling and load balancing
 
 ### Amazon EKS (Elastic Kubernetes Service)
 
 AWS-managed Kubernetes service that allows running Kubernetes on AWS infrastructure using standard Kubernetes APIs.
 
 **Key Features**:
-- Managed Kubernetes control plane
-- High availability across multiple availability zones
-- Integration with AWS services
-- EC2 and Fargate support
+
+* Managed Kubernetes control plane
+* High availability across multiple availability zones
+* Integration with AWS services
+* EC2 and Fargate support
 
 ### AWS Fargate
 
 Serverless container execution environment that allows running containers without managing servers.
 
 **Key Features**:
-- No server management needed
-- Per-container billing
-- Integration with ECS and EKS
-- Security isolation
+
+* No server management needed
+* Per-container billing
+* Integration with ECS and EKS
+* Security isolation
 
 ### Amazon ECR (Elastic Container Registry)
 
 AWS's managed container image registry service.
 
 **Key Features**:
-- Image vulnerability scanning
-- Integration with IAM
-- Image lifecycle management
-- High availability and scalability
+
+* Image vulnerability scanning
+* Integration with IAM
+* Image lifecycle management
+* High availability and scalability
 
 ## Glossary
 
-| Term | Description |
-|------|-------------|
-| **Container** | A standardized software unit that packages an application with its dependencies, enabling consistent execution anywhere. |
-| **Image** | A read-only template used to create containers, containing application code, libraries, dependencies, tools, and other files. |
-| **Dockerfile** | A text file containing instructions for building a container image. |
-| **Registry** | A repository that stores and distributes container images. (e.g., Docker Hub, Amazon ECR) |
-| **Container Runtime** | Software that runs containers. (e.g., Docker, containerd, CRI-O) |
-| **Namespace** | A Linux kernel feature that isolates processes so they cannot see other parts of the system. |
-| **cgroups** | A Linux kernel feature that limits and monitors resource usage (CPU, memory, etc.) of process groups. |
-| **Layer** | Container images consist of multiple layers, each corresponding to a Dockerfile instruction. |
-| **Volume** | A mechanism for persistently storing container data. |
-| **Orchestration** | The process of automating the deployment, management, scaling, and networking of multiple containers. |
-| **ECS** | Amazon Elastic Container Service, AWS's container orchestration service. |
-| **ECR** | Amazon Elastic Container Registry, AWS's container image registry service. |
-| **Fargate** | AWS's serverless container execution environment that runs containers without infrastructure management. |
+| Term                  | Description                                                                                                                   |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Container**         | A standardized software unit that packages an application with its dependencies, enabling consistent execution anywhere.      |
+| **Image**             | A read-only template used to create containers, containing application code, libraries, dependencies, tools, and other files. |
+| **Dockerfile**        | A text file containing instructions for building a container image.                                                           |
+| **Registry**          | A repository that stores and distributes container images. (e.g., Docker Hub, Amazon ECR)                                     |
+| **Container Runtime** | Software that runs containers. (e.g., Docker, containerd, CRI-O)                                                              |
+| **Namespace**         | A Linux kernel feature that isolates processes so they cannot see other parts of the system.                                  |
+| **cgroups**           | A Linux kernel feature that limits and monitors resource usage (CPU, memory, etc.) of process groups.                         |
+| **Layer**             | Container images consist of multiple layers, each corresponding to a Dockerfile instruction.                                  |
+| **Volume**            | A mechanism for persistently storing container data.                                                                          |
+| **Orchestration**     | The process of automating the deployment, management, scaling, and networking of multiple containers.                         |
+| **ECS**               | Amazon Elastic Container Service, AWS's container orchestration service.                                                      |
+| **ECR**               | Amazon Elastic Container Registry, AWS's container image registry service.                                                    |
+| **Fargate**           | AWS's serverless container execution environment that runs containers without infrastructure management.                      |
 
 ## Conclusion
 
@@ -702,8 +704,8 @@ To test what you've learned in this chapter, take the [Container Technology Quiz
 
 ## References
 
-- [Docker Official Documentation](https://docs.docker.com/)
-- [OCI (Open Container Initiative)](https://opencontainers.org/)
-- [containerd Project](https://containerd.io/)
-- [CNCF Container Runtime Overview](https://www.cncf.io/blog/2019/06/27/an-introduction-to-container-runtimes/)
-- [AWS Container Services](https://aws.amazon.com/containers/)
+* [Docker Official Documentation](https://docs.docker.com/)
+* [OCI (Open Container Initiative)](https://opencontainers.org/)
+* [containerd Project](https://containerd.io/)
+* [CNCF Container Runtime Overview](https://www.cncf.io/blog/2019/06/27/an-introduction-to-container-runtimes/)
+* [AWS Container Services](https://aws.amazon.com/containers/)

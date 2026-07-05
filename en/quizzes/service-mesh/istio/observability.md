@@ -1,8 +1,6 @@
-# Istio Observability Quiz
+# Observability Quiz
 
-> **Supported Version**: Istio 1.28.0
-> **EKS Version**: 1.34 (Kubernetes 1.28+)
-> **Last Updated**: February 19, 2026
+> **Supported Version**: Istio 1.28.0 **EKS Version**: 1.34 (Kubernetes 1.28+) **Last Updated**: February 19, 2026
 
 This quiz tests your understanding of Istio's observability features.
 
@@ -12,12 +10,10 @@ This quiz tests your understanding of Istio's observability features.
 
 Which metric is **NOT** collected by default by Prometheus in Istio?
 
-A. istio_requests_total (total request count)
-B. istio_request_duration_milliseconds (request latency)
-C. istio_request_bytes (request size)
-D. istio_pod_cpu_usage (Pod CPU usage)
+A. istio\_requests\_total (total request count) B. istio\_request\_duration\_milliseconds (request latency) C. istio\_request\_bytes (request size) D. istio\_pod\_cpu\_usage (Pod CPU usage)
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: D**
@@ -28,13 +24,15 @@ Istio Envoy collects **traffic-related metrics** only, while Pod CPU usage is co
 
 **Metrics collected by Istio:**
 
-1. **istio_requests_total (A - O)**
+1. **istio\_requests\_total (A - O)**
+
 ```promql
 # Total requests by service
 sum(rate(istio_requests_total[5m])) by (destination_service_name)
 ```
 
-2. **istio_request_duration_milliseconds (B - O)**
+2. **istio\_request\_duration\_milliseconds (B - O)**
+
 ```promql
 # P95 latency
 histogram_quantile(0.95,
@@ -42,25 +40,27 @@ histogram_quantile(0.95,
 )
 ```
 
-3. **istio_request_bytes (C - O)**
+3. **istio\_request\_bytes (C - O)**
+
 ```promql
 # Request size
 sum(rate(istio_request_bytes_sum[5m])) by (destination_service_name)
 ```
 
-4. **istio_pod_cpu_usage (D - X)**
-- This is not an Istio metric
-- Kubernetes metric: `container_cpu_usage_seconds_total`
-- Requires kube-state-metrics to collect in Prometheus
+4. **istio\_pod\_cpu\_usage (D - X)**
+
+* This is not an Istio metric
+* Kubernetes metric: `container_cpu_usage_seconds_total`
+* Requires kube-state-metrics to collect in Prometheus
 
 **Istio Metric Categories:**
 
-| Category | Example Metric | Description |
-|----------|---------------|-------------|
-| **Request** | istio_requests_total | Request count, response codes |
-| **Duration** | istio_request_duration_milliseconds | Latency distribution |
-| **Size** | istio_request_bytes, istio_response_bytes | Traffic size |
-| **TCP** | istio_tcp_connections_opened_total | TCP connections |
+| Category     | Example Metric                                | Description                   |
+| ------------ | --------------------------------------------- | ----------------------------- |
+| **Request**  | istio\_requests\_total                        | Request count, response codes |
+| **Duration** | istio\_request\_duration\_milliseconds        | Latency distribution          |
+| **Size**     | istio\_request\_bytes, istio\_response\_bytes | Traffic size                  |
+| **TCP**      | istio\_tcp\_connections\_opened\_total        | TCP connections               |
 
 **Golden Signals Examples:**
 
@@ -116,21 +116,21 @@ kubectl port-forward -n istio-system svc/prometheus 9090:9090
 ```
 
 **Reference:**
-- [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
+
+* [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
+
 </details>
 
----
+***
 
 ### Question 2: Distributed Tracing
 
 What is the **minimum configuration** required for distributed tracing in Istio?
 
-A. The application must generate trace IDs
-B. The application must propagate HTTP headers
-C. Jaeger client must be installed on all services
-D. Envoy automatically handles everything
+A. The application must generate trace IDs B. The application must propagate HTTP headers C. Jaeger client must be installed on all services D. Envoy automatically handles everything
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: B**
@@ -238,10 +238,10 @@ app.get('/api/users', async (req, res) => {
 
 **Analysis of Each Option:**
 
-- **A (X)**: Envoy automatically generates trace IDs
-- **B (O)**: Application must propagate HTTP headers (required)
-- **C (X)**: Jaeger client not needed, Envoy sends Spans
-- **D (X)**: Envoy creates/sends Spans, but header propagation is application's responsibility
+* **A (X)**: Envoy automatically generates trace IDs
+* **B (O)**: Application must propagate HTTP headers (required)
+* **C (X)**: Jaeger client not needed, Envoy sends Spans
+* **D (X)**: Envoy creates/sends Spans, but header propagation is application's responsibility
 
 **Sampling Configuration:**
 
@@ -263,21 +263,21 @@ istioctl dashboard jaeger
 ```
 
 **Reference:**
-- [Distributed Tracing](../../../service-mesh/istio/observability/02-distributed-tracing.md)
+
+* [Distributed Tracing](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/02-distributed-tracing.md)
+
 </details>
 
----
+***
 
 ### Question 3: Kiali Visualization
 
 Which feature is **NOT** provided by Kiali?
 
-A. Service topology visualization
-B. Traffic flow analysis
-C. Automatic Canary deployment execution
-D. Istio configuration validation
+A. Service topology visualization B. Traffic flow analysis C. Automatic Canary deployment execution D. Istio configuration validation
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: C**
@@ -302,6 +302,7 @@ istioctl dashboard kiali
 ```
 
 **Graph View Example:**
+
 ```
 Frontend → Backend → Database
    ↓
@@ -316,16 +317,17 @@ Color codes:
 **2. Traffic Flow Analysis (B - O)**
 
 Kiali displays:
-- Request count (RPS)
-- Error rate (%)
-- P50/P95/P99 latency
-- TCP connection count
+
+* Request count (RPS)
+* Error rate (%)
+* P50/P95/P99 latency
+* TCP connection count
 
 **3. Automatic Canary Deployment Execution (C - X)**
 
-- Kiali does NOT execute deployments
-- Kiali only **visualizes** traffic split status
-- Deployment execution: Argo Rollouts, Flagger
+* Kiali does NOT execute deployments
+* Kiali only **visualizes** traffic split status
+* Deployment execution: Argo Rollouts, Flagger
 
 **4. Istio Configuration Validation (D - O)**
 
@@ -375,13 +377,13 @@ helm install kiali-server kiali/kiali-server \
 
 **Kiali vs Other Tools:**
 
-| Tool | Role | Deployment Execution |
-|------|------|---------------------|
-| **Kiali** | Visualization, analysis, validation | No |
-| **Argo Rollouts** | Progressive Delivery | Yes |
-| **Flagger** | Automatic Canary deployment | Yes |
-| **Grafana** | Metrics dashboard | No |
-| **Jaeger** | Distributed tracing | No |
+| Tool              | Role                                | Deployment Execution |
+| ----------------- | ----------------------------------- | -------------------- |
+| **Kiali**         | Visualization, analysis, validation | No                   |
+| **Argo Rollouts** | Progressive Delivery                | Yes                  |
+| **Flagger**       | Automatic Canary deployment         | Yes                  |
+| **Grafana**       | Metrics dashboard                   | No                   |
+| **Jaeger**        | Distributed tracing                 | No                   |
 
 **Practical Usage Example:**
 
@@ -403,22 +405,22 @@ istioctl dashboard kiali
 ```
 
 **Reference:**
-- [Visualization](../../../service-mesh/istio/observability/04-visualization.md)
-- [Kiali Official Documentation](https://kiali.io/docs/)
+
+* [Visualization](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/04-visualization.md)
+* [Kiali Official Documentation](https://kiali.io/docs/)
+
 </details>
 
----
+***
 
 ### Question 4: Access Log Configuration
 
 How do you configure Access Log output in **JSON format** in Istio?
 
-A. Set meshConfig.accessLogEncoding to JSON in IstioOperator
-B. Directly modify Envoy ConfigMap
-C. Add annotation to each Pod
-D. Convert to JSON via Prometheus query
+A. Set meshConfig.accessLogEncoding to JSON in IstioOperator B. Directly modify Envoy ConfigMap C. Add annotation to each Pod D. Convert to JSON via Prometheus query
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: A**
@@ -560,13 +562,13 @@ kubectl logs <pod-name> -c istio-proxy | \
 
 **TEXT Format vs JSON Format:**
 
-| Item | TEXT | JSON |
-|------|------|------|
-| **Readability** | High (human) | Low (human) |
-| **Parsing** | Difficult | Easy (machine) |
-| **Size** | Small | Large |
-| **Structure** | Unstructured | Structured |
-| **Querying** | Difficult | Easy (jq, etc.) |
+| Item            | TEXT         | JSON            |
+| --------------- | ------------ | --------------- |
+| **Readability** | High (human) | Low (human)     |
+| **Parsing**     | Difficult    | Easy (machine)  |
+| **Size**        | Small        | Large           |
+| **Structure**   | Unstructured | Structured      |
+| **Querying**    | Difficult    | Easy (jq, etc.) |
 
 **TEXT Format Example:**
 
@@ -575,22 +577,22 @@ kubectl logs <pod-name> -c istio-proxy | \
 ```
 
 **Reference:**
-- [Logging](../../../service-mesh/istio/observability/03-logging.md)
-- [Envoy Access Log Format](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
+
+* [Logging](../../../service-mesh/istio/observability/03-logging.md)
+* [Envoy Access Log Format](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
+
 </details>
 
----
+***
 
 ### Question 5: Grafana Dashboards
 
 Which Grafana dashboard is **NOT** provided by default with Istio installation?
 
-A. Istio Service Dashboard
-B. Istio Workload Dashboard
-C. Istio Performance Dashboard
-D. Istio Cost Dashboard
+A. Istio Service Dashboard B. Istio Workload Dashboard C. Istio Performance Dashboard D. Istio Cost Dashboard
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer: D**
@@ -602,6 +604,7 @@ Istio does **not provide a Cost Dashboard** by default.
 **Istio Default Grafana Dashboards:**
 
 **1. Istio Service Dashboard (A - O)**
+
 ```
 Service-level metrics:
 - Request Volume (request count)
@@ -612,6 +615,7 @@ Service-level metrics:
 ```
 
 **2. Istio Workload Dashboard (B - O)**
+
 ```
 Workload (Pod) level metrics:
 - Incoming Request Volume
@@ -623,6 +627,7 @@ Workload (Pod) level metrics:
 ```
 
 **3. Istio Performance Dashboard (C - O)**
+
 ```
 Istio's own performance metrics:
 - Pilot performance (xDS push time)
@@ -633,6 +638,7 @@ Istio's own performance metrics:
 ```
 
 **4. Istio Control Plane Dashboard**
+
 ```
 Control Plane metrics:
 - Istiod resource usage
@@ -642,6 +648,7 @@ Control Plane metrics:
 ```
 
 **5. Istio Mesh Dashboard**
+
 ```
 Overall mesh metrics:
 - Total request count
@@ -728,11 +735,13 @@ expr: |
 ```
 
 **Reference:**
-- [Visualization](../../../service-mesh/istio/observability/04-visualization.md)
-- [Grafana Official Documentation](https://grafana.com/docs/)
+
+* [Visualization](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/04-visualization.md)
+* [Grafana Official Documentation](https://grafana.com/docs/)
+
 </details>
 
----
+***
 
 ## Short Answer Questions (6-10)
 
@@ -741,17 +750,19 @@ expr: |
 Explain how to monitor Google SRE's **Golden Signals** (Latency, Traffic, Errors, Saturation) using Istio and Prometheus. Include **Prometheus queries** and **alerting rules** for each signal.
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
 
 **Golden Signals Monitoring Implementation:**
 
----
+***
 
 **1. Latency**
 
 **Prometheus Query:**
+
 ```promql
 # P95 latency
 histogram_quantile(0.95,
@@ -782,6 +793,7 @@ histogram_quantile(0.50,
 ```
 
 **Alerting Rules:**
+
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -823,11 +835,12 @@ spec:
         summary: "Critical latency on {{ $labels.destination_service_name }}"
 ```
 
----
+***
 
 **2. Traffic**
 
 **Prometheus Query:**
+
 ```promql
 # Requests per second (RPS)
 sum(rate(
@@ -848,6 +861,7 @@ sum(rate(
 ```
 
 **Alerting Rules:**
+
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -880,11 +894,12 @@ spec:
         severity: warning
 ```
 
----
+***
 
 **3. Errors**
 
 **Prometheus Query:**
+
 ```promql
 # Error rate (5xx)
 sum(rate(
@@ -921,6 +936,7 @@ sum(rate(
 ```
 
 **Alerting Rules:**
+
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -958,11 +974,12 @@ spec:
         severity: critical
 ```
 
----
+***
 
 **4. Saturation**
 
 **Prometheus Query:**
+
 ```promql
 # Envoy CPU usage
 sum(rate(
@@ -992,6 +1009,7 @@ sum(
 ```
 
 **Alerting Rules:**
+
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -1051,7 +1069,7 @@ spec:
         severity: critical
 ```
 
----
+***
 
 **Grafana Dashboard Configuration:**
 
@@ -1092,24 +1110,27 @@ spec:
 ```
 
 **Reference:**
-- [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
-- [Google SRE Book - Monitoring](https://sre.google/sre-book/monitoring-distributed-systems/)
+
+* [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
+* [Google SRE Book - Monitoring](https://sre.google/sre-book/monitoring-distributed-systems/)
+
 </details>
 
----
+***
 
 ### Question 7: Finding Performance Bottlenecks with Jaeger
 
 Explain how to use the distributed tracing tool Jaeger to find **performance bottlenecks** in a microservices architecture. Include **Trace analysis methods** and **practical debugging scenarios**.
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
 
 **Performance Bottleneck Analysis with Jaeger:**
 
----
+***
 
 **1. Jaeger Installation and Configuration**
 
@@ -1134,7 +1155,7 @@ spec:
           address: jaeger-collector.istio-system:9411
 ```
 
----
+***
 
 **2. Understanding Trace Structure**
 
@@ -1149,18 +1170,20 @@ Trace
 ```
 
 **Span Information:**
-- **Duration**: Time spent in Span
-- **Tags**: Metadata (HTTP method, URL, response code)
-- **Logs**: Events (errors, warnings)
-- **Parent-Child Relationship**: Call hierarchy
 
----
+* **Duration**: Time spent in Span
+* **Tags**: Metadata (HTTP method, URL, response code)
+* **Logs**: Events (errors, warnings)
+* **Parent-Child Relationship**: Call hierarchy
+
+***
 
 **3. Practical Debugging Scenarios**
 
 **Scenario 1: High P99 Latency**
 
 **Symptoms:**
+
 ```promql
 # P99 latency is 2 seconds
 histogram_quantile(0.99,
@@ -1186,6 +1209,7 @@ Limit Results: 20
 ```
 
 **Identified Problem:**
+
 ```
 Trace ID: abc-123-def
 Total Duration: 2.1 seconds
@@ -1197,6 +1221,7 @@ Total Duration: 2.1 seconds
 ```
 
 **Resolution:**
+
 ```yaml
 # 1. Optimize MongoDB query
 # - Add index
@@ -1228,7 +1253,7 @@ spec:
       perTryTimeout: 200ms
 ```
 
----
+***
 
 **Scenario 2: Intermittent Timeouts**
 
@@ -1252,6 +1277,7 @@ Duration: 10,000ms  ← Abnormal!
 ```
 
 **Check Span Details:**
+
 ```json
 {
   "traceID": "timeout-001",
@@ -1277,6 +1303,7 @@ Duration: 10,000ms  ← Abnormal!
 ```
 
 **Resolution:**
+
 ```yaml
 # Increase Connection Pool
 apiVersion: networking.istio.io/v1beta1
@@ -1294,7 +1321,7 @@ spec:
         maxRequestsPerConnection: 2
 ```
 
----
+***
 
 **Scenario 3: Cascading Latency**
 
@@ -1341,11 +1368,12 @@ async def get_user_data(user_id):
 # Total time: 2 seconds (longest call)
 ```
 
----
+***
 
 **4. Jaeger UI Tips**
 
 **Service Dependencies (Service Dependency Graph):**
+
 ```bash
 # Jaeger UI → Dependencies tab
 # - Visualize service call relationships
@@ -1354,6 +1382,7 @@ async def get_user_data(user_id):
 ```
 
 **Compare Traces:**
+
 ```bash
 # 1. Select normal Trace
 # 2. Select slow Trace
@@ -1362,6 +1391,7 @@ async def get_user_data(user_id):
 ```
 
 **Deep Dependency Graph:**
+
 ```bash
 # Check detailed dependencies for specific Trace
 # - Time spent per Span
@@ -1369,7 +1399,7 @@ async def get_user_data(user_id):
 # - Critical Path
 ```
 
----
+***
 
 **5. Performance Optimization Checklist**
 
@@ -1400,7 +1430,7 @@ async def get_user_data(user_id):
 # - Use read replicas
 ```
 
----
+***
 
 **6. Prometheus + Jaeger Integration**
 
@@ -1416,30 +1446,34 @@ histogram_quantile(0.99,
 ```
 
 **Reference:**
-- [Distributed Tracing](../../../service-mesh/istio/observability/02-distributed-tracing.md)
-- [Jaeger Official Documentation](https://www.jaegertracing.io/docs/)
+
+* [Distributed Tracing](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/02-distributed-tracing.md)
+* [Jaeger Official Documentation](https://www.jaegertracing.io/docs/)
+
 </details>
 
----
+***
 
 ### Question 8: Service Mesh Troubleshooting with Kiali
 
 Explain how to diagnose and resolve **common problems** (configuration errors, traffic anomalies, security policy conflicts) in the Istio service mesh using Kiali.
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
 
 **Service Mesh Troubleshooting with Kiali:**
 
----
+***
 
 **1. Configuration Error Diagnosis**
 
 **Problem 1: VirtualService Host Error**
 
 **Symptoms:**
+
 ```bash
 # Service call failure
 curl http://reviews:9080
@@ -1459,6 +1493,7 @@ istioctl dashboard kiali
 ```
 
 **Kiali Error Message:**
+
 ```
 Warning: VirtualService 'reviews-vs' has issues:
 - Host 'reviews.default.svc.cluster.local' references service 'reviews'
@@ -1512,7 +1547,7 @@ spec:
       version: v1
 ```
 
----
+***
 
 **Problem 2: DestinationRule Subset Label Mismatch**
 
@@ -1530,6 +1565,7 @@ Warning: DestinationRule 'reviews-dr' has issues:
 ```
 
 **Check Problem:**
+
 ```bash
 # Check Pod labels
 kubectl get pods -l app=reviews --show-labels
@@ -1540,6 +1576,7 @@ reviews-v1-xxx  app=reviews,version=1.0  ← version=1.0 (wrong)
 ```
 
 **Resolution:**
+
 ```yaml
 # Incorrect DestinationRule
 apiVersion: networking.istio.io/v1beta1
@@ -1560,7 +1597,7 @@ spec:
       version: "1.0"  # Match Pod label
 ```
 
----
+***
 
 **2. Traffic Anomaly Diagnosis**
 
@@ -1603,7 +1640,7 @@ kubectl edit deployment backend-v2
 # After few minutes: 50% / 50% normalized
 ```
 
----
+***
 
 **Problem 4: Circular Dependency**
 
@@ -1618,6 +1655,7 @@ Circular dependency detected!
 ```
 
 **Kiali Alert:**
+
 ```
 Warning: Circular dependency detected:
 service-a → service-b → service-a
@@ -1635,13 +1673,14 @@ service-a → service-c (common service)
 service-b → service-c
 ```
 
----
+***
 
 **3. Security Policy Conflict Diagnosis**
 
 **Problem 5: AuthorizationPolicy Conflict**
 
 **Symptoms:**
+
 ```bash
 # frontend → backend call fails
 curl http://backend:8080
@@ -1712,7 +1751,7 @@ spec:
         principals: ["cluster.local/ns/default/sa/frontend"]
 ```
 
----
+***
 
 **Problem 6: mTLS Mode Mismatch**
 
@@ -1743,11 +1782,12 @@ spec:
     mode: STRICT  # Apply STRICT to all services
 ```
 
----
+***
 
 **4. Kiali Advanced Features**
 
 **Custom Time Range:**
+
 ```bash
 # Kiali → Graph view
 # Time Range: Last 1 hour
@@ -1759,6 +1799,7 @@ spec:
 ```
 
 **Traffic Animation:**
+
 ```bash
 # Kiali → Graph view
 # Display: Enable Traffic Animation
@@ -1769,6 +1810,7 @@ spec:
 ```
 
 **Edge Labels:**
+
 ```bash
 # Kiali → Graph view
 # Edge Labels:
@@ -1782,6 +1824,7 @@ frontend → backend-v2: 20% (2 rps)
 ```
 
 **Service Details:**
+
 ```bash
 # Kiali → Services → backend
 
@@ -1793,7 +1836,7 @@ Tabs:
 5. Envoy: Envoy configuration check
 ```
 
----
+***
 
 **5. Troubleshooting Workflow**
 
@@ -1834,17 +1877,20 @@ flowchart TD
 ```
 
 **Reference:**
-- [Visualization](../../../service-mesh/istio/observability/04-visualization.md)
-- [Kiali Official Documentation](https://kiali.io/docs/)
+
+* [Visualization](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/04-visualization.md)
+* [Kiali Official Documentation](https://kiali.io/docs/)
+
 </details>
 
----
+***
 
 ### Question 9: Production Observability Stack Setup
 
 Explain how to deploy the Istio observability stack (Prometheus, Grafana, Jaeger, Kiali) in **High Availability (HA)** configuration for a production Kubernetes cluster. Include **persistent storage**, **scaling**, and **backup** strategies.
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
@@ -1861,18 +1907,21 @@ Due to the length of this answer, please refer to the Korean source file for the
 6. **Monitoring and Alerting** with PrometheusRules
 
 **Reference:**
-- [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator)
-- [Thanos](https://thanos.io/tip/thanos/getting-started.md/)
-- [Jaeger Operator](https://www.jaegertracing.io/docs/latest/operator/)
+
+* [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator)
+* [Thanos](https://thanos.io/tip/thanos/getting-started.md/)
+* [Jaeger Operator](https://www.jaegertracing.io/docs/latest/operator/)
+
 </details>
 
----
+***
 
 ### Question 10: Custom Metrics and Dashboard Creation
 
 Explain how to collect **business metrics** (e.g., order count, payment success rate) beyond the default metrics collected by Istio Envoy, and create a Grafana custom dashboard.
 
 <details>
+
 <summary>Show Answer</summary>
 
 **Answer:**
@@ -1889,29 +1938,32 @@ Due to the length of this answer, please refer to the Korean source file for the
 6. **Alerting Configuration** with PrometheusRules
 
 **Reference:**
-- [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
-- [Prometheus Client Libraries](https://prometheus.io/docs/instrumenting/clientlibs/)
-- [Grafana Provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
+
+* [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
+* [Prometheus Client Libraries](https://prometheus.io/docs/instrumenting/clientlibs/)
+* [Grafana Provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
+
 </details>
 
----
+***
 
 ## Score Calculation
 
-- Multiple Choice 1-5: 10 points each (Total 50 points)
-- Short Answer 6-10: 10 points each (Total 50 points)
-- **Total: 100 points**
+* Multiple Choice 1-5: 10 points each (Total 50 points)
+* Short Answer 6-10: 10 points each (Total 50 points)
+* **Total: 100 points**
 
 **Evaluation Criteria:**
-- 90-100 points: Excellent (Istio Observability Expert)
-- 80-89 points: Good (Capable of production monitoring)
-- 70-79 points: Average (Additional learning recommended)
-- 60-69 points: Below Average (Review of basic concepts needed)
-- 0-59 points: Re-learning needed
+
+* 90-100 points: Excellent (Istio Observability Expert)
+* 80-89 points: Good (Capable of production monitoring)
+* 70-79 points: Average (Additional learning recommended)
+* 60-69 points: Below Average (Review of basic concepts needed)
+* 0-59 points: Re-learning needed
 
 ## Learning Resources
 
-- [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
-- [Distributed Tracing](../../../service-mesh/istio/observability/02-distributed-tracing.md)
-- [Logging](../../../service-mesh/istio/observability/03-logging.md)
-- [Visualization](../../../service-mesh/istio/observability/04-visualization.md)
+* [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
+* [Distributed Tracing](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/02-distributed-tracing.md)
+* [Logging](../../../service-mesh/istio/observability/03-logging.md)
+* [Visualization](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/04-visualization.md)

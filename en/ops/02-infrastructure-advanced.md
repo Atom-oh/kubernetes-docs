@@ -1,70 +1,73 @@
-# NLB Weighted Routing and Blue/Green Clusters
+# Infrastructure Advanced
 
-> **Supported Versions**: Terraform >= 1.5, AWS Provider >= 5.40, EKS >= 1.29
-> **Last Updated**: February 19, 2026
+> **Supported Versions**: Terraform >= 1.5, AWS Provider >= 5.40, EKS >= 1.29 **Last Updated**: February 19, 2026
 
-< [Previous: Terraform 3-Layer Infrastructure](./01-infrastructure-setup.md) | [Table of Contents](./README.md) | [Next: CI Pipelines](./03-ci-pipelines.md) >
+< [Previous: Terraform 3-Layer Infrastructure](01-infrastructure-setup.md) | [Table of Contents](./) | [Next: CI Pipelines](03-ci-pipelines.md) >
 
----
+***
 
 ## Overview
 
 This guide covers advanced infrastructure patterns for running production EKS workloads with high availability and zero-downtime deployments. The Blue/Green cluster architecture enables seamless cluster upgrades, disaster recovery, and traffic management across multiple availability zones.
 
 **Key Topics:**
-- Blue/Green dual-cluster architecture
-- NLB weighted target groups for traffic distribution
-- DNS-based traffic switching with Route53
-- Zone-aware data placement for stateful workloads
-- Automated failover with CloudWatch and Lambda
 
----
+* Blue/Green dual-cluster architecture
+* NLB weighted target groups for traffic distribution
+* DNS-based traffic switching with Route53
+* Zone-aware data placement for stateful workloads
+* Automated failover with CloudWatch and Lambda
+
+***
 
 ## 1. Blue/Green Architecture Overview
 
 ### Why Blue/Green Clusters?
 
 Traditional in-place cluster upgrades carry significant risk:
-- Workload disruption during control plane updates
-- Node draining can cause capacity issues
-- Rollback complexity when issues arise
-- Extended maintenance windows
+
+* Workload disruption during control plane updates
+* Node draining can cause capacity issues
+* Rollback complexity when issues arise
+* Extended maintenance windows
 
 The Blue/Green architecture eliminates these risks by maintaining two independent clusters:
 
-| Aspect | In-Place Upgrade | Blue/Green |
-|--------|------------------|------------|
-| Downtime Risk | Medium-High | Near Zero |
-| Rollback Time | 30-60 minutes | Seconds (DNS/NLB) |
-| Testing | Limited | Full production traffic |
-| Cost | Single cluster | 2x cluster (during transition) |
+| Aspect        | In-Place Upgrade | Blue/Green                     |
+| ------------- | ---------------- | ------------------------------ |
+| Downtime Risk | Medium-High      | Near Zero                      |
+| Rollback Time | 30-60 minutes    | Seconds (DNS/NLB)              |
+| Testing       | Limited          | Full production traffic        |
+| Cost          | Single cluster   | 2x cluster (during transition) |
 
 ### Architecture Diagram
 
-![NLB Blue/Green Architecture](../assets/generated-diagrams/nlb_bluegreen_architecture.png)
+![NLB Blue/Green Architecture](../.gitbook/assets/nlb_bluegreen_architecture.png)
 
 ### Single-Zone Design Rationale
 
 Each cluster operates in a single availability zone:
 
 **Advantages:**
+
 1. **Data Locality**: Pods always schedule near their storage volumes
 2. **Cost Optimization**: Zero cross-AZ data transfer costs
 3. **Failure Isolation**: AZ failure affects only one cluster
 4. **Simplified Networking**: No complex multi-AZ load balancing
 
 **Trade-offs:**
-- Higher single-AZ risk (mitigated by Blue/Green failover)
-- Requires careful capacity planning per zone
+
+* Higher single-AZ risk (mitigated by Blue/Green failover)
+* Requires careful capacity planning per zone
 
 ### Zone Assignment
 
-| Cluster | Availability Zone | Purpose |
-|---------|-------------------|---------|
-| Blue | ap-northeast-2a | Primary production |
-| Green | ap-northeast-2c | Secondary/upgrade target |
+| Cluster | Availability Zone | Purpose                  |
+| ------- | ----------------- | ------------------------ |
+| Blue    | ap-northeast-2a   | Primary production       |
+| Green   | ap-northeast-2c   | Secondary/upgrade target |
 
----
+***
 
 ## 2. NLB Weighted Target Groups
 
@@ -444,7 +447,7 @@ aws elbv2 describe-listeners \
   --query 'Listeners[*].DefaultActions[*].ForwardConfig.TargetGroups'
 ```
 
----
+***
 
 ## 3. DNS-Based Traffic Switching
 
@@ -701,15 +704,15 @@ variable "green_dns_weight" {
 
 DNS TTL affects how quickly traffic shifts when weights change:
 
-| TTL Value | Switch Time | Use Case |
-|-----------|-------------|----------|
-| 60 seconds | ~2-3 minutes | Rapid failover |
-| 300 seconds | ~10-15 minutes | Normal operations |
-| 3600 seconds | ~1-2 hours | Stable routing |
+| TTL Value    | Switch Time     | Use Case          |
+| ------------ | --------------- | ----------------- |
+| 60 seconds   | \~2-3 minutes   | Rapid failover    |
+| 300 seconds  | \~10-15 minutes | Normal operations |
+| 3600 seconds | \~1-2 hours     | Stable routing    |
 
 For Route53 Alias records, TTL is inherited from the target (NLB). For explicit TTL control, use non-alias records with IP addresses.
 
----
+***
 
 ## 4. Data Node Placement
 
@@ -719,7 +722,7 @@ For stateful workloads, pods must schedule in the same zone as their persistent 
 
 ### NodePool Zone Configuration
 
-The actual NodePool YAML is managed by ArgoCD GitOps (see [GitOps Pipeline Configuration](./04-gitops-pipeline.md)), but here are the key concepts:
+The actual NodePool YAML is managed by ArgoCD GitOps (see [GitOps Pipeline Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)), but here are the key concepts:
 
 ```yaml
 # Conceptual NodePool for Blue cluster (zone: ap-northeast-2a)
@@ -907,7 +910,7 @@ volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Retain
 ```
 
----
+***
 
 ## 5. Failover Automation
 
@@ -1369,7 +1372,7 @@ echo "=== Traffic Shift Complete ==="
 echo "All traffic now routed to: $TO_CLUSTER"
 ```
 
----
+***
 
 ## Summary
 
@@ -1383,11 +1386,11 @@ The Blue/Green cluster architecture with NLB weighted routing provides:
 
 ### Related Documentation
 
-- [Terraform 3-Layer Infrastructure](./01-infrastructure-setup.md)
-- [CI Pipelines](./03-ci-pipelines.md)
-- [GitOps Pipeline Configuration](./04-gitops-pipeline.md)
-- [Getting Started with EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
+* [Terraform 3-Layer Infrastructure](01-infrastructure-setup.md)
+* [CI Pipelines](03-ci-pipelines.md)
+* [GitOps Pipeline Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [Getting Started with EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
 
----
+***
 
-< [Previous: Terraform 3-Layer Infrastructure](./01-infrastructure-setup.md) | [Table of Contents](./README.md) | [Next: CI Pipelines](./03-ci-pipelines.md) >
+< [Previous: Terraform 3-Layer Infrastructure](01-infrastructure-setup.md) | [Table of Contents](./) | [Next: CI Pipelines](03-ci-pipelines.md) >

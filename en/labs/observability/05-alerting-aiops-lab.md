@@ -1,28 +1,26 @@
 # Part 5: Alerting and AIOps
 
-> **Difficulty**: Advanced
-> **Estimated Time**: 60 minutes
-> **Last Updated**: February 22, 2026
+> **Difficulty**: Advanced **Estimated Time**: 60 minutes **Last Updated**: February 22, 2026
 
 ## Learning Objectives
 
-- Configure AlertManager detection rules for common failure patterns
-- Set up Grafana OnCall for incident management
-- Use CloudWatch Investigations for AI-powered analysis
-- Build an AIOps Agent using Lambda and Bedrock Claude for automated incident response
+* Configure AlertManager detection rules for common failure patterns
+* Set up Grafana OnCall for incident management
+* Use CloudWatch Investigations for AI-powered analysis
+* Build an AIOps Agent using Lambda and Bedrock Claude for automated incident response
 
 ## Prerequisites
 
-- [ ] Completed [Part 4: Load Testing](./04-load-testing-scaling-lab.md)
-- [ ] Observability stack collecting metrics, logs, and traces
-- [ ] SNS Topic configured for notifications
-- [ ] AWS Bedrock access enabled (for AIOps section)
+* [ ] Completed [Part 4: Load Testing](04-load-testing-scaling-lab.md)
+* [ ] Observability stack collecting metrics, logs, and traces
+* [ ] SNS Topic configured for notifications
+* [ ] AWS Bedrock access enabled (for AIOps section)
 
----
+***
 
 ## Architecture Overview
 
-![AIOps Architecture](../../../assets/labs/observability/aiops-architecture.png)
+![AIOps Architecture](../../.gitbook/assets/aiops-architecture.png)
 
 ```mermaid
 flowchart TB
@@ -58,7 +56,7 @@ flowchart TB
     GO -->|escalation| SNS
 ```
 
----
+***
 
 ## Exercise 1: AlertManager PrometheusRules
 
@@ -249,14 +247,14 @@ EOF
 
 **Step 1.2: Alert severity matrix**
 
-| Alert | Severity | Response Time | Escalation |
-|-------|----------|--------------|------------|
-| HighErrorRate | Critical | 5 min | On-call engineer |
-| HighLatency | Warning | 15 min | Slack notification |
-| PodCrashLoopBackOff | Critical | 5 min | On-call + Lead |
-| SQSQueueBacklog | Warning | 15 min | Slack notification |
-| NodeNotReady | Critical | 5 min | Infra team |
-| AuroraHighCPU | Warning | 15 min | Database team |
+| Alert               | Severity | Response Time | Escalation         |
+| ------------------- | -------- | ------------- | ------------------ |
+| HighErrorRate       | Critical | 5 min         | On-call engineer   |
+| HighLatency         | Warning  | 15 min        | Slack notification |
+| PodCrashLoopBackOff | Critical | 5 min         | On-call + Lead     |
+| SQSQueueBacklog     | Warning  | 15 min        | Slack notification |
+| NodeNotReady        | Critical | 5 min         | Infra team         |
+| AuroraHighCPU       | Warning  | 15 min        | Database team      |
 
 ### Verification
 
@@ -269,7 +267,7 @@ kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:909
 curl -s http://localhost:9090/api/v1/rules | jq '.data.groups[].name'
 ```
 
----
+***
 
 ## Exercise 2: CloudWatch Alarms
 
@@ -345,7 +343,7 @@ aws cloudwatch describe-alarms \
   --output table
 ```
 
----
+***
 
 ## Exercise 3: Grafana OnCall Setup
 
@@ -424,7 +422,7 @@ EOF
 # Level 4: Manager escalation (30 min)
 ```
 
----
+***
 
 ## Exercise 4: SNS Topic and Email Subscription
 
@@ -453,7 +451,7 @@ aws sns subscribe \
   --region $AWS_REGION
 ```
 
----
+***
 
 ## Exercise 5: CloudWatch Investigations
 
@@ -517,7 +515,7 @@ aws cloudwatch put-insight-rule \
   --region $AWS_REGION
 ```
 
----
+***
 
 ## Exercise 6: AIOps Agent with Lambda and Bedrock
 
@@ -851,7 +849,7 @@ aws apigateway create-rest-api \
   --region $AWS_REGION
 ```
 
----
+***
 
 ## Exercise 7: Load and Fault Injection
 
@@ -883,7 +881,7 @@ curl -s http://localhost:9093/api/v2/alerts | jq '.[].labels.alertname'
 # Check email for alerts
 ```
 
----
+***
 
 ## Exercise 8: Verify AIOps Pipeline
 
@@ -912,7 +910,7 @@ aws logs tail /aws/lambda/obs-lab-aiops-agent --follow --region $AWS_REGION
 
 Check your email for the AIOps analysis report.
 
----
+***
 
 ## Exercise 9: (Advanced) A2A Multi-Agent Pattern
 
@@ -951,67 +949,73 @@ This advanced pattern uses multiple specialized AI agents that collaborate on co
 3. SQS for inter-agent communication
 4. DynamoDB for shared context
 
----
+***
 
 ## Summary
 
 In this lab, you have:
 
-| Task | Status |
-|------|--------|
-| PrometheusRules (10+ alerts) | Created |
-| CloudWatch Alarms | Configured |
-| Grafana OnCall | Set up |
-| SNS Notifications | Enabled |
-| CloudWatch Investigations | Configured |
-| AIOps Lambda Agent | Deployed |
-| Fault Injection Test | Completed |
+| Task                         | Status     |
+| ---------------------------- | ---------- |
+| PrometheusRules (10+ alerts) | Created    |
+| CloudWatch Alarms            | Configured |
+| Grafana OnCall               | Set up     |
+| SNS Notifications            | Enabled    |
+| CloudWatch Investigations    | Configured |
+| AIOps Lambda Agent           | Deployed   |
+| Fault Injection Test         | Completed  |
 
 ## Verification Checklist
 
-- [ ] Alertmanager fires alerts on high error rate
-- [ ] OnCall receives and routes alerts
-- [ ] CloudWatch Investigations generates hypotheses
-- [ ] Lambda AIOps agent analyzes alerts
-- [ ] SNS delivers analysis reports to email
+* [ ] Alertmanager fires alerts on high error rate
+* [ ] OnCall receives and routes alerts
+* [ ] CloudWatch Investigations generates hypotheses
+* [ ] Lambda AIOps agent analyzes alerts
+* [ ] SNS delivers analysis reports to email
 
 ## Cleanup
 
-Cleanup will be performed in [Part 6](./06-distributed-tracing-lab.md#cleanup).
+Cleanup will be performed in [Part 6](06-distributed-tracing-lab.md#cleanup).
 
 ## Troubleshooting
 
 <details>
+
 <summary>Alerts not firing</summary>
 
-- Check PrometheusRule syntax: `kubectl describe prometheusrules -n monitoring`
-- Verify metrics exist: test query in Grafana Explore
-- Check Prometheus targets: `curl localhost:9090/api/v1/targets`
+* Check PrometheusRule syntax: `kubectl describe prometheusrules -n monitoring`
+* Verify metrics exist: test query in Grafana Explore
+* Check Prometheus targets: `curl localhost:9090/api/v1/targets`
+
 </details>
 
 <details>
+
 <summary>Lambda not receiving webhooks</summary>
 
-- Check API Gateway configuration
-- Verify Alertmanager webhook config
-- Check Lambda CloudWatch logs for errors
+* Check API Gateway configuration
+* Verify Alertmanager webhook config
+* Check Lambda CloudWatch logs for errors
+
 </details>
 
 <details>
+
 <summary>Bedrock invocation failing</summary>
 
-- Verify IAM role has bedrock:InvokeModel permission
-- Check model ID is correct
-- Ensure Bedrock is enabled in your region
+* Verify IAM role has bedrock:InvokeModel permission
+* Check model ID is correct
+* Ensure Bedrock is enabled in your region
+
 </details>
 
 ## Next Steps
 
-Continue to [Part 6: Distributed Tracing Analysis](./06-distributed-tracing-lab.md) to perform deep trace analysis.
+Continue to [Part 6: Distributed Tracing Analysis](06-distributed-tracing-lab.md) to perform deep trace analysis.
 
 ## References
 
-- [Alertmanager Documentation](../../observability/alerting/01-alertmanager.md)
-- [Grafana OnCall Documentation](../../observability/alerting/03-grafana-oncall.md)
-- [CloudWatch Alarms Documentation](../../observability/alerting/02-cloudwatch-alarms.md)
-- [AWS Bedrock Documentation](https://docs.aws.amazon.com/bedrock/)
+* [Alertmanager Documentation](../../observability/alerting/01-alertmanager.md)
+* [Grafana OnCall Documentation](../../observability/alerting/03-grafana-oncall.md)
+* [CloudWatch Alarms Documentation](../../observability/alerting/02-cloudwatch-alarms.md)
+* [AWS Bedrock Documentation](https://docs.aws.amazon.com/bedrock/)

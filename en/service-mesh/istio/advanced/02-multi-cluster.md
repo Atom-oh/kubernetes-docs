@@ -1,24 +1,22 @@
-# Multi-cluster Service Mesh
+# Multi-cluster
 
-> **Supported Versions**: Istio 1.18+
-> **Last Updated**: February 23, 2026
-> **Kubernetes Compatibility**: 1.32+
+> **Supported Versions**: Istio 1.18+ **Last Updated**: February 23, 2026 **Kubernetes Compatibility**: 1.32+
 
 Multi-cluster Service Mesh connects multiple Kubernetes clusters into a unified service mesh.
 
 ## Table of Contents
 
-1. [Do You Really Need Multi-cluster?](#do-you-really-need-multi-cluster)
-2. [Architecture Selection Guide](#architecture-selection-guide)
-3. [Istio vs AWS VPC Lattice](#istio-vs-aws-vpc-lattice)
-4. [Topology](#topology)
-5. [Primary-Remote Setup](#primary-remote-setup)
-6. [Multi-Primary Setup](#multi-primary-setup)
-7. [Cross-cluster Communication](#cross-cluster-communication)
-8. [Using with VPC Lattice](#using-with-vpc-lattice)
-9. [Practical Examples](#practical-examples)
-10. [Performance and Cost Comparison](#performance-and-cost-comparison)
-11. [Troubleshooting](#troubleshooting)
+1. [Do You Really Need Multi-cluster?](02-multi-cluster.md#do-you-really-need-multi-cluster)
+2. [Architecture Selection Guide](02-multi-cluster.md#architecture-selection-guide)
+3. [Istio vs AWS VPC Lattice](02-multi-cluster.md#istio-vs-aws-vpc-lattice)
+4. [Topology](02-multi-cluster.md#topology)
+5. [Primary-Remote Setup](02-multi-cluster.md#primary-remote-setup)
+6. [Multi-Primary Setup](02-multi-cluster.md#multi-primary-setup)
+7. [Cross-cluster Communication](02-multi-cluster.md#cross-cluster-communication)
+8. [Using with VPC Lattice](02-multi-cluster.md#using-with-vpc-lattice)
+9. [Practical Examples](02-multi-cluster.md#practical-examples)
+10. [Performance and Cost Comparison](02-multi-cluster.md#performance-and-cost-comparison)
+11. [Troubleshooting](02-multi-cluster.md#troubleshooting)
 
 ## Do You Really Need Multi-cluster?
 
@@ -108,9 +106,10 @@ flowchart LR
 ```
 
 **When needed**:
-- Global user-facing services (latency goal <100ms)
-- Data sovereignty compliance (GDPR, financial data localization)
-- Regional traffic routing and failure isolation
+
+* Global user-facing services (latency goal <100ms)
+* Data sovereignty compliance (GDPR, financial data localization)
+* Regional traffic routing and failure isolation
 
 #### 2. Disaster Recovery (DR)
 
@@ -152,23 +151,26 @@ flowchart TB
 ```
 
 **When needed**:
-- RTO (Recovery Time Objective) <1 hour
-- RPO (Recovery Point Objective) <15 minutes
-- Automatic Failover on regional failure
+
+* RTO (Recovery Time Objective) <1 hour
+* RPO (Recovery Point Objective) <15 minutes
+* Automatic Failover on regional failure
 
 #### 3. Environment Separation and Staged Deployment
 
 **When needed**:
-- Dev/Staging/Prod cluster separation with unified management
-- Blue/Green deployments at cluster level
-- Canary deployments with gradual regional expansion
+
+* Dev/Staging/Prod cluster separation with unified management
+* Blue/Green deployments at cluster level
+* Canary deployments with gradual regional expansion
 
 #### 4. Organizational Boundaries and Security Isolation
 
 **When needed**:
-- Independent cluster operation per team/department
-- Enhanced Multi-tenancy
-- Physical isolation for regulatory compliance
+
+* Independent cluster operation per team/department
+* Enhanced Multi-tenancy
+* Physical isolation for regulatory compliance
 
 ### When Multi-cluster is NOT Needed
 
@@ -202,155 +204,173 @@ flowchart TD
 ```
 
 **Use instead**:
-- Kubernetes Namespace separation
-- NetworkPolicy for network isolation
-- RBAC for access control
+
+* Kubernetes Namespace separation
+* NetworkPolicy for network isolation
+* RBAC for access control
 
 #### 2. When Operational Complexity Cannot Be Handled
 
 **Multi-cluster operational requirements**:
-- Minimum 2-3 Istio experts
-- East-West Gateway management and monitoring
-- Cross-cluster certificate management
-- Cross-cluster debugging capability
+
+* Minimum 2-3 Istio experts
+* East-West Gateway management and monitoring
+* Cross-cluster certificate management
+* Cross-cluster debugging capability
 
 **If your team is small**:
-- Single-cluster Istio or
-- AWS VPC Lattice (managed service)
+
+* Single-cluster Istio or
+* AWS VPC Lattice (managed service)
 
 #### 3. When Cost is a Key Consideration
 
 **Multi-cluster additional costs**:
-- LoadBalancer for East-West Gateway ($20-50/month per region)
-- Cross-region data transfer ($0.02/GB)
-- Control Plane redundancy (2-3x resources)
+
+* LoadBalancer for East-West Gateway ($20-50/month per region)
+* Cross-region data transfer ($0.02/GB)
+* Control Plane redundancy (2-3x resources)
 
 ### Checklist
 
 Answer these questions before adoption:
 
 **Architecture**:
-- [ ] Are 2 or more clusters already in operation?
-- [ ] Is multi-region deployment needed?
-- [ ] Are cross-cluster service calls frequent?
+
+* [ ] Are 2 or more clusters already in operation?
+* [ ] Is multi-region deployment needed?
+* [ ] Are cross-cluster service calls frequent?
 
 **Business Requirements**:
-- [ ] Targeting global users?
-- [ ] Is Disaster Recovery (DR) essential?
-- [ ] Are RTO/RPO requirements strict?
+
+* [ ] Targeting global users?
+* [ ] Is Disaster Recovery (DR) essential?
+* [ ] Are RTO/RPO requirements strict?
 
 **Security and Compliance**:
-- [ ] Is data localization needed?
-- [ ] Is strong cross-cluster isolation needed?
+
+* [ ] Is data localization needed?
+* [ ] Is strong cross-cluster isolation needed?
 
 **Operational Capability**:
-- [ ] Do you have Istio experts?
-- [ ] Can you debug complex networking issues?
-- [ ] Can you afford additional costs?
+
+* [ ] Do you have Istio experts?
+* [ ] Can you debug complex networking issues?
+* [ ] Can you afford additional costs?
 
 **Results**:
-- 9+ checks: Multi-cluster Istio recommended
-- 5-8 checks: Consider VPC Lattice or Hybrid
-- 4 or fewer checks: Start with Single-cluster Istio
+
+* 9+ checks: Multi-cluster Istio recommended
+* 5-8 checks: Consider VPC Lattice or Hybrid
+* 4 or fewer checks: Start with Single-cluster Istio
 
 ## Architecture Selection Guide
 
 ### Optimal Solution by Scenario
 
-| Scenario | Single-cluster | Multi-cluster Istio | VPC Lattice | Hybrid |
-|------|----------------|---------------------|-------------|--------|
-| **Single region, small scale** | Optimal | Overkill | Unnecessary | Unnecessary |
-| **Multi-region, strong L7 needed** | Not possible | Optimal | Limited | Recommended |
-| **AWS-centric, simple connectivity** | Limited | Overkill | Optimal | Unnecessary |
-| **DR, automatic Failover** | Not possible | Optimal | Manual | Recommended |
-| **Cost optimization priority** | Optimal | Expensive | Recommended | Medium |
-| **Operational simplification** | Optimal | Complex | Optimal | Medium |
-| **Fine-grained traffic control** | Possible | Optimal | Limited | Recommended |
+| Scenario                             | Single-cluster | Multi-cluster Istio | VPC Lattice | Hybrid      |
+| ------------------------------------ | -------------- | ------------------- | ----------- | ----------- |
+| **Single region, small scale**       | Optimal        | Overkill            | Unnecessary | Unnecessary |
+| **Multi-region, strong L7 needed**   | Not possible   | Optimal             | Limited     | Recommended |
+| **AWS-centric, simple connectivity** | Limited        | Overkill            | Optimal     | Unnecessary |
+| **DR, automatic Failover**           | Not possible   | Optimal             | Manual      | Recommended |
+| **Cost optimization priority**       | Optimal        | Expensive           | Recommended | Medium      |
+| **Operational simplification**       | Optimal        | Complex             | Optimal     | Medium      |
+| **Fine-grained traffic control**     | Possible       | Optimal             | Limited     | Recommended |
 
 ### Comparison of Each Solution
 
 #### Single-cluster Istio
 
 **Pros**:
-- Simplest management
-- Low cost
-- Fast debugging
-- All Istio features available
+
+* Simplest management
+* Low cost
+* Fast debugging
+* All Istio features available
 
 **Cons**:
-- Single point of failure
-- Complete service outage on regional failure
-- No geographic distribution possible
+
+* Single point of failure
+* Complete service outage on regional failure
+* No geographic distribution possible
 
 **Suitable when**:
-- Single region service
-- Small team (<50 people)
-- High availability not essential
+
+* Single region service
+* Small team (<50 people)
+* High availability not essential
 
 #### Multi-cluster Istio
 
 **Pros**:
-- Complete geographic distribution
-- Automatic DR and Failover
-- All L7 features (Retry, Timeout, Circuit Breaker)
-- Fine-grained traffic control
-- Unified observability
+
+* Complete geographic distribution
+* Automatic DR and Failover
+* All L7 features (Retry, Timeout, Circuit Breaker)
+* Fine-grained traffic control
+* Unified observability
 
 **Cons**:
-- High operational complexity
-- East-West Gateway management required
-- Cross-region data transfer costs
-- Difficult debugging
+
+* High operational complexity
+* East-West Gateway management required
+* Cross-region data transfer costs
+* Difficult debugging
 
 **Suitable when**:
-- Global services
-- Strong DR needed
-- Fine-grained L7 control essential
+
+* Global services
+* Strong DR needed
+* Fine-grained L7 control essential
 
 #### AWS VPC Lattice
 
 **Pros**:
-- AWS fully managed
-- Simple setup
-- Low operational burden
-- Safe cross-VPC connectivity
-- Cost effective
+
+* AWS fully managed
+* Simple setup
+* Low operational burden
+* Safe cross-VPC connectivity
+* Cost effective
 
 **Cons**:
-- Limited L7 features (no Retry, Circuit Breaker)
-- AWS lock-in
-- No fine-grained traffic control
-- Lacks Istio observability
+
+* Limited L7 features (no Retry, Circuit Breaker)
+* AWS lock-in
+* No fine-grained traffic control
+* Lacks Istio observability
 
 **Suitable when**:
-- AWS-centric architecture
-- Only simple service connectivity needed
-- Operational simplification priority
+
+* AWS-centric architecture
+* Only simple service connectivity needed
+* Operational simplification priority
 
 ## Istio vs AWS VPC Lattice
 
 ### Feature Comparison
 
-| Feature | Istio Multi-cluster | AWS VPC Lattice | Hybrid |
-|------|---------------------|-----------------|--------|
-| **Traffic Routing** | |||
-| Header-based routing | Fully supported | Limited | Istio handles |
-| Weighted routing | Supported | Supported | Both possible |
-| Path-based routing | Supported | Supported | Both possible |
-| **Resilience** | |||
-| Retry | Fine-grained control | Not supported | Istio handles |
-| Timeout | Fine-grained control | Basic only | Istio handles |
-| Circuit Breaker | Supported | Not supported | Istio handles |
-| **Security** | |||
-| mTLS | Automatic | Supported | Both |
-| AuthN/AuthZ | Fine-grained policies | IAM only | Istio handles |
-| **Observability** | |||
-| Distributed tracing | Jaeger/Zipkin | Limited | Istio handles |
-| Metrics | Detailed | Basic only | Istio handles |
-| **Operations** | |||
-| Management complexity | High | Low | Medium |
-| Cost | High | Low | Medium |
-| AWS integration | Manual | Native | Good |
+| Feature               | Istio Multi-cluster   | AWS VPC Lattice | Hybrid        |
+| --------------------- | --------------------- | --------------- | ------------- |
+| **Traffic Routing**   |                       |                 |               |
+| Header-based routing  | Fully supported       | Limited         | Istio handles |
+| Weighted routing      | Supported             | Supported       | Both possible |
+| Path-based routing    | Supported             | Supported       | Both possible |
+| **Resilience**        |                       |                 |               |
+| Retry                 | Fine-grained control  | Not supported   | Istio handles |
+| Timeout               | Fine-grained control  | Basic only      | Istio handles |
+| Circuit Breaker       | Supported             | Not supported   | Istio handles |
+| **Security**          |                       |                 |               |
+| mTLS                  | Automatic             | Supported       | Both          |
+| AuthN/AuthZ           | Fine-grained policies | IAM only        | Istio handles |
+| **Observability**     |                       |                 |               |
+| Distributed tracing   | Jaeger/Zipkin         | Limited         | Istio handles |
+| Metrics               | Detailed              | Basic only      | Istio handles |
+| **Operations**        |                       |                 |               |
+| Management complexity | High                  | Low             | Medium        |
+| Cost                  | High                  | Low             | Medium        |
+| AWS integration       | Manual                | Native          | Good          |
 
 ### Architecture Pattern Comparison
 
@@ -388,14 +408,16 @@ flowchart TB
 ```
 
 **Pros**:
-- Full Istio features
-- Unified observability
-- Fine-grained control
+
+* Full Istio features
+* Unified observability
+* Fine-grained control
 
 **Cons**:
-- East-West Gateway management required
-- High complexity
-- Cross-region data transfer costs
+
+* East-West Gateway management required
+* High complexity
+* Cross-region data transfer costs
 
 #### Pattern 2: VPC Lattice Only
 
@@ -430,14 +452,16 @@ flowchart TB
 ```
 
 **Pros**:
-- AWS fully managed
-- Simple setup
-- Low operational burden
+
+* AWS fully managed
+* Simple setup
+* Low operational burden
 
 **Cons**:
-- Cannot use Istio features
-- Limited traffic control
-- Not Kubernetes native
+
+* Cannot use Istio features
+* Limited traffic control
+* Not Kubernetes native
 
 #### Pattern 3: Hybrid (Recommended)
 
@@ -484,27 +508,31 @@ flowchart TB
 ```
 
 **Pros**:
-- Intra-cluster: All advanced Istio features (Retry, Circuit Breaker, fine-grained routing)
-- Cross-cluster: Simple VPC Lattice management and stability
-- Reduced operational complexity (no East-West Gateway)
-- Cost optimization (minimize cross-region traffic)
+
+* Intra-cluster: All advanced Istio features (Retry, Circuit Breaker, fine-grained routing)
+* Cross-cluster: Simple VPC Lattice management and stability
+* Reduced operational complexity (no East-West Gateway)
+* Cost optimization (minimize cross-region traffic)
 
 **Cons**:
-- Need to understand two technology stacks
-- Cross-cluster limited to Lattice features
+
+* Need to understand two technology stacks
+* Cross-cluster limited to Lattice features
 
 **Suitable when**:
-- AWS environment
-- Complex traffic control needed intra-cluster
-- Only simple connectivity needed cross-cluster
+
+* AWS environment
+* Complex traffic control needed intra-cluster
+* Only simple connectivity needed cross-cluster
 
 ## Multi-cluster Overview
 
 With Multi-cluster Service Mesh you can:
-- Multi-region deployment
-- Disaster Recovery (DR)
-- Environment separation (dev/staging/prod)
-- Cross-cluster service discovery and communication
+
+* Multi-region deployment
+* Disaster Recovery (DR)
+* Environment separation (dev/staging/prod)
+* Cross-cluster service discovery and communication
 
 ## Topology
 
@@ -539,10 +567,11 @@ flowchart TB
 ```
 
 **Characteristics**:
-- Single Control Plane (Primary)
-- Multiple Data Planes (Remote)
-- Simple management
-- Single point of failure (Primary)
+
+* Single Control Plane (Primary)
+* Multiple Data Planes (Remote)
+* Simple management
+* Single point of failure (Primary)
 
 ### Multi-Primary
 
@@ -571,10 +600,11 @@ flowchart TB
 ```
 
 **Characteristics**:
-- Multiple Control Planes
-- High availability
-- Complex management
-- Regional autonomy
+
+* Multiple Control Planes
+* High availability
+* Complex management
+* Regional autonomy
 
 ## Primary-Remote Setup
 
@@ -868,15 +898,17 @@ sequenceDiagram
 ### Pros and Considerations
 
 **Pros**:
-- Intra-cluster: All Istio features (Retry, Circuit Breaker, fine-grained routing)
-- Cross-cluster: Simple VPC Lattice management
-- No East-West Gateway needed -> Reduced operational burden
-- AWS native integration
+
+* Intra-cluster: All Istio features (Retry, Circuit Breaker, fine-grained routing)
+* Cross-cluster: Simple VPC Lattice management
+* No East-West Gateway needed -> Reduced operational burden
+* AWS native integration
 
 **Considerations**:
-- Cross-cluster traffic limited to VPC Lattice features
-- VPC Lattice cannot finely control Retry, Timeout
-- Istio distributed tracing breaks at cluster boundaries (traced independently in each cluster)
+
+* Cross-cluster traffic limited to VPC Lattice features
+* VPC Lattice cannot finely control Retry, Timeout
+* Istio distributed tracing breaks at cluster boundaries (traced independently in each cluster)
 
 ## Practical Examples
 
@@ -935,10 +967,11 @@ flowchart TB
 ```
 
 **Decision**:
-- **Intra-cluster (Frontend <-> Cart <-> Order)**: Use Istio
-  - Reason: Frequent calls, complex routing, Circuit Breaker needed
-- **Cross-cluster (Order -> Payment)**: Use VPC Lattice
-  - Reason: Relatively simple calls, leverage AWS IAM authentication, simple management
+
+* **Intra-cluster (Frontend <-> Cart <-> Order)**: Use Istio
+  * Reason: Frequent calls, complex routing, Circuit Breaker needed
+* **Cross-cluster (Order -> Payment)**: Use VPC Lattice
+  * Reason: Relatively simple calls, leverage AWS IAM authentication, simple management
 
 #### Configuration Example
 
@@ -1129,41 +1162,44 @@ aws route53 change-resource-record-sets \
 
 ### Performance Comparison
 
-| Metric | Single-cluster | Multi-cluster Istio | Hybrid (Istio + Lattice) |
-|--------|----------------|---------------------|--------------------------|
-| **Intra-cluster latency** | ~2ms | ~2ms | ~2ms |
-| **Cross-cluster latency** | N/A | +5-10ms (East-West GW) | +3-5ms (VPC Lattice) |
-| **Throughput (RPS)** | 10,000 | 8,500 | 9,200 |
-| **CPU overhead** | +10% | +15% | +12% |
-| **Memory usage** | +50MB/pod | +70MB/pod | +55MB/pod |
+| Metric                    | Single-cluster | Multi-cluster Istio    | Hybrid (Istio + Lattice) |
+| ------------------------- | -------------- | ---------------------- | ------------------------ |
+| **Intra-cluster latency** | \~2ms          | \~2ms                  | \~2ms                    |
+| **Cross-cluster latency** | N/A            | +5-10ms (East-West GW) | +3-5ms (VPC Lattice)     |
+| **Throughput (RPS)**      | 10,000         | 8,500                  | 9,200                    |
+| **CPU overhead**          | +10%           | +15%                   | +12%                     |
+| **Memory usage**          | +50MB/pod      | +70MB/pod              | +55MB/pod                |
 
 ### Cost Comparison (Monthly, 2 clusters)
 
-| Item | Single-cluster | Multi-cluster Istio | Hybrid | VPC Lattice only |
-|------|----------------|---------------------|--------|---------------|
-| **Control Plane** | $50 | $100 (x2) | $100 (x2) | $0 |
-| **East-West Gateway** | $0 | $100 (NLB x2) | $0 | $0 |
-| **Cross-region transfer** | $0 | $200 (10TB) | $100 (5TB) | $100 (5TB) |
-| **VPC Lattice** | $0 | $0 | $30 | $50 |
-| **Operations personnel** | $10,000 | $15,000 | $12,000 | $8,000 |
-| **Total estimated cost** | ~$10,050 | ~$15,400 | ~$12,230 | ~$8,150 |
+| Item                      | Single-cluster | Multi-cluster Istio | Hybrid     | VPC Lattice only |
+| ------------------------- | -------------- | ------------------- | ---------- | ---------------- |
+| **Control Plane**         | $50            | $100 (x2)           | $100 (x2)  | $0               |
+| **East-West Gateway**     | $0             | $100 (NLB x2)       | $0         | $0               |
+| **Cross-region transfer** | $0             | $200 (10TB)         | $100 (5TB) | $100 (5TB)       |
+| **VPC Lattice**           | $0             | $0                  | $30        | $50              |
+| **Operations personnel**  | $10,000        | $15,000             | $12,000    | $8,000           |
+| **Total estimated cost**  | \~$10,050      | \~$15,400           | \~$12,230  | \~$8,150         |
 
 **Cost saving tips**:
-- Cross-region transfer costs can be reduced with VPC Peering
-- VPC Lattice is throughput-based billing -> traffic optimization essential
-- 90% resource overhead reduction with Ambient Mode
+
+* Cross-region transfer costs can be reduced with VPC Peering
+* VPC Lattice is throughput-based billing -> traffic optimization essential
+* 90% resource overhead reduction with Ambient Mode
 
 ### ROI Analysis
 
 **Multi-cluster Istio investment value**:
-- Strongly recommended when downtime cost > $1,000/hour
-- Recommended when global customer experience is important
-- Excessive investment for small startups
+
+* Strongly recommended when downtime cost > $1,000/hour
+* Recommended when global customer experience is important
+* Excessive investment for small startups
 
 **Hybrid approach sweet spot**:
-- AWS-centric architecture
-- Complex logic intra-cluster
-- Simple connectivity cross-cluster
+
+* AWS-centric architecture
+* Complex logic intra-cluster
+* Simple connectivity cross-cluster
 
 ## Troubleshooting
 
@@ -1183,35 +1219,36 @@ kubectl logs -n istio-system -l app=istiod --context="${CTX_CLUSTER1}"
 
 ### Official Documentation
 
-- [Istio Multi-cluster](https://istio.io/latest/docs/setup/install/multicluster/)
-- [Multi-Primary](https://istio.io/latest/docs/setup/install/multicluster/multi-primary/)
-- [Primary-Remote](https://istio.io/latest/docs/setup/install/multicluster/primary-remote/)
-- [AWS VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
-- [AWS Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/)
+* [Istio Multi-cluster](https://istio.io/latest/docs/setup/install/multicluster/)
+* [Multi-Primary](https://istio.io/latest/docs/setup/install/multicluster/multi-primary/)
+* [Primary-Remote](https://istio.io/latest/docs/setup/install/multicluster/primary-remote/)
+* [AWS VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
+* [AWS Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/)
 
 ### Blogs and Case Studies
 
-- [Tetrate - Multi-cluster Istio](https://tetrate.io/blog/multicluster-istio/)
-- [Solo.io - Istio Multi-cluster Best Practices](https://www.solo.io/blog/istio-multicluster/)
+* [Tetrate - Multi-cluster Istio](https://tetrate.io/blog/multicluster-istio/)
+* [Solo.io - Istio Multi-cluster Best Practices](https://www.solo.io/blog/istio-multicluster/)
 
 ### Related Documents
 
-- [Ambient Mode](01-ambient-mode.md) - Resource optimization
-- [mTLS](../security/01-mtls.md) - Secure cross-cluster communication
-- [VPC Lattice](../../networking/02-vpc-lattice.md) - AWS managed service networking
+* [Ambient Mode](01-ambient-mode.md) - Resource optimization
+* [mTLS](../security/01-mtls.md) - Secure cross-cluster communication
+* [VPC Lattice](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/networking/02-vpc-lattice.md) - AWS managed service networking
 
 ## Summary
 
 Multi-cluster Service Mesh is powerful but increases complexity and cost. Decision guide:
 
-| Choice | Suitable when | Key pros | Key cons |
-|------|------------|-----------|----------|
-| **Single-cluster** | Single region, small scale | Simple management, low cost | Single point of failure, no geographic distribution |
-| **Multi-cluster Istio** | Global services, strong L7 needed | Full control, all Istio features | High complexity, high cost |
-| **VPC Lattice** | AWS-centric, simple connectivity | AWS managed, low operational burden | Limited Istio features, AWS lock-in |
-| **Hybrid** | AWS environment, complex internal + simple external | Balanced complexity and features | Need to understand two technology stacks |
+| Choice                  | Suitable when                                       | Key pros                            | Key cons                                            |
+| ----------------------- | --------------------------------------------------- | ----------------------------------- | --------------------------------------------------- |
+| **Single-cluster**      | Single region, small scale                          | Simple management, low cost         | Single point of failure, no geographic distribution |
+| **Multi-cluster Istio** | Global services, strong L7 needed                   | Full control, all Istio features    | High complexity, high cost                          |
+| **VPC Lattice**         | AWS-centric, simple connectivity                    | AWS managed, low operational burden | Limited Istio features, AWS lock-in                 |
+| **Hybrid**              | AWS environment, complex internal + simple external | Balanced complexity and features    | Need to understand two technology stacks            |
 
 **Recommended approach**:
+
 1. Start with Single-cluster
 2. When multi-region needed -> Consider Hybrid (Istio + VPC Lattice)
 3. When strong L7 control essential -> Multi-cluster Istio

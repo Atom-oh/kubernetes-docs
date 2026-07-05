@@ -1,18 +1,19 @@
 # AWS Controllers for Kubernetes (ACK)
 
 ## Table of Contents
-- [Introduction](#introduction)
-- [Architecture](#architecture)
-- [Installation and Configuration](#installation-and-configuration)
-- [Supported AWS Services](#supported-aws-services)
-- [The Origins and Evolution of ACK](#the-origins-and-evolution-of-ack)
-- [Resource Creation Examples](#resource-creation-examples)
-- [Resource Management](#resource-management)
-- [Security Considerations](#security-considerations)
-- [Monitoring and Logging](#monitoring-and-logging)
-- [Best Practices](#best-practices)
-- [Troubleshooting](#troubleshooting)
-- [Conclusion](#conclusion)
+
+* [Introduction](02-ack.md#introduction)
+* [Architecture](02-ack.md#architecture)
+* [Installation and Configuration](02-ack.md#installation-and-configuration)
+* [Supported AWS Services](02-ack.md#supported-aws-services)
+* [The Origins and Evolution of ACK](02-ack.md#the-origins-and-evolution-of-ack)
+* [Resource Creation Examples](02-ack.md#resource-creation-examples)
+* [Resource Management](02-ack.md#resource-management)
+* [Security Considerations](02-ack.md#security-considerations)
+* [Monitoring and Logging](02-ack.md#monitoring-and-logging)
+* [Best Practices](02-ack.md#best-practices)
+* [Troubleshooting](02-ack.md#troubleshooting)
+* [Conclusion](02-ack.md#conclusion)
 
 ## Introduction
 
@@ -20,29 +21,27 @@ AWS Controllers for Kubernetes (ACK) is a project that enables Kubernetes users 
 
 ### Key Benefits of ACK
 
-- **Unified Experience**: Manage Kubernetes and AWS resources with the same tools and workflows
-- **GitOps Support**: Define AWS resources as code and manage them in Git repositories
-- **Declarative Configuration**: Define desired state and let the controller reconcile actual state
-- **Kubernetes Native Approach**: Use standard Kubernetes concepts and APIs
-- **Multi-Cluster Support**: Reference the same AWS resources from multiple clusters
-- **IAM Integration**: Integration of Kubernetes service accounts with AWS IAM roles
+* **Unified Experience**: Manage Kubernetes and AWS resources with the same tools and workflows
+* **GitOps Support**: Define AWS resources as code and manage them in Git repositories
+* **Declarative Configuration**: Define desired state and let the controller reconcile actual state
+* **Kubernetes Native Approach**: Use standard Kubernetes concepts and APIs
+* **Multi-Cluster Support**: Reference the same AWS resources from multiple clusters
+* **IAM Integration**: Integration of Kubernetes service accounts with AWS IAM roles
 
 ### Comparison with Existing Approaches
 
-| Feature | ACK | AWS CloudFormation | Terraform | AWS SDK/CLI |
-|---------|-----|-------------------|-----------|-------------|
-| Interface | Kubernetes API | CloudFormation templates | HCL | Programming API/CLI |
-| Declarative | ✅ | ✅ | ✅ | ❌ |
-| State Management | Kubernetes etcd | CloudFormation stack | Terraform state | Manual management |
-| Drift Detection | ✅ | ✅ | ✅ | ❌ |
-| Kubernetes Integration | Native | Limited | Limited | Limited |
-| Supported Services | Limited (expanding) | Extensive | Extensive | All services |
+| Feature                | ACK                 | AWS CloudFormation       | Terraform       | AWS SDK/CLI         |
+| ---------------------- | ------------------- | ------------------------ | --------------- | ------------------- |
+| Interface              | Kubernetes API      | CloudFormation templates | HCL             | Programming API/CLI |
+| Declarative            | ✅                   | ✅                        | ✅               | ❌                   |
+| State Management       | Kubernetes etcd     | CloudFormation stack     | Terraform state | Manual management   |
+| Drift Detection        | ✅                   | ✅                        | ✅               | ❌                   |
+| Kubernetes Integration | Native              | Limited                  | Limited         | Limited             |
+| Supported Services     | Limited (expanding) | Extensive                | Extensive       | All services        |
 
 ## Architecture
 
 ACK is based on the Kubernetes operator pattern and provides controllers for each AWS service.
-
-![](../assets/ack_architecture.svg)
 
 ### Key Components
 
@@ -62,10 +61,10 @@ ACK is based on the Kubernetes operator pattern and provides controllers for eac
 
 ### Prerequisites
 
-- Kubernetes cluster (v1.16 or higher)
-- kubectl configured
-- AWS account and appropriate IAM permissions
-- Helm 3 (optional)
+* Kubernetes cluster (v1.16 or higher)
+* kubectl configured
+* AWS account and appropriate IAM permissions
+* Helm 3 (optional)
 
 ### Installation Methods
 
@@ -157,33 +156,33 @@ ACK provides controllers for various AWS services. Each service controller can b
 
 ### Currently Supported Services (as of July 2025)
 
-- Amazon API Gateway (apigatewayv2)
-- Amazon DynamoDB
-- Amazon ECR
-- Amazon EKS
-- Amazon ElastiCache
-- Amazon MemoryDB
-- Amazon MQ
-- Amazon RDS
-- Amazon S3
-- Amazon SageMaker
-- AWS IAM
-- AWS Lambda
-- AWS SNS
-- AWS SQS
-- Amazon EventBridge
-- Amazon MSK
-- Amazon OpenSearch Service
-- AWS ACM
-- AWS Route 53
+* Amazon API Gateway (apigatewayv2)
+* Amazon DynamoDB
+* Amazon ECR
+* Amazon EKS
+* Amazon ElastiCache
+* Amazon MemoryDB
+* Amazon MQ
+* Amazon RDS
+* Amazon S3
+* Amazon SageMaker
+* AWS IAM
+* AWS Lambda
+* AWS SNS
+* AWS SQS
+* Amazon EventBridge
+* Amazon MSK
+* Amazon OpenSearch Service
+* AWS ACM
+* AWS Route 53
 
 ### Service Controller Status
 
 Each service controller has one of the following states:
 
-- **Alpha**: Early development stage, API may change
-- **Beta**: Feature complete, stable but API may change
-- **GA (Generally Available)**: Ready for production use
+* **Alpha**: Early development stage, API may change
+* **Beta**: Feature complete, stable but API may change
+* **GA (Generally Available)**: Ready for production use
 
 Check the latest status at the [ACK GitHub Repository](https://github.com/aws-controllers-k8s/community).
 
@@ -202,10 +201,10 @@ AWS resource management has evolved as follows:
 
 Limitations of existing approaches:
 
-- **Tool Separation**: Dual management burden of operating Terraform/CloudFormation and kubectl separately
-- **State Inconsistency**: IaC tool state and Kubernetes cluster state are separated, causing potential drift
-- **GitOps Integration Difficulty**: Challenging to manage AWS resources with GitOps tools like ArgoCD/Flux
-- **Team Experience Fragmentation**: Infrastructure and application teams using different tools and workflows
+* **Tool Separation**: Dual management burden of operating Terraform/CloudFormation and kubectl separately
+* **State Inconsistency**: IaC tool state and Kubernetes cluster state are separated, causing potential drift
+* **GitOps Integration Difficulty**: Challenging to manage AWS resources with GitOps tools like ArgoCD/Flux
+* **Team Experience Fragmentation**: Infrastructure and application teams using different tools and workflows
 
 ACK addresses these issues by enabling unified management of AWS infrastructure and applications through a single Kubernetes control plane.
 
@@ -213,9 +212,9 @@ ACK addresses these issues by enabling unified management of AWS infrastructure 
 
 For detailed examples of creating AWS resources with ACK, see the following documents:
 
-- [S3 and IAM](./ack/01-s3-iam.md)
-- [SQS and SNS](./ack/02-sqs-sns.md)
-- [ELBv2, Route 53, RDS (NLB + Aurora PostgreSQL)](./ack/03-elbv2-route53-rds.md)
+* [S3 and IAM](ack/01-s3-iam.md)
+* [SQS and SNS](ack/02-sqs-sns.md)
+* [ELBv2, Route 53, RDS (NLB + Aurora PostgreSQL)](ack/03-elbv2-route53-rds.md)
 
 ## Resource Management
 
@@ -398,9 +397,9 @@ spec:
 
 Key metrics:
 
-- `ack_reconcile_success_total`: Number of successful reconciliations
-- `ack_reconcile_failure_total`: Number of failed reconciliations
-- `ack_api_call_duration_seconds`: AWS API call latency
+* `ack_reconcile_success_total`: Number of successful reconciliations
+* `ack_reconcile_failure_total`: Number of failed reconciliations
+* `ack_api_call_duration_seconds`: AWS API call latency
 
 ### AWS CloudTrail Integration
 
@@ -502,9 +501,10 @@ spec:
 **Symptom**: ACK resource is created but AWS resource is not created
 
 **Solution**:
-- Check controller logs
-- Verify IAM permissions
-- Check resource status and events
+
+* Check controller logs
+* Verify IAM permissions
+* Check resource status and events
 
 ```bash
 kubectl logs -n ack-system -l app.kubernetes.io/name=ack-s3-controller
@@ -516,17 +516,19 @@ kubectl describe bucket my-sample-bucket
 **Symptom**: "AccessDenied" error message
 
 **Solution**:
-- Verify IAM policies and roles
-- Check IRSA configuration
-- Review CloudTrail logs
+
+* Verify IAM policies and roles
+* Check IRSA configuration
+* Review CloudTrail logs
 
 #### 3. Resource Deletion Stuck
 
 **Symptom**: Resource stuck in "Terminating" state
 
 **Solution**:
-- Check dependencies
-- Remove finalizers (if necessary)
+
+* Check dependencies
+* Remove finalizers (if necessary)
 
 ```bash
 kubectl patch bucket my-sample-bucket -p '{"metadata":{"finalizers":[]}}' --type=merge
@@ -558,18 +560,18 @@ ACK continues to evolve, with support being added for more AWS services. Combine
 
 ### Next Steps
 
-- Build GitOps pipelines using ACK
-- Integrate multiple AWS service controllers
-- Extend custom resource definitions
-- Develop multi-account and multi-region strategies
+* Build GitOps pipelines using ACK
+* Integrate multiple AWS service controllers
+* Extend custom resource definitions
+* Develop multi-account and multi-region strategies
 
 ## References
 
-- [ACK Official Documentation](https://aws-controllers-k8s.github.io/community/)
-- [ACK GitHub Repository](https://github.com/aws-controllers-k8s/community)
-- [AWS Service Controller List](https://aws-controllers-k8s.github.io/community/docs/community/services/)
-- [ACK Design Principles](https://aws-controllers-k8s.github.io/community/docs/community/design/)
-- [EKS Workshop - ACK](https://www.eksworkshop.com/intermediate/290_ack/)
+* [ACK Official Documentation](https://aws-controllers-k8s.github.io/community/)
+* [ACK GitHub Repository](https://github.com/aws-controllers-k8s/community)
+* [AWS Service Controller List](https://aws-controllers-k8s.github.io/community/docs/community/services/)
+* [ACK Design Principles](https://aws-controllers-k8s.github.io/community/docs/community/design/)
+* [EKS Workshop - ACK](https://www.eksworkshop.com/intermediate/290_ack/)
 
 ## Quiz
 

@@ -1,7 +1,6 @@
 # Introduction to Kubernetes
 
-> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 11, 2026
+> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33 **Last Updated**: February 11, 2026
 
 Kubernetes (K8s) is an open-source container orchestration platform that automates the deployment, scaling, and management of containerized applications. This document explains the basic concepts, architecture, main components, and features of Kubernetes.
 
@@ -10,13 +9,15 @@ Kubernetes (K8s) is an open-source container orchestration platform that automat
 To follow along with the examples in this document, you will need the following tools and environment:
 
 ### Required Tools
-- **kubectl**: Command-line tool for interacting with Kubernetes clusters
-- **Container Runtime**: Docker, containerd, CRI-O, etc.
-- **minikube** or **kind**: Local Kubernetes cluster (for development and learning)
+
+* **kubectl**: Command-line tool for interacting with Kubernetes clusters
+* **Container Runtime**: Docker, containerd, CRI-O, etc.
+* **minikube** or **kind**: Local Kubernetes cluster (for development and learning)
 
 ### Installation Methods
 
 **kubectl Installation**:
+
 ```bash
 # macOS
 brew install kubectl
@@ -31,6 +32,7 @@ curl -LO "https://dl.k8s.io/release/v1.28.0/bin/windows/amd64/kubectl.exe"
 ```
 
 **minikube Installation**:
+
 ```bash
 # macOS
 brew install minikube
@@ -46,22 +48,24 @@ Invoke-WebRequest -OutFile 'c:\minikube\minikube.exe' -Uri 'https://github.com/k
 ```
 
 ### Starting a Local Cluster
+
 ```bash
 minikube start
 ```
 
 ## Table of Contents
-- [What is Kubernetes?](#what-is-kubernetes)
-- [History of Kubernetes](#history-of-kubernetes)
-- [Kubernetes Architecture](#kubernetes-architecture)
-- [Kubernetes Main Components](#kubernetes-main-components)
-- [Kubernetes Basic Objects](#kubernetes-basic-objects)
-- [Kubernetes Workload Resources](#kubernetes-workload-resources)
-- [Kubernetes Services and Networking](#kubernetes-services-and-networking)
-- [Kubernetes Storage](#kubernetes-storage)
-- [Kubernetes Configuration and Security](#kubernetes-configuration-and-security)
-- [Kubernetes vs Amazon EKS](#kubernetes-vs-amazon-eks)
-- [Getting Started with Kubernetes](#getting-started-with-kubernetes)
+
+* [What is Kubernetes?](04-kubernetes-introduction.md#what-is-kubernetes)
+* [History of Kubernetes](04-kubernetes-introduction.md#history-of-kubernetes)
+* [Kubernetes Architecture](04-kubernetes-introduction.md#kubernetes-architecture)
+* [Kubernetes Main Components](04-kubernetes-introduction.md#kubernetes-main-components)
+* [Kubernetes Basic Objects](04-kubernetes-introduction.md#kubernetes-basic-objects)
+* [Kubernetes Workload Resources](04-kubernetes-introduction.md#kubernetes-workload-resources)
+* [Kubernetes Services and Networking](04-kubernetes-introduction.md#kubernetes-services-and-networking)
+* [Kubernetes Storage](04-kubernetes-introduction.md#kubernetes-storage)
+* [Kubernetes Configuration and Security](04-kubernetes-introduction.md#kubernetes-configuration-and-security)
+* [Kubernetes vs Amazon EKS](04-kubernetes-introduction.md#kubernetes-vs-amazon-eks)
+* [Getting Started with Kubernetes](04-kubernetes-introduction.md#getting-started-with-kubernetes)
 
 ## What is Kubernetes?
 
@@ -80,23 +84,23 @@ Kubernetes means 'helmsman' or 'pilot' in Greek and is an open-source system tha
 
 ### Problems Kubernetes Solves
 
-- **Container Orchestration**: Efficiently manage hundreds or thousands of containers
-- **High Availability**: Ensure uninterrupted application operation
-- **Scalability**: Auto scaling based on traffic increase
-- **Disaster Recovery**: Automatic recovery on failures
-- **Resource Efficiency**: Efficiently utilize hardware resources
-- **Declarative Configuration**: Manage infrastructure as code
-- **Multi-cloud and Hybrid Cloud**: Consistent deployment and management across various environments
+* **Container Orchestration**: Efficiently manage hundreds or thousands of containers
+* **High Availability**: Ensure uninterrupted application operation
+* **Scalability**: Auto scaling based on traffic increase
+* **Disaster Recovery**: Automatic recovery on failures
+* **Resource Efficiency**: Efficiently utilize hardware resources
+* **Declarative Configuration**: Manage infrastructure as code
+* **Multi-cloud and Hybrid Cloud**: Consistent deployment and management across various environments
 
 ## History of Kubernetes
 
 ### Background
 
-- **2003-2013**: Google internally used a container orchestration system called Borg
-- **June 2014**: Google released Kubernetes as open source
-- **July 2015**: Kubernetes 1.0 released and donated to Cloud Native Computing Foundation (CNCF)
-- **2016-2017**: Major cloud providers launched managed Kubernetes services
-- **2018 and beyond**: Established as the de facto standard for container orchestration
+* **2003-2013**: Google internally used a container orchestration system called Borg
+* **June 2014**: Google released Kubernetes as open source
+* **July 2015**: Kubernetes 1.0 released and donated to Cloud Native Computing Foundation (CNCF)
+* **2016-2017**: Major cloud providers launched managed Kubernetes services
+* **2018 and beyond**: Established as the de facto standard for container orchestration
 
 ### Origin of the Name
 
@@ -112,33 +116,27 @@ Kubernetes follows a master-node architecture. Master nodes (control plane) mana
 
 ### Control Plane (Master) Components
 
-![Kubernetes Control Plane](../assets/kubernetes_control_plane.png)
-
 1. **kube-apiserver**: Frontend of the control plane that exposes the Kubernetes API
 2. **etcd**: Consistent and highly available key-value store for all cluster data
 3. **kube-scheduler**: Component that assigns pods to nodes
 4. **kube-controller-manager**: Component that runs controller processes
-   - Node Controller: Notification and response when nodes go down
-   - Replication Controller: Maintains correct number of pod replicas
-   - Endpoints Controller: Connects services and pods
-   - Service Account & Token Controller: Creates default accounts and API access tokens for new namespaces
+   * Node Controller: Notification and response when nodes go down
+   * Replication Controller: Maintains correct number of pod replicas
+   * Endpoints Controller: Connects services and pods
+   * Service Account & Token Controller: Creates default accounts and API access tokens for new namespaces
 5. **cloud-controller-manager**: Component containing cloud-specific control logic
-   - Node Controller: Checks with cloud provider if node has been deleted
-   - Route Controller: Sets up routes in cloud infrastructure
-   - Service Controller: Creates, updates, deletes cloud provider load balancers
-   - Volume Controller: Creates, attaches, mounts volumes
+   * Node Controller: Checks with cloud provider if node has been deleted
+   * Route Controller: Sets up routes in cloud infrastructure
+   * Service Controller: Creates, updates, deletes cloud provider load balancers
+   * Volume Controller: Creates, attaches, mounts volumes
 
 ### Node Components
-
-![Kubernetes Worker Node](../assets/kubernetes_worker_node.png)
 
 1. **kubelet**: Agent running on each node that ensures containers in pods are running
 2. **kube-proxy**: Network proxy running on each node that implements the Kubernetes Service concept
 3. **Container Runtime**: Software responsible for running containers (Docker, containerd, CRI-O, etc.)
 
 ### Full Architecture
-
-![Kubernetes Architecture](../assets/kubernetes_architecture.svg)
 
 ## Kubernetes Main Components
 
@@ -147,88 +145,97 @@ Kubernetes follows a master-node architecture. Master nodes (control plane) mana
 The API server is the frontend of the control plane that exposes the Kubernetes API. All internal and external requests are processed through the API server.
 
 **Key Functions**:
-- Provides REST API
-- Authentication and authorization
-- Request validation
-- Communication with etcd
-- Horizontally scalable
+
+* Provides REST API
+* Authentication and authorization
+* Request validation
+* Communication with etcd
+* Horizontally scalable
 
 ### etcd
 
 etcd is a consistent and highly available key-value store that stores all cluster data.
 
 **Key Features**:
-- Distributed system
-- Strong consistency
-- High availability
-- Secure data storage
-- Watch feature for monitoring changes
+
+* Distributed system
+* Strong consistency
+* High availability
+* Secure data storage
+* Watch feature for monitoring changes
 
 ### Scheduler (kube-scheduler)
 
 The scheduler is a control plane component that selects nodes to run newly created pods.
 
 **Scheduling Process**:
+
 1. **Filtering**: Identify nodes that can run the pod
 2. **Scoring**: Assign scores to suitable nodes
 3. **Binding**: Assign pod to optimal node
 
 **Considerations**:
-- Resource requirements (CPU, memory)
-- Hardware/software/policy constraints
-- Affinity/anti-affinity specifications
-- Data locality
-- Workload interference
+
+* Resource requirements (CPU, memory)
+* Hardware/software/policy constraints
+* Affinity/anti-affinity specifications
+* Data locality
+* Workload interference
 
 ### Controller Manager (kube-controller-manager)
 
 The controller manager is a control plane component that runs multiple controller processes.
 
 **Main Controllers**:
-- **Node Controller**: Monitor and respond to node state
-- **Replication Controller**: Maintain pod replica count
-- **Endpoints Controller**: Connect services and pods
-- **Service Account & Token Controller**: Create default accounts and API tokens for namespaces
-- **Job Controller**: Manage one-time tasks
-- **CronJob Controller**: Manage scheduled tasks
-- **DaemonSet Controller**: Ensure specific pods run on all nodes
-- **StatefulSet Controller**: Manage stateful applications
-- **PV Controller**: Manage persistent volumes
+
+* **Node Controller**: Monitor and respond to node state
+* **Replication Controller**: Maintain pod replica count
+* **Endpoints Controller**: Connect services and pods
+* **Service Account & Token Controller**: Create default accounts and API tokens for namespaces
+* **Job Controller**: Manage one-time tasks
+* **CronJob Controller**: Manage scheduled tasks
+* **DaemonSet Controller**: Ensure specific pods run on all nodes
+* **StatefulSet Controller**: Manage stateful applications
+* **PV Controller**: Manage persistent volumes
 
 ### Cloud Controller Manager (cloud-controller-manager)
 
 The cloud controller manager is a control plane component containing cloud-specific control logic.
 
 **Main Controllers**:
-- **Node Controller**: Check node state through cloud provider API
-- **Route Controller**: Set up routes in cloud environment
-- **Service Controller**: Create, update, delete cloud load balancers
-- **Volume Controller**: Create, attach, mount cloud storage volumes
+
+* **Node Controller**: Check node state through cloud provider API
+* **Route Controller**: Set up routes in cloud environment
+* **Service Controller**: Create, update, delete cloud load balancers
+* **Volume Controller**: Create, attach, mount cloud storage volumes
 
 ### kubelet
 
 kubelet is an agent running on each node that ensures containers in pods are running.
 
 **Key Functions**:
-- Run containers according to PodSpec
-- Report container status
-- Perform container health checks
-- Manage container lifecycle
-- Report node status
+
+* Run containers according to PodSpec
+* Report container status
+* Perform container health checks
+* Manage container lifecycle
+* Report node status
 
 ### kube-proxy
 
 kube-proxy is a network proxy running on each node that implements the Kubernetes Service concept.
 
 **Key Functions**:
-- Maintain network rules for service IPs and ports
-- Forward connections
-- Implement load balancing
+
+* Maintain network rules for service IPs and ports
+* Forward connections
+* Implement load balancing
 
 **Operating Modes**:
-- **userspace mode**: Run proxy in user space (legacy)
-- **iptables mode**: NAT implementation using Linux iptables (default)
-- **IPVS mode**: Uses Linux kernel's IP Virtual Server (high performance)
+
+* **userspace mode**: Run proxy in user space (legacy)
+* **iptables mode**: NAT implementation using Linux iptables (default)
+* **IPVS mode**: Uses Linux kernel's IP Virtual Server (high performance)
 
 ## Kubernetes Basic Objects
 
@@ -239,13 +246,15 @@ Kubernetes objects are persistent entities that represent the state of the clust
 A Pod is the smallest deployable unit in Kubernetes, representing a group of one or more containers. Containers in a pod share storage and network and are always scheduled together on the same node.
 
 **Key Features**:
-- Has unique IP address
-- Shared network namespace (same IP and port space)
-- Shared IPC namespace
-- Shared hostname
-- Localhost communication between containers possible
+
+* Has unique IP address
+* Shared network namespace (same IP and port space)
+* Shared IPC namespace
+* Shared hostname
+* Localhost communication between containers possible
 
 **Pod Example**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -275,12 +284,14 @@ spec:
 Namespaces provide a way to isolate resource groups within a single cluster. This is useful when multiple teams or projects share the same cluster.
 
 **Default Namespaces**:
-- **default**: Default namespace
-- **kube-system**: Namespace for objects created by the Kubernetes system
-- **kube-public**: Namespace for objects readable by all users
-- **kube-node-lease**: Namespace for node heartbeats
+
+* **default**: Default namespace
+* **kube-system**: Namespace for objects created by the Kubernetes system
+* **kube-public**: Namespace for objects readable by all users
+* **kube-node-lease**: Namespace for node heartbeats
 
 **Namespace Example**:
+
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -293,6 +304,7 @@ metadata:
 Labels are key-value pairs attached to objects, used to identify and select objects. Selectors provide a way to filter objects based on labels.
 
 **Labels Example**:
+
 ```yaml
 metadata:
   labels:
@@ -302,10 +314,12 @@ metadata:
 ```
 
 **Selector Types**:
-- **Equality-based**: `=`, `!=`
-- **Set-based**: `in`, `notin`, `exists`
+
+* **Equality-based**: `=`, `!=`
+* **Set-based**: `in`, `notin`, `exists`
 
 **Selector Example**:
+
 ```yaml
 selector:
   matchLabels:
@@ -320,6 +334,7 @@ selector:
 Annotations are key-value pairs that store non-identifying metadata about objects. Annotations are useful for storing information used by tools or libraries.
 
 **Annotations Example**:
+
 ```yaml
 metadata:
   annotations:
@@ -334,12 +349,14 @@ metadata:
 A node is a worker machine in a Kubernetes cluster that runs pods. A node can be a physical or virtual machine.
 
 **Node Status**:
-- **Addresses**: Hostname, Internal IP, External IP
-- **Conditions**: Ready, DiskPressure, MemoryPressure, PIDPressure, NetworkUnavailable
-- **Capacity**: CPU, Memory, Maximum pods
-- **Info**: Kernel version, Container runtime version, kubelet version
+
+* **Addresses**: Hostname, Internal IP, External IP
+* **Conditions**: Ready, DiskPressure, MemoryPressure, PIDPressure, NetworkUnavailable
+* **Capacity**: CPU, Memory, Maximum pods
+* **Info**: Kernel version, Container runtime version, kubelet version
 
 **Node Example**:
+
 ```yaml
 apiVersion: v1
 kind: Node
@@ -371,11 +388,13 @@ Workload resources are objects used to manage and run pods. These resources mana
 A ReplicaSet ensures that a specified number of pod replicas are always running. If pods fail or are deleted, the ReplicaSet automatically creates replacement pods.
 
 **Key Functions**:
-- Maintain specified number of pod replicas
-- Define pod template
-- Identify pods through selectors
+
+* Maintain specified number of pod replicas
+* Define pod template
+* Identify pods through selectors
 
 **ReplicaSet Example**:
+
 ```yaml
 apiVersion: apps/v1
 kind: ReplicaSet
@@ -405,12 +424,14 @@ spec:
 A Deployment abstracts ReplicaSets one level further, providing declarative updates for applications. Deployments provide features like rolling updates, rollbacks, and scaling.
 
 **Key Functions**:
-- Declarative application updates
-- Rolling updates and rollbacks
-- Deployment history management
-- Scaling
+
+* Declarative application updates
+* Rolling updates and rollbacks
+* Deployment history management
+* Scaling
 
 **Deployment Example**:
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -458,12 +479,14 @@ spec:
 A StatefulSet is a workload resource for applications that require state maintenance. It assigns unique identifiers to each pod and provides stable network identifiers and persistent storage.
 
 **Key Functions**:
-- Stable and unique network identifiers
-- Stable and persistent storage
-- Sequential deployment and scaling
-- Sequential updates
+
+* Stable and unique network identifiers
+* Stable and persistent storage
+* Sequential deployment and scaling
+* Sequential updates
 
 **StatefulSet Example**:
+
 ```yaml
 apiVersion: apps/v1
 kind: StatefulSet
@@ -511,12 +534,14 @@ spec:
 A DaemonSet ensures that a copy of a pod runs on all nodes (or specific nodes). When nodes are added to the cluster, pods are automatically added, and when nodes are removed, pods are also removed.
 
 **Key Use Cases**:
-- Log collectors (Fluentd, Logstash)
-- Monitoring agents (Prometheus Node Exporter)
-- Network plugins (Calico, Cilium)
-- Storage daemons (Ceph)
+
+* Log collectors (Fluentd, Logstash)
+* Monitoring agents (Prometheus Node Exporter)
+* Network plugins (Calico, Cilium)
+* Storage daemons (Ceph)
 
 **DaemonSet Example**:
+
 ```yaml
 apiVersion: apps/v1
 kind: DaemonSet
@@ -558,12 +583,14 @@ spec:
 A Job creates one or more pods and continues execution until a specified number of pods successfully terminate. Suitable for batch processing tasks.
 
 **Key Functions**:
-- One-time task execution
-- Parallel task execution
-- Guarantee task completion
-- Retry on failure
+
+* One-time task execution
+* Parallel task execution
+* Guarantee task completion
+* Retry on failure
 
 **Job Example**:
+
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -587,12 +614,14 @@ spec:
 A CronJob runs Jobs periodically according to a specified schedule. Works similarly to Linux cron jobs.
 
 **Key Functions**:
-- Task execution according to schedule
-- Cron expression support
-- Concurrency policy settings
-- History limits
+
+* Task execution according to schedule
+* Cron expression support
+* Concurrency policy settings
+* History limits
 
 **CronJob Example**:
+
 ```yaml
 apiVersion: batch/v1
 kind: CronJob
@@ -615,6 +644,7 @@ spec:
               value: "db.example.com"
           restartPolicy: OnFailure
 ```
+
 ## Kubernetes Services and Networking
 
 The Kubernetes networking model is based on the premise that all pods have unique IP addresses and can communicate with each other without special configuration. Services provide stable endpoints for sets of pods.
@@ -624,15 +654,14 @@ The Kubernetes networking model is based on the premise that all pods have uniqu
 A Service provides a single endpoint and load balancing for a set of pods. Since pods are dynamically created and deleted, services provide stable network addresses despite these changes.
 
 **Service Types**:
-- **ClusterIP**: Service accessible only within the cluster (default)
-- **NodePort**: Accessible externally through each node's IP and specific port
-- **LoadBalancer**: Accessible externally using cloud provider's load balancer
-- **ExternalName**: Creates CNAME record for external service
 
-
-![Kubernetes Services](../assets/kubernetes_services.svg)
+* **ClusterIP**: Service accessible only within the cluster (default)
+* **NodePort**: Accessible externally through each node's IP and specific port
+* **LoadBalancer**: Accessible externally using cloud provider's load balancer
+* **ExternalName**: Creates CNAME record for external service
 
 **Service Example**:
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -648,6 +677,7 @@ spec:
 ```
 
 **NodePort Service Example**:
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -664,6 +694,7 @@ spec:
 ```
 
 **LoadBalancer Service Example**:
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -685,12 +716,14 @@ spec:
 An Ingress is an API object that manages HTTP and HTTPS routing from outside the cluster to internal services. Ingress provides load balancing, SSL termination, name-based virtual hosting, etc.
 
 **Ingress Controllers**:
-- **NGINX Ingress Controller**: NGINX-based ingress controller
-- **AWS ALB Ingress Controller**: AWS Application Load Balancer-based ingress controller
-- **Traefik**: Cloud-native edge router
-- **Istio Ingress**: Service mesh-based ingress
+
+* **NGINX Ingress Controller**: NGINX-based ingress controller
+* **AWS ALB Ingress Controller**: AWS Application Load Balancer-based ingress controller
+* **Traefik**: Cloud-native edge router
+* **Istio Ingress**: Service mesh-based ingress
 
 **Ingress Example**:
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -726,16 +759,17 @@ spec:
 
 ### NetworkPolicy
 
-NetworkPolicy provides a way to control communication between pods. By default, all pods can communicate with each other, but you can restrict this using network policies.
-![Kubernetes Namespaces](../assets/kubernetes_namespaces.svg)
+NetworkPolicy provides a way to control communication between pods. By default, all pods can communicate with each other, but you can restrict this using network policies.&#x20;
 
 **Key Functions**:
-- Control communication between pods
-- Control communication between namespaces
-- Control ingress (incoming) and egress (outgoing) traffic
-- Port and protocol-based filtering
+
+* Control communication between pods
+* Control communication between namespaces
+* Control ingress (incoming) and egress (outgoing) traffic
+* Port and protocol-based filtering
 
 **NetworkPolicy Example**:
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -772,10 +806,12 @@ spec:
 Kubernetes provides a DNS service within the cluster to support service discovery. CoreDNS is used by default.
 
 **DNS Name Format**:
-- **Service**: `<service-name>.<namespace>.svc.cluster.local`
-- **Pod**: `<pod-IP-address-dots-replaced>.pod.cluster.local`
+
+* **Service**: `<service-name>.<namespace>.svc.cluster.local`
+* **Pod**: `<pod-IP-address-dots-replaced>.pod.cluster.local`
 
 **DNS Configuration Example**:
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -806,11 +842,13 @@ data:
 A service mesh is an infrastructure layer that manages communication between microservices. Service meshes provide traffic management, security, and observability.
 
 **Major Service Meshes**:
-- **Istio**: Most widely used service mesh
-- **Linkerd**: Lightweight service mesh
-- **AWS App Mesh**: AWS managed service mesh
+
+* **Istio**: Most widely used service mesh
+* **Linkerd**: Lightweight service mesh
+* **AWS App Mesh**: AWS managed service mesh
 
 **Istio VirtualService Example**:
+
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -833,24 +871,25 @@ spec:
         host: reviews
         subset: v1
 ```
+
 ## Kubernetes Storage
 
 Kubernetes provides various storage options for containerized applications. It provides ways to persist data even when pods are restarted or rescheduled.
-
-![Kubernetes Storage](../assets/kubernetes_storage.svg)
 
 ### Volume
 
 A volume is a directory that can be mounted to containers in a pod, persisting data for the pod's lifecycle. Volumes are also used to share data between containers in a pod.
 
 **Main Volume Types**:
-- **emptyDir**: Starts as empty directory, deleted when pod is deleted
-- **hostPath**: Mount from host node's file system to pod
-- **configMap**: Mount ConfigMap as volume
-- **secret**: Mount Secret as volume
-- **persistentVolumeClaim**: Mount persistent volume to pod
+
+* **emptyDir**: Starts as empty directory, deleted when pod is deleted
+* **hostPath**: Mount from host node's file system to pod
+* **configMap**: Mount ConfigMap as volume
+* **secret**: Mount Secret as volume
+* **persistentVolumeClaim**: Mount persistent volume to pod
 
 **emptyDir Volume Example**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -873,11 +912,13 @@ spec:
 A PersistentVolume is an API object representing a storage resource in the cluster. It exists independently of pods and is provisioned by cluster administrators.
 
 **Access Modes**:
-- **ReadWriteOnce (RWO)**: Can be mounted read/write by a single node
-- **ReadOnlyMany (ROX)**: Can be mounted read-only by multiple nodes
-- **ReadWriteMany (RWX)**: Can be mounted read/write by multiple nodes
+
+* **ReadWriteOnce (RWO)**: Can be mounted read/write by a single node
+* **ReadOnlyMany (ROX)**: Can be mounted read-only by multiple nodes
+* **ReadWriteMany (RWX)**: Can be mounted read/write by multiple nodes
 
 **PersistentVolume Example**:
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -900,6 +941,7 @@ spec:
 A PersistentVolumeClaim is an API object representing a user's storage request. Pods access PVs through PVCs.
 
 **PersistentVolumeClaim Example**:
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -915,6 +957,7 @@ spec:
 ```
 
 **Pod using PVC Example**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -938,6 +981,7 @@ spec:
 A StorageClass describes "classes" of storage provided by administrators. Different service quality levels, backup policies, or arbitrary policies determined by cluster administrators can be provided.
 
 **StorageClass Example**:
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -956,6 +1000,7 @@ allowVolumeExpansion: true
 Dynamic provisioning is a feature that automatically creates PVs when PVCs are requested using storage classes.
 
 **Dynamic Provisioning Example**:
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -975,13 +1020,15 @@ spec:
 CSI provides a standard interface between Kubernetes and storage systems. This allows storage providers to develop their own storage drivers without modifying Kubernetes code.
 
 **Major CSI Drivers**:
-- **AWS EBS CSI Driver**: Amazon EBS volume management
-- **AWS EFS CSI Driver**: Amazon EFS file system management
-- **AWS FSx for Lustre CSI Driver**: FSx for Lustre file system management
-- **GCE PD CSI Driver**: Google Compute Engine persistent disk management
-- **Azure Disk CSI Driver**: Azure disk management
+
+* **AWS EBS CSI Driver**: Amazon EBS volume management
+* **AWS EFS CSI Driver**: Amazon EFS file system management
+* **AWS FSx for Lustre CSI Driver**: FSx for Lustre file system management
+* **GCE PD CSI Driver**: Google Compute Engine persistent disk management
+* **Azure Disk CSI Driver**: Azure disk management
 
 **CSI Driver Deployment Example**:
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -994,6 +1041,7 @@ parameters:
   encrypted: "true"
 volumeBindingMode: WaitForFirstConsumer
 ```
+
 ## Kubernetes Configuration and Security
 
 Kubernetes provides various objects and mechanisms for managing application configuration and security.
@@ -1003,6 +1051,7 @@ Kubernetes provides various objects and mechanisms for managing application conf
 A ConfigMap is an API object that stores configuration data as key-value pairs. Pods can use ConfigMap data as environment variables, command-line arguments, or configuration files.
 
 **ConfigMap Example**:
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -1018,6 +1067,7 @@ data:
 ```
 
 **Pod using ConfigMap Example**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1047,15 +1097,17 @@ spec:
 A Secret is an API object that stores sensitive information such as passwords, tokens, and keys. Similar to ConfigMap but designed for sensitive data.
 
 **Secret Types**:
-- **Opaque**: Arbitrary user-defined data (default)
-- **kubernetes.io/service-account-token**: Service account token
-- **kubernetes.io/dockercfg**: Serialized ~/.dockercfg file
-- **kubernetes.io/dockerconfigjson**: Serialized ~/.docker/config.json file
-- **kubernetes.io/basic-auth**: Credentials for basic authentication
-- **kubernetes.io/ssh-auth**: Credentials for SSH authentication
-- **kubernetes.io/tls**: Data for TLS client or server
+
+* **Opaque**: Arbitrary user-defined data (default)
+* **kubernetes.io/service-account-token**: Service account token
+* **kubernetes.io/dockercfg**: Serialized \~/.dockercfg file
+* **kubernetes.io/dockerconfigjson**: Serialized \~/.docker/config.json file
+* **kubernetes.io/basic-auth**: Credentials for basic authentication
+* **kubernetes.io/ssh-auth**: Credentials for SSH authentication
+* **kubernetes.io/tls**: Data for TLS client or server
 
 **Secret Example**:
+
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -1068,6 +1120,7 @@ data:
 ```
 
 **Pod using Secret Example**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1095,12 +1148,14 @@ spec:
 RBAC is a mechanism for controlling access to the Kubernetes API. It grants specific permissions to users or service accounts using Roles and RoleBindings.
 
 **Main RBAC Objects**:
-- **Role**: Defines a set of permissions within a namespace
-- **ClusterRole**: Defines a set of permissions cluster-wide
-- **RoleBinding**: Binds a role to users, groups, or service accounts
-- **ClusterRoleBinding**: Binds a cluster role to users, groups, or service accounts
+
+* **Role**: Defines a set of permissions within a namespace
+* **ClusterRole**: Defines a set of permissions cluster-wide
+* **RoleBinding**: Binds a role to users, groups, or service accounts
+* **ClusterRoleBinding**: Binds a cluster role to users, groups, or service accounts
 
 **Role Example**:
+
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -1114,6 +1169,7 @@ rules:
 ```
 
 **RoleBinding Example**:
+
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -1135,6 +1191,7 @@ roleRef:
 A ServiceAccount provides an identity for processes running inside a pod. Pods use service accounts to communicate with the Kubernetes API.
 
 **ServiceAccount Example**:
+
 ```yaml
 apiVersion: v1
 kind: ServiceAccount
@@ -1144,6 +1201,7 @@ metadata:
 ```
 
 **Pod using ServiceAccount Example**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1161,6 +1219,7 @@ spec:
 NetworkPolicy provides a way to control communication between pods. By default, all pods can communicate with each other, but you can restrict this using network policies.
 
 **NetworkPolicy Example**:
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -1197,6 +1256,7 @@ spec:
 PodSecurityPolicy defines security-related conditions for pod creation and updates. This has been deprecated since Kubernetes 1.21 and replaced by Pod Security Standards.
 
 **Pod SecurityContext Example**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1226,6 +1286,7 @@ Pod Security Standards provide three policy levels that define security requirem
 3. **Restricted**: Strong restrictions applying best practices
 
 **Pod Security Standards Application Example**:
+
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -1236,24 +1297,25 @@ metadata:
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn: restricted
 ```
+
 ## Kubernetes vs Amazon EKS
 
 Amazon EKS (Elastic Kubernetes Service) is a managed Kubernetes service provided by AWS. EKS provides all the basic features of Kubernetes while adding AWS service integration and management convenience.
 
 ### Key Differences
 
-| Characteristic | Self-managed Kubernetes | Amazon EKS |
-|------|----------------------|------------|
-| Control Plane Management | User manages directly | Managed by AWS |
-| High Availability | User must configure | Provided by default (deployed across multiple availability zones) |
-| Upgrades | User performs directly | Managed by AWS (user can initiate) |
-| Security Patches | User applies directly | Automatically applied by AWS |
-| Authentication | Various options need configuration | Integrated with AWS IAM |
-| Networking | CNI plugin selection and configuration required | Amazon VPC CNI provided by default |
-| Load Balancing | Manual configuration required | AWS Load Balancer Controller integration |
-| Storage | Storage driver configuration required | EBS, EFS, FSx CSI driver integration |
-| Monitoring | Manual setup required | CloudWatch Container Insights integration |
-| Cost | Infrastructure costs only | Control plane cost + infrastructure costs |
+| Characteristic           | Self-managed Kubernetes                         | Amazon EKS                                                        |
+| ------------------------ | ----------------------------------------------- | ----------------------------------------------------------------- |
+| Control Plane Management | User manages directly                           | Managed by AWS                                                    |
+| High Availability        | User must configure                             | Provided by default (deployed across multiple availability zones) |
+| Upgrades                 | User performs directly                          | Managed by AWS (user can initiate)                                |
+| Security Patches         | User applies directly                           | Automatically applied by AWS                                      |
+| Authentication           | Various options need configuration              | Integrated with AWS IAM                                           |
+| Networking               | CNI plugin selection and configuration required | Amazon VPC CNI provided by default                                |
+| Load Balancing           | Manual configuration required                   | AWS Load Balancer Controller integration                          |
+| Storage                  | Storage driver configuration required           | EBS, EFS, FSx CSI driver integration                              |
+| Monitoring               | Manual setup required                           | CloudWatch Container Insights integration                         |
+| Cost                     | Infrastructure costs only                       | Control plane cost + infrastructure costs                         |
 
 ### Additional EKS Features
 
@@ -1308,6 +1370,7 @@ There are several ways to get started with Kubernetes. Here we briefly introduce
 Minikube is a tool that runs a single-node Kubernetes cluster on your local machine.
 
 **Installation and Start**:
+
 ```bash
 # Install
 brew install minikube
@@ -1327,6 +1390,7 @@ minikube dashboard
 Kind is a tool that runs Kubernetes clusters locally using Docker containers as nodes.
 
 **Installation and Start**:
+
 ```bash
 # Install
 brew install kind
@@ -1344,6 +1408,7 @@ kubectl cluster-info --context kind-my-cluster
 Docker Desktop provides a feature to easily run Kubernetes on Mac and Windows.
 
 **Setup**:
+
 1. Install Docker Desktop
 2. Settings > Kubernetes > Check "Enable Kubernetes"
 3. Click "Apply & Restart"
@@ -1355,6 +1420,7 @@ Docker Desktop provides a feature to easily run Kubernetes on Mac and Windows.
 eksctl is a simple CLI tool for creating and managing EKS clusters.
 
 **Installation and Cluster Creation**:
+
 ```bash
 # Install eksctl
 brew tap weaveworks/tap
@@ -1383,6 +1449,7 @@ kubectl get nodes
 You can also create EKS clusters through the AWS Management Console.
 
 **Steps**:
+
 1. Log in to AWS Management Console
 2. Navigate to EKS service
 3. Click "Create cluster"
@@ -1397,6 +1464,7 @@ You can also create EKS clusters through the AWS Management Console.
 kubectl is a command-line tool for interacting with Kubernetes clusters.
 
 **Installation**:
+
 ```bash
 # macOS
 brew install kubectl
@@ -1411,6 +1479,7 @@ curl -LO "https://dl.k8s.io/release/v1.28.0/bin/windows/amd64/kubectl.exe"
 ```
 
 **Basic Commands**:
+
 ```bash
 # Check cluster info
 kubectl cluster-info
@@ -1439,6 +1508,7 @@ kubectl exec -it <pod-name> -- /bin/bash
 Kubernetes Dashboard provides a web-based UI for managing clusters.
 
 **Installation and Access**:
+
 ```bash
 # Install dashboard
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
@@ -1479,59 +1549,65 @@ The dashboard can be accessed at http://localhost:8001/api/v1/namespaces/kuberne
 Kubernetes is a powerful platform that automates the deployment, scaling, and management of containerized applications. Summary of key content covered in this document:
 
 ### Core Architecture
-- **Control Plane**: Brain of the cluster (API Server, etcd, Scheduler, Controller Manager)
-- **Worker Nodes**: Nodes that run actual applications (kubelet, kube-proxy, Container Runtime)
-- **Declarative Configuration**: Define desired state and Kubernetes matches current state to desired state
+
+* **Control Plane**: Brain of the cluster (API Server, etcd, Scheduler, Controller Manager)
+* **Worker Nodes**: Nodes that run actual applications (kubelet, kube-proxy, Container Runtime)
+* **Declarative Configuration**: Define desired state and Kubernetes matches current state to desired state
 
 ### Main Objects and Resources
-- **Basic Objects**: Pod, Service, Volume, Namespace
-- **Workload Resources**: Deployment, StatefulSet, DaemonSet, Job, CronJob
-- **Configuration and Security**: ConfigMap, Secret, RBAC, ServiceAccount
-- **Networking**: Service, Ingress, NetworkPolicy
-- **Storage**: PersistentVolume, PersistentVolumeClaim, StorageClass
+
+* **Basic Objects**: Pod, Service, Volume, Namespace
+* **Workload Resources**: Deployment, StatefulSet, DaemonSet, Job, CronJob
+* **Configuration and Security**: ConfigMap, Secret, RBAC, ServiceAccount
+* **Networking**: Service, Ingress, NetworkPolicy
+* **Storage**: PersistentVolume, PersistentVolumeClaim, StorageClass
 
 ### Recommended Learning Path
 
 **Step 1: Build Local Environment**
-- Create local cluster with minikube or kind
-- Learn kubectl commands
-- Practice with basic objects (Pod, Deployment, Service)
+
+* Create local cluster with minikube or kind
+* Learn kubectl commands
+* Practice with basic objects (Pod, Deployment, Service)
 
 **Step 2: Master Core Concepts**
-- Understand and practice workload resources
-- Configuration management with ConfigMap and Secret
-- Configure networking with Service and Ingress
-- Manage storage with PV and PVC
+
+* Understand and practice workload resources
+* Configuration management with ConfigMap and Secret
+* Configure networking with Service and Ingress
+* Manage storage with PV and PVC
 
 **Step 3: Learn Advanced Features**
-- RBAC and security policies
-- Auto scaling (HPA, VPA, Cluster Autoscaler)
-- Monitoring and logging (Prometheus, Grafana)
-- Service mesh (Istio, Linkerd)
+
+* RBAC and security policies
+* Auto scaling (HPA, VPA, Cluster Autoscaler)
+* Monitoring and logging (Prometheus, Grafana)
+* Service mesh (Istio, Linkerd)
 
 **Step 4: Production Operations**
-- Use Amazon EKS or other managed Kubernetes
-- CI/CD pipeline integration
-- Disaster recovery and backup strategies
-- Cost optimization and resource management
+
+* Use Amazon EKS or other managed Kubernetes
+* CI/CD pipeline integration
+* Disaster recovery and backup strategies
+* Cost optimization and resource management
 
 ### Next Steps
 
-- **EKS Deep Dive**: EKS-specific features (Fargate, VPC CNI, ALB Controller)
-- **Advanced Networking**: CNI plugins (Calico, Cilium)
-- **Observability**: Metrics, logs, tracing
-- **GitOps**: ArgoCD, Flux
-- **Security Hardening**: Pod Security Standards, Network Policies, OPA/Gatekeeper
+* **EKS Deep Dive**: EKS-specific features (Fargate, VPC CNI, ALB Controller)
+* **Advanced Networking**: CNI plugins (Calico, Cilium)
+* **Observability**: Metrics, logs, tracing
+* **GitOps**: ArgoCD, Flux
+* **Security Hardening**: Pod Security Standards, Network Policies, OPA/Gatekeeper
 
 Kubernetes continues to evolve and has become a core element of cloud-native application development and operations. We hope this document helps you start your Kubernetes journey.
 
 ### Additional Learning Resources
 
-- **Official Documentation**: [Kubernetes Official Documentation](https://kubernetes.io/docs/) provides the most accurate and up-to-date information
-- **Interactive Tutorials**: Hands-on practice available at [Kubernetes Tutorials](https://kubernetes.io/docs/tutorials/)
-- **Community**: [Kubernetes Slack](https://slack.k8s.io/), [Reddit r/kubernetes](https://reddit.com/r/kubernetes)
-- **Certifications**: CKA (Certified Kubernetes Administrator), CKAD (Certified Kubernetes Application Developer)
-- **Korean Community**: Kubernetes Korea User Group, AWS Korea User Group
+* **Official Documentation**: [Kubernetes Official Documentation](https://kubernetes.io/docs/) provides the most accurate and up-to-date information
+* **Interactive Tutorials**: Hands-on practice available at [Kubernetes Tutorials](https://kubernetes.io/docs/tutorials/)
+* **Community**: [Kubernetes Slack](https://slack.k8s.io/), [Reddit r/kubernetes](https://reddit.com/r/kubernetes)
+* **Certifications**: CKA (Certified Kubernetes Administrator), CKAD (Certified Kubernetes Application Developer)
+* **Korean Community**: Kubernetes Korea User Group, AWS Korea User Group
 
 ## Quiz
 
@@ -1539,9 +1615,9 @@ To test what you learned in this chapter, take the [Introduction to Kubernetes Q
 
 ## References
 
-- [Kubernetes Official Documentation](https://kubernetes.io/docs/)
-- [Amazon EKS Documentation](https://docs.aws.amazon.com/eks/)
-- [Kubernetes GitHub Repository](https://github.com/kubernetes/kubernetes)
-- [CNCF (Cloud Native Computing Foundation)](https://www.cncf.io/)
-- [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way)
-- [Kubernetes Patterns](https://www.oreilly.com/library/view/kubernetes-patterns/9781492050278/)
+* [Kubernetes Official Documentation](https://kubernetes.io/docs/)
+* [Amazon EKS Documentation](https://docs.aws.amazon.com/eks/)
+* [Kubernetes GitHub Repository](https://github.com/kubernetes/kubernetes)
+* [CNCF (Cloud Native Computing Foundation)](https://www.cncf.io/)
+* [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way)
+* [Kubernetes Patterns](https://www.oreilly.com/library/view/kubernetes-patterns/9781492050278/)

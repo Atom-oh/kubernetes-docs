@@ -1,10 +1,10 @@
-# EKS Cluster Creation - Part 3
+# Part 3: Creating Clusters with AWS Management Console and CLI
 
 ## Creating a Cluster Using AWS Management Console
 
 The steps to create an EKS cluster using the AWS Management Console are as follows:
 
-![EKS Cluster Creation Workflow via AWS Management Console](../assets/generated-diagrams/eks_console_cluster_creation_workflow.png)
+![EKS Cluster Creation Workflow via AWS Management Console](../.gitbook/assets/eks_console_cluster_creation_workflow.png)
 
 1. Log in to the [AWS Management Console](https://console.aws.amazon.com/).
 2. Search for "EKS" or select "Elastic Kubernetes Service" from the services list.
@@ -13,42 +13,42 @@ The steps to create an EKS cluster using the AWS Management Console are as follo
 ### Cluster Configuration
 
 4. On the "Configure cluster" page, enter the following information:
-   - **Cluster name**: Enter a unique name for the cluster.
-   - **Kubernetes version**: Select the Kubernetes version to use.
-   - **Cluster service role**: Create a new role or select an existing role.
-   - **Tags**: Add tags if needed.
-   - Click the "Next" button.
+   * **Cluster name**: Enter a unique name for the cluster.
+   * **Kubernetes version**: Select the Kubernetes version to use.
+   * **Cluster service role**: Create a new role or select an existing role.
+   * **Tags**: Add tags if needed.
+   * Click the "Next" button.
 
 ### Specify Networking
 
 5. On the "Specify networking" page, enter the following information:
-   - **VPC**: Create a new VPC or select an existing VPC.
-   - **Subnets**: Select the subnets to use for the cluster. At least 2 subnets must be in different availability zones.
-   - **Security groups**: Select the security groups to use for the cluster.
-   - **Cluster endpoint access**: Configure access to the cluster API server endpoint.
-     - **Public**: The API server can be accessed from the internet.
-     - **Private**: The API server can only be accessed from within the VPC.
-     - **Public and Private**: The API server can be accessed from both the internet and within the VPC.
-   - Click the "Next" button.
+   * **VPC**: Create a new VPC or select an existing VPC.
+   * **Subnets**: Select the subnets to use for the cluster. At least 2 subnets must be in different availability zones.
+   * **Security groups**: Select the security groups to use for the cluster.
+   * **Cluster endpoint access**: Configure access to the cluster API server endpoint.
+     * **Public**: The API server can be accessed from the internet.
+     * **Private**: The API server can only be accessed from within the VPC.
+     * **Public and Private**: The API server can be accessed from both the internet and within the VPC.
+   * Click the "Next" button.
 
 ### Configure Logging
 
 6. On the "Configure logging" page, enter the following information:
-   - **Control plane logging**: Select the log types to enable.
-     - API server logs
-     - Audit logs
-     - Authenticator logs
-     - Controller manager logs
-     - Scheduler logs
-   - Click the "Next" button.
+   * **Control plane logging**: Select the log types to enable.
+     * API server logs
+     * Audit logs
+     * Authenticator logs
+     * Controller manager logs
+     * Scheduler logs
+   * Click the "Next" button.
 
 ### Select Add-ons
 
 7. On the "Select add-ons" page, enter the following information:
-   - **Amazon VPC CNI**: CNI plugin for pod networking.
-   - **CoreDNS**: DNS service within the cluster.
-   - **kube-proxy**: Provides network proxy and load balancing.
-   - Click the "Next" button.
+   * **Amazon VPC CNI**: CNI plugin for pod networking.
+   * **CoreDNS**: DNS service within the cluster.
+   * **kube-proxy**: Provides network proxy and load balancing.
+   * Click the "Next" button.
 
 ### Review and Create
 
@@ -59,29 +59,26 @@ Once cluster creation is complete, you can click the "Add node group" button to 
 ### Add Node Group
 
 1. On the "Node group configuration" page, enter the following information:
-   - **Node group name**: Enter a unique name for the node group.
-   - **Node IAM role**: Create a new role or select an existing role.
-   - Click the "Next" button.
-
+   * **Node group name**: Enter a unique name for the node group.
+   * **Node IAM role**: Create a new role or select an existing role.
+   * Click the "Next" button.
 2. On the "Set compute and scaling configuration" page, enter the following information:
-   - **AMI type**: Select the AMI type to use for the nodes.
-   - **Instance type**: Select the EC2 instance type to use for the nodes.
-   - **Disk size**: Specify the disk size for the nodes.
-   - **Node count**: Specify the minimum, maximum, and desired number of nodes.
-   - Click the "Next" button.
-
+   * **AMI type**: Select the AMI type to use for the nodes.
+   * **Instance type**: Select the EC2 instance type to use for the nodes.
+   * **Disk size**: Specify the disk size for the nodes.
+   * **Node count**: Specify the minimum, maximum, and desired number of nodes.
+   * Click the "Next" button.
 3. On the "Specify networking" page, enter the following information:
-   - **Subnets**: Select the subnets to use for the node group.
-   - **Remote access configuration**: Configure SSH access.
-   - Click the "Next" button.
-
+   * **Subnets**: Select the subnets to use for the node group.
+   * **Remote access configuration**: Configure SSH access.
+   * Click the "Next" button.
 4. On the "Review and create" page, review the configuration and click the "Create" button.
 
 ## Creating a Cluster Using AWS CLI
 
 The process of creating an EKS cluster using AWS CLI consists of several steps. This method is useful when more control is needed.
 
-![EKS Cluster Creation Workflow via AWS CLI](../assets/generated-diagrams/eks_cli_cluster_creation_workflow.png)
+![EKS Cluster Creation Workflow via AWS CLI](../.gitbook/assets/eks_cli_cluster_creation_workflow.png)
 
 ### 1. Create Cluster IAM Role
 

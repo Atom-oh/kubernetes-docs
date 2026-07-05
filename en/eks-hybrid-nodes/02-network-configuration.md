@@ -1,9 +1,8 @@
 # Network Configuration
 
-< [Previous: Prerequisites](./01-prerequisites.md) | [Table of Contents](./README.md) | [Next: Air-Gap Setup](./03-airgap-setup.md) >
+< [Previous: Prerequisites](01-prerequisites.md) | [Table of Contents](./) | [Next: Air-Gap Setup](03-airgap-setup.md) >
 
-> **Supported Versions**: EKS 1.31+, nodeadm 0.1+
-> **Last Updated**: February 23, 2026
+> **Supported Versions**: EKS 1.31+, nodeadm 0.1+ **Last Updated**: February 23, 2026
 
 This document covers the network configuration required for EKS Hybrid Nodes, including CIDR requirements, firewall rules, AWS endpoint access, security group configuration, and DNS setup.
 
@@ -11,15 +10,15 @@ This document covers the network configuration required for EKS Hybrid Nodes, in
 
 The following diagram illustrates the complete network topology for EKS Hybrid Nodes, including VPC configuration, Transit Gateway routing, remote CIDRs, and firewall rules.
 
-![EKS Hybrid Nodes Network Prerequisites](../../assets/aws-official-diagrams/hybrid-prereq-diagram.png)
+![EKS Hybrid Nodes Network Prerequisites](../.gitbook/assets/hybrid-prereq-diagram.png)
 
 ### VPC as Network Hub
 
 In an EKS Hybrid Nodes environment, the VPC serves as the **network hub** between hybrid nodes and the control plane.
 
-- **ENI Placement**: The EKS control plane places ENIs (Elastic Network Interfaces) in VPC subnets. These ENIs are the communication endpoints between the control plane and hybrid nodes.
-- **Traffic Path**: All traffic between the control plane and hybrid nodes flows through these ENIs. API server requests, kubelet communication, webhook calls, and all control plane traffic traverse the VPC ENIs.
-- **ENI IP Changes**: During cluster updates (e.g., version upgrades), ENIs may be deleted and recreated, which can change their IP addresses. Using subnet CIDR ranges instead of individual IPs in firewall rules provides flexibility for these changes.
+* **ENI Placement**: The EKS control plane places ENIs (Elastic Network Interfaces) in VPC subnets. These ENIs are the communication endpoints between the control plane and hybrid nodes.
+* **Traffic Path**: All traffic between the control plane and hybrid nodes flows through these ENIs. API server requests, kubelet communication, webhook calls, and all control plane traffic traverse the VPC ENIs.
+* **ENI IP Changes**: During cluster updates (e.g., version upgrades), ENIs may be deleted and recreated, which can change their IP addresses. Using subnet CIDR ranges instead of individual IPs in firewall rules provides flexibility for these changes.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -51,26 +50,26 @@ In an EKS Hybrid Nodes environment, the VPC serves as the **network hub** betwee
 
 On-premises node and pod CIDRs must meet the following requirements:
 
-- Must be within **RFC-1918 ranges**: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
-- Must **not overlap** with:
-  - Each other (node CIDR and pod CIDR)
-  - The VPC CIDR for the EKS cluster
-  - The Kubernetes service IPv4 CIDR
+* Must be within **RFC-1918 ranges**: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+* Must **not overlap** with:
+  * Each other (node CIDR and pod CIDR)
+  * The VPC CIDR for the EKS cluster
+  * The Kubernetes service IPv4 CIDR
 
 The `RemoteNodeNetwork` and `RemotePodNetwork` fields are specified when creating the EKS cluster.
 
 ### Routable vs Unroutable Pod Networks
 
-| Configuration | Routable (Recommended) | Unroutable |
-|--------------|----------------------|------------|
-| Setup | BGP (recommended), static routes, or custom routing | CNI egress masquerade/NAT |
-| Webhooks | Can run on hybrid nodes | Must run on cloud nodes only |
-| Pod↔Pod communication | Direct cloud↔on-premises communication | Not possible |
-| AWS service integration | ALB, Prometheus, etc. can reach hybrid workloads | Cannot reach hybrid workloads |
+| Configuration           | Routable (Recommended)                              | Unroutable                    |
+| ----------------------- | --------------------------------------------------- | ----------------------------- |
+| Setup                   | BGP (recommended), static routes, or custom routing | CNI egress masquerade/NAT     |
+| Webhooks                | Can run on hybrid nodes                             | Must run on cloud nodes only  |
+| Pod↔Pod communication   | Direct cloud↔on-premises communication              | Not possible                  |
+| AWS service integration | ALB, Prometheus, etc. can reach hybrid workloads    | Cannot reach hybrid workloads |
 
 > **Recommendation**: Use Cilium BGP Control Plane to make pod CIDRs routable.
 
----
+***
 
 ## Required Firewall Ports
 
@@ -78,30 +77,30 @@ The `RemoteNodeNetwork` and `RemotePodNetwork` fields are specified when creatin
 
 The following ports must be opened for communication between on-premises and AWS:
 
-| Port | Protocol | Direction | Purpose |
-|------|----------|-----------|---------|
-| 443 | TCP | On-Prem → AWS | Kubelet to Kubernetes API server |
-| 443 | TCP | On-Prem → AWS | Pods to Kubernetes API server |
-| 10250 | TCP | AWS → On-Prem | API server to kubelet |
-| Webhook ports | TCP | AWS → On-Prem | API server to webhooks (routable pod networks only) |
-| 53 | TCP/UDP | Bidirectional | CoreDNS (pod CIDR ↔ pod CIDR; include VPC CIDR if CoreDNS runs in cloud) |
-| App ports | User-defined | Bidirectional | Pod-to-pod application communication |
+| Port          | Protocol     | Direction     | Purpose                                                                  |
+| ------------- | ------------ | ------------- | ------------------------------------------------------------------------ |
+| 443           | TCP          | On-Prem → AWS | Kubelet to Kubernetes API server                                         |
+| 443           | TCP          | On-Prem → AWS | Pods to Kubernetes API server                                            |
+| 10250         | TCP          | AWS → On-Prem | API server to kubelet                                                    |
+| Webhook ports | TCP          | AWS → On-Prem | API server to webhooks (routable pod networks only)                      |
+| 53            | TCP/UDP      | Bidirectional | CoreDNS (pod CIDR ↔ pod CIDR; include VPC CIDR if CoreDNS runs in cloud) |
+| App ports     | User-defined | Bidirectional | Pod-to-pod application communication                                     |
 
 ### VPN Ports (when using Site-to-Site VPN)
 
-| Port | Protocol | Direction | Purpose |
-|------|----------|-----------|---------|
-| 500 | UDP | Bidirectional | IKE (Internet Key Exchange) |
-| 4500 | UDP | Bidirectional | IPSec NAT-T |
+| Port | Protocol | Direction     | Purpose                     |
+| ---- | -------- | ------------- | --------------------------- |
+| 500  | UDP      | Bidirectional | IKE (Internet Key Exchange) |
+| 4500 | UDP      | Bidirectional | IPSec NAT-T                 |
 
 ### Cilium CNI Ports
 
 Additional ports required when using Cilium as the CNI:
 
-| Port | Protocol | Direction | Purpose |
-|------|----------|-----------|---------|
-| 8472 | UDP | Bidirectional | VXLAN overlay (default tunnel mode) |
-| 4240 | TCP | Bidirectional | Health check |
+| Port | Protocol | Direction     | Purpose                             |
+| ---- | -------- | ------------- | ----------------------------------- |
+| 8472 | UDP      | Bidirectional | VXLAN overlay (default tunnel mode) |
+| 4240 | TCP      | Bidirectional | Health check                        |
 
 > **Note**: For detailed firewall requirements for Cilium and Calico, refer to each project's official documentation.
 
@@ -133,7 +132,7 @@ sudo iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
 sudo iptables-save | sudo tee /etc/iptables/rules.v4
 ```
 
----
+***
 
 ## On-Premises Outbound Access Requirements
 
@@ -141,25 +140,25 @@ sudo iptables-save | sudo tee /etc/iptables/rules.v4
 
 The following AWS endpoints must be reachable via HTTPS (443) from on-premises nodes during nodeadm installation and upgrade:
 
-| Component | URL | Notes |
-|-----------|-----|-------|
-| EKS node artifacts (S3) | `https://hybrid-assets.eks.amazonaws.com` | nodeadm binary and dependencies |
-| EKS service | `https://eks.<region>.amazonaws.com` | Cluster information lookup |
-| ECR service | `https://api.ecr.<region>.amazonaws.com` | Container image pulls |
-| SSM binary | `https://amazon-ssm-<region>.s3.<region>.amazonaws.com` | When using SSM credential provider |
-| SSM service | `https://ssm.<region>.amazonaws.com` | When using SSM credential provider |
-| IAM Roles Anywhere | `https://rolesanywhere.<region>.amazonaws.com` | When using IAM RA credential provider |
-| OS package manager | Regional-specific endpoints | System package installation |
+| Component               | URL                                                     | Notes                                 |
+| ----------------------- | ------------------------------------------------------- | ------------------------------------- |
+| EKS node artifacts (S3) | `https://hybrid-assets.eks.amazonaws.com`               | nodeadm binary and dependencies       |
+| EKS service             | `https://eks.<region>.amazonaws.com`                    | Cluster information lookup            |
+| ECR service             | `https://api.ecr.<region>.amazonaws.com`                | Container image pulls                 |
+| SSM binary              | `https://amazon-ssm-<region>.s3.<region>.amazonaws.com` | When using SSM credential provider    |
+| SSM service             | `https://ssm.<region>.amazonaws.com`                    | When using SSM credential provider    |
+| IAM Roles Anywhere      | `https://rolesanywhere.<region>.amazonaws.com`          | When using IAM RA credential provider |
+| OS package manager      | Regional-specific endpoints                             | System package installation           |
 
 ### Endpoints Required for Ongoing Operations
 
-| Purpose | Source | Destination | Notes |
-|---------|--------|-------------|-------|
-| Kubelet → API server | Node CIDR | EKS cluster IPs | Port 443 |
-| Pod → API server | Pod CIDR | EKS cluster IPs | Port 443 |
-| SSM credential refresh | Node CIDR | SSM endpoint | 5-minute heartbeat interval |
-| IAM RA credential refresh | Node CIDR | IAM Anywhere endpoint | Periodic refresh |
-| EKS Pod Identity | Node CIDR | EKS Auth endpoint | When using Pod Identity |
+| Purpose                   | Source    | Destination           | Notes                       |
+| ------------------------- | --------- | --------------------- | --------------------------- |
+| Kubelet → API server      | Node CIDR | EKS cluster IPs       | Port 443                    |
+| Pod → API server          | Pod CIDR  | EKS cluster IPs       | Port 443                    |
+| SSM credential refresh    | Node CIDR | SSM endpoint          | 5-minute heartbeat interval |
+| IAM RA credential refresh | Node CIDR | IAM Anywhere endpoint | Periodic refresh            |
+| EKS Pod Identity          | Node CIDR | EKS Auth endpoint     | When using Pod Identity     |
 
 ### Discovering EKS Cluster Network Interface IPs
 
@@ -174,7 +173,7 @@ aws ec2 describe-network-interfaces \
 
 > **Note**: EKS network interfaces may be deleted and recreated during cluster updates (e.g., version upgrades). Using constrained subnet sizes makes the IP range predictable, which simplifies firewall configuration.
 
----
+***
 
 ## VPC Private Endpoints (Air-Gap / Private Connectivity)
 
@@ -195,18 +194,18 @@ On-premises node
 
 ### Required Interface VPC Endpoints
 
-| Service | Endpoint Service Name | Private DNS | Purpose |
-|---------|----------------------|-------------|---------|
-| EKS | `com.amazonaws.<region>.eks` | Yes | Kubernetes API server communication |
-| EKS Auth | `com.amazonaws.<region>.eks-auth` | Yes | Pod Identity authentication |
-| ECR API | `com.amazonaws.<region>.ecr.api` | Yes | Image metadata queries |
-| ECR DKR | `com.amazonaws.<region>.ecr.dkr` | Yes | Image pull (Docker registry) |
-| S3 | `com.amazonaws.<region>.s3` | — | Image layers, nodeadm artifacts (**Interface type**) |
-| STS | `com.amazonaws.<region>.sts` | Yes | IAM credential exchange |
-| SSM | `com.amazonaws.<region>.ssm` | Yes | When using SSM credential provider |
-| SSM Messages | `com.amazonaws.<region>.ssmmessages` | Yes | SSM Session Manager communication |
+| Service      | Endpoint Service Name                | Private DNS | Purpose                                              |
+| ------------ | ------------------------------------ | ----------- | ---------------------------------------------------- |
+| EKS          | `com.amazonaws.<region>.eks`         | Yes         | Kubernetes API server communication                  |
+| EKS Auth     | `com.amazonaws.<region>.eks-auth`    | Yes         | Pod Identity authentication                          |
+| ECR API      | `com.amazonaws.<region>.ecr.api`     | Yes         | Image metadata queries                               |
+| ECR DKR      | `com.amazonaws.<region>.ecr.dkr`     | Yes         | Image pull (Docker registry)                         |
+| S3           | `com.amazonaws.<region>.s3`          | —           | Image layers, nodeadm artifacts (**Interface type**) |
+| STS          | `com.amazonaws.<region>.sts`         | Yes         | IAM credential exchange                              |
+| SSM          | `com.amazonaws.<region>.ssm`         | Yes         | When using SSM credential provider                   |
+| SSM Messages | `com.amazonaws.<region>.ssmmessages` | Yes         | SSM Session Manager communication                    |
 
-> **Note**: S3 Interface endpoints do not automatically support `private_dns_enabled`. If you need private DNS resolution for S3 domains, you must configure a separate Private Hosted Zone (PHZ). For the `hybrid-assets.eks.amazonaws.com` private mirroring pattern, see [Air-Gap Setup - hybrid-assets Private Mirroring](./03-airgap-setup.md#hybrid-assets-private-mirroring-s3--phz-pattern).
+> **Note**: S3 Interface endpoints do not automatically support `private_dns_enabled`. If you need private DNS resolution for S3 domains, you must configure a separate Private Hosted Zone (PHZ). For the `hybrid-assets.eks.amazonaws.com` private mirroring pattern, see [Air-Gap Setup - hybrid-assets Private Mirroring](03-airgap-setup.md#hybrid-assets-private-mirroring-s3--phz-pattern).
 
 ### Creating VPC Endpoints with Terraform
 
@@ -387,9 +386,9 @@ zone "eks.amazonaws.com" {
 };
 ```
 
-> **Note**: For Route 53 Resolver Inbound Endpoint creation, see the [DNS Configuration](#dns-configuration) section in this document. After configuring VPC endpoints, always verify with `nslookup eks.<region>.amazonaws.com` that private IPs are returned.
+> **Note**: For Route 53 Resolver Inbound Endpoint creation, see the [DNS Configuration](02-network-configuration.md#dns-configuration) section in this document. After configuring VPC endpoints, always verify with `nslookup eks.<region>.amazonaws.com` that private IPs are returned.
 
----
+***
 
 ## AWS Security Group Configuration
 
@@ -397,17 +396,17 @@ EKS automatically configures security group inbound rules when the cluster is cr
 
 ### Auto-Created Inbound Rules
 
-| Protocol | Port | Source | Purpose |
-|----------|------|--------|---------|
-| TCP | 443 | Remote node CIDR(s) | Kubelet to Kubernetes API |
-| TCP | 443 | Remote pod CIDR(s) | Pods to Kubernetes API (non-NAT CNI) |
+| Protocol | Port | Source              | Purpose                              |
+| -------- | ---- | ------------------- | ------------------------------------ |
+| TCP      | 443  | Remote node CIDR(s) | Kubelet to Kubernetes API            |
+| TCP      | 443  | Remote pod CIDR(s)  | Pods to Kubernetes API (non-NAT CNI) |
 
 ### Outbound Rules to Add Manually
 
-| Protocol | Port | Destination | Purpose |
-|----------|------|-------------|---------|
-| TCP | 10250 | Remote node CIDR(s) | API server to kubelet |
-| TCP | Webhook ports | Remote pod CIDR(s) | API server to webhooks |
+| Protocol | Port          | Destination         | Purpose                |
+| -------- | ------------- | ------------------- | ---------------------- |
+| TCP      | 10250         | Remote node CIDR(s) | API server to kubelet  |
+| TCP      | Webhook ports | Remote pod CIDR(s)  | API server to webhooks |
 
 ```bash
 # Example: Create a custom security group
@@ -427,7 +426,7 @@ aws ec2 authorize-security-group-ingress \
 
 > **Caution**: The default limit is 60 inbound rules per security group. Also, EKS does not automatically remove rules when remote networks are removed — manual cleanup is required.
 
----
+***
 
 ## Pod CIDR Firewall Strategy
 
@@ -449,7 +448,7 @@ sudo iptables -A INPUT -s 172.20.0.0/16 -j ACCEPT
 sudo iptables -A OUTPUT -d 172.20.0.0/16 -j ACCEPT
 ```
 
----
+***
 
 ## DNS Configuration
 
@@ -633,10 +632,11 @@ kubectl get nodes -L eks.amazonaws.com/compute-type
 ```
 
 > **Note**:
-> - When using the EKS managed CoreDNS add-on, the same configuration can be applied through the add-on's `configurationValues`.
-> - Using `whenUnsatisfiable: ScheduleAnyway` ensures that scheduling is not blocked even when nodes exist on only one side. This guarantees CoreDNS starts normally during initial cluster bootstrap.
+>
+> * When using the EKS managed CoreDNS add-on, the same configuration can be applied through the add-on's `configurationValues`.
+> * Using `whenUnsatisfiable: ScheduleAnyway` ensures that scheduling is not blocked even when nodes exist on only one side. This guarantees CoreDNS starts normally during initial cluster bootstrap.
 
----
+***
 
 ## Traffic Flow Patterns
 
@@ -648,42 +648,43 @@ Understanding the traffic flow patterns between AWS and on-premises is critical 
 
 Kubelet initiates HTTPS requests to the API server endpoint via DNS lookup. In public access mode, traffic traverses the public internet. In private mode, traffic flows through VPN/DX to VPC ENIs.
 
-![Kubelet to Control Plane](../../assets/interactive-diagrams/hybrid-nodes-kubelet-to-cp.svg)
+![Kubelet to Control Plane](../.gitbook/assets/hybrid-nodes-kubelet-to-cp.svg)
 
 ### Pattern 2: EKS Control Plane → Kubelet
 
 The API server retrieves the node IP from the node status object. Traffic routes through VPC, then crosses the cloud boundary via Direct Connect or VPN to reach the kubelet on port 10250. This is used for `kubectl logs`, `kubectl exec`, `kubectl port-forward`, etc.
 
-![Control Plane to Kubelet](../../assets/interactive-diagrams/hybrid-nodes-cp-to-kubelet.svg)
+![Control Plane to Kubelet](../.gitbook/assets/hybrid-nodes-cp-to-kubelet.svg)
 
 ### Pattern 3: Pod → EKS Control Plane
 
 Pods communicate with the Kubernetes API via the `kubernetes` Service (ClusterIP). kube-proxy applies DNAT to convert the service IP to the control plane ENI IP, then the packet routes through VPN/DX to the VPC.
 
-- **Without CNI NAT**: Pod sends to kubernetes service IP (e.g., 172.16.0.1), kube-proxy applies DNAT to control plane ENI IP. Return traffic requires reverse routing through pod CIDRs.
-- **With CNI NAT**: CNI applies SNAT before node processing, simplifying return routing (no additional pod CIDR routing needed).
+* **Without CNI NAT**: Pod sends to kubernetes service IP (e.g., 172.16.0.1), kube-proxy applies DNAT to control plane ENI IP. Return traffic requires reverse routing through pod CIDRs.
+* **With CNI NAT**: CNI applies SNAT before node processing, simplifying return routing (no additional pod CIDR routing needed).
 
-![Pod to Control Plane](../../assets/interactive-diagrams/hybrid-nodes-pod-to-cp.svg)
+![Pod to Control Plane](../.gitbook/assets/hybrid-nodes-pod-to-cp.svg)
 
 ### Pattern 4: EKS Control Plane → Pod (Webhooks)
 
 The API server initiates direct connections to webhook pods running on hybrid nodes. Traffic routes through VPC for the remote pod CIDR, crosses the boundary via gateway. This **requires routable pod CIDRs**.
 
-![Control Plane to Pod](../../assets/interactive-diagrams/hybrid-nodes-cp-to-pod.svg)
+![Control Plane to Pod](../.gitbook/assets/hybrid-nodes-cp-to-pod.svg)
 
-> **Important**: If your on-premises pod CIDR is not routable, you **must run all webhooks on cloud nodes**. See [Webhook Configuration](#webhook-configuration) below.
+> **Important**: If your on-premises pod CIDR is not routable, you **must run all webhooks on cloud nodes**. See [Webhook Configuration](02-network-configuration.md#webhook-configuration) below.
 
 ### Pattern 5: Pod ↔ Pod on Hybrid Nodes
 
 Pods on different hybrid nodes communicate using [VXLAN encapsulation](../networking/cilium/03-networking.md#vxlan-technology-deep-dive) (or similar overlay protocols like Geneve, IP-in-IP). The CNI encapsulates the original pod-to-pod packet with outer headers using source/destination node IPs. The receiving node's CNI decapsulates and delivers to the destination pod.
 
-![Pod to Pod on Hybrid Nodes](../../assets/interactive-diagrams/hybrid-nodes-pod-to-pod.svg)
+![Pod to Pod on Hybrid Nodes](../.gitbook/assets/hybrid-nodes-pod-to-pod.svg)
 
 #### VXLAN Encapsulation Details
 
 VXLAN (Virtual Extensible LAN) encapsulates L2 frames into L3 packets to create an overlay network. Here's how the packet structure transforms during Pod communication between hybrid nodes.
 
 **Original Packet (Before Encapsulation)**
+
 ```
 ┌────────────────────────────────────────────────┐
 │  Pod-A IP (src) → Pod-B IP (dst) │   Payload   │
@@ -692,6 +693,7 @@ VXLAN (Virtual Extensible LAN) encapsulates L2 frames into L3 packets to create 
 ```
 
 **After VXLAN Encapsulation**
+
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │ Outer IP Header │ UDP Header │ VXLAN Header │      Original Packet          │
@@ -702,6 +704,7 @@ VXLAN (Virtual Extensible LAN) encapsulates L2 frames into L3 packets to create 
 ```
 
 **Encapsulation Process (Source Node)**
+
 1. Pod-A sends a packet to Pod-B
 2. The source node's CNI (Cilium) looks up the destination Pod IP and identifies the target node
 3. CNI wraps the original packet with a VXLAN header and outer IP header
@@ -709,16 +712,18 @@ VXLAN (Virtual Extensible LAN) encapsulates L2 frames into L3 packets to create 
 5. The encapsulated packet is sent via UDP port 8472
 
 **Decapsulation Process (Destination Node)**
+
 1. The destination node receives the VXLAN packet on UDP port 8472
 2. CNI strips the VXLAN header and outer IP header
 3. The original packet is delivered to the destination Pod
 
 **Key Components**
-| Component | Description |
-|-----------|-------------|
+
+| Component                      | Description                                                                  |
+| ------------------------------ | ---------------------------------------------------------------------------- |
 | VNI (VXLAN Network Identifier) | 24-bit identifier that isolates pod network traffic (default: auto-assigned) |
-| UDP Port | Cilium default: 8472, Standard VXLAN: 4789 |
-| MTU | Must account for VXLAN overhead (50 bytes), e.g., 1500 → 1450 |
+| UDP Port                       | Cilium default: 8472, Standard VXLAN: 4789                                   |
+| MTU                            | Must account for VXLAN overhead (50 bytes), e.g., 1500 → 1450                |
 
 > **Note**: Besides VXLAN, Cilium supports other tunnel protocols such as Geneve and IP-in-IP. Use the `--tunnel` option to select the tunnel mode.
 
@@ -726,18 +731,18 @@ VXLAN (Virtual Extensible LAN) encapsulates L2 frames into L3 packets to create 
 
 VPC pods (using VPC CNI) send directly to hybrid pods; VPC routing directs traffic to the on-premises gateway. The packet crosses the boundary and arrives at the hybrid node. This **requires routable pod CIDRs** and proper VPC route table entries.
 
-![East-West Traffic](../../assets/interactive-diagrams/hybrid-nodes-east-west.svg)
+![East-West Traffic](../.gitbook/assets/hybrid-nodes-east-west.svg)
 
 ### Traffic Flow Summary
 
-| # | Flow | Direction | Port | Requirements |
-|---|------|-----------|------|-------------|
-| 1 | Kubelet → API Server | On-Prem → AWS | TCP 443 | VPN/DX or internet |
-| 2 | API Server → Kubelet | AWS → On-Prem | TCP 10250 | SG outbound rule |
-| 3 | Pod → API Server | On-Prem → AWS | TCP 443 | kube-proxy DNAT |
-| 4 | API Server → Webhook Pod | AWS → On-Prem | TCP 8443+ | **Routable pod CIDR** |
-| 5 | Hybrid Pod ↔ Hybrid Pod | On-Prem internal | UDP 8472 | Cilium VXLAN |
-| 6 | Cloud Pod ↔ Hybrid Pod | AWS ↔ On-Prem | VPC route | **Routable pod CIDR** + VPC routes |
+| # | Flow                     | Direction        | Port      | Requirements                       |
+| - | ------------------------ | ---------------- | --------- | ---------------------------------- |
+| 1 | Kubelet → API Server     | On-Prem → AWS    | TCP 443   | VPN/DX or internet                 |
+| 2 | API Server → Kubelet     | AWS → On-Prem    | TCP 10250 | SG outbound rule                   |
+| 3 | Pod → API Server         | On-Prem → AWS    | TCP 443   | kube-proxy DNAT                    |
+| 4 | API Server → Webhook Pod | AWS → On-Prem    | TCP 8443+ | **Routable pod CIDR**              |
+| 5 | Hybrid Pod ↔ Hybrid Pod  | On-Prem internal | UDP 8472  | Cilium VXLAN                       |
+| 6 | Cloud Pod ↔ Hybrid Pod   | AWS ↔ On-Prem    | VPC route | **Routable pod CIDR** + VPC routes |
 
 ### kube-proxy iptables Chain Structure
 
@@ -751,11 +756,11 @@ KUBE-SERVICES (entry point)
 
 **Chain Roles**
 
-| Chain | Role | Example |
-|-------|------|---------|
+| Chain             | Role                                                       | Example                              |
+| ----------------- | ---------------------------------------------------------- | ------------------------------------ |
 | **KUBE-SERVICES** | Matches destination IP:Port against all ClusterIP services | `172.20.0.1:443` → `KUBE-SVC-NPX...` |
-| **KUBE-SVC-xxxx** | Selects endpoint using probability-based load balancing | 3 Pods → 33% probability each |
-| **KUBE-SEP-xxxx** | Performs DNAT to specific Pod IP:Port | DNAT to `10.85.0.15:8080` |
+| **KUBE-SVC-xxxx** | Selects endpoint using probability-based load balancing    | 3 Pods → 33% probability each        |
+| **KUBE-SEP-xxxx** | Performs DNAT to specific Pod IP:Port                      | DNAT to `10.85.0.15:8080`            |
 
 **Actual iptables Rules Example**
 
@@ -782,13 +787,13 @@ kubelet runs on each node and exposes REST endpoints for API server communicatio
 
 **kubelet API Ports and Endpoints**
 
-| Port | Endpoint | Purpose |
-|------|----------|---------|
-| 10250 | `/pods` | List pods running on the node |
-| 10250 | `/exec/{namespace}/{pod}/{container}` | Execute commands in containers (`kubectl exec`) |
-| 10250 | `/logs/{namespace}/{pod}/{container}` | Stream container logs (`kubectl logs`) |
-| 10250 | `/metrics` | Expose kubelet metrics (for Prometheus scraping) |
-| 10250 | `/healthz` | kubelet health check |
+| Port  | Endpoint                              | Purpose                                          |
+| ----- | ------------------------------------- | ------------------------------------------------ |
+| 10250 | `/pods`                               | List pods running on the node                    |
+| 10250 | `/exec/{namespace}/{pod}/{container}` | Execute commands in containers (`kubectl exec`)  |
+| 10250 | `/logs/{namespace}/{pod}/{container}` | Stream container logs (`kubectl logs`)           |
+| 10250 | `/metrics`                            | Expose kubelet metrics (for Prometheus scraping) |
+| 10250 | `/healthz`                            | kubelet health check                             |
 
 **Node Registration and Address Reporting**
 
@@ -803,24 +808,24 @@ status:
     type: Hostname
 ```
 
-- **InternalIP**: The node's actual on-premises IP address. The API server uses this address to connect to kubelet.
-- **Hostname**: The node's hostname.
+* **InternalIP**: The node's actual on-premises IP address. The API server uses this address to connect to kubelet.
+* **Hostname**: The node's hostname.
 
 > **Firewall Rule Requirement**: Since the API server uses `InternalIP` to connect to kubelet, **TCP port 10250 must be open from AWS → On-Prem**. If this connection is blocked, commands like `kubectl exec`, `kubectl logs`, and `kubectl port-forward` will fail.
 
----
+***
 
 ## Routable Pod CIDR Configuration
 
 Making on-premises pod CIDRs routable is essential for webhooks, east-west traffic, and AWS service integration (ALB, Prometheus, etc.).
 
-![Remote Pod CIDRs](../../assets/aws-official-diagrams/hybrid-nodes-remote-pod-cidrs.png)
+![Remote Pod CIDRs](../.gitbook/assets/hybrid-nodes-remote-pod-cidrs.png)
 
 ### Option 1: BGP (Recommended)
 
 CNI acts as a virtual router and propagates per-node pod CIDR routes to the local on-premises router. This is the most dynamic and maintainable approach.
 
-![BGP Routing](../../assets/aws-official-diagrams/hybrid-nodes-bgp.png)
+![BGP Routing](../.gitbook/assets/hybrid-nodes-bgp.png)
 
 #### Cilium BGP Control Plane Configuration
 
@@ -870,18 +875,18 @@ In the Cilium BGP configuration above, `localASN` and `peerASN` are **Autonomous
 
 **Private vs Public ASN Ranges**
 
-| Range | Type | Use Case |
-|-------|------|----------|
-| **64512 – 65534** | 16-bit Private | Internal networks, data centers, lab environments. **Use this range for EKS Hybrid Nodes.** |
-| **4200000000 – 4294967294** | 32-bit Private | Large-scale internal deployments needing many unique ASNs |
-| 1 – 64511 | 16-bit Public | Internet-facing networks registered with RIR (ARIN, RIPE, APNIC) |
+| Range                       | Type           | Use Case                                                                                    |
+| --------------------------- | -------------- | ------------------------------------------------------------------------------------------- |
+| **64512 – 65534**           | 16-bit Private | Internal networks, data centers, lab environments. **Use this range for EKS Hybrid Nodes.** |
+| **4200000000 – 4294967294** | 32-bit Private | Large-scale internal deployments needing many unique ASNs                                   |
+| 1 – 64511                   | 16-bit Public  | Internet-facing networks registered with RIR (ARIN, RIPE, APNIC)                            |
 
 > **For EKS Hybrid Nodes**: Always use **private ASN ranges** (64512–65534). You do not need a public ASN — BGP here is used only within your internal network between Cilium nodes and on-premises routers.
 
 **How to Choose ASN Values**
 
-- **`localASN`** (e.g., `65001`): The ASN assigned to Cilium running on your hybrid nodes. All Cilium nodes in the same cluster typically share one ASN.
-- **`peerASN`** (e.g., `65000`): The ASN of your on-premises router that Cilium peers with. Check your router's BGP configuration to find this value.
+* **`localASN`** (e.g., `65001`): The ASN assigned to Cilium running on your hybrid nodes. All Cilium nodes in the same cluster typically share one ASN.
+* **`peerASN`** (e.g., `65000`): The ASN of your on-premises router that Cilium peers with. Check your router's BGP configuration to find this value.
 
 If no BGP is currently configured in your environment, simply pick two different numbers from the private range (e.g., `65000` for the router, `65001` for Cilium). If your network team already uses BGP internally, coordinate with them to avoid ASN conflicts.
 
@@ -889,7 +894,7 @@ If no BGP is currently configured in your environment, simply pick two different
 
 Below are examples of how to configure the **router side** of the BGP peering to match the Cilium configuration above. In each example, the router uses ASN `65000` and peers with a Cilium node at `10.80.1.10` (ASN `65001`).
 
-##### Cisco IOS / IOS-XE
+**Cisco IOS / IOS-XE**
 
 ```
 router bgp 65000
@@ -902,7 +907,7 @@ router bgp 65000
  exit-address-family
 ```
 
-##### Cisco NX-OS (Nexus)
+**Cisco NX-OS (Nexus)**
 
 ```
 router bgp 65000
@@ -914,7 +919,7 @@ router bgp 65000
       soft-reconfiguration inbound
 ```
 
-##### Juniper Junos (MX / QFX / SRX)
+**Juniper Junos (MX / QFX / SRX)**
 
 ```
 set protocols bgp group eks-hybrid type external
@@ -924,7 +929,7 @@ set protocols bgp group eks-hybrid family inet unicast
 set routing-options autonomous-system 65000
 ```
 
-##### Arista EOS
+**Arista EOS**
 
 ```
 router bgp 65000
@@ -935,7 +940,7 @@ router bgp 65000
       neighbor 10.80.1.10 activate
 ```
 
-##### MikroTik RouterOS
+**MikroTik RouterOS**
 
 ```
 /routing bgp connection
@@ -943,7 +948,7 @@ add name=eks-hybrid remote.address=10.80.1.10 remote.as=65001 \
     local.role=ebgp as=65000 address-families=ip
 ```
 
-##### FRRouting (FRR) — Software Router (Linux)
+**FRRouting (FRR) — Software Router (Linux)**
 
 FRRouting is commonly used as a software BGP router on Linux servers and VMs:
 
@@ -957,7 +962,7 @@ router bgp 65000
  exit-address-family
 ```
 
-##### AWS Transit Gateway (TGW)
+**AWS Transit Gateway (TGW)**
 
 When using AWS Transit Gateway with Site-to-Site VPN, the TGW side ASN is configured during TGW creation:
 
@@ -999,24 +1004,24 @@ Hybrid nodes should show Session State `established`.
 
 Manual router configuration with pod CIDRs. Simplest but error-prone and requires manual updates when nodes change.
 
-![Static Routes](../../assets/aws-official-diagrams/hybrid-nodes-static-routes.png)
+![Static Routes](../.gitbook/assets/hybrid-nodes-static-routes.png)
 
 #### Understanding Cluster-Pool IPAM Allocation
 
-In Cilium's `cluster-pool` IPAM mode, the entire pod CIDR pool is divided into fixed-size blocks per node. Two key parameters are configured in the Cilium values from [04-node-bootstrap.md](./04-node-bootstrap.md):
+In Cilium's `cluster-pool` IPAM mode, the entire pod CIDR pool is divided into fixed-size blocks per node. Two key parameters are configured in the Cilium values from [04-node-bootstrap.md](04-node-bootstrap.md):
 
-| Parameter | Example Value | Description |
-|-----------|--------------|-------------|
-| `clusterPoolIPv4PodCIDRList` | `10.85.0.0/16` | The entire pod CIDR pool |
-| `clusterPoolIPv4MaskSize` | `25` | Subnet size allocated per node (/25 = 128 IPs) |
+| Parameter                    | Example Value  | Description                                    |
+| ---------------------------- | -------------- | ---------------------------------------------- |
+| `clusterPoolIPv4PodCIDRList` | `10.85.0.0/16` | The entire pod CIDR pool                       |
+| `clusterPoolIPv4MaskSize`    | `25`           | Subnet size allocated per node (/25 = 128 IPs) |
 
 For example, with a pool of `10.85.0.0/16` and mask size `/25`, up to **512 nodes** can each be assigned 128 pod IPs. The Cilium Operator allocates blocks in node registration order:
 
-| Node | Allocated PodCIDR | Available Pod IPs |
-|------|-------------------|-------------------|
-| hybrid-node-001 | `10.85.0.0/25` | `10.85.0.1` – `10.85.0.126` |
-| hybrid-node-002 | `10.85.0.128/25` | `10.85.0.129` – `10.85.0.254` |
-| hybrid-node-003 | `10.85.1.0/25` | `10.85.1.1` – `10.85.1.126` |
+| Node            | Allocated PodCIDR | Available Pod IPs             |
+| --------------- | ----------------- | ----------------------------- |
+| hybrid-node-001 | `10.85.0.0/25`    | `10.85.0.1` – `10.85.0.126`   |
+| hybrid-node-002 | `10.85.0.128/25`  | `10.85.0.129` – `10.85.0.254` |
+| hybrid-node-003 | `10.85.1.0/25`    | `10.85.1.1` – `10.85.1.126`   |
 
 > **Important**: This allocation information is recorded in the **CiliumNode CR**. It may differ from the Kubernetes Node object's `spec.podCIDR`, so always reference the CiliumNode CR when configuring static routes.
 
@@ -1062,7 +1067,7 @@ Destination = Node's PodCIDR
 Next Hop    = Node's InternalIP
 ```
 
-##### Linux (ip route)
+**Linux (ip route)**
 
 ```bash
 # Add routes for each node's pod CIDR
@@ -1083,7 +1088,7 @@ up ip route add 10.85.1.0/25 via 10.80.1.12
 # /etc/NetworkManager/dispatcher.d/99-hybrid-routes
 ```
 
-##### Cisco IOS / IOS-XE
+**Cisco IOS / IOS-XE**
 
 ```
 ip route 10.85.0.0 255.255.255.128 10.80.1.10 name hybrid-node-001-pods
@@ -1091,7 +1096,7 @@ ip route 10.85.0.128 255.255.255.128 10.80.1.11 name hybrid-node-002-pods
 ip route 10.85.1.0 255.255.255.128 10.80.1.12 name hybrid-node-003-pods
 ```
 
-##### FRRouting (FRR)
+**FRRouting (FRR)**
 
 ```
 ip route 10.85.0.0/25 10.80.1.10
@@ -1099,7 +1104,7 @@ ip route 10.85.0.128/25 10.80.1.11
 ip route 10.85.1.0/25 10.80.1.12
 ```
 
-##### AWS VPC Route Table
+**AWS VPC Route Table**
 
 When pods need to be reachable from an AWS VPC connected via VPN/Direct Connect, use an aggregate CIDR:
 
@@ -1141,27 +1146,28 @@ ip route add 10.85.1.0/25 via 10.80.1.12
 
 **Static Routes vs BGP Comparison**
 
-| Aspect | Static Routes | BGP (Option 1) |
-|--------|--------------|-----------------|
-| Node addition | Manual route addition to router required | Routes propagated automatically |
-| Node removal | Manual route deletion from router required | Routes withdrawn automatically |
-| Node IP change | All routes must be manually updated | Updates propagated automatically |
-| Failure detection | None (stale routes remain) | Auto-detected via BGP keepalives |
-| Configuration complexity | Low | Medium (BGP peering setup required) |
-| Scalability | Suitable for 1–5 nodes | Scales to tens/hundreds of nodes |
+| Aspect                   | Static Routes                              | BGP (Option 1)                      |
+| ------------------------ | ------------------------------------------ | ----------------------------------- |
+| Node addition            | Manual route addition to router required   | Routes propagated automatically     |
+| Node removal             | Manual route deletion from router required | Routes withdrawn automatically      |
+| Node IP change           | All routes must be manually updated        | Updates propagated automatically    |
+| Failure detection        | None (stale routes remain)                 | Auto-detected via BGP keepalives    |
+| Configuration complexity | Low                                        | Medium (BGP peering setup required) |
+| Scalability              | Suitable for 1–5 nodes                     | Scales to tens/hundreds of nodes    |
 
 > **Recommendations**:
-> - **PoC / Small environments** (1–5 nodes): Static routes provide a quick start
-> - **Production / 5+ nodes**: Use [BGP (Option 1)](#option-1-bgp-recommended). It automatically responds to node changes and significantly reduces operational overhead
-> - **Environments where BGP is not permitted by policy**: Use static routes with the automation script above to manage route changes
+>
+> * **PoC / Small environments** (1–5 nodes): Static routes provide a quick start
+> * **Production / 5+ nodes**: Use [BGP (Option 1)](02-network-configuration.md#option-1-bgp-recommended). It automatically responds to node changes and significantly reduces operational overhead
+> * **Environments where BGP is not permitted by policy**: Use static routes with the automation script above to manage route changes
 
 ### Option 3: ARP Proxying
 
 Nodes respond to ARP requests for hosted pod IPs. Requires Layer 2 network proximity to the local router. Cilium has built-in proxy ARP support. No router BGP or static route configuration needed, but pod CIDR must not overlap with other networks.
 
-![ARP Proxying](../../assets/aws-official-diagrams/hybrid-nodes-arp-proxy.png)
+![ARP Proxying](../.gitbook/assets/hybrid-nodes-arp-proxy.png)
 
----
+***
 
 ## Network Policies
 
@@ -1270,16 +1276,16 @@ spec:
 
 ### Network Policy Considerations for Hybrid Environments
 
-| Consideration | Description |
-|---------------|-------------|
-| **Default Behavior** | Without network policies, all traffic is allowed. Once a NetworkPolicy is applied, only explicitly allowed traffic passes through. |
-| **Cross-Boundary Traffic** | Policies must account for communication between Pods on cloud nodes and Pods on hybrid nodes. |
-| **CNI Requirement** | Both policy types work when Cilium is configured as the CNI. |
-| **Policy Scope** | CiliumNetworkPolicy applies only to its namespace. Use CiliumClusterwideNetworkPolicy for cluster-wide policies. |
+| Consideration              | Description                                                                                                                        |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Default Behavior**       | Without network policies, all traffic is allowed. Once a NetworkPolicy is applied, only explicitly allowed traffic passes through. |
+| **Cross-Boundary Traffic** | Policies must account for communication between Pods on cloud nodes and Pods on hybrid nodes.                                      |
+| **CNI Requirement**        | Both policy types work when Cilium is configured as the CNI.                                                                       |
+| **Policy Scope**           | CiliumNetworkPolicy applies only to its namespace. Use CiliumClusterwideNetworkPolicy for cluster-wide policies.                   |
 
 > **Recommendation**: In hybrid environments, define explicit network policies to prevent unintended cross-boundary traffic. Sensitive workloads should be protected with strict Ingress/Egress policies.
 
----
+***
 
 ## Webhook Configuration
 
@@ -1309,14 +1315,14 @@ affinity:
 
 The following add-ons require webhook placement consideration:
 
-| Add-on | Webhook Placement (Unroutable Pod CIDR) |
-|--------|----------------------------------------|
-| AWS Load Balancer Controller | Cloud nodes only |
-| CloudWatch Observability Agent | Cloud nodes only |
-| ADOT (OpenTelemetry) | Cloud nodes only |
-| cert-manager | Cloud nodes only |
-| Kubernetes Metrics Server | Requires routable pod CIDR |
+| Add-on                         | Webhook Placement (Unroutable Pod CIDR) |
+| ------------------------------ | --------------------------------------- |
+| AWS Load Balancer Controller   | Cloud nodes only                        |
+| CloudWatch Observability Agent | Cloud nodes only                        |
+| ADOT (OpenTelemetry)           | Cloud nodes only                        |
+| cert-manager                   | Cloud nodes only                        |
+| Kubernetes Metrics Server      | Requires routable pod CIDR              |
 
----
+***
 
-< [Previous: Prerequisites](./01-prerequisites.md) | [Table of Contents](./README.md) | [Next: Air-Gap Setup](./03-airgap-setup.md) >
+< [Previous: Prerequisites](01-prerequisites.md) | [Table of Contents](./) | [Next: Air-Gap Setup](03-airgap-setup.md) >

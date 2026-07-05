@@ -1,28 +1,26 @@
 # Part 3: MSA Deployment and Canary
 
-> **Difficulty**: Advanced
-> **Estimated Time**: 60 minutes
-> **Last Updated**: February 23, 2026
+> **Difficulty**: Advanced **Estimated Time**: 60 minutes **Last Updated**: February 23, 2026
 
 ## Learning Objectives
 
-- Deploy MSA applications using ArgoCD multi-cluster management
-- Configure Argo Rollouts for canary deployments with AnalysisTemplate
-- Implement OpenTelemetry auto-instrumentation for all services
-- Execute canary releases with observability-driven promotion/rollback
+* Deploy MSA applications using ArgoCD multi-cluster management
+* Configure Argo Rollouts for canary deployments with AnalysisTemplate
+* Implement OpenTelemetry auto-instrumentation for all services
+* Execute canary releases with observability-driven promotion/rollback
 
 ## Prerequisites
 
-- [ ] Completed [Part 1: Infrastructure Setup](./01-infrastructure-setup-lab.md)
-- [ ] Completed [Part 2: Observability Stack](./02-observability-stack-lab.md)
-- [ ] ArgoCD and Argo Rollouts running
-- [ ] Observability stack collecting data
+* [ ] Completed [Part 1: Infrastructure Setup](01-infrastructure-setup-lab.md)
+* [ ] Completed [Part 2: Observability Stack](02-observability-stack-lab.md)
+* [ ] ArgoCD and Argo Rollouts running
+* [ ] Observability stack collecting data
 
----
+***
 
 ## Architecture Overview
 
-![MSA Service Map](../../../assets/labs/observability/msa-service-map.png)
+![MSA Service Map](../../.gitbook/assets/msa-service-map.png)
 
 ### Service Call Flow
 
@@ -60,19 +58,19 @@ sequenceDiagram
     deactivate Notif
 ```
 
----
+***
 
 ## Exercise 1: MSA Application Overview
 
 ### Application Structure
 
-| Service | Language | Framework | Port | Description |
-|---------|----------|-----------|------|-------------|
-| API Gateway | Go | Gin | 8080 | Request routing, authentication |
-| Order Service | Python | FastAPI | 8000 | Order management |
-| Payment Service | Java | Spring Boot | 8080 | Payment processing |
-| Notification Service | Node.js | Express | 3000 | Email/SMS notifications |
-| Analytics Batch | Python | - | - | Daily analytics (MWAA triggered) |
+| Service              | Language | Framework   | Port | Description                      |
+| -------------------- | -------- | ----------- | ---- | -------------------------------- |
+| API Gateway          | Go       | Gin         | 8080 | Request routing, authentication  |
+| Order Service        | Python   | FastAPI     | 8000 | Order management                 |
+| Payment Service      | Java     | Spring Boot | 8080 | Payment processing               |
+| Notification Service | Node.js  | Express     | 3000 | Email/SMS notifications          |
+| Analytics Batch      | Python   | -           | -    | Daily analytics (MWAA triggered) |
 
 ### Repository Structure
 
@@ -166,7 +164,7 @@ async def create_order(order: OrderRequest):
         return {"order_id": order_id}
 ```
 
----
+***
 
 ## Exercise 2: Karpenter NodePool Configuration
 
@@ -265,7 +263,7 @@ kubectl get ec2nodeclasses
 # Expected: msa-workloads NodePool and msa-nodeclass EC2NodeClass created
 ```
 
----
+***
 
 ## Exercise 3: KEDA ScaledObject Configuration
 
@@ -378,7 +376,7 @@ kubectl get hpa -n msa
 # Expected: ScaledObjects created, HPAs auto-generated
 ```
 
----
+***
 
 ## Exercise 4: ArgoCD Application Deployment
 
@@ -761,7 +759,7 @@ kubectl get svc -n msa
 # Expected: All 4 services running
 ```
 
----
+***
 
 ## Exercise 5: OpenTelemetry Auto-Instrumentation
 
@@ -833,12 +831,12 @@ EOF
 
 **Step 5.3: Auto-instrumentation coverage table**
 
-| Language | Instrumented Libraries | Annotation |
-|----------|----------------------|------------|
-| Go | gin, net/http, gRPC | `instrumentation.opentelemetry.io/inject-go: "true"` |
-| Python | FastAPI, SQLAlchemy, boto3, requests | `instrumentation.opentelemetry.io/inject-python: "true"` |
-| Java | Spring Boot, JDBC, Kafka, gRPC | `instrumentation.opentelemetry.io/inject-java: "true"` |
-| Node.js | Express, pg, aws-sdk, http | `instrumentation.opentelemetry.io/inject-nodejs: "true"` |
+| Language | Instrumented Libraries               | Annotation                                               |
+| -------- | ------------------------------------ | -------------------------------------------------------- |
+| Go       | gin, net/http, gRPC                  | `instrumentation.opentelemetry.io/inject-go: "true"`     |
+| Python   | FastAPI, SQLAlchemy, boto3, requests | `instrumentation.opentelemetry.io/inject-python: "true"` |
+| Java     | Spring Boot, JDBC, Kafka, gRPC       | `instrumentation.opentelemetry.io/inject-java: "true"`   |
+| Node.js  | Express, pg, aws-sdk, http           | `instrumentation.opentelemetry.io/inject-nodejs: "true"` |
 
 **Step 5.4: Restart deployments to apply instrumentation**
 
@@ -857,7 +855,7 @@ kubectl get pods -n msa -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.sp
 kubectl logs -n opentelemetry -l app=otel-collector --tail=50 | grep "trace"
 ```
 
----
+***
 
 ## Exercise 6: Argo Rollouts Canary Deployment
 
@@ -1063,7 +1061,7 @@ ROLLOUTS_DASHBOARD=$(kubectl -n argo-rollouts get svc argo-rollouts-dashboard \
 echo "Dashboard: http://$ROLLOUTS_DASHBOARD:3100/rollout/msa/order-service"
 ```
 
----
+***
 
 ## Exercise 7: Intentional Failure and Automatic Rollback
 
@@ -1119,63 +1117,69 @@ kubectl get pods -n msa -l app=order-service -o jsonpath='{range .items[*]}{.met
 # All should show v1 or stable version
 ```
 
----
+***
 
 ## Summary
 
 In this lab, you have:
 
-| Task | Status |
-|------|--------|
-| Karpenter NodePool for MSA | Configured |
-| KEDA ScaledObjects (SQS + Prometheus) | Created |
-| ArgoCD ApplicationSet | Deployed |
-| MSA Services (4 services) | Running |
-| OTel Auto-Instrumentation | Enabled |
-| Argo Rollouts Canary | Configured |
-| AnalysisTemplate | Created |
-| Failure/Rollback Test | Completed |
+| Task                                  | Status     |
+| ------------------------------------- | ---------- |
+| Karpenter NodePool for MSA            | Configured |
+| KEDA ScaledObjects (SQS + Prometheus) | Created    |
+| ArgoCD ApplicationSet                 | Deployed   |
+| MSA Services (4 services)             | Running    |
+| OTel Auto-Instrumentation             | Enabled    |
+| Argo Rollouts Canary                  | Configured |
+| AnalysisTemplate                      | Created    |
+| Failure/Rollback Test                 | Completed  |
 
 ## Cleanup
 
-Cleanup will be performed in [Part 6](./06-distributed-tracing-lab.md#cleanup).
+Cleanup will be performed in [Part 6](06-distributed-tracing-lab.md#cleanup).
 
 ## Troubleshooting
 
 <details>
+
 <summary>OTel instrumentation not injecting</summary>
 
-- Verify OTel Operator is running: `kubectl get pods -n opentelemetry-operator-system`
-- Check Instrumentation resource: `kubectl get instrumentation -n msa`
-- Ensure pod annotations are correct
-- Restart pods after creating Instrumentation
+* Verify OTel Operator is running: `kubectl get pods -n opentelemetry-operator-system`
+* Check Instrumentation resource: `kubectl get instrumentation -n msa`
+* Ensure pod annotations are correct
+* Restart pods after creating Instrumentation
+
 </details>
 
 <details>
+
 <summary>Canary analysis always failing</summary>
 
-- Check Prometheus query syntax in AnalysisTemplate
-- Verify metrics are being collected: test query in Grafana Explore
-- Check AnalysisRun logs: `kubectl describe analysisrun -n msa <name>`
-- Adjust success/failure conditions if needed
+* Check Prometheus query syntax in AnalysisTemplate
+* Verify metrics are being collected: test query in Grafana Explore
+* Check AnalysisRun logs: `kubectl describe analysisrun -n msa <name>`
+* Adjust success/failure conditions if needed
+
 </details>
 
 <details>
+
 <summary>KEDA not scaling</summary>
 
-- Verify IRSA permissions for SQS access
-- Check KEDA operator logs: `kubectl logs -n keda -l app=keda-operator`
-- Test SQS metrics: `aws sqs get-queue-attributes --queue-url $SQS_QUEUE_URL --attribute-names ApproximateNumberOfMessages`
+* Verify IRSA permissions for SQS access
+* Check KEDA operator logs: `kubectl logs -n keda -l app=keda-operator`
+* Test SQS metrics: `aws sqs get-queue-attributes --queue-url $SQS_QUEUE_URL --attribute-names ApproximateNumberOfMessages`
+
 </details>
 
 ## Next Steps
 
-Continue to [Part 4: Load Testing and Autoscaling](./04-load-testing-scaling-lab.md) to stress test the MSA application.
+Continue to [Part 4: Load Testing and Autoscaling](04-load-testing-scaling-lab.md) to stress test the MSA application.
 
 ## References
 
-- [ArgoCD Documentation](../../gitops/argocd/README.md)
-- [Argo Rollouts Documentation](../../gitops/argocd/05-traffic-management.md)
-- [KEDA Documentation](../../autoscaling/01-keda.md)
-- [Karpenter Documentation](../../autoscaling/02-karpenter.md)
-- [OpenTelemetry Documentation](../../observability/tracing/03-opentelemetry.md)
+* [ArgoCD Documentation](../../gitops/argocd/)
+* [Argo Rollouts Documentation](../../gitops/argocd/05-traffic-management.md)
+* [KEDA Documentation](../../autoscaling/01-keda.md)
+* [Karpenter Documentation](../../autoscaling/02-karpenter.md)
+* [OpenTelemetry Documentation](../../observability/tracing/03-opentelemetry.md)

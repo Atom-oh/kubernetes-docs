@@ -1,7 +1,6 @@
-# Part 2: Calico Architecture Deep Dive
+# Part 2: Architecture
 
-> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 23, 2026
+> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+ **Last Updated**: February 23, 2026
 
 ## Overview
 
@@ -9,7 +8,7 @@ This section provides an in-depth exploration of Calico's architecture. Understa
 
 ## Full Architecture Diagram
 
-![Calico Architecture](../../../assets/calico_architecture.png)
+![Calico Architecture](../../.gitbook/assets/calico_architecture.png)
 
 ```mermaid
 flowchart TD
@@ -144,11 +143,11 @@ flowchart LR
 
 Felix supports multiple data plane backends:
 
-| Data Plane | Description | Best For |
-|------------|-------------|----------|
-| **iptables** | Traditional Linux firewall | Compatibility, mature deployments |
-| **nftables** | Modern Linux firewall | Newer kernels, better performance |
-| **eBPF** | In-kernel programmable | Maximum performance, kube-proxy replacement |
+| Data Plane   | Description                | Best For                                    |
+| ------------ | -------------------------- | ------------------------------------------- |
+| **iptables** | Traditional Linux firewall | Compatibility, mature deployments           |
+| **nftables** | Modern Linux firewall      | Newer kernels, better performance           |
+| **eBPF**     | In-kernel programmable     | Maximum performance, kube-proxy replacement |
 
 ### FelixConfiguration Resource
 
@@ -312,11 +311,11 @@ flowchart TD
 
 ### BGP Session Types
 
-| Session Type | Use Case | Configuration |
-|--------------|----------|---------------|
-| **Node-to-Node Mesh** | Default for small clusters | Automatic, full mesh |
-| **Route Reflector** | Large clusters (100+ nodes) | Dedicated RR nodes |
-| **External Peering** | On-premises integration | Manual BGP peer config |
+| Session Type          | Use Case                    | Configuration          |
+| --------------------- | --------------------------- | ---------------------- |
+| **Node-to-Node Mesh** | Default for small clusters  | Automatic, full mesh   |
+| **Route Reflector**   | Large clusters (100+ nodes) | Dedicated RR nodes     |
+| **External Peering**  | On-premises integration     | Manual BGP peer config |
 
 ### BGP Configuration Examples
 
@@ -709,13 +708,13 @@ The calico-kube-controllers pod runs a set of controllers that sync Kubernetes r
 
 ### Controllers Overview
 
-| Controller | Purpose |
-|------------|---------|
-| **Node Controller** | Syncs Kubernetes nodes with Calico node resources |
-| **Policy Controller** | Syncs Kubernetes NetworkPolicy with Calico policy |
-| **Namespace Controller** | Syncs namespace labels for profile management |
-| **ServiceAccount Controller** | Syncs service account labels for RBAC |
-| **WorkloadEndpoint Controller** | Cleans up stale workload endpoints |
+| Controller                      | Purpose                                           |
+| ------------------------------- | ------------------------------------------------- |
+| **Node Controller**             | Syncs Kubernetes nodes with Calico node resources |
+| **Policy Controller**           | Syncs Kubernetes NetworkPolicy with Calico policy |
+| **Namespace Controller**        | Syncs namespace labels for profile management     |
+| **ServiceAccount Controller**   | Syncs service account labels for RBAC             |
+| **WorkloadEndpoint Controller** | Cleans up stale workload endpoints                |
 
 ### Controller Reconciliation Loop
 
@@ -809,10 +808,11 @@ flowchart LR
 ```
 
 **Advantages:**
-- No separate etcd cluster to manage
-- Uses Kubernetes RBAC for access control
-- Simpler operational model
-- Works with any Kubernetes distribution
+
+* No separate etcd cluster to manage
+* Uses Kubernetes RBAC for access control
+* Simpler operational model
+* Works with any Kubernetes distribution
 
 ### etcd Datastore (Legacy)
 
@@ -842,20 +842,21 @@ flowchart LR
 ```
 
 **Advantages:**
-- Decoupled from Kubernetes API server
-- Can be used for non-Kubernetes workloads (VMs, bare metal)
-- Historical option for very large clusters
+
+* Decoupled from Kubernetes API server
+* Can be used for non-Kubernetes workloads (VMs, bare metal)
+* Historical option for very large clusters
 
 ### Datastore Comparison
 
-| Feature | Kubernetes API | etcd |
-|---------|----------------|------|
-| **Operational Complexity** | Lower | Higher |
-| **Scalability** | Good (with Typha) | Excellent |
-| **Non-K8s Workloads** | Limited | Full support |
-| **Backup/Restore** | Via K8s | Separate tooling |
-| **Access Control** | K8s RBAC | etcd auth |
-| **Recommendation** | Default choice | Special cases only |
+| Feature                    | Kubernetes API    | etcd               |
+| -------------------------- | ----------------- | ------------------ |
+| **Operational Complexity** | Lower             | Higher             |
+| **Scalability**            | Good (with Typha) | Excellent          |
+| **Non-K8s Workloads**      | Limited           | Full support       |
+| **Backup/Restore**         | Via K8s           | Separate tooling   |
+| **Access Control**         | K8s RBAC          | etcd auth          |
+| **Recommendation**         | Default choice    | Special cases only |
 
 ## Component Interaction Sequence
 
@@ -990,16 +991,17 @@ Calico's architecture is designed for scalability, performance, and operational 
 6. **Datastore**: Kubernetes API (recommended) or etcd for configuration storage
 
 Understanding these components and their interactions is essential for:
-- Troubleshooting connectivity issues
-- Optimizing performance at scale
-- Planning capacity and architecture
-- Integrating with existing network infrastructure
+
+* Troubleshooting connectivity issues
+* Optimizing performance at scale
+* Planning capacity and architecture
+* Integrating with existing network infrastructure
 
 [Previous: Part 1 - Introduction to Calico](01-introduction.md)
 
 [Next: Part 3 - Networking Modes](03-networking-modes.md)
 
-[Return to Calico Overview](README.md)
+[Return to Calico Overview](./)
 
 ## Quiz
 

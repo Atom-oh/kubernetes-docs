@@ -1,44 +1,41 @@
-# Istio Architecture
+# Architecture
 
-> **Supported Version**: Istio 1.28+
-> **API Version**: `networking.istio.io/v1`, `security.istio.io/v1`
-> **Last Updated**: February 19, 2026
+> **Supported Version**: Istio 1.28+ **API Version**: `networking.istio.io/v1`, `security.istio.io/v1` **Last Updated**: February 19, 2026
 
 This document provides an in-depth look at Istio's internal architecture and networking mechanisms.
 
 **For background and history**, refer to the [Basic Concepts](02-basic-concepts.md#background-and-history) document.
 
 **Important Changes (Istio 1.5+)**:
-- Pilot, Citadel, Galley are **no longer separate components**
-- They are consolidated into a **single binary** called Istiod (`pilot-discovery`)
-- Pilot/Citadel/Galley terminology refers to **historical names describing functionality**
+
+* Pilot, Citadel, Galley are **no longer separate components**
+* They are consolidated into a **single binary** called Istiod (`pilot-discovery`)
+* Pilot/Citadel/Galley terminology refers to **historical names describing functionality**
 
 ## Table of Contents
 
-1. [Istio Architecture Overview](#istio-architecture-overview)
-2. [Control Plane: Istiod](#control-plane-istiod)
-3. [Data Plane: Envoy Proxy](#data-plane-envoy-proxy)
-4. [Sidecar Injection Mechanism](#sidecar-injection-mechanism)
-5. [iptables and Traffic Interception](#iptables-and-traffic-interception)
-6. [DNS Processing Mechanism](#dns-processing-mechanism)
-7. [xDS API Communication](#xds-api-communication)
-8. [Optimization with Sidecar Resource](#optimization-with-sidecar-resource)
+1. [Istio Architecture Overview](03-architecture.md#istio-architecture-overview)
+2. [Control Plane: Istiod](03-architecture.md#control-plane-istiod)
+3. [Data Plane: Envoy Proxy](03-architecture.md#data-plane-envoy-proxy)
+4. [Sidecar Injection Mechanism](03-architecture.md#sidecar-injection-mechanism)
+5. [iptables and Traffic Interception](03-architecture.md#iptables-and-traffic-interception)
+6. [DNS Processing Mechanism](03-architecture.md#dns-processing-mechanism)
+7. [xDS API Communication](03-architecture.md#xds-api-communication)
+8. [Optimization with Sidecar Resource](03-architecture.md#optimization-with-sidecar-resource)
 
 ## Istio Architecture Overview
 
 ### Overall Structure
 
-![istio-overview](../../assets/istio-overview.png)
-
 ### Control Plane vs Data Plane
 
-| Category | Control Plane (Istiod) | Data Plane (Envoy) |
-|------|------------------------|-------------------|
-| **Role** | Policy management, configuration distribution | Actual traffic processing |
-| **Location** | Separate pods (typically 1-3) | All application pods |
-| **Language** | Go | C++ |
-| **Load** | Low | High (all traffic) |
-| **Scalability** | Horizontal scaling (HA) | Automatic (1 per pod) |
+| Category        | Control Plane (Istiod)                        | Data Plane (Envoy)        |
+| --------------- | --------------------------------------------- | ------------------------- |
+| **Role**        | Policy management, configuration distribution | Actual traffic processing |
+| **Location**    | Separate pods (typically 1-3)                 | All application pods      |
+| **Language**    | Go                                            | C++                       |
+| **Load**        | Low                                           | High (all traffic)        |
+| **Scalability** | Horizontal scaling (HA)                       | Automatic (1 per pod)     |
 
 ## Control Plane: Istiod
 
@@ -125,10 +122,11 @@ spec:
 ```
 
 Istiod tracks:
-- Kubernetes Services
-- Endpoints (pod IPs)
-- Pod state changes
-- External services (ServiceEntry)
+
+* Kubernetes Services
+* Endpoints (pod IPs)
+* Pod state changes
+* External services (ServiceEntry)
 
 #### 2. Traffic Management (Pilot Functionality)
 
@@ -192,6 +190,7 @@ sequenceDiagram
 ```
 
 **SPIFFE ID Format**:
+
 ```
 spiffe://cluster.local/ns/default/sa/reviews
 ```
@@ -214,6 +213,7 @@ spec:
 ```
 
 Istiod validates before applying:
+
 ```bash
 $ kubectl apply -f invalid-vs.yaml
 Error from server: admission webhook "validation.istio.io" denied the request:
@@ -234,19 +234,20 @@ istio-p+     1  /usr/local/bin/pilot-discovery discovery
 ```
 
 **Key Points**:
-- Istiod runs as a **single Go binary** called `pilot-discovery`
-- Pilot, Citadel, Galley exist as **code-level packages/modules** but are not separate processes
-- All functions run as goroutines within a single process
+
+* Istiod runs as a **single Go binary** called `pilot-discovery`
+* Pilot, Citadel, Galley exist as **code-level packages/modules** but are not separate processes
+* All functions run as goroutines within a single process
 
 **Main Ports Provided by Istiod**:
 
-| Port | Protocol | Purpose | Functionality |
-|------|----------|------|------|
-| **15010** | gRPC | xDS (legacy) | Backward compatibility |
-| **15012** | gRPC | xDS over TLS | Primary xDS API endpoint |
-| **15014** | HTTP | Control plane monitoring | Metrics and health checks |
-| **15017** | HTTPS | Webhook | Sidecar injection |
-| **8080** | HTTP | Debug | Debugging interface |
+| Port      | Protocol | Purpose                  | Functionality             |
+| --------- | -------- | ------------------------ | ------------------------- |
+| **15010** | gRPC     | xDS (legacy)             | Backward compatibility    |
+| **15012** | gRPC     | xDS over TLS             | Primary xDS API endpoint  |
+| **15014** | HTTP     | Control plane monitoring | Metrics and health checks |
+| **15017** | HTTPS    | Webhook                  | Sidecar injection         |
+| **8080**  | HTTP     | Debug                    | Debugging interface       |
 
 ### Istiod Deployment
 
@@ -278,9 +279,10 @@ spec:
 ```
 
 **Typical Resource Usage**:
-- CPU: 0.5 - 2 cores
-- Memory: 2 - 4 GB
-- Can handle thousands of services and pods
+
+* CPU: 0.5 - 2 cores
+* Memory: 2 - 4 GB
+* Can handle thousands of services and pods
 
 ## Data Plane: Envoy Proxy
 
@@ -336,10 +338,11 @@ flowchart TB
 ```
 
 **Default Istio Listeners**:
-- `0.0.0.0:15001`: All outbound TCP traffic
-- `0.0.0.0:15006`: All inbound TCP traffic
-- `0.0.0.0:15021`: Health check
-- `0.0.0.0:15090`: Prometheus metrics
+
+* `0.0.0.0:15001`: All outbound TCP traffic
+* `0.0.0.0:15006`: All inbound TCP traffic
+* `0.0.0.0:15021`: Health check
+* `0.0.0.0:15090`: Prometheus metrics
 
 #### 2. Filters
 
@@ -407,10 +410,11 @@ flowchart LR
 ### Envoy Performance
 
 **Benchmarks** (typical environment):
-- Throughput: 10,000+ RPS per core
-- Added latency: < 1ms (P99)
-- Memory: 50-100 MB (default configuration)
-- CPU: 0.1-0.5 cores (typical load)
+
+* Throughput: 10,000+ RPS per core
+* Added latency: < 1ms (P99)
+* Memory: 50-100 MB (default configuration)
+* CPU: 0.1-0.5 cores (typical load)
 
 ## Sidecar Injection Mechanism
 
@@ -462,6 +466,7 @@ flowchart TB
 ### Original vs After Injection
 
 **Original Deployment**:
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -478,6 +483,7 @@ spec:
 ```
 
 **After Injection**:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -507,6 +513,7 @@ spec:
 #### Automatic Injection (Recommended)
 
 **Namespace Level**:
+
 ```bash
 # Add label to namespace
 kubectl label namespace default istio-injection=enabled
@@ -516,6 +523,7 @@ kubectl apply -f deployment.yaml
 ```
 
 **Pod Level** (Annotation):
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -542,9 +550,10 @@ kubectl apply -f deployment-injected.yaml
 ```
 
 **Manual Injection Scenarios**:
-- Environments where automatic injection cannot be used
-- When explicit control is needed in CI/CD pipelines
-- When you want to inspect injected YAML for debugging
+
+* Environments where automatic injection cannot be used
+* When explicit control is needed in CI/CD pipelines
+* When you want to inspect injected YAML for debugging
 
 ## iptables and Traffic Interception
 
@@ -684,10 +693,10 @@ REDIRECT   tcp  --  0.0.0.0/0  0.0.0.0/0           redir ports 15006
 
 Istio supports two traffic interception methods:
 
-| Method | Advantages | Disadvantages | Use Scenario |
-|------|------|------|--------------|
-| **iptables** | Simple, universal | Init Container required | Default setup |
-| **eBPF (CNI)** | No Init needed, fast | Requires modern kernel | High performance, Ambient Mode |
+| Method         | Advantages           | Disadvantages           | Use Scenario                   |
+| -------------- | -------------------- | ----------------------- | ------------------------------ |
+| **iptables**   | Simple, universal    | Init Container required | Default setup                  |
+| **eBPF (CNI)** | No Init needed, fast | Requires modern kernel  | High performance, Ambient Mode |
 
 ## DNS Processing Mechanism
 
@@ -720,6 +729,7 @@ flowchart LR
 ```
 
 **/etc/resolv.conf** (inside pod):
+
 ```bash
 nameserver 10.96.0.10  # kube-dns ClusterIP
 search default.svc.cluster.local svc.cluster.local cluster.local
@@ -765,9 +775,10 @@ flowchart TB
 ```
 
 **Advantages**:
-- No CoreDNS calls needed (performance improvement)
-- Dynamic Endpoint updates
-- Advanced routing (versions, weights, etc.)
+
+* No CoreDNS calls needed (performance improvement)
+* Dynamic Endpoint updates
+* Advanced routing (versions, weights, etc.)
 
 ### DNS Proxy (Optional)
 
@@ -854,13 +865,13 @@ flowchart LR
 
 ### xDS API Types
 
-| API | Name | Role | Example |
-|-----|------|------|------|
-| **LDS** | Listener Discovery | Receive port configuration | 15001, 15006 |
-| **RDS** | Route Discovery | HTTP routing rules | VirtualService |
-| **CDS** | Cluster Discovery | Upstream services | DestinationRule |
-| **EDS** | Endpoint Discovery | Pod IP list | Service Endpoints |
-| **SDS** | Secret Discovery | TLS certificates | mTLS certificates |
+| API     | Name               | Role                       | Example           |
+| ------- | ------------------ | -------------------------- | ----------------- |
+| **LDS** | Listener Discovery | Receive port configuration | 15001, 15006      |
+| **RDS** | Route Discovery    | HTTP routing rules         | VirtualService    |
+| **CDS** | Cluster Discovery  | Upstream services          | DestinationRule   |
+| **EDS** | Endpoint Discovery | Pod IP list                | Service Endpoints |
+| **SDS** | Secret Discovery   | TLS certificates           | mTLS certificates |
 
 ### xDS Communication Flow
 
@@ -970,10 +981,11 @@ flowchart TB
 ```
 
 **Problems**:
-- Increased memory usage
-- Increased CPU usage (configuration processing)
-- Network bandwidth waste
-- Increased Istiod load
+
+* Increased memory usage
+* Increased CPU usage (configuration processing)
+* Network bandwidth waste
+* Increased Istiod load
 
 ### Solution: Sidecar Resource
 
@@ -1057,14 +1069,16 @@ spec:
 ### Sidecar Resource Effects
 
 **Before (No Sidecar)**:
-- 1000 services → 1000 Cluster configurations
-- Envoy memory: ~500 MB
-- Configuration push time: 5-10 seconds
+
+* 1000 services → 1000 Cluster configurations
+* Envoy memory: \~500 MB
+* Configuration push time: 5-10 seconds
 
 **After (Sidecar Applied)**:
-- 10 services → 10 Cluster configurations
-- Envoy memory: ~80 MB
-- Configuration push time: < 1 second
+
+* 10 services → 10 Cluster configurations
+* Envoy memory: \~80 MB
+* Configuration push time: < 1 second
 
 ### DNS and Sidecar Integration
 
@@ -1084,24 +1098,28 @@ spec:
 ```
 
 **Result**:
-- Envoy only resolves `reviews`, `ratings`
-- External domains like `google.com` forwarded to CoreDNS
-- Memory and CPU savings
+
+* Envoy only resolves `reviews`, `ratings`
+* External domains like `google.com` forwarded to CoreDNS
+* Memory and CPU savings
 
 ## References
 
 ### Official Documentation
-- [Istio Architecture](https://istio.io/latest/docs/ops/deployment/architecture/)
-- [Envoy Proxy](https://www.envoyproxy.io/docs/envoy/latest/intro/intro)
-- [xDS Protocol](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol)
-- [SPIFFE](https://spiffe.io/)
+
+* [Istio Architecture](https://istio.io/latest/docs/ops/deployment/architecture/)
+* [Envoy Proxy](https://www.envoyproxy.io/docs/envoy/latest/intro/intro)
+* [xDS Protocol](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol)
+* [SPIFFE](https://spiffe.io/)
 
 ### History and Background
-- [Envoy Origin Story - Matt Klein](https://blog.envoyproxy.io/the-universal-data-plane-api-d15cec7a)
-- [Istio Announcement - Google Cloud Blog](https://cloud.google.com/blog/products/gcp/istio-service-mesh-for-microservices)
-- [Service Mesh History](https://www.nginx.com/blog/what-is-a-service-mesh/)
+
+* [Envoy Origin Story - Matt Klein](https://blog.envoyproxy.io/the-universal-data-plane-api-d15cec7a)
+* [Istio Announcement - Google Cloud Blog](https://cloud.google.com/blog/products/gcp/istio-service-mesh-for-microservices)
+* [Service Mesh History](https://www.nginx.com/blog/what-is-a-service-mesh/)
 
 ### Advanced Learning
-- [Envoy Architecture Overview](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/arch_overview)
-- [Istio Performance and Scalability](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
-- [iptables Tutorial](https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html)
+
+* [Envoy Architecture Overview](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/arch_overview)
+* [Istio Performance and Scalability](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
+* [iptables Tutorial](https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html)

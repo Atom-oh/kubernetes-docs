@@ -1,7 +1,6 @@
-# Linkerd Service Mesh
+# Linkerd
 
-> **Supported Versions**: Linkerd 2.16+
-> **Last Updated**: February 22, 2026
+> **Supported Versions**: Linkerd 2.16+ **Last Updated**: February 22, 2026
 
 ## Overview
 
@@ -9,13 +8,13 @@ Linkerd is a CNCF (Cloud Native Computing Foundation) graduated project and a li
 
 ### Core Value Propositions
 
-| Value | Description |
-|-------|-------------|
-| **Simplicity** | Sensible defaults that work out of the box without complex configuration |
-| **Security by Default** | Automatic mTLS encryption without any configuration |
-| **Lightweight** | Micro-proxy written in Rust with minimal resource usage (~10MB memory) |
-| **Fast Performance** | Less than 1ms p99 latency overhead |
-| **Operational Ease** | Simple upgrades and intuitive debugging tools |
+| Value                   | Description                                                              |
+| ----------------------- | ------------------------------------------------------------------------ |
+| **Simplicity**          | Sensible defaults that work out of the box without complex configuration |
+| **Security by Default** | Automatic mTLS encryption without any configuration                      |
+| **Lightweight**         | Micro-proxy written in Rust with minimal resource usage (\~10MB memory)  |
+| **Fast Performance**    | Less than 1ms p99 latency overhead                                       |
+| **Operational Ease**    | Simple upgrades and intuitive debugging tools                            |
 
 ## Linkerd Architecture Overview
 
@@ -57,73 +56,68 @@ graph TB
 
 Compare Linkerd, Istio, and Cilium Service Mesh to understand the characteristics of each solution.
 
-| Feature | Linkerd | Istio | Cilium Service Mesh |
-|---------|---------|-------|---------------------|
-| **Proxy** | linkerd2-proxy (Rust) | Envoy (C++) | eBPF + Envoy (optional) |
-| **Resource Usage** | Very Low (~10MB) | High (~50-100MB) | Low (eBPF mode) |
-| **Latency Overhead** | <1ms p99 | 2-5ms p99 | <1ms (eBPF mode) |
-| **Complexity** | Low | High | Medium |
-| **mTLS** | Automatic (default) | Configuration required | Configuration required |
-| **Traffic Management** | Basic (SMI) | Very Rich | Basic |
-| **Observability** | Good (built-in) | Excellent | Good (Hubble) |
-| **Multi-cluster** | Service Mirroring | Complex setup | ClusterMesh |
-| **CNI Integration** | Separate | Separate | Native |
-| **CNCF Status** | Graduated | Graduated | Graduated |
-| **Learning Curve** | Gentle | Steep | Medium |
-| **Community** | Active | Very Active | Active |
+| Feature                | Linkerd               | Istio                  | Cilium Service Mesh     |
+| ---------------------- | --------------------- | ---------------------- | ----------------------- |
+| **Proxy**              | linkerd2-proxy (Rust) | Envoy (C++)            | eBPF + Envoy (optional) |
+| **Resource Usage**     | Very Low (\~10MB)     | High (\~50-100MB)      | Low (eBPF mode)         |
+| **Latency Overhead**   | <1ms p99              | 2-5ms p99              | <1ms (eBPF mode)        |
+| **Complexity**         | Low                   | High                   | Medium                  |
+| **mTLS**               | Automatic (default)   | Configuration required | Configuration required  |
+| **Traffic Management** | Basic (SMI)           | Very Rich              | Basic                   |
+| **Observability**      | Good (built-in)       | Excellent              | Good (Hubble)           |
+| **Multi-cluster**      | Service Mirroring     | Complex setup          | ClusterMesh             |
+| **CNI Integration**    | Separate              | Separate               | Native                  |
+| **CNCF Status**        | Graduated             | Graduated              | Graduated               |
+| **Learning Curve**     | Gentle                | Steep                  | Medium                  |
+| **Community**          | Active                | Very Active            | Active                  |
 
 ## When to Choose Linkerd
 
 ### Suitable Use Cases
 
 1. **When Simplicity Matters**
-   - When basic service mesh capabilities are needed over complex traffic management features
-   - Small operations teams or teams with limited service mesh experience
-   - When fast adoption and low learning curve are priorities
-
+   * When basic service mesh capabilities are needed over complex traffic management features
+   * Small operations teams or teams with limited service mesh experience
+   * When fast adoption and low learning curve are priorities
 2. **When Resource Efficiency is Critical**
-   - Environments running many Pods per node
-   - When sidecar overhead needs to be minimized
-   - Latency-sensitive applications
-
+   * Environments running many Pods per node
+   * When sidecar overhead needs to be minimized
+   * Latency-sensitive applications
 3. **When Security Should Be the Default**
-   - When automatic mTLS without configuration is needed
-   - Zero-trust network implementation
-   - Encryption requirements for compliance
-
+   * When automatic mTLS without configuration is needed
+   * Zero-trust network implementation
+   * Encryption requirements for compliance
 4. **When Operational Simplicity is Required**
-   - Preference for simple upgrade processes
-   - Minimal CRDs and configuration
-   - Intuitive CLI tooling
+   * Preference for simple upgrade processes
+   * Minimal CRDs and configuration
+   * Intuitive CLI tooling
 
 ### Less Suitable Use Cases
 
 1. **Advanced Traffic Management Needs**
-   - Complex routing rules, header manipulation
-   - Advanced load balancing algorithms
-   - Extensive protocol support (beyond gRPC)
-
+   * Complex routing rules, header manipulation
+   * Advanced load balancing algorithms
+   * Extensive protocol support (beyond gRPC)
 2. **VM Workload Integration**
-   - Integration with workloads outside Kubernetes
-   - Mixed VM and container environments
-
+   * Integration with workloads outside Kubernetes
+   * Mixed VM and container environments
 3. **Large-scale Multi-protocol Environments**
-   - Need for various protocol support (Kafka, MongoDB, etc.)
-   - Complex Wasm extension requirements
+   * Need for various protocol support (Kafka, MongoDB, etc.)
+   * Complex Wasm extension requirements
 
 ## Documentation Structure
 
 This section covers Linkerd's main features and operational methods:
 
-| Document | Description |
-|----------|-------------|
-| [Installation and Setup](./01-installation.md) | CLI installation, control plane installation, HA configuration, extensions |
-| [Architecture](./02-architecture.md) | Control plane, data plane, certificate hierarchy details |
-| [Traffic Management](./03-traffic-management.md) | ServiceProfile, TrafficSplit, retries, timeouts, canary deployments |
-| [Security](./04-security.md) | mTLS, authorization policies, certificate management, external CA integration |
-| [Observability](./05-observability.md) | Metrics, dashboards, CLI tools, Prometheus/Grafana integration, distributed tracing |
-| [Multi-cluster](./06-multi-cluster.md) | Service mirroring, cluster linking, failover |
-| [Best Practices](./07-best-practices.md) | Production checklist, performance tuning, troubleshooting |
+| Document                                       | Description                                                                         |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------- |
+| [Installation and Setup](01-installation.md)   | CLI installation, control plane installation, HA configuration, extensions          |
+| [Architecture](02-architecture.md)             | Control plane, data plane, certificate hierarchy details                            |
+| [Traffic Management](03-traffic-management.md) | ServiceProfile, TrafficSplit, retries, timeouts, canary deployments                 |
+| [Security](04-security.md)                     | mTLS, authorization policies, certificate management, external CA integration       |
+| [Observability](05-observability.md)           | Metrics, dashboards, CLI tools, Prometheus/Grafana integration, distributed tracing |
+| [Multi-cluster](06-multi-cluster.md)           | Service mirroring, cluster linking, failover                                        |
+| [Best Practices](07-best-practices.md)         | Production checklist, performance tuning, troubleshooting                           |
 
 ## Quick Start
 
@@ -203,19 +197,19 @@ linkerd viz tap deploy/my-app -n my-app
 
 Linkerd injects a sidecar container called `linkerd-proxy` into each Pod. This proxy:
 
-- Written in Rust for memory safety and high performance
-- Uses only ~10MB of memory
-- Adds less than 1ms latency
-- Handles all inbound/outbound traffic
-- Automatically applies mTLS encryption
+* Written in Rust for memory safety and high performance
+* Uses only \~10MB of memory
+* Adds less than 1ms latency
+* Handles all inbound/outbound traffic
+* Automatically applies mTLS encryption
 
 ### Service Discovery
 
 The Destination component monitors Kubernetes services and provides endpoint information to proxies:
 
-- Real-time endpoint updates
-- ServiceProfile-based routing information
-- Traffic split policy distribution
+* Real-time endpoint updates
+* ServiceProfile-based routing information
+* Traffic split policy distribution
 
 ### Automatic mTLS
 
@@ -227,14 +221,14 @@ Linkerd automatically encrypts all mesh traffic without configuration:
 
 ## Next Steps
 
-1. **[Installation and Setup](./01-installation.md)**: Detailed guide on installing Linkerd in your cluster
-2. **[Architecture](./02-architecture.md)**: Understanding Linkerd's internal structure
-3. **[Quizzes](/en/quizzes/service-mesh/linkerd/)**: Test your knowledge
+1. [**Installation and Setup**](01-installation.md): Detailed guide on installing Linkerd in your cluster
+2. [**Architecture**](02-architecture.md): Understanding Linkerd's internal structure
+3. [**Quizzes**](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/service-mesh/linkerd/README.md): Test your knowledge
 
 ## References
 
-- [Linkerd Official Documentation](https://linkerd.io/2/overview/)
-- [Linkerd GitHub](https://github.com/linkerd/linkerd2)
-- [CNCF Linkerd Project Page](https://www.cncf.io/projects/linkerd/)
-- [Linkerd Slack Community](https://slack.linkerd.io/)
-- [Buoyant Blog](https://buoyant.io/blog)
+* [Linkerd Official Documentation](https://linkerd.io/2/overview/)
+* [Linkerd GitHub](https://github.com/linkerd/linkerd2)
+* [CNCF Linkerd Project Page](https://www.cncf.io/projects/linkerd/)
+* [Linkerd Slack Community](https://slack.linkerd.io/)
+* [Buoyant Blog](https://buoyant.io/blog)

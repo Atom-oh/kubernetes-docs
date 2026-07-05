@@ -1,4 +1,4 @@
-# Part 2: Scheduler Extender and Framework
+# Part 2: Implementation
 
 ## Scheduler Extender Approach
 
@@ -7,8 +7,6 @@ The scheduler extender approach is a way to extend the functionality of the defa
 ### Scheduler Extender Architecture
 
 The following diagram shows the architecture of the scheduler extender approach:
-
-![Scheduler Extender Architecture](../assets/scheduler_extender_architecture.svg)
 
 ### Scheduler Extender Workflow
 
@@ -311,13 +309,9 @@ The scheduler framework introduced in Kubernetes 1.15 provides a plugin-based ar
 
 The following diagram shows the scheduler framework architecture:
 
-![Scheduler Framework Architecture](../assets/custom-scheduler-framework-architecture.svg)
-
 ### Scheduler Framework Plugin Configuration
 
 The following diagram shows the scheduler framework plugin configuration:
-
-![](../assets/kubernetes-scheduler-architecture.svg)
 
 ### Scheduling Framework Extension Points
 
@@ -488,8 +482,7 @@ When implementing the scheduler framework in Amazon EKS, consider the following:
 
 ### EKS Scheduler Framework Architecture
 
-The following diagram shows how to implement the scheduler framework in EKS:
-![](../assets/eks_scheduler_framework_architecture.svg)
+The following diagram shows how to implement the scheduler framework in EKS:&#x20;
 
 ### EKS Scheduler Framework Implementation Steps
 

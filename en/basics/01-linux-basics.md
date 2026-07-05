@@ -1,7 +1,6 @@
 # Linux Basics
 
-> **Supported Versions**: All major Linux distributions (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+)
-> **Last Updated**: February 11, 2026
+> **Supported Versions**: All major Linux distributions (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+) **Last Updated**: February 11, 2026
 
 Understanding Linux fundamentals is essential for comprehending Kubernetes and container technology. This document covers the core Linux concepts that are particularly important in Kubernetes environments.
 
@@ -10,12 +9,15 @@ Understanding Linux fundamentals is essential for comprehending Kubernetes and c
 To follow along with the examples in this document, you'll need the following environment:
 
 ### Required Environment
-- Linux operating system (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+ recommended)
-- Terminal access
-- sudo privileges
+
+* Linux operating system (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+ recommended)
+* Terminal access
+* sudo privileges
 
 ### Cloud Environment Setup (Optional)
+
 If using an AWS EC2 instance:
+
 ```bash
 # Start an Amazon Linux 2 instance
 aws ec2 run-instances \
@@ -30,29 +32,31 @@ ssh -i your-key.pem ec2-user@your-instance-public-ip
 ```
 
 ### Local Environment Setup (Optional)
+
 For local practice, you can use one of the following:
-- **VirtualBox + Vagrant**: Set up a virtual machine environment
-- **WSL2**: Use Linux environment on Windows
-- **Docker**: Practice in a container environment
+
+* **VirtualBox + Vagrant**: Set up a virtual machine environment
+* **WSL2**: Use Linux environment on Windows
+* **Docker**: Practice in a container environment
 
 ## Table of Contents
 
-* [Linux Kernel and User Space](#linux-kernel-and-user-space)
-* [Process Management](#process-management)
-* [Namespaces](#namespaces)
-* [cgroups (Control Groups)](#cgroups-control-groups)
-* [File System](#file-system)
-* [Networking Basics](#networking-basics)
-* [Security Context](#security-context)
-* [systemd and Service Management](#systemd-and-service-management)
-* [Kernel Parameters and Modules](#kernel-parameters-and-modules)
-* [System Resource Limits](#system-resource-limits)
-* [Log Management](#log-management)
-* [DNS and Network Configuration](#dns-and-network-configuration)
-* [Time Synchronization](#time-synchronization)
-* [Package Management](#package-management)
-* [Essential Linux Commands](#essential-linux-commands)
-* [Container-Related Linux Features](#container-related-linux-features)
+* [Linux Kernel and User Space](01-linux-basics.md#linux-kernel-and-user-space)
+* [Process Management](01-linux-basics.md#process-management)
+* [Namespaces](01-linux-basics.md#namespaces)
+* [cgroups (Control Groups)](01-linux-basics.md#cgroups-control-groups)
+* [File System](01-linux-basics.md#file-system)
+* [Networking Basics](01-linux-basics.md#networking-basics)
+* [Security Context](01-linux-basics.md#security-context)
+* [systemd and Service Management](01-linux-basics.md#systemd-and-service-management)
+* [Kernel Parameters and Modules](01-linux-basics.md#kernel-parameters-and-modules)
+* [System Resource Limits](01-linux-basics.md#system-resource-limits)
+* [Log Management](01-linux-basics.md#log-management)
+* [DNS and Network Configuration](01-linux-basics.md#dns-and-network-configuration)
+* [Time Synchronization](01-linux-basics.md#time-synchronization)
+* [Package Management](01-linux-basics.md#package-management)
+* [Essential Linux Commands](01-linux-basics.md#essential-linux-commands)
+* [Container-Related Linux Features](01-linux-basics.md#container-related-linux-features)
 
 ## Linux Kernel and User Space
 
@@ -71,24 +75,19 @@ The Linux kernel is the core of the operating system, acting as an intermediary 
 
 User space is the memory region where regular applications run. User space programs access kernel services through system calls.
 
-![Linux Architecture](../assets/linux_architecture.svg)
-
 ### System Call Examples
 
-| System Call | Description | Related Commands |
-|------------|-------------|------------------|
-| `fork()` | Create new process | `ps`, `top` |
-| `exec()` | Execute program | `bash`, `sh` |
-| `open()` | Open file | `cat`, `less` |
-| `read()` | Read data from file | `cat`, `grep` |
-| `write()` | Write data to file | `echo`, `tee` |
-| `socket()` | Create network socket | `netstat`, `ss` |
-| `clone()` | Create namespace | `unshare`, `docker` |
+| System Call | Description           | Related Commands    |
+| ----------- | --------------------- | ------------------- |
+| `fork()`    | Create new process    | `ps`, `top`         |
+| `exec()`    | Execute program       | `bash`, `sh`        |
+| `open()`    | Open file             | `cat`, `less`       |
+| `read()`    | Read data from file   | `cat`, `grep`       |
+| `write()`   | Write data to file    | `echo`, `tee`       |
+| `socket()`  | Create network socket | `netstat`, `ss`     |
+| `clone()`   | Create namespace      | `unshare`, `docker` |
 
 ### Linux Kernel Architecture
-
-![Linux Kernel Architecture](../assets/linux_kernel_architecture.svg)
-
 
 ## Process Management
 
@@ -305,8 +304,6 @@ ip link set <veth2> netns <namespace-name>
 ### File Permissions
 
 Linux file permissions consist of read (r), write (w), and execute (x) permissions for owner, group, and other users.
-
-![File Permission Structure](../assets/file_permissions.svg)
 
 ### Permission-Related Commands
 
@@ -1001,8 +998,6 @@ journalctl -u <service> # View service logs
 
 OverlayFS is a union mount file system that represents multiple directories as a single directory. It's used by container runtimes like Docker to implement image layers.
 
-![](../assets/linux_basics_overlayfs.svg)
-
 ### Network Bridge and NAT
 
 Container networking is primarily implemented using bridge interfaces and NAT (Network Address Translation).
@@ -1075,17 +1070,20 @@ Key capabilities:
 Linux fundamentals and features are essential for understanding Kubernetes and container technology. Here's a summary of the key topics covered in this document:
 
 ### Core Technologies
+
 * **Namespaces and cgroups**: Foundation for container isolation and resource management
 * **OverlayFS**: Core of container image layering
 * **systemd**: Kubernetes node service management
 
 ### Essential Operations Knowledge
+
 * **Kernel Parameter Tuning**: Network and system optimization through sysctl
 * **Module Management**: CNI plugin and storage driver support
 * **Log Management**: System and service log analysis through journald
 * **Time Synchronization**: Maintaining consistency in distributed systems
 
 ### Troubleshooting
+
 * **Resource Limits**: Resource management through ulimit and cgroups
 * **Networking**: DNS, bridge, iptables configuration
 * **Package Management**: Version management of Kubernetes components

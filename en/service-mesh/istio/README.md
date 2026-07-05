@@ -4,20 +4,20 @@ A practical guide for utilizing Istio Service Mesh on Amazon EKS.
 
 ## Table of Contents
 
-0. [Do You Really Need a Service Mesh?](#do-you-really-need-a-service-mesh)
-1. [Installation and Initial Setup](01-installation.md)
-2. [Basic Concepts](02-basic-concepts.md)
-3. [Architecture](03-architecture.md)
-4. [AWS Integration](04-aws-integration.md)
-5. [Glossary](glossary.md)
-6. [Traffic Management](traffic-management/README.md)
-7. [Security](security/README.md)
-8. [Observability](observability/README.md)
-9. [Resilience](resilience/README.md)
-10. [Advanced](advanced/README.md)
-11. [Troubleshooting](troubleshooting/common-errors.md)
-12. [Best Practices](best-practices.md)
-13. [Alternative Comparison](comparison/README.md)
+1. [Do You Really Need a Service Mesh?](./#do-you-really-need-a-service-mesh)
+2. [Installation and Initial Setup](01-installation.md)
+3. [Basic Concepts](02-basic-concepts.md)
+4. [Architecture](03-architecture.md)
+5. [AWS Integration](04-aws-integration.md)
+6. [Glossary](glossary.md)
+7. [Traffic Management](traffic-management/)
+8. [Security](security/)
+9. [Observability](observability/)
+10. [Resilience](resilience/)
+11. [Advanced](advanced/)
+12. [Troubleshooting](troubleshooting/common-errors.md)
+13. [Best Practices](best-practices.md)
+14. [Alternative Comparison](comparison/)
 
 ## What is Istio?
 
@@ -25,30 +25,20 @@ Istio is an open-source service mesh platform for connecting, securing, controll
 
 ### Service Mesh Concept
 
-<p align="center">
-  <img src="https://istio.io/latest/img/service-mesh.svg" alt="Istio Service Mesh" width="800">
-</p>
+<div align="center"><img src="https://istio.io/latest/img/service-mesh.svg" alt="Istio Service Mesh" width="800"></div>
 
 A service mesh is an infrastructure layer that manages communication between microservices. Istio deploys a Sidecar Proxy (Envoy) alongside each service to intercept and control all network traffic. This provides the following capabilities without modifying application code:
 
-- **Traffic Routing**: Intelligent routing, load balancing, Canary deployments
-- **Security**: Automatic mTLS, authentication, authorization
-- **Observability**: Metrics, logs, distributed tracing
-- **Resilience**: Circuit Breaking, Retry, Timeout
+* **Traffic Routing**: Intelligent routing, load balancing, Canary deployments
+* **Security**: Automatic mTLS, authentication, authorization
+* **Observability**: Metrics, logs, distributed tracing
+* **Resilience**: Circuit Breaking, Retry, Timeout
 
 ### Practical Usage Examples
 
-<p align="center">
-  <img src="https://istio.io/latest/docs/examples/bookinfo/noistio.svg" alt="Application without Istio" width="600">
-  <br>
-  <em>Application without Istio</em>
-</p>
+<p align="center"><img src="https://istio.io/latest/docs/examples/bookinfo/noistio.svg" alt="Application without Istio"><br><em>Application without Istio</em></p>
 
-<p align="center">
-  <img src="https://istio.io/latest/docs/examples/bookinfo/withistio.svg" alt="Application with Istio" width="600">
-  <br>
-  <em>Application with Istio - Envoy Proxy deployed as Sidecar to each service</em>
-</p>
+<p align="center"><img src="https://istio.io/latest/docs/examples/bookinfo/withistio.svg" alt="Application with Istio"><br><em>Application with Istio - Envoy Proxy deployed as Sidecar to each service</em></p>
 
 When Istio is applied, an Envoy Proxy is automatically deployed as a sidecar container to each microservice, transparently intercepting and controlling all network traffic.
 
@@ -145,23 +135,26 @@ flowchart LR
 ```
 
 **Recommended Criteria**:
-- ✅ 10 or more microservices
-- ✅ Frequent inter-service communication (East-West traffic)
-- ✅ Multiple programming languages used (Polyglot)
-- ✅ Multiple teams developing services independently
+
+* ✅ 10 or more microservices
+* ✅ Frequent inter-service communication (East-West traffic)
+* ✅ Multiple programming languages used (Polyglot)
+* ✅ Multiple teams developing services independently
 
 #### 2. Zero Trust Security Requirements
 
 **Service Mesh Provides**:
-- Automatic mTLS encryption between services
-- SPIFFE-based Identity management
-- Fine-grained authentication/authorization policies
-- Guaranteed encrypted communication
+
+* Automatic mTLS encryption between services
+* SPIFFE-based Identity management
+* Fine-grained authentication/authorization policies
+* Guaranteed encrypted communication
 
 **Difficult to Achieve Without Alternatives**:
-- Duplicate security logic implementation in each service
-- Complexity of manual certificate management
-- Inconsistent security policies
+
+* Duplicate security logic implementation in each service
+* Complexity of manual certificate management
+* Inconsistent security policies
 
 #### 3. Advanced Traffic Management
 
@@ -187,19 +180,21 @@ spec:
 ```
 
 **When Needed**:
-- Canary deployments, A/B testing
-- Header/path-based routing
-- Traffic Mirroring (Shadow Testing)
-- Fault Injection (Chaos Engineering)
-- Circuit Breaking, Retry, Timeout
+
+* Canary deployments, A/B testing
+* Header/path-based routing
+* Traffic Mirroring (Shadow Testing)
+* Fault Injection (Chaos Engineering)
+* Circuit Breaking, Retry, Timeout
 
 #### 4. Unified Observability
 
 **Service Mesh Advantages**:
-- Automatic metric collection without application code modification
-- Automatic Distributed Tracing implementation
-- Unified logging format
-- Service topology visualization (Kiali)
+
+* Automatic metric collection without application code modification
+* Automatic Distributed Tracing implementation
+* Unified logging format
+* Service topology visualization (Kiali)
 
 ### When Service Mesh is Not Needed ❌
 
@@ -223,18 +218,21 @@ flowchart LR
 ```
 
 **Use Instead**:
-- Kubernetes Ingress Controller (NGINX, Traefik)
-- Simple load balancer
-- Application-level implementation
+
+* Kubernetes Ingress Controller (NGINX, Traefik)
+* Simple load balancer
+* Application-level implementation
 
 #### 2. Few Microservices (<10)
 
 **Overhead is Greater**:
-- Service Mesh operational complexity > benefits gained
-- 5-10 services can be managed manually
-- NetworkPolicy provides sufficient security
+
+* Service Mesh operational complexity > benefits gained
+* 5-10 services can be managed manually
+* NetworkPolicy provides sufficient security
 
 **Alternative**:
+
 ```yaml
 # Kubernetes NetworkPolicy is sufficient
 apiVersion: networking.k8s.io/v1
@@ -255,39 +253,43 @@ spec:
 #### 3. Insufficient Operations Resources
 
 **Service Mesh Operations Requirements**:
-- Istio/Envoy expertise
-- Control Plane monitoring and management
-- Upgrade and patch management
-- Troubleshooting capability (increased debugging complexity)
+
+* Istio/Envoy expertise
+* Control Plane monitoring and management
+* Upgrade and patch management
+* Troubleshooting capability (increased debugging complexity)
 
 **Team Preparation Needed**:
-- At least 1-2 Service Mesh experts
-- Continuous learning and update tracking
-- Sufficient test environment
+
+* At least 1-2 Service Mesh experts
+* Continuous learning and update tracking
+* Sufficient test environment
 
 #### 4. When Performance is Extremely Critical
 
 **Service Mesh Overhead**:
-- Latency: +1-3ms (P50), +5-10ms (P99)
-- CPU: +10-20% per pod
-- Memory: +50-100MB per pod (Sidecar mode)
+
+* Latency: +1-3ms (P50), +5-10ms (P99)
+* CPU: +10-20% per pod
+* Memory: +50-100MB per pod (Sidecar mode)
 
 **Consider Alternatives**:
-- Ambient Mode (90% reduction in resource usage)
-- CNI-based solutions (Cilium)
-- Application-level optimization
+
+* Ambient Mode (90% reduction in resource usage)
+* CNI-based solutions (Cilium)
+* Application-level optimization
 
 ### Alternative Solutions Comparison
 
-| Feature | Service Mesh | CNI (Cilium) | Ingress Controller | App-level |
-|------|-------------|--------------|-------------------|-----------|
-| **L7 Traffic Management** | ✅ Full support | ⚠️ Limited | ⚠️ Ingress only | ✅ Possible |
-| **mTLS Automation** | ✅ Full support | ✅ Possible | ❌ Not supported | ❌ Manual implementation |
-| **Distributed Tracing** | ✅ Automatic | ❌ Not supported | ❌ Not supported | ⚠️ Manual implementation |
-| **L3/L4 Policies** | ✅ Supported | ✅ Full support | ❌ Not supported | ❌ Not supported |
-| **Operational Complexity** | 🔴 High | 🟡 Medium | 🟢 Low | 🟡 Medium |
-| **Resource Overhead** | 🔴 High (Sidecar)<br/>🟢 Low (Ambient) | 🟢 Low | 🟢 Low | 🟢 None |
-| **Suitable Scale** | 10+ services | All scales | Small scale | Small scale |
+| Feature                    | Service Mesh                                 | CNI (Cilium)    | Ingress Controller | App-level                |
+| -------------------------- | -------------------------------------------- | --------------- | ------------------ | ------------------------ |
+| **L7 Traffic Management**  | ✅ Full support                               | ⚠️ Limited      | ⚠️ Ingress only    | ✅ Possible               |
+| **mTLS Automation**        | ✅ Full support                               | ✅ Possible      | ❌ Not supported    | ❌ Manual implementation  |
+| **Distributed Tracing**    | ✅ Automatic                                  | ❌ Not supported | ❌ Not supported    | ⚠️ Manual implementation |
+| **L3/L4 Policies**         | ✅ Supported                                  | ✅ Full support  | ❌ Not supported    | ❌ Not supported          |
+| **Operational Complexity** | 🔴 High                                      | 🟡 Medium       | 🟢 Low             | 🟡 Medium                |
+| **Resource Overhead**      | <p>🔴 High (Sidecar)<br>🟢 Low (Ambient)</p> | 🟢 Low          | 🟢 Low             | 🟢 None                  |
+| **Suitable Scale**         | 10+ services                                 | All scales      | Small scale        | Small scale              |
 
 ### CNI-Based Solution (Cilium)
 
@@ -327,46 +329,53 @@ flowchart TB
 ```
 
 **When Cilium is More Suitable**:
-- L3/L4 network policies are the main purpose
-- High performance is a core requirement
-- Avoiding Service Mesh operational burden
-- Only simple mTLS and observability needed
 
-**Reference**: [Cilium Documentation](../../networking/cilium/README.md)
+* L3/L4 network policies are the main purpose
+* High performance is a core requirement
+* Avoiding Service Mesh operational burden
+* Only simple mTLS and observability needed
+
+**Reference**: [Cilium Documentation](../../networking/cilium/)
 
 ### Decision Checklist
 
 Answer the following questions before adoption:
 
 **Architecture**:
-- [ ] Do you have 10 or more microservices?
-- [ ] Is inter-service communication complex?
-- [ ] Are multiple programming languages used?
+
+* [ ] Do you have 10 or more microservices?
+* [ ] Is inter-service communication complex?
+* [ ] Are multiple programming languages used?
 
 **Security**:
-- [ ] Is a Zero Trust security model needed?
-- [ ] Is mTLS encryption between services mandatory?
-- [ ] Is fine-grained access control needed?
+
+* [ ] Is a Zero Trust security model needed?
+* [ ] Is mTLS encryption between services mandatory?
+* [ ] Is fine-grained access control needed?
 
 **Traffic Management**:
-- [ ] Are Canary deployments, A/B testing needed?
-- [ ] Are advanced routing rules needed?
-- [ ] Are Circuit Breaking, Retry needed for many services?
+
+* [ ] Are Canary deployments, A/B testing needed?
+* [ ] Are advanced routing rules needed?
+* [ ] Are Circuit Breaking, Retry needed for many services?
 
 **Observability**:
-- [ ] Is distributed tracing mandatory?
-- [ ] Is unified metric collection needed?
-- [ ] Is service topology visualization needed?
+
+* [ ] Is distributed tracing mandatory?
+* [ ] Is unified metric collection needed?
+* [ ] Is service topology visualization needed?
 
 **Operations**:
-- [ ] Do you have Service Mesh experts?
-- [ ] Can you handle the operational complexity?
-- [ ] Can you accept the resource overhead?
+
+* [ ] Do you have Service Mesh experts?
+* [ ] Can you handle the operational complexity?
+* [ ] Can you accept the resource overhead?
 
 **Results**:
-- ✅ 10 or more checked: Service Mesh strongly recommended
-- 🟡 5-9 checked: Careful evaluation needed, start small (Ambient Mode recommended)
-- ❌ 4 or fewer checked: Consider alternative solutions (CNI, Ingress, App-level)
+
+* ✅ 10 or more checked: Service Mesh strongly recommended
+* 🟡 5-9 checked: Careful evaluation needed, start small (Ambient Mode recommended)
+* ❌ 4 or fewer checked: Consider alternative solutions (CNI, Ingress, App-level)
 
 ### Gradual Adoption Strategy
 
@@ -391,6 +400,7 @@ flowchart LR
 ```
 
 **Recommended Order**:
+
 1. **Pilot Project** (1-2 namespaces)
 2. **Observability First** (metrics, logs, traces)
 3. **Apply Security** (mTLS PERMISSIVE → STRICT)
@@ -399,50 +409,39 @@ flowchart LR
 
 ### Key Features
 
-1. **Traffic Management**
+1.  **Traffic Management**
 
-   <p align="center">
-     <img src="https://istio.io/latest/docs/concepts/traffic-management/request-routing.svg" alt="Traffic Routing" width="500">
-   </p>
+    <div align="center"><img src="https://istio.io/latest/docs/concepts/traffic-management/request-routing.svg" alt="Traffic Routing" width="500"></div>
 
-   - Intelligent routing and load balancing
-   - A/B testing, Canary deployment, Blue/Green deployment
-   - Circuit Breaking, Retry, Timeout control
-   - Traffic Mirroring and Fault Injection
+    * Intelligent routing and load balancing
+    * A/B testing, Canary deployment, Blue/Green deployment
+    * Circuit Breaking, Retry, Timeout control
+    * Traffic Mirroring and Fault Injection
+2.  **Security**
 
-2. **Security**
+    <div align="center"><img src="https://istio.io/latest/docs/concepts/security/arch-sec.svg" alt="Security Architecture" width="600"></div>
 
-   <p align="center">
-     <img src="https://istio.io/latest/docs/concepts/security/arch-sec.svg" alt="Security Architecture" width="600">
-   </p>
+    * Automatic mTLS encryption between services
+    * Strong authentication and authorization
+    * Fine-grained access control policies
+    * Network isolation and security policies
+3.  **Observability**
 
-   - Automatic mTLS encryption between services
-   - Strong authentication and authorization
-   - Fine-grained access control policies
-   - Network isolation and security policies
+    <div align="center"><img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png" alt="Kiali Service Graph" width="700"></div>
 
-3. **Observability**
-
-   <p align="center">
-     <img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png" alt="Kiali Service Graph" width="700">
-   </p>
-
-   - Automatic metrics, logs, and trace generation
-   - Prometheus, Grafana, Jaeger, Kiali integration
-   - Service topology visualization
-   - Real-time traffic monitoring
-
+    * Automatic metrics, logs, and trace generation
+    * Prometheus, Grafana, Jaeger, Kiali integration
+    * Service topology visualization
+    * Real-time traffic monitoring
 4. **Resilience**
-   - Circuit Breaker pattern
-   - Rate Limiting
-   - Outlier Detection
-   - Zone Aware Routing
+   * Circuit Breaker pattern
+   * Rate Limiting
+   * Outlier Detection
+   * Zone Aware Routing
 
 ### Istio Architecture
 
-<p align="center">
-  <img src="https://istio.io/latest/docs/ops/deployment/architecture/arch.svg" alt="Istio Architecture" width="700">
-</p>
+<div align="center"><img src="https://istio.io/latest/docs/ops/deployment/architecture/arch.svg" alt="Istio Architecture" width="700"></div>
 
 Istio consists of a Control Plane and a Data Plane:
 
@@ -501,49 +500,46 @@ flowchart TB
 ```
 
 **Control Plane (istiod)**:
-- **Pilot**: Service discovery, traffic routing rule management
-- **Citadel**: Certificate generation and management, mTLS enablement
-- **Galley**: Configuration validation and deployment
+
+* **Pilot**: Service discovery, traffic routing rule management
+* **Citadel**: Certificate generation and management, mTLS enablement
+* **Galley**: Configuration validation and deployment
 
 **Data Plane**:
-- **Envoy Proxy**: Deployed as a sidecar to each pod, intercepting and controlling all network traffic
+
+* **Envoy Proxy**: Deployed as a sidecar to each pod, intercepting and controlling all network traffic
 
 ### Benefits of Using Istio on Amazon EKS
 
 1. **Easy Microservices Management**
-   - Traffic management without application code modification
-   - Consistent policy application with declarative configuration
-   - Uses Kubernetes Native API
-
+   * Traffic management without application code modification
+   * Consistent policy application with declarative configuration
+   * Uses Kubernetes Native API
 2. **Enhanced Security**
-   - Automatic encryption between services
-   - Authentication integrated with AWS IAM
-   - Fine-grained permission control
-
+   * Automatic encryption between services
+   * Authentication integrated with AWS IAM
+   * Fine-grained permission control
 3. **Improved Observability**
-   - Integration with Amazon CloudWatch
-   - Distributed tracing through AWS X-Ray
-   - Detailed metrics and logs
-
+   * Integration with Amazon CloudWatch
+   * Distributed tracing through AWS X-Ray
+   * Detailed metrics and logs
 4. **Integration with AWS Services**
-   - Application Load Balancer (ALB) integration
-   - AWS Certificate Manager (ACM) integration
-   - Compatible with Amazon EBS CSI Driver
+   * Application Load Balancer (ALB) integration
+   * AWS Certificate Manager (ACM) integration
+   * Compatible with Amazon EBS CSI Driver
 
 ### Getting Started
 
-<p align="center">
-  <img src="https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-gateway-example/gateway-api-topology.svg" alt="Gateway API Architecture" width="600">
-</p>
+<div align="center"><img src="https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-gateway-example/gateway-api-topology.svg" alt="Gateway API Architecture" width="600"></div>
 
 If you're new to Istio, read the documents in the following order:
 
-1. **[Installation and Initial Setup](01-installation.md)**: Install Istio on EKS cluster
-2. **[Basic Concepts](02-basic-concepts.md)**: Understand Istio core concepts
-3. **[Traffic Management](traffic-management/README.md)**: Learn Gateway, VirtualService, DestinationRule
-4. **[Security](security/README.md)**: Configure mTLS, authentication, authorization
-5. **[Observability](observability/README.md)**: Collect metrics, logs, traces
-6. **[Best Practices](best-practices.md)**: Recommendations for production environments
+1. [**Installation and Initial Setup**](01-installation.md): Install Istio on EKS cluster
+2. [**Basic Concepts**](02-basic-concepts.md): Understand Istio core concepts
+3. [**Traffic Management**](traffic-management/): Learn Gateway, VirtualService, DestinationRule
+4. [**Security**](security/): Configure mTLS, authentication, authorization
+5. [**Observability**](observability/): Collect metrics, logs, traces
+6. [**Best Practices**](best-practices.md): Recommendations for production environments
 
 ### Hands-on Examples
 
@@ -567,16 +563,17 @@ spec:
 
 ### References
 
-- [Istio Official Documentation](https://istio.io/latest/docs/)
-- [Istio GitHub](https://github.com/istio/istio)
-- [AWS EKS Workshop - Istio](https://www.eksworkshop.com/intermediate/330_servicemesh_using_istio/)
-- [Istio Community](https://discuss.istio.io/)
+* [Istio Official Documentation](https://istio.io/latest/docs/)
+* [Istio GitHub](https://github.com/istio/istio)
+* [AWS EKS Workshop - Istio](https://www.eksworkshop.com/intermediate/330_servicemesh_using_istio/)
+* [Istio Community](https://discuss.istio.io/)
 
 ### Quizzes
 
 To test what you've learned in this chapter, try the following quizzes:
-- [Traffic Management Quiz](../../quizzes/service-mesh/istio/traffic-management.md)
-- [Security Quiz](../../quizzes/service-mesh/istio/security.md)
-- [Observability Quiz](../../quizzes/service-mesh/istio/observability.md)
-- [Resilience Quiz](../../quizzes/service-mesh/istio/resilience.md)
-- [Advanced Quiz](../../quizzes/service-mesh/istio/advanced.md)
+
+* [Traffic Management Quiz](../../quizzes/service-mesh/istio/traffic-management.md)
+* [Security Quiz](../../quizzes/service-mesh/istio/security.md)
+* [Observability Quiz](../../quizzes/service-mesh/istio/observability.md)
+* [Resilience Quiz](../../quizzes/service-mesh/istio/resilience.md)
+* [Advanced Quiz](../../quizzes/service-mesh/istio/advanced.md)

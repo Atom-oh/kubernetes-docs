@@ -4,10 +4,10 @@ This document covers how to integrate Istio with AWS services in an Amazon EKS e
 
 ## Table of Contents
 
-1. [AWS Load Balancer Integration](#aws-load-balancer-integration)
-2. [Istio vs Other Solutions Comparison](#istio-vs-other-solutions-comparison)
-3. [EKS-Specific Optimization](#eks-specific-optimization)
-4. [Best Practices](#best-practices)
+1. [AWS Load Balancer Integration](04-aws-integration.md#aws-load-balancer-integration)
+2. [Istio vs Other Solutions Comparison](04-aws-integration.md#istio-vs-other-solutions-comparison)
+3. [EKS-Specific Optimization](04-aws-integration.md#eks-specific-optimization)
+4. [Best Practices](04-aws-integration.md#best-practices)
 
 ## AWS Load Balancer Integration
 
@@ -173,18 +173,18 @@ spec:
 
 #### NLB Advantages
 
-- **High Performance**: Handle millions of requests per second
-- **Low Latency**: Operates at Layer 4 for fast responses
-- **Static IP**: Elastic IP allocation possible
-- **Protocol Support**: TCP, UDP, TLS
-- **Cost Effective**: Cheaper than ALB
+* **High Performance**: Handle millions of requests per second
+* **Low Latency**: Operates at Layer 4 for fast responses
+* **Static IP**: Elastic IP allocation possible
+* **Protocol Support**: TCP, UDP, TLS
+* **Cost Effective**: Cheaper than ALB
 
 #### NLB Use Cases
 
-- WebSocket, gRPC, and other long-lived connections
-- Handling millions of requests per second
-- When static IP is required
-- When TLS termination should be done at Istio
+* WebSocket, gRPC, and other long-lived connections
+* Handling millions of requests per second
+* When static IP is required
+* When TLS termination should be done at Istio
 
 ### Application Load Balancer (ALB) Integration
 
@@ -320,34 +320,34 @@ spec:
 
 #### ALB Advantages
 
-- **Advanced Routing**: Path, Header, Query String-based routing
-- **WAF Integration**: Enhanced security with AWS WAF
-- **Authentication Integration**: Cognito, OIDC integration
-- **ACM Integration**: Automatic certificate management
-- **Container Optimized**: Optimized for ECS, EKS
+* **Advanced Routing**: Path, Header, Query String-based routing
+* **WAF Integration**: Enhanced security with AWS WAF
+* **Authentication Integration**: Cognito, OIDC integration
+* **ACM Integration**: Automatic certificate management
+* **Container Optimized**: Optimized for ECS, EKS
 
 #### ALB Use Cases
 
-- HTTP/HTTPS only traffic
-- When path-based routing is needed
-- When WAF security is required
-- When handling multiple domains with a single load balancer
+* HTTP/HTTPS only traffic
+* When path-based routing is needed
+* When WAF security is required
+* When handling multiple domains with a single load balancer
 
 ### NLB vs ALB Comparison
 
-| Property | NLB | ALB |
-|------|-----|-----|
-| **OSI Layer** | Layer 4 (TCP/UDP) | Layer 7 (HTTP/HTTPS) |
-| **Performance** | Millions of requests per second | Tens of thousands of requests per second |
-| **Latency** | Very low | Low |
-| **Static IP** | Supported (Elastic IP) | Not supported |
-| **TLS Termination** | Pass through as TCP (handled at Istio) | Can be handled at ALB |
-| **Routing** | IP/Port-based | Path, Host, Header-based |
-| **WAF Integration** | Not available | Available |
-| **Cost** | Lower | Relatively higher |
-| **WebSocket** | Native support | Supported |
-| **gRPC** | Native support | Requires HTTP/2 |
-| **Recommended Use** | High performance, WebSocket, gRPC | HTTP routing, WAF, authentication |
+| Property            | NLB                                    | ALB                                      |
+| ------------------- | -------------------------------------- | ---------------------------------------- |
+| **OSI Layer**       | Layer 4 (TCP/UDP)                      | Layer 7 (HTTP/HTTPS)                     |
+| **Performance**     | Millions of requests per second        | Tens of thousands of requests per second |
+| **Latency**         | Very low                               | Low                                      |
+| **Static IP**       | Supported (Elastic IP)                 | Not supported                            |
+| **TLS Termination** | Pass through as TCP (handled at Istio) | Can be handled at ALB                    |
+| **Routing**         | IP/Port-based                          | Path, Host, Header-based                 |
+| **WAF Integration** | Not available                          | Available                                |
+| **Cost**            | Lower                                  | Relatively higher                        |
+| **WebSocket**       | Native support                         | Supported                                |
+| **gRPC**            | Native support                         | Requires HTTP/2                          |
+| **Recommended Use** | High performance, WebSocket, gRPC      | HTTP routing, WAF, authentication        |
 
 ## Istio vs Other Solutions Comparison
 
@@ -402,52 +402,48 @@ flowchart TB
 
 #### Feature Comparison
 
-| Property | Istio | VPC Lattice |
-|------|-------|-------------|
-| **Management** | Self-managed | AWS-managed (Fully-managed) |
-| **Sidecar** | Required (Sidecar or Ambient) | Not required |
-| **Resource Overhead** | High (Envoy per pod) | Low (no sidecar) |
-| **Complexity** | High | Low |
-| **Learning Curve** | Steep | Gentle |
+| Property               | Istio                                | VPC Lattice                 |
+| ---------------------- | ------------------------------------ | --------------------------- |
+| **Management**         | Self-managed                         | AWS-managed (Fully-managed) |
+| **Sidecar**            | Required (Sidecar or Ambient)        | Not required                |
+| **Resource Overhead**  | High (Envoy per pod)                 | Low (no sidecar)            |
+| **Complexity**         | High                                 | Low                         |
+| **Learning Curve**     | Steep                                | Gentle                      |
 | **Traffic Management** | Very advanced (fine-grained control) | Basic (sufficient features) |
-| **mTLS** | Automatic, fine-grained control | Supported |
-| **Observability** | Rich metrics, traces | Basic metrics |
-| **Fault Injection** | Supported | Not supported |
-| **Circuit Breaker** | Fine-grained control | Basic functionality |
-| **Rate Limiting** | Local + Global | Basic functionality |
-| **Multi-cluster** | Strong support | Cross-VPC connectivity |
-| **Cross-account** | Complex | Simple (native support) |
-| **Cost** | Compute cost (EC2) | Service usage cost |
-| **Vendor Lock-in** | None (open source) | AWS lock-in |
-| **Kubernetes Only** | Yes | No (EC2, Lambda, etc.) |
+| **mTLS**               | Automatic, fine-grained control      | Supported                   |
+| **Observability**      | Rich metrics, traces                 | Basic metrics               |
+| **Fault Injection**    | Supported                            | Not supported               |
+| **Circuit Breaker**    | Fine-grained control                 | Basic functionality         |
+| **Rate Limiting**      | Local + Global                       | Basic functionality         |
+| **Multi-cluster**      | Strong support                       | Cross-VPC connectivity      |
+| **Cross-account**      | Complex                              | Simple (native support)     |
+| **Cost**               | Compute cost (EC2)                   | Service usage cost          |
+| **Vendor Lock-in**     | None (open source)                   | AWS lock-in                 |
+| **Kubernetes Only**    | Yes                                  | No (EC2, Lambda, etc.)      |
 
 #### When to Choose Istio
 
 **Istio is suitable when:**
 
 1. **Fine-grained Traffic Control Needed**
-   - Canary deployment, A/B testing, Traffic Mirroring
-   - Complex routing rules (Header, Cookie-based, etc.)
-   - Fault Injection for Chaos Engineering
-
+   * Canary deployment, A/B testing, Traffic Mirroring
+   * Complex routing rules (Header, Cookie-based, etc.)
+   * Fault Injection for Chaos Engineering
 2. **Strong Security Requirements**
-   - Automatic mTLS encryption between services
-   - Fine-grained authorization policies
-   - JWT validation, RBAC
-
+   * Automatic mTLS encryption between services
+   * Fine-grained authorization policies
+   * JWT validation, RBAC
 3. **Advanced Observability Needed**
-   - Detailed metrics (Latency P50/P95/P99)
-   - Distributed tracing (Jaeger, Zipkin)
-   - Service topology visualization (Kiali)
-
+   * Detailed metrics (Latency P50/P95/P99)
+   * Distributed tracing (Jaeger, Zipkin)
+   * Service topology visualization (Kiali)
 4. **Multi-cluster Mesh**
-   - Communication between multiple EKS clusters
-   - Cross-cluster failover
-   - Global load balancing
-
+   * Communication between multiple EKS clusters
+   * Cross-cluster failover
+   * Global load balancing
 5. **Vendor Independence**
-   - Possibility of moving to other clouds or on-premises
-   - Using Kubernetes standards
+   * Possibility of moving to other clouds or on-premises
+   * Using Kubernetes standards
 
 **Example: Istio's Advanced Traffic Management**
 
@@ -500,24 +496,20 @@ spec:
 **VPC Lattice is suitable when:**
 
 1. **Simple Service Connectivity**
-   - Only basic load balancing and routing needed
-   - Fast implementation is important
-
+   * Only basic load balancing and routing needed
+   * Fast implementation is important
 2. **Low Operational Overhead**
-   - Prefer AWS-managed services
-   - No sidecar management burden
-
+   * Prefer AWS-managed services
+   * No sidecar management burden
 3. **Cross-VPC/Account Communication**
-   - Connecting services across multiple AWS accounts
-   - Communication without VPC peering
-
+   * Connecting services across multiple AWS accounts
+   * Communication without VPC peering
 4. **Mixed Environments**
-   - EKS + EC2 + Lambda mixed environments
-   - Using various compute types beyond just Kubernetes
-
+   * EKS + EC2 + Lambda mixed environments
+   * Using various compute types beyond just Kubernetes
 5. **Cost Optimization**
-   - Reducing sidecar resource costs
-   - Small-scale services
+   * Reducing sidecar resource costs
+   * Small-scale services
 
 #### Using Istio + VPC Lattice Together
 
@@ -564,9 +556,9 @@ flowchart TB
 
 **Use Cases:**
 
-- **Inside cluster**: Istio for fine-grained traffic management and security
-- **Cross-cluster/Cross-account**: VPC Lattice for simple connectivity
-- **Mixed environments**: Use VPC Lattice for connecting Istio clusters with Lambda/EC2
+* **Inside cluster**: Istio for fine-grained traffic management and security
+* **Cross-cluster/Cross-account**: VPC Lattice for simple connectivity
+* **Mixed environments**: Use VPC Lattice for connecting Istio clusters with Lambda/EC2
 
 ### Istio vs Cilium (eBPF-based)
 
@@ -574,46 +566,49 @@ Cilium is a Kubernetes networking and security solution using eBPF.
 
 #### Architecture Comparison
 
-| Property | Istio | Cilium |
-|------|-------|--------|
-| **Technology Stack** | Envoy Proxy (sidecar) | eBPF (kernel level) |
-| **Primary Purpose** | Service Mesh | CNI + Service Mesh |
-| **Networking** | Operates on top of Kubernetes CNI | Provides CNI itself |
-| **Performance** | Good | Excellent (kernel level) |
-| **Resource Usage** | High (sidecar) | Low (kernel level) |
-| **L7 Features** | Very powerful | Basic |
-| **Observability** | Rich | Hubble (basic) |
-| **Learning Curve** | Steep | Steep |
-| **Maturity** | High | Medium (Service Mesh features) |
+| Property             | Istio                             | Cilium                         |
+| -------------------- | --------------------------------- | ------------------------------ |
+| **Technology Stack** | Envoy Proxy (sidecar)             | eBPF (kernel level)            |
+| **Primary Purpose**  | Service Mesh                      | CNI + Service Mesh             |
+| **Networking**       | Operates on top of Kubernetes CNI | Provides CNI itself            |
+| **Performance**      | Good                              | Excellent (kernel level)       |
+| **Resource Usage**   | High (sidecar)                    | Low (kernel level)             |
+| **L7 Features**      | Very powerful                     | Basic                          |
+| **Observability**    | Rich                              | Hubble (basic)                 |
+| **Learning Curve**   | Steep                             | Steep                          |
+| **Maturity**         | High                              | Medium (Service Mesh features) |
 
 #### Feature Comparison
 
-| Feature | Istio | Cilium |
-|------|-------|--------|
-| **Network Policy** | Kubernetes + Istio | Kubernetes + Cilium (more powerful) |
-| **L7 Load Balancing** | Very fine-grained | Basic |
-| **mTLS** | Automatic, fine-grained control | Supported |
-| **Traffic Management** | Very advanced | Basic |
-| **Observability** | Prometheus, Jaeger, Kiali | Hubble |
-| **Performance** | Good | Excellent |
-| **Multi-cluster** | Strong | Cluster Mesh |
+| Feature                | Istio                           | Cilium                              |
+| ---------------------- | ------------------------------- | ----------------------------------- |
+| **Network Policy**     | Kubernetes + Istio              | Kubernetes + Cilium (more powerful) |
+| **L7 Load Balancing**  | Very fine-grained               | Basic                               |
+| **mTLS**               | Automatic, fine-grained control | Supported                           |
+| **Traffic Management** | Very advanced                   | Basic                               |
+| **Observability**      | Prometheus, Jaeger, Kiali       | Hubble                              |
+| **Performance**        | Good                            | Excellent                           |
+| **Multi-cluster**      | Strong                          | Cluster Mesh                        |
 
 #### When to Choose What
 
 **Choose Istio:**
-- L7 traffic management is core requirement
-- Need powerful service mesh features
-- Need rich observability and debugging tools
+
+* L7 traffic management is core requirement
+* Need powerful service mesh features
+* Need rich observability and debugging tools
 
 **Choose Cilium:**
-- Considering CNI replacement
-- Network security is main concern
-- Performance optimization is important
-- Want to leverage eBPF technology
+
+* Considering CNI replacement
+* Network security is main concern
+* Performance optimization is important
+* Want to leverage eBPF technology
 
 **Using Together:**
-- Can use Cilium as CNI and Istio as Service Mesh
-- However, consider feature overlap and increased complexity
+
+* Can use Cilium as CNI and Istio as Service Mesh
+* However, consider feature overlap and increased complexity
 
 ## EKS-Specific Optimization
 
@@ -925,62 +920,66 @@ spec:
 ### 1. Load Balancer Selection Guide
 
 **Use NLB:**
-- gRPC, WebSocket, and other long-lived connections
-- Handling millions of requests per second
-- Static IP required
-- TLS termination at Istio
+
+* gRPC, WebSocket, and other long-lived connections
+* Handling millions of requests per second
+* Static IP required
+* TLS termination at Istio
 
 **Use ALB:**
-- HTTP/HTTPS only
-- Path-based routing
-- WAF security required
-- Cognito authentication integration
+
+* HTTP/HTTPS only
+* Path-based routing
+* WAF security required
+* Cognito authentication integration
 
 ### 2. TLS Termination Location
 
 **Terminate at Load Balancer (Recommended):**
-- ACM certificate auto-renewal
-- Easy management
-- Reduced Istio load
+
+* ACM certificate auto-renewal
+* Easy management
+* Reduced Istio load
 
 **Terminate at Istio:**
-- End-to-end encryption required
-- Fine-grained TLS policy control
-- Using mTLS
+
+* End-to-end encryption required
+* Fine-grained TLS policy control
+* Using mTLS
 
 ### 3. Cost Optimization
 
-- **Spot Instances**: Use for Istio Gateway workloads
-- **Graviton Instances**: Cost savings with ARM-based instances
-- **Resource Limits**: Set appropriate sidecar resource limits
-- **Ambient Mode**: Consider for eliminating sidecar overhead
+* **Spot Instances**: Use for Istio Gateway workloads
+* **Graviton Instances**: Cost savings with ARM-based instances
+* **Resource Limits**: Set appropriate sidecar resource limits
+* **Ambient Mode**: Consider for eliminating sidecar overhead
 
 ### 4. Security
 
-- **IRSA**: Access AWS services with IAM roles
-- **Security Groups**: Principle of least privilege
-- **mTLS**: Enable encryption between services
-- **Network Policy**: Use with Cilium or Calico
+* **IRSA**: Access AWS services with IAM roles
+* **Security Groups**: Principle of least privilege
+* **mTLS**: Enable encryption between services
+* **Network Policy**: Use with Cilium or Calico
 
 ### 5. Monitoring
 
-- **CloudWatch**: Unified logs and metrics
-- **X-Ray**: Distributed tracing
-- **Prometheus + Grafana**: Detailed metrics
-- **Kiali**: Service mesh visualization
+* **CloudWatch**: Unified logs and metrics
+* **X-Ray**: Distributed tracing
+* **Prometheus + Grafana**: Detailed metrics
+* **Kiali**: Service mesh visualization
 
 ## Next Steps
 
 If you've completed AWS integration, refer to the following documents:
 
-1. **[Traffic Management](traffic-management/README.md)**: Advanced traffic management features
-2. **[Security](security/README.md)**: mTLS and authentication/authorization
-3. **[Observability](observability/README.md)**: Metrics, logs, trace collection
+1. [**Traffic Management**](traffic-management/): Advanced traffic management features
+2. [**Security**](security/): mTLS and authentication/authorization
+3. [**Observability**](/broken/pages/HT0uW6gT7EfVN0LF8wU5): Metrics, logs, trace collection
 
 ## References
 
-- [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
-- [EKS Best Practices - Networking](https://aws.github.io/aws-eks-best-practices/networking/)
-- [VPC Lattice Documentation](https://docs.aws.amazon.com/vpc-lattice/)
-- [Cilium Documentation](https://docs.cilium.io/)
-- [AWS Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html)
+* [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
+* [EKS Best Practices - Networking](https://aws.github.io/aws-eks-best-practices/networking/)
+* [VPC Lattice Documentation](https://docs.aws.amazon.com/vpc-lattice/)
+* [Cilium Documentation](https://docs.cilium.io/)
+* [AWS Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html)

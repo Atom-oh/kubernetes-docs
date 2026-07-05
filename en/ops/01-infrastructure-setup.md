@@ -1,23 +1,23 @@
-# Building EKS Auto Mode Infrastructure with Terraform 3-Layer
+# Infrastructure Setup
 
-> **Supported Versions**: Terraform >= 1.10, AWS Provider >= 5.40, EKS >= 1.29
-> **Last Updated**: February 19, 2026
+> **Supported Versions**: Terraform >= 1.10, AWS Provider >= 5.40, EKS >= 1.29 **Last Updated**: February 19, 2026
 
-< [Table of Contents](./README.md) | [Next: NLB Weighted Routing and Blue/Green Clusters](./02-infrastructure-advanced.md) >
+< [Table of Contents](./) | [Next: NLB Weighted Routing and Blue/Green Clusters](02-infrastructure-advanced.md) >
 
----
+***
 
 ## Overview
 
 This guide presents a production-ready Terraform architecture for deploying Amazon EKS clusters with Auto Mode enabled. The 3-layer approach separates infrastructure concerns by change frequency, ownership, and blast radius, enabling teams to work independently while maintaining operational safety.
 
 **Key Design Principles:**
-- **Separation of Concerns**: Each layer has distinct ownership and change patterns
-- **Blast Radius Minimization**: Changes in one layer cannot accidentally affect others
-- **State Isolation**: Independent Terraform state files per layer
-- **GitOps Ready**: Terraform manages AWS infrastructure; Kubernetes resources are managed by ArgoCD
 
----
+* **Separation of Concerns**: Each layer has distinct ownership and change patterns
+* **Blast Radius Minimization**: Changes in one layer cannot accidentally affect others
+* **State Isolation**: Independent Terraform state files per layer
+* **GitOps Ready**: Terraform manages AWS infrastructure; Kubernetes resources are managed by ArgoCD
+
+***
 
 ## 1. 3-Layer Architecture Introduction
 
@@ -34,11 +34,11 @@ The 3-layer architecture addresses these challenges by organizing infrastructure
 
 ### Layer Characteristics
 
-| Layer | Name | Change Frequency | Primary Owner | Blast Radius | Dependencies |
-|-------|------|------------------|---------------|--------------|--------------|
-| 01 | Network | Quarterly | Infrastructure Team | High | None |
-| 02 | Cluster | Monthly | Platform Team | Medium | 01-network |
-| 03 | Platform | Weekly | Platform/App Teams | Low | 01-network, 02-cluster |
+| Layer | Name     | Change Frequency | Primary Owner       | Blast Radius | Dependencies           |
+| ----- | -------- | ---------------- | ------------------- | ------------ | ---------------------- |
+| 01    | Network  | Quarterly        | Infrastructure Team | High         | None                   |
+| 02    | Cluster  | Monthly          | Platform Team       | Medium       | 01-network             |
+| 03    | Platform | Weekly           | Platform/App Teams  | Low          | 01-network, 02-cluster |
 
 ### Directory Structure
 
@@ -72,9 +72,9 @@ eks-terraform/
 
 ### Change Flow Visualization
 
-![Terraform Change Flow](../assets/generated-diagrams/terraform_change_flow.png)
+![Terraform Change Flow](../.gitbook/assets/terraform_change_flow.png)
 
----
+***
 
 ## 2. 00-shared: Common Configuration
 
@@ -84,9 +84,7 @@ The shared layer contains configuration templates and common variables used acro
 
 First, create the S3 bucket for Terraform state management:
 
-> **Note**: Starting from Terraform 1.10, the S3 backend supports native state locking via
-> `use_lockfile = true`, leveraging S3 conditional writes. This eliminates the need for a
-> DynamoDB table for state locking.
+> **Note**: Starting from Terraform 1.10, the S3 backend supports native state locking via `use_lockfile = true`, leveraging S3 conditional writes. This eliminates the need for a DynamoDB table for state locking.
 
 ```hcl
 # 00-shared/bootstrap/main.tf
@@ -232,7 +230,7 @@ locals {
 }
 ```
 
----
+***
 
 ## 3. 01-network: VPC Configuration
 
@@ -241,13 +239,15 @@ The network layer establishes the foundational VPC infrastructure. This layer ch
 ### Design Considerations
 
 For this architecture, we use a **Blue/Green zone design**:
-- **Blue Zone**: ap-northeast-2a (primary)
-- **Green Zone**: ap-northeast-2c (secondary)
+
+* **Blue Zone**: ap-northeast-2a (primary)
+* **Green Zone**: ap-northeast-2c (secondary)
 
 This single-zone per cluster approach provides:
-- Data locality for stateful workloads
-- Cost optimization (reduced cross-AZ traffic)
-- Clear failure domain isolation
+
+* Data locality for stateful workloads
+* Cost optimization (reduced cross-AZ traffic)
+* Clear failure domain isolation
 
 ### Main Configuration
 
@@ -572,7 +572,7 @@ terraform {
 }
 ```
 
----
+***
 
 ## 4. 02-cluster: EKS Auto Mode
 
@@ -581,9 +581,10 @@ The cluster layer deploys EKS with Auto Mode enabled. Auto Mode simplifies clust
 ### Understanding EKS Auto Mode
 
 EKS Auto Mode provides:
-- **Compute Auto Mode**: Automatic node provisioning and scaling
-- **Network Auto Mode**: Managed VPC CNI with automatic IP management
-- **Storage Auto Mode**: Dynamic storage class provisioning
+
+* **Compute Auto Mode**: Automatic node provisioning and scaling
+* **Network Auto Mode**: Managed VPC CNI with automatic IP management
+* **Storage Auto Mode**: Dynamic storage class provisioning
 
 For more details on EKS Auto Mode, see [Getting Started with EKS Auto Mode](../eks-auto-mode/01-getting-started.md).
 
@@ -911,7 +912,7 @@ terraform {
 }
 ```
 
----
+***
 
 ## 5. 03-platform: Add-ons and Pod Identity
 
@@ -1387,7 +1388,7 @@ terraform {
 }
 ```
 
----
+***
 
 ## 6. Inter-Layer Integration
 
@@ -1415,7 +1416,7 @@ locals {
 
 ### Output/Data Flow
 
-![Layer Integration Flow](../assets/generated-diagrams/terraform_layer_integration.png)
+![Layer Integration Flow](../.gitbook/assets/terraform_layer_integration.png)
 
 ### State Management Best Practices
 
@@ -1443,7 +1444,7 @@ s3://eks-platform-prod-tfstate/
         └── terraform.tfstate
 ```
 
----
+***
 
 ## 7. Validation
 
@@ -1593,7 +1594,7 @@ cd ../02-cluster && terraform plan -out=plan.out
 cd ../03-platform && terraform plan -out=plan.out
 ```
 
----
+***
 
 ## Key Design Principles
 
@@ -1601,22 +1602,22 @@ cd ../03-platform && terraform plan -out=plan.out
 
 This architecture follows a clear separation:
 
-| Layer | Terraform Manages | GitOps Manages |
-|-------|-------------------|----------------|
-| Network | VPC, Subnets, NAT, Endpoints | - |
-| Cluster | EKS, KMS, CloudWatch | - |
-| Platform | Add-ons, IAM Roles, Access Entries | - |
-| Kubernetes | - | NodePool, Deployments, Services |
+| Layer      | Terraform Manages                  | GitOps Manages                  |
+| ---------- | ---------------------------------- | ------------------------------- |
+| Network    | VPC, Subnets, NAT, Endpoints       | -                               |
+| Cluster    | EKS, KMS, CloudWatch               | -                               |
+| Platform   | Add-ons, IAM Roles, Access Entries | -                               |
+| Kubernetes | -                                  | NodePool, Deployments, Services |
 
-Kubernetes resources (NodePool definitions, application Deployments) are managed by ArgoCD GitOps. See [GitOps Pipeline Configuration](./04-gitops-pipeline.md) for details.
+Kubernetes resources (NodePool definitions, application Deployments) are managed by ArgoCD GitOps. See [GitOps Pipeline Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md) for details.
 
 ### Cross-References
 
-- [Getting Started with EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
-- [EKS Security Best Practices](../eks/05-eks-security.md)
-- [NLB Weighted Routing and Blue/Green Clusters](./02-infrastructure-advanced.md)
-- [GitOps Pipeline Configuration](./04-gitops-pipeline.md)
+* [Getting Started with EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
+* [EKS Security Best Practices](../eks/05-eks-security.md)
+* [NLB Weighted Routing and Blue/Green Clusters](02-infrastructure-advanced.md)
+* [GitOps Pipeline Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
 
----
+***
 
-< [Table of Contents](./README.md) | [Next: NLB Weighted Routing and Blue/Green Clusters](./02-infrastructure-advanced.md) >
+< [Table of Contents](./) | [Next: NLB Weighted Routing and Blue/Green Clusters](02-infrastructure-advanced.md) >

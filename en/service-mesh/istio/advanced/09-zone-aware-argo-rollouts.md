@@ -1,20 +1,18 @@
 # Zone-Aware Argo Rollouts
 
-> **Supported Versions**: Istio 1.18+, Argo Rollouts 1.6+
-> **Last Updated**: February 19, 2026
-> **Difficulty**: Expert
+> **Supported Versions**: Istio 1.18+, Argo Rollouts 1.6+ **Last Updated**: February 19, 2026 **Difficulty**: Expert
 
 This document explains how to set up independent Argo Rollouts Canary deployments per AWS Availability Zone while leveraging Istio's locality-aware routing for automatic failover.
 
 ## Table of Contents
 
-1. [Problem Definition](#problem-definition)
-2. [Architecture Overview](#architecture-overview)
-3. [Key Design Decisions](#key-design-decisions)
-4. [Implementation Guide](#implementation-guide)
-5. [Traffic Flow](#traffic-flow)
-6. [Troubleshooting](#troubleshooting)
-7. [Best Practices](#best-practices)
+1. [Problem Definition](09-zone-aware-argo-rollouts.md#problem-definition)
+2. [Architecture Overview](09-zone-aware-argo-rollouts.md#architecture-overview)
+3. [Key Design Decisions](09-zone-aware-argo-rollouts.md#key-design-decisions)
+4. [Implementation Guide](09-zone-aware-argo-rollouts.md#implementation-guide)
+5. [Traffic Flow](09-zone-aware-argo-rollouts.md#traffic-flow)
+6. [Troubleshooting](09-zone-aware-argo-rollouts.md#troubleshooting)
+7. [Best Practices](09-zone-aware-argo-rollouts.md#best-practices)
 
 ## Problem Definition
 
@@ -58,16 +56,14 @@ flowchart TD
 **Why Zone-specific Rollouts are Needed?**
 
 1. **Independent PDB Management per Rollout**
-   - Each Zone's Rollout manages its own PDB
-   - Zone A and B's PDBs are unaffected even if Zone C completely disappears
-
+   * Each Zone's Rollout manages its own PDB
+   * Zone A and B's PDBs are unaffected even if Zone C completely disappears
 2. **Zone-level Recovery**
-   - Only the affected Rollout restarts when Zone C recovers
-   - No impact on deployment state of other Zones
-
+   * Only the affected Rollout restarts when Zone C recovers
+   * No impact on deployment state of other Zones
 3. **Spot Instance Interruption Response**
-   - Service continues in other Zones even when all Spot Instances in a specific Zone are terminated
-   - Automatic traffic switching via Istio locality failover
+   * Service continues in other Zones even when all Spot Instances in a specific Zone are terminated
+   * Automatic traffic switching via Istio locality failover
 
 **PDB Configuration Example** (per Zone):
 
@@ -113,9 +109,10 @@ spec:
 ```
 
 **Benefits**:
-- Zone A and B's PDBs work normally even during complete Zone C outage
-- Each Zone can recover independently
-- Canary deployments also proceed independently per Zone
+
+* Zone A and B's PDBs work normally even during complete Zone C outage
+* Each Zone can recover independently
+* Canary deployments also proceed independently per Zone
 
 ### Requirements
 
@@ -253,25 +250,29 @@ http:
 ```
 
 **Core Principle**:
-- Each Rollout references **different route names** (`zone-a-route`, `zone-b-route`, `zone-c-route`)
-- Each route processes only traffic from that Zone via **sourceLabels match**
-- Locality-aware routing automatically prioritizes zone-local endpoints
+
+* Each Rollout references **different route names** (`zone-a-route`, `zone-b-route`, `zone-c-route`)
+* Each route processes only traffic from that Zone via **sourceLabels match**
+* Locality-aware routing automatically prioritizes zone-local endpoints
 
 ### 2. Locality-aware Routing
 
 **Default Behavior**:
-- Zone A client -> Zone A Pod (100%)
-- Zone B client -> Zone B Pod (100%)
-- Zone C client -> Zone C Pod (100%)
+
+* Zone A client -> Zone A Pod (100%)
+* Zone B client -> Zone B Pod (100%)
+* Zone C client -> Zone C Pod (100%)
 
 **On Failover**:
-- Zone A failure -> Automatic switch to Zone B
-- Zone B failure -> Automatic switch to Zone C
-- Zone C failure -> Automatic switch to Zone A
+
+* Zone A failure -> Automatic switch to Zone B
+* Zone B failure -> Automatic switch to Zone C
+* Zone C failure -> Automatic switch to Zone A
 
 ### 3. Unified Service Calling
 
 Clients use a single DNS name:
+
 ```bash
 # Call like this
 curl http://test.default.svc.cluster.local:8080
@@ -456,11 +457,13 @@ spec:
 ```
 
 **Important Changes**:
-- Previous: All Zones sharing same `primary` route -> **Conflict occurred**
-- Fixed: Each Zone uses independent route names (`zone-a-route`, `zone-b-route`, `zone-c-route`)
-- Added: Zone-specific traffic separation via `sourceLabels.topology.kubernetes.io/zone` match
+
+* Previous: All Zones sharing same `primary` route -> **Conflict occurred**
+* Fixed: Each Zone uses independent route names (`zone-a-route`, `zone-b-route`, `zone-c-route`)
+* Added: Zone-specific traffic separation via `sourceLabels.topology.kubernetes.io/zone` match
 
 **How it Works**:
+
 1. Requests from Zone A pods -> `zone-a-route` matched
 2. Rollout A modifies only `zone-a-route` weights (no impact on other Zones)
 3. Locality-aware routing automatically prioritizes zone-local endpoints
@@ -834,6 +837,7 @@ sequenceDiagram
 ### 1. VirtualService Conflict Error
 
 **Symptoms**:
+
 ```bash
 Error: VirtualService update conflict
 ```
@@ -841,6 +845,7 @@ Error: VirtualService update conflict
 **Cause**: Multiple Rollouts trying to modify the same route simultaneously
 
 **Resolution**:
+
 ```yaml
 # Configure each Rollout to manage unique subsets
 spec:
@@ -860,6 +865,7 @@ spec:
 **Cause**: Incorrect `distribute` settings
 
 **Resolution**:
+
 ```yaml
 # Correct distribute settings
 distribute:
@@ -875,6 +881,7 @@ distribute:
 **Cause**: Outlier detection disabled or settings too slow
 
 **Resolution**:
+
 ```yaml
 # Fast failure detection
 outlierDetection:
@@ -888,6 +895,7 @@ outlierDetection:
 **Symptoms**: Canary deployment not progressing
 
 **Verification**:
+
 ```bash
 # Check Rollout status
 kubectl argo rollouts get rollout test-a -n default
@@ -926,6 +934,7 @@ kubectl logs -n argo-rollouts deployment/argo-rollouts
 **Problem**: Increased complexity when deploying multiple zone Rollouts simultaneously
 
 **Recommendation**:
+
 ```bash
 # Sequential deployment per Zone
 kubectl argo rollouts promote test-a -n default
@@ -1053,48 +1062,53 @@ spec:
 
 ### 6. Deployment Checklist
 
-- [ ] All zone Nodes are ready
-- [ ] VirtualService includes all subsets
-- [ ] DestinationRule locality settings verified
-- [ ] Outlier detection enabled
-- [ ] Each Rollout manages unique subsets
-- [ ] Zone-specific Services defined
-- [ ] Prometheus metrics collection verified
-- [ ] Alert rules configured
+* [ ] All zone Nodes are ready
+* [ ] VirtualService includes all subsets
+* [ ] DestinationRule locality settings verified
+* [ ] Outlier detection enabled
+* [ ] Each Rollout manages unique subsets
+* [ ] Zone-specific Services defined
+* [ ] Prometheus metrics collection verified
+* [ ] Alert rules configured
 
 ## Performance Considerations
 
 ### Resource Requirements
 
 **Control Plane**:
-- Istiod: CPU 500m, Memory 2GB (load from additional VirtualService/DestinationRule)
+
+* Istiod: CPU 500m, Memory 2GB (load from additional VirtualService/DestinationRule)
 
 **Data Plane**:
-- Envoy Sidecar: CPU 100-500m, Memory 50-150MB (zone information and locality routing overhead)
+
+* Envoy Sidecar: CPU 100-500m, Memory 50-150MB (zone information and locality routing overhead)
 
 **Argo Rollouts Controller**:
-- CPU 100m, Memory 128MB (managing 3 Rollouts)
+
+* CPU 100m, Memory 128MB (managing 3 Rollouts)
 
 ### Network Overhead
 
-- **Zone-local traffic**: Additional latency 1-2ms (Envoy overhead)
-- **Cross-zone traffic** (on failover): Additional latency 5-10ms (inter-zone network)
+* **Zone-local traffic**: Additional latency 1-2ms (Envoy overhead)
+* **Cross-zone traffic** (on failover): Additional latency 5-10ms (inter-zone network)
 
 ## References
 
 ### Related Documents
-- [Argo Rollouts Integration](08-argo-rollouts.md)
-- [Zone Aware Routing](../resilience/03-zone-aware-routing.md)
-- [Outlier Detection](../resilience/01-outlier-detection.md)
-- [DestinationRule](../traffic-management/03-destination-rule.md)
+
+* [Argo Rollouts Integration](08-argo-rollouts.md)
+* [Zone Aware Routing](../resilience/03-zone-aware-routing.md)
+* [Outlier Detection](../resilience/01-outlier-detection.md)
+* [DestinationRule](../traffic-management/03-destination-rule.md)
 
 ### External Links
-- [Istio Locality Load Balancing](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
-- [Argo Rollouts Istio Integration](https://argoproj.github.io/argo-rollouts/features/traffic-management/istio/)
-- [AWS Availability Zones](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
+
+* [Istio Locality Load Balancing](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/)
+* [Argo Rollouts Istio Integration](https://argoproj.github.io/argo-rollouts/features/traffic-management/istio/)
+* [AWS Availability Zones](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
 
 ## Next Steps
 
-1. [Lab: Zone-aware Rollout Practice](../../labs/zone-aware-rollout/)
+1. [Lab: Zone-aware Rollout Practice](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/labs/zone-aware-rollout/README.md)
 2. Extend to [Multi-cluster](02-multi-cluster.md) for inter-region failover implementation
-3. [Progressive Delivery](../../advanced/progressive-delivery.md) for automated analysis and rollback
+3. [Progressive Delivery](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/advanced/progressive-delivery.md) for automated analysis and rollback

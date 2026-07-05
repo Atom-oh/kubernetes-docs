@@ -1,7 +1,6 @@
-# Part 1: Custom Scheduler Fundamentals
+# Custom Scheduler
 
-> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 19, 2026
+> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33 **Last Updated**: February 19, 2026
 
 The Kubernetes scheduler is a critical component that decides which node a pod should be placed on. While the default scheduler works well in most cases, you can implement a custom scheduler for specific requirements. In this chapter, we will learn how to implement a custom scheduler in EKS.
 
@@ -10,9 +9,10 @@ The Kubernetes scheduler is a critical component that decides which node a pod s
 To follow along with the examples in this document, you will need the following tools and environment:
 
 ### Required Tools
-- kubectl v1.31 or higher
-- Go 1.19 or higher (for custom scheduler development)
-- A working Kubernetes cluster (EKS, minikube, kind, etc.)
+
+* kubectl v1.31 or higher
+* Go 1.19 or higher (for custom scheduler development)
+* A working Kubernetes cluster (EKS, minikube, kind, etc.)
 
 ### Development Environment Setup
 
@@ -36,23 +36,19 @@ go get k8s.io/klog/v2
 
 The Kubernetes scheduling process consists of the following stages:
 
-![kubernetes_scheduling_process](../assets/kubernetes_scheduling_process.svg)
-
 ### Detailed Explanation of Scheduling Stages
 
 1. **Filtering Phase**
-   - The stage where suitable nodes for running the pod are identified
-   - Each filter plugin determines whether a node can host the pod
-   - If any filter fails, that node is excluded from candidates
-
+   * The stage where suitable nodes for running the pod are identified
+   * Each filter plugin determines whether a node can host the pod
+   * If any filter fails, that node is excluded from candidates
 2. **Scoring Phase**
-   - The stage where filtered nodes are assigned scores
-   - Each scoring plugin assigns a score between 0-100 to nodes
-   - Final scores are calculated by applying weights
-
+   * The stage where filtered nodes are assigned scores
+   * Each scoring plugin assigns a score between 0-100 to nodes
+   * Final scores are calculated by applying weights
 3. **Binding Phase**
-   - The stage where the pod is assigned to the highest-scoring node
-   - Pod-node binding information is updated through the Kubernetes API
+   * The stage where the pod is assigned to the highest-scoring node
+   * Pod-node binding information is updated through the Kubernetes API
 
 ## When Custom Schedulers Are Needed
 
@@ -66,13 +62,13 @@ Consider a custom scheduler in the following cases:
 
 ### Real-World Use Cases
 
-| Industry | Use Case | Custom Scheduler Benefits |
-|----------|----------|---------------------------|
-| Finance | High-frequency trading systems | Network topology-aware placement for latency minimization |
-| Healthcare | Medical image processing | GPU resource optimization and data locality guarantee |
-| Telecommunications | 5G network functions | Proximity guarantee to specific network devices |
-| Retail | Seasonal traffic handling | Cost-effective spot instance utilization optimization |
-| Media | Video transcoding | CPU/GPU node selection based on workload characteristics |
+| Industry           | Use Case                       | Custom Scheduler Benefits                                 |
+| ------------------ | ------------------------------ | --------------------------------------------------------- |
+| Finance            | High-frequency trading systems | Network topology-aware placement for latency minimization |
+| Healthcare         | Medical image processing       | GPU resource optimization and data locality guarantee     |
+| Telecommunications | 5G network functions           | Proximity guarantee to specific network devices           |
+| Retail             | Seasonal traffic handling      | Cost-effective spot instance utilization optimization     |
+| Media              | Video transcoding              | CPU/GPU node selection based on workload characteristics  |
 
 1. **Filtering**: Identifies nodes where the pod can run. This stage considers resource requirements, node selectors, node affinity, taints and tolerations, etc.
 2. **Scoring**: Scores the filtered nodes. This stage considers node resource usage, inter-pod affinity, node affinity, etc.
@@ -98,8 +94,6 @@ There are three main approaches to implementing a custom scheduler:
 ### Multiple Scheduler Approach
 
 In the multiple scheduler approach, a custom scheduler runs alongside the default scheduler. When creating a pod, you can specify which scheduler to use with the `schedulerName` field.
-
-![multi_scheduler_approach](../assets/multi_scheduler_approach.svg)
 
 #### Custom Scheduler Implementation
 
@@ -298,8 +292,6 @@ When implementing a custom scheduler in Amazon EKS, consider the following:
 ### EKS Custom Scheduler Architecture
 
 The following diagram shows how to implement a custom scheduler in an EKS cluster:
-
-![EKS Custom Scheduler Architecture](../assets/eks_custom_scheduler_architecture.svg)
 
 ### EKS-Specific Scheduling Considerations
 

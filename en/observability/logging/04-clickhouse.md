@@ -1,4 +1,4 @@
-# ClickHouse for Log Analytics
+# ClickHouse
 
 > **Last Updated**: June 30, 2026
 
@@ -6,30 +6,30 @@ ClickHouse is an open-source columnar database optimized for OLAP (Online Analyt
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Kubernetes Deployment](#kubernetes-deployment)
-4. [Log Ingestion Pipeline](#log-ingestion-pipeline)
-5. [SQL Queries](#sql-queries)
-6. [Grafana Integration](#grafana-integration)
-7. [Performance Optimization](#performance-optimization)
-8. [S3 Archiving and Long-term Retention](#s3-archiving-and-long-term-retention)
-9. [HyperDX (ClickHouse Native Viewer)](#hyperdx-clickhouse-native-viewer)
+1. [Overview](04-clickhouse.md#overview)
+2. [Architecture](04-clickhouse.md#architecture)
+3. [Kubernetes Deployment](04-clickhouse.md#kubernetes-deployment)
+4. [Log Ingestion Pipeline](04-clickhouse.md#log-ingestion-pipeline)
+5. [SQL Queries](04-clickhouse.md#sql-queries)
+6. [Grafana Integration](04-clickhouse.md#grafana-integration)
+7. [Performance Optimization](04-clickhouse.md#performance-optimization)
+8. [S3 Archiving and Long-term Retention](04-clickhouse.md#s3-archiving-and-long-term-retention)
+9. [HyperDX (ClickHouse Native Viewer)](04-clickhouse.md#hyperdx-clickhouse-native-viewer)
 
----
+***
 
 ## Overview
 
 ### ClickHouse Features
 
-| Feature | Description |
-|---------|-------------|
-| **Columnar storage** | Data storage optimized for analytical queries |
-| **High compression** | 10:1+ compression ratios for storage cost savings |
-| **Fast queries** | Scan billions of rows in seconds |
-| **SQL support** | Write queries in standard SQL |
-| **Horizontal scaling** | Distributed processing via sharding |
-| **Real-time ingestion** | Ingest millions of rows per second |
+| Feature                 | Description                                       |
+| ----------------------- | ------------------------------------------------- |
+| **Columnar storage**    | Data storage optimized for analytical queries     |
+| **High compression**    | 10:1+ compression ratios for storage cost savings |
+| **Fast queries**        | Scan billions of rows in seconds                  |
+| **SQL support**         | Write queries in standard SQL                     |
+| **Horizontal scaling**  | Distributed processing via sharding               |
+| **Real-time ingestion** | Ingest millions of rows per second                |
 
 ### Why Choose ClickHouse for Log Analytics
 
@@ -50,17 +50,17 @@ ClickHouse is an open-source columnar database optimized for OLAP (Online Analyt
 
 ### Comparison with Other Solutions
 
-| Item | ClickHouse | Elasticsearch | Loki |
-|------|-----------|---------------|------|
-| **Query language** | SQL | Query DSL | LogQL |
-| **Storage method** | Columnar | Document-based | Chunk-based |
-| **Compression ratio** | Very high | Low | High |
-| **Full-text search** | Limited | Excellent | Limited |
-| **Aggregation queries** | Excellent | Good | Basic |
-| **Learning curve** | Low if SQL familiar | Medium | Low |
-| **Operational complexity** | Medium | High | Low |
+| Item                       | ClickHouse          | Elasticsearch  | Loki        |
+| -------------------------- | ------------------- | -------------- | ----------- |
+| **Query language**         | SQL                 | Query DSL      | LogQL       |
+| **Storage method**         | Columnar            | Document-based | Chunk-based |
+| **Compression ratio**      | Very high           | Low            | High        |
+| **Full-text search**       | Limited             | Excellent      | Limited     |
+| **Aggregation queries**    | Excellent           | Good           | Basic       |
+| **Learning curve**         | Low if SQL familiar | Medium         | Low         |
+| **Operational complexity** | Medium              | High           | Low         |
 
----
+***
 
 ## Architecture
 
@@ -163,7 +163,7 @@ sequenceDiagram
     CH->>S3: Move cold data
 ```
 
----
+***
 
 ## Kubernetes Deployment
 
@@ -379,13 +379,13 @@ spec:
     app: zookeeper
 ```
 
----
+***
 
 ## Log Ingestion Pipeline
 
 ### Buffer → Store → Distributed 3-Tier Design
 
-> **Interactive Visualization**: See the [ClickHouse 3-Tier Pipeline Animation](../../../assets/clickhouse-3tier-pipeline.html) to visually explore the Buffer → Store → Distributed data flow.
+> **Interactive Visualization**: See the [ClickHouse 3-Tier Pipeline Animation](https://github.com/Atom-oh/kubernetes-docs/blob/main/assets/clickhouse-3tier-pipeline.html) to visually explore the Buffer → Store → Distributed data flow.
 
 In large-scale log environments (TB+ per day), concentrated INSERT requests create many small Parts, causing Merge overhead to spike. A 3-tier design using the Buffer engine solves this problem.
 
@@ -396,9 +396,10 @@ Buffer Table (Memory)  →  Store Table (ReplicatedMergeTree)  →  Distributed 
 ```
 
 **Buffer Engine Role:**
-- Accumulates INSERT requests in memory and flushes to the Store table when conditions (time/rows/bytes) are met
-- Batches many small INSERTs during peak into large Parts → minimizes Merge overhead
-- Prevents `Too many parts` errors from Part count explosion
+
+* Accumulates INSERT requests in memory and flushes to the Store table when conditions (time/rows/bytes) are met
+* Batches many small INSERTs during peak into large Parts → minimizes Merge overhead
+* Prevents `Too many parts` errors from Part count explosion
 
 ```sql
 -- 1. Store table (actual data storage)
@@ -671,7 +672,7 @@ AS SELECT
 FROM logs.kafka_logs;
 ```
 
----
+***
 
 ## SQL Queries
 
@@ -808,7 +809,7 @@ GROUP BY service
 ORDER BY errors_5m DESC;
 ```
 
----
+***
 
 ## Grafana Integration
 
@@ -903,7 +904,7 @@ groups:
           description: "No logs received in the last 10 minutes"
 ```
 
----
+***
 
 ## HyperDX (ClickHouse Native Viewer)
 
@@ -911,27 +912,27 @@ HyperDX is a native log viewer that queries ClickHouse directly. Unlike Grafana 
 
 ### Key Advantages
 
-| Feature | Description |
-|---------|-------------|
+| Feature                   | Description                                                            |
+| ------------------------- | ---------------------------------------------------------------------- |
 | **Field-specific search** | `ServiceName:payment` style searches are 20x+ faster than LIKE queries |
-| **ClickHouse native** | Queries ClickHouse directly without separate indexing layers |
-| **Auto schema detection** | Automatically recognizes Buffer/Store/View separated structures |
-| **OTEL compatible** | Native support for OpenTelemetry log schema |
+| **ClickHouse native**     | Queries ClickHouse directly without separate indexing layers           |
+| **Auto schema detection** | Automatically recognizes Buffer/Store/View separated structures        |
+| **OTEL compatible**       | Native support for OpenTelemetry log schema                            |
 
 ### Log Viewer Comparison
 
-| Feature | Grafana | Signoz | HyperDX |
-|---------|---------|--------|---------|
-| **ClickHouse native** | Plugin required | Forces own schema | Native |
-| **Field search speed** | Good | Good | Excellent (20x) |
-| **Custom schema** | Supported | Limited | Full support |
-| **Buffer/Store structure** | Manual config | Not supported | Auto-detected |
-| **Deployment** | Standalone | Standalone | Standalone |
-| **License** | AGPL-3.0 | Custom license | MIT |
+| Feature                    | Grafana         | Signoz            | HyperDX         |
+| -------------------------- | --------------- | ----------------- | --------------- |
+| **ClickHouse native**      | Plugin required | Forces own schema | Native          |
+| **Field search speed**     | Good            | Good              | Excellent (20x) |
+| **Custom schema**          | Supported       | Limited           | Full support    |
+| **Buffer/Store structure** | Manual config   | Not supported     | Auto-detected   |
+| **Deployment**             | Standalone      | Standalone        | Standalone      |
+| **License**                | AGPL-3.0        | Custom license    | MIT             |
 
 > **Signoz Limitation**: Signoz enforces its own schema, which creates constraints in environments using Buffer → Store → Distributed 3-tier structures or custom Materialized columns.
 
----
+***
 
 ## Performance Optimization
 
@@ -977,20 +978,20 @@ ClickHouse's MergeTree engine creates Parts on INSERT and merges them in the bac
 
 **Part Size Trade-offs:**
 
-| Part Characteristic | Large Size + Few Parts | Small Size + Many Parts |
-|--------------------|----------------------|------------------------|
-| **Merge overhead** | Memory spikes during merge | Frequent merges, CPU load |
+| Part Characteristic   | Large Size + Few Parts       | Small Size + Many Parts      |
+| --------------------- | ---------------------------- | ---------------------------- |
+| **Merge overhead**    | Memory spikes during merge   | Frequent merges, CPU load    |
 | **Query performance** | Fewer Parts to scan = faster | Part-open overhead increases |
-| **INSERT impact** | Large batches needed | Small batches possible |
-| **Risk** | OOM possibility | `Too many parts` error |
+| **INSERT impact**     | Large batches needed         | Small batches possible       |
+| **Risk**              | OOM possibility              | `Too many parts` error       |
 
 **Operational Recommendations:**
 
-| Item | Recommended Value |
-|------|-------------------|
-| Parts per partition | ~20 or fewer |
-| Size per Part | 2-3GB |
-| Active partitions | 24-48 with hourly partitioning |
+| Item                | Recommended Value              |
+| ------------------- | ------------------------------ |
+| Parts per partition | \~20 or fewer                  |
+| Size per Part       | 2-3GB                          |
+| Active partitions   | 24-48 with hourly partitioning |
 
 **Monitoring Queries:**
 
@@ -1127,7 +1128,7 @@ resources:
   # S3 tiering required
 ```
 
----
+***
 
 ## S3 Archiving and Long-term Retention
 
@@ -1175,9 +1176,10 @@ ORDER BY (partition_id);
 ```
 
 **Archiving Delay Strategy:**
-- Wait for Merge completion: 2 days (until Part merges stabilize)
-- Reprocessing buffer: 1 day (for potential data corrections/re-ingestion)
-- **Total delay: 3 days** — archive data only after 3 days from partition creation
+
+* Wait for Merge completion: 2 days (until Part merges stabilize)
+* Reprocessing buffer: 1 day (for potential data corrections/re-ingestion)
+* **Total delay: 3 days** — archive data only after 3 days from partition creation
 
 ### Querying Archived Data Directly
 
@@ -1198,9 +1200,9 @@ GROUP BY hour, level
 ORDER BY hour;
 ```
 
-> **Cost Impact**: 1TB raw logs → S3 Parquet + ZSTD compression ≈ 100GB (90% reduction). At S3 Standard pricing, long-term retention costs ~$2.3/TB per month.
+> **Cost Impact**: 1TB raw logs → S3 Parquet + ZSTD compression ≈ 100GB (90% reduction). At S3 Standard pricing, long-term retention costs \~$2.3/TB per month.
 
----
+***
 
 ## Quiz
 
