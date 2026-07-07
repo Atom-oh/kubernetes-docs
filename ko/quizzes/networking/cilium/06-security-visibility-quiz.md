@@ -223,8 +223,8 @@
     
     <details>
     <summary>정답 보기</summary>
-    <p><strong>정답</strong>: A) `hubble observe --pod <pod-name>`</p>
-    <p><strong>설명</strong>: `hubble observe --pod <pod-name>` 명령어는 특정 Pod의 네트워크 흐름을 실시간으로 관찰할 수 있습니다.</p>
+    <p><strong>정답</strong>: A) <code>hubble observe --pod &lt;pod-name&gt;</code></p>
+    <p><strong>설명</strong>: <code>hubble observe --pod &lt;pod-name&gt;</code> 명령어는 특정 Pod의 네트워크 흐름을 실시간으로 관찰할 수 있습니다.</p>
     </details>
 
 19. **Hubble이 수집하는 메트릭이 아닌 것은?**

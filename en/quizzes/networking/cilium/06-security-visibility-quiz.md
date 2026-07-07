@@ -223,8 +223,8 @@
 
     <details>
     <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: A) `hubble observe --pod <pod-name>`</p>
-    <p><strong>Explanation</strong>: The `hubble observe --pod <pod-name>` command can observe network flows for a specific Pod in real-time.</p>
+    <p><strong>Answer</strong>: A) <code>hubble observe --pod &lt;pod-name&gt;</code></p>
+    <p><strong>Explanation</strong>: The <code>hubble observe --pod &lt;pod-name&gt;</code> command can observe network flows for a specific Pod in real-time.</p>
     </details>
 
 19. **Which metric is NOT collected by Hubble?**

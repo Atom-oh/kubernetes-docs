@@ -341,6 +341,9 @@ spec:
 
 1000개의 Pod가 있는 대규모 Kubernetes 클러스터에서 Istio를 사용할 때, Sidecar Mode와 Ambient Mode의 **예상 리소스 사용량**을 계산하고 비교하세요. (ztunnel이 10개 노드에 배포되고, waypoint가 1개라고 가정)
 
+<details>
+<summary>정답 및 해설</summary>
+
 **답변:**
 
 **가정:**

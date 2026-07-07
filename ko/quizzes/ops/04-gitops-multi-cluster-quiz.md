@@ -170,6 +170,6 @@ Matrix Generator는 두 개의 Generator를 조합하여 가능한 모든 조합
 **정답: B) ApplicationSet의 템플릿과 Generator 파라미터 활용**
 
 **설명:**
-ApplicationSet에서 Generator는 각 클러스터의 메타데이터(이름, 레이블, URL 등)를 파라미터로 제공하고, 템플릿에서 이 파라미터를 사용하여 클러스터별로 다른 설정을 적용할 수 있습니다. 예를 들어, `{{cluster.name}}`을 사용하여 클러스터별 values 파일을 지정할 수 있습니다.
+ApplicationSet에서 Generator는 각 클러스터의 메타데이터(이름, 레이블, URL 등)를 파라미터로 제공하고, 템플릿에서 이 파라미터를 사용하여 클러스터별로 다른 설정을 적용할 수 있습니다. 예를 들어, <code v-pre>{{cluster.name}}</code>을 사용하여 클러스터별 values 파일을 지정할 수 있습니다.
 
 </details>

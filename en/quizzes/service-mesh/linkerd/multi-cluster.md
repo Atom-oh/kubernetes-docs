@@ -57,15 +57,15 @@ Adding the `mirror.linkerd.io/exported: "true"` label to a service makes it mirr
 
 ### 4. What is the naming format for mirror services?
 
-A. <service>.<cluster>
-B. <service>-<cluster>
-C. <cluster>-<service>
-D. <service>@<cluster>
+A. `<service>.<cluster>`
+B. `<service>-<cluster>`
+C. `<cluster>-<service>`
+D. `<service>@<cluster>`
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. <service>-<cluster>**
+**Answer: B. `<service>-<cluster>`**
 
 **Explanation:**
 Mirror services are created in the format `<original-service-name>-<original-cluster-name>`. Example: The web service from the west cluster is mirrored as web-west in the east cluster.

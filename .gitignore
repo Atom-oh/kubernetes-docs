@@ -1,3 +1,7 @@
 .omc/
 .playwright-mcp/
 scripts/
+
+node_modules/
+.vitepress/cache/
+.vitepress/dist/

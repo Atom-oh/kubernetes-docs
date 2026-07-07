@@ -187,18 +187,18 @@ Silence는 일시적으로 알림을 억제하는 기능으로, 반드시 종료
 ---
 
 10. 다음 중 Alertmanager 템플릿에서 사용할 수 있는 Go 템플릿 문법으로 올바르지 않은 것은?
-    - A) `{{ .Labels.alertname }}`
-    - B) `{{ if eq .Status "firing" }}위험{{ end }}`
-    - C) `{{ range .Alerts }}{{ .Labels.severity }}{{ end }}`
-    - D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`
+    - A) <code v-pre>{{ .Labels.alertname }}</code>
+    - B) <code v-pre>{{ if eq .Status "firing" }}위험{{ end }}</code>
+    - C) <code v-pre>{{ range .Alerts }}{{ .Labels.severity }}{{ end }}</code>
+    - D) <code v-pre>{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}</code>
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`**
+**정답: D) <code v-pre>{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}</code>**
 
 **설명:**
-Go 템플릿은 삼항 연산자(`? :`)를 지원하지 않습니다. 대신 `{{ if }}`문을 사용해야 합니다. 올바른 문법은 다음과 같습니다:
+Go 템플릿은 삼항 연산자(`? :`)를 지원하지 않습니다. 대신 <code v-pre>{{ if }}</code>문을 사용해야 합니다. 올바른 문법은 다음과 같습니다:
 ```
 {{ if gt (len .Annotations.description) 100 }}
   {{ slice .Annotations.description 0 100 }}...

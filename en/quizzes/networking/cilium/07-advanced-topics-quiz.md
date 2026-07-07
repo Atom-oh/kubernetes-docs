@@ -289,8 +289,8 @@
 
     <details>
     <summary>Show Answer</summary>
-    <p><strong>Answer</strong>: C) `cilium endpoint get <endpoint-id>`</p>
-    <p><strong>Explanation</strong>: The `cilium endpoint get <endpoint-id>` command shows detailed information and applied network policy status for a specific endpoint (Pod).</p>
+    <p><strong>Answer</strong>: C) <code>cilium endpoint get &lt;endpoint-id&gt;</code></p>
+    <p><strong>Explanation</strong>: The <code>cilium endpoint get &lt;endpoint-id&gt;</code> command shows detailed information and applied network policy status for a specific endpoint (Pod).</p>
     </details>
 
 24. **What is the command to check BPF map status in Cilium?**

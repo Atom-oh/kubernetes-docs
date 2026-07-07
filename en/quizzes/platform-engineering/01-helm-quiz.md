@@ -55,7 +55,7 @@ The values.yaml file defines default configuration values used by chart template
 
 </details>
 
-### 4. What does `{{ .Release.Name }}` reference in a Helm template?
+### 4. What does <code v-pre>{{ .Release.Name }}</code> reference in a Helm template?
 
 - A) Chart name
 - B) Kubernetes cluster name
@@ -208,7 +208,7 @@ Helm v3 stores release information as Secrets within the namespace where the rel
 **Answer: default**
 
 **Explanation:**
-The `default` function provides a default value when a value is empty or undefined. Usage example: `{{ .Values.image.tag | default .Chart.AppVersion }}`
+The `default` function provides a default value when a value is empty or undefined. Usage example: <code v-pre>{{ .Values.image.tag | default .Chart.AppVersion }}</code>
 
 </details>
 

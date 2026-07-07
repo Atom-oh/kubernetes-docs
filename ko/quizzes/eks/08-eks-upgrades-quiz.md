@@ -1755,7 +1755,7 @@ Amazon EKS 클러스터 업그레이드 중 발생할 수 있는 문제를 해�
    ```
 
 3. **업그레이드 문제 해결 가이드**:
-   ```markdown
+   ````markdown
    # EKS 업그레이드 문제 해결 가이드
    
    ## 컨트롤 플레인 업그레이드 문제
@@ -1848,7 +1848,7 @@ Amazon EKS 클러스터 업그레이드 중 발생할 수 있는 문제를 해�
       ```
       aws eks update-addon --cluster-name my-cluster --addon-name <addon-name> --addon-version <target-version> --resolve-conflicts PRESERVE
       ```
-   ```
+   ````
 
 다른 옵션들의 문제점:
 - **A. 즉시 새 클러스터 생성**: 이는 극단적인 접근 방식으로, 시간과 리소스가 많이 소요되며, 근본 원인을 해결하지 않고 회피하는 방법입니다.
