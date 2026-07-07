@@ -427,7 +427,7 @@
     * [Observability Quiz](quizzes/service-mesh/istio/observability.md)
     * [Resilience Quiz](quizzes/service-mesh/istio/resilience.md)
     * [Advanced Quiz](quizzes/service-mesh/istio/advanced.md)
-    * [Comparison Quiz](quizzes/service-mesh/istio/comparison.md)
+    * [Comparison Quiz](quiz-collection/service-mesh/istio-detailed-quiz/comparison.md)
     * [Basic Quiz](quizzes/service-mesh/istio/basic.md)
   * [Linkerd Detailed Quiz](quiz-collection/service-mesh/linkerd-detailed-quiz/README.md)
     * [Architecture Quiz](quizzes/service-mesh/linkerd/architecture.md)

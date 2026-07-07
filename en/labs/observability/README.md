@@ -8,7 +8,7 @@ This lab series provides a comprehensive, hands-on journey through building a fu
 
 The architecture simulates a production-grade environment with a **Managed Cluster** hosting the observability stack and a **Service Cluster** running MSA applications with OTel instrumentation.
 
-![Architecture Overview](../../.gitbook/assets/architecture-overview.png)
+![Architecture Overview](../../.gitbook/assets/msa-service-map.png)
 
 ## Architecture Diagram
 

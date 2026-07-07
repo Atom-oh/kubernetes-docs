@@ -20,7 +20,7 @@
 
 ## Architecture Overview
 
-![AIOps Architecture](../../.gitbook/assets/aiops-architecture.png)
+![AIOps Architecture](../../.gitbook/assets/msa-service-map.png)
 
 ```mermaid
 flowchart TB
