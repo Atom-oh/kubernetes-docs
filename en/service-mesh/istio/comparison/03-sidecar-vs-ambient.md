@@ -155,6 +155,29 @@ The concern with ambient is that **the L7 waypoint (Envoy) reuses connections fr
 3. Ambient-L7 also showed a large average-latency spike and 87 requests that never completed within the run — consistent with the waypoint struggling under combined rollout churn and sustained load, distinct from the other two modes.
 4. Rollout cycles completed in the same 600-second window (42 / 64 / 65 for sidecar / ambient-L4 / ambient-L7) were far higher than an earlier measurement on a busy shared cluster, because this dedicated cluster had no other tenants competing for CPU/network — the *relative* ordering (sidecar slowest, ambient-L4 fastest) held up, but absolute rollout speed is highly dependent on cluster contention and shouldn't be over-interpreted as an intrinsic property of any mode.
 
+### Follow-up: after graceful-shutdown hardening
+
+The baseline numbers above reflect **no shutdown tuning at all**. We reran the same T1 test (100 qps × 600s, 60,000 requests/mode) after adding two changes:
+
+- **All three modes**: `lifecycle.preStop.sleep.seconds: 10` on the `echo` container (the K8s 1.29+ native sleep action — no exec/shell required) plus `terminationGracePeriodSeconds: 40`, giving Endpoint removal time to propagate across the cluster before the pod actually stops accepting connections
+- **Sidecar only**: `EXIT_ON_ZERO_ACTIVE_CONNECTIONS=true` + `terminationDrainDuration: 30s` injected into istio-proxy via the `proxy.istio.io/config` pod annotation (confirmed present in the istio-proxy init container's actual env) — exits as soon as active connections hit zero instead of always waiting the full 30s
+
+| Mode | Rollout cycles | Code 200 | Code 503 | Code -1 | Sockets used | Avg latency |
+|---|---|---|---|---|---|---|
+| sidecar (hardened) | 42 | 60,000 (100%) | **0** | **0** | 16 (perfect keepalive) | 2.630ms |
+| ambient-L4 (hardened) | 38 | 60,000 (100%) | **0** | **0** | 395 | 1.189ms |
+| ambient-L7 (hardened) | 45 | 59,352 (98.9%) | 648 (1.1%) | **0** | 678 | 3.843ms |
+
+**Baseline → hardened comparison**
+
+| Mode | Baseline error rate | Hardened error rate | Change |
+|---|---|---|---|
+| sidecar | 0.5% 503 + 0% TCP | 0% 503 + 0% TCP | **503s fully eliminated** |
+| ambient-L4 | 0% 503 + 0.3% TCP | 0% 503 + 0% TCP | **TCP errors also fully eliminated** |
+| ambient-L7 | 2.6% 503 + 0.1% TCP | 1.1% 503 + 0% TCP | 503 rate cut by more than half |
+
+> ✅ **Verdict**: this confirms, with measurements, the hypothesis that these 503s stem from a pod not shutting down gracefully before its Endpoint removal propagates — `preStop sleep 10` alone eliminated errors entirely for sidecar and ambient-L4. Ambient-L7 (waypoint) also improved substantially but didn't reach zero — meaning the waypoint's own stale-connection-reuse mechanism (the core §4 finding above) isn't fully solved by workload-side graceful-shutdown tuning alone. If you route through a waypoint, apply this hardening as a baseline and still budget for the residual 503 risk it doesn't eliminate.
+
 ### The risk of retry as a mitigation — Test Results (T2)
 
 **Test setup**: a harness of `order` (6 replicas, non-idempotent `POST /order` with a 0.1s in-handler delay, reports its request ID to a `collector`), `collector` (counts distinct request IDs and flags any seen more than once), and `order-client` (continuous POST load at 20 req/s with a unique UUID per request). A retry policy (`attempts: 3, perTryTimeout: 2s, retryOn: 503,reset,connect-failure`) was applied via the same Istio VirtualService config to both sidecar (istio-proxy) and ambient-L7 (waypoint). Each mode ran for 300s with concurrent `rollout restart` of the `order` Deployment.
@@ -190,6 +213,16 @@ Rather than a binary "sidecar or ambient" choice, we recommend **applying differ
 | Periphery (queries, notifications, batch) | Dashboards, alerting | Adopt ambient aggressively | Maximizes resource/operational benefit; mTLS and rollout behavior verified safe by test |
 
 **Namespace-level mixed deployment** was actually validated in this round of testing — sidecar, ambient-L4, and ambient-L7 namespaces ran concurrently on the same cluster, each independently enforcing STRICT mTLS.
+
+### L4-only's limitations — can I still do canary deployments?
+
+Ambient L4-only has no waypoint, so ztunnel never looks inside the HTTP request. That means **L7 features — HTTP header/path-based routing, retries, circuit breaking, traffic mirroring — cannot be applied to an L4-only service.** Whether this actually blocks canary deployments depends on where the traffic enters from.
+
+> ✅ **Ingress canary is unaffected.** An Istio Ingress Gateway or a Gateway API `Gateway` is always a separate, full Envoy proxy (its own Deployment), regardless of whether the backend workload runs in ambient or sidecar mode. The weighted split between v1/v2 subsets via `VirtualService`/`HTTPRoute` is decided entirely at the gateway; ztunnel (L4) only tunnels the connection to the already-selected destination pod afterward. Canary deployments for externally-exposed APIs work fine with L4-only backends.
+
+> ⚠️ **Mesh-internal (east-west) canary needs L7 on that specific service.** If service A calls service B inside the mesh and you want to split traffic between B-v1 and B-v2 by percentage, something has to make that routing decision at L7 — ztunnel can't. You'd need to either **deploy a waypoint in front of B (switch B to ambient-L7) or run B with a sidecar** for that canary to work.
+
+**Bottom line**: canary deployments for externally-exposed APIs work fine on L4-only. Only reach for a waypoint or sidecar on the specific service that needs mesh-internal canary — which is exactly how the tiered recommendation above is meant to be applied in practice.
 
 **Checklist before adoption**
 
@@ -565,6 +598,57 @@ kill "$ROLLOUT_PID" 2>/dev/null
 ```
 
 > 💡 Without `-allow-initial-errors`, fortio aborts the entire run if its warmup request happens to land during a rollout and gets a 503. This flag is required for any load test that overlaps with rollout churn.
+
+**Graceful-shutdown hardening patch** (used for the "after hardening" rerun in §4, applied to the existing Deployments via `kubectl patch --type strategic`):
+
+```yaml
+# common to all 3 modes — ambient-l4/l7 get only this patch
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo
+spec:
+  template:
+    spec:
+      terminationGracePeriodSeconds: 40
+      containers:
+      - name: echo
+        lifecycle:
+          preStop:
+            sleep:
+              seconds: 10
+```
+
+```yaml
+# sidecar namespace only, additionally (EXIT_ON_ZERO_ACTIVE_CONNECTIONS)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo
+  namespace: mesh-test-sidecar
+spec:
+  template:
+    metadata:
+      annotations:
+        proxy.istio.io/config: |
+          terminationDrainDuration: 30s
+          proxyMetadata:
+            EXIT_ON_ZERO_ACTIVE_CONNECTIONS: "true"
+    spec:
+      terminationGracePeriodSeconds: 40
+      containers:
+      - name: echo
+        lifecycle:
+          preStop:
+            sleep:
+              seconds: 10
+```
+
+```bash
+kubectl patch deployment/echo -n mesh-test-sidecar --type strategic --patch-file patch-prestop-sidecar.yaml
+kubectl patch deployment/echo -n mesh-test-ambient-l4 --type strategic --patch-file patch-prestop-ambient.yaml
+kubectl patch deployment/echo -n mesh-test-ambient-l7 --type strategic --patch-file patch-prestop-ambient.yaml
+```
 
 ### G. Running the latency test (T5, §3)
 

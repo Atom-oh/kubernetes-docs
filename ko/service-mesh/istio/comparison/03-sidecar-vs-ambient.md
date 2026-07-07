@@ -155,6 +155,29 @@ Ambient에서 우려되는 문제는 **L7 waypoint(Envoy)가 목적지 IP:Port �
 3. ambient-L7은 평균 지연도 크게 튀었고 60,000건 중 87건은 실행 시간 내에 끝내 완료되지 않았습니다 — rollout churn과 지속 부하가 겹치면 waypoint가 다른 두 모드와는 구분되게 부담을 받는다는 신호입니다.
 4. 같은 600초 창에서 완료된 rollout 횟수(sidecar 42 / ambient-L4 64 / ambient-L7 65)는 부하가 많던 공유 클러스터에서의 이전 측정치보다 훨씬 높았습니다 — 이 전용 클러스터에는 CPU/네트워크를 다투는 다른 테넌트가 없었기 때문입니다. *상대적* 순서(sidecar가 가장 느리고 ambient-L4가 가장 빠름)는 유지됐지만, 절대적인 rollout 속도는 클러스터 경쟁 상황에 크게 좌우되므로 모드 자체의 고유한 속성으로 과도하게 해석하지 않는 것이 좋습니다.
 
+### Graceful shutdown 하드닝 적용 후 — 후속 실측
+
+위 baseline 수치는 `preStop` 훅이나 종료 관련 튜닝을 **전혀 하지 않은** 기본값 상태입니다. 다음 두 가지를 추가해 동일한 T1 테스트(100qps × 600초, 60,000건/모드)를 재실행했습니다:
+
+- **3개 모드 전체**: `echo` 컨테이너에 `lifecycle.preStop.sleep.seconds: 10` (K8s 1.29+ 네이티브 sleep 액션, exec/셸 불필요) + `terminationGracePeriodSeconds: 40` — SIGTERM 전에 Endpoint 제거가 클러스터에 전파될 시간을 벌어줌
+- **sidecar만 추가**: `proxy.istio.io/config` 어노테이션으로 istio-proxy에 `EXIT_ON_ZERO_ACTIVE_CONNECTIONS=true` + `terminationDrainDuration: 30s` 주입 (istio-proxy initContainer의 실제 env에 반영된 것을 확인함) — active connection이 0이 되면 30초를 다 기다리지 않고 즉시 종료
+
+| 모드 | rollout 횟수 | Code 200 | Code 503 | Code -1 | Sockets used | 평균 지연 |
+|---|---|---|---|---|---|---|
+| sidecar (하드닝) | 42 | 60,000 (100%) | **0** | **0** | 16 (완벽 keepalive) | 2.630ms |
+| ambient-L4 (하드닝) | 38 | 60,000 (100%) | **0** | **0** | 395 | 1.189ms |
+| ambient-L7 (하드닝) | 45 | 59,352 (98.9%) | 648 (1.1%) | **0** | 678 | 3.843ms |
+
+**Baseline → 하드닝 비교**
+
+| 모드 | Baseline 오류율 | 하드닝 후 오류율 | 변화 |
+|---|---|---|---|
+| sidecar | 503 0.5% + TCP오류 0% | 503 0% + TCP오류 0% | **503 완전히 사라짐** |
+| ambient-L4 | 503 0% + TCP오류 0.3% | 503 0% + TCP오류 0% | **TCP 오류도 완전히 사라짐** |
+| ambient-L7 | 503 2.6% + TCP오류 0.1% | 503 1.1% + TCP오류 0% | 503 비율이 절반 이하로 감소 |
+
+> ✅ **결론**: 사용자가 지적했던 "Endpoint 제거 전에 graceful하게 종료되지 않아서 503이 난다"는 가설이 실측으로 확인됐습니다. `preStop sleep 10`만으로 sidecar와 ambient-L4의 오류가 완전히 사라졌고, ambient-L7(waypoint)도 절반 이하로 줄었습니다. waypoint 자체의 커넥션 재사용 문제(§4 본문의 핵심 메커니즘)는 workload 쪽 graceful shutdown 튜닝만으로는 완전히 해결되지 않는다는 뜻이기도 합니다 — L7 경로를 쓴다면 이 workload 측 하드닝을 기본으로 적용하고도 여전히 남는 503 리스크를 감안해야 합니다.
+
 ### Retry 완화책의 위험성 — 실측 결과 (T2)
 
 **테스트 구성**: `order`(6 replica, 비멱등 `POST /order`, 핸들러 내 0.1초 지연 후 request ID를 `collector`에 보고), `collector`(distinct request ID를 집계하고 2회 이상 보인 ID를 표시), `order-client`(요청마다 고유 UUID를 붙여 20 req/s로 지속 POST)로 구성한 하네스입니다. 동일한 Istio VirtualService retry 정책(`attempts: 3, perTryTimeout: 2s, retryOn: 503,reset,connect-failure`)을 sidecar(istio-proxy)와 ambient-L7(waypoint) 양쪽에 적용했습니다. 각 모드는 `order` Deployment에 동시에 `rollout restart`를 걸며 300초간 측정했습니다.
@@ -190,6 +213,16 @@ Ambient에서 우려되는 문제는 **L7 waypoint(Envoy)가 목적지 IP:Port �
 | 주변부 (조회, 알림, 배치) | 대시보드, 알림 발송 | Ambient 적극 적용 | 리소스·운영 이점 극대화, 실측으로 mTLS·rollout 문제 없음 확인 |
 
 **네임스페이스 단위 혼합 배치**는 이번 실측에서 실제로 검증됐습니다 — 같은 클러스터에서 sidecar/ambient-L4/ambient-L7 네임스페이스가 동시에 정상 동작했고, 각각 독립적으로 STRICT mTLS를 적용할 수 있었습니다.
+
+### L4-only의 제약사항 — canary 배포는 여전히 가능한가?
+
+Ambient L4-only는 waypoint가 없으므로 ztunnel이 HTTP 요청 내용을 들여다보지 못합니다. 즉 **HTTP 헤더/경로 기반 라우팅, retry, circuit breaker, traffic mirroring 같은 L7 기능은 L4-only 상태의 서비스에는 적용할 수 없습니다.** 이 제약이 canary 배포에 실제로 영향을 주는지는 트래픽이 어디서 들어오는지에 따라 다릅니다.
+
+> ✅ **외부 진입(ingress) canary는 영향 없음.** Istio Ingress Gateway나 Gateway API의 `Gateway`는 워크로드의 ambient/sidecar 모드와 무관하게 항상 별도의 완전한 Envoy 프록시(Deployment)로 동작합니다. `VirtualService`/`HTTPRoute`의 weighted routing으로 v1/v2 subset을 나누는 결정은 이 게이트웨이에서 이미 끝나고, ztunnel(L4)은 그 결정 이후 이미 정해진 목적지 Pod까지 mTLS 터널만 뚫어주는 역할이라 L4-only여도 아무 문제가 없습니다. 외부로 노출되는 API의 canary 배포는 L4-only로 그대로 가능합니다.
+
+> ⚠️ **mesh 내부(east-west) canary는 그 서비스에 L7이 필요합니다.** 예를 들어 서비스 A가 클러스터 내부에서 서비스 B를 호출할 때 B-v1/B-v2로 비율 기반 트래픽 분할을 하려면, 그 라우팅 결정을 누군가 L7에서 해줘야 합니다. ztunnel은 이 판단을 못 하므로, **B 앞에 waypoint를 배포하거나(ambient-L7 전환) B를 sidecar로 돌려야** canary가 성립합니다.
+
+**결론**: "외부로 노출되는 API의 canary"는 L4-only로 충분하고, "내부 서비스 간 canary"가 필요한 서비스에 한해서만 waypoint 또는 sidecar를 선택적으로 붙이면 됩니다 — 이것이 위 계층화 권장안의 실제 적용 방식입니다.
 
 **도입 전 재확인 체크리스트**
 
@@ -565,6 +598,57 @@ kill "$ROLLOUT_PID" 2>/dev/null
 ```
 
 > 💡 `-allow-initial-errors` 플래그가 없으면 fortio의 워밍업 요청이 하필 rollout 도중 503을 맞을 경우 테스트 전체가 즉시 중단됩니다. rollout churn과 겹치는 부하 테스트에는 필수 플래그입니다.
+
+**Graceful shutdown 하드닝 패치** (§4 "하드닝 적용 후" 재검증에 사용, `kubectl patch --type strategic`으로 기존 Deployment에 적용):
+
+```yaml
+# 3개 모드 공통 — ambient-l4/l7는 이 패치만 적용
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo
+spec:
+  template:
+    spec:
+      terminationGracePeriodSeconds: 40
+      containers:
+      - name: echo
+        lifecycle:
+          preStop:
+            sleep:
+              seconds: 10
+```
+
+```yaml
+# sidecar 네임스페이스만 추가 적용 (EXIT_ON_ZERO_ACTIVE_CONNECTIONS)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo
+  namespace: mesh-test-sidecar
+spec:
+  template:
+    metadata:
+      annotations:
+        proxy.istio.io/config: |
+          terminationDrainDuration: 30s
+          proxyMetadata:
+            EXIT_ON_ZERO_ACTIVE_CONNECTIONS: "true"
+    spec:
+      terminationGracePeriodSeconds: 40
+      containers:
+      - name: echo
+        lifecycle:
+          preStop:
+            sleep:
+              seconds: 10
+```
+
+```bash
+kubectl patch deployment/echo -n mesh-test-sidecar --type strategic --patch-file patch-prestop-sidecar.yaml
+kubectl patch deployment/echo -n mesh-test-ambient-l4 --type strategic --patch-file patch-prestop-ambient.yaml
+kubectl patch deployment/echo -n mesh-test-ambient-l7 --type strategic --patch-file patch-prestop-ambient.yaml
+```
 
 ### G. Latency 테스트 실행 (T5, §3)
 
