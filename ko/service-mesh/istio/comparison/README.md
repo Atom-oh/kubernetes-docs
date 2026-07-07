@@ -1,6 +1,6 @@
 # 비교 가이드
 
-> **마지막 업데이트**: 2026년 2월 19일 **대상 독자**: 아키텍트, DevOps 엔지니어, Platform 엔지니어
+> **마지막 업데이트**: 2026년 7월 7일 **대상 독자**: 아키텍트, DevOps 엔지니어, Platform 엔지니어
 
 이 섹션은 다양한 Service Mesh 및 네트워킹 솔루션을 비교하여 각 솔루션의 장단점과 적합한 사용 사례를 제시합니다.
 
@@ -48,6 +48,21 @@ Kubernetes Service Mesh (Istio)와 AWS 네이티브 서비스 네트워킹 (VPC 
 * 운영 오버헤드
 * 비용 구조
 * 하이브리드 및 멀티 클라우드 지원
+
+### 3. [Sidecar vs Ambient Mode 선택 가이드](03-sidecar-vs-ambient.md)
+
+Istio 내부에서 sidecar 모드와 ambient 모드 중 무엇을 선택할지, EKS 1.36 실측 결과 기반 의사결정 가이드:
+
+* mTLS, NetworkPolicy, latency, 무중단 rollout(waypoint 503) 4가지 요구사항별 실측 결과
+* ambient waypoint 경유 시 503 비율이 sidecar보다 높다는 실측 데이터
+* 워크로드 계층별(코어/준코어/주변부) 혼합 배치 권장안
+
+**비교 기준**:
+
+* mTLS 적용 방식 및 검증
+* NetworkPolicy와 HBONE 포트 상호작용
+* Rollout 중 503 발생률 (실측)
+* Retry 정책의 비멱등 API 리스크
 
 ## 🎯 선택 가이드
 

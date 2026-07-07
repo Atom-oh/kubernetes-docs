@@ -1,6 +1,6 @@
 # Comparison Guide
 
-> **Last Updated**: February 19, 2026 **Target Audience**: Architects, DevOps Engineers, Platform Engineers
+> **Last Updated**: July 7, 2026 **Target Audience**: Architects, DevOps Engineers, Platform Engineers
 
 This section compares various Service Mesh and networking solutions, presenting the pros and cons of each solution and appropriate use cases.
 
@@ -48,6 +48,21 @@ Comparison between Kubernetes Service Mesh (Istio) and AWS native service networ
 * Operational overhead
 * Cost structure
 * Hybrid and multi-cloud support
+
+### 3. [Sidecar vs Ambient Mode Selection Guide](03-sidecar-vs-ambient.md)
+
+A test-result-driven decision guide for choosing between Istio's sidecar mode and ambient mode on EKS 1.36:
+
+* Test results against 4 requirements: mTLS, NetworkPolicy, latency, and zero-downtime rollout (waypoint 503)
+* Measured data showing a higher 503 rate through the ambient waypoint than sidecar
+* A tiered mixed-deployment recommendation by workload tier (core / semi-core / periphery)
+
+**Comparison Criteria**:
+
+* mTLS enforcement and verification
+* NetworkPolicy interaction with the HBONE port
+* 503 rate during rollouts (measured)
+* Retry policy risk on non-idempotent APIs
 
 ## Selection Guide
 
