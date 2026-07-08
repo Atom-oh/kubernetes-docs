@@ -423,6 +423,8 @@ Ambient Mode:
 * [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md#리소스-사용량-비교)
 * [비용 최적화](../../../service-mesh/istio/best-practices.md#비용-최적화)
 
+</details>
+
 ***
 
 ### 문제 8: mTLS 작동 원리
