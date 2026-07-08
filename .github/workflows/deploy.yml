@@ -16,11 +16,11 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: kubernetes-docs-arm
     env:
       # 914 pages (ko+en) bundled in one process needs more than Node's
-      # default heap; the default GitHub runner has 7GB total memory.
-      NODE_OPTIONS: --max-old-space-size=6144
+      # default heap; self-hosted runner has 10Gi memory.
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
