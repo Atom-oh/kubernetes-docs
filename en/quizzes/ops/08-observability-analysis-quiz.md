@@ -126,14 +126,14 @@ TraceQL is Tempo's query language for searching traces. It supports filtering by
 ### 8. How do you extract a JSON field in LogQL?
 
 - A) `json.fieldname`
-- B) `{app="myapp"} | json | line_format "{{.fieldname}}"`
+- B) <code v-pre>{app="myapp"} | json | line_format "{{.fieldname}}"</code>
 - C) `SELECT fieldname FROM logs`
 - D) `logs.fieldname`
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) `{app="myapp"} | json | line_format "{{.fieldname}}"`**
+**Answer: B) <code v-pre>{app="myapp"} | json | line_format "{{.fieldname}}"</code>**
 
 **Explanation:**
 The `| json` parser extracts JSON fields from log lines into labels. You can then use `| line_format` with Go template syntax to format output, or filter with extracted fields like `| status_code >= 500`.

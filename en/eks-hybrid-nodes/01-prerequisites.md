@@ -476,7 +476,7 @@ aws eks create-access-entry \
 
 This command automatically sets:
 
-* Username: `system:node:{{SessionName}}`
+* Username: <code v-pre>system:node:{{SessionName}}</code>
 * Kubernetes groups: `system:bootstrappers`, `system:nodes`
 
 ### aws-auth ConfigMap Alternative

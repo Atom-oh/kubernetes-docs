@@ -884,10 +884,10 @@ MetricTemplate에서 사용할 수 있는 변수:
 
 | 변수 | 설명 |
 |------|------|
-| `{{ namespace }}` | Canary 리소스의 네임스페이스 |
-| `{{ target }}` | 대상 Deployment 이름 |
-| `{{ interval }}` | 메트릭 분석 간격 |
-| `{{ variables.key }}` | Canary에서 전달하는 사용자 정의 변수 |
+| <code v-pre>{{ namespace }}</code> | Canary 리소스의 네임스페이스 |
+| <code v-pre>{{ target }}</code> | 대상 Deployment 이름 |
+| <code v-pre>{{ interval }}</code> | 메트릭 분석 간격 |
+| <code v-pre>{{ variables.key }}</code> | Canary에서 전달하는 사용자 정의 변수 |
 
 Canary에서 MetricTemplate 참조:
 

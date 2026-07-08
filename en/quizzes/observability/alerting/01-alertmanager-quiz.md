@@ -187,18 +187,18 @@ Silence is a feature that temporarily suppresses alerts and must always specify 
 ---
 
 10. Which of the following is NOT valid Go template syntax that can be used in Alertmanager templates?
-    - A) `{{ .Labels.alertname }}`
-    - B) `{{ if eq .Status "firing" }}Danger{{ end }}`
-    - C) `{{ range .Alerts }}{{ .Labels.severity }}{{ end }}`
-    - D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`
+    - A) <code v-pre>{{ .Labels.alertname }}</code>
+    - B) <code v-pre>{{ if eq .Status "firing" }}Danger{{ end }}</code>
+    - C) <code v-pre>{{ range .Alerts }}{{ .Labels.severity }}{{ end }}</code>
+    - D) <code v-pre>{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}</code>
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`**
+**Answer: D) <code v-pre>{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}</code>**
 
 **Explanation:**
-Go templates do not support the ternary operator (`? :`). Instead, you must use `{{ if }}` statements. The correct syntax would be:
+Go templates do not support the ternary operator (`? :`). Instead, you must use <code v-pre>{{ if }}</code> statements. The correct syntax would be:
 ```
 {{ if gt (len .Annotations.description) 100 }}
   {{ slice .Annotations.description 0 100 }}...

@@ -289,8 +289,8 @@
     
     <details>
     <summary>정답 보기</summary>
-    <p><strong>정답</strong>: C) `cilium endpoint get <endpoint-id>`</p>
-    <p><strong>설명</strong>: `cilium endpoint get <endpoint-id>` 명령어는 특정 엔드포인트(Pod)의 상세 정보와 적용된 네트워크 정책 상태를 보여줍니다.</p>
+    <p><strong>정답</strong>: C) <code>cilium endpoint get &lt;endpoint-id&gt;</code></p>
+    <p><strong>설명</strong>: <code>cilium endpoint get &lt;endpoint-id&gt;</code> 명령어는 특정 엔드포인트(Pod)의 상세 정보와 적용된 네트워크 정책 상태를 보여줍니다.</p>
     </details>
 
 24. **Cilium에서 BPF 맵 상태를 확인하는 명령어는?**

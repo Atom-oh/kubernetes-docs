@@ -476,7 +476,7 @@ aws eks create-access-entry \
 
 이 명령은 자동으로 다음을 설정합니다:
 
-* 사용자 이름: `system:node:{{SessionName}}`
+* 사용자 이름: <code v-pre>system:node:{{SessionName}}</code>
 * Kubernetes 그룹: `system:bootstrappers`, `system:nodes`
 
 ### aws-auth ConfigMap 대안

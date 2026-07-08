@@ -57,15 +57,15 @@ D. linkerd.io/multicluster: "export"
 
 ### 4. 미러 서비스의 이름 형식은?
 
-A. <service>.<cluster>
-B. <service>-<cluster>
-C. <cluster>-<service>
-D. <service>@<cluster>
+A. `<service>.<cluster>`
+B. `<service>-<cluster>`
+C. `<cluster>-<service>`
+D. `<service>@<cluster>`
 
 <details>
 <summary>정답 및 설명</summary>
 
-**정답: B. <service>-<cluster>**
+**정답: B. `<service>-<cluster>`**
 
 **설명:**
 미러 서비스는 `<원본 서비스 이름>-<원본 클러스터 이름>` 형식으로 생성됩니다. 예: west 클러스터의 web 서비스는 east 클러스터에서 web-west로 미러됩니다.

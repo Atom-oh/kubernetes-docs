@@ -55,7 +55,7 @@ values.yaml 파일은 차트 템플릿에서 사용할 기본 구성 값을 정�
 
 </details>
 
-### 4. Helm 템플릿에서 `{{ .Release.Name }}`은 무엇을 참조합니까?
+### 4. Helm 템플릿에서 <code v-pre>{{ .Release.Name }}</code>은 무엇을 참조합니까?
 
 - A) 차트 이름
 - B) Kubernetes 클러스터 이름
@@ -208,7 +208,7 @@ Helm v3는 릴리스 정보를 릴리스가 배포된 네임스페이스 내의 
 **정답: default**
 
 **설명:**
-`default` 함수는 값이 비어있거나 정의되지 않은 경우 기본값을 제공합니다. 사용 예: `{{ .Values.image.tag | default .Chart.AppVersion }}`
+`default` 함수는 값이 비어있거나 정의되지 않은 경우 기본값을 제공합니다. 사용 예: <code v-pre>{{ .Values.image.tag | default .Chart.AppVersion }}</code>
 
 </details>
 
