@@ -153,6 +153,12 @@ When ResourceQuota is applied to a namespace and quotas are set for computing re
 <details>
 <summary>Show Answer</summary>
 
+**Answer: A) Defining pod scheduling priority**
+
+**Explanation:**
+PriorityClass defines the scheduling priority of pods. When resources are scarce, higher-priority pods are scheduled before lower-priority ones, and can preempt lower-priority pods if necessary.
+</details>
+
 ## Short Answer Questions
 
 1. Explain the main differences between ResourceQuota and LimitRange.
@@ -715,5 +721,4 @@ kubectl label namespace restricted-ns \
 8. **Extensibility**:
    - **PodSecurityPolicy**: High extensibility through custom settings.
    - **Pod Security Admission**: Limited extensibility, additional tools like OPA Gatekeeper or Kyverno may be needed for finer control.
-</details>
 </details>
