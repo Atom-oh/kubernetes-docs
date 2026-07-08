@@ -18,9 +18,11 @@ jobs:
   build:
     runs-on: kubernetes-docs-arm
     env:
-      # 914 pages (ko+en) bundled in one process needs more than Node's
-      # default heap; self-hosted runner has 10Gi memory.
-      NODE_OPTIONS: --max-old-space-size=8192
+      # 914 pages (ko+en) bundled in one Vite/Rollup process OOM'd at 6/8/10GB
+      # heap on the shared runner. Now on a dedicated r8g.large (16GiB) node
+      # with a 14Gi pod request; keep heap at the pod request so V8 doesn't
+      # try to grow past what the pod is guaranteed.
+      NODE_OPTIONS: --max-old-space-size=14336
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
