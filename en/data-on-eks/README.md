@@ -1,0 +1,67 @@
+# Data on EKS
+
+> **Last Updated**: July 9, 2026
+
+## Overview
+
+"Data on EKS" covers running the core workloads of the AWS data ecosystem — streaming, batch processing, and workflow orchestration — as Kubernetes-native applications on Amazon EKS, rather than relying solely on fully managed services. By deploying tools like Kafka, Spark, Airflow, and Flink through containers and the Operator pattern, you can manage data workloads with the same deployment, observability, and scaling practices you already use for the rest of your platform on EKS.
+
+This section is not meant to argue against fully managed services such as Amazon MSK, Amazon EMR, or Amazon MWAA. Both approaches involve real trade-offs, and most teams end up choosing — or combining — them based on operational capacity, customization needs, and cost structure. This section focuses on what you need to know once you've decided to run these tools directly on EKS.
+
+## Data Workload Categories
+
+Tools in the data platform space generally fall into four categories, each solving a different problem.
+
+| Category | Problem It Solves | Representative Tool | Data on EKS Coverage |
+|----------|--------------------|----------------------|------------------------|
+| **Streaming** | Publish/subscribe to events in real time and reliably connect asynchronous communication between systems | Apache Kafka | Available — [Kafka on EKS](kafka/README.md) |
+| **Batch & Analytics** | Distributed processing of large datasets for ETL, aggregation, and ML pipelines | Apache Spark | Coming soon |
+| **Orchestration** | Define dependencies and schedules across data jobs and manage their execution | Apache Airflow | Coming soon |
+| **Stream Processing** | Perform real-time aggregation, transformation, and stateful computation on streaming data | Apache Flink | Coming soon |
+
+```mermaid
+graph LR
+    subgraph "Data on EKS"
+        K[Kafka<br/>Streaming]
+        S[Spark<br/>Batch & Analytics]
+        A[Airflow<br/>Orchestration]
+        F[Flink<br/>Stream Processing]
+    end
+
+    K -->|Feeds events| F
+    K -->|Lands raw data| S
+    A -->|Schedules jobs| S
+    A -->|Schedules jobs| K
+
+    style K fill:#4fc3f7
+    style S fill:#81c784
+    style A fill:#ffb74d
+    style F fill:#ce93d8
+```
+
+## Why Run These on EKS
+
+Fully managed services meaningfully reduce operational burden, but more teams are choosing to run these tools natively on EKS for reasons like:
+
+- **Unified operations and observability**: Data workloads can be managed with the same `kubectl`, GitOps workflows, and Prometheus/Grafana stack used across the rest of the platform, instead of maintaining a separate toolchain.
+- **Autoscaling**: [Karpenter](../autoscaling/02-karpenter.md)-driven node autoscaling combined with HPA/KEDA lets you scale brokers, workers, and executors precisely to match workload demand.
+- **Cost efficiency**: Techniques from [EKS cost optimization](../eks/07-eks-cost-optimization.md) — Spot Instances, improved bin-packing density, and so on — apply just as well to data workloads as to any other service.
+- **Multi-tenancy**: Kubernetes isolation primitives — namespaces, ResourceQuotas, NetworkPolicies — let multiple teams and workloads safely share a single cluster.
+
+This approach does come with trade-offs: your team takes on Operator management, storage design, and upgrade strategy directly. The deep dives that follow address that balance in detail for each tool.
+
+## Currently Covered
+
+- [Kafka on EKS](kafka/README.md) — An 8-part deep dive into deploying and operating Apache Kafka on EKS using the Strimzi Operator.
+
+## Roadmap
+
+The following topics are planned for future additions:
+
+- **Apache Spark** — Distributed batch processing and analytics pipelines on EKS
+- **Apache Airflow** — Workflow orchestration on EKS
+- **Apache Flink** — Real-time stream processing on EKS
+
+## Next Steps
+
+1. [Kafka on EKS](kafka/README.md) — Strimzi-based Kafka deep dive
