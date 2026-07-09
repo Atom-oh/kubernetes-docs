@@ -8,7 +8,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  id-token: write # required for OIDC -> AWS role assumption (Bedrock)
 
 concurrency:
   group: weekly-news-digest
@@ -16,11 +15,29 @@ concurrency:
 
 jobs:
   digest:
-    runs-on: kubernetes-docs-arm
+    # Dedicated EKS ARC runner for this repo (Pod Identity: claude-runner ->
+    # mall-apne2-mgmt-ci-runner grants Bedrock access, no OIDC needed) — see
+    # AWS-Demo-Platform/argocd-apps/system/appset-helm-runner-claude-arm-kubernetes-docs.yaml
+    runs-on: kubernetes-docs-claude-arm
+    env:
+      # Matches AWS-Demo-Platform/.github/workflows/pr-review.yml: endpoint region
+      # and AWS_REGION must agree or SigV4 signing fails.
+      ANTHROPIC_MODEL: us.anthropic.claude-fable-5
+      CLAUDE_CODE_USE_BEDROCK: 1
+      ANTHROPIC_BEDROCK_BASE_URL: https://bedrock-runtime.us-east-1.amazonaws.com
+      AWS_REGION: us-east-1
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Verify Claude Code CLI present (pre-installed on runner)
+        run: |
+          if ! command -v claude >/dev/null 2>&1; then
+            echo "::warning::claude CLI not found on runner, falling back to npm global install"
+            npm install -g @anthropic-ai/claude-code
+          fi
+          claude --version
 
       - name: Compute ISO week and skip if this week's PR already exists
         id: week
@@ -33,6 +50,9 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # ponytail: RSS/Atom only for now, no AgentCore Gateway web-search MCP enrichment
+      # — that gateway is owned by the separate ttobak project and isn't live yet.
+      # Add a --mcp-config step here once AGENTCORE_GATEWAY_URL exists.
       - name: Fetch RSS/Atom feeds
         if: steps.week.outputs.exists == 'false'
         run: |
@@ -45,68 +65,38 @@ jobs:
             curl -fsSL --retry 3 -o "feeds/release-$name.xml" "https://github.com/$repo/releases.atom"
           done
 
-      - name: Configure AWS credentials (OIDC)
-        if: steps.week.outputs.exists == 'false'
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: us-west-2
-
-      # Written to a file (rather than inlined into claude_args as JSON) so we
-      # don't have to escape JSON braces inside a GitHub Actions expression.
-      - name: Write optional AgentCore Gateway MCP config
-        if: steps.week.outputs.exists == 'false' && vars.AGENTCORE_GATEWAY_URL != ''
-        run: |
-          cat > /tmp/mcp-config.json <<EOF
-          {"mcpServers":{"web-search":{"type":"http","url":"${{ vars.AGENTCORE_GATEWAY_URL }}"}}}
-          EOF
-
-      - name: Build claude_args
-        if: steps.week.outputs.exists == 'false'
-        id: claude_args
-        run: |
-          # NOTE: confirm this model ID/inference-profile is enabled in the target
-          # Bedrock account/region before relying on this workflow.
-          args='--model us.anthropic.claude-sonnet-4-5-20250929-v1:0 --allowedTools "Read,Write,Edit,Glob,Grep"'
-          if [ -f /tmp/mcp-config.json ]; then
-            args="$args --mcp-config /tmp/mcp-config.json"
-          fi
-          echo "value=$args" >> "$GITHUB_OUTPUT"
-
       - name: Generate digest with Claude
         if: steps.week.outputs.exists == 'false'
-        uses: anthropics/claude-code-action@v1
-        with:
-          use_bedrock: "true"
-          claude_args: ${{ steps.claude_args.outputs.value }}
-          prompt: |
-            You maintain a bilingual (Korean + English) Kubernetes/Amazon EKS training
-            site. Read CLAUDE.md for repo conventions first.
+        env:
+          WEEK: ${{ steps.week.outputs.week }}
+        run: |
+          cat <<PROMPT_EOF > /tmp/prompt.txt
+          You maintain a bilingual (Korean + English) Kubernetes/Amazon EKS training
+          site. Read CLAUDE.md for repo conventions first.
 
-            The files under feeds/*.xml are RSS/Atom feeds fetched moments ago from the
-            Kubernetes blog, AWS What's New, the CNCF blog, and GitHub releases for
-            kubernetes, istio, cilium, argo-cd, karpenter, and linkerd2. Read each file
-            directly (they are small).
+          The files under feeds/*.xml are RSS/Atom feeds fetched moments ago from the
+          Kubernetes blog, AWS What's New, the CNCF blog, and GitHub releases for
+          kubernetes, istio, cilium, argo-cd, karpenter, and linkerd2. Read each file
+          directly (they are small).
 
-            1. From all feed items, keep only those published in the last 7 days.
-            2. Select the 5-10 items most relevant to this site's topics: Amazon EKS,
-               Kubernetes core concepts, networking (Cilium/Calico), service mesh
-               (Istio/Linkerd), GitOps (ArgoCD), autoscaling (Karpenter/KEDA), security,
-               observability, platform engineering. Skip items with no clear relevance.
-            3. If an MCP tool named "web-search" is available, you may use it to fetch
-               short additional context for an item (e.g. what a terse release note
-               actually changed). If you cite a web-search result, you MUST keep its
-               source URL visible in the digest text.
-            4. Write ko/news/${{ steps.week.outputs.week }}.md and
-               en/news/${{ steps.week.outputs.week }}.md. Follow the document header
-               format and news naming convention in CLAUDE.md. Each item needs: a short
-               title, 1-3 sentence summary, the original source link, and (when genuinely
-               relevant) a link to an existing page in this repo that the news relates to.
-               Korean and English should cover the same items but do not need to be
-               literal translations.
-            5. Prepend a new bullet linking to the new file at the top of the "다이제스트
-               목록" / "Digest Archive" list in ko/news/README.md and en/news/README.md.
-            6. Do not modify SUMMARY.md, quizzes, labs, or any other existing content.
+          1. From all feed items, keep only those published in the last 7 days.
+          2. Select the 5-10 items most relevant to this site's topics: Amazon EKS,
+             Kubernetes core concepts, networking (Cilium/Calico), service mesh
+             (Istio/Linkerd), GitOps (ArgoCD), autoscaling (Karpenter/KEDA), security,
+             observability, platform engineering. Skip items with no clear relevance.
+          3. Write ko/news/$WEEK.md and en/news/$WEEK.md. Follow the document header
+             format and news naming convention in CLAUDE.md. Each item needs: a short
+             title, 1-3 sentence summary, the original source link, and (when genuinely
+             relevant) a link to an existing page in this repo that the news relates to.
+             Korean and English should cover the same items but do not need to be
+             literal translations.
+          4. Prepend a new bullet linking to the new file at the top of the "다이제스트
+             목록" / "Digest Archive" list in ko/news/README.md and en/news/README.md.
+          5. Do not modify SUMMARY.md, quizzes, labs, or any other existing content.
+          PROMPT_EOF
+
+          claude -p "$(cat /tmp/prompt.txt)" --output-format text \
+            --allowedTools "Read Write Edit Glob Grep"
 
       - name: Commit and open PR
         if: steps.week.outputs.exists == 'false'
