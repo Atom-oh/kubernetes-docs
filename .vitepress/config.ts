@@ -8,7 +8,11 @@ export default defineConfig({
   base: '/kubernetes-docs/',
   srcDir: '.',
   srcExclude: ['slide/**', 'CLAUDE.md', '**/SUMMARY.md'],
-  rewrites: { 'README.md': 'index.md' },
+  rewrites: {
+    'README.md': 'index.md',
+    'ko/README.md': 'ko/index.md',
+    'en/README.md': 'en/index.md'
+  },
   ignoreDeadLinks: true,
   head: [
     ['script', { async: '', src: `https://www.googletagmanager.com/gtag/js?id=${GA_ID}` }],
@@ -18,13 +22,13 @@ export default defineConfig({
     ko: {
       label: '한국어',
       lang: 'ko-KR',
-      link: '/ko/README',
+      link: '/ko/',
       themeConfig: { sidebar: summarySidebar('ko') }
     },
     en: {
       label: 'English',
       lang: 'en-US',
-      link: '/en/README',
+      link: '/en/',
       themeConfig: { sidebar: summarySidebar('en') }
     }
   },

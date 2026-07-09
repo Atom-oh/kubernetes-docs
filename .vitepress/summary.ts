@@ -21,7 +21,7 @@ export function summarySidebar(lang: 'ko' | 'en') {
     const indent = m[1].length
     while (stack.length > 1 && indent <= stack[stack.length - 1].indent) stack.pop()
     const item: any = m[3]
-      ? { text: m[2], link: `/${lang}/${m[3].replace(/\.md$/, '')}` }
+      ? { text: m[2], link: m[3] === 'README.md' ? `/${lang}/` : `/${lang}/${m[3].replace(/\.md$/, '')}` }
       : { text: m[4].trim(), collapsed: true }
     item.items = []
     stack[stack.length - 1].items.push(item)
