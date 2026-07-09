@@ -5,4 +5,4 @@ Kubernetes, Amazon EKS, CNCF 생태계의 주요 뉴스를 매주 정리합니�
 
 ## 다이제스트 목록
 
-(아직 발행된 다이제스트가 없습니다. 매주 월요일 GitHub Actions가 새 항목을 이 목록에 추가합니다.)
+* [2026년 W28 (7월 2일 ~ 7월 9일)](2026-W28.md) — etcd v3.7.0, EKS Auto Mode GPU 요금 인하, Cilium 1.20 프리릴리스 등
