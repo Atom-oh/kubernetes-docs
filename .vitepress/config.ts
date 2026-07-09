@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 import { summarySidebar } from './summary'
 
-const GA_ID = 'G-XXXXXXXXXX' // TODO: replace with the real GA4 measurement ID
+const GA_ID = 'G-GWVLEW5JLL'
 
 export default defineConfig({
   title: 'Kubernetes & Amazon EKS Training',
