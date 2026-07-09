@@ -14,6 +14,9 @@
 
 ## 목차
 
+### 소식
+- [주간 소식](./news/README.md) - Kubernetes/EKS 생태계 최신 뉴스 다이제스트
+
 ### 기초 개념
 1. [Linux 기초](./basics/01-linux-basics.md) | [퀴즈](./quizzes/basics/01-linux-basics-quiz.md) | [실습](./labs/basics/01-linux-basics-lab.md)
 2. [Linux 운영 기술](./basics/02-linux-advanced.md) | [퀴즈](./quizzes/basics/02-linux-advanced-quiz.md) | [실습](./labs/basics/02-linux-advanced-lab.md)
