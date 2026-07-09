@@ -97,6 +97,19 @@
 * [Agentic AI 플랫폼](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML 모범 사례](ai-ml/07-ai-ml-best-practices.md)
 
+## Data on EKS
+
+* [Data on EKS 개요](data-on-eks/README.md)
+* [Kafka on EKS 딥다이브](data-on-eks/kafka/README.md)
+  * [Part 1: Kafka 핵심 개념](data-on-eks/kafka/01-kafka-fundamentals.md)
+  * [Part 2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
+  * [Part 3: Kafka 운영](data-on-eks/kafka/03-kafka-operations.md)
+  * [Part 4: 스키마 레지스트리](data-on-eks/kafka/04-schema-registry.md)
+  * [Part 5: Kafka Connect와 MirrorMaker](data-on-eks/kafka/05-kafka-connect-mirrormaker.md)
+  * [Part 6: MSK 통합](data-on-eks/kafka/06-msk-integration.md)
+  * [Part 7: 모니터링](data-on-eks/kafka/07-monitoring.md)
+  * [Part 8: 모범 사례](data-on-eks/kafka/08-best-practices.md)
+
 ## Networking
 
 * [Networking 개요](networking/README.md)
@@ -392,6 +405,15 @@
   * [vLLM 배포 퀴즈](quizzes/ai-ml/04-vllm-deployment-quiz.md)
   * [Agentic AI 플랫폼 퀴즈](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
   * [AI/ML 모범 사례 퀴즈](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+* [Data on EKS](quiz/data-on-eks/README.md)
+  * [Part 1: Kafka 핵심 개념 퀴즈](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+  * [Part 2: Strimzi Operator 퀴즈](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
+  * [Part 3: Kafka 운영 퀴즈](quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
+  * [Part 4: 스키마 레지스트리 퀴즈](quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)
+  * [Part 5: Kafka Connect와 MirrorMaker 퀴즈](quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
+  * [Part 6: MSK 통합 퀴즈](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
+  * [Part 7: 모니터링 퀴즈](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
+  * [Part 8: 모범 사례 퀴즈](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
 * [Networking](quiz/networking/README.md)
   * [Networking 개요 퀴즈](quizzes/networking/00-networking-overview-quiz.md)
   * [VPC CNI 퀴즈](quizzes/networking/01-vpc-cni-quiz.md)

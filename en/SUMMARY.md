@@ -97,6 +97,19 @@
 * [Agentic AI Platform on EKS](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML Best Practices](ai-ml/07-ai-ml-best-practices.md)
 
+## Data on EKS
+
+* [Data on EKS Overview](data-on-eks/README.md)
+* [Kafka on EKS Deep Dive](data-on-eks/kafka/README.md)
+  * [Part 1: Kafka Fundamentals](data-on-eks/kafka/01-kafka-fundamentals.md)
+  * [Part 2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
+  * [Part 3: Kafka Operations](data-on-eks/kafka/03-kafka-operations.md)
+  * [Part 4: Schema Registry](data-on-eks/kafka/04-schema-registry.md)
+  * [Part 5: Kafka Connect and MirrorMaker](data-on-eks/kafka/05-kafka-connect-mirrormaker.md)
+  * [Part 6: MSK Integration](data-on-eks/kafka/06-msk-integration.md)
+  * [Part 7: Monitoring](data-on-eks/kafka/07-monitoring.md)
+  * [Part 8: Best Practices](data-on-eks/kafka/08-best-practices.md)
+
 ## Networking
 
 * [Networking Overview](networking/README.md)
@@ -392,6 +405,15 @@
   * [vLLM Deployment Quiz](quizzes/ai-ml/04-vllm-deployment-quiz.md)
   * [Agentic AI Platform on EKS Quiz](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
   * [AI/ML Best Practices Quiz](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+* [Data on EKS](quiz-collection/data-on-eks/README.md)
+  * [Part 1: Kafka Fundamentals Quiz](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+  * [Part 2: Strimzi Operator Quiz](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
+  * [Part 3: Kafka Operations Quiz](quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
+  * [Part 4: Schema Registry Quiz](quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)
+  * [Part 5: Kafka Connect and MirrorMaker Quiz](quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
+  * [Part 6: MSK Integration Quiz](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
+  * [Part 7: Monitoring Quiz](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
+  * [Part 8: Best Practices Quiz](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
 * [Networking](quiz-collection/networking/README.md)
   * [Networking Overview Quiz](quizzes/networking/00-networking-overview-quiz.md)
   * [VPC CNI Quiz](quizzes/networking/01-vpc-cni-quiz.md)
