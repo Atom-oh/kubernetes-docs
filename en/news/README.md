@@ -5,4 +5,4 @@ Weekly roundups of major Kubernetes, Amazon EKS, and CNCF ecosystem news. Each d
 
 ## Digest Archive
 
-(No digests published yet. A GitHub Actions workflow adds a new entry to this list every Monday.)
+* [2026 W28 (Jul 2 – Jul 9)](2026-W28.md) — etcd v3.7.0, EKS Auto Mode GPU fee cut, Cilium 1.20 pre-release, and more
