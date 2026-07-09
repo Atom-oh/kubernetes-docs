@@ -14,6 +14,9 @@ This training content provides quizzes for each topic along with the learning ma
 
 ## Table of Contents
 
+### News
+- [Weekly News](./news/README.md) - Latest Kubernetes/EKS ecosystem news digests
+
 ### Basic Concepts
 1. [Linux Basics](./basics/01-linux-basics.md) | [Quiz](./quizzes/basics/01-linux-basics-quiz.md) | [Lab](./labs/basics/01-linux-basics-lab.md)
 2. [Linux Operations Skills](./basics/02-linux-advanced.md) | [Quiz](./quizzes/basics/02-linux-advanced-quiz.md) | [Lab](./labs/basics/02-linux-advanced-lab.md)

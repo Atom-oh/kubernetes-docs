@@ -4,6 +4,10 @@
 
 * [소개](README.md)
 
+## 소식
+
+* [소식](news/README.md)
+
 ## Basic
 
 * [Linux 기초](basics/01-linux-basics.md)
@@ -336,7 +340,8 @@
   * [컨테이너 기술 퀴즈](quizzes/basics/03-container-technology-quiz.md)
   * [Kubernetes 소개 퀴즈](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [eBPF 기초와 실무 활용 퀴즈](quizzes/basics/05-ebpf-fundamentals-quiz.md)
-* [클러스터 아키텍처 퀴즈](quizzes/core/01-cluster-architecture-quiz.md)
+* [Kubernetes 핵심 개념](quiz/core/README.md)
+  * [클러스터 아키텍처 퀴즈](quizzes/core/01-cluster-architecture-quiz.md)
   * [파드와 워크로드 퀴즈](quizzes/core/02-pods-and-workloads-quiz.md)
   * [서비스와 네트워킹 퀴즈](quizzes/core/03-services-networking-quiz.md)
   * [스토리지 퀴즈](quizzes/core/04-storage-quiz.md)
@@ -540,7 +545,7 @@
   * [Backstage IDP 퀴즈](quizzes/platform-engineering/06-backstage-idp-quiz.md)
   * [Crossplane 퀴즈](quizzes/platform-engineering/07-crossplane-quiz.md)
   * [vCluster 퀴즈](quizzes/platform-engineering/08-vcluster-quiz.md)
-* [운영 가이드](quiz/undefined/README.md)
+* [운영 가이드](quiz/operations-guide/README.md)
   * [인프라 구성 기초 퀴즈](quizzes/ops/01-infrastructure-setup-quiz.md)
   * [인프라 구성 고급 퀴즈](quizzes/ops/02-infrastructure-advanced-quiz.md)
   * [CI 파이프라인 구성 퀴즈](quizzes/ops/03-ci-pipelines-quiz.md)

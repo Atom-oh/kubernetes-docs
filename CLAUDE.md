@@ -89,6 +89,7 @@ Explanation text here.
 - Lab files: mirror content path under `labs/` with `-lab` suffix (e.g., `labs/basics/01-linux-basics-lab.md`)
 - Subdirectory introductions: `README.md` within the subtree (e.g., `networking/cilium/README.md`)
 - **Exception — Istio, Linkerd, and Cilium Service Mesh quizzes** use topic-based names without numbers: `quizzes/service-mesh/istio/traffic-management.md`, `quizzes/service-mesh/linkerd/architecture.md`, etc.
+- **Exception — News digests**: `news/YYYY-Www.md` (ISO week, e.g. `news/2026-W28.md`). No quiz or lab counterpart; each digest is appended to the archive list in `news/README.md`.
 
 ### Bilingual Content Parity
 
