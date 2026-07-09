@@ -8,6 +8,7 @@
     "docs:preview": "vitepress preview"
   },
   "devDependencies": {
+    "sitemap": "^8.0.3",
     "vitepress": "^1.6.4"
   }
 }
