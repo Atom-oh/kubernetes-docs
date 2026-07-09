@@ -1,0 +1,133 @@
+name: Weekly K8s/EKS News Digest
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Monday 09:00 KST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write # required for OIDC -> AWS role assumption (Bedrock)
+
+concurrency:
+  group: weekly-news-digest
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: kubernetes-docs-arm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute ISO week and skip if this week's PR already exists
+        id: week
+        run: |
+          week=$(date -u +%G-W%V)
+          echo "week=$week" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --heads origin "docs/news-$week" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch RSS/Atom feeds
+        if: steps.week.outputs.exists == 'false'
+        run: |
+          mkdir -p feeds
+          curl -fsSL --retry 3 -o feeds/kubernetes-blog.xml https://kubernetes.io/feed.xml
+          curl -fsSL --retry 3 -o feeds/aws-whats-new.xml https://aws.amazon.com/about-aws/whats-new/recent/feed/
+          curl -fsSL --retry 3 -o feeds/cncf-blog.xml https://www.cncf.io/feed/
+          for repo in kubernetes/kubernetes istio/istio cilium/cilium argoproj/argo-cd aws/karpenter-provider-aws linkerd/linkerd2; do
+            name=$(echo "$repo" | tr '/' '-')
+            curl -fsSL --retry 3 -o "feeds/release-$name.xml" "https://github.com/$repo/releases.atom"
+          done
+
+      - name: Configure AWS credentials (OIDC)
+        if: steps.week.outputs.exists == 'false'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: us-west-2
+
+      # Written to a file (rather than inlined into claude_args as JSON) so we
+      # don't have to escape JSON braces inside a GitHub Actions expression.
+      - name: Write optional AgentCore Gateway MCP config
+        if: steps.week.outputs.exists == 'false' && vars.AGENTCORE_GATEWAY_URL != ''
+        run: |
+          cat > /tmp/mcp-config.json <<EOF
+          {"mcpServers":{"web-search":{"type":"http","url":"${{ vars.AGENTCORE_GATEWAY_URL }}"}}}
+          EOF
+
+      - name: Build claude_args
+        if: steps.week.outputs.exists == 'false'
+        id: claude_args
+        run: |
+          # NOTE: confirm this model ID/inference-profile is enabled in the target
+          # Bedrock account/region before relying on this workflow.
+          args='--model us.anthropic.claude-sonnet-4-5-20250929-v1:0 --allowedTools "Read,Write,Edit,Glob,Grep"'
+          if [ -f /tmp/mcp-config.json ]; then
+            args="$args --mcp-config /tmp/mcp-config.json"
+          fi
+          echo "value=$args" >> "$GITHUB_OUTPUT"
+
+      - name: Generate digest with Claude
+        if: steps.week.outputs.exists == 'false'
+        uses: anthropics/claude-code-action@v1
+        with:
+          use_bedrock: "true"
+          claude_args: ${{ steps.claude_args.outputs.value }}
+          prompt: |
+            You maintain a bilingual (Korean + English) Kubernetes/Amazon EKS training
+            site. Read CLAUDE.md for repo conventions first.
+
+            The files under feeds/*.xml are RSS/Atom feeds fetched moments ago from the
+            Kubernetes blog, AWS What's New, the CNCF blog, and GitHub releases for
+            kubernetes, istio, cilium, argo-cd, karpenter, and linkerd2. Read each file
+            directly (they are small).
+
+            1. From all feed items, keep only those published in the last 7 days.
+            2. Select the 5-10 items most relevant to this site's topics: Amazon EKS,
+               Kubernetes core concepts, networking (Cilium/Calico), service mesh
+               (Istio/Linkerd), GitOps (ArgoCD), autoscaling (Karpenter/KEDA), security,
+               observability, platform engineering. Skip items with no clear relevance.
+            3. If an MCP tool named "web-search" is available, you may use it to fetch
+               short additional context for an item (e.g. what a terse release note
+               actually changed). If you cite a web-search result, you MUST keep its
+               source URL visible in the digest text.
+            4. Write ko/news/${{ steps.week.outputs.week }}.md and
+               en/news/${{ steps.week.outputs.week }}.md. Follow the document header
+               format and news naming convention in CLAUDE.md. Each item needs: a short
+               title, 1-3 sentence summary, the original source link, and (when genuinely
+               relevant) a link to an existing page in this repo that the news relates to.
+               Korean and English should cover the same items but do not need to be
+               literal translations.
+            5. Prepend a new bullet linking to the new file at the top of the "다이제스트
+               목록" / "Digest Archive" list in ko/news/README.md and en/news/README.md.
+            6. Do not modify SUMMARY.md, quizzes, labs, or any other existing content.
+
+      - name: Commit and open PR
+        if: steps.week.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WEEK: ${{ steps.week.outputs.week }}
+        run: |
+          if git status --porcelain | grep -q .; then
+            git checkout -b "docs/news-$WEEK"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add ko/news en/news
+            git commit -m "docs: add weekly K8s/EKS news digest ($WEEK)"
+            git push origin "docs/news-$WEEK"
+            gh label create automated-news --color 0E8A16 --description "Automated weekly news digest" --force
+            gh pr create \
+              --title "docs: weekly news digest ($WEEK)" \
+              --body "Automated Kubernetes/EKS ecosystem news digest for $WEEK. Generated from kubernetes.io, AWS What's New, CNCF blog, and upstream project releases. Please review before merging." \
+              --label automated-news \
+              --base main \
+              --head "docs/news-$WEEK"
+          else
+            echo "No relevant news found this week; skipping PR."
+          fi
