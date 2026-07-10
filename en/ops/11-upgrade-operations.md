@@ -1,7 +1,7 @@
 # EKS Upgrades: Auto Mode Zero-Downtime Upgrade
 
 > **Supported Versions**: EKS 1.28+, Terraform 1.5+, Karpenter 1.0+
-> **Last Updated**: February 22, 2026
+> **Last Updated**: July 10, 2026
 
 < [Previous: Resource Optimization](./10-resource-optimization.md) | [Table of Contents](./README.md) | [Next: Event Capacity Planning](./12-event-capacity-planning.md) >
 
@@ -1554,6 +1554,41 @@ cat << 'EOF'
 
 EOF
 ```
+
+### Alternative: Zonal In-Place Upgrade with Native Rollback
+
+Since Amazon EKS added native Kubernetes version rollback (July 2026), teams that already run one cluster per zone behind the weighted NLB from [NLB Weighted Target Groups](02-infrastructure-advanced.md#2-nlb-weighted-target-groups) have a lighter-weight option than maintaining a second full cluster fleet indefinitely: upgrade each zonal cluster in place, one zone at a time, using the existing weighted routing only to drain traffic during the upgrade window, and relying on EKS's native rollback — not a second cluster — as the safety net.
+
+```
+┌────────────────────────────────────────────────────────────┐
+│      Zonal In-Place Upgrade (rollback as safety net)       │
+├────────────────────────────────────────────────────────────┤
+│                                                              │
+│   ┌─────────────┐     ┌─────────────┐    ┌─────────────┐   │
+│   │   AZ-a      │◄────│    NLB      │───►│   AZ-c      │   │
+│   │  1.30→1.31  │     │  Weighted   │    │   1.30      │   │
+│   └─────────────┘     └─────────────┘    └─────────────┘   │
+│                                                              │
+│   1. Shift NLB weight: AZ-a -> 0%, AZ-c -> 100%             │
+│   2. Upgrade AZ-a's control plane + nodes in place          │
+│   3. Validate AZ-a, shift weight back to 50/50              │
+│   4. Repeat for AZ-c                                        │
+│   5. If AZ-a misbehaves post-upgrade: use EKS's native      │
+│      rollback (control plane only, N -> N-1, within 7 days) │
+│      instead of standing up a third cluster                 │
+└────────────────────────────────────────────────────────────┘
+```
+
+**When this fits better than a permanent Blue/Green fleet:**
+- You already run zonal clusters for availability, not specifically for upgrades
+- You want to avoid the steady-state cost of running two full cluster fleets
+- Your upgrade window can tolerate the ~7-day rollback eligibility instead of an instant cluster-level failback
+
+**When to keep the full Blue/Green fleet from this section instead:**
+- You need to validate the new version against real production traffic on a fully separate cluster before cutting over — native rollback only reverts the control plane, not any node/AMI/add-on changes made in place
+- Rollback eligibility conditions aren't met (cluster created at the target version, more than 7 days elapsed, another upgrade already applied, or a backward-incompatible feature was enabled) — see [EKS Upgrade Strategies — Rollback Procedure](../eks/08-eks-upgrades.md#rollback-procedure)
+
+(Source: [Amazon EKS announces Kubernetes version rollback](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-version-rollback), July 2026)
 
 ---
 
