@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 concurrency:
   group: weekly-news-digest
@@ -52,7 +53,9 @@ jobs:
 
       # ponytail: RSS/Atom only for now, no AgentCore Gateway web-search MCP enrichment
       # — that gateway is owned by the separate ttobak project and isn't live yet.
-      # Add a --mcp-config step here once AGENTCORE_GATEWAY_URL exists.
+      # Add a --mcp-config step here once AGENTCORE_GATEWAY_URL exists. Deeper
+      # research instead comes from letting Claude curl the source URL directly
+      # (see allowedTools below).
       - name: Fetch RSS/Atom feeds
         if: steps.week.outputs.exists == 'false'
         run: |
@@ -65,59 +68,133 @@ jobs:
             curl -fsSL --retry 3 -o "feeds/release-$name.xml" "https://github.com/$repo/releases.atom"
           done
 
-      - name: Generate digest with Claude
+      - name: Update docs in-place with Claude
         if: steps.week.outputs.exists == 'false'
         env:
           WEEK: ${{ steps.week.outputs.week }}
         run: |
           cat <<PROMPT_EOF > /tmp/prompt.txt
           You maintain a bilingual (Korean + English) Kubernetes/Amazon EKS training
-          site. Read CLAUDE.md for repo conventions first.
+          site. Read CLAUDE.md for repo conventions first, then read
+          .github/news-topic-map.yml — it maps news keywords to existing doc paths
+          (same relative path under both ko/ and en/).
 
           The files under feeds/*.xml are RSS/Atom feeds fetched moments ago from the
           Kubernetes blog, AWS What's New, the CNCF blog, and GitHub releases for
           kubernetes, istio, cilium, argo-cd, karpenter, and linkerd2. Read each file
           directly (they are small).
 
-          1. From all feed items, keep only those published in the last 7 days.
-          2. Select the 5-10 items most relevant to this site's topics: Amazon EKS,
-             Kubernetes core concepts, networking (Cilium/Calico), service mesh
-             (Istio/Linkerd), GitOps (ArgoCD), autoscaling (Karpenter/KEDA), security,
-             observability, platform engineering. Skip items with no clear relevance.
-          3. Write ko/news/$WEEK.md and en/news/$WEEK.md. Follow the document header
-             format and news naming convention in CLAUDE.md. Each item needs: a short
-             title, 1-3 sentence summary, the original source link, and (when genuinely
-             relevant) a link to an existing page in this repo that the news relates to.
-             Korean and English should cover the same items but do not need to be
-             literal translations.
-          4. Prepend a new bullet linking to the new file at the top of the "다이제스트
-             목록" / "Digest Archive" list in ko/news/README.md and en/news/README.md.
-          5. Do not modify SUMMARY.md, quizzes, labs, or any other existing content.
+          1. From all feed items, keep only those published in the last 7 days, then
+             select the 5-10 most relevant to this site's topics. Skip items with no
+             clear relevance to Kubernetes/EKS/CNCF ecosystem content.
+          2. For each selected item, check whether its topic matches an entry in
+             news-topic-map.yml (case-insensitive keyword match against the item's
+             title/summary).
+             - Match found -> read the mapped doc(s) in BOTH ko/<path> and en/<path>.
+               You may curl the item's source URL to read the full article/release
+               notes for more context before writing.
+               - Only edit an EXISTING sentence if the news makes it factually
+                 outdated (e.g. a stated price, version number, or limit changed).
+                 Otherwise add a new small subsection near the relevant part of the
+                 doc (e.g. "### 2026년 7월 업데이트" / "### July 2026 Update").
+                 Never rewrite unrelated parts of the document.
+               - Update the doc's header date line ("마지막 업데이트" / "Last Updated")
+                 to today.
+             - No match -> this item is changelog-only, do not edit any doc for it.
+          3. Update the "갱신 로그" / "Update Log" list in ko/news/README.md and
+             en/news/README.md: prepend one line per doc you touched, e.g.
+             `- $WEEK: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — etcd v3.7.0 반영`
+             and one line per unmatched item with no doc link, e.g.
+             `- $WEEK: 매칭 문서 없음 — Cilium 1.20 프리릴리스 ([원문](https://...))`.
+             (Use the English phrasing/section header in en/news/README.md.)
+          4. Do not modify SUMMARY.md, quizzes, labs, or create any new files under
+             news/. Do not touch news-topic-map.yml.
           PROMPT_EOF
 
           claude -p "$(cat /tmp/prompt.txt)" --output-format text \
-            --allowedTools "Read Write Edit Glob Grep"
+            --allowedTools "Read Write Edit Glob Grep Bash(curl:*)"
+
+      # ponytail: a real content-review-agent subagent call would need that
+      # plugin registered on this headless runner, which isn't guaranteed —
+      # so this reproduces its rubric as a plain second `claude -p` pass
+      # instead of depending on subagent-type propagation. Swap to an actual
+      # Agent/Task-tool call if/when that's confirmed to work here.
+      - name: Quality gate on the diff
+        if: steps.week.outputs.exists == 'false'
+        id: gate
+        run: |
+          if ! git status --porcelain -- ko en | grep -q .; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          git diff -- ko en > /tmp/review-diff.txt
+
+          cat <<PROMPT_EOF > /tmp/review-prompt.txt
+          Review this diff to a bilingual (Korean/English) Kubernetes/EKS training
+          site (piped to your stdin). Score 0-100 on: layout/formatting consistency,
+          terminology consistency between ko/en, hallucinated or unverifiable claims,
+          language correctness, no PII/sensitive data, readability, and structural
+          completeness (ko and en changes match in substance).
+
+          Output EXACTLY two lines, nothing else:
+          SCORE: <0-100>
+          FEEDBACK: <one sentence>
+          PROMPT_EOF
+
+          claude -p "$(cat /tmp/review-prompt.txt)" --output-format text \
+            --allowedTools "Read" < /tmp/review-diff.txt > /tmp/review-result.txt || true
+
+          cat /tmp/review-result.txt
+          score=$(grep -oP '(?<=SCORE:\s*)\d+' /tmp/review-result.txt | head -1)
+          if [ -z "$score" ] || [ "$score" -lt 85 ]; then
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Commit and open PR
-        if: steps.week.outputs.exists == 'false'
+        if: steps.week.outputs.exists == 'false' && steps.gate.outputs.has_changes == 'true' && steps.gate.outputs.passed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           WEEK: ${{ steps.week.outputs.week }}
         run: |
-          if git status --porcelain | grep -q .; then
-            git checkout -b "docs/news-$WEEK"
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add ko/news en/news
-            git commit -m "docs: add weekly K8s/EKS news digest ($WEEK)"
-            git push origin "docs/news-$WEEK"
-            gh label create automated-news --color 0E8A16 --description "Automated weekly news digest" --force
-            gh pr create \
-              --title "docs: weekly news digest ($WEEK)" \
-              --body "Automated Kubernetes/EKS ecosystem news digest for $WEEK. Generated from kubernetes.io, AWS What's New, CNCF blog, and upstream project releases. Please review before merging." \
-              --label automated-news \
-              --base main \
-              --head "docs/news-$WEEK"
-          else
-            echo "No relevant news found this week; skipping PR."
-          fi
+          git checkout -b "docs/news-$WEEK"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ko en
+          git commit -m "docs: weekly news-driven update ($WEEK)"
+          git push origin "docs/news-$WEEK"
+          gh label create automated-news --color 0E8A16 --description "Automated weekly news-driven doc update" --force
+          gh pr create \
+            --title "docs: weekly news-driven update ($WEEK)" \
+            --body "Automated update to existing docs based on this week's Kubernetes/EKS/CNCF ecosystem news, plus a changelog entry in news/README.md. Please review before merging." \
+            --label automated-news \
+            --base main \
+            --head "docs/news-$WEEK"
+
+      - name: Open review-flagged issue instead of a PR
+        if: steps.week.outputs.exists == 'false' && steps.gate.outputs.has_changes == 'true' && steps.gate.outputs.passed == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WEEK: ${{ steps.week.outputs.week }}
+        run: |
+          gh label create automated-news-review-flagged --color B60205 --description "Weekly news update failed the quality gate" --force
+          {
+            echo "The weekly news-driven update for $WEEK failed the automated quality gate (score < 85) and was not opened as a PR."
+            echo ""
+            echo "Review feedback:"
+            echo '```'
+            cat /tmp/review-result.txt
+            echo '```'
+            echo ""
+            echo "Diff that was proposed:"
+            echo '```diff'
+            head -c 60000 /tmp/review-diff.txt
+            echo '```'
+          } > /tmp/issue-body.txt
+          gh issue create \
+            --title "docs: weekly news update needs manual review ($WEEK)" \
+            --label automated-news-review-flagged \
+            --body-file /tmp/issue-body.txt
+          git checkout -- ko en

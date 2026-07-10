@@ -89,8 +89,13 @@ Explanation text here.
 - Lab files: mirror content path under `labs/` with `-lab` suffix (e.g., `labs/basics/01-linux-basics-lab.md`)
 - Subdirectory introductions: `README.md` within the subtree (e.g., `networking/cilium/README.md`)
 - **Exception — Istio, Linkerd, and Cilium Service Mesh quizzes** use topic-based names without numbers: `quizzes/service-mesh/istio/traffic-management.md`, `quizzes/service-mesh/linkerd/architecture.md`, etc.
-- **Exception — News digests**: `news/YYYY-Www.md` (ISO week, e.g. `news/2026-W28.md`). No quiz or lab counterpart; each digest is appended to the archive list in `news/README.md`.
 
 ### Bilingual Content Parity
 
 Korean and English documents cover identical topics but are **not literal translations**. They may use different formatting for the same concept (e.g., tables vs. ASCII diagrams). When editing, ensure both languages convey the same information, but don't force identical formatting.
+
+### Automated News-Driven Updates
+
+`.github/workflows/weekly-news-digest.yml` runs weekly, matches fresh Kubernetes/EKS/CNCF news against `.github/news-topic-map.yml`, and updates the matched doc(s) in place in both `ko/` and `en/` (bumping the header's "마지막 업데이트"/"Last Updated" date) rather than writing a separate news file. Unmatched news is recorded as a link-only line in `ko/news/README.md` / `en/news/README.md`'s "갱신 로그"/"Update Log" — those two files are the only ones under `news/`; no per-week files are created.
+
+When adding a new top-level content section that should participate in this pipeline (i.e., news about it should get auto-applied rather than always falling through to link-only), add a matching entry to `.github/news-topic-map.yml`.
