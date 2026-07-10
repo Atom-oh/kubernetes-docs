@@ -12,6 +12,8 @@
 
 - keywords: [etcd]
   docs: [core/01-cluster-architecture.md]
+- keywords: [eks rollback, version rollback, eks 버전 롤백, 버전 롤백]
+  docs: [eks/08-eks-upgrades.md, ops/11-upgrade-operations.md]
 - keywords: [kubernetes v1., kubernetes 1., k8s release, kubernetes release]
   docs: [core/01-cluster-architecture.md]
 - keywords: [pod security standard, pss]
