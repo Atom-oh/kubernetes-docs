@@ -1,0 +1,100 @@
+# Keyword -> doc mapping for the weekly news digest (weekly-news-digest.yml).
+#
+# When a news item's title/summary matches one of a doc's keywords, that news
+# item is a candidate for an in-place update to `ko/<doc>` and `en/<doc>`
+# (both, same relative path). No match -> the item only gets a link in
+# ko/news/README.md and en/news/README.md's changelog, no doc is touched.
+#
+# This is deliberately not exhaustive (502 docs total) -- it covers the
+# sections most likely to get fast-moving ecosystem news. Add an entry here
+# whenever a topic starts showing up in digests with "매칭 문서 없음", or when
+# a new SUMMARY.md section is added that should participate in this pipeline.
+
+- keywords: [etcd]
+  docs: [core/01-cluster-architecture.md]
+- keywords: [eks rollback, version rollback, eks 버전 롤백, 버전 롤백]
+  docs: [eks/08-eks-upgrades.md, ops/11-upgrade-operations.md]
+- keywords: [kubernetes v1., kubernetes 1., k8s release, kubernetes release]
+  docs: [core/01-cluster-architecture.md]
+- keywords: [pod security standard, pss]
+  docs: [core/06-security.md, security/03-pod-security-standards.md]
+- keywords: [scheduling, preemption, eviction]
+  docs: [core/08-scheduling-preemption-eviction.md]
+- keywords: [windows container, windows in kubernetes]
+  docs: [core/10-windows-in-kubernetes.md]
+
+- keywords: [eks auto mode]
+  docs: [eks-auto-mode/README.md]
+- keywords: [eks auto mode gpu, gpu management fee, gpu 관리 요금]
+  docs: [eks-auto-mode/06-cost-management.md]
+- keywords: [eks hybrid nodes]
+  docs: [eks-hybrid-nodes/README.md]
+- keywords: [eks cluster creation, amazon eks 클러스터]
+  docs: [eks/02-eks-cluster-creation.md]
+- keywords: [eks networking, vpc cni]
+  docs: [eks/03-eks-networking-part1.md, networking/01-vpc-cni.md]
+- keywords: [eks storage, ebs csi, efs csi]
+  docs: [eks/04-eks-storage-part1.md]
+- keywords: [eks security]
+  docs: [eks/05-eks-security.md]
+- keywords: [eks upgrade, kubernetes version support policy]
+  docs: [eks/08-eks-upgrades.md]
+- keywords: [eks cost optimization]
+  docs: [eks/07-eks-cost-optimization.md]
+
+- keywords: [cilium]
+  docs: [networking/cilium/README.md]
+- keywords: [calico]
+  docs: [networking/calico/README.md]
+- keywords: [gateway api]
+  docs: [networking/04-gateway-api.md]
+- keywords: [aws load balancer controller]
+  docs: [networking/03-aws-lb-controller.md]
+
+- keywords: [istio]
+  docs: [service-mesh/istio/README.md]
+- keywords: [linkerd]
+  docs: [service-mesh/linkerd/README.md]
+- keywords: [cilium service mesh]
+  docs: [service-mesh/cilium-service-mesh/README.md]
+
+- keywords: [argo cd, argocd]
+  docs: [gitops/argocd/README.md]
+- keywords: [flux, fluxcd]
+  docs: [gitops/02-fluxcd.md]
+- keywords: [flagger]
+  docs: [gitops/04-flagger.md]
+
+- keywords: [karpenter]
+  docs: [autoscaling/02-karpenter.md]
+- keywords: [keda]
+  docs: [autoscaling/01-keda.md]
+- keywords: [knative]
+  docs: [autoscaling/03-knative.md]
+
+- keywords: [prometheus]
+  docs: [observability/metrics/01-prometheus.md]
+- keywords: [cloudwatch application signals, cloudwatch metrics, cloudwatch service events]
+  docs: [observability/metrics/04-cloudwatch-metrics.md]
+- keywords: [grafana loki]
+  docs: [observability/logging/01-loki.md]
+- keywords: [opentelemetry, adot]
+  docs: [observability/tracing/03-opentelemetry.md]
+- keywords: [aws x-ray]
+  docs: [observability/tracing/02-xray.md]
+
+- keywords: [kyverno]
+  docs: [security/01-kyverno-policy-management.md]
+- keywords: [opa gatekeeper]
+  docs: [security/09-opa-gatekeeper.md]
+- keywords: [cert-manager]
+  docs: [security/10-cert-manager.md]
+- keywords: [spiffe, spire]
+  docs: [security/12-spiffe-spire.md]
+
+- keywords: [helm]
+  docs: [platform-engineering/01-helm.md]
+- keywords: [crossplane]
+  docs: [platform-engineering/07-crossplane.md]
+- keywords: [backstage]
+  docs: [platform-engineering/06-backstage-idp.md]
