@@ -146,11 +146,18 @@ jobs:
             --allowedTools "Read" < /tmp/review-diff.txt > /tmp/review-result.txt || true
 
           cat /tmp/review-result.txt
-          score=$(grep -oP '(?<=SCORE:\s*)\d+' /tmp/review-result.txt | head -1)
-          if [ -z "$score" ] || [ "$score" -lt 85 ]; then
-            echo "passed=false" >> "$GITHUB_OUTPUT"
-          else
+          # NOTE: -E (POSIX extended regex), not -P (PCRE) -- some runner
+          # images ship a grep without PCRE support, which silently makes
+          # -oP match nothing rather than erroring, defaulting every run to
+          # "failed" regardless of the real score. Confirmed and fixed after
+          # a 90-scoring run got routed to the issue-fallback path instead of
+          # opening a PR.
+          score=$(grep -oE 'SCORE:[[:space:]]*[0-9]+' /tmp/review-result.txt | head -1 | grep -oE '[0-9]+')
+          echo "Parsed score: '$score'"
+          if [[ "$score" =~ ^[0-9]+$ ]] && [ "$score" -ge 85 ]; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Commit and open PR
