@@ -1,6 +1,6 @@
 # CloudWatch Metrics
 
-> **마지막 업데이트**: 2026년 7월 3일
+> **마지막 업데이트**: 2026년 7월 11일
 
 ## 목차
 
@@ -158,6 +158,10 @@ eksctl utils update-cluster-logging \
 > 출처: [CloudWatch OTel 기반 Container Insights for EKS (Preview)](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
 
 `amazon-cloudwatch-observability` EKS 애드온 및 Application Signals와의 관계는 [EKS 모니터링 및 로깅](../../eks/06-eks-monitoring-logging.md#cloudwatch-observability-add-on-500) 문서를 참고하세요.
+
+### 2026년 7월 업데이트: Application Signals Service Events
+
+2026년 7월 6일 발표된 Service Events는 CloudWatch Application Signals가 활성화된 애플리케이션에서 오류(예외), 성능 이상(지연 이벤트 스냅샷), 배포 이벤트를 자동으로 캡처하는 기능입니다. ADOT SDK 또는 `amazon-cloudwatch-observability` EKS 애드온으로 계측된 애플리케이션이라면 Application Signals 활성화만으로 추가 설정 없이 동작하며, 함수 호출(function-call) 메트릭을 켜서 더 깊은 성능 가시성을 얻을 수도 있습니다. 모든 상용 AWS 리전에서 제공되며 Java, Python, JavaScript를 지원합니다. ([발표 원문](https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/))
 
 ## CloudWatch Agent 구성
 

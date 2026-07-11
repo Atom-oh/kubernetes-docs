@@ -1,7 +1,7 @@
 # Karpenter
 
-> **지원 버전**: Karpenter 1.6 ~ 1.13, Kubernetes 1.29+ (v1.13 기준)  
-> **마지막 업데이트**: 2026년 7월 3일
+> **지원 버전**: Karpenter 1.6 ~ 1.14, Kubernetes 1.29+ (v1.14 기준)  
+> **마지막 업데이트**: 2026년 7월 11일
 
 ## 목차
 - [소개](#소개)
@@ -392,6 +392,17 @@ disruption:
 ### NodeReadinessController를 통한 초기화 Taint 자동 무시 (v1.13)
 
 Karpenter v1.13에 추가된 NodeReadinessController는 노드가 초기화되는 동안 붙는 준비성(readiness) 관련 Taint를 자동으로 무시해 불필요한 스케줄링 차단을 줄입니다. 기존에는 `startupTaints`로 수동 처리해야 했던 초기화 지연 문제가 완화되어, 신규 노드가 프로비저닝 후 Ready 상태에 도달하는 과정에서의 스케줄링 안정성과 프로비저닝 신뢰성이 향상됩니다.
+
+### 2026년 7월 업데이트: v1.14 릴리스
+
+2026년 7월 11일 릴리스된 Karpenter v1.14의 주요 기능:
+
+- **CapacityBuffers API 지원**: 예비 용량(버퍼)을 선언적으로 확보해 급격한 스케일 아웃에 대비할 수 있습니다
+- **프리뷰(preview) 인스턴스 타입 지원**: 아직 정식 출시 전인 EC2 인스턴스 타입도 프로비저닝 대상으로 선택 가능
+- **Nitro Enclaves 지원**: 시작 템플릿에 `EnclaveOptions.Enabled`를 설정할 수 있어 기밀 컴퓨팅 워크로드에 활용 가능
+- 버그 수정: 보조 ENI의 기본 IP 계산 반영, Zonal Shift 캐시 하이드레이션 보장, AWS SDK 클라이언트 타임아웃 설정 등
+
+자세한 내용은 [v1.14.0 릴리스 노트](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0)를 참고하세요.
 
 ## 노드 클래스
 

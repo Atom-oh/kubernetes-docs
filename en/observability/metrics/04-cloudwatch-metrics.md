@@ -1,6 +1,6 @@
 # CloudWatch Metrics
 
-> **Last Updated**: July 3, 2026
+> **Last Updated**: July 11, 2026
 
 ## Table of Contents
 
@@ -158,6 +158,10 @@ Preview regions: US East (N. Virginia), US West (Oregon), Asia Pacific (Sydney),
 > Reference: [CloudWatch OTel-based Container Insights for EKS (Preview)](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
 
 For how this relates to the `amazon-cloudwatch-observability` EKS add-on and Application Signals, see [EKS Monitoring and Logging](../../eks/06-eks-monitoring-logging.md#cloudwatch-observability-add-on-500).
+
+### July 2026 Update: Application Signals Service Events
+
+Service Events, announced July 6, 2026, automatically captures errors (exception snapshots), performance anomalies (latency event snapshots), and deployment events for any application with CloudWatch Application Signals enabled. Applications instrumented with the ADOT SDKs or the `amazon-cloudwatch-observability` EKS add-on get this with no extra configuration once Application Signals is active, and you can optionally turn on function-call metrics for deeper performance visibility. Available in all commercial AWS Regions; supported languages are Java, Python, and JavaScript. ([Announcement](https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/))
 
 ## CloudWatch Agent Configuration
 

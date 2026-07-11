@@ -1,7 +1,7 @@
 # Karpenter
 
-> **Supported Versions**: Karpenter 1.6 - 1.13, Kubernetes 1.29+ (as of v1.13)
-> **Last Updated**: July 3, 2026
+> **Supported Versions**: Karpenter 1.6 - 1.14, Kubernetes 1.29+ (as of v1.14)
+> **Last Updated**: July 11, 2026
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -398,6 +398,17 @@ disruption:
 ### Automatic Ignoring of Initialization Taints via NodeReadinessController (v1.13)
 
 The NodeReadinessController, added in Karpenter v1.13, automatically ignores readiness-related taints (such as those applied while a node is initializing) to reduce unnecessary scheduling blocks. This eases the initialization-delay problem that previously required manual handling via `startupTaints`, improving scheduling stability and provisioning reliability while a new node is coming up to Ready.
+
+### July 2026 Update: v1.14 Released
+
+Karpenter v1.14, released July 11, 2026, brings:
+
+- **CapacityBuffers API support**: declaratively reserve headroom capacity to absorb sudden scale-out spikes
+- **Preview instance type support**: instance types that are not yet generally available can now be selected for provisioning
+- **Nitro Enclaves support**: `EnclaveOptions.Enabled` can be set in the launch template, useful for confidential-computing workloads
+- Bug fixes: accounting for the primary IP on secondary ENIs, ensuring the Zonal Shift cache is hydrated, wiring an AWS SDK client timeout into the operator config, and more
+
+See the [v1.14.0 release notes](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0) for details.
 
 ## Node Classes
 
