@@ -1,7 +1,7 @@
 # 클러스터 아키텍처
 
 > **지원 버전**: Kubernetes 1.32, 1.33, 1.34  
-> **마지막 업데이트**: 2026년 2월 23일
+> **마지막 업데이트**: 2026년 7월 11일
 
 ## 실습 환경 설정
 
@@ -220,6 +220,17 @@ ETCDCTL_API=3 etcdctl snapshot restore snapshot.db \
 - 적절한 메모리 할당
 - 정기적인 압축 및 조각 모음
 - 클러스터 크기에 따른 적절한 etcd 노드 수 설정 (일반적으로 3 또는 5)
+
+#### 2026년 7월 업데이트: etcd v3.7.0 릴리스
+
+2026년 7월 8일 SIG etcd가 etcd v3.7.0을 릴리스했습니다. 주요 변경 사항:
+
+- **RangeStream**: 대용량 Range 응답 전체를 메모리에 버퍼링하지 않고 청크 단위로 스트리밍하는 기능 (오랫동안 요청되어 온 기능)
+- **성능 개선**: keys-only Range 요청 최적화, 더 빠르고 안정적인 리스(lease) 처리
+- 레거시 v2store 잔재 완전 제거 및 protobuf 전면 개편
+- 핵심 의존성 bbolt v1.5.0, raft v3.7.0 포함
+
+자세한 내용은 [공식 발표](https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/)와 [etcd v3.7 체인지로그](https://github.com/etcd-io/etcd/blob/main/CHANGELOG/CHANGELOG-3.7.md)를 참고하세요.
 
 ### kube-scheduler
 

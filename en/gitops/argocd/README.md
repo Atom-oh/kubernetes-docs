@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **Supported Versions**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **Last Updated**: February 23, 2026
+> **Last Updated**: July 11, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -278,6 +278,10 @@ spec:
 ```
 
 ## Version Compatibility
+
+### July 2026 Update: ArgoCD 3.x Patch Releases
+
+ArgoCD v3.4.5 was released on July 9, 2026. The 3.4 line is the current stable release line, and the next minor version, v3.5.0, has reached rc2. The tables below were written against the 2.x era — check the [ArgoCD releases page](https://github.com/argoproj/argo-cd/releases) for up-to-date per-version support information.
 
 ### Kubernetes Compatibility
 

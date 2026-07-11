@@ -1,9 +1,18 @@
 # Cost Management and Optimization
 
 > **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: February 19, 2026
+> **Last Updated**: July 11, 2026
 
 This guide covers cost optimization strategies for EKS Auto Mode, including cost analysis, Spot savings measurement, resource right-sizing, and Savings Plans integration.
+
+### July 2026 Update: GPU Management Fees Reduced by Up to 60%
+
+Effective July 1, 2026, EKS Auto Mode management fees for GPU and accelerated instance types were reduced:
+
+- **G-series**: management fees reduced by 35%
+- **P-series and AWS Trainium**: management fees reduced by 60%
+
+The reductions apply automatically to all Auto Mode clusters in every AWS Region where EKS Auto Mode is available — no action required. Auto Mode includes capabilities built for accelerated workloads, such as parallel image pulling and unpacking on GPU instances with local NVMe storage (so large container and model images start faster) and accelerator-aware node repair that detects GPU hardware failures and automatically replaces unhealthy nodes. See [Amazon EKS pricing](https://aws.amazon.com/eks/pricing/) for the updated rate table. ([Announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-auto-mode-gpu-price))
 
 ---
 

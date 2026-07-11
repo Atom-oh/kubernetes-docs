@@ -1,7 +1,7 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: February 22, 2026
+> **Last Updated**: July 11, 2026
 
 ## Lab Environment Setup
 
@@ -220,6 +220,17 @@ ETCDCTL_API=3 etcdctl snapshot restore snapshot.db \
 - Proper memory allocation
 - Regular compaction and defragmentation
 - Appropriate number of etcd nodes based on cluster size (typically 3 or 5)
+
+#### July 2026 Update: etcd v3.7.0 Released
+
+On July 8, 2026, SIG etcd released etcd v3.7.0. Highlights:
+
+- **RangeStream**: streams large range results in chunks instead of buffering the whole response in memory (a long-requested feature)
+- **Performance improvements**: optimized keys-only range requests, faster and more reliable leases
+- Removes the last remnants of the legacy v2store and completes a major protobuf overhaul
+- Ships with updated core dependencies bbolt v1.5.0 and raft v3.7.0
+
+See the [official announcement](https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/) and the [etcd v3.7 changelog](https://github.com/etcd-io/etcd/blob/main/CHANGELOG/CHANGELOG-3.7.md) for details.
 
 ### kube-scheduler
 

@@ -1,13 +1,22 @@
 # 비용 관리 및 최적화
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 2월 19일
+> **마지막 업데이트**: 2026년 7월 11일
 
 < [이전: 운영 및 관리](./05-operations.md) | [목차](./README.md) | [다음: 노드 생명주기](./07-node-lifecycle.md) >
 
 ---
 
 이 문서에서는 EKS Auto Mode에서 비용을 효과적으로 관리하고 최적화하는 방법을 설명합니다.
+
+### 2026년 7월 업데이트: GPU 관리 요금 최대 60% 인하
+
+2026년 7월 1일부터 EKS Auto Mode의 GPU 및 가속 인스턴스 관리 요금이 인하되었습니다:
+
+- **G 시리즈**: 관리 요금 35% 인하
+- **P 시리즈 및 AWS Trainium**: 관리 요금 60% 인하
+
+이 인하는 EKS Auto Mode가 제공되는 모든 AWS 리전의 모든 Auto Mode 클러스터에 자동 적용되며, 별도 작업이 필요 없습니다. Auto Mode는 GPU 인스턴스의 로컬 NVMe 스토리지를 활용한 병렬 이미지 풀링(대형 컨테이너/모델 이미지 시작 시간 단축)과 GPU 하드웨어 장애를 감지해 비정상 노드를 자동 교체하는 가속기 인식 노드 복구 등 가속 워크로드용 기능을 포함합니다. 최신 요율표는 [Amazon EKS 요금](https://aws.amazon.com/eks/pricing/) 페이지를 참고하세요. ([발표 원문](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-auto-mode-gpu-price))
 
 ## 비용 최적화 기본 원칙
 
