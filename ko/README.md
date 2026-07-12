@@ -81,9 +81,10 @@
 5. [노드 부트스트랩](./eks-hybrid-nodes/04-node-bootstrap.md) | [퀴즈](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
 6. [GPU 서버 통합](./eks-hybrid-nodes/05-gpu-integration.md) | [퀴즈](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
 7. [워크로드 배치 전략](./eks-hybrid-nodes/06-workload-placement.md) | [퀴즈](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
-8. [운영 및 유지보수](./eks-hybrid-nodes/08-operations.md) | [퀴즈](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
-9. [베어메탈 서버 OS 설치](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [퀴즈](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
-10. [Hybrid Nodes Gateway](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [퀴즈](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+8. [노드 라이프사이클 관리](./eks-hybrid-nodes/07-node-lifecycle.md) | [퀴즈](./quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
+9. [운영 및 유지보수](./eks-hybrid-nodes/08-operations.md) | [퀴즈](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+10. [베어메탈 서버 OS 설치](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [퀴즈](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+11. [Hybrid Nodes Gateway](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [퀴즈](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 
 ### EKS Auto Mode
 1. [EKS Auto Mode 소개](./eks-auto-mode/README.md)
