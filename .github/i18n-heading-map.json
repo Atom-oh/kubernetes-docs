@@ -26,5 +26,10 @@
     "cn": "测验集合",
     "es": "Colección de cuestionarios",
     "jp": "クイズ集"
+  },
+  "Scheduling": {
+    "cn": "调度",
+    "es": "Planificación",
+    "jp": "スケジューリング"
   }
 }
