@@ -27,4 +27,8 @@
    - [第 6 部分：MSK 集成](./data-on-eks/kafka/06-msk-integration.md) | [Quiz](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
    - [第 7 部分：监控](./data-on-eks/kafka/07-monitoring.md) | [Quiz](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
    - [第 8 部分：最佳实践](./data-on-eks/kafka/08-best-practices.md) | [Quiz](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+### 自动扩缩容
+1. [KEDA](./autoscaling/01-keda.md) | [Quiz](./quizzes/autoscaling/05-keda-quiz.md)
+2. [Karpenter](./autoscaling/02-karpenter.md) | [Quiz](./quizzes/autoscaling/06-karpenter-quiz.md)
+3. [Knative](./autoscaling/03-knative.md) | [Quiz](./quizzes/autoscaling/03-knative-quiz.md)
 

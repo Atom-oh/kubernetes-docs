@@ -27,3 +27,13 @@
   * [コンテナ技術クイズ](quizzes/basics/03-container-technology-quiz.md)
   * [Kubernetes 入門クイズ](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [eBPF の基礎と実践的応用クイズ](quizzes/basics/05-ebpf-fundamentals-quiz.md)
+
+  * [KEDAクイズ](quizzes/autoscaling/05-keda-quiz.md)
+  * [Karpenterクイズ](quizzes/autoscaling/06-karpenter-quiz.md)
+  * [Knativeクイズ](quizzes/autoscaling/03-knative-quiz.md)
+
+## オートスケーリング
+
+* [KEDA](autoscaling/01-keda.md)
+* [Karpenter](autoscaling/02-karpenter.md)
+* [Knative](autoscaling/03-knative.md)

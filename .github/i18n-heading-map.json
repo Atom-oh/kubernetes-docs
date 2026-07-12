@@ -1,4 +1,9 @@
 {
+  "Autoscaling": {
+    "cn": "自动扩缩容",
+    "es": "Autoescalado",
+    "jp": "オートスケーリング"
+  },
   "Basic": {
     "cn": "基础",
     "es": "Básico",

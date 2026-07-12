@@ -49,3 +49,12 @@
   * [第 6 部分：MSK 集成](data-on-eks/kafka/06-msk-integration.md)
   * [第 7 部分：监控](data-on-eks/kafka/07-monitoring.md)
   * [第 8 部分：最佳实践](data-on-eks/kafka/08-best-practices.md)
+  * [KEDA 测验](quizzes/autoscaling/05-keda-quiz.md)
+  * [Karpenter 测验](quizzes/autoscaling/06-karpenter-quiz.md)
+  * [Knative 测验](quizzes/autoscaling/03-knative-quiz.md)
+
+## 自动扩缩容
+
+* [KEDA](autoscaling/01-keda.md)
+* [Karpenter](autoscaling/02-karpenter.md)
+* [Knative](autoscaling/03-knative.md)
