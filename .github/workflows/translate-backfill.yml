@@ -76,10 +76,20 @@ jobs:
           fi
           kiro-cli --version
 
-      - name: Skip if this section's branch already exists
+      - name: Skip if this section+langs branch already exists
         id: check
         run: |
-          if git ls-remote --exit-code --heads origin "docs/translate-$SECTION" >/dev/null 2>&1; then
+          # Branch/PR is scoped to (section, langs), not just section -- a
+          # large section run against a runner with a real wall-clock limit
+          # (a live run got killed by an infra-level "runner shutdown signal"
+          # at ~29min covering all 3 langs) needs splitting into separate
+          # per-language dispatches, and those must not collide on a shared
+          # "docs/translate-$SECTION" branch (the first lang's run would
+          # create it, then every other lang's run would see it exists and
+          # skip entirely, silently doing nothing).
+          BRANCH="docs/translate-$SECTION-$(echo "$LANGS" | tr ' ' '-')"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
@@ -174,16 +184,17 @@ jobs:
         if: steps.check.outputs.exists == 'false' && steps.gate.outputs.has_changes == 'true' && steps.gate.outputs.passed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.check.outputs.branch }}
         run: |
-          git checkout -b "docs/translate-$SECTION"
+          git checkout -b "$BRANCH"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add cn jp es .github/i18n-heading-map.json
-          git commit -m "docs: translate $SECTION section into cn/jp/es"
-          git push origin "docs/translate-$SECTION"
+          git commit -m "docs: translate $SECTION section into $LANGS"
+          git push origin "$BRANCH"
           gh label create automated-translation --color 1D76DB --description "Automated cn/jp/es translation backfill" --force
           FAILS=$(cat /tmp/translate-failures.txt 2>/dev/null || true)
-          BODY="Automated translation of the '$SECTION' section (en/ -> cn/jp/es) via kiro-cli. Please spot-check before merging."
+          BODY="Automated translation of the '$SECTION' section (en/ -> $LANGS) via kiro-cli. Please spot-check before merging."
           if [ -n "$FAILS" ]; then
             BODY="$BODY
 
@@ -193,11 +204,11 @@ jobs:
           \`\`\`"
           fi
           gh pr create \
-            --title "docs: translate $SECTION section into cn/jp/es" \
+            --title "docs: translate $SECTION section into $LANGS" \
             --body "$BODY" \
             --label automated-translation \
             --base main \
-            --head "docs/translate-$SECTION"
+            --head "$BRANCH"
 
       - name: Open review-flagged issue instead of a PR
         if: steps.check.outputs.exists == 'false' && steps.gate.outputs.has_changes == 'true' && steps.gate.outputs.passed == 'false'
