@@ -3,7 +3,7 @@ import path from 'node:path'
 
 // Parses SUMMARY.md (GitBook nav format) into a VitePress sidebar.
 // Input: `## Section` headers, `* [Title](path.md)` items, nested by indent.
-export function summarySidebar(lang: 'ko' | 'en') {
+export function summarySidebar(lang: string) {
   const src = fs.readFileSync(path.join(__dirname, '..', lang, 'SUMMARY.md'), 'utf8')
   const sidebar: any[] = []
   let stack: { indent: number; items: any[] }[] = []

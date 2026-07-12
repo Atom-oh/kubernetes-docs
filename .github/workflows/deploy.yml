@@ -19,10 +19,12 @@ jobs:
     runs-on: kubernetes-docs-arm
     env:
       # 914 pages (ko+en) bundled in one Vite/Rollup process OOM'd at 6/8/10GB
-      # heap on the shared runner. Now on a dedicated r8g.large (16GiB) node
-      # with a 14Gi pod request; keep heap at the pod request so V8 doesn't
-      # try to grow past what the pod is guaranteed.
-      NODE_OPTIONS: --max-old-space-size=14336
+      # heap on the shared runner. Moved to a dedicated node (32Gi capacity)
+      # with a 26Gi pod request; keep heap at the pod request so V8 doesn't
+      # try to grow past what the pod is guaranteed. Bumped from the earlier
+      # 14336 (14Gi/16GiB node) ahead of the cn/jp/es locale rollout, which
+      # will roughly 2.5x the page count once fully backfilled.
+      NODE_OPTIONS: --max-old-space-size=26624
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

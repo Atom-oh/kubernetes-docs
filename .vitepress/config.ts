@@ -11,7 +11,10 @@ export default defineConfig({
   rewrites: {
     'README.md': 'index.md',
     'ko/README.md': 'ko/index.md',
-    'en/README.md': 'en/index.md'
+    'en/README.md': 'en/index.md',
+    'cn/README.md': 'cn/index.md',
+    'jp/README.md': 'jp/index.md',
+    'es/README.md': 'es/index.md'
   },
   ignoreDeadLinks: true,
   sitemap: {
@@ -33,6 +36,24 @@ export default defineConfig({
       lang: 'en-US',
       link: '/en/',
       themeConfig: { sidebar: summarySidebar('en') }
+    },
+    cn: {
+      label: '中文',
+      lang: 'zh-CN',
+      link: '/cn/',
+      themeConfig: { sidebar: summarySidebar('cn') }
+    },
+    jp: {
+      label: '日本語',
+      lang: 'ja-JP',
+      link: '/jp/',
+      themeConfig: { sidebar: summarySidebar('jp') }
+    },
+    es: {
+      label: 'Español',
+      lang: 'es-ES',
+      link: '/es/',
+      themeConfig: { sidebar: summarySidebar('es') }
     }
   },
   themeConfig: {
