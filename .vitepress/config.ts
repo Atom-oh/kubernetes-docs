@@ -3,6 +3,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 import { summarySidebar } from './summary'
 
 const GA_ID = 'G-GWVLEW5JLL'
+const ADSENSE_CLIENT = 'ca-pub-6267917556914416'
 
 export default withMermaid(defineConfig({
   title: 'Kubernetes & Amazon EKS Training',
@@ -23,7 +24,8 @@ export default withMermaid(defineConfig({
   },
   head: [
     ['script', { async: '', src: `https://www.googletagmanager.com/gtag/js?id=${GA_ID}` }],
-    ['script', {}, `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)};gtag('js',new Date());gtag('config','${GA_ID}');`]
+    ['script', {}, `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)};gtag('js',new Date());gtag('config','${GA_ID}');`],
+    ['script', { async: '', src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`, crossorigin: 'anonymous' }]
   ],
   locales: {
     ko: {
