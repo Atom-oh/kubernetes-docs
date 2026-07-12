@@ -17,14 +17,14 @@ set -euo pipefail
 
 SRC="$1"
 DST="$2"
-LANG="$3"
+LANG_CODE="$3"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-case "$LANG" in
+case "$LANG_CODE" in
   cn) LANG_NAME="Simplified Chinese"; DATE_LABEL="最后更新" ;;
   jp) LANG_NAME="Japanese"; DATE_LABEL="最終更新" ;;
   es) LANG_NAME="Spanish"; DATE_LABEL="Última actualización" ;;
-  *) echo "translate.sh: unknown lang_code '$LANG' (want cn|jp|es)" >&2; exit 1 ;;
+  *) echo "translate.sh: unknown lang_code '$LANG_CODE' (want cn|jp|es)" >&2; exit 1 ;;
 esac
 
 if [ -f "$REPO_ROOT/$DST" ]; then
@@ -60,7 +60,7 @@ run_once() {
   # files in this repo (basics/04, 05 are 44-46KB) -- 300s cut those off
   # mid-write on both the first attempt AND the retry, failing every large
   # file in the section.
-  ( cd "$REPO_ROOT" && env -i PATH="$PATH" HOME="$CELL" LANG="${LANG_ENV:-C.UTF-8}" \
+  ( cd "$REPO_ROOT" && env -i PATH="$PATH" HOME="$CELL" LANG="C.UTF-8" \
       KIRO_API_KEY="${KIRO_API_KEY:-}" \
       timeout 600 kiro-cli chat "$PROMPT" --model gpt-5.5 \
       --no-interactive --trust-tools=fs_read,fs_write --wrap never )
@@ -86,4 +86,5 @@ if run_once && [ -s "$REPO_ROOT/$DST" ] && validate; then
 fi
 
 echo "FAILED: $DST" >&2
+rm -f "$REPO_ROOT/$DST"
 exit 1
