@@ -68,7 +68,7 @@ jobs:
           set -euo pipefail
           : > /tmp/translate-failures.txt
           while read -r _ DST _; do rm -f "$DST"; done < /tmp/pairs.txt
-          xargs -a /tmp/pairs.txt -P 6 -L 1 bash -c \
+          xargs -a /tmp/pairs.txt -P 2 -L 1 bash -c \
             'bash scripts/translate.sh "$0" "$1" "$2" || echo "$1" >> /tmp/translate-failures.txt'
           cat /tmp/translate-failures.txt
 

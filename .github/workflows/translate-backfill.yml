@@ -105,7 +105,7 @@ jobs:
           done
 
           : > /tmp/translate-failures.txt
-          xargs -a /tmp/pairs.txt -P 6 -L 1 bash -c \
+          xargs -a /tmp/pairs.txt -P 2 -L 1 bash -c \
             'bash scripts/translate.sh "$0" "$1" "$2" || echo "$1" >> /tmp/translate-failures.txt'
 
           echo "Translated $(wc -l < /tmp/pairs.txt) file(s), $(wc -l < /tmp/translate-failures.txt) failure(s)"

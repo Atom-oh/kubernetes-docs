@@ -11,7 +11,8 @@
 #
 # Exits 0 on a validated translation, 1 otherwise. On failure, prints
 # "FAILED: <dst_path>" to stderr (single short line — safe for concurrent
-# `>>` appends from parallel workers at this fan-out width, ~6).
+# `>>` appends from parallel workers at this fan-out width, ~2 -- the
+# kubernetes-docs-claude-arm runner pod only requests 1800m CPU/3500Mi).
 set -euo pipefail
 
 SRC="$1"
