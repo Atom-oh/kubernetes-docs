@@ -1,3 +1,5 @@
+> [한국어](../ko/) | [English](../en/) | [中文](../cn/) | [日本語](../jp/)
+
 # Contenido de Formación de Kubernetes y Amazon EKS
 
 Este sitio se está traduciendo automáticamente desde la [versión en inglés](../en/), sección por sección. Para las secciones aún no traducidas, consulte la [versión en inglés](../en/) o [coreano](../ko/).
