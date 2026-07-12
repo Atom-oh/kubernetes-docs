@@ -1,9 +1,10 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 import { summarySidebar } from './summary'
 
 const GA_ID = 'G-GWVLEW5JLL'
 
-export default defineConfig({
+export default withMermaid(defineConfig({
   title: 'Kubernetes & Amazon EKS Training',
   base: '/kubernetes-docs/',
   srcDir: '.',
@@ -39,4 +40,4 @@ export default defineConfig({
     search: { provider: 'local' },
     outline: 'deep'
   }
-})
+}))
