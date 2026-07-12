@@ -1,0 +1,137 @@
+name: Translate Sync (cn/jp/es)
+
+# Keeps cn/jp/es in sync when en/ changes (e.g. a merged weekly-news-digest
+# PR). Only re-translates files whose cn/jp/es counterpart already exists --
+# sections not yet backfilled (see translate-backfill.yml) are untouched, so
+# this never races ahead of the section-by-section rollout.
+on:
+  push:
+    branches: [main]
+    paths: ['en/**/*.md']
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: translate-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: kubernetes-docs-claude-arm
+    env:
+      ANTHROPIC_MODEL: us.anthropic.claude-fable-5
+      CLAUDE_CODE_USE_BEDROCK: 1
+      ANTHROPIC_BEDROCK_BASE_URL: https://bedrock-runtime.us-east-1.amazonaws.com
+      AWS_REGION: us-east-1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify CLIs present (pre-installed on runner)
+        run: |
+          if ! command -v claude >/dev/null 2>&1; then
+            npm install -g @anthropic-ai/claude-code
+          fi
+          if ! command -v kiro-cli >/dev/null 2>&1; then
+            echo "::error::kiro-cli not found on runner (image needs rebuild)"
+            exit 1
+          fi
+
+      - name: Find changed en/ files with an existing cn/jp/es counterpart
+        id: diff
+        run: |
+          set -euo pipefail
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.event.after || github.sha }}"
+          if [ -z "${BEFORE:-}" ] || ! git cat-file -e "$BEFORE" 2>/dev/null; then
+            # workflow_dispatch, or first push with no prior SHA -- diff the last commit only.
+            BEFORE="HEAD~1"
+          fi
+          CHANGED=$(git diff --name-only "$BEFORE" "$AFTER" -- en | grep '\.md$' || true)
+          : > /tmp/pairs.txt
+          for SRC in $CHANGED; do
+            for LANG in cn jp es; do
+              DST="${LANG}${SRC#en}"
+              [ -f "$DST" ] && printf '%s %s %s\n' "$SRC" "$DST" "$LANG" >> /tmp/pairs.txt
+            done
+          done
+          echo "pair_count=$(wc -l < /tmp/pairs.txt)" >> "$GITHUB_OUTPUT"
+          cat /tmp/pairs.txt
+
+      - name: Re-translate changed files
+        if: steps.diff.outputs.pair_count != '0'
+        run: |
+          set -euo pipefail
+          : > /tmp/translate-failures.txt
+          while read -r _ DST _; do rm -f "$DST"; done < /tmp/pairs.txt
+          xargs -a /tmp/pairs.txt -P 6 -L 1 bash -c \
+            'bash scripts/translate.sh "$0" "$1" "$2" || echo "$1" >> /tmp/translate-failures.txt'
+          cat /tmp/translate-failures.txt
+
+      - name: Quality gate on the diff
+        if: steps.diff.outputs.pair_count != '0'
+        id: gate
+        run: |
+          if ! git status --porcelain -- cn jp es | grep -q .; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          git diff -- cn jp es | head -c 100000 > /tmp/review-diff.txt
+
+          cat <<'PROMPT_EOF' > /tmp/review-prompt.txt
+          Review this diff (piped to your stdin) re-translating existing
+          Simplified Chinese/Japanese/Spanish pages after their English
+          source changed, for a Kubernetes/EKS training site. Score 0-100 on:
+          markdown structure preserved exactly, translation faithfulness,
+          Kubernetes/AWS technical terms kept in English, language
+          correctness, and no PII/sensitive data.
+
+          Output EXACTLY two lines, nothing else:
+          SCORE: <0-100>
+          FEEDBACK: <one sentence>
+          PROMPT_EOF
+
+          claude -p "$(cat /tmp/review-prompt.txt)" --output-format text \
+            --allowedTools "Read" < /tmp/review-diff.txt > /tmp/review-result.txt || true
+          cat /tmp/review-result.txt
+          score=$(grep -oE 'SCORE:[[:space:]]*[0-9]+' /tmp/review-result.txt | head -1 | grep -oE '[0-9]+')
+          if [[ "$score" =~ ^[0-9]+$ ]] && [ "$score" -ge 85 ]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and open PR
+        if: steps.diff.outputs.pair_count != '0' && steps.gate.outputs.has_changes == 'true' && steps.gate.outputs.passed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA_SHORT=$(git rev-parse --short "${{ github.event.after || github.sha }}")
+          BRANCH="docs/translate-sync-$SHA_SHORT"
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            exit 0
+          fi
+          git checkout -b "$BRANCH"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add cn jp es
+          git commit -m "docs: re-sync cn/jp/es translations for en/ changes ($SHA_SHORT)"
+          git push origin "$BRANCH"
+          gh label create automated-translation --color 1D76DB --description "Automated cn/jp/es translation backfill" --force
+          gh pr create \
+            --title "docs: re-sync cn/jp/es translations ($SHA_SHORT)" \
+            --body "English source changed in commit $SHA_SHORT; re-translated the already-backfilled cn/jp/es counterparts. Please spot-check before merging." \
+            --label automated-translation \
+            --base main \
+            --head "$BRANCH"
+
+      - name: Discard changes if gate failed (manual follow-up not auto-filed for sync)
+        if: steps.diff.outputs.pair_count != '0' && steps.gate.outputs.has_changes == 'true' && steps.gate.outputs.passed == 'false'
+        run: |
+          echo "::warning::translate-sync quality gate failed (score < 85), discarding. Re-run manually or fix via translate-backfill for the affected section."
+          git checkout -- cn jp es

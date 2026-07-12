@@ -1,0 +1,217 @@
+name: Translate Backfill (cn/jp/es)
+
+# Backfills one content section from en/ into cn/jp/es via kiro-cli (headless,
+# fs_read/fs_write tools -- kiro-cli's non-interactive chat ignores stdin and
+# argv has a 128KiB kernel limit, so docs can't be piped/embedded, see
+# scripts/translate.sh). Section-at-a-time so each PR stays reviewable; run
+# again with a different `section` input to keep going. Safe to re-run: any
+# destination file that already exists is skipped (scripts/translate.sh).
+on:
+  workflow_dispatch:
+    inputs:
+      section:
+        description: 'Section to backfill (en/<section>/ directory name)'
+        required: true
+        type: choice
+        options:
+          - basics
+          - core
+          - scheduling
+          - autoscaling
+          - eks
+          - eks-hybrid-nodes
+          - eks-auto-mode
+          - ai-ml
+          - data-on-eks
+          - networking
+          - service-mesh
+          - security
+          - platform-engineering
+          - gitops
+          - ops
+          - observability
+          - news
+      langs:
+        description: 'Space-separated language codes to translate into'
+        required: false
+        default: 'cn jp es'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: translate-backfill-${{ github.event.inputs.section }}
+  cancel-in-progress: false
+
+jobs:
+  translate:
+    runs-on: kubernetes-docs-claude-arm
+    env:
+      # Quality-gate step only -- Bedrock/Pod Identity, same as
+      # weekly-news-digest.yml. Section translation itself uses kiro-cli
+      # (KIRO_API_KEY from the runner pod env, see appset-helm-runner-claude-arm-kubernetes-docs.yaml).
+      ANTHROPIC_MODEL: us.anthropic.claude-fable-5
+      CLAUDE_CODE_USE_BEDROCK: 1
+      ANTHROPIC_BEDROCK_BASE_URL: https://bedrock-runtime.us-east-1.amazonaws.com
+      AWS_REGION: us-east-1
+      SECTION: ${{ github.event.inputs.section }}
+      LANGS: ${{ github.event.inputs.langs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify CLIs present (pre-installed on runner)
+        run: |
+          if ! command -v claude >/dev/null 2>&1; then
+            echo "::warning::claude CLI not found on runner, falling back to npm global install"
+            npm install -g @anthropic-ai/claude-code
+          fi
+          claude --version
+          if ! command -v kiro-cli >/dev/null 2>&1; then
+            echo "::error::kiro-cli not found on runner (image needs rebuild, see AWS-Demo-Platform/docker/actions-runner-claude/Dockerfile)"
+            exit 1
+          fi
+          kiro-cli --version
+
+      - name: Skip if this section's branch already exists
+        id: check
+        run: |
+          if git ls-remote --exit-code --heads origin "docs/translate-$SECTION" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Translate section files
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          set -euo pipefail
+          FILES=$(find en/"$SECTION" en/quizzes/"$SECTION" en/labs/"$SECTION" -type f -name '*.md' 2>/dev/null || true)
+          if [ -z "$FILES" ]; then
+            echo "::error::no en/ files found for section '$SECTION' (checked en/$SECTION, en/quizzes/$SECTION, en/labs/$SECTION)"
+            exit 1
+          fi
+          echo "$FILES" | wc -l
+
+          : > /tmp/pairs.txt
+          for LANG in $LANGS; do
+            while IFS= read -r SRC; do
+              DST="${LANG}${SRC#en}"
+              printf '%s %s %s\n' "$SRC" "$DST" "$LANG" >> /tmp/pairs.txt
+            done <<< "$FILES"
+          done
+
+          : > /tmp/translate-failures.txt
+          xargs -a /tmp/pairs.txt -P 6 -L 1 bash -c \
+            'bash scripts/translate.sh "$0" "$1" "$2" || echo "$1" >> /tmp/translate-failures.txt'
+
+          echo "Translated $(wc -l < /tmp/pairs.txt) file(s), $(wc -l < /tmp/translate-failures.txt) failure(s)"
+          cat /tmp/translate-failures.txt
+
+      - name: Sync SUMMARY.md / README.md nav entries
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          set -euo pipefail
+          for LANG in $LANGS; do
+            python3 scripts/sync-nav.py "$SECTION" "$LANG"
+          done
+
+      # Same rubric/threshold as weekly-news-digest.yml's gate, plus
+      # translation-specific checks. grep -oE (not -oP, this runner's grep
+      # has no PCRE support -- see .github/workflows/weekly-news-digest.yml
+      # history) and a quoted heredoc delimiter (no backtick substitution).
+      - name: Quality gate on the diff
+        if: steps.check.outputs.exists == 'false'
+        id: gate
+        run: |
+          if ! git status --porcelain -- cn jp es | grep -q .; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          git diff -- cn jp es | head -c 100000 > /tmp/review-diff.txt
+
+          cat <<'PROMPT_EOF' > /tmp/review-prompt.txt
+          Review this diff (piped to your stdin) adding new Simplified
+          Chinese/Japanese/Spanish translations to a Kubernetes/EKS training
+          site, machine-translated from an English source. Score 0-100 on:
+          markdown structure preserved exactly (headings, code fences, links,
+          paths unchanged), translation faithfulness (no dropped or invented
+          content vs. the English original visible in the diff context),
+          Kubernetes/AWS technical terms kept in English, language
+          correctness and readability in the target language, and no
+          PII/sensitive data.
+
+          Output EXACTLY two lines, nothing else:
+          SCORE: <0-100>
+          FEEDBACK: <one sentence>
+          PROMPT_EOF
+
+          claude -p "$(cat /tmp/review-prompt.txt)" --output-format text \
+            --allowedTools "Read" < /tmp/review-diff.txt > /tmp/review-result.txt || true
+
+          cat /tmp/review-result.txt
+          score=$(grep -oE 'SCORE:[[:space:]]*[0-9]+' /tmp/review-result.txt | head -1 | grep -oE '[0-9]+')
+          echo "Parsed score: '$score'"
+          if [[ "$score" =~ ^[0-9]+$ ]] && [ "$score" -ge 85 ]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and open PR
+        if: steps.check.outputs.exists == 'false' && steps.gate.outputs.has_changes == 'true' && steps.gate.outputs.passed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git checkout -b "docs/translate-$SECTION"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add cn jp es .github/i18n-heading-map.json
+          git commit -m "docs: translate $SECTION section into cn/jp/es"
+          git push origin "docs/translate-$SECTION"
+          gh label create automated-translation --color 1D76DB --description "Automated cn/jp/es translation backfill" --force
+          FAILS=$(cat /tmp/translate-failures.txt 2>/dev/null || true)
+          BODY="Automated translation of the '$SECTION' section (en/ -> cn/jp/es) via kiro-cli. Please spot-check before merging."
+          if [ -n "$FAILS" ]; then
+            BODY="$BODY
+
+          Files that failed translation after retry (left untranslated, re-run this workflow for the same section to retry):
+          \`\`\`
+          $FAILS
+          \`\`\`"
+          fi
+          gh pr create \
+            --title "docs: translate $SECTION section into cn/jp/es" \
+            --body "$BODY" \
+            --label automated-translation \
+            --base main \
+            --head "docs/translate-$SECTION"
+
+      - name: Open review-flagged issue instead of a PR
+        if: steps.check.outputs.exists == 'false' && steps.gate.outputs.has_changes == 'true' && steps.gate.outputs.passed == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create automated-translation-review-flagged --color B60205 --description "Translation backfill failed the quality gate" --force
+          {
+            echo "The translation backfill for section '$SECTION' failed the automated quality gate (score < 85) and was not opened as a PR."
+            echo ""
+            echo "Review feedback:"
+            echo '```'
+            cat /tmp/review-result.txt
+            echo '```'
+            echo ""
+            echo "Diff sample that was proposed:"
+            echo '```diff'
+            cat /tmp/review-diff.txt
+            echo '```'
+          } > /tmp/issue-body.txt
+          gh issue create \
+            --title "docs: $SECTION translation backfill needs manual review" \
+            --label automated-translation-review-flagged \
+            --body-file /tmp/issue-body.txt
+          git checkout -- cn jp es .github/i18n-heading-map.json
