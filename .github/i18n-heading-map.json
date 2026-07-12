@@ -1,1 +1,22 @@
-{}
+{
+  "Basic": {
+    "cn": "基础",
+    "es": "Básico",
+    "jp": "基本"
+  },
+  "Basic Concepts": {
+    "cn": "基本概念",
+    "es": "Conceptos básicos",
+    "jp": "基本概念"
+  },
+  "Lab Guides": {
+    "cn": "实验指南",
+    "es": "Guías de laboratorio",
+    "jp": "ラボガイド"
+  },
+  "Quiz Collection": {
+    "cn": "测验集合",
+    "es": "Colección de cuestionarios",
+    "jp": "クイズ集"
+  }
+}
