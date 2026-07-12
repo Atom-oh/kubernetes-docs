@@ -1,1 +1,14 @@
-{}
+{
+  "Basic": {
+    "cn": "基础"
+  },
+  "Basic Concepts": {
+    "cn": "基本概念"
+  },
+  "Lab Guides": {
+    "cn": "实验指南"
+  },
+  "Quiz Collection": {
+    "cn": "测试集合"
+  }
+}
