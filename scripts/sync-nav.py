@@ -142,6 +142,25 @@ def prune(nodes, prefixes):
     return survivors
 
 
+def prune_missing(nodes, lang):
+    """Drop any node whose destination file doesn't actually exist -- a
+    section-scoped translate.sh failure (a file that timed out both
+    attempts) or a path that's structurally out of scope for section
+    backfill (e.g. 'Lab Guides Introduction' -> labs/README.md, a top-level
+    intro never touched by any per-section run). Without this, a nav entry
+    can point at a file that was never created -- a dead link a real run
+    produced (4/13 basics files failed translation, but SUMMARY.md/README.md
+    still linked to all 13)."""
+    survivors = []
+    for n in nodes:
+        n.children = prune_missing(n.children, lang)
+        exists = n.path is not None and (REPO_ROOT / lang / n.path).exists()
+        n.keep = bool(n.children) or exists
+        if n.keep:
+            survivors.append(n)
+    return survivors
+
+
 def collect_titled(nodes, out):
     for n in nodes:
         if n.title is not None:
@@ -149,22 +168,28 @@ def collect_titled(nodes, out):
         collect_titled(n.children, out)
 
 
-def render(nodes, existing_paths=frozenset()):
+def render(nodes, lang, existing_paths=frozenset()):
     """Shared parent bullets (e.g. 'Lab Guides Introduction' wrapping every
     section's lab entries) get pruned back in on every section's run since
     they have surviving children -- render them only the first time; once
     their path is already in the destination file, emit just their children
-    so the same wrapper line isn't duplicated on every subsequent section."""
+    so the same wrapper line isn't duplicated on every subsequent section.
+
+    A node whose own destination file doesn't exist (translation failure,
+    or a path structurally out of scope for section backfill, e.g.
+    labs/README.md) is skipped the same way -- rendered as absent, but its
+    surviving children (whose files DO exist) still render one level up."""
     out = []
     for n in nodes:
         already_present = n.path is not None and n.path in existing_paths
-        if not already_present:
+        file_missing = n.path is not None and not (REPO_ROOT / lang / n.path).exists()
+        if not already_present and not file_missing:
             prefix = " " * n.indent + "* "
             if n.title is not None:
                 out.append(f"{prefix}[{n.title}]({n.path})")
             else:
                 out.append(f"{prefix}{n.raw_group_text}")
-        out.extend(render(n.children, existing_paths))
+        out.extend(render(n.children, lang, existing_paths))
     return out
 
 
@@ -196,7 +221,7 @@ def sync_summary(section, lang, heading_map):
     dst_text = dst_path.read_text(encoding="utf-8")
 
     for heading, item_lines in blocks:
-        forest = prune(parse_block(item_lines), prefixes)
+        forest = prune_missing(prune(parse_block(item_lines), prefixes), lang)
         if not forest:
             continue
 
@@ -207,7 +232,7 @@ def sync_summary(section, lang, heading_map):
             n.title = t
 
         existing_paths = set(re.findall(r"\]\(([^)]+)\)", dst_text))
-        fragment_lines = render(forest, existing_paths)
+        fragment_lines = render(forest, lang, existing_paths)
         if not fragment_lines:
             continue
 
@@ -228,6 +253,27 @@ def sync_summary(section, lang, heading_map):
             dst_text = dst_text.rstrip("\n") + f"\n\n## {dst_heading}\n\n" + "\n".join(fragment_lines) + "\n"
 
     dst_path.write_text(dst_text, encoding="utf-8")
+
+
+def _readme_link_exists(path, lang):
+    return (REPO_ROOT / lang / path.lstrip("./")).exists()
+
+
+def _filter_readme_line(line, lang):
+    """README.md ToC lines look like 'N. [Title](path) | [Quiz](qpath) |
+    [Lab](lpath)'. Drop the whole line if its primary (first) link's target
+    doesn't exist in this lang (translation failure) -- an entry with no
+    content to point to isn't useful. Otherwise drop just the Quiz/Lab
+    segments whose own target is missing."""
+    links = list(re.finditer(r"\[([^\]]+)\]\(([^)]+)\)", line))
+    if not links:
+        return line
+    if not _readme_link_exists(links[0].group(2), lang):
+        return None
+    for m in links[1:]:
+        if not _readme_link_exists(m.group(2), lang):
+            line = line.replace(f" | {m.group(0)}", "")
+    return line
 
 
 def sync_readme(section, lang, heading_map):
@@ -253,6 +299,16 @@ def sync_readme(section, lang, heading_map):
     while j < len(en_lines) and not en_lines[j].startswith("### "):
         body.append(en_lines[j])
         j += 1
+
+    filtered_body = []
+    for ln in body:
+        if not ln.strip():
+            filtered_body.append(ln)
+            continue
+        kept = _filter_readme_line(ln, lang)
+        if kept is not None:
+            filtered_body.append(kept)
+    body = filtered_body
 
     titles = re.findall(r"\[([^\]]+)\]\([^)]+\)", "\n".join(body))
     # Skip bare "Quiz"/"Lab" labels -- keep those in English for consistency

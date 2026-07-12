@@ -54,9 +54,15 @@ CELL="$(mktemp -d)"
 trap 'rm -rf "$CELL"' EXIT
 
 run_once() {
+  # 600s, not 300s: kiro-cli writes large docs (30-45KB+) via several
+  # sequential fs_write chunk calls rather than one shot, and a real run
+  # showed that consistently taking 4-5 minutes per attempt for the biggest
+  # files in this repo (basics/04, 05 are 44-46KB) -- 300s cut those off
+  # mid-write on both the first attempt AND the retry, failing every large
+  # file in the section.
   ( cd "$REPO_ROOT" && env -i PATH="$PATH" HOME="$CELL" LANG="${LANG_ENV:-C.UTF-8}" \
       KIRO_API_KEY="${KIRO_API_KEY:-}" \
-      timeout 300 kiro-cli chat "$PROMPT" --model claude-haiku-4.5 \
+      timeout 600 kiro-cli chat "$PROMPT" --model claude-haiku-4.5 \
       --no-interactive --trust-tools=fs_read,fs_write --wrap never )
 }
 
