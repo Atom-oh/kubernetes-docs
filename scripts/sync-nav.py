@@ -53,18 +53,37 @@ def _clean_kiro_line(ln):
 
 
 _title_cache = {}
+SUFFIX_RE = re.compile(r"^(.+) (Quiz|Lab)$")
 
 
-def translate_titles(titles, lang):
-    """One kiro-cli call translates a batch of short titles. Cached per
-    (title, lang) so the same English title translates identically whether
-    it's encountered via SUMMARY.md or README.md -- without this, two
-    independent calls for the same title (e.g. "Linux Basics") can come back
-    with different wording ("Linux 基础知识" vs "Linux 基础"), a real
-    inconsistency a quality-gate run caught. Falls back to the original
-    English titles (logged, non-fatal) if the model call fails or returns
-    the wrong line count -- an untranslated nav label is a minor quality
-    gap, not a broken build."""
+def _run_kiro_batch(prompt, n, lang):
+    """Shared kiro-cli batch call: send prompt, expect exactly n lines back.
+    Returns None on any failure (wrong line count, exception) so callers can
+    fall back -- an untranslated nav label is a minor quality gap, not a
+    broken build."""
+    try:
+        result = subprocess.run(
+            ["kiro-cli", "chat", prompt, "--model", "gpt-5.5",
+             "--no-interactive", "--trust-tools=", "--wrap", "never"],
+            capture_output=True, text=True, timeout=90,
+        )
+        lines = [_clean_kiro_line(ln) for ln in result.stdout.splitlines()]
+        lines = [re.sub(r"^\d+\.\s*", "", ln).strip() for ln in lines if ln.strip()]
+        if len(lines) == n:
+            return lines
+        print(f"::warning::sync-nav: title translation returned {len(lines)}/{n} lines, keeping English", file=sys.stderr)
+    except Exception as e:
+        print(f"::warning::sync-nav: title translation failed ({e}), keeping English", file=sys.stderr)
+    return None
+
+
+def _translate_batch(titles, lang):
+    """Translate a batch of independent titles, caching each (title, lang)
+    pair so the same English title translates identically wherever it's
+    encountered (SUMMARY.md vs README.md) -- without this, two independent
+    calls for "Linux Basics" could come back worded differently ("Linux
+    基础知识" vs "Linux 基础"), a real inconsistency a quality-gate run
+    caught."""
     uncached = [t for t in titles if (t, lang) not in _title_cache]
     if uncached:
         lang_name = LANG_NAMES[lang]
@@ -79,25 +98,60 @@ def translate_titles(titles, lang):
             f"title per line, in the same order, with no numbering and no extra "
             f"commentary:\n{numbered}"
         )
-        try:
-            result = subprocess.run(
-                ["kiro-cli", "chat", prompt, "--model", "gpt-5.5",
-                 "--no-interactive", "--trust-tools=", "--wrap", "never"],
-                capture_output=True, text=True, timeout=90,
-            )
-            lines = [_clean_kiro_line(ln) for ln in result.stdout.splitlines()]
-            lines = [re.sub(r"^\d+\.\s*", "", ln).strip() for ln in lines if ln.strip()]
-            if len(lines) == len(uncached):
-                for t, translated in zip(uncached, lines):
-                    _title_cache[(t, lang)] = translated
-            else:
-                print(f"::warning::sync-nav: title translation returned {len(lines)}/{len(uncached)} lines, keeping English", file=sys.stderr)
-                for t in uncached:
-                    _title_cache[(t, lang)] = t
-        except Exception as e:
-            print(f"::warning::sync-nav: title translation failed ({e}), keeping English", file=sys.stderr)
-            for t in uncached:
-                _title_cache[(t, lang)] = t
+        lines = _run_kiro_batch(prompt, len(uncached), lang) or uncached
+        for t, translated in zip(uncached, lines):
+            _title_cache[(t, lang)] = translated
+    return [_title_cache[t, lang] for t in titles]
+
+
+def _translate_suffixed_batch(entries, lang):
+    """entries: [(full_title, base_title, kind)] where kind is 'Quiz' or
+    'Lab'. Anchors each to base_title's already-cached translation instead
+    of translating the full compound phrase blind -- otherwise "Introduction
+    to Kubernetes" and "Introduction to Kubernetes Quiz" get translated by
+    two separate, independent calls and can disagree on wording (a real run
+    produced cn "简介" vs "入门" for the same concept). Falls back to
+    _translate_batch on the full phrase if this call fails."""
+    uncached = [e for e in entries if (e[0], lang) not in _title_cache]
+    if not uncached:
+        return
+    lang_name = LANG_NAMES[lang]
+    numbered = "\n".join(
+        f"{i + 1}. English title: \"{full}\" | Its topic's fixed {lang_name} translation: "
+        f"\"{_title_cache[base, lang]}\" | Page type: {kind}"
+        for i, (full, base, kind) in enumerate(uncached)
+    )
+    prompt = (
+        f"For each of the following {len(uncached)} documentation page titles, produce a "
+        f"natural {lang_name} title for that Quiz or Lab page. Each is the Quiz/Lab page for "
+        f"a topic whose translation is already fixed (given) -- reuse that exact given phrase "
+        f"for the topic, phrased the way {lang_name} naturally titles a quiz/lab page for it "
+        f"(e.g. a suffix or prefix word meaning Quiz/Lab, whichever reads naturally). Output "
+        f"EXACTLY {len(uncached)} lines, one title per line, same order, no numbering, no "
+        f"extra commentary:\n{numbered}"
+    )
+    lines = _run_kiro_batch(prompt, len(uncached), lang)
+    if lines is None:
+        _translate_batch([full for full, _, _ in uncached], lang)
+        return
+    for (full, _, _), translated in zip(uncached, lines):
+        _title_cache[(full, lang)] = translated
+
+
+def translate_titles(titles, lang):
+    """Public entry point. Splits "X Quiz"/"X Lab" titles from plain ones so
+    quiz/lab titles get anchored to their already-translated base concept
+    (see _translate_suffixed_batch) instead of translated independently."""
+    plain, suffixed = [], []
+    for t in titles:
+        m = SUFFIX_RE.match(t)
+        (suffixed.append((t, m.group(1), m.group(2))) if m else plain.append(t))
+
+    bases = list(dict.fromkeys(plain + [base for _, base, _ in suffixed]))
+    if bases:
+        _translate_batch(bases, lang)
+    if suffixed:
+        _translate_suffixed_batch(suffixed, lang)
 
     return [_title_cache[(t, lang)] for t in titles]
 

@@ -94,6 +94,14 @@ jobs:
             echo "::error::no en/ files found for section '$SECTION' (checked en/$SECTION, en/quizzes/$SECTION, en/labs/$SECTION)"
             exit 1
           fi
+          # labs/README.md and quizzes/README.md are top-level intro docs, not
+          # scoped to any section, so no section run ever picks them up on its
+          # own -- sync-nav.py's SUMMARY.md wrapper bullets ("Lab Guides
+          # Introduction" etc.) point at them regardless of $SECTION, so
+          # without this every section leaves those wrapper links dead
+          # (translate.sh skips files that already exist, so this is only
+          # real work the very first time any section run happens).
+          FILES=$(printf '%s\nen/labs/README.md\nen/quizzes/README.md' "$FILES")
           echo "$FILES" | wc -l
 
           : > /tmp/pairs.txt
