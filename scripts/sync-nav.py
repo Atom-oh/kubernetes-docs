@@ -42,35 +42,64 @@ def save_heading_map(m):
     HEADING_MAP_PATH.write_text(json.dumps(m, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def _clean_kiro_line(ln):
+    """Strip ANSI color codes and kiro-cli's leading '> ' response marker
+    (only present on the first line of output, and only visible once ANSI
+    codes are stripped -- easy to miss, caught via a real run that leaked
+    "> " into translated titles, e.g. "[> Linux 基础知识]")."""
+    ln = re.sub(r"\x1b\[[0-9;]*m", "", ln)
+    ln = re.sub(r"^>\s*", "", ln)
+    return ln.strip()
+
+
+_title_cache = {}
+
+
 def translate_titles(titles, lang):
-    """One kiro-cli call translates a batch of short titles. Falls back to
-    the original English titles (logged, non-fatal) if the model call fails
-    or returns the wrong line count -- an untranslated nav label is a minor
-    quality gap, not a broken build."""
-    if not titles:
-        return []
-    lang_name = LANG_NAMES[lang]
-    numbered = "\n".join(f"{i + 1}. {t}" for i, t in enumerate(titles))
-    prompt = (
-        f"Translate each of the following {len(titles)} short documentation titles into "
-        f"{lang_name}. Keep Kubernetes/AWS technical terms (Pod, EKS, Karpenter, etc.) in "
-        f"English. Output EXACTLY {len(titles)} lines, one translated title per line, in the "
-        f"same order, with no numbering and no extra commentary:\n{numbered}"
-    )
-    try:
-        result = subprocess.run(
-            ["kiro-cli", "chat", prompt, "--model", "claude-haiku-4.5",
-             "--no-interactive", "--trust-tools=", "--wrap", "never"],
-            capture_output=True, text=True, timeout=90,
+    """One kiro-cli call translates a batch of short titles. Cached per
+    (title, lang) so the same English title translates identically whether
+    it's encountered via SUMMARY.md or README.md -- without this, two
+    independent calls for the same title (e.g. "Linux Basics") can come back
+    with different wording ("Linux 基础知识" vs "Linux 基础"), a real
+    inconsistency a quality-gate run caught. Falls back to the original
+    English titles (logged, non-fatal) if the model call fails or returns
+    the wrong line count -- an untranslated nav label is a minor quality
+    gap, not a broken build."""
+    uncached = [t for t in titles if (t, lang) not in _title_cache]
+    if uncached:
+        lang_name = LANG_NAMES[lang]
+        numbered = "\n".join(f"{i + 1}. {t}" for i, t in enumerate(uncached))
+        prompt = (
+            f"Translate each of the following {len(uncached)} short documentation titles "
+            f"FULLY into {lang_name} -- translate the whole title, do not leave generic "
+            f"English words untranslated and do not append the English original alongside "
+            f"the translation. The only exception: keep specific Kubernetes/AWS product or "
+            f"resource names (Pod, EKS, Karpenter, etc.) in English within an otherwise "
+            f"translated sentence. Output EXACTLY {len(uncached)} lines, one translated "
+            f"title per line, in the same order, with no numbering and no extra "
+            f"commentary:\n{numbered}"
         )
-        lines = [re.sub(r"\x1b\[[0-9;]*m", "", ln).strip() for ln in result.stdout.splitlines()]
-        lines = [re.sub(r"^\d+\.\s*", "", ln).strip() for ln in lines if ln.strip()]
-        if len(lines) == len(titles):
-            return lines
-        print(f"::warning::sync-nav: title translation returned {len(lines)}/{len(titles)} lines, keeping English", file=sys.stderr)
-    except Exception as e:
-        print(f"::warning::sync-nav: title translation failed ({e}), keeping English", file=sys.stderr)
-    return titles
+        try:
+            result = subprocess.run(
+                ["kiro-cli", "chat", prompt, "--model", "claude-haiku-4.5",
+                 "--no-interactive", "--trust-tools=", "--wrap", "never"],
+                capture_output=True, text=True, timeout=90,
+            )
+            lines = [_clean_kiro_line(ln) for ln in result.stdout.splitlines()]
+            lines = [re.sub(r"^\d+\.\s*", "", ln).strip() for ln in lines if ln.strip()]
+            if len(lines) == len(uncached):
+                for t, translated in zip(uncached, lines):
+                    _title_cache[(t, lang)] = translated
+            else:
+                print(f"::warning::sync-nav: title translation returned {len(lines)}/{len(uncached)} lines, keeping English", file=sys.stderr)
+                for t in uncached:
+                    _title_cache[(t, lang)] = t
+        except Exception as e:
+            print(f"::warning::sync-nav: title translation failed ({e}), keeping English", file=sys.stderr)
+            for t in uncached:
+                _title_cache[(t, lang)] = t
+
+    return [_title_cache[(t, lang)] for t in titles]
 
 
 class Node:
