@@ -19,6 +19,11 @@
   * [Laboratorio de Habilidades de operación de Linux](labs/basics/02-linux-advanced-lab.md)
   * [Laboratorio de Tecnología de contenedores](labs/basics/03-container-technology-lab.md)
 
+  * [Laboratorio de Pods y cargas de trabajo](labs/core/02-pods-and-workloads-lab.md)
+  * [Laboratorio de Servicios y redes](labs/core/03-services-networking-lab.md)
+  * [Laboratorio de Almacenamiento](labs/core/04-storage-lab.md)
+  * [Laboratorio de ConfigMap y Secret](labs/core/05-configuration-secrets-lab.md)
+
 ## Colección de cuestionarios
 
 * [Colección de cuestionarios - Cuestionarios por tema](quizzes/README.md)
@@ -32,8 +37,34 @@
   * [Cuestionario sobre Karpenter](quizzes/autoscaling/06-karpenter-quiz.md)
   * [Cuestionario sobre Knative](quizzes/autoscaling/03-knative-quiz.md)
 
+  * [Quiz de arquitectura del clúster](quizzes/core/01-cluster-architecture-quiz.md)
+  * [Quiz de pods y cargas de trabajo](quizzes/core/02-pods-and-workloads-quiz.md)
+  * [Quiz de servicios y redes](quizzes/core/03-services-networking-quiz.md)
+  * [Quiz de almacenamiento](quizzes/core/04-storage-quiz.md)
+  * [Quiz de configuración](quizzes/core/05-configuration-secrets-quiz.md)
+  * [Quiz de seguridad](quizzes/core/06-security-quiz.md)
+  * [Quiz de políticas](quizzes/core/07-policies-quiz.md)
+  * [Quiz de programación, apropiación y expulsión](quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+  * [Quiz de administración del clúster](quizzes/core/09-cluster-administration-quiz.md)
+  * [Quiz de Windows en Kubernetes](quizzes/core/10-windows-in-kubernetes-quiz.md)
+  * [Quiz de extensión de Kubernetes](quizzes/core/11-extending-kubernetes-quiz.md)
+
 ## Autoescalado
 
 * [KEDA](autoscaling/01-keda.md)
 * [Karpenter](autoscaling/02-karpenter.md)
 * [Knative](autoscaling/03-knative.md)
+
+## Conceptos básicos de Kubernetes
+
+* [Arquitectura del clúster](core/01-cluster-architecture.md)
+* [Pods y cargas de trabajo](core/02-pods-and-workloads.md)
+* [Servicios y redes](core/03-services-networking.md)
+* [Almacenamiento](core/04-storage.md)
+* [Configuración](core/05-configuration-secrets.md)
+* [Seguridad](core/06-security.md)
+* [Políticas](core/07-policies.md)
+* [Programación, apropiación y expulsión](core/08-scheduling-preemption-eviction.md)
+* [Administración del clúster](core/09-cluster-administration.md)
+* [Windows en Kubernetes](core/10-windows-in-kubernetes.md)
+* [Extensión de Kubernetes](core/11-extending-kubernetes.md)
