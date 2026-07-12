@@ -81,7 +81,7 @@ def translate_titles(titles, lang):
         )
         try:
             result = subprocess.run(
-                ["kiro-cli", "chat", prompt, "--model", "claude-haiku-4.5",
+                ["kiro-cli", "chat", prompt, "--model", "gpt-5.5",
                  "--no-interactive", "--trust-tools=", "--wrap", "never"],
                 capture_output=True, text=True, timeout=90,
             )
