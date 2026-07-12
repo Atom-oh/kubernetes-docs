@@ -15,3 +15,16 @@
 4. [Kubernetes 简介](./basics/04-kubernetes-introduction.md) | [Quiz](./quizzes/basics/04-kubernetes-introduction-quiz.md)
 5. [eBPF 基础与实践应用](./basics/05-ebpf-fundamentals.md) | [Quiz](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
 
+### EKS 上的数据
+1. [EKS 上的数据概述](./data-on-eks/README.md)
+2. **Kafka on EKS Deep Dive**
+   - [EKS 上的 Kafka 简介](./data-on-eks/kafka/README.md)
+   - [第 1 部分：Kafka 基础知识](./data-on-eks/kafka/01-kafka-fundamentals.md) | [Quiz](./quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+   - [第 2 部分：Strimzi Operator](./data-on-eks/kafka/02-strimzi-operator.md) | [Quiz](./quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
+   - [第 3 部分：Kafka 运维](./data-on-eks/kafka/03-kafka-operations.md) | [Quiz](./quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
+   - [第 4 部分：Schema Registry](./data-on-eks/kafka/04-schema-registry.md) | [Quiz](./quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)
+   - [第 5 部分：Kafka Connect 和 MirrorMaker](./data-on-eks/kafka/05-kafka-connect-mirrormaker.md) | [Quiz](./quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
+   - [第 6 部分：MSK 集成](./data-on-eks/kafka/06-msk-integration.md) | [Quiz](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
+   - [第 7 部分：监控](./data-on-eks/kafka/07-monitoring.md) | [Quiz](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
+   - [第 8 部分：最佳实践](./data-on-eks/kafka/08-best-practices.md) | [Quiz](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+
