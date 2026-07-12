@@ -15,3 +15,8 @@
 4. [Kubernetes 简介](./basics/04-kubernetes-introduction.md) | [Quiz](./quizzes/basics/04-kubernetes-introduction-quiz.md)
 5. [eBPF 基础与实践应用](./basics/05-ebpf-fundamentals.md) | [Quiz](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
 
+### 自动扩缩容
+1. [KEDA](./autoscaling/01-keda.md) | [Quiz](./quizzes/autoscaling/05-keda-quiz.md)
+2. [Karpenter](./autoscaling/02-karpenter.md) | [Quiz](./quizzes/autoscaling/06-karpenter-quiz.md)
+3. [Knative](./autoscaling/03-knative.md) | [Quiz](./quizzes/autoscaling/03-knative-quiz.md)
+

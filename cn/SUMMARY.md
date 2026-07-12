@@ -27,3 +27,13 @@
   * [容器技术测验](quizzes/basics/03-container-technology-quiz.md)
   * [Kubernetes 简介测验](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [eBPF 基础与实践应用测验](quizzes/basics/05-ebpf-fundamentals-quiz.md)
+
+  * [KEDA 测验](quizzes/autoscaling/05-keda-quiz.md)
+  * [Karpenter 测验](quizzes/autoscaling/06-karpenter-quiz.md)
+  * [Knative 测验](quizzes/autoscaling/03-knative-quiz.md)
+
+## 自动扩缩容
+
+* [KEDA](autoscaling/01-keda.md)
+* [Karpenter](autoscaling/02-karpenter.md)
+* [Knative](autoscaling/03-knative.md)

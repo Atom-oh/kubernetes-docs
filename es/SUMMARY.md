@@ -27,3 +27,13 @@
   * [Quiz de Tecnología de contenedores](quizzes/basics/03-container-technology-quiz.md)
   * [Quiz de Introducción a Kubernetes](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [Quiz de Fundamentos de eBPF y aplicaciones prácticas](quizzes/basics/05-ebpf-fundamentals-quiz.md)
+
+  * [Cuestionario sobre KEDA](quizzes/autoscaling/05-keda-quiz.md)
+  * [Cuestionario sobre Karpenter](quizzes/autoscaling/06-karpenter-quiz.md)
+  * [Cuestionario sobre Knative](quizzes/autoscaling/03-knative-quiz.md)
+
+## Autoescalado
+
+* [KEDA](autoscaling/01-keda.md)
+* [Karpenter](autoscaling/02-karpenter.md)
+* [Knative](autoscaling/03-knative.md)
