@@ -37,6 +37,10 @@
   * [第 7 部分：监控测验](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [第 8 部分：最佳实践测验](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
 
+  * [自定义调度器测验 - 第 1 部分](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+  * [自定义调度器测验 - 第 2 部分](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+  * [自定义调度器测验 - 第 3 部分](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+
 ## EKS 上的数据
 
 * [EKS 上的数据概述](data-on-eks/README.md)
@@ -58,3 +62,10 @@
 * [KEDA](autoscaling/01-keda.md)
 * [Karpenter](autoscaling/02-karpenter.md)
 * [Knative](autoscaling/03-knative.md)
+
+## 调度
+
+* [自定义调度器](scheduling/01-custom-scheduler-part1.md)
+  * [第 1 部分：基本概念](scheduling/01-custom-scheduler-part1.md)
+  * [第 2 部分：实现](scheduling/02-custom-scheduler-part2.md)
+  * [第 3 部分：高级功能](scheduling/03-custom-scheduler-part3.md)

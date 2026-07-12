@@ -32,8 +32,19 @@
   * [Cuestionario sobre Karpenter](quizzes/autoscaling/06-karpenter-quiz.md)
   * [Cuestionario sobre Knative](quizzes/autoscaling/03-knative-quiz.md)
 
+  * [Cuestionario sobre el planificador personalizado - Parte 1](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+  * [Cuestionario sobre el planificador personalizado - Parte 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+  * [Cuestionario sobre el planificador personalizado - Parte 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+
 ## Autoescalado
 
 * [KEDA](autoscaling/01-keda.md)
 * [Karpenter](autoscaling/02-karpenter.md)
 * [Knative](autoscaling/03-knative.md)
+
+## Planificación
+
+* [Planificador personalizado](scheduling/01-custom-scheduler-part1.md)
+  * [Parte 1: Conceptos básicos](scheduling/01-custom-scheduler-part1.md)
+  * [Parte 2: Implementación](scheduling/02-custom-scheduler-part2.md)
+  * [Parte 3: Funcionalidades avanzadas](scheduling/03-custom-scheduler-part3.md)

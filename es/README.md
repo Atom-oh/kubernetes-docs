@@ -20,3 +20,9 @@ Este sitio se está traduciendo automáticamente desde la [versión en inglés](
 2. [Karpenter](./autoscaling/02-karpenter.md) | [Quiz](./quizzes/autoscaling/06-karpenter-quiz.md)
 3. [Knative](./autoscaling/03-knative.md) | [Quiz](./quizzes/autoscaling/03-knative-quiz.md)
 
+### Planificación
+1. Custom Scheduler
+   - [Parte 1: Fundamentos del planificador personalizado](./scheduling/01-custom-scheduler-part1.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+   - [Parte 2: Extensiones del planificador y marco de trabajo](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+   - [Parte 3: Ejemplos de implementación del planificador personalizado y monitorización](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+
