@@ -102,10 +102,10 @@ jobs:
                  to today.
              - No match -> this item is changelog-only, do not edit any doc for it.
           3. Update the "갱신 로그" / "Update Log" list in ko/news/README.md and
-             en/news/README.md: prepend one line per doc you touched, e.g.
-             `- $WEEK: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — etcd v3.7.0 반영`
-             and one line per unmatched item with no doc link, e.g.
-             `- $WEEK: 매칭 문서 없음 — Cilium 1.20 프리릴리스 ([원문](https://...))`.
+             en/news/README.md: prepend one line per doc you touched, e.g. a bullet
+             linking the doc path with a short note like "etcd v3.7.0 반영", and one
+             line per unmatched item with no doc link but a link to its source
+             instead, noting "매칭 문서 없음". Use $WEEK as the entry's date/week label.
              (Use the English phrasing/section header in en/news/README.md.)
           4. Do not modify SUMMARY.md, quizzes, labs, or create any new files under
              news/. Do not touch news-topic-map.yml.
