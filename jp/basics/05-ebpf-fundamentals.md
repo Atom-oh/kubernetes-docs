@@ -1,0 +1,1588 @@
+# eBPF の基礎と Kubernetes での応用
+
+> **対応バージョン**: Linux Kernel 4.18+, Kubernetes 1.25+
+> **最終更新**: February 2025
+
+eBPF は、サンドボックス化されたプログラムを Linux kernel 内で実行できるようにする革新的な技術です。このドキュメントでは、eBPF の基本概念から Kubernetes 環境での実践的な応用までを扱います。
+
+## 目次
+
+* [1. eBPF 入門](#1-introduction-to-ebpf)
+* [2. eBPF アーキテクチャ](#2-ebpf-architecture)
+* [3. eBPF Program Type](#3-ebpf-program-types)
+* [4. eBPF 開発ツール](#4-ebpf-development-tools)
+* [5. eBPF と Kubernetes Networking](#5-ebpf-and-kubernetes-networking)
+* [6. eBPF ベースの Observability](#6-ebpf-based-observability)
+* [7. eBPF ベースの Security](#7-ebpf-based-security)
+* [8. 実践的な eBPF の例](#8-practical-ebpf-examples)
+* [9. eBPF の制限と考慮事項](#9-ebpf-limitations-and-considerations)
+* [10. 次のステップ](#10-next-steps)
+
+## Lab 環境のセットアップ
+
+このドキュメントの例に沿って進めるには、次の環境が必要です。
+
+### 前提条件
+- Linux kernel 4.18 以上（5.10+ 推奨）
+- bpftool, bcc-tools
+- Kubernetes cluster（任意）
+
+### 環境セットアップ
+
+```bash
+# Install required packages on Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install -y linux-tools-common linux-tools-generic bpfcc-tools
+
+# Check kernel version
+uname -r
+
+# Verify eBPF feature support
+sudo bpftool feature
+```
+
+---
+
+## 1. eBPF 入門
+
+### 1.1 eBPF とは？
+
+**eBPF (extended Berkeley Packet Filter)** は、ユーザー定義のプログラムを Linux kernel 内で安全に実行できるようにする技術です。もともとは BPF としてネットワークパケットフィルタリングのために設計されましたが、拡張され、現在では networking、security、tracing、performance analysis などさまざまな領域で使用されています。
+
+> **重要な概念**: eBPF を使うと、kernel source code を変更したり kernel module を読み込んだりせずに、kernel の動作を拡張および観察できます。
+
+```mermaid
+graph TB
+    subgraph "User Space"
+        A[Write eBPF Program] --> B[Compile]
+        B --> C[Load into Kernel via System Call]
+    end
+
+    subgraph "Kernel Space"
+        C --> D[Verifier]
+        D --> E[JIT Compilation]
+        E --> F[eBPF Program Execution]
+        F --> G[Event Hook Points]
+    end
+
+    G --> H[Network Packets]
+    G --> I[System Calls]
+    G --> J[Function Calls]
+    G --> K[Tracepoints]
+```
+
+### 1.2 従来の BPF から eBPF への進化
+
+**Original BPF (1992)**:
+- UC Berkeley で開発
+- ネットワークパケットのキャプチャとフィルタリングに特化
+- 2 個の 32-bit register
+- 最大 4,096 命令の制限
+
+**eBPF (2014~)**:
+- 64-bit architecture のサポート
+- 11 個の register
+- Maps による状態保存
+- さまざまな hook point のサポート
+- JIT compilation による native performance
+
+| Feature | Traditional BPF | eBPF |
+|---------|-----------------|------|
+| Register | 2 (32-bit) | 11 (64-bit) |
+| 命令数 | 4,096 | 100 万以上 |
+| Map support | なし | さまざまな map type |
+| Use case | Packet filtering | 汎用 kernel programming |
+| 呼び出し機能 | なし | Helper function、BPF-to-BPF call |
+| 状態保存 | 不可能 | map により可能 |
+
+### 1.3 なぜ eBPF は革新的なのか
+
+eBPF は次の理由で革新的です。
+
+1. **kernel 変更なしの機能拡張**: kernel source code を変更せずに kernel 機能を拡張できます
+2. **安全な実行**: Verifier がプログラムの安全性を保証します
+3. **高い performance**: JIT compilation により native code level の performance を実現します
+4. **動的読み込み**: 再起動せずにプログラムを load/unload できます
+5. **本番環境での安定性**: crash や無限 loop なしで安全に実行できます
+
+```mermaid
+graph LR
+    subgraph "Traditional Approach"
+        A1[Develop Kernel Module] --> B1[Compile Kernel]
+        B1 --> C1[Reboot Required]
+        C1 --> D1[System Instability Risk]
+    end
+
+    subgraph "eBPF Approach"
+        A2[Write eBPF Program] --> B2[Runtime Load]
+        B2 --> C2[Execute After Verification]
+        C2 --> D2[Safe Execution Guaranteed]
+    end
+```
+
+### 1.4 eBPF と Kernel Module の比較
+
+| Aspect | eBPF | Kernel Module |
+|--------|------|---------------|
+| **安全性** | Verifier が安全性を保証 | kernel を crash させる可能性あり |
+| **可搬性** | CO-RE により kernel version に依存しにくい | kernel version ごとの再 compilation が必要 |
+| **読み込み** | 動的 load/unload | insmod/rmmod が必要 |
+| **権限** | CAP_BPF または CAP_SYS_ADMIN | root 権限が必要 |
+| **Debugging** | 制限あり | 完全な kernel debugging が可能 |
+| **Performance** | JIT compilation で最適化 | Native performance |
+| **機能範囲** | 指定された hook point のみ | 無制限 |
+| **開発難易度** | 比較的容易 | 高い専門性が必要 |
+
+---
+
+## 2. eBPF アーキテクチャ
+
+### 2.1 eBPF 実行フロー
+
+```mermaid
+flowchart TB
+    A[Write eBPF Program in C/Rust] --> B[Compile to BPF Bytecode with Clang/LLVM]
+    B --> C[Load into Kernel via bpf System Call]
+    C --> D{Verifier}
+    D -->|Fail| E[Load Rejected + Error Message]
+    D -->|Success| F[JIT Compiler]
+    F --> G[Native Machine Code]
+    G --> H[Attach to Event Hook]
+    H --> I[Execute on Event Trigger]
+    I --> J[Store Data in eBPF Map]
+    J --> K[Read Data from User Space]
+```
+
+### 2.2 Verifier
+
+Verifier は eBPF の中核となる security mechanism です。プログラムが kernel 内で実行される前に、次の項目を検証します。
+
+**検証項目**:
+- 無限 loop がないこと（DAG 構造チェック）
+- 範囲外の memory access がないこと
+- 初期化されていない変数を使用していないこと
+- helper function の呼び出しが正しいこと
+- program termination が保証されていること
+
+```c
+// Example rejected by verifier
+int bad_example(void *ctx) {
+    int i;
+    for (i = 0; i < 1000000; i++) {  // Potential infinite loop
+        // ...
+    }
+    return 0;
+}
+
+// Example allowed by verifier
+int good_example(void *ctx) {
+    #pragma unroll
+    for (int i = 0; i < 10; i++) {  // Unrolled at compile time
+        // ...
+    }
+    return 0;
+}
+```
+
+### 2.3 JIT Compiler
+
+JIT (Just-In-Time) compiler は eBPF bytecode を native machine code に変換します。
+
+```bash
+# Check JIT compiler status
+cat /proc/sys/net/core/bpf_jit_enable
+
+# Enable JIT compiler (0: disabled, 1: enabled, 2: debug mode)
+echo 1 | sudo tee /proc/sys/net/core/bpf_jit_enable
+```
+
+**JIT Compilation の利点**:
+- interpreter と比較して 4〜5 倍の performance 向上
+- native CPU instruction として直接実行
+- architecture 固有の最適化を適用
+
+### 2.4 eBPF Maps
+
+eBPF maps は、kernel と user space の間で data を共有し、状態を保存するための data structure です。
+
+**主な Map Type**:
+
+| Map Type | Description | Use Case |
+|----------|-------------|----------|
+| `BPF_MAP_TYPE_HASH` | Hash table | Key-value storage、connection tracking |
+| `BPF_MAP_TYPE_ARRAY` | 固定長 array | index ベースの access、configuration value |
+| `BPF_MAP_TYPE_PERF_EVENT_ARRAY` | Event array | user space への event 送信 |
+| `BPF_MAP_TYPE_RINGBUF` | Ring buffer | 高 performance event streaming |
+| `BPF_MAP_TYPE_LRU_HASH` | LRU hash | Cache、自動 entry eviction |
+| `BPF_MAP_TYPE_PERCPU_ARRAY` | Per-CPU array | lock-free な statistics collection |
+| `BPF_MAP_TYPE_LPM_TRIE` | LPM trie | IP address matching、routing |
+
+```c
+// Hash map definition example
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __uint(max_entries, 1024);
+    __type(key, __u32);      // Key: Process ID
+    __type(value, __u64);    // Value: Counter
+} packet_count SEC(".maps");
+```
+
+### 2.5 Helper Functions
+
+eBPF programs は、kernel が提供する helper functions を通じて kernel functions に access します。
+
+**主な Helper Functions**:
+
+```c
+// Map manipulation
+void *bpf_map_lookup_elem(struct bpf_map *map, const void *key);
+int bpf_map_update_elem(struct bpf_map *map, const void *key, const void *value, u64 flags);
+int bpf_map_delete_elem(struct bpf_map *map, const void *key);
+
+// Time-related
+u64 bpf_ktime_get_ns(void);  // Current time in nanoseconds
+
+// Packet manipulation
+int bpf_skb_load_bytes(const struct sk_buff *skb, u32 offset, void *to, u32 len);
+int bpf_xdp_adjust_head(struct xdp_md *xdp_md, int delta);
+
+// Tracing
+int bpf_probe_read(void *dst, u32 size, const void *src);
+int bpf_trace_printk(const char *fmt, u32 fmt_size, ...);
+
+// Process information
+u64 bpf_get_current_pid_tgid(void);    // Get PID/TGID
+u64 bpf_get_current_uid_gid(void);     // Get UID/GID
+int bpf_get_current_comm(void *buf, u32 size);  // Process name
+```
+
+### 2.6 Program Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Write: Write code in C/Rust
+    Write --> Compile: Clang/LLVM
+    Compile --> Load: bpf() syscall
+    Load --> Verify: Run verifier
+    Verify --> JIT: Verification success
+    Verify --> [*]: Verification failure
+    JIT --> Attach: Attach to hook point
+    Attach --> Execute: On event trigger
+    Execute --> Execute: Repeated execution
+    Attach --> Detach: Explicit detach
+    Detach --> [*]: Program unload
+```
+
+---
+
+## 3. eBPF Program Type
+
+### 3.1 XDP (eXpress Data Path)
+
+XDP は、network driver level で packet を処理する最速の方法です。
+
+```mermaid
+graph LR
+    A[NIC] --> B{XDP Program}
+    B -->|XDP_DROP| C[Drop Packet]
+    B -->|XDP_PASS| D[Pass to Kernel Stack]
+    B -->|XDP_TX| E[Return to Same NIC]
+    B -->|XDP_REDIRECT| F[Redirect to Another Interface]
+    B -->|XDP_ABORTED| G[Error Handling]
+```
+
+**XDP Operation Mode**:
+| Mode | Description | Performance |
+|------|-------------|-------------|
+| Native XDP | NIC driver 内で直接実行 | 最高 |
+| Offloaded XDP | smart NIC 上で実行 | 最高+ |
+| Generic XDP | software emulation | test 用 |
+
+```c
+// XDP program example: Drop traffic on specific port
+SEC("xdp")
+int xdp_drop_port(struct xdp_md *ctx) {
+    void *data = (void *)(long)ctx->data;
+    void *data_end = (void *)(long)ctx->data_end;
+
+    struct ethhdr *eth = data;
+    if ((void *)(eth + 1) > data_end)
+        return XDP_PASS;
+
+    if (eth->h_proto != htons(ETH_P_IP))
+        return XDP_PASS;
+
+    struct iphdr *ip = (void *)(eth + 1);
+    if ((void *)(ip + 1) > data_end)
+        return XDP_PASS;
+
+    if (ip->protocol != IPPROTO_TCP)
+        return XDP_PASS;
+
+    struct tcphdr *tcp = (void *)ip + (ip->ihl * 4);
+    if ((void *)(tcp + 1) > data_end)
+        return XDP_PASS;
+
+    // Drop port 8080 traffic
+    if (tcp->dest == htons(8080))
+        return XDP_DROP;
+
+    return XDP_PASS;
+}
+```
+
+### 3.2 TC (Traffic Control)
+
+TC programs は、network stack の traffic control layer で実行されます。
+
+```bash
+# TC program attachment example
+tc qdisc add dev eth0 clsact
+tc filter add dev eth0 ingress bpf da obj tc_prog.o sec classifier
+tc filter add dev eth0 egress bpf da obj tc_prog.o sec classifier
+```
+
+**TC と XDP の比較**:
+| Feature | XDP | TC |
+|---------|-----|-----|
+| 実行場所 | Driver level | Network stack |
+| Performance | 最高 | 高い |
+| SKB access | 不可能 | 可能 |
+| Direction | Ingress のみ | Ingress と egress の両方 |
+| Packet modification | 制限あり | 柔軟 |
+
+### 3.3 Kprobes/Uprobes
+
+Kprobes と Uprobes は function call を動的に trace します。
+
+```c
+// Kprobe example: Trace tcp_connect function
+SEC("kprobe/tcp_connect")
+int BPF_KPROBE(trace_tcp_connect, struct sock *sk) {
+    u32 pid = bpf_get_current_pid_tgid() >> 32;
+
+    // Get destination IP address
+    u32 daddr = BPF_CORE_READ(sk, __sk_common.skc_daddr);
+    u16 dport = BPF_CORE_READ(sk, __sk_common.skc_dport);
+
+    bpf_printk("PID %d connecting to %pI4:%d\n", pid, &daddr, ntohs(dport));
+    return 0;
+}
+
+// Uprobe example: Trace malloc function
+SEC("uprobe/libc.so.6:malloc")
+int BPF_UPROBE(trace_malloc, size_t size) {
+    u32 pid = bpf_get_current_pid_tgid() >> 32;
+    bpf_printk("PID %d malloc(%zu)\n", pid, size);
+    return 0;
+}
+```
+
+### 3.4 Tracepoints
+
+Tracepoints は kernel 内で事前定義された静的な trace point です。
+
+```bash
+# Check available tracepoints
+sudo ls /sys/kernel/debug/tracing/events/
+
+# Tracepoints in specific categories
+sudo ls /sys/kernel/debug/tracing/events/sched/
+sudo ls /sys/kernel/debug/tracing/events/syscalls/
+```
+
+```c
+// Tracepoint example: Trace process execution
+SEC("tracepoint/sched/sched_process_exec")
+int handle_exec(struct trace_event_raw_sched_process_exec *ctx) {
+    char comm[16];
+    bpf_get_current_comm(&comm, sizeof(comm));
+
+    u32 pid = bpf_get_current_pid_tgid() >> 32;
+    bpf_printk("Process started: %s (PID: %d)\n", comm, pid);
+
+    return 0;
+}
+```
+
+### 3.5 LSM (Linux Security Module) BPF
+
+LSM BPF は security policy を動的に適用します。
+
+```c
+// LSM BPF example: Restrict file opening
+SEC("lsm/file_open")
+int BPF_PROG(restrict_file_open, struct file *file, int ret) {
+    if (ret != 0)
+        return ret;
+
+    char path[256];
+    bpf_d_path(&file->f_path, path, sizeof(path));
+
+    // Block access to /etc/shadow
+    if (bpf_strncmp(path, 11, "/etc/shadow") == 0)
+        return -EACCES;
+
+    return 0;
+}
+```
+
+### 3.6 Socket Filter
+
+Socket level で packet を filter します。
+
+```c
+// Socket Filter example
+SEC("socket")
+int socket_filter(struct __sk_buff *skb) {
+    // Allow only IPv4 packets
+    if (skb->protocol != htons(ETH_P_IP))
+        return 0;  // Drop
+
+    return skb->len;  // Return packet length (allow)
+}
+```
+
+### 3.7 Cgroup Programs
+
+Container resource と networking を制御します。
+
+```c
+// Cgroup socket program example: Block external connections
+SEC("cgroup/connect4")
+int restrict_connect(struct bpf_sock_addr *ctx) {
+    // Block connections that are not to local network
+    __u32 dst = ctx->user_ip4;
+
+    // Allow only 10.0.0.0/8 range
+    if ((dst & 0xFF) != 10)
+        return 0;  // Deny connection
+
+    return 1;  // Allow connection
+}
+```
+
+---
+
+## 4. eBPF 開発ツール
+
+### 4.1 bpftool
+
+bpftool は eBPF programs と maps を管理するための公式ツールです。
+
+```bash
+# List loaded eBPF programs
+sudo bpftool prog list
+
+# Program details
+sudo bpftool prog show id <ID>
+
+# Program dump (bytecode)
+sudo bpftool prog dump xlated id <ID>
+
+# JIT compiled code dump
+sudo bpftool prog dump jited id <ID>
+
+# Map list
+sudo bpftool map list
+
+# Query map contents
+sudo bpftool map dump id <MAP_ID>
+
+# Add value to map
+sudo bpftool map update id <MAP_ID> key 0x01 0x00 0x00 0x00 value 0xFF 0x00 0x00 0x00
+
+# Check kernel eBPF features
+sudo bpftool feature
+
+# BTF (BPF Type Format) information
+sudo bpftool btf list
+```
+
+### 4.2 bpftrace
+
+bpftrace は DTrace style の高水準 tracing language です。
+
+```bash
+# Installation
+sudo apt-get install -y bpftrace
+
+# System call count
+sudo bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }'
+
+# Read bytes per process
+sudo bpftrace -e 'tracepoint:syscalls:sys_exit_read /args->ret > 0/ { @bytes[comm] = sum(args->ret); }'
+
+# File open tracing
+sudo bpftrace -e 'tracepoint:syscalls:sys_enter_openat { printf("%s opened %s\n", comm, str(args->filename)); }'
+
+# TCP connection tracing
+sudo bpftrace -e 'kprobe:tcp_connect { printf("%s -> %s\n", ntop(((struct sock *)arg0)->__sk_common.skc_rcv_saddr), ntop(((struct sock *)arg0)->__sk_common.skc_daddr)); }'
+
+# Latency histogram
+sudo bpftrace -e 'kprobe:vfs_read { @start[tid] = nsecs; } kretprobe:vfs_read /@start[tid]/ { @ns = hist(nsecs - @start[tid]); delete(@start[tid]); }'
+```
+
+**便利な bpftrace One-liners**:
+
+```bash
+# Top CPU-consuming processes
+sudo bpftrace -e 'profile:hz:99 { @[comm] = count(); }'
+
+# Block I/O latency
+sudo bpftrace -e 'tracepoint:block:block_rq_issue { @start[args->dev, args->sector] = nsecs; } tracepoint:block:block_rq_complete /@start[args->dev, args->sector]/ { @usecs = hist((nsecs - @start[args->dev, args->sector]) / 1000); delete(@start[args->dev, args->sector]); }'
+
+# New process tracing
+sudo bpftrace -e 'tracepoint:sched:sched_process_exec { printf("%-10d %-16s\n", pid, comm); }'
+
+# Memory allocation tracing
+sudo bpftrace -e 'tracepoint:kmem:kmalloc { @bytes = hist(args->bytes_alloc); }'
+```
+
+### 4.3 BCC (BPF Compiler Collection)
+
+BCC は Python と Lua を通じて eBPF programs を記述できる toolkit です。
+
+```bash
+# Installation
+sudo apt-get install -y bpfcc-tools python3-bpfcc
+
+# Included tools
+ls /usr/share/bcc/tools/
+```
+
+**主な BCC Tools**:
+
+| Tool | Description |
+|------|-------------|
+| `execsnoop` | 新しい process execution を trace |
+| `opensnoop` | file open を trace |
+| `biolatency` | Block I/O latency |
+| `tcpconnect` | TCP connection を trace |
+| `tcpaccept` | TCP incoming connection を trace |
+| `tcpretrans` | TCP retransmission を trace |
+| `runqlat` | CPU run queue latency |
+| `profile` | CPU profiling |
+| `funccount` | function call count |
+| `trace` | 汎用 function tracing |
+
+```bash
+# Usage examples
+sudo /usr/share/bcc/tools/execsnoop    # Trace process execution
+sudo /usr/share/bcc/tools/tcpconnect   # Trace TCP connections
+sudo /usr/share/bcc/tools/biolatency   # Disk I/O latency
+sudo /usr/share/bcc/tools/profile -F 99 10  # CPU profiling for 10 seconds
+```
+
+### 4.4 libbpf と CO-RE
+
+libbpf は eBPF programs を読み込むための C library で、CO-RE (Compile Once, Run Everywhere) をサポートします。
+
+**CO-RE の利点**:
+- コンパイル済みの eBPF programs をさまざまな kernel version で実行
+- BTF (BPF Type Format) を使用した struct relocation
+- kernel header への依存を削減
+
+```c
+// Example using CO-RE
+#include "vmlinux.h"
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_core_read.h>
+
+SEC("kprobe/do_sys_open")
+int BPF_KPROBE(do_sys_open, int dfd, const char *filename) {
+    u32 pid = bpf_get_current_pid_tgid() >> 32;
+
+    char fname[256];
+    bpf_probe_read_user_str(fname, sizeof(fname), filename);
+
+    bpf_printk("PID %d opened: %s\n", pid, fname);
+    return 0;
+}
+
+char LICENSE[] SEC("license") = "GPL";
+```
+
+**BTF の生成と検証**:
+
+```bash
+# Check BTF support
+ls /sys/kernel/btf/vmlinux
+
+# Generate vmlinux.h (for CO-RE development)
+bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
+
+# Check program BTF information
+bpftool prog show id <ID> --pretty
+```
+
+---
+
+## 5. eBPF と Kubernetes Networking
+
+### 5.1 Cilium: eBPF ベースの CNI
+
+Cilium は、eBPF を活用する最も代表的な Kubernetes CNI (Container Network Interface) です。
+
+```mermaid
+graph TB
+    subgraph "Cilium Architecture"
+        A[Kubernetes API] --> B[Cilium Agent]
+        B --> C[eBPF Dataplane]
+        C --> D[XDP Programs]
+        C --> E[TC Programs]
+        C --> F[Socket Programs]
+    end
+
+    subgraph "Features"
+        D --> G[DDoS Protection]
+        E --> H[Network Policy]
+        E --> I[Load Balancing]
+        F --> J[Socket-level Routing]
+    end
+```
+
+#### kube-proxy Replacement
+
+Cilium は eBPF を使用して kube-proxy を完全に置き換えることができます。
+
+**従来の kube-proxy (iptables mode)**:
+```
+Packet → Netfilter → iptables rule evaluation → DNAT → Routing
+```
+
+**Cilium eBPF mode**:
+```
+Packet → eBPF map lookup → Direct routing
+```
+
+```bash
+# Install Cilium (kube-proxy replacement mode)
+helm install cilium cilium/cilium --version 1.14.0 \
+  --namespace kube-system \
+  --set kubeProxyReplacement=strict \
+  --set k8sServiceHost=${API_SERVER_IP} \
+  --set k8sServicePort=${API_SERVER_PORT}
+
+# Remove kube-proxy
+kubectl -n kube-system delete ds kube-proxy
+kubectl -n kube-system delete cm kube-proxy
+```
+
+#### Network Policy
+
+Cilium は eBPF を使用して L3/L4/L7 network policy を適用します。
+
+```yaml
+# Cilium network policy example
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-http-only
+spec:
+  endpointSelector:
+    matchLabels:
+      app: web
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: frontend
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: "/api/.*"
+```
+
+#### Load Balancing
+
+```yaml
+# Cilium LoadBalancer service example
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+  annotations:
+    io.cilium/lb-ipam-ips: "192.168.1.100"
+spec:
+  type: LoadBalancer
+  selector:
+    app: my-app
+  ports:
+    - port: 80
+      targetPort: 8080
+```
+
+### 5.2 Calico eBPF Mode
+
+Calico も eBPF dataplane をサポートします。
+
+```bash
+# Enable Calico eBPF mode
+kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF"}}}'
+```
+
+**Calico eBPF Mode の機能**:
+- Source IP preservation
+- Direct Server Return (DSR) support
+- Host endpoint policies
+- 暗号化された node 間通信
+
+### 5.3 Performance Comparison: iptables vs eBPF
+
+| Aspect | iptables | eBPF |
+|--------|----------|------|
+| **Scalability** | O(n) - service 数に比例 | O(1) - map lookup |
+| **Latency** | rule 数に応じて増加 | 一定 |
+| **CPU usage** | 高い | 低い |
+| **Updates** | table 全体の rewrite | map entry update |
+| **Observability** | 制限あり | Hubble integration |
+| **Memory** | rule ごとの memory | 最適化された map structure |
+
+**Benchmark Results**（1000 services に基づく）:
+
+```
+| Metric                  | iptables    | eBPF      | Improvement |
+|------------------------|-------------|-----------|-------------|
+| Connection setup time  | 2.5ms       | 0.3ms     | 8.3x        |
+| CPU usage              | 15%         | 3%        | 5x          |
+| Memory usage           | 256MB       | 32MB      | 8x          |
+| Connections per second | 50,000      | 250,000   | 5x          |
+```
+
+```bash
+# Check Cilium status
+cilium status
+
+# Check eBPF maps
+cilium bpf lb list
+cilium bpf ct list global
+
+# Network policy status
+cilium policy get
+```
+
+---
+
+## 6. eBPF ベースの Observability
+
+eBPF により、system と application の動作を深く観察できます。従来の agent ベースの monitoring とは異なり、eBPF は kernel level で data を収集するため、より豊富な情報を低い overhead で提供します。
+
+### 6.1 Hubble: Cilium Network Observability
+
+Hubble は Cilium に組み込まれている network observability platform です。
+
+```mermaid
+graph TB
+    subgraph "Hubble Architecture"
+        A[Cilium Agent] --> B[eBPF Dataplane]
+        B --> C[Hubble Observer]
+        C --> D[Hubble Relay]
+        D --> E[Hubble UI]
+        D --> F[Hubble CLI]
+    end
+
+    subgraph "Collected Data"
+        B --> G[Network Flows]
+        B --> H[DNS Queries]
+        B --> I[HTTP Requests]
+        B --> J[Policy Decisions]
+    end
+```
+
+```bash
+# Install Hubble
+helm upgrade cilium cilium/cilium --version 1.14.0 \
+  --namespace kube-system \
+  --reuse-values \
+  --set hubble.relay.enabled=true \
+  --set hubble.ui.enabled=true
+
+# Use Hubble CLI
+hubble observe --pod my-pod
+hubble observe --namespace default
+hubble observe --protocol http
+hubble observe --verdict DROPPED
+
+# Observe traffic between specific services
+hubble observe --from-pod default/frontend --to-pod default/backend
+
+# Real-time network flow monitoring
+hubble observe -f --type trace
+
+# Generate service map
+hubble observe --namespace default -o jsonpb | hubble relay --serviceMap
+```
+
+**Hubble UI への access**:
+
+```bash
+# Port forwarding
+kubectl port-forward -n kube-system svc/hubble-ui 12000:80
+
+# Access http://localhost:12000 in browser
+```
+
+### 6.2 Pixie: Auto-instrumentation Observability
+
+Pixie は eBPF を使用して、application code を変更せずに telemetry を自動収集します。
+
+**Pixie の機能**:
+- 自動 protocol parsing（HTTP, gRPC, MySQL, PostgreSQL, Kafka など）
+- 自動 service map generation
+- Distributed tracing
+- CPU profiling
+- Dynamic logging
+
+```bash
+# Install Pixie
+px deploy
+
+# Pixie CLI query examples
+# HTTP request latency
+px script run px/http_data
+
+# Traffic between services
+px script run px/service_stats
+
+# Slow request analysis
+px script run px/slow_requests -- start_time=-5m latency_ns=100000000
+
+# Pod resource usage
+px script run px/pod_stats
+```
+
+**PxL (Pixie Query Language) の例**:
+
+```python
+# Find slow HTTP requests
+import px
+
+df = px.DataFrame(table='http_events', start_time='-5m')
+df = df[df.latency > 100000000]  # Over 100ms
+df = df.groupby(['service', 'req_path']).agg(
+    count=('latency', px.count),
+    avg_latency=('latency', px.mean),
+    p99_latency=('latency', px.quantiles, 0.99)
+)
+px.display(df)
+```
+
+### 6.3 Coroot: "No-Code" Monitoring
+
+Coroot は eBPF を使用して、追加設定なしで system を自動 monitoring します。
+
+```bash
+# Install Coroot with Helm
+helm repo add coroot https://coroot.github.io/helm-charts
+helm install coroot coroot/coroot -n coroot --create-namespace
+```
+
+**Coroot の機能**:
+- 自動 service discovery
+- 自動 dependency map generation
+- SLO monitoring
+- Anomaly detection
+- Root cause analysis
+
+### 6.4 Kepler: Energy Consumption Monitoring
+
+Kepler (Kubernetes-based Efficient Power Level Exporter) は eBPF を使用して container の energy consumption を monitoring します。
+
+```bash
+# Install Kepler
+kubectl apply -f https://raw.githubusercontent.com/sustainable-computing-io/kepler/main/manifests/kubernetes/deployment.yaml
+
+# Check Prometheus metrics
+curl localhost:9103/metrics | grep kepler
+```
+
+**Kepler Metrics**:
+- `kepler_container_joules_total`: container ごとの energy consumption
+- `kepler_container_gpu_joules_total`: GPU energy consumption
+- `kepler_node_core_joules_total`: Node CPU energy
+
+### 6.5 Traditional Agents vs eBPF Instrumentation の比較
+
+| Aspect | Traditional Agents | eBPF Instrumentation |
+|--------|-------------------|---------------------|
+| **Overhead** | 高い (5-15%) | 低い (<1%) |
+| **Code modification** | 必要 (SDK/library) | 不要 |
+| **Coverage** | instrumented parts のみ | system 全体 |
+| **Deployment** | application ごと | node ごと |
+| **Privileges** | 通常権限 | CAP_BPF が必要 |
+| **Data depth** | Application level | Kernel level |
+| **Protocol support** | 明示的な support が必要 | 自動 parsing |
+
+```mermaid
+graph LR
+    subgraph "Traditional Approach"
+        A1[Application] --> B1[SDK/Agent]
+        B1 --> C1[Metrics Collection]
+        C1 --> D1[Monitoring Backend]
+    end
+
+    subgraph "eBPF Approach"
+        A2[Application] --> B2[Kernel]
+        B2 --> C2[eBPF Program]
+        C2 --> D2[Monitoring Backend]
+    end
+```
+
+---
+
+## 7. eBPF ベースの Security
+
+### 7.1 Tetragon: Runtime Security
+
+Tetragon は Cilium project が提供する eBPF ベースの runtime security solution です。
+
+```mermaid
+graph TB
+    subgraph "Tetragon Architecture"
+        A[Tetragon Agent] --> B[eBPF Sensors]
+        B --> C[Process Tracing]
+        B --> D[Network Tracing]
+        B --> E[File Tracing]
+    end
+
+    subgraph "Policy Enforcement"
+        C --> F[Process Kill]
+        D --> G[Network Block]
+        E --> H[File Access Deny]
+    end
+
+    I[TracingPolicy CRD] --> A
+```
+
+```bash
+# Install Tetragon
+helm repo add cilium https://helm.cilium.io
+helm install tetragon cilium/tetragon -n kube-system
+
+# Observe events
+kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout -f | tetra getevents -o compact
+```
+
+**TracingPolicy の例**:
+
+```yaml
+# Monitor sensitive file access
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: sensitive-file-access
+spec:
+  kprobes:
+    - call: security_file_open
+      syscall: false
+      args:
+        - index: 0
+          type: file
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: Prefix
+              values:
+                - /etc/shadow
+                - /etc/passwd
+                - /etc/sudoers
+          matchActions:
+            - action: Sigkill  # Terminate process
+```
+
+```yaml
+# Network connection control
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: restrict-outbound
+spec:
+  kprobes:
+    - call: tcp_connect
+      syscall: false
+      args:
+        - index: 0
+          type: sock
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: NotEqual
+              values:
+                - "10.0.0.0/8"  # Internal network
+          matchActions:
+            - action: Sigkill
+```
+
+### 7.2 Falco: eBPF ベースの Anomaly Detection
+
+Falco は eBPF を使用して runtime の anomalous behavior を検出する CNCF project です。
+
+```bash
+# Install Falco (eBPF driver)
+helm repo add falcosecurity https://falcosecurity.github.io/charts
+helm install falco falcosecurity/falco \
+  --namespace falco --create-namespace \
+  --set driver.kind=modern_ebpf
+```
+
+**Falco Rule の例**:
+
+```yaml
+# Detect reading of /etc/shadow
+- rule: Read sensitive file
+  desc: Detect reading of sensitive files
+  condition: >
+    open_read and
+    fd.name in (/etc/shadow, /etc/sudoers) and
+    not proc.name in (systemd, sudo, login)
+  output: >
+    Sensitive file opened (file=%fd.name user=%user.name
+    process=%proc.name container=%container.name)
+  priority: WARNING
+
+# Detect shell execution in container
+- rule: Shell in container
+  desc: Detect shell execution in container
+  condition: >
+    spawned_process and
+    container and
+    proc.name in (bash, sh, zsh, dash) and
+    proc.pname != containerd-shim
+  output: >
+    Shell spawned in container (container=%container.name
+    shell=%proc.name parent=%proc.pname)
+  priority: NOTICE
+
+# Detect privilege escalation
+- rule: Privilege escalation
+  desc: Detect privilege escalation attempts
+  condition: >
+    spawned_process and
+    proc.name in (sudo, su, doas) and
+    container
+  output: >
+    Privilege escalation attempt (user=%user.name
+    command=%proc.cmdline container=%container.name)
+  priority: WARNING
+```
+
+### 7.3 seccomp-bpf: System Call Filtering
+
+seccomp-bpf は BPF を使用して、process が実行できる system call を制限します。
+
+```yaml
+# Apply seccomp profile in Kubernetes Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-pod
+spec:
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault  # or Localhost
+  containers:
+    - name: app
+      image: nginx
+```
+
+**Custom seccomp Profile**:
+
+```json
+{
+  "defaultAction": "SCMP_ACT_ERRNO",
+  "architectures": ["SCMP_ARCH_X86_64"],
+  "syscalls": [
+    {
+      "names": ["read", "write", "open", "close", "stat", "fstat", "mmap", "mprotect", "munmap", "brk", "rt_sigaction", "rt_sigprocmask", "ioctl", "access", "pipe", "select", "sched_yield", "mremap", "msync", "mincore", "madvise", "shmget", "shmat", "shmctl", "dup", "dup2", "pause", "nanosleep", "getitimer", "alarm", "setitimer", "getpid", "socket", "connect", "accept", "sendto", "recvfrom", "bind", "listen", "getsockname", "getpeername", "socketpair", "setsockopt", "getsockopt", "clone", "fork", "vfork", "execve", "exit", "wait4", "kill", "uname", "fcntl", "flock", "fsync", "fdatasync", "truncate", "ftruncate", "getdents", "getcwd", "chdir", "rename", "mkdir", "rmdir", "creat", "link", "unlink", "symlink", "readlink", "chmod", "fchmod", "chown", "fchown", "lchown", "umask", "gettimeofday", "getrlimit", "getrusage", "sysinfo", "times", "ptrace", "getuid", "syslog", "getgid", "setuid", "setgid", "geteuid", "getegid", "setpgid", "getppid", "getpgrp", "setsid", "setreuid", "setregid", "getgroups", "setgroups", "setresuid", "getresuid", "setresgid", "getresgid", "getpgid", "setfsuid", "setfsgid", "getsid", "capget", "capset", "rt_sigpending", "rt_sigtimedwait", "rt_sigqueueinfo", "rt_sigsuspend", "sigaltstack", "utime", "mknod", "personality", "ustat", "statfs", "fstatfs", "sysfs", "getpriority", "setpriority", "sched_setparam", "sched_getparam", "sched_setscheduler", "sched_getscheduler", "sched_get_priority_max", "sched_get_priority_min", "sched_rr_get_interval", "mlock", "munlock", "mlockall", "munlockall", "vhangup", "pivot_root", "prctl", "arch_prctl", "adjtimex", "setrlimit", "chroot", "sync", "acct", "settimeofday", "mount", "umount2", "swapon", "swapoff", "reboot", "sethostname", "setdomainname", "ioperm", "iopl", "create_module", "init_module", "delete_module", "get_kernel_syms", "query_module", "quotactl", "nfsservctl", "getpmsg", "putpmsg", "afs_syscall", "tuxcall", "security", "gettid", "readahead", "setxattr", "lsetxattr", "fsetxattr", "getxattr", "lgetxattr", "fgetxattr", "listxattr", "llistxattr", "flistxattr", "removexattr", "lremovexattr", "fremovexattr", "tkill", "time", "futex", "sched_setaffinity", "sched_getaffinity", "set_thread_area", "io_setup", "io_destroy", "io_getevents", "io_submit", "io_cancel", "get_thread_area", "lookup_dcookie", "epoll_create", "epoll_ctl_old", "epoll_wait_old", "remap_file_pages", "getdents64", "set_tid_address", "restart_syscall", "semtimedop", "fadvise64", "timer_create", "timer_settime", "timer_gettime", "timer_getoverrun", "timer_delete", "clock_settime", "clock_gettime", "clock_getres", "clock_nanosleep", "exit_group", "epoll_wait", "epoll_ctl", "tgkill", "utimes", "vserver", "mbind", "set_mempolicy", "get_mempolicy", "mq_open", "mq_unlink", "mq_timedsend", "mq_timedreceive", "mq_notify", "mq_getsetattr", "kexec_load", "waitid", "add_key", "request_key", "keyctl", "ioprio_set", "ioprio_get", "inotify_init", "inotify_add_watch", "inotify_rm_watch", "migrate_pages", "openat", "mkdirat", "mknodat", "fchownat", "futimesat", "newfstatat", "unlinkat", "renameat", "linkat", "symlinkat", "readlinkat", "fchmodat", "faccessat", "pselect6", "ppoll", "unshare", "set_robust_list", "get_robust_list", "splice", "tee", "sync_file_range", "vmsplice", "move_pages", "utimensat", "epoll_pwait", "signalfd", "timerfd_create", "eventfd", "fallocate", "timerfd_settime", "timerfd_gettime", "accept4", "signalfd4", "eventfd2", "epoll_create1", "dup3", "pipe2", "inotify_init1", "preadv", "pwritev", "rt_tgsigqueueinfo", "perf_event_open", "recvmmsg", "fanotify_init", "fanotify_mark", "prlimit64", "name_to_handle_at", "open_by_handle_at", "clock_adjtime", "syncfs", "sendmmsg", "setns", "getcpu", "process_vm_readv", "process_vm_writev", "kcmp", "finit_module", "sched_setattr", "sched_getattr", "renameat2", "seccomp", "getrandom", "memfd_create", "kexec_file_load", "bpf"],
+      "action": "SCMP_ACT_ALLOW"
+    }
+  ]
+}
+```
+
+### 7.4 LSM BPF: Dynamic Security Policies
+
+LSM BPF は Linux Security Module と eBPF を組み合わせ、security policy を動的に適用します。
+
+```c
+// LSM BPF example: Restrict executable files
+SEC("lsm/bprm_check_security")
+int BPF_PROG(restrict_exec, struct linux_binprm *bprm, int ret) {
+    char filename[256];
+    bpf_probe_read_kernel_str(filename, sizeof(filename), bprm->filename);
+
+    // Block execution from /tmp
+    if (bpf_strncmp(filename, 5, "/tmp/") == 0)
+        return -EPERM;
+
+    return 0;
+}
+
+// LSM BPF example: Restrict network sockets
+SEC("lsm/socket_connect")
+int BPF_PROG(restrict_connect, struct socket *sock, struct sockaddr *address, int addrlen, int ret) {
+    if (ret != 0)
+        return ret;
+
+    struct sockaddr_in *addr = (struct sockaddr_in *)address;
+
+    // Block connection to specific port
+    if (ntohs(addr->sin_port) == 6666)
+        return -EACCES;
+
+    return 0;
+}
+```
+
+---
+
+## 8. 実践的な eBPF の例
+
+### 8.1 bpftrace による System Performance Analysis
+
+**TCP Connection Tracing**:
+
+```bash
+# TCP connection tracing
+sudo bpftrace -e '
+tracepoint:tcp:tcp_connect {
+    printf("%s -> %s:%d\n",
+        ntop(args->saddr),
+        ntop(args->daddr),
+        args->dport);
+}'
+```
+
+**System Call Latency Analysis**:
+
+```bash
+# Read system call latency histogram
+sudo bpftrace -e '
+tracepoint:syscalls:sys_enter_read { @start[tid] = nsecs; }
+tracepoint:syscalls:sys_exit_read /@start[tid]/ {
+    @latency = hist((nsecs - @start[tid]) / 1000);
+    delete(@start[tid]);
+}'
+```
+
+**Disk I/O Analysis**:
+
+```bash
+# Block I/O request tracing
+sudo bpftrace -e '
+tracepoint:block:block_rq_issue {
+    printf("%s %s %d\n",
+        comm,
+        args->rwbs,
+        args->bytes / 1024);
+}'
+
+# I/O latency histogram
+sudo bpftrace -e '
+tracepoint:block:block_rq_issue { @start[args->dev, args->sector] = nsecs; }
+tracepoint:block:block_rq_complete /@start[args->dev, args->sector]/ {
+    @us = hist((nsecs - @start[args->dev, args->sector]) / 1000);
+    delete(@start[args->dev, args->sector]);
+}'
+```
+
+### 8.2 Cilium Hubble による Network Flow Observation
+
+```bash
+# Real-time network flow observation
+hubble observe -f
+
+# Specific namespace traffic
+hubble observe --namespace production
+
+# Filter HTTP traffic only
+hubble observe --protocol http
+
+# Analyze dropped packets
+hubble observe --verdict DROPPED
+
+# DNS query tracing
+hubble observe --protocol dns
+
+# Traffic between specific Pods
+hubble observe --from-pod default/frontend --to-pod default/backend
+
+# Detailed analysis with JSON output
+hubble observe --namespace default -o json | jq '.flow.destination.pod_name'
+
+# Flow statistics
+hubble observe --namespace default -o jsonpb | \
+  jq -r '.flow | "\(.source.pod_name // .source.identity) -> \(.destination.pod_name // .destination.identity)"' | \
+  sort | uniq -c | sort -rn | head -20
+```
+
+### 8.3 Tetragon による Process Security Monitoring
+
+```bash
+# Real-time Tetragon event monitoring
+kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout -f | \
+  tetra getevents -o compact
+
+# Filter process execution events only
+kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout -f | \
+  tetra getevents -o compact --process-filter
+
+# Events from specific namespace
+kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout -f | \
+  tetra getevents -o json | jq 'select(.process_exec.process.pod.namespace == "default")'
+```
+
+**File Access Monitoring Policy**:
+
+```yaml
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: file-access-monitor
+spec:
+  kprobes:
+    - call: security_file_open
+      syscall: false
+      return: false
+      args:
+        - index: 0
+          type: file
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: Prefix
+              values:
+                - /etc/
+                - /var/run/secrets/
+          matchActions:
+            - action: Post
+```
+
+### 8.4 eBPF による Latency Analysis
+
+**Service Response Time Measurement**:
+
+```bash
+# HTTP request latency tracing (BCC)
+sudo /usr/share/bcc/tools/funclatency 'c:read' -i 1
+
+# TCP handshake latency
+sudo bpftrace -e '
+kprobe:tcp_v4_connect { @start[tid] = nsecs; }
+kretprobe:tcp_v4_connect /@start[tid]/ {
+    @connect_latency_us = hist((nsecs - @start[tid]) / 1000);
+    delete(@start[tid]);
+}'
+
+# DNS lookup latency
+sudo bpftrace -e '
+tracepoint:net:net_dev_xmit /args->protocol == 0x0800/ {
+    @dns_start[args->skbaddr] = nsecs;
+}
+tracepoint:net:netif_receive_skb /args->protocol == 0x0800 && @dns_start[args->skbaddr]/ {
+    @dns_latency = hist((nsecs - @dns_start[args->skbaddr]) / 1000);
+    delete(@dns_start[args->skbaddr]);
+}'
+```
+
+**Application Performance Analysis Script**:
+
+```bash
+#!/bin/bash
+# app-latency-analysis.bt
+
+sudo bpftrace -e '
+BEGIN {
+    printf("Tracing application latency... Hit Ctrl-C to end.\n");
+}
+
+uprobe:/usr/lib/x86_64-linux-gnu/libc.so.6:malloc {
+    @malloc_start[tid] = nsecs;
+}
+
+uretprobe:/usr/lib/x86_64-linux-gnu/libc.so.6:malloc /@malloc_start[tid]/ {
+    @malloc_ns = hist(nsecs - @malloc_start[tid]);
+    delete(@malloc_start[tid]);
+}
+
+kprobe:tcp_sendmsg {
+    @send_start[tid] = nsecs;
+}
+
+kretprobe:tcp_sendmsg /@send_start[tid]/ {
+    @tcp_send_ns = hist(nsecs - @send_start[tid]);
+    delete(@send_start[tid]);
+}
+
+END {
+    printf("\n=== Malloc Latency ===\n");
+    print(@malloc_ns);
+    printf("\n=== TCP Send Latency ===\n");
+    print(@tcp_send_ns);
+}
+'
+```
+
+---
+
+## 9. eBPF の制限と考慮事項
+
+### 9.1 技術的制限
+
+| Limitation | Value | Description |
+|------------|-------|-------------|
+| **Stack size** | 512 bytes | local variable storage space の制限 |
+| **Max instructions** | 100 万 | program complexity の制限 |
+| **Max nested calls** | 8 levels | BPF-to-BPF function call depth |
+| **Map entry count** | map type により異なる | memory limit に依存 |
+| **Program size** | map type により異なる | JIT compilation 後に制限 |
+
+**Stack Size Limit の回避策**:
+
+```c
+// Bad example: Exceeds stack size
+int bad_function(void *ctx) {
+    char buffer[1024];  // Exceeds stack size!
+    return 0;
+}
+
+// Good example: Use map
+struct {
+    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, char[1024]);
+} buffer_map SEC(".maps");
+
+int good_function(void *ctx) {
+    __u32 key = 0;
+    char *buffer = bpf_map_lookup_elem(&buffer_map, &key);
+    if (!buffer)
+        return 0;
+    // Use buffer
+    return 0;
+}
+```
+
+### 9.2 Loop の制限
+
+eBPF verifier は program termination を保証するために loop を制限します。
+
+```c
+// Rejected by verifier: Unbounded loop
+for (int i = 0; i < n; i++) {  // n is determined at runtime
+    // ...
+}
+
+// Allowed by verifier: Bounded loop (kernel 5.3+)
+#pragma clang loop unroll(disable)
+for (int i = 0; i < 100 && i < n; i++) {  // Upper bound specified
+    // ...
+}
+
+// Allowed by verifier: Compile-time unrolling
+#pragma unroll
+for (int i = 0; i < 10; i++) {
+    // ...
+}
+
+// Using bpf_loop helper (kernel 5.17+)
+static int callback(u32 index, void *ctx) {
+    // Iteration work
+    return 0;
+}
+
+int main_prog(void *ctx) {
+    bpf_loop(1000, callback, NULL, 0);
+    return 0;
+}
+```
+
+### 9.3 Kernel Version Compatibility
+
+| Feature | Minimum Kernel Version |
+|---------|----------------------|
+| Basic eBPF | 3.18 |
+| XDP | 4.8 |
+| BTF | 4.18 |
+| CO-RE | 5.2 |
+| BPF ring buffer | 5.8 |
+| BPF loops | 5.3 |
+| LSM BPF | 5.7 |
+| bpf_loop helper | 5.17 |
+
+```bash
+# Check kernel version
+uname -r
+
+# Check eBPF feature support
+sudo bpftool feature probe kernel
+
+# Check BTF support
+ls /sys/kernel/btf/vmlinux
+```
+
+### 9.4 Debugging の課題
+
+eBPF programs の debugging は従来の方法とは異なります。
+
+**Debugging 方法**:
+
+```c
+// bpf_printk (for debugging, impacts performance)
+bpf_printk("value = %d\n", value);
+
+// Check debug messages
+sudo cat /sys/kernel/debug/tracing/trace_pipe
+```
+
+```bash
+# Check verifier log (on load failure)
+sudo bpftool prog load my_prog.o /sys/fs/bpf/my_prog -d
+
+# Check program statistics
+sudo bpftool prog show id <ID> --json | jq '.run_time_ns, .run_cnt'
+
+# Dump map contents
+sudo bpftool map dump id <MAP_ID>
+```
+
+### 9.5 権限要件
+
+| Privilege | Purpose |
+|-----------|---------|
+| `CAP_BPF` | eBPF programs の load (kernel 5.8+) |
+| `CAP_SYS_ADMIN` | 従来の eBPF 権限 |
+| `CAP_PERFMON` | performance monitoring events への attach |
+| `CAP_NET_ADMIN` | XDP/TC programs への attach |
+
+```bash
+# Check privileges
+capsh --print
+
+# Run program with specific privileges
+sudo setcap cap_bpf,cap_perfmon+ep ./my_bpf_loader
+```
+
+**Kubernetes での権限設定**:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ebpf-pod
+spec:
+  containers:
+    - name: ebpf-container
+      image: my-ebpf-app
+      securityContext:
+        capabilities:
+          add:
+            - BPF
+            - PERFMON
+            - NET_ADMIN
+        privileged: false
+      volumeMounts:
+        - name: bpf-maps
+          mountPath: /sys/fs/bpf
+        - name: debug
+          mountPath: /sys/kernel/debug
+  volumes:
+    - name: bpf-maps
+      hostPath:
+        path: /sys/fs/bpf
+    - name: debug
+      hostPath:
+        path: /sys/kernel/debug
+```
+
+### 9.6 Security Considerations
+
+eBPF は強力な tool ですが、security risk も存在します。
+
+- **Information leakage**: sensitive data に access できる可能性があります
+- **DoS attacks**: performance degradation を引き起こす可能性があります
+- **Privilege escalation**: misconfiguration により脆弱性が生じる可能性があります
+
+**Security Best Practices**:
+
+```bash
+# Disable unprivileged eBPF
+echo 0 | sudo tee /proc/sys/kernel/unprivileged_bpf_disabled
+
+# BPF security lockdown
+echo 1 | sudo tee /proc/sys/kernel/bpf_spec_v1
+echo 2 | sudo tee /proc/sys/kernel/bpf_spec_v4
+```
+
+---
+
+## 10. 次のステップ
+
+### 10.1 関連 Quiz
+
+このドキュメントの理解度を確認するには、次の quiz に挑戦してください。
+
+- [eBPF Fundamentals Quiz](../quizzes/basics/05-ebpf-fundamentals-quiz.md)
+
+### 10.2 高度な学習リソース
+
+**公式ドキュメントとリソース**:
+- [eBPF.io](https://ebpf.io) - 公式 eBPF documentation
+- [Cilium Documentation](https://docs.cilium.io) - 公式 Cilium documentation
+- [BPF Performance Tools](https://www.brendangregg.com/bpf-performance-tools-book.html) - Brendan Gregg の BPF performance tools book
+
+**Hands-on 環境**:
+- [eBPF Tutorial](https://github.com/lizrice/learning-ebpf) - Liz Rice の eBPF tutorial
+- [BCC Tutorial](https://github.com/iovisor/bcc/blob/master/docs/tutorial.md) - 公式 BCC tutorial
+- [bpftrace Tutorial](https://github.com/iovisor/bpftrace/blob/master/docs/tutorial_one_liners.md) - bpftrace one-liner tutorial
+
+**Community**:
+- [eBPF Summit](https://ebpf.io/summit/) - 年次 eBPF conference
+- [Cilium Slack](https://cilium.io/slack) - Cilium community
+
+### 10.3 関連ドキュメント
+
+このドキュメントに関連する高度な内容については、次を参照してください。
+
+| Topic | Document Link | Description |
+|-------|---------------|-------------|
+| Cilium Introduction | [Cilium Overview](../networking/cilium/01-introduction.md) | eBPF ベースの CNI introduction |
+| eBPF Deep Dive | [eBPF Technical Deep Dive](../networking/cilium/02-ebpf.md) | Advanced eBPF techniques |
+| Networking | [Cilium Networking](../networking/cilium/03-networking.md) | eBPF networking implementation |
+| Security | [Cilium Security](../networking/cilium/06-security-visibility.md) | eBPF ベースの security |
+| Kubernetes Networking | [Services and Networking](../core/03-services-networking.md) | 基本 networking concepts |
+
+### 10.4 Hands-on Checklist
+
+eBPF 学習のための hands-on checklist:
+
+```
+[ ] Use bpftool to check loaded eBPF programs
+[ ] Run system call tracing with bpftrace
+[ ] Analyze network traffic with BCC tools
+[ ] Install Cilium and observe network with Hubble
+[ ] Monitor security events with Tetragon
+[ ] Write and load a simple XDP program
+```
+
+---
+
+## まとめ
+
+eBPF は、Linux kernel の動作を安全に拡張し観察できる革新的な技術です。このドキュメントで扱った主な内容をまとめます。
+
+1. **eBPF の基本概念**: kernel 内で安全に実行されるサンドボックス化された programs
+2. **Architecture**: verifier、JIT compiler、maps、helper functions で構成
+3. **Program Types**: XDP、TC、Kprobes、Tracepoints、LSM BPF など
+4. **Development Tools**: bpftool、bpftrace、BCC、libbpf
+5. **Kubernetes での応用**: Cilium、Calico eBPF mode による高 performance networking
+6. **Observability**: Hubble、Pixie、Coroot による深い system observation
+7. **Security**: Tetragon、Falco、seccomp-bpf による runtime security
+8. **Limitations**: stack size、loops、kernel version compatibility を考慮
+
+eBPF は、cloud-native 環境における networking、security、observability の未来を牽引する中核技術です。
