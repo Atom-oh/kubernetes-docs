@@ -1,7 +1,7 @@
 # Cilium Service Mesh Security
 
 > **Supported Versions**: Cilium 1.16+, Kubernetes 1.28+
-> **Last Updated**: February 22, 2026
+> **Last Updated**: July 13, 2026
 
 ## Overview
 
@@ -64,6 +64,18 @@ sequenceDiagram
 
     Note over PodA,PodB: No application code changes required
 ```
+
+### Native mTLS via ztunnel (2026 Update)
+
+In March 2026, Cilium introduced a newer mTLS architecture inspired by Istio Ambient's ztunnel model, evolving beyond the pure eBPF handshake shown above. The stack now has three cooperating components:
+
+- **SPIRE** — issues workload identity and X.509 certificates (same role as in the SPIRE-based configuration below)
+- **Cilium** — installs iptables rules that transparently redirect outbound pod traffic to ztunnel on port 15001
+- **ztunnel** — a per-node proxy (not a per-pod sidecar) that performs the actual mTLS handshake and encrypts pod-to-pod traffic
+
+This keeps the same "no sidecar, no application changes" guarantee, but the TLS handshake now runs in a dedicated per-node process rather than purely in eBPF — a design Cilium adopted directly from Istio Ambient's ztunnel. As of March 2026 this is available as a public preview on Azure Kubernetes Service ("Cilium mTLS encryption" for AKS). Mutual authentication still only works within a Cilium-managed cluster and is not compatible with external mTLS solutions.
+
+See the [Cilium blog post on native mTLS](https://cilium.io/blog/2026/03/23/native-mtls-cilium/) for the full architecture writeup.
 
 ### SPIRE-based mTLS Configuration
 
