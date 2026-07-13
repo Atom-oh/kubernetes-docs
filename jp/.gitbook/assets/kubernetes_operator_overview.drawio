@@ -1,0 +1,138 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mxfile host="app.diagrams.net" modified="2025-08-05T11:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
+  <diagram name="Kubernetes Operator Overview" id="kubernetes-operator-overview">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        
+        <mxCell id="title" value="Kubernetes Operator 개요" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="450" y="40" width="300" height="30" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="api-server" value="Kubernetes&#10;API Server" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=api;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="200" y="120" width="80" height="77" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="controller-manager" value="Controller Manager" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=c_m;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="400" y="120" width="80" height="77" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="operator-controller" value="Operator Controller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="120" width="120" height="80" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="crd" value="Custom Resource&#10;Definition (CRD)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="280" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="custom-resources" value="Custom Resources" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="280" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="reconciliation-loop" value="Reconciliation Loop" style="ellipse;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="800" y="120" width="120" height="80" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="desired-state" value="Desired State" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="700" y="380" width="100" height="50" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="current-state" value="Current State" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="820" y="380" width="100" height="50" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="actions" value="Actions&#10;(Create/Update/Delete)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="380" width="120" height="50" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="pattern-explanation" value="Operator 패턴" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="80" y="480" width="980" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pattern-text" value="Operator는 Kubernetes의 확장 메커니즘으로, 애플리케이션별 도메인 지식을 코드로 캡슐화합니다.&#10;• CRD를 통해 새로운 리소스 타입 정의&#10;• Controller를 통해 리소스의 생명주기 관리&#10;• Reconciliation Loop를 통해 원하는 상태와 현재 상태를 지속적으로 비교하고 조정&#10;• 복잡한 애플리케이션의 배포, 업그레이드, 백업 등을 자동화" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;spacingTop=10;spacingLeft=20;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="100" y="520" width="940" height="70" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="api-to-controller-manager" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#326CE5;" edge="1" parent="1" source="api-server" target="controller-manager">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="api-to-operator" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="api-server" target="operator-controller">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="139" />
+              <mxPoint x="320" y="160" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="operator-to-crd" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="operator-controller" target="crd">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="630" y="240" />
+              <mxPoint x="460" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="operator-to-cr" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="operator-controller" target="custom-resources">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="operator-to-reconciliation" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="operator-controller" target="reconciliation-loop">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="reconciliation-to-desired" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="reconciliation-loop" target="desired-state">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="830" y="300" />
+              <mxPoint x="750" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="reconciliation-to-current" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="reconciliation-loop" target="current-state">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="860" y="300" />
+              <mxPoint x="870" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="reconciliation-to-actions" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" edge="1" parent="1" source="reconciliation-loop" target="actions">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="890" y="300" />
+              <mxPoint x="1000" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        
+        <mxCell id="k8s-core-label" value="Kubernetes 핵심 구성 요소" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#326CE5;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="250" y="80" width="180" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="operator-components-label" value="Operator 구성 요소" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#00C7B7;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="650" y="80" width="150" height="30" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
