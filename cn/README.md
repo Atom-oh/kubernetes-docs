@@ -38,3 +38,16 @@
    - [第 2 部分：调度器扩展与框架](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [第 3 部分：自定义调度器实现示例与监控](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
+### Kubernetes 核心概念
+1. [集群架构](./core/01-cluster-architecture.md) | [Quiz](./quizzes/core/01-cluster-architecture-quiz.md)
+2. [Pod 和工作负载](./core/02-pods-and-workloads.md) | [Quiz](./quizzes/core/02-pods-and-workloads-quiz.md)
+3. [服务和网络](./core/03-services-networking.md) | [Quiz](./quizzes/core/03-services-networking-quiz.md)
+4. [存储](./core/04-storage.md) | [Quiz](./quizzes/core/04-storage-quiz.md)
+5. [配置](./core/05-configuration-secrets.md) | [Quiz](./quizzes/core/05-configuration-secrets-quiz.md)
+6. [安全](./core/06-security.md) | [Quiz](./quizzes/core/06-security-quiz.md)
+7. [策略](./core/07-policies.md) | [Quiz](./quizzes/core/07-policies-quiz.md)
+8. [调度、抢占和驱逐](./core/08-scheduling-preemption-eviction.md) | [Quiz](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+9. [集群管理](./core/09-cluster-administration.md) | [Quiz](./quizzes/core/09-cluster-administration-quiz.md)
+10. [Kubernetes 中的 Windows](./core/10-windows-in-kubernetes.md)
+11. [扩展 Kubernetes](./core/11-extending-kubernetes.md) | [Quiz](./quizzes/core/11-extending-kubernetes-quiz.md)
+
