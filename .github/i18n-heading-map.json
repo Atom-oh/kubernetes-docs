@@ -58,5 +58,10 @@
     "cn": "调度",
     "es": "Planificación",
     "jp": "スケジューリング"
+  },
+  "Security & Policy": {
+    "cn": "安全与策略",
+    "es": "Seguridad y política",
+    "jp": "セキュリティとポリシー"
   }
 }

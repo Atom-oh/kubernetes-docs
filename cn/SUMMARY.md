@@ -74,6 +74,19 @@
   * [EKS 上的智能体 AI 平台测验](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
   * [AI/ML 最佳实践测验](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
+  * [使用 Kyverno 进行策略管理测验](quizzes/security/01-kyverno-policy-management-quiz.md)
+  * [Kubernetes 认证和授权测验](quizzes/security/02-kubernetes-auth-authz-quiz.md)
+  * [Pod 安全标准测验](quizzes/security/03-pod-security-standards-quiz.md)
+  * [网络策略测验](quizzes/security/04-network-policies-quiz.md)
+  * [密钥管理测验](quizzes/security/05-secrets-management-quiz.md)
+  * [EKS 安全最佳实践测验](quizzes/security/06-eks-security-best-practices-quiz.md)
+  * [镜像安全测验](quizzes/security/07-image-security-quiz.md)
+  * [运行时安全测验](quizzes/security/08-runtime-security-quiz.md)
+  * [OPA Gatekeeper 测验](quizzes/security/09-opa-gatekeeper-quiz.md)
+  * [cert-manager 测验](quizzes/security/10-cert-manager-quiz.md)
+  * [Kubescape 测验](quizzes/security/11-kubescape-quiz.md)
+  * [SPIFFE/SPIRE 测验](quizzes/security/12-spiffe-spire-quiz.md)
+
 ## EKS 上的数据
 
 * [EKS 上的数据概述](data-on-eks/README.md)
@@ -142,3 +155,18 @@
 ## 新闻
 
 * [新闻](news/README.md)
+
+## 安全与策略
+
+* [使用 Kyverno 进行策略管理](security/01-kyverno-policy-management.md)
+* [Kubernetes 认证和授权](security/02-kubernetes-auth-authz.md)
+* [Pod 安全标准](security/03-pod-security-standards.md)
+* [网络策略](security/04-network-policies.md)
+* [密钥管理](security/05-secrets-management.md)
+* [EKS 安全最佳实践](security/06-eks-security-best-practices.md)
+* [镜像安全](security/07-image-security.md)
+* [运行时安全](security/08-runtime-security.md)
+* [OPA Gatekeeper](security/09-opa-gatekeeper.md)
+* [cert-manager](security/10-cert-manager.md)
+* [Kubescape](security/11-kubescape.md)
+* [SPIFFE/SPIRE](security/12-spiffe-spire.md)

@@ -80,6 +80,19 @@
   * [Quiz sobre Plataforma de IA agéntica en EKS](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
   * [Quiz sobre Buenas prácticas de IA/ML](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
+  * [Gestión de políticas con Kyverno: cuestionario](quizzes/security/01-kyverno-policy-management-quiz.md)
+  * [Autenticación y autorización de Kubernetes: cuestionario](quizzes/security/02-kubernetes-auth-authz-quiz.md)
+  * [Estándares de seguridad de Pod: cuestionario](quizzes/security/03-pod-security-standards-quiz.md)
+  * [Políticas de red: cuestionario](quizzes/security/04-network-policies-quiz.md)
+  * [Gestión de secretos: cuestionario](quizzes/security/05-secrets-management-quiz.md)
+  * [Mejores prácticas de seguridad de EKS: cuestionario](quizzes/security/06-eks-security-best-practices-quiz.md)
+  * [Seguridad de imágenes: cuestionario](quizzes/security/07-image-security-quiz.md)
+  * [Seguridad en tiempo de ejecución: cuestionario](quizzes/security/08-runtime-security-quiz.md)
+  * [OPA Gatekeeper: cuestionario](quizzes/security/09-opa-gatekeeper-quiz.md)
+  * [cert-manager: cuestionario](quizzes/security/10-cert-manager-quiz.md)
+  * [Kubescape: cuestionario](quizzes/security/11-kubescape-quiz.md)
+  * [SPIFFE/SPIRE: cuestionario](quizzes/security/12-spiffe-spire-quiz.md)
+
 ## Autoescalado
 
 * [KEDA](autoscaling/01-keda.md)
@@ -146,3 +159,18 @@
 * [Despliegue y optimización de vLLM](ai-ml/02-vllm-deployment.md)
 * [Plataforma de IA agéntica en EKS](ai-ml/03-agentic-ai-platform.md)
 * [Buenas prácticas de IA/ML](ai-ml/07-ai-ml-best-practices.md)
+
+## Seguridad y política
+
+* [Gestión de políticas con Kyverno](security/01-kyverno-policy-management.md)
+* [Autenticación y autorización de Kubernetes](security/02-kubernetes-auth-authz.md)
+* [Estándares de seguridad de Pod](security/03-pod-security-standards.md)
+* [Políticas de red](security/04-network-policies.md)
+* [Gestión de secretos](security/05-secrets-management.md)
+* [Mejores prácticas de seguridad de EKS](security/06-eks-security-best-practices.md)
+* [Seguridad de imágenes](security/07-image-security.md)
+* [Seguridad en tiempo de ejecución](security/08-runtime-security.md)
+* [OPA Gatekeeper](security/09-opa-gatekeeper.md)
+* [cert-manager](security/10-cert-manager.md)
+* [Kubescape](security/11-kubescape.md)
+* [SPIFFE/SPIRE](security/12-spiffe-spire.md)
