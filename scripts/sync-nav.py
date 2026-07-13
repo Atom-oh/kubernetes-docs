@@ -299,10 +299,15 @@ def sync_summary(section, lang, heading_map):
         m = heading_re.search(dst_text)
         if m:
             # Insert before the next '## ' heading (or EOF), keeping this heading's block contiguous.
+            # A single '\n' (not '\n\n') continues the existing bullet list without a blank-line
+            # gap in the middle -- CommonMark treats a blank line between two top-level list items
+            # as splitting them into separate lists, which a real quality-gate run flagged (a
+            # section like "Amazon EKS" that's shared between two translate-backfill sections, e.g.
+            # eks-hybrid-nodes and eks, got its list visibly split down the middle).
             rest = dst_text[m.end():]
             next_h = re.search(r"^## ", rest, re.MULTILINE)
             insert_at = m.end() + (next_h.start() if next_h else len(rest))
-            dst_text = dst_text[:insert_at].rstrip("\n") + "\n\n" + "\n".join(fragment_lines) + "\n\n" + dst_text[insert_at:].lstrip("\n")
+            dst_text = dst_text[:insert_at].rstrip("\n") + "\n" + "\n".join(fragment_lines) + "\n\n" + dst_text[insert_at:].lstrip("\n")
         else:
             dst_text = dst_text.rstrip("\n") + f"\n\n## {dst_heading}\n\n" + "\n".join(fragment_lines) + "\n"
 
