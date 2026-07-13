@@ -1,0 +1,6 @@
+/* Sidebar and right-hand outline stay fixed width in VitePress's default
+   theme, so widening the overall layout max-width adds nearly all the
+   extra space to the content column specifically. */
+:root {
+  --vp-layout-max-width: 1560px;
+}
