@@ -56,6 +56,13 @@
   * [调度、抢占和驱逐测验](quizzes/core/08-scheduling-preemption-eviction-quiz.md)
   * [集群管理测验](quizzes/core/09-cluster-administration-quiz.md)
   * [扩展 Kubernetes 测验](quizzes/core/11-extending-kubernetes-quiz.md)
+  * [AI/ML 工作负载测验](quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+  * [AI 基础设施测验](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+  * [模型训练测验](quizzes/ai-ml/05-model-training-quiz.md)
+  * [推理框架测验](quizzes/ai-ml/04-inference-frameworks-quiz.md)
+  * [vLLM 部署测验](quizzes/ai-ml/04-vllm-deployment-quiz.md)
+  * [EKS 上的智能体 AI 平台测验](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+  * [AI/ML 最佳实践测验](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
 ## EKS 上的数据
 
@@ -99,3 +106,12 @@
 * [集群管理](core/09-cluster-administration.md)
 * [Kubernetes 中的 Windows](core/10-windows-in-kubernetes.md)
 * [扩展 Kubernetes](core/11-extending-kubernetes.md)
+## 人工智能/机器学习
+
+* [AI/ML 工作负载](ai-ml/01-ai-ml-workloads.md)
+* [AI 基础设施](ai-ml/06-ai-infrastructure.md)
+* [在 EKS 上进行模型训练](ai-ml/05-model-training.md)
+* [推理框架](ai-ml/04-inference-frameworks.md)
+* [vLLM 部署与优化](ai-ml/02-vllm-deployment.md)
+* [EKS 上的智能体 AI 平台](ai-ml/03-agentic-ai-platform.md)
+* [AI/ML 最佳实践](ai-ml/07-ai-ml-best-practices.md)
