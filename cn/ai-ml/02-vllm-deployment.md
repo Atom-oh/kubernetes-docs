@@ -1,0 +1,1424 @@
+# vLLM 部署与优化
+
+> **支持的版本**: Kubernetes 1.31, 1.32, 1.33  
+> **最后更新**: April 9, 2026
+
+vLLM 是面向大型语言模型 (LLMs) 最广泛采用的开源高性能推理引擎。在本章中，我们将探索 vLLM 的最新功能和架构，并学习如何在 EKS 上以生产规模部署和优化它。
+
+## 实验环境设置
+
+要跟随本文档中的示例进行操作，你需要以下工具和环境：
+
+### 必需工具和资源
+- kubectl v1.31 或更高版本
+- Helm v3.10 或更高版本
+- 配备 NVIDIA GPUs 的 EKS 集群（最低推荐：g5.2xlarge 实例）
+- 已安装 NVIDIA drivers 和 NVIDIA Device Plugin
+- 至少 50GB 磁盘空间
+
+### GPU Node 设置
+
+```bash
+# Install NVIDIA Device Plugin
+kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.14.0/nvidia-device-plugin.yml
+
+# Verify GPU nodes
+kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu"
+```
+
+## vLLM 简介
+
+vLLM 是具有以下特性的 LLM 推理引擎：
+
+```mermaid
+flowchart TD
+    subgraph vLLM [vLLM Architecture]
+        subgraph Features [Key Features]
+            PagedAttention[PagedAttention]
+            ContinuousBatching[Continuous Batching]
+            DistributedInference[Distributed Inference]
+            Quantization[Quantization]
+            OpenAIAPI[OpenAI Compatible API]
+        end
+
+        subgraph Components [Core Components]
+            Engine[Inference Engine]
+            Scheduler[Request Scheduler]
+            KVCache[KV Cache Manager]
+            ModelLoader[Model Loader]
+            APIServer[API Server]
+        end
+
+        subgraph Benefits [Key Benefits]
+            MemoryEfficiency[Memory Efficiency]
+            HighThroughput[High Throughput]
+            LowLatency[Low Latency]
+            Scalability[Scalability]
+        end
+    end
+
+    PagedAttention --> MemoryEfficiency
+    ContinuousBatching --> HighThroughput
+    DistributedInference --> Scalability
+    Quantization --> MemoryEfficiency
+
+    Engine --> KVCache
+    Scheduler --> Engine
+    ModelLoader --> Engine
+    Engine --> APIServer
+
+    classDef featureNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef componentNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef benefitNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+    class PagedAttention,ContinuousBatching,DistributedInference,Quantization,OpenAIAPI,Features featureNode;
+    class Engine,Scheduler,KVCache,ModelLoader,APIServer,Components componentNode;
+    class MemoryEfficiency,HighThroughput,LowLatency,Scalability,Benefits benefitNode;
+    class vLLM default;
+```
+
+### vLLM 的关键特性
+
+1. **PagedAttention**:
+   - 高效管理 KV cache 的内存管理技术
+   - 受操作系统虚拟内存管理启发
+   - 可实现最多 10 倍的并发请求处理能力
+
+2. **Continuous Batching**:
+   - 动态批处理请求以最大化 GPU 利用率
+   - 新请求到达后立即开始处理
+   - 吞吐量最高提升 2 倍
+
+3. **Distributed Inference**:
+   - 通过 tensor parallelization 支持大规模模型
+   - 在多个 GPUs 之间进行模型分片
+   - 支持 175B+ 参数模型
+
+4. **Quantization**:
+   - 支持包括 INT8、FP16 在内的多种精度
+   - 降低内存使用并提升推理速度
+   - 在精度损失极小的情况下，内存效率最高提升 2 倍
+
+## 支持的模型
+
+vLLM 支持以下模型：
+
+| Model Family | Supported Models | Quantization Options |
+|-------------|-----------------|---------------------|
+| **LLaMA 3 / 3.1 / 3.2 / 3.3** | 1B, 3B, 8B, 70B, 405B | FP16, BF16, FP8, INT8, INT4, AWQ, GPTQ |
+| **DeepSeek V3 / R1** | 7B, 67B, 671B (MoE) | FP16, BF16, FP8, AWQ, GPTQ |
+| **Qwen 2 / 2.5 / QwQ** | 0.5B ~ 72B | FP16, BF16, FP8, INT8, AWQ, GPTQ |
+| **Mistral / Mixtral** | 7B, 8x7B, 8x22B, Large 2 | FP16, BF16, FP8, AWQ, GPTQ |
+| **Gemma 2 / 3** | 2B, 9B, 27B | FP16, BF16, INT8 |
+| **Phi-3 / Phi-4** | 3.8B, 7B, 14B | FP16, BF16, INT8, AWQ |
+| **Command R / R+** | 35B, 104B | FP16, BF16 |
+| **DBRX** | 132B (MoE) | FP16, BF16 |
+| **StarCoder 2** | 3B, 7B, 15B | FP16, BF16 |
+| **Vision Models (VLM)** | LLaVA, Pixtral, Qwen2-VL, InternVL | FP16, BF16 |
+
+1. **PagedAttention**: 内存高效的 attention 机制，可在处理长序列时优化内存使用。
+2. **Continuous Batching**: 动态批处理请求以提升吞吐量。
+3. **Distributed Inference**: 将模型分布到多个 GPUs 和 Nodes 上，以处理大规模模型。
+4. **Quantization**: 支持 INT8/INT4 quantization，以降低内存使用并提升吞吐量。
+5. **OpenAI Compatible API**: 提供与 OpenAI API 兼容的接口。
+
+### 最新 vLLM 功能 (v0.6+)
+
+vLLM 正在快速演进，近期版本带来了重要的新能力：
+
+#### Speculative Decoding
+
+使用较小的 draft model 生成多个候选 tokens，再由较大的模型在单次 pass 中验证，从而将推理速度提升 2-3 倍：
+
+```bash
+python -m vllm.entrypoints.openai.api_server \
+  --model meta-llama/Llama-3.1-70B-Instruct \
+  --speculative-model meta-llama/Llama-3.1-8B-Instruct \
+  --num-speculative-tokens 5
+```
+
+#### Prefix Caching
+
+在共享相同 system prompt 或 context 的请求之间自动复用 KV cache，显著降低 TTFT (Time to First Token)：
+
+```bash
+--enable-prefix-caching
+```
+
+#### Chunked Prefill
+
+将长 prompt prefill 拆分为更小的 chunks，并与 decode steps 交错执行，从而降低长上下文请求对其他请求延迟的影响：
+
+```bash
+--enable-chunked-prefill --max-num-batched-tokens 2048
+```
+
+#### Dynamic LoRA Adapter Loading
+
+在运行时动态加载/卸载多个 LoRA adapters，从单个 base model 服务多个定制模型：
+
+```bash
+--enable-lora --max-loras 4 --max-lora-rank 64
+```
+
+```python
+# Specify LoRA model in API request
+response = client.chat.completions.create(
+    model="my-custom-lora-adapter",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+```
+
+#### Structured Output
+
+通过 JSON Schema、regex patterns 和 CFG (Context-Free Grammar) 支持受约束的输出生成，用于可靠地生成结构化数据：
+
+```python
+from openai import OpenAI
+client = OpenAI(base_url="http://vllm-service:8000/v1")
+
+response = client.chat.completions.create(
+    model="meta-llama/Llama-3.1-8B-Instruct",
+    messages=[{"role": "user", "content": "Return user information as JSON"}],
+    response_format={
+        "type": "json_schema",
+        "json_schema": {
+            "name": "user_info",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "age": {"type": "integer"},
+                    "email": {"type": "string"}
+                },
+                "required": ["name", "age", "email"]
+            }
+        }
+    }
+)
+```
+
+#### Tool Calling
+
+支持与 OpenAI 兼容的 Tool/Function Calling，用于与 agent workflows 集成：
+
+```python
+response = client.chat.completions.create(
+    model="meta-llama/Llama-3.1-8B-Instruct",
+    messages=[{"role": "user", "content": "What's the weather in Seoul?"}],
+    tools=[{
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get the current weather for a specified location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {"type": "string", "description": "City name"}
+                },
+                "required": ["location"]
+            }
+        }
+    }]
+)
+```
+
+#### FP8 Quantization
+
+支持在 Hopper (H100) 和 Ada Lovelace (L4, L40S) GPUs 上使用 FP8 quantization，在保持几乎相同精度的同时将内存使用减半：
+
+```bash
+--quantization fp8 --kv-cache-dtype fp8
+```
+
+#### Vision-Language Model (VLM) Serving
+
+支持同时处理图像和文本的多模态模型：
+
+```python
+response = client.chat.completions.create(
+    model="llava-hf/llava-v1.6-mistral-7b-hf",
+    messages=[{
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "Describe this image"},
+            {"type": "image_url", "image_url": {"url": "data:image/png;base64,..."}}
+        ]
+    }]
+)
+```
+
+## 系统要求
+
+在 EKS 上部署 vLLM 的系统要求：
+
+```mermaid
+flowchart TD
+    subgraph Requirements [System Requirements]
+        subgraph Hardware [Hardware]
+            GPU[NVIDIA GPU]
+            Memory[GPU Memory]
+            CPU[CPU Cores]
+        end
+
+        subgraph Software [Software]
+            CUDA[CUDA 12.1+]
+            Python[Python 3.9+]
+            PyTorch[PyTorch 2.4.0+]
+        end
+
+        subgraph ModelSize [Requirements by Model Size]
+            Model7B[7B Model: 16GB+ GPU Memory]
+            Model13B[13B Model: 24GB+ GPU Memory]
+            Model70B[70B Model: 80GB+ GPU Memory]
+        end
+    end
+
+    GPU --> Memory
+    Memory --> ModelSize
+
+    classDef hardwareNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef softwareNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef modelNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    class GPU,Memory,CPU,Hardware hardwareNode;
+    class CUDA,Python,PyTorch,Software softwareNode;
+    class Model7B,Model13B,Model70B,ModelSize modelNode;
+    class Requirements default;
+```
+
+1. **Hardware**:
+   - NVIDIA GPU（Volta、Turing、Ampere、Hopper 架构）
+   - 最低 GPU 内存：因模型大小而异
+     - 7B model：最低 16GB GPU 内存
+     - 13B model：最低 24GB GPU 内存
+     - 70B model：最低 80GB GPU 内存（或分布到多个 GPUs 上）
+
+2. **Software**:
+   - CUDA 12.1 或更高版本（FP8 推荐 CUDA 12.4）
+   - Python 3.9 或更高版本
+   - PyTorch 2.4.0 或更高版本
+
+3. **EKS Node Types**:
+   - p5.48xlarge：8x NVIDIA H100 GPU，每个 80GB（最高性能）
+   - p4d.24xlarge：8x NVIDIA A100 GPU，每个 40GB 或 80GB
+   - g6.12xlarge：4x NVIDIA L4 GPU，每个 24GB（高性价比）
+   - g5.12xlarge：4x NVIDIA A10G GPU，每个 24GB
+   - g6e.12xlarge：4x NVIDIA L40S GPU，每个 48GB
+   - trn1.32xlarge：16x AWS Trainium，每个 32GB（AWS silicon）
+
+## EKS 基础设施配置
+
+```mermaid
+flowchart TD
+    subgraph AWS [AWS Cloud]
+        subgraph EKS [Amazon EKS]
+            subgraph ControlPlane [Control Plane]
+                APIServer[API Server]
+                Scheduler[Scheduler]
+                ControllerManager[Controller Manager]
+            end
+
+            subgraph NodeGroups [Node Groups]
+                subgraph GPUNodes [GPU Nodes]
+                    P4d[p4d.24xlarge]
+                    P3[p3.16xlarge]
+                    G5[g5.12xlarge]
+                end
+
+                subgraph CPUNodes [CPU Nodes]
+                    C5[c5.4xlarge]
+                    M5[m5.4xlarge]
+                end
+            end
+
+            subgraph Storage [Storage]
+                FSx[FSx for Lustre]
+                EBS[Amazon EBS]
+                S3[Amazon S3]
+            end
+
+            subgraph Networking [Networking]
+                VPC[VPC]
+                Subnet[Subnet]
+                SecurityGroup[Security Group]
+                EFA[Elastic Fabric Adapter]
+            end
+        end
+
+        subgraph Services [AWS Services]
+            ECR[Amazon ECR]
+            CloudWatch[CloudWatch]
+            IAM[IAM]
+        end
+    end
+
+    GPUNodes --> Storage
+    GPUNodes --> Networking
+    CPUNodes --> Storage
+    CPUNodes --> Networking
+
+    EKS --> Services
+
+    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef cpuNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    class ECR,CloudWatch,IAM,FSx,EBS,S3 awsService;
+    class APIServer,Scheduler,ControllerManager,ControlPlane,Networking,VPC,Subnet,SecurityGroup,EFA k8sComponent;
+    class P4d,P3,G5,GPUNodes gpuNode;
+    class C5,M5,CPUNodes cpuNode;
+    class AWS,EKS,NodeGroups,Storage default;
+```
+
+## 存储配置
+
+vLLM 需要高性能存储，因为它需要加载大型模型权重：
+
+### FSx for Lustre 设置
+
+FSx for Lustre 是适合快速加载大型模型权重的高性能并行文件系统：
+
+```yaml
+apiVersion: fsx.aws.k8s.io/v1beta1
+kind: Lustre
+metadata:
+  name: vllm-models
+spec:
+  deploymentType: SCRATCH_2
+  storageCapacity: 1200
+  subnetIds:
+    - subnet-0123456789abcdef0
+  securityGroupIds:
+    - sg-0123456789abcdef0
+  perUnitStorageThroughput: 200
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fsx-lustre-sc
+provisioner: fsx.csi.aws.com
+parameters:
+  fileSystemId: fs-0123456789abcdef0
+  mountName: vllm-models
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vllm-models-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: fsx-lustre-sc
+  resources:
+    requests:
+      storage: 1200Gi
+```
+
+### 从 S3 下载模型
+
+用于将 Hugging Face 模型存储在 S3 中并下载到 FSx for Lustre 的 Job：
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: model-download
+spec:
+  template:
+    spec:
+      containers:
+      - name: model-download
+        image: huggingface/transformers:latest
+        command:
+        - python
+        - -c
+        - |
+          from huggingface_hub import snapshot_download
+          import os
+
+          model_id = "meta-llama/Llama-3.1-70B-Instruct"
+          dest_dir = "/models/llama-3.1-70b"
+
+          os.makedirs(dest_dir, exist_ok=True)
+          snapshot_download(repo_id=model_id, local_dir=dest_dir, token=os.environ["HF_TOKEN"])
+        env:
+        - name: HF_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: huggingface-token
+              key: token
+        volumeMounts:
+        - name: models-volume
+          mountPath: /models
+      restartPolicy: Never
+      volumes:
+      - name: models-volume
+        persistentVolumeClaim:
+          claimName: vllm-models-pvc
+```
+
+## vLLM 部署
+
+### 部署架构
+
+下图展示了在 EKS 上部署 vLLM 的两种主要架构：
+
+```mermaid
+flowchart TD
+    subgraph Deployment [vLLM Deployment Architecture]
+        subgraph SingleNode [Single Node Deployment]
+            Pod1[vLLM Pod]
+
+            subgraph Pod1Components [Pod Components]
+                Container1[vLLM Container]
+                Volume1[Model Volume]
+            end
+
+            subgraph GPUs1 [GPU]
+                GPU1[GPU 0]
+                GPU2[GPU 1]
+                GPU3["..."]
+                GPU4[GPU 7]
+            end
+        end
+
+        subgraph MultiNode [Multi-Node Deployment]
+            Pod2[vLLM Pod 0]
+            Pod3[vLLM Pod 1]
+
+            subgraph Pod2Components [Pod 0 Components]
+                Container2[vLLM Container]
+                Volume2[Model Volume]
+            end
+
+            subgraph Pod3Components [Pod 1 Components]
+                Container3[vLLM Container]
+                Volume3[Model Volume]
+            end
+
+            subgraph GPUs2 [Node 0 GPU]
+                GPU5[GPU 0]
+                GPU6[GPU 1]
+                GPU7["..."]
+                GPU8[GPU 7]
+            end
+
+            subgraph GPUs3 [Node 1 GPU]
+                GPU9[GPU 0]
+                GPU10[GPU 1]
+                GPU11["..."]
+                GPU12[GPU 7]
+            end
+
+            NCCL[NCCL Communication]
+        end
+
+        subgraph Storage [Shared Storage]
+            FSx[FSx for Lustre]
+            S3[Amazon S3]
+        end
+
+        subgraph Networking [Networking]
+            Service[Kubernetes Service]
+            LoadBalancer[Load Balancer]
+            Client[Client]
+        end
+    end
+
+    Pod1 --> Pod1Components
+    Pod1Components --> GPUs1
+    Container1 --> Volume1
+
+    Pod2 --> Pod2Components
+    Pod3 --> Pod3Components
+    Pod2Components --> GPUs2
+    Pod3Components --> GPUs3
+    Container2 --> Volume2
+    Container3 --> Volume3
+
+    Pod2 <--> NCCL
+    Pod3 <--> NCCL
+
+    Volume1 --> FSx
+    Volume2 --> FSx
+    Volume3 --> FSx
+    FSx --> S3
+
+    Client --> LoadBalancer
+    LoadBalancer --> Service
+    Service --> Pod1
+    Service --> Pod2
+
+    classDef podComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef containerComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef gpuComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef storageComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef networkComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    class Pod1,Pod2,Pod3,Pod1Components,Pod2Components,Pod3Components podComponent;
+    class Container1,Container2,Container3,Volume1,Volume2,Volume3,NCCL containerComponent;
+    class GPU1,GPU2,GPU3,GPU4,GPU5,GPU6,GPU7,GPU8,GPU9,GPU10,GPU11,GPU12,GPUs1,GPUs2,GPUs3 gpuComponent;
+    class FSx,S3,Storage storageComponent;
+    class Service,LoadBalancer,Client,Networking networkComponent;
+    class Deployment,SingleNode,MultiNode default;
+```
+
+### 单 Node 部署
+
+在单个 GPU 或单个 Node 上的多个 GPUs 运行 vLLM 的 Deployment：
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm-inference
+  template:
+    metadata:
+      labels:
+        app: vllm-inference
+    spec:
+      containers:
+      - name: vllm-server
+        image: vllm/vllm-openai:latest
+        command:
+        - python
+        - -m
+        - vllm.entrypoints.openai.api_server
+        - --model=/models/llama-3.1-70b
+        - --tensor-parallel-size=8
+        - --gpu-memory-utilization=0.95
+        - --max-num-batched-tokens=16384
+        - --enable-prefix-caching
+        - --enable-chunked-prefill
+        - --port=8000
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            nvidia.com/gpu: 8
+        volumeMounts:
+        - name: models-volume
+          mountPath: /models
+        env:
+        - name: CUDA_VISIBLE_DEVICES
+          value: "0,1,2,3,4,5,6,7"
+      volumes:
+      - name: models-volume
+        persistentVolumeClaim:
+          claimName: vllm-models-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-inference
+spec:
+  selector:
+    app: vllm-inference
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: LoadBalancer
+```
+
+### 多 Node 分布式部署
+
+将大型模型分布到多个 Nodes 的方法：
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vllm-config
+data:
+  hostfile: |
+    vllm-inference-0 slots=8
+    vllm-inference-1 slots=8
+  run_server.sh: |
+    #!/bin/bash
+
+    RANK=$HOSTNAME
+    if [[ $HOSTNAME == "vllm-inference-0" ]]; then
+      RANK=0
+    elif [[ $HOSTNAME == "vllm-inference-1" ]]; then
+      RANK=1
+    fi
+
+    python -m vllm.entrypoints.openai.api_server \
+      --model=/models/llama-3.1-70b \
+      --tensor-parallel-size=16 \
+      --pipeline-parallel-size=1 \
+      --max-num-batched-tokens=8192 \
+      --port=8000 \
+      --host=0.0.0.0 \
+      --master-addr=vllm-inference-0 \
+      --master-port=29500 \
+      --rank=$RANK
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vllm-inference
+spec:
+  serviceName: "vllm-inference"
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vllm-inference
+  template:
+    metadata:
+      labels:
+        app: vllm-inference
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - vllm-inference
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: vllm-server
+        image: vllm/vllm-openai:latest
+        command:
+        - bash
+        - /config/run_server.sh
+        ports:
+        - containerPort: 8000
+        - containerPort: 29500
+        resources:
+          limits:
+            nvidia.com/gpu: 8
+        volumeMounts:
+        - name: models-volume
+          mountPath: /models
+        - name: config-volume
+          mountPath: /config
+        env:
+        - name: CUDA_VISIBLE_DEVICES
+          value: "0,1,2,3,4,5,6,7"
+        - name: NCCL_DEBUG
+          value: "INFO"
+        - name: NCCL_IB_DISABLE
+          value: "0"
+        - name: NCCL_IB_GID_INDEX
+          value: "3"
+        - name: NCCL_NET_GDR_LEVEL
+          value: "5"
+      volumes:
+      - name: models-volume
+        persistentVolumeClaim:
+          claimName: vllm-models-pvc
+      - name: config-volume
+        configMap:
+          name: vllm-config
+          defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-inference
+spec:
+  selector:
+    app: vllm-inference
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: api
+  - port: 29500
+    targetPort: 29500
+    name: nccl
+  clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-inference-lb
+spec:
+  selector:
+    app: vllm-inference
+    statefulset.kubernetes.io/pod-name: vllm-inference-0
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: LoadBalancer
+```
+
+## 性能优化
+
+```mermaid
+flowchart TD
+    subgraph Optimization [Performance Optimization]
+        subgraph GPUMemory [GPU Memory Optimization]
+            MemoryUtil[GPU Memory Utilization Adjustment]
+            Quantization[Quantization Application]
+            SwapSpace[Swap Space Utilization]
+        end
+
+        subgraph Throughput [Throughput Optimization]
+            BatchSize[Batch Size Adjustment]
+            KVCache[KV Cache Optimization]
+            TensorParallel[Tensor Parallel Processing]
+        end
+
+        subgraph NetworkOpt [Network Optimization]
+            EFA[EFA Utilization]
+            NCCLSettings[NCCL Settings Optimization]
+            NodePlacement[Node Placement Optimization]
+        end
+    end
+
+    MemoryUtil -->|--gpu-memory-utilization=0.9| Performance([Performance Improvement])
+    Quantization -->|--quantization awq| Performance
+    SwapSpace -->|--swap-space=16| Performance
+
+    BatchSize -->|--max-num-batched-tokens=8192| Performance
+    KVCache -->|--block-size=16| Performance
+    TensorParallel -->|--tensor-parallel-size=8| Performance
+
+    EFA -->|vpc.amazonaws.com/efa: 1| Performance
+    NCCLSettings -->|NCCL_DEBUG=INFO| Performance
+    NodePlacement -->|topology.kubernetes.io/zone| Performance
+
+    classDef gpuMemNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef throughputNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef networkNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef performanceNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    class MemoryUtil,Quantization,SwapSpace,GPUMemory gpuMemNode;
+    class BatchSize,KVCache,TensorParallel,Throughput throughputNode;
+    class EFA,NCCLSettings,NodePlacement,NetworkOpt networkNode;
+    class Performance performanceNode;
+    class Optimization default;
+```
+
+### GPU 内存优化
+
+优化 vLLM GPU 内存使用的方法：
+
+1. **GPU Memory Utilization Adjustment**:
+
+```bash
+--gpu-memory-utilization=0.9
+```
+
+2. **Quantization Application**:
+
+```bash
+--quantization awq
+```
+
+3. **Swap Space Utilization**:
+
+```bash
+--swap-space=16
+```
+
+### 吞吐量优化
+
+优化 vLLM 吞吐量的方法：
+
+1. **Batch Size Adjustment**:
+
+```bash
+--max-num-batched-tokens=8192
+```
+
+2. **KV Cache Optimization**:
+
+```bash
+--block-size=16
+```
+
+3. **Tensor Parallel Processing Adjustment**:
+
+```bash
+--tensor-parallel-size=8
+```
+
+### 网络优化
+
+在分布式部署中优化网络性能的方法：
+
+1. **EFA (Elastic Fabric Adapter) Utilization**:
+
+```yaml
+resources:
+  limits:
+    nvidia.com/gpu: 8
+    vpc.amazonaws.com/efa: 1
+```
+
+2. **NCCL Settings Optimization**:
+
+```yaml
+env:
+- name: NCCL_DEBUG
+  value: "INFO"
+- name: NCCL_MIN_NCHANNELS
+  value: "4"
+- name: NCCL_SOCKET_IFNAME
+  value: "^lo,docker"
+- name: NCCL_ASYNC_ERROR_HANDLING
+  value: "1"
+```
+
+3. **Node Placement Optimization**:
+
+```yaml
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values:
+          - us-west-2a
+```
+
+## 监控和日志
+
+```mermaid
+flowchart TD
+    subgraph Monitoring [Monitoring and Logging]
+        subgraph MetricsCollection [Metrics Collection]
+            vLLMMetrics[vLLM Metrics]
+            GPUMetrics[GPU Metrics]
+            KubeMetrics[Kubernetes Metrics]
+        end
+
+        subgraph MonitoringStack [Monitoring Stack]
+            Prometheus[(Prometheus)]
+            AlertManager[Alert Manager]
+            Grafana[Grafana]
+        end
+
+        subgraph LoggingStack [Logging Stack]
+            Fluentd[Fluentd]
+            CloudWatch[CloudWatch Logs]
+            ElasticSearch[(ElasticSearch)]
+            Kibana[Kibana]
+        end
+
+        subgraph Dashboards [Dashboards]
+            GPUUtilization[GPU Utilization]
+            Throughput[Throughput]
+            Latency[Latency]
+            ErrorRate[Error Rate]
+        end
+
+        subgraph Alerts [Alerts]
+            HighLatency[High Latency]
+            LowThroughput[Low Throughput]
+            GPUError[GPU Error]
+            OOMError[Out of Memory Error]
+        end
+    end
+
+    vLLMMetrics --> Prometheus
+    GPUMetrics --> Prometheus
+    KubeMetrics --> Prometheus
+
+    Prometheus --> AlertManager
+    Prometheus --> Grafana
+
+    AlertManager --> Alerts
+    Grafana --> Dashboards
+
+    vLLMMetrics --> Fluentd
+    Fluentd --> CloudWatch
+    Fluentd --> ElasticSearch
+    ElasticSearch --> Kibana
+
+    classDef metricsNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef monitoringNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef loggingNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
+    classDef dashboardNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef alertNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    class vLLMMetrics,GPUMetrics,KubeMetrics,MetricsCollection metricsNode;
+    class Prometheus,AlertManager,Grafana,MonitoringStack monitoringNode;
+    class Fluentd,CloudWatch,ElasticSearch,Kibana,LoggingStack loggingNode;
+    class GPUUtilization,Throughput,Latency,ErrorRate,Dashboards dashboardNode;
+    class HighLatency,LowThroughput,GPUError,OOMError,Alerts alertNode;
+    class Monitoring default;
+```
+
+### Prometheus 指标
+
+从 vLLM server 收集 Prometheus metrics 的方法：
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-metrics
+  labels:
+    app: vllm-inference
+spec:
+  selector:
+    app: vllm-inference
+  ports:
+  - port: 8001
+    targetPort: 8001
+    name: metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vllm-metrics
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: vllm-inference
+  endpoints:
+  - port: metrics
+    interval: 15s
+```
+
+### 日志收集
+
+将 vLLM server 日志收集到 CloudWatch 的方法：
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: logging
+data:
+  fluent.conf: |
+    <source>
+      @type tail
+      path /var/log/containers/vllm-*.log
+      pos_file /var/log/fluentd-vllm.log.pos
+      tag kubernetes.vllm.*
+      read_from_head true
+      <parse>
+        @type json
+        time_format %Y-%m-%dT%H:%M:%S.%NZ
+      </parse>
+    </source>
+
+    <filter kubernetes.vllm.**>
+      @type kubernetes_metadata
+      @id filter_kube_metadata
+    </filter>
+
+    <match kubernetes.vllm.**>
+      @type cloudwatch_logs
+      log_group_name /eks/vllm/logs
+      log_stream_name_key $.kubernetes.pod_name
+      remove_log_stream_name_key true
+      auto_create_stream true
+      region us-west-2
+    </match>
+```
+
+## 自动扩缩容
+
+```mermaid
+flowchart TD
+    subgraph Autoscaling [Autoscaling]
+        subgraph PodScaling [Pod Scaling]
+            HPA[HorizontalPodAutoscaler]
+            KEDA[KEDA]
+            CustomMetrics[Custom Metrics]
+        end
+
+        subgraph NodeScaling [Node Scaling]
+            Karpenter[Karpenter]
+            ClusterAutoscaler[Cluster Autoscaler]
+            SpotInstances[Spot Instances]
+        end
+
+        subgraph ScalingTriggers [Scaling Triggers]
+            CPUUtilization[CPU Utilization]
+            GPUUtilization[GPU Utilization]
+            RequestsPerSecond[Requests Per Second]
+            QueueLength[Queue Length]
+        end
+    end
+
+    CPUUtilization --> HPA
+    GPUUtilization --> CustomMetrics
+    RequestsPerSecond --> KEDA
+    QueueLength --> KEDA
+
+    HPA --> Karpenter
+    KEDA --> Karpenter
+    CustomMetrics --> ClusterAutoscaler
+
+    Karpenter --> SpotInstances
+
+    classDef podScalingNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef nodeScalingNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef triggerNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    class HPA,KEDA,CustomMetrics,PodScaling podScalingNode;
+    class Karpenter,ClusterAutoscaler,SpotInstances,NodeScaling nodeScalingNode;
+    class CPUUtilization,GPUUtilization,RequestsPerSecond,QueueLength,ScalingTriggers triggerNode;
+    class Autoscaling default;
+```
+
+### HPA (Horizontal Pod Autoscaler)
+
+基于请求量自动扩缩 vLLM servers 的方法：
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: vllm-inference-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vllm-inference
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Pods
+    pods:
+      metric:
+        name: requests_per_second
+      target:
+        type: AverageValue
+        averageValue: 100
+```
+
+### 使用 Karpenter 进行 Node 自动扩缩容
+
+自动预置 GPU Nodes 的方法：
+
+```yaml
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: vllm-gpu
+spec:
+  template:
+    spec:
+      requirements:
+      - key: node.kubernetes.io/instance-type
+        operator: In
+        values:
+        - p3.16xlarge
+        - g5.12xlarge
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+      - key: vpc.amazonaws.com/efa
+        operator: In
+        values:
+        - "true"
+      nodeClassRef:
+        name: vllm-gpu-class
+  limits:
+    nvidia.com/gpu: 32
+---
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: vllm-gpu-class
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: vllm-cluster
+  securityGroupSelector:
+    karpenter.sh/discovery: vllm-cluster
+  ttlSecondsAfterEmpty: 30
+```
+
+## 安全配置
+
+### Network Policy
+
+限制对 vLLM servers 网络访问的方法：
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vllm-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: vllm-inference
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api-gateway
+    ports:
+    - protocol: TCP
+      port: 8000
+  - from:
+    - podSelector:
+        matchLabels:
+          app: vllm-inference
+    ports:
+    - protocol: TCP
+      port: 29500
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: vllm-inference
+    ports:
+    - protocol: TCP
+      port: 29500
+  - to:
+    ports:
+    - protocol: TCP
+      port: 443
+```
+
+### Security Context
+
+配置 container security context 的方法：
+
+```yaml
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+```
+
+## 客户端集成
+
+```mermaid
+flowchart TD
+    subgraph ClientIntegration [Client Integration]
+        subgraph Gateway [API Gateway]
+            Nginx[Nginx]
+            APIGateway[API Gateway]
+            Envoy[Envoy Proxy]
+        end
+
+        subgraph Clients [Clients]
+            PythonClient[Python Client]
+            JavaScriptClient[JavaScript Client]
+            CurlClient[Curl Client]
+        end
+
+        subgraph Security [Security]
+            Auth[Authentication]
+            RateLimit[Rate Limiting]
+            CORS[CORS]
+        end
+
+        subgraph Backend [Backend]
+            vLLMService[vLLM Service]
+            LoadBalancer[Load Balancer]
+        end
+    end
+
+    Clients --> Gateway
+    Gateway --> Security
+    Security --> Backend
+
+    PythonClient -->|HTTP Request| Nginx
+    JavaScriptClient -->|HTTP Request| APIGateway
+    CurlClient -->|HTTP Request| Envoy
+
+    Nginx --> Auth
+    APIGateway --> RateLimit
+    Envoy --> CORS
+
+    Auth --> LoadBalancer
+    RateLimit --> LoadBalancer
+    CORS --> LoadBalancer
+
+    LoadBalancer --> vLLMService
+
+    classDef gatewayNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
+    classDef clientNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+    classDef securityNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
+    classDef backendNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+
+    class Nginx,APIGateway,Envoy,Gateway gatewayNode;
+    class PythonClient,JavaScriptClient,CurlClient,Clients clientNode;
+    class Auth,RateLimit,CORS,Security securityNode;
+    class vLLMService,LoadBalancer,Backend backendNode;
+    class ClientIntegration default;
+```
+
+### API Gateway
+
+在 vLLM servers 前部署 API gateway 的方法：
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  default.conf: |
+    server {
+      listen 80;
+
+      location /v1/ {
+        proxy_pass http://vllm-inference:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+      }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+spec:
+  selector:
+    app: api-gateway
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
+```
+
+### Client 示例
+
+使用 Python client 向 vLLM server 发送请求的方法：
+
+```python
+import requests
+import json
+
+url = "http://api-gateway/v1/completions"
+
+payload = {
+    "model": "llama-3.1-70b",
+    "prompt": "Once upon a time",
+    "max_tokens": 100,
+    "temperature": 0.7
+}
+
+headers = {
+    "Content-Type": "application/json"
+}
+
+response = requests.post(url, headers=headers, data=json.dumps(payload))
+
+print(response.json())
+```
+
+## 最佳实践
+
+### 资源管理
+
+1. **考虑内存开销**:
+   - 除 GPU 内存外，还应分配足够的 CPU 内存。
+   - 建议分配约为模型大小两倍的 CPU 内存。
+
+2. **CPU Core 分配**:
+   - 每个 GPU 至少分配 4 个 CPU cores。
+   - 使用 tensor parallelization 时可能需要更多 CPU cores。
+
+3. **Node 选择**:
+   - 根据模型大小选择合适的 Node types。
+   - 选择具有高内存带宽的 Nodes。
+
+### 高可用性
+
+1. **多可用区部署**:
+   - 将 vLLM servers 部署到多个可用区。
+   - 确保每个可用区都有足够容量。
+
+2. **Load Balancing**:
+   - 将请求分发到多个 vLLM server instances。
+   - 配置 session affinity，使来自同一用户的请求路由到同一 server。
+
+3. **故障恢复**:
+   - 配置 health checks 以检测故障 servers。
+   - 实现自动恢复机制。
+
+### 成本优化
+
+1. **使用 Spot Instances**:
+   - 使用 Spot instances 降低成本。
+   - 适用于可容忍中断的 workloads。
+
+2. **Model Quantization**:
+   - 应用 INT8 或 INT4 quantization 以降低内存使用。
+   - 考虑精度和性能之间的平衡。
+
+3. **Autoscaling**:
+   - 基于请求量自动扩缩 servers。
+   - 在空闲时段缩减 servers 以降低成本。
+
+## 总结
+
+vLLM 是当前最活跃开发的开源 LLM 推理引擎，全面支持 Speculative Decoding、Prefix Caching、dynamic LoRA loading、Structured Output 和 Tool Calling 等生产环境必需功能。结合适当的 GPU instance 选择、高性能存储、网络优化以及 EKS 上的 auto-scaling，你可以构建一个具有成本效益且可扩展的 LLM serving platform。关于与 SGLang 和 TGI 等其他框架的比较，请参阅 [Inference Frameworks](./04-inference-frameworks.md) 章节。
+
+## 参考资料
+
+- [vLLM Official Documentation](https://docs.vllm.ai/) - 官方 vLLM 文档和最新功能指南
+- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - 用于在 EKS 上部署 AI/ML workloads 的 AWS 指南和示例
+
+## 测验
+
+要测试你在本章中学到的内容，请尝试 [Topic Quiz](../quizzes/ai-ml/04-vllm-deployment-quiz.md)。
