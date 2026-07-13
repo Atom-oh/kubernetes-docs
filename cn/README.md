@@ -38,3 +38,16 @@
    - [第 2 部分：调度器扩展与框架](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [第 3 部分：自定义调度器实现示例与监控](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
+### EKS 混合节点
+1. [EKS 混合节点介绍](./eks-hybrid-nodes/README.md)
+2. [先决条件](./eks-hybrid-nodes/01-prerequisites.md) | [Quiz](./quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+3. [网络配置](./eks-hybrid-nodes/02-network-configuration.md) | [Quiz](./quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+4. [隔离网络环境设置](./eks-hybrid-nodes/03-airgap-setup.md) | [Quiz](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+5. [节点引导](./eks-hybrid-nodes/04-node-bootstrap.md) | [Quiz](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+6. [GPU 服务器集成](./eks-hybrid-nodes/05-gpu-integration.md) | [Quiz](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+7. [工作负载放置策略](./eks-hybrid-nodes/06-workload-placement.md) | [Quiz](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+8. [节点生命周期管理](./eks-hybrid-nodes/07-node-lifecycle.md) | [Quiz](./quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
+9. [运维](./eks-hybrid-nodes/08-operations.md) | [Quiz](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+10. [裸金属操作系统设置](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [Quiz](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+11. [混合节点网关](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [Quiz](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+

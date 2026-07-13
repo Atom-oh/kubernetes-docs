@@ -41,6 +41,17 @@
   * [自定义调度器测验 - 第 2 部分](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
   * [自定义调度器测验 - 第 3 部分](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
+  * [先决条件测验](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+  * [网络配置测验](quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+  * [隔离网络环境设置测验](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+  * [节点引导测验](quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+  * [GPU 服务器集成测验](quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+  * [工作负载放置策略测验](quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+  * [节点生命周期管理测验](quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
+  * [运维测验](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+  * [裸金属操作系统设置测验](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+  * [混合节点网关测验](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+
 ## EKS 上的数据
 
 * [EKS 上的数据概述](data-on-eks/README.md)
@@ -69,3 +80,17 @@
   * [第 1 部分：基本概念](scheduling/01-custom-scheduler-part1.md)
   * [第 2 部分：实现](scheduling/02-custom-scheduler-part2.md)
   * [第 3 部分：高级功能](scheduling/03-custom-scheduler-part3.md)
+
+## Amazon EKS
+
+* [EKS 混合节点](eks-hybrid-nodes/README.md)
+  * [先决条件](eks-hybrid-nodes/01-prerequisites.md)
+  * [网络配置](eks-hybrid-nodes/02-network-configuration.md)
+  * [隔离网络环境设置](eks-hybrid-nodes/03-airgap-setup.md)
+  * [节点引导](eks-hybrid-nodes/04-node-bootstrap.md)
+  * [GPU 服务器集成](eks-hybrid-nodes/05-gpu-integration.md)
+  * [工作负载放置策略](eks-hybrid-nodes/06-workload-placement.md)
+  * [节点生命周期管理](eks-hybrid-nodes/07-node-lifecycle.md)
+  * [运维](eks-hybrid-nodes/08-operations.md)
+  * [裸金属操作系统设置](eks-hybrid-nodes/09-bare-metal-os-setup.md)
+  * [混合节点网关](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)

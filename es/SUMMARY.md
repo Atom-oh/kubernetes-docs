@@ -36,6 +36,17 @@
   * [Cuestionario sobre el planificador personalizado - Parte 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
   * [Cuestionario sobre el planificador personalizado - Parte 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
+  * [Cuestionario sobre Requisitos previos](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+  * [Cuestionario sobre Configuración de red](quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+  * [Cuestionario sobre Configuración de entorno aislado](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+  * [Cuestionario sobre Bootstrap de nodos](quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+  * [Cuestionario sobre Integración de servidores GPU](quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+  * [Cuestionario sobre Estrategias de colocación de cargas de trabajo](quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+  * [Cuestionario sobre Gestión del ciclo de vida de los nodos](quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
+  * [Cuestionario sobre Operaciones y mantenimiento](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+  * [Cuestionario sobre Configuración del sistema operativo en bare metal](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+  * [Cuestionario sobre Gateway de nodos híbridos](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+
 ## Autoescalado
 
 * [KEDA](autoscaling/01-keda.md)
@@ -48,3 +59,17 @@
   * [Parte 1: Conceptos básicos](scheduling/01-custom-scheduler-part1.md)
   * [Parte 2: Implementación](scheduling/02-custom-scheduler-part2.md)
   * [Parte 3: Funcionalidades avanzadas](scheduling/03-custom-scheduler-part3.md)
+
+## Amazon EKS
+
+* [Nodos híbridos de EKS](eks-hybrid-nodes/README.md)
+  * [Requisitos previos](eks-hybrid-nodes/01-prerequisites.md)
+  * [Configuración de red](eks-hybrid-nodes/02-network-configuration.md)
+  * [Configuración de entorno aislado](eks-hybrid-nodes/03-airgap-setup.md)
+  * [Bootstrap de nodos](eks-hybrid-nodes/04-node-bootstrap.md)
+  * [Integración de servidores GPU](eks-hybrid-nodes/05-gpu-integration.md)
+  * [Estrategias de colocación de cargas de trabajo](eks-hybrid-nodes/06-workload-placement.md)
+  * [Gestión del ciclo de vida de los nodos](eks-hybrid-nodes/07-node-lifecycle.md)
+  * [Operaciones y mantenimiento](eks-hybrid-nodes/08-operations.md)
+  * [Configuración del sistema operativo en bare metal](eks-hybrid-nodes/09-bare-metal-os-setup.md)
+  * [Gateway de nodos híbridos](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)

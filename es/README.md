@@ -26,3 +26,16 @@ Este sitio se está traduciendo automáticamente desde la [versión en inglés](
    - [Parte 2: Extensiones del planificador y marco de trabajo](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [Parte 3: Ejemplos de implementación del planificador personalizado y monitorización](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
+### Nodos híbridos de EKS
+1. [Introducción a EKS Hybrid Nodes](./eks-hybrid-nodes/README.md)
+2. [Requisitos previos](./eks-hybrid-nodes/01-prerequisites.md) | [Quiz](./quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+3. [Configuración de red](./eks-hybrid-nodes/02-network-configuration.md) | [Quiz](./quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+4. [Configuración de entorno aislado](./eks-hybrid-nodes/03-airgap-setup.md) | [Quiz](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+5. [Bootstrap de nodos](./eks-hybrid-nodes/04-node-bootstrap.md) | [Quiz](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+6. [Integración de servidores GPU](./eks-hybrid-nodes/05-gpu-integration.md) | [Quiz](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+7. [Estrategias de colocación de cargas de trabajo](./eks-hybrid-nodes/06-workload-placement.md) | [Quiz](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+8. [Gestión del ciclo de vida de los nodos](./eks-hybrid-nodes/07-node-lifecycle.md) | [Quiz](./quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
+9. [Operaciones y mantenimiento](./eks-hybrid-nodes/08-operations.md) | [Quiz](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+10. [Configuración del sistema operativo en bare metal](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [Quiz](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+11. [Gateway de nodos híbridos](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [Quiz](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+
