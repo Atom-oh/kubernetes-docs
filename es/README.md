@@ -355,3 +355,12 @@ Este material de formación es gratuito para uso con fines de aprendizaje.
    - [Parte 7: Monitoreo](./data-on-eks/kafka/07-monitoring.md) | [Quiz](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
    - [Parte 8: Mejores prácticas](./data-on-eks/kafka/08-best-practices.md) | [Quiz](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
 
+### Inteligencia artificial y aprendizaje automático
+1. [Cargas de trabajo de IA/ML](./ai-ml/01-ai-ml-workloads.md) | [Quiz](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+2. [Infraestructura de IA](./ai-ml/06-ai-infrastructure.md) | [Quiz](./quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+3. [Entrenamiento de modelos en EKS](./ai-ml/05-model-training.md) | [Quiz](./quizzes/ai-ml/05-model-training-quiz.md)
+4. [Frameworks de inferencia](./ai-ml/04-inference-frameworks.md) | [Quiz](./quizzes/ai-ml/04-inference-frameworks-quiz.md)
+5. [Despliegue y optimización de vLLM](./ai-ml/02-vllm-deployment.md) | [Quiz](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
+6. [Plataforma de IA agéntica en EKS](./ai-ml/03-agentic-ai-platform.md) | [Quiz](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+7. [Buenas prácticas de IA/ML](./ai-ml/07-ai-ml-best-practices.md) | [Quiz](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+

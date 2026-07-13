@@ -355,3 +355,12 @@
    - [パート7: 監視](./data-on-eks/kafka/07-monitoring.md) | [Quiz](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
    - [パート8: ベストプラクティス](./data-on-eks/kafka/08-best-practices.md) | [Quiz](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
 
+### 人工知能／機械学習
+1. [AI/ML ワークロード](./ai-ml/01-ai-ml-workloads.md) | [Quiz](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+2. [AI インフラストラクチャ](./ai-ml/06-ai-infrastructure.md) | [Quiz](./quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+3. [EKS でのモデル学習](./ai-ml/05-model-training.md) | [Quiz](./quizzes/ai-ml/05-model-training-quiz.md)
+4. [推論フレームワーク](./ai-ml/04-inference-frameworks.md) | [Quiz](./quizzes/ai-ml/04-inference-frameworks-quiz.md)
+5. [vLLM のデプロイと最適化](./ai-ml/02-vllm-deployment.md) | [Quiz](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
+6. [EKS 上のエージェント型 AI プラットフォーム](./ai-ml/03-agentic-ai-platform.md) | [Quiz](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+7. [AI/ML のベストプラクティス](./ai-ml/07-ai-ml-best-practices.md) | [Quiz](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+
