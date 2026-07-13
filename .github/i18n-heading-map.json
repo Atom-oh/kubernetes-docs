@@ -20,6 +20,11 @@
   "Data on EKS": {
     "cn": "EKS 上的数据"
   },
+  "Kubernetes Core Concepts": {
+    "cn": "Kubernetes 核心概念",
+    "es": "Conceptos básicos de Kubernetes",
+    "jp": "Kubernetes の中核概念"
+  },
   "Lab Guides": {
     "cn": "实验指南",
     "es": "Guías de laboratorio",

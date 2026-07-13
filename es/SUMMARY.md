@@ -19,6 +19,11 @@
   * [Laboratorio de Habilidades de operación de Linux](labs/basics/02-linux-advanced-lab.md)
   * [Laboratorio de Tecnología de contenedores](labs/basics/03-container-technology-lab.md)
 
+  * [Laboratorio de Pods y cargas de trabajo](labs/core/02-pods-and-workloads-lab.md)
+  * [Laboratorio de Servicios y redes](labs/core/03-services-networking-lab.md)
+  * [Laboratorio de Almacenamiento](labs/core/04-storage-lab.md)
+  * [Laboratorio de ConfigMap y Secret](labs/core/05-configuration-secrets-lab.md)
+
 ## Colección de cuestionarios
 
 * [Colección de cuestionarios - Cuestionarios por tema](quizzes/README.md)
@@ -36,6 +41,18 @@
   * [Cuestionario sobre el planificador personalizado - Parte 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
   * [Cuestionario sobre el planificador personalizado - Parte 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
+  * [Cuestionario sobre Arquitectura del clúster](quizzes/core/01-cluster-architecture-quiz.md)
+  * [Cuestionario sobre Pods y cargas de trabajo](quizzes/core/02-pods-and-workloads-quiz.md)
+  * [Cuestionario sobre Servicios y redes](quizzes/core/03-services-networking-quiz.md)
+  * [Cuestionario sobre Almacenamiento](quizzes/core/04-storage-quiz.md)
+  * [Cuestionario sobre Configuración](quizzes/core/05-configuration-secrets-quiz.md)
+  * [Cuestionario sobre Seguridad](quizzes/core/06-security-quiz.md)
+  * [Cuestionario sobre Políticas](quizzes/core/07-policies-quiz.md)
+  * [Cuestionario sobre Programación, apropiación y expulsión](quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+  * [Cuestionario sobre Administración del clúster](quizzes/core/09-cluster-administration-quiz.md)
+  * [Cuestionario sobre Windows en Kubernetes](quizzes/core/10-windows-in-kubernetes-quiz.md)
+  * [Cuestionario sobre Extensión de Kubernetes](quizzes/core/11-extending-kubernetes-quiz.md)
+
 ## Autoescalado
 
 * [KEDA](autoscaling/01-keda.md)
@@ -48,3 +65,17 @@
   * [Parte 1: Conceptos básicos](scheduling/01-custom-scheduler-part1.md)
   * [Parte 2: Implementación](scheduling/02-custom-scheduler-part2.md)
   * [Parte 3: Funcionalidades avanzadas](scheduling/03-custom-scheduler-part3.md)
+
+## Conceptos básicos de Kubernetes
+
+* [Arquitectura del clúster](core/01-cluster-architecture.md)
+* [Pods y cargas de trabajo](core/02-pods-and-workloads.md)
+* [Servicios y redes](core/03-services-networking.md)
+* [Almacenamiento](core/04-storage.md)
+* [Configuración](core/05-configuration-secrets.md)
+* [Seguridad](core/06-security.md)
+* [Políticas](core/07-policies.md)
+* [Programación, apropiación y expulsión](core/08-scheduling-preemption-eviction.md)
+* [Administración del clúster](core/09-cluster-administration.md)
+* [Windows en Kubernetes](core/10-windows-in-kubernetes.md)
+* [Extensión de Kubernetes](core/11-extending-kubernetes.md)

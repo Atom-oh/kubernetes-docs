@@ -317,3 +317,16 @@ Este material de formación es gratuito para uso con fines de aprendizaje.
    - [Parte 2: Extensiones del planificador y marco de trabajo](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [Parte 3: Ejemplos de implementación del planificador personalizado y monitorización](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
+### Conceptos básicos de Kubernetes
+1. [Arquitectura del clúster](./core/01-cluster-architecture.md) | [Quiz](./quizzes/core/01-cluster-architecture-quiz.md)
+2. [Pods y cargas de trabajo](./core/02-pods-and-workloads.md) | [Quiz](./quizzes/core/02-pods-and-workloads-quiz.md)
+3. [Servicios y redes](./core/03-services-networking.md) | [Quiz](./quizzes/core/03-services-networking-quiz.md)
+4. [Almacenamiento](./core/04-storage.md) | [Quiz](./quizzes/core/04-storage-quiz.md)
+5. [Configuración](./core/05-configuration-secrets.md) | [Quiz](./quizzes/core/05-configuration-secrets-quiz.md)
+6. [Seguridad](./core/06-security.md) | [Quiz](./quizzes/core/06-security-quiz.md)
+7. [Políticas](./core/07-policies.md) | [Quiz](./quizzes/core/07-policies-quiz.md)
+8. [Programación, apropiación y expulsión](./core/08-scheduling-preemption-eviction.md) | [Quiz](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+9. [Administración del clúster](./core/09-cluster-administration.md) | [Quiz](./quizzes/core/09-cluster-administration-quiz.md)
+10. [Windows en Kubernetes](./core/10-windows-in-kubernetes.md) | [Quiz](./quizzes/core/10-windows-in-kubernetes-quiz.md)
+11. [Extensión de Kubernetes](./core/11-extending-kubernetes.md) | [Quiz](./quizzes/core/11-extending-kubernetes-quiz.md)
+

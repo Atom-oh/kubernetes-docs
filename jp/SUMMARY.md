@@ -19,6 +19,11 @@
   * [Linux 運用スキルラボ](labs/basics/02-linux-advanced-lab.md)
   * [コンテナ技術ラボ](labs/basics/03-container-technology-lab.md)
 
+  * [Pod とワークロード ラボ](labs/core/02-pods-and-workloads-lab.md)
+  * [サービスとネットワーキング ラボ](labs/core/03-services-networking-lab.md)
+  * [ストレージ ラボ](labs/core/04-storage-lab.md)
+  * [ConfigMap と Secret ラボ](labs/core/05-configuration-secrets-lab.md)
+
 ## クイズ集
 
 * [クイズ集 - トピック別クイズ](quizzes/README.md)
@@ -36,6 +41,18 @@
   * [カスタムスケジューラー小テスト - パート2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
   * [カスタムスケジューラー小テスト - パート3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
+  * [クラスターアーキテクチャクイズ](quizzes/core/01-cluster-architecture-quiz.md)
+  * [Pod とワークロードクイズ](quizzes/core/02-pods-and-workloads-quiz.md)
+  * [サービスとネットワーキングクイズ](quizzes/core/03-services-networking-quiz.md)
+  * [ストレージクイズ](quizzes/core/04-storage-quiz.md)
+  * [構成クイズ](quizzes/core/05-configuration-secrets-quiz.md)
+  * [セキュリティクイズ](quizzes/core/06-security-quiz.md)
+  * [ポリシークイズ](quizzes/core/07-policies-quiz.md)
+  * [スケジューリング、プリエンプション、退避クイズ](quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+  * [クラスター管理クイズ](quizzes/core/09-cluster-administration-quiz.md)
+  * [Kubernetes における Windows クイズ](quizzes/core/10-windows-in-kubernetes-quiz.md)
+  * [Kubernetes の拡張クイズ](quizzes/core/11-extending-kubernetes-quiz.md)
+
 ## オートスケーリング
 
 * [KEDA](autoscaling/01-keda.md)
@@ -48,3 +65,17 @@
   * [パート1: 基本概念](scheduling/01-custom-scheduler-part1.md)
   * [パート2: 実装](scheduling/02-custom-scheduler-part2.md)
   * [パート3: 高度な機能](scheduling/03-custom-scheduler-part3.md)
+
+## Kubernetes の中核概念
+
+* [クラスターアーキテクチャ](core/01-cluster-architecture.md)
+* [Pod とワークロード](core/02-pods-and-workloads.md)
+* [サービスとネットワーキング](core/03-services-networking.md)
+* [ストレージ](core/04-storage.md)
+* [構成](core/05-configuration-secrets.md)
+* [セキュリティ](core/06-security.md)
+* [ポリシー](core/07-policies.md)
+* [スケジューリング、プリエンプション、退避](core/08-scheduling-preemption-eviction.md)
+* [クラスター管理](core/09-cluster-administration.md)
+* [Kubernetes における Windows](core/10-windows-in-kubernetes.md)
+* [Kubernetes の拡張](core/11-extending-kubernetes.md)

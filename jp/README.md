@@ -317,3 +317,16 @@
    - [パート 2: スケジューラー拡張機能とフレームワーク](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [パート 3: カスタムスケジューラーの実装例と監視](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
+### Kubernetes の中核概念
+1. [クラスターアーキテクチャ](./core/01-cluster-architecture.md) | [Quiz](./quizzes/core/01-cluster-architecture-quiz.md)
+2. [Pod とワークロード](./core/02-pods-and-workloads.md) | [Quiz](./quizzes/core/02-pods-and-workloads-quiz.md)
+3. [サービスとネットワーキング](./core/03-services-networking.md) | [Quiz](./quizzes/core/03-services-networking-quiz.md)
+4. [ストレージ](./core/04-storage.md) | [Quiz](./quizzes/core/04-storage-quiz.md)
+5. [構成](./core/05-configuration-secrets.md) | [Quiz](./quizzes/core/05-configuration-secrets-quiz.md)
+6. [セキュリティ](./core/06-security.md) | [Quiz](./quizzes/core/06-security-quiz.md)
+7. [ポリシー](./core/07-policies.md) | [Quiz](./quizzes/core/07-policies-quiz.md)
+8. [スケジューリング、プリエンプション、退避](./core/08-scheduling-preemption-eviction.md) | [Quiz](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+9. [クラスター管理](./core/09-cluster-administration.md) | [Quiz](./quizzes/core/09-cluster-administration-quiz.md)
+10. [Kubernetes における Windows](./core/10-windows-in-kubernetes.md) | [Quiz](./quizzes/core/10-windows-in-kubernetes-quiz.md)
+11. [Kubernetes の拡張](./core/11-extending-kubernetes.md) | [Quiz](./quizzes/core/11-extending-kubernetes-quiz.md)
+
