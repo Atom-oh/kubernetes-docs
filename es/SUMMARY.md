@@ -124,3 +124,7 @@
   * [Parte 6: Integración con MSK](data-on-eks/kafka/06-msk-integration.md)
   * [Parte 7: Monitoreo](data-on-eks/kafka/07-monitoring.md)
   * [Parte 8: Mejores prácticas](data-on-eks/kafka/08-best-practices.md)
+
+## Noticias
+
+* [Noticias](news/README.md)

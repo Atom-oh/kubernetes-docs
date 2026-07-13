@@ -138,3 +138,7 @@
 * [vLLM 部署与优化](ai-ml/02-vllm-deployment.md)
 * [EKS 上的智能体 AI 平台](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML 最佳实践](ai-ml/07-ai-ml-best-practices.md)
+
+## 新闻
+
+* [新闻](news/README.md)
