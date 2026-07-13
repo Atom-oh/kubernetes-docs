@@ -80,6 +80,19 @@
   * [EKS 上のエージェント型 AI プラットフォームクイズ](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
   * [AI/ML のベストプラクティスクイズ](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
+  * [Kyvernoによるポリシー管理クイズ](quizzes/security/01-kyverno-policy-management-quiz.md)
+  * [Kubernetesの認証と認可クイズ](quizzes/security/02-kubernetes-auth-authz-quiz.md)
+  * [Podセキュリティ標準クイズ](quizzes/security/03-pod-security-standards-quiz.md)
+  * [ネットワークポリシークイズ](quizzes/security/04-network-policies-quiz.md)
+  * [シークレット管理クイズ](quizzes/security/05-secrets-management-quiz.md)
+  * [EKSセキュリティのベストプラクティスクイズ](quizzes/security/06-eks-security-best-practices-quiz.md)
+  * [イメージセキュリティクイズ](quizzes/security/07-image-security-quiz.md)
+  * [ランタイムセキュリティクイズ](quizzes/security/08-runtime-security-quiz.md)
+  * [OPA Gatekeeperクイズ](quizzes/security/09-opa-gatekeeper-quiz.md)
+  * [cert-managerクイズ](quizzes/security/10-cert-manager-quiz.md)
+  * [Kubescapeクイズ](quizzes/security/11-kubescape-quiz.md)
+  * [SPIFFE/SPIREクイズ](quizzes/security/12-spiffe-spire-quiz.md)
+
 ## オートスケーリング
 
 * [KEDA](autoscaling/01-keda.md)
@@ -146,3 +159,18 @@
 * [vLLM のデプロイと最適化](ai-ml/02-vllm-deployment.md)
 * [EKS 上のエージェント型 AI プラットフォーム](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML のベストプラクティス](ai-ml/07-ai-ml-best-practices.md)
+
+## セキュリティとポリシー
+
+* [Kyvernoによるポリシー管理](security/01-kyverno-policy-management.md)
+* [Kubernetesの認証と認可](security/02-kubernetes-auth-authz.md)
+* [Podセキュリティ標準](security/03-pod-security-standards.md)
+* [ネットワークポリシー](security/04-network-policies.md)
+* [シークレット管理](security/05-secrets-management.md)
+* [EKSセキュリティのベストプラクティス](security/06-eks-security-best-practices.md)
+* [イメージセキュリティ](security/07-image-security.md)
+* [ランタイムセキュリティ](security/08-runtime-security.md)
+* [OPA Gatekeeper](security/09-opa-gatekeeper.md)
+* [cert-manager](security/10-cert-manager.md)
+* [Kubescape](security/11-kubescape.md)
+* [SPIFFE/SPIRE](security/12-spiffe-spire.md)

@@ -364,3 +364,17 @@
 6. [EKS 上のエージェント型 AI プラットフォーム](./ai-ml/03-agentic-ai-platform.md) | [Quiz](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [AI/ML のベストプラクティス](./ai-ml/07-ai-ml-best-practices.md) | [Quiz](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
+### セキュリティとポリシー
+1. [Kyvernoによるポリシー管理](./security/01-kyverno-policy-management.md) | [Quiz](./quizzes/security/01-kyverno-policy-management-quiz.md)
+2. [Kubernetesの認証と認可](./security/02-kubernetes-auth-authz.md) | [Quiz](./quizzes/security/02-kubernetes-auth-authz-quiz.md)
+3. [Podセキュリティ標準](./security/03-pod-security-standards.md) | [Quiz](./quizzes/security/03-pod-security-standards-quiz.md)
+4. [ネットワークポリシー](./security/04-network-policies.md) | [Quiz](./quizzes/security/04-network-policies-quiz.md)
+5. [シークレット管理](./security/05-secrets-management.md) | [Quiz](./quizzes/security/05-secrets-management-quiz.md)
+6. [EKSセキュリティのベストプラクティス](./security/06-eks-security-best-practices.md) | [Quiz](./quizzes/security/06-eks-security-best-practices-quiz.md)
+7. [イメージセキュリティ](./security/07-image-security.md) | [Quiz](./quizzes/security/07-image-security-quiz.md)
+8. [ランタイムセキュリティ](./security/08-runtime-security.md) | [Quiz](./quizzes/security/08-runtime-security-quiz.md)
+9. [OPA Gatekeeper](./security/09-opa-gatekeeper.md) | [Quiz](./quizzes/security/09-opa-gatekeeper-quiz.md)
+10. [cert-manager](./security/10-cert-manager.md) | [Quiz](./quizzes/security/10-cert-manager-quiz.md)
+11. [Kubescape](./security/11-kubescape.md) | [Quiz](./quizzes/security/11-kubescape-quiz.md)
+12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [Quiz](./quizzes/security/12-spiffe-spire-quiz.md)
+

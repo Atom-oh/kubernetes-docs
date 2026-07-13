@@ -364,3 +364,17 @@ Este material de formación es gratuito para uso con fines de aprendizaje.
 6. [Plataforma de IA agéntica en EKS](./ai-ml/03-agentic-ai-platform.md) | [Quiz](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [Buenas prácticas de IA/ML](./ai-ml/07-ai-ml-best-practices.md) | [Quiz](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
+### Seguridad y política
+1. [Gestión de políticas con Kyverno](./security/01-kyverno-policy-management.md) | [Quiz](./quizzes/security/01-kyverno-policy-management-quiz.md)
+2. [Autenticación y autorización de Kubernetes](./security/02-kubernetes-auth-authz.md) | [Quiz](./quizzes/security/02-kubernetes-auth-authz-quiz.md)
+3. [Estándares de seguridad de Pod](./security/03-pod-security-standards.md) | [Quiz](./quizzes/security/03-pod-security-standards-quiz.md)
+4. [Políticas de red](./security/04-network-policies.md) | [Quiz](./quizzes/security/04-network-policies-quiz.md)
+5. [Gestión de secretos](./security/05-secrets-management.md) | [Quiz](./quizzes/security/05-secrets-management-quiz.md)
+6. [Mejores prácticas de seguridad de EKS](./security/06-eks-security-best-practices.md) | [Quiz](./quizzes/security/06-eks-security-best-practices-quiz.md)
+7. [Seguridad de imágenes](./security/07-image-security.md) | [Quiz](./quizzes/security/07-image-security-quiz.md)
+8. [Seguridad en tiempo de ejecución](./security/08-runtime-security.md) | [Quiz](./quizzes/security/08-runtime-security-quiz.md)
+9. [OPA Gatekeeper](./security/09-opa-gatekeeper.md) | [Quiz](./quizzes/security/09-opa-gatekeeper-quiz.md)
+10. [cert-manager](./security/10-cert-manager.md) | [Quiz](./quizzes/security/10-cert-manager-quiz.md)
+11. [Kubescape](./security/11-kubescape.md) | [Quiz](./quizzes/security/11-kubescape-quiz.md)
+12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [Quiz](./quizzes/security/12-spiffe-spire-quiz.md)
+

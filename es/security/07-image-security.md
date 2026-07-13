@@ -1,0 +1,897 @@
+# Container Image Security
+
+> **Versiones compatibles**: Trivy 0.56+, Kubernetes 1.31, 1.32, 1.33
+> **Última actualización**: February 22, 2026
+
+La seguridad de las imágenes de contenedor es la primera línea de defensa en la seguridad de Kubernetes. Este documento cubre el escaneo de imágenes, la firma, la verificación y la seguridad de la cadena de suministro.
+
+## Table of Contents
+
+1. [Image Scanning Overview](#image-scanning-overview)
+2. [Trivy](#trivy)
+3. [Amazon ECR Image Scanning](#amazon-ecr-image-scanning)
+4. [Image Signing with Cosign/Sigstore](#image-signing-with-cosignsigstore)
+5. [Image Verification in Admission Control](#image-verification-in-admission-control)
+6. [Supply Chain Security](#supply-chain-security)
+7. [Base Image Selection](#base-image-selection)
+8. [Image Registry Best Practices](#image-registry-best-practices)
+9. [CI/CD Pipeline Integration](#cicd-pipeline-integration)
+
+---
+
+## Image Scanning Overview
+
+### Shift-Left Security
+
+La seguridad de las imágenes debe comenzar temprano en el proceso de desarrollo.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    Shift-Left Image Security                             │
+│                                                                         │
+│  Development Phase           Build Phase              Runtime Phase     │
+│  ┌─────────┐               ┌─────────┐               ┌─────────┐       │
+│  │ IDE     │               │ CI/CD   │               │ K8s     │       │
+│  │ Scanning│──────────────▶│ Scanning│──────────────▶│ Scanning│       │
+│  │         │               │         │               │         │       │
+│  │ • Local │               │ • Build │               │ • Runtime│      │
+│  │   scan  │               │   gate  │               │   monitor│      │
+│  │ • Deps  │               │ • Regis-│               │ • Policy │      │
+│  │   check │               │   try   │               │   enforce│      │
+│  └─────────┘               └─────────┘               └─────────┘       │
+│                                                                         │
+│  ◀─────────────────── Cost & Ease of Fix ──────────────────────▶       │
+│     Low                                                   High          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Scan Targets
+
+| Target | Description | Tools |
+|--------|-------------|-------|
+| **OS Packages** | Operating system package vulnerabilities | Trivy, Grype, Clair |
+| **Language Dependencies** | npm, pip, go modules, etc. | Trivy, Snyk |
+| **Misconfigurations** | Dockerfile, K8s manifests | Trivy, Checkov |
+| **Secrets** | Hardcoded sensitive information | Trivy, Trufflehog |
+| **Licenses** | Open source licenses | Trivy, FOSSA |
+
+---
+
+## Trivy
+
+### Trivy Overview
+
+Trivy es un scanner de seguridad integral para contenedores, sistemas de archivos, repositorios Git y más.
+
+### Trivy Installation
+
+```bash
+# macOS
+brew install trivy
+
+# Linux (Debian/Ubuntu)
+sudo apt-get install wget apt-transport-https gnupg
+wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+sudo apt-get update
+sudo apt-get install trivy
+
+# Docker
+docker pull aquasec/trivy:latest
+```
+
+### Image Scanning
+
+```bash
+# Basic image scan
+trivy image nginx:latest
+
+# Severity filtering
+trivy image --severity HIGH,CRITICAL nginx:latest
+
+# JSON output
+trivy image --format json --output results.json nginx:latest
+
+# SARIF format (GitHub Security integration)
+trivy image --format sarif --output results.sarif nginx:latest
+
+# Ignore unfixed vulnerabilities
+trivy image --ignore-unfixed nginx:latest
+
+# Include secret scanning
+trivy image --scanners vuln,secret nginx:latest
+```
+
+### Filesystem Scanning
+
+```bash
+# Scan project directory
+trivy fs --scanners vuln,secret,config .
+
+# Scan Dockerfile
+trivy config Dockerfile
+
+# Scan Kubernetes manifests
+trivy config ./k8s/
+
+# Scan Helm charts
+trivy config ./charts/my-app/
+```
+
+### Trivy Configuration File
+
+```yaml
+# trivy.yaml
+severity:
+  - HIGH
+  - CRITICAL
+
+scan:
+  scanners:
+    - vuln
+    - secret
+    - config
+
+vulnerability:
+  ignore-unfixed: true
+  type:
+    - os
+    - library
+
+secret:
+  config: /path/to/secret-config.yaml
+
+misconfiguration:
+  helm:
+    values:
+      - values.yaml
+
+ignore:
+  - CVE-2023-12345  # Ignore specific CVE
+  - secret-rule-id  # Ignore specific secret rule
+```
+
+### Trivy Operator (Kubernetes Integration)
+
+```bash
+# Install Trivy Operator
+helm repo add aqua https://aquasecurity.github.io/helm-charts/
+helm repo update
+
+helm install trivy-operator aqua/trivy-operator \
+    --namespace trivy-system \
+    --create-namespace \
+    --set trivy.ignoreUnfixed=true
+```
+
+```yaml
+# Check VulnerabilityReport
+apiVersion: aquasecurity.github.io/v1alpha1
+kind: VulnerabilityReport
+metadata:
+  name: deployment-nginx-nginx
+  namespace: default
+spec:
+  # Auto-generated by Trivy Operator
+report:
+  scanner:
+    name: Trivy
+    version: 0.56.0
+  summary:
+    criticalCount: 2
+    highCount: 5
+    mediumCount: 10
+    lowCount: 15
+  vulnerabilities:
+    - vulnerabilityID: CVE-2024-12345
+      severity: CRITICAL
+      title: "Buffer overflow in libssl"
+      installedVersion: "1.1.1"
+      fixedVersion: "1.1.2"
+```
+
+---
+
+## Amazon ECR Image Scanning
+
+### Basic Scanning vs Enhanced Scanning
+
+| Feature | Basic Scanning | Enhanced Scanning (Inspector) |
+|---------|---------------|-------------------------------|
+| **Scan Engine** | Clair | Amazon Inspector |
+| **Scan Frequency** | On push | Continuous scan |
+| **Vulnerability DB** | CVE | CVE + Amazon threat intelligence |
+| **Cost** | Free | Inspector pricing |
+| **Language Packages** | Limited | Broad support |
+| **AWS Integration** | Basic | Security Hub, EventBridge |
+
+### Enabling Enhanced Scanning
+
+```bash
+# Configure registry scanning
+aws ecr put-registry-scanning-configuration \
+    --scan-type ENHANCED \
+    --rules '[
+        {
+            "repositoryFilters": [
+                {"filter": "production/*", "filterType": "WILDCARD"}
+            ],
+            "scanFrequency": "CONTINUOUS_SCAN"
+        },
+        {
+            "repositoryFilters": [
+                {"filter": "development/*", "filterType": "WILDCARD"}
+            ],
+            "scanFrequency": "SCAN_ON_PUSH"
+        }
+    ]'
+```
+
+### Retrieving Scan Results
+
+```bash
+# Get scan results
+aws ecr describe-image-scan-findings \
+    --repository-name my-app \
+    --image-id imageTag=latest \
+    --query 'imageScanFindings.findings[?severity==`CRITICAL`]'
+
+# Vulnerability summary
+aws ecr describe-image-scan-findings \
+    --repository-name my-app \
+    --image-id imageTag=latest \
+    --query 'imageScanFindings.findingSeverityCounts'
+```
+
+### Notifications via EventBridge
+
+```yaml
+# CloudFormation/SAM template
+Resources:
+  ECRScanRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: ecr-scan-findings
+      EventPattern:
+        source:
+          - aws.ecr
+        detail-type:
+          - ECR Image Scan
+        detail:
+          scan-status:
+            - COMPLETE
+          finding-severity-counts:
+            CRITICAL:
+              - exists: true
+      Targets:
+        - Id: SNSTarget
+          Arn: !Ref AlertTopic
+          InputTransformer:
+            InputPathsMap:
+              repo: "$.detail.repository-name"
+              tag: "$.detail.image-tags[0]"
+              critical: "$.detail.finding-severity-counts.CRITICAL"
+            InputTemplate: |
+              "ECR Scan Alert: Found <critical> CRITICAL vulnerabilities in <repo>:<tag>"
+```
+
+---
+
+## Image Signing with Cosign/Sigstore
+
+### Cosign Overview
+
+Cosign forma parte del proyecto Sigstore, una herramienta para firmar y verificar imágenes de contenedor.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    Cosign Image Signing Workflow                         │
+│                                                                         │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────────────────┐  │
+│  │   Build     │────▶│   Sign      │────▶│   Push to Registry      │  │
+│  │   Image     │     │   (Cosign)  │     │   (Image + Signature)   │  │
+│  └─────────────┘     └─────────────┘     └───────────┬─────────────┘  │
+│                                                       │                │
+│                                                       ▼                │
+│  ┌─────────────────────────────────────────────────────────────────┐  │
+│  │                      Container Registry                          │  │
+│  │                                                                  │  │
+│  │  ┌─────────────────┐    ┌─────────────────┐                    │  │
+│  │  │   Image         │    │   Signature     │                    │  │
+│  │  │   sha256:abc... │    │   sha256:xyz... │                    │  │
+│  │  └─────────────────┘    └─────────────────┘                    │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                                          │                             │
+│                                          ▼                             │
+│  ┌─────────────────────────────────────────────────────────────────┐  │
+│  │                    Kubernetes Cluster                            │  │
+│  │                                                                  │  │
+│  │  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐       │  │
+│  │  │  Admission  │────▶│   Verify    │────▶│   Deploy    │       │  │
+│  │  │  Controller │     │  Signature  │     │    Pod      │       │  │
+│  │  │  (Kyverno)  │     │             │     │             │       │  │
+│  │  └─────────────┘     └─────────────┘     └─────────────┘       │  │
+│  └─────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Cosign Installation
+
+```bash
+# macOS
+brew install cosign
+
+# Linux
+curl -LO https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64
+chmod +x cosign-linux-amd64
+sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+
+# Version check
+cosign version
+```
+
+### Key-Based Signing
+
+```bash
+# Generate key pair
+cosign generate-key-pair
+
+# Sign image
+cosign sign --key cosign.key myregistry.io/myapp:v1.0.0
+
+# Verify signature
+cosign verify --key cosign.pub myregistry.io/myapp:v1.0.0
+```
+
+### Keyless Signing (OIDC-based)
+
+```bash
+# Keyless signing in GitHub Actions
+# GITHUB_TOKEN automatically provides OIDC token
+cosign sign myregistry.io/myapp:v1.0.0
+
+# Verify keyless signature
+cosign verify \
+    --certificate-identity=https://github.com/myorg/myrepo/.github/workflows/build.yaml@refs/heads/main \
+    --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
+    myregistry.io/myapp:v1.0.0
+```
+
+### GitHub Actions Integration
+
+```yaml
+name: Build, Sign and Push
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-sign-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write  # Required for keyless signing
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Login to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        id: build
+        with:
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+      - name: Sign Image (Keyless)
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          cosign sign --yes ghcr.io/${{ github.repository }}@${DIGEST}
+
+      - name: Verify Signature
+        run: |
+          cosign verify \
+            --certificate-identity-regexp="https://github.com/${{ github.repository }}/*" \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+```
+
+---
+
+## Image Verification in Admission Control
+
+### Kyverno imageVerify
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signature
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: verify-signature
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/myorg/*"
+          attestors:
+            - count: 1
+              entries:
+                - keyless:
+                    subject: "https://github.com/myorg/*/.github/workflows/*@refs/heads/main"
+                    issuer: "https://token.actions.githubusercontent.com"
+                    rekor:
+                      url: https://rekor.sigstore.dev
+---
+# Key-based verification
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-key
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: verify-key-signature
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      verifyImages:
+        - imageReferences:
+            - "myregistry.io/*"
+          attestors:
+            - count: 1
+              entries:
+                - keys:
+                    publicKeys: |
+                      -----BEGIN PUBLIC KEY-----
+                      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...
+                      -----END PUBLIC KEY-----
+```
+
+### Connaisseur
+
+```yaml
+# Connaisseur installation
+helm repo add connaisseur https://sse-secure-systems.github.io/connaisseur/charts
+helm install connaisseur connaisseur/connaisseur \
+    -n connaisseur \
+    --create-namespace
+```
+
+```yaml
+# Connaisseur configuration
+# values.yaml
+validators:
+  - name: cosign
+    type: cosign
+    trustRoots:
+      - name: production
+        key: |
+          -----BEGIN PUBLIC KEY-----
+          MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...
+          -----END PUBLIC KEY-----
+
+policy:
+  - pattern: "ghcr.io/myorg/*"
+    validator: cosign
+    with:
+      trustRoot: production
+  - pattern: "*"
+    validator: deny  # Deny other images
+```
+
+---
+
+## Supply Chain Security
+
+### SBOM (Software Bill of Materials) Generation
+
+```bash
+# Generate SBOM with Syft
+syft myregistry.io/myapp:latest -o spdx-json > sbom.spdx.json
+syft myregistry.io/myapp:latest -o cyclonedx-json > sbom.cyclonedx.json
+
+# Generate SBOM with Trivy
+trivy image --format spdx-json --output sbom.json myregistry.io/myapp:latest
+
+# Attach SBOM to image (Cosign)
+cosign attach sbom --sbom sbom.spdx.json myregistry.io/myapp:latest
+```
+
+### SBOM-based Vulnerability Scanning
+
+```bash
+# Scan SBOM for vulnerabilities
+trivy sbom sbom.spdx.json
+
+# Scan SBOM with Grype
+grype sbom:sbom.spdx.json
+```
+
+### SLSA (Supply chain Levels for Software Artifacts)
+
+```yaml
+# Generate SLSA Provenance in GitHub Actions
+name: SLSA Build
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and Push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+  provenance:
+    needs: build
+    permissions:
+      actions: read
+      id-token: write
+      packages: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v1.9.0
+    with:
+      image: ghcr.io/${{ github.repository }}
+      digest: ${{ needs.build.outputs.digest }}
+    secrets:
+      registry-username: ${{ github.actor }}
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
+```
+
+---
+
+## Base Image Selection
+
+### Image Type Comparison
+
+| Image Type | Size | Vulnerabilities | Debugging | Use Case |
+|------------|------|-----------------|-----------|----------|
+| **distroless** | Very small | Very few | Difficult | Production |
+| **Alpine** | Small (~5MB) | Few | Possible | Lightweight apps |
+| **Chainguard** | Small | Very few | Limited | Security-focused |
+| **Ubuntu/Debian** | Large | Many | Easy | Dev/Legacy |
+| **Scratch** | Minimal | None | Impossible | Static binaries |
+
+### Using Distroless Images
+
+```dockerfile
+# Multi-stage build with distroless
+FROM golang:1.22 AS builder
+WORKDIR /app
+COPY go.* ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server
+
+# Distroless runtime image
+FROM gcr.io/distroless/static-debian12:nonroot
+COPY --from=builder /app/server /server
+USER nonroot:nonroot
+ENTRYPOINT ["/server"]
+```
+
+### Using Chainguard Images
+
+```dockerfile
+# Chainguard Python image
+FROM cgr.dev/chainguard/python:latest
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+USER nonroot
+CMD ["python", "app.py"]
+```
+
+### Alpine Security Hardening
+
+```dockerfile
+FROM alpine:3.19
+
+# Install minimal packages only
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    && rm -rf /var/cache/apk/*
+
+# Create non-root user
+RUN addgroup -g 1000 app && \
+    adduser -u 1000 -G app -s /bin/sh -D app
+
+WORKDIR /app
+COPY --chown=app:app . .
+
+USER app
+CMD ["python3", "app.py"]
+```
+
+---
+
+## Image Registry Best Practices
+
+### Using Private Registries
+
+```yaml
+# ImagePullSecrets configuration
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-credentials
+  namespace: production
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: <base64-encoded-docker-config>
+---
+# Set default ImagePullSecret on ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: production
+imagePullSecrets:
+  - name: registry-credentials
+```
+
+### Image Pull Policies
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-pod
+spec:
+  containers:
+  - name: app
+    image: myregistry.io/myapp@sha256:abc123...  # Use digest
+    imagePullPolicy: Always  # Always verify latest
+```
+
+### Immutable Tag Policy (Kyverno)
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-image-digest
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: require-digest
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Images must use digest instead of tags"
+        pattern:
+          spec:
+            containers:
+              - image: "*@sha256:*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: disallow-latest
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Using 'latest' tag is not allowed"
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"
+```
+
+---
+
+## CI/CD Pipeline Integration
+
+### Complete Image Security Pipeline
+
+```yaml
+# .github/workflows/secure-build.yaml
+name: Secure Image Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # 1. Code scanning
+  code-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner (fs mode)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+  # 2. Build and scan
+  build-scan:
+    needs: code-scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:scan
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IMAGE_NAME }}:scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Check for critical vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IMAGE_NAME }}:scan'
+          exit-code: '1'
+          severity: 'CRITICAL'
+
+  # 3. Push and sign
+  push-sign:
+    needs: build-scan
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Login to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Sign image with Cosign
+        run: |
+          cosign sign --yes ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.push.outputs.digest }}
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.push.outputs.digest }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Attach SBOM to image
+        run: |
+          cosign attach sbom --sbom sbom.spdx.json ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.push.outputs.digest }}
+
+  # 4. Generate SLSA Provenance
+  provenance:
+    needs: push-sign
+    permissions:
+      actions: read
+      id-token: write
+      packages: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v1.9.0
+    with:
+      image: ghcr.io/${{ github.repository }}
+      digest: ${{ needs.push-sign.outputs.digest }}
+    secrets:
+      registry-username: ${{ github.actor }}
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
+```
+
+---
+
+## Summary
+
+Aspectos clave de la seguridad de imágenes de contenedor:
+
+1. **Scanning**: Detectar vulnerabilidades con Trivy y el escaneo mejorado de ECR
+2. **Signing**: Garantizar la integridad de las imágenes con Cosign/Sigstore
+3. **Verification**: Permitir solo imágenes firmadas con Kyverno
+4. **Supply Chain**: Lograr transparencia con SBOM y SLSA
+5. **Base Images**: Usar distroless y Chainguard
+6. **CI/CD Integration**: Crear pipelines de seguridad automatizados
+
+### Recommendations
+
+- Aplicar escaneo de vulnerabilidades a todas las imágenes
+- Firmar siempre las imágenes de producción
+- Usar digests en lugar de la etiqueta `latest`
+- Usar imágenes base distroless o mínimas
+- Automatizar la generación y gestión de SBOM
+
+---
+
+## References
+
+- [Trivy Official Documentation](https://aquasecurity.github.io/trivy/)
+- [Cosign/Sigstore Documentation](https://docs.sigstore.dev/)
+- [Kyverno Image Verification](https://kyverno.io/docs/writing-policies/verify-images/)
+- [SLSA Framework](https://slsa.dev/)
+- [Chainguard Images](https://www.chainguard.dev/chainguard-images)
