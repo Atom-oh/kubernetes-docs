@@ -124,3 +124,7 @@
   * [パート6: MSK統合](data-on-eks/kafka/06-msk-integration.md)
   * [パート7: 監視](data-on-eks/kafka/07-monitoring.md)
   * [パート8: ベストプラクティス](data-on-eks/kafka/08-best-practices.md)
+
+## ニュース
+
+* [ニュース](news/README.md)
