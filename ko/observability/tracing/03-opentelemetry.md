@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **지원 버전**: OTEL 1.x
-> **마지막 업데이트**: 2026년 2월 20일
+> **마지막 업데이트**: 2026년 7월 13일
 
 ## 소개
 
@@ -1133,6 +1133,10 @@ service:
       processors: [batch]
       exporters: [otlp/tempo, awsxray, datadog, jaeger]
 ```
+
+### 2026년 7월 업데이트: AI 에이전트 트래픽의 네트워크 경계 관측
+
+CNCF 블로그에 [NGINX와 OpenTelemetry로 AI 에이전트의 네트워크 경계를 구성하는 패턴](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/)이 소개되었습니다. AI 에이전트의 아웃바운드 트래픽을 포워드 프록시(NGINX)로 강제 경유시키고, NGINX 네이티브 OpenTelemetry 모듈로 요청마다 OTel 스팬을 생성하는 방식입니다. 생성된 스팬은 위에서 다룬 것과 동일하게 OTel Collector를 통해 감사 로그로 보존하거나 Jaeger, Grafana, SIEM 등으로 전달할 수 있어, 사용자 상호작용과 에이전트가 대신 수행한 외부 호출을 상관 분석할 수 있습니다. 에이전트 워크로드를 클러스터에서 운영할 때 기존 OTel 파이프라인을 그대로 재사용하는 관측 패턴으로 참고할 만합니다.
 
 ## Best Practices
 

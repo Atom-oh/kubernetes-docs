@@ -1,10 +1,13 @@
 # News
-> **Last Updated**: July 11, 2026
+> **Last Updated**: July 13, 2026
 
 Kubernetes, Amazon EKS, and CNCF ecosystem news isn't collected into separate digest documents here. Each week, GitHub Actions applies relevant news directly to the existing doc it relates to, and this update log records only which doc changed and why. News with no matching doc is recorded here as a link only.
 
 ## Update Log
 
+- 2026-W29: [security/10-cert-manager.md](../security/10-cert-manager.md) — applied ACM support for the ACME protocol (ACM public certificates now consumable from cert-manager)
+- 2026-W29: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — applied NGINX + OpenTelemetry network-boundary observability pattern for AI agents
+- 2026-W29: no matching doc — Evolving platform engineering for AI-native workloads, CNCF blog ([source](https://www.cncf.io/blog/2026/07/06/evolving-platform-engineering-for-ai-native-workloads/))
 - 2026-07-11: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied etcd v3.7.0 release (RangeStream and more)
 - 2026-07-11: [eks-auto-mode/06-cost-management.md](../eks-auto-mode/06-cost-management.md) — applied EKS Auto Mode GPU management fee reduction of up to 60%
 - 2026-07-11: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — applied Karpenter v1.14.0 release (CapacityBuffers API and more)

@@ -1,7 +1,7 @@
 # Certificate Management with cert-manager
 
 > **Supported Versions**: cert-manager 1.16+, Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: July 3, 2026
+> **Last Updated**: July 13, 2026
 
 cert-manager is a powerful and extensible X.509 certificate controller for Kubernetes. It automates the management and issuance of TLS certificates from various sources, including Let's Encrypt, HashiCorp Vault, Venafi, and private PKI systems.
 
@@ -995,6 +995,12 @@ spec:
 On December 15, 2025, AWS announced [automated certificate management for Kubernetes with AWS Certificate Manager (ACM)](https://aws.amazon.com/about-aws/whats-new/2025/12/acm-automated-certificate-management-kubernetes), integrating ACM with AWS Controllers for Kubernetes (ACK). With the ACM ACK controller installed in a cluster, certificates can be defined as native Kubernetes custom resources (YAML), and the ACK controller handles the full lifecycle automatically: requesting issuance, completing domain/ownership validation, and creating and renewing the corresponding Kubernetes Secret.
 
 Where cert-manager is a CNCF open-source solution supporting a wide range of issuers (Let's Encrypt and other ACME issuers, Vault, AWS Private CA, self-signed, and more), the ACM+ACK integration is an **AWS-native alternative**. For organizations already invested in the IAM/ACM ecosystem, it delivers the same kind of automation without operating a separate open-source controller.
+
+### July 2026 Update: ACM Now Supports the ACME Protocol
+
+In July 2026, ACM added support for [issuing public certificates via the ACME protocol](https://aws.amazon.com/about-aws/whats-new/2026/07/aws-certificate-manager-acme/). You can provision a fully managed ACME server endpoint that issues public TLS certificates with a 45-day validity from Amazon Trust Services using any ACMEv2-compatible client — including Certbot, acme.sh, and cert-manager for Kubernetes. In other words, you can now consume ACM public certificates from cert-manager's existing ACME Issuer simply by pointing its `server` field at the ACM ACME endpoint, without installing the ACK controller.
+
+PKI administrators can apply centralized governance at the endpoint level — restricting domain scopes and enforcing wildcard policies — and delegate certificate requests to application teams without distributing DNS credentials, with all activity auditable via CloudTrail logging and CloudWatch metrics. With the CA/Browser Forum mandating 47-day certificate lifetimes by 2029, the cert-manager + ACM ACME endpoint combination is positioned as an AWS-native alternative to Let's Encrypt.
 
 ### Supported Certificate Types
 

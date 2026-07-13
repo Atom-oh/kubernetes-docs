@@ -1,7 +1,7 @@
 # cert-manager를 활용한 인증서 관리
 
 > **지원 버전**: cert-manager 1.16+, Kubernetes 1.31, 1.32, 1.33
-> **마지막 업데이트**: 2026년 7월 3일
+> **마지막 업데이트**: 2026년 7월 13일
 
 cert-manager는 Kubernetes 클러스터 내에서 TLS 인증서의 발급, 갱신, 폐기를 자동화하는 CNCF Graduated 프로젝트입니다. X.509 인증서의 전체 수명주기를 Kubernetes 네이티브 방식으로 관리할 수 있습니다.
 
@@ -962,6 +962,12 @@ spec:
 2025년 12월 15일, AWS는 [AWS Certificate Manager(ACM)와 AWS Controllers for Kubernetes(ACK)를 통합](https://aws.amazon.com/about-aws/whats-new/2025/12/acm-automated-certificate-management-kubernetes)하여 Kubernetes 환경에서 인증서 발급/갱신을 자동화하는 기능을 발표했습니다. 클러스터에 ACM용 ACK 컨트롤러를 설치하면 인증서를 Kubernetes 커스텀 리소스(YAML)로 정의할 수 있고, ACK 컨트롤러가 발급 요청 → 소유권/도메인 검증 → Kubernetes Secret 생성 및 갱신까지 전체 라이프사이클을 자동으로 처리합니다.
 
 cert-manager가 Let's Encrypt 등 다양한 ACME 발급자를 지원하는 CNCF 오픈소스 솔루션인 반면, ACM+ACK 통합은 **AWS 네이티브 대안**입니다. 이미 IAM/ACM 생태계를 사용 중인 조직이라면 별도의 오픈소스 컨트롤러 운영 없이도 동일한 자동화를 얻을 수 있어 관리 부담을 줄일 수 있습니다.
+
+### 2026년 7월 업데이트: ACM의 ACME 프로토콜 지원
+
+2026년 7월, ACM이 [ACME 프로토콜을 통한 퍼블릭 인증서 발급](https://aws.amazon.com/about-aws/whats-new/2026/07/aws-certificate-manager-acme/)을 지원하기 시작했습니다. 완전 관리형 ACME 서버 엔드포인트를 프로비저닝하면 Certbot, acme.sh는 물론 Kubernetes의 cert-manager 같은 ACMEv2 호환 클라이언트로 Amazon Trust Services가 발급하는 유효기간 45일의 퍼블릭 TLS 인증서를 자동 발급/갱신할 수 있습니다. 즉, ACK 컨트롤러를 설치하지 않고도 기존 cert-manager의 ACME Issuer에서 `server`만 ACM ACME 엔드포인트로 지정해 ACM 퍼블릭 인증서를 사용할 수 있습니다.
+
+PKI 관리자는 엔드포인트 수준에서 도메인 범위 제한, 와일드카드 사용 정책 등 중앙 거버넌스를 적용하면서 DNS 자격 증명을 배포하지 않고 애플리케이션 팀에 인증서 요청을 위임할 수 있으며, 모든 활동은 CloudTrail 로깅과 CloudWatch 지표로 감사할 수 있습니다. CA/Browser 포럼이 2029년까지 인증서 수명을 47일로 의무화함에 따라, cert-manager + ACM ACME 엔드포인트 조합은 Let's Encrypt의 AWS 네이티브 대안으로 자리잡을 수 있습니다.
 
 ### 지원 인증서 유형
 
