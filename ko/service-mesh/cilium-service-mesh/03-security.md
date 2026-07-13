@@ -1,7 +1,7 @@
 # Cilium Service Mesh 보안
 
 > **지원 버전**: Cilium 1.16+, Kubernetes 1.28+
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 7월 13일
 
 ## 개요
 
@@ -64,6 +64,18 @@ sequenceDiagram
 
     Note over PodA,PodB: 애플리케이션 코드 변경 불필요
 ```
+
+### ztunnel 기반 네이티브 mTLS (2026년 업데이트)
+
+2026년 3월, Cilium은 위에서 설명한 순수 eBPF 핸드셰이크 방식에서 한 단계 더 나아가 Istio Ambient의 ztunnel 모델에서 영감을 받은 새로운 mTLS 아키텍처를 도입했습니다. 이제 세 가지 컴포넌트가 함께 동작합니다:
+
+- **SPIRE** — 워크로드 신원과 X.509 인증서를 발급 (아래 SPIRE 기반 설정과 동일한 역할)
+- **Cilium** — 파드의 아웃바운드 트래픽을 15001번 포트의 ztunnel로 투명하게 리다이렉트하는 iptables 규칙을 설치
+- **ztunnel** — 파드별 사이드카가 아닌 **노드별 프록시**로, 실제 mTLS 핸드셰이크를 수행하고 파드 간 트래픽을 암호화
+
+"사이드카 없음, 애플리케이션 코드 변경 없음"이라는 기존 보장은 그대로 유지되지만, TLS 핸드셰이크 자체는 순수 eBPF가 아니라 노드별로 전용 프로세스에서 수행됩니다 — Istio Ambient의 ztunnel에서 직접 가져온 설계입니다. 2026년 3월 기준 Azure Kubernetes Service에서 퍼블릭 프리뷰("Cilium mTLS encryption" for AKS)로 제공되고 있습니다. 상호 인증은 여전히 Cilium이 관리하는 클러스터 내부에서만 동작하며 외부 mTLS 솔루션과는 호환되지 않습니다.
+
+전체 아키텍처는 [Cilium의 네이티브 mTLS 블로그 포스트](https://cilium.io/blog/2026/03/23/native-mtls-cilium/)를 참고하세요.
 
 ### SPIRE 기반 mTLS 설정
 
