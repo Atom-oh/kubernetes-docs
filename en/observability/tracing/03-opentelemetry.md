@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **Supported Versions**: OTEL 1.x
-> **Last Updated**: February 20, 2026
+> **Last Updated**: July 13, 2026
 
 ## Introduction
 
@@ -755,6 +755,10 @@ service:
       processors: [batch]
       exporters: [otlp/tempo, awsxray, datadog, jaeger]
 ```
+
+### July 2026 Update: Observing a Network Boundary for AI Agent Traffic
+
+A CNCF blog post describes a pattern for [building a network boundary for AI agents using NGINX and OpenTelemetry](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/). Outbound traffic from AI agents is forced through a forward proxy (NGINX), and the NGINX native OpenTelemetry module emits an OTel span for every request. Those spans flow through an OTel Collector just like the pipelines covered above — persisted to an audit log or forwarded to Jaeger, Grafana, or a SIEM — letting you correlate user interactions with the external calls an agent made on their behalf. If you run agent workloads in your cluster, this is a useful observability pattern that reuses your existing OTel pipeline as-is.
 
 ## Best Practices
 

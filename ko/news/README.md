@@ -1,10 +1,13 @@
 # 소식
-> **마지막 업데이트**: 2026년 7월 11일
+> **마지막 업데이트**: 2026년 7월 13일
 
 Kubernetes, Amazon EKS, CNCF 생태계의 뉴스는 별도 다이제스트 문서로 쌓이지 않습니다. 매주 GitHub Actions가 관련 뉴스를 관련된 기존 문서에 직접 반영하고, 아래 갱신 로그에 어떤 문서가 왜 바뀌었는지만 남깁니다. 매칭되는 문서가 없는 뉴스는 원문 링크만 기록됩니다.
 
 ## 갱신 로그
 
+- 2026-W29: [security/10-cert-manager.md](../security/10-cert-manager.md) — ACM의 ACME 프로토콜 지원(cert-manager에서 ACM 퍼블릭 인증서 발급 가능) 반영
+- 2026-W29: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — NGINX + OpenTelemetry 기반 AI 에이전트 네트워크 경계 관측 패턴 반영
+- 2026-W29: 매칭 문서 없음 — AI 네이티브 워크로드를 위한 플랫폼 엔지니어링의 진화, CNCF 블로그 ([원문](https://www.cncf.io/blog/2026/07/06/evolving-platform-engineering-for-ai-native-workloads/))
 - 2026-07-11: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — etcd v3.7.0 릴리스(RangeStream 등) 반영
 - 2026-07-11: [eks-auto-mode/06-cost-management.md](../eks-auto-mode/06-cost-management.md) — EKS Auto Mode GPU 관리 요금 최대 60% 인하 반영
 - 2026-07-11: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter v1.14.0 릴리스(CapacityBuffers API 등) 반영
