@@ -350,3 +350,15 @@
 6. [EKS 上的智能体 AI 平台](./ai-ml/03-agentic-ai-platform.md) | [Quiz](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [AI/ML 最佳实践](./ai-ml/07-ai-ml-best-practices.md) | [Quiz](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
+### EKS 自动模式
+1. [EKS 自动模式简介](./eks-auto-mode/README.md)
+2. [入门指南](./eks-auto-mode/01-getting-started.md) | [Quiz](./quizzes/eks-auto-mode/01-getting-started-quiz.md)
+3. [NodePool 配置](./eks-auto-mode/02-nodepool-configuration.md) | [Quiz](./quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
+4. [扩缩容行为](./eks-auto-mode/03-scaling-behavior.md) | [Quiz](./quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
+5. [Spot 实例策略](./eks-auto-mode/04-spot-strategies.md) | [Quiz](./quizzes/eks-auto-mode/04-spot-strategies-quiz.md)
+6. [运维与管理](./eks-auto-mode/05-operations.md) | [Quiz](./quizzes/eks-auto-mode/05-operations-quiz.md)
+7. [成本管理](./eks-auto-mode/06-cost-management.md) | [Quiz](./quizzes/eks-auto-mode/06-cost-management-quiz.md)
+8. [Node 生命周期](./eks-auto-mode/07-node-lifecycle.md) | [Quiz](./quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
+9. [工作负载优化](./eks-auto-mode/08-workload-optimization.md) | [Quiz](./quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
+10. [迁移指南](./eks-auto-mode/09-migration-guide.md) | [Quiz](./quizzes/eks-auto-mode/09-migration-guide-quiz.md)
+

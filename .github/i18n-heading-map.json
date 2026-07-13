@@ -29,6 +29,11 @@
     "es": "Datos en EKS",
     "jp": "EKS 上のデータ"
   },
+  "EKS Auto Mode": {
+    "cn": "EKS 自动模式",
+    "es": "Modo automático de EKS",
+    "jp": "EKS Auto Mode"
+  },
   "EKS Hybrid Nodes": {
     "cn": "EKS 混合节点",
     "es": "Nodos híbridos de EKS",

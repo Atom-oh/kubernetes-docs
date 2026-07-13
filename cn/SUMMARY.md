@@ -86,6 +86,15 @@
   * [cert-manager 测验](quizzes/security/10-cert-manager-quiz.md)
   * [Kubescape 测验](quizzes/security/11-kubescape-quiz.md)
   * [SPIFFE/SPIRE 测验](quizzes/security/12-spiffe-spire-quiz.md)
+  * [入门指南测验](quizzes/eks-auto-mode/01-getting-started-quiz.md)
+  * [NodePool 配置测验](quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
+  * [扩缩容行为测验](quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
+  * [Spot 实例策略测验](quizzes/eks-auto-mode/04-spot-strategies-quiz.md)
+  * [运维与管理测验](quizzes/eks-auto-mode/05-operations-quiz.md)
+  * [成本管理测验](quizzes/eks-auto-mode/06-cost-management-quiz.md)
+  * [Node 生命周期测验](quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
+  * [工作负载优化测验](quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
+  * [迁移指南测验](quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
 ## EKS 上的数据
 
@@ -129,6 +138,17 @@
   * [运维](eks-hybrid-nodes/08-operations.md)
   * [裸金属操作系统设置](eks-hybrid-nodes/09-bare-metal-os-setup.md)
   * [混合节点网关](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
+* [EKS 自动模式](eks-auto-mode/README.md)
+  * [入门指南](eks-auto-mode/01-getting-started.md)
+  * [NodePool 配置](eks-auto-mode/02-nodepool-configuration.md)
+  * [扩缩容行为](eks-auto-mode/03-scaling-behavior.md)
+  * [Spot 实例策略](eks-auto-mode/04-spot-strategies.md)
+  * [运维与管理](eks-auto-mode/05-operations.md)
+  * [成本管理](eks-auto-mode/06-cost-management.md)
+  * [Node 生命周期](eks-auto-mode/07-node-lifecycle.md)
+  * [工作负载优化](eks-auto-mode/08-workload-optimization.md)
+  * [迁移指南](eks-auto-mode/09-migration-guide.md)
+
 ## Kubernetes 核心概念
 
 * [集群架构](core/01-cluster-architecture.md)
