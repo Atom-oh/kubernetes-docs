@@ -72,6 +72,14 @@
   * [パート7: 監視クイズ](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [パート8: ベストプラクティスクイズ](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
 
+  * [AI/ML ワークロードクイズ](quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+  * [AI インフラストラクチャクイズ](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+  * [モデルの学習クイズ](quizzes/ai-ml/05-model-training-quiz.md)
+  * [推論フレームワーククイズ](quizzes/ai-ml/04-inference-frameworks-quiz.md)
+  * [vLLM の配備クイズ](quizzes/ai-ml/04-vllm-deployment-quiz.md)
+  * [EKS 上のエージェント型 AI プラットフォームクイズ](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+  * [AI/ML のベストプラクティスクイズ](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+
 ## オートスケーリング
 
 * [KEDA](autoscaling/01-keda.md)
@@ -128,3 +136,13 @@
 ## ニュース
 
 * [ニュース](news/README.md)
+
+## 人工知能／機械学習
+
+* [AI/ML ワークロード](ai-ml/01-ai-ml-workloads.md)
+* [AI インフラストラクチャ](ai-ml/06-ai-infrastructure.md)
+* [EKS でのモデル学習](ai-ml/05-model-training.md)
+* [推論フレームワーク](ai-ml/04-inference-frameworks.md)
+* [vLLM のデプロイと最適化](ai-ml/02-vllm-deployment.md)
+* [EKS 上のエージェント型 AI プラットフォーム](ai-ml/03-agentic-ai-platform.md)
+* [AI/ML のベストプラクティス](ai-ml/07-ai-ml-best-practices.md)

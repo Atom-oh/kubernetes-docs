@@ -72,6 +72,14 @@
   * [Cuestionario de Parte 7: Monitoreo](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [Cuestionario de Parte 8: Mejores prácticas](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
 
+  * [Quiz sobre Cargas de trabajo de IA/ML](quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+  * [Quiz sobre Infraestructura de IA](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+  * [Quiz sobre Entrenamiento de modelos](quizzes/ai-ml/05-model-training-quiz.md)
+  * [Quiz sobre Frameworks de inferencia](quizzes/ai-ml/04-inference-frameworks-quiz.md)
+  * [Quiz sobre Despliegue de vLLM](quizzes/ai-ml/04-vllm-deployment-quiz.md)
+  * [Quiz sobre Plataforma de IA agéntica en EKS](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+  * [Quiz sobre Buenas prácticas de IA/ML](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+
 ## Autoescalado
 
 * [KEDA](autoscaling/01-keda.md)
@@ -128,3 +136,13 @@
 ## Noticias
 
 * [Noticias](news/README.md)
+
+## Inteligencia artificial y aprendizaje automático
+
+* [Cargas de trabajo de IA/ML](ai-ml/01-ai-ml-workloads.md)
+* [Infraestructura de IA](ai-ml/06-ai-infrastructure.md)
+* [Entrenamiento de modelos en EKS](ai-ml/05-model-training.md)
+* [Frameworks de inferencia](ai-ml/04-inference-frameworks.md)
+* [Despliegue y optimización de vLLM](ai-ml/02-vllm-deployment.md)
+* [Plataforma de IA agéntica en EKS](ai-ml/03-agentic-ai-platform.md)
+* [Buenas prácticas de IA/ML](ai-ml/07-ai-ml-best-practices.md)

@@ -1,6 +1,8 @@
 {
   "AI/ML": {
-    "cn": "人工智能/机器学习"
+    "cn": "人工智能/机器学习",
+    "es": "Inteligencia artificial y aprendizaje automático",
+    "jp": "人工知能／機械学習"
   },
   "Amazon EKS": {
     "cn": "Amazon EKS",
