@@ -24,6 +24,8 @@
   * [Laboratorio de Almacenamiento](labs/core/04-storage-lab.md)
   * [Laboratorio de ConfigMap y Secret](labs/core/05-configuration-secrets-lab.md)
 
+  * [Laboratorio de creación de clústeres de EKS](labs/eks/01-eks-cluster-creation-lab.md)
+
 ## Colección de cuestionarios
 
 * [Colección de cuestionarios - Cuestionarios por tema](quizzes/README.md)
@@ -93,6 +95,27 @@
   * [Kubescape: cuestionario](quizzes/security/11-kubescape-quiz.md)
   * [SPIFFE/SPIRE: cuestionario](quizzes/security/12-spiffe-spire-quiz.md)
 
+  * [Cuestionario sobre Introducción a EKS](quizzes/eks/01-eks-introduction-quiz.md)
+  * [Cuestionario sobre creación de clústeres de EKS - Parte 1](quizzes/eks/02-eks-cluster-creation-part1-quiz.md)
+  * [Cuestionario sobre creación de clústeres de EKS - Parte 2](quizzes/eks/02-eks-cluster-creation-part2-quiz.md)
+  * [Cuestionario sobre creación de clústeres de EKS - Parte 3](quizzes/eks/02-eks-cluster-creation-part3-quiz.md)
+  * [Cuestionario sobre creación de clústeres de EKS - Parte 4](quizzes/eks/02-eks-cluster-creation-part4-quiz.md)
+  * [Cuestionario sobre creación de clústeres de EKS - Parte 5](quizzes/eks/02-eks-cluster-creation-part5-quiz.md)
+  * [Cuestionario sobre redes de EKS - Parte 1](quizzes/eks/03-eks-networking-part1-quiz.md)
+  * [Cuestionario sobre redes de EKS - Parte 2](quizzes/eks/03-eks-networking-part2-quiz.md)
+  * [Cuestionario sobre redes de EKS - Parte 3](quizzes/eks/03-eks-networking-part3-quiz.md)
+  * [Cuestionario sobre almacenamiento de EKS - Parte 1](quizzes/eks/04-eks-storage-part1-quiz.md)
+  * [Cuestionario sobre almacenamiento de EKS - Parte 2](quizzes/eks/04-eks-storage-part2-quiz.md)
+  * [Cuestionario sobre almacenamiento de EKS - Parte 3](quizzes/eks/04-eks-storage-part3-quiz.md)
+  * [Cuestionario sobre Seguridad de EKS](quizzes/eks/05-eks-security-quiz.md)
+  * [Cuestionario sobre Monitoreo y registro de EKS](quizzes/eks/06-eks-monitoring-logging-quiz.md)
+  * [Cuestionario sobre Optimización de costos de EKS](quizzes/eks/07-eks-cost-optimization-quiz.md)
+  * [Cuestionario sobre Actualizaciones de EKS](quizzes/eks/08-eks-upgrades-quiz.md)
+  * [Cuestionario sobre Solución de problemas de EKS](quizzes/eks/09-eks-troubleshooting-quiz.md)
+  * [Cuestionario sobre Resiliencia y alta disponibilidad de EKS](quizzes/eks/10-eks-resiliency-quiz.md)
+  * [Cuestionario sobre Depuración avanzada de EKS](quizzes/eks/11-eks-advanced-debugging-quiz.md)
+  * [Cuestionario sobre Características y hoja de ruta de versiones de Kubernetes](quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
+
 ## Autoescalado
 
 * [KEDA](autoscaling/01-keda.md)
@@ -119,6 +142,32 @@
   * [Operaciones y mantenimiento](eks-hybrid-nodes/08-operations.md)
   * [Configuración del sistema operativo en bare metal](eks-hybrid-nodes/09-bare-metal-os-setup.md)
   * [Gateway de nodos híbridos](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
+
+* [Introducción a EKS](eks/01-eks-introduction.md)
+* [Creación de clústeres de EKS](eks/02-eks-cluster-creation.md)
+  * [Parte 1: Requisitos previos](eks/02-eks-cluster-creation-part1.md)
+  * [Parte 2: Creación de clústeres con eksctl](eks/02-eks-cluster-creation-part2.md)
+  * [Parte 3: Creación de clústeres con AWS Management Console y CLI](eks/02-eks-cluster-creation-part3.md)
+  * [Parte 4: Creación de clústeres con Terraform y CDK](eks/02-eks-cluster-creation-part4.md)
+  * [Parte 5: Acceso, validación, actualización y eliminación de clústeres](eks/02-eks-cluster-creation-part5.md)
+  * [Conclusión](eks/02-eks-cluster-creation-conclusion.md)
+* [Redes de EKS](eks/03-eks-networking-part1.md)
+  * [Parte 1: Conceptos básicos](eks/03-eks-networking-part1.md)
+  * [Parte 2: Configuración avanzada](eks/03-eks-networking-part2.md)
+  * [Parte 3: Solución de problemas](eks/03-eks-networking-part3.md)
+* [Almacenamiento de EKS](eks/04-eks-storage-part1.md)
+  * [Parte 1: Conceptos básicos](eks/04-eks-storage-part1.md)
+  * [Parte 2: Clases de almacenamiento](eks/04-eks-storage-part2.md)
+  * [Parte 3: Configuración avanzada](eks/04-eks-storage-part3.md)
+* [Seguridad de EKS](eks/05-eks-security.md)
+* [Monitoreo y registro de EKS](eks/06-eks-monitoring-logging.md)
+* [Optimización de costos de EKS](eks/07-eks-cost-optimization.md)
+* [Actualizaciones de EKS](eks/08-eks-upgrades.md)
+* [Solución de problemas de EKS](eks/09-eks-troubleshooting.md)
+* [Resiliencia y alta disponibilidad de EKS](eks/10-eks-resiliency.md)
+* [Depuración avanzada de EKS](eks/11-eks-advanced-debugging.md)
+* [Características y hoja de ruta de versiones de Kubernetes](eks/12-kubernetes-version-roadmap.md)
+
 ## Conceptos básicos de Kubernetes
 
 * [Arquitectura del clúster](core/01-cluster-architecture.md)
