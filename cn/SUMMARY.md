@@ -19,6 +19,11 @@
   * [Linux 运维技能实验](labs/basics/02-linux-advanced-lab.md)
   * [容器技术实验](labs/basics/03-container-technology-lab.md)
 
+  * [Pod 和工作负载实验](labs/core/02-pods-and-workloads-lab.md)
+  * [服务和网络实验](labs/core/03-services-networking-lab.md)
+  * [存储实验](labs/core/04-storage-lab.md)
+  * [ConfigMap 和 Secret 实验](labs/core/05-configuration-secrets-lab.md)
+
 ## 测验集合
 
 * [测验合集 - 按主题分类的测验](quizzes/README.md)
@@ -51,6 +56,23 @@
   * [运维测验](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
   * [裸金属操作系统设置测验](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
   * [混合节点网关测验](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+  * [集群架构测验](quizzes/core/01-cluster-architecture-quiz.md)
+  * [Pod 和工作负载测验](quizzes/core/02-pods-and-workloads-quiz.md)
+  * [服务和网络测验](quizzes/core/03-services-networking-quiz.md)
+  * [存储测验](quizzes/core/04-storage-quiz.md)
+  * [配置测验](quizzes/core/05-configuration-secrets-quiz.md)
+  * [安全测验](quizzes/core/06-security-quiz.md)
+  * [策略测验](quizzes/core/07-policies-quiz.md)
+  * [调度、抢占和驱逐测验](quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+  * [集群管理测验](quizzes/core/09-cluster-administration-quiz.md)
+  * [扩展 Kubernetes 测验](quizzes/core/11-extending-kubernetes-quiz.md)
+  * [AI/ML 工作负载测验](quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+  * [AI 基础设施测验](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+  * [模型训练测验](quizzes/ai-ml/05-model-training-quiz.md)
+  * [推理框架测验](quizzes/ai-ml/04-inference-frameworks-quiz.md)
+  * [vLLM 部署测验](quizzes/ai-ml/04-vllm-deployment-quiz.md)
+  * [EKS 上的智能体 AI 平台测验](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+  * [AI/ML 最佳实践测验](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
 
 ## EKS 上的数据
 
@@ -94,3 +116,25 @@
   * [运维](eks-hybrid-nodes/08-operations.md)
   * [裸金属操作系统设置](eks-hybrid-nodes/09-bare-metal-os-setup.md)
   * [混合节点网关](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
+## Kubernetes 核心概念
+
+* [集群架构](core/01-cluster-architecture.md)
+* [Pod 和工作负载](core/02-pods-and-workloads.md)
+* [服务和网络](core/03-services-networking.md)
+* [存储](core/04-storage.md)
+* [配置](core/05-configuration-secrets.md)
+* [安全](core/06-security.md)
+* [策略](core/07-policies.md)
+* [调度、抢占和驱逐](core/08-scheduling-preemption-eviction.md)
+* [集群管理](core/09-cluster-administration.md)
+* [Kubernetes 中的 Windows](core/10-windows-in-kubernetes.md)
+* [扩展 Kubernetes](core/11-extending-kubernetes.md)
+## 人工智能/机器学习
+
+* [AI/ML 工作负载](ai-ml/01-ai-ml-workloads.md)
+* [AI 基础设施](ai-ml/06-ai-infrastructure.md)
+* [在 EKS 上进行模型训练](ai-ml/05-model-training.md)
+* [推理框架](ai-ml/04-inference-frameworks.md)
+* [vLLM 部署与优化](ai-ml/02-vllm-deployment.md)
+* [EKS 上的智能体 AI 平台](ai-ml/03-agentic-ai-platform.md)
+* [AI/ML 最佳实践](ai-ml/07-ai-ml-best-practices.md)

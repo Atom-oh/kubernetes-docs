@@ -3,6 +3,8 @@
     "cn": "Amazon EKS",
     "es": "Amazon EKS",
     "jp": "Amazon EKS"
+  "AI/ML": {
+    "cn": "人工智能/机器学习"
   },
   "Autoscaling": {
     "cn": "自动扩缩容",
@@ -26,6 +28,10 @@
     "cn": "EKS 混合节点",
     "es": "Nodos híbridos de EKS",
     "jp": "EKS Hybrid Nodes"
+  "Kubernetes Core Concepts": {
+    "cn": "Kubernetes 核心概念",
+    "es": "Conceptos básicos de Kubernetes",
+    "jp": "Kubernetes の中核概念"
   },
   "Lab Guides": {
     "cn": "实验指南",
