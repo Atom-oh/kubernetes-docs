@@ -378,3 +378,14 @@
 11. [Kubescape](./security/11-kubescape.md) | [Quiz](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [Quiz](./quizzes/security/12-spiffe-spire-quiz.md)
 
+### プラットフォームエンジニアリング
+0. [プラットフォームエンジニアリングの概要](./platform-engineering/00-platform-engineering-overview.md) | [Quiz](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
+1. [Helm](./platform-engineering/01-helm.md) | [Quiz](./quizzes/platform-engineering/01-helm-quiz.md)
+2. [AWS Controllers for Kubernetes（ACK）](./platform-engineering/02-ack.md) | [Quiz](./quizzes/platform-engineering/02-ack-quiz.md)
+3. [Kubernetes Resource Operator（KRO）](./platform-engineering/03-kro.md) | [Quiz](./quizzes/platform-engineering/03-kro-quiz.md)
+4. [Kubernetes の拡張メカニズム](./platform-engineering/04-kubernetes-extensions.md) | [Quiz](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+5. [ExampleCorp：ACK と KRO の統合例](./platform-engineering/05-example-corp-app.md)
+6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [Quiz](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
+7. [Crossplane](./platform-engineering/07-crossplane.md) | [Quiz](./quizzes/platform-engineering/07-crossplane-quiz.md)
+8. [vCluster](./platform-engineering/08-vcluster.md) | [Quiz](./quizzes/platform-engineering/08-vcluster-quiz.md)
+

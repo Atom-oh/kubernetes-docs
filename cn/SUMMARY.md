@@ -116,6 +116,14 @@
   * [Node 生命周期测验](quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
   * [工作负载优化测验](quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
   * [迁移指南测验](quizzes/eks-auto-mode/09-migration-guide-quiz.md)
+  * [平台工程概述测验](quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
+  * [Helm 测验](quizzes/platform-engineering/01-helm-quiz.md)
+  * [ACK 测验](quizzes/platform-engineering/02-ack-quiz.md)
+  * [KRO 测验](quizzes/platform-engineering/03-kro-quiz.md)
+  * [Kubernetes 扩展机制测验](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+  * [Backstage 内部开发者平台测验](quizzes/platform-engineering/06-backstage-idp-quiz.md)
+  * [Crossplane 测验](quizzes/platform-engineering/07-crossplane-quiz.md)
+  * [vCluster 测验](quizzes/platform-engineering/08-vcluster-quiz.md)
 
 ## EKS 上的数据
 
@@ -235,3 +243,18 @@
 * [cert-manager](security/10-cert-manager.md)
 * [Kubescape](security/11-kubescape.md)
 * [SPIFFE/SPIRE](security/12-spiffe-spire.md)
+
+## 平台工程
+
+* [平台工程概述](platform-engineering/00-platform-engineering-overview.md)
+* [Helm](platform-engineering/01-helm.md)
+* [AWS Controllers for Kubernetes (ACK)](platform-engineering/02-ack.md)
+  * [S3 和 IAM 示例](platform-engineering/ack/01-s3-iam.md)
+  * [SQS 和 SNS 示例](platform-engineering/ack/02-sqs-sns.md)
+  * [ELBv2、Route 53、RDS 示例](platform-engineering/ack/03-elbv2-route53-rds.md)
+* [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
+* [Kubernetes 扩展机制](platform-engineering/04-kubernetes-extensions.md)
+* [ExampleCorp：ACK + KRO 集成示例](platform-engineering/05-example-corp-app.md)
+* [Backstage 内部开发者平台](platform-engineering/06-backstage-idp.md)
+* [Crossplane](platform-engineering/07-crossplane.md)
+* [vCluster](platform-engineering/08-vcluster.md)

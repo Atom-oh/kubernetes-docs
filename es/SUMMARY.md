@@ -124,6 +124,14 @@
   * [Cuestionario sobre Ciclo de vida de los nodos](quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
   * [Cuestionario sobre Optimización de cargas de trabajo](quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
   * [Cuestionario sobre Guía de migración](quizzes/eks-auto-mode/09-migration-guide-quiz.md)
+  * [Cuestionario sobre descripción general de la ingeniería de plataformas](quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
+  * [Cuestionario sobre Helm](quizzes/platform-engineering/01-helm-quiz.md)
+  * [Cuestionario sobre ACK](quizzes/platform-engineering/02-ack-quiz.md)
+  * [Cuestionario sobre KRO](quizzes/platform-engineering/03-kro-quiz.md)
+  * [Cuestionario sobre mecanismos de extensión de Kubernetes](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+  * [Cuestionario sobre IDP de Backstage](quizzes/platform-engineering/06-backstage-idp-quiz.md)
+  * [Cuestionario sobre Crossplane](quizzes/platform-engineering/07-crossplane-quiz.md)
+  * [Cuestionario sobre vCluster](quizzes/platform-engineering/08-vcluster-quiz.md)
 
 ## Autoescalado
 
@@ -242,3 +250,18 @@
 * [cert-manager](security/10-cert-manager.md)
 * [Kubescape](security/11-kubescape.md)
 * [SPIFFE/SPIRE](security/12-spiffe-spire.md)
+
+## Ingeniería de plataformas
+
+* [Descripción general de la ingeniería de plataformas](platform-engineering/00-platform-engineering-overview.md)
+* [Helm](platform-engineering/01-helm.md)
+* [AWS Controllers for Kubernetes (ACK)](platform-engineering/02-ack.md)
+  * [Ejemplos de S3 e IAM](platform-engineering/ack/01-s3-iam.md)
+  * [Ejemplos de SQS y SNS](platform-engineering/ack/02-sqs-sns.md)
+  * [Ejemplos de ELBv2, Route 53 y RDS](platform-engineering/ack/03-elbv2-route53-rds.md)
+* [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
+* [Mecanismos de extensión de Kubernetes](platform-engineering/04-kubernetes-extensions.md)
+* [ExampleCorp: ejemplo de integración de ACK + KRO](platform-engineering/05-example-corp-app.md)
+* [IDP de Backstage](platform-engineering/06-backstage-idp.md)
+* [Crossplane](platform-engineering/07-crossplane.md)
+* [vCluster](platform-engineering/08-vcluster.md)
