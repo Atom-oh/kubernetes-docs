@@ -311,3 +311,9 @@ Si quieres contribuir a este proyecto:
 ## Licencia
 
 Este material de formación es gratuito para uso con fines de aprendizaje.
+### Planificación
+1. Custom Scheduler
+   - [Parte 1: Fundamentos del planificador personalizado](./scheduling/01-custom-scheduler-part1.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+   - [Parte 2: Extensiones del planificador y marco de trabajo](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+   - [Parte 3: Ejemplos de implementación del planificador personalizado y monitorización](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+

@@ -1,4 +1,7 @@
 {
+  "AI/ML": {
+    "cn": "人工智能/机器学习"
+  },
   "Autoscaling": {
     "cn": "自动扩缩容",
     "es": "Autoescalado",
@@ -26,5 +29,10 @@
     "cn": "测验集合",
     "es": "Colección de cuestionarios",
     "jp": "クイズ集"
+  },
+  "Scheduling": {
+    "cn": "调度",
+    "es": "Planificación",
+    "jp": "スケジューリング"
   }
 }

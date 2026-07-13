@@ -37,6 +37,18 @@
   * [第 7 部分：监控测验](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [第 8 部分：最佳实践测验](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
 
+  * [自定义调度器测验 - 第 1 部分](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+  * [自定义调度器测验 - 第 2 部分](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+  * [自定义调度器测验 - 第 3 部分](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+
+  * [AI/ML 工作负载测验](quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+  * [AI 基础设施测验](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+  * [模型训练测验](quizzes/ai-ml/05-model-training-quiz.md)
+  * [推理框架测验](quizzes/ai-ml/04-inference-frameworks-quiz.md)
+  * [vLLM 部署测验](quizzes/ai-ml/04-vllm-deployment-quiz.md)
+  * [EKS 上的智能体 AI 平台测验](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+  * [AI/ML 最佳实践测验](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+
 ## EKS 上的数据
 
 * [EKS 上的数据概述](data-on-eks/README.md)
@@ -58,3 +70,20 @@
 * [KEDA](autoscaling/01-keda.md)
 * [Karpenter](autoscaling/02-karpenter.md)
 * [Knative](autoscaling/03-knative.md)
+
+## 调度
+
+* [自定义调度器](scheduling/01-custom-scheduler-part1.md)
+  * [第 1 部分：基本概念](scheduling/01-custom-scheduler-part1.md)
+  * [第 2 部分：实现](scheduling/02-custom-scheduler-part2.md)
+  * [第 3 部分：高级功能](scheduling/03-custom-scheduler-part3.md)
+
+## 人工智能/机器学习
+
+* [AI/ML 工作负载](ai-ml/01-ai-ml-workloads.md)
+* [AI 基础设施](ai-ml/06-ai-infrastructure.md)
+* [在 EKS 上进行模型训练](ai-ml/05-model-training.md)
+* [推理框架](ai-ml/04-inference-frameworks.md)
+* [vLLM 部署与优化](ai-ml/02-vllm-deployment.md)
+* [EKS 上的智能体 AI 平台](ai-ml/03-agentic-ai-platform.md)
+* [AI/ML 最佳实践](ai-ml/07-ai-ml-best-practices.md)

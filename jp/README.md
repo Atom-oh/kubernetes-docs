@@ -311,3 +311,9 @@
 ## ライセンス
 
 このトレーニング教材は、学習目的で自由に使用できます。
+### スケジューリング
+1. Custom Scheduler
+   - [パート 1: カスタムスケジューラーの基礎](./scheduling/01-custom-scheduler-part1.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
+   - [パート 2: スケジューラー拡張機能とフレームワーク](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
+   - [パート 3: カスタムスケジューラーの実装例と監視](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
+
