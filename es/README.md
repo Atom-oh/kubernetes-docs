@@ -378,3 +378,15 @@ Este material de formación es gratuito para uso con fines de aprendizaje.
 11. [Kubescape](./security/11-kubescape.md) | [Quiz](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [Quiz](./quizzes/security/12-spiffe-spire-quiz.md)
 
+### Modo automático de EKS
+1. [Introducción al modo automático de EKS](./eks-auto-mode/README.md)
+2. [Primeros pasos](./eks-auto-mode/01-getting-started.md) | [Quiz](./quizzes/eks-auto-mode/01-getting-started-quiz.md)
+3. [Configuración de NodePool](./eks-auto-mode/02-nodepool-configuration.md) | [Quiz](./quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
+4. [Comportamiento de escalado](./eks-auto-mode/03-scaling-behavior.md) | [Quiz](./quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
+5. [Estrategias de instancias Spot](./eks-auto-mode/04-spot-strategies.md) | [Quiz](./quizzes/eks-auto-mode/04-spot-strategies-quiz.md)
+6. [Operaciones y administración](./eks-auto-mode/05-operations.md) | [Quiz](./quizzes/eks-auto-mode/05-operations-quiz.md)
+7. [Gestión de costos](./eks-auto-mode/06-cost-management.md) | [Quiz](./quizzes/eks-auto-mode/06-cost-management-quiz.md)
+8. [Ciclo de vida de los nodos](./eks-auto-mode/07-node-lifecycle.md) | [Quiz](./quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
+9. [Optimización de cargas de trabajo](./eks-auto-mode/08-workload-optimization.md) | [Quiz](./quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
+10. [Guía de migración](./eks-auto-mode/09-migration-guide.md) | [Quiz](./quizzes/eks-auto-mode/09-migration-guide-quiz.md)
+

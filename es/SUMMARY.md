@@ -115,6 +115,15 @@
   * [Cuestionario sobre Resiliencia y alta disponibilidad de EKS](quizzes/eks/10-eks-resiliency-quiz.md)
   * [Cuestionario sobre Depuración avanzada de EKS](quizzes/eks/11-eks-advanced-debugging-quiz.md)
   * [Cuestionario sobre Características y hoja de ruta de versiones de Kubernetes](quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
+  * [Cuestionario sobre Primeros pasos](quizzes/eks-auto-mode/01-getting-started-quiz.md)
+  * [Cuestionario sobre Configuración de NodePool](quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
+  * [Cuestionario sobre Comportamiento de escalado](quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
+  * [Cuestionario sobre Estrategias de instancias Spot](quizzes/eks-auto-mode/04-spot-strategies-quiz.md)
+  * [Cuestionario sobre Operaciones y administración](quizzes/eks-auto-mode/05-operations-quiz.md)
+  * [Cuestionario sobre Gestión de costos](quizzes/eks-auto-mode/06-cost-management-quiz.md)
+  * [Cuestionario sobre Ciclo de vida de los nodos](quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
+  * [Cuestionario sobre Optimización de cargas de trabajo](quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
+  * [Cuestionario sobre Guía de migración](quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
 ## Autoescalado
 
@@ -167,6 +176,16 @@
 * [Resiliencia y alta disponibilidad de EKS](eks/10-eks-resiliency.md)
 * [Depuración avanzada de EKS](eks/11-eks-advanced-debugging.md)
 * [Características y hoja de ruta de versiones de Kubernetes](eks/12-kubernetes-version-roadmap.md)
+* [Modo automático de EKS](eks-auto-mode/README.md)
+  * [Primeros pasos](eks-auto-mode/01-getting-started.md)
+  * [Configuración de NodePool](eks-auto-mode/02-nodepool-configuration.md)
+  * [Comportamiento de escalado](eks-auto-mode/03-scaling-behavior.md)
+  * [Estrategias de instancias Spot](eks-auto-mode/04-spot-strategies.md)
+  * [Operaciones y administración](eks-auto-mode/05-operations.md)
+  * [Gestión de costos](eks-auto-mode/06-cost-management.md)
+  * [Ciclo de vida de los nodos](eks-auto-mode/07-node-lifecycle.md)
+  * [Optimización de cargas de trabajo](eks-auto-mode/08-workload-optimization.md)
+  * [Guía de migración](eks-auto-mode/09-migration-guide.md)
 
 ## Conceptos básicos de Kubernetes
 
