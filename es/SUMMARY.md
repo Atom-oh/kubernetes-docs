@@ -63,6 +63,15 @@
   * [Cuestionario sobre Windows en Kubernetes](quizzes/core/10-windows-in-kubernetes-quiz.md)
   * [Cuestionario sobre Extensión de Kubernetes](quizzes/core/11-extending-kubernetes-quiz.md)
 
+  * [Cuestionario de Parte 1: Fundamentos de Kafka](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+  * [Cuestionario de Parte 2: Operador Strimzi](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
+  * [Cuestionario de Parte 3: Operaciones de Kafka](quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
+  * [Cuestionario de Parte 4: Registro de esquemas](quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)
+  * [Cuestionario de Parte 5: Kafka Connect y MirrorMaker](quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
+  * [Cuestionario de Parte 6: Integración con MSK](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
+  * [Cuestionario de Parte 7: Monitoreo](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
+  * [Cuestionario de Parte 8: Mejores prácticas](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+
 ## Autoescalado
 
 * [KEDA](autoscaling/01-keda.md)
@@ -102,3 +111,16 @@
 * [Administración del clúster](core/09-cluster-administration.md)
 * [Windows en Kubernetes](core/10-windows-in-kubernetes.md)
 * [Extensión de Kubernetes](core/11-extending-kubernetes.md)
+
+## Datos en EKS
+
+* [Descripción general de datos en EKS](data-on-eks/README.md)
+* [Análisis profundo de Kafka en EKS](data-on-eks/kafka/README.md)
+  * [Parte 1: Fundamentos de Kafka](data-on-eks/kafka/01-kafka-fundamentals.md)
+  * [Parte 2: Operador Strimzi](data-on-eks/kafka/02-strimzi-operator.md)
+  * [Parte 3: Operaciones de Kafka](data-on-eks/kafka/03-kafka-operations.md)
+  * [Parte 4: Registro de esquemas](data-on-eks/kafka/04-schema-registry.md)
+  * [Parte 5: Kafka Connect y MirrorMaker](data-on-eks/kafka/05-kafka-connect-mirrormaker.md)
+  * [Parte 6: Integración con MSK](data-on-eks/kafka/06-msk-integration.md)
+  * [Parte 7: Monitoreo](data-on-eks/kafka/07-monitoring.md)
+  * [Parte 8: Mejores prácticas](data-on-eks/kafka/08-best-practices.md)

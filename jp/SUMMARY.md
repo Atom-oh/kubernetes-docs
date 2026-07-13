@@ -63,6 +63,15 @@
   * [Kubernetes における Windows クイズ](quizzes/core/10-windows-in-kubernetes-quiz.md)
   * [Kubernetes の拡張クイズ](quizzes/core/11-extending-kubernetes-quiz.md)
 
+  * [パート1: Kafkaの基礎クイズ](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+  * [パート2: Strimzi Operatorクイズ](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
+  * [パート3: Kafkaの運用クイズ](quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
+  * [パート4: Schema Registryクイズ](quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)
+  * [パート5: Kafka ConnectとMirrorMakerクイズ](quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
+  * [パート6: MSK統合クイズ](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
+  * [パート7: 監視クイズ](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
+  * [パート8: ベストプラクティスクイズ](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+
 ## オートスケーリング
 
 * [KEDA](autoscaling/01-keda.md)
@@ -102,3 +111,16 @@
 * [クラスター管理](core/09-cluster-administration.md)
 * [Kubernetes における Windows](core/10-windows-in-kubernetes.md)
 * [Kubernetes の拡張](core/11-extending-kubernetes.md)
+
+## EKS 上のデータ
+
+* [EKS上のデータ概要](data-on-eks/README.md)
+* [EKS上のKafkaの詳細解説](data-on-eks/kafka/README.md)
+  * [パート1: Kafkaの基礎](data-on-eks/kafka/01-kafka-fundamentals.md)
+  * [パート2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
+  * [パート3: Kafkaの運用](data-on-eks/kafka/03-kafka-operations.md)
+  * [パート4: Schema Registry](data-on-eks/kafka/04-schema-registry.md)
+  * [パート5: Kafka ConnectとMirrorMaker](data-on-eks/kafka/05-kafka-connect-mirrormaker.md)
+  * [パート6: MSK統合](data-on-eks/kafka/06-msk-integration.md)
+  * [パート7: 監視](data-on-eks/kafka/07-monitoring.md)
+  * [パート8: ベストプラクティス](data-on-eks/kafka/08-best-practices.md)
