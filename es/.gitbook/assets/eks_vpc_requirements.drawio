@@ -1,0 +1,138 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mxfile host="app.diagrams.net" modified="2025-08-05T11:00:00.000Z" agent="5.0" etag="generated" version="24.7.17">
+  <diagram name="EKS VPC Requirements" id="eks-vpc-requirements">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        
+        <mxCell id="title" value="EKS VPC 요구 사항" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="450" y="40" width="250" height="30" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="main-requirements" value="EKS VPC 요구 사항" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=3;fontSize=14;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="450" y="120" width="180" height="60" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="req-subnets" value="최소 2개 이상의&#10;가용 영역에 서브넷 필요" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="200" y="250" width="150" height="60" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="req-ip" value="충분한 IP 주소 제공" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="400" y="250" width="150" height="60" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="req-dns" value="DNS 호스트 이름 및&#10;DNS 확인 활성화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="600" y="250" width="150" height="60" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="req-internet" value="노드의 인터넷 액세스 필요" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="800" y="250" width="150" height="60" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="internet-options" value="NAT 게이트웨이 또는&#10;인터넷 게이트웨이" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="800" y="380" width="150" height="60" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="details-container" value="상세 요구 사항" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="80" y="480" width="1000" height="360" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="subnet-details" value="서브넷 요구 사항" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="100" y="520" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="subnet-desc" value="• 최소 2개의 가용 영역에 서브넷 배치&#10;• 각 AZ에 퍼블릭 및 프라이빗 서브넷 권장&#10;• 고가용성을 위한 다중 AZ 구성&#10;• 로드 밸런서 배치를 위한 퍼블릭 서브넷&#10;• 워커 노드 배치를 위한 프라이빗 서브넷" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="100" y="560" width="220" height="80" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="ip-details" value="IP 주소 계획" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="340" y="520" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="ip-desc" value="• 노드당 최대 포드 수 고려&#10;• ENI 및 보조 IP 주소 계산&#10;• 향후 확장을 위한 여유 공간&#10;• 일반적인 권장사항:&#10;  - 소규모: /24 (256개 IP)&#10;  - 중간규모: /20 (4,096개 IP)&#10;  - 대규모: /16 (65,536개 IP)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="340" y="560" width="220" height="80" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="dns-details" value="DNS 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="580" y="520" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="dns-desc" value="• enableDnsHostnames: true&#10;• enableDnsSupport: true&#10;• 노드 간 통신을 위한 DNS 확인&#10;• 서비스 디스커버리 지원&#10;• AWS 서비스와의 통합을 위한 DNS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="580" y="560" width="220" height="80" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="internet-details" value="인터넷 액세스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="820" y="520" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="internet-desc" value="• 컨테이너 이미지 다운로드&#10;• AWS API 호출&#10;• 외부 서비스와의 통신&#10;• 패키지 및 업데이트 다운로드&#10;• NAT 게이트웨이 (권장) 또는&#10;  NAT 인스턴스 사용" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="820" y="560" width="220" height="80" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="config-examples" value="구성 예시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+          <mxGeometry x="100" y="660" width="940" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="config-code" value="# VPC 생성 예시&#10;aws ec2 create-vpc --cidr-block 10.0.0.0/16 --enable-dns-hostnames --enable-dns-support&#10;&#10;# 서브넷 생성 예시&#10;aws ec2 create-subnet --vpc-id vpc-12345678 --cidr-block 10.0.1.0/24 --availability-zone us-west-2a&#10;aws ec2 create-subnet --vpc-id vpc-12345678 --cidr-block 10.0.2.0/24 --availability-zone us-west-2b&#10;&#10;# 인터넷 게이트웨이 연결&#10;aws ec2 create-internet-gateway&#10;aws ec2 attach-internet-gateway --vpc-id vpc-12345678 --internet-gateway-id igw-12345678" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontFamily=Noto Sans CJK KR;spacingTop=5;spacingLeft=10;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="110" y="700" width="920" height="120" as="geometry" />
+        </mxCell>
+        
+        
+        <mxCell id="main-to-subnets" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#1F497D;" edge="1" parent="1" source="main-requirements" target="req-subnets">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="495" y="220" />
+              <mxPoint x="275" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="main-to-ip" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#1F497D;" edge="1" parent="1" source="main-requirements" target="req-ip">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="220" />
+              <mxPoint x="475" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="main-to-dns" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#1F497D;" edge="1" parent="1" source="main-requirements" target="req-dns">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="220" />
+              <mxPoint x="675" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="main-to-internet" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#1F497D;" edge="1" parent="1" source="main-requirements" target="req-internet">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="585" y="220" />
+              <mxPoint x="875" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="internet-to-options" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#B85450;" edge="1" parent="1" source="req-internet" target="internet-options">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+      <mxCell id="icon_2000" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_cloud;" vertex="1" parent="1"><mxGeometry x="454.0" y="43.0" width="24" height="24" as="geometry" /></mxCell><mxCell id="icon_2001" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.vpc_subnet;" vertex="1" parent="1"><mxGeometry x="204.0" y="268.0" width="24" height="24" as="geometry" /></mxCell><mxCell id="icon_2002" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=node;" vertex="1" parent="1"><mxGeometry x="804.0" y="269.0" width="24" height="22" as="geometry" /></mxCell><mxCell id="icon_2003" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.nat_gateway;" vertex="1" parent="1"><mxGeometry x="804.0" y="398.0" width="24" height="24" as="geometry" /></mxCell></root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

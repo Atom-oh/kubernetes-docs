@@ -1,0 +1,136 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mxfile host="65bd71144e">
+    <diagram name="Network Performance Optimization" id="network-performance-optimization">
+        <mxGraphModel dx="1170" dy="603" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                <mxCell id="title" value="EKS 네트워크 성능 최적화" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="30" width="300" height="30" as="geometry" />
+                </mxCell>
+                <mxCell id="central" value="네트워크 성능 최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD;strokeWidth=3;fontSize=14;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="120" width="200" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="instance-type" value="인스턴스 유형 선택" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E8;strokeColor=#4CAF50;strokeWidth=2;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="80" width="150" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="networking-mode" value="클러스터 네트워킹 모드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;strokeWidth=2;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="750" y="80" width="150" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="mtu-optimization" value="MTU 최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=2;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="250" width="150" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="tcp-optimization" value="TCP 최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#D32F2F;strokeWidth=2;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="750" y="250" width="150" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="node-placement" value="노드 배치 및 지역성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="370" y="310" width="150" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="network-policy" value="네트워크 정책 최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="545" y="310" width="150" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="enhanced-networking" value="향상된 네트워킹&#10;지원 인스턴스" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="52" y="180" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="network-bandwidth" value="네트워크 대역폭" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="175" y="180" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="ena" value="Elastic Network&#10;Adapter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="292" y="180" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="vpc-cni" value="AWS VPC CNI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="680" y="180" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="custom-networking" value="사용자 정의&#10;네트워킹" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="800" y="180" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="alt-cni" value="대체 CNI 플러그인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="920" y="180" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="default-mtu" value="기본 MTU 설정" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="10" y="310" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="mtu-adjustment" value="MTU 조정" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="130" y="310" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="jumbo-frames" value="점보 프레임" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="310" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="tcp-demux" value="TCP 조기 역다중화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="720" y="310" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="tcp-keepalive" value="TCP keepalive 설정" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="848" y="310" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="tcp-buffer" value="TCP 버퍼 크기" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="970" y="310" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="az-locality" value="가용 영역 지역성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="140" y="380" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="node-locality" value="노드 지역성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="292" y="380" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="topology-hints" value="토폴로지 인식 힌트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="596" y="380" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="policy-minimize" value="정책 수 최소화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="444" y="380" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="policy-scope" value="정책 범위 최적화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="748" y="380" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="policy-order" value="정책 평가 순서 고려" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F0F0;strokeColor=#666666;fontSize=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="900" y="380" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="central-to-instance" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#4CAF50;" parent="1" source="central" target="instance-type" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="central-to-networking" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9800;" parent="1" source="central" target="networking-mode" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="central-to-mtu" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#7B1FA2;" parent="1" source="central" target="mtu-optimization" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="central-to-tcp" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#D32F2F;" parent="1" source="central" target="tcp-optimization" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="central-to-placement" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#9673A6;" parent="1" source="central" target="node-placement" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="central-to-policy" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#82B366;" parent="1" source="central" target="network-policy" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="instance-to-enhanced" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="instance-type" target="enhanced-networking" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="220" y="130" as="sourcePoint" />
+                        <Array as="points">
+                            <mxPoint x="225" y="160" />
+                            <mxPoint x="102" y="160" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="instance-to-bandwidth" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#666666;" parent="1" source="instance-type" target="network-bandwidth" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="227" y="150" as="sourcePoint" />
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="instance-to-ena" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#666666;" parent="1" source="instance-type" target="ena" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="272" y="150" as="sourcePoint" />
+                        <Array as="points">
+                            <mxPoint x="225" y="160" />
+                            <mxPoint x="342" y="160" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="tips" value="성능 최적화 팁" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=3;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="450" width="1000" height="280" as="geometry" />
+                </mxCell>
+                <mxCell id="tips-content" value="1. 인스턴스 유형 선택&#10;   • C5n, M5n, R5n 등 네트워크 최적화 인스턴스 사용&#10;   • 25Gbps 이상의 네트워크 대역폭을 제공하는 인스턴스 선택&#10;   • SR-IOV 및 향상된 네트워킹 지원 확인&#10;&#10;2. CNI 최적화&#10;   • WARM_IP_TARGET을 적절히 설정하여 IP 할당 지연 최소화&#10;   • MINIMUM_IP_TARGET으로 최소 IP 풀 유지&#10;   • 사용자 정의 네트워킹으로 IP 주소 공간 확장&#10;&#10;3. MTU 설정&#10;   • 점보 프레임(9000 MTU) 사용으로 패킷 오버헤드 감소&#10;   • 전체 네트워크 경로에서 일관된 MTU 설정&#10;   • Path MTU Discovery 활성화&#10;&#10;4. TCP 튜닝&#10;   • TCP 윈도우 스케일링 활성화&#10;   • TCP 혼잡 제어 알고리즘 최적화 (BBR 권장)&#10;   • TCP 버퍼 크기 조정&#10;&#10;5. 배치 최적화&#10;   • 통신이 빈번한 포드를 같은 AZ에 배치&#10;   • 포드 어피니티/안티어피니티 활용&#10;   • 토폴로지 스프레드 제약 조건 사용&#10;&#10;6. 모니터링 및 진단&#10;   • VPC Flow Logs로 네트워크 트래픽 분석&#10;   • CloudWatch 메트릭으로 네트워크 성능 모니터링&#10;   • 네트워크 진단 도구 활용 (tcpdump, iperf3 등)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;spacingTop=5;spacingLeft=10;strokeWidth=2;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="100" y="490" width="960" height="230" as="geometry" />
+                </mxCell>
+            <mxCell id="icon_2000" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_cloud;" vertex="1" parent="1"><mxGeometry x="454.0" y="33.0" width="24" height="24" as="geometry" /></mxCell><mxCell id="icon_2001" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=node;" vertex="1" parent="1"><mxGeometry x="374.0" y="324.0" width="24" height="22" as="geometry" /></mxCell><mxCell id="icon_2002" value="" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=middle;verticalAlign=middle;align=left;html=1;fontSize=0;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=c_cni;" vertex="1" parent="1"><mxGeometry x="684.0" y="194.0" width="24" height="22" as="geometry" /></mxCell></root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

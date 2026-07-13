@@ -1,0 +1,178 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mxfile host="65bd71144e">
+    <diagram name="EKS CLI Cluster Creation Workflow" id="eks-cli-cluster-creation-workflow">
+        <mxGraphModel dx="1436" dy="1323" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                <mxCell id="title" value="AWS CLI를 통한 EKS 클러스터 생성 워크플로우" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="350" y="40" width="500" height="30" as="geometry" />
+                </mxCell>
+                <mxCell id="start" value="시작" style="ellipse;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="100" width="80" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="iam-role" value="1. 클러스터&#10;IAM 역할 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="100" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="vpc" value="2. VPC 및&#10;서브넷 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="100" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="sg" value="3. 클러스터&#10;보안 그룹 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="100" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="cluster" value="4. EKS&#10;클러스터 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="620" y="100" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="node-role" value="5. 노드&#10;IAM 역할 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="760" y="100" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="nodegroup" value="6. 노드 그룹 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="900" y="100" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="kubeconfig" value="7. kubeconfig 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#D79B00;fontColor=black;fontSize=11;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="760" y="200" width="100" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="4" value="" style="edgeStyle=none;html=1;fontColor=#000000;strokeWidth=1;" edge="1" parent="1" target="node-create-role">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="610" y="258" as="sourcePoint" />
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="aws-resources-container" value="AWS 리소스 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FD;strokeColor=#1F497D;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="320" width="320" height="200" as="geometry" />
+                </mxCell>
+                <mxCell id="create-role" value="create-role" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="359" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="create-vpc" value="create-vpc" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.vpc;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="360" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="create-sg" value="create-security-group" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.security_group;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="140" y="440" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="sg-rule" value="authorize-security-&#10;group-ingress" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.security_group;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="440" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="eks-cluster-container" value="EKS 클러스터 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="320" width="320" height="200" as="geometry" />
+                </mxCell>
+                <mxCell id="create-cluster" value="create-cluster" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eks_cloud;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="490" y="360" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="describe-cluster" value="describe-cluster" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="595" y="359" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="node-create-role" value="create-role" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="690" y="358" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="describe-nodegroup" value="describe-nodegroup" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="595" y="440" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="cluster-access-container" value="클러스터 접근" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=10;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="820" y="320" width="280" height="200" as="geometry" />
+                </mxCell>
+                <mxCell id="update-kubeconfig" value="update-kubeconfig" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="840" y="360" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="get-nodes" value="get nodes" style="sketch=0;outlineConnect=0;fontColor=#FFFFFF;gradientColor=none;fillColor=#326CE5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.kubernetes.icon;prIcon=node;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="1020" y="358" width="40" height="38" as="geometry" />
+                </mxCell>
+                <mxCell id="success" value="완료" style="ellipse;whiteSpace=wrap;html=1;fillColor=#00C7B7;strokeColor=#006658;fontColor=white;fontSize=12;fontStyle=1;fontFamily=Noto Sans CJK KR;" parent="1" vertex="1">
+                    <mxGeometry x="920" y="440" width="80" height="50" as="geometry" />
+                </mxCell>
+                <mxCell id="start-to-iam" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00C7B7;" parent="1" source="start" target="iam-role" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="iam-to-vpc" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" parent="1" source="iam-role" target="vpc" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="vpc-to-sg" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" parent="1" source="vpc" target="sg" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="sg-to-cluster" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" parent="1" source="sg" target="cluster" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="cluster-to-node-role" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" parent="1" source="cluster" target="node-role" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="node-role-to-nodegroup" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" parent="1" source="node-role" target="nodegroup" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="nodegroup-to-kubeconfig" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#FF9900;" parent="1" source="nodegroup" target="kubeconfig" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="950" y="180" />
+                            <mxPoint x="810" y="180" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="kubeconfig-to-verify" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;strokeWidth=2;strokeColor=#326CE5;" parent="1" source="kubeconfig" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="630" y="225" as="targetPoint" />
+                        <Array as="points">
+                            <mxPoint x="630" y="225" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="iam-to-create-role" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#1F497D;dashed=1;" parent="1" source="iam-role" target="create-role" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="250" y="280" />
+                            <mxPoint x="130" y="280" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="create-role-to-attach" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;strokeWidth=1;strokeColor=#1F497D;" parent="1" source="create-role" target="8" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="190" y="380" as="targetPoint" />
+                        <Array as="points">
+                            <mxPoint x="190" y="380" />
+                            <mxPoint x="190" y="380" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="vpc-to-create-vpc" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#1F497D;dashed=1;" parent="1" source="vpc" target="create-vpc" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="390" y="280" />
+                            <mxPoint x="280" y="280" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="create-vpc-to-subnet" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#1F497D;" parent="1" source="create-vpc" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="330" y="380" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="sg-to-create-sg" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#1F497D;dashed=1;" parent="1" source="sg" target="create-sg" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="530" y="280" />
+                            <mxPoint x="160" y="280" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="create-sg-to-rule" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;strokeColor=#1F497D;" parent="1" source="create-sg" target="sg-rule" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="2" value="&lt;span style=&quot;font-size: 11px;&quot;&gt;8. 클러스터 확인&lt;/span&gt;" style="sketch=0;html=1;dashed=0;whitespace=wrap;fillColor=#2875E2;strokeColor=#ffffff;points=[[0.005,0.63,0],[0.1,0.2,0],[0.9,0.2,0],[0.5,0,0],[0.995,0.63,0],[0.72,0.99,0],[0.5,1,0],[0.28,0.99,0]];verticalLabelPosition=bottom;align=center;verticalAlign=top;shape=mxgraph.kubernetes.icon;prIcon=user;fontSize=14;fontStyle=1;strokeWidth=2;fontFamily=Noto Sans CJK KR;" vertex="1" parent="1">
+                    <mxGeometry x="585" y="201" width="50" height="48" as="geometry" />
+                </mxCell>
+                <mxCell id="6" value="attach-role-policy" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="490" y="440" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="7" value="create-nodegroup" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="690" y="440" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="8" value="attach-role-policy" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="190" y="358" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="9" value="create-subnet" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF9900;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.command_line_interface;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="330" y="358" width="40" height="40" as="geometry" />
+                </mxCell>
+                <mxCell id="10" value="&lt;span style=&quot;color: rgb(255, 255, 255); font-size: 10px;&quot;&gt;kubectl&lt;/span&gt;" style="sketch=0;html=1;dashed=0;whitespace=wrap;fillColor=#2875E2;strokeColor=#ffffff;points=[[0.005,0.63,0],[0.1,0.2,0],[0.9,0.2,0],[0.5,0,0],[0.995,0.63,0],[0.72,0.99,0],[0.5,1,0],[0.28,0.99,0]];verticalLabelPosition=bottom;align=center;verticalAlign=top;shape=mxgraph.kubernetes.icon;prIcon=user;fontSize=14;fontStyle=1;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="940" y="356" width="40" height="44" as="geometry" />
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
