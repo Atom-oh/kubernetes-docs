@@ -41,6 +41,16 @@
   * [カスタムスケジューラー小テスト - パート2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
   * [カスタムスケジューラー小テスト - パート3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
+  * [前提条件クイズ](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+  * [ネットワーク設定クイズ](quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+  * [エアギャップ環境のセットアップクイズ](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+  * [Nodeの初期化クイズ](quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+  * [GPUサーバーの統合クイズ](quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+  * [ワークロード配置戦略クイズ](quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+  * [Nodeライフサイクル管理クイズ](quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
+  * [運用と保守クイズ](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+  * [ベアメタルOSのセットアップクイズ](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+  * [Hybrid Nodesゲートウェイクイズ](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
   * [クラスターアーキテクチャクイズ](quizzes/core/01-cluster-architecture-quiz.md)
   * [Pod とワークロードクイズ](quizzes/core/02-pods-and-workloads-quiz.md)
   * [サービスとネットワーキングクイズ](quizzes/core/03-services-networking-quiz.md)
@@ -66,6 +76,19 @@
   * [パート2: 実装](scheduling/02-custom-scheduler-part2.md)
   * [パート3: 高度な機能](scheduling/03-custom-scheduler-part3.md)
 
+## Amazon EKS
+
+* [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
+  * [前提条件](eks-hybrid-nodes/01-prerequisites.md)
+  * [ネットワーク設定](eks-hybrid-nodes/02-network-configuration.md)
+  * [エアギャップ環境のセットアップ](eks-hybrid-nodes/03-airgap-setup.md)
+  * [Nodeの初期化](eks-hybrid-nodes/04-node-bootstrap.md)
+  * [GPUサーバーの統合](eks-hybrid-nodes/05-gpu-integration.md)
+  * [ワークロード配置戦略](eks-hybrid-nodes/06-workload-placement.md)
+  * [Nodeライフサイクル管理](eks-hybrid-nodes/07-node-lifecycle.md)
+  * [運用と保守](eks-hybrid-nodes/08-operations.md)
+  * [ベアメタルOSのセットアップ](eks-hybrid-nodes/09-bare-metal-os-setup.md)
+  * [Hybrid Nodesゲートウェイ](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
 ## Kubernetes の中核概念
 
 * [クラスターアーキテクチャ](core/01-cluster-architecture.md)

@@ -317,6 +317,18 @@
    - [パート 2: スケジューラー拡張機能とフレームワーク](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [パート 3: カスタムスケジューラーの実装例と監視](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
 
+### EKS Hybrid Nodes
+1. [EKS ハイブリッドノードの概要](./eks-hybrid-nodes/README.md)
+2. [前提条件](./eks-hybrid-nodes/01-prerequisites.md) | [Quiz](./quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
+3. [ネットワーク設定](./eks-hybrid-nodes/02-network-configuration.md) | [Quiz](./quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
+4. [エアギャップ環境のセットアップ](./eks-hybrid-nodes/03-airgap-setup.md) | [Quiz](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+5. [Nodeの初期化](./eks-hybrid-nodes/04-node-bootstrap.md) | [Quiz](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+6. [GPUサーバーの統合](./eks-hybrid-nodes/05-gpu-integration.md) | [Quiz](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
+7. [ワークロード配置戦略](./eks-hybrid-nodes/06-workload-placement.md) | [Quiz](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
+8. [Nodeライフサイクル管理](./eks-hybrid-nodes/07-node-lifecycle.md) | [Quiz](./quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
+9. [運用と保守](./eks-hybrid-nodes/08-operations.md) | [Quiz](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
+10. [ベアメタルOSのセットアップ](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [Quiz](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+11. [Hybrid Nodesゲートウェイ](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [Quiz](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 ### Kubernetes の中核概念
 1. [クラスターアーキテクチャ](./core/01-cluster-architecture.md) | [Quiz](./quizzes/core/01-cluster-architecture-quiz.md)
 2. [Pod とワークロード](./core/02-pods-and-workloads.md) | [Quiz](./quizzes/core/02-pods-and-workloads-quiz.md)

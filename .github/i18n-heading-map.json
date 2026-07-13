@@ -1,4 +1,8 @@
 {
+  "Amazon EKS": {
+    "cn": "Amazon EKS",
+    "es": "Amazon EKS",
+    "jp": "Amazon EKS"
   "AI/ML": {
     "cn": "人工智能/机器学习"
   },
@@ -20,6 +24,10 @@
   "Data on EKS": {
     "cn": "EKS 上的数据"
   },
+  "EKS Hybrid Nodes": {
+    "cn": "EKS 混合节点",
+    "es": "Nodos híbridos de EKS",
+    "jp": "EKS Hybrid Nodes"
   "Kubernetes Core Concepts": {
     "cn": "Kubernetes 核心概念",
     "es": "Conceptos básicos de Kubernetes",
