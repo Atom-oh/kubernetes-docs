@@ -92,6 +92,15 @@
   * [cert-managerクイズ](quizzes/security/10-cert-manager-quiz.md)
   * [Kubescapeクイズ](quizzes/security/11-kubescape-quiz.md)
   * [SPIFFE/SPIREクイズ](quizzes/security/12-spiffe-spire-quiz.md)
+  * [はじめにクイズ](quizzes/eks-auto-mode/01-getting-started-quiz.md)
+  * [NodePool の設定クイズ](quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
+  * [スケーリング動作クイズ](quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
+  * [Spot Instance 戦略クイズ](quizzes/eks-auto-mode/04-spot-strategies-quiz.md)
+  * [運用と管理クイズ](quizzes/eks-auto-mode/05-operations-quiz.md)
+  * [コスト管理クイズ](quizzes/eks-auto-mode/06-cost-management-quiz.md)
+  * [Node のライフサイクルクイズ](quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
+  * [ワークロードの最適化クイズ](quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
+  * [移行ガイドクイズ](quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
 ## オートスケーリング
 
@@ -119,6 +128,17 @@
   * [運用と保守](eks-hybrid-nodes/08-operations.md)
   * [ベアメタルOSのセットアップ](eks-hybrid-nodes/09-bare-metal-os-setup.md)
   * [Hybrid Nodesゲートウェイ](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
+* [EKS Auto Mode](eks-auto-mode/README.md)
+  * [はじめに](eks-auto-mode/01-getting-started.md)
+  * [NodePool の設定](eks-auto-mode/02-nodepool-configuration.md)
+  * [スケーリング動作](eks-auto-mode/03-scaling-behavior.md)
+  * [Spot Instance 戦略](eks-auto-mode/04-spot-strategies.md)
+  * [運用と管理](eks-auto-mode/05-operations.md)
+  * [コスト管理](eks-auto-mode/06-cost-management.md)
+  * [Node のライフサイクル](eks-auto-mode/07-node-lifecycle.md)
+  * [ワークロードの最適化](eks-auto-mode/08-workload-optimization.md)
+  * [移行ガイド](eks-auto-mode/09-migration-guide.md)
+
 ## Kubernetes の中核概念
 
 * [クラスターアーキテクチャ](core/01-cluster-architecture.md)

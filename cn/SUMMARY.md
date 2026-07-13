@@ -107,6 +107,15 @@
   * [EKS 弹性和高可用性测验](quizzes/eks/10-eks-resiliency-quiz.md)
   * [EKS 高级调试测验](quizzes/eks/11-eks-advanced-debugging-quiz.md)
   * [Kubernetes 版本功能和路线图测验](quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
+  * [入门指南测验](quizzes/eks-auto-mode/01-getting-started-quiz.md)
+  * [NodePool 配置测验](quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
+  * [扩缩容行为测验](quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
+  * [Spot 实例策略测验](quizzes/eks-auto-mode/04-spot-strategies-quiz.md)
+  * [运维与管理测验](quizzes/eks-auto-mode/05-operations-quiz.md)
+  * [成本管理测验](quizzes/eks-auto-mode/06-cost-management-quiz.md)
+  * [Node 生命周期测验](quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
+  * [工作负载优化测验](quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
+  * [迁移指南测验](quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
 ## EKS 上的数据
 
@@ -174,6 +183,16 @@
 * [EKS 弹性和高可用性](eks/10-eks-resiliency.md)
 * [EKS 高级调试](eks/11-eks-advanced-debugging.md)
 * [Kubernetes 版本功能和路线图](eks/12-kubernetes-version-roadmap.md)
+* [EKS 自动模式](eks-auto-mode/README.md)
+  * [入门指南](eks-auto-mode/01-getting-started.md)
+  * [NodePool 配置](eks-auto-mode/02-nodepool-configuration.md)
+  * [扩缩容行为](eks-auto-mode/03-scaling-behavior.md)
+  * [Spot 实例策略](eks-auto-mode/04-spot-strategies.md)
+  * [运维与管理](eks-auto-mode/05-operations.md)
+  * [成本管理](eks-auto-mode/06-cost-management.md)
+  * [Node 生命周期](eks-auto-mode/07-node-lifecycle.md)
+  * [工作负载优化](eks-auto-mode/08-workload-optimization.md)
+  * [迁移指南](eks-auto-mode/09-migration-guide.md)
 
 ## Kubernetes 核心概念
 
