@@ -1,0 +1,911 @@
+# CloudWatch Logs
+
+> **Última actualización**: February 20, 2026
+
+Amazon CloudWatch Logs es un servicio totalmente administrado de monitoreo de logs de AWS. Se integra de forma nativa con EKS, lo que permite la recopilación, el almacenamiento y el análisis de logs sin una gestión de infraestructura independiente.
+
+## Tabla de contenidos
+
+1. [Descripción general](#overview)
+2. [Logging del plano de control de EKS](#eks-control-plane-logging)
+3. [Container Insights](#container-insights)
+4. [Integración de FluentBit](#fluentbit-integration)
+5. [CloudWatch Logs Insights](#cloudwatch-logs-insights)
+6. [Filtros de suscripción](#subscription-filters)
+7. [Optimización de costos](#cost-optimization)
+
+---
+
+## Descripción general
+
+### Características de CloudWatch Logs
+
+| Característica | Descripción |
+|---------|-------------|
+| **Totalmente administrado** | No requiere gestión de infraestructura |
+| **Integración con AWS** | Integración nativa con EKS, Lambda, EC2, etc. |
+| **Seguridad** | IAM, cifrado KMS, endpoints de VPC |
+| **Escalabilidad** | Recopilación/almacenamiento de logs ilimitados |
+| **Tiempo real** | Transmisión de logs y alertas en tiempo real |
+
+### Conceptos clave
+
+```mermaid
+flowchart TB
+    subgraph Sources["Log Sources"]
+        EKS[EKS Cluster]
+        APP[Application]
+        LAMBDA[Lambda]
+    end
+
+    subgraph CWL["CloudWatch Logs"]
+        LG[Log Group<br/>/aws/eks/cluster/logs]
+        LS1[Log Stream 1]
+        LS2[Log Stream 2]
+        LS3[Log Stream 3]
+    end
+
+    subgraph Features["Features"]
+        INSIGHTS[Logs Insights]
+        METRIC[Metric Filters]
+        SUB[Subscription Filters]
+        ALARM[CloudWatch Alarms]
+    end
+
+    subgraph Destinations["Destinations"]
+        S3[(S3)]
+        KDF[Kinesis Data Firehose]
+        LAMBDA2[Lambda]
+        OS[OpenSearch]
+    end
+
+    EKS --> LG
+    APP --> LG
+    LAMBDA --> LG
+
+    LG --> LS1
+    LG --> LS2
+    LG --> LS3
+
+    LG --> INSIGHTS
+    LG --> METRIC
+    LG --> SUB
+
+    METRIC --> ALARM
+
+    SUB --> S3
+    SUB --> KDF
+    SUB --> LAMBDA2
+    KDF --> OS
+
+    classDef source fill:#4CAF50,stroke:#333,color:white
+    classDef cwl fill:#FF9800,stroke:#333,color:white
+    classDef feature fill:#2196F3,stroke:#333,color:white
+    classDef dest fill:#9C27B0,stroke:#333,color:white
+
+    class EKS,APP,LAMBDA source
+    class LG,LS1,LS2,LS3 cwl
+    class INSIGHTS,METRIC,SUB,ALARM feature
+    class S3,KDF,LAMBDA2,OS dest
+```
+
+### Terminología
+
+| Término | Descripción | Ejemplo |
+|------|-------------|---------|
+| **Log Group** | Grupo lógico de log streams | `/aws/eks/my-cluster/cluster` |
+| **Log Stream** | Secuencia de logs de una única fuente | `kube-apiserver-xxx` |
+| **Log Event** | Entrada de log individual | Marca de tiempo + mensaje |
+| **Retención** | Período de retención de logs | 1 día ~ para siempre |
+
+---
+
+## Logging del plano de control de EKS
+
+### Tipos de logs
+
+| Tipo de log | Descripción | Recomendado |
+|----------|-------------|-------------|
+| **api** | Logs del servidor de la API de Kubernetes | Obligatorio |
+| **audit** | Logs de auditoría de llamadas a la API | Obligatorio (seguridad) |
+| **authenticator** | Logs de autenticación de IAM | Recomendado |
+| **controllerManager** | Logs del administrador de controladores | Opcional |
+| **scheduler** | Logs del scheduler | Opcional |
+
+### Habilitar mediante AWS CLI
+
+```bash
+# Enable all control plane logs
+aws eks update-cluster-config \
+  --name my-cluster \
+  --region ap-northeast-2 \
+  --logging '{
+    "clusterLogging": [
+      {
+        "types": ["api", "audit", "authenticator", "controllerManager", "scheduler"],
+        "enabled": true
+      }
+    ]
+  }'
+
+# Enable specific logs only
+aws eks update-cluster-config \
+  --name my-cluster \
+  --region ap-northeast-2 \
+  --logging '{
+    "clusterLogging": [
+      {
+        "types": ["api", "audit", "authenticator"],
+        "enabled": true
+      },
+      {
+        "types": ["controllerManager", "scheduler"],
+        "enabled": false
+      }
+    ]
+  }'
+```
+
+### Configurar con Terraform
+
+```hcl
+resource "aws_eks_cluster" "main" {
+  name     = "my-cluster"
+  role_arn = aws_iam_role.eks_cluster.arn
+  version  = "1.29"
+
+  vpc_config {
+    subnet_ids              = var.subnet_ids
+    endpoint_private_access = true
+    endpoint_public_access  = true
+  }
+
+  enabled_cluster_log_types = [
+    "api",
+    "audit",
+    "authenticator"
+  ]
+
+  tags = {
+    Environment = "production"
+  }
+}
+
+# Set log group retention period
+resource "aws_cloudwatch_log_group" "eks" {
+  name              = "/aws/eks/my-cluster/cluster"
+  retention_in_days = 30
+
+  tags = {
+    Environment = "production"
+    Cluster     = "my-cluster"
+  }
+}
+```
+
+### Estructura de Log Group
+
+```
+/aws/eks/my-cluster/cluster
++-- kube-apiserver-xxx           # API server logs
++-- kube-apiserver-audit-xxx     # Audit logs
++-- authenticator-xxx            # Authentication logs
++-- kube-controller-manager-xxx  # Controller manager
++-- kube-scheduler-xxx           # Scheduler
+```
+
+---
+
+## Container Insights
+
+### Descripción general de Container Insights
+
+Container Insights recopila, agrega y resume métricas y logs de aplicaciones en contenedores y microservicios en clústeres de EKS.
+
+### Métodos de instalación
+
+#### CloudWatch Agent + FluentBit (recomendado)
+
+```bash
+# Create namespace
+kubectl create namespace amazon-cloudwatch
+
+# Install CloudWatch Agent
+kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluent-bit-quickstart.yaml
+```
+
+#### Instalar mediante Helm Chart
+
+```bash
+# Add Helm repository
+helm repo add aws-observability https://aws-observability.github.io/aws-otel-helm-charts
+helm repo update
+
+# Install
+helm install container-insights aws-observability/adot-exporter-for-eks-on-ec2 \
+  --namespace amazon-cloudwatch \
+  --set clusterName=my-cluster \
+  --set awsRegion=ap-northeast-2 \
+  --set serviceAccount.create=true \
+  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::123456789012:role/ContainerInsightsRole
+```
+
+### Configuración de IRSA
+
+```bash
+# Create IAM policy
+cat > container-insights-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:PutMetricData",
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
+        "ec2:DescribeInstances",
+        "ec2:DescribeTags",
+        "ec2:DescribeVolumes"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+
+aws iam create-policy \
+  --policy-name ContainerInsightsPolicy \
+  --policy-document file://container-insights-policy.json
+
+# Setup IRSA
+eksctl create iamserviceaccount \
+  --cluster=my-cluster \
+  --namespace=amazon-cloudwatch \
+  --name=cloudwatch-agent \
+  --attach-policy-arn=arn:aws:iam::123456789012:policy/ContainerInsightsPolicy \
+  --approve
+```
+
+### Logs recopilados
+
+| Tipo de log | Log Group | Descripción |
+|----------|-----------|-------------|
+| **Aplicación** | `/aws/containerinsights/cluster/application` | stdout/stderr del contenedor |
+| **Host** | `/aws/containerinsights/cluster/host` | Logs del sistema del Node |
+| **Dataplane** | `/aws/containerinsights/cluster/dataplane` | kubelet, kube-proxy |
+| **Rendimiento** | `/aws/containerinsights/cluster/performance` | Métricas de rendimiento |
+
+---
+
+## Integración de FluentBit
+
+### ConfigMap de FluentBit
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: amazon-cloudwatch
+  labels:
+    k8s-app: fluent-bit
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush                     5
+        Grace                     30
+        Log_Level                 info
+        Daemon                    off
+        Parsers_File              parsers.conf
+        HTTP_Server               On
+        HTTP_Listen               0.0.0.0
+        HTTP_Port                 2020
+        storage.path              /var/fluent-bit/state/flb-storage/
+        storage.sync              normal
+        storage.checksum          off
+        storage.backlog.mem_limit 5M
+
+    @INCLUDE application-log.conf
+    @INCLUDE dataplane-log.conf
+    @INCLUDE host-log.conf
+
+  application-log.conf: |
+    [INPUT]
+        Name                tail
+        Tag                 application.*
+        Exclude_Path        /var/log/containers/cloudwatch-agent*, /var/log/containers/fluent-bit*, /var/log/containers/aws-node*, /var/log/containers/kube-proxy*
+        Path                /var/log/containers/*.log
+        multiline.parser    docker, cri
+        DB                  /var/fluent-bit/state/flb_container.db
+        Mem_Buf_Limit       50MB
+        Skip_Long_Lines     On
+        Refresh_Interval    10
+        Rotate_Wait         30
+        storage.type        filesystem
+        Read_from_Head      Off
+
+    [FILTER]
+        Name                kubernetes
+        Match               application.*
+        Kube_URL            https://kubernetes.default.svc:443
+        Kube_Tag_Prefix     application.var.log.containers.
+        Merge_Log           On
+        Merge_Log_Key       log_processed
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude Off
+        Labels              Off
+        Annotations         Off
+        Use_Kubelet         On
+        Kubelet_Port        10250
+        Buffer_Size         0
+
+    [OUTPUT]
+        Name                cloudwatch_logs
+        Match               application.*
+        region              ${AWS_REGION}
+        log_group_name      /aws/containerinsights/${CLUSTER_NAME}/application
+        log_stream_prefix   ${HOST_NAME}-
+        auto_create_group   true
+        extra_user_agent    container-insights
+        log_retention_days  30
+
+  dataplane-log.conf: |
+    [INPUT]
+        Name                systemd
+        Tag                 dataplane.systemd.*
+        Systemd_Filter      _SYSTEMD_UNIT=docker.service
+        Systemd_Filter      _SYSTEMD_UNIT=containerd.service
+        Systemd_Filter      _SYSTEMD_UNIT=kubelet.service
+        DB                  /var/fluent-bit/state/systemd.db
+        Path                /var/log/journal
+        Read_From_Tail      On
+
+    [INPUT]
+        Name                tail
+        Tag                 dataplane.tail.*
+        Path                /var/log/containers/aws-node*, /var/log/containers/kube-proxy*
+        multiline.parser    docker, cri
+        DB                  /var/fluent-bit/state/flb_dataplane_tail.db
+        Mem_Buf_Limit       50MB
+        Skip_Long_Lines     On
+        Refresh_Interval    10
+        Rotate_Wait         30
+        storage.type        filesystem
+        Read_from_Head      Off
+
+    [OUTPUT]
+        Name                cloudwatch_logs
+        Match               dataplane.*
+        region              ${AWS_REGION}
+        log_group_name      /aws/containerinsights/${CLUSTER_NAME}/dataplane
+        log_stream_prefix   ${HOST_NAME}-
+        auto_create_group   true
+        extra_user_agent    container-insights
+        log_retention_days  30
+
+  host-log.conf: |
+    [INPUT]
+        Name                tail
+        Tag                 host.dmesg
+        Path                /var/log/dmesg
+        Key                 message
+        DB                  /var/fluent-bit/state/flb_dmesg.db
+        Mem_Buf_Limit       5MB
+        Skip_Long_Lines     On
+        Refresh_Interval    10
+        Read_from_Head      Off
+
+    [INPUT]
+        Name                tail
+        Tag                 host.messages
+        Path                /var/log/messages
+        Parser              syslog
+        DB                  /var/fluent-bit/state/flb_messages.db
+        Mem_Buf_Limit       5MB
+        Skip_Long_Lines     On
+        Refresh_Interval    10
+        Read_from_Head      Off
+
+    [INPUT]
+        Name                tail
+        Tag                 host.secure
+        Path                /var/log/secure
+        Parser              syslog
+        DB                  /var/fluent-bit/state/flb_secure.db
+        Mem_Buf_Limit       5MB
+        Skip_Long_Lines     On
+        Refresh_Interval    10
+        Read_from_Head      Off
+
+    [OUTPUT]
+        Name                cloudwatch_logs
+        Match               host.*
+        region              ${AWS_REGION}
+        log_group_name      /aws/containerinsights/${CLUSTER_NAME}/host
+        log_stream_prefix   ${HOST_NAME}.
+        auto_create_group   true
+        extra_user_agent    container-insights
+        log_retention_days  30
+
+  parsers.conf: |
+    [PARSER]
+        Name                docker
+        Format              json
+        Time_Key            time
+        Time_Format         %Y-%m-%dT%H:%M:%S.%LZ
+
+    [PARSER]
+        Name                cri
+        Format              regex
+        Regex               ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$
+        Time_Key            time
+        Time_Format         %Y-%m-%dT%H:%M:%S.%L%z
+
+    [PARSER]
+        Name                syslog
+        Format              regex
+        Regex               ^(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_\/\.\-]*)(?:\[(?<pid>[0-9]+)\])?(?:[^\:]*\:)? *(?<message>.*)$
+        Time_Key            time
+        Time_Format         %b %d %H:%M:%S
+```
+
+### DaemonSet de FluentBit
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluent-bit
+  namespace: amazon-cloudwatch
+  labels:
+    k8s-app: fluent-bit
+spec:
+  selector:
+    matchLabels:
+      k8s-app: fluent-bit
+  template:
+    metadata:
+      labels:
+        k8s-app: fluent-bit
+    spec:
+      serviceAccountName: fluent-bit
+      terminationGracePeriodSeconds: 10
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+        - operator: Exists
+          effect: NoExecute
+        - operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: fluent-bit
+          image: public.ecr.aws/aws-observability/aws-for-fluent-bit:stable
+          imagePullPolicy: Always
+          env:
+            - name: AWS_REGION
+              value: "ap-northeast-2"
+            - name: CLUSTER_NAME
+              value: "my-cluster"
+            - name: HOST_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources:
+            limits:
+              cpu: 500m
+              memory: 250Mi
+            requests:
+              cpu: 50m
+              memory: 50Mi
+          volumeMounts:
+            - name: fluentbitstate
+              mountPath: /var/fluent-bit/state
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: varlibdockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+            - name: fluent-bit-config
+              mountPath: /fluent-bit/etc/
+            - name: runlogjournal
+              mountPath: /run/log/journal
+              readOnly: true
+            - name: dmesg
+              mountPath: /var/log/dmesg
+              readOnly: true
+      volumes:
+        - name: fluentbitstate
+          hostPath:
+            path: /var/fluent-bit/state
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+        - name: fluent-bit-config
+          configMap:
+            name: fluent-bit-config
+        - name: runlogjournal
+          hostPath:
+            path: /run/log/journal
+        - name: dmesg
+          hostPath:
+            path: /var/log/dmesg
+```
+
+---
+
+## CloudWatch Logs Insights
+
+### Sintaxis básica de consultas
+
+```sql
+-- Basic filtering
+fields @timestamp, @message
+| filter @message like /error/i
+| sort @timestamp desc
+| limit 100
+
+-- Field extraction (JSON)
+fields @timestamp, @message
+| parse @message '{"level":"*","message":"*"}' as level, msg
+| filter level = "ERROR"
+| sort @timestamp desc
+
+-- Regex parsing
+fields @timestamp, @message
+| parse @message /user_id=(?<user_id>\d+)/
+| filter user_id = "12345"
+```
+
+### Ejemplos de consultas de logs de EKS
+
+```sql
+-- API server errors
+fields @timestamp, @message
+| filter @logStream like /kube-apiserver/
+| filter @message like /error|Error|ERROR/
+| sort @timestamp desc
+| limit 50
+
+-- Audit logs: specific user activity
+fields @timestamp, @message
+| filter @logStream like /kube-apiserver-audit/
+| parse @message '"user":{"username":"*"' as username
+| filter username = "admin"
+| sort @timestamp desc
+
+-- Authentication failures
+fields @timestamp, @message
+| filter @logStream like /authenticator/
+| filter @message like /AccessDenied|Forbidden|unauthorized/
+| sort @timestamp desc
+
+-- Pod create/delete events
+fields @timestamp, @message
+| filter @logStream like /kube-apiserver-audit/
+| filter @message like /"verb":"create"/ or @message like /"verb":"delete"/
+| filter @message like /"resource":"pods"/
+| sort @timestamp desc
+```
+
+### Consultas de logs de aplicaciones
+
+```sql
+-- Errors by namespace
+fields @timestamp, @message, kubernetes.namespace_name
+| filter @message like /error/i
+| stats count(*) as error_count by kubernetes.namespace_name
+| sort error_count desc
+
+-- Response time analysis (JSON logs)
+fields @timestamp, @message
+| filter kubernetes.container_name = "api"
+| parse @message '{"response_time":*,' as response_time
+| filter response_time > 1000
+| sort response_time desc
+
+-- Log volume by time
+fields @timestamp
+| stats count(*) as log_count by bin(1h)
+| sort @timestamp
+
+-- Top error messages
+fields @timestamp, @message
+| filter @message like /error/i
+| stats count(*) as count by @message
+| sort count desc
+| limit 10
+```
+
+### Consultas avanzadas
+
+```sql
+-- Percentile calculation
+fields @timestamp, @message
+| filter kubernetes.container_name = "nginx"
+| parse @message '* * * * * * * * * * "*" * * * * *' as date, time, remote_addr, dash1, dash2, request, status, body_bytes, referer, user_agent
+| parse request '"* * *"' as method, path, protocol
+| parse @message '* * * * * * * * * * * * * * * * * * * * * * *  * * * * * * * * * * * * * * * * * * * * * * * *' as d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15,d16,d17,d18,d19,d20,d21,d22,d23,d24,d25,d26,d27,d28,d29,d30,d31,d32,d33,d34,d35,d36,response_time_ms
+| stats percentile(response_time_ms, 50) as p50,
+        percentile(response_time_ms, 90) as p90,
+        percentile(response_time_ms, 99) as p99
+  by bin(5m)
+
+-- Container restart detection
+fields @timestamp, @message, kubernetes.pod_name
+| filter @message like /Back-off restarting failed container/
+| stats count(*) as restart_count by kubernetes.pod_name
+| sort restart_count desc
+
+-- Multi log group query (Cross-account)
+SOURCE '/aws/containerinsights/cluster-a/application'
+     | '/aws/containerinsights/cluster-b/application'
+| fields @timestamp, @message, @logStream
+| filter @message like /error/i
+| sort @timestamp desc
+```
+
+---
+
+## Filtros de suscripción
+
+### Exportar a S3
+
+```hcl
+# Export to S3 via Kinesis Data Firehose
+resource "aws_kinesis_firehose_delivery_stream" "logs_to_s3" {
+  name        = "cloudwatch-logs-to-s3"
+  destination = "extended_s3"
+
+  extended_s3_configuration {
+    role_arn            = aws_iam_role.firehose.arn
+    bucket_arn          = aws_s3_bucket.logs.arn
+    prefix              = "logs/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
+    error_output_prefix = "errors/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
+    buffering_size      = 64
+    buffering_interval  = 300
+    compression_format  = "GZIP"
+
+    cloudwatch_logging_options {
+      enabled         = true
+      log_group_name  = aws_cloudwatch_log_group.firehose.name
+      log_stream_name = "S3Delivery"
+    }
+  }
+}
+
+# Subscription Filter
+resource "aws_cloudwatch_log_subscription_filter" "logs_to_s3" {
+  name            = "logs-to-s3"
+  log_group_name  = "/aws/containerinsights/my-cluster/application"
+  filter_pattern  = ""  # All logs
+  destination_arn = aws_kinesis_firehose_delivery_stream.logs_to_s3.arn
+  role_arn        = aws_iam_role.cloudwatch_to_firehose.arn
+}
+```
+
+### Procesar con Lambda
+
+```python
+# lambda_function.py
+import json
+import gzip
+import base64
+import boto3
+
+def lambda_handler(event, context):
+    # Decode CloudWatch Logs data
+    compressed_payload = base64.b64decode(event['awslogs']['data'])
+    uncompressed_payload = gzip.decompress(compressed_payload)
+    log_data = json.loads(uncompressed_payload)
+
+    for log_event in log_data['logEvents']:
+        message = log_event['message']
+
+        # Alert on error logs
+        if 'ERROR' in message or 'error' in message:
+            send_alert(log_data['logGroup'], message)
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Processed successfully')
+    }
+
+def send_alert(log_group, message):
+    sns = boto3.client('sns')
+    sns.publish(
+        TopicArn='arn:aws:sns:ap-northeast-2:123456789012:alerts',
+        Subject=f'Error in {log_group}',
+        Message=message[:1000]  # SNS message size limit
+    )
+```
+
+```hcl
+# Lambda Subscription Filter
+resource "aws_cloudwatch_log_subscription_filter" "logs_to_lambda" {
+  name            = "logs-to-lambda"
+  log_group_name  = "/aws/containerinsights/my-cluster/application"
+  filter_pattern  = "?ERROR ?error ?Error"
+  destination_arn = aws_lambda_function.log_processor.arn
+}
+
+resource "aws_lambda_permission" "cloudwatch" {
+  statement_id  = "AllowCloudWatchLogs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.log_processor.function_name
+  principal     = "logs.ap-northeast-2.amazonaws.com"
+  source_arn    = "${aws_cloudwatch_log_group.app.arn}:*"
+}
+```
+
+### Crear alertas con filtros de métricas
+
+```hcl
+# Error count metric
+resource "aws_cloudwatch_log_metric_filter" "error_count" {
+  name           = "ErrorCount"
+  pattern        = "[timestamp, requestid, level=ERROR, ...]"
+  log_group_name = "/aws/containerinsights/my-cluster/application"
+
+  metric_transformation {
+    name          = "ErrorCount"
+    namespace     = "Application/Logs"
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+# Alert configuration
+resource "aws_cloudwatch_metric_alarm" "high_error_rate" {
+  alarm_name          = "HighErrorRate"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "ErrorCount"
+  namespace           = "Application/Logs"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 100
+  alarm_description   = "Error count exceeded 100 in 5 minutes"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+}
+```
+
+---
+
+## Optimización de costos
+
+### Estructura de costos
+
+```
+CloudWatch Logs pricing (ap-northeast-2):
+
++---------------------+-----------------+---------------------+
+|        Item         |     Price       |        Notes        |
++---------------------+-----------------+---------------------+
+| Ingestion           | $0.50/GB        | Pre-compression size|
+| Storage             | $0.03/GB/month  | Post-compression    |
+| Analysis (Insights) | $0.005/GB scan  | Data scanned/query  |
+| Logs to S3          | $0.00/GB        | Free (S3 cost sep.) |
++---------------------+-----------------+---------------------+
+
+Example: 100GB/day ingestion, 30-day retention
++-- Ingestion: 100GB x $0.50 x 30 days = $1,500
++-- Storage: ~50GB x $0.03 x 30 days = $45 (50% compression)
++-- Analysis: ~200GB x $0.005 = $1 (daily avg)
++-- Total monthly cost: ~$1,576
+```
+
+### Estrategias de reducción de costos
+
+#### 1. Filtrado de logs
+
+```yaml
+# Exclude unnecessary logs in FluentBit
+[FILTER]
+    Name     grep
+    Match    *
+    Exclude  log healthcheck
+    Exclude  log readiness
+    Exclude  log liveness
+
+[FILTER]
+    Name     grep
+    Match    *
+    Exclude  kubernetes_namespace_name kube-system
+```
+
+#### 2. Optimización del período de retención
+
+```hcl
+# Set retention period by environment
+resource "aws_cloudwatch_log_group" "production" {
+  name              = "/aws/containerinsights/prod-cluster/application"
+  retention_in_days = 30  # Production: 30 days
+}
+
+resource "aws_cloudwatch_log_group" "development" {
+  name              = "/aws/containerinsights/dev-cluster/application"
+  retention_in_days = 7   # Development: 7 days
+}
+
+resource "aws_cloudwatch_log_group" "audit" {
+  name              = "/aws/eks/my-cluster/cluster"
+  retention_in_days = 365  # Audit logs: 1 year
+}
+```
+
+#### 3. Archivar en S3
+
+```hcl
+# Archive long-retention logs to S3
+resource "aws_cloudwatch_log_subscription_filter" "archive" {
+  name            = "archive-to-s3"
+  log_group_name  = aws_cloudwatch_log_group.audit.name
+  filter_pattern  = ""
+  destination_arn = aws_kinesis_firehose_delivery_stream.archive.arn
+  role_arn        = aws_iam_role.cloudwatch_to_firehose.arn
+}
+
+# Transition to S3 Glacier
+resource "aws_s3_bucket_lifecycle_configuration" "archive" {
+  bucket = aws_s3_bucket.logs_archive.id
+
+  rule {
+    id     = "archive"
+    status = "Enabled"
+
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+
+    transition {
+      days          = 90
+      storage_class = "GLACIER"
+    }
+  }
+}
+```
+
+#### 4. Ajustar los niveles de log
+
+```yaml
+# Disable DEBUG logs in production
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  LOG_LEVEL: "INFO"  # DEBUG, INFO, WARN, ERROR
+```
+
+### Monitoreo de costos
+
+```sql
+-- Check CloudWatch Logs usage (Logs Insights)
+fields @timestamp, @ingestionTime, @message
+| stats sum(@billedDuration) as total_billed by bin(1d)
+
+-- Track costs via AWS Cost Explorer API
+aws ce get-cost-and-usage \
+  --time-period Start=2025-01-01,End=2025-01-31 \
+  --granularity MONTHLY \
+  --metrics "BlendedCost" \
+  --filter '{"Dimensions":{"Key":"SERVICE","Values":["AmazonCloudWatch"]}}'
+```
+
+---
+
+## Cuestionario
+
+Pon a prueba tus conocimientos con el [Cuestionario de CloudWatch Logs](../../quizzes/observability/logging/03-cloudwatch-logs-quiz.md).
