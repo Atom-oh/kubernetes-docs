@@ -83,5 +83,8 @@
     "cn": "安全与策略",
     "es": "Seguridad y política",
     "jp": "セキュリティとポリシー"
+  },
+  "Service Mesh": {
+    "cn": "服务网格"
   }
 }
