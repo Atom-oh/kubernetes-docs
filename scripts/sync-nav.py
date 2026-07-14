@@ -446,9 +446,42 @@ def sync_readme(section, lang, heading_map):
         heading_map.setdefault(heading_text, {})[lang] = dst_heading
 
     dst_path_text = dst_path.read_text(encoding="utf-8")
-    if re.search(rf"^### {re.escape(dst_heading)}\s*$", dst_path_text, re.MULTILINE):
+
+    # Match "already synced" by a body link path, not the heading text.
+    # Paths never get translated, so they're stable across runs -- unlike
+    # the heading, which is re-translated fresh by translate_titles() each
+    # time a section is (re-)synced and can come out worded differently
+    # from an earlier pass (e.g. Phase 0 scaffolding left "### AI/ML"
+    # untranslated while a later backfill run produced "人工智能/机器学习").
+    # Matching on heading text alone made that mismatch invisible, so
+    # sync_readme() never recognized already-scaffolded content and kept
+    # duplicating it at the file tail on every run -- confirmed live across
+    # cn/jp/es for 7-10 sections each.
+    body_paths = re.findall(r"\]\(([^)]+)\)", "\n".join(body))
+    if body_paths and body_paths[0] in dst_path_text:
         return  # already synced for this lang
-    dst_path_text = dst_path_text.rstrip("\n") + f"\n\n### {dst_heading}\n" + "\n".join(translated_body) + "\n"
+
+    # Insert new blocks right before the heading that follows "## Table of
+    # Contents" (mirroring sync_summary's tail-of-block insertion) so a
+    # section's first-ever README sync lands inside the ToC, not appended
+    # after "## License" at the absolute end of the file.
+    en_toc_heading = "Table of Contents"
+    dst_toc_heading = heading_map.get(en_toc_heading, {}).get(lang)
+    if dst_toc_heading is None:
+        dst_toc_heading = translate_titles([en_toc_heading], lang)[0]
+        heading_map.setdefault(en_toc_heading, {})[lang] = dst_toc_heading
+
+    toc_re = re.compile(rf"^## {re.escape(dst_toc_heading)}\s*$", re.MULTILINE)
+    m = toc_re.search(dst_path_text)
+    if m:
+        rest = dst_path_text[m.end():]
+        next_h = re.search(r"^## ", rest, re.MULTILINE)
+        insert_at = m.end() + (next_h.start() if next_h else len(rest))
+        before = dst_path_text[:insert_at].rstrip("\n") + "\n\n"
+        after = "\n" + dst_path_text[insert_at:].lstrip("\n")
+        dst_path_text = before + f"### {dst_heading}\n" + "\n".join(translated_body) + after
+    else:
+        dst_path_text = dst_path_text.rstrip("\n") + f"\n\n### {dst_heading}\n" + "\n".join(translated_body) + "\n"
     dst_path.write_text(dst_path_text, encoding="utf-8")
 
 
