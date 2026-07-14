@@ -403,6 +403,7 @@
     * [Argo Rollouts con reconocimiento de zona](service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md)
     * [Autoescalado mediante métricas de Istio](service-mesh/istio/advanced/10-keda-autoscaling.md)
   * [Guía comparativa](service-mesh/istio/comparison/README.md)
+    * [Comparación de soluciones de malla de servicios](service-mesh/istio/comparison/01-service-mesh-comparison.md)
     * [Istio frente a VPC Lattice](service-mesh/istio/comparison/02-istio-vs-lattice.md)
     * [Guía de selección entre Sidecar y Modo Ambient](service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
   * [Solución de problemas](service-mesh/istio/troubleshooting/common-errors.md)
@@ -422,3 +423,4 @@
   * [Observabilidad](service-mesh/cilium-service-mesh/04-observability.md)
   * [Ingress y Gateway](service-mesh/cilium-service-mesh/05-ingress-gateway.md)
   * [Prácticas recomendadas](service-mesh/cilium-service-mesh/06-best-practices.md)
+
