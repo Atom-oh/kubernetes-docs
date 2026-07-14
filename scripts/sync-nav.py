@@ -63,7 +63,7 @@ def _run_kiro_batch(prompt, n, lang):
     broken build."""
     try:
         result = subprocess.run(
-            ["kiro-cli", "chat", prompt, "--model", "gpt-5.5",
+            ["kiro-cli", "chat", prompt, "--model", "gpt-5.6-terra",
              "--no-interactive", "--trust-tools=", "--wrap", "never"],
             capture_output=True, text=True, timeout=90,
         )
