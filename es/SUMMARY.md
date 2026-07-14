@@ -132,6 +132,21 @@
   * [Cuestionario sobre IDP de Backstage](quizzes/platform-engineering/06-backstage-idp-quiz.md)
   * [Cuestionario sobre Crossplane](quizzes/platform-engineering/07-crossplane-quiz.md)
   * [Cuestionario sobre vCluster](quizzes/platform-engineering/08-vcluster-quiz.md)
+* [Guía de operaciones](quiz/operations-guide/README.md)
+  * [Cuestionario: Configuración de infraestructura](quizzes/ops/01-infrastructure-setup-quiz.md)
+  * [Cuestionario: Infraestructura avanzada](quizzes/ops/02-infrastructure-advanced-quiz.md)
+  * [Cuestionario: Canalizaciones de IC](quizzes/ops/03-ci-pipelines-quiz.md)
+  * [Cuestionario: GitOps multiclúster](quizzes/ops/04-gitops-multi-cluster-quiz.md)
+  * [Cuestionario: Automatización de GitOps](quizzes/ops/05-gitops-automation-quiz.md)
+  * [Cuestionario: Estrategias de escalado](quizzes/ops/06-scaling-strategies-quiz.md)
+  * [Cuestionario: Alertas de observabilidad](quizzes/ops/07-observability-alerts-quiz.md)
+  * [Cuestionario: Análisis de observabilidad](quizzes/ops/08-observability-analysis-quiz.md)
+  * [Cuestionario: Pila de observabilidad](quizzes/ops/09-observability-stack-quiz.md)
+  * [Cuestionario: Optimización de recursos](quizzes/ops/10-resource-optimization-quiz.md)
+  * [Cuestionario: Operaciones de actualización](quizzes/ops/11-upgrade-operations-quiz.md)
+  * [Cuestionario: Planificación de capacidad para eventos](quizzes/ops/12-event-capacity-planning-quiz.md)
+  * [Cuestionario: Plataforma de visibilidad de costos de FinOps](quizzes/ops/13-finops-cost-platform-quiz.md)
+  * [Cuestionario: Tekton Pipelines](quizzes/ops/14-tekton-pipelines-quiz.md)
 
 ## Autoescalado
 
@@ -265,3 +280,21 @@
 * [IDP de Backstage](platform-engineering/06-backstage-idp.md)
 * [Crossplane](platform-engineering/07-crossplane.md)
 * [vCluster](platform-engineering/08-vcluster.md)
+
+## Guía de operaciones
+
+* [Guía de operaciones](ops/README.md)
+  * [Configuración de infraestructura](ops/01-infrastructure-setup.md)
+  * [Infraestructura avanzada](ops/02-infrastructure-advanced.md)
+  * [Canalizaciones de IC](ops/03-ci-pipelines.md)
+  * [GitOps multiclúster](ops/04-gitops-multi-cluster.md)
+  * [Automatización de GitOps](ops/05-gitops-automation.md)
+  * [Estrategias de escalado](ops/06-scaling-strategies.md)
+  * [Alertas de observabilidad](ops/07-observability-alerts.md)
+  * [Análisis de observabilidad](ops/08-observability-analysis.md)
+  * [Pila de observabilidad](ops/09-observability-stack.md)
+  * [Optimización de recursos](ops/10-resource-optimization.md)
+  * [Operaciones de actualización](ops/11-upgrade-operations.md)
+  * [Planificación de capacidad para eventos](ops/12-event-capacity-planning.md)
+  * [Plataforma de visibilidad de costos de FinOps](ops/13-finops-cost-platform.md)
+  * [Tekton Pipelines](ops/14-tekton-pipelines.md)

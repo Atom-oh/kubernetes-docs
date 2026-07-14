@@ -54,6 +54,11 @@
     "es": "Noticias",
     "jp": "ニュース"
   },
+  "Operations Guide": {
+    "cn": "运维指南",
+    "es": "Guía de operaciones",
+    "jp": "運用ガイド"
+  },
   "Platform Engineering": {
     "cn": "平台工程",
     "es": "Ingeniería de plataformas",
