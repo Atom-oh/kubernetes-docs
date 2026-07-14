@@ -81,7 +81,14 @@ jobs:
             exit 0
           fi
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          git diff -- cn jp es | head -c 100000 > /tmp/review-diff.txt
+          # Nav files first, uncapped -- see translate-backfill.yml's gate
+          # for why (issue #99: a flat cap let large diffs exhaust the
+          # budget before nav files were visible, causing false "dropped
+          # content" claims).
+          git diff -- cn/SUMMARY.md cn/README.md jp/SUMMARY.md jp/README.md \
+            es/SUMMARY.md es/README.md .github/i18n-heading-map.json \
+            > /tmp/review-diff.txt
+          git diff -- cn jp es | head -c 200000 >> /tmp/review-diff.txt
 
           # See translate-backfill.yml's gate for why: files that genuinely
           # failed re-translation (both attempts) are intentionally left
@@ -105,6 +112,11 @@ jobs:
               echo 'still showing old/unchanged content:'
               echo "$FAILED_FILES"
             fi
+            echo ''
+            echo 'For large diffs the content-file portion may be truncated near the'
+            echo 'end -- SUMMARY.md/README.md/i18n-heading-map.json are always shown'
+            echo 'in full above it. Do not call content "dropped" or "untranslated"'
+            echo 'just because it is absent near the end of a large diff.'
             echo ''
             echo 'Output EXACTLY two lines, nothing else:'
             echo 'SCORE: <0-100>'

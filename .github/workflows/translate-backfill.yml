@@ -150,7 +150,19 @@ jobs:
             exit 0
           fi
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          git diff -- cn jp es | head -c 100000 > /tmp/review-diff.txt
+          # Nav files first, uncapped: they're small (a few KB each) but
+          # this is where nearly every real bug in this pipeline has been
+          # (#39, #43, #70, #81, #86, #90). A flat 100KB cap on the whole
+          # diff let big sections' cn/es content exhaust the budget before
+          # jp's SUMMARY.md/README.md were even visible, so the reviewer
+          # judged a truncated fragment and wrongly called real content
+          # "dropped"/"untranslated" (observability, issue #99). Content
+          # files are capped separately since a rough skim of prose is
+          # enough for that half of the rubric.
+          git diff -- cn/SUMMARY.md cn/README.md jp/SUMMARY.md jp/README.md \
+            es/SUMMARY.md es/README.md .github/i18n-heading-map.json \
+            > /tmp/review-diff.txt
+          git diff -- cn jp es | head -c 200000 >> /tmp/review-diff.txt
 
           # Files that genuinely failed translate.sh (both attempts) are
           # intentionally absent from the nav (sync-nav.py's dead-link
@@ -180,6 +192,12 @@ jobs:
               echo 'absence from SUMMARY.md/README.md as dropped content:'
               echo "$FAILED_FILES"
             fi
+            echo ''
+            echo 'For large sections the content-file portion of this diff may be'
+            echo 'truncated near the end -- SUMMARY.md/README.md/i18n-heading-map.json'
+            echo 'are always shown in full above it, so judge nav completeness from'
+            echo 'those directly. Do not call content "dropped" or "untranslated"'
+            echo 'just because it is absent near the end of a large diff.'
             echo ''
             echo 'Output EXACTLY two lines, nothing else:'
             echo 'SCORE: <0-100>'
