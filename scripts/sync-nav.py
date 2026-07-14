@@ -229,14 +229,22 @@ def render(nodes, lang, existing_paths=frozenset()):
     their path is already in the destination file, emit just their children
     so the same wrapper line isn't duplicated on every subsequent section.
 
-    A node whose own destination file doesn't exist (translation failure,
-    or a path structurally out of scope for section backfill, e.g.
-    labs/README.md) is skipped the same way -- rendered as absent, but its
-    surviving children (whose files DO exist) still render one level up."""
+    A LEAF node (no children) whose own destination file doesn't exist
+    (translation failure) is skipped -- rendered as absent, per #39/#43.
+    But a node WITH children is always rendered regardless of its own
+    file's existence: en/SUMMARY.md's Quiz Collection uses ~16 group-label
+    bullets like '[Observability](quiz/observability/README.md)' whose
+    'quiz/' (singular) path is never a real file -- it's intentionally a
+    label-only placeholder, not a translatable page. Hiding those (as an
+    earlier version of this function did, treating them the same as a
+    missing leaf) orphaned every deeply-nested child at its original
+    indent with no parent bullet above it, making it visually nest under
+    whatever unrelated item preceded it in the file -- a real quality-gate
+    run scored 55/100 catching exactly this for the Observability section."""
     out = []
     for n in nodes:
         already_present = n.path is not None and n.path in existing_paths
-        file_missing = n.path is not None and not (REPO_ROOT / lang / n.path).exists()
+        file_missing = n.path is not None and not n.children and not (REPO_ROOT / lang / n.path).exists()
         if not already_present and not file_missing:
             prefix = " " * n.indent + "* "
             if n.title is not None:
