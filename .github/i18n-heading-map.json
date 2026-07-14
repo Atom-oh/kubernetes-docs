@@ -62,6 +62,9 @@
     "es": "Noticias",
     "jp": "ニュース"
   },
+  "Observability": {
+    "cn": "可观测性"
+  },
   "Operations Guide": {
     "cn": "运维指南",
     "es": "Guía de operaciones",
