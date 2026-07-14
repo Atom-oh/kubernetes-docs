@@ -83,18 +83,33 @@ jobs:
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
           git diff -- cn jp es | head -c 100000 > /tmp/review-diff.txt
 
-          cat <<'PROMPT_EOF' > /tmp/review-prompt.txt
-          Review this diff (piped to your stdin) re-translating existing
-          Simplified Chinese/Japanese/Spanish pages after their English
-          source changed, for a Kubernetes/EKS training site. Score 0-100 on:
-          markdown structure preserved exactly, translation faithfulness,
-          Kubernetes/AWS technical terms kept in English, language
-          correctness, and no PII/sensitive data.
+          # See translate-backfill.yml's gate for why: files that genuinely
+          # failed re-translation (both attempts) are intentionally left
+          # unchanged (old content, not a fresh translation) rather than
+          # invented -- flag that to the reviewer instead of letting it
+          # guess "why wasn't this updated" as a completeness bug.
+          FAILED_FILES=$(cat /tmp/translate-failures.txt 2>/dev/null || true)
 
-          Output EXACTLY two lines, nothing else:
-          SCORE: <0-100>
-          FEEDBACK: <one sentence>
-          PROMPT_EOF
+          {
+            echo 'Review this diff (piped to your stdin) re-translating existing'
+            echo 'Simplified Chinese/Japanese/Spanish pages after their English'
+            echo 'source changed, for a Kubernetes/EKS training site. Score 0-100 on:'
+            echo 'markdown structure preserved exactly, translation faithfulness,'
+            echo 'Kubernetes/AWS technical terms kept in English, language'
+            echo 'correctness, and no PII/sensitive data.'
+            if [ -n "$FAILED_FILES" ]; then
+              echo ''
+              echo 'The following destination files genuinely failed re-translation after'
+              echo 'a retry and were intentionally left with their prior content (this is'
+              echo 'correct, expected behavior, not a bug) -- do NOT penalize them for'
+              echo 'still showing old/unchanged content:'
+              echo "$FAILED_FILES"
+            fi
+            echo ''
+            echo 'Output EXACTLY two lines, nothing else:'
+            echo 'SCORE: <0-100>'
+            echo 'FEEDBACK: <one sentence>'
+          } > /tmp/review-prompt.txt
 
           claude -p "$(cat /tmp/review-prompt.txt)" --output-format text \
             --allowedTools "Read" < /tmp/review-diff.txt > /tmp/review-result.txt || true
