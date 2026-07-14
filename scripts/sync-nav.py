@@ -395,7 +395,7 @@ def sync_readme(section, lang, heading_map):
         heading_map.setdefault(heading_text, {})[lang] = dst_heading
 
     dst_path_text = dst_path.read_text(encoding="utf-8")
-    if f"### {dst_heading}" in dst_path_text:
+    if re.search(rf"^### {re.escape(dst_heading)}\s*$", dst_path_text, re.MULTILINE):
         return  # already synced for this lang
     dst_path_text = dst_path_text.rstrip("\n") + f"\n\n### {dst_heading}\n" + "\n".join(translated_body) + "\n"
     dst_path.write_text(dst_path_text, encoding="utf-8")
