@@ -58,22 +58,28 @@ SUFFIX_RE = re.compile(r"^(.+) (Quiz|Lab)$")
 
 def _run_kiro_batch(prompt, n, lang):
     """Shared kiro-cli batch call: send prompt, expect exactly n lines back.
-    Returns None on any failure (wrong line count, exception) so callers can
-    fall back -- an untranslated nav label is a minor quality gap, not a
-    broken build."""
-    try:
-        result = subprocess.run(
-            ["kiro-cli", "chat", prompt, "--model", "gpt-5.6-terra",
-             "--no-interactive", "--trust-tools=", "--wrap", "never"],
-            capture_output=True, text=True, timeout=90,
-        )
-        lines = [_clean_kiro_line(ln) for ln in result.stdout.splitlines()]
-        lines = [re.sub(r"^\d+\.\s*", "", ln).strip() for ln in lines if ln.strip()]
-        if len(lines) == n:
-            return lines
-        print(f"::warning::sync-nav: title translation returned {len(lines)}/{n} lines, keeping English", file=sys.stderr)
-    except Exception as e:
-        print(f"::warning::sync-nav: title translation failed ({e}), keeping English", file=sys.stderr)
+    Retries once on any failure before giving up -- a real run under
+    concurrent runner load (another section's backfill in parallel) hit a
+    transient failure here and silently kept a heading/title in English for
+    just that one run, with no retry to absorb the blip (unlike
+    translate.sh's file-level calls, which already retry once). Returns
+    None only after both attempts fail, so callers can fall back -- an
+    untranslated nav label is a minor quality gap, not a broken build."""
+    for attempt in (1, 2):
+        try:
+            result = subprocess.run(
+                ["kiro-cli", "chat", prompt, "--model", "gpt-5.6-terra",
+                 "--no-interactive", "--trust-tools=", "--wrap", "never"],
+                capture_output=True, text=True, timeout=90,
+            )
+            lines = [_clean_kiro_line(ln) for ln in result.stdout.splitlines()]
+            lines = [re.sub(r"^\d+\.\s*", "", ln).strip() for ln in lines if ln.strip()]
+            if len(lines) == n:
+                return lines
+            print(f"::warning::sync-nav: title translation attempt {attempt} returned {len(lines)}/{n} lines", file=sys.stderr)
+        except Exception as e:
+            print(f"::warning::sync-nav: title translation attempt {attempt} failed ({e})", file=sys.stderr)
+    print(f"::warning::sync-nav: title translation failed after retry, keeping English", file=sys.stderr)
     return None
 
 
