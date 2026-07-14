@@ -261,6 +261,44 @@ def render(nodes, lang, existing_paths=frozenset()):
     return out
 
 
+def insert_new_nodes(nodes, dst_text, existing_paths, lang, tail_anchor):
+    """Splice new (not-yet-present) subtrees into dst_text anchored right
+    after their nearest already-present ancestor's own line, instead of
+    always appending at the tail of the whole heading block.
+
+    A tail-only append is correct the first time a heading's tree is added
+    (everything is new, in document order, so appending is the tree). It
+    breaks on a later run that only adds a few previously-failed leaf files
+    whose parent (e.g. an Istio subsection) already exists mid-block: with
+    tail-only append those leaves land after whatever unrelated bullet
+    happens to be last in the block, visually nesting under it. A real run
+    hit exactly this for service-mesh (issue #101): two retried Istio pages
+    rendered as children of Cilium Service Mesh's "Best Practices" bullet,
+    just because that was the block's last line.
+
+    tail_anchor is the fallback insertion point (end of the whole heading
+    block) for a root subtree that's entirely new -- same as the old
+    behavior for that case."""
+    for n in nodes:
+        already_present = n.path is not None and n.path in existing_paths
+        if already_present:
+            m = re.search(rf"^ *\* \[.*?\]\({re.escape(n.path)}\)[^\n]*\n", dst_text, re.MULTILINE)
+            child_anchor = m.end() if m else tail_anchor
+            dst_text, new_child_anchor = insert_new_nodes(n.children, dst_text, existing_paths, lang, child_anchor)
+            tail_anchor += new_child_anchor - child_anchor
+            continue
+        file_missing = n.path is not None and not n.children and not (REPO_ROOT / lang / n.path).exists()
+        if file_missing:
+            continue
+        fragment = render([n], lang, existing_paths)
+        if not fragment:
+            continue
+        block = "\n".join(fragment) + "\n"
+        dst_text = dst_text[:tail_anchor] + block + dst_text[tail_anchor:]
+        tail_anchor += len(block)
+    return dst_text, tail_anchor
+
+
 def extract_heading_blocks(summary_lines):
     """-> list of (heading_text, [item_lines]) in document order."""
     blocks = []
@@ -300,9 +338,6 @@ def sync_summary(section, lang, heading_map):
             n.title = t
 
         existing_paths = set(re.findall(r"\]\(([^)]+)\)", dst_text))
-        fragment_lines = render(forest, lang, existing_paths)
-        if not fragment_lines:
-            continue
 
         dst_heading = heading_map.get(heading, {}).get(lang)
         if dst_heading is None:
@@ -312,17 +347,27 @@ def sync_summary(section, lang, heading_map):
         heading_re = re.compile(rf"^## {re.escape(dst_heading)}\s*$", re.MULTILINE)
         m = heading_re.search(dst_text)
         if m:
-            # Insert before the next '## ' heading (or EOF), keeping this heading's block contiguous.
-            # A single '\n' (not '\n\n') continues the existing bullet list without a blank-line
-            # gap in the middle -- CommonMark treats a blank line between two top-level list items
-            # as splitting them into separate lists, which a real quality-gate run flagged (a
-            # section like "Amazon EKS" that's shared between two translate-backfill sections, e.g.
-            # eks-hybrid-nodes and eks, got its list visibly split down the middle).
+            # Tail-of-block fallback anchor, for a root subtree that's
+            # entirely new (no already-present ancestor to splice after) --
+            # same position the old tail-only-append logic always used. A
+            # single '\n' (not '\n\n') before it continues the existing
+            # bullet list without a blank-line gap in the middle --
+            # CommonMark treats a blank line between two top-level list
+            # items as splitting them into separate lists, which a real
+            # quality-gate run flagged (a section like "Amazon EKS" shared
+            # between two translate-backfill sections, e.g. eks-hybrid-nodes
+            # and eks, got its list visibly split down the middle).
             rest = dst_text[m.end():]
             next_h = re.search(r"^## ", rest, re.MULTILINE)
             insert_at = m.end() + (next_h.start() if next_h else len(rest))
-            dst_text = dst_text[:insert_at].rstrip("\n") + "\n" + "\n".join(fragment_lines) + "\n\n" + dst_text[insert_at:].lstrip("\n")
+            before = dst_text[:insert_at].rstrip("\n") + "\n"
+            after = "\n" + dst_text[insert_at:].lstrip("\n")
+            dst_text = before + after
+            dst_text, _ = insert_new_nodes(forest, dst_text, existing_paths, lang, len(before))
         else:
+            fragment_lines = render(forest, lang, existing_paths)
+            if not fragment_lines:
+                continue
             dst_text = dst_text.rstrip("\n") + f"\n\n## {dst_heading}\n\n" + "\n".join(fragment_lines) + "\n"
 
     dst_path.write_text(dst_text, encoding="utf-8")
