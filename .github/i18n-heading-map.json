@@ -86,6 +86,7 @@
   },
   "Service Mesh": {
     "cn": "服务网格",
+    "es": "Malla de servicios",
     "jp": "サービスメッシュ"
   }
 }

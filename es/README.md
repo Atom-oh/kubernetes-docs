@@ -401,3 +401,23 @@ Este material de formación es gratuito para uso con fines de aprendizaje.
 7. [Crossplane](./platform-engineering/07-crossplane.md) | [Quiz](./quizzes/platform-engineering/07-crossplane-quiz.md)
 8. [vCluster](./platform-engineering/08-vcluster.md) | [Quiz](./quizzes/platform-engineering/08-vcluster-quiz.md)
 
+### Malla de servicios
+1. [Istio](./service-mesh/istio/README.md) | [Quiz](./quizzes/service-mesh/02-istio-quiz.md)
+2. **Linkerd**
+   - [Introducción a Linkerd](./service-mesh/linkerd/README.md)
+   - [Instalación](./service-mesh/linkerd/01-installation.md) | [Quiz](./quizzes/service-mesh/linkerd/installation.md)
+   - [Arquitectura](./service-mesh/linkerd/02-architecture.md) | [Quiz](./quizzes/service-mesh/linkerd/architecture.md)
+   - [Gestión del tráfico](./service-mesh/linkerd/03-traffic-management.md) | [Quiz](./quizzes/service-mesh/linkerd/traffic-management.md)
+   - [Seguridad](./service-mesh/linkerd/04-security.md) | [Quiz](./quizzes/service-mesh/linkerd/security.md)
+   - [Observabilidad](./service-mesh/linkerd/05-observability.md) | [Quiz](./quizzes/service-mesh/linkerd/observability.md)
+   - [Multiclúster](./service-mesh/linkerd/06-multi-cluster.md) | [Quiz](./quizzes/service-mesh/linkerd/multi-cluster.md)
+   - [Prácticas recomendadas](./service-mesh/linkerd/07-best-practices.md)
+3. **Cilium Service Mesh**
+   - [Introducción a la malla de servicios Cilium](./service-mesh/cilium-service-mesh/README.md)
+   - [Arquitectura](./service-mesh/cilium-service-mesh/01-architecture.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/architecture.md)
+   - [Gestión del tráfico](./service-mesh/cilium-service-mesh/02-traffic-management.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/traffic-management.md)
+   - [Seguridad](./service-mesh/cilium-service-mesh/03-security.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/security.md)
+   - [Observabilidad](./service-mesh/cilium-service-mesh/04-observability.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/observability.md)
+   - [Puerta de enlace de entrada](./service-mesh/cilium-service-mesh/05-ingress-gateway.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
+   - [Prácticas recomendadas](./service-mesh/cilium-service-mesh/06-best-practices.md)
+
