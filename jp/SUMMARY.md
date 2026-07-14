@@ -131,6 +131,21 @@
   * [EKS の回復力と高可用性クイズ](quizzes/eks/10-eks-resiliency-quiz.md)
   * [EKS の高度なデバッグクイズ](quizzes/eks/11-eks-advanced-debugging-quiz.md)
   * [Kubernetes バージョンの機能とロードマップクイズ](quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
+* [運用ガイド](quiz/operations-guide/README.md)
+  * [インフラストラクチャのセットアップクイズ](quizzes/ops/01-infrastructure-setup-quiz.md)
+  * [インフラストラクチャの高度な設定クイズ](quizzes/ops/02-infrastructure-advanced-quiz.md)
+  * [継続的インテグレーション・パイプラインクイズ](quizzes/ops/03-ci-pipelines-quiz.md)
+  * [GitOps マルチクラスタークイズ](quizzes/ops/04-gitops-multi-cluster-quiz.md)
+  * [GitOps 自動化クイズ](quizzes/ops/05-gitops-automation-quiz.md)
+  * [スケーリング戦略クイズ](quizzes/ops/06-scaling-strategies-quiz.md)
+  * [可観測性アラートクイズ](quizzes/ops/07-observability-alerts-quiz.md)
+  * [可観測性分析クイズ](quizzes/ops/08-observability-analysis-quiz.md)
+  * [可観測性スタッククイズ](quizzes/ops/09-observability-stack-quiz.md)
+  * [リソース最適化クイズ](quizzes/ops/10-resource-optimization-quiz.md)
+  * [アップグレード運用クイズ](quizzes/ops/11-upgrade-operations-quiz.md)
+  * [イベント時のキャパシティ計画クイズ](quizzes/ops/12-event-capacity-planning-quiz.md)
+  * [FinOps コスト可視化プラットフォームクイズ](quizzes/ops/13-finops-cost-platform-quiz.md)
+  * [Tekton パイプラインクイズ](quizzes/ops/14-tekton-pipelines-quiz.md)
 
 ## オートスケーリング
 
@@ -263,3 +278,21 @@
 * [Backstage IDP](platform-engineering/06-backstage-idp.md)
 * [Crossplane](platform-engineering/07-crossplane.md)
 * [vCluster](platform-engineering/08-vcluster.md)
+
+## 運用ガイド
+
+* [運用ガイド](ops/README.md)
+  * [インフラストラクチャのセットアップ](ops/01-infrastructure-setup.md)
+  * [インフラストラクチャの高度な設定](ops/02-infrastructure-advanced.md)
+  * [継続的インテグレーション・パイプライン](ops/03-ci-pipelines.md)
+  * [GitOps マルチクラスター](ops/04-gitops-multi-cluster.md)
+  * [GitOps 自動化](ops/05-gitops-automation.md)
+  * [スケーリング戦略](ops/06-scaling-strategies.md)
+  * [可観測性アラート](ops/07-observability-alerts.md)
+  * [可観測性分析](ops/08-observability-analysis.md)
+  * [可観測性スタック](ops/09-observability-stack.md)
+  * [リソース最適化](ops/10-resource-optimization.md)
+  * [アップグレード運用](ops/11-upgrade-operations.md)
+  * [イベント時のキャパシティ計画](ops/12-event-capacity-planning.md)
+  * [FinOps コスト可視化プラットフォーム](ops/13-finops-cost-platform.md)
+  * [Tekton パイプライン](ops/14-tekton-pipelines.md)

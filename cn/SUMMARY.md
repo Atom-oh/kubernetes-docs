@@ -124,6 +124,21 @@
   * [Backstage 内部开发者平台测验](quizzes/platform-engineering/06-backstage-idp-quiz.md)
   * [Crossplane 测验](quizzes/platform-engineering/07-crossplane-quiz.md)
   * [vCluster 测验](quizzes/platform-engineering/08-vcluster-quiz.md)
+* [运维指南](quiz/operations-guide/README.md)
+  * [基础设施设置测验](quizzes/ops/01-infrastructure-setup-quiz.md)
+  * [基础设施进阶测验](quizzes/ops/02-infrastructure-advanced-quiz.md)
+  * [持续集成流水线测验](quizzes/ops/03-ci-pipelines-quiz.md)
+  * [GitOps 多集群测验](quizzes/ops/04-gitops-multi-cluster-quiz.md)
+  * [GitOps 自动化测验](quizzes/ops/05-gitops-automation-quiz.md)
+  * [扩缩容策略测验](quizzes/ops/06-scaling-strategies-quiz.md)
+  * [可观测性告警测验](quizzes/ops/07-observability-alerts-quiz.md)
+  * [可观测性分析测验](quizzes/ops/08-observability-analysis-quiz.md)
+  * [可观测性技术栈测验](quizzes/ops/09-observability-stack-quiz.md)
+  * [资源优化测验](quizzes/ops/10-resource-optimization-quiz.md)
+  * [升级运维测验](quizzes/ops/11-upgrade-operations-quiz.md)
+  * [活动容量规划测验](quizzes/ops/12-event-capacity-planning-quiz.md)
+  * [FinOps 成本可见性平台测验](quizzes/ops/13-finops-cost-platform-quiz.md)
+  * [Tekton 流水线测验](quizzes/ops/14-tekton-pipelines-quiz.md)
 
 ## EKS 上的数据
 
@@ -258,3 +273,21 @@
 * [Backstage 内部开发者平台](platform-engineering/06-backstage-idp.md)
 * [Crossplane](platform-engineering/07-crossplane.md)
 * [vCluster](platform-engineering/08-vcluster.md)
+
+## 运维指南
+
+* [运维指南](ops/README.md)
+  * [基础设施设置](ops/01-infrastructure-setup.md)
+  * [基础设施进阶](ops/02-infrastructure-advanced.md)
+  * [持续集成流水线](ops/03-ci-pipelines.md)
+  * [GitOps 多集群](ops/04-gitops-multi-cluster.md)
+  * [GitOps 自动化](ops/05-gitops-automation.md)
+  * [扩缩容策略](ops/06-scaling-strategies.md)
+  * [可观测性告警](ops/07-observability-alerts.md)
+  * [可观测性分析](ops/08-observability-analysis.md)
+  * [可观测性技术栈](ops/09-observability-stack.md)
+  * [资源优化](ops/10-resource-optimization.md)
+  * [升级运维](ops/11-upgrade-operations.md)
+  * [活动容量规划](ops/12-event-capacity-planning.md)
+  * [FinOps 成本可见性平台](ops/13-finops-cost-platform.md)
+  * [Tekton 流水线](ops/14-tekton-pipelines.md)
