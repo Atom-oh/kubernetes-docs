@@ -101,6 +101,14 @@
   * [Node のライフサイクルクイズ](quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
   * [ワークロードの最適化クイズ](quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
   * [移行ガイドクイズ](quizzes/eks-auto-mode/09-migration-guide-quiz.md)
+  * [プラットフォームエンジニアリングの概要クイズ](quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
+  * [Helm クイズ](quizzes/platform-engineering/01-helm-quiz.md)
+  * [ACK クイズ](quizzes/platform-engineering/02-ack-quiz.md)
+  * [KRO クイズ](quizzes/platform-engineering/03-kro-quiz.md)
+  * [Kubernetes の拡張メカニズムクイズ](quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+  * [Backstage IDP クイズ](quizzes/platform-engineering/06-backstage-idp-quiz.md)
+  * [Crossplane クイズ](quizzes/platform-engineering/07-crossplane-quiz.md)
+  * [vCluster クイズ](quizzes/platform-engineering/08-vcluster-quiz.md)
 
 ## オートスケーリング
 
@@ -194,3 +202,18 @@
 * [cert-manager](security/10-cert-manager.md)
 * [Kubescape](security/11-kubescape.md)
 * [SPIFFE/SPIRE](security/12-spiffe-spire.md)
+
+## プラットフォームエンジニアリング
+
+* [プラットフォームエンジニアリングの概要](platform-engineering/00-platform-engineering-overview.md)
+* [Helm](platform-engineering/01-helm.md)
+* [AWS Controllers for Kubernetes（ACK）](platform-engineering/02-ack.md)
+  * [S3 と IAM の例](platform-engineering/ack/01-s3-iam.md)
+  * [SQS と SNS の例](platform-engineering/ack/02-sqs-sns.md)
+  * [ELBv2、Route 53、RDS の例](platform-engineering/ack/03-elbv2-route53-rds.md)
+* [Kubernetes Resource Operator（KRO）](platform-engineering/03-kro.md)
+* [Kubernetes の拡張メカニズム](platform-engineering/04-kubernetes-extensions.md)
+* [ExampleCorp：ACK と KRO の統合例](platform-engineering/05-example-corp-app.md)
+* [Backstage IDP](platform-engineering/06-backstage-idp.md)
+* [Crossplane](platform-engineering/07-crossplane.md)
+* [vCluster](platform-engineering/08-vcluster.md)
