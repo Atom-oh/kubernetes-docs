@@ -39,6 +39,11 @@
     "es": "Nodos híbridos de EKS",
     "jp": "EKS Hybrid Nodes"
   },
+  "GitOps": {
+    "cn": "GitOps",
+    "es": "GitOps",
+    "jp": "GitOps"
+  },
   "Kubernetes Core Concepts": {
     "cn": "Kubernetes 核心概念",
     "es": "Conceptos básicos de Kubernetes",
