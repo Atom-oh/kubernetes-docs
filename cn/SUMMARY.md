@@ -464,6 +464,7 @@
     * [区域感知 Argo Rollouts](service-mesh/istio/advanced/09-zone-aware-argo-rollouts.md)
     * [使用 Istio 指标进行自动扩缩容](service-mesh/istio/advanced/10-keda-autoscaling.md)
   * [对比指南](service-mesh/istio/comparison/README.md)
+    * [服务网格解决方案比较](service-mesh/istio/comparison/01-service-mesh-comparison.md)
     * [Istio 与 VPC Lattice 对比](service-mesh/istio/comparison/02-istio-vs-lattice.md)
     * [Sidecar 与 Ambient 模式选择指南](service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
   * [故障排除](service-mesh/istio/troubleshooting/common-errors.md)
