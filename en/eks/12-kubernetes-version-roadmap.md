@@ -1,7 +1,7 @@
 # Kubernetes Version Features and Roadmap
 
 > **Supported Versions**: Kubernetes 1.29 - 1.36
-> **Last Updated**: July 3, 2026
+> **Last Updated**: July 15, 2026
 
 Kubernetes evolves rapidly, with three releases per year introducing new features, graduating existing ones, and deprecating old APIs. For enterprise teams running Amazon EKS, understanding the version landscape is essential for planning upgrades, adopting new capabilities at the right time, and avoiding disruptions from deprecations. This document provides a comprehensive, version-by-version reference covering Kubernetes 1.29 through 1.36, with EKS-specific guidance for each release.
 
@@ -1746,6 +1746,22 @@ spec:
 > **Safety Note**: MAP `matchConstraints` is cluster-wide by default. Always scope mutations using a `namespaceSelector` in the binding to prevent unintended modifications across the cluster.
 
 > **Technical Note**: `resizePolicy` is defined as an atomic list in the Kubernetes API schema. This means you must use `JSONPatch` (as shown above). Attempting to use `ApplyConfiguration` will fail with `"may not mutate atomic arrays"`.
+
+**Test results (EKS 1.36.1)** — verified by applying the manifest above as-is against a cluster serving `admissionregistration.k8s.io/v1` (GA):
+
+| Case | Annotation | Injected resizePolicy | Result |
+|------|-----------|------------------------|--------|
+| with-annotation | present | `[{cpu:NotRequired},{memory:RestartContainer}]` | ✅ injected (no webhook) |
+| without-annotation | absent | `[]` (none) | ✅ not injected (matchCondition worked) |
+
+```bash
+kubectl -n map-demo get pod with-annotation -o jsonpath='{.spec.containers[0].resizePolicy}'
+# -> [{"resourceName":"cpu","restartPolicy":"NotRequired"},{"resourceName":"memory","restartPolicy":"RestartContainer"}]
+```
+
+The test pod manifest has no `resizePolicy` at all, yet it appears on the created pod — proof that MAP injected it at admission time, with no webhook server involved.
+
+> **Caution**: Without a `matchResources.namespaceSelector` scoping the binding, this intercepts pod creation cluster-wide. `failurePolicy: Fail` is only safe once scoped down. Policy changes also take a few seconds to recompile and propagate, so apply the policy first and create workloads shortly after -- not in the same apply.
 
 **In-Place Pod Vertical Scaling Enhancements**
 
