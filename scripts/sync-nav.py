@@ -261,6 +261,18 @@ def render(nodes, lang, existing_paths=frozenset()):
     return out
 
 
+def _subtree_end(dst_text, start_pos, parent_indent):
+    """Position right after the last descendant of a bullet at
+    parent_indent, starting the scan at start_pos (its own line's end) --
+    the first subsequent bullet line at indent <= parent_indent is a
+    sibling or an ancestor's sibling, so everything before it belongs to
+    this node's subtree."""
+    for bm in re.finditer(r"^( *)\* ", dst_text[start_pos:], re.MULTILINE):
+        if len(bm.group(1)) <= parent_indent:
+            return start_pos + bm.start()
+    return len(dst_text)
+
+
 def insert_new_nodes(nodes, dst_text, existing_paths, lang, tail_anchor):
     """Splice new (not-yet-present) subtrees into dst_text anchored right
     after their nearest already-present ancestor's own line, instead of
@@ -282,8 +294,15 @@ def insert_new_nodes(nodes, dst_text, existing_paths, lang, tail_anchor):
     for n in nodes:
         already_present = n.path is not None and n.path in existing_paths
         if already_present:
-            m = re.search(rf"^ *\* \[.*?\]\({re.escape(n.path)}\)[^\n]*\n", dst_text, re.MULTILINE)
-            child_anchor = m.end() if m else tail_anchor
+            m = re.search(rf"^( *)\* \[.*?\]\({re.escape(n.path)}\)[^\n]*\n", dst_text, re.MULTILINE)
+            # Anchor after the LAST of this node's existing children (end of
+            # its whole subtree), not right after its own line -- otherwise
+            # a new child lands FIRST among its siblings regardless of where
+            # en/SUMMARY.md actually places it. A real run hit this for
+            # observability (score 80, just under the gate): "Log
+            # Collectors" is the last child of "Logging" in en/SUMMARY.md,
+            # but anchoring at the parent's own line put it first.
+            child_anchor = _subtree_end(dst_text, m.end(), len(m.group(1))) if m else tail_anchor
             dst_text, new_child_anchor = insert_new_nodes(n.children, dst_text, existing_paths, lang, child_anchor)
             tail_anchor += new_child_anchor - child_anchor
             continue
@@ -361,7 +380,13 @@ def sync_summary(section, lang, heading_map):
             next_h = re.search(r"^## ", rest, re.MULTILINE)
             insert_at = m.end() + (next_h.start() if next_h else len(rest))
             before = dst_text[:insert_at].rstrip("\n") + "\n"
-            after = "\n" + dst_text[insert_at:].lstrip("\n")
+            # No leading blank line when there's nothing after insert_at --
+            # this heading is the last one in the file, so the "\n\n"
+            # separator (needed to keep this block visually apart from the
+            # NEXT heading) would otherwise land at EOF as a stray trailing
+            # blank line, which a real run got dinged for (score 80).
+            tail_content = dst_text[insert_at:].lstrip("\n")
+            after = ("\n" + tail_content) if tail_content else ""
             dst_text = before + after
             dst_text, _ = insert_new_nodes(forest, dst_text, existing_paths, lang, len(before))
         else:
