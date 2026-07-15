@@ -284,6 +284,7 @@
   * [이벤트 용량 계획 플레이북](ops/12-event-capacity-planning.md)
   * [FinOps 비용 가시성 플랫폼](ops/13-finops-cost-platform.md)
   * [Tekton Pipelines](ops/14-tekton-pipelines.md)
+  * [Zonal 클러스터 운영 전략](ops/15-zonal-operations-guide.md)
 
 ## Observability
 
@@ -560,3 +561,4 @@
   * [이벤트 용량 계획 퀴즈](quizzes/ops/12-event-capacity-planning-quiz.md)
   * [FinOps 비용 가시성 플랫폼 퀴즈](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Tekton Pipelines 퀴즈](quizzes/ops/14-tekton-pipelines-quiz.md)
+  * [Zonal 클러스터 운영 전략 퀴즈](quizzes/ops/15-zonal-operations-guide-quiz.md)

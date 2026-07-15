@@ -235,6 +235,7 @@ This training content provides quizzes for each topic along with the learning ma
 12. [Event Capacity Planning Playbook](./ops/12-event-capacity-planning.md) | [Quiz](./quizzes/ops/12-event-capacity-planning-quiz.md)
 13. [FinOps Cost Visibility Platform](./ops/13-finops-cost-platform.md) | [Quiz](./quizzes/ops/13-finops-cost-platform-quiz.md)
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [Quiz](./quizzes/ops/14-tekton-pipelines-quiz.md)
+15. [Zonal Cluster Operations](./ops/15-zonal-operations-guide.md) | [Quiz](./quizzes/ops/15-zonal-operations-guide-quiz.md)
 
 ### Observability
 1. [Observability Overview](./observability/README.md)
