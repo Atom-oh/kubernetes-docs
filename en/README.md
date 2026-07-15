@@ -119,6 +119,26 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 6: MSK Integration](./data-on-eks/kafka/06-msk-integration.md) | [Quiz](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
    - [Part 7: Monitoring](./data-on-eks/kafka/07-monitoring.md) | [Quiz](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
    - [Part 8: Best Practices](./data-on-eks/kafka/08-best-practices.md) | [Quiz](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+3. **Spark on EKS Deep Dive**
+   - [Spark on EKS Introduction](./data-on-eks/spark/README.md)
+   - [Part 1: Spark on Kubernetes Fundamentals](./data-on-eks/spark/01-spark-fundamentals.md) | [Quiz](./quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
+   - [Part 2: Spark Operator](./data-on-eks/spark/02-spark-operator.md) | [Quiz](./quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
+   - [Part 3: Amazon EMR on EKS](./data-on-eks/spark/03-emr-on-eks.md) | [Quiz](./quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
+   - [Part 4: Performance and Cost Tuning](./data-on-eks/spark/04-performance-tuning.md) | [Quiz](./quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)
+   - [Part 5: Best Practices and Security](./data-on-eks/spark/05-best-practices.md) | [Quiz](./quizzes/data-on-eks/spark/05-best-practices-quiz.md)
+4. **Airflow on EKS Deep Dive**
+   - [Airflow on EKS Introduction](./data-on-eks/airflow/README.md)
+   - [Part 1: Airflow Architecture on Kubernetes](./data-on-eks/airflow/01-architecture.md) | [Quiz](./quizzes/data-on-eks/airflow/01-architecture-quiz.md)
+   - [Part 2: Helm Deployment and Executor Choice](./data-on-eks/airflow/02-helm-deployment.md) | [Quiz](./quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
+   - [Part 3: DAG Patterns and KubernetesPodOperator](./data-on-eks/airflow/03-dag-patterns.md) | [Quiz](./quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md)
+   - [Part 4: Amazon MWAA Integration](./data-on-eks/airflow/04-mwaa-integration.md) | [Quiz](./quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
+   - [Part 5: Operations and Security](./data-on-eks/airflow/05-operations.md) | [Quiz](./quizzes/data-on-eks/airflow/05-operations-quiz.md)
+5. **Flink on EKS Deep Dive**
+   - [Flink on EKS Introduction](./data-on-eks/flink/README.md)
+   - [Part 1: Flink Architecture on Kubernetes](./data-on-eks/flink/01-architecture.md) | [Quiz](./quizzes/data-on-eks/flink/01-architecture-quiz.md)
+   - [Part 2: Flink Kubernetes Operator](./data-on-eks/flink/02-flink-kubernetes-operator.md) | [Quiz](./quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
+   - [Part 3: State, Checkpointing, and Streaming Patterns](./data-on-eks/flink/03-state-checkpointing-streaming.md) | [Quiz](./quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
+   - [Part 4: Operations, High Availability, and Managed Flink](./data-on-eks/flink/04-operations-ha.md) | [Quiz](./quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
 
 ### Networking
 1. [Networking Overview](./networking/README.md) | [Quiz](./quizzes/networking/00-networking-overview-quiz.md)

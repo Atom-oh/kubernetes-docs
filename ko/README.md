@@ -119,6 +119,26 @@
    - [Part 6: MSK 통합](./data-on-eks/kafka/06-msk-integration.md) | [퀴즈](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
    - [Part 7: 모니터링](./data-on-eks/kafka/07-monitoring.md) | [퀴즈](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
    - [Part 8: 모범 사례](./data-on-eks/kafka/08-best-practices.md) | [퀴즈](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+3. **Spark on EKS 딥다이브**
+   - [Spark on EKS 소개](./data-on-eks/spark/README.md)
+   - [Part 1: Spark on Kubernetes 기초](./data-on-eks/spark/01-spark-fundamentals.md) | [퀴즈](./quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
+   - [Part 2: Spark Operator](./data-on-eks/spark/02-spark-operator.md) | [퀴즈](./quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
+   - [Part 3: Amazon EMR on EKS](./data-on-eks/spark/03-emr-on-eks.md) | [퀴즈](./quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
+   - [Part 4: 성능 및 비용 튜닝](./data-on-eks/spark/04-performance-tuning.md) | [퀴즈](./quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)
+   - [Part 5: 모범 사례와 보안](./data-on-eks/spark/05-best-practices.md) | [퀴즈](./quizzes/data-on-eks/spark/05-best-practices-quiz.md)
+4. **Airflow on EKS 딥다이브**
+   - [Airflow on EKS 소개](./data-on-eks/airflow/README.md)
+   - [Part 1: Kubernetes에서의 Airflow 아키텍처](./data-on-eks/airflow/01-architecture.md) | [퀴즈](./quizzes/data-on-eks/airflow/01-architecture-quiz.md)
+   - [Part 2: Helm 배포와 Executor 선택](./data-on-eks/airflow/02-helm-deployment.md) | [퀴즈](./quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
+   - [Part 3: DAG 패턴과 KubernetesPodOperator](./data-on-eks/airflow/03-dag-patterns.md) | [퀴즈](./quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md)
+   - [Part 4: Amazon MWAA 통합](./data-on-eks/airflow/04-mwaa-integration.md) | [퀴즈](./quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
+   - [Part 5: 운영과 보안](./data-on-eks/airflow/05-operations.md) | [퀴즈](./quizzes/data-on-eks/airflow/05-operations-quiz.md)
+5. **Flink on EKS 딥다이브**
+   - [Flink on EKS 소개](./data-on-eks/flink/README.md)
+   - [Part 1: Kubernetes에서의 Flink 아키텍처](./data-on-eks/flink/01-architecture.md) | [퀴즈](./quizzes/data-on-eks/flink/01-architecture-quiz.md)
+   - [Part 2: Flink Kubernetes Operator](./data-on-eks/flink/02-flink-kubernetes-operator.md) | [퀴즈](./quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
+   - [Part 3: 상태 관리, 체크포인팅, 스트리밍 패턴](./data-on-eks/flink/03-state-checkpointing-streaming.md) | [퀴즈](./quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
+   - [Part 4: 운영, 고가용성, 그리고 매니지드 Flink](./data-on-eks/flink/04-operations-ha.md) | [퀴즈](./quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
 
 ### Networking
 1. [Networking 개요](./networking/README.md) | [퀴즈](./quizzes/networking/00-networking-overview-quiz.md)
