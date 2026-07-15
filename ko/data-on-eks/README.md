@@ -1,6 +1,6 @@
 # Data on EKS
 
-> **마지막 업데이트**: 2026년 7월 9일
+> **마지막 업데이트**: 2026년 7월 15일
 
 ## 개요
 
@@ -15,9 +15,9 @@
 | 카테고리 | 해결하는 문제 | 대표 도구 | Data on EKS 콘텐츠 |
 |----------|---------------|-----------|---------------------|
 | **스트리밍 (Streaming)** | 이벤트를 실시간으로 발행·구독하고, 시스템 간 비동기 통신을 안정적으로 연결 | Apache Kafka | ✅ [Kafka on EKS](kafka/README.md) |
-| **배치/분석 (Batch & Analytics)** | 대용량 데이터를 분산 처리하여 ETL, 집계, 머신러닝 파이프라인을 수행 | Apache Spark | 🔜 로드맵 |
-| **워크플로우 오케스트레이션 (Orchestration)** | 여러 데이터 작업 간의 의존성과 스케줄을 정의하고 실행을 관리 | Apache Airflow | 🔜 로드맵 |
-| **스트림 처리 (Stream Processing)** | 스트리밍 데이터에 대해 실시간으로 집계·변환·상태 기반 연산을 수행 | Apache Flink | 🔜 로드맵 |
+| **배치/분석 (Batch & Analytics)** | 대용량 데이터를 분산 처리하여 ETL, 집계, 머신러닝 파이프라인을 수행 | Apache Spark | ✅ [Spark on EKS](spark/README.md) |
+| **워크플로우 오케스트레이션 (Orchestration)** | 여러 데이터 작업 간의 의존성과 스케줄을 정의하고 실행을 관리 | Apache Airflow | ✅ [Airflow on EKS](airflow/README.md) |
+| **스트림 처리 (Stream Processing)** | 스트리밍 데이터에 대해 실시간으로 집계·변환·상태 기반 연산을 수행 | Apache Flink | ✅ [Flink on EKS](flink/README.md) |
 
 ```mermaid
 graph LR
@@ -53,15 +53,13 @@ graph LR
 ## 현재 다루는 주제
 
 - [Kafka on EKS](kafka/README.md) — Strimzi Operator를 사용해 Apache Kafka를 EKS에 배포하고 운영하는 방법을 8개 파트로 심층 다룹니다.
-
-## 로드맵
-
-다음 주제는 향후 추가될 예정입니다.
-
-- **Apache Spark** — EKS 위에서의 분산 배치 처리 및 분석 파이프라인
-- **Apache Airflow** — EKS 위에서의 워크플로우 오케스트레이션
-- **Apache Flink** — EKS 위에서의 실시간 스트림 처리
+- [Spark on EKS](spark/README.md) — Spark-on-Kubernetes 기초, Spark Operator 생태계, Amazon EMR on EKS, 성능/비용 튜닝을 5개 파트로 다룹니다.
+- [Airflow on EKS](airflow/README.md) — Airflow 3의 아키텍처, Helm 기반 배포와 Executor 선택, KubernetesPodOperator를 활용한 DAG 패턴, Amazon MWAA 연동을 5개 파트로 다룹니다.
+- [Flink on EKS](flink/README.md) — Kubernetes 위에서의 Flink 아키텍처, Flink Kubernetes Operator, 상태 관리/체크포인팅, 운영 및 고가용성을 4개 파트로 다룹니다.
 
 ## 다음 단계
 
 1. [Kafka on EKS](kafka/README.md) — Strimzi 기반 Kafka 딥다이브
+2. [Spark on EKS](spark/README.md) — Spark Operator와 EMR on EKS 딥다이브
+3. [Airflow on EKS](airflow/README.md) — Helm 기반 Airflow 배포와 DAG 패턴 딥다이브
+4. [Flink on EKS](flink/README.md) — Flink Kubernetes Operator와 스트리밍 패턴 딥다이브
