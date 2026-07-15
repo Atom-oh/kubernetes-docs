@@ -1,7 +1,7 @@
 # Kubernetes 버전별 신규 기능과 로드맵
 
 > **지원 버전**: Kubernetes 1.29 - 1.36
-> **마지막 업데이트**: 2026년 7월 3일
+> **마지막 업데이트**: 2026년 7월 15일
 
 Kubernetes는 연 3회 릴리스 주기를 통해 빠르게 진화하고 있으며, 각 버전마다 중요한 기능이 추가되거나 졸업(GA)합니다. 기업 환경에서 EKS 클러스터를 운영하는 팀에게 버전별 변경 사항을 체계적으로 파악하는 것은 안정적인 업그레이드 계획 수립과 새로운 기능의 적시 채택을 위해 필수적입니다.
 
@@ -1796,6 +1796,22 @@ spec:
 ```
 
 > **안전 참고**: MAP의 `jsonPatch` 표현식은 **atomic list**(예: `resizePolicy`)에 대해 전체 교체를 수행합니다. 기존 값이 있을 경우 덮어씌워지므로, `matchConditions`으로 대상을 정확히 한정하는 것이 중요합니다. Strategic Merge Patch는 atomic list에서는 merge가 아닌 replace 동작을 하므로, JSONPatch를 사용하여 명시적으로 경로를 지정하는 방식이 권장됩니다.
+
+**실측 결과 (EKS 1.36.1)** — `admissionregistration.k8s.io/v1`(GA)로 서빙되는 클러스터에서 위 매니페스트를 그대로 적용해 검증한 결과입니다:
+
+| 케이스 | annotation | 주입된 resizePolicy | 판정 |
+|--------|-----------|-------------------|------|
+| with-annotation | 有 | `[{cpu:NotRequired},{memory:RestartContainer}]` | ✅ 주입됨 (webhook 없이) |
+| without-annotation | 無 | `[]` (없음) | ✅ 주입 안 됨 (matchCondition 동작) |
+
+```bash
+kubectl -n map-demo get pod with-annotation -o jsonpath='{.spec.containers[0].resizePolicy}'
+# → [{"resourceName":"cpu","restartPolicy":"NotRequired"},{"resourceName":"memory","restartPolicy":"RestartContainer"}]
+```
+
+테스트 Pod 매니페스트엔 `resizePolicy`가 없는데도 생성된 Pod에는 나타납니다 — admission 시점에 MAP가 주입했다는 증거입니다(webhook 서버 없음).
+
+> **주의**: `matchResources.namespaceSelector`로 대상 네임스페이스를 한정하지 않으면 클러스터 전역 Pod 생성에 개입합니다. `failurePolicy: Fail`은 범위를 좁힌 뒤에만 안전합니다. 또한 정책 생성/수정 직후에는 재컴파일·전파에 수초가 걸리므로, 정책을 먼저 적용하고 잠시 후 워크로드를 생성하는 것이 안전합니다.
 
 ##### In-Place Pod Vertical Scaling 확장
 
