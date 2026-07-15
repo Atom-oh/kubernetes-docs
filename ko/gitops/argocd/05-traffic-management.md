@@ -1,7 +1,7 @@
 # ArgoCD 트래픽 관리
 
 > **지원 버전**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 7월 15일
 
 ## 목차
 
@@ -716,6 +716,17 @@ kubectl argo rollouts get rollout my-app-canary -n production
 
 ## 인그레스 컨트롤러 통합
 
+Argo Rollouts는 10개 이상의 트래픽 provider를 지원합니다. Kong처럼 네이티브 통합이 없는 provider는 **Gateway API 플러그인**을 경유합니다.
+
+| Provider | 연동 방식 | 비고 |
+|---|---|---|
+| NGINX Ingress | 네이티브 (`trafficRouting.nginx`) | `canary-weight` 애노테이션 직접 조작 |
+| AWS ALB | 네이티브 (`trafficRouting.alb`) | Ingress backend port가 `use-annotation`이어야 함 — [실측 검증 결과](#실측-검증-결과-eks) 참고 |
+| Istio | 네이티브 (`trafficRouting.istio`) | VirtualService/DestinationRule 직접 조작 |
+| SMI | 네이티브 (`trafficRouting.smi`) | SMI 프로젝트 자체가 유지보수 종료 상태 — 신규 도입 비권장 |
+| Ambassador, Apache APISIX, Traefik, Google Cloud | 네이티브 | 이 문서에서는 다루지 않음, [공식 문서](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/) 참고 |
+| **Kong**, 기타 Gateway API 호환 구현체(kgateway 등) | **Gateway API 플러그인** (`trafficRouting.plugins`) | 네이티브 `trafficRouting.kong` 필드는 존재하지 않음 |
+
 ### NGINX Ingress
 
 ```yaml
@@ -862,6 +873,8 @@ spec:
                   name: use-annotation
 ```
 
+> ⚠️ **실측 확인**: Ingress backend의 `port`를 `name: use-annotation` 대신 실수로 `number: 80` 같은 실제 포트로 지정하면, `alb.ingress.kubernetes.io/actions.*` 애노테이션이 **에러나 경고 없이 조용히 무시**됩니다. AWS Load Balancer Controller가 가중치 forward 규칙 대신 단일 타겟그룹 규칙을 그대로 유지하므로, `kubectl get rollout`에서는 `SetWeight`가 정상적으로 올라가는 것처럼 보여도 실제 ALB 트래픽은 전혀 전환되지 않습니다. 반드시 `aws elbv2 describe-rules`로 실제 리스너 규칙의 `ForwardConfig.TargetGroups` weight를 대조해 확인하세요.
+
 ### Istio VirtualService
 
 ```yaml
@@ -949,6 +962,138 @@ spec:
       labels:
         app: my-app
 ```
+
+### Gateway API 플러그인 (범용)
+
+Kong처럼 Argo Rollouts에 네이티브로 통합되지 않은 Gateway API 호환 구현체(Kong, Traefik, kgateway 등)는 argoproj-labs가 유지하는 [Gateway API 플러그인](https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi)을 통해 지원됩니다. 이 플러그인은 표준 `HTTPRoute`의 `backendRefs[].weight`를 직접 조작하므로, Gateway API를 구현하는 컨트롤러라면 어디에나 동일하게 적용됩니다. TLSRoute와 헤더 기반 라우팅도 지원하며, 2026년 기준 최신 릴리스는 v0.16.0입니다.
+
+플러그인 설치 — 컨트롤러가 기동 시 바이너리를 다운로드하도록 `argo-rollouts-config` ConfigMap에 등록합니다:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argo-rollouts-config
+  namespace: argo-rollouts
+data:
+  trafficRouterPlugins: |-
+    - name: "argoproj-labs/gatewayAPI"
+      location: "https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/download/v0.16.0/gatewayapi-plugin-linux-amd64"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argo-rollouts-gateway-api-plugin
+rules:
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["httproutes", "grpcroutes", "tcproutes", "tlsroutes"]
+    verbs: ["get", "list", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argo-rollouts-gateway-api-plugin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-rollouts-gateway-api-plugin
+subjects:
+  - kind: ServiceAccount
+    name: argo-rollouts
+    namespace: argo-rollouts
+```
+
+Rollout에서는 `trafficRouting.plugins`로 HTTPRoute를 지정합니다:
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: my-app
+  namespace: production
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: app
+          image: my-app:v2.0.0
+          ports:
+            - containerPort: 8080
+  strategy:
+    canary:
+      stableService: my-app-stable
+      canaryService: my-app-canary
+      trafficRouting:
+        plugins:
+          argoproj-labs/gatewayAPI:
+            httpRoute: my-app-route
+            namespace: production
+      steps:
+        - setWeight: 20
+        - pause: {duration: 1m}
+        - setWeight: 50
+        - pause: {duration: 1m}
+        - setWeight: 100
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: my-app-route
+  namespace: production
+spec:
+  parentRefs:
+    - name: my-gateway
+  rules:
+    - backendRefs:
+        - name: my-app-stable
+          kind: Service
+          port: 80
+          weight: 100
+        - name: my-app-canary
+          kind: Service
+          port: 80
+          weight: 0
+```
+
+플러그인이 Rollout의 각 `setWeight` 단계마다 이 두 `backendRefs[].weight` 값을 직접 갱신합니다.
+
+### Kong (Gateway API 플러그인 경유)
+
+Kong Ingress Controller(KIC)는 Argo Rollouts에 네이티브로 통합되어 있지 않습니다 — 위 Gateway API 플러그인을 그대로 사용합니다. KIC를 Gateway API 모드로 설치한 뒤, GatewayClass를 **unmanaged gateway**로 지정해야 합니다:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: kong
+  annotations:
+    konghq.com/gatewayclass-unmanaged: "true"   # 필수 — 없으면 Gateway가 "Waiting for controller"에서 멈춤
+spec:
+  controllerName: konghq.com/kic-gateway-controller   # KIC의 IngressClass controller 문자열과 다르므로 주의
+```
+
+이후 [Gateway API 플러그인](#gateway-api-플러그인-범용) 설정을 그대로 적용하면 됩니다 (Rollout/HTTPRoute YAML 동일).
+
+### 실측 검증 결과 (EKS)
+
+EKS 1.36 클러스터(Argo Rollouts v1.9.0, AWS Load Balancer Controller v3.2.1, Istio 1.30, Kong Ingress Controller 3.5 + Gateway API 플러그인 v0.16.0)에서 격리된 테스트 네임스페이스로 4개 provider를 검증했습니다. 검증 후 모든 테스트 리소스(네임스페이스, Helm 릴리스, ALB, GatewayClass)는 정리했습니다.
+
+| Provider | 검증 항목 | 결과 |
+|---|---|---|
+| NGINX | `canary-weight` 애노테이션 20→50→100% 전환 | ✅ 정상 — 실시간 curl 트래픽 비율이 애노테이션 값과 일치 |
+| Istio | VirtualService weight 20→50→100% 전환, `abort` 시 즉시 0% 복귀 | ✅ 정상 — curl 비율이 weight와 일치, abort 후 트래픽이 즉시 이전 stable로 전환 |
+| AWS ALB | 리스너 규칙 forward weight 전환, `aws elbv2 describe-rules`로 실제 AWS 상태 대조 | ✅ 정상 (단, 위 [`use-annotation` 주의](#aws-alb) 필요) |
+| Kong (Gateway API 플러그인) | `HTTPRoute.backendRefs[].weight` 전환, Kong 데이터플레인 실제 트래픽 확인 | ✅ 정상 — 단, `gatewayclass-unmanaged` 애노테이션과 정확한 `controllerName` 설정이 까다로움 (위 참고) |
 
 ## EKS에서의 프로그레시브 딜리버리
 

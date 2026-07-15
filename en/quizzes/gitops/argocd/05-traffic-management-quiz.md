@@ -129,3 +129,35 @@ When an AnalysisRun fails (metrics exceed failure thresholds), Argo Rollouts aut
 Adding a `pause` step without a duration creates an indefinite pause that requires manual promotion (via CLI or UI) to continue. This is useful for manual verification gates in the deployment process.
 
 </details>
+
+9. How do you split canary traffic through the Kong Ingress Controller?
+   - A) Use the `trafficRouting.kong` field directly
+   - B) Manipulate an HTTPRoute via the Gateway API plugin (`trafficRouting.plugins`)
+   - C) Kong cannot be integrated with Argo Rollouts
+   - D) Route around it using an Istio VirtualService
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) Manipulate an HTTPRoute via the Gateway API plugin (`trafficRouting.plugins`)**
+
+**Explanation:**
+Kong has no native Argo Rollouts integration — there is no `trafficRouting.kong` field. It is supported only through argoproj-labs' Gateway API plugin, which manipulates a standard HTTPRoute resource. Other Gateway API-compliant controllers, such as Traefik and kgateway, use the same plugin.
+
+</details>
+
+10. What resource does the Argo Rollouts Gateway API plugin actually update at each canary weight step?
+    - A) The Service's `selector` labels
+    - B) The Ingress's `canary-weight` annotation
+    - C) The HTTPRoute's `backendRefs[].weight`
+    - D) The DestinationRule's subset labels
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C) The HTTPRoute's `backendRefs[].weight`**
+
+**Explanation:**
+The Gateway API plugin directly updates the standard Gateway API HTTPRoute resource's `backendRefs[].weight` values at each setWeight step. This is a universal mechanism that applies identically to any controller implementing Gateway API — Kong, Traefik, kgateway, and others.
+
+</details>

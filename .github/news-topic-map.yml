@@ -62,6 +62,8 @@
 
 - keywords: [argo cd, argocd]
   docs: [gitops/argocd/README.md]
+- keywords: [argo rollouts, progressive delivery, gateway api plugin, kong ingress]
+  docs: [gitops/argocd/05-traffic-management.md]
 - keywords: [flux, fluxcd]
   docs: [gitops/02-fluxcd.md]
 - keywords: [flagger]

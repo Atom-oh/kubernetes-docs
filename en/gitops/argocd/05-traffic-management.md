@@ -1,7 +1,7 @@
 # ArgoCD Traffic Management
 
 > **Supported Versions**: Argo Rollouts v1.6+, ArgoCD v2.9+
-> **Last Updated**: February 22, 2026
+> **Last Updated**: July 15, 2026
 
 ## Table of Contents
 - [Argo Rollouts Overview](#argo-rollouts-overview)
@@ -137,11 +137,6 @@ dashboard:
     ingressClassName: nginx
     hosts:
       - rollouts.example.com
-
-# For AWS ALB integration
-trafficRouterPlugins:
-  - name: alb
-    enabled: true
 ```
 
 ## Blue-Green Deployments
@@ -633,6 +628,17 @@ spec:
 
 ## Ingress Integration
 
+Argo Rollouts supports more than 10 traffic providers. Providers with no native integration, such as Kong, are supported through the **Gateway API plugin** instead.
+
+| Provider | Integration | Notes |
+|---|---|---|
+| NGINX Ingress | Native (`trafficRouting.nginx`) | Manipulates the `canary-weight` annotation directly |
+| AWS ALB | Native (`trafficRouting.alb`) | The Ingress backend port must be `use-annotation` — see [verification results](#verification-results-on-eks) |
+| Istio | Native (`trafficRouting.istio`) | Manipulates the VirtualService/DestinationRule directly |
+| SMI | Native (`trafficRouting.smi`) | The SMI project itself is effectively unmaintained — not recommended for new adoption |
+| Ambassador, Apache APISIX, Traefik, Google Cloud | Native | Not covered in this document — see the [official docs](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/) |
+| **Kong** and other Gateway API-compliant implementations (kgateway, etc.) | **Gateway API plugin** (`trafficRouting.plugins`) | There is no native `trafficRouting.kong` field |
+
 ### NGINX Ingress
 
 ```yaml
@@ -747,6 +753,8 @@ spec:
                   name: use-annotation
 ```
 
+> ⚠️ **Verified in testing**: If the Ingress backend port is accidentally set to a real port number (e.g. `number: 80`) instead of `name: use-annotation`, the AWS Load Balancer Controller **silently ignores** the `alb.ingress.kubernetes.io/actions.*` annotation — no error, no warning. It keeps a plain single-target-group rule instead of the weighted forward rule, so `kubectl get rollout` shows `SetWeight` climbing normally while the real ALB traffic never actually shifts. Always cross-check the live listener rule's `ForwardConfig.TargetGroups` weights with `aws elbv2 describe-rules`.
+
 ### Istio Traffic Splitting
 
 ```yaml
@@ -812,6 +820,138 @@ spec:
       labels:
         app: myapp
 ```
+
+### Gateway API Plugin (Universal)
+
+Gateway API-compliant implementations with no native Argo Rollouts integration — Kong, Traefik, kgateway, and others — are supported through the [Gateway API plugin](https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi) maintained by argoproj-labs. The plugin manipulates the standard `HTTPRoute`'s `backendRefs[].weight` field directly, so it applies identically to any controller that implements Gateway API. It also supports TLSRoute and header-based routing; the latest release as of 2026 is v0.16.0.
+
+Install the plugin by registering it in the `argo-rollouts-config` ConfigMap so the controller downloads the binary on startup:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argo-rollouts-config
+  namespace: argo-rollouts
+data:
+  trafficRouterPlugins: |-
+    - name: "argoproj-labs/gatewayAPI"
+      location: "https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/download/v0.16.0/gatewayapi-plugin-linux-amd64"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argo-rollouts-gateway-api-plugin
+rules:
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["httproutes", "grpcroutes", "tcproutes", "tlsroutes"]
+    verbs: ["get", "list", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argo-rollouts-gateway-api-plugin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-rollouts-gateway-api-plugin
+subjects:
+  - kind: ServiceAccount
+    name: argo-rollouts
+    namespace: argo-rollouts
+```
+
+The Rollout references the HTTPRoute through `trafficRouting.plugins`:
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: myapp
+  namespace: myapp
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: app
+          image: myapp:v2.0.0
+          ports:
+            - containerPort: 8080
+  strategy:
+    canary:
+      stableService: myapp-stable
+      canaryService: myapp-canary
+      trafficRouting:
+        plugins:
+          argoproj-labs/gatewayAPI:
+            httpRoute: myapp-route
+            namespace: myapp
+      steps:
+        - setWeight: 20
+        - pause: {duration: 1m}
+        - setWeight: 50
+        - pause: {duration: 1m}
+        - setWeight: 100
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: myapp-route
+  namespace: myapp
+spec:
+  parentRefs:
+    - name: myapp-gateway
+  rules:
+    - backendRefs:
+        - name: myapp-stable
+          kind: Service
+          port: 80
+          weight: 100
+        - name: myapp-canary
+          kind: Service
+          port: 80
+          weight: 0
+```
+
+At each `setWeight` step, the plugin updates these two `backendRefs[].weight` values directly.
+
+### Kong (via the Gateway API Plugin)
+
+The Kong Ingress Controller (KIC) has no native Argo Rollouts integration — it uses the Gateway API plugin above. After installing KIC in Gateway API mode, the GatewayClass must be marked as an **unmanaged gateway**:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: kong
+  annotations:
+    konghq.com/gatewayclass-unmanaged: "true"   # required — without it the Gateway stays stuck on "Waiting for controller"
+spec:
+  controllerName: konghq.com/kic-gateway-controller   # note: different from KIC's IngressClass controller string
+```
+
+From here, apply the same [Gateway API plugin](#gateway-api-plugin-universal) configuration as above — the Rollout and HTTPRoute YAML are identical.
+
+### Verification Results on EKS
+
+We validated all four providers in isolated test namespaces on an EKS 1.36 cluster (Argo Rollouts v1.9.0, AWS Load Balancer Controller v3.2.1, Istio 1.30, Kong Ingress Controller 3.5 + Gateway API plugin v0.16.0). All test resources (namespaces, Helm releases, the ALB, the GatewayClass) were torn down after verification.
+
+| Provider | What was checked | Result |
+|---|---|---|
+| NGINX | `canary-weight` annotation transitioning 20→50→100% | ✅ Confirmed — live curl traffic ratio matched the annotation value |
+| Istio | VirtualService weight transitioning 20→50→100%, and immediate revert to 0% on `abort` | ✅ Confirmed — curl ratio matched the weight, and traffic snapped back to the previous stable version right after abort |
+| AWS ALB | Listener rule forward weight transition, cross-checked against the live AWS state with `aws elbv2 describe-rules` | ✅ Confirmed (but requires the [`use-annotation` caveat](#aws-alb-ingress) above) |
+| Kong (Gateway API plugin) | `HTTPRoute.backendRefs[].weight` transition, and real traffic through Kong's data plane | ✅ Confirmed — though the `gatewayclass-unmanaged` annotation and exact `controllerName` are easy to get wrong (see above) |
 
 ## Rollback Strategies
 
