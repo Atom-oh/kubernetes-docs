@@ -41,6 +41,7 @@ Before starting this operations guide, ensure familiarity with:
 | 09 | [Observability Stack Operations](./09-observability-stack.md) | Loki, Tempo, Prometheus/AMP installation and operations |
 | 10 | [Resource Optimization](./10-resource-optimization.md) | Requests/Limits, JVM tuning, framework-specific guide |
 | 11 | [EKS Upgrades](./11-upgrade-operations.md) | Auto Mode zero-downtime upgrade, blue/green strategy |
+| 15 | [Zonal Cluster Operations](./15-zonal-operations-guide.md) | TargetGroupBinding weight shifting, native rollback, Kafka/Redis/Aurora AZ-affine reads |
 
 ---
 

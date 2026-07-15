@@ -39,6 +39,7 @@
 | 09 | [관측성 스택 운영](./09-observability-stack.md) | Loki, Tempo, Prometheus/AMP 설치 및 운영 |
 | 10 | [리소스 최적화](./10-resource-optimization.md) | Requests/Limits, JVM 튜닝, 프레임워크별 가이드 |
 | 11 | [EKS 업그레이드](./11-upgrade-operations.md) | Auto Mode 무중단 업그레이드, 블루/그린 전략 |
+| 15 | [Zonal 클러스터 운영 전략](./15-zonal-operations-guide.md) | TargetGroupBinding weight 전환, 네이티브 롤백, Kafka/Redis/Aurora AZ 친화 read |
 
 ---
 

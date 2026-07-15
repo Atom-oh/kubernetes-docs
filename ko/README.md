@@ -235,6 +235,7 @@
 12. [이벤트 용량 계획 플레이북](./ops/12-event-capacity-planning.md) | [퀴즈](./quizzes/ops/12-event-capacity-planning-quiz.md)
 13. [FinOps 비용 가시성 플랫폼](./ops/13-finops-cost-platform.md) | [퀴즈](./quizzes/ops/13-finops-cost-platform-quiz.md)
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [퀴즈](./quizzes/ops/14-tekton-pipelines-quiz.md)
+15. [Zonal 클러스터 운영 전략](./ops/15-zonal-operations-guide.md) | [퀴즈](./quizzes/ops/15-zonal-operations-guide-quiz.md)
 
 ### Observability
 1. [Observability 개요](./observability/README.md)

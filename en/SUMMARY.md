@@ -284,6 +284,7 @@
   * [Event Capacity Planning](ops/12-event-capacity-planning.md)
   * [FinOps Cost Visibility Platform](ops/13-finops-cost-platform.md)
   * [Tekton Pipelines](ops/14-tekton-pipelines.md)
+  * [Zonal Cluster Operations](ops/15-zonal-operations-guide.md)
 
 ## Observability
 
@@ -560,3 +561,4 @@
   * [Event Capacity Planning Quiz](quizzes/ops/12-event-capacity-planning-quiz.md)
   * [FinOps Cost Visibility Platform Quiz](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Tekton Pipelines Quiz](quizzes/ops/14-tekton-pipelines-quiz.md)
+  * [Zonal Cluster Operations Quiz](quizzes/ops/15-zonal-operations-guide-quiz.md)
