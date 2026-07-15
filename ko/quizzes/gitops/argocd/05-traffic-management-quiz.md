@@ -129,3 +129,35 @@ AnalysisRun이 실패하면(메트릭이 실패 임계값 초과) Argo Rollouts�
 기간 없이 `pause` 단계를 추가하면 계속하려면 수동 프로모션(CLI 또는 UI를 통해)이 필요한 무기한 일시 중지가 생성됩니다. 이는 배포 프로세스의 수동 검증 게이트에 유용합니다.
 
 </details>
+
+9. Kong Ingress Controller로 카나리 트래픽을 분할하려면 어떻게 해야 하나요?
+   - A) `trafficRouting.kong` 필드를 직접 사용한다
+   - B) Gateway API 플러그인(`trafficRouting.plugins`)을 통해 HTTPRoute를 조작한다
+   - C) Kong은 Argo Rollouts와 연동할 수 없다
+   - D) Istio VirtualService로 우회한다
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) Gateway API 플러그인(`trafficRouting.plugins`)을 통해 HTTPRoute를 조작한다**
+
+**설명:**
+Kong은 Argo Rollouts에 네이티브로 통합되어 있지 않습니다. `trafficRouting.kong`이라는 필드는 존재하지 않으며, argoproj-labs의 Gateway API 플러그인을 통해 표준 HTTPRoute 리소스를 조작하는 방식으로만 지원됩니다. Kong 외에도 Traefik, kgateway 등 Gateway API를 구현하는 다른 컨트롤러 역시 동일한 플러그인을 사용합니다.
+
+</details>
+
+10. Argo Rollouts Gateway API 플러그인이 카나리 weight 전환마다 실제로 갱신하는 대상은 무엇인가요?
+    - A) Service의 `selector` 라벨
+    - B) Ingress의 `canary-weight` 애노테이션
+    - C) HTTPRoute의 `backendRefs[].weight`
+    - D) DestinationRule의 subset 라벨
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) HTTPRoute의 `backendRefs[].weight`**
+
+**설명:**
+Gateway API 플러그인은 표준 Gateway API 리소스인 HTTPRoute의 `backendRefs[].weight` 값을 setWeight 단계마다 직접 갱신합니다. 이 방식은 Gateway API를 구현하는 어떤 컨트롤러(Kong, Traefik, kgateway 등)에도 동일하게 적용되는 범용 메커니즘입니다.
+
+</details>
