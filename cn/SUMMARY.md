@@ -528,6 +528,7 @@
     * [OpenSearch](observability/logging/02-opensearch.md)
     * [CloudWatch 日志](observability/logging/03-cloudwatch-logs.md)
     * [ClickHouse](observability/logging/04-clickhouse.md)
+    * [日志收集器](observability/logging/05-collectors.md)
   * [追踪](observability/tracing/README.md)
     * [Grafana Tempo](observability/tracing/01-tempo.md)
     * [AWS X-Ray](observability/tracing/02-xray.md)
