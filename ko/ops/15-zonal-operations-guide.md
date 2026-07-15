@@ -40,6 +40,8 @@ AWS도 이 패턴을 [Cell-Based Architecture for Amazon EKS 공식 가이드](h
 
 ## 트래픽 계층: Target Group + TargetGroupBinding + Weight 전환
 
+![Zonal Cell 아키텍처와 가중치 트래픽 전환](../../assets/ops-zonal-traffic-architecture.png)
+
 zonal 클러스터 여러 개를 운영할 때 트래픽을 옮기는 표준 패턴은 다음과 같습니다.
 
 1. NLB/ALB와 Target Group을 클러스터 **밖에서** Terraform 등 IaC로 생성합니다 (클러스터가 사라져도 로드밸런서는 유지됨).
@@ -102,6 +104,8 @@ TargetGroupBinding의 기본/고급/멀티포트 설정은 [`networking/03-aws-l
 트래픽 전환과 업그레이드까지는 zonal 아키텍처를 갖춘 팀이라면 대체로 준비되어 있습니다. 반면 **DB/캐시/메시징의 read 경로**는 놓치기 쉽습니다 — 애플리케이션 파드는 자기가 속한 AZ 안에 있어도, DB reader나 캐시 replica, Kafka broker는 라운드로빈으로 다른 AZ에 배정되어 조용히 인터-AZ 비용과 지연을 만듭니다.
 
 공통 원리는 하나입니다: **write는 leader/primary로 가야 하니 어차피 cross-AZ가 발생할 수 있지만, read는 같은 AZ의 replica로만 보내면 됩니다.** 트래픽의 대부분이 read인 워크로드(캐시, 조회성 쿼리, 컨슈머)에서는 이것만으로도 인터-AZ 비용의 상당 부분이 사라집니다.
+
+![데이터 계층 AZ 친화 Read 경로](../../assets/ops-zonal-data-az-affinity.png)
 
 이걸 하려면 먼저 파드가 "나는 어느 AZ에 있는가"를 알아야 합니다. Kubernetes Downward API는 Pod에 노드의 zone 라벨(`topology.kubernetes.io/zone`)을 직접 주입해주지 않으므로, 다음 중 하나가 필요합니다.
 

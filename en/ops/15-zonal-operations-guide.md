@@ -40,6 +40,8 @@ Zonal/blue-green architecture itself is already covered in [`ops/02-infrastructu
 
 ## Traffic Layer: Target Group + TargetGroupBinding + Weight Shifting
 
+![Zonal cell architecture with weighted traffic shifting](../../assets/ops-zonal-traffic-architecture.png)
+
 The standard pattern for moving traffic across multiple zonal clusters:
 
 1. Create the NLB/ALB and Target Groups **outside** the cluster with IaC such as Terraform (so the load balancer survives even if a cluster is replaced).
@@ -102,6 +104,8 @@ The execution runbook (shift NLB weight -> in-place upgrade -> validate -> resto
 Traffic shifting and upgrades are usually already in place for a team with a zonal architecture. The **read path of DB/cache/messaging** is the part that quietly gets missed — an application pod may live entirely inside one AZ, but the DB reader, cache replica, or Kafka broker it talks to gets assigned round-robin across AZs, generating inter-AZ cost and latency nobody notices until the bill arrives.
 
 The underlying principle is the same everywhere: **writes have to go to the leader/primary, so they may cross AZs regardless — but reads can be routed to a same-AZ replica.** For workloads that are mostly reads (caches, lookup queries, consumers), that alone removes a large share of the inter-AZ cost.
+
+![Data-layer AZ-affinity read path](../../assets/ops-zonal-data-az-affinity.png)
 
 Doing this requires the pod to know which AZ it's in. The Kubernetes Downward API does not inject the node's zone label (`topology.kubernetes.io/zone`) into a pod directly, so one of the following is needed:
 
