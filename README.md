@@ -5,8 +5,8 @@ head:
     - |
       (function () {
         var lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
-        var target = '/kubernetes-docs/en/';
-        if (lang.indexOf('ko') === 0) target = '/kubernetes-docs/ko/';
+        var target = '/kubernetes-docs/ko/';
+        if (lang.indexOf('en') === 0) target = '/kubernetes-docs/en/';
         else if (lang.indexOf('zh') === 0) target = '/kubernetes-docs/cn/';
         else if (lang.indexOf('ja') === 0) target = '/kubernetes-docs/jp/';
         else if (lang.indexOf('es') === 0) target = '/kubernetes-docs/es/';
