@@ -52,8 +52,12 @@ const config = defineConfig({
     ['script', {}, `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)};gtag('js',new Date());gtag('config','${GA_ID}');`],
     ['script', { async: '', src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`, crossorigin: 'anonymous' }]
   ],
+  // The locale menu always lists all five languages so a per-locale batch build
+  // still renders the full language switcher; VP_LOCALES only limits which
+  // content trees are built (links to the other locales resolve after the
+  // per-locale dists are merged).
   locales: Object.fromEntries(
-    ACTIVE_LOCALES.map(l => [l, localeConfig(LOCALE_DEFS[l].label, LOCALE_DEFS[l].lang, l)])
+    ALL_LOCALES.map(l => [l, localeConfig(LOCALE_DEFS[l].label, LOCALE_DEFS[l].lang, l)])
   ),
   themeConfig: {
     ...(DISABLE_SEARCH ? {} : { search: { provider: 'local' as const } }),
