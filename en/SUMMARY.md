@@ -279,6 +279,7 @@
     * [Security](gitops/argocd/07-security.md)
     * [Notifications](gitops/argocd/08-notifications.md)
     * [Best Practices](gitops/argocd/09-best-practices.md)
+    * [Rollouts Experiments Deep Dive](gitops/argocd/10-rollouts-experiment.md)
   * [FluxCD](gitops/02-fluxcd.md)
   * [GitOps Tools Comparison](gitops/03-gitops-comparison.md)
   * [Flagger Progressive Delivery](gitops/04-flagger.md)

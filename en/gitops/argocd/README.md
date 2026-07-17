@@ -196,6 +196,7 @@ Synchronization brings the cluster state to match the desired state:
 | [Security](07-security.md) | SSO integration, secret management, TLS, audit logging |
 | [Notifications](08-notifications.md) | Notification services, triggers, templates, subscriptions |
 | [Best Practices](09-best-practices.md) | Repository patterns, performance tuning, troubleshooting, EKS tips |
+| [Rollouts Experiments Deep Dive](10-rollouts-experiment.md) | Experiment CRD, ephemeral ReplicaSet validation, AnalysisRun verdicts |
 
 ## Quick Start
 

@@ -321,6 +321,7 @@ gantt
 | [07. 보안](07-security.md) | SSO, 시크릿 관리, TLS | 중급 |
 | [08. 알림](08-notifications.md) | Slack, Teams, Webhook 연동 | 중급 |
 | [09. 모범 사례](09-best-practices.md) | 프로덕션 구성, 성능 최적화, 문제 해결 | 고급 |
+| [10. Rollouts Experiment 심층 분석](10-rollouts-experiment.md) | Experiment CRD, 임시 ReplicaSet 검증, AnalysisRun 판정 | 고급 |
 
 ### 학습 경로
 
