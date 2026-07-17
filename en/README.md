@@ -235,6 +235,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [Security](./gitops/argocd/07-security.md) | [Quiz](./quizzes/gitops/argocd/07-security-quiz.md)
    - [Notifications](./gitops/argocd/08-notifications.md) | [Quiz](./quizzes/gitops/argocd/08-notifications-quiz.md)
    - [Best Practices](./gitops/argocd/09-best-practices.md) | [Quiz](./quizzes/gitops/argocd/09-best-practices-quiz.md)
+   - [Rollouts Experiments Deep Dive](./gitops/argocd/10-rollouts-experiment.md) | [Quiz](./quizzes/gitops/argocd/10-rollouts-experiment-quiz.md)
 3. [FluxCD](./gitops/02-fluxcd.md) | [Quiz](./quizzes/gitops/02-fluxcd-quiz.md)
 4. [GitOps Tools Comparison](./gitops/03-gitops-comparison.md) | [Quiz](./quizzes/gitops/03-gitops-comparison-quiz.md)
 5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [Quiz](./quizzes/gitops/04-flagger-quiz.md)

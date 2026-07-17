@@ -279,6 +279,7 @@
     * [보안](gitops/argocd/07-security.md)
     * [알림](gitops/argocd/08-notifications.md)
     * [모범 사례](gitops/argocd/09-best-practices.md)
+    * [Rollouts Experiment 심층 분석](gitops/argocd/10-rollouts-experiment.md)
   * [FluxCD](gitops/02-fluxcd.md)
   * [GitOps 도구 비교](gitops/03-gitops-comparison.md)
   * [Flagger Progressive Delivery](gitops/04-flagger.md)

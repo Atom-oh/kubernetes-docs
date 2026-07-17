@@ -1005,6 +1005,8 @@ spec:
 
 Run A/B tests with multiple versions simultaneously.
 
+> For the detailed behavior — resource creation chain, naming rules, traffic isolation, and AnalysisRun verdicts — see the [Rollouts Experiments Deep Dive](10-rollouts-experiment.md).
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Experiment
