@@ -1,7 +1,7 @@
 # Zonal Cluster Operations: Traffic Shifting, Upgrade Rollback, and Data-Layer AZ Affinity
 
 > **Supported Versions**: Amazon EKS 1.33+, AWS Load Balancer Controller 2.9+, Kafka 2.4+ (KIP-392), Valkey GLIDE 1.x
-> **Last Updated**: July 15, 2026
+> **Last Updated**: July 21, 2026
 
 < [Previous: Tekton Pipelines](14-tekton-pipelines.md) | [Table of Contents](./) >
 
@@ -80,6 +80,8 @@ aws elbv2 modify-listener \
 TargetGroupBinding's basic/advanced/multi-port configuration is covered in [`networking/03-aws-lb-controller.md`](../networking/03-aws-lb-controller.md#targetgroupbinding), and the full Terraform setup for NLB weighted target groups plus Route 53 weighted routing is in [`ops/02-infrastructure-advanced.md`](02-infrastructure-advanced.md#2-nlb-weighted-target-groups).
 
 **Planned shifts vs. failure-triggered shifts**: weight adjustment is for **planned** transitions like upgrades and deployments. Unplanned situations like an AZ outage are handled by [ARC (Application Recovery Controller) Zonal Shift](../eks/10-eks-resiliency.md#arc-zonal-shift), which detects and shifts automatically — the two mechanisms don't compete, they split planned vs. reactive duty.
+
+> **July 2026 update**: ARC zonal shift/autoshift is [now supported on EKS Auto Mode clusters](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift) as well. On Auto Mode, there are no flags to set and no Karpenter versions to manage — just enable ARC zonal shift on the cluster, and when a shift activates, new-node provisioning in the impaired AZ and voluntary disruptions (consolidation/drift) are halted automatically.
 
 ***
 

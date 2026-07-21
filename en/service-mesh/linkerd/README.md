@@ -1,6 +1,10 @@
 # Linkerd
 
-> **Supported Versions**: Linkerd 2.16+ **Last Updated**: February 22, 2026
+> **Supported Versions**: Linkerd 2.16+ **Last Updated**: July 21, 2026
+
+### July 2026 Update: edge-26.7.1 — Requests to Undefined Service Ports Disallowed
+
+The edge-26.7.1 release, published July 16, 2026, includes a **behavior-changing (breaking) fix**. Previously, if a ServiceProfile was defined for the target service, requests to ports not defined on the Service were still allowed. The destination controller now returns an empty `DestinationProfile` for `GetProfile` requests on ports not defined on the service, causing the proxy to fall back to the client policy API, which correctly returns a Forbidden filter and denies the connection. If any workloads communicate over ports not declared on their Service resources, clean up the port definitions before upgrading. See the [release notes](https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1) for details.
 
 ## Overview
 

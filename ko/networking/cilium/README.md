@@ -6,7 +6,13 @@
 
 > **지원 버전**: Cilium 1.17, 1.18
 > **Kubernetes 호환성**: 1.32 이상
-> **마지막 업데이트**: 2026년 2월 23일
+> **마지막 업데이트**: 2026년 7월 21일
+
+### 2026년 7월 업데이트: 패치 릴리스 및 NetworkPolicy 보안 이슈
+
+2026년 7월 16일 Cilium 1.19.6, 1.18.12, 1.17.18 패치 릴리스가 공개되었습니다. Gateway API 액세스 로그 설정(`CiliumGatewayClassConfig`의 `spec.telemetry.accessLogs`) 지원 추가와 함께, 에이전트 재시작/업그레이드 중 기존 연결이 잠시 끊길 수 있는 회귀(regression), ClusterMesh `service.cilium.io/affinity: "none"` 어노테이션의 트래픽 블랙홀 버그 등이 수정되었습니다.
+
+또한 **CVE-2026-56743** 보안 이슈에 주의하세요: Cilium 1.19.0-1.19.4에서 `clusterName`을 기본값이 아닌 값으로 설정한 경우, pod/namespace 셀렉터 없이 `ipBlock`만 사용하는 Kubernetes NetworkPolicy가 같은 네임스페이스의 다른 워크로드 트래픽을 의도치 않게 허용할 수 있습니다. 1.19.5 이상으로 업그레이드하세요. 자세한 내용은 [보안 권고문](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r)을 참고하세요.
 
 ## Cilium 1.18의 주요 개선사항
 

@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **지원 버전**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **마지막 업데이트**: 2026년 7월 11일
+> **마지막 업데이트**: 2026년 7월 21일
 
 ## 목차
 
@@ -269,6 +269,8 @@ spec:
 ### 2026년 7월 업데이트: ArgoCD 3.x 패치 릴리스
 
 2026년 7월 9일 ArgoCD v3.4.5 패치 릴리스가 공개되었습니다. 현재 3.4가 최신 안정(stable) 릴리스 라인이며, 차기 마이너 버전인 v3.5.0은 rc2까지 진행 중입니다. 아래 표는 2.x 시절 기준으로 작성된 것이므로, 최신 버전별 지원 정보는 [ArgoCD 릴리스 페이지](https://github.com/argoproj/argo-cd/releases)를 함께 확인하세요.
+
+2026년 7월 28일 요코하마에서 KubeCon + CloudNativeCon Japan 병행 행사로 열리는 ArgoCon Japan에서는 Argo CD 리드 메인테이너가 차기 버전(3.5) 제안을 공유할 예정입니다 ([CNCF 블로그](https://www.cncf.io/blog/2026/07/20/argocon-japan-2026-meeting-the-maintainers-enterprise-insights-and-the-road-to-argo-cd-3-5/)).
 
 ### ArgoCD 버전
 

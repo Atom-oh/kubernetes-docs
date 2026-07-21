@@ -1,9 +1,13 @@
 # EKS Auto Mode 운영 가이드
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 2월 23일
+> **마지막 업데이트**: 2026년 7월 21일
 
 Amazon EKS Auto Mode는 Kubernetes 노드 관리를 완전히 자동화하는 기능으로, 워크로드 요구 사항에 따라 자동으로 노드를 프로비저닝하고 최적화합니다. 이 가이드에서는 EKS Auto Mode의 개념, 설정 방법, 그리고 프로덕션 환경에서의 모범 사례를 상세히 다룹니다.
+
+### 2026년 7월 업데이트: ARC Zonal Shift 지원
+
+2026년 7월 10일부터 EKS Auto Mode 클러스터에서도 Amazon Application Recovery Controller(ARC) zonal shift와 autoshift를 사용할 수 있습니다. Auto Mode가 컴퓨팅을 대신 관리하므로 별도 플래그 설정이나 Karpenter 버전 관리 없이 클러스터에서 ARC zonal shift만 활성화하면 됩니다. zonal shift가 발동되면 Auto Mode는 장애 AZ에서 신규 용량 프로비저닝을 중단하고, 해당 존 노드에 대한 consolidation·drift 같은 자발적 중단(voluntary disruption)도 함께 중단합니다. 추가 비용은 없으며, 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift)와 [ARC zonal shift 문서](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html)를 참고하세요.
 
 ## 목차
 
