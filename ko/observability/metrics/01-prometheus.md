@@ -1,7 +1,7 @@
 # Prometheus
 
 > **지원 버전**: Prometheus 2.x / 3.x
-> **마지막 업데이트**: 2026년 2월 20일
+> **마지막 업데이트**: 2026년 7월 21일
 
 ## 목차
 
@@ -308,6 +308,10 @@ node_disk_io_time_seconds_total
 node_network_receive_bytes_total
 node_network_transmit_bytes_total
 ```
+
+### 2026년 7월 업데이트: 커스텀 메트릭 익스포터 작성 가이드
+
+2026년 7월 14일 Kubernetes 블로그에 [Building a Custom Metrics Exporter for Kubernetes](https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/) 글이 게시되었습니다. kube-state-metrics나 node-exporter가 다루지 못하는 신호(큐 대기 메시지 수, 배치 작업 소요 시간, 활성 연결 수 등)를 수집해야 할 때 익스포터를 직접 작성하는 방법을 다룹니다. 핵심 요점: 익스포터는 `/metrics` 엔드포인트로 플레인 텍스트 메트릭을 노출하는 작은 HTTP 서버일 뿐이며, 신호 특성에 따라 메트릭 타입을 선택하고(누적 합계는 counter, 오르내리는 값은 gauge, 지연 시간 분포는 histogram), 이름은 `<네임스페이스>_<이름>_<단위>` 형식의 `snake_case`로 짓습니다. 컨테이너로 패키징해 Prometheus와 궁극적으로 HorizontalPodAutoscaler까지 연결하는 과정도 다룹니다.
 
 ## PromQL 쿼리 언어
 

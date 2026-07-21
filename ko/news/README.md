@@ -1,10 +1,21 @@
 # 소식
-> **마지막 업데이트**: 2026년 7월 13일
+> **마지막 업데이트**: 2026년 7월 21일
 
 Kubernetes, Amazon EKS, CNCF 생태계의 뉴스는 별도 다이제스트 문서로 쌓이지 않습니다. 매주 GitHub Actions가 관련 뉴스를 관련된 기존 문서에 직접 반영하고, 아래 갱신 로그에 어떤 문서가 왜 바뀌었는지만 남깁니다. 매칭되는 문서가 없는 뉴스는 원문 링크만 기록됩니다.
 
 ## 갱신 로그
 
+- 2026-W30: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.19.6/1.18.12/1.17.18 패치 릴리스 및 CVE-2026-56743(ipBlock NetworkPolicy 이슈) 반영
+- 2026-W30: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.30.3/1.29.6 패치 릴리스 반영
+- 2026-W30: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — Linkerd edge-26.7.1(미정의 서비스 포트 요청 차단, breaking) 반영
+- 2026-W30: [eks-auto-mode/README.md](../eks-auto-mode/README.md) — EKS Auto Mode의 ARC zonal shift/autoshift 지원 반영
+- 2026-W30: [ops/15-zonal-operations-guide.md](../ops/15-zonal-operations-guide.md) — EKS Auto Mode의 ARC zonal shift 지원 반영
+- 2026-W30: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter 전 유지 라인 일괄 패치 릴리스(v1.3.8~v1.11.3) 반영
+- 2026-W30: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37.0-beta.0 및 v1.37 릴리스 일정 반영
+- 2026-W30: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCon Japan 2026과 Argo CD 3.5 로드맵 공유 예정 소식 반영
+- 2026-W30: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — Kubernetes 블로그의 커스텀 메트릭 익스포터 작성 가이드 반영
+- 2026-W30: 매칭 문서 없음 — HAMi, CNCF 인큐베이팅 프로젝트로 승격 ([원문](https://www.cncf.io/blog/2026/07/15/hami-becomes-a-cncf-incubating-project/))
+- 2026-W30: 매칭 문서 없음 — Kubernetes에서 vLLM으로 셀프 호스팅 LLM 운영하기, CNCF 블로그 ([원문](https://www.cncf.io/blog/2026/07/16/running-a-self-hosted-llm-in-kubernetes-with-vllm/))
 - 2026-W29: [security/10-cert-manager.md](../security/10-cert-manager.md) — ACM의 ACME 프로토콜 지원(cert-manager에서 ACM 퍼블릭 인증서 발급 가능) 반영
 - 2026-W29: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — NGINX + OpenTelemetry 기반 AI 에이전트 네트워크 경계 관측 패턴 반영
 - 2026-W29: 매칭 문서 없음 — AI 네이티브 워크로드를 위한 플랫폼 엔지니어링의 진화, CNCF 블로그 ([원문](https://www.cncf.io/blog/2026/07/06/evolving-platform-engineering-for-ai-native-workloads/))

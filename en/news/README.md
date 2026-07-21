@@ -1,10 +1,21 @@
 # News
-> **Last Updated**: July 13, 2026
+> **Last Updated**: July 21, 2026
 
 Kubernetes, Amazon EKS, and CNCF ecosystem news isn't collected into separate digest documents here. Each week, GitHub Actions applies relevant news directly to the existing doc it relates to, and this update log records only which doc changed and why. News with no matching doc is recorded here as a link only.
 
 ## Update Log
 
+- 2026-W30: [networking/cilium/README.md](../networking/cilium/README.md) — applied Cilium 1.19.6/1.18.12/1.17.18 patch releases and CVE-2026-56743 (ipBlock NetworkPolicy issue)
+- 2026-W30: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — applied Istio 1.30.3/1.29.6 patch releases
+- 2026-W30: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — applied Linkerd edge-26.7.1 (requests to undefined service ports disallowed, breaking)
+- 2026-W30: [eks-auto-mode/README.md](../eks-auto-mode/README.md) — applied ARC zonal shift/autoshift support for EKS Auto Mode
+- 2026-W30: [ops/15-zonal-operations-guide.md](../ops/15-zonal-operations-guide.md) — applied ARC zonal shift support for EKS Auto Mode
+- 2026-W30: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — applied coordinated Karpenter patch releases across all maintained lines (v1.3.8–v1.11.3)
+- 2026-W30: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied Kubernetes v1.37.0-beta.0 and the v1.37 release schedule
+- 2026-W30: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied ArgoCon Japan 2026 and the upcoming Argo CD 3.5 roadmap session
+- 2026-W30: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — applied the Kubernetes blog's custom metrics exporter guide
+- 2026-W30: no matching doc — HAMi becomes a CNCF incubating project ([source](https://www.cncf.io/blog/2026/07/15/hami-becomes-a-cncf-incubating-project/))
+- 2026-W30: no matching doc — Running a self-hosted LLM in Kubernetes with vLLM, CNCF blog ([source](https://www.cncf.io/blog/2026/07/16/running-a-self-hosted-llm-in-kubernetes-with-vllm/))
 - 2026-W29: [security/10-cert-manager.md](../security/10-cert-manager.md) — applied ACM support for the ACME protocol (ACM public certificates now consumable from cert-manager)
 - 2026-W29: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — applied NGINX + OpenTelemetry network-boundary observability pattern for AI agents
 - 2026-W29: no matching doc — Evolving platform engineering for AI-native workloads, CNCF blog ([source](https://www.cncf.io/blog/2026/07/06/evolving-platform-engineering-for-ai-native-workloads/))

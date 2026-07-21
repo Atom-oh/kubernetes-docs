@@ -1,7 +1,7 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: July 11, 2026
+> **Last Updated**: July 21, 2026
 
 ## Lab Environment Setup
 
@@ -1712,6 +1712,10 @@ Best practices for Kubernetes cluster security:
 ## Cluster Upgrades
 
 Kubernetes cluster upgrades are necessary to apply new features, security patches, and bug fixes. Upgrades must be carefully planned and executed.
+
+### July 2026 Update: Kubernetes v1.37 in Beta
+
+v1.37.0-beta.0 was published on July 20, 2026, moving the next minor release, v1.37, into the late stage of its release cycle. Code Freeze is scheduled for July 22-23, 2026, and the final v1.37.0 release for August 26, 2026. See the [v1.37 release information](https://www.kubernetes.dev/resources/release/) for the full schedule.
 
 ### Upgrade Strategies
 

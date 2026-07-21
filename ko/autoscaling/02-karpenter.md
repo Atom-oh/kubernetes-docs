@@ -1,7 +1,7 @@
 # Karpenter
 
 > **지원 버전**: Karpenter 1.6 ~ 1.14, Kubernetes 1.29+ (v1.14 기준)  
-> **마지막 업데이트**: 2026년 7월 11일
+> **마지막 업데이트**: 2026년 7월 21일
 
 ## 목차
 - [소개](#소개)
@@ -403,6 +403,8 @@ Karpenter v1.13에 추가된 NodeReadinessController는 노드가 초기화되�
 - 버그 수정: 보조 ENI의 기본 IP 계산 반영, Zonal Shift 캐시 하이드레이션 보장, AWS SDK 클라이언트 타임아웃 설정 등
 
 자세한 내용은 [v1.14.0 릴리스 노트](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0)를 참고하세요.
+
+이어서 2026년 7월 17일에는 유지 관리 중인 모든 마이너 라인(v1.3.8 ~ v1.11.3)에 대해 업스트림 `sigs.k8s.io/karpenter` 버전을 갱신하는 패치 릴리스가 일괄 공개되었습니다. 구버전 라인을 사용 중이라면 해당 라인의 최신 패치로 업데이트하는 것을 권장합니다 ([릴리스 목록](https://github.com/aws/karpenter-provider-aws/releases)).
 
 ## 노드 클래스
 

@@ -6,7 +6,13 @@ This section provides a comprehensive understanding of Cilium's core concepts an
 
 > **Supported Versions**: Cilium 1.17, 1.18
 > **Kubernetes Compatibility**: 1.32 and above
-> **Last Updated**: February 23, 2026
+> **Last Updated**: July 21, 2026
+
+### July 2026 Update: Patch Releases and a NetworkPolicy Security Issue
+
+On July 16, 2026, the Cilium 1.19.6, 1.18.12, and 1.17.18 patch releases were published. Alongside new support for configuring Gateway API access logs (`spec.telemetry.accessLogs` in `CiliumGatewayClassConfig`), they fix a regression that could briefly drop established connections during agent restart/upgrade and a ClusterMesh bug where the `service.cilium.io/affinity: "none"` annotation caused a traffic blackhole.
+
+Also note the **CVE-2026-56743** security issue: in Cilium 1.19.0-1.19.4 with a non-default `clusterName`, a Kubernetes NetworkPolicy using only `ipBlock` rules (no pod/namespace selectors) could unintentionally allow traffic from other workloads in the same namespace. Upgrade to 1.19.5 or later. See the [security advisory](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r) for details.
 
 ## Key Improvements in Cilium 1.18
 
