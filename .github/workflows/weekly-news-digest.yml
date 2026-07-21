@@ -68,12 +68,21 @@ jobs:
       # JSON-RPC POST -- no MCP client involved, see the script for the
       # reference implementation this mirrors). Degrades gracefully to an
       # empty results file if WEB_SEARCH_GATEWAY_URL isn't set.
+      #
+      # continue-on-error: the runner image has no pip3 (only apt-installed
+      # packages), so boto3 comes via apt; if that ever fails too, this step
+      # must not take down the whole digest -- the prompt already tolerates
+      # an empty/missing feeds/web-search.json and falls back to RSS alone.
       - name: AgentCore Gateway web search enrichment
         if: steps.week.outputs.exists == 'false'
+        continue-on-error: true
         env:
           WEB_SEARCH_GATEWAY_URL: ${{ vars.WEB_SEARCH_GATEWAY_URL }}
         run: |
-          python3 -c "import boto3" 2>/dev/null || pip3 install --quiet boto3
+          python3 -c "import boto3" 2>/dev/null || {
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq python3-boto3
+          }
           python3 .github/scripts/web_search_gateway.py
 
       - name: Update docs in-place with Claude
