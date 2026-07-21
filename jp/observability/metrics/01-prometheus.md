@@ -1,47 +1,47 @@
 # Prometheus
 
-> **サポート対象バージョン**: Prometheus 2.x / 3.x
-> **最終更新**: February 20, 2026
+> **対応バージョン**: Prometheus 2.x / 3.x
+> **最終更新**: July 21, 2026
 
 ## 目次
 
-- [概要](#introduction)
+- [はじめに](#introduction)
 - [アーキテクチャ](#architecture)
-- [コアコンポーネント](#core-components)
-- [PromQL クエリ言語](#promql-query-language)
+- [主要コンポーネント](#core-components)
+- [PromQLクエリ言語](#promql-query-language)
 - [Service Discovery](#service-discovery)
 - [Prometheus Operator](#prometheus-operator)
-- [kube-prometheus-stack のインストール](#kube-prometheus-stack-installation)
-- [Alertmanager との統合](#alertmanager-integration)
-- [Remote Write と AMP の統合](#remote-write-and-amp-integration)
+- [kube-prometheus-stackのインストール](#kube-prometheus-stack-installation)
+- [Alertmanagerの統合](#alertmanager-integration)
+- [Remote WriteとAMPの統合](#remote-write-and-amp-integration)
 - [パフォーマンスチューニング](#performance-tuning)
 - [ベストプラクティス](#best-practices)
 - [トラブルシューティング](#troubleshooting)
 
-## 概要
+## はじめに
 
-Prometheus は、SoundCloud で最初に開発され、CNCF (Cloud Native Computing Foundation) に寄贈されたオープンソースのシステム監視およびアラートツールキットです。Kubernetes 環境におけるデファクトスタンダードの監視ソリューションとなっています。
+Prometheusは、SoundCloudで開発され、CNCF（Cloud Native Computing Foundation）に寄贈されたオープンソースのシステム監視・アラートツールキットです。Kubernetes環境における事実上の標準的な監視ソリューションになっています。
 
 ### 主な機能
 
-1. **多次元データモデル**: メトリクス名とキー・バリューペア（ラベル）で識別される時系列データ
+1. **多次元データモデル**: メトリクス名とキー・バリューの組（ラベル）で識別される時系列データ
 2. **PromQL**: 多次元データを活用する柔軟なクエリ言語
-3. **Pull ベースの収集**: HTTP を介してターゲットから定期的にメトリクスをスクレイプ
-4. **Service Discovery**: Kubernetes のような動的環境で監視ターゲットを自動検出
-5. **アラート管理**: Alertmanager を介したルールベースのアラート定義とルーティング
+3. **Pullベースの収集**: HTTPを介してターゲットから定期的にメトリクスをスクレイピング
+4. **Service discovery**: Kubernetesのような動的環境で監視ターゲットを自動検出
+5. **アラート管理**: ルールベースのアラート定義とAlertmanagerによるルーティング
 6. **スタンドアロンサーバー**: 分散ストレージへの依存なしに単一サーバーとして動作
 
-### Prometheus が適している場合
+### Prometheusが適しているケース
 
 - 純粋な数値の時系列データを記録する場合
-- マシン中心の監視および非常に動的なサービス指向アーキテクチャ
+- マシン中心の監視や、非常に動的なサービス指向アーキテクチャ
 - 多次元データの収集とクエリ
-- 100% の正確性よりシステム全体の概要が重要な場合
+- 100%の正確性よりもシステム全体の概観が重要な場合
 
-### Prometheus が適していない場合
+### Prometheusが適していないケース
 
 - イベントログやトレーシング
-- リクエスト単位の課金のように 100% の正確性が必要なケース
+- リクエスト単位の課金のように100%の正確性が必要なケース
 - 長期データ保持（別途長期ストレージが必要）
 
 ## アーキテクチャ
@@ -111,18 +111,18 @@ flowchart TD
 
 ### データフロー
 
-1. **Service Discovery**: Kubernetes API、DNS、ファイルなどからスクレイプターゲットを検出
-2. **メトリクス収集**: HTTP を介してターゲットの `/metrics` エンドポイントからメトリクスをスクレイプ
-3. **データストレージ**: 収集したメトリクスをローカル TSDB に保存
-4. **ルール評価**: 保存済みデータに対してアラートルールと記録ルールを評価
-5. **アラート配信**: 発火したアラートを Alertmanager に送信
-6. **クエリサービス**: HTTP API を介して PromQL クエリを処理
+1. **Service Discovery**: Kubernetes API、DNS、ファイルなどからスクレイピングターゲットを検出します。
+2. **メトリクス収集**: HTTPを介してターゲットの`/metrics`エンドポイントからメトリクスをスクレイピングします。
+3. **データ保存**: 収集したメトリクスをローカルのTSDBに保存します。
+4. **ルール評価**: 保存済みデータに対してアラートルールと記録ルールを評価します。
+5. **アラート配信**: 発火したアラートをAlertmanagerに送信します。
+6. **クエリサービス**: HTTP APIを介してPromQLクエリを処理します。
 
-## コアコンポーネント
+## 主要コンポーネント
 
 ### TSDB（時系列データベース）
 
-Prometheus に組み込まれた時系列データベースは、時系列データを効率的に保存するよう設計されています。
+Prometheusに組み込まれた時系列データベースは、時系列データを効率的に保存できるよう設計されています。
 
 ```yaml
 # TSDB-related configuration
@@ -136,7 +136,7 @@ storage:
     max-block-duration: 36h         # Maximum block size (10% of retention recommended)
 ```
 
-**TSDB ブロック構造**:
+**TSDBブロック構造**:
 ```
 data/
 ├── 01BKGV7JBM69T2G1BGBGM6KB12/   # 2-hour block
@@ -156,7 +156,7 @@ data/
 
 ### kube-state-metrics
 
-Kubernetes API オブジェクトに関するメトリクスを生成するサービスです。
+Kubernetes APIオブジェクトに関するメトリクスを生成するServiceです。
 
 ```yaml
 apiVersion: apps/v1
@@ -212,7 +212,7 @@ kube_node_status_allocatable{resource="cpu"}
 
 ### node-exporter
 
-ホストレベルのハードウェアおよび OS メトリクスを公開する exporter です。
+ホストレベルのハードウェアおよびOSメトリクスを公開するExporterです。
 
 ```yaml
 apiVersion: apps/v1
@@ -297,9 +297,13 @@ node_network_receive_bytes_total
 node_network_transmit_bytes_total
 ```
 
-## PromQL クエリ言語
+### 2026年7月の更新: カスタムメトリクスExporterの作成
 
-PromQL (Prometheus Query Language) は Prometheus の関数型クエリ言語です。
+2026年7月14日、Kubernetesブログで[kubernetes向けカスタムメトリクスExporterの構築](https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/)が公開されました。これは、kube-state-metricsやnode-exporterでシグナル（キューの深さ、バッチの実行時間、アクティブ接続数など）を取得できない場合に、Exporterをゼロから作成する手順を解説した記事です。主なポイントは、Exporterは`/metrics`でプレーンテキストのメトリクスを公開するHTTPサーバーに過ぎないこと、シグナルの形状に応じてメトリクスタイプ（合計にはcounter、増減する値にはgauge、レイテンシ分布にはhistogram）を選ぶこと、そしてメトリクスを`snake_case`の`<namespace>_<name>_<unit>`形式で命名することです。この記事では、Exporterをコンテナとしてパッケージ化し、Prometheus、最終的にはHorizontalPodAutoscalerが利用できるように接続する方法も扱っています。
+
+## PromQLクエリ言語
+
+PromQL（Prometheus Query Language）は、Prometheusの関数型クエリ言語です。
 
 ### 基本クエリ
 
@@ -348,7 +352,7 @@ quantile(0.95, http_request_duration_seconds)
 stddev(rate(http_requests_total[5m]))
 ```
 
-### Rate と Increase 関数
+### RateおよびIncrease関数
 
 ```promql
 # rate: Average per-second rate of increase (for Counters)
@@ -407,7 +411,7 @@ histogram_quantile(0.95,
 
 ### Kubernetes Service Discovery
 
-Prometheus は Kubernetes API を通じて監視ターゲットを自動検出します。
+PrometheusはKubernetes APIを介して監視ターゲットを自動検出します。
 
 ```yaml
 scrape_configs:
@@ -438,7 +442,7 @@ scrape_configs:
         target_label: pod
 ```
 
-### Pod Annotation ベースのスクレイピング
+### Pod Annotationベースのスクレイピング
 
 ```yaml
 apiVersion: v1
@@ -460,9 +464,9 @@ spec:
 
 ## Prometheus Operator
 
-Prometheus Operator は Kubernetes で Prometheus を宣言的に管理するためのコントローラーです。
+Prometheus Operatorは、Kubernetes上のPrometheusを宣言的に管理するためのコントローラーです。
 
-### Custom Resource Definitions (CRD)
+### Custom Resource Definitions（CRD）
 
 ```mermaid
 flowchart TD
@@ -571,11 +575,11 @@ spec:
         description: "Pod has restarted {{ $value }} times in the last hour"
 ```
 
-## kube-prometheus-stack のインストール
+## kube-prometheus-stackのインストール
 
-kube-prometheus-stack は、Prometheus、Alertmanager、Grafana、および関連コンポーネントを含む包括的な Helm chart です。
+kube-prometheus-stackは、Prometheus、Alertmanager、Grafana、および関連コンポーネントを含む包括的なHelm chartです。
 
-### Helm を使用したインストール
+### Helmによるインストール
 
 ```bash
 # Add Helm repository
@@ -594,7 +598,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
   -f values.yaml
 ```
 
-### values.yaml の例
+### values.yamlの例
 
 ```yaml
 # Prometheus configuration
@@ -674,7 +678,7 @@ grafana:
     isDefault: false
 ```
 
-## Alertmanager との統合
+## Alertmanagerの統合
 
 ### AlertmanagerConfig
 
@@ -743,9 +747,9 @@ spec:
       sendResolved: true
 ```
 
-## Remote Write と AMP の統合
+## Remote WriteとAMPの統合
 
-### Amazon Managed Prometheus (AMP) との統合
+### Amazon Managed Prometheus（AMP）の統合
 
 ```yaml
 # Prometheus configuration
@@ -774,7 +778,7 @@ spec:
       action: drop
 ```
 
-### IRSA の設定
+### IRSAのセットアップ
 
 ```bash
 # Create IAM policy
@@ -812,7 +816,7 @@ eksctl create iamserviceaccount \
 
 ## パフォーマンスチューニング
 
-### メモリの最適化
+### メモリ最適化
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -837,7 +841,7 @@ spec:
   walCompression: true
 ```
 
-### スクレイプの最適化
+### スクレイピングの最適化
 
 ```yaml
 scrape_configs:
@@ -917,7 +921,7 @@ spec:
 
 ## トラブルシューティング
 
-### 一般的な問題
+### よくある問題
 
 #### 1. メモリ不足（OOMKilled）
 
@@ -943,7 +947,7 @@ count(http_requests_total)
 # Solution: Use metric_relabel_configs to remove unnecessary labels/metrics
 ```
 
-#### 3. スクレイプの失敗
+#### 3. スクレイピングの失敗
 
 ```bash
 # Check target status
@@ -982,12 +986,12 @@ curl http://prometheus:9090/api/v1/alerts
 
 ## 参考資料
 
-- [Prometheus 公式ドキュメント](https://prometheus.io/docs/)
-- [Prometheus Operator ドキュメント](https://prometheus-operator.dev/)
-- [PromQL チートシート](https://promlabs.com/promql-cheat-sheet/)
+- [Prometheus公式ドキュメント](https://prometheus.io/docs/)
+- [Prometheus Operatorドキュメント](https://prometheus-operator.dev/)
+- [PromQLチートシート](https://promlabs.com/promql-cheat-sheet/)
 - [kube-prometheus-stack Chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
-- [Prometheus ベストプラクティス](https://prometheus.io/docs/practices/)
+- [Prometheusのベストプラクティス](https://prometheus.io/docs/practices/)
 
 ## クイズ
 
-この章の理解度を確認するには、[Prometheus クイズ](../../quizzes/observability/metrics/01-prometheus-quiz.md)に挑戦してください。
+この章の理解度を確認するには、[Prometheusクイズ](../../quizzes/observability/metrics/01-prometheus-quiz.md)に挑戦してください。

@@ -1,7 +1,7 @@
 # ArgoCD
 
-> **支持的版本**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **最后更新**: July 11, 2026
+> **支持版本**: ArgoCD v2.9+, Argo Rollouts v1.6+
+> **最后更新**: July 21, 2026
 
 ## 目录
 - [什么是 ArgoCD？](#what-is-argocd)
@@ -14,9 +14,9 @@
 
 ## 什么是 ArgoCD？
 
-ArgoCD 是 Kubernetes 的声明式 GitOps 持续交付工具。它通过将 Git 仓库中定义的目标状态与集群中的实际状态同步，自动将应用程序部署到 Kubernetes 集群。
+ArgoCD 是一款面向 Kubernetes 的声明式 GitOps 持续交付工具。它通过将 Git 仓库中定义的期望状态与集群中的实际状态同步，实现 Kubernetes 集群中应用程序部署的自动化。
 
-作为 CNCF 毕业项目，ArgoCD 已成为基于 GitOps 的 Kubernetes 部署的事实标准，被全球数千家组织采用。
+作为 CNCF 的毕业项目，ArgoCD 已成为基于 GitOps 的 Kubernetes 部署事实上的标准，被全球数千家组织使用。
 
 ```mermaid
 flowchart LR
@@ -79,27 +79,27 @@ flowchart LR
 ### GitOps 原生
 
 - **Git 作为唯一事实来源**: 所有应用程序配置均存储在 Git 中
-- **声明式部署**: 定义目标状态，其余工作由 ArgoCD 处理
-- **审计追踪**: 通过 Git commits 完整记录所有更改的历史
-- **回滚**: 可立即回滚到任意先前状态
+- **声明式部署**: 定义期望状态，其余工作由 ArgoCD 处理
+- **审计追踪**: 通过 Git commit 获得所有变更的完整历史记录
+- **回滚**: 可即时回滚到任意先前状态
 
 ### 多集群管理
 
-- **集中式控制**: 通过单个 ArgoCD 实例管理数百个集群
+- **集中控制**: 通过单个 ArgoCD 实例管理数百个集群
 - **ApplicationSet**: 基于模板的多集群部署
 - **Cluster Generator**: 基于标签动态定位集群
 
-### 企业就绪
+### 企业级就绪
 
 - **RBAC**: 细粒度的基于角色的访问控制
 - **SSO 集成**: 支持 OIDC、SAML、LDAP
-- **多租户**: 基于 Project 的隔离
+- **多租户**: 基于项目的隔离
 - **高可用性**: 适用于生产环境的 HA 部署
 
 ### 开发者体验
 
-- **Web UI**: 可视化应用程序管理和监控
-- **CLI**: 功能完整的命令行界面
+- **Web UI**: 可视化的应用程序管理和监控
+- **CLI**: 功能完备的命令行界面
 - **通知**: Slack、Teams、电子邮件、webhook 集成
 - **健康监控**: 内置和自定义健康检查
 
@@ -110,10 +110,10 @@ flowchart LR
 | 组件 | 描述 | 副本数 (HA) |
 |-----------|-------------|---------------|
 | **API Server** | 处理所有 API 请求、身份验证和 RBAC | 2+ |
-| **Repository Server** | 克隆仓库、生成 manifests、缓存结果 | 2+ |
+| **Repository Server** | 克隆仓库、生成 manifest、缓存结果 | 2+ |
 | **Application Controller** | 监控应用程序、协调状态 | 2+（分片） |
-| **Redis** | 用于 repo server 和 controller 的缓存层 | 3 (HA) |
-| **Dex** | 用于 SSO 集成的 OIDC 提供程序 | 2+ |
+| **Redis** | Repo Server 和 Controller 的缓存层 | 3 (HA) |
+| **Dex** | 用于 SSO 集成的 OIDC 提供方 | 2+ |
 | **Notification Controller** | 在事件发生时发送通知 | 1+ |
 | **ApplicationSet Controller** | 管理 ApplicationSet 资源 | 1+ |
 
@@ -156,46 +156,47 @@ sequenceDiagram
 ### Application
 
 Application CRD 是 ArgoCD 中的主要资源。它定义：
-- **源**: 获取 manifests 的位置（Git repo、Helm chart、OCI）
-- **目标位置**: 部署位置（cluster 和 namespace）
-- **同步策略**: 如何处理同步
+- **Source**: 获取 manifest 的位置（Git 仓库、Helm chart、OCI）
+- **Destination**: 部署位置（集群和 namespace）
+- **Sync Policy**: 处理同步的方式
 
 ### Project
 
 Project 提供逻辑分组和访问控制：
 - 限制可使用的仓库
-- 限制目标 cluster 和 namespace
+- 限制目标集群和 namespace
 - 定义允许/拒绝的资源
 
 ### ApplicationSet
 
-ApplicationSet 可使用 generators 通过单一定义管理多个应用程序：
+ApplicationSet 可通过 generator 从单一定义管理多个应用程序：
 - **List Generator**: 静态值列表
-- **Cluster Generator**: 定位已注册的 clusters
+- **Cluster Generator**: 定位已注册集群
 - **Git Generator**: 扫描仓库目录/文件
-- **Matrix/Merge**: 组合多个 generators
+- **Matrix/Merge**: 组合多个 generator
 
-### Sync
+### 同步
 
-同步使集群状态与目标状态一致：
+同步使集群状态与期望状态一致：
 - **手动同步**: 由用户触发
-- **自动同步**: Git 更改时自动执行
-- **Self-Heal**: 自动修正偏差
-- **Prune**: 删除孤立资源
+- **自动同步**: 在 Git 发生变更时自动执行
+- **自愈**: 自动修正漂移
+- **清理**: 移除孤立资源
 
 ## 子指南导航
 
 | 指南 | 描述 |
 |-------|-------------|
 | [安装](01-installation.md) | 安装方法、CLI 设置、HA 配置、EKS 集成 |
-| [应用程序](02-applications.md) | Application CRD、源类型、健康检查、hooks、App of Apps |
-| [同步策略](03-sync-strategies.md) | 同步策略、waves、windows、diffing、retry 配置 |
-| [ApplicationSets](04-applicationsets.md) | 所有 generators、templating、渐进式同步、多集群模式 |
-| [流量管理](05-traffic-management.md) | Argo Rollouts、blue-green、canary、分析、ingress 集成 |
-| [Projects 与 RBAC](06-projects-rbac.md) | AppProject、RBAC 策略、多租户、JWT tokens |
-| [安全性](07-security.md) | SSO 集成、secret 管理、TLS、审计日志 |
-| [通知](08-notifications.md) | 通知服务、triggers、templates、subscriptions |
+| [应用程序](02-applications.md) | Application CRD、源类型、健康检查、hook、App of Apps |
+| [同步策略](03-sync-strategies.md) | 同步策略、wave、window、差异比较、重试配置 |
+| [ApplicationSet](04-applicationsets.md) | 所有 generator、模板化、渐进式同步、多集群模式 |
+| [流量管理](05-traffic-management.md) | Argo Rollouts、蓝绿、金丝雀、分析、ingress 集成 |
+| [项目与 RBAC](06-projects-rbac.md) | AppProject、RBAC 策略、多租户、JWT token |
+| [安全](07-security.md) | SSO 集成、Secret 管理、TLS、审计日志 |
+| [通知](08-notifications.md) | 通知服务、触发器、模板、订阅 |
 | [最佳实践](09-best-practices.md) | 仓库模式、性能调优、故障排除、EKS 提示 |
+| [Rollouts Experiments 深入解析](10-rollouts-experiment.md) | Experiment CRD、临时 ReplicaSet 验证、AnalysisRun 结果 |
 
 ## 快速开始
 
@@ -240,7 +241,7 @@ argocd login localhost:8080
 argocd account update-password
 ```
 
-### 5. 部署您的第一个应用程序
+### 5. 部署第一个应用程序
 
 ```bash
 # Create application via CLI
@@ -254,7 +255,7 @@ argocd app create guestbook \
 argocd app sync guestbook
 ```
 
-或者以声明方式：
+或者使用声明式方式：
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -281,7 +282,9 @@ spec:
 
 ### 2026 年 7 月更新：ArgoCD 3.x 补丁版本
 
-ArgoCD v3.4.5 于 2026 年 7 月 9 日发布。3.4 系列是当前稳定发布系列，下一个次要版本 v3.5.0 已达到 rc2。下表基于 2.x 时代编写——请查看 [ArgoCD 发布页面](https://github.com/argoproj/argo-cd/releases)，获取按版本划分的最新支持信息。
+ArgoCD v3.4.5 于 2026 年 7 月 9 日发布。3.4 系列是当前稳定发布系列，下一个次要版本 v3.5.0 已达到 rc2。以下表格基于 2.x 时代编写——请查看 [ArgoCD releases page](https://github.com/argoproj/argo-cd/releases)，获取最新的按版本划分的支持信息。
+
+在 2026 年 7 月 28 日于横滨举行的 ArgoCon Japan 上（该活动是与 KubeCon + CloudNativeCon Japan 联合举办的活动），Argo CD 的首席维护者将分享下一个版本（3.5）的提案（[CNCF blog](https://www.cncf.io/blog/2026/07/20/argocon-japan-2026-meeting-the-maintainers-enterprise-insights-and-the-road-to-argo-cd-3-5/)）。
 
 ### Kubernetes 兼容性
 
@@ -314,7 +317,7 @@ ArgoCD v3.4.5 于 2026 年 7 月 9 日发布。3.4 系列是当前稳定发布�
 
 1. **[安装指南](01-installation.md)**: 为生产环境设置 ArgoCD
 2. **[应用程序指南](02-applications.md)**: 了解 Application CRD
-3. **[ApplicationSets 指南](04-applicationsets.md)**: 多集群部署
+3. **[ApplicationSet 指南](04-applicationsets.md)**: 多集群部署
 
 ## 资源
 
@@ -325,4 +328,4 @@ ArgoCD v3.4.5 于 2026 年 7 月 9 日发布。3.4 系列是当前稳定发布�
 
 ## 测验
 
-要测试所学知识，请尝试 [ArgoCD 安装测验](../../quizzes/gitops/argocd/01-installation-quiz.md)。
+要检验所学内容，请尝试 [ArgoCD 安装测验](../../quizzes/gitops/argocd/01-installation-quiz.md)。

@@ -1,10 +1,22 @@
 # Istio
 
+> **最后更新**: July 21, 2026
+
 在 Amazon EKS 上使用 Istio Service Mesh 的实用指南。
+
+### 2026 年 7 月更新：Istio 1.30.3 / 1.29.6 补丁版本发布
+
+2026 年 7 月 16 日，Istio 1.30.3 和 1.29.6 补丁版本发布。1.30.3 的亮点包括：
+
+- 通过将由 workload/service 地址变更触发的 XDS 推送限定为仅受影响的 waypoint，提升了 ambient mode 下 istiod 的可扩展性
+- 修复了 istiod 在重启前无法获取更新后的远程 cluster secret（例如凭证/token 轮换期间）的 bug
+- 现在可通过 `PILOT_NODE_UNTAINT_CONTROLLERS_TAINT_NAME` 环境变量自定义 pilot node untaint controller 的 taint 名称
+
+详情请参阅[官方公告](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.3/)。
 
 ## 目录
 
-1. [您真的需要 Service Mesh 吗？](./#do-you-really-need-a-service-mesh)
+1. [真的需要 Service Mesh 吗？](./#do-you-really-need-a-service-mesh)
 2. [安装和初始设置](01-installation.md)
 3. [基本概念](02-basic-concepts.md)
 4. [架构](03-architecture.md)
@@ -14,20 +26,20 @@
 8. [安全](security/)
 9. [可观测性](observability/)
 10. [弹性](resilience/)
-11. [高级功能](advanced/)
-12. [故障排除](troubleshooting/common-errors.md)
+11. [高级](advanced/)
+12. [故障排查](troubleshooting/common-errors.md)
 13. [最佳实践](best-practices.md)
-14. [替代方案比较](comparison/)
+14. [替代方案对比](comparison/)
 
 ## 什么是 Istio？
 
-Istio 是一个开源 Service Mesh 平台，用于连接、保护、控制和观测微服务。它管理复杂微服务架构中 Service 之间的通信，并提供流量控制、安全性和可观测性。
+Istio 是一个用于连接、保护、控制和观测微服务的开源 Service Mesh 平台。它管理复杂微服务架构中服务之间的通信，并提供流量控制、安全性和可观测性。
 
 ### Service Mesh 概念
 
 <div align="center"><img src="https://istio.io/latest/img/service-mesh.svg" alt="Istio Service Mesh" width="800"></div>
 
-Service Mesh 是管理微服务之间通信的基础设施层。Istio 会在每个 Service 旁部署一个 Sidecar Proxy（Envoy），以拦截和控制所有网络流量。这无需修改应用程序代码即可提供以下能力：
+Service Mesh 是管理微服务之间通信的基础设施层。Istio 在每个服务旁部署 Sidecar Proxy（Envoy），以拦截和控制所有网络流量。无需修改应用程序代码即可提供以下能力：
 
 * **流量路由**：智能路由、负载均衡、Canary 部署
 * **安全性**：自动 mTLS、身份验证、授权
@@ -38,13 +50,13 @@ Service Mesh 是管理微服务之间通信的基础设施层。Istio 会在每�
 
 <p align="center"><img src="https://istio.io/latest/docs/examples/bookinfo/noistio.svg" alt="未使用 Istio 的应用程序"><br><em>未使用 Istio 的应用程序</em></p>
 
-<p align="center"><img src="https://istio.io/latest/docs/examples/bookinfo/withistio.svg" alt="使用 Istio 的应用程序"><br><em>使用 Istio 的应用程序 - Envoy Proxy 作为 Sidecar 部署到每个 Service</em></p>
+<p align="center"><img src="https://istio.io/latest/docs/examples/bookinfo/withistio.svg" alt="使用 Istio 的应用程序"><br><em>使用 Istio 的应用程序 - Envoy Proxy 作为 Sidecar 部署到每个服务</em></p>
 
-应用 Istio 后，Envoy Proxy 会自动作为 Sidecar 容器部署到每个微服务中，透明地拦截和控制所有网络流量。
+应用 Istio 后，Envoy Proxy 会自动作为 sidecar container 部署到每个微服务中，透明地拦截和控制所有网络流量。
 
-## 您真的需要 Service Mesh 吗？
+## 真的需要 Service Mesh 吗？
 
-Service Mesh 是一个强大的工具，但并不适合所有情况。在采用前需要仔细考虑。
+Service Mesh 是一个强大的工具，但并不适合所有情况。采用前需要仔细考虑。
 
 ### 决策流程
 
@@ -134,27 +146,27 @@ flowchart LR
     class Note1 note;
 ```
 
-**推荐标准**：
+**推荐条件**：
 
 * ✅ 10 个或更多微服务
-* ✅ Service 间通信频繁（东西向流量）
+* ✅ 频繁的服务间通信（East-West 流量）
 * ✅ 使用多种编程语言（Polyglot）
-* ✅ 多个团队独立开发 Service
+* ✅ 多个团队独立开发服务
 
 #### 2. Zero Trust 安全要求
 
 **Service Mesh 提供**：
 
-* Service 之间自动进行 mTLS 加密
-* 基于 SPIFFE 的身份管理
+* 服务之间自动进行 mTLS 加密
+* 基于 SPIFFE 的 Identity 管理
 * 细粒度的身份验证/授权策略
 * 保证通信加密
 
 **替代方案难以实现**：
 
-* 在每个 Service 中重复实现安全逻辑
-* 手动管理证书的复杂性
-* 不一致的安全策略
+* 在每个服务中重复实现安全逻辑
+* 手动证书管理的复杂性
+* 安全策略不一致
 
 #### 3. 高级流量管理
 
@@ -179,7 +191,7 @@ spec:
       weight: 10  # Only 10% to new version
 ```
 
-**适用场景**：
+**需要的场景**：
 
 * Canary 部署、A/B 测试
 * 基于 Header/path 的路由
@@ -193,8 +205,8 @@ spec:
 
 * 无需修改应用程序代码即可自动收集指标
 * 自动实现 Distributed Tracing
-* 统一日志格式
-* Service 拓扑可视化（Kiali）
+* 统一的日志格式
+* 服务拓扑可视化（Kiali）
 
 ### 何时不需要 Service Mesh ❌
 
@@ -217,7 +229,7 @@ flowchart LR
     class Note note;
 ```
 
-**替代方案**：
+**可改用**：
 
 * Kubernetes Ingress Controller（NGINX、Traefik）
 * 简单的负载均衡器
@@ -227,9 +239,9 @@ flowchart LR
 
 **开销更大**：
 
-* Service Mesh 的运维复杂性 > 所获得的收益
-* 5-10 个 Service 可以手动管理
-* NetworkPolicy 提供足够的安全性
+* Service Mesh 的运维复杂度大于获得的收益
+* 5-10 个服务可以手动管理
+* NetworkPolicy 提供了足够的安全性
 
 **替代方案**：
 
@@ -257,21 +269,21 @@ spec:
 * Istio/Envoy 专业知识
 * Control Plane 监控和管理
 * 升级和补丁管理
-* 故障排除能力（调试复杂性增加）
+* 故障排查能力（调试复杂度增加）
 
-**团队所需准备**：
+**所需团队准备**：
 
 * 至少 1-2 名 Service Mesh 专家
 * 持续学习并跟踪更新
 * 充足的测试环境
 
-#### 4. 对性能要求极高时
+#### 4. 性能极其关键时
 
 **Service Mesh 开销**：
 
 * 延迟：+1-3ms（P50）、+5-10ms（P99）
-* CPU：每个 Pod +10-20%
-* 内存：每个 Pod +50-100MB（Sidecar 模式）
+* CPU：每个 pod +10-20%
+* 内存：每个 pod +50-100MB（Sidecar mode）
 
 **考虑替代方案**：
 
@@ -279,7 +291,7 @@ spec:
 * 基于 CNI 的解决方案（Cilium）
 * 应用程序级优化
 
-### 替代解决方案比较
+### 替代方案对比
 
 | 功能                    | Service Mesh                                 | CNI（Cilium）    | Ingress Controller | 应用程序级                |
 | -------------------------- | -------------------------------------------- | --------------- | ------------------ | ------------------------ |
@@ -287,9 +299,9 @@ spec:
 | **mTLS 自动化**        | ✅ 完整支持                               | ✅ 可实现      | ❌ 不支持    | ❌ 手动实现  |
 | **Distributed Tracing**    | ✅ 自动                                  | ❌ 不支持 | ❌ 不支持    | ⚠️ 手动实现 |
 | **L3/L4 策略**         | ✅ 支持                                  | ✅ 完整支持  | ❌ 不支持    | ❌ 不支持          |
-| **运维复杂性** | 🔴 高                                      | 🟡 中等       | 🟢 低             | 🟡 中等                |
+| **运维复杂度** | 🔴 高                                      | 🟡 中等       | 🟢 低             | 🟡 中等                |
 | **资源开销**      | <p>🔴 高（Sidecar）<br>🟢 低（Ambient）</p> | 🟢 低          | 🟢 低             | 🟢 无                  |
-| **适用规模**         | 10+ 个 Service                                 | 所有规模      | 小规模        | 小规模              |
+| **适用规模**         | 10+ 个服务                                 | 所有规模      | 小规模        | 小规模              |
 
 ### 基于 CNI 的解决方案（Cilium）
 
@@ -328,12 +340,12 @@ flowchart TB
     class UC1,UC2,UC3 usecase;
 ```
 
-**Cilium 更适合的情况**：
+**Cilium 更适合的场景**：
 
 * L3/L4 网络策略是主要目的
 * 高性能是核心要求
-* 希望避免 Service Mesh 的运维负担
-* 仅需要简单的 mTLS 和可观测性
+* 避免 Service Mesh 的运维负担
+* 只需要简单的 mTLS 和可观测性
 
 **参考**：[Cilium 文档](../../networking/cilium/)
 
@@ -343,43 +355,43 @@ flowchart TB
 
 **架构**：
 
-* [ ] 您是否有 10 个或更多微服务？
-* [ ] Service 间通信是否复杂？
+* [ ] 是否有 10 个或更多微服务？
+* [ ] 服务间通信是否复杂？
 * [ ] 是否使用多种编程语言？
 
 **安全性**：
 
 * [ ] 是否需要 Zero Trust 安全模型？
-* [ ] Service 之间的 mTLS 加密是否是强制要求？
+* [ ] 服务之间是否必须使用 mTLS 加密？
 * [ ] 是否需要细粒度访问控制？
 
 **流量管理**：
 
 * [ ] 是否需要 Canary 部署、A/B 测试？
 * [ ] 是否需要高级路由规则？
-* [ ] 是否需要为许多 Service 使用 Circuit Breaking、Retry？
+* [ ] 是否有许多服务需要 Circuit Breaking、Retry？
 
 **可观测性**：
 
-* [ ] Distributed Tracing 是否是强制要求？
+* [ ] Distributed Tracing 是否是必需的？
 * [ ] 是否需要统一收集指标？
-* [ ] 是否需要 Service 拓扑可视化？
+* [ ] 是否需要服务拓扑可视化？
 
 **运维**：
 
-* [ ] 您是否拥有 Service Mesh 专家？
-* [ ] 您能否应对运维复杂性？
-* [ ] 您能否接受资源开销？
+* [ ] 是否有 Service Mesh 专家？
+* [ ] 能否应对运维复杂度？
+* [ ] 能否接受资源开销？
 
 **结果**：
 
-* ✅ 勾选 10 项或更多：强烈建议使用 Service Mesh
-* 🟡 勾选 5-9 项：需要谨慎评估，从小规模开始（推荐 Ambient Mode）
-* ❌ 勾选 4 项或更少：考虑替代方案（CNI、Ingress、应用程序级）
+* ✅ 勾选 10 项或以上：强烈推荐 Service Mesh
+* 🟡 勾选 5-9 项：需要仔细评估，从小范围开始（推荐 Ambient Mode）
+* ❌ 勾选 4 项或以下：考虑替代方案（CNI、Ingress、应用程序级）
 
 ### 渐进式采用策略
 
-如果您确定需要 Service Mesh，请逐步采用：
+如果确定需要 Service Mesh，请逐步采用：
 
 ```mermaid
 flowchart LR
@@ -405,7 +417,7 @@ flowchart LR
 2. **可观测性优先**（指标、日志、追踪）
 3. **应用安全性**（mTLS PERMISSIVE → STRICT）
 4. **流量管理**（VirtualService、DestinationRule）
-5. **全公司范围扩展**
+5. **全公司范围推广**
 
 ### 主要功能
 
@@ -421,17 +433,17 @@ flowchart LR
 
     <div align="center"><img src="https://istio.io/latest/docs/concepts/security/arch-sec.svg" alt="安全架构" width="600"></div>
 
-    * Service 之间自动进行 mTLS 加密
+    * 服务之间自动进行 mTLS 加密
     * 强身份验证和授权
     * 细粒度访问控制策略
     * 网络隔离和安全策略
 3.  **可观测性**
 
-    <div align="center"><img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png" alt="Kiali Service 图" width="700"></div>
+    <div align="center"><img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png" alt="Kiali 服务图" width="700"></div>
 
     * 自动生成指标、日志和追踪
     * Prometheus、Grafana、Jaeger、Kiali 集成
-    * Service 拓扑可视化
+    * 服务拓扑可视化
     * 实时流量监控
 4. **弹性**
    * Circuit Breaker 模式
@@ -501,49 +513,49 @@ flowchart TB
 
 **Control Plane（istiod）**：
 
-* **Pilot**：Service 发现、流量路由规则管理
+* **Pilot**：服务发现、流量路由规则管理
 * **Citadel**：证书生成和管理、启用 mTLS
 * **Galley**：配置验证和部署
 
 **Data Plane**：
 
-* **Envoy Proxy**：作为 Sidecar 部署到每个 Pod，拦截和控制所有网络流量
+* **Envoy Proxy**：作为 sidecar 部署到每个 pod，拦截和控制所有网络流量
 
 ### 在 Amazon EKS 上使用 Istio 的优势
 
-1. **轻松管理微服务**
+1. **易于管理微服务**
    * 无需修改应用程序代码即可进行流量管理
    * 使用声明式配置应用一致的策略
    * 使用 Kubernetes Native API
 2. **增强安全性**
-   * Service 之间自动加密
+   * 服务之间自动加密
    * 与 AWS IAM 集成的身份验证
    * 细粒度权限控制
 3. **提升可观测性**
    * 与 Amazon CloudWatch 集成
-   * 通过 AWS X-Ray 进行分布式追踪
+   * 通过 AWS X-Ray 实现分布式追踪
    * 详细的指标和日志
-4. **与 AWS Service 集成**
+4. **与 AWS 服务集成**
    * Application Load Balancer（ALB）集成
    * AWS Certificate Manager（ACM）集成
    * 与 Amazon EBS CSI Driver 兼容
 
-### 快速开始
+### 入门
 
 <div align="center"><img src="https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-gateway-example/gateway-api-topology.svg" alt="Gateway API 架构" width="600"></div>
 
-如果您刚开始使用 Istio，请按以下顺序阅读文档：
+如果您刚接触 Istio，请按以下顺序阅读文档：
 
-1. [**安装和初始设置**](01-installation.md)：在 EKS 集群上安装 Istio
+1. [**安装和初始设置**](01-installation.md)：在 EKS cluster 上安装 Istio
 2. [**基本概念**](02-basic-concepts.md)：了解 Istio 核心概念
 3. [**流量管理**](traffic-management/)：学习 Gateway、VirtualService、DestinationRule
-4. [**安全**](security/)：配置 mTLS、身份验证、授权
+4. [**安全性**](security/)：配置 mTLS、身份验证、授权
 5. [**可观测性**](observability/)：收集指标、日志、追踪
 6. [**最佳实践**](best-practices.md)：生产环境建议
 
 ### 实操示例
 
-每个部分都包含可用的 YAML 示例。所有示例均采用点击复制的结构：
+每个部分均包含可运行的 YAML 示例。所有示例均采用点击复制的结构：
 
 ```yaml
 # Example VirtualService
@@ -570,10 +582,10 @@ spec:
 
 ### 测验
 
-要测试您在本章中学到的知识，请尝试以下测验：
+要测试您在本章学到的内容，请尝试以下测验：
 
 * [流量管理测验](../../quizzes/service-mesh/istio/traffic-management.md)
-* [安全测验](../../quizzes/service-mesh/istio/security.md)
+* [安全性测验](../../quizzes/service-mesh/istio/security.md)
 * [可观测性测验](../../quizzes/service-mesh/istio/observability.md)
 * [弹性测验](../../quizzes/service-mesh/istio/resilience.md)
-* [高级功能测验](../../quizzes/service-mesh/istio/advanced.md)
+* [高级测验](../../quizzes/service-mesh/istio/advanced.md)

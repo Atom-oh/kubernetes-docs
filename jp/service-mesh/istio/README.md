@@ -1,11 +1,23 @@
 # Istio
 
-Amazon EKS で Istio Service Mesh を活用するための実践ガイドです。
+> **最終更新**: July 21, 2026
+
+Amazon EKS で Istio Service Mesh を活用するための実践ガイド。
+
+### 2026年7月更新: Istio 1.30.3 / 1.29.6 パッチリリース
+
+2026年7月16日、Istio 1.30.3 および 1.29.6 のパッチリリースが公開されました。1.30.3 の主な内容:
+
+- ambient mode において、workload/service address の変更による XDS push を影響を受ける waypoint のみに限定し、istiod のスケーラビリティを改善
+- istiod がリモートクラスターの更新済み secret（例: credential/token rotation 時）を再起動まで取得しないバグを修正
+- pilot node untaint controller の taint 名を、`PILOT_NODE_UNTAINT_CONTROLLERS_TAINT_NAME` 環境変数でカスタマイズ可能に変更
+
+詳細は[公式発表](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.3/)を参照してください。
 
 ## 目次
 
-1. [Service Mesh は本当に必要ですか？](./#do-you-really-need-a-service-mesh)
-2. [インストールと初期設定](01-installation.md)
+1. [Service Mesh は本当に必要か？](./#do-you-really-need-a-service-mesh)
+2. [インストールと初期セットアップ](01-installation.md)
 3. [基本概念](02-basic-concepts.md)
 4. [アーキテクチャ](03-architecture.md)
 5. [AWS 統合](04-aws-integration.md)
@@ -17,34 +29,34 @@ Amazon EKS で Istio Service Mesh を活用するための実践ガイドです�
 11. [高度な機能](advanced/)
 12. [トラブルシューティング](troubleshooting/common-errors.md)
 13. [ベストプラクティス](best-practices.md)
-14. [代替案の比較](comparison/)
+14. [代替手段の比較](comparison/)
 
 ## Istio とは？
 
-Istio は、マイクロサービスを接続、保護、制御、監視するためのオープンソースの Service Mesh プラットフォームです。複雑なマイクロサービスアーキテクチャにおけるサービス間通信を管理し、トラフィック制御、セキュリティ、可観測性を提供します。
+Istio は、マイクロサービスの接続、保護、制御、監視を行うオープンソースの Service Mesh プラットフォームです。複雑なマイクロサービスアーキテクチャにおける Service 間通信を管理し、トラフィック制御、セキュリティ、可観測性を提供します。
 
 ### Service Mesh の概念
 
 <div align="center"><img src="https://istio.io/latest/img/service-mesh.svg" alt="Istio Service Mesh" width="800"></div>
 
-Service Mesh は、マイクロサービス間の通信を管理するインフラストラクチャレイヤーです。Istio は各サービスとともに Sidecar Proxy（Envoy）をデプロイし、すべてのネットワークトラフィックをインターセプトして制御します。これにより、アプリケーションコードを変更せずに次の機能を提供します。
+Service Mesh は、マイクロサービス間の通信を管理するインフラストラクチャ層です。Istio は各 Service の横に Sidecar Proxy（Envoy）をデプロイし、すべてのネットワークトラフィックをインターセプトして制御します。これにより、アプリケーションコードを変更せずに次の機能を提供します:
 
-* **トラフィックルーティング**: インテリジェントルーティング、ロードバランシング、Canary デプロイメント
+* **トラフィックルーティング**: インテリジェントなルーティング、ロードバランシング、Canary デプロイメント
 * **セキュリティ**: 自動 mTLS、認証、認可
 * **可観測性**: メトリクス、ログ、分散トレーシング
 * **レジリエンス**: Circuit Breaking、Retry、Timeout
 
-### 実践的な利用例
+### 実践的な使用例
 
 <p align="center"><img src="https://istio.io/latest/docs/examples/bookinfo/noistio.svg" alt="Istio を使用しないアプリケーション"><br><em>Istio を使用しないアプリケーション</em></p>
 
-<p align="center"><img src="https://istio.io/latest/docs/examples/bookinfo/withistio.svg" alt="Istio を使用するアプリケーション"><br><em>Istio を使用するアプリケーション - 各サービスに Sidecar としてデプロイされた Envoy Proxy</em></p>
+<p align="center"><img src="https://istio.io/latest/docs/examples/bookinfo/withistio.svg" alt="Istio を使用するアプリケーション"><br><em>Istio を使用するアプリケーション - 各 Service に Sidecar としてデプロイされた Envoy Proxy</em></p>
 
-Istio を適用すると、各マイクロサービスに sidecar コンテナとして Envoy Proxy が自動的にデプロイされ、すべてのネットワークトラフィックを透過的にインターセプトして制御します。
+Istio を適用すると、各マイクロサービスに Envoy Proxy が sidecar container として自動的にデプロイされ、すべてのネットワークトラフィックを透過的にインターセプトして制御します。
 
-## Service Mesh は本当に必要ですか？
+## Service Mesh は本当に必要か？
 
-Service Mesh は強力なツールですが、すべての状況に適しているわけではありません。導入前に慎重な検討が必要です。
+Service Mesh は強力なツールですが、すべての状況に適しているわけではありません。導入前には慎重な検討が必要です。
 
 ### 判断フロー
 
@@ -136,24 +148,24 @@ flowchart LR
 
 **推奨基準**:
 
-* ✅ マイクロサービスが 10 個以上
-* ✅ サービス間通信（East-West トラフィック）が頻繁に発生する
-* ✅ 複数のプログラミング言語（Polyglot）を使用している
-* ✅ 複数のチームがサービスを独立して開発している
+* ✅ マイクロサービスが 10 以上
+* ✅ Service 間通信（East-West traffic）が頻繁
+* ✅ 複数のプログラミング言語を使用（Polyglot）
+* ✅ 複数のチームが独立して Service を開発
 
 #### 2. Zero Trust セキュリティ要件
 
-**Service Mesh が提供する機能**:
+**Service Mesh が提供するもの**:
 
-* サービス間の自動 mTLS 暗号化
+* Service 間の自動 mTLS 暗号化
 * SPIFFE ベースの Identity 管理
-* きめ細かな認証／認可ポリシー
-* 暗号化通信の保証
+* きめ細かな認証/認可ポリシー
+* 暗号化された通信の保証
 
 **代替手段では実現が難しいこと**:
 
-* 各サービスにおけるセキュリティロジック実装の重複
-* 手動での証明書管理の複雑さ
+* 各 Service でのセキュリティロジック実装の重複
+* 手動の証明書管理による複雑さ
 * 一貫性のないセキュリティポリシー
 
 #### 3. 高度なトラフィック管理
@@ -179,7 +191,7 @@ spec:
       weight: 10  # Only 10% to new version
 ```
 
-**必要となる場合**:
+**必要な場合**:
 
 * Canary デプロイメント、A/B テスト
 * Header/path ベースのルーティング
@@ -191,10 +203,10 @@ spec:
 
 **Service Mesh の利点**:
 
-* アプリケーションコードを変更せずにメトリクスを自動収集
-* Distributed Tracing の自動実装
+* アプリケーションコードを変更せずに自動メトリクス収集
+* 自動 Distributed Tracing 実装
 * 統一されたログ形式
-* サービストポロジーの可視化（Kiali）
+* Service topology の可視化（Kiali）
 
 ### Service Mesh が不要な場合 ❌
 
@@ -220,18 +232,18 @@ flowchart LR
 **代わりに使用するもの**:
 
 * Kubernetes Ingress Controller（NGINX、Traefik）
-* シンプルなロードバランサー
+* シンプルな load balancer
 * アプリケーションレベルの実装
 
-#### 2. 少数のマイクロサービス（10 未満）
+#### 2. 少数のマイクロサービス（<10）
 
-**オーバーヘッドの方が大きい場合**:
+**オーバーヘッドがメリットを上回る場合**:
 
 * Service Mesh の運用の複雑さ > 得られるメリット
-* 5～10 個のサービスは手動で管理可能
-* NetworkPolicy で十分なセキュリティを提供できる
+* 5～10 の Service は手動で管理可能
+* NetworkPolicy は十分なセキュリティを提供
 
-**代替案**:
+**代替手段**:
 
 ```yaml
 # Kubernetes NetworkPolicy is sufficient
@@ -250,30 +262,30 @@ spec:
           app: frontend
 ```
 
-#### 3. 運用リソースの不足
+#### 3. 運用リソースが不足している場合
 
 **Service Mesh の運用要件**:
 
 * Istio/Envoy の専門知識
 * Control Plane の監視と管理
-* アップグレードおよびパッチ管理
+* Upgrade および patch 管理
 * トラブルシューティング能力（デバッグの複雑さが増加）
 
-**チームに必要な準備**:
+**必要なチーム準備**:
 
-* 少なくとも 1～2 名の Service Mesh エキスパート
-* 継続的な学習とアップデートの追跡
+* Service Mesh の専門家が最低 1～2 名
+* 継続的な学習と更新の追跡
 * 十分なテスト環境
 
 #### 4. パフォーマンスが極めて重要な場合
 
 **Service Mesh のオーバーヘッド**:
 
-* レイテンシー: +1～3ms（P50）、+5～10ms（P99）
-* CPU: Pod あたり +10～20%
-* メモリ: Pod あたり +50～100MB（Sidecar モード）
+* Latency: +1-3ms（P50）、+5-10ms（P99）
+* CPU: Pod あたり +10-20%
+* Memory: Pod あたり +50-100MB（Sidecar mode）
 
-**代替案を検討**:
+**代替手段を検討**:
 
 * Ambient Mode（リソース使用量を 90% 削減）
 * CNI ベースのソリューション（Cilium）
@@ -281,19 +293,19 @@ spec:
 
 ### 代替ソリューションの比較
 
-| 機能                    | Service Mesh                                 | CNI（Cilium）    | Ingress Controller | アプリケーションレベル                |
+| 機能                    | Service Mesh                                 | CNI (Cilium)    | Ingress Controller | アプリレベル                |
 | -------------------------- | -------------------------------------------- | --------------- | ------------------ | ------------------------ |
 | **L7 トラフィック管理**  | ✅ 完全対応                               | ⚠️ 制限あり      | ⚠️ Ingress のみ    | ✅ 可能               |
 | **mTLS 自動化**        | ✅ 完全対応                               | ✅ 可能      | ❌ 非対応    | ❌ 手動実装  |
-| **Distributed Tracing**    | ✅ 自動                                  | ❌ 非対応 | ❌ 非対応    | ⚠️ 手動実装 |
+| **分散トレーシング**    | ✅ 自動                                  | ❌ 非対応 | ❌ 非対応    | ⚠️ 手動実装 |
 | **L3/L4 ポリシー**         | ✅ 対応                                  | ✅ 完全対応  | ❌ 非対応    | ❌ 非対応          |
 | **運用の複雑さ** | 🔴 高                                      | 🟡 中       | 🟢 低             | 🟡 中                |
 | **リソースオーバーヘッド**      | <p>🔴 高（Sidecar）<br>🟢 低（Ambient）</p> | 🟢 低          | 🟢 低             | 🟢 なし                  |
-| **適した規模**         | 10 以上のサービス                                 | すべての規模      | 小規模        | 小規模              |
+| **適した規模**         | 10 以上の Service                                 | すべての規模      | 小規模        | 小規模              |
 
 ### CNI ベースのソリューション（Cilium）
 
-Cilium は eBPF をベースに、**ネットワークレベル**で多くの機能を提供します。
+Cilium は eBPF を基盤として、**ネットワークレベル**で多くの機能を提供します:
 
 ```mermaid
 flowchart TB
@@ -330,56 +342,56 @@ flowchart TB
 
 **Cilium がより適している場合**:
 
-* L3/L4 ネットワークポリシーが主な目的である
-* 高パフォーマンスが中核要件である
-* Service Mesh の運用負荷を避けたい
-* シンプルな mTLS と可観測性のみが必要である
+* L3/L4 network policy が主目的
+* 高パフォーマンスが中核要件
+* Service Mesh の運用負荷を回避したい
+* シンプルな mTLS と可観測性のみが必要
 
 **参照**: [Cilium ドキュメント](../../networking/cilium/)
 
 ### 判断チェックリスト
 
-導入前に次の質問に回答してください。
+導入前に次の質問へ回答してください:
 
 **アーキテクチャ**:
 
-* [ ] マイクロサービスが 10 個以上ありますか？
-* [ ] サービス間通信は複雑ですか？
+* [ ] 10 以上のマイクロサービスがありますか？
+* [ ] Service 間通信は複雑ですか？
 * [ ] 複数のプログラミング言語を使用していますか？
 
 **セキュリティ**:
 
 * [ ] Zero Trust セキュリティモデルが必要ですか？
-* [ ] サービス間の mTLS 暗号化は必須ですか？
+* [ ] Service 間の mTLS 暗号化は必須ですか？
 * [ ] きめ細かなアクセス制御が必要ですか？
 
 **トラフィック管理**:
 
 * [ ] Canary デプロイメント、A/B テストが必要ですか？
 * [ ] 高度なルーティングルールが必要ですか？
-* [ ] 多くのサービスに Circuit Breaking、Retry が必要ですか？
+* [ ] 多くの Service に Circuit Breaking、Retry が必要ですか？
 
 **可観測性**:
 
 * [ ] 分散トレーシングは必須ですか？
-* [ ] 統合されたメトリクス収集が必要ですか？
-* [ ] サービストポロジーの可視化が必要ですか？
+* [ ] 統合メトリクス収集が必要ですか？
+* [ ] Service topology の可視化が必要ですか？
 
 **運用**:
 
-* [ ] Service Mesh のエキスパートがいますか？
-* [ ] 運用の複雑さに対応できますか？
+* [ ] Service Mesh の専門家がいますか？
+* [ ] 運用の複雑さに対処できますか？
 * [ ] リソースオーバーヘッドを許容できますか？
 
 **結果**:
 
-* ✅ 10 個以上にチェック: Service Mesh を強く推奨
-* 🟡 5～9 個にチェック: 慎重な評価が必要。小規模から始める（Ambient Mode を推奨）
-* ❌ 4 個以下にチェック: 代替ソリューション（CNI、Ingress、アプリケーションレベル）を検討
+* ✅ 10 個以上チェック: Service Mesh を強く推奨
+* 🟡 5～9 個チェック: 慎重な評価が必要。小規模から開始（Ambient Mode を推奨）
+* ❌ 4 個以下チェック: 代替ソリューション（CNI、Ingress、アプリレベル）を検討
 
 ### 段階的な導入戦略
 
-Service Mesh が必要と判断した場合は、段階的に導入してください。
+Service Mesh が必要と判断した場合は、段階的に導入してください:
 
 ```mermaid
 flowchart LR
@@ -401,38 +413,38 @@ flowchart LR
 
 **推奨順序**:
 
-1. **パイロットプロジェクト**（1～2 個の namespace）
+1. **パイロットプロジェクト**（1～2 Namespace）
 2. **可観測性を優先**（メトリクス、ログ、トレース）
 3. **セキュリティを適用**（mTLS PERMISSIVE → STRICT）
 4. **トラフィック管理**（VirtualService、DestinationRule）
-5. **全社展開**
+5. **全社への展開**
 
 ### 主な機能
 
 1.  **トラフィック管理**
 
-    <div align="center"><img src="https://istio.io/latest/docs/concepts/traffic-management/request-routing.svg" alt="Traffic Routing" width="500"></div>
+    <div align="center"><img src="https://istio.io/latest/docs/concepts/traffic-management/request-routing.svg" alt="トラフィックルーティング" width="500"></div>
 
-    * インテリジェントルーティングとロードバランシング
+    * インテリジェントなルーティングとロードバランシング
     * A/B テスト、Canary デプロイメント、Blue/Green デプロイメント
     * Circuit Breaking、Retry、Timeout の制御
     * Traffic Mirroring と Fault Injection
 2.  **セキュリティ**
 
-    <div align="center"><img src="https://istio.io/latest/docs/concepts/security/arch-sec.svg" alt="Security Architecture" width="600"></div>
+    <div align="center"><img src="https://istio.io/latest/docs/concepts/security/arch-sec.svg" alt="セキュリティアーキテクチャ" width="600"></div>
 
-    * サービス間の自動 mTLS 暗号化
+    * Service 間の自動 mTLS 暗号化
     * 強力な認証と認可
     * きめ細かなアクセス制御ポリシー
     * ネットワーク分離とセキュリティポリシー
 3.  **可観測性**
 
-    <div align="center"><img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png" alt="Kiali Service Graph" width="700"></div>
+    <div align="center"><img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png" alt="Kiali Service グラフ" width="700"></div>
 
-    * メトリクス、ログ、トレースの自動生成
+    * 自動メトリクス、ログ、トレースの生成
     * Prometheus、Grafana、Jaeger、Kiali との統合
-    * サービストポロジーの可視化
-    * リアルタイムトラフィック監視
+    * Service topology の可視化
+    * リアルタイムのトラフィック監視
 4. **レジリエンス**
    * Circuit Breaker パターン
    * Rate Limiting
@@ -441,9 +453,9 @@ flowchart LR
 
 ### Istio アーキテクチャ
 
-<div align="center"><img src="https://istio.io/latest/docs/ops/deployment/architecture/arch.svg" alt="Istio Architecture" width="700"></div>
+<div align="center"><img src="https://istio.io/latest/docs/ops/deployment/architecture/arch.svg" alt="Istio アーキテクチャ" width="700"></div>
 
-Istio は Control Plane と Data Plane で構成されます。
+Istio は Control Plane と Data Plane で構成されます:
 
 ```mermaid
 flowchart TB
@@ -507,19 +519,19 @@ flowchart TB
 
 **Data Plane**:
 
-* **Envoy Proxy**: 各 Pod に sidecar としてデプロイされ、すべてのネットワークトラフィックをインターセプトして制御する
+* **Envoy Proxy**: 各 Pod に sidecar としてデプロイされ、すべてのネットワークトラフィックをインターセプトして制御
 
-### Amazon EKS で Istio を使用する利点
+### Amazon EKS で Istio を使用するメリット
 
-1. **マイクロサービス管理の容易さ**
+1. **容易なマイクロサービス管理**
    * アプリケーションコードを変更せずにトラフィックを管理
-   * 宣言的設定による一貫したポリシー適用
+   * 宣言的な設定による一貫したポリシー適用
    * Kubernetes Native API を使用
-2. **セキュリティの強化**
-   * サービス間の自動暗号化
+2. **強化されたセキュリティ**
+   * Service 間の自動暗号化
    * AWS IAM と統合された認証
    * きめ細かな権限制御
-3. **可観測性の向上**
+3. **向上した可観測性**
    * Amazon CloudWatch との統合
    * AWS X-Ray による分散トレーシング
    * 詳細なメトリクスとログ
@@ -530,20 +542,20 @@ flowchart TB
 
 ### はじめに
 
-<div align="center"><img src="https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-gateway-example/gateway-api-topology.svg" alt="Gateway API Architecture" width="600"></div>
+<div align="center"><img src="https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-gateway-example/gateway-api-topology.svg" alt="Gateway API アーキテクチャ" width="600"></div>
 
-Istio を初めて使用する場合は、次の順序でドキュメントをお読みください。
+Istio を初めて使用する場合は、次の順序でドキュメントを読んでください:
 
-1. [**インストールと初期設定**](01-installation.md): EKS クラスターに Istio をインストールする
-2. [**基本概念**](02-basic-concepts.md): Istio の中核概念を理解する
-3. [**トラフィック管理**](traffic-management/): Gateway、VirtualService、DestinationRule を学ぶ
-4. [**セキュリティ**](security/): mTLS、認証、認可を設定する
-5. [**可観測性**](observability/): メトリクス、ログ、トレースを収集する
+1. [**インストールと初期セットアップ**](01-installation.md): EKS cluster に Istio をインストール
+2. [**基本概念**](02-basic-concepts.md): Istio の中核概念を理解
+3. [**トラフィック管理**](traffic-management/): Gateway、VirtualService、DestinationRule を学習
+4. [**セキュリティ**](security/): mTLS、認証、認可を設定
+5. [**可観測性**](observability/): メトリクス、ログ、トレースを収集
 6. [**ベストプラクティス**](best-practices.md): 本番環境向けの推奨事項
 
 ### ハンズオン例
 
-各セクションには、動作する YAML 例が含まれています。すべての例は、クリックしてコピーできるように構成されています。
+各セクションには動作する YAML 例が含まれています。すべての例はクリックしてコピーできる構成です:
 
 ```yaml
 # Example VirtualService
@@ -570,7 +582,7 @@ spec:
 
 ### クイズ
 
-この章で学んだ内容を確認するために、以下のクイズに挑戦してください。
+この章で学んだ内容を確認するために、以下のクイズに挑戦してください:
 
 * [トラフィック管理クイズ](../../quizzes/service-mesh/istio/traffic-management.md)
 * [セキュリティクイズ](../../quizzes/service-mesh/istio/security.md)
