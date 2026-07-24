@@ -1,8 +1,20 @@
 # Istio
 
+> **Última actualización**: July 21, 2026
+
 Una guía práctica para utilizar Istio Service Mesh en Amazon EKS.
 
-## Tabla de contenido
+### Actualización de julio de 2026: lanzamientos de parches Istio 1.30.3 / 1.29.6
+
+El 16 de julio de 2026, se publicaron los lanzamientos de parches Istio 1.30.3 y 1.29.6. Aspectos destacados de 1.30.3:
+
+- Se mejoró la escalabilidad de istiod en modo ambient al limitar los envíos XDS derivados de cambios de direcciones de workload/service únicamente a los waypoints afectados
+- Se corrigió un error por el que istiod no detectaba secretos de clúster remoto actualizados (por ejemplo, durante la rotación de credenciales/tokens) hasta reiniciarse
+- El nombre de taint del controlador de eliminación de taints de nodos pilot ahora se puede personalizar mediante la variable de entorno `PILOT_NODE_UNTAINT_CONTROLLERS_TAINT_NAME`
+
+Consulta el [anuncio oficial](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.3/) para obtener más detalles.
+
+## Tabla de contenidos
 
 1. [¿Realmente necesitas un Service Mesh?](./#do-you-really-need-a-service-mesh)
 2. [Instalación y configuración inicial](01-installation.md)
@@ -10,18 +22,18 @@ Una guía práctica para utilizar Istio Service Mesh en Amazon EKS.
 4. [Arquitectura](03-architecture.md)
 5. [Integración con AWS](04-aws-integration.md)
 6. [Glosario](glossary.md)
-7. [Gestión del tráfico](traffic-management/)
+7. [Gestión de tráfico](traffic-management/)
 8. [Seguridad](security/)
 9. [Observabilidad](observability/)
 10. [Resiliencia](resilience/)
 11. [Avanzado](advanced/)
 12. [Solución de problemas](troubleshooting/common-errors.md)
-13. [Prácticas recomendadas](best-practices.md)
+13. [Mejores prácticas](best-practices.md)
 14. [Comparación de alternativas](comparison/)
 
 ## ¿Qué es Istio?
 
-Istio es una plataforma Service Mesh de código abierto para conectar, proteger, controlar y observar microservicios. Gestiona la comunicación entre servicios en arquitecturas de microservicios complejas y proporciona control del tráfico, seguridad y observabilidad.
+Istio es una plataforma Service Mesh de código abierto para conectar, proteger, controlar y observar microservicios. Gestiona la comunicación entre servicios en arquitecturas complejas de microservicios y proporciona control de tráfico, seguridad y observabilidad.
 
 ### Concepto de Service Mesh
 
@@ -34,7 +46,7 @@ Un Service Mesh es una capa de infraestructura que gestiona la comunicación ent
 * **Observabilidad**: Métricas, logs, trazado distribuido
 * **Resiliencia**: Circuit Breaking, Retry, Timeout
 
-### Ejemplos prácticos de uso
+### Ejemplos de uso práctico
 
 <p align="center"><img src="https://istio.io/latest/docs/examples/bookinfo/noistio.svg" alt="Aplicación sin Istio"><br><em>Aplicación sin Istio</em></p>
 
@@ -44,7 +56,7 @@ Cuando se aplica Istio, se despliega automáticamente un Envoy Proxy como conten
 
 ## ¿Realmente necesitas un Service Mesh?
 
-Un Service Mesh es una herramienta potente, pero no es adecuada para todas las situaciones. Es necesario considerarlo cuidadosamente antes de adoptarlo.
+Un Service Mesh es una herramienta potente, pero no es adecuada para todas las situaciones. Se requiere una consideración cuidadosa antes de adoptarlo.
 
 ### Flujo de decisión
 
@@ -96,7 +108,7 @@ flowchart TD
 
 ### Cuándo se necesita un Service Mesh ✅
 
-#### 1. Entorno de microservicios complejo
+#### 1. Entorno complejo de microservicios
 
 ```mermaid
 flowchart LR
@@ -143,20 +155,20 @@ flowchart LR
 
 #### 2. Requisitos de seguridad Zero Trust
 
-**El Service Mesh proporciona**:
+**Service Mesh proporciona**:
 
 * Cifrado mTLS automático entre servicios
-* Gestión de identidad basada en SPIFFE
+* Gestión de Identity basada en SPIFFE
 * Políticas detalladas de autenticación/autorización
 * Comunicación cifrada garantizada
 
-**Difícil de lograr con alternativas**:
+**Difícil de lograr sin alternativas**:
 
 * Implementación de lógica de seguridad duplicada en cada servicio
 * Complejidad de la gestión manual de certificados
-* Políticas de seguridad incoherentes
+* Políticas de seguridad inconsistentes
 
-#### 3. Gestión avanzada del tráfico
+#### 3. Gestión de tráfico avanzada
 
 ```yaml
 # Canary Deployment (Traffic Distribution)
@@ -217,7 +229,7 @@ flowchart LR
     class Note note;
 ```
 
-**Utiliza en su lugar**:
+**Usa en su lugar**:
 
 * Kubernetes Ingress Controller (NGINX, Traefik)
 * Balanceador de carga simple
@@ -227,7 +239,7 @@ flowchart LR
 
 **La sobrecarga es mayor**:
 
-* La complejidad operativa del Service Mesh > los beneficios obtenidos
+* La complejidad operativa de Service Mesh > los beneficios obtenidos
 * 5-10 servicios se pueden gestionar manualmente
 * NetworkPolicy proporciona seguridad suficiente
 
@@ -252,14 +264,14 @@ spec:
 
 #### 3. Recursos operativos insuficientes
 
-**Requisitos operativos del Service Mesh**:
+**Requisitos operativos de Service Mesh**:
 
 * Experiencia en Istio/Envoy
-* Monitorización y gestión del Control Plane
+* Monitoreo y gestión del Control Plane
 * Gestión de actualizaciones y parches
 * Capacidad de solución de problemas (mayor complejidad de depuración)
 
-**Preparación del equipo necesaria**:
+**Preparación de equipo necesaria**:
 
 * Al menos 1-2 expertos en Service Mesh
 * Aprendizaje continuo y seguimiento de actualizaciones
@@ -267,7 +279,7 @@ spec:
 
 #### 4. Cuando el rendimiento es extremadamente crítico
 
-**Sobrecarga del Service Mesh**:
+**Sobrecarga de Service Mesh**:
 
 * Latencia: +1-3ms (P50), +5-10ms (P99)
 * CPU: +10-20% por pod
@@ -293,7 +305,7 @@ spec:
 
 ### Solución basada en CNI (Cilium)
 
-Cilium proporciona muchas características a **nivel de red** basadas en eBPF:
+Cilium proporciona muchas funciones en el **nivel de red** basadas en eBPF:
 
 ```mermaid
 flowchart TB
@@ -330,16 +342,16 @@ flowchart TB
 
 **Cuándo Cilium es más adecuado**:
 
-* Las políticas de red L3/L4 son el objetivo principal
-* El alto rendimiento es un requisito fundamental
-* Evitar la carga operativa del Service Mesh
+* Las políticas de red L3/L4 son el propósito principal
+* Alto rendimiento es un requisito fundamental
+* Evitar la carga operativa de Service Mesh
 * Solo se necesitan mTLS y observabilidad simples
 
 **Referencia**: [Documentación de Cilium](../../networking/cilium/)
 
-### Lista de verificación para la decisión
+### Lista de verificación de decisión
 
-Responde las siguientes preguntas antes de adoptarlo:
+Responde las siguientes preguntas antes de la adopción:
 
 **Arquitectura**:
 
@@ -353,7 +365,7 @@ Responde las siguientes preguntas antes de adoptarlo:
 * [ ] ¿Es obligatorio el cifrado mTLS entre servicios?
 * [ ] ¿Se necesita control de acceso detallado?
 
-**Gestión del tráfico**:
+**Gestión de tráfico**:
 
 * [ ] ¿Se necesitan despliegues Canary y pruebas A/B?
 * [ ] ¿Se necesitan reglas de enrutamiento avanzadas?
@@ -368,14 +380,14 @@ Responde las siguientes preguntas antes de adoptarlo:
 **Operaciones**:
 
 * [ ] ¿Tienes expertos en Service Mesh?
-* [ ] ¿Puedes manejar la complejidad operativa?
+* [ ] ¿Puedes gestionar la complejidad operativa?
 * [ ] ¿Puedes aceptar la sobrecarga de recursos?
 
 **Resultados**:
 
-* ✅ 10 o más seleccionadas: Service Mesh muy recomendado
-* 🟡 5-9 seleccionadas: Se necesita una evaluación cuidadosa; empieza a pequeña escala (se recomienda Ambient Mode)
-* ❌ 4 o menos seleccionadas: Considera soluciones alternativas (CNI, Ingress, nivel de aplicación)
+* ✅ 10 o más marcadas: Service Mesh muy recomendado
+* 🟡 5-9 marcadas: Se necesita una evaluación cuidadosa; comienza a pequeña escala (se recomienda Ambient Mode)
+* ❌ 4 o menos marcadas: Considera soluciones alternativas (CNI, Ingress, nivel de aplicación)
 
 ### Estrategia de adopción gradual
 
@@ -404,12 +416,12 @@ flowchart LR
 1. **Proyecto piloto** (1-2 namespaces)
 2. **Observabilidad primero** (métricas, logs, trazas)
 3. **Aplicar seguridad** (mTLS PERMISSIVE → STRICT)
-4. **Gestión del tráfico** (VirtualService, DestinationRule)
+4. **Gestión de tráfico** (VirtualService, DestinationRule)
 5. **Expansión en toda la empresa**
 
-### Características principales
+### Características clave
 
-1.  **Gestión del tráfico**
+1.  **Gestión de tráfico**
 
     <div align="center"><img src="https://istio.io/latest/docs/concepts/traffic-management/request-routing.svg" alt="Enrutamiento de tráfico" width="500"></div>
 
@@ -432,7 +444,7 @@ flowchart LR
     * Generación automática de métricas, logs y trazas
     * Integración con Prometheus, Grafana, Jaeger y Kiali
     * Visualización de la topología de servicios
-    * Monitorización de tráfico en tiempo real
+    * Monitoreo de tráfico en tiempo real
 4. **Resiliencia**
    * Patrón Circuit Breaker
    * Rate Limiting
@@ -507,14 +519,14 @@ flowchart TB
 
 **Data Plane**:
 
-* **Envoy Proxy**: Desplegado como sidecar en cada pod, intercepta y controla todo el tráfico de red
+* **Envoy Proxy**: Desplegado como sidecar en cada pod, interceptando y controlando todo el tráfico de red
 
-### Beneficios de utilizar Istio en Amazon EKS
+### Beneficios de usar Istio en Amazon EKS
 
 1. **Gestión sencilla de microservicios**
-   * Gestión del tráfico sin modificar el código de la aplicación
+   * Gestión de tráfico sin modificar el código de la aplicación
    * Aplicación coherente de políticas con configuración declarativa
-   * Utiliza Kubernetes Native API
+   * Usa Kubernetes Native API
 2. **Seguridad mejorada**
    * Cifrado automático entre servicios
    * Autenticación integrada con AWS IAM
@@ -534,16 +546,16 @@ flowchart TB
 
 Si eres nuevo en Istio, lee los documentos en el siguiente orden:
 
-1. [**Instalación y configuración inicial**](01-installation.md): Instala Istio en el clúster de EKS
+1. [**Instalación y configuración inicial**](01-installation.md): Instala Istio en un clúster de EKS
 2. [**Conceptos básicos**](02-basic-concepts.md): Comprende los conceptos principales de Istio
-3. [**Gestión del tráfico**](traffic-management/): Aprende sobre Gateway, VirtualService y DestinationRule
+3. [**Gestión de tráfico**](traffic-management/): Aprende Gateway, VirtualService, DestinationRule
 4. [**Seguridad**](security/): Configura mTLS, autenticación y autorización
 5. [**Observabilidad**](observability/): Recopila métricas, logs y trazas
-6. [**Prácticas recomendadas**](best-practices.md): Recomendaciones para entornos de producción
+6. [**Mejores prácticas**](best-practices.md): Recomendaciones para entornos de producción
 
 ### Ejemplos prácticos
 
-Cada sección incluye ejemplos de YAML funcionales. Todos los ejemplos están estructurados para poder copiarlos con un clic:
+Cada sección incluye ejemplos funcionales de YAML. Todos los ejemplos están estructurados para copiarse con un clic:
 
 ```yaml
 # Example VirtualService
@@ -564,15 +576,15 @@ spec:
 ### Referencias
 
 * [Documentación oficial de Istio](https://istio.io/latest/docs/)
-* [Istio en GitHub](https://github.com/istio/istio)
+* [Istio GitHub](https://github.com/istio/istio)
 * [AWS EKS Workshop - Istio](https://www.eksworkshop.com/intermediate/330_servicemesh_using_istio/)
 * [Comunidad de Istio](https://discuss.istio.io/)
 
 ### Cuestionarios
 
-Para evaluar lo que aprendiste en este capítulo, prueba los siguientes cuestionarios:
+Para comprobar lo que has aprendido en este capítulo, prueba los siguientes cuestionarios:
 
-* [Cuestionario de gestión del tráfico](../../quizzes/service-mesh/istio/traffic-management.md)
+* [Cuestionario de gestión de tráfico](../../quizzes/service-mesh/istio/traffic-management.md)
 * [Cuestionario de seguridad](../../quizzes/service-mesh/istio/security.md)
 * [Cuestionario de observabilidad](../../quizzes/service-mesh/istio/observability.md)
 * [Cuestionario de resiliencia](../../quizzes/service-mesh/istio/resilience.md)

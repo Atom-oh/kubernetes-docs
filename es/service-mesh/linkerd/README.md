@@ -1,20 +1,24 @@
 # Linkerd
 
-> **Versiones compatibles**: Linkerd 2.16+ **Última actualización**: February 22, 2026
+> **Versiones compatibles**: Linkerd 2.16+ **Última actualización**: July 21, 2026
+
+### Actualización de julio de 2026: edge-26.7.1 — No se permiten solicitudes a puertos de Service no definidos
+
+La versión edge-26.7.1, publicada el 16 de julio de 2026, incluye una corrección **que cambia el comportamiento (incompatible)**. Anteriormente, si se definía un ServiceProfile para el Service de destino, aún se permitían solicitudes a puertos no definidos en el Service. Ahora, el controlador de destino devuelve un `DestinationProfile` vacío para las solicitudes `GetProfile` en puertos no definidos en el Service, lo que hace que el proxy recurra a la API de políticas de cliente, que devuelve correctamente un filtro Forbidden y rechaza la conexión. Si alguna carga de trabajo se comunica a través de puertos no declarados en sus recursos Service, depure las definiciones de puertos antes de actualizar. Consulte las [notas de la versión](https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1) para obtener más detalles.
 
 ## Descripción general
 
-Linkerd es un proyecto graduado de CNCF (Cloud Native Computing Foundation) y una solución ligera de service mesh. Desarrollado originalmente por Buoyant en 2016, fue el proyecto que acuñó por primera vez el término "service mesh". Los valores fundamentales de Linkerd son la simplicidad, la seguridad por defecto y una sobrecarga mínima de recursos, lo que hace que la comunicación de servicio a servicio en entornos Kubernetes sea segura y confiable.
+Linkerd es un proyecto graduado de CNCF (Cloud Native Computing Foundation) y una solución ligera de service mesh. Desarrollado originalmente por Buoyant en 2016, fue el proyecto que acuñó por primera vez el término "service mesh". Los valores fundamentales de Linkerd son la simplicidad, la seguridad predeterminada y una sobrecarga mínima de recursos, lo que hace que la comunicación entre servicios en entornos Kubernetes sea segura y confiable.
 
-### Propuestas de valor principales
+### Propuestas de valor fundamentales
 
 | Valor                   | Descripción                                                              |
 | ----------------------- | ------------------------------------------------------------------------ |
-| **Simplicidad**         | Valores predeterminados adecuados que funcionan de inmediato sin configuración compleja |
-| **Seguridad por defecto** | Cifrado mTLS automático sin ninguna configuración                      |
-| **Ligero**              | Micro-proxy escrito en Rust con uso mínimo de recursos (\~10MB de memoria)  |
-| **Rendimiento rápido**  | Menos de 1ms de sobrecarga de latencia p99                                       |
-| **Facilidad operativa** | Actualizaciones simples y herramientas de depuración intuitivas                            |
+| **Simplicidad**         | Valores predeterminados razonables que funcionan de inmediato sin configuración compleja |
+| **Seguridad predeterminada** | Cifrado mTLS automático sin ninguna configuración                      |
+| **Ligero**              | Micro-proxy escrito en Rust con uso mínimo de recursos (~10MB de memoria)  |
+| **Alto rendimiento**    | Menos de 1ms de sobrecarga de latencia p99                                       |
+| **Facilidad operativa** | Actualizaciones sencillas y herramientas de depuración intuitivas                            |
 
 ## Descripción general de la arquitectura de Linkerd
 
@@ -52,21 +56,21 @@ graph TB
     V --> BP
 ```
 
-## Comparación de Service Mesh
+## Comparación de service mesh
 
 Compare Linkerd, Istio y Cilium Service Mesh para comprender las características de cada solución.
 
 | Característica                | Linkerd               | Istio                  | Cilium Service Mesh     |
 | ---------------------- | --------------------- | ---------------------- | ----------------------- |
-| **Proxy**              | linkerd2-proxy (Rust) | Envoy (C++)            | eBPF + Envoy (optional) |
-| **Uso de recursos**     | Muy bajo (\~10MB)     | Alto (\~50-100MB)      | Bajo (modo eBPF)         |
+| **Proxy**              | linkerd2-proxy (Rust) | Envoy (C++)            | eBPF + Envoy (opcional) |
+| **Uso de recursos**     | Muy bajo (~10MB)     | Alto (~50-100MB)      | Bajo (modo eBPF)         |
 | **Sobrecarga de latencia**   | <1ms p99              | 2-5ms p99              | <1ms (modo eBPF)        |
 | **Complejidad**         | Baja                   | Alta                   | Media                  |
 | **mTLS**               | Automático (predeterminado)   | Requiere configuración | Requiere configuración  |
 | **Gestión de tráfico** | Básica (SMI)           | Muy completa              | Básica                   |
 | **Observabilidad**      | Buena (integrada)       | Excelente              | Buena (Hubble)           |
-| **Multi-cluster**      | Service Mirroring     | Configuración compleja          | ClusterMesh             |
-| **Integración de CNI**    | Independiente              | Independiente               | Nativa                  |
+| **Multicluster**      | Reflejo de Service     | Configuración compleja          | ClusterMesh             |
+| **Integración CNI**    | Independiente              | Independiente              | Nativa                  |
 | **Estado de CNCF**        | Graduado             | Graduado              | Graduado               |
 | **Curva de aprendizaje**     | Suave                | Pronunciada                  | Media                  |
 | **Comunidad**          | Activa                | Muy activa            | Activa                  |
@@ -81,14 +85,14 @@ Compare Linkerd, Istio y Cilium Service Mesh para comprender las característica
    * Cuando la adopción rápida y una curva de aprendizaje baja son prioridades
 2. **Cuando la eficiencia de recursos es crítica**
    * Entornos que ejecutan muchos Pods por nodo
-   * Cuando se necesita minimizar la sobrecarga del sidecar
+   * Cuando se debe minimizar la sobrecarga del sidecar
    * Aplicaciones sensibles a la latencia
-3. **Cuando la seguridad debe ser el valor predeterminado**
+3. **Cuando la seguridad debe ser predeterminada**
    * Cuando se necesita mTLS automático sin configuración
    * Implementación de red de confianza cero
    * Requisitos de cifrado para cumplimiento normativo
 4. **Cuando se requiere simplicidad operativa**
-   * Preferencia por procesos de actualización simples
+   * Preferencia por procesos de actualización sencillos
    * CRDs y configuración mínimos
    * Herramientas de CLI intuitivas
 
@@ -101,8 +105,8 @@ Compare Linkerd, Istio y Cilium Service Mesh para comprender las característica
 2. **Integración de cargas de trabajo de VM**
    * Integración con cargas de trabajo fuera de Kubernetes
    * Entornos mixtos de VM y contenedores
-3. **Entornos multi-protocolo a gran escala**
-   * Necesidad de compatibilidad con varios protocolos (Kafka, MongoDB, etc.)
+3. **Entornos multiprotocolo a gran escala**
+   * Necesidad de soporte para diversos protocolos (Kafka, MongoDB, etc.)
    * Requisitos complejos de extensiones Wasm
 
 ## Estructura de la documentación
@@ -111,13 +115,13 @@ Esta sección cubre las principales características y métodos operativos de Li
 
 | Documento                                       | Descripción                                                                         |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------- |
-| [Instalación y configuración](01-installation.md)   | Instalación de CLI, instalación de control plane, configuración de HA, extensiones          |
-| [Arquitectura](02-architecture.md)             | Detalles de control plane, data plane y jerarquía de certificados                            |
-| [Gestión de tráfico](03-traffic-management.md) | ServiceProfile, TrafficSplit, reintentos, tiempos de espera, deployments canary                 |
+| [Instalación y configuración](01-installation.md)   | Instalación de CLI, instalación del control plane, configuración de HA, extensiones          |
+| [Arquitectura](02-architecture.md)             | Detalles del control plane, data plane y jerarquía de certificados                            |
+| [Gestión de tráfico](03-traffic-management.md) | ServiceProfile, TrafficSplit, reintentos, tiempos de espera, despliegues canary                 |
 | [Seguridad](04-security.md)                     | mTLS, políticas de autorización, gestión de certificados, integración de CA externa       |
-| [Observabilidad](05-observability.md)           | Métricas, dashboards, herramientas de CLI, integración con Prometheus/Grafana, trazado distribuido |
-| [Multi-cluster](06-multi-cluster.md)           | Service mirroring, vinculación de clústeres, failover                                        |
-| [Prácticas recomendadas](07-best-practices.md)         | Lista de verificación de producción, ajuste de rendimiento, solución de problemas                           |
+| [Observabilidad](05-observability.md)           | Métricas, dashboards, herramientas de CLI, integración de Prometheus/Grafana, rastreo distribuido |
+| [Multicluster](06-multi-cluster.md)           | Reflejo de Service, vinculación de clústeres, failover                                        |
+| [Mejores prácticas](07-best-practices.md)         | Lista de verificación de producción, ajuste de rendimiento, resolución de problemas                           |
 
 ## Inicio rápido
 
@@ -152,7 +156,7 @@ linkerd install | kubectl apply -f -
 linkerd check
 ```
 
-### 4. Agregar la aplicación a la malla
+### 4. Agregar la aplicación al mesh
 
 ```bash
 # Enable automatic injection for namespace
@@ -191,14 +195,14 @@ linkerd viz stat deploy -n my-app
 linkerd viz tap deploy/my-app -n my-app
 ```
 
-## Conceptos principales
+## Conceptos fundamentales
 
-### Proxy de Data Plane
+### Proxy de data plane
 
 Linkerd inyecta un contenedor sidecar llamado `linkerd-proxy` en cada Pod. Este proxy:
 
-* Está escrito en Rust para la seguridad de la memoria y un alto rendimiento
-* Utiliza solo \~10MB de memoria
+* Está escrito en Rust para seguridad de memoria y alto rendimiento
+* Usa solo ~10MB de memoria
 * Añade menos de 1ms de latencia
 * Gestiona todo el tráfico entrante/saliente
 * Aplica automáticamente el cifrado mTLS
@@ -213,17 +217,17 @@ El componente Destination supervisa los servicios de Kubernetes y proporciona in
 
 ### mTLS automático
 
-Linkerd cifra automáticamente todo el tráfico de la malla sin configuración:
+Linkerd cifra automáticamente todo el tráfico del mesh sin configuración:
 
 1. El componente Identity emite certificados a cada proxy
-2. Autenticación Mutual TLS entre proxies
+2. Autenticación TLS mutua entre proxies
 3. Renovación automática de certificados (predeterminado de 24 horas)
 
 ## Próximos pasos
 
 1. [**Instalación y configuración**](01-installation.md): Guía detallada para instalar Linkerd en su clúster
-2. [**Arquitectura**](02-architecture.md): Comprenda la estructura interna de Linkerd
-3. [**Cuestionarios**](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/service-mesh/linkerd/README.md): Evalúe sus conocimientos
+2. [**Arquitectura**](02-architecture.md): Comprensión de la estructura interna de Linkerd
+3. [**Cuestionarios**](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/service-mesh/linkerd/README.md): Pruebe sus conocimientos
 
 ## Referencias
 
