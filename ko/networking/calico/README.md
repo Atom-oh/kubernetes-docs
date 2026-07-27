@@ -1,11 +1,15 @@
 # Calico 딥다이브: 엔터프라이즈급 Kubernetes 네트워킹
 
 > **지원 버전**: Calico v3.29+ / Kubernetes 1.28+
-> **마지막 업데이트**: 2026년 2월 23일
+> **마지막 업데이트**: 2026년 7월 27일
 
 ## 개요
 
 Calico는 Kubernetes, 가상 머신, 베어메탈 워크로드를 위한 업계 표준 오픈소스 네트워킹 및 네트워크 보안 솔루션입니다. Project Calico에서 시작하여 현재 Tigera에서 관리하며, 전 세계적으로 가장 널리 배포된 Kubernetes CNI 중 하나로 **Fortune 100대 기업의 80% 이상**이 프로덕션 환경에서 사용하고 있습니다.
+
+### 2026년 7월 업데이트: Calico for VMs on Kubernetes
+
+2026년 7월 21일, Tigera가 가상 머신과 컨테이너를 하나의 Kubernetes 네이티브 컨트롤 플레인에서 네트워킹·보안까지 통합 관리하는 eBPF 기반 플랫폼 **Calico for VMs on Kubernetes**를 출시했습니다. VMware/NSX 마이그레이션을 겨냥한 기능으로, Kubernetes로 이전한 VM이 기존 IP 주소를 유지하고, L2 브리지 확장으로 기존 VLAN에 그대로 연결되며, 옆의 컨테이너와 동일한 Calico 네트워크 정책·마이크로세그멘테이션(정책 티어, staged policy 포함)·라우팅·로드 밸런싱·플로우 가시성을 이어받습니다. 자세한 내용은 [보도자료](https://www.storagenewsletter.com/2026/07/21/tigera-launches-calico-unified-platform-3-23-the-definitive-vmware-migration-solution-with-one-network-and-one-security-model-for-every-vm-and-container-on-kubernetes/)를 참고하세요.
 
 ### Calico를 선택해야 하는 이유
 

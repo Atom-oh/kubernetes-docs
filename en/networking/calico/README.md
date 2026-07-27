@@ -1,7 +1,7 @@
 # Calico Deep Dive: Enterprise-Grade Kubernetes Networking
 
 > **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+
-> **Last Updated**: February 22, 2026
+> **Last Updated**: July 27, 2026
 
 ## Overview
 
@@ -10,6 +10,10 @@ This section provides a comprehensive understanding of Calico's core concepts an
 ## What is Calico?
 
 Calico is an open-source networking and network security solution for containers, virtual machines, and native host-based workloads. Originally developed by Tigera, Calico has become one of the most widely deployed Kubernetes CNI plugins, trusted by enterprises worldwide for its stability, performance, and robust network policy capabilities.
+
+### July 2026 Update: Calico for VMs on Kubernetes
+
+On July 21, 2026, Tigera launched **Calico for VMs on Kubernetes**, an eBPF-powered platform that delivers networking and network security for both virtual machines and containers on a single Kubernetes-native control plane. It targets VMware/NSX migrations: a VM moved onto Kubernetes keeps its IP address, can stay on an existing VLAN via L2 bridge extension, and inherits the same Calico network policy, microsegmentation (including policy tiers and staged policy), routing, load balancing, and flow visibility as the containers next to it. See the [press release](https://www.storagenewsletter.com/2026/07/21/tigera-launches-calico-unified-platform-3-23-the-definitive-vmware-migration-solution-with-one-network-and-one-security-model-for-every-vm-and-container-on-kubernetes/) for details.
 
 ### Core Advantages
 

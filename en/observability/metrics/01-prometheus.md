@@ -1,7 +1,7 @@
 # Prometheus
 
 > **Supported Versions**: Prometheus 2.x / 3.x
-> **Last Updated**: July 21, 2026
+> **Last Updated**: July 27, 2026
 
 ## Table of Contents
 
@@ -748,6 +748,10 @@ spec:
 ```
 
 ## Remote Write and AMP Integration
+
+### July 2026 Update: AMP Workspace Limit Increases
+
+On July 21, 2026, AWS announced that Amazon Managed Service for Prometheus now supports up to 1.5 billion active metric time series and up to 200,000 total recording and alerting rules per workspace. Limits are raised via a service quota increase request in AWS Support Center or AWS Service Quotas. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/) for details.
 
 ### Amazon Managed Prometheus (AMP) Integration
 
