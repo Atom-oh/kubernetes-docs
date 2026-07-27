@@ -1,13 +1,13 @@
 # Karpenter
 
 > **支持的版本**: Karpenter 1.6 - 1.14, Kubernetes 1.29+ (截至 v1.14)
-> **最后更新**: July 21, 2026
+> **最后更新**: July 27, 2026
 
 ## 目录
 - [简介](#introduction)
 - [架构](#architecture)
-- [安装和配置](#installation-and-configuration)
-- [预配器](#provisioner)
+- [安装与配置](#installation-and-configuration)
+- [预配置器](#provisioner)
 - [节点模板](#node-templates)
 - [中断处理](#interruption-handling)
 - [集成](#integration)
@@ -18,35 +18,35 @@
 
 ## 简介
 
-Karpenter 是一个开源集群自动扩缩器，可为 Kubernetes 集群自动进行节点预配。Karpenter 会根据工作负载要求动态预配适当的计算资源，以确保应用程序可用性并优化集群效率。
+Karpenter 是一个开源集群自动扩缩器，可为 Kubernetes 集群自动进行节点预配置。Karpenter 会根据工作负载需求动态预配置合适的计算资源，以确保应用程序可用性并优化集群效率。
 
 ### Karpenter 的主要优势
 
-1. **快速扩缩**：根据工作负载要求在数秒内完成节点预配
+1. **快速扩缩**：根据工作负载需求在数秒内完成节点预配置
 2. **成本优化**：为工作负载选择最合适的实例类型
-3. **配置简单**：通过声明式 API 轻松配置
-4. **以工作负载为中心的设计**：基于 Pod 要求进行节点预配
-5. **云集成**：利用云提供商功能
+3. **简单配置**：通过声明式 API 轻松配置
+4. **以工作负载为中心的设计**：基于 Pod 需求进行节点预配置
+5. **云集成**：利用云提供商能力
 6. **高效装箱**：优化资源利用率
-7. **灵活的节点管理**：节点生命周期管理与集成式中断处理
+7. **灵活的节点管理**：节点生命周期管理和集成式中断处理
 
 ### 与现有自动扩缩器的比较
 
-| 特性 | Karpenter | Cluster Autoscaler | 云提供商托管节点组 |
+| 功能 | Karpenter | Cluster Autoscaler | 云提供商托管节点组 |
 |---------|-----------|-------------------|---------------------------|
-| 扩缩速度 | 非常快（数秒） | 中等（数分钟） | 慢（数分钟） |
+| 扩缩速度 | 非常快（秒） | 中等（分钟） | 慢（分钟） |
 | 实例类型选择 | 动态 | 基于节点组 | 基于节点组 |
-| 装箱效率 | 高 | 中等 | 低 |
-| 配置复杂度 | 低 | 中等 | 低 |
+| 装箱效率 | 高 | 中 | 低 |
+| 配置复杂度 | 低 | 中 | 低 |
 | 云集成 | 原生 | 有限 | 原生 |
 | 节点组管理 | 不需要 | 需要 | 需要 |
-| 中断处理 | 集成 | 有限 | 有限 |
+| 中断处理 | 集成式 | 有限 | 有限 |
 
-> **注意**：如果您使用传统的 EKS 托管节点组和 Cluster Autoscaler 而不是 Karpenter，EC2 Auto Scaling Warm Pools（自 2026 年 4 月起可用）可让您保留已初始化的实例处于待命状态，实现无冷启动扩容。您可以选择 Stopped 状态（成本更低）或 Running 状态（转换更快），它会自动与 Cluster Autoscaler 集成——但这是托管节点组功能，并非 Karpenter 使用的功能。
+> **注意**：如果不使用 Karpenter 而坚持采用传统 EKS Managed Node Groups 和 Cluster Autoscaler，EC2 Auto Scaling Warm Pools（自 2026 年 4 月起可用）可让您保留已预初始化的实例作为待命实例，以实现无冷启动扩容。您可选择 Stopped 状态（成本更低）或 Running 状态（转换更快），并且它会自动与 Cluster Autoscaler 集成——但这是 Managed Node Group 的功能，而非 Karpenter 使用的功能。
 
 ## 架构
 
-Karpenter 作为 Kubernetes controller 运行，检测不可调度的 Pod 并预配适当的节点。
+Karpenter 作为 Kubernetes controller 运行，检测不可调度的 Pod 并预配置合适的节点。
 
 ```mermaid
 flowchart TD
@@ -103,7 +103,7 @@ flowchart TD
     class G,H awsService
 ```
 
-### Karpenter 工作流程
+### Karpenter 工作流
 
 下图展示了 Karpenter 如何在 EKS 集群中工作：
 
@@ -129,24 +129,24 @@ sequenceDiagram
     KA->>P: Schedule pod
 ```
 
-### 核心组件
+### 关键组件
 
-1. **Karpenter Controller**：检测不可调度的 Pod 并管理节点预配
+1. **Karpenter Controller**：检测不可调度的 Pod 并管理节点预配置
 2. **Karpenter Webhook**：验证 Karpenter 资源
-3. **Provisioner CRD**：定义节点预配策略
-4. **NodeTemplate CRD**：定义要预配的节点配置
+3. **Provisioner CRD**：定义节点预配置策略
+4. **NodeTemplate CRD**：定义要预配置节点的配置
 5. **云提供商集成**：与云提供商 API 集成以管理计算资源
 
 ### 工作原理
 
 1. Karpenter Controller 检测不可调度的 Pod
-2. 分析 Pod 要求（资源、节点选择器、容忍度等）
-3. 根据 Provisioner 和节点模板配置确定适当的节点类型
-4. 调用云提供商 API 预配节点
+2. 分析 Pod 需求（资源、节点选择器、容忍等）
+3. 根据 Provisioner 和节点模板配置确定合适的节点类型
+4. 调用云提供商 API 预配置节点
 5. 节点加入集群后调度 Pod
-6. 当不再需要节点时，通过集成式中断处理移除节点
+6. 当不再需要节点时，通过集成式中断处理将其移除
 
-## 安装和配置
+## 安装与配置
 
 ### 前提条件
 
@@ -268,7 +268,7 @@ spec:
 
 ## NodePool
 
-NodePool 是一种 Kubernetes 自定义资源，用于定义 Karpenter 如何预配节点。它取代了之前的 Provisioner。
+NodePool 是一个 Kubernetes 自定义资源，用于定义 Karpenter 如何预配置节点。它取代了之前的 Provisioner。
 
 ### 基本 NodePool 配置
 
@@ -330,9 +330,9 @@ spec:
           effect: NoSchedule
 ```
 
-### 要求配置
+### Requirements 配置
 
-要求定义 Karpenter 将预配的节点特征：
+Requirements 定义 Karpenter 将预配置节点的特征：
 
 ```yaml
 template:
@@ -364,9 +364,9 @@ template:
         values: ["linux"]
 ```
 
-### 限制配置
+### Limits 配置
 
-限制定义 Karpenter 可以预配的最大资源量：
+Limits 定义 Karpenter 可预配置的最大资源量：
 
 ```yaml
 limits:
@@ -377,7 +377,7 @@ limits:
 
 ### Dynamic Resource Allocation (DRA) 支持（v1.13）
 
-从 Karpenter v1.13（于 2026 年 6 月发布）开始，Karpenter 支持基于 Kubernetes Dynamic Resource Allocation (DRA) 的设备分配跟踪。Karpenter 现在可以识别基于声明的资源，例如 GPU 和专用加速器，并将其纳入预配决策；这不仅能针对 `nvidia.com/gpu` 等扩展资源进行准确扩缩，还支持使用 DRA `ResourceClaim`/`DeviceClass` 对象的 AI/HPC 工作负载。基于 DRA 的跟踪需要 Kubernetes 1.29 或更高版本。
+从 Karpenter v1.13（于 2026 年 6 月发布）开始，Karpenter 支持基于 Kubernetes Dynamic Resource Allocation (DRA) 的设备分配跟踪。Karpenter 现在可以识别基于声明的资源，例如 GPU 和专用加速器，并将其纳入预配置决策。这不仅能够对 `nvidia.com/gpu` 等扩展资源进行准确扩缩，还可为使用 DRA `ResourceClaim`/`DeviceClass` 对象的 AI/HPC 工作负载准确扩缩。基于 DRA 的跟踪需要 Kubernetes 1.29 或更高版本。
 
 ### 节点过期配置
 
@@ -397,24 +397,26 @@ disruption:
 
 ### 通过 NodeReadinessController 自动忽略初始化 Taint（v1.13）
 
-Karpenter v1.13 新增的 NodeReadinessController 会自动忽略与就绪状态相关的 Taint（例如节点初始化期间应用的 Taint），以减少不必要的调度阻塞。它缓解了以前需要通过 `startupTaints` 手动处理的初始化延迟问题，从而在新节点变为 Ready 的过程中提高调度稳定性和预配可靠性。
+Karpenter v1.13 新增的 NodeReadinessController 会自动忽略与就绪状态相关的 Taint（例如节点初始化时应用的 Taint），从而减少不必要的调度阻塞。这缓解了以前需要通过 `startupTaints` 手动处理的初始化延迟问题，改善了新节点进入 Ready 状态期间的调度稳定性和预配置可靠性。
 
 ### 2026 年 7 月更新：v1.14 发布
 
-于 2026 年 7 月 11 日发布的 Karpenter v1.14 带来了：
+Karpenter v1.14 于 2026 年 7 月 11 日发布，带来了：
 
-- **CapacityBuffers API 支持**：以声明方式预留富余容量，吸收突发的扩容峰值
-- **预览版实例类型支持**：现在可选择尚未全面可用的实例类型进行预配
+- **CapacityBuffers API 支持**：以声明方式预留余量容量，以吸收突发的扩容峰值
+- **预览实例类型支持**：现在可选择尚未全面上市的实例类型进行预配置
 - **Nitro Enclaves 支持**：可以在启动模板中设置 `EnclaveOptions.Enabled`，适用于机密计算工作负载
-- Bug 修复：将辅助 ENI 上的主 IP 纳入统计、确保 Zonal Shift 缓存已填充、将 AWS SDK 客户端超时接入 operator 配置等
+- 错误修复：包括计算辅助 ENI 上的主 IP、确保 Zonal Shift 缓存已填充、将 AWS SDK 客户端超时连接至 operator 配置等
 
 有关详细信息，请参阅 [v1.14.0 发布说明](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0)。
 
-随后，在 2026 年 7 月 17 日，所有仍在维护的次要版本线都发布了一批协调的补丁版本（v1.3.8 至 v1.11.3），每个版本都提升了上游 `sigs.k8s.io/karpenter` 版本。如果您使用的是较旧的版本线，建议更新至该版本线的最新补丁（[发布列表](https://github.com/aws/karpenter-provider-aws/releases)）。
+随后，在 2026 年 7 月 17 日，所有仍在维护的次要版本线都发布了一批协调的补丁版本（v1.3.8 至 v1.11.3），每个版本都提升了上游 `sigs.k8s.io/karpenter` 版本。如果您使用的是较旧的版本线，建议更新至该版本线的最新补丁版本（[发布列表](https://github.com/aws/karpenter-provider-aws/releases)）。
+
+2026 年 7 月 22 日，AWS 还宣布 Karpenter（和 EKS Auto Mode）节点池支持 Elastic Fabric Adapter (EFA) 网络设备配置和 EC2 placement group。可将支持 EFA 的实例上的网络接口设置为仅 EFA（不消耗 VPC IP 地址）或标准 ENI，并可直接在节点池配置中指定 cluster/spread/partition placement 策略——这对于分布式训练和推理工作负载非常有用。请参阅[公告](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/)。
 
 ## 节点类
 
-节点类定义 Karpenter 预配的节点配置。在 AWS 上，它使用 EC2NodeClass CRD。
+节点类定义 Karpenter 预配置的节点的配置。在 AWS 上，它使用 EC2NodeClass CRD。
 
 ### AWS EC2NodeClass 配置
 
@@ -481,7 +483,7 @@ securityGroupSelector:
 
 ### AMI 配置
 
-Karpenter 支持各种 AMI 系列：
+Karpenter 支持多种 AMI 系列：
 
 ```yaml
 # Amazon Linux 2
@@ -599,15 +601,15 @@ flowchart LR
 
 ## 中断处理
 
-Karpenter 会自动处理节点中断，以确保工作负载可用性。
+Karpenter 会自动处理中断节点，以确保工作负载可用性。
 
 ### 集成式中断处理
 
-Karpenter 可处理以下中断事件：
+Karpenter 处理以下中断事件：
 
 1. **Spot 实例中断**：处理 AWS Spot 实例中断通知
 2. **节点过期**：基于 TTL 的节点替换
-3. **缩容**：不再需要节点时移除节点
+3. **缩容**：当不再需要节点时将其移除
 4. **节点整合**：整合为更高效的节点配置
 
 ### 中断处理配置
@@ -627,9 +629,9 @@ spec:
     expireAfter: 720h  # 30 days
 ```
 
-### 腾空配置
+### 驱逐配置
 
-Karpenter 会在移除节点前安全地腾空 Pod：
+Karpenter 会在移除节点之前安全地驱逐 Pod：
 
 ```yaml
 apiVersion: v1
@@ -655,7 +657,7 @@ data:
 
 ### PDB (PodDisruptionBudget) 集成
 
-Karpenter 会遵守 PDB，以确保应用程序可用性：
+Karpenter 遵守 PDB 以确保应用程序可用性：
 
 ```yaml
 apiVersion: policy/v1
@@ -675,9 +677,9 @@ Karpenter 可与各种 Kubernetes 和云服务集成。
 
 ### Kubernetes 集成
 
-#### 1. Pod 拓扑分布约束
+#### 1. Pod Topology Spread Constraints
 
-Karpenter 在预配节点时会考虑 Pod 拓扑分布约束：
+Karpenter 在预配置节点时会考虑 Pod Topology Spread Constraints：
 
 ```yaml
 apiVersion: apps/v1
@@ -697,9 +699,9 @@ spec:
               app: web-server
 ```
 
-#### 2. Pod 亲和性/反亲和性
+#### 2. Pod Affinity/Anti-Affinity
 
-Karpenter 会考虑 Pod 亲和性和反亲和性规则：
+Karpenter 会考虑 Pod Affinity 和 Anti-Affinity 规则：
 
 ```yaml
 apiVersion: apps/v1
@@ -724,7 +726,7 @@ spec:
 
 #### 3. Taint 和 Toleration
 
-Karpenter 在预配节点时会考虑 Taint 和 Toleration：
+Karpenter 在预配置节点时会考虑 Taint 和 Toleration：
 
 ```yaml
 apiVersion: karpenter.sh/v1alpha5
@@ -816,7 +818,7 @@ spec:
 ```
 ## 与 Amazon EKS 集成
 
-Karpenter 可与 Amazon EKS 无缝集成，以提供集群自动扩缩功能。
+Karpenter 与 Amazon EKS 无缝集成，可提供集群自动扩缩。
 
 ```mermaid
 flowchart TD
@@ -1003,9 +1005,9 @@ helm install karpenter karpenter/karpenter \
   --set aws.defaultInstanceProfile=KarpenterNodeInstanceProfile-${CLUSTER_NAME}
 ```
 
-### 与 EKS 托管节点组配合使用
+### 与 EKS Managed Node Groups 一起使用
 
-Karpenter 可以与 EKS 托管节点组一同使用：
+Karpenter 可以与 EKS Managed Node Groups 一起使用：
 
 ```yaml
 # Provisioner for EKS Managed Node Groups
@@ -1044,7 +1046,7 @@ spec:
     karpenter.sh/discovery: "${CLUSTER_NAME}"
 ```
 
-### 与 EKS Fargate 配合使用
+### 与 EKS Fargate 一起使用
 
 Karpenter 可以与 EKS Fargate 一起使用，以配置混合集群：
 
@@ -1091,13 +1093,13 @@ spec:
 
 ### AZ 故障响应：Amazon ARC Zonal Shift 集成（2026 年 5 月）
 
-Karpenter 支持来自 Amazon ARC (Application Recovery Controller) 的 Zonal Shift。当可用区 (AZ) 发生故障时，Karpenter 会自动停止在该 AZ 中预配新节点，并将工作负载调度到健康的 AZ。也支持 Zonal Autoshift，即 AWS 自动检测 AZ 运行状况并处理流量转移和恢复。
+Karpenter 支持来自 Amazon ARC (Application Recovery Controller) 的 Zonal Shift。当可用区 (AZ) 发生故障时，Karpenter 会自动停止在该 AZ 中预配置新节点，并将工作负载调度到正常的 AZ。还支持 Zonal Autoshift，即 AWS 自动检测 AZ 运行状况并处理流量转移和恢复。
 
-检测到故障时，Karpenter 还会自动暂停自愿中断（整合、漂移处理等），从而避免在故障期间不必要的节点替换进一步破坏集群稳定性。这会直接使用您现有的 EKS ARC 资源——无需自定义资源——并通过 `ENABLE_ZONAL_SHIFT` 选项启用。
+检测到故障时，Karpenter 还会自动暂停自愿中断（整合、drift 处理等），以避免在故障期间不必要的节点替换进一步破坏集群稳定性。这会直接使用现有的 EKS ARC 资源——不需要自定义资源——并通过 `ENABLE_ZONAL_SHIFT` 选项启用。
 
 ### EKS 成本优化
 
-您可以使用 Karpenter 优化 EKS 集群成本：
+您可以使用 Karpenter 为 EKS 集群优化成本：
 
 ```mermaid
 flowchart TD
@@ -1272,7 +1274,7 @@ flowchart TD
     classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
     classDef category fill:#9C27B0,stroke:#333,stroke-width:1px,color:white;
     classDef performance fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
-    classDef cost fill:#FF9800,stroke:#333,stroke-width:1px,color:white;
+    classDef cost fill:#FF9800,stroke:#333,stroke-width:1px,color:black;
     classDef availability fill:#2196F3,stroke:#333,stroke-width:1px,color:white;
     classDef security fill:#F44336,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
@@ -1287,9 +1289,9 @@ flowchart TD
 
 ### 性能优化
 
-1. **选择适当的实例类型**：选择适合工作负载的实例类型
-2. **允许多种实例类型**：允许使用多种实例类型，以实现可用性和成本优化
-3. **设置适当的 TTL**：设置与工作负载模式相匹配的 TTL
+1. **选择合适的实例类型**：选择适合您工作负载的实例类型
+2. **允许多种实例类型**：允许多种实例类型，以提高可用性并优化成本
+3. **设置合适的 TTL**：设置与工作负载模式匹配的 TTL
 4. **启用节点整合**：启用节点整合以优化资源利用率
 
 ```yaml
@@ -1324,9 +1326,9 @@ spec:
 ### 成本优化
 
 1. **使用 Spot 实例**：使用 Spot 实例节省成本
-2. **选择适当的实例规格**：选择适合工作负载的实例规格
-3. **利用零扩缩**：在没有活动时将节点数减少到 0
-4. **设置节点过期时间**：通过定期替换节点来利用最新的实例类型
+2. **选择合适的实例大小**：选择适合您工作负载的实例大小
+3. **使用零扩缩**：没有活动时将节点数减少到 0
+4. **设置节点过期**：通过定期替换节点利用最新实例类型
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1356,8 +1358,8 @@ spec:
 ### 提高可用性
 
 1. **使用多个可用区**：跨多个可用区部署节点
-2. **混用按需和 Spot 实例**：平衡可用性和成本
-3. **设置适当的 PDB**：确保应用程序可用性
+2. **混合按需实例和 Spot 实例**：平衡可用性和成本
+3. **设置合适的 PDB**：确保应用程序可用性
 4. **优化中断处理**：在节点中断期间确保工作负载可用性
 
 ```yaml
@@ -1394,9 +1396,9 @@ spec:
 
 ### 常见问题
 
-#### 1. 节点预配失败
+#### 1. 节点预配置失败
 
-**症状**：Pod 保持 Pending 状态，且未预配节点
+**症状**：Pod 保持 Pending 状态，且节点未被预配置
 
 **解决方案**：
 - 检查 Karpenter 日志
@@ -1421,7 +1423,7 @@ kubectl describe pod <name>
 **解决方案**：
 - 检查 TTL 设置
 - 验证节点整合设置
-- 检查 Pod 腾空状态
+- 检查 Pod 驱逐状态
 
 ```bash
 # Check node status
@@ -1436,10 +1438,10 @@ kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller | gr
 
 #### 3. 实例类型选择问题
 
-**症状**：预配了意外的实例类型
+**症状**：预配置了意外的实例类型
 
 **解决方案**：
-- 检查 Provisioner 要求
+- 检查 Provisioner Requirements
 - 验证 Pod 资源请求
 - 检查可用区约束
 
@@ -1478,11 +1480,11 @@ kubectl patch configmap -n karpenter karpenter-global-settings --type merge -p '
 
 ## 结论
 
-Karpenter 是一款强大的自动扩缩器，可为 Kubernetes 集群自动进行节点预配。它会根据工作负载要求动态预配适当的计算资源，以确保应用程序可用性并优化集群效率。
+Karpenter 是一个强大的自动扩缩器，可为 Kubernetes 集群自动进行节点预配置。它会根据工作负载需求动态预配置合适的计算资源，以确保应用程序可用性并优化集群效率。
 
-本文档介绍了 Karpenter 的基本概念、安装方法、Provisioner 和节点模板配置、中断处理、各种集成、与 Amazon EKS 的集成、最佳实践和故障排除。
+本文档介绍了 Karpenter 的基本概念、安装方法、Provisioner 和节点模板配置、中断处理、各种集成、与 Amazon EKS 的集成、最佳实践以及故障排除。
 
-使用 Karpenter，您可以简化集群管理、优化资源利用率并降低成本。尤其是在 Amazon EKS 等云托管 Kubernetes 环境中，您可以最大化 Karpenter 的优势。
+使用 Karpenter，您可以简化集群管理、优化资源利用率并降低成本。尤其是在 Amazon EKS 等云托管 Kubernetes 环境中，您可以最大程度地发挥 Karpenter 的优势。
 
 ### 后续步骤
 
@@ -1497,12 +1499,12 @@ Karpenter 是一款强大的自动扩缩器，可为 Kubernetes 集群自动进�
 - [Karpenter 官方文档](https://karpenter.sh/)
 - [Karpenter GitHub 仓库](https://github.com/aws/karpenter)
 - [Amazon EKS Workshop - Karpenter](https://www.eksworkshop.com/docs/autoscaling/compute/karpenter/)
-- [AWS 博客 - Karpenter](https://aws.amazon.com/blogs/containers/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
+- [AWS Blog - Karpenter](https://aws.amazon.com/blogs/containers/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
 - [Karpenter 最佳实践](https://aws.github.io/aws-eks-best-practices/karpenter/)
-- [Karpenter GitHub 发行版](https://github.com/aws/karpenter-provider-aws/releases)
-- [AWS 新动态 - Karpenter ARC Zonal Shift 支持](https://aws.amazon.com/about-aws/whats-new/2026/05/karpenter-arc-zonal-shift/)
-- [AWS 新动态 - Amazon EKS 托管节点组 Warm Pool 支持](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-managed-node-groups-ec2-warm-pools/)
+- [Karpenter GitHub 发布版本](https://github.com/aws/karpenter-provider-aws/releases)
+- [AWS What's New - Karpenter ARC Zonal Shift 支持](https://aws.amazon.com/about-aws/whats-new/2026/05/karpenter-arc-zonal-shift/)
+- [AWS What's New - Amazon EKS Managed Node Group Warm Pool 支持](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-managed-node-groups-ec2-warm-pools/)
 
 ## 测验
 
-要测试您在本章中学到的内容，请尝试[主题测验](../quizzes/autoscaling/06-karpenter-quiz.md)。
+要测试您在本章学到的内容，请尝试[主题测验](../quizzes/autoscaling/06-karpenter-quiz.md)。

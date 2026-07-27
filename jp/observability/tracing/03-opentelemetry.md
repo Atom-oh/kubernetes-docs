@@ -1,15 +1,19 @@
 # OpenTelemetry
 
 > **対応バージョン**: OTEL 1.x
-> **最終更新**: July 13, 2026
+> **最終更新**: July 27, 2026
 
 ## はじめに
 
-OpenTelemetry（OTel）は、クラウドネイティブソフトウェア向けの可観測性フレームワークです。Traces、Metrics、Logs という3つのシグナルを生成、収集、管理するためのベンダー中立な標準を提供します。CNCF で2番目に活発なプロジェクトとして、業界標準となっています。
+OpenTelemetry（OTel）は、クラウドネイティブソフトウェア向けの可観測性フレームワークです。Traces、Metrics、Logsという3つのシグナルを生成、収集、管理するためのベンダー中立な標準を提供します。CNCFで2番目に活発なプロジェクトとして、業界標準になっています。
 
-## OpenTelemetry とは？
+### 2026年7月の更新: CNCF Graduation
 
-OpenTelemetry は、OpenTracing プロジェクトと OpenCensus プロジェクトの統合から生まれました。
+OpenTelemetryは、KubernetesやPrometheusなどのプロジェクトと同様に、CNCFの最高成熟度レベルである**graduated**ステータスを正式に達成しました。Graduationは、プロジェクトのガバナンス、セキュリティプラクティス、採用状況が本番利用に向けて検証済みであることを示します。コミュニティが示した次のステップは、残るシグナル（プロファイリングなど）の成熟化とコントリビューターの継続的な増加に焦点を当てています。背景とロードマップについては、CNCFブログ記事["OpenTelemetry has graduated… Now what?"](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/)を参照してください。
+
+## OpenTelemetryとは？
+
+OpenTelemetryは、OpenTracingプロジェクトとOpenCensusプロジェクトの統合から生まれました。
 
 ```mermaid
 flowchart LR
@@ -95,9 +99,9 @@ flowchart LR
 
 ### 自動計装
 
-コードを変更せずに計装を自動的に追加します。
+コードを変更せずに自動で計装を追加します。
 
-#### Java 自動計装
+#### Javaの自動計装
 
 ```bash
 # Download Java Agent
@@ -142,7 +146,7 @@ spec:
             name: otel-java-agent
 ```
 
-#### Python 自動計装
+#### Pythonの自動計装
 
 ```bash
 # Installation
@@ -175,7 +179,7 @@ spec:
               value: "true"
 ```
 
-#### Node.js 自動計装
+#### Node.jsの自動計装
 
 ```javascript
 // tracing.js
@@ -217,7 +221,7 @@ process.on('SIGTERM', () => {
 
 きめ細かな制御が必要な場合は、手動で計装します。
 
-#### Java 手動計装
+#### Javaの手動計装
 
 ```java
 import io.opentelemetry.api.OpenTelemetry;
@@ -344,7 +348,7 @@ flowchart LR
     class OTLP_EXP,TEMPO_EXP,XRAY_EXP,PROM_EXP,LOKI_EXP,DD_EXP exporter
 ```
 
-### Collector 設定
+### Collectorの設定
 
 ```yaml
 # otel-collector-config.yaml
@@ -498,11 +502,11 @@ service:
       exporters: [loki]
 ```
 
-## EKS Deployment パターン
+## EKSのDeploymentパターン
 
-### DaemonSet パターン
+### DaemonSetパターン
 
-各ノード上のすべての Pod からデータを収集するため、各ノードに Collector をデプロイします。
+各ノード上のすべてのPodからデータを収集するため、各ノードにCollectorをデプロイします。
 
 ```yaml
 # otel-collector-daemonset.yaml
@@ -582,9 +586,9 @@ spec:
   type: ClusterIP
 ```
 
-### Sidecar パターン
+### Sidecarパターン
 
-各アプリケーション Pod 内に Sidecar として Collector をデプロイします。
+各アプリケーションPod内のsidecarとしてCollectorをデプロイします。
 
 ```yaml
 # application-with-sidecar.yaml
@@ -632,9 +636,9 @@ spec:
 
 ## Kubernetes Operator
 
-OpenTelemetry Operator を使用した自動計装:
+OpenTelemetry Operatorを使用した自動計装:
 
-### Operator のインストール
+### Operatorのインストール
 
 ```bash
 # Install cert-manager (required)
@@ -685,7 +689,7 @@ spec:
     image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:latest
 ```
 
-### 自動計装の注入
+### 自動計装のInjection
 
 ```yaml
 # Enable auto-instrumentation on namespace
@@ -720,7 +724,7 @@ spec:
 
 ## マルチバックエンド設定
 
-単一の Collector から複数のバックエンドへデータを送信します。
+単一のCollectorから複数のバックエンドへデータを送信します。
 
 ```yaml
 exporters:
@@ -756,13 +760,13 @@ service:
       exporters: [otlp/tempo, awsxray, datadog, jaeger]
 ```
 
-### 2026年7月の更新: AI Agent トラフィックのネットワーク境界を観測する
+### 2026年7月の更新: AI Agentトラフィックのネットワーク境界を監視する
 
-CNCF のブログ記事では、[NGINX と OpenTelemetry を使用して AI Agent 向けのネットワーク境界を構築するパターン](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/)を説明しています。AI Agent からのアウトバウンドトラフィックはフォワードプロキシ（NGINX）を経由するよう強制され、NGINX ネイティブ OpenTelemetry モジュールがリクエストごとに OTel span を出力します。これらの span は、上で説明したパイプラインと同様に OTel Collector を通過し、監査ログに永続化されるか、Jaeger、Grafana、または SIEM に転送されます。これにより、ユーザーインタラクションと Agent が代理で実行した外部呼び出しを関連付けられます。クラスターで Agent ワークロードを実行している場合、これは既存の OTel パイプラインをそのまま再利用できる有用な可観測性パターンです。
+CNCFブログ記事では、[NGINXとOpenTelemetryを使用してAI Agent向けのネットワーク境界を構築する](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/)パターンを説明しています。AI Agentからのアウトバウンドトラフィックはフォワードプロキシ（NGINX）を経由するよう強制され、NGINXネイティブのOpenTelemetryモジュールがリクエストごとにOTel spanを出力します。これらのspanは、上記で扱ったパイプラインと同様にOTel Collectorを通過し、監査ログに永続化されるか、Jaeger、Grafana、またはSIEMに転送されます。これにより、ユーザー操作と、Agentがその代理で行った外部呼び出しを関連付けられます。クラスターでAgentワークロードを実行する場合、これは既存のOTelパイプラインをそのまま再利用できる有用な可観測性パターンです。
 
 ## ベストプラクティス
 
-### 1. Resource Attributes を標準化する
+### 1. Resource Attributesを標準化する
 
 ```yaml
 # Follow Semantic Conventions
@@ -862,4 +866,4 @@ processors:
 
 ## クイズ
 
-[OpenTelemetry クイズ](../../quizzes/observability/tracing/03-opentelemetry-quiz.md)で理解度を確認しましょう。
+[OpenTelemetryクイズ](../../quizzes/observability/tracing/03-opentelemetry-quiz.md)で知識をテストしてください。

@@ -1,15 +1,19 @@
 # OpenTelemetry
 
 > **支持的版本**: OTEL 1.x
-> **最后更新**: July 13, 2026
+> **最后更新**: July 27, 2026
 
 ## 简介
 
-OpenTelemetry (OTel) 是面向云原生软件的可观测性框架。它提供用于生成、收集和管理三类信号的厂商中立标准：Traces、Metrics 和 Logs。作为 CNCF 活跃度第二高的项目，它已成为行业标准。
+OpenTelemetry (OTel) 是用于云原生软件的可观测性框架。它为生成、收集和管理三类信号提供了厂商中立的标准：Traces、Metrics 和 Logs。作为 CNCF 第二活跃的项目，它已成为行业标准。
+
+### 2026 年 7 月更新：CNCF 毕业
+
+OpenTelemetry 已正式获得 CNCF **毕业**状态，这是该基金会的最高成熟度级别，成为与 Kubernetes 和 Prometheus 等项目并列的一员。毕业表明该项目的治理、安全实践和采用情况已通过审核，适合生产使用。社区公布的下一步重点是使其余信号（例如 profiling）更加成熟，并维持贡献者数量的增长。有关背景和路线图，请参阅 CNCF 博客文章 ["OpenTelemetry has graduated… Now what?"](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/)。
 
 ## 什么是 OpenTelemetry？
 
-OpenTelemetry 源于 OpenTracing 和 OpenCensus 项目的合并：
+OpenTelemetry 源自 OpenTracing 和 OpenCensus 项目的合并：
 
 ```mermaid
 flowchart LR
@@ -95,7 +99,7 @@ flowchart LR
 
 ### 自动插桩
 
-无需修改代码即可自动添加插桩。
+无需更改代码即可自动添加插桩。
 
 #### Java 自动插桩
 
@@ -215,7 +219,7 @@ process.on('SIGTERM', () => {
 
 ### 手动插桩
 
-如需精细控制，请进行手动插桩。
+如需细粒度控制，请手动进行插桩。
 
 #### Java 手动插桩
 
@@ -584,7 +588,7 @@ spec:
 
 ### Sidecar 模式
 
-将 Collector 作为 sidecar 部署在每个应用 Pod 中：
+将 Collector 作为 sidecar 部署在每个应用程序 Pod 中：
 
 ```yaml
 # application-with-sidecar.yaml
@@ -634,7 +638,7 @@ spec:
 
 使用 OpenTelemetry Operator 进行自动插桩：
 
-### 安装 Operator
+### Operator 安装
 
 ```bash
 # Install cert-manager (required)
@@ -720,7 +724,7 @@ spec:
 
 ## 多后端配置
 
-从单个 Collector 将数据发送到多个后端：
+从单个 Collector 向多个后端发送数据：
 
 ```yaml
 exporters:
@@ -758,11 +762,11 @@ service:
 
 ### 2026 年 7 月更新：观察 AI Agent 流量的网络边界
 
-一篇 CNCF 博客文章介绍了使用 NGINX 和 OpenTelemetry [为 AI Agent 构建网络边界](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/)的模式。来自 AI Agent 的出站流量会被强制经由正向代理（NGINX），而 NGINX 原生 OpenTelemetry 模块会为每个请求生成一个 OTel span。这些 span 会像上述 pipeline 一样流经 OTel Collector，并被持久化到审计日志或转发至 Jaeger、Grafana 或 SIEM，使您能够将用户交互与 Agent 代表其发出的外部调用关联起来。如果您在集群中运行 Agent 工作负载，这是一个实用的可观测性模式，可原样复用现有的 OTel pipeline。
+CNCF 博客文章介绍了一种[使用 NGINX 和 OpenTelemetry 为 AI Agent 构建网络边界](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/)的模式。AI Agent 发出的出站流量会被强制通过转发代理（NGINX），而 NGINX 原生 OpenTelemetry 模块会为每个请求生成一个 OTel span。这些 span 会像上述 pipeline 一样流经 OTel Collector——持久化到审计日志或转发至 Jaeger、Grafana 或 SIEM——使您能够将用户交互与 Agent 代表其发出的外部调用关联起来。如果您在集群中运行 Agent 工作负载，这是一种非常实用的可观测性模式，可按原样复用现有的 OTel pipeline。
 
 ## 最佳实践
 
-### 1. 标准化资源属性
+### 1. 统一资源属性
 
 ```yaml
 # Follow Semantic Conventions
