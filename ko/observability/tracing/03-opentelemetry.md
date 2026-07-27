@@ -1,11 +1,15 @@
 # OpenTelemetry
 
 > **지원 버전**: OTEL 1.x
-> **마지막 업데이트**: 2026년 7월 13일
+> **마지막 업데이트**: 2026년 7월 27일
 
 ## 소개
 
 OpenTelemetry(OTel)는 클라우드 네이티브 소프트웨어를 위한 관측성 프레임워크입니다. Traces, Metrics, Logs의 세 가지 신호를 생성, 수집, 관리하기 위한 벤더 중립적 표준을 제공합니다. CNCF의 두 번째로 활발한 프로젝트로, 업계 표준으로 자리잡고 있습니다.
+
+### 2026년 7월 업데이트: CNCF 졸업(Graduation)
+
+OpenTelemetry가 CNCF의 최고 성숙 단계인 **졸업(graduated)** 프로젝트가 되었습니다. Kubernetes, Prometheus 등과 같은 반열에 오른 것으로, 거버넌스·보안 관행·프로덕션 채택이 검증되었음을 의미합니다. 커뮤니티는 다음 단계로 프로파일링 등 나머지 신호의 성숙화와 기여자 저변 확대를 꼽고 있습니다. 배경과 로드맵은 CNCF 블로그 글 ["OpenTelemetry has graduated… Now what?"](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/)을 참고하세요.
 
 ## OpenTelemetry란?
 

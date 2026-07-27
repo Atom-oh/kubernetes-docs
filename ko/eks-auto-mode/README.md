@@ -1,9 +1,13 @@
 # EKS Auto Mode 운영 가이드
 
 > **지원 버전**: EKS 1.29+, EKS Auto Mode GA
-> **마지막 업데이트**: 2026년 7월 21일
+> **마지막 업데이트**: 2026년 7월 27일
 
 Amazon EKS Auto Mode는 Kubernetes 노드 관리를 완전히 자동화하는 기능으로, 워크로드 요구 사항에 따라 자동으로 노드를 프로비저닝하고 최적화합니다. 이 가이드에서는 EKS Auto Mode의 개념, 설정 방법, 그리고 프로덕션 환경에서의 모범 사례를 상세히 다룹니다.
+
+### 2026년 7월 업데이트: EFA 및 배치 그룹(Placement Group) 지원
+
+2026년 7월 22일, EKS Auto Mode(및 오픈소스 Karpenter)의 노드 풀에서 Elastic Fabric Adapter(EFA) 네트워크 디바이스 구성과 EC2 배치 그룹을 지원한다고 발표되었습니다. EFA 지원 인스턴스의 네트워크 인터페이스를 EFA 전용 또는 표준 ENI로 구성할 수 있으며 — EFA 전용 인터페이스는 VPC IP 주소를 소비하지 않으면서도 인터커넥트 대역폭을 최대로 활용할 수 있습니다 — cluster, spread, partition 배치 전략을 노드 풀 구성에서 직접 지정해 인스턴스를 시작할 수 있습니다. 최대 처리량이나 장애 격리가 필요한 분산 학습/추론 워크로드를 겨냥한 기능입니다. 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/)를 참고하세요.
 
 ### 2026년 7월 업데이트: ARC Zonal Shift 지원
 
