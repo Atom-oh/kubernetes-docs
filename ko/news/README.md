@@ -1,10 +1,17 @@
 # 소식
-> **마지막 업데이트**: 2026년 7월 27일
+> **마지막 업데이트**: 2026년 8월 17일
 
 Kubernetes, Amazon EKS, CNCF 생태계의 뉴스는 별도 다이제스트 문서로 쌓이지 않습니다. 매주 GitHub Actions가 관련 뉴스를 관련된 기존 문서에 직접 반영하고, 아래 갱신 로그에 어떤 문서가 왜 바뀌었는지만 남깁니다. 매칭되는 문서가 없는 뉴스는 원문 링크만 기록됩니다.
 
 ## 갱신 로그
 
+- 2026-W34: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.0 정식 릴리스 및 v3.5.1/v3.4.7/v3.3.14 패치 릴리스 반영
+- 2026-W34: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.0-beta.1 릴리스(1.31 베타 단계 진입) 반영
+- 2026-W34: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — Linkerd edge-26.8.2(Gateway API 1.5.1 지원, 테스트 최대 k8s 1.36) 반영
+- 2026-W34: 매칭 문서 없음 — Amazon EKS, Kubernetes 컨트롤 플레인 구성 파라미터(스케줄러/컨트롤러 매니저/API 서버 튜닝) 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-control-plane-configuration-parameters))
+- 2026-W34: 매칭 문서 없음 — Cloud Native Buildpacks, CNCF 졸업(graduated) 프로젝트 승격 ([원문](https://www.cncf.io/announcements/2026/08/11/cncf-announces-graduation-of-cloud-native-buildpacks-advancing-the-standard-for-container-builds/))
+- 2026-W34: 매칭 문서 없음 — KubeCon + CloudNativeCon North America 2026 일정 공개, AI Inference + Agentic 트랙 신설 ([원문](https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/))
+- 2026-W34: 매칭 문서 없음 — Kubernetes YAML을 KYAML로 예쁘게 출력하기, Kubernetes 블로그 ([원문](https://kubernetes.io/blog/2026/08/11/how-to-pretty-print-kubernetes-yaml-as-kyaml/))
 - 2026-W31: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.36.3/v1.35.7/v1.34.10 패치 릴리스 및 v1.37 코드 프리즈 발효 반영
 - 2026-W31: [eks-auto-mode/README.md](../eks-auto-mode/README.md) — EKS Auto Mode 노드 풀의 EFA·EC2 배치 그룹 지원 반영
 - 2026-W31: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter 노드 풀의 EFA·EC2 배치 그룹 지원 반영

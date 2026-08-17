@@ -1,8 +1,12 @@
 # Istio
 
-> **Last Updated**: July 21, 2026
+> **Last Updated**: August 17, 2026
 
 A practical guide for utilizing Istio Service Mesh on Amazon EKS.
+
+### August 2026 Update: Istio 1.31 Enters Beta
+
+The release process for the next minor version, Istio 1.31, is underway: 1.31.0-alpha.2 was published on August 11, 2026, followed by 1.31.0-beta.0 on August 13 and 1.31.0-beta.1 on August 14. Alpha/beta builds are pre-releases for early validation, not production use — only pick them up if you want to test new features ahead of the GA release. See the [Istio releases page](https://github.com/istio/istio/releases) for details.
 
 ### July 2026 Update: Istio 1.30.3 / 1.29.6 Patch Releases
 
