@@ -6,7 +6,7 @@
 
 > **지원 버전**: Cilium 1.17, 1.18
 > **Kubernetes 호환성**: 1.32 이상
-> **마지막 업데이트**: 2026년 7월 27일
+> **마지막 업데이트**: 2026년 8월 10일
 
 ### 2026년 7월 업데이트: 패치 릴리스 및 NetworkPolicy 보안 이슈
 
@@ -14,7 +14,20 @@
 
 또한 **CVE-2026-56743** 보안 이슈에 주의하세요: Cilium 1.19.0-1.19.4에서 `clusterName`을 기본값이 아닌 값으로 설정한 경우, pod/namespace 셀렉터 없이 `ipBlock`만 사용하는 Kubernetes NetworkPolicy가 같은 네임스페이스의 다른 워크로드 트래픽을 의도치 않게 허용할 수 있습니다. 1.19.5 이상으로 업그레이드하세요. 자세한 내용은 [보안 권고문](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r)을 참고하세요.
 
-2026년 7월 21일에는 차기 마이너 릴리스 1.20의 두 번째 릴리스 후보인 [Cilium 1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1)이 공개되었습니다(rc.0은 7월 14일). GA 전에 1.20 기능을 테스트하려면 quay.io에서 RC 이미지를 사용할 수 있습니다.
+2026년 7월 21일에는 차기 마이너 릴리스 1.20의 두 번째 릴리스 후보인 [Cilium 1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1)이 공개되었습니다(rc.0은 7월 14일).
+
+### 2026년 8월 업데이트: Cilium 1.20.0 GA
+
+2026년 7월 29일 [Cilium 1.20.0](https://github.com/cilium/cilium/releases/tag/v1.20.0)이 정식 릴리스되었습니다. 1,100명 이상의 기여자가 2,660개 이상의 커밋을 반영한 릴리스로, 주요 내용은 다음과 같습니다.
+
+- **Gateway API v1.6.1**: 새로 GA된 TCPRoute/UDPRoute 지원, 백엔드 구간 TLS를 위한 `BackendTLSPolicy`, 리스너 위임 관리를 위한 ListenerSets, `ExternalAuth` 필터(GEP-1494), 네이티브 CORS 지원
+- **네트워킹**: Cilium 포크 없이 eBPF 데이터패스를 확장하는 데이터패스 플러그인, netkit 자동 선택(`bpf.datapathMode=auto`), 듀얼스택 클러스터용 IPv6 이그레스 게이트웨이 IP
+- **IPAM**: AWS ENI IPAM의 IPv6 지원(Beta), cluster-pool에서 multi-pool IPAM으로의 무중단 마이그레이션
+- **서비스/ClusterMesh**: `PreferSameZone`/`PreferSameNode` 트래픽 분배 힌트, `service.cilium.io/weight` 어노테이션 기반 가중치 Maglev 백엔드, Multi-Cluster Services(MCS) API 안정(stable) 지원
+- **보안**: Kubernetes ClusterNetworkPolicy(KCNP)의 Admin/Baseline 티어 지원, 내부 CA 또는 SPIRE 기반 ztunnel 워크로드 아이덴티티, 신규 `cluster-mesh` 정책 엔티티
+- **성능**: `cilium-cni` 바이너리가 약 77MB에서 16MB로 축소, 통합 로드밸런서 상태 관리와 대규모 클러스터용 BPF 정책 맵 인코딩 최적화
+
+레거시 Mutual Authentication, Envoy Go 확장, Kafka 인지 정책, `cilium.io/v2alpha1` `CiliumNodeConfig` API, libnetwork 통합, 커스텀 CNI 설정을 사용 중이라면 업그레이드 시 조치가 필요합니다 — [업그레이드 가이드](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes)를 참고하세요. 다음 사이클의 첫 프리릴리스인 1.21.0-pre.0은 8월 3일에 공개되었습니다.
 
 ## Cilium 1.18의 주요 개선사항
 

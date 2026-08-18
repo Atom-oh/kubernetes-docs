@@ -272,9 +272,22 @@ spec:
 
 ### 2026년 7월 업데이트: ArgoCD 3.x 패치 릴리스
 
-2026년 7월 9일 ArgoCD v3.4.5 패치 릴리스가 공개되었습니다. 현재 3.4가 최신 안정(stable) 릴리스 라인이며, 차기 마이너 버전인 v3.5.0은 rc2까지 진행 중입니다. 아래 표는 2.x 시절 기준으로 작성된 것이므로, 최신 버전별 지원 정보는 [ArgoCD 릴리스 페이지](https://github.com/argoproj/argo-cd/releases)를 함께 확인하세요.
+2026년 7월 9일 ArgoCD v3.4.5 패치 릴리스가 공개되었습니다. 아래 표는 2.x 시절 기준으로 작성된 것이므로, 최신 버전별 지원 정보는 [ArgoCD 릴리스 페이지](https://github.com/argoproj/argo-cd/releases)를 함께 확인하세요.
 
-2026년 7월 28일 요코하마에서 KubeCon + CloudNativeCon Japan 병행 행사로 열리는 ArgoCon Japan에서는 Argo CD 리드 메인테이너가 차기 버전(3.5) 제안을 공유할 예정입니다 ([CNCF 블로그](https://www.cncf.io/blog/2026/07/20/argocon-japan-2026-meeting-the-maintainers-enterprise-insights-and-the-road-to-argo-cd-3-5/)).
+2026년 7월 28일 요코하마에서 KubeCon + CloudNativeCon Japan 병행 행사로 열린 ArgoCon Japan에서는 Argo CD 리드 메인테이너가 차기 버전(3.5) 제안을 공유했습니다 ([CNCF 블로그](https://www.cncf.io/blog/2026/07/20/argocon-japan-2026-meeting-the-maintainers-enterprise-insights-and-the-road-to-argo-cd-3-5/)).
+
+### 2026년 8월 업데이트: ArgoCD v3.5.0 정식 릴리스
+
+2026년 8월 4일 [ArgoCD v3.5.0](https://github.com/argoproj/argo-cd/releases/tag/v3.5.0)이 GA로 공개되며 3.5가 최신 안정(stable) 릴리스 라인이 되었습니다. 주요 변경 사항:
+
+- **Helm 3 → Helm 4 마이그레이션**: 매니페스트 렌더링에 Helm 4 사용
+- **소스 무결성 검증(Alpha)**: 소스 하이드레이터의 dry source에 대한 옵트인 서명 검증 및 Source Integrity 설정 CLI 지원
+- **ApplicationSet 개선**: 애플리케이션 동시(concurrent) 관리, 아카이브 상태 기준 저장소 필터링
+- **웹훅 지터(jitter)**: 웹훅 트리거 애플리케이션 새로고침에 지터를 설정해 새로고침 폭주 완화
+- **UI**: New App 패널의 멀티 소스 애플리케이션 생성, ApplicationSet Preview Apps 탭, 리소스 트리의 AppSet 노드 표시
+- **신규 헬스 체크**: GatewayClass, `BackendTLSPolicy`(Gateway API), VictoriaMetrics, Gardener Shoot 등
+
+이전 라인에도 2026년 7월 31일 v3.4.6, v3.3.13 패치 릴리스가 함께 공개되었습니다.
 
 ### ArgoCD 버전
 

@@ -12,6 +12,14 @@ Kubernetes, Amazon EKS, and CNCF ecosystem news isn't collected into separate di
 - 2026-W34: no matching doc — Cloud Native Buildpacks becomes a CNCF graduated project ([source](https://www.cncf.io/announcements/2026/08/11/cncf-announces-graduation-of-cloud-native-buildpacks-advancing-the-standard-for-container-builds/))
 - 2026-W34: no matching doc — KubeCon + CloudNativeCon North America 2026 schedule revealed, new AI Inference + Agentic track added ([source](https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/))
 - 2026-W34: no matching doc — How to pretty-print your Kubernetes YAML as KYAML, Kubernetes blog ([source](https://kubernetes.io/blog/2026/08/11/how-to-pretty-print-kubernetes-yaml-as-kyaml/))
+- 2026-W33: [networking/04-gateway-api.md](../networking/04-gateway-api.md) — applied Gateway API v1.6 (TCPRoute/UDPRoute graduated to Standard v1, experimental resources moved to the x-k8s.io API group)
+- 2026-W33: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied ArgoCD v3.5.0 GA (Helm 4 migration, source integrity verification alpha, ApplicationSet improvements)
+- 2026-W33: [networking/cilium/README.md](../networking/cilium/README.md) — applied Cilium 1.20.0 GA (Gateway API v1.6.1, KCNP, multi-pool IPAM migration) and 1.21.0-pre.0
+- 2026-W33: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied the Kubernetes v1.37 sneak peek, Docs Freeze taking effect, and the v1.38.0-alpha.0 tag
+- 2026-W33: no matching doc — Amazon ECR now supports image layers up to 200 GB for Docker push ([source](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-ecr-image-layers/))
+- 2026-W33: no matching doc — K8gb becomes a CNCF incubating project ([source](https://www.cncf.io/announcements/2026/08/05/k8gb-becomes-a-cncf-incubating-project/))
+- 2026-W33: no matching doc — OpenCost 1.121.0 adds Kubernetes inference cost tracking ([source](https://www.cncf.io/blog/2026/08/05/opencost-1-121-0-first-of-a-kind-kubernetes-inference-cost-tracking/))
+- 2026-W33: no matching doc — Does Kubernetes DRA Replace HAMi?, CNCF blog ([source](https://www.cncf.io/blog/2026/08/07/does-kubernetes-dra-replace-hami/))
 - 2026-W31: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied Kubernetes v1.36.3/v1.35.7/v1.34.10 patch releases and the v1.37 Code Freeze taking effect
 - 2026-W31: [eks-auto-mode/README.md](../eks-auto-mode/README.md) — applied EFA and EC2 placement group support for EKS Auto Mode node pools
 - 2026-W31: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — applied EFA and EC2 placement group support for Karpenter node pools

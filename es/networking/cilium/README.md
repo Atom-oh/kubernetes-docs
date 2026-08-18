@@ -1,35 +1,37 @@
-# Análisis detallado de Cilium: el futuro de las redes Cloud Native
+# Análisis profundo de Cilium: El futuro de las redes Cloud Native
 
 ## Descripción general
 
-Esta sección proporciona una comprensión integral de los conceptos y tecnologías principales de Cilium. Exploraremos en profundidad la arquitectura de Cilium, la tecnología eBPF, los modelos de red, las características de seguridad y más.
+Esta sección ofrece una comprensión integral de los conceptos y tecnologías fundamentales de Cilium. Exploraremos en profundidad la arquitectura de Cilium, la tecnología eBPF, los modelos de red, las características de seguridad y mucho más.
 
 > **Versiones compatibles**: Cilium 1.17, 1.18
-> **Compatibilidad con Kubernetes**: 1.32 y posteriores
-> **Última actualización**: July 21, 2026
+> **Compatibilidad con Kubernetes**: 1.32 y versiones posteriores
+> **Última actualización**: July 27, 2026
 
 ### Actualización de julio de 2026: versiones de parche y un problema de seguridad de NetworkPolicy
 
-El 16 de julio de 2026, se publicaron las versiones de parche Cilium 1.19.6, 1.18.12 y 1.17.18. Junto con el nuevo soporte para configurar registros de acceso de Gateway API (`spec.telemetry.accessLogs` en `CiliumGatewayClassConfig`), corrigen una regresión que podía interrumpir brevemente conexiones establecidas durante el reinicio/actualización del agente y un error de ClusterMesh en el que la anotación `service.cilium.io/affinity: "none"` provocaba un agujero negro de tráfico.
+El 16 de julio de 2026 se publicaron las versiones de parche Cilium 1.19.6, 1.18.12 y 1.17.18. Junto con el nuevo soporte para configurar registros de acceso de Gateway API (`spec.telemetry.accessLogs` en `CiliumGatewayClassConfig`), corrigen una regresión que podía interrumpir brevemente las conexiones establecidas durante el reinicio o la actualización del agente, y un error de ClusterMesh en el que la anotación `service.cilium.io/affinity: "none"` provocaba un agujero negro de tráfico.
 
-También tenga en cuenta el problema de seguridad **CVE-2026-56743**: en Cilium 1.19.0-1.19.4 con un `clusterName` no predeterminado, una NetworkPolicy de Kubernetes que utilizaba únicamente reglas `ipBlock` (sin selectores de Pod/namespace) podía permitir involuntariamente tráfico de otras cargas de trabajo en el mismo namespace. Actualice a 1.19.5 o una versión posterior. Consulte el [aviso de seguridad](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r) para obtener más detalles.
+Tenga también en cuenta el problema de seguridad **CVE-2026-56743**: en Cilium 1.19.0-1.19.4 con un `clusterName` no predeterminado, una Kubernetes NetworkPolicy que usaba únicamente reglas `ipBlock` (sin selectores de Pod/namespace) podía permitir involuntariamente tráfico de otras cargas de trabajo en el mismo namespace. Actualice a la versión 1.19.5 o posterior. Consulte el [aviso de seguridad](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r) para obtener más información.
+
+El 21 de julio de 2026 se publicó [Cilium 1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1), el segundo candidato de lanzamiento para la próxima versión menor 1.20, después de rc.0 el 14 de julio. Si desea probar las características de 1.20 antes de GA, las imágenes RC están disponibles en quay.io.
 
 ## Mejoras principales de Cilium 1.18
 
 Cilium 1.18 ofrece las siguientes mejoras importantes de características y nuevas capacidades:
 
-### Mejoras de redes
-- **Plano de control BGP mejorado**: Configuración de BGP más flexible y escalable
-- **Enrutamiento multiclúster mejorado**: Rendimiento optimizado de la comunicación entre clústeres
-- **Integración mejorada de Service Mesh**: Mejor integración con el proxy Envoy
+### Mejoras de red
+- **Plano de control BGP mejorado**: Configuración BGP más flexible y escalable
+- **Enrutamiento multi-clúster mejorado**: Rendimiento de comunicación entre clústeres optimizado
+- **Integración de Service Mesh mejorada**: Mejor integración con el proxy Envoy
 
 ### Mejoras de seguridad
 - **Políticas de red mejoradas**: Control de políticas más granular y mejoras de rendimiento
 - **Opciones de cifrado mejoradas**: Rendimiento de cifrado WireGuard e IPsec optimizado
 
 ### Mejoras de observabilidad
-- **Mejoras de Hubble**: Métricas e información de trazabilidad más completas
-- **Integración mejorada de Prometheus**: Nuevas métricas y dashboards
+- **Mejoras de Hubble**: Métricas e información de trazado más completas
+- **Integración con Prometheus mejorada**: Nuevas métricas y paneles
 - **Registro de flujos mejorado**: Información más detallada sobre los flujos de red
 
 ### Optimizaciones de rendimiento
@@ -39,27 +41,27 @@ Cilium 1.18 ofrece las siguientes mejoras importantes de características y nuev
 
 ## Introducción
 
-Cilium es una solución de redes, seguridad y observabilidad de código abierto para plataformas de gestión de contenedores Linux como Kubernetes, Docker y Mesos. Cilium se basa en la tecnología eBPF (extended Berkeley Packet Filter), y proporciona características de redes y seguridad más potentes y eficientes que los enfoques tradicionales de redes Linux.
+Cilium es una solución de red, seguridad y observabilidad de código abierto para plataformas de gestión de contenedores Linux como Kubernetes, Docker y Mesos. Cilium se basa en la tecnología eBPF (extended Berkeley Packet Filter), y proporciona características de red y seguridad más potentes y eficientes que los enfoques de redes Linux tradicionales.
 
 ### ¿Qué es eBPF?
 
-eBPF es una tecnología que actúa como una máquina virtual aislada dentro del kernel Linux, lo que permite ejecutar programas de forma segura dentro del kernel sin modificar su código. Esto posibilita la ejecución eficiente de diversas tareas, como el procesamiento de paquetes de red, la monitorización de llamadas al sistema y el análisis de rendimiento.
+eBPF es una tecnología que actúa como una máquina virtual aislada dentro del kernel de Linux, lo que permite ejecutar programas de forma segura dentro del kernel sin modificar su código. Esto permite la ejecución eficiente de diversas tareas, como el procesamiento de paquetes de red, la supervisión de llamadas al sistema y el análisis de rendimiento.
 
 Características principales de eBPF:
 - Alto rendimiento mediante la ejecución en el espacio del kernel
-- Rendimiento nativo mediante compilación JIT (Just-In-Time)
-- Entorno de ejecución seguro (verificación de programas mediante el verifier)
-- Carga y descarga dinámicas posibles
+- Rendimiento nativo mediante la compilación JIT (Just-In-Time)
+- Entorno de ejecución seguro (verificación de programas mediante verifier)
+- Posibilidad de carga y descarga dinámicas
 
 ### Beneficios principales de Cilium
 
 1. **Redes de alto rendimiento**: Procesamiento eficiente de paquetes mediante eBPF
 2. **Políticas de red granulares**: Soporte de políticas de red de nivel L3-L7
-3. **Cifrado transparente**: Cifrado IPsec o WireGuard transparente entre nodos
+3. **Cifrado transparente**: Cifrado transparente IPsec o WireGuard entre nodos
 4. **Balanceo de carga**: Balanceo de carga de alto rendimiento basado en XDP (eXpress Data Path)
-5. **Observabilidad**: Visibilidad del flujo de red mediante Hubble
+5. **Observabilidad**: Visibilidad de los flujos de red mediante Hubble
 6. **Service Mesh**: Gestión de tráfico L7 sin sidecars existentes
-7. **Redes multiclúster**: Conectividad transparente entre clústeres
+7. **Redes multi-clúster**: Conectividad transparente entre clústeres
 8. **Soporte de BGP**: Integración con redes externas
 
 ### Comparación con CNI existentes
@@ -72,7 +74,7 @@ Características principales de eBPF:
 | Observabilidad | Hubble | Flow Logs | Limitado | VPC Flow Logs |
 | Service Mesh | Integrado | Requiere Istio | Requiere Istio | Requiere Istio/AppMesh |
 | Rendimiento | Muy alto | Alto | Medio | Alto |
-| Multiclúster | Integrado | Limitado | Ninguno | Requiere Transit Gateway |
+| Multi-clúster | Integrado | Limitado | Ninguno | Requiere Transit Gateway |
 
 ## Arquitectura
 
@@ -129,20 +131,20 @@ flowchart TD
 
 ### Componentes principales
 
-1. **Cilium Agent**: Se ejecuta en cada nodo, carga y administra programas eBPF
-2. **Cilium Operator**: Administra recursos y operaciones de nivel de clúster
+1. **Cilium Agent**: Se ejecuta en cada nodo, carga y gestiona programas eBPF
+2. **Cilium Operator**: Gestiona recursos y operaciones a nivel de clúster
 3. **Programas eBPF**: Se cargan en el kernel para el procesamiento de paquetes y la aplicación de políticas
-4. **Hubble**: Proporciona monitorización de flujos de red y observabilidad
-5. **Cilium CLI**: Herramienta de línea de comandos para la administración de Cilium y Hubble
+4. **Hubble**: Proporciona supervisión y observabilidad de los flujos de red
+5. **Cilium CLI**: Herramienta de línea de comandos para la gestión de Cilium y Hubble
 
 ### Modelos de red
 
-Cilium admite múltiples modos de red:
+Cilium admite varios modos de red:
 
 1. **Enrutamiento directo**: Enrutamiento directo entre nodos (BGP o enrutamiento estático)
 2. **Túneles**: Redes superpuestas mediante túneles VXLAN o Geneve
-3. **AWS ENI**: Utilización de Elastic Network Interface (ENI) en Amazon EKS
-4. **Azure IPAM**: Utilización de Azure IPAM en Azure AKS
+3. **AWS ENI**: Uso de Elastic Network Interface (ENI) en Amazon EKS
+4. **Azure IPAM**: Uso de Azure IPAM en Azure AKS
 
 ### Flujo de paquetes
 
@@ -150,7 +152,7 @@ Cómo se procesan los paquetes en Cilium:
 
 1. El paquete llega a la interfaz de red
 2. El programa eBPF XDP realiza el procesamiento inicial (defensa contra DDoS, balanceo de carga)
-3. El programa eBPF TC (Traffic Control) aplica políticas de red
+3. El programa eBPF TC (Traffic Control) aplica las políticas de red
 4. El paquete se entrega al namespace de red del contenedor
 5. Los paquetes de respuesta se procesan mediante una ruta similar
 
@@ -158,10 +160,10 @@ Cómo se procesan los paquetes en Cilium:
 
 Hay dos formas principales de usar Cilium en Amazon EKS:
 
-1. **Instalar como un Add-on de Amazon EKS**: Amazon EKS proporciona Cilium como un add-on administrado.
-2. **Instalación manual**: Instale directamente mediante el chart Helm.
+1. **Instalación como Amazon EKS Add-on**: Amazon EKS proporciona Cilium como un complemento administrado.
+2. **Instalación manual**: Instale directamente mediante Helm chart.
 
-### Instalación como Add-on de Amazon EKS
+### Instalación como Amazon EKS Add-on
 
 ```bash
 # Install Cilium add-on
@@ -198,13 +200,13 @@ helm install cilium cilium/cilium \
 
 ### Opciones de configuración específicas de EKS
 
-Opciones de configuración clave que deben considerarse al usar Cilium con EKS:
+Opciones de configuración principales que se deben considerar al usar Cilium con EKS:
 
-1. **Modo ENI**: Aproveche el rendimiento nativo de redes AWS mediante AWS Elastic Network Interface
+1. **Modo ENI**: Aprovecha el rendimiento nativo de redes AWS mediante AWS Elastic Network Interface
 2. **Modo IPAM**: Integración con la gestión de direcciones IP de AWS VPC
 3. **Cifrado**: Cifrado de tráfico entre nodos (WireGuard o IPsec)
 4. **NodeLocal DNSCache**: Mejora del rendimiento de DNS
-5. **Hubble**: Habilite la observabilidad de red
+5. **Hubble**: Habilita la observabilidad de red
 
 ### Configuración del modo ENI
 
@@ -240,7 +242,7 @@ cilium install --set eni.enabled=true \
   --set tunnel=disabled
 ```
 
-#### Creación de un nuevo clúster EKS con Cilium CNI
+#### Creación de un clúster EKS nuevo con Cilium CNI
 
 ```bash
 eksctl create cluster --name cilium-cluster \
@@ -278,12 +280,12 @@ cilium clustermesh connect --context cluster1 --destination-context cluster2
 
 ### Requisitos previos
 
-- Clúster de Kubernetes (v1.16 o posterior)
-- Kernel Linux 4.9 o posterior (recomendado: 5.4 o posterior)
+- Clúster de Kubernetes (v1.16 o superior)
+- Kernel de Linux 4.9 o superior (recomendado: 5.4 o superior)
 - kubectl configurado
 - Helm (opcional)
 
-### Instalar Cilium CLI
+### Instalación de Cilium CLI
 
 ```bash
 curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
@@ -326,7 +328,7 @@ cilium install --set encryption.enabled=true --set encryption.type=ipsec
 
 ## Políticas de red
 
-Cilium amplía la API NetworkPolicy de Kubernetes para proporcionar políticas de red granulares en los niveles L3-L7.
+Cilium amplía la API Kubernetes NetworkPolicy para proporcionar políticas de red granulares en los niveles L3-L7.
 
 ### Política de red básica
 
@@ -400,7 +402,7 @@ spec:
 
 ## Observabilidad con Hubble
 
-Hubble es la capa de observabilidad de Cilium, que permite visualizar y analizar los datos de flujos de red recopilados mediante eBPF.
+Hubble es la capa de observabilidad de Cilium, que permite visualizar y analizar los datos de flujo de red recopilados mediante eBPF.
 
 ### Instalación de Hubble
 
@@ -450,10 +452,10 @@ cilium connectivity test --test=performance
 
 ### Optimización del rendimiento
 
-1. **Optimización de la versión del kernel**: Use el kernel Linux 5.4 o posterior
-2. **Habilitar el control de congestión BBR**: Mejore el rendimiento de la red
-3. **Habilitar la aceleración XDP**: Mejore el rendimiento del procesamiento de paquetes
-4. **Optimización de MTU**: Configure una MTU adecuada para el entorno de red
+1. **Optimización de la versión del kernel**: Use el kernel de Linux 5.4 o superior
+2. **Habilitar el control de congestión BBR**: Mejora el rendimiento de la red
+3. **Habilitar la aceleración XDP**: Mejora el rendimiento del procesamiento de paquetes
+4. **Optimización de MTU**: Establezca una MTU adecuada para el entorno de red
 
 ```bash
 cilium install --set bpf.preallocateMaps=true \
@@ -463,11 +465,11 @@ cilium install --set bpf.preallocateMaps=true \
   --set loadBalancer.mode=dsr
 ```
 
-### Fortalecimiento de la seguridad
+### Fortalecimiento de seguridad
 
-1. **Aplicar una política de denegación predeterminada**: Permita únicamente el tráfico autorizado explícitamente
+1. **Aplicar una política de denegación predeterminada**: Permita únicamente el tráfico autorizado de forma explícita
 2. **Habilitar el cifrado**: Cifre el tráfico entre nodos
-3. **Aplicar el principio de privilegio mínimo**: Diseñe políticas que permitan únicamente la comunicación necesaria
+3. **Aplicar el principio de mínimo privilegio**: Diseñe políticas que permitan solo la comunicación necesaria
 
 ### Observabilidad mejorada
 
@@ -516,35 +518,35 @@ cilium sysdump
 kubectl logs -n kube-system -l k8s-app=cilium
 ```
 
-## Índice del análisis detallado
+## Índice del análisis profundo
 
 **[Introducción a Cilium y conceptos básicos](01-introduction.md)**
 - Descripción general e historia de Cilium
-- Conceptos básicos de redes de contenedores
+- Fundamentos de redes de contenedores
 - Comprensión de CNI (Container Network Interface)
 - Características diferenciadoras de Cilium
 
-**[Análisis detallado de la tecnología eBPF](02-ebpf.md)**
+**[Análisis profundo de la tecnología eBPF](02-ebpf.md)**
 - Introducción e historia de la tecnología eBPF
 - Cómo funciona eBPF dentro del kernel
-- Tipos de programas eBPF y mapas
+- Tipos de programas y mapas eBPF
 - Uso de eBPF en Cilium
 
 **[Modelos de red y VXLAN](03-networking.md)**
-- Comparación de modelos de red de contenedores
-- Análisis detallado de la tecnología VXLAN
+- Comparación de modelos de redes de contenedores
+- Análisis profundo de la tecnología VXLAN
 - Redes superpuestas de Cilium
-- Técnicas de optimización del rendimiento
-- Mecanismos de enrutamiento (encapsulación frente a Native-Routing)
-- Redes de proveedores de nube (AWS ENI, Google Cloud)
+- Técnicas de optimización de rendimiento
+- Mecanismos de enrutamiento (Encapsulation frente a Native-Routing)
+- Redes de proveedores cloud (AWS ENI, Google Cloud)
 
 **[IPAM y políticas de red](04-ipam-policy.md)**
 - Estrategias de gestión de direcciones IP (IPAM)
 - Integración de IPAM de Kubernetes y Cilium
 - Diseño e implementación de políticas de red
-- Escenarios multiclúster
-- Análisis detallado de los modos IPAM (Cluster Scope, Kubernetes Host Scope, Multi-Pool)
-- IPAM de proveedores de nube (Azure IPAM, AWS ENI, GKE)
+- Escenarios multi-clúster
+- Análisis profundo de los modos IPAM (Cluster Scope, Kubernetes Host Scope, Multi-Pool)
+- IPAM de proveedores cloud (Azure IPAM, AWS ENI, GKE)
 - IPAM basado en CRD
 
 **[Redes L2-L7 y balanceo de carga](05-l2-l7-networking.md)**
@@ -552,30 +554,30 @@ kubectl logs -n kube-system -l k8s-app=cilium
 - Características específicas por capa de Cilium
 - Integración de Service Mesh
 - Arquitectura de balanceo de carga
-- Configuración de masquerading y modos de implementación
-- Manejo de fragmentos IPv4
+- Configuración e implementación de Masquerading
+- Gestión de fragmentos IPv4
 
 **[Seguridad y visibilidad](06-security-visibility.md)**
 - Características de seguridad de Cilium
-- Visibilidad y monitorización de red
+- Visibilidad y supervisión de red
 - Arquitectura y uso de Hubble
 - Detección de amenazas en tiempo real
 
 **[Temas avanzados y casos reales](07-advanced-topics.md)**
-- Ajuste del rendimiento y solución de problemas
+- Ajuste de rendimiento y solución de problemas
 - Estrategias de implementación a gran escala
 - Estudios de casos de uso reales
 - Hoja de ruta futura y dirección de desarrollo
 
 ## Recursos adicionales
 
-- [Análisis detallado de conceptos de redes](networking-concepts.md)
+- [Análisis profundo de conceptos de red](networking-concepts.md)
 - [Glosario y abreviaturas](glossary.md)
 
 ## Referencias
 
 - [Documentación oficial de Cilium](https://docs.cilium.io/)
-- [Repositorio GitHub de Cilium](https://github.com/cilium/cilium)
+- [Repositorio de Cilium en GitHub](https://github.com/cilium/cilium)
 - [Documentación de eBPF](https://ebpf.io/)
 - [Documentación de Hubble](https://github.com/cilium/hubble)
 - [Editor de políticas de red de Cilium](https://editor.cilium.io/)
@@ -583,4 +585,4 @@ kubectl logs -n kube-system -l k8s-app=cilium
 
 ## Cuestionario
 
-Para comprobar lo aprendido en esta sección, pruebe el [cuestionario de análisis detallado de Cilium](../../quizzes/networking/cilium/01-introduction-quiz.md).
+Para comprobar lo que ha aprendido en esta sección, pruebe el [cuestionario de análisis profundo de Cilium](../../quizzes/networking/cilium/01-introduction-quiz.md).

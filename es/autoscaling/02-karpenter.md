@@ -1,14 +1,14 @@
 # Karpenter
 
 > **Versiones compatibles**: Karpenter 1.6 - 1.14, Kubernetes 1.29+ (a partir de v1.14)
-> **Última actualización**: July 21, 2026
+> **Última actualización**: July 27, 2026
 
-## Tabla de contenidos
+## Tabla de contenido
 - [Introducción](#introduction)
 - [Arquitectura](#architecture)
 - [Instalación y configuración](#installation-and-configuration)
 - [Provisioner](#provisioner)
-- [Plantillas de nodos](#node-templates)
+- [Plantillas de nodo](#node-templates)
 - [Gestión de interrupciones](#interruption-handling)
 - [Integración](#integration)
 - [Integración con Amazon EKS](#integration-with-amazon-eks)
@@ -18,21 +18,21 @@
 
 ## Introducción
 
-Karpenter es un autoscaler de clústeres de código abierto que automatiza el aprovisionamiento de nodos para clústeres de Kubernetes. Karpenter aprovisiona dinámicamente recursos de cómputo adecuados en función de los requisitos de las cargas de trabajo para garantizar la disponibilidad de las aplicaciones y optimizar la eficiencia del clúster.
+Karpenter es un autoscaler de clústeres de código abierto que automatiza el aprovisionamiento de nodos para clústeres de Kubernetes. Karpenter aprovisiona dinámicamente recursos de cómputo adecuados según los requisitos de las cargas de trabajo para garantizar la disponibilidad de las aplicaciones y optimizar la eficiencia del clúster.
 
 ### Beneficios principales de Karpenter
 
-1. **Escalado rápido**: Aprovisionamiento de nodos en segundos según los requisitos de la carga de trabajo
-2. **Optimización de costos**: Selección de los tipos de instancia más adecuados para las cargas de trabajo
-3. **Configuración sencilla**: Configuración fácil mediante API declarativas
-4. **Diseño centrado en las cargas de trabajo**: Aprovisionamiento de nodos basado en los requisitos de los Pod
-5. **Integración con la nube**: Aprovecha las capacidades del proveedor de nube
-6. **Bin packing eficiente**: Optimiza la utilización de recursos
-7. **Gestión flexible de nodos**: Gestión del ciclo de vida de los nodos y gestión integrada de interrupciones
+1. **Escalado rápido**: aprovisionamiento de nodos en segundos según los requisitos de las cargas de trabajo
+2. **Optimización de costos**: selección de los tipos de instancia más adecuados para las cargas de trabajo
+3. **Configuración sencilla**: configuración fácil mediante API declarativas
+4. **Diseño centrado en las cargas de trabajo**: aprovisionamiento de nodos según los requisitos de los Pod
+5. **Integración con la nube**: aprovecha las capacidades del proveedor de nube
+6. **Bin packing eficiente**: optimiza la utilización de recursos
+7. **Gestión flexible de nodos**: gestión del ciclo de vida de los nodos y gestión integrada de interrupciones
 
-### Comparación con autoscalers existentes
+### Comparación con los autoscalers existentes
 
-| Característica | Karpenter | Cluster Autoscaler | Grupos de nodos administrados por el proveedor de nube |
+| Característica | Karpenter | Cluster Autoscaler | Managed Node Groups del proveedor de nube |
 |---------|-----------|-------------------|---------------------------|
 | Velocidad de escalado | Muy rápida (segundos) | Media (minutos) | Lenta (minutos) |
 | Selección de tipo de instancia | Dinámica | Basada en grupos de nodos | Basada en grupos de nodos |
@@ -42,7 +42,7 @@ Karpenter es un autoscaler de clústeres de código abierto que automatiza el ap
 | Gestión de grupos de nodos | No requerida | Requerida | Requerida |
 | Gestión de interrupciones | Integrada | Limitada | Limitada |
 
-> **Nota**: Si se mantiene con EKS Managed Node Groups y Cluster Autoscaler tradicionales en lugar de Karpenter, EC2 Auto Scaling Warm Pools (disponibles desde abril de 2026) permiten mantener instancias preinicializadas en espera para un scale-out sin cold start. Puede elegir un estado Stopped (menor costo) o Running (transición más rápida), y se integra automáticamente con Cluster Autoscaler; sin embargo, esta es una característica de Managed Node Groups, no algo que use Karpenter.
+> **Nota**: Si prefiere usar los EKS Managed Node Groups tradicionales y Cluster Autoscaler en lugar de Karpenter, los EC2 Auto Scaling Warm Pools (disponibles desde abril de 2026) permiten mantener instancias preinicializadas en espera para un escalado horizontal sin arranque en frío. Puede elegir el estado Stopped (menor costo) o Running (transición más rápida), y se integra automáticamente con Cluster Autoscaler; sin embargo, es una característica de Managed Node Groups, no algo que use Karpenter.
 
 ## Arquitectura
 
@@ -131,26 +131,26 @@ sequenceDiagram
 
 ### Componentes principales
 
-1. **Karpenter Controller**: Detecta Pod no programables y gestiona el aprovisionamiento de nodos
-2. **Karpenter Webhook**: Valida los recursos de Karpenter
-3. **Provisioner CRD**: Define las políticas de aprovisionamiento de nodos
-4. **NodeTemplate CRD**: Define la configuración de los nodos que se aprovisionarán
-5. **Integración con el proveedor de nube**: Se integra con las API del proveedor de nube para gestionar recursos de cómputo
+1. **Karpenter Controller**: detecta Pod no programables y gestiona el aprovisionamiento de nodos
+2. **Karpenter Webhook**: valida los recursos de Karpenter
+3. **Provisioner CRD**: define las políticas de aprovisionamiento de nodos
+4. **NodeTemplate CRD**: define la configuración de los nodos que se aprovisionarán
+5. **Integración con el proveedor de nube**: se integra con las API del proveedor de nube para gestionar recursos de cómputo
 
 ### Cómo funciona
 
 1. Karpenter Controller detecta Pod no programables
 2. Analiza los requisitos de los Pod (recursos, selectores de nodos, tolerations, etc.)
-3. Determina los tipos de nodo adecuados según la configuración del provisioner y la plantilla de nodo
+3. Determina los tipos de nodo adecuados según la configuración de Provisioner y de la plantilla de nodo
 4. Llama a la API del proveedor de nube para aprovisionar nodos
-5. Programa los Pod una vez que los nodos se unen al clúster
-6. Elimina nodos mediante la gestión integrada de interrupciones cuando ya no son necesarios
+5. Programa los Pod cuando los nodos se unen al clúster
+6. Elimina nodos mediante la gestión integrada de interrupciones cuando dejan de ser necesarios
 
 ## Instalación y configuración
 
 ### Requisitos previos
 
-- Clúster de Kubernetes (v1.19 o superior)
+- Clúster de Kubernetes (v1.19 o posterior)
 - kubectl configurado
 - Credenciales y permisos del proveedor de nube
 - Helm (opcional)
@@ -202,7 +202,7 @@ helm install karpenter karpenter/karpenter \
   --set aws.defaultInstanceProfile=KarpenterNodeInstanceProfile
 ```
 
-#### 3. Verificar la instalación
+#### 3. Verificación de la instalación
 
 ```bash
 kubectl get pods -n karpenter
@@ -268,7 +268,7 @@ spec:
 
 ## NodePool
 
-NodePool es un recurso personalizado de Kubernetes que define cómo Karpenter aprovisiona nodos. Sustituye al Provisioner anterior.
+NodePool es un recurso personalizado de Kubernetes que define cómo Karpenter aprovisiona nodos. Reemplaza al Provisioner anterior.
 
 ### Configuración básica de NodePool
 
@@ -377,7 +377,7 @@ limits:
 
 ### Compatibilidad con Dynamic Resource Allocation (DRA) (v1.13)
 
-A partir de Karpenter v1.13 (publicada en junio de 2026), Karpenter admite el seguimiento de asignación de dispositivos basado en Kubernetes Dynamic Resource Allocation (DRA). Ahora Karpenter puede reconocer recursos basados en claims, como GPU y aceleradores especializados, e incluirlos en las decisiones de aprovisionamiento, lo que permite un escalado preciso no solo para recursos extendidos como `nvidia.com/gpu`, sino también para cargas de trabajo de AI/HPC que usan objetos DRA `ResourceClaim`/`DeviceClass`. El seguimiento basado en DRA requiere Kubernetes 1.29 o posterior.
+A partir de Karpenter v1.13 (lanzado en junio de 2026), Karpenter admite el seguimiento de asignación de dispositivos basado en Kubernetes Dynamic Resource Allocation (DRA). Karpenter ahora puede reconocer recursos basados en reclamaciones, como GPU y aceleradores especializados, e incluirlos en las decisiones de aprovisionamiento, lo que permite un escalado preciso no solo para recursos extendidos como `nvidia.com/gpu`, sino también para cargas de trabajo de IA/HPC que usan objetos DRA `ResourceClaim`/`DeviceClass`. El seguimiento basado en DRA requiere Kubernetes 1.29 o posterior.
 
 ### Configuración de expiración de nodos
 
@@ -397,24 +397,26 @@ disruption:
 
 ### Omisión automática de taints de inicialización mediante NodeReadinessController (v1.13)
 
-NodeReadinessController, agregado en Karpenter v1.13, omite automáticamente los taints relacionados con la preparación (como los aplicados mientras un nodo se inicializa) para reducir bloqueos de programación innecesarios. Esto alivia el problema de retraso de inicialización que anteriormente requería gestión manual mediante `startupTaints`, lo que mejora la estabilidad de la programación y la fiabilidad del aprovisionamiento mientras un nuevo nodo alcanza el estado Ready.
+NodeReadinessController, añadido en Karpenter v1.13, omite automáticamente los taints relacionados con la preparación (como los aplicados mientras se inicializa un nodo) para reducir bloqueos de programación innecesarios. Esto alivia el problema de retraso de inicialización que antes requería una gestión manual mediante `startupTaints`, y mejora la estabilidad de programación y la fiabilidad del aprovisionamiento mientras un nodo nuevo alcanza el estado Ready.
 
-### Actualización de julio de 2026: v1.14 publicada
+### Actualización de julio de 2026: lanzamiento de v1.14
 
-Karpenter v1.14, publicada el 11 de julio de 2026, incorpora:
+Karpenter v1.14, lanzado el 11 de julio de 2026, incorpora:
 
-- **Compatibilidad con la API CapacityBuffers**: reserva declarativamente capacidad de margen para absorber picos repentinos de scale-out
-- **Compatibilidad con tipos de instancia en vista previa**: ahora se pueden seleccionar para el aprovisionamiento tipos de instancia que aún no están disponibles de forma general
-- **Compatibilidad con Nitro Enclaves**: se puede establecer `EnclaveOptions.Enabled` en la plantilla de lanzamiento, útil para cargas de trabajo de computación confidencial
-- Correcciones de errores: contabilización de la IP primaria en ENI secundarios, garantía de que la caché de Zonal Shift esté hidratada, conexión de un tiempo de espera del cliente de AWS SDK en la configuración del operador y más
+- **Compatibilidad con la API CapacityBuffers**: reserva de forma declarativa capacidad de margen para absorber picos repentinos de escalado horizontal
+- **Compatibilidad con tipos de instancia de vista previa**: ahora se pueden seleccionar para el aprovisionamiento tipos de instancia que aún no están disponibles de forma general
+- **Compatibilidad con Nitro Enclaves**: `EnclaveOptions.Enabled` puede establecerse en la plantilla de lanzamiento, lo que resulta útil para cargas de trabajo de computación confidencial
+- Correcciones de errores: contabilización de la IP principal en ENI secundarios, garantía de que la caché de Zonal Shift se complete, conexión de un tiempo de espera del cliente AWS SDK en la configuración del operador y más
 
-Consulte las [notas de la versión v1.14.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0) para obtener detalles.
+Consulte las [notas de la versión v1.14.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0) para obtener más detalles.
 
-Posteriormente, el 17 de julio de 2026, se publicaron de forma coordinada versiones de parche (v1.3.8 a v1.11.3) en todas las líneas menores mantenidas, y cada una actualizó la versión ascendente de `sigs.k8s.io/karpenter`. Si utiliza una línea anterior, se recomienda actualizar al último parche de esa línea ([lista de versiones](https://github.com/aws/karpenter-provider-aws/releases)).
+Posteriormente, el 17 de julio de 2026, se publicó un lote coordinado de versiones de parche (de v1.3.8 a v1.11.3) en todas las líneas menores mantenidas, cada una actualizando la versión ascendente de `sigs.k8s.io/karpenter`. Si utiliza una línea anterior, se recomienda actualizar al último parche de esa línea ([lista de versiones](https://github.com/aws/karpenter-provider-aws/releases)).
 
-## Clases de nodos
+El 22 de julio de 2026, AWS anunció además la configuración de dispositivos de red Elastic Fabric Adapter (EFA) y la compatibilidad con grupos de ubicación de EC2 para los node pools de Karpenter (y EKS Auto Mode). Las interfaces de red de instancias compatibles con EFA pueden configurarse como solo EFA (lo que no consume direcciones IP de VPC) o ENI estándar, y las estrategias de ubicación cluster/spread/partition pueden especificarse directamente en la configuración del node pool; esto resulta útil para cargas de trabajo de entrenamiento e inferencia distribuidas. Consulte el [anuncio](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/).
 
-Las clases de nodos definen la configuración de los nodos que Karpenter aprovisiona. En AWS, usa el CRD EC2NodeClass.
+## Clases de nodo
+
+Las clases de nodo definen la configuración de los nodos que Karpenter aprovisiona. En AWS, utiliza el CRD EC2NodeClass.
 
 ### Configuración de AWS EC2NodeClass
 
@@ -463,9 +465,9 @@ spec:
     httpTokens: required
 ```
 
-### Selección de subnets y security groups
+### Selección de subredes y grupos de seguridad
 
-Las subnets y los security groups se pueden seleccionar mediante selectores de etiquetas:
+Las subredes y los grupos de seguridad pueden seleccionarse mediante selectores de etiquetas:
 
 ```yaml
 # Subnet selection
@@ -481,7 +483,7 @@ securityGroupSelector:
 
 ### Configuración de AMI
 
-Karpenter admite varias familias de AMI:
+Karpenter admite diversas familias de AMI:
 
 ```yaml
 # Amazon Linux 2
@@ -525,7 +527,7 @@ blockDeviceMappings:
 
 ### Configuración de datos de usuario
 
-Puede definir scripts de datos de usuario para ejecutarlos al iniciar el nodo:
+Puede definir scripts de datos de usuario que se ejecuten al iniciar el nodo:
 
 ```yaml
 userData: |
@@ -605,10 +607,10 @@ Karpenter gestiona automáticamente las interrupciones de nodos para garantizar 
 
 Karpenter gestiona los siguientes eventos de interrupción:
 
-1. **Interrupciones de Spot Instance**: Gestiona las notificaciones de interrupción de instancias AWS Spot
-2. **Expiración de nodos**: Reemplazo de nodos basado en TTL
-3. **Scale down**: Elimina nodos cuando ya no son necesarios
-4. **Consolidación de nodos**: Consolida en configuraciones de nodos más eficientes
+1. **Interrupciones de Spot Instance**: gestiona las notificaciones de interrupción de instancias Spot de AWS
+2. **Expiración de nodos**: reemplazo de nodos basado en TTL
+3. **Reducción de escala**: elimina nodos cuando dejan de ser necesarios
+4. **Consolidación de nodos**: consolida en configuraciones de nodos más eficientes
 
 ### Configuración de gestión de interrupciones
 
@@ -627,9 +629,9 @@ spec:
     expireAfter: 720h  # 30 days
 ```
 
-### Configuración de drenaje
+### Configuración de drenado
 
-Karpenter drena de forma segura los Pod antes de eliminar nodos:
+Karpenter drena los Pod de forma segura antes de eliminar nodos:
 
 ```yaml
 apiVersion: v1
@@ -653,7 +655,7 @@ data:
       expireAfter: 720h
 ```
 
-### Integración con PDB (PodDisruptionBudget)
+### Integración de PDB (PodDisruptionBudget)
 
 Karpenter respeta los PDB para garantizar la disponibilidad de las aplicaciones:
 
@@ -671,13 +673,13 @@ spec:
 
 ## Integración
 
-Karpenter se integra con diversos servicios de Kubernetes y de nube.
+Karpenter se integra con varios servicios de Kubernetes y de nube.
 
 ### Integración con Kubernetes
 
 #### 1. Pod Topology Spread Constraints
 
-Karpenter considera las Pod Topology Spread Constraints al aprovisionar nodos:
+Karpenter tiene en cuenta las Pod Topology Spread Constraints al aprovisionar nodos:
 
 ```yaml
 apiVersion: apps/v1
@@ -699,7 +701,7 @@ spec:
 
 #### 2. Pod Affinity/Anti-Affinity
 
-Karpenter considera las reglas de Pod Affinity y Anti-Affinity:
+Karpenter tiene en cuenta las reglas de Pod Affinity y Anti-Affinity:
 
 ```yaml
 apiVersion: apps/v1
@@ -722,9 +724,9 @@ spec:
               topologyKey: "kubernetes.io/hostname"
 ```
 
-#### 3. Taints y tolerations
+#### 3. Taints y Tolerations
 
-Karpenter considera los taints y tolerations al aprovisionar nodos:
+Karpenter tiene en cuenta los taints y las tolerations al aprovisionar nodos:
 
 ```yaml
 apiVersion: karpenter.sh/v1alpha5
@@ -761,7 +763,7 @@ spec:
 
 #### 1. EC2 Spot Instances
 
-Karpenter admite EC2 Spot instances para optimizar costos:
+Karpenter admite instancias EC2 Spot para optimizar costos:
 
 ```yaml
 apiVersion: karpenter.sh/v1alpha5
@@ -787,7 +789,7 @@ spec:
     karpenter.sh/discovery: "true"
 ```
 
-#### 2. EC2 Instance Profiles
+#### 2. Perfiles de instancia de EC2
 
 Karpenter utiliza perfiles de instancia de EC2 para conceder permisos de IAM a los nodos:
 
@@ -800,7 +802,7 @@ spec:
   instanceProfile: KarpenterNodeInstanceProfile
 ```
 
-#### 3. Launch Templates
+#### 3. Plantillas de lanzamiento
 
 Karpenter admite plantillas de lanzamiento de EC2:
 
@@ -816,7 +818,7 @@ spec:
 ```
 ## Integración con Amazon EKS
 
-Karpenter se integra perfectamente con Amazon EKS para proporcionar autoscaling de clústeres.
+Karpenter se integra sin problemas con Amazon EKS para proporcionar autoscaling de clústeres.
 
 ```mermaid
 flowchart TD
@@ -913,9 +915,9 @@ aws ec2 create-tags \
   --tags Key=karpenter.sh/discovery,Value=${CLUSTER_NAME}
 ```
 
-#### 2. Configuración del rol de IAM
+#### 2. Configuración de roles de IAM
 
-Configure los roles de IAM necesarios para el controller y los nodos de Karpenter:
+Configure los roles de IAM necesarios para el controller de Karpenter y los nodos:
 
 ```bash
 # Create controller role
@@ -990,7 +992,7 @@ aws iam put-role-policy \
   --policy-document file://controller-policy.json
 ```
 
-### Instalación de Karpenter en el clúster de EKS
+### Instalación de Karpenter en un clúster de EKS
 
 ```bash
 # Installation using Helm
@@ -1005,7 +1007,7 @@ helm install karpenter karpenter/karpenter \
 
 ### Uso con EKS Managed Node Groups
 
-Karpenter se puede usar junto con EKS Managed Node Groups:
+Karpenter puede utilizarse junto con EKS Managed Node Groups:
 
 ```yaml
 # Provisioner for EKS Managed Node Groups
@@ -1046,7 +1048,7 @@ spec:
 
 ### Uso con EKS Fargate
 
-Karpenter se puede usar con EKS Fargate para configurar clústeres híbridos:
+Karpenter puede utilizarse con EKS Fargate para configurar clústeres híbridos:
 
 ```yaml
 # Create Fargate profile
@@ -1089,15 +1091,15 @@ spec:
         karpenter.sh/discovery: "${CLUSTER_NAME}"
 ```
 
-### Respuesta a fallos de AZ: integración con Amazon ARC Zonal Shift (mayo de 2026)
+### Respuesta ante fallos de AZ: integración de Amazon ARC Zonal Shift (mayo de 2026)
 
-Karpenter admite Zonal Shift de Amazon ARC (Application Recovery Controller). Cuando falla una Availability Zone (AZ), Karpenter deja de aprovisionar automáticamente nuevos nodos en esa AZ y programa las cargas de trabajo hacia AZ en buen estado. También se admite Zonal Autoshift, donde AWS detecta automáticamente el estado de la AZ y gestiona el desplazamiento de tráfico y la recuperación.
+Karpenter admite Zonal Shift de Amazon ARC (Application Recovery Controller). Cuando falla una Availability Zone (AZ), Karpenter deja automáticamente de aprovisionar nodos nuevos en esa AZ y, en su lugar, programa las cargas de trabajo hacia AZ en buen estado. También se admite Zonal Autoshift, donde AWS detecta automáticamente el estado de las AZ y gestiona el cambio de tráfico y la recuperación.
 
-Cuando se detecta un fallo, Karpenter también suspende automáticamente la interrupción voluntaria (consolidación, gestión de drift, etc.) para que el reemplazo innecesario de nodos no desestabilice aún más el clúster durante una interrupción. Esto utiliza directamente los recursos de EKS ARC existentes, no requiere recursos personalizados y se habilita con la opción `ENABLE_ZONAL_SHIFT`.
+Cuando se detecta un fallo, Karpenter también suspende automáticamente la interrupción voluntaria (consolidación, gestión de drift, etc.) para que el reemplazo innecesario de nodos no desestabilice aún más el clúster durante una interrupción. Esto utiliza directamente sus recursos existentes de EKS ARC, no requiere recursos personalizados y se habilita con la opción `ENABLE_ZONAL_SHIFT`.
 
 ### Optimización de costos de EKS
 
-Puede utilizar Karpenter para optimizar los costos de los clústeres de EKS:
+Puede usar Karpenter para optimizar los costos de los clústeres de EKS:
 
 ```mermaid
 flowchart TD
@@ -1208,7 +1210,7 @@ spec:
   ttlSecondsAfterEmpty: 30
 ```
 
-#### 3. Habilitar la consolidación de nodos
+#### 3. Habilitación de la consolidación de nodos
 
 ```yaml
 apiVersion: karpenter.sh/v1alpha5
@@ -1272,7 +1274,7 @@ flowchart TD
     classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
     classDef category fill:#9C27B0,stroke:#333,stroke-width:1px,color:white;
     classDef performance fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
-    classDef cost fill:#FF9800,stroke:#333,stroke-width:1px,color:white;
+    classDef cost fill:#FF9800,stroke:#333,stroke-width:1px,color:black;
     classDef availability fill:#2196F3,stroke:#333,stroke-width:1px,color:white;
     classDef security fill:#F44336,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
@@ -1287,10 +1289,10 @@ flowchart TD
 
 ### Optimización del rendimiento
 
-1. **Seleccionar tipos de instancia adecuados**: Elija tipos de instancia adecuados para sus cargas de trabajo
-2. **Permitir tipos de instancia diversos**: Permita varios tipos de instancia para la disponibilidad y la optimización de costos
-3. **Establecer un TTL adecuado**: Establezca un TTL que se ajuste a los patrones de sus cargas de trabajo
-4. **Habilitar la consolidación de nodos**: Habilite la consolidación de nodos para optimizar la utilización de recursos
+1. **Seleccione los tipos de instancia adecuados**: elija tipos de instancia apropiados para sus cargas de trabajo
+2. **Permita tipos de instancia diversos**: permita varios tipos de instancia para la disponibilidad y la optimización de costos
+3. **Establezca el TTL adecuado**: establezca un TTL que se ajuste a los patrones de sus cargas de trabajo
+4. **Habilite la consolidación de nodos**: habilite la consolidación de nodos para optimizar la utilización de recursos
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1323,10 +1325,10 @@ spec:
 
 ### Optimización de costos
 
-1. **Utilizar Spot Instances**: Use Spot instances para ahorrar costos
-2. **Seleccionar tamaños de instancia adecuados**: Elija tamaños de instancia adecuados para sus cargas de trabajo
-3. **Utilizar escalado a cero**: Reduzca el número de nodos a 0 cuando no haya actividad
-4. **Establecer la expiración de nodos**: Aproveche los tipos de instancia más recientes mediante el reemplazo regular de nodos
+1. **Utilice Spot Instances**: use instancias Spot para ahorrar costos
+2. **Seleccione tamaños de instancia adecuados**: elija tamaños de instancia apropiados para sus cargas de trabajo
+3. **Utilice el escalado a cero**: reduzca el número de nodos a 0 cuando no haya actividad
+4. **Establezca la expiración de nodos**: aproveche los tipos de instancia más recientes mediante el reemplazo periódico de nodos
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1355,10 +1357,10 @@ spec:
 
 ### Mejora de la disponibilidad
 
-1. **Usar varias Availability Zones**: Implemente nodos en varias Availability Zones
-2. **Combinar instancias On-demand y Spot**: Equilibre disponibilidad y costo
-3. **Establecer PDB adecuados**: Garantice la disponibilidad de las aplicaciones
-4. **Optimizar la gestión de interrupciones**: Garantice la disponibilidad de las cargas de trabajo durante las interrupciones de nodos
+1. **Use varias Availability Zones**: implemente nodos en varias zonas de disponibilidad
+2. **Combine On-demand y Spot Instances**: equilibre disponibilidad y costo
+3. **Establezca los PDB adecuados**: garantice la disponibilidad de las aplicaciones
+4. **Optimice la gestión de interrupciones**: garantice la disponibilidad de las cargas de trabajo durante las interrupciones de nodos
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1394,14 +1396,14 @@ spec:
 
 ### Problemas comunes
 
-#### 1. Error en el aprovisionamiento de nodos
+#### 1. Error de aprovisionamiento de nodos
 
-**Síntoma**: Los Pod permanecen en estado Pending y los nodos no se aprovisionan
+**Síntoma**: los Pod permanecen en estado Pending y los nodos no se aprovisionan
 
 **Solución**:
 - Compruebe los logs de Karpenter
 - Verifique los permisos de IAM
-- Compruebe la configuración del provisioner
+- Compruebe la configuración de Provisioner
 
 ```bash
 # Check Karpenter logs
@@ -1416,12 +1418,12 @@ kubectl describe pod <name>
 
 #### 2. Problemas de eliminación de nodos
 
-**Síntoma**: Los nodos no se eliminan como se esperaba
+**Síntoma**: los nodos no se eliminan como se esperaba
 
 **Solución**:
 - Compruebe la configuración de TTL
 - Verifique la configuración de consolidación de nodos
-- Compruebe el estado de drenaje de los Pod
+- Compruebe el estado de drenado de los Pod
 
 ```bash
 # Check node status
@@ -1436,12 +1438,12 @@ kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller | gr
 
 #### 3. Problemas de selección de tipos de instancia
 
-**Síntoma**: Se aprovisionan tipos de instancia inesperados
+**Síntoma**: se aprovisionan tipos de instancia inesperados
 
 **Solución**:
-- Compruebe los requisitos del provisioner
+- Compruebe los requisitos de Provisioner
 - Verifique las solicitudes de recursos de los Pod
-- Compruebe las restricciones de Availability Zone
+- Compruebe las restricciones de las zonas de disponibilidad
 
 ```bash
 # Check provisioner requirements
@@ -1478,16 +1480,16 @@ kubectl patch configmap -n karpenter karpenter-global-settings --type merge -p '
 
 ## Conclusión
 
-Karpenter es un autoscaler potente que automatiza el aprovisionamiento de nodos para clústeres de Kubernetes. Aprovisiona dinámicamente recursos de cómputo adecuados en función de los requisitos de las cargas de trabajo para garantizar la disponibilidad de las aplicaciones y optimizar la eficiencia del clúster.
+Karpenter es un potente autoscaler que automatiza el aprovisionamiento de nodos para clústeres de Kubernetes. Aprovisiona dinámicamente recursos de cómputo adecuados según los requisitos de las cargas de trabajo para garantizar la disponibilidad de las aplicaciones y optimizar la eficiencia del clúster.
 
-Este documento cubrió los conceptos básicos de Karpenter, los métodos de instalación, la configuración de provisioner y plantillas de nodos, la gestión de interrupciones, diversas integraciones, la integración con Amazon EKS, las prácticas recomendadas y la solución de problemas.
+Este documento cubrió los conceptos básicos de Karpenter, los métodos de instalación, la configuración de Provisioner y de plantillas de nodo, la gestión de interrupciones, diversas integraciones, la integración con Amazon EKS, las prácticas recomendadas y la solución de problemas.
 
-Al utilizar Karpenter, puede simplificar la gestión del clúster, optimizar la utilización de recursos y reducir costos. Especialmente en entornos de Kubernetes administrados en la nube como Amazon EKS, puede maximizar los beneficios de Karpenter.
+Con Karpenter, puede simplificar la gestión de clústeres, optimizar la utilización de recursos y reducir costos. Especialmente en entornos de Kubernetes administrados en la nube como Amazon EKS, puede maximizar los beneficios de Karpenter.
 
 ### Próximos pasos
 
-- Implemente estrategias de optimización de costos mediante Karpenter
-- Configure provisioners para diversos tipos de cargas de trabajo
+- Implemente estrategias de optimización de costos con Karpenter
+- Configure Provisioner para diversos tipos de cargas de trabajo
 - Diseñe arquitecturas de clústeres híbridos
 - Integre Karpenter con otras herramientas de Kubernetes
 - Desarrolle estrategias avanzadas de gestión del ciclo de vida de los nodos
@@ -1495,14 +1497,14 @@ Al utilizar Karpenter, puede simplificar la gestión del clúster, optimizar la 
 ## Referencias
 
 - [Documentación oficial de Karpenter](https://karpenter.sh/)
-- [Repositorio de GitHub de Karpenter](https://github.com/aws/karpenter)
-- [Taller de Amazon EKS - Karpenter](https://www.eksworkshop.com/docs/autoscaling/compute/karpenter/)
-- [Blog de AWS - Karpenter](https://aws.amazon.com/blogs/containers/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
+- [Repositorio de Karpenter en GitHub](https://github.com/aws/karpenter)
+- [Taller de Amazon EKS: Karpenter](https://www.eksworkshop.com/docs/autoscaling/compute/karpenter/)
+- [Blog de AWS: Karpenter](https://aws.amazon.com/blogs/containers/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
 - [Prácticas recomendadas de Karpenter](https://aws.github.io/aws-eks-best-practices/karpenter/)
-- [Versiones de GitHub de Karpenter](https://github.com/aws/karpenter-provider-aws/releases)
-- [Novedades de AWS - Compatibilidad de Karpenter con ARC Zonal Shift](https://aws.amazon.com/about-aws/whats-new/2026/05/karpenter-arc-zonal-shift/)
-- [Novedades de AWS - Compatibilidad de Amazon EKS Managed Node Group con Warm Pool](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-managed-node-groups-ec2-warm-pools/)
+- [Versiones de Karpenter en GitHub](https://github.com/aws/karpenter-provider-aws/releases)
+- [Novedades de AWS: compatibilidad de Karpenter con ARC Zonal Shift](https://aws.amazon.com/about-aws/whats-new/2026/05/karpenter-arc-zonal-shift/)
+- [Novedades de AWS: compatibilidad de Amazon EKS Managed Node Group con Warm Pools](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-managed-node-groups-ec2-warm-pools/)
 
 ## Cuestionario
 
-Para poner a prueba lo aprendido en este capítulo, pruebe el [cuestionario del tema](../quizzes/autoscaling/06-karpenter-quiz.md).
+Para comprobar lo que ha aprendido en este capítulo, pruebe el [cuestionario del tema](../quizzes/autoscaling/06-karpenter-quiz.md).
