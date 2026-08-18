@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **Supported Versions**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **Last Updated**: August 10, 2026
+> **Last Updated**: August 17, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -279,6 +279,10 @@ spec:
 ```
 
 ## Version Compatibility
+
+### August 2026 Update: ArgoCD 3.5 GA and Patch Releases
+
+ArgoCD v3.5.0 went GA on August 7, 2026, making 3.5 the current stable release line. It was followed on August 12 by coordinated patches for the three maintained release lines: v3.5.1 / v3.4.7 / v3.3.14. v3.5.1 includes bug fixes such as stopping ApplicationSet progressive sync from reconciling in a tight loop and server-side diff Secret-masking fixes (including hiding secrets in the `last-applied-configuration` annotation). See the [v3.5.1 release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.5.1) for details.
 
 ### July 2026 Update: ArgoCD 3.x Patch Releases
 

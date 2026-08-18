@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **지원 버전**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **마지막 업데이트**: 2026년 8월 10일
+> **마지막 업데이트**: 2026년 8월 17일
 
 ## 목차
 
@@ -265,6 +265,10 @@ spec:
 | **Missing** | 리소스 없음 |
 
 ## 버전 지원 정보
+
+### 2026년 8월 업데이트: ArgoCD 3.5 정식 릴리스 및 패치
+
+2026년 8월 7일 ArgoCD v3.5.0이 정식 릴리스되어 3.5가 최신 안정(stable) 릴리스 라인이 되었습니다. 이어 8월 12일에는 유지 관리 중인 세 릴리스 라인의 패치인 v3.5.1 / v3.4.7 / v3.3.14가 함께 공개되었습니다. v3.5.1에는 ApplicationSet progressive sync가 루프를 돌며 반복 재조정되던 문제 수정, server-side diff에서 Secret 데이터 마스킹 관련 수정(`last-applied-configuration` 어노테이션의 시크릿 노출 방지 포함) 등 버그 수정이 담겼습니다. 자세한 내용은 [v3.5.1 릴리스 노트](https://github.com/argoproj/argo-cd/releases/tag/v3.5.1)를 참고하세요.
 
 ### 2026년 7월 업데이트: ArgoCD 3.x 패치 릴리스
 

@@ -1,10 +1,17 @@
 # News
-> **Last Updated**: August 10, 2026
+> **Last Updated**: August 17, 2026
 
 Kubernetes, Amazon EKS, and CNCF ecosystem news isn't collected into separate digest documents here. Each week, GitHub Actions applies relevant news directly to the existing doc it relates to, and this update log records only which doc changed and why. News with no matching doc is recorded here as a link only.
 
 ## Update Log
 
+- 2026-W34: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the ArgoCD v3.5.0 GA release and the v3.5.1/v3.4.7/v3.3.14 patch releases
+- 2026-W34: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — applied the Istio 1.31.0-beta.1 release (1.31 entering beta)
+- 2026-W34: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — applied Linkerd edge-26.8.2 (Gateway API 1.5.1 support, tested max k8s 1.36)
+- 2026-W34: no matching doc — Amazon EKS now supports advanced Kubernetes control plane configuration parameters (scheduler/controller manager/API server tuning) ([source](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-control-plane-configuration-parameters))
+- 2026-W34: no matching doc — Cloud Native Buildpacks becomes a CNCF graduated project ([source](https://www.cncf.io/announcements/2026/08/11/cncf-announces-graduation-of-cloud-native-buildpacks-advancing-the-standard-for-container-builds/))
+- 2026-W34: no matching doc — KubeCon + CloudNativeCon North America 2026 schedule revealed, new AI Inference + Agentic track added ([source](https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/))
+- 2026-W34: no matching doc — How to pretty-print your Kubernetes YAML as KYAML, Kubernetes blog ([source](https://kubernetes.io/blog/2026/08/11/how-to-pretty-print-kubernetes-yaml-as-kyaml/))
 - 2026-W33: [networking/04-gateway-api.md](../networking/04-gateway-api.md) — applied Gateway API v1.6 (TCPRoute/UDPRoute graduated to Standard v1, experimental resources moved to the x-k8s.io API group)
 - 2026-W33: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied ArgoCD v3.5.0 GA (Helm 4 migration, source integrity verification alpha, ApplicationSet improvements)
 - 2026-W33: [networking/cilium/README.md](../networking/cilium/README.md) — applied Cilium 1.20.0 GA (Gateway API v1.6.1, KCNP, multi-pool IPAM migration) and 1.21.0-pre.0

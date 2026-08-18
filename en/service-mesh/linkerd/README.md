@@ -1,6 +1,10 @@
 # Linkerd
 
-> **Supported Versions**: Linkerd 2.16+ **Last Updated**: July 21, 2026
+> **Supported Versions**: Linkerd 2.16+ **Last Updated**: August 17, 2026
+
+### August 2026 Update: edge-26.8.2 — Gateway API 1.5.1 Support
+
+The edge-26.8.2 release, published August 14, 2026, adds Gateway API 1.5.1 support (via linkerd-kubert 0.27.0) and bumps the tested maximum Kubernetes version to 1.36. It also includes stability fixes: removing a duplicate Job informer in the destination controller and making the policy controller exit if its lease watch task dies. See the [release notes](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2) for details.
 
 ### July 2026 Update: edge-26.7.1 — Requests to Undefined Service Ports Disallowed
 

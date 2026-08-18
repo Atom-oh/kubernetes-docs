@@ -1,6 +1,10 @@
 # Linkerd
 
-> **지원 버전**: Linkerd 2.16+ **마지막 업데이트**: 2026년 7월 21일
+> **지원 버전**: Linkerd 2.16+ **마지막 업데이트**: 2026년 8월 17일
+
+### 2026년 8월 업데이트: edge-26.8.2 — Gateway API 1.5.1 지원
+
+2026년 8월 14일 공개된 edge-26.8.2 릴리스는 Gateway API 1.5.1 지원(linkerd-kubert 0.27.0 경유)을 추가하고, 테스트된 최대 Kubernetes 버전을 1.36으로 올렸습니다. 그 외 destination 컨트롤러의 중복 Job informer 제거, lease watch 태스크가 죽으면 policy 컨트롤러가 함께 종료되도록 하는 안정성 수정이 포함되었습니다. 자세한 내용은 [릴리스 노트](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2)를 참고하세요.
 
 ### 2026년 7월 업데이트: edge-26.7.1 — 미정의 서비스 포트 요청 차단
 
