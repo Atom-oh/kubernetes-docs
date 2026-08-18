@@ -1,43 +1,47 @@
-# Calico en profundidad: redes Kubernetes de nivel empresarial
+# Análisis profundo de Calico: redes Kubernetes de nivel empresarial
 
 > **Versiones compatibles**: Calico v3.29+ / Kubernetes 1.28+
-> **Última actualización**: February 22, 2026
+> **Última actualización**: July 27, 2026
 
 ## Descripción general
 
-Esta sección ofrece una comprensión integral de los conceptos y tecnologías principales de Calico. Exploraremos en profundidad la arquitectura de Calico, los modos de red, las políticas de red, las características de seguridad y la integración con proveedores de nube.
+Esta sección proporciona una comprensión integral de los conceptos y tecnologías centrales de Calico. Exploraremos en profundidad la arquitectura de Calico, los modos de red, las políticas de red, las características de seguridad y la integración con proveedores de nube.
 
 ## ¿Qué es Calico?
 
 Calico es una solución de redes y seguridad de red de código abierto para contenedores, máquinas virtuales y cargas de trabajo nativas basadas en host. Desarrollado originalmente por Tigera, Calico se ha convertido en uno de los plugins CNI de Kubernetes más ampliamente implementados, en el que empresas de todo el mundo confían por su estabilidad, rendimiento y sólidas capacidades de políticas de red.
 
+### Actualización de julio de 2026: Calico para VMs en Kubernetes
+
+El 21 de julio de 2026, Tigera lanzó **Calico for VMs on Kubernetes**, una plataforma impulsada por eBPF que ofrece redes y seguridad de red tanto para máquinas virtuales como para contenedores en un único plano de control nativo de Kubernetes. Está dirigida a las migraciones de VMware/NSX: una VM trasladada a Kubernetes conserva su dirección IP, puede permanecer en una VLAN existente mediante extensión de puente L2 y hereda la misma política de red de Calico, microsegmentación (incluidos los niveles de políticas y las políticas por etapas), enrutamiento, balanceo de carga y visibilidad de flujos que los contenedores junto a ella. Consulte el [comunicado de prensa](https://www.storagenewsletter.com/2026/07/21/tigera-launches-calico-unified-platform-3-23-the-definitive-vmware-migration-solution-with-one-network-and-one-security-model-for-every-vm-and-container-on-kubernetes/) para más detalles.
+
 ### Ventajas principales
 
-1. **Madurez comprobada en producción**: Utilizado en producción por miles de organizaciones desde 2016
+1. **Madurez probada en batalla**: Utilizado en producción por miles de organizaciones desde 2016
 2. **Plano de datos flexible**: Elección entre planos de datos iptables, nftables o eBPF
-3. **Compatibilidad nativa con BGP**: Integración BGP de primera clase para implementaciones on-premises e híbridas
-4. **Políticas de red integrales**: Kubernetes NetworkPolicy más políticas ampliadas de Calico
-5. **Compatibilidad con Windows**: Compatibilidad completa con redes de contenedores Windows
-6. **Características empresariales**: Tigera Calico Enterprise añade observabilidad, cumplimiento y defensa frente a amenazas
+3. **Soporte nativo de BGP**: Integración BGP de primera clase para implementaciones on-premises e híbridas
+4. **Políticas de red integrales**: Kubernetes NetworkPolicy más políticas extendidas de Calico
+5. **Soporte de Windows**: Soporte completo de redes para contenedores Windows
+6. **Características empresariales**: Tigera Calico Enterprise añade observabilidad, cumplimiento y defensa ante amenazas
 7. **Integración cloud-native**: Integración fluida con infraestructura AWS, GCP, Azure y on-premises
 
 ### ¿Por qué elegir Calico?
 
-- **Comprobado a escala**: Potencia cargas de trabajo de producción en empresas que procesan miles de millones de transacciones
+- **Probado a escala**: Ejecuta cargas de trabajo de producción en empresas que procesan miles de millones de transacciones
 - **Simplicidad operativa**: Instalación y configuración sencillas
-- **Comunidad sólida**: Comunidad de código abierto activa con amplia documentación
-- **Flexibilidad de proveedor**: Funciona de manera coherente en cualquier distribución de Kubernetes
-- **Preparado para cumplimiento**: Características integradas para registros de auditoría y aplicación de políticas
+- **Comunidad sólida**: Comunidad activa de código abierto con amplia documentación
+- **Flexibilidad de proveedor**: Funciona de forma coherente en cualquier distribución de Kubernetes
+- **Preparado para el cumplimiento**: Características integradas para registros de auditoría y aplicación de políticas
 
 ## Aspectos destacados de la versión: Calico v3.29
 
 Calico v3.29 ofrece mejoras significativas en redes, seguridad y observabilidad:
 
 ### Mejoras de redes
-- **Plano de datos eBPF GA**: Plano de datos eBPF listo para producción con paridad total de características
+- **Plano de datos eBPF GA**: Plano de datos eBPF listo para producción con paridad completa de características
 - **Rendimiento BGP mejorado**: Convergencia de rutas optimizada y menor uso de memoria
 - **VXLAN mejorado**: Mejor enrutamiento entre subredes con detección automática de MTU
-- **IPv6 Dual-Stack**: Compatibilidad completa con entornos de red dual-stack
+- **IPv6 Dual-Stack**: Soporte completo para entornos de red dual-stack
 
 ### Mejoras de seguridad
 - **Mejoras de políticas DNS**: Políticas de red basadas en FQDN más granulares
@@ -46,23 +50,22 @@ Calico v3.29 ofrece mejoras significativas en redes, seguridad y observabilidad:
 
 ### Características operativas
 - **Calico API Server**: Agregación nativa de Kubernetes API para recursos de Calico
-- **Diagnóstico mejorado**: Herramientas de solución de problemas y comprobaciones de estado mejoradas
+- **Diagnósticos mejorados**: Herramientas de solución de problemas y comprobaciones de estado mejoradas
 - **Optimización de recursos**: Menor consumo de CPU y memoria
 
 ## Comparación de CNI
 
 | Característica | Calico | Cilium |
 |---------|--------|--------|
-| **Tecnología principal** | iptables/eBPF | eBPF |
+| **Tecnología central** | iptables/eBPF | eBPF |
 | **Madurez** | Muy alta (2016+) | Alta (2017+) |
 | **Política de red** | L3-L4 (L7 Enterprise) | L3-L7 |
 | **Service Mesh** | Independiente (Enterprise) | Integrado |
-| **Compatibilidad con BGP** | Sólida (nativa) | Compatible |
+| **Soporte BGP** | Sólido (nativo) | Compatible |
 | **Observabilidad** | Básica (Enterprise: avanzada) | Hubble (potente) |
-| **Compatibilidad con Windows** | Completa | Beta |
+| **Soporte de Windows** | Completo | Beta |
 | **Plano de datos eBPF** | Opcional | Obligatorio |
 | **Curva de aprendizaje** | Moderada | Más pronunciada |
-| **Uso de recursos** | Menor | Mayor |
 | **Reemplazo de kube-proxy** | Sí (modo eBPF) | Sí |
 | **Multi-Cluster** | Federación | Cluster Mesh |
 
@@ -113,15 +116,15 @@ flowchart TD
 | Componente | Función | Se ejecuta en |
 |-----------|------|---------|
 | **Felix** | Programa rutas y ACL en cada host | Cada nodo |
-| **BIRD** | Daemon BGP para la distribución de rutas | Cada nodo |
-| **confd** | Observa el datastore, genera la configuración de BIRD | Cada nodo |
-| **Typha** | Proxy de caché para reducir la carga del API server | Pods dedicados |
+| **BIRD** | Demonio BGP para distribución de rutas | Cada nodo |
+| **confd** | Supervisa el datastore, genera la configuración de BIRD | Cada nodo |
+| **Typha** | Proxy de caché para reducir la carga del servidor API | Pods dedicados |
 | **kube-controllers** | Sincroniza recursos de Kubernetes con Calico | Plano de control |
 | **Calico API Server** | Capa de agregación de Kubernetes API | Plano de control |
 
 ## Modos de red
 
-Calico admite varios modos de red para adaptarse a diferentes requisitos de infraestructura:
+Calico admite varios modos de red para adaptarse a distintos requisitos de infraestructura:
 
 ### 1. Modo IPIP (predeterminado)
 - Encapsulación IP-in-IP para tráfico entre subredes
@@ -156,7 +159,7 @@ flowchart TD
 
 ## Integración con Amazon EKS
 
-Calico se integra de forma fluida con Amazon EKS y proporciona capacidades mejoradas de políticas de red.
+Calico se integra fluidamente con Amazon EKS y proporciona capacidades mejoradas de políticas de red.
 
 ### Instalación rápida en EKS
 
@@ -223,7 +226,7 @@ spec:
 EOF
 ```
 
-### Método 2: Instalación mediante Helm
+### Método 2: instalación con Helm
 
 ```bash
 # Add Calico Helm repository
@@ -238,7 +241,7 @@ helm install calico projectcalico/tigera-operator \
   --set installation.kubernetesProvider=EKS
 ```
 
-### Método 3: Instalación basada en manifiestos
+### Método 3: instalación basada en manifests
 
 ```bash
 # For clusters with 50 nodes or less
@@ -250,7 +253,7 @@ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.0/
 
 ## Ejemplos de políticas de red
 
-### NetworkPolicy básica de Kubernetes
+### Kubernetes NetworkPolicy básica
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -274,7 +277,7 @@ spec:
       port: 8080
 ```
 
-### GlobalNetworkPolicy de Calico
+### Calico GlobalNetworkPolicy
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -299,7 +302,7 @@ spec:
   - action: Deny
 ```
 
-### NetworkPolicy de Calico con FQDN
+### Calico NetworkPolicy con FQDN
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -344,9 +347,9 @@ spec:
 | Métrica | Descripción |
 |--------|-------------|
 | `felix_active_local_endpoints` | Número de endpoints activos en el nodo |
-| `felix_iptables_rules` | Número de reglas de iptables programadas |
+| `felix_iptables_rules` | Número de reglas iptables programadas |
 | `felix_ipsets_calico` | Número de conjuntos IP mantenidos |
-| `felix_int_dataplane_failures` | Errores de programación del plano de datos |
+| `felix_int_dataplane_failures` | Fallos de programación del plano de datos |
 | `felix_cluster_num_hosts` | Total de hosts en el clúster |
 
 ### Endpoints de comprobación de estado
@@ -360,7 +363,7 @@ curl -s http://localhost:9099/readiness
 curl -s http://localhost:9098/liveness
 ```
 
-## Referencia rápida para la solución de problemas
+## Referencia rápida de solución de problemas
 
 ### Comandos comunes
 
@@ -385,16 +388,16 @@ kubectl logs -n calico-system -l k8s-app=calico-node -c calico-node
 kubectl exec -n calico-system calico-node-xxxxx -c calico-node -- birdcl show protocols
 ```
 
-### Problemas comunes y soluciones
+### Problemas y soluciones comunes
 
 | Problema | Diagnóstico | Solución |
 |-------|-----------|----------|
 | Pods bloqueados en ContainerCreating | Compruebe los logs de Felix para detectar errores de IPAM | Verifique la configuración de IPPool |
 | Falla la conectividad entre nodos | Compruebe el modo de encapsulación | Asegúrese de que IPIP/VXLAN esté habilitado |
 | Las políticas de red no se aplican | Compruebe el orden de las políticas y los selectores | Use `calicoctl` para verificar las políticas |
-| CPU alta en Felix | Demasiadas reglas de iptables | Considere el plano de datos eBPF |
+| CPU alta en Felix | Demasiadas reglas iptables | Considere el plano de datos eBPF |
 
-## Índice de la guía en profundidad
+## Índice del análisis profundo
 
 **[Parte 1: Introducción a Calico](01-introduction.md)**
 - Qué es Calico e historia del proyecto
@@ -403,10 +406,10 @@ kubectl exec -n calico-system calico-node-xxxxx -c calico-node -- birdcl show pr
 - Casos de uso y escenarios de implementación
 - Comunidad y gobernanza
 
-**[Parte 2: Guía en profundidad de la arquitectura de Calico](02-architecture.md)**
+**[Parte 2: Análisis profundo de la arquitectura de Calico](02-architecture.md)**
 - Descripción general de la arquitectura de componentes
 - Felix: el agente de Calico
-- BIRD: daemon de enrutamiento BGP
+- BIRD: demonio de enrutamiento BGP
 - confd: gestión de configuración
 - Typha: componente de escalado
 - kube-controllers: integración con Kubernetes
@@ -422,22 +425,22 @@ kubectl exec -n calico-system calico-node-xxxxx -c calico-node -- birdcl show pr
 - Compatibilidad con proveedores de nube
 - Optimización de MTU
 
-## Guía de selección: Calico vs Cilium
+## Guía de selección: Calico frente a Cilium
 
 ### Elija Calico cuando:
 - Necesite estabilidad y madurez comprobadas en producción
-- Se requiera compatibilidad con contenedores Windows
+- Se requiera soporte para contenedores Windows
 - La integración BGP con la infraestructura de red existente sea crítica
-- Prefiera la simplicidad operativa frente a características avanzadas
+- Prefiera la simplicidad operativa frente a las características avanzadas
 - La eficiencia de recursos sea una prioridad
 - Ya esté familiarizado con redes basadas en iptables
 
 ### Elija Cilium cuando:
 - Necesite políticas de red L7 avanzadas
-- Se deseen capacidades integradas de service mesh
+- Se deseen capacidades de service mesh integradas
 - Sea importante una observabilidad profunda con Hubble
-- Desee aprovechar características eBPF de vanguardia
-- Se necesite conectividad Multi-Cluster con Cluster Mesh
+- Desee aprovechar las características eBPF más avanzadas
+- Se necesite conectividad multi-cluster con Cluster Mesh
 
 ### Enfoque híbrido
 Algunas organizaciones utilizan ambos:
@@ -450,10 +453,10 @@ Algunas organizaciones utilizan ambos:
 - [Repositorio de GitHub de Calico](https://github.com/projectcalico/calico)
 - [Tigera Calico Enterprise](https://www.tigera.io/tigera-products/calico-enterprise/)
 - [Guía de políticas de red de Calico](https://docs.tigera.io/calico/latest/network-policy/)
-- [Integración de Amazon EKS con Calico](https://docs.aws.amazon.com/eks/latest/userguide/calico.html)
+- [Integración de Calico con Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/calico.html)
 - [Referencia de calicoctl](https://docs.tigera.io/calico/latest/reference/calicoctl/)
 - [Plano de datos eBPF de Calico](https://docs.tigera.io/calico/latest/operations/ebpf/)
 
 ## Cuestionario
 
-Para comprobar lo que ha aprendido en esta sección, pruebe el [Cuestionario de la guía en profundidad de Calico](../../quizzes/networking/calico/01-introduction-quiz.md).
+Para comprobar lo que ha aprendido en esta sección, pruebe el [cuestionario de análisis profundo de Calico](../../quizzes/networking/calico/01-introduction-quiz.md).

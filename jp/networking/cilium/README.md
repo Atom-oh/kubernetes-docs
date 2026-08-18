@@ -1,82 +1,84 @@
-# Cilium 詳細解説: Cloud Native Networking の未来
+# Cilium Deep Dive: Cloud Native Networkingの未来
 
 ## 概要
 
-このセクションでは、Cilium のコアコンセプトとテクノロジーを包括的に理解します。Cilium のアーキテクチャ、eBPF テクノロジー、ネットワーキングモデル、セキュリティ機能などを深く掘り下げます。
+このセクションでは、Ciliumのコアコンセプトとテクノロジーを包括的に理解します。Ciliumのアーキテクチャ、eBPFテクノロジー、ネットワーキングモデル、セキュリティ機能などを詳しく学びます。
 
-> **サポート対象バージョン**: Cilium 1.17, 1.18
-> **Kubernetes 互換性**: 1.32 以上
-> **最終更新**: July 21, 2026
+> **対応バージョン**: Cilium 1.17, 1.18
+> **Kubernetes互換性**: 1.32 以降
+> **最終更新**: July 27, 2026
 
-### 2026年7月アップデート: パッチリリースと NetworkPolicy のセキュリティ問題
+### 2026年7月アップデート: パッチリリースとNetworkPolicyのセキュリティ問題
 
-2026年7月16日に、Cilium 1.19.6、1.18.12、1.17.18 のパッチリリースが公開されました。`CiliumGatewayClassConfig` の Gateway API アクセスログ（`spec.telemetry.accessLogs`）を設定する新しいサポートに加え、agent の再起動・アップグレード中に確立済みの接続が一時的に切断される可能性があるリグレッションと、`service.cilium.io/affinity: "none"` アノテーションがトラフィックブラックホールを引き起こす ClusterMesh のバグを修正しています。
+2026年7月16日、Cilium 1.19.6、1.18.12、1.17.18のパッチリリースが公開されました。Gateway APIアクセスログの設定（`CiliumGatewayClassConfig`の`spec.telemetry.accessLogs`）の新規サポートに加え、agentの再起動/アップグレード中に確立済み接続が一時的に切断される可能性があるリグレッション、および`service.cilium.io/affinity: "none"`アノテーションがトラフィックのブラックホールを引き起こすClusterMeshのバグが修正されています。
 
-**CVE-2026-56743** のセキュリティ問題にも注意してください。デフォルト以外の `clusterName` を使用する Cilium 1.19.0-1.19.4 では、`ipBlock` ルールのみ（Pod/namespace セレクターなし）を使用する Kubernetes NetworkPolicy が、同じ namespace 内の他の workload からのトラフィックを意図せず許可する可能性がありました。1.19.5 以降にアップグレードしてください。詳細については、[security advisory](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r) を参照してください。
+また、**CVE-2026-56743**のセキュリティ問題にも注意してください。デフォルト以外の`clusterName`を使用するCilium 1.19.0-1.19.4では、`ipBlock`ルールのみ（Pod/namespaceセレクターなし）を使用するKubernetes NetworkPolicyが、同じnamespace内の他のworkloadからのトラフィックを意図せず許可する可能性がありました。1.19.5以降にアップグレードしてください。詳細は[セキュリティアドバイザリ](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r)を参照してください。
 
-## Cilium 1.18 の主な改善点
+2026年7月21日、[Cilium 1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1)が公開されました。これは7月14日のrc.0に続く、次期1.20マイナーリリースの2番目のリリース候補です。GA前に1.20の機能をテストしたい場合は、quay.ioでRCイメージを利用できます。
 
-Cilium 1.18 では、以下の主要な機能改善と新機能が提供されます。
+## Cilium 1.18の主な改善
+
+Cilium 1.18では、以下の主要な機能改善と新機能が提供されます。
 
 ### ネットワーキングの改善
-- **強化された BGP Control Plane**: より柔軟でスケーラブルな BGP 設定
-- **改善されたマルチクラスター・ルーティング**: クラスター間通信パフォーマンスの最適化
-- **強化された Service Mesh 統合**: Envoy proxy との統合を改善
+- **BGP Control Planeの強化**: より柔軟でスケーラブルなBGP設定
+- **マルチクラスター・ルーティングの改善**: クラスター間通信パフォーマンスの最適化
+- **Service Mesh統合の強化**: Envoy proxyとの統合を改善
 
-### セキュリティ強化
-- **強化された Network Policy**: より細粒度なポリシー制御とパフォーマンスの向上
-- **改善された暗号化オプション**: WireGuard と IPsec の暗号化パフォーマンスを最適化
+### セキュリティの強化
+- **Network Policyの強化**: よりきめ細かなポリシー制御とパフォーマンスの改善
+- **暗号化オプションの改善**: WireGuardおよびIPsec暗号化パフォーマンスの最適化
 
 ### 可観測性の改善
-- **Hubble の改善**: より充実したメトリクスとトレーシング情報
-- **強化された Prometheus 統合**: 新しいメトリクスとダッシュボード
-- **改善されたフローロギング**: より詳細なネットワークフロー情報
+- **Hubbleの改善**: より豊富なメトリクスとトレース情報
+- **Prometheus統合の強化**: 新しいメトリクスとダッシュボード
+- **Flow Loggingの改善**: より詳細なネットワークフロー情報
 
-### パフォーマンス最適化
-- **eBPF プログラムの最適化**: より高速なパケット処理
-- **メモリ使用量の改善**: 大規模クラスターにおけるリソース効率の向上
-- **CPU 使用率の最適化**: オーバーヘッドの削減
+### パフォーマンスの最適化
+- **eBPF Programの最適化**: より高速なパケット処理
+- **メモリ使用量の改善**: 大規模クラスターでのリソース効率を向上
+- **CPU使用率の最適化**: オーバーヘッドを削減
 
 ## はじめに
 
-Cilium は、Kubernetes、Docker、Mesos などの Linux コンテナ管理プラットフォーム向けのオープンソースのネットワーキング、セキュリティ、可観測性ソリューションです。Cilium は eBPF（extended Berkeley Packet Filter）テクノロジーに基づいており、従来の Linux ネットワーキングアプローチよりも強力で効率的なネットワーキングおよびセキュリティ機能を提供します。
+Ciliumは、Kubernetes、Docker、MesosなどのLinuxコンテナ管理プラットフォーム向けのオープンソースのネットワーキング、セキュリティ、可観測性ソリューションです。CiliumはeBPF（extended Berkeley Packet Filter）テクノロジーに基づいており、従来のLinuxネットワーキングアプローチよりも強力で効率的なネットワーキングおよびセキュリティ機能を提供します。
 
-### eBPF とは
+### eBPFとは
 
-eBPF は Linux kernel 内でサンドボックス化された仮想マシンのように動作するテクノロジーであり、kernel コードを変更せずにプログラムを kernel 内で安全に実行できます。これにより、ネットワークパケット処理、system call の監視、パフォーマンス分析など、さまざまなタスクを効率的に実行できます。
+eBPFは、Linux kernel内でサンドボックス化された仮想マシンのように動作するテクノロジーです。kernelコードを変更せずに、kernel内でプログラムを安全に実行できます。これにより、ネットワークパケット処理、system call監視、パフォーマンス分析などのさまざまなタスクを効率的に実行できます。
 
-eBPF の主な特徴:
-- kernel space での実行による高パフォーマンス
+eBPFの主な特徴:
+- kernel spaceでの実行による高パフォーマンス
 - JIT（Just-In-Time）コンパイルによるネイティブパフォーマンス
-- 安全な実行環境（verifier によるプログラム検証）
+- 安全な実行環境（verifierによるプログラム検証）
 - 動的なロードとアンロードが可能
 
-### Cilium の主な利点
+### Ciliumの主な利点
 
-1. **高パフォーマンス・ネットワーキング**: eBPF を使用した効率的なパケット処理
-2. **細粒度の Network Policy**: L3-L7 レベルの Network Policy をサポート
-3. **透過的暗号化**: node 間の透過的な IPsec または WireGuard 暗号化
-4. **Load Balancing**: XDP（eXpress Data Path）ベースの高パフォーマンス Load Balancing
-5. **可観測性**: Hubble によるネットワークフローの可視化
-6. **Service Mesh**: 既存の sidecar なしでの L7 トラフィック管理
-7. **マルチクラスター・ネットワーキング**: クラスター間の透過的な接続性
-8. **BGP サポート**: 外部ネットワークとの統合
+1. **高パフォーマンスネットワーキング**: eBPFを使用した効率的なパケット処理
+2. **きめ細かなNetwork Policy**: L3-L7レベルのNetwork Policyをサポート
+3. **透過的な暗号化**: node間の透過的なIPsecまたはWireGuard暗号化
+4. **Load Balancing**: XDP（eXpress Data Path）ベースの高パフォーマンスLoad Balancing
+5. **可観測性**: Hubbleによるネットワークフローの可視化
+6. **Service Mesh**: 既存のsidecarなしでのL7トラフィック管理
+7. **マルチクラスターネットワーキング**: クラスター間の透過的な接続性
+8. **BGPサポート**: 外部ネットワークとの統合
 
-### 既存の CNI との比較
+### 既存CNIとの比較
 
 | 機能 | Cilium | Calico | Flannel | AWS VPC CNI |
 |---------|--------|--------|---------|-------------|
 | ネットワークモデル | eBPF | iptables/IPVS | VXLAN/host-gw | AWS ENI |
-| Network Policy | L3-L7 | L3-L4 | 制限あり | AWS Security Groups |
+| Network Policy | L3-L7 | L3-L4 | 限定的 | AWS Security Groups |
 | 暗号化 | IPsec/WireGuard | IPsec | なし | なし |
-| 可観測性 | Hubble | Flow Logs | 制限あり | VPC Flow Logs |
-| Service Mesh | 組み込み | Istio が必要 | Istio が必要 | Istio/AppMesh が必要 |
+| 可観測性 | Hubble | Flow Logs | 限定的 | VPC Flow Logs |
+| Service Mesh | 組み込み | Istioが必要 | Istioが必要 | Istio/AppMeshが必要 |
 | パフォーマンス | 非常に高い | 高い | 中程度 | 高い |
-| マルチクラスター | 組み込み | 制限あり | なし | Transit Gateway が必要 |
+| マルチクラスター | 組み込み | 限定的 | なし | Transit Gatewayが必要 |
 
 ## アーキテクチャ
 
-Cilium は eBPF ベースの data plane と Kubernetes に統合された control plane で構成されています。
+Ciliumは、eBPFをベースとするdata planeとKubernetesと統合されたcontrol planeで構成されています。
 
 ```mermaid
 flowchart TD
@@ -127,41 +129,41 @@ flowchart TD
     class E,F,G observability
 ```
 
-### 主なコンポーネント
+### 主要コンポーネント
 
-1. **Cilium Agent**: 各 node 上で実行され、eBPF プログラムをロードして管理します
-2. **Cilium Operator**: クラスターレベルのリソースと操作を管理します
-3. **eBPF Programs**: パケット処理とポリシー適用のために kernel にロードされます
-4. **Hubble**: ネットワークフローの監視と可観測性を提供します
-5. **Cilium CLI**: Cilium と Hubble を管理するための command-line tool
+1. **Cilium Agent**: 各nodeで実行され、eBPF Programをロードおよび管理
+2. **Cilium Operator**: クラスターレベルのリソースと操作を管理
+3. **eBPF Programs**: パケット処理とポリシー適用のためにkernelへロード
+4. **Hubble**: ネットワークフロー監視と可観測性を提供
+5. **Cilium CLI**: CiliumおよびHubble管理用のコマンドラインツール
 
 ### ネットワーキングモデル
 
-Cilium は複数のネットワーキングモードをサポートしています:
+Ciliumは複数のネットワーキングモードをサポートしています:
 
-1. **Direct Routing**: node 間の直接ルーティング（BGP または static routing）
-2. **Tunneling**: VXLAN または Geneve tunnel による overlay networking
-3. **AWS ENI**: Amazon EKS で Elastic Network Interface（ENI）を利用
-4. **Azure IPAM**: Azure AKS で Azure IPAM を利用
+1. **Direct Routing**: node間の直接ルーティング（BGPまたはstatic routing）
+2. **Tunneling**: VXLANまたはGeneve tunnelによるoverlay networking
+3. **AWS ENI**: Amazon EKS上でElastic Network Interface（ENI）を利用
+4. **Azure IPAM**: Azure AKS上でAzure IPAMを利用
 
 ### パケットフロー
 
-Cilium でパケットが処理される仕組み:
+Ciliumでパケットが処理される流れ:
 
-1. パケットがネットワークインターフェイスに到着します
-2. eBPF XDP プログラムが初期処理を実行します（DDoS 防御、load balancing）
-3. eBPF TC（Traffic Control）プログラムが Network Policy を適用します
-4. パケットがコンテナの network namespace に配信されます
-5. 応答パケットは同様のパスを経て処理されます
+1. パケットがネットワークインターフェイスに到着
+2. eBPF XDP Programが初期処理を実行（DDoS防御、Load Balancing）
+3. eBPF TC（Traffic Control）ProgramがNetwork Policyを適用
+4. パケットがコンテナのnetwork namespaceに配送
+5. レスポンスパケットは同様の経路で処理
 
-## Amazon EKS との統合
+## Amazon EKSとの統合
 
-Amazon EKS で Cilium を使用する主な方法は 2 つあります:
+Amazon EKSでCiliumを使用する主な方法は2つあります:
 
-1. **Amazon EKS Add-on としてインストール**: Amazon EKS は Cilium をマネージド add-on として提供します。
-2. **手動インストール**: Helm chart を使用して直接インストールします。
+1. **Amazon EKS Add-onとしてインストール**: Amazon EKSはCiliumをマネージドAdd-onとして提供します。
+2. **手動インストール**: Helm chartを使用して直接インストールします。
 
-### Amazon EKS Add-on としてのインストール
+### Amazon EKS Add-onとしてインストール
 
 ```bash
 # Install Cilium add-on
@@ -177,7 +179,7 @@ aws eks describe-addon \
   --addon-name cilium
 ```
 
-### Helm を使用した手動インストール
+### Helmを使用した手動インストール
 
 ```bash
 # Add Cilium Helm repository
@@ -196,17 +198,17 @@ helm install cilium cilium/cilium \
   --set tunnel=disabled
 ```
 
-### EKS 固有の設定オプション
+### EKS固有の設定オプション
 
-Cilium を EKS とともに使用する際に検討すべき主な設定オプション:
+EKSでCiliumを使用する際に検討すべき主な設定オプション:
 
-1. **ENI モード**: AWS Elastic Network Interface を使用してネイティブ AWS ネットワーキングパフォーマンスを活用
-2. **IPAM モード**: AWS VPC IP アドレス管理との統合
-3. **暗号化**: node 間トラフィックの暗号化（WireGuard または IPsec）
-4. **NodeLocal DNSCache**: DNS パフォーマンスの向上
+1. **ENI Mode**: AWS Elastic Network Interfaceを使用してネイティブAWSネットワーキングのパフォーマンスを活用
+2. **IPAM Mode**: AWS VPC IPアドレス管理との統合
+3. **Encryption**: node間トラフィックの暗号化（WireGuardまたはIPsec）
+4. **NodeLocal DNSCache**: DNSパフォーマンスの改善
 5. **Hubble**: ネットワーク可観測性を有効化
 
-### ENI モードの設定
+### ENI Modeの設定
 
 ```yaml
 apiVersion: v1
@@ -225,9 +227,9 @@ data:
   egress-masquerade-interfaces: "eth0"
 ```
 
-### EKS Cluster への Cilium のインストール
+### EKS ClusterへのCiliumのインストール
 
-#### 既存の EKS Cluster への Cilium のインストール
+#### 既存のEKS ClusterへのCiliumのインストール
 
 ```bash
 # Remove AWS CNI
@@ -240,7 +242,7 @@ cilium install --set eni.enabled=true \
   --set tunnel=disabled
 ```
 
-#### Cilium CNI を使用する新規 EKS Cluster の作成
+#### Cilium CNIを使用する新しいEKS Clusterの作成
 
 ```bash
 eksctl create cluster --name cilium-cluster \
@@ -259,9 +261,9 @@ cilium install --set eni.enabled=true \
   --set tunnel=disabled
 ```
 
-### EKS Cluster の相互接続
+### EKS Clusterの相互接続
 
-Cilium Cluster Mesh を使用した EKS cluster の相互接続:
+Cilium Cluster Meshを使用したEKS Clusterの相互接続:
 
 ```bash
 # On cluster 1
@@ -278,12 +280,12 @@ cilium clustermesh connect --context cluster1 --destination-context cluster2
 
 ### 前提条件
 
-- Kubernetes cluster（v1.16 以上）
-- Linux kernel 4.9 以上（推奨: 5.4 以上）
-- kubectl が設定済みであること
+- Kubernetes cluster（v1.16以降）
+- Linux kernel 4.9以降（推奨: 5.4以降）
+- kubectlが設定済み
 - Helm（任意）
 
-### Cilium CLI のインストール
+### Cilium CLIのインストール
 
 ```bash
 curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
@@ -295,40 +297,40 @@ rm cilium-linux-amd64.tar.gz
 
 #### ネットワーキングモードの設定
 
-Direct routing モード:
+Direct routing mode:
 ```bash
 cilium install --set tunnel=disabled --set autoDirectNodeRoutes=true
 ```
 
-VXLAN モード:
+VXLAN mode:
 ```bash
 cilium install --set tunnel=vxlan
 ```
 
-#### kube-proxy 置き換えの設定
+#### kube-proxy置換の設定
 
-完全置き換えモード:
+完全置換モード:
 ```bash
 cilium install --set kubeProxyReplacement=strict
 ```
 
 #### 暗号化の設定
 
-WireGuard 暗号化:
+WireGuard暗号化:
 ```bash
 cilium install --set encryption.enabled=true --set encryption.type=wireguard
 ```
 
-IPsec 暗号化:
+IPsec暗号化:
 ```bash
 cilium install --set encryption.enabled=true --set encryption.type=ipsec
 ```
 
 ## Network Policy
 
-Cilium は Kubernetes NetworkPolicy API を拡張し、L3-L7 レベルで細粒度の Network Policy を提供します。
+CiliumはKubernetes NetworkPolicy APIを拡張し、L3-L7レベルのきめ細かなNetwork Policyを提供します。
 
-### 基本的な Network Policy
+### 基本的なNetwork Policy
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -376,7 +378,7 @@ spec:
           path: "/api/v1/products"
 ```
 
-### FQDN ベースのポリシー
+### FQDNベースのポリシー
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -398,17 +400,17 @@ spec:
         protocol: TCP
 ```
 
-## Hubble による可観測性
+## Hubbleによる可観測性
 
-Hubble は Cilium の可観測性レイヤーであり、eBPF を通じて収集されたネットワークフローデータの可視化と分析を可能にします。
+HubbleはCiliumの可観測性レイヤーであり、eBPFを通じて収集されたネットワークフローデータの可視化と分析を可能にします。
 
-### Hubble のインストール
+### Hubbleのインストール
 
 ```bash
 cilium hubble enable --ui
 ```
 
-### ネットワークフローの監視
+### ネットワークフローの観測
 
 ```bash
 # Observe all flows
@@ -427,13 +429,13 @@ hubble observe --from-label app=frontend --to-label app=backend
 hubble observe --verdict DROPPED
 ```
 
-### Prometheus 統合
+### Prometheus統合
 
 ```bash
 cilium hubble enable --metrics="{dns:query;ignoreAAAA,drop:sourceContext=pod;destinationContext=pod,tcp,flow,icmp,http}"
 ```
 
-## Cilium のテスト
+## Ciliumのテスト
 
 ```bash
 # Basic connectivity test
@@ -448,12 +450,12 @@ cilium connectivity test --test=performance
 
 ## ベストプラクティス
 
-### パフォーマンス最適化
+### パフォーマンスの最適化
 
-1. **Kernel バージョンの最適化**: Linux kernel 5.4 以上を使用
-2. **BBR Congestion Control の有効化**: ネットワークスループットを向上
-3. **XDP Acceleration の有効化**: パケット処理パフォーマンスを向上
-4. **MTU の最適化**: ネットワーク環境に適した MTU を設定
+1. **Kernel Versionの最適化**: Linux kernel 5.4以降を使用
+2. **BBR Congestion Controlを有効化**: ネットワークスループットを改善
+3. **XDP Accelerationを有効化**: パケット処理パフォーマンスを改善
+4. **MTUの最適化**: ネットワーク環境に適したMTUを設定
 
 ```bash
 cilium install --set bpf.preallocateMaps=true \
@@ -465,9 +467,9 @@ cilium install --set bpf.preallocateMaps=true \
 
 ### セキュリティ強化
 
-1. **Default Deny Policy の適用**: 明示的に許可されたトラフィックのみを許可
-2. **暗号化の有効化**: node 間トラフィックを暗号化
-3. **最小権限の原則の適用**: 必要な通信のみを許可するようポリシーを設計
+1. **Default Deny Policyを適用**: 明示的に許可されたトラフィックのみを許可
+2. **暗号化を有効化**: node間トラフィックを暗号化
+3. **最小権限の原則を適用**: 必要な通信のみを許可するようポリシーを設計
 
 ### 可観測性の向上
 
@@ -516,71 +518,71 @@ cilium sysdump
 kubectl logs -n kube-system -l k8s-app=cilium
 ```
 
-## 詳細解説の目次
+## Deep Dive目次
 
-**[Cilium の概要と基本コンセプト](01-introduction.md)**
-- Cilium の概要と歴史
+**[Ciliumの紹介と基本コンセプト](01-introduction.md)**
+- Ciliumの概要と歴史
 - コンテナネットワーキングの基礎
 - CNI（Container Network Interface）の理解
-- Cilium の差別化機能
+- Ciliumの差別化機能
 
-**[eBPF テクノロジーの詳細解説](02-ebpf.md)**
-- eBPF テクノロジーの概要と歴史
-- kernel 内での eBPF の動作
-- eBPF プログラムの種類とマップ
-- Cilium における eBPF の活用
+**[eBPFテクノロジーのDeep Dive](02-ebpf.md)**
+- eBPFテクノロジーと歴史の紹介
+- eBPFがkernel内部で動作する仕組み
+- eBPF Programの種類とMap
+- CiliumにおけるeBPFの活用
 
-**[ネットワーキングモデルと VXLAN](03-networking.md)**
+**[ネットワーキングモデルとVXLAN](03-networking.md)**
 - コンテナネットワーキングモデルの比較
-- VXLAN テクノロジーの詳細解説
-- Cilium の overlay networking
+- VXLANテクノロジーのDeep Dive
+- CiliumのOverlay Networking
 - パフォーマンス最適化の手法
 - ルーティングメカニズム（Encapsulation vs Native-Routing）
-- Cloud Provider ネットワーキング（AWS ENI、Google Cloud）
+- Cloud Provider Networking（AWS ENI、Google Cloud）
 
-**[IPAM と Network Policy](04-ipam-policy.md)**
-- IP アドレス管理（IPAM）戦略
-- Kubernetes と Cilium の IPAM 統合
-- Network Policy の設計と実装
+**[IPAMとNetwork Policy](04-ipam-policy.md)**
+- IPアドレス管理（IPAM）戦略
+- KubernetesとCilium IPAMの統合
+- Network Policyの設計と実装
 - マルチクラスターのシナリオ
-- IPAM モードの詳細解説（Cluster Scope、Kubernetes Host Scope、Multi-Pool）
+- IPAM ModeのDeep Dive（Cluster Scope、Kubernetes Host Scope、Multi-Pool）
 - Cloud Provider IPAM（Azure IPAM、AWS ENI、GKE）
-- CRD ベースの IPAM
+- CRDベースのIPAM
 
-**[L2-L7 ネットワーキングと Load Balancing](05-l2-l7-networking.md)**
-- OSI モデルのレイヤー（L2、L3、L4、L7）の理解
-- Cilium のレイヤー固有機能
-- Service Mesh 統合
-- Load Balancing アーキテクチャ
-- Masquerading の設定と実装モード
-- IPv4 Fragment の処理
+**[L2-L7 NetworkingとLoad Balancing](05-l2-l7-networking.md)**
+- OSI Modelレイヤー（L2、L3、L4、L7）の理解
+- Ciliumのレイヤー固有機能
+- Service Mesh統合
+- Load Balancingアーキテクチャ
+- Masqueradingの設定と実装モード
+- IPv4 Fragmentの処理
 
 **[セキュリティと可視性](06-security-visibility.md)**
-- Cilium のセキュリティ機能
+- Ciliumのセキュリティ機能
 - ネットワークの可視性と監視
-- Hubble のアーキテクチャと使用方法
-- リアルタイムの脅威検出
+- Hubbleアーキテクチャと使用方法
+- リアルタイム脅威検出
 
 **[高度なトピックと実際の事例](07-advanced-topics.md)**
 - パフォーマンスチューニングとトラブルシューティング
-- 大規模デプロイメント戦略
+- 大規模デプロイ戦略
 - 実際のユースケーススタディ
-- 今後のロードマップと開発の方向性
+- 将来のロードマップと開発の方向性
 
 ## 追加リソース
 
-- [ネットワーキングコンセプトの詳細解説](networking-concepts.md)
+- [ネットワーキングコンセプトのDeep Dive](networking-concepts.md)
 - [用語集と略語](glossary.md)
 
 ## 参考資料
 
-- [Cilium 公式ドキュメント](https://docs.cilium.io/)
-- [Cilium GitHub リポジトリ](https://github.com/cilium/cilium)
-- [eBPF ドキュメント](https://ebpf.io/)
-- [Hubble ドキュメント](https://github.com/cilium/hubble)
+- [Cilium公式ドキュメント](https://docs.cilium.io/)
+- [Cilium GitHub Repository](https://github.com/cilium/cilium)
+- [eBPFドキュメント](https://ebpf.io/)
+- [Hubbleドキュメント](https://github.com/cilium/hubble)
 - [Cilium Network Policy Editor](https://editor.cilium.io/)
 - [AWS EKS Workshop - Cilium](https://www.eksworkshop.com/beginner/115_cilium/)
 
 ## クイズ
 
-このセクションで学んだ内容を確認するには、[Cilium 詳細解説クイズ](../../quizzes/networking/cilium/01-introduction-quiz.md)に挑戦してください。
+このセクションで学んだ内容を確認するには、[Cilium Deep Diveクイズ](../../quizzes/networking/cilium/01-introduction-quiz.md)に挑戦してください。
