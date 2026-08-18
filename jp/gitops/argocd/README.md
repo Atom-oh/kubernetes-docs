@@ -1,7 +1,7 @@
 # ArgoCD
 
-> **対応バージョン**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **最終更新**: July 21, 2026
+> **サポート対象バージョン**: ArgoCD v2.9+, Argo Rollouts v1.6+
+> **最終更新**: August 10, 2026
 
 ## 目次
 - [ArgoCD とは？](#what-is-argocd)
@@ -14,7 +14,7 @@
 
 ## ArgoCD とは？
 
-ArgoCD は、Kubernetes 向けの宣言的な GitOps 継続的デリバリーツールです。Git リポジトリで定義された望ましい状態をクラスター内の実際の状態と同期させることで、Kubernetes クラスターへのアプリケーションのデプロイを自動化します。
+ArgoCD は、Kubernetes 向けの宣言的な GitOps 継続的デリバリーツールです。Git リポジトリで定義された望ましい状態をクラスター内の実際の状態と同期することで、Kubernetes クラスターへのアプリケーションのデプロイを自動化します。
 
 CNCF の卒業プロジェクトとして、ArgoCD は GitOps ベースの Kubernetes デプロイにおける事実上の標準となっており、世界中の数千の組織で利用されています。
 
@@ -78,9 +78,9 @@ flowchart LR
 
 ### GitOps ネイティブ
 
-- **単一の信頼できる情報源としての Git**: すべてのアプリケーション設定を Git に保存
-- **宣言的デプロイ**: 望ましい状態を定義し、残りは ArgoCD が処理
-- **監査証跡**: Git コミットを通じたすべての変更の完全な履歴
+- **Git を唯一の信頼できる情報源として使用**: すべてのアプリケーション設定を Git に保存
+- **宣言的なデプロイ**: 望ましい状態を定義し、残りは ArgoCD が処理
+- **監査証跡**: Git コミットによるすべての変更の完全な履歴
 - **ロールバック**: 任意の以前の状態へ即座にロールバック
 
 ### マルチクラスター管理
@@ -92,11 +92,11 @@ flowchart LR
 ### エンタープライズ対応
 
 - **RBAC**: きめ細かなロールベースのアクセス制御
-- **SSO 統合**: OIDC、SAML、LDAP のサポート
+- **SSO 統合**: OIDC、SAML、LDAP をサポート
 - **マルチテナンシー**: Project ベースの分離
 - **高可用性**: 本番環境対応の HA デプロイ
 
-### 開発者体験
+### 開発者エクスペリエンス
 
 - **Web UI**: 視覚的なアプリケーション管理とモニタリング
 - **CLI**: フル機能のコマンドラインインターフェース
@@ -113,7 +113,7 @@ flowchart LR
 | **Repository Server** | リポジトリをクローンし、マニフェストを生成して、結果をキャッシュ | 2+ |
 | **Application Controller** | アプリケーションを監視し、状態を調整 | 2+ (シャーディング) |
 | **Redis** | Repo Server と Controller のキャッシュレイヤー | 3 (HA) |
-| **Dex** | SSO 統合用の OIDC プロバイダー | 2+ |
+| **Dex** | SSO 統合のための OIDC プロバイダー | 2+ |
 | **Notification Controller** | イベント発生時に通知を送信 | 1+ |
 | **ApplicationSet Controller** | ApplicationSet リソースを管理 | 1+ |
 
@@ -155,7 +155,7 @@ sequenceDiagram
 
 ### Application
 
-Application CRD は ArgoCD における主要なリソースです。以下を定義します。
+Application CRD は ArgoCD の主要なリソースです。以下を定義します。
 - **Source**: マニフェストの取得元（Git リポジトリ、Helm チャート、OCI）
 - **Destination**: デプロイ先（クラスターと namespace）
 - **Sync Policy**: 同期の処理方法
@@ -164,20 +164,20 @@ Application CRD は ArgoCD における主要なリソースです。以下を�
 
 Project は論理的なグループ化とアクセス制御を提供します。
 - 使用可能なリポジトリを制限
-- 対象のクラスターと namespace を制限
+- 宛先のクラスターと namespace を制限
 - 許可または拒否するリソースを定義
 
 ### ApplicationSet
 
-ApplicationSet では、Generator を使用して単一の定義から複数のアプリケーションを管理できます。
+ApplicationSet は Generator を使用して、単一の定義から複数のアプリケーションを管理できます。
 - **List Generator**: 静的な値のリスト
-- **Cluster Generator**: 登録済みクラスターを対象化
+- **Cluster Generator**: 登録済みクラスターをターゲットに指定
 - **Git Generator**: リポジトリのディレクトリ／ファイルをスキャン
 - **Matrix/Merge**: 複数の Generator を組み合わせ
 
 ### Sync
 
-同期により、クラスターの状態を望ましい状態に一致させます。
+同期により、クラスターの状態を望ましい状態と一致させます。
 - **Manual Sync**: ユーザーがトリガー
 - **Auto Sync**: Git の変更時に自動実行
 - **Self-Heal**: ドリフトを自動修正
@@ -187,14 +187,14 @@ ApplicationSet では、Generator を使用して単一の定義から複数の�
 
 | ガイド | 説明 |
 |-------|-------------|
-| [インストール](01-installation.md) | インストール方法、CLI セットアップ、HA 構成、EKS 統合 |
-| [Applications](02-applications.md) | Application CRD、Source タイプ、ヘルスチェック、Hook、App of Apps |
-| [Sync 戦略](03-sync-strategies.md) | Sync Policy、Wave、Window、差分比較、リトライ設定 |
+| [インストール](01-installation.md) | インストール方法、CLI セットアップ、HA 設定、EKS 統合 |
+| [Applications](02-applications.md) | Application CRD、Source タイプ、ヘルスチェック、hook、App of Apps |
+| [Sync 戦略](03-sync-strategies.md) | Sync Policy、wave、window、diff、リトライ設定 |
 | [ApplicationSets](04-applicationsets.md) | すべての Generator、テンプレート化、プログレッシブ Sync、マルチクラスターのパターン |
-| [トラフィック管理](05-traffic-management.md) | Argo Rollouts、ブルーグリーン、カナリア、分析、Ingress 統合 |
-| [Projects と RBAC](06-projects-rbac.md) | AppProject、RBAC ポリシー、マルチテナンシー、JWT トークン |
-| [セキュリティ](07-security.md) | SSO 統合、Secret 管理、TLS、監査ログ |
-| [通知](08-notifications.md) | 通知サービス、トリガー、テンプレート、サブスクリプション |
+| [Traffic Management](05-traffic-management.md) | Argo Rollouts、blue-green、canary、分析、Ingress 統合 |
+| [Projects & RBAC](06-projects-rbac.md) | AppProject、RBAC ポリシー、マルチテナンシー、JWT トークン |
+| [Security](07-security.md) | SSO 統合、Secret 管理、TLS、監査ログ |
+| [Notifications](08-notifications.md) | 通知サービス、トリガー、テンプレート、サブスクリプション |
 | [ベストプラクティス](09-best-practices.md) | リポジトリパターン、パフォーマンスチューニング、トラブルシューティング、EKS のヒント |
 | [Rollouts Experiments 詳細解説](10-rollouts-experiment.md) | Experiment CRD、一時的な ReplicaSet 検証、AnalysisRun の判定 |
 
@@ -228,7 +228,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath="{.data.password}" | base64 -d && echo
 ```
 
-### 4. CLI からログイン
+### 4. CLI でログイン
 
 ```bash
 # Install CLI (macOS)
@@ -255,7 +255,7 @@ argocd app create guestbook \
 argocd app sync guestbook
 ```
 
-または、宣言的に作成します。
+または、宣言的に定義します。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -280,11 +280,24 @@ spec:
 
 ## バージョン互換性
 
-### 2026年7月更新: ArgoCD 3.x パッチリリース
+### July 2026 更新: ArgoCD 3.x パッチリリース
 
-ArgoCD v3.4.5 は 2026年7月9日にリリースされました。3.4 系は現在の安定リリース系統であり、次のマイナーバージョンである v3.5.0 は rc2 に到達しています。以下の表は 2.x 時代を対象に作成されています。バージョンごとの最新サポート情報については、[ArgoCD releases page](https://github.com/argoproj/argo-cd/releases) を確認してください。
+ArgoCD v3.4.5 は July 9, 2026 にリリースされました。以下の表は 2.x 時代を基準に作成されています。バージョンごとの最新サポート情報については、[ArgoCD releases page](https://github.com/argoproj/argo-cd/releases) を確認してください。
 
-KubeCon + CloudNativeCon Japan の併設イベントとして 2026年7月28日に横浜で開催された ArgoCon Japan では、Argo CD のリードメンテナーが次期バージョン（3.5）の提案を共有します（[CNCF blog](https://www.cncf.io/blog/2026/07/20/argocon-japan-2026-meeting-the-maintainers-enterprise-insights-and-the-road-to-argo-cd-3-5/)）。
+KubeCon + CloudNativeCon Japan の併催イベントとして July 28, 2026 に横浜で開催された ArgoCon Japan で、Argo CD のリードメンテナーが次期バージョン（3.5）の提案を共有しました（[CNCF blog](https://www.cncf.io/blog/2026/07/20/argocon-japan-2026-meeting-the-maintainers-enterprise-insights-and-the-road-to-argo-cd-3-5/)）。
+
+### August 2026 更新: ArgoCD v3.5.0 リリース
+
+[ArgoCD v3.5.0](https://github.com/argoproj/argo-cd/releases/tag/v3.5.0) は August 4, 2026 に GA となり、3.5 が現在の安定リリースラインになりました。主な変更点は以下のとおりです。
+
+- **Helm 3 → Helm 4 への移行**: マニフェストのレンダリングで Helm 4 を使用
+- **Source integrity verification (Alpha)**: Source hydrator で dry source に対するオプトインの署名検証を追加し、Source Integrity 設定の CLI サポートを追加
+- **ApplicationSet の改善**: 同時アプリケーション管理と、アーカイブ状態によるリポジトリフィルタリング
+- **Webhook jitter**: webhook でトリガーされるアプリケーション更新の設定可能な jitter により、サンダリングハードによる更新スパイクを平滑化
+- **UI**: New App パネルでのマルチ Source アプリケーション作成、ApplicationSet Preview Apps タブ、リソースツリー内の AppSet ノード
+- **新しいヘルスチェック**: GatewayClass、`BackendTLSPolicy` (Gateway API)、VictoriaMetrics、Gardener Shoot など
+
+前のリリースライン向けに、パッチリリース v3.4.6 と v3.3.13 も July 31, 2026 に公開されました。
 
 ### Kubernetes 互換性
 
@@ -309,13 +322,13 @@ KubeCon + CloudNativeCon Japan の併設イベントとして 2026年7月28日�
 
 | Rollouts バージョン | ArgoCD バージョン | 機能 |
 |------------------|----------------|----------|
-| 1.7.x | 2.10+ | 分析機能の改善 |
+| 1.7.x | 2.10+ | 分析の改善 |
 | 1.6.x | 2.9+ | 通知統合 |
 | 1.5.x | 2.8+ | プログレッシブデリバリー |
 
 ## 次のステップ
 
-1. **[インストールガイド](01-installation.md)**: 本番環境向けに ArgoCD をセットアップ
+1. **[インストールガイド](01-installation.md)**: ArgoCD を本番環境向けにセットアップ
 2. **[Applications ガイド](02-applications.md)**: Application CRD について学ぶ
 3. **[ApplicationSets ガイド](04-applicationsets.md)**: マルチクラスターデプロイ
 
@@ -328,4 +341,4 @@ KubeCon + CloudNativeCon Japan の併設イベントとして 2026年7月28日�
 
 ## クイズ
 
-学んだ内容を確認するには、[ArgoCD インストールクイズ](../../quizzes/gitops/argocd/01-installation-quiz.md) に挑戦してください。
+学習内容を確認するには、[ArgoCD インストールクイズ](../../quizzes/gitops/argocd/01-installation-quiz.md) に挑戦してください。

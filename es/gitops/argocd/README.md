@@ -1,22 +1,22 @@
 # ArgoCD
 
 > **Versiones compatibles**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **Última actualización**: July 21, 2026
+> **Última actualización**: August 10, 2026
 
-## Tabla de contenidos
+## Tabla de contenido
 - [¿Qué es ArgoCD?](#what-is-argocd)
 - [Beneficios clave](#key-benefits)
 - [Descripción general de la arquitectura](#architecture-overview)
 - [Conceptos principales](#core-concepts)
-- [Navegación de las subguías](#sub-guide-navigation)
+- [Navegación de subguías](#sub-guide-navigation)
 - [Inicio rápido](#quick-start)
 - [Compatibilidad de versiones](#version-compatibility)
 
 ## ¿Qué es ArgoCD?
 
-ArgoCD es una herramienta de entrega continua declarativa de GitOps para Kubernetes. Automatiza el despliegue de aplicaciones en clústeres de Kubernetes mediante la sincronización del estado deseado definido en repositorios de Git con el estado real del clúster.
+ArgoCD es una herramienta declarativa de entrega continua GitOps para Kubernetes. Automatiza el despliegue de aplicaciones en clústeres de Kubernetes mediante la sincronización del estado deseado definido en repositorios Git con el estado real del clúster.
 
-Como proyecto graduado de CNCF, ArgoCD se ha convertido en el estándar de facto para los despliegues de Kubernetes basados en GitOps y es utilizado por miles de organizaciones en todo el mundo.
+Como proyecto graduado de CNCF, ArgoCD se ha convertido en el estándar de facto para los despliegues de Kubernetes basados en GitOps, utilizado por miles de organizaciones en todo el mundo.
 
 ```mermaid
 flowchart LR
@@ -76,31 +76,31 @@ flowchart LR
 
 ## Beneficios clave
 
-### GitOps nativo
+### Nativo de GitOps
 
-- **Git como única fuente de verdad**: Todas las configuraciones de aplicaciones se almacenan en Git
-- **Despliegues declarativos**: Define el estado deseado; ArgoCD se encarga del resto
+- **Git como fuente única de verdad**: Todas las configuraciones de las aplicaciones se almacenan en Git
+- **Despliegues declarativos**: Defina el estado deseado; ArgoCD se encarga del resto
 - **Registro de auditoría**: Historial completo de todos los cambios mediante commits de Git
-- **Reversión**: Reversión instantánea a cualquier estado anterior
+- **Rollback**: Reversión instantánea a cualquier estado anterior
 
-### Gestión de múltiples clústeres
+### Administración multiclúster
 
-- **Control centralizado**: Gestiona cientos de clústeres desde una única instancia de ArgoCD
-- **ApplicationSet**: Despliegues de múltiples clústeres basados en plantillas
+- **Control centralizado**: Administre cientos de clústeres desde una única instancia de ArgoCD
+- **ApplicationSet**: Despliegues multiclúster basados en plantillas
 - **Cluster Generator**: Selección dinámica de clústeres basada en etiquetas
 
 ### Listo para empresas
 
-- **RBAC**: Control de acceso basado en roles y de granularidad fina
+- **RBAC**: Control de acceso basado en roles de granularidad fina
 - **Integración de SSO**: Compatibilidad con OIDC, SAML y LDAP
 - **Multi-Tenancy**: Aislamiento basado en proyectos
-- **Alta disponibilidad**: Despliegue de HA listo para producción
+- **Alta disponibilidad**: Despliegue HA listo para producción
 
-### Experiencia de desarrollador
+### Experiencia del desarrollador
 
-- **Web UI**: Gestión y monitoreo visual de aplicaciones
+- **Web UI**: Administración y monitoreo visual de aplicaciones
 - **CLI**: Interfaz de línea de comandos con todas las funciones
-- **Notificaciones**: Integraciones con Slack, Teams, correo electrónico y webhooks
+- **Notificaciones**: Integraciones con Slack, Teams, correo electrónico y webhook
 - **Monitoreo de estado**: Comprobaciones de estado integradas y personalizadas
 
 ## Descripción general de la arquitectura
@@ -110,12 +110,12 @@ flowchart LR
 | Componente | Descripción | Réplicas (HA) |
 |-----------|-------------|---------------|
 | **API Server** | Gestiona todas las solicitudes de API, la autenticación y RBAC | 2+ |
-| **Repository Server** | Clona repositorios, genera manifiestos y almacena resultados en caché | 2+ |
+| **Repository Server** | Clona repositorios, genera manifests y almacena resultados en caché | 2+ |
 | **Application Controller** | Monitorea aplicaciones y reconcilia el estado | 2+ (fragmentado) |
-| **Redis** | Capa de caché para el servidor de repositorios y el controlador | 3 (HA) |
+| **Redis** | Capa de caché para repo server y controller | 3 (HA) |
 | **Dex** | Proveedor OIDC para la integración de SSO | 2+ |
 | **Notification Controller** | Envía notificaciones sobre eventos | 1+ |
-| **ApplicationSet Controller** | Gestiona recursos de ApplicationSet | 1+ |
+| **ApplicationSet Controller** | Administra recursos ApplicationSet | 1+ |
 
 ### Flujo de datos
 
@@ -156,46 +156,46 @@ sequenceDiagram
 ### Application
 
 El CRD Application es el recurso principal de ArgoCD. Define:
-- **Origen**: De dónde obtener los manifiestos (repositorio de Git, gráfico de Helm, OCI)
-- **Destino**: Dónde desplegar (clúster y namespace)
-- **Política de sincronización**: Cómo gestionar la sincronización
+- **Source**: Dónde obtener los manifests (repositorio Git, chart de Helm, OCI)
+- **Destination**: Dónde desplegar (clúster y namespace)
+- **Sync Policy**: Cómo gestionar la sincronización
 
 ### Project
 
 Los proyectos proporcionan agrupación lógica y control de acceso:
-- Restringen qué repositorios se pueden usar
-- Limitan los clústeres y namespaces de destino
-- Definen los recursos permitidos/denegados
+- Restringir qué repositorios se pueden utilizar
+- Limitar los clústeres y namespaces de destino
+- Definir recursos permitidos/denegados
 
 ### ApplicationSet
 
-ApplicationSet permite gestionar múltiples aplicaciones desde una sola definición mediante generadores:
+ApplicationSet permite administrar varias aplicaciones desde una sola definición mediante generators:
 - **List Generator**: Lista estática de valores
-- **Cluster Generator**: Selecciona clústeres registrados
-- **Git Generator**: Examina directorios/archivos del repositorio
-- **Matrix/Merge**: Combina varios generadores
+- **Cluster Generator**: Dirigirse a clústeres registrados
+- **Git Generator**: Analizar directorios/archivos de repositorios
+- **Matrix/Merge**: Combinar varios generators
 
-### Sincronización
+### Sync
 
 La sincronización hace que el estado del clúster coincida con el estado deseado:
-- **Sincronización manual**: Iniciada por el usuario
-- **Sincronización automática**: Automática ante cambios en Git
+- **Sync manual**: Iniciada por el usuario
+- **Auto Sync**: Automática ante cambios en Git
 - **Self-Heal**: Corrige automáticamente la desviación
 - **Prune**: Elimina recursos huérfanos
 
-## Navegación de las subguías
+## Navegación de subguías
 
 | Guía | Descripción |
 |-------|-------------|
-| [Instalación](01-installation.md) | Métodos de instalación, configuración de CLI, configuración de HA, integración de EKS |
-| [Aplicaciones](02-applications.md) | CRD Application, tipos de origen, comprobaciones de estado, hooks, App of Apps |
-| [Estrategias de sincronización](03-sync-strategies.md) | Políticas de sincronización, oleadas, ventanas, comparación de diferencias, configuración de reintentos |
-| [ApplicationSets](04-applicationsets.md) | Todos los generadores, plantillas, sincronización progresiva, patrones de múltiples clústeres |
-| [Gestión del tráfico](05-traffic-management.md) | Argo Rollouts, blue-green, canary, análisis, integración de ingress |
+| [Instalación](01-installation.md) | Métodos de instalación, configuración de CLI, configuración de HA, integración con EKS |
+| [Aplicaciones](02-applications.md) | CRD Application, tipos de fuentes, comprobaciones de estado, hooks, App of Apps |
+| [Estrategias de Sync](03-sync-strategies.md) | Políticas de Sync, waves, ventanas, diffing, configuración de reintentos |
+| [ApplicationSets](04-applicationsets.md) | Todos los generators, plantillas, Sync progresivo, patrones multiclúster |
+| [Administración de tráfico](05-traffic-management.md) | Argo Rollouts, blue-green, canary, análisis, integración de ingress |
 | [Proyectos y RBAC](06-projects-rbac.md) | AppProject, políticas de RBAC, multi-tenancy, tokens JWT |
-| [Seguridad](07-security.md) | Integración de SSO, gestión de secretos, TLS, registro de auditoría |
-| [Notificaciones](08-notifications.md) | Servicios de notificación, desencadenantes, plantillas, suscripciones |
-| [Prácticas recomendadas](09-best-practices.md) | Patrones de repositorio, optimización del rendimiento, resolución de problemas, consejos para EKS |
+| [Seguridad](07-security.md) | Integración de SSO, administración de secrets, TLS, registro de auditoría |
+| [Notificaciones](08-notifications.md) | Servicios de notificación, triggers, plantillas, suscripciones |
+| [Mejores prácticas](09-best-practices.md) | Patrones de repositorio, ajuste de rendimiento, solución de problemas, consejos para EKS |
 | [Análisis detallado de experimentos de Rollouts](10-rollouts-experiment.md) | CRD Experiment, validación efímera de ReplicaSet, veredictos de AnalysisRun |
 
 ## Inicio rápido
@@ -241,7 +241,7 @@ argocd login localhost:8080
 argocd account update-password
 ```
 
-### 5. Desplegar tu primera aplicación
+### 5. Desplegar su primera aplicación
 
 ```bash
 # Create application via CLI
@@ -282,9 +282,22 @@ spec:
 
 ### Actualización de julio de 2026: versiones de parche de ArgoCD 3.x
 
-ArgoCD v3.4.5 se lanzó el 9 de julio de 2026. La línea 3.4 es la línea de versiones estables actual, y la siguiente versión menor, v3.5.0, ha alcanzado rc2. Las tablas siguientes se elaboraron para la era 2.x; consulta la [página de versiones de ArgoCD](https://github.com/argoproj/argo-cd/releases) para obtener información actualizada sobre la compatibilidad de cada versión.
+ArgoCD v3.4.5 se lanzó el 9 de julio de 2026. Las tablas siguientes se redactaron para la era 2.x; consulte la [página de lanzamientos de ArgoCD](https://github.com/argoproj/argo-cd/releases) para obtener información actualizada sobre la compatibilidad por versión.
 
-En ArgoCon Japan, celebrado el 28 de julio de 2026 en Yokohama como evento conjunto de KubeCon + CloudNativeCon Japan, el mantenedor principal de Argo CD compartirá una propuesta para la siguiente versión (3.5) ([blog de CNCF](https://www.cncf.io/blog/2026/07/20/argocon-japan-2026-meeting-the-maintainers-enterprise-insights-and-the-road-to-argo-cd-3-5/)).
+En ArgoCon Japan, celebrado el 28 de julio de 2026 en Yokohama como evento conjunto de KubeCon + CloudNativeCon Japan, el mantenedor principal de Argo CD compartió una propuesta para la siguiente versión (3.5) ([blog de CNCF](https://www.cncf.io/blog/2026/07/20/argocon-japan-2026-meeting-the-maintainers-enterprise-insights-and-the-road-to-argo-cd-3-5/)).
+
+### Actualización de agosto de 2026: lanzamiento de ArgoCD v3.5.0
+
+[ArgoCD v3.5.0](https://github.com/argoproj/argo-cd/releases/tag/v3.5.0) alcanzó disponibilidad general el 4 de agosto de 2026, lo que convierte a 3.5 en la línea de lanzamiento estable actual. Los cambios destacados incluyen:
+
+- **Migración de Helm 3 → Helm 4**: el renderizado de manifests ahora utiliza Helm 4
+- **Verificación de integridad de fuentes (Alpha)**: verificación de firmas opcional para fuentes dry en el source hydrator, además de compatibilidad de CLI para la configuración de Source Integrity
+- **Mejoras de ApplicationSet**: administración simultánea de aplicaciones y filtrado de repositorios por estado archivado
+- **Jitter de webhook**: jitter configurable para las actualizaciones de aplicaciones activadas por webhook, a fin de suavizar los picos de actualizaciones del efecto thundering herd
+- **UI**: creación de aplicaciones multifuente en el panel New App, pestaña ApplicationSet Preview Apps y nodos AppSet en el árbol de recursos
+- **Nuevas comprobaciones de estado**: GatewayClass, `BackendTLSPolicy` (Gateway API), VictoriaMetrics, Gardener Shoot y más
+
+Las versiones de parche v3.4.6 y v3.3.13 también se lanzaron el 31 de julio de 2026 para las líneas anteriores.
 
 ### Compatibilidad con Kubernetes
 
@@ -307,17 +320,17 @@ En ArgoCon Japan, celebrado el 28 de julio de 2026 en Yokohama como evento conju
 
 ### Compatibilidad con Argo Rollouts
 
-| Versión de Rollouts | Versión de ArgoCD | Características |
+| Versión de Rollouts | Versión de ArgoCD | Funcionalidades |
 |------------------|----------------|----------|
 | 1.7.x | 2.10+ | Mejoras de análisis |
 | 1.6.x | 2.9+ | Integración de notificaciones |
 | 1.5.x | 2.8+ | Entrega progresiva |
 
-## Próximos pasos
+## Siguientes pasos
 
-1. **[Guía de instalación](01-installation.md)**: Configura ArgoCD para producción
-2. **[Guía de aplicaciones](02-applications.md)**: Aprende sobre el CRD Application
-3. **[Guía de ApplicationSets](04-applicationsets.md)**: Despliegues de múltiples clústeres
+1. **[Guía de instalación](01-installation.md)**: Configure ArgoCD para producción
+2. **[Guía de aplicaciones](02-applications.md)**: Aprenda sobre el CRD Application
+3. **[Guía de ApplicationSets](04-applicationsets.md)**: Despliegues multiclúster
 
 ## Recursos
 
@@ -328,4 +341,4 @@ En ArgoCon Japan, celebrado el 28 de julio de 2026 en Yokohama como evento conju
 
 ## Cuestionario
 
-Para comprobar lo que has aprendido, prueba el [cuestionario de instalación de ArgoCD](../../quizzes/gitops/argocd/01-installation-quiz.md).
+Para comprobar lo que ha aprendido, pruebe el [cuestionario de instalación de ArgoCD](../../quizzes/gitops/argocd/01-installation-quiz.md).
