@@ -1,7 +1,7 @@
 # 클러스터 아키텍처
 
 > **지원 버전**: Kubernetes 1.32, 1.33, 1.34  
-> **마지막 업데이트**: 2026년 7월 27일
+> **마지막 업데이트**: 2026년 8월 10일
 
 ## 실습 환경 설정
 
@@ -1714,6 +1714,10 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 2026년 7월 20일 v1.37.0-beta.0이 공개되며 차기 마이너 릴리스 v1.37의 릴리스 사이클이 후반부에 접어들었습니다. 코드 프리즈는 예정대로 2026년 7월 22-23일에 발효되었고, 정식 릴리스(v1.37.0)는 2026년 8월 26일로 예정되어 있습니다. 세부 일정은 [v1.37 릴리스 정보](https://www.kubernetes.dev/resources/release/)를 참고하세요.
 
 같은 주(2026년 7월 22-23일)에 유지 관리 중인 모든 라인의 패치 릴리스도 함께 공개되었습니다: [v1.36.3](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.3), [v1.35.7](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.7), [v1.34.10](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.10). 사용 중인 마이너 버전의 최신 패치를 적용하는 것을 권장합니다.
+
+### 2026년 8월 업데이트: v1.37 스니크 픽(Sneak Peek)
+
+2026년 7월 31일 릴리스 팀이 [Kubernetes v1.37 스니크 픽](https://kubernetes.io/blog/2026/07/31/kubernetes-v1-37-sneak-peek/)을 공개해, 8월 26일로 예정된 v1.37.0 정식 릴리스에 앞서 계획된 사용 중단(deprecation)·제거·기능 변경 사항을 정리했습니다. 문서 프리즈(Docs Freeze)는 2026년 8월 5-6일에 발효되었습니다. 한편 다음 사이클의 첫 태그인 v1.38.0-alpha.0이 2026년 8월 6일에 생성되었습니다.
 
 ### 업그레이드 전략
 

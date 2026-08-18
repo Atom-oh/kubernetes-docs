@@ -1,10 +1,18 @@
 # 소식
-> **마지막 업데이트**: 2026년 7월 27일
+> **마지막 업데이트**: 2026년 8월 10일
 
 Kubernetes, Amazon EKS, CNCF 생태계의 뉴스는 별도 다이제스트 문서로 쌓이지 않습니다. 매주 GitHub Actions가 관련 뉴스를 관련된 기존 문서에 직접 반영하고, 아래 갱신 로그에 어떤 문서가 왜 바뀌었는지만 남깁니다. 매칭되는 문서가 없는 뉴스는 원문 링크만 기록됩니다.
 
 ## 갱신 로그
 
+- 2026-W33: [networking/04-gateway-api.md](../networking/04-gateway-api.md) — Gateway API v1.6(TCPRoute/UDPRoute Standard v1 승격, 실험적 리소스의 x-k8s.io API 그룹 분리) 반영
+- 2026-W33: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.0 GA(Helm 4 마이그레이션, 소스 무결성 검증 알파, ApplicationSet 개선) 반영
+- 2026-W33: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.0 GA(Gateway API v1.6.1, KCNP, multi-pool IPAM 마이그레이션) 및 1.21.0-pre.0 반영
+- 2026-W33: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 스니크 픽, 문서 프리즈 발효, v1.38.0-alpha.0 태그 반영
+- 2026-W33: 매칭 문서 없음 — Amazon ECR, Docker push 이미지 레이어 최대 200GB 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-ecr-image-layers/))
+- 2026-W33: 매칭 문서 없음 — K8gb, CNCF 인큐베이팅 프로젝트 승격 ([원문](https://www.cncf.io/announcements/2026/08/05/k8gb-becomes-a-cncf-incubating-project/))
+- 2026-W33: 매칭 문서 없음 — OpenCost 1.121.0, Kubernetes 추론(inference) 비용 추적 기능 추가 ([원문](https://www.cncf.io/blog/2026/08/05/opencost-1-121-0-first-of-a-kind-kubernetes-inference-cost-tracking/))
+- 2026-W33: 매칭 문서 없음 — Kubernetes DRA가 HAMi를 대체할까?, CNCF 블로그 ([원문](https://www.cncf.io/blog/2026/08/07/does-kubernetes-dra-replace-hami/))
 - 2026-W31: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.36.3/v1.35.7/v1.34.10 패치 릴리스 및 v1.37 코드 프리즈 발효 반영
 - 2026-W31: [eks-auto-mode/README.md](../eks-auto-mode/README.md) — EKS Auto Mode 노드 풀의 EFA·EC2 배치 그룹 지원 반영
 - 2026-W31: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter 노드 풀의 EFA·EC2 배치 그룹 지원 반영
