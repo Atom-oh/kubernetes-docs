@@ -100,6 +100,13 @@
 * [vLLM 배포 및 최적화](ai-ml/02-vllm-deployment.md)
 * [Agentic AI 플랫폼](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML 모범 사례](ai-ml/07-ai-ml-best-practices.md)
+* [Kubeflow on EKS 딥다이브](ai-ml/kubeflow/README.md)
+  * [Part 1: EKS에서의 Kubeflow 아키텍처와 설치](ai-ml/kubeflow/01-architecture-installation.md)
+  * [Part 2: Kubeflow Pipelines](ai-ml/kubeflow/02-pipelines.md)
+  * [Part 3: Kubeflow Notebooks](ai-ml/kubeflow/03-notebooks.md)
+  * [Part 4: Katib — 하이퍼파라미터 튜닝과 AutoML](ai-ml/kubeflow/04-katib.md)
+  * [Part 5: Kubeflow Trainer와 분산 학습](ai-ml/kubeflow/05-training-operator.md)
+  * [Part 6: KServe — Kubernetes 위에서의 모델 서빙](ai-ml/kubeflow/06-kserve.md)
 
 ## Data on EKS
 
@@ -429,6 +436,12 @@
   * [vLLM 배포 퀴즈](quizzes/ai-ml/04-vllm-deployment-quiz.md)
   * [Agentic AI 플랫폼 퀴즈](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
   * [AI/ML 모범 사례 퀴즈](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+  * [Part 1: Kubeflow 아키텍처와 설치 퀴즈](quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+  * [Part 2: Kubeflow Pipelines 퀴즈](quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
+  * [Part 3: Kubeflow Notebooks 퀴즈](quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
+  * [Part 4: Katib 퀴즈](quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+  * [Part 5: Kubeflow Trainer 퀴즈](quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
+  * [Part 6: KServe 퀴즈](quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
 * [Data on EKS](quiz/data-on-eks/README.md)
   * [Part 1: Kafka 핵심 개념 퀴즈](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator 퀴즈](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
