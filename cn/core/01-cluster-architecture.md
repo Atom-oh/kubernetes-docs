@@ -1,13 +1,13 @@
 # 集群架构
 
-> **支持的版本**: Kubernetes 1.32, 1.33, 1.34
-> **最后更新**: July 27, 2026
+> **支持的版本**：Kubernetes 1.32、1.33、1.34
+> **最后更新**：August 10, 2026
 
 ## 实验环境设置
 
 要练习本文档中的概念，你需要以下工具和环境：
 
-### 所需工具
+### 必需工具
 - kubectl v1.34 或更高版本
 - 一个可用的 Kubernetes 集群（EKS、minikube、kind 等）
 
@@ -30,9 +30,9 @@ kubectl get pods -n kube-system
 
 ## 集群架构概览
 
-> **核心概念**: Kubernetes 集群由控制平面和工作 Node 组成，每部分均由执行特定职责的多个组件构成。
+> **核心概念**：Kubernetes 集群由控制平面和工作节点组成，每个部分均由执行特定职责的多个组件构成。
 
-Kubernetes 集群由一组用于运行容器化应用程序的 Node（虚拟机或物理机）组成。集群大致分为控制平面和工作 Node。
+Kubernetes 集群由一组用于运行容器化应用程序的节点（虚拟机或物理机）组成。集群大致分为控制平面和工作节点。
 
 ### 集群架构图
 
@@ -105,28 +105,28 @@ graph TD
 **控制平面组件**：
 - **kube-apiserver**：暴露 Kubernetes API 的前端
 - **etcd**：存储所有集群数据的键值存储
-- **kube-scheduler**：为新创建的 Pod 选择运行 Node
-- **kube-controller-manager**：运行管理集群状态的控制器
+- **kube-scheduler**：选择用于运行新创建 Pod 的节点
+- **kube-controller-manager**：运行用于管理集群状态的控制器
 - **cloud-controller-manager**：与云提供商 API 交互
 
-**工作 Node 组件**：
-- **kubelet**：在每个 Node 上运行、管理容器执行的代理
+**工作节点组件**：
+- **kubelet**：运行在每个节点上的代理，管理容器执行
 - **kube-proxy**：维护网络规则并执行连接转发
 - **Container Runtime**：运行容器（containerd、CRI-O 等）
 
 ## 控制平面组件
 
-控制平面充当 Kubernetes 集群的“中枢”，负责管理和控制集群的整体状态。控制平面组件通常运行在专用机器上，并且可以复制为多个实例以实现高可用性。
+控制平面充当 Kubernetes 集群的“中枢”，管理和控制集群的整体状态。控制平面组件通常运行在专用机器上，并可复制为多个实例以实现高可用性。
 
 ### 控制平面组件详情
 
-| 组件 | 主要功能 | 通信对象 | 高可用性配置 |
+| 组件 | 主要功能 | 通信目标 | 高可用性配置 |
 |-----------|---------------|----------------------|--------------------------------|
-| **kube-apiserver** | - 提供 Kubernetes API<br>- 身份验证与授权<br>- API 请求处理 | - 所有组件<br>- etcd | 多实例水平扩展 |
-| **etcd** | - 存储集群数据<br>- 分布式键值存储<br>- 确保一致性 | - kube-apiserver | 多 Node 集群 |
-| **kube-scheduler** | - Pod 放置决策<br>- 评估 Node 资源<br>- 应用亲和性/反亲和性 | - kube-apiserver | 主备配置 |
-| **kube-controller-manager** | - Node 控制器<br>- 副本控制器<br>- Endpoint 控制器<br>- Service account 控制器 | - kube-apiserver | 主备配置 |
-| **cloud-controller-manager** | - 云提供商集成<br>- Node 生命周期<br>- 路由和负载均衡 | - kube-apiserver<br>- Cloud API | 主备配置 |
+| **kube-apiserver** | - 提供 Kubernetes API<br>- 身份验证和授权<br>- API 请求处理 | - 所有组件<br>- etcd | 通过多个实例进行水平扩展 |
+| **etcd** | - 存储集群数据<br>- 分布式键值存储<br>- 确保一致性 | - kube-apiserver | 多节点集群 |
+| **kube-scheduler** | - Pod 放置决策<br>- 评估节点资源<br>- 应用亲和性/反亲和性 | - kube-apiserver | 主备配置 |
+| **kube-controller-manager** | - 节点控制器<br>- 副本控制器<br>- Endpoint 控制器<br>- Service Account 控制器 | - kube-apiserver | 主备配置 |
+| **cloud-controller-manager** | - 云提供商集成<br>- 节点生命周期<br>- 路由和负载均衡 | - kube-apiserver<br>- 云 API | 主备配置 |
 
 ### 控制平面通信流程
 
@@ -134,15 +134,15 @@ graph TD
 2. kube-apiserver 执行身份验证、授权和准入
 3. kube-apiserver 从 etcd 读取数据或向其写入数据
 4. 控制器和调度器通过 kube-apiserver 监视集群状态
-5. kubelet 向 kube-apiserver 报告 Node 状态
+5. kubelet 向 kube-apiserver 报告节点状态
 
 ### kube-apiserver
 
-kube-apiserver 是暴露 Kubernetes API 的控制平面前端。所有内部和外部请求都通过该 API server 处理。
+kube-apiserver 是暴露 Kubernetes API 的控制平面前端。所有内部和外部请求均通过此 API 服务器处理。
 
 **主要功能**：
 - 提供 REST API
-- 身份验证与授权
+- 身份验证和授权
 - 请求验证和处理
 - 与 etcd 通信
 - 可水平扩展（可扩展到多个实例）
@@ -167,18 +167,18 @@ kube-apiserver \
 
 **API Server 安全性**：
 - 通过 TLS 证书进行安全通信
-- 支持多种身份验证方法（X.509 证书、Service account token、OIDC、webhook 等）
+- 支持多种身份验证方法（X.509 证书、Service Account token、OIDC、webhook 等）
 - 通过 RBAC（基于角色的访问控制）进行权限管理
 - 通过准入控制器进行请求验证和修改
 
 ### etcd
 
-etcd 是一个一致、高可用的键值存储，用于存储所有集群数据。它是 Kubernetes 的“事实来源”。
+etcd 是一个一致且高可用的键值存储，用于保存所有集群数据。它是 Kubernetes 的“事实来源”。
 
 **主要特性**：
 - 分布式系统
 - 强一致性（使用 Raft 共识算法）
-- 高可用性（可配置多个 Node）
+- 高可用性（可配置多个节点）
 - 安全的数据存储
 - 用于监控变更的 Watch 功能
 
@@ -197,7 +197,7 @@ etcd \
   --data-dir=/var/lib/etcd
 ```
 
-**etcd 备份与恢复**：
+**etcd 备份和恢复**：
 ```bash
 # etcd backup
 ETCDCTL_API=3 etcdctl snapshot save snapshot.db \
@@ -216,40 +216,40 @@ ETCDCTL_API=3 etcdctl snapshot restore snapshot.db \
 ```
 
 **etcd 性能优化**：
-- 磁盘 I/O 优化（建议使用 SSD）
-- 适当分配内存
+- 磁盘 I/O 优化（推荐 SSD）
+- 合理分配内存
 - 定期压缩和碎片整理
-- 根据集群规模配置适当数量的 etcd Node（通常为 3 或 5 个）
+- 根据集群规模配置适当数量的 etcd 节点（通常为 3 或 5 个）
 
-#### 2026 年 7 月更新：etcd v3.7.0 已发布
+#### 2026 年 7 月更新：etcd v3.7.0 发布
 
 2026 年 7 月 8 日，SIG etcd 发布了 etcd v3.7.0。亮点包括：
 
-- **RangeStream**：以分块方式流式传输大型范围查询结果，而不是在内存中缓冲整个响应（长期以来备受期待的功能）
-- **性能改进**：优化仅键范围查询，租约速度更快且更可靠
-- 移除了旧版 v2store 的最后残余，并完成了重大 protobuf 改造
-- 随附更新后的核心依赖项 bbolt v1.5.0 和 raft v3.7.0
+- **RangeStream**：以分块方式流式传输大型范围查询结果，而非在内存中缓冲整个响应（这是一项长期期待的功能）
+- **性能改进**：优化了仅键范围请求，租约更快、更可靠
+- 移除了旧版 v2store 的最后残余部分，并完成了重大的 protobuf 改造
+- 包含更新后的核心依赖项 bbolt v1.5.0 和 raft v3.7.0
 
-详情请参阅[官方公告](https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/)和 [etcd v3.7 变更日志](https://github.com/etcd-io/etcd/blob/main/CHANGELOG/CHANGELOG-3.7.md)。
+有关详细信息，请参阅[官方公告](https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/)和 [etcd v3.7 变更日志](https://github.com/etcd-io/etcd/blob/main/CHANGELOG/CHANGELOG-3.7.md)。
 
 ### kube-scheduler
 
-kube-scheduler 是为新创建的 Pod 选择运行 Node 的控制平面组件。
+kube-scheduler 是选择节点来运行新创建 Pod 的控制平面组件。
 
 **调度过程**：
-1. **过滤**：识别能够运行 Pod 的 Node
-   - 资源需求（CPU、内存）
-   - Node 选择器、Node 亲和性
+1. **过滤**：识别可以运行 Pod 的节点
+   - 资源要求（CPU、内存）
+   - 节点选择器、节点亲和性
    - 污点和容忍度
    - Volume 约束
 
-2. **评分**：为合适的 Node 分配分数
+2. **评分**：为合适的节点分配分数
    - 资源利用率
    - Pod 间亲和性/反亲和性
    - 数据本地性
-   - 跨 Node 的负载均衡
+   - 节点间负载均衡
 
-3. **绑定**：将 Pod 分配给最优 Node
+3. **绑定**：将 Pod 分配给最优节点
 
 **调度器配置**：
 ```bash
@@ -263,7 +263,7 @@ kube-scheduler \
 **调度器配置文件和插件**：
 - 默认调度器配置文件
 - 自定义调度器配置文件
-- 调度器扩展点（filter、score、bind 等）
+- 调度器扩展点（过滤、评分、绑定等）
 - 多调度器支持
 
 **调度策略**：
@@ -284,19 +284,19 @@ profiles:
 
 ### kube-controller-manager
 
-kube-controller-manager 是运行多个控制器进程的控制平面组件。每个控制器管理集群的一个特定方面。
+kube-controller-manager 是运行多个控制器进程的控制平面组件。每个控制器管理集群的特定方面。
 
 **主要控制器**：
-- **Node Controller**：监控并响应 Node 状态
+- **Node Controller**：监控和响应节点状态
 - **Replication Controller**：维护 Pod 副本数量
 - **Endpoint Controller**：连接 Service 和 Pod
-- **Service Account & Token Controller**：为 Namespace 创建默认账户和 API token
+- **Service Account & Token Controller**：为 namespace 创建默认账户和 API token
 - **Job Controller**：管理一次性任务
-- **CronJob Controller**：管理计划任务
-- **DaemonSet Controller**：确保特定 Pod 在所有 Node 上运行
+- **CronJob Controller**：管理定时任务
+- **DaemonSet Controller**：确保特定 Pod 在所有节点上运行
 - **StatefulSet Controller**：管理有状态应用程序
-- **PV Controller**：管理 Persistent Volume
-- **Namespace Controller**：管理 Namespace 生命周期
+- **PV Controller**：管理持久卷
+- **Namespace Controller**：管理 namespace 生命周期
 - **Garbage Collector**：清理孤立对象
 
 **Controller Manager 配置**：
@@ -321,13 +321,13 @@ kube-controller-manager \
 
 ### cloud-controller-manager
 
-cloud-controller-manager 是包含云特定控制逻辑的控制平面组件。这使 Kubernetes 核心能够与云提供商 API 分离。
+cloud-controller-manager 是包含云特定控制逻辑的控制平面组件。这使得 Kubernetes 核心与云提供商 API 能够分离。
 
 **主要控制器**：
-- **Node Controller**：通过云提供商 API 检查 Node 状态
+- **Node Controller**：通过云提供商 API 检查节点状态
 - **Route Controller**：在云环境中配置路由
 - **Service Controller**：创建、更新和删除云负载均衡器
-- **Volume Controller**：创建、附加和挂载云存储 Volume
+- **Volume Controller**：创建、附加和挂载云存储卷
 
 **云提供商实现**：
 - AWS Cloud Controller Manager
@@ -348,23 +348,23 @@ cloud-controller-manager \
 
 **Cloud Controller Manager 的优势**：
 - 将云提供商特定代码与 Kubernetes 核心分离
-- 云提供商可以独立开发自己的功能
-- 无需更改 Kubernetes 核心即可添加云功能
+- 云提供商可独立开发自己的功能
+- 无需修改 Kubernetes 核心即可添加云功能
 
-## Node 组件
+## 节点组件
 
-Node 是 Kubernetes 集群中运行容器化应用程序的工作机器。每个 Node 由控制平面管理，并由多个组件构成。
+节点是在 Kubernetes 集群中运行容器化应用程序的工作机器。每个节点均由控制平面管理，并由多个组件构成。
 
 ### kubelet
 
-kubelet 是在每个 Node 上运行的代理，用于管理 Pod 中的容器。kubelet 通过各种机制接收 PodSpec，并确保容器根据这些规范健康运行。
+kubelet 是运行在每个节点上的代理，用于管理 Pod 内的容器。kubelet 通过多种机制接收 PodSpec，并确保容器按照这些规格健康运行。
 
 **主要功能**：
 - 根据 PodSpec 运行容器
-- 监控并报告容器状态
+- 监控和报告容器状态
 - 管理容器生命周期
 - 管理 Volume 挂载
-- 报告 Node 状态
+- 报告节点状态
 - 执行容器健康检查
 
 **kubelet 配置**：
@@ -409,8 +409,8 @@ healthzBindAddress: 127.0.0.1
 healthzPort: 10248
 ```
 
-**Static Pod**：
-kubelet 可以直接运行由其管理、无需经过 API server 的 Static Pod。这主要用于运行控制平面组件。
+**静态 Pod**：
+kubelet 可以运行由其直接管理、无需经过 API server 的静态 Pod。这主要用于运行控制平面组件。
 
 ```yaml
 # /etc/kubernetes/manifests/kube-apiserver.yaml
@@ -431,7 +431,7 @@ spec:
 
 ### kube-proxy
 
-kube-proxy 是运行在每个 Node 上、实现 Kubernetes Service 概念的网络代理。它维护 Node 上的网络规则并执行连接转发。
+kube-proxy 是运行在每个节点上的网络代理，用于实现 Kubernetes Service 概念。它维护节点上的网络规则并执行连接转发。
 
 **主要功能**：
 - 维护 Service IP 和端口的网络规则
@@ -489,23 +489,23 @@ mode: "iptables"
 
 **IPVS 与 iptables 模式比较**：
 
-| 特性 | iptables 模式 | IPVS 模式 |
+| 特征 | iptables 模式 | IPVS 模式 |
 |----------------|---------------|-----------|
-| 性能 | Service 较多时性能下降 | 大型集群中性能更好 |
+| 性能 | Service 较多时性能下降 | 大型集群中性能更佳 |
 | 负载均衡算法 | 仅支持轮询 | 支持多种算法（rr、lc、dh、sh、sed、nq） |
 | 实现方式 | 网络数据包过滤链 | 基于哈希表 |
 | 内核要求 | 默认内核模块 | 需要 IPVS 内核模块 |
 
 ### Container Runtime
 
-Container Runtime 是运行容器的软件。Kubernetes 通过 Container Runtime Interface（CRI）支持各种 Container Runtime。
+Container Runtime 是运行容器的软件。Kubernetes 通过 Container Runtime Interface（CRI）支持多种 Container Runtime。
 
 **主要 Container Runtime**：
-1. **containerd**：轻量级 Container Runtime（当前使用最广泛）
+1. **containerd**：轻量级 Container Runtime（目前使用最广泛）
 2. **CRI-O**：专为 Kubernetes 设计的轻量级 Runtime
-3. **Docker Engine**：通过 Docker shim 支持（自 Kubernetes 1.24 起弃用）
+3. **Docker Engine**：通过 Docker shim 支持（自 Kubernetes 1.24 起已弃用）
 
-**Container Runtime 层结构**：
+**Container Runtime 分层结构**：
 
 ```mermaid
 graph TD
@@ -581,7 +581,7 @@ pause_image = "k8s.gcr.io/pause:3.6"
 5. **Metrics Server**：收集资源使用指标
    - Metrics Server
 
-6. **日志记录和监控**：日志收集和监控
+6. **日志和监控**：日志收集和监控
    - Prometheus、Grafana、Elasticsearch、Fluentd、Kibana 等
 
 **CoreDNS 配置示例**：
@@ -656,7 +656,7 @@ data:
 
 ## 集群通信路径
 
-Kubernetes 集群内的各种组件之间会进行通信。了解这些通信路径对于集群设计、安全性和故障排查非常重要。
+Kubernetes 集群内的各类组件之间会发生通信。了解这些通信路径对于集群设计、安全性和故障排除至关重要。
 
 ### 控制平面内部通信
 
@@ -695,12 +695,12 @@ graph LR
    - 端口：6443/TCP（kube-apiserver）
    - 安全性：基于 TLS 证书的身份验证
 
-4. **cloud-controller-manager 和 kube-apiserver**：Cloud controller 与 kube-apiserver 通信以监视集群状态和管理云资源。
+4. **cloud-controller-manager 和 kube-apiserver**：Cloud Controller 与 kube-apiserver 通信以监视集群状态和管理云资源。
    - 协议：HTTPS
    - 端口：6443/TCP（kube-apiserver）
    - 安全性：基于 TLS 证书的身份验证
 
-### 控制平面与 Node 通信
+### 控制平面和节点通信
 
 ```mermaid
 graph TD
@@ -716,14 +716,14 @@ graph TD
     class KP proxy;
 ```
 
-控制平面与 Node 之间的通信如下：
+控制平面和节点之间的通信如下：
 
-1. **kube-apiserver 和 kubelet**：kube-apiserver 与 kubelet 通信以传递 Pod 规范并收集 Node 状态。
+1. **kube-apiserver 和 kubelet**：kube-apiserver 与 kubelet 通信以传递 Pod 规格并收集节点状态。
    - 协议：HTTPS
    - 端口：10250/TCP（kubelet）
    - 安全性：基于 TLS 证书的身份验证
 
-2. **kubelet 和 kube-apiserver**：kubelet 与 kube-apiserver 通信以进行 Node 注册、Pod 状态报告和事件传输。
+2. **kubelet 和 kube-apiserver**：kubelet 与 kube-apiserver 通信以进行节点注册、Pod 状态报告和事件传输。
    - 协议：HTTPS
    - 端口：6443/TCP（kube-apiserver）
    - 安全性：基于 TLS 证书的身份验证
@@ -733,7 +733,7 @@ graph TD
    - 端口：6443/TCP（kube-apiserver）
    - 安全性：基于 TLS 证书的身份验证
 
-### Node 间通信
+### 节点间通信
 
 ```mermaid
 graph LR
@@ -749,14 +749,14 @@ graph LR
     class CNI cni;
 ```
 
-Node 间通信如下：
+节点间通信如下：
 
-1. **Pod 到 Pod 通信**：Pod 通过 CNI 插件提供的网络彼此通信。
+1. **Pod 到 Pod 的通信**：Pod 通过 CNI 插件提供的网络相互通信。
    - 协议：取决于应用程序（TCP、UDP 等）
    - 端口：取决于应用程序
    - 安全性：可通过网络策略控制
 
-2. **跨 Node Pod 通信**：不同 Node 上的 Pod 之间的通信由 CNI 插件处理。
+2. **跨节点 Pod 通信**：不同节点上的 Pod 之间的通信由 CNI 插件处理。
    - 协议：取决于应用程序（TCP、UDP 等）
    - 端口：取决于应用程序
    - 安全性：可通过网络策略控制
@@ -790,16 +790,16 @@ graph LR
 2. **外部流量和 Service**：外部流量通过 NodePort、LoadBalancer Service 或 Ingress 访问集群内的应用程序。
    - 协议：HTTP、HTTPS、TCP、UDP 等
    - 端口：取决于 Service 配置
-   - 安全性：取决于 Ingress controller 和 Service 配置
+   - 安全性：取决于 Ingress Controller 和 Service 配置
 
 ### 通信安全
 
-Kubernetes 集群内通信的安全性通过以下方法实现：
+Kubernetes 集群内的通信安全性通过以下方式实现：
 
 1. **TLS 证书**：控制平面组件之间的所有通信均使用 TLS 证书加密。
-2. **身份验证与授权**：所有对 API server 的请求均经过身份验证和授权流程。
-3. **网络策略**：可以通过网络策略限制 Pod 到 Pod 的通信。
-4. **加密的 Secret**：存储在 etcd 中的 Secret 可以被加密。
+2. **身份验证和授权**：对 API server 的所有请求均经过身份验证和授权过程。
+3. **网络策略**：可通过网络策略限制 Pod 到 Pod 的通信。
+4. **加密的 Secret**：存储在 etcd 中的 Secret 可以加密。
 
 **API Server 通信安全配置示例**：
 ```yaml
@@ -822,11 +822,11 @@ resources:
 
 ### 控制平面高可用性
 
-控制平面的高可用性通过以下方法实现：
+控制平面的高可用性通过以下方式实现：
 
-1. **多个控制平面 Node**：通常部署 3 或 5 个控制平面 Node 以实现冗余
-2. **etcd 集群**：部署由多个 etcd 实例组成的集群（通常为 3 或 5 个）
-3. **Load Balancer**：在 API server 前放置 Load Balancer 以分配流量
+1. **多个控制平面节点**：通常部署 3 个或 5 个控制平面节点以实现冗余
+2. **etcd 集群**：部署由多个 etcd 实例组成的集群（通常为 3 个或 5 个）
+3. **负载均衡器**：在 API server 前放置负载均衡器以分配流量
 
 **高可用控制平面架构**：
 
@@ -873,16 +873,16 @@ graph LR
     class E1,E2,E3 etcd;
 ```
 
-### 工作 Node 高可用性
+### 工作节点高可用性
 
-工作 Node 的高可用性通过以下方法实现：
+工作节点的高可用性通过以下方式实现：
 
-1. **多个工作 Node**：将工作负载分布在多个工作 Node 上
-2. **自动 Node 恢复**：利用云提供商的自动恢复功能
-3. **自动扩缩容**：通过 Cluster Autoscaler 自动扩缩容 Node
-4. **多个可用区**：将 Node 部署在多个可用区中
+1. **多个工作节点**：将工作负载分布到多个工作节点上
+2. **自动节点恢复**：利用云提供商的自动恢复功能
+3. **自动扩缩容**：通过 Cluster Autoscaler 实现节点自动扩缩容
+4. **多个可用区**：跨多个可用区部署节点
 
-**工作 Node 分布式部署**：
+**工作节点分布式部署**：
 
 ```mermaid
 graph TD
@@ -904,12 +904,12 @@ graph TD
 
 ### 应用程序高可用性
 
-应用程序的高可用性通过以下方法实现：
+应用程序的高可用性通过以下方式实现：
 
 1. **ReplicaSet/Deployment**：运行多个 Pod 副本
-2. **Pod 分布规则**：通过 Pod 反亲和性将 Pod 分布在多个 Node 上
-3. **PodDisruptionBudget**：确保计划中断期间的最低可用性
-4. **Service 和负载均衡**：将流量分配到多个 Pod
+2. **Pod 分布规则**：通过 Pod 反亲和性将 Pod 分布到多个节点上
+3. **PodDisruptionBudget**：确保计划内中断期间的最低可用性
+4. **Service 和负载均衡**：将流量分布到多个 Pod
 
 **Pod 反亲和性示例**：
 ```yaml
@@ -954,9 +954,9 @@ spec:
 
 ### 灾难恢复策略
 
-Kubernetes 集群的灾难恢复策略通过以下方法实现：
+Kubernetes 集群的灾难恢复策略通过以下方式实现：
 
-1. **etcd 备份与恢复**：建立定期的 etcd 数据备份和恢复流程
+1. **etcd 备份和恢复**：建立定期 etcd 数据备份和恢复程序
 2. **多区域部署**：跨多个区域部署集群
 3. **集群联邦**：以联邦方式管理多个集群
 4. **持续备份**：持续备份应用程序数据
@@ -996,29 +996,29 @@ systemctl start kubelet
 
 ## 集群网络
 
-Kubernetes 网络使 Pod、Service 和外部世界之间能够通信。Kubernetes 网络模型假定每个 Pod 都具有唯一 IP 地址，并且能够在不使用 NAT 的情况下相互通信。
+Kubernetes 网络支持 Pod、Service 与外部世界之间的通信。Kubernetes 网络模型假定每个 Pod 都具有唯一的 IP 地址，并且可在无需 NAT 的情况下相互通信。
 
 ### 网络模型
 
 Kubernetes 网络模型具有以下要求：
 
-1. **Pod 到 Pod 通信**：所有 Pod 必须能够在不使用 NAT 的情况下与所有其他 Pod 通信
-2. **Node 到 Pod 通信**：Node 必须能够在不使用 NAT 的情况下与所有 Pod 通信
-3. **Pod 到外部通信**：Pod 必须能够与外部世界通信（通常使用 NAT）
+1. **Pod 到 Pod 的通信**：所有 Pod 必须能够在无需 NAT 的情况下与所有其他 Pod 通信
+2. **节点到 Pod 的通信**：节点必须能够在无需 NAT 的情况下与所有 Pod 通信
+3. **Pod 到外部的通信**：Pod 必须能够与外部世界通信（通常使用 NAT）
 
 ### CNI（Container Network Interface）
 
-CNI 是在 Kubernetes 中实现网络的标准接口。有各种 CNI 插件，每种插件都具有不同的功能和性能特征。
+CNI 是在 Kubernetes 中实现网络的标准接口。存在多种 CNI 插件，每种插件都有不同的特性和性能特征。
 
 **主要 CNI 插件**：
 
 1. **Calico**：基于 BGP 的网络，支持网络策略
    - 特性：高性能、网络策略、加密、eBPF 支持
-   - 使用场景：大型集群、注重安全性的环境
+   - 使用场景：大型集群、注重安全的环境
 
-2. **Cilium**：基于 eBPF 的网络和安全性
+2. **Cilium**：基于 eBPF 的网络和安全
    - 特性：L3-L7 安全策略、高性能、可观测性
-   - 使用场景：微服务、注重安全性的环境
+   - 使用场景：微服务、注重安全的环境
 
 3. **Flannel**：简单的 Overlay 网络
    - 特性：设置简单、轻量级
@@ -1069,12 +1069,12 @@ data:
 
 ### Service 网络
 
-Kubernetes Service 为一组 Pod 提供稳定的端点。Service 有 ClusterIP、NodePort、LoadBalancer 和 ExternalName 等多种类型。
+Kubernetes Service 为一组 Pod 提供稳定的端点。Service 有多种类型，包括 ClusterIP、NodePort、LoadBalancer 和 ExternalName。
 
 **Service 网络组件**：
 
-1. **ClusterIP**：仅可在集群内访问的虚拟 IP
-2. **kube-proxy**：将流量从 Service IP 路由到 Pod
+1. **ClusterIP**：仅能在集群内访问的虚拟 IP
+2. **kube-proxy**：将发送到 Service IP 的流量路由至 Pod
 3. **CoreDNS**：用于服务发现的 DNS 服务
 
 **Service 网络流程**：
@@ -1099,13 +1099,13 @@ spec:
 
 ### Ingress 网络
 
-Ingress 管理从集群外部到集群内部 Service 的 HTTP 和 HTTPS 路由。Ingress controller 实现 Ingress 资源。
+Ingress 管理从集群外部到集群内部 Service 的 HTTP 和 HTTPS 路由。Ingress Controller 实现 Ingress 资源。
 
 **主要 Ingress Controller**：
-1. **NGINX Ingress Controller**：基于 NGINX 的 Ingress controller
+1. **NGINX Ingress Controller**：基于 NGINX 的 Ingress Controller
 2. **AWS ALB Ingress Controller**：基于 AWS Application Load Balancer
 3. **Traefik**：云原生边缘路由器
-4. **HAProxy Ingress**：基于 HAProxy 的 Ingress controller
+4. **HAProxy Ingress**：基于 HAProxy 的 Ingress Controller
 
 **Ingress 网络流程**：
 ```
@@ -1170,12 +1170,12 @@ spec:
       port: 9090
 ```
 
-### 网络故障排查
+### 网络故障排除
 
-排查 Kubernetes 网络问题的常用工具和命令：
+用于排查 Kubernetes 网络问题的常见工具和命令：
 
-1. **ping、traceroute**：基本网络连接测试
-2. **tcpdump**：网络数据包捕获与分析
+1. **ping、traceroute**：基本网络连通性测试
+2. **tcpdump**：网络数据包捕获和分析
 3. **netstat、ss**：检查网络连接状态
 4. **nslookup、dig**：DNS 查询测试
 5. **kubectl exec**：在 Pod 内执行网络命令
@@ -1197,16 +1197,16 @@ kubectl get endpoints <service-name>
 
 ## 集群存储
 
-Kubernetes 存储为容器化应用程序提供数据持久化。Kubernetes 提供各种存储选项和抽象，以帮助应用程序高效使用存储。
+Kubernetes 存储为容器化应用程序提供数据持久化能力。Kubernetes 提供了多种存储选项和抽象，以帮助应用程序高效使用存储。
 
 ### 存储架构
 
 Kubernetes 存储架构由以下组件构成：
 
 1. **Volume**：可挂载到 Pod 内容器的目录
-2. **Persistent Volume（PV）**：集群中的存储资源
-3. **Persistent Volume Claim（PVC）**：用户的存储请求
-4. **Storage Class**：定义存储的“类别”或类型
+2. **Persistent Volumes（PV）**：集群中的存储资源
+3. **Persistent Volume Claims（PVC）**：用户存储请求
+4. **Storage Classes**：定义存储的“类别”或类型
 5. **CSI（Container Storage Interface）**：与存储系统的标准接口
 
 **存储架构流程**：
@@ -1233,20 +1233,20 @@ graph LR
 
 ### Volume 类型
 
-Kubernetes 支持各种类型的 Volume：
+Kubernetes 支持多种类型的 Volume：
 
 1. **临时 Volume**：
-   - **emptyDir**：以空目录开始，并在 Pod 删除时删除
+   - **emptyDir**：以空目录开始，并在 Pod 被删除时删除
    - **configMap**：将 ConfigMap 挂载为 Volume
    - **secret**：将 Secret 挂载为 Volume
    - **downwardAPI**：将 Pod 和容器信息作为文件公开
 
-2. **Persistent Volume**：
+2. **持久 Volume**：
    - **awsElasticBlockStore**：AWS EBS Volume
    - **azureDisk**：Azure Disk
    - **gcePersistentDisk**：GCE Persistent Disk
    - **nfs**：NFS Volume
-   - **csi**：通过 CSI driver 提供的 Volume
+   - **csi**：通过 CSI Driver 提供的 Volume
 
 **Volume 示例**：
 ```yaml
@@ -1269,7 +1269,7 @@ spec:
 
 ### Persistent Volume 和 Claim
 
-Persistent Volume（PV）是由管理员配置或通过 Storage Class 动态配置的集群存储资源。Persistent Volume Claim（PVC）是用户的存储请求。
+Persistent Volume（PV）是由管理员预置或通过 Storage Class 动态预置的集群存储资源。Persistent Volume Claim（PVC）是用户的存储请求。
 
 **Persistent Volume 示例**：
 ```yaml
@@ -1306,7 +1306,7 @@ spec:
 
 ### Storage Class
 
-Storage Class 描述管理员提供的存储“类别”。当请求 PVC 时，Storage Class 允许动态配置 PV。
+Storage Class 描述管理员提供的存储“类别”。当请求 PVC 时，Storage Class 允许动态预置 PV。
 
 **Storage Class 示例**：
 ```yaml
@@ -1324,7 +1324,7 @@ allowVolumeExpansion: true
 
 ### CSI（Container Storage Interface）
 
-CSI 在 Kubernetes 和存储系统之间提供标准接口。通过 CSI，存储提供商无需修改 Kubernetes 代码即可开发自己的存储 driver。
+CSI 在 Kubernetes 和存储系统之间提供标准接口。借助 CSI，存储提供商可以开发自己的存储 Driver，而无需修改 Kubernetes 代码。
 
 **CSI 架构**：
 
@@ -1364,34 +1364,34 @@ volumeBindingMode: WaitForFirstConsumer
 使用 Kubernetes 存储的最佳实践：
 
 1. **选择合适的存储类型**：选择与工作负载特性匹配的存储类型
-2. **使用动态配置**：利用通过 Storage Class 的动态配置
+2. **使用动态预置**：通过 Storage Class 利用动态预置
 3. **选择合适的访问模式**：选择与工作负载要求匹配的访问模式
 4. **设置资源请求和限制**：请求适当的存储容量
-5. **制定备份和恢复策略**：为关键数据准备备份和恢复策略
+5. **建立备份和恢复策略**：为关键数据准备备份和恢复策略
 6. **监控存储**：监控存储使用情况和性能
 
 ## 集群可扩展性
 
-Kubernetes 集群可扩展性是指集群处理不断增长的负载和需求的能力。可扩展性可以通过水平扩展（scale out）和垂直扩展（scale up）实现。
+Kubernetes 集群可扩展性是指集群处理不断增加的负载和需求的能力。可扩展性可通过水平扩展（scale out）和垂直扩展（scale up）实现。
 
 ### 集群规模限制
 
 Kubernetes 集群具有以下规模限制：
 
-1. **Node 数量**：每个集群最多 5,000 个 Node
+1. **节点数量**：每个集群最多 5,000 个节点
 2. **Pod 数量**：每个集群最多 150,000 个 Pod
-3. **每个 Node 的 Pod 数量**：每个 Node 最多 110 个 Pod（默认）
+3. **每个节点的 Pod 数量**：每个节点最多 110 个 Pod（默认）
 4. **Service 数量**：每个集群最多 10,000 个 Service
-5. **每个 Pod 的容器数**：每个 Pod 最多 20 个容器
+5. **每个 Pod 的容器数量**：每个 Pod 最多 20 个容器
 
 这些限制可能因 Kubernetes 版本和集群配置而异。
 
 ### 水平扩展
 
-水平扩展通过添加更多 Node 来增加集群容量。
+水平扩展通过添加更多节点来增加集群容量。
 
-**Node 自动扩缩容**：
-Kubernetes Cluster Autoscaler 根据工作负载要求自动调整 Node 数量。
+**节点自动扩缩容**：
+Kubernetes Cluster Autoscaler 根据工作负载要求自动调整节点数量。
 
 ```yaml
 # AWS Auto Scaling Group tags example
@@ -1428,7 +1428,7 @@ spec:
 ```
 
 **Karpenter**：
-Karpenter 是 AWS 开发的新型 Node 自动扩缩容工具，可提供更快、更高效的 Node 配置。
+Karpenter 是 AWS 开发的新型节点自动扩缩容工具，可提供更快、更高效的节点预置。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1461,7 +1461,7 @@ spec:
 
 ### 垂直扩展
 
-垂直扩展增加现有 Node 的资源（CPU、内存）。
+垂直扩展可增加现有节点的资源（CPU、内存）。
 
 **Vertical Pod Autoscaler（VPA）**：
 VPA 自动调整 Pod 的 CPU 和内存请求。
@@ -1518,7 +1518,7 @@ spec:
 ```
 
 **KEDA（Kubernetes Event-driven Autoscaling）**：
-KEDA 提供事件驱动的自动扩缩容，支持根据各种事件源进行扩展。
+KEDA 提供事件驱动的自动扩缩容，可根据各种事件源进行扩展。
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -1544,22 +1544,22 @@ spec:
 Kubernetes 集群可扩展性的最佳实践：
 
 1. **设置资源请求和限制**：为所有 Pod 设置适当的资源请求和限制
-2. **Node Pool 策略**：为不同的工作负载特性配置多个 Node Pool
+2. **节点池策略**：针对不同工作负载特性配置多个节点池
 3. **配置自动扩缩容**：正确配置 Cluster Autoscaler、HPA、VPA
-4. **高效 Pod 放置**：利用 Node 亲和性、Pod 亲和性/反亲和性
+4. **高效 Pod 放置**：利用节点亲和性、Pod 亲和性/反亲和性
 5. **集群监控**：持续监控资源使用情况和性能
-6. **负载测试**：定期执行负载测试以验证扩展策略
+6. **负载测试**：定期进行负载测试以验证扩展策略
 
-## 集群安全性
+## 集群安全
 
-Kubernetes 集群安全性必须在多个层面实现，包括身份验证、授权、网络策略、Pod 安全性等。
+Kubernetes 集群安全必须在多个层面实施，包括身份验证、授权、网络策略、Pod 安全等。
 
 ### 身份验证
 
-验证对 Kubernetes API server 访问的方法：
+用于验证对 Kubernetes API server 访问的方法：
 
 1. **X.509 证书**：使用 TLS 客户端证书进行身份验证
-2. **Service Account Token**：用于 Pod 内 API server 访问的 token
+2. **Service Account Token**：用于 Pod 内 API server 访问的 Token
 3. **OpenID Connect（OIDC）**：通过外部身份提供商进行身份验证
 4. **Webhook Token Authentication**：通过外部身份验证服务进行身份验证
 5. **Authentication Proxy**：通过身份验证代理进行身份验证
@@ -1588,12 +1588,12 @@ current-context: my-context
 
 ### 授权
 
-控制已通过身份验证的用户操作的方法：
+用于控制已验证用户操作的方法：
 
 1. **RBAC（Role-Based Access Control）**：基于角色的访问控制
 2. **ABAC（Attribute-Based Access Control）**：基于属性的访问控制
-3. **Node Authorization**：Node 的特殊授权
-4. **Webhook Authorization**：通过外部服务授权
+3. **Node Authorization**：节点的特殊授权
+4. **Webhook Authorization**：通过外部服务进行授权
 
 **RBAC 示例**：
 ```yaml
@@ -1630,7 +1630,7 @@ roleRef:
 
 1. **网络策略**：控制 Pod 到 Pod 的通信
 2. **加密通信**：通过 TLS 加密通信
-3. **Service Mesh**：通过 Istio、Linkerd 等实现高级网络安全性
+3. **Service Mesh**：通过 Istio、Linkerd 等实现高级网络安全
 
 **网络策略示例**：
 ```yaml
@@ -1645,9 +1645,9 @@ spec:
   - Egress
 ```
 
-### Pod 安全性
+### Pod 安全
 
-Pod 级别的安全实现：
+Pod 级别的安全实施：
 
 1. **Pod Security Context**：Pod 和容器级别的安全设置
 2. **Pod Security Standards**：定义 Pod 安全要求
@@ -1679,7 +1679,7 @@ spec:
 
 安全管理敏感信息的方法：
 
-1. **Kubernetes Secret**：使用基础 Secret 资源
+1. **Kubernetes Secrets**：使用基本 Secret 资源
 2. **加密的 etcd**：加密存储在 etcd 中的 Secret
 3. **外部 Secret 管理**：利用 HashiCorp Vault、AWS Secrets Manager 等
 
@@ -1698,34 +1698,38 @@ resources:
     - identity: {}
 ```
 
-### 安全性最佳实践
+### 安全最佳实践
 
-Kubernetes 集群安全性的最佳实践：
+Kubernetes 集群安全的最佳实践：
 
-1. **最小权限原则**：仅授予最低必要权限
+1. **最小权限原则**：仅授予必要的最小权限
 2. **定期更新**：定期更新集群和组件
 3. **网络隔离**：通过网络策略限制 Pod 到 Pod 的通信
-4. **镜像安全性**：仅使用受信任的镜像，并实施漏洞扫描
-5. **审计日志记录**：为集群活动启用审计日志
-6. **安全基准**：遵从 CIS 基准等安全标准
+4. **镜像安全**：仅使用受信任的镜像，并实施漏洞扫描
+5. **审计日志**：为集群活动启用审计日志
+6. **安全基准**：遵守 CIS 基准等安全标准
 
 ## 集群升级
 
-Kubernetes 集群升级对于应用新功能、安全补丁和错误修复是必要的。升级必须经过仔细规划和执行。
+Kubernetes 集群升级是应用新功能、安全补丁和错误修复所必需的。升级必须经过谨慎规划和执行。
 
-### 2026 年 7 月更新：Kubernetes v1.37 处于 Beta 阶段
+### 2026 年 7 月更新：Kubernetes v1.37 进入 Beta 阶段
 
-v1.37.0-beta.0 于 2026 年 7 月 20 日发布，使下一个次要版本 v1.37 进入其发布周期的后期阶段。Code Freeze 按计划于 2026 年 7 月 22 日至 23 日生效，最终 v1.37.0 版本计划于 2026 年 8 月 26 日发布。完整时间表请参阅 [v1.37 发布信息](https://www.kubernetes.dev/resources/release/)。
+v1.37.0-beta.0 于 2026 年 7 月 20 日发布，使下一个次要版本 v1.37 进入发布周期的后期阶段。Code Freeze 按计划于 2026 年 7 月 22 日至 23 日生效，最终 v1.37.0 版本计划于 2026 年 8 月 26 日发布。完整时间表请参阅 [v1.37 发布信息](https://www.kubernetes.dev/resources/release/)。
 
-同一周（2026 年 7 月 22 日至 23 日），所有受维护版本线均发布了补丁版本：[v1.36.3](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.3)、[v1.35.7](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.7) 和 [v1.34.10](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.10)。一如既往，建议应用你所用次要版本的最新补丁。
+同一周（2026 年 7 月 22 日至 23 日），所有受维护版本线均发布了补丁版本：[v1.36.3](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.3)、[v1.35.7](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.7) 和 [v1.34.10](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.10)。与往常一样，建议为你的次要版本应用最新补丁。
+
+### 2026 年 8 月更新：v1.37 抢先看
+
+2026 年 7 月 31 日，发布团队发布了 [Kubernetes v1.37 抢先看](https://kubernetes.io/blog/2026/07/31/kubernetes-v1-37-sneak-peek/)，概述了在最终 v1.37.0 版本（仍计划于 2026 年 8 月 26 日发布）之前计划进行的弃用、移除和功能变更。Docs Freeze 于 2026 年 8 月 5 日至 6 日生效。同时，下一个周期的首个 tag v1.38.0-alpha.0 于 2026 年 8 月 6 日创建。
 
 ### 升级策略
 
 Kubernetes 集群升级的策略：
 
 1. **Blue/Green 升级**：单独创建新版本集群并迁移工作负载
-2. **就地升级**：直接升级现有集群
-3. **Canary 升级**：先仅升级部分 Node 进行验证
+2. **原地升级**：直接升级现有集群
+3. **Canary 升级**：先仅升级部分节点以进行验证
 
 ### 升级顺序
 
@@ -1733,7 +1737,7 @@ Kubernetes 集群升级的典型顺序：
 
 1. **控制平面升级**：kube-apiserver、kube-controller-manager、kube-scheduler、etcd
 2. **DNS 和 CNI 升级**：CoreDNS、CNI 插件和其他主要附加组件
-3. **工作 Node 升级**：依次升级工作 Node
+3. **工作节点升级**：依次升级工作节点
 
 **kubeadm 升级示例**：
 ```bash
@@ -1755,35 +1759,35 @@ kubectl uncordon <node-name>
 升级 Kubernetes 集群时的注意事项：
 
 1. **API 变更**：检查新版本中的 API 变更
-2. **Feature Gate**：检查新的 Feature Gate 和默认值变更
+2. **Feature Gates**：检查新的 Feature Gate 和默认值变更
 3. **依赖项**：检查 CNI、CSI 等依赖组件的兼容性
 4. **停机时间**：规划升级期间的预期停机时间
-5. **回滚计划**：制定出现问题时的回滚计划
+5. **回滚计划**：制定在发生问题时的回滚计划
 
 ### 升级最佳实践
 
 Kubernetes 集群升级的最佳实践：
 
 1. **先在测试环境中测试**：在生产升级前于测试环境中验证
-2. **渐进式升级**：一次升级一个次要版本
-3. **备份**：升级前备份 etcd 数据
-4. **文档记录**：记录升级流程和结果
-5. **监控**：在升级期间和升级后监控集群状态
+2. **渐进式升级**：每次升级一个次要版本
+3. **备份**：在升级前备份 etcd 数据
+4. **文档化**：记录升级过程和结果
+5. **监控**：在升级期间和之后监控集群状态
 6. **升级窗口**：在低流量时段执行升级
 
 ## Amazon EKS 集群架构
 
-Amazon EKS（Elastic Kubernetes Service）是 AWS 提供的托管 Kubernetes 服务。EKS 在提供所有基础 Kubernetes 功能的同时，增加了与 AWS 服务的集成和管理便利性。
+Amazon EKS（Elastic Kubernetes Service）是 AWS 提供的托管 Kubernetes 服务。EKS 在提供所有基本 Kubernetes 功能的同时，还增加了与 AWS 服务的集成和管理便利性。
 
 ### EKS 架构概览
 
 EKS 集群由以下组件构成：
 
-1. **EKS 控制平面**：由 AWS 管理的 Kubernetes 控制平面
-2. **EKS Node**：由用户管理的工作 Node（EC2 实例）
-3. **EKS 托管 Node Group**：由 AWS 管理的 Node Group
-4. **EKS Fargate Profile**：无服务器容器执行环境
-5. **VPC 和 Subnet**：用于集群网络的 VPC 和 Subnet
+1. **EKS Control Plane**：由 AWS 管理的 Kubernetes 控制平面
+2. **EKS Nodes**：由用户管理的工作节点（EC2 实例）
+3. **EKS Managed Node Groups**：由 AWS 管理的节点组
+4. **EKS Fargate Profiles**：无服务器容器执行环境
+5. **VPC 和 Subnets**：用于集群网络的 VPC 和子网
 
 **EKS 架构图**：
 
@@ -1830,26 +1834,26 @@ graph TD
     class API,ETCD,SCHED,CTRL,NG1,NG2,FG eks;
 ```
 
-### EKS 控制平面
+### EKS Control Plane
 
-EKS 控制平面由 AWS 管理，并跨多个可用区提供高可用性。
+EKS 控制平面由 AWS 管理，并在多个可用区中提供高可用性。
 
 **主要特性**：
-1. **托管服务**：AWS 管理控制平面的维护和升级
+1. **托管服务**：AWS 管理控制平面维护和升级
 2. **高可用性**：跨多个可用区部署
 3. **自动扩缩容**：根据负载自动扩缩容
 4. **安全性**：与 AWS 安全服务集成
 
-### EKS Node 类型
+### EKS 节点类型
 
-EKS 支持多种类型的 Node：
+EKS 支持多种类型的节点：
 
-1. **自主管理的 Node**：用户直接管理 EC2 实例
-2. **托管 Node Group**：AWS 管理 Node 生命周期
+1. **自管节点**：用户直接管理 EC2 实例
+2. **托管节点组**：AWS 管理节点生命周期
 3. **Fargate**：无服务器容器执行环境
-4. **Bottlerocket Node**：针对容器工作负载优化的操作系统
+4. **Bottlerocket 节点**：针对容器工作负载优化的 OS
 
-**托管 Node Group 示例**：
+**托管节点组示例**：
 ```yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
@@ -1876,12 +1880,12 @@ managedNodeGroups:
 
 ### EKS 网络
 
-EKS 网络基于 Amazon VPC，并包括以下组件：
+EKS 网络基于 Amazon VPC，包含以下组件：
 
 1. **VPC CNI Plugin**：与 AWS VPC 网络集成
-2. **Security Group**：Node 和 Pod 级别的网络安全性
+2. **Security Groups**：节点和 Pod 级别的网络安全
 3. **Load Balancer 集成**：与 ELB、ALB、NLB 集成
-4. **VPC Endpoint**：与 AWS 服务私密通信
+4. **VPC Endpoints**：与 AWS 服务进行私有通信
 
 **VPC CNI 配置示例**：
 ```yaml
@@ -1919,12 +1923,12 @@ parameters:
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-### EKS 安全性
+### EKS 安全
 
-EKS 与 AWS 安全服务集成，以提供强大的安全性：
+EKS 与 AWS 安全服务集成以提供强大的安全性：
 
-1. **IAM 集成**：AWS IAM 与 Kubernetes RBAC 的集成
-2. **VPC 安全性**：VPC Security Group 和网络 ACL
+1. **IAM 集成**：AWS IAM 和 Kubernetes RBAC 集成
+2. **VPC 安全**：VPC Security Group 和网络 ACL
 3. **AWS KMS**：用于 Secret 加密的 KMS 集成
 4. **AWS WAF**：Web 应用程序防火墙集成
 5. **AWS Shield**：DDoS 防护
@@ -1980,13 +1984,13 @@ spec:
 
 优化 EKS 集群成本的方法：
 
-1. **Spot Instance**：利用具有成本效益的 Spot Instance
-2. **Fargate**：通过无服务器容器执行降低闲置资源成本
+1. **Spot Instances**：利用成本效益高的 Spot 实例
+2. **Fargate**：通过无服务器容器执行降低空闲资源成本
 3. **自动扩缩容**：通过 Cluster Autoscaler 优化资源
-4. **Graviton 处理器**：利用基于 ARM 的 Graviton 实例
+4. **Graviton Processors**：利用基于 ARM 的 Graviton 实例
 5. **资源请求优化**：设置适当的资源请求和限制
 
-**Spot Instance Node Group 示例**：
+**Spot Instance 节点组示例**：
 ```yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
@@ -2002,19 +2006,19 @@ managedNodeGroups:
     maxSize: 10
 ```
 
-## 深入学习
+## 了解更多
 
-要加深对本文档所涵盖集群架构的理解，请参阅以下主题：
+要深入了解本文档中介绍的集群架构，请参阅以下主题：
 
 - [Kubernetes 简介](../basics/04-kubernetes-introduction.md) - Kubernetes 的基本概念和历史
 - [Pod 和工作负载](./02-pods-and-workloads.md) - 管理在集群中运行的工作负载
 - [Service 和网络](./03-services-networking.md) - 集群内的网络配置
-- [调度、抢占和驱逐](./08-scheduling-preemption-eviction.md) - Pod 如何放置在 Node 上
-- [集群管理](./09-cluster-administration.md) - 集群操作和管理
+- [调度、抢占和驱逐](./08-scheduling-preemption-eviction.md) - Pod 如何被放置在节点上
+- [集群管理](./09-cluster-administration.md) - 集群运行和管理
 - [EKS 简介](../eks/01-eks-introduction.md) - Amazon EKS 服务概览
 - [EKS 集群创建](../eks/02-eks-cluster-creation-part1.md) - 如何创建 EKS 集群
 
-### 实践和高级学习
+### 实践和进阶学习
 
 - [Kubernetes 官方教程](https://kubernetes.io/docs/tutorials/) - 通过动手实践学习
 - [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way) - 手动构建 Kubernetes 集群
@@ -2022,13 +2026,13 @@ managedNodeGroups:
 
 ## 结论
 
-在本文档中，我们研究了 Kubernetes 集群的架构、主要组件及其协同工作方式。我们还涵盖了集群网络、存储、可扩展性、安全性和升级等重要方面，以及 Amazon EKS 集群的架构。
+在本文档中，我们研究了 Kubernetes 集群的架构、主要组件及其协同工作方式。我们还介绍了集群网络、存储、可扩展性、安全性和升级等重要方面，以及 Amazon EKS 集群的架构。
 
-理解 Kubernetes 集群架构是有效进行集群设计、部署和运维的基础。凭借这些知识，你可以构建稳定、可扩展且安全性增强的 Kubernetes 环境。
+理解 Kubernetes 集群架构是有效进行集群设计、部署和运行的基础。有了这些知识，你可以构建稳定、可扩展且安全性增强的 Kubernetes 环境。
 
 ## 测验
 
-要测试你在本章中学到的内容，请尝试[集群架构测验](../quizzes/core/01-cluster-architecture-quiz.md)。
+要测试你在本章中学到的知识，请尝试[集群架构测验](../quizzes/core/01-cluster-architecture-quiz.md)。
 
 ## 参考资料
 

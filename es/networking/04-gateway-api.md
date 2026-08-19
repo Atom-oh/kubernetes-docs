@@ -1,20 +1,20 @@
 # Kubernetes Gateway API
 
 > **Versiones compatibles**: Gateway API v1.2+
-> **Última actualización**: July 3, 2026
+> **Última actualización**: August 10, 2026
 
 ## Descripción general
 
-Gateway API es la API de ingress de nueva generación para Kubernetes, diseñada para superar las limitaciones de la API Ingress existente y proporcionar capacidades de enrutamiento de red más expresivas y extensibles. Desarrollada por SIG-Network, es compatible con diversas implementaciones, incluidas Istio, Cilium, Envoy Gateway y más.
+Gateway API es la API de ingress de nueva generación para Kubernetes, diseñada para superar las limitaciones de la API Ingress existente y proporcionar capacidades de enrutamiento de red más expresivas y extensibles. Desarrollada por SIG-Network, cuenta con soporte de varias implementaciones, entre ellas Istio, Cilium, Envoy Gateway y otras.
 
 ### Limitaciones de la API Ingress
 
 | Problema | Descripción |
 |---------|-------------|
-| **Expresividad limitada** | Compatibilidad deficiente con TCP/UDP/gRPC más allá del enrutamiento HTTP |
-| **Sin separación de roles** | Es difícil separar los permisos de administradores de infraestructura y desarrolladores de aplicaciones |
+| **Expresividad limitada** | Soporte insuficiente para TCP/UDP/gRPC más allá del enrutamiento HTTP |
+| **Sin separación de roles** | Es difícil separar los permisos de los administradores de infraestructura y los desarrolladores de aplicaciones |
 | **Abuso de anotaciones** | Las características específicas de la implementación se gestionan mediante anotaciones, lo que reduce la portabilidad |
-| **Extensibilidad limitada** | Es difícil añadir nuevos protocolos o características |
+| **Extensibilidad limitada** | Es difícil agregar nuevos protocolos o características |
 | **Entre namespaces** | Enrutamiento complejo entre namespaces |
 
 ### Beneficios de Gateway API
@@ -92,10 +92,10 @@ graph TB
 ### Separación de roles
 
 | Rol | Recursos administrados | Responsabilidad |
-|------|------------------|----------------|
+|------|------------------------|-----------------|
 | **Proveedor de infraestructura** | GatewayClass | Definir la configuración básica de la infraestructura |
 | **Operador del clúster** | Gateway, ReferenceGrant | Aprovisionamiento del balanceador de carga, gestión de permisos |
-| **Desarrollador de aplicaciones** | HTTPRoute, GRPCRoute, etc. | Definir reglas de enrutamiento de la aplicación |
+| **Desarrollador de aplicaciones** | HTTPRoute, GRPCRoute, etc. | Definir reglas de enrutamiento de aplicaciones |
 
 ## GatewayClass
 
@@ -309,12 +309,12 @@ spec:
           - kind: TCPRoute
 ```
 
-### Modos de TLS
+### Modos TLS
 
 | Modo | Descripción | Caso de uso |
-|------|-------------|----------|
+|------|-------------|-------------|
 | **Terminate** | Terminación de TLS en Gateway | HTTPS estándar |
-| **Passthrough** | Pasa TLS al backend | Cifrado de extremo a extremo |
+| **Passthrough** | Transmitir TLS al backend | Cifrado de extremo a extremo |
 
 ```yaml
 # TLS Terminate example
@@ -339,7 +339,7 @@ listeners:
 
 ## HTTPRoute
 
-HTTPRoute define reglas de enrutamiento para tráfico HTTP/HTTPS.
+HTTPRoute define las reglas de enrutamiento para el tráfico HTTP/HTTPS.
 
 ### HTTPRoute básico
 
@@ -647,7 +647,7 @@ spec:
 
 ## GRPCRoute
 
-Define reglas de enrutamiento para tráfico gRPC.
+Define reglas de enrutamiento para el tráfico gRPC.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -698,10 +698,11 @@ spec:
 
 ## TCPRoute
 
-Define el enrutamiento de tráfico TCP.
+Define el enrutamiento del tráfico TCP.
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+# GA in v1 since Gateway API v1.6 (v1alpha2 deprecated)
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: database-route
@@ -718,7 +719,7 @@ spec:
           port: 5432
 ---
 # Multi-backend TCP routing
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: tcp-loadbalance
@@ -741,7 +742,7 @@ spec:
 
 ## TLSRoute
 
-Define el enrutamiento de tráfico TLS passthrough.
+Define el enrutamiento del tráfico TLS passthrough.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1alpha2
@@ -766,10 +767,11 @@ spec:
 
 ## UDPRoute
 
-Define el enrutamiento de tráfico UDP.
+Define el enrutamiento del tráfico UDP.
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+# GA in v1 since Gateway API v1.6 (v1alpha2 deprecated)
+apiVersion: gateway.networking.k8s.io/v1
 kind: UDPRoute
 metadata:
   name: dns-route
@@ -833,10 +835,10 @@ spec:
 ### Implementaciones principales
 
 | Implementación | Controlador | Características |
-|----------------|------------|----------|
+|----------------|------------|-----------------|
 | **Istio** | istio.io/gateway-controller | Integración con Service Mesh, gestión avanzada del tráfico |
 | **Cilium** | io.cilium/gateway-controller | Basado en eBPF, alto rendimiento |
-| **Envoy Gateway** | gateway.envoyproxy.io/gatewayclass-controller | Basado en Envoy, conforme a estándares |
+| **Envoy Gateway** | gateway.envoyproxy.io/gatewayclass-controller | Basado en Envoy, conforme con los estándares |
 | **AWS Gateway API Controller** | application-networking.k8s.aws/gateway-api-controller | Integración con VPC Lattice |
 | **Contour** | projectcontour.io/gateway-controller | Basado en Envoy, configuración sencilla |
 | **NGINX Gateway Fabric** | gateway.nginx.org/nginx-gateway-controller | Basado en NGINX |
@@ -857,24 +859,24 @@ spec:
 | Reescritura de URL | Sí | Sí | Sí | Parcial | Sí |
 | Duplicación | Sí | Parcial | Sí | No | Sí |
 
-## Compatibilidad con Gateway API de AWS Load Balancer Controller (v3.0 GA)
+## Compatibilidad de Gateway API con AWS Load Balancer Controller (GA v3.0)
 
 A partir de AWS Load Balancer Controller v3.0.0 (enero de 2026), la compatibilidad con Gateway API alcanzó GA, lo que permite la gestión declarativa de ALB/NLB mediante el modelo de separación de roles GatewayClass/Gateway/HTTPRoute.
 
-- **Contexto**: Con NGINX Ingress Controller alcanzando el fin de soporte en marzo de 2026, AWS posiciona LBC v3.0 + Gateway API como la alternativa nativa.
-- **Compatibilidad con versiones anteriores**: Los recursos Ingress/Service existentes continúan siendo totalmente compatibles; no se requiere una transición inmediata y la migración puede realizarse gradualmente.
-- **Beneficios**: Enrutamiento basado en encabezados/consultas, distribución de tráfico ponderada (Blue/Green, Canary) y un diseño multiprotocolo que cubre TCP/UDP/gRPC.
-- **Precaución al actualizar**: Si realiza la instalación mediante Helm con `enableCertManager=true`, establezca `keepTLSSecret=false` antes de actualizar (esto se gestiona automáticamente desde v3.0.0 en adelante).
+- **Contexto**: Con NGINX Ingress Controller llegando al final de su soporte en marzo de 2026, AWS posiciona LBC v3.0 + Gateway API como la alternativa nativa.
+- **Compatibilidad con versiones anteriores**: Los recursos Ingress/Service existentes siguen siendo totalmente compatibles; no es necesario realizar una transición inmediata y la migración puede efectuarse gradualmente.
+- **Beneficios**: Enrutamiento basado en encabezados/consultas, distribución de tráfico ponderada (Blue/Green, Canary) y un diseño multiprotocolo que abarca TCP/UDP/gRPC.
+- **Precaución al actualizar**: Si instala mediante Helm con `enableCertManager=true`, establezca `keepTLSSecret=false` antes de actualizar (esto se gestiona automáticamente a partir de v3.0.0).
 
 ### Herramientas de migración de v3.4.0 (junio de 2026)
 
-Se añadieron herramientas para migrar Ingress existentes basados en ALB a Gateway API sin tiempo de inactividad.
+Se agregaron herramientas para migrar Ingress existentes basados en ALB a Gateway API sin tiempo de inactividad.
 
-- **Herramienta de migración de Ingress a Gateway**: Crea nuevos recursos de Gateway API junto al ALB existente, lo que permite una transición sin tiempo de inactividad.
-- **CLI lbc-migrate**: Convierte automáticamente las anotaciones, reglas de enrutamiento e IngressGroups existentes en recursos de Gateway API; la opción `--from-cluster` analiza el clúster directamente.
-- **Consola de migración**: Una interfaz web para validar la configuración convertida antes de migrar.
+- **Herramienta de migración de Ingress a Gateway**: Crea nuevos recursos de Gateway API junto al ALB existente, lo que permite una transición sin tiempo de inactividad
+- **CLI lbc-migrate**: Convierte automáticamente las anotaciones, reglas de enrutamiento e IngressGroups existentes en recursos de Gateway API; la opción `--from-cluster` analiza el clúster directamente
+- **Consola de migración**: Una UI web para validar la configuración convertida antes de migrar
 
-> **Precaución**: El comportamiento cambió para las combinaciones de Gateway API + NLB. Si varias Routes TCP/UDP/TLS se conectan a un único Listener, solo la Route más antigua recibe tráfico. Revise la configuración de Route de L4 antes de actualizar.
+> **Precaución**: El comportamiento cambió para las combinaciones de Gateway API + NLB. Si varias Routes TCP/UDP/TLS se adjuntan a un único Listener, solo la Route más antigua recibe tráfico. Revise la configuración de sus Routes L4 antes de actualizar.
 
 (Fuente común: [AWS Load Balancer Controller Releases](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases))
 
@@ -1059,16 +1061,16 @@ spec:
           weight: 10
 ```
 
-### Lista de comprobación de migración
+### Lista de comprobación para la migración
 
 - [ ] Analizar las anotaciones de Ingress existentes
 - [ ] Seleccionar la implementación y crear GatewayClass
 - [ ] Crear el recurso Gateway y configurar los listeners
 - [ ] Convertir las reglas de enrutamiento a HTTPRoute
 - [ ] Configurar el acceso entre namespaces con ReferenceGrant
-- [ ] Migrar certificados TLS
+- [ ] Migrar los certificados TLS
 - [ ] Realizar una transición gradual mediante división de tráfico
-- [ ] Configurar monitorización y registro
+- [ ] Configurar la monitorización y el registro
 - [ ] Eliminar los recursos Ingress existentes
 
 ## Patrones de EKS
@@ -1161,14 +1163,14 @@ spec:
 
 ## Canales y madurez de la API
 
-Gateway API proporciona características con diversos niveles de madurez.
+Gateway API proporciona características con distintos niveles de madurez.
 
 ### Clasificación de canales
 
 | Canal | Madurez | Recursos |
 |---------|----------|-----------|
-| **Estándar** | GA | GatewayClass, Gateway, HTTPRoute, ReferenceGrant |
-| **Experimental** | Beta/Alpha | GRPCRoute, TCPRoute, TLSRoute, UDPRoute |
+| **Standard** | GA | GatewayClass, Gateway, HTTPRoute, ReferenceGrant, TCPRoute, UDPRoute |
+| **Experimental** | Beta/Alpha | GRPCRoute, TLSRoute |
 
 ### Versiones y compatibilidad
 
@@ -1179,8 +1181,17 @@ kind: HTTPRoute
 
 # Experimental channel
 apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TCPRoute
+kind: TLSRoute
 ```
+
+### Actualización de agosto de 2026: Gateway API v1.6 — TCPRoute y UDPRoute pasan a Standard
+
+Gateway API v1.6.0 se lanzó el 30 de junio de 2026 y fue [anunciada en el blog de Kubernetes el 3 de agosto de 2026](https://kubernetes.io/blog/2026/08/03/gateway-api-v1-6-release/). Dos cambios son importantes para las tablas anteriores:
+
+- **TCPRoute y UDPRoute ahora son Standard (GA)**: ambos pasaron a la versión de API `gateway.networking.k8s.io/v1`, proporcionando a las cargas de trabajo L4 sin procesar (bases de datos, DNS, VoIP, juegos, telemetría de IoT) un modelo de enrutamiento portátil y estable. La versión `v1alpha2` de cada uno está obsoleta desde v1.6 y se eliminará en una versión futura.
+- **Separación del grupo de API Experimental**: los recursos experimentales pasan a un grupo de API distinto, `gateway.networking.x-k8s.io`, con un prefijo `X` (por ejemplo, el nuevo recurso `XBackend`) para hacer explícito el límite entre Standard y Experimental.
+
+Las implementaciones están adoptando v1.6 rápidamente; por ejemplo, Cilium 1.20 (julio de 2026) incluye soporte para Gateway API v1.6.1, incluidos TCPRoute/UDPRoute.
 
 ## Comparación con la API Ingress
 
@@ -1197,7 +1208,7 @@ kind: TCPRoute
 | **Portabilidad** | Depende de anotaciones | Estandarizado |
 | **Extensibilidad** | No | CRD |
 
-## Prácticas recomendadas
+## Mejores prácticas
 
 ### 1. Seguir la separación de roles
 
@@ -1207,7 +1218,7 @@ kind: TCPRoute
 # App team: Manage HTTPRoute
 ```
 
-### 2. ReferenceGrant con mínimo privilegio
+### 2. ReferenceGrant con privilegios mínimos
 
 ```yaml
 # Explicitly allow only required namespaces
@@ -1250,9 +1261,9 @@ spec:
 
 ## Referencias
 
-- [Gateway API Official Documentation](https://gateway-api.sigs.k8s.io/)
+- [Documentación oficial de Gateway API](https://gateway-api.sigs.k8s.io/)
 - [Gateway API GitHub](https://github.com/kubernetes-sigs/gateway-api)
-- [Istio Gateway API Support](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
-- [Cilium Gateway API](https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/)
+- [Compatibilidad de Gateway API con Istio](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
+- [Gateway API de Cilium](https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/)
 - [AWS Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/)
 - [Envoy Gateway](https://gateway.envoyproxy.io/)
