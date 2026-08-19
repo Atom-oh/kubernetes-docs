@@ -106,6 +106,11 @@ This training content provides quizzes for each topic along with the learning ma
 5. [vLLM Deployment & Optimization](./ai-ml/02-vllm-deployment.md) | [Quiz](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 6. [Agentic AI Platform on EKS](./ai-ml/03-agentic-ai-platform.md) | [Quiz](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [AI/ML Best Practices](./ai-ml/07-ai-ml-best-practices.md) | [Quiz](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+8. **MLflow on EKS Deep Dive**
+   - [MLflow on EKS Introduction](./ai-ml/mlflow/README.md)
+   - [Part 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [Quiz](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+   - [Part 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [Quiz](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+   - [Part 3: Deploying MLflow on EKS](./ai-ml/mlflow/03-eks-deployment.md) | [Quiz](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 
 ### Data on EKS
 1. [Data on EKS Overview](./data-on-eks/README.md)
