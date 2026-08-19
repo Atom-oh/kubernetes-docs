@@ -100,6 +100,10 @@
 * [vLLM Deployment & Optimization](ai-ml/02-vllm-deployment.md)
 * [Agentic AI Platform on EKS](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML Best Practices](ai-ml/07-ai-ml-best-practices.md)
+* [MLflow on EKS Deep Dive](ai-ml/mlflow/README.md)
+  * [Part 1: MLflow Tracking](ai-ml/mlflow/01-tracking.md)
+  * [Part 2: MLflow Model Registry](ai-ml/mlflow/02-model-registry.md)
+  * [Part 3: Deploying MLflow on EKS](ai-ml/mlflow/03-eks-deployment.md)
 
 ## Data on EKS
 
@@ -429,6 +433,9 @@
   * [vLLM Deployment Quiz](quizzes/ai-ml/04-vllm-deployment-quiz.md)
   * [Agentic AI Platform on EKS Quiz](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
   * [AI/ML Best Practices Quiz](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+  * [Part 1: MLflow Tracking Quiz](quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+  * [Part 2: MLflow Model Registry Quiz](quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+  * [Part 3: Deploying MLflow on EKS Quiz](quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 * [Data on EKS](quiz/data-on-eks/README.md)
   * [Part 1: Kafka Fundamentals Quiz](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator Quiz](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
