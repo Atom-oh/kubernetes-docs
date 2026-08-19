@@ -1,67 +1,80 @@
-# Cilium 深度解析：Cloud Native 网络的未来
+# Cilium 深度解析：云原生网络的未来
 
 ## 概述
 
-本节将全面介绍 Cilium 的核心概念和技术。我们将深入探索 Cilium 的架构、eBPF 技术、网络模型、安全功能等。
+本节将帮助你全面理解 Cilium 的核心概念和技术。我们将深入探讨 Cilium 的架构、eBPF 技术、网络模型、安全功能等。
 
 > **支持的版本**: Cilium 1.17, 1.18
 > **Kubernetes 兼容性**: 1.32 及以上
-> **最后更新**: July 27, 2026
+> **最后更新**: August 10, 2026
 
 ### 2026 年 7 月更新：补丁版本与 NetworkPolicy 安全问题
 
-2026 年 7 月 16 日，Cilium 1.19.6、1.18.12 和 1.17.18 补丁版本发布。除新增 Gateway API 访问日志配置支持（`CiliumGatewayClassConfig` 中的 `spec.telemetry.accessLogs`）外，这些版本还修复了在 agent 重启/升级期间可能短暂中断已建立连接的回归问题，以及一个 ClusterMesh Bug：`service.cilium.io/affinity: "none"` 注解会导致流量黑洞。
+2026 年 7 月 16 日，Cilium 1.19.6、1.18.12 和 1.17.18 补丁版本发布。除了新增 Gateway API 访问日志配置支持（`CiliumGatewayClassConfig` 中的 `spec.telemetry.accessLogs`）外，这些版本还修复了一个可能在 agent 重启/升级期间短暂中断已建立连接的回归问题，以及一个 ClusterMesh bug：`service.cilium.io/affinity: "none"` 注解会导致流量黑洞。
 
-还请注意 **CVE-2026-56743** 安全问题：在使用非默认 `clusterName` 的 Cilium 1.19.0-1.19.4 中，仅使用 `ipBlock` 规则（不含 pod/namespace selector）的 Kubernetes NetworkPolicy 可能会意外允许来自同一 namespace 中其他 workload 的流量。请升级至 1.19.5 或更高版本。详见[安全公告](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r)。
+还请注意 **CVE-2026-56743** 安全问题：在使用非默认 `clusterName` 的 Cilium 1.19.0-1.19.4 中，仅使用 `ipBlock` 规则（不含 pod/namespace selector）的 Kubernetes NetworkPolicy 可能会意外允许来自同一 namespace 中其他 workload 的流量。请升级到 1.19.5 或更高版本。详情请参阅[安全公告](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r)。
 
-2026 年 7 月 21 日，[Cilium 1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1) 发布——这是即将发布的 1.20 次要版本的第二个候选版本，此前 rc.0 已于 7 月 14 日发布。如果想在 GA 之前测试 1.20 功能，可在 quay.io 获取 RC 镜像。
+2026 年 7 月 21 日，[Cilium 1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1) 发布——这是即将发布的 1.20 次要版本的第二个 release candidate，继 7 月 14 日发布的 rc.0 之后。
+
+### 2026 年 8 月更新：Cilium 1.20.0 GA
+
+2026 年 7 月 29 日，[Cilium 1.20.0](https://github.com/cilium/cilium/releases/tag/v1.20.0) 发布——汇集了来自 1,100 多位贡献者的超过 2,660 个新提交。亮点包括：
+
+- **Gateway API v1.6.1**：支持新近 GA 的 TCPRoute/UDPRoute、用于后端 TLS 的 `BackendTLSPolicy`、用于委托 listener 管理的 ListenerSets、`ExternalAuth` filter（GEP-1494）以及原生 CORS 支持
+- **网络**：无需 fork 即可扩展 eBPF datapath 的 datapath plugin、自动 netkit 选择（`bpf.datapathMode=auto`），以及适用于 dual-stack cluster 的 IPv6 egress gateway IP
+- **IPAM**：AWS ENI IPAM 的 IPv6 支持（Beta），以及从 cluster-pool 到 multi-pool IPAM 的原地迁移
+- **Services/ClusterMesh**：`PreferSameZone`/`PreferSameNode` 流量分发、通过 `service.cilium.io/weight` 注解实现加权 Maglev backend，以及稳定的 Multi-Cluster Services (MCS) API 支持
+- **安全**：支持带有 Admin/Baseline tier 的 Kubernetes ClusterNetworkPolicy (KCNP)、通过内部 CA 或 SPIRE 提供 ztunnel identity，以及新的 `cluster-mesh` policy entity
+- **性能**：`cilium-cni` 二进制文件从约 77 MB 缩小至 16 MB，此外还包括聚合的 load-balancer state 和针对大型 cluster 优化的 BPF policy-map encoding
+
+如果你使用 legacy Mutual Authentication、Envoy Go extension、Kafka-aware policy、`cilium.io/v2alpha1` `CiliumNodeConfig` API、libnetwork integration 或自定义 CNI 配置，请在升级期间采取相应措施——请参阅[升级指南](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes)。下一周期的首个预发布版本 1.21.0-pre.0 于 8 月 3 日发布。
 
 ## Cilium 1.18 的主要改进
 
-Cilium 1.18 提供了以下主要功能改进和新能力：
+Cilium 1.18 带来了以下主要功能改进和新能力：
 
 ### 网络改进
-- **增强的 BGP Control Plane**：更灵活且可扩展的 BGP 配置
-- **改进的多集群路由**：优化跨集群通信性能
+- **增强的 BGP Control Plane**：更灵活、可扩展的 BGP 配置
+- **改进的 Multi-cluster Routing**：优化的 cluster 间通信性能
 - **增强的 Service Mesh 集成**：与 Envoy proxy 更好地集成
 
 ### 安全增强
-- **增强的网络策略**：更细粒度的策略控制和性能改进
-- **改进的加密选项**：优化 WireGuard 和 IPsec 加密性能
+- **增强的 Network Policy**：更精细的 policy control 和性能改进
+- **改进的加密选项**：优化的 WireGuard 和 IPsec 加密性能
 
 ### 可观测性改进
-- **Hubble 改进**：更丰富的指标和追踪信息
-- **增强的 Prometheus 集成**：新增指标和 dashboard
-- **改进的流量日志**：更详细的网络流量信息
+- **Hubble 改进**：更丰富的指标和 tracing 信息
+- **增强的 Prometheus 集成**：新增 metrics 和 dashboard
+- **改进的 Flow Logging**：更详细的网络流量信息
 
 ### 性能优化
-- **eBPF 程序优化**：更快的数据包处理
-- **内存使用改进**：大型集群中更好的资源效率
-- **CPU 使用优化**：更低开销
+- **eBPF Program 优化**：更快的数据包处理
+- **内存使用改进**：在大规模 cluster 中具有更好的资源效率
+- **CPU 使用优化**：更低的开销
 
 ## 简介
 
-Cilium 是面向 Kubernetes、Docker 和 Mesos 等 Linux 容器管理平台的开源网络、安全和可观测性解决方案。Cilium 基于 eBPF（extended Berkeley Packet Filter）技术，提供比传统 Linux 网络方法更强大、更高效的网络和安全功能。
+Cilium 是面向 Kubernetes、Docker 和 Mesos 等 Linux container 管理平台的开源网络、安全和可观测性解决方案。Cilium 基于 eBPF（extended Berkeley Packet Filter）技术，相比传统 Linux 网络方法，提供了更强大、更高效的网络和安全功能。
 
 ### 什么是 eBPF？
 
-eBPF 是一种技术，其作用类似于 Linux kernel 内的沙箱虚拟机，允许程序在无需修改 kernel 代码的情况下安全地在 kernel 内执行。这使得网络数据包处理、系统调用监控和性能分析等各种任务能够高效执行。
+eBPF 是一种技术，类似于 Linux kernel 内部的沙箱化虚拟机，允许在不修改 kernel 代码的情况下在 kernel 中安全地执行程序。这使得网络数据包处理、system call 监控和性能分析等各种任务能够高效执行。
 
 eBPF 的主要特性：
 - 通过 kernel space 执行实现高性能
 - 通过 JIT（Just-In-Time）编译实现原生性能
-- 安全的执行环境（通过 verifier 进行程序验证）
+- 安全的执行环境（通过 verifier 进行 program 验证）
 - 支持动态加载和卸载
 
 ### Cilium 的主要优势
 
-1. **高性能网络**：使用 eBPF 进行高效的数据包处理
-2. **细粒度网络策略**：支持 L3-L7 级别的网络策略
-3. **透明加密**：节点之间透明的 IPsec 或 WireGuard 加密
-4. **负载均衡**：基于 XDP（eXpress Data Path）的高性能负载均衡
+1. **高性能网络**：使用 eBPF 实现高效的数据包处理
+2. **细粒度 Network Policy**：支持 L3-L7 级别的网络 policy
+3. **透明加密**：node 之间的透明 IPsec 或 WireGuard 加密
+4. **Load Balancing**：基于 XDP（eXpress Data Path）的高性能 load balancing
 5. **可观测性**：通过 Hubble 实现网络流量可见性
 6. **Service Mesh**：无需现有 sidecar 的 L7 流量管理
-7. **多集群网络**：集群之间的透明连接
+7. **Multi-Cluster Networking**：cluster 之间的透明连接
 8. **BGP 支持**：与外部网络集成
 
 ### 与现有 CNI 的比较
@@ -69,12 +82,12 @@ eBPF 的主要特性：
 | 功能 | Cilium | Calico | Flannel | AWS VPC CNI |
 |---------|--------|--------|---------|-------------|
 | 网络模型 | eBPF | iptables/IPVS | VXLAN/host-gw | AWS ENI |
-| 网络策略 | L3-L7 | L3-L4 | 有限 | AWS Security Groups |
+| Network Policy | L3-L7 | L3-L4 | 有限 | AWS Security Groups |
 | 加密 | IPsec/WireGuard | IPsec | 无 | 无 |
 | 可观测性 | Hubble | Flow Logs | 有限 | VPC Flow Logs |
 | Service Mesh | 内置 | 需要 Istio | 需要 Istio | 需要 Istio/AppMesh |
-| 性能 | 非常高 | 高 | 中等 | 高 |
-| 多集群 | 内置 | 有限 | 无 | 需要 Transit Gateway |
+| 性能 | 极高 | 高 | 中等 | 高 |
+| Multi-Cluster | 内置 | 有限 | 无 | 需要 Transit Gateway |
 
 ## 架构
 
@@ -129,38 +142,38 @@ flowchart TD
     class E,F,G observability
 ```
 
-### 核心组件
+### 主要组件
 
-1. **Cilium Agent**：在每个节点上运行，加载和管理 eBPF 程序
-2. **Cilium Operator**：管理集群级资源和操作
-3. **eBPF Programs**：加载到 kernel 中以执行数据包处理和策略实施
+1. **Cilium Agent**：在每个 node 上运行，加载和管理 eBPF program
+2. **Cilium Operator**：管理 cluster 级资源和操作
+3. **eBPF Programs**：加载到 kernel 中以进行数据包处理和 policy enforcement
 4. **Hubble**：提供网络流量监控和可观测性
-5. **Cilium CLI**：用于管理 Cilium 和 Hubble 的命令行工具
+5. **Cilium CLI**：用于管理 Cilium 和 Hubble 的 command-line tool
 
 ### 网络模型
 
 Cilium 支持多种网络模式：
 
-1. **Direct Routing**：节点之间直接路由（BGP 或静态路由）
-2. **Tunneling**：通过 VXLAN 或 Geneve tunnel 实现 overlay 网络
-3. **AWS ENI**：在 Amazon EKS 上使用 Elastic Network Interface（ENI）
+1. **Direct Routing**：node 之间的直接路由（BGP 或 static routing）
+2. **Tunneling**：通过 VXLAN 或 Geneve tunnel 实现 overlay networking
+3. **AWS ENI**：在 Amazon EKS 上使用 Elastic Network Interface (ENI)
 4. **Azure IPAM**：在 Azure AKS 上使用 Azure IPAM
 
-### 数据包流向
+### 数据包流
 
-Cilium 中数据包的处理方式：
+Cilium 中的数据包处理方式：
 
 1. 数据包到达 network interface
-2. eBPF XDP 程序执行初始处理（DDoS 防御、负载均衡）
-3. eBPF TC（Traffic Control）程序应用网络策略
-4. 数据包被传递到容器 network namespace
-5. 响应数据包经过类似路径处理
+2. eBPF XDP program 执行初始处理（DDoS defense、load balancing）
+3. eBPF TC（Traffic Control）program 应用 network policy
+4. 数据包被传递到 container network namespace
+5. 响应数据包通过类似路径处理
 
 ## 与 Amazon EKS 集成
 
-在 Amazon EKS 上使用 Cilium 有两种主要方式：
+在 Amazon EKS 上使用 Cilium 的主要方式有两种：
 
-1. **作为 Amazon EKS Add-on 安装**：Amazon EKS 将 Cilium 作为托管 Add-on 提供。
+1. **作为 Amazon EKS Add-on 安装**：Amazon EKS 提供 Cilium 作为托管 add-on。
 2. **手动安装**：直接使用 Helm chart 安装。
 
 ### 作为 Amazon EKS Add-on 安装
@@ -198,13 +211,13 @@ helm install cilium cilium/cilium \
   --set tunnel=disabled
 ```
 
-### EKS 特定配置选项
+### EKS 专用配置选项
 
-在 EKS 上使用 Cilium 时应考虑的主要配置选项：
+在 EKS 中使用 Cilium 时需要考虑的主要配置选项：
 
-1. **ENI Mode**：利用 AWS Elastic Network Interface 实现原生 AWS 网络性能
+1. **ENI Mode**：使用 AWS Elastic Network Interface 充分发挥原生 AWS 网络性能
 2. **IPAM Mode**：与 AWS VPC IP 地址管理集成
-3. **Encryption**：节点间流量加密（WireGuard 或 IPsec）
+3. **Encryption**：node 间流量加密（WireGuard 或 IPsec）
 4. **NodeLocal DNSCache**：提升 DNS 性能
 5. **Hubble**：启用网络可观测性
 
@@ -227,9 +240,9 @@ data:
   egress-masquerade-interfaces: "eth0"
 ```
 
-### 在 EKS 集群上安装 Cilium
+### 在 EKS Cluster 上安装 Cilium
 
-#### 在现有 EKS 集群上安装 Cilium
+#### 在现有 EKS Cluster 上安装 Cilium
 
 ```bash
 # Remove AWS CNI
@@ -242,7 +255,7 @@ cilium install --set eni.enabled=true \
   --set tunnel=disabled
 ```
 
-#### 使用 Cilium CNI 创建新的 EKS 集群
+#### 使用 Cilium CNI 创建新的 EKS Cluster
 
 ```bash
 eksctl create cluster --name cilium-cluster \
@@ -261,9 +274,9 @@ cilium install --set eni.enabled=true \
   --set tunnel=disabled
 ```
 
-### EKS 集群互连
+### EKS Cluster 互连
 
-使用 Cilium Cluster Mesh 实现 EKS 集群互连：
+使用 Cilium Cluster Mesh 实现 EKS cluster 互连：
 
 ```bash
 # On cluster 1
@@ -280,7 +293,7 @@ cilium clustermesh connect --context cluster1 --destination-context cluster2
 
 ### 前提条件
 
-- Kubernetes 集群（v1.16 或更高版本）
+- Kubernetes cluster（v1.16 或更高版本）
 - Linux kernel 4.9 或更高版本（推荐：5.4 或更高版本）
 - 已配置 kubectl
 - Helm（可选）
@@ -297,12 +310,12 @@ rm cilium-linux-amd64.tar.gz
 
 #### 网络模式配置
 
-直接路由模式：
+Direct routing mode：
 ```bash
 cilium install --set tunnel=disabled --set autoDirectNodeRoutes=true
 ```
 
-VXLAN 模式：
+VXLAN mode：
 ```bash
 cilium install --set tunnel=vxlan
 ```
@@ -326,11 +339,11 @@ IPsec 加密：
 cilium install --set encryption.enabled=true --set encryption.type=ipsec
 ```
 
-## 网络策略
+## Network Policy
 
-Cilium 扩展了 Kubernetes NetworkPolicy API，以提供 L3-L7 级别的细粒度网络策略。
+Cilium 扩展了 Kubernetes NetworkPolicy API，以提供 L3-L7 级别的细粒度网络 policy。
 
-### 基础网络策略
+### 基础 Network Policy
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -352,7 +365,7 @@ spec:
       protocol: TCP
 ```
 
-### Cilium 网络策略
+### Cilium Network Policy
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -378,7 +391,7 @@ spec:
           path: "/api/v1/products"
 ```
 
-### 基于 FQDN 的策略
+### 基于 FQDN 的 Policy
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -402,7 +415,7 @@ spec:
 
 ## 使用 Hubble 实现可观测性
 
-Hubble 是 Cilium 的可观测性层，可对通过 eBPF 收集的网络流量数据进行可视化和分析。
+Hubble 是 Cilium 的可观测性层，支持对通过 eBPF 收集的网络流量数据进行可视化和分析。
 
 ### 安装 Hubble
 
@@ -452,9 +465,9 @@ cilium connectivity test --test=performance
 
 ### 性能优化
 
-1. **Kernel 版本优化**：使用 Linux kernel 5.4 或更高版本
-2. **启用 BBR 拥塞控制**：提升网络吞吐量
-3. **启用 XDP 加速**：提升数据包处理性能
+1. **Kernel Version 优化**：使用 Linux kernel 5.4 或更高版本
+2. **启用 BBR Congestion Control**：提高网络吞吐量
+3. **启用 XDP Acceleration**：提高数据包处理性能
 4. **MTU 优化**：设置适合网络环境的 MTU
 
 ```bash
@@ -467,9 +480,9 @@ cilium install --set bpf.preallocateMaps=true \
 
 ### 安全加固
 
-1. **应用默认拒绝策略**：仅允许明确许可的流量
-2. **启用加密**：加密节点间流量
-3. **应用最小权限原则**：设计仅允许必要通信的策略
+1. **应用 Default Deny Policy**：仅允许明确许可的流量
+2. **启用 Encryption**：加密 node 间流量
+3. **应用 Least Privilege Principle**：设计仅允许必要通信的 policy
 
 ### 改进可观测性
 
@@ -521,46 +534,46 @@ kubectl logs -n kube-system -l k8s-app=cilium
 ## 深度解析目录
 
 **[Cilium 简介和基础概念](01-introduction.md)**
-- Cilium 概览和历史
-- 容器网络基础
+- Cilium 概述和历史
+- Container Networking 基础
 - 理解 CNI（Container Network Interface）
 - Cilium 的差异化功能
 
 **[eBPF 技术深度解析](02-ebpf.md)**
 - eBPF 技术和历史简介
 - eBPF 在 Kernel 内部的工作原理
-- eBPF 程序类型和 Maps
+- eBPF Program 类型和 Map
 - 在 Cilium 中使用 eBPF
 
 **[网络模型和 VXLAN](03-networking.md)**
-- 容器网络模型比较
+- Container Networking 模型比较
 - VXLAN 技术深度解析
-- Cilium 的 Overlay 网络
+- Cilium 的 Overlay Networking
 - 性能优化技术
-- 路由机制（Encapsulation 与 Native-Routing）
-- Cloud Provider 网络（AWS ENI、Google Cloud）
+- Routing 机制（Encapsulation 与 Native-Routing）
+- Cloud Provider Networking（AWS ENI、Google Cloud）
 
-**[IPAM 和网络策略](04-ipam-policy.md)**
-- IP 地址管理（IPAM）策略
+**[IPAM 和 Network Policy](04-ipam-policy.md)**
+- IP Address Management (IPAM) 策略
 - Kubernetes 和 Cilium IPAM 集成
-- 网络策略设计和实施
-- 多集群场景
+- Network Policy 设计和实现
+- Multi-Cluster 场景
 - IPAM Mode 深度解析（Cluster Scope、Kubernetes Host Scope、Multi-Pool）
 - Cloud Provider IPAM（Azure IPAM、AWS ENI、GKE）
 - 基于 CRD 的 IPAM
 
-**[L2-L7 网络和负载均衡](05-l2-l7-networking.md)**
-- 理解 OSI Model 层（L2、L3、L4、L7）
-- Cilium 的特定层功能
+**[L2-L7 网络和 Load Balancing](05-l2-l7-networking.md)**
+- 理解 OSI Model 层级（L2、L3、L4、L7）
+- Cilium 的分层功能
 - Service Mesh 集成
-- 负载均衡架构
-- Masquerading 配置和实施模式
+- Load Balancing 架构
+- Masquerading 配置和实现模式
 - IPv4 Fragment 处理
 
-**[安全和可见性](06-security-visibility.md)**
+**[安全与可见性](06-security-visibility.md)**
 - Cilium 的安全功能
 - 网络可见性和监控
-- Hubble 架构和使用方法
+- Hubble 架构和使用
 - 实时威胁检测
 
 **[高级主题和真实案例](07-advanced-topics.md)**
@@ -585,4 +598,4 @@ kubectl logs -n kube-system -l k8s-app=cilium
 
 ## 测验
 
-要测试你在本节所学内容，请尝试 [Cilium 深度解析测验](../../quizzes/networking/cilium/01-introduction-quiz.md)。
+要测试你在本节中学到的内容，请尝试 [Cilium 深度解析测验](../../quizzes/networking/cilium/01-introduction-quiz.md)。
