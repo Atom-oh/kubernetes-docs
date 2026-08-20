@@ -100,6 +100,11 @@
 * [vLLM Deployment & Optimization](ai-ml/02-vllm-deployment.md)
 * [Agentic AI Platform on EKS](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML Best Practices](ai-ml/07-ai-ml-best-practices.md)
+* [Ray on EKS Deep Dive](ai-ml/ray/README.md)
+  * [Part 1: Ray Architecture](ai-ml/ray/01-architecture.md)
+  * [Part 2: The KubeRay Operator](ai-ml/ray/02-kuberay-operator.md)
+  * [Part 3: Ray Train and Ray Tune](ai-ml/ray/03-ray-train-tune.md)
+  * [Part 4: Ray Serve](ai-ml/ray/04-ray-serve.md)
 
 ## Data on EKS
 
@@ -429,6 +434,10 @@
   * [vLLM Deployment Quiz](quizzes/ai-ml/04-vllm-deployment-quiz.md)
   * [Agentic AI Platform on EKS Quiz](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
   * [AI/ML Best Practices Quiz](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+  * [Part 1: Ray Architecture Quiz](quizzes/ai-ml/ray/01-architecture-quiz.md)
+  * [Part 2: KubeRay Operator Quiz](quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
+  * [Part 3: Ray Train and Tune Quiz](quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
+  * [Part 4: Ray Serve Quiz](quizzes/ai-ml/ray/04-ray-serve-quiz.md)
 * [Data on EKS](quiz/data-on-eks/README.md)
   * [Part 1: Kafka Fundamentals Quiz](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator Quiz](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
