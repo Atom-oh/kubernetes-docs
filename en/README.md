@@ -114,6 +114,11 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 4: Katib — Hyperparameter Tuning and AutoML](./ai-ml/kubeflow/04-katib.md) | [Quiz](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
    - [Part 5: Kubeflow Trainer and Distributed Training](./ai-ml/kubeflow/05-training-operator.md) | [Quiz](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
    - [Part 6: KServe — Model Serving on Kubernetes](./ai-ml/kubeflow/06-kserve.md) | [Quiz](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+9. **MLflow on EKS Deep Dive**
+   - [MLflow on EKS Introduction](./ai-ml/mlflow/README.md)
+   - [Part 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [Quiz](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+   - [Part 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [Quiz](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+   - [Part 3: Deploying MLflow on EKS](./ai-ml/mlflow/03-eks-deployment.md) | [Quiz](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 
 ### Data on EKS
 1. [Data on EKS Overview](./data-on-eks/README.md)

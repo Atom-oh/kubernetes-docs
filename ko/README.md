@@ -114,6 +114,11 @@
    - [Part 4: Katib — 하이퍼파라미터 튜닝과 AutoML](./ai-ml/kubeflow/04-katib.md) | [퀴즈](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
    - [Part 5: Kubeflow Trainer와 분산 학습](./ai-ml/kubeflow/05-training-operator.md) | [퀴즈](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
    - [Part 6: KServe — Kubernetes 위에서의 모델 서빙](./ai-ml/kubeflow/06-kserve.md) | [퀴즈](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+9. **MLflow on EKS 딥다이브**
+   - [MLflow on EKS 소개](./ai-ml/mlflow/README.md)
+   - [Part 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [퀴즈](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+   - [Part 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [퀴즈](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+   - [Part 3: MLflow를 EKS에 배포하기](./ai-ml/mlflow/03-eks-deployment.md) | [퀴즈](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 
 ### Data on EKS
 1. [Data on EKS 개요](./data-on-eks/README.md)

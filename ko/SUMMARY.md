@@ -107,6 +107,10 @@
   * [Part 4: Katib — 하이퍼파라미터 튜닝과 AutoML](ai-ml/kubeflow/04-katib.md)
   * [Part 5: Kubeflow Trainer와 분산 학습](ai-ml/kubeflow/05-training-operator.md)
   * [Part 6: KServe — Kubernetes 위에서의 모델 서빙](ai-ml/kubeflow/06-kserve.md)
+* [MLflow on EKS 딥다이브](ai-ml/mlflow/README.md)
+  * [Part 1: MLflow Tracking](ai-ml/mlflow/01-tracking.md)
+  * [Part 2: MLflow Model Registry](ai-ml/mlflow/02-model-registry.md)
+  * [Part 3: MLflow를 EKS에 배포하기](ai-ml/mlflow/03-eks-deployment.md)
 
 ## Data on EKS
 
@@ -442,6 +446,9 @@
   * [Part 4: Katib 퀴즈](quizzes/ai-ml/kubeflow/04-katib-quiz.md)
   * [Part 5: Kubeflow Trainer 퀴즈](quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
   * [Part 6: KServe 퀴즈](quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+  * [Part 1: MLflow Tracking 퀴즈](quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+  * [Part 2: MLflow Model Registry 퀴즈](quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+  * [Part 3: MLflow EKS 배포 퀴즈](quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 * [Data on EKS](quiz/data-on-eks/README.md)
   * [Part 1: Kafka 핵심 개념 퀴즈](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator 퀴즈](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)

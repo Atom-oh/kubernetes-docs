@@ -107,6 +107,10 @@
   * [Part 4: Katib — Hyperparameter Tuning and AutoML](ai-ml/kubeflow/04-katib.md)
   * [Part 5: Kubeflow Trainer and Distributed Training](ai-ml/kubeflow/05-training-operator.md)
   * [Part 6: KServe — Model Serving on Kubernetes](ai-ml/kubeflow/06-kserve.md)
+* [MLflow on EKS Deep Dive](ai-ml/mlflow/README.md)
+  * [Part 1: MLflow Tracking](ai-ml/mlflow/01-tracking.md)
+  * [Part 2: MLflow Model Registry](ai-ml/mlflow/02-model-registry.md)
+  * [Part 3: Deploying MLflow on EKS](ai-ml/mlflow/03-eks-deployment.md)
 
 ## Data on EKS
 
@@ -442,6 +446,9 @@
   * [Part 4: Katib Quiz](quizzes/ai-ml/kubeflow/04-katib-quiz.md)
   * [Part 5: Kubeflow Trainer Quiz](quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
   * [Part 6: KServe Quiz](quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+  * [Part 1: MLflow Tracking Quiz](quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+  * [Part 2: MLflow Model Registry Quiz](quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+  * [Part 3: Deploying MLflow on EKS Quiz](quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 * [Data on EKS](quiz/data-on-eks/README.md)
   * [Part 1: Kafka Fundamentals Quiz](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator Quiz](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
