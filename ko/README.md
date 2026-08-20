@@ -106,7 +106,15 @@
 5. [vLLM 배포 및 최적화](./ai-ml/02-vllm-deployment.md) | [퀴즈](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 6. [Agentic AI 플랫폼](./ai-ml/03-agentic-ai-platform.md) | [퀴즈](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [AI/ML 모범 사례](./ai-ml/07-ai-ml-best-practices.md) | [퀴즈](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
-8. **MLflow on EKS 딥다이브**
+8. **Kubeflow on EKS 딥다이브**
+   - [Kubeflow on EKS 소개](./ai-ml/kubeflow/README.md)
+   - [Part 1: EKS에서의 Kubeflow 아키텍처와 설치](./ai-ml/kubeflow/01-architecture-installation.md) | [퀴즈](./quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+   - [Part 2: Kubeflow Pipelines](./ai-ml/kubeflow/02-pipelines.md) | [퀴즈](./quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
+   - [Part 3: Kubeflow Notebooks](./ai-ml/kubeflow/03-notebooks.md) | [퀴즈](./quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
+   - [Part 4: Katib — 하이퍼파라미터 튜닝과 AutoML](./ai-ml/kubeflow/04-katib.md) | [퀴즈](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+   - [Part 5: Kubeflow Trainer와 분산 학습](./ai-ml/kubeflow/05-training-operator.md) | [퀴즈](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
+   - [Part 6: KServe — Kubernetes 위에서의 모델 서빙](./ai-ml/kubeflow/06-kserve.md) | [퀴즈](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+9. **MLflow on EKS 딥다이브**
    - [MLflow on EKS 소개](./ai-ml/mlflow/README.md)
    - [Part 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [퀴즈](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
    - [Part 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [퀴즈](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
