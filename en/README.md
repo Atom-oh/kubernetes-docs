@@ -112,6 +112,19 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 2: The KubeRay Operator](./ai-ml/ray/02-kuberay-operator.md) | [Quiz](./quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
    - [Part 3: Ray Train and Ray Tune](./ai-ml/ray/03-ray-train-tune.md) | [Quiz](./quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
    - [Part 4: Ray Serve](./ai-ml/ray/04-ray-serve.md) | [Quiz](./quizzes/ai-ml/ray/04-ray-serve-quiz.md)
+9. **Kubeflow on EKS Deep Dive**
+   - [Kubeflow on EKS Introduction](./ai-ml/kubeflow/README.md)
+   - [Part 1: Kubeflow Architecture and Installation on EKS](./ai-ml/kubeflow/01-architecture-installation.md) | [Quiz](./quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+   - [Part 2: Kubeflow Pipelines](./ai-ml/kubeflow/02-pipelines.md) | [Quiz](./quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
+   - [Part 3: Kubeflow Notebooks](./ai-ml/kubeflow/03-notebooks.md) | [Quiz](./quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
+   - [Part 4: Katib — Hyperparameter Tuning and AutoML](./ai-ml/kubeflow/04-katib.md) | [Quiz](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+   - [Part 5: Kubeflow Trainer and Distributed Training](./ai-ml/kubeflow/05-training-operator.md) | [Quiz](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
+   - [Part 6: KServe — Model Serving on Kubernetes](./ai-ml/kubeflow/06-kserve.md) | [Quiz](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+10. **MLflow on EKS Deep Dive**
+   - [MLflow on EKS Introduction](./ai-ml/mlflow/README.md)
+   - [Part 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [Quiz](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+   - [Part 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [Quiz](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+   - [Part 3: Deploying MLflow on EKS](./ai-ml/mlflow/03-eks-deployment.md) | [Quiz](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 
 ### Data on EKS
 1. [Data on EKS Overview](./data-on-eks/README.md)
