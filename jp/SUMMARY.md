@@ -253,6 +253,20 @@
     * [負荷テストとオートスケーリングクイズ](quizzes/observability/labs/04-load-testing-scaling-quiz.md)
     * [アラートとAIOpsクイズ](quizzes/observability/labs/05-alerting-aiops-quiz.md)
     * [分散トレーシングの分析クイズ](quizzes/observability/labs/06-distributed-tracing-quiz.md)
+* [AI/機械学習](quiz/ai-ml/README.md)
+  * [第1部：Rayアーキテクチャ クイズ](quizzes/ai-ml/ray/01-architecture-quiz.md)
+  * [第2部: KubeRay Operator クイズ](quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
+  * [第3部: Ray TrainとTune クイズ](quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
+  * [第4部：Ray Serve クイズ](quizzes/ai-ml/ray/04-ray-serve-quiz.md)
+  * [第1部: Kubeflowのアーキテクチャとインストール クイズ](quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+  * [第2部：Kubeflow Pipelines クイズ](quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
+  * [第3部：Kubeflow Notebooks クイズ](quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
+  * [第4部: Katib クイズ](quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+  * [第5部: Kubeflow Trainer クイズ](quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
+  * [第6部: KServe クイズ](quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+  * [第1部：MLflow Tracking クイズ](quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+  * [第2部：MLflow Model Registry クイズ](quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+  * [第3部：EKS上でのMLflowのデプロイ クイズ](quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 
 ## オートスケーリング
 
@@ -355,6 +369,22 @@
 * [vLLM のデプロイと最適化](ai-ml/02-vllm-deployment.md)
 * [EKS 上のエージェント型 AI プラットフォーム](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML のベストプラクティス](ai-ml/07-ai-ml-best-practices.md)
+* [EKS上のRay詳細解説](ai-ml/ray/README.md)
+  * [第1部：Rayアーキテクチャ](ai-ml/ray/01-architecture.md)
+  * [第2部：KubeRay Operator](ai-ml/ray/02-kuberay-operator.md)
+  * [第3部：Ray TrainとRay Tune](ai-ml/ray/03-ray-train-tune.md)
+  * [第4部：Ray Serve](ai-ml/ray/04-ray-serve.md)
+* [EKS上のKubeflow詳細解説](ai-ml/kubeflow/README.md)
+  * [第1部：EKS上のKubeflowアーキテクチャとインストール](ai-ml/kubeflow/01-architecture-installation.md)
+  * [第2部：Kubeflow Pipelines](ai-ml/kubeflow/02-pipelines.md)
+  * [第3部：Kubeflow Notebooks](ai-ml/kubeflow/03-notebooks.md)
+  * [第4部：Katib — ハイパーパラメータチューニングとAutoML](ai-ml/kubeflow/04-katib.md)
+  * [第5部：Kubeflow Trainerと分散学習](ai-ml/kubeflow/05-training-operator.md)
+  * [第6部：KServe — Kubernetes上でのモデル提供](ai-ml/kubeflow/06-kserve.md)
+* [EKS上のMLflow詳細解説](ai-ml/mlflow/README.md)
+  * [第1部：MLflow Tracking](ai-ml/mlflow/01-tracking.md)
+  * [第2部：MLflow Model Registry](ai-ml/mlflow/02-model-registry.md)
+  * [第3部：EKS上でのMLflowのデプロイ](ai-ml/mlflow/03-eks-deployment.md)
 
 ## セキュリティとポリシー
 
