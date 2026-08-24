@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **지원 버전**: OTEL 1.x
-> **마지막 업데이트**: 2026년 7월 27일
+> **마지막 업데이트**: 2026년 8월 24일
 
 ## 소개
 
@@ -1141,6 +1141,10 @@ service:
 ### 2026년 7월 업데이트: AI 에이전트 트래픽의 네트워크 경계 관측
 
 CNCF 블로그에 [NGINX와 OpenTelemetry로 AI 에이전트의 네트워크 경계를 구성하는 패턴](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/)이 소개되었습니다. AI 에이전트의 아웃바운드 트래픽을 포워드 프록시(NGINX)로 강제 경유시키고, NGINX 네이티브 OpenTelemetry 모듈로 요청마다 OTel 스팬을 생성하는 방식입니다. 생성된 스팬은 위에서 다룬 것과 동일하게 OTel Collector를 통해 감사 로그로 보존하거나 Jaeger, Grafana, SIEM 등으로 전달할 수 있어, 사용자 상호작용과 에이전트가 대신 수행한 외부 호출을 상관 분석할 수 있습니다. 에이전트 워크로드를 클러스터에서 운영할 때 기존 OTel 파이프라인을 그대로 재사용하는 관측 패턴으로 참고할 만합니다.
+
+### 2026년 8월 업데이트: 느린 SQL 쿼리를 신뢰성 메트릭으로 정제하기
+
+CNCF 블로그에 [느린 쿼리를 실행 가능한 신뢰성 메트릭으로 바꾸는 방법](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/)이 소개되었습니다. 애플리케이션이 내보내는 OpenTelemetry 데이터베이스 스팬을 대시보드·알림에 바로 쓸 수 있는 스팬 파생(span-derived) 메트릭으로 정제하는 반복 가능한 워크플로를 다룹니다. 단순한 느린 쿼리 감지에서 시작해, 트래픽으로 가중한 영향도 분석(어떤 쿼리를 최적화해야 가장 효과가 큰지), 이상 감지(지금 어떤 쿼리가 비정상인지)까지 단계적으로 확장하며, 직접 따라 해 볼 수 있는 [실습 랩 저장소](https://github.com/causely-oss/slow-query-lab)도 제공합니다.
 
 ## Best Practices
 
