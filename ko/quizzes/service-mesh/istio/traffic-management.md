@@ -378,7 +378,7 @@ spec:
       perTryTimeout: 2s
 ```
 
-A. 총 10초 동안 3번 재시도, 각 시도는 2초 제한\
+A. 최초 요청 이후 최대 3번 재시도하며, 각 전달은 2초 제한이고 전체는 10초 제한\
 B. 총 2초 동안 3번 재시도, 각 시도는 10초 제한\
 C. 총 10초 동안 무제한 재시도, 각 시도는 2초 제한\
 D. 재시도 없이 10초 후 실패
@@ -389,7 +389,7 @@ D. 재시도 없이 10초 후 실패
 
 **정답: A**
 
-이 구성은 **총 10초** 내에 **3번까지 재시도**하되, **각 시도는 2초 제한**입니다.
+이 구성은 최초 요청 이후 **최대 3번 추가 재시도**하되, 각 전달은 **2초 제한**, 전체 요청은 **10초 제한**입니다. 따라서 최악의 경우 upstream에 최대 4번 전달될 수 있습니다.
 
 **해설:**
 
@@ -398,8 +398,8 @@ D. 재시도 없이 10초 후 실패
 ```yaml
 timeout: 10s           # 전체 요청의 최대 시간
 retries:
-  attempts: 3          # 최대 재시도 횟수
-  perTryTimeout: 2s    # 각 시도의 제한 시간
+  attempts: 3          # 최초 요청 이후 최대 3번 재시도
+  perTryTimeout: 2s    # 각 전달의 제한 시간
 ```
 
 **실행 시나리오:**
@@ -414,18 +414,12 @@ retries:
 ├─ 2번째 시도: 1.8초 소요 → 성공
 └─ 총 소요 시간: 3.8초
 
-시나리오 3: 3번 모두 실패
+시나리오 3: 최초 요청과 재시도 3번이 모두 실패
 ├─ 1번째 시도: 2초 타임아웃 → 실패
 ├─ 2번째 시도: 2초 타임아웃 → 실패
 ├─ 3번째 시도: 2초 타임아웃 → 실패
-└─ 총 소요 시간: 6초 (10초 전에 실패)
-
-시나리오 4: 전체 타임아웃
-├─ 1번째 시도: 2초 타임아웃 → 실패
-├─ 2번째 시도: 2초 타임아웃 → 실패
-├─ 3번째 시도: 2초 타임아웃 → 실패
-├─ 4번째 시도: 2초 지나지 않았지만 전체 10초 도달
-└─ 총 소요 시간: 10초 (전체 타임아웃)
+├─ 4번째 시도: 2초 타임아웃 → 실패
+└─ 총 소요 시간: 약 8초
 ```
 
 **Retry 조건 설정:**
@@ -440,23 +434,34 @@ retries:
 **모범 사례:**
 
 ```yaml
-# 일반적인 설정
-timeout: 30s
-retries:
-  attempts: 3
-  perTryTimeout: 10s
-  retryOn: 5xx,gateway-error,reset,connect-failure
+# 읽기 요청: 제한적 retry
+- match:
+  - method:
+      regex: "^(GET|HEAD)$"
+  retries:
+    attempts: 2
+    perTryTimeout: 2s
+    retryOn: connect-failure,refused-stream
+
+# 쓰기 요청: mesh retry 비활성화
+- match:
+  - method:
+      regex: "^(POST|PATCH)$"
+  retries:
+    attempts: 0
 ```
 
 **주의사항:**
 
-* `timeout` ≥ `attempts × perTryTimeout`이어야 모든 재시도 가능
+* 모든 재시도 시간 예산을 확보하려면 `timeout`이 대략 `(1 + attempts) × perTryTimeout`보다 커야 하며 backoff도 고려해야 함
 * 너무 많은 재시도는 cascading failure 유발 가능
-* Idempotent 작업에만 재시도 권장
+* `attempts: 0`은 retry 비활성화, `attempts: 1`은 최초 요청 이후 한 번 재전송
+* POST/PATCH는 서버가 commit한 뒤 응답만 유실될 수 있으므로 기본적으로 mesh retry 비활성화
+* mTLS나 네트워크 암호화는 요청 replay의 안전성을 보장하지 않음
 
 **참고 자료:**
 
-* [Timeout과 Retry](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/06-timeout-retry.md)
+* [Timeout과 Retry](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
 
 </details>
 
@@ -2022,7 +2027,7 @@ spec:
 
 ## 학습 자료
 
-* [트래픽 관리 문서](../../../service-mesh/istio/traffic-management/)
+* [트래픽 관리 문서](../../../service-mesh/istio/traffic-management/README.md)
 * [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
 * [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/01-gateway.md)
 * [트래픽 분할](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md)

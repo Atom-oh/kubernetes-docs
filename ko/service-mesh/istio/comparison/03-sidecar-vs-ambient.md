@@ -1,7 +1,7 @@
 # Sidecar vs Ambient Mode 선택 가이드 (EKS 1.36 실측)
 
 > **지원 버전**: Istio 1.30 / EKS 1.36
-> **마지막 업데이트**: 2026년 7월 7일
+> **마지막 업데이트**: 2026년 8월 21일
 
 이 문서는 미션 크리티컬 워크로드(예: 가상자산 거래소의 주문·체결 경로)를 EKS에 올릴 때 **Istio를 sidecar 모드로 도입할지, ambient 모드로 도입할지**를 결정하기 위한 실측 기반 가이드입니다. 아키텍처 설명 자체는 [Ambient Mode](../advanced/01-ambient-mode.md) 문서에 이미 있으므로 여기서는 반복하지 않고, 다음 4가지 요구사항을 기준으로 실측 결과와 권장안만 제시합니다.
 
@@ -14,14 +14,14 @@
 
 ## 의사결정 요약표
 
-| 요구사항 | Sidecar | Ambient (L4, waypoint 미사용) | Ambient (L7, waypoint 사용) |
-|---|---|---|---|
-| mTLS | ✅ STRICT 지원, 실측 확인 | ✅ STRICT 지원, 실측 확인 | ✅ STRICT 지원, 실측 확인 |
-| NetworkPolicy | ✅ 기존 룰 그대로 사용, 실측 확인 | ⚠️ HBONE 포트(15008) 허용 필요, 실측 확인 | ⚠️ HBONE 포트(15008) 허용 필요, 실측 확인 |
-| Latency (no-mesh 기준 P50 오버헤드) | +1.29ms, 실측 | +0.04ms (거의 없음), 실측 | +1.86ms, 실측 |
-| 무중단 rollout | 503 발생 (0.5%, 실측) | **실제 503 0건**, TCP 리셋 0.3%로 대체 | 503 발생 **2.6%, sidecar의 약 5배** (실측) |
+| 요구사항 | Sidecar | Ambient (L4, waypoint 미사용) | Ambient (L7, waypoint 사용) | Cilium |
+|---|---|---|---|---|
+| mTLS | ✅ STRICT 지원, 실측 확인 | ✅ STRICT 지원, 실측 확인 | ✅ STRICT 지원, 실측 확인 | ⚠️ 이번 사이클엔 실측 없음 — identity 상호 인증 + 별도로 켜야 하는 WireGuard/IPsec 조합이며, STRICT처럼 한 스위치로 동등하지 않음([아래](#원시-실패와-retry가-숨긴-실패를-분리해서-측정) 참고) |
+| NetworkPolicy | ✅ 기존 룰 그대로 사용, 실측 확인 | ⚠️ HBONE 포트(15008) 허용 필요, 실측 확인 | ⚠️ HBONE 포트(15008) 허용 필요, 실측 확인 | ⚠️ 이번 사이클엔 실측 없음 — K8s NetworkPolicy 애드온이 아니라 CiliumNetworkPolicy가 네이티브 메커니즘 |
+| Latency (no-mesh 기준 P50 오버헤드) | +1.29ms, 실측 | +0.04ms (거의 없음), 실측 | +1.86ms, 실측 | 이번 사이클엔 실측 없음 |
+| 무중단 rollout | 503 발생 (0.5%, 실측) | **실제 503 0건**, TCP 리셋 0.3%로 대체 | 503 발생 **2.6%, sidecar의 약 5배** (실측) | 이번 사이클엔 실측 없음 |
 
-> ✅ **한 줄 결론**: waypoint(L7)를 쓰지 않는 ambient(L4)가 rollout 안정성 면에서 가장 우수했고 latency 오버헤드도 거의 없었습니다. waypoint를 쓰는 순간 sidecar보다 503 비율이 더 높아지고 latency도 sidecar와 비슷한 수준으로 올라갑니다. 근거는 아래 §3~§4에서 확인하세요.
+> ✅ **한 줄 결론**: waypoint(L7)를 쓰지 않는 ambient(L4)가 rollout 안정성 면에서 가장 우수했고 latency 오버헤드도 거의 없었습니다. waypoint를 쓰는 순간 sidecar보다 503 비율이 더 높아지고 latency도 sidecar와 비슷한 수준으로 올라갑니다. 근거는 아래 §3~§4에서 확인하세요. Cilium은 보안 관점의 동등 비교를 위해 표에 넣었을 뿐([아래](#원시-실패와-retry가-숨긴-실패를-분리해서-측정) 참고) 이번 테스트 클러스터에 배포하지 않았으므로, 해당 칸은 문서화된 특성만 적었고 실측을 대신하지 않습니다.
 
 ## 1. mTLS — 실측 결과 (EKS 1.36.2, Istio 1.30.2)
 
@@ -190,6 +190,27 @@ Ambient에서 우려되는 문제는 **L7 waypoint(Envoy)가 목적지 IP:Port �
 > ✅ **결론**: 두 모드 모두에서 비멱등 요청의 중복 실행은 관찰되지 않았습니다. 클라이언트에 보이는 낮은 실패율은 retry가 실제로 발동해 rollout churn으로 인한 일시적 오류를 대부분 가려주고 있었음을 보여주는데, 그럼에도 성공한 retry 중 같은 논리적 요청이 두 번 처리된 사례는 없었습니다.
 
 > ⚠️ **주의 — "안전하다"는 증명은 아닙니다.** 이번 특정 조건(perTryTimeout=2s, 20 req/s, replica 6개, 기본 graceful shutdown, `preStop` 훅 없음)에서 재현되지 않았을 뿐입니다. 이론상의 메커니즘 — 요청이 애플리케이션에 이미 도달한 뒤 응답이 호출자에게 돌아오기 *전에* 연결이 끊겨 retry가 재전송되는 경우 — 은 애플리케이션이 처리를 시작한 *이후*이면서 응답이 돌아오기 *이전*인 매우 좁은 시간창에서만 발생합니다. 300초간의 지속적인 rollout churn으로도 두 모드 어느 쪽에서도 이 사례를 포착하지 못했지만, 서버 측 idempotency key가 없는 비멱등 경로라면 mesh 레벨 retry는 여전히 기본적으로 안전하지 않다고 취급해야 합니다 — 이 테스트는 race가 *흔하다*는 확신을 낮췄을 뿐, *안전하다*는 것을 증명하지는 않습니다.
+
+### 원시 실패와 retry가 숨긴 실패를 분리해서 측정
+
+mTLS 데이터 플레인 선택과 HTTP retry 정책은 서로 다른 결정입니다. Sidecar Envoy와 waypoint Envoy는 L7에서 HTTP 요청을 재시도할 수 있지만, ambient의 ztunnel은 [L4 프록시](https://istio.io/latest/docs/ambient/architecture/data-plane/)이므로 HTTP 503의 의미를 해석하거나 HTTP 요청을 replay하지 않습니다. 따라서 클라이언트에 보인 최종 503 수만 비교하면 sidecar/waypoint가 더 안정적인지, retry가 원시 실패(raw failure)를 가렸는지 구분할 수 없습니다.
+
+공정한 rollout 비교에서는 POST/PATCH 같은 쓰기 route에 `attempts: 0`을 명시하고 다음 항목을 따로 기록합니다.
+
+- retry 전의 HTTP 503, TCP reset/EOF, connection refused
+- Envoy의 `upstream_rq_retry`, `upstream_rq_retry_success` 카운터
+- 최초 요청을 포함한 실제 upstream 전달 횟수
+- retry가 끝난 뒤 클라이언트에 최종적으로 보인 성공/실패
+- 서버에서 같은 idempotency key나 command ID가 두 번 처리됐는지 여부
+
+| 데이터 플레인 | mTLS/암호화 의미 | L7 retry 위치 | 권장 사용 |
+|---|---|---|---|
+| Istio sidecar | 워크로드별 SPIFFE 인증서 기반 mTLS | 각 Pod의 Envoy | 비멱등 핵심 경로의 보수적인 기준선 |
+| Istio ambient L4 | ztunnel 간 HBONE 워크로드 mTLS | 없음 | Istio mTLS와 L4 정책만 필요할 때 첫 후보 |
+| Istio ambient L7 | HBONE + waypoint Envoy | 공유 waypoint | HTTP 라우팅·L7 정책이 필요한 서비스에만 추가 |
+| Cilium | identity 상호 인증과 WireGuard/IPsec 같은 전송 암호화를 별도 선택 | L3/L4 암호화 계층에는 없음 | 기존 Cilium 데이터 플레인에서 identity 정책과 네트워크 암호화가 목적일 때 |
+
+> **운영 기준**: mTLS만 필요하면 ambient L4부터 검증하고, L7 정책이나 east-west HTTP 라우팅이 필요한 서비스에만 waypoint를 추가합니다. retry를 끈 조건에서 ambient rollout 오류가 워크로드의 error budget을 넘는 비멱등 핵심 경로는 sidecar를 기준선으로 유지합니다.
 
 ### 테스트 격리에 관한 노트
 
@@ -927,6 +948,8 @@ kubectl exec -n "$NS" "$CLIENT" -c order-client -- python3 -c \
 
 - [Ambient Mode](../advanced/01-ambient-mode.md) — ztunnel/waypoint 아키텍처, 사이드카 대비 리소스 비교
 - [mTLS](../security/01-mtls.md) — STRICT/PERMISSIVE 모드, 인증서 관리, NetworkPolicy 충돌
+- [Istio VirtualService Retry](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry) — `attempts: 0`과 retry 조건
+- [Envoy Retry Statistics](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter) — retry 동작과 관측 지표
 - [Troubleshooting: 파드 종료 시 연결 에러](../troubleshooting/common-errors.md#파드-종료-시-연결-에러)
 - [Sidecar Injection](../advanced/07-sidecar-injection.md)
 - [Service Mesh 솔루션 비교](01-service-mesh-comparison.md)

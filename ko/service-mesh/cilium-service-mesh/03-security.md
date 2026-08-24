@@ -1,83 +1,80 @@
 # Cilium Service Mesh 보안
 
 > **지원 버전**: Cilium 1.16+, Kubernetes 1.28+
-> **마지막 업데이트**: 2026년 7월 13일
+> **마지막 업데이트**: 2026년 8월 21일
 
 ## 개요
 
-Cilium Service Mesh는 eBPF와 SPIFFE를 기반으로 한 강력한 보안 기능을 제공합니다. 투명한 mTLS, ID 기반 네트워크 정책, WireGuard 암호화 등을 통해 제로 트러스트 네트워킹을 구현할 수 있습니다. 이 장에서는 Cilium Service Mesh의 보안 아키텍처와 설정 방법을 자세히 설명합니다.
+Cilium 보안에서는 다음 세 계층을 분리해야 합니다.
+
+1. **Identity 기반 인가**: Cilium Identity와 eBPF 정책이 어떤 워크로드의 통신을 허용할지 결정합니다.
+2. **상호 인증**: SPIFFE/SPIRE를 사용하는 Cilium mutual authentication은 애플리케이션 데이터 연결과 분리된 **out-of-band** handshake로 상대 identity를 확인합니다.
+3. **데이터 암호화**: 기존 방식에서는 WireGuard/IPsec을 별도로 켜야 payload가 암호화됩니다. 지원되는 환경에서는 ztunnel 기반 native mTLS preview가 워크로드 트래픽을 TLS로 암호화합니다.
+
+이 세 기능을 조합할 수 있지만 자동으로 Istio `PeerAuthentication`의 `STRICT` workload mTLS와 같은 의미가 되지는 않습니다. 보안 요구사항을 identity 인가, 상대 인증, 전송 중 암호화로 나눠 각각 검증해야 합니다.
 
 ## 보안 아키텍처
 
 ```mermaid
-graph TB
-    subgraph "Security Layers"
-        subgraph "Transport Security"
-            mTLS[Mutual TLS]
-            WG[WireGuard Encryption]
-            IPsec[IPsec]
-        end
+flowchart LR
+    Workload[워크로드 트래픽]
+    Identity[Cilium Identity]
+    Policy[eBPF L3/L4·L7 정책]
+    SPIRE[SPIFFE/SPIRE]
+    Auth[Out-of-band 상호 인증]
+    Encrypt{Payload 암호화 선택}
+    WG[WireGuard 또는 IPsec]
+    Native[native ztunnel mTLS preview]
 
-        subgraph "Identity Security"
-            SPIFFE[SPIFFE/SPIRE]
-            CiliumID[Cilium Identity]
-            SA[Service Account]
-        end
-
-        subgraph "Policy Security"
-            L3L4[L3/L4 Network Policy]
-            L7[L7 Network Policy]
-            Auth[Authorization Policy]
-        end
-    end
-
-    Pod[Pod] --> CiliumID
-    CiliumID --> SPIFFE
-    SPIFFE --> mTLS
-
-    Pod --> L3L4
-    L3L4 --> L7
-    L7 --> Auth
+    Workload --> Identity --> Policy
+    Identity --> SPIRE --> Auth --> Policy
+    Policy --> Encrypt
+    Encrypt --> WG
+    Encrypt --> Native
 ```
 
-## 투명한 mTLS
+## 상호 인증과 데이터 암호화
 
-### 사이드카 없는 mTLS
+### 기존 Cilium mutual authentication
 
-Cilium Service Mesh는 사이드카 프록시 없이 투명한 mTLS를 제공합니다:
+Cilium mutual authentication은 연결 허용 전에 두 endpoint의 identity를 검증하지만, 기존 구현의 인증 handshake는 애플리케이션 데이터 경로와 분리되어 있습니다. 즉 `authentication.mode: required`만으로 기존 데이터 연결의 payload가 TLS 암호화된다고 가정하면 안 됩니다. 데이터 기밀성이 필요하면 [WireGuard 또는 IPsec](https://docs.cilium.io/en/stable/security/network/encryption/)을 함께 구성합니다.
 
 ```mermaid
 sequenceDiagram
     participant PodA as Pod A
-    participant eBPFA as eBPF (Node A)
+    participant CiliumA as Cilium Agent A
     participant SPIRE as SPIRE Agent
-    participant eBPFB as eBPF (Node B)
+    participant CiliumB as Cilium Agent B
     participant PodB as Pod B
 
-    PodA->>eBPFA: Plain TCP
-    eBPFA->>SPIRE: Get SVID
-    SPIRE->>eBPFA: X.509 Certificate
-    Note over eBPFA: TLS Handshake
-    eBPFA->>eBPFB: Encrypted Traffic
-    Note over eBPFB: TLS Verification
-    eBPFB->>PodB: Plain TCP
-
-    Note over PodA,PodB: 애플리케이션 코드 변경 불필요
+    PodA->>CiliumA: 연결 요청
+    CiliumA->>SPIRE: SVID 기반 인증 요청
+    SPIRE-->>CiliumA: identity 증명
+    CiliumA->>CiliumB: out-of-band 인증 handshake
+    CiliumB-->>CiliumA: 인증 결과
+    CiliumA->>PodB: 정책 허용 후 데이터 연결
+    Note over PodA,PodB: Payload 암호화는 WireGuard/IPsec 또는 native mTLS를 별도로 선택
 ```
 
 ### ztunnel 기반 네이티브 mTLS (2026년 업데이트)
 
-2026년 3월, Cilium은 위에서 설명한 순수 eBPF 핸드셰이크 방식에서 한 단계 더 나아가 Istio Ambient의 ztunnel 모델에서 영감을 받은 새로운 mTLS 아키텍처를 도입했습니다. 이제 세 가지 컴포넌트가 함께 동작합니다:
+2026년 3월 공개된 Cilium native mTLS는 ztunnel 모델을 사용해 상호 인증과 실제 payload 암호화를 하나의 workload mTLS 경로로 제공합니다. 기존 out-of-band mutual authentication 및 WireGuard/IPsec 조합과는 다른 데이터 플레인입니다. 다음 세 컴포넌트가 함께 동작합니다:
 
 - **SPIRE** — 워크로드 신원과 X.509 인증서를 발급 (아래 SPIRE 기반 설정과 동일한 역할)
 - **Cilium** — 파드의 아웃바운드 트래픽을 15001번 포트의 ztunnel로 투명하게 리다이렉트하는 iptables 규칙을 설치
 - **ztunnel** — 파드별 사이드카가 아닌 **노드별 프록시**로, 실제 mTLS 핸드셰이크를 수행하고 파드 간 트래픽을 암호화
 
-"사이드카 없음, 애플리케이션 코드 변경 없음"이라는 기존 보장은 그대로 유지되지만, TLS 핸드셰이크 자체는 순수 eBPF가 아니라 노드별로 전용 프로세스에서 수행됩니다 — Istio Ambient의 ztunnel에서 직접 가져온 설계입니다. 2026년 3월 기준 Azure Kubernetes Service에서 퍼블릭 프리뷰("Cilium mTLS encryption" for AKS)로 제공되고 있습니다. 상호 인증은 여전히 Cilium이 관리하는 클러스터 내부에서만 동작하며 외부 mTLS 솔루션과는 호환되지 않습니다.
+"사이드카 없음, 애플리케이션 코드 변경 없음"이라는 특성은 유지되지만 TLS handshake는 노드별 전용 프로세스에서 수행됩니다. 이 기능은 preview 상태와 플랫폼별 지원 범위를 확인한 뒤 도입해야 하며, 운영 성숙도가 높은 Istio `STRICT` mTLS의 자동 대체로 취급해서는 안 됩니다.
 
 전체 아키텍처는 [Cilium의 네이티브 mTLS 블로그 포스트](https://cilium.io/blog/2026/03/23/native-mtls-cilium/)를 참고하세요.
 
-### SPIRE 기반 mTLS 설정
+### mTLS엔 Cilium과 Istio 중 언제 어느 쪽을 고를까
+
+- **Cilium을 고르는 경우**: 이미 Cilium이 데이터플레인으로 돌고 있고, 효율적인 L3/L4 identity 정책과 네트워크 암호화가 목적일 때 — 별도 사이드카나 서비스별 프록시를 운영할 필요가 없고, 필요한 접근 규칙은 CiliumNetworkPolicy/CiliumClusterwideNetworkPolicy로 이미 표현 가능합니다.
+- **Istio를 고르는 경우**: `PeerAuthentication`의 `STRICT` 시맨틱을 갖춘 성숙한 workload 인증서 mTLS나, Istio 고유의 L7 정책·라우팅([sidecar vs ambient 비교](../istio/comparison/03-sidecar-vs-ambient.md)에서 다루는 `AuthorizationPolicy`, retry, traffic-shifting 규칙류)이 필요할 때 — Cilium의 기존 mutual authentication은 out-of-band라 이런 정책 표면을 갖지 않습니다.
+- 암호화 계층만 보고 결정하지 마세요: Cilium의 WireGuard/IPsec과 네이티브 ztunnel mTLS preview 둘 다 payload를 암호화하지만, 어느 쪽도 Istio `PeerAuthentication`의 `STRICT`가 한 스위치로 제공하는 "워크로드 신원 발급 + 정책 강제 + payload 암호화" 조합을 그대로 재현하지는 않습니다.
+
+### SPIRE 기반 mutual authentication 설정
 
 ```yaml
 # values.yaml - SPIRE 통합 설정
@@ -122,10 +119,10 @@ authentication:
               disableContainerSelectors: false
 ```
 
-### mTLS 정책 적용
+### 상호 인증 정책 적용
 
 ```yaml
-# 전체 클러스터에 mTLS 활성화
+# 전체 클러스터에서 mutual authentication 요구
 apiVersion: cilium.io/v2
 kind: CiliumClusterwideNetworkPolicy
 metadata:
@@ -136,10 +133,10 @@ spec:
   - mode: required
 ```
 
-### 네임스페이스별 mTLS 설정
+### 네임스페이스별 상호 인증 설정
 
 ```yaml
-# 특정 네임스페이스에만 mTLS 적용
+# 특정 네임스페이스에만 mutual authentication 적용
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -159,10 +156,10 @@ spec:
     - mode: required
 ```
 
-### 서비스별 mTLS 설정
+### 서비스별 상호 인증 설정
 
 ```yaml
-# 특정 서비스 간 mTLS 강제
+# 특정 서비스 간 mutual authentication 강제
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -350,6 +347,8 @@ spec:
 
 ## 상호 인증 (Mutual Authentication)
 
+> 이 절은 `authentication.mode` 정책 설정 예시입니다. mutual authentication이 다루는 범위와 다루지 않는 범위(out-of-band handshake이며 payload 암호화와 별개)는 위의 [상호 인증과 데이터 암호화](#상호-인증과-데이터-암호화)를 참고하세요.
+
 ### 인증 모드
 
 ```yaml
@@ -434,6 +433,8 @@ spec:
 ```
 
 ## 암호화
+
+> 이 절은 위의 [상호 인증과 데이터 암호화](#상호-인증과-데이터-암호화)에서 개념으로 소개한 payload 암호화 메커니즘(WireGuard/IPsec)의 실제 설정입니다 — 암호화는 mutual authentication의 부산물이 아니라 별도로 선택하는 항목입니다.
 
 ### WireGuard 투명 암호화
 
@@ -938,5 +939,7 @@ hubble:
 - [Cilium Network Policy Documentation](https://docs.cilium.io/en/stable/security/policy/)
 - [Cilium Mutual Authentication](https://docs.cilium.io/en/stable/network/servicemesh/mutual-authentication/)
 - [Cilium Encryption Documentation](https://docs.cilium.io/en/stable/security/network/encryption/)
+- [Cilium Native mTLS](https://cilium.io/blog/2026/03/23/native-mtls-cilium/)
+- [Istio PeerAuthentication](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
 - [SPIFFE/SPIRE Documentation](https://spiffe.io/docs/latest/)
 - [Zero Trust Architecture - NIST](https://www.nist.gov/publications/zero-trust-architecture)
