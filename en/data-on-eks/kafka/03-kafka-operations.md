@@ -261,7 +261,7 @@ From the consumer side, a rolling restart can trigger a consumer group rebalance
 
 ---
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

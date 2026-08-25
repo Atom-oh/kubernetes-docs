@@ -119,7 +119,7 @@ After Part 2's install, expect to see four separate Deployments (`airflow-api-se
 
 This document covered Airflow 3's four-service architecture — api-server, scheduler, dag-processor, and triggerer — why DAG parsing was pulled out of the scheduler and made its own mandatory service, and why the 2.x hybrid executors were replaced by per-task/per-DAG executor assignment. Part 2 deploys this architecture on EKS with the official Helm chart, sets up the metadata database, and does a deeper comparison of `KubernetesExecutor` versus `CeleryExecutor` to help you pick one for your workload.
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

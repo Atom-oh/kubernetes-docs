@@ -1,6 +1,6 @@
 # 네트워크 구성
 
-< [이전: 사전 요구 사항](01-prerequisites.md) | [목차](./) | [다음: 에어갭 환경 구성](03-airgap-setup.md) >
+< [이전: 사전 요구 사항](01-prerequisites.md) | [목차](./README.md) | [다음: 에어갭 환경 구성](03-airgap-setup.md) >
 
 > **지원 버전**: EKS 1.31+, nodeadm 0.1+ **마지막 업데이트**: 2026년 2월 23일
 
@@ -1325,4 +1325,4 @@ affinity:
 
 ***
 
-< [이전: 사전 요구 사항](01-prerequisites.md) | [목차](./) | [다음: 에어갭 환경 구성](03-airgap-setup.md) >
+< [이전: 사전 요구 사항](01-prerequisites.md) | [목차](./README.md) | [다음: 에어갭 환경 구성](03-airgap-setup.md) >

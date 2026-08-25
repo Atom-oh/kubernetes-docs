@@ -245,7 +245,7 @@ kubectl exec -n kafka my-cluster-broker-0 -c kafka -- \
 
 ---
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

@@ -1216,4 +1216,4 @@ spec:
 * [RFC 4271 - BGP-4](https://tools.ietf.org/html/rfc4271)
 * [RFC 4456 - BGP Route Reflection](https://tools.ietf.org/html/rfc4456)
 
-[이전: Part 3 - IPAM 및 IP Pool](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/networking/calico/03-ipam-ip-pools.md) | [다음: Part 5 - Network Policy 심화](05-network-policy.md) | [메인 페이지로 돌아가기](./)
+[이전: Part 3 - IPAM 및 IP Pool](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/networking/calico/03-ipam-ip-pools.md) | [다음: Part 5 - Network Policy 심화](05-network-policy.md) | [메인 페이지로 돌아가기](./README.md)

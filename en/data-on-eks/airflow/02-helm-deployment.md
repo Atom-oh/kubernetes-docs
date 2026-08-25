@@ -201,7 +201,7 @@ kubectl get pods -n airflow -l component=redis
 
 This document covered the two Airflow Helm charts and why only `apache/airflow` is official, installed a working Airflow 3 deployment, and worked through the `KubernetesExecutor` vs. `CeleryExecutor` decision in depth, including KEDA-based autoscaling for Celery workers. The next chapter in this section moves on to DAG authoring patterns on Kubernetes — the `KubernetesPodOperator`, task-level executor overrides, and structuring DAGs for the dag-processor introduced in Part 1.
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

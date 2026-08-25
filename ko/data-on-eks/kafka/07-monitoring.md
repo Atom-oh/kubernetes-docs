@@ -229,7 +229,7 @@ Strimzi는 공식 리포지토리의 [`examples/metrics/grafana-dashboards`](htt
 
 메트릭 수집, 알림, 오토스케일링까지 구성했다면 이제 이를 실제 운영 기준(SLO, 용량 계획, 장애 대응 절차)에 반영해야 합니다. 이는 [Part 8: 모범 사례](./08-best-practices.md)에서 다룹니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

@@ -207,7 +207,7 @@ Satisfying this checklist is a reasonable bar for saying a Flink deployment is r
 
 ---
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

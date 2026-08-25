@@ -212,7 +212,7 @@ kubectl logs -n flink deploy/order-events-processor
 
 This part covered how Flink keeps state correct and recoverable — state backends, checkpoints versus savepoints, exactly-once delivery to Kafka, and the streaming patterns that connect MSK to Iceberg on S3. The next part in this series moves from job-level concerns to cluster-level operations: monitoring, scaling, and running Flink on EKS in production.
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

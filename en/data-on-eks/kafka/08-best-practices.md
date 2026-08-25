@@ -245,7 +245,7 @@ Satisfying this checklist is a reasonable bar for saying the cluster is ready to
 
 ---
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

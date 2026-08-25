@@ -120,7 +120,7 @@ Apache Flink의 2.x 라인은 2026년 중반 기준 현재 안정 버전이며, 
 
 이번 문서에서는 Kubernetes에서의 Flink 핵심 아키텍처 — JobManager/TaskManager 모델, 세 가지 배포 모드와 Application Mode가 프로덕션 기본값인 이유, 네이티브 Kubernetes 배포와 레거시 Standalone-on-Kubernetes 방식의 차이 — 를 살펴봤습니다. Part 2에서는 네이티브 Kubernetes 배포 위에 구축되어 `FlinkDeployment`와 `FlinkSessionJob` 커스텀 리소스로 Flink 클러스터를 선언적으로 관리하는 **Flink Kubernetes Operator**의 설치와 운영을 다룹니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

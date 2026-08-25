@@ -2,7 +2,7 @@
 
 > **지원 버전**: EKS 1.29+, Terraform 1.10+, AWS Provider 5.x **마지막 업데이트**: 2026년 2월 19일
 
-< [이전: 목차](./) | [목차](./) | [다음: NLB 가중치 라우팅](02-infrastructure-advanced.md) >
+< [이전: 목차](./README.md) | [목차](./README.md) | [다음: NLB 가중치 라우팅](02-infrastructure-advanced.md) >
 
 ***
 

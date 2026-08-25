@@ -992,7 +992,7 @@ sequenceDiagram
 
 ***
 
-[← 이전: 소개 및 기본 개념](01-introduction.md) | [메인 페이지](./) | [다음: 네트워킹 모드 →](03-networking-modes.md)
+[← 이전: 소개 및 기본 개념](01-introduction.md) | [메인 페이지](./README.md) | [다음: 네트워킹 모드 →](03-networking-modes.md)
 
 ## 퀴즈
 

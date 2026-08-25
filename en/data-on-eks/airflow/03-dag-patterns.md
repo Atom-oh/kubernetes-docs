@@ -175,7 +175,7 @@ Airflow 3's asset/event-driven scheduling is a good fit for chaining this kind o
 
 This document covered how `KubernetesPodOperator` launches Pods independently of the `KubernetesExecutor`/`CeleryExecutor` choice from Part 2, the pod spec precedence order that governs `pod_template_file`/`full_pod_spec`/`pod_template_dict`, using `affinity`/`tolerations` and per-task IRSA to give KPO tasks dedicated compute and scoped AWS permissions, and Airflow 3's DAG bundle model — particularly `GitDagBundle`'s commit-level versioning as the modern replacement for a bare `git-sync` sidecar.
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

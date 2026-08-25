@@ -211,7 +211,7 @@ spec:
 
 Kafka Connect와 MirrorMaker 2로 데이터 이동과 재해복구 파이프라인을 구성했다면, 다음으로는 이 워크로드를 완전 관리형 서비스인 Amazon MSK와 어떻게 통합하거나 비교할지 살펴볼 차례입니다. 이는 [Part 6: MSK 통합](./06-msk-integration.md)에서 다룹니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

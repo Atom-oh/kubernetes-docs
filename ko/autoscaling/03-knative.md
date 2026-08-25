@@ -2176,7 +2176,7 @@ spec:
 * [KEDA (Kubernetes Event-driven Autoscaling)](01-keda.md) - 이벤트 기반 스케일링 도구
 * [Karpenter](02-karpenter.md) - 노드 레벨 오토스케일링
 * [EKS 비용 최적화](../eks/07-eks-cost-optimization.md) - EKS 환경에서의 비용 최적화 전략
-* [Istio Traffic Management](../service-mesh/istio/traffic-management/) - 서비스 메시 기반 트래픽 관리
+* [Istio Traffic Management](../service-mesh/istio/traffic-management/README.md) - 서비스 메시 기반 트래픽 관리
 * [Prometheus](../observability/metrics/01-prometheus.md) - Knative 메트릭 수집 및 모니터링
 * [cert-manager](../security/10-cert-manager.md) - TLS 인증서 자동 관리
 

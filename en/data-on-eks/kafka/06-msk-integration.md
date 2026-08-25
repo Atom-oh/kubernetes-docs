@@ -165,7 +165,7 @@ In practice the answer is often "both" — starting a new service on MSK Serverl
 
 Whether you run MSK or Strimzi, you need continuous visibility into broker metrics and consumer lag to know the cluster is healthy. That's the subject of [Part 7: Monitoring](./07-monitoring.md).
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

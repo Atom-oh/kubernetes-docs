@@ -972,9 +972,9 @@ spec:
 
 AWS 통합을 완료했다면 다음 문서를 참고하세요:
 
-1. [**Traffic Management**](traffic-management/): 고급 트래픽 관리 기능
-2. [**Security**](security/): mTLS 및 인증/권한 부여
-3. [**Observability**](/broken/pages/hbB0YVk8JbUbBlZzs4eX): 메트릭, 로그, 트레이스 수집
+1. [**Traffic Management**](traffic-management/README.md): 고급 트래픽 관리 기능
+2. [**Security**](security/README.md): mTLS 및 인증/권한 부여
+3. [**Observability**](observability/README.md): 메트릭, 로그, 트레이스 수집
 
 ## 참고 자료
 

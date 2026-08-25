@@ -4,20 +4,20 @@ A practical guide for utilizing Istio Service Mesh on Amazon EKS.
 
 ## Table of Contents
 
-1. [Do You Really Need a Service Mesh?](./#do-you-really-need-a-service-mesh)
+1. [Do You Really Need a Service Mesh?](#do-you-really-need-a-service-mesh)
 2. [Installation and Initial Setup](01-installation.md)
 3. [Basic Concepts](02-basic-concepts.md)
 4. [Architecture](03-architecture.md)
 5. [AWS Integration](04-aws-integration.md)
 6. [Glossary](glossary.md)
-7. [Traffic Management](traffic-management/)
-8. [Security](security/)
-9. [Observability](observability/)
-10. [Resilience](resilience/)
-11. [Advanced](advanced/)
+7. [Traffic Management](traffic-management/README.md)
+8. [Security](security/README.md)
+9. [Observability](observability/README.md)
+10. [Resilience](resilience/README.md)
+11. [Advanced](advanced/README.md)
 12. [Troubleshooting](troubleshooting/common-errors.md)
 13. [Best Practices](best-practices.md)
-14. [Alternative Comparison](comparison/)
+14. [Alternative Comparison](comparison/README.md)
 
 ## What is Istio?
 
@@ -335,7 +335,7 @@ flowchart TB
 * Avoiding Service Mesh operational burden
 * Only simple mTLS and observability needed
 
-**Reference**: [Cilium Documentation](../../networking/cilium/)
+**Reference**: [Cilium Documentation](../../networking/cilium/README.md)
 
 ### Decision Checklist
 
@@ -536,9 +536,9 @@ If you're new to Istio, read the documents in the following order:
 
 1. [**Installation and Initial Setup**](01-installation.md): Install Istio on EKS cluster
 2. [**Basic Concepts**](02-basic-concepts.md): Understand Istio core concepts
-3. [**Traffic Management**](traffic-management/): Learn Gateway, VirtualService, DestinationRule
-4. [**Security**](security/): Configure mTLS, authentication, authorization
-5. [**Observability**](observability/): Collect metrics, logs, traces
+3. [**Traffic Management**](traffic-management/README.md): Learn Gateway, VirtualService, DestinationRule
+4. [**Security**](security/README.md): Configure mTLS, authentication, authorization
+5. [**Observability**](observability/README.md): Collect metrics, logs, traces
 6. [**Best Practices**](best-practices.md): Recommendations for production environments
 
 ### Hands-on Examples

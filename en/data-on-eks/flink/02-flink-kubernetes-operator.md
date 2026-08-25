@@ -205,7 +205,7 @@ flowchart TD
 
 With the operator installed and the upgrade/autoscaling mechanics in place, the next step is deploying real stream processing jobs — configuring checkpointing and state backends, wiring up Kafka sources/sinks, and tuning resource sizing for production workloads.
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

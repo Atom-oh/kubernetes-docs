@@ -573,8 +573,8 @@ istioctl bug-report
 Istio 설치가 완료되었습니다! 이제 다음 문서를 참고하여 Istio를 활용해보세요:
 
 1. [**기본 개념**](02-basic-concepts.md): Istio의 핵심 개념과 아키텍처 이해
-2. [**Traffic Management**](traffic-management/): Gateway, VirtualService, DestinationRule 학습
-3. [**Security**](security/): mTLS, 인증, 권한 부여 설정
+2. [**Traffic Management**](traffic-management/README.md): Gateway, VirtualService, DestinationRule 학습
+3. [**Security**](security/README.md): mTLS, 인증, 권한 부여 설정
 
 ## 참고 자료
 

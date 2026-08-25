@@ -2,7 +2,7 @@
 
 > **Supported Versions**: EKS 1.28+, Metrics Server 0.7+, KEDA 2.13+, VPA 1.0+ **Last Updated**: February 19, 2026
 
-< [Previous: GitOps Automation](05-gitops-automation.md) | [Table of Contents](./) | [Next: Operational Alert Configuration](07-observability-alerts.md) >
+< [Previous: GitOps Automation](05-gitops-automation.md) | [Table of Contents](./README.md) | [Next: Operational Alert Configuration](07-observability-alerts.md) >
 
 ***
 
@@ -2589,4 +2589,4 @@ spec:
 
 ***
 
-< [Previous: GitOps Automation](05-gitops-automation.md) | [Table of Contents](./) | [Next: Operational Alert Configuration](07-observability-alerts.md) >
+< [Previous: GitOps Automation](05-gitops-automation.md) | [Table of Contents](./README.md) | [Next: Operational Alert Configuration](07-observability-alerts.md) >

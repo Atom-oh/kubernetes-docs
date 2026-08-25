@@ -145,9 +145,9 @@ Istio의 모든 기능에 대한 상세 가이드입니다.
 
 | 문서 | 설명 |
 |------|------|
-| [설치 가이드](istio/installation.md) | Istio 설치 및 초기 설정 |
-| [핵심 개념](istio/core-concepts.md) | Istio의 기본 개념과 용어 |
-| [구성 요소](istio/components.md) | Istio 아키텍처와 구성 요소 |
+| [설치 가이드](istio/01-installation.md) | Istio 설치 및 초기 설정 |
+| [핵심 개념](istio/02-basic-concepts.md) | Istio의 기본 개념과 용어 |
+| [구성 요소](istio/03-architecture.md) | Istio 아키텍처와 구성 요소 |
 
 ### 🚦 트래픽 관리
 
@@ -169,18 +169,18 @@ Istio의 모든 기능에 대한 상세 가이드입니다.
 | 문서 | 설명 |
 |------|------|
 | [mTLS](istio/security/01-mtls.md) | 서비스 간 mTLS 구성 |
-| [Authorization Policy](istio/security/02-authorization-policy.md) | 액세스 제어 정책 |
-| [Request Authentication](istio/security/03-request-authentication.md) | JWT 기반 인증 |
-| [Peer Authentication](istio/security/04-peer-authentication.md) | 서비스 간 인증 |
+| [Authorization Policy](istio/security/03-authorization.md) | 액세스 제어 정책 |
+| [Request Authentication](istio/security/02-authentication.md) | JWT 기반 인증 |
+| [Peer Authentication](istio/security/02-authentication.md) | 서비스 간 인증 |
 
 ### 📊 관찰성
 
 | 문서 | 설명 |
 |------|------|
 | [메트릭](istio/observability/01-metrics.md) | Prometheus 메트릭 수집 |
-| [분산 추적](istio/observability/02-distributed-tracing.md) | Jaeger/Zipkin 통합 |
+| [분산 추적](istio/observability/02-tracing.md) | Jaeger/Zipkin 통합 |
 | [로깅](istio/observability/03-logging.md) | 액세스 로그 및 구조화 로깅 |
-| [시각화](istio/observability/04-visualization.md) | Kiali, Grafana 대시보드 |
+| [시각화](istio/observability/04-dashboards.md) | Kiali, Grafana 대시보드 |
 
 ### 💪 복원력
 
@@ -318,4 +318,4 @@ Istio에 대한 이해도를 테스트하려면 [Istio 퀴즈](../quizzes/servic
 
 ---
 
-**다음 단계**: [설치 가이드](istio/installation.md)를 참고하여 Istio를 설치하고, [핵심 개념](istio/core-concepts.md)에서 기본 개념을 학습하세요.
+**다음 단계**: [설치 가이드](istio/01-installation.md)를 참고하여 Istio를 설치하고, [핵심 개념](istio/02-basic-concepts.md)에서 기본 개념을 학습하세요.

@@ -2,7 +2,7 @@
 
 > **Supported Versions**: Terraform >= 1.5, AWS Provider >= 5.40, EKS >= 1.29 **Last Updated**: February 19, 2026
 
-< [Previous: Terraform 3-Layer Infrastructure](01-infrastructure-setup.md) | [Table of Contents](./) | [Next: CI Pipelines](03-ci-pipelines.md) >
+< [Previous: Terraform 3-Layer Infrastructure](01-infrastructure-setup.md) | [Table of Contents](./README.md) | [Next: CI Pipelines](03-ci-pipelines.md) >
 
 ***
 
@@ -1393,4 +1393,4 @@ The Blue/Green cluster architecture with NLB weighted routing provides:
 
 ***
 
-< [Previous: Terraform 3-Layer Infrastructure](01-infrastructure-setup.md) | [Table of Contents](./) | [Next: CI Pipelines](03-ci-pipelines.md) >
+< [Previous: Terraform 3-Layer Infrastructure](01-infrastructure-setup.md) | [Table of Contents](./README.md) | [Next: CI Pipelines](03-ci-pipelines.md) >

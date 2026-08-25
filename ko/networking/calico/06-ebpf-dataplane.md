@@ -898,4 +898,4 @@ spec:
 * [Linux Kernel BPF 문서](https://www.kernel.org/doc/html/latest/bpf/)
 * [Calico eBPF 성능 벤치마크](https://www.tigera.io/blog/calico-ebpf-dataplane/)
 
-[이전: Part 5 - Network Policy 심화](05-network-policy.md) | [다음: Part 7 - 운영 및 트러블슈팅](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/networking/calico/07-operations.md) | [메인 페이지로 돌아가기](./)
+[이전: Part 5 - Network Policy 심화](05-network-policy.md) | [다음: Part 7 - 운영 및 트러블슈팅](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/networking/calico/07-operations.md) | [메인 페이지로 돌아가기](./README.md)

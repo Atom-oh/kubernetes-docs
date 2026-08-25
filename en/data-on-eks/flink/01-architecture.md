@@ -120,7 +120,7 @@ Apache Flink's 2.x line is the current stable baseline as of mid-2026, with **Fl
 
 This document covered Flink's core architecture on Kubernetes — the JobManager/TaskManager model, the three deployment modes and why Application Mode is the production default, and the difference between native Kubernetes deployment and the legacy standalone-on-Kubernetes path. Part 2 covers installing and operating the **Flink Kubernetes Operator**, which builds on native Kubernetes deployment to manage Flink clusters declaratively via `FlinkDeployment` and `FlinkSessionJob` custom resources.
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

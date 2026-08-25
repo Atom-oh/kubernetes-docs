@@ -746,7 +746,7 @@ spec:
 
 ***
 
-[← 이전: 아키텍처 심층 분석](02-architecture.md) | [메인 페이지](./) | [다음: BGP 심층 분석 →](04-bgp-deep-dive.md)
+[← 이전: 아키텍처 심층 분석](02-architecture.md) | [메인 페이지](./README.md) | [다음: BGP 심층 분석 →](04-bgp-deep-dive.md)
 
 ## 퀴즈
 

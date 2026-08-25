@@ -259,7 +259,7 @@ kubectl delete sparkapplication word-count -n spark-operator
 
 Operator를 통해 작업을 제출하고 모니터링할 수 있게 되었다면, 다음으로 마주치는 질문은 보통 "직접 운영할지, AWS에 맡길지"입니다. 이 트레이드오프와 EMR on EKS의 virtual cluster 모델은 [Part 3: EMR on EKS](./03-emr-on-eks.md)에서 다룹니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

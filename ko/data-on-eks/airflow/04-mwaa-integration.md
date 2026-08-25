@@ -146,7 +146,7 @@ Kafka 시리즈의 MSK vs Strimzi와 마찬가지로, 실제로는 둘 다 쓰�
 
 이 문서에서는 MWAA의 완전관리형 컨트롤 플레인이 제공하는 것과 제공하지 않는 것 — scheduler/api-server/워커 자체에 대한 직접적인 Kubernetes 접근 불가, 업스트림 Airflow보다 몇 개월 지연되는 버전, Part 1~3의 git 네이티브 워크플로우 대신 S3 기반의 플러그인/의존성/DAG 배포 — 을 다뤘고, 여기에 더해 MWAA의 DAG가 여전히 자체 EKS 클러스터의 워크로드를 제어할 수 있게 해주는 `KubernetesPodOperator` + `in_cluster=False` + IAM identity mapping 패턴도 살펴봤습니다. MWAA를 선택하든, EKS 셀프 매니지드 Airflow를 선택하든, 혹은 둘을 섞어 쓰든, 위 의사결정 가이드는 이 Data on EKS 시리즈 전반에서 반복적으로 등장하는 "완전관리형 vs 셀프 매니지드" 트레이드오프 분석과 동일한 구조를 따릅니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

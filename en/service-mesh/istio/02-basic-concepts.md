@@ -1440,25 +1440,25 @@ You now understand Istio's basic concepts. Learn how to use them in practice thr
 
 ### Core Features
 
-1. [**Traffic Management**](traffic-management/)
+1. [**Traffic Management**](traffic-management/README.md)
    * Gateway and VirtualService usage
    * DestinationRule and subset definition
    * ServiceEntry and WorkloadEntry (VM registration)
    * Advanced routing patterns (Canary, A/B testing)
    * Traffic Mirroring and Shadowing
-2. [**Security**](security/)
+2. [**Security**](security/README.md)
    * mTLS configuration and PeerAuthentication
    * Authentication (RequestAuthentication, JWT)
    * Authorization (AuthorizationPolicy)
    * Security policy management
    * External authentication integration
-3. [**Observability**](/broken/pages/HT0uW6gT7EfVN0LF8wU5)
+3. [**Observability**](observability/README.md)
    * Metric collection (Prometheus)
    * Distributed tracing (Jaeger, Zipkin)
    * Logging configuration
    * Kiali service mesh visualization
    * Grafana dashboards
-4. [**Resilience**](resilience/)
+4. [**Resilience**](resilience/README.md)
    * Circuit Breaker pattern
    * Retry and Timeout settings
    * Rate Limiting
@@ -1467,7 +1467,7 @@ You now understand Istio's basic concepts. Learn how to use them in practice thr
 
 ### Advanced Topics
 
-5. [**Advanced Topics**](advanced/)
+5. [**Advanced Topics**](advanced/README.md)
    * Ambient Mode (sidecar-less mesh)
    * Multi-Cluster configuration
    * EnvoyFilter customization

@@ -2,7 +2,7 @@
 
 > **지원 버전**: Prometheus 2.50+, Alertmanager 0.27+, kube-prometheus-stack 50+ **마지막 업데이트**: 2026년 2월 23일
 
-< [이전: 스케일링 전략](06-scaling-strategies.md) | [목차](./) | [다음: 관측성 분석](08-observability-analysis.md) >
+< [이전: 스케일링 전략](06-scaling-strategies.md) | [목차](./README.md) | [다음: 관측성 분석](08-observability-analysis.md) >
 
 ***
 
@@ -1868,10 +1868,10 @@ route:
 
 ## 관련 문서
 
-* [모니터링 스택](../observability/) - Prometheus, VictoriaMetrics, Grafana 설정
-* [로깅 스택](../observability/logging/) - Loki, Tempo 설정
+* [모니터링 스택](../observability/README.md) - Prometheus, VictoriaMetrics, Grafana 설정
+* [로깅 스택](../observability/logging/README.md) - Loki, Tempo 설정
 * [EKS Auto Mode 노드 라이프사이클](../eks-auto-mode/07-node-lifecycle.md) - Karpenter 노드 관리
 
 ***
 
-< [이전: 스케일링 전략](06-scaling-strategies.md) | [목차](./) | [다음: 관측성 분석](08-observability-analysis.md) >
+< [이전: 스케일링 전략](06-scaling-strategies.md) | [목차](./README.md) | [다음: 관측성 분석](08-observability-analysis.md) >

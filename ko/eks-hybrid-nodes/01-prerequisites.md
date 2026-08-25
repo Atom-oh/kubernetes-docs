@@ -1,6 +1,6 @@
 # 사전 요구 사항
 
-< [목차](./) | [다음: 네트워크 구성](02-network-configuration.md) >
+< [목차](./README.md) | [다음: 네트워크 구성](02-network-configuration.md) >
 
 > **지원 버전**: EKS 1.31+, nodeadm 0.1+ **마지막 업데이트**: 2026년 2월 23일
 
@@ -628,4 +628,4 @@ kubectl get svc
 
 ***
 
-< [목차](./) | [다음: 네트워크 구성](02-network-configuration.md) >
+< [목차](./README.md) | [다음: 네트워크 구성](02-network-configuration.md) >

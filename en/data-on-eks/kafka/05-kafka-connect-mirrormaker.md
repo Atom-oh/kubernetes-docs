@@ -211,7 +211,7 @@ spec:
 
 With Kafka Connect and MirrorMaker 2 in place for data movement and disaster recovery, the next step is looking at how this workload integrates with — or compares to — the fully managed Amazon MSK service. That's covered in [Part 6: MSK Integration](./06-msk-integration.md).
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

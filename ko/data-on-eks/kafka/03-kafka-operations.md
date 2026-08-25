@@ -261,7 +261,7 @@ kubectl get pdb -n kafka -l strimzi.io/cluster=my-cluster
 
 ---
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

@@ -149,7 +149,7 @@ spec:
 
 이번 문서에서는 Spark를 Kubernetes 위에서 운영할 때의 기초 — 클러스터 모드의 `spark-submit`이 드라이버 Pod를 만들고 그 드라이버가 Kubernetes API에 직접 executor Pod 스케줄링을 요청하는 방식, YARN 스타일의 External Shuffle Service가 없는 상황에서 Dynamic Resource Allocation이 `shuffleTracking.enabled`를 필요로 하는 이유, 그리고 Pod가 종료되려 할 때 정상 종료 기능이 진행 중인 데이터를 어떻게 보호하는지 — 를 살펴봤습니다. Part 2에서는 **Spark Operator**를 이용해 EKS에서 Spark 애플리케이션을 선언적으로 배포하고 관리하는 방법을 다룹니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

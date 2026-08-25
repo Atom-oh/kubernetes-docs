@@ -119,7 +119,7 @@ Part 2에서 설치를 마치면 4개의 개별 Deployment(`airflow-api-server`,
 
 이번 문서에서는 Airflow 3의 4가지 서비스 구조(api-server, scheduler, dag-processor, triggerer), DAG 파싱이 스케줄러에서 분리되어 별도의 필수 서비스가 된 이유, 2.x의 하이브리드 Executor가 작업/DAG 단위 Executor 지정으로 대체된 이유를 살펴봤습니다. Part 2에서는 공식 Helm 차트를 이용해 이 아키텍처를 EKS에 배포하고, 메타데이터 데이터베이스를 설정하며, `KubernetesExecutor`와 `CeleryExecutor`를 더 깊이 비교해 워크로드에 맞는 선택을 돕습니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 
