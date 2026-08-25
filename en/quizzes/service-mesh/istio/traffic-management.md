@@ -2007,7 +2007,7 @@ spec:
 
 ## Learning Resources
 
-* [Traffic Management Documentation](../../../service-mesh/istio/traffic-management/)
+* [Traffic Management Documentation](../../../service-mesh/istio/traffic-management/README.md)
 * [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
 * [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
 * [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
