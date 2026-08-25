@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 import { summarySidebar } from './summary'
+import { vitepressBuildScope } from './site-scope.mjs'
 
 const GA_ID = 'G-GWVLEW5JLL'
 const ADSENSE_CLIENT = 'ca-pub-6267917556914416'
@@ -10,16 +11,18 @@ export default withMermaid(defineConfig({
   title: 'Kubernetes & Amazon EKS Training',
   base: '/kubernetes-docs/',
   srcDir: '.',
-  srcExclude: ['slide/**', 'CLAUDE.md', '**/SUMMARY.md'],
-  rewrites: {
-    'README.md': 'index.md',
-    'ko/README.md': 'ko/index.md',
-    'en/README.md': 'en/index.md',
-    'cn/README.md': 'cn/index.md',
-    'jp/README.md': 'jp/index.md',
-    'es/README.md': 'es/index.md'
+  srcExclude: vitepressBuildScope.srcExclude,
+  rewrites: vitepressBuildScope.rewrites,
+  ignoreDeadLinks: false,
+  markdown: {
+    languageAlias: {
+      promql: 'sql',
+      logql: 'sql',
+      traceql: 'sql',
+      rego: 'hcl',
+      river: 'hcl'
+    }
   },
-  ignoreDeadLinks: true,
   sitemap: {
     hostname: 'https://www.atomai.click/kubernetes-docs/'
   },
@@ -41,24 +44,6 @@ export default withMermaid(defineConfig({
       lang: 'en-US',
       link: '/en/',
       themeConfig: { sidebar: summarySidebar('en') }
-    },
-    cn: {
-      label: '中文',
-      lang: 'zh-CN',
-      link: '/cn/',
-      themeConfig: { sidebar: summarySidebar('cn') }
-    },
-    jp: {
-      label: '日本語',
-      lang: 'ja-JP',
-      link: '/jp/',
-      themeConfig: { sidebar: summarySidebar('jp') }
-    },
-    es: {
-      label: 'Español',
-      lang: 'es-ES',
-      link: '/es/',
-      themeConfig: { sidebar: summarySidebar('es') }
     }
   },
   themeConfig: {
