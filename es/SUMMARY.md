@@ -254,6 +254,20 @@
     * [Cuestionario: Pruebas de carga y escalado automático](quizzes/observability/labs/04-load-testing-scaling-quiz.md)
     * [Cuestionario: Alertas y AIOps](quizzes/observability/labs/05-alerting-aiops-quiz.md)
     * [Cuestionario: Análisis de trazabilidad distribuida](quizzes/observability/labs/06-distributed-tracing-quiz.md)
+* [IA/aprendizaje automático](quiz/ai-ml/README.md)
+  * [Cuestionario: Parte 1: Arquitectura de Ray](quizzes/ai-ml/ray/01-architecture-quiz.md)
+  * [Cuestionario: Parte 2: Operador KubeRay](quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
+  * [Cuestionario: Parte 3: Ray Train y Tune](quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
+  * [Cuestionario: Parte 4: Ray Serve](quizzes/ai-ml/ray/04-ray-serve-quiz.md)
+  * [Cuestionario: Parte 1: Arquitectura e instalación de Kubeflow](quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+  * [Cuestionario: Parte 2: Pipelines de Kubeflow](quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
+  * [Cuestionario: Parte 3: Cuadernos de Kubeflow](quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
+  * [Cuestionario: Parte 4: Katib](quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+  * [Cuestionario: Parte 5: Kubeflow Trainer](quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
+  * [Cuestionario: Parte 6: KServe](quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+  * [Cuestionario: Parte 1: Seguimiento de MLflow](quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+  * [Cuestionario: Parte 2: Registro de modelos de MLflow](quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+  * [Cuestionario: Parte 3: Implementación de MLflow en EKS](quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 
 ## Autoescalado
 
@@ -357,6 +371,22 @@
 * [Despliegue y optimización de vLLM](ai-ml/02-vllm-deployment.md)
 * [Plataforma de IA agéntica en EKS](ai-ml/03-agentic-ai-platform.md)
 * [Buenas prácticas de IA/ML](ai-ml/07-ai-ml-best-practices.md)
+* [Análisis profundo de Ray en EKS](ai-ml/ray/README.md)
+  * [Parte 1: Arquitectura de Ray](ai-ml/ray/01-architecture.md)
+  * [Parte 2: El operador KubeRay](ai-ml/ray/02-kuberay-operator.md)
+  * [Parte 3: Ray Train y Ray Tune](ai-ml/ray/03-ray-train-tune.md)
+  * [Parte 4: Ray Serve](ai-ml/ray/04-ray-serve.md)
+* [Análisis profundo de Kubeflow en EKS](ai-ml/kubeflow/README.md)
+  * [Parte 1: Arquitectura e instalación de Kubeflow en EKS](ai-ml/kubeflow/01-architecture-installation.md)
+  * [Parte 2: Pipelines de Kubeflow](ai-ml/kubeflow/02-pipelines.md)
+  * [Parte 3: Cuadernos de Kubeflow](ai-ml/kubeflow/03-notebooks.md)
+  * [Parte 4: Katib — Ajuste de hiperparámetros y AutoML](ai-ml/kubeflow/04-katib.md)
+  * [Parte 5: Kubeflow Trainer y entrenamiento distribuido](ai-ml/kubeflow/05-training-operator.md)
+  * [Parte 6: KServe — Servicio de modelos en Kubernetes](ai-ml/kubeflow/06-kserve.md)
+* [Análisis profundo de MLflow en EKS](ai-ml/mlflow/README.md)
+  * [Parte 1: Seguimiento de MLflow](ai-ml/mlflow/01-tracking.md)
+  * [Parte 2: Registro de modelos de MLflow](ai-ml/mlflow/02-model-registry.md)
+  * [Parte 3: Implementación de MLflow en EKS](ai-ml/mlflow/03-eks-deployment.md)
 
 ## Seguridad y política
 

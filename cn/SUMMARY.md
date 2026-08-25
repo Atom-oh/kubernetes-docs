@@ -246,6 +246,20 @@
     * [负载测试与自动扩缩容测验](quizzes/observability/labs/04-load-testing-scaling-quiz.md)
     * [告警与智能运维测验](quizzes/observability/labs/05-alerting-aiops-quiz.md)
     * [分布式追踪分析测验](quizzes/observability/labs/06-distributed-tracing-quiz.md)
+* [人工智能/机器学习](quiz/ai-ml/README.md)
+  * [第 1 部分：Ray 架构测验](quizzes/ai-ml/ray/01-architecture-quiz.md)
+  * [第 2 部分：KubeRay 运算符测验](quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
+  * [第 3 部分：Ray Train 和 Tune 测验](quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
+  * [第 4 部分：Ray Serve 测验](quizzes/ai-ml/ray/04-ray-serve-quiz.md)
+  * [第 1 部分：Kubeflow 架构与安装测验](quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+  * [第 2 部分：Kubeflow Pipelines 测验](quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
+  * [第 3 部分：Kubeflow Notebooks 测验](quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
+  * [第 4 部分：Katib 测验](quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+  * [第 5 部分：Kubeflow Trainer 测验](quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
+  * [第 6 部分：KServe 测验](quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+  * [第 1 部分：MLflow 跟踪测验](quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+  * [第 2 部分：MLflow 模型注册表测验](quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+  * [第 3 部分：在 EKS 上部署 MLflow 测验](quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 
 ## EKS 上的数据
 
@@ -346,6 +360,22 @@
 * [vLLM 部署与优化](ai-ml/02-vllm-deployment.md)
 * [EKS 上的智能体 AI 平台](ai-ml/03-agentic-ai-platform.md)
 * [AI/ML 最佳实践](ai-ml/07-ai-ml-best-practices.md)
+* [EKS 上的 Ray 深入解析](ai-ml/ray/README.md)
+  * [第 1 部分：Ray 架构](ai-ml/ray/01-architecture.md)
+  * [第 2 部分：KubeRay Operator](ai-ml/ray/02-kuberay-operator.md)
+  * [第 3 部分：Ray Train 和 Ray Tune](ai-ml/ray/03-ray-train-tune.md)
+  * [第 4 部分：Ray Serve](ai-ml/ray/04-ray-serve.md)
+* [EKS 上的 Kubeflow 深入解析](ai-ml/kubeflow/README.md)
+  * [第 1 部分：Kubeflow 架构及在 EKS 上的安装](ai-ml/kubeflow/01-architecture-installation.md)
+  * [第 2 部分：Kubeflow Pipelines](ai-ml/kubeflow/02-pipelines.md)
+  * [第 3 部分：Kubeflow Notebooks](ai-ml/kubeflow/03-notebooks.md)
+  * [第 4 部分：Katib — 超参数调优和自动化机器学习](ai-ml/kubeflow/04-katib.md)
+  * [第 5 部分：Kubeflow Trainer 和分布式训练](ai-ml/kubeflow/05-training-operator.md)
+  * [第 6 部分：KServe — 在 Kubernetes 上提供模型服务](ai-ml/kubeflow/06-kserve.md)
+* [EKS 上的 MLflow 深入解析](ai-ml/mlflow/README.md)
+  * [第 1 部分：MLflow 跟踪](ai-ml/mlflow/01-tracking.md)
+  * [第 2 部分：MLflow 模型注册表](ai-ml/mlflow/02-model-registry.md)
+  * [第 3 部分：在 EKS 上部署 MLflow](ai-ml/mlflow/03-eks-deployment.md)
 
 ## 新闻
 

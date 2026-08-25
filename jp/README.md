@@ -106,6 +106,25 @@
 5. [vLLM Deployment と Optimization](./ai-ml/02-vllm-deployment.md) | [クイズ](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 6. [EKS 上の Agentic AI Platform](./ai-ml/03-agentic-ai-platform.md) | [クイズ](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [AI/ML Best Practices](./ai-ml/07-ai-ml-best-practices.md) | [クイズ](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+8. **EKS上のRay詳細解説**
+   - [EKS上のRay入門](./ai-ml/ray/README.md)
+   - [第1部：Rayアーキテクチャ](./ai-ml/ray/01-architecture.md) | [クイズ](./quizzes/ai-ml/ray/01-architecture-quiz.md)
+   - [第2部：KubeRay Operator](./ai-ml/ray/02-kuberay-operator.md) | [クイズ](./quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
+   - [第3部：Ray TrainとRay Tune](./ai-ml/ray/03-ray-train-tune.md) | [クイズ](./quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
+   - [第4部：Ray Serve](./ai-ml/ray/04-ray-serve.md) | [クイズ](./quizzes/ai-ml/ray/04-ray-serve-quiz.md)
+9. **EKS上のKubeflow詳細解説**
+   - [EKS上のKubeflow入門](./ai-ml/kubeflow/README.md)
+   - [第1部：EKS上のKubeflowアーキテクチャとインストール](./ai-ml/kubeflow/01-architecture-installation.md) | [クイズ](./quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+   - [第2部：Kubeflow Pipelines](./ai-ml/kubeflow/02-pipelines.md) | [クイズ](./quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
+   - [第3部：Kubeflow Notebooks](./ai-ml/kubeflow/03-notebooks.md) | [クイズ](./quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
+   - [第4部：Katib — ハイパーパラメータチューニングとAutoML](./ai-ml/kubeflow/04-katib.md) | [クイズ](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+   - [第5部：Kubeflow Trainerと分散学習](./ai-ml/kubeflow/05-training-operator.md) | [クイズ](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
+   - [第6部：KServe — Kubernetes上でのモデル提供](./ai-ml/kubeflow/06-kserve.md) | [クイズ](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+10. **EKS上のMLflow詳細解説**
+    - [EKS上のMLflow入門](./ai-ml/mlflow/README.md)
+    - [第1部：MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [クイズ](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+    - [第2部：MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [クイズ](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+    - [第3部：EKS上でのMLflowのデプロイ](./ai-ml/mlflow/03-eks-deployment.md) | [クイズ](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 
 ### Data on EKS
 1. [Data on EKS 概要](./data-on-eks/README.md)
