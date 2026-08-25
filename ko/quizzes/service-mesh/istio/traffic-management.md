@@ -2022,7 +2022,7 @@ spec:
 
 ## 학습 자료
 
-* [트래픽 관리 문서](../../../service-mesh/istio/traffic-management/)
+* [트래픽 관리 문서](../../../service-mesh/istio/traffic-management/README.md)
 * [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
 * [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/01-gateway.md)
 * [트래픽 분할](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/istio/traffic-management/03-traffic-splitting.md)
