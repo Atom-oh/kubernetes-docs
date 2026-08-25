@@ -106,6 +106,25 @@
 5. [vLLM 部署和优化](./ai-ml/02-vllm-deployment.md) | [测验](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 6. [EKS 上的 Agentic AI 平台](./ai-ml/03-agentic-ai-platform.md) | [测验](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [AI/ML 最佳实践](./ai-ml/07-ai-ml-best-practices.md) | [测验](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+8. **EKS 上的 Ray 深入解析**
+   - [EKS 上的 Ray 简介](./ai-ml/ray/README.md)
+   - [第 1 部分：Ray 架构](./ai-ml/ray/01-architecture.md) | [测验](./quizzes/ai-ml/ray/01-architecture-quiz.md)
+   - [第 2 部分：KubeRay Operator](./ai-ml/ray/02-kuberay-operator.md) | [测验](./quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
+   - [第 3 部分：Ray Train 和 Ray Tune](./ai-ml/ray/03-ray-train-tune.md) | [测验](./quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
+   - [第 4 部分：Ray Serve](./ai-ml/ray/04-ray-serve.md) | [测验](./quizzes/ai-ml/ray/04-ray-serve-quiz.md)
+9. **EKS 上的 Kubeflow 深入解析**
+   - [EKS 上的 Kubeflow 简介](./ai-ml/kubeflow/README.md)
+   - [第 1 部分：Kubeflow 架构及在 EKS 上的安装](./ai-ml/kubeflow/01-architecture-installation.md) | [测验](./quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+   - [第 2 部分：Kubeflow Pipelines](./ai-ml/kubeflow/02-pipelines.md) | [测验](./quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
+   - [第 3 部分：Kubeflow Notebooks](./ai-ml/kubeflow/03-notebooks.md) | [测验](./quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
+   - [第 4 部分：Katib — 超参数调优和自动化机器学习](./ai-ml/kubeflow/04-katib.md) | [测验](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+   - [第 5 部分：Kubeflow Trainer 和分布式训练](./ai-ml/kubeflow/05-training-operator.md) | [测验](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
+   - [第 6 部分：KServe — 在 Kubernetes 上提供模型服务](./ai-ml/kubeflow/06-kserve.md) | [测验](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+10. **EKS 上的 MLflow 深入解析**
+    - [EKS 上的 MLflow 简介](./ai-ml/mlflow/README.md)
+    - [第 1 部分：MLflow 跟踪](./ai-ml/mlflow/01-tracking.md) | [测验](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+    - [第 2 部分：MLflow 模型注册表](./ai-ml/mlflow/02-model-registry.md) | [测验](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+    - [第 3 部分：在 EKS 上部署 MLflow](./ai-ml/mlflow/03-eks-deployment.md) | [测验](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 
 ### Data on EKS
 1. [Data on EKS 概览](./data-on-eks/README.md)
