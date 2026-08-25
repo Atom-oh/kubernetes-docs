@@ -6,7 +6,28 @@ This section provides a comprehensive understanding of Cilium's core concepts an
 
 > **Supported Versions**: Cilium 1.17, 1.18
 > **Kubernetes Compatibility**: 1.32 and above
-> **Last Updated**: February 23, 2026
+> **Last Updated**: August 10, 2026
+
+### July 2026 Update: Patch Releases and a NetworkPolicy Security Issue
+
+On July 16, 2026, the Cilium 1.19.6, 1.18.12, and 1.17.18 patch releases were published. Alongside new support for configuring Gateway API access logs (`spec.telemetry.accessLogs` in `CiliumGatewayClassConfig`), they fix a regression that could briefly drop established connections during agent restart/upgrade and a ClusterMesh bug where the `service.cilium.io/affinity: "none"` annotation caused a traffic blackhole.
+
+Also note the **CVE-2026-56743** security issue: in Cilium 1.19.0-1.19.4 with a non-default `clusterName`, a Kubernetes NetworkPolicy using only `ipBlock` rules (no pod/namespace selectors) could unintentionally allow traffic from other workloads in the same namespace. Upgrade to 1.19.5 or later. See the [security advisory](https://github.com/cilium/cilium/security/advisories/GHSA-fm8w-2m5w-9j7r) for details.
+
+On July 21, 2026, [Cilium 1.20.0-rc.1](https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1) was published — the second release candidate for the upcoming 1.20 minor release, following rc.0 on July 14.
+
+### August 2026 Update: Cilium 1.20.0 GA
+
+On July 29, 2026, [Cilium 1.20.0](https://github.com/cilium/cilium/releases/tag/v1.20.0) was released — over 2,660 new commits from 1,100+ contributors. Highlights:
+
+- **Gateway API v1.6.1**: support for the newly GA'd TCPRoute/UDPRoute, `BackendTLSPolicy` for TLS to backends, ListenerSets for delegated listener management, an `ExternalAuth` filter (GEP-1494), and native CORS support
+- **Networking**: datapath plugins for extending the eBPF datapath without forking, automatic netkit selection (`bpf.datapathMode=auto`), and IPv6 egress gateway IPs for dual-stack clusters
+- **IPAM**: IPv6 for AWS ENI IPAM (Beta), and in-place migration from cluster-pool to multi-pool IPAM
+- **Services/ClusterMesh**: `PreferSameZone`/`PreferSameNode` traffic distribution, weighted Maglev backends via the `service.cilium.io/weight` annotation, and stable Multi-Cluster Services (MCS) API support
+- **Security**: Kubernetes ClusterNetworkPolicy (KCNP) support with Admin/Baseline tiers, ztunnel identity via internal CA or SPIRE, and a new `cluster-mesh` policy entity
+- **Performance**: the `cilium-cni` binary shrank from ~77 MB to 16 MB, plus aggregated load-balancer state and optimized BPF policy-map encoding for large clusters
+
+Take action during upgrade if you use legacy Mutual Authentication, Envoy Go extensions, Kafka-aware policies, the `cilium.io/v2alpha1` `CiliumNodeConfig` API, the libnetwork integration, or a custom CNI configuration — see the [upgrade guide](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes). The first pre-release of the next cycle, 1.21.0-pre.0, followed on August 3.
 
 ## Key Improvements in Cilium 1.18
 

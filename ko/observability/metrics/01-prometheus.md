@@ -1,7 +1,7 @@
 # Prometheus
 
 > **지원 버전**: Prometheus 2.x / 3.x
-> **마지막 업데이트**: 2026년 2월 20일
+> **마지막 업데이트**: 2026년 7월 27일
 
 ## 목차
 
@@ -308,6 +308,10 @@ node_disk_io_time_seconds_total
 node_network_receive_bytes_total
 node_network_transmit_bytes_total
 ```
+
+### 2026년 7월 업데이트: 커스텀 메트릭 익스포터 작성 가이드
+
+2026년 7월 14일 Kubernetes 블로그에 [Building a Custom Metrics Exporter for Kubernetes](https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/) 글이 게시되었습니다. kube-state-metrics나 node-exporter가 다루지 못하는 신호(큐 대기 메시지 수, 배치 작업 소요 시간, 활성 연결 수 등)를 수집해야 할 때 익스포터를 직접 작성하는 방법을 다룹니다. 핵심 요점: 익스포터는 `/metrics` 엔드포인트로 플레인 텍스트 메트릭을 노출하는 작은 HTTP 서버일 뿐이며, 신호 특성에 따라 메트릭 타입을 선택하고(누적 합계는 counter, 오르내리는 값은 gauge, 지연 시간 분포는 histogram), 이름은 `<네임스페이스>_<이름>_<단위>` 형식의 `snake_case`로 짓습니다. 컨테이너로 패키징해 Prometheus와 궁극적으로 HorizontalPodAutoscaler까지 연결하는 과정도 다룹니다.
 
 ## PromQL 쿼리 언어
 
@@ -1114,6 +1118,10 @@ spec:
 ```
 
 ## Remote Write 및 AMP 연동
+
+### 2026년 7월 업데이트: AMP 워크스페이스 한도 상향
+
+2026년 7월 21일, Amazon Managed Service for Prometheus가 워크스페이스당 최대 15억 개의 활성 메트릭 시계열과 최대 20만 개의 recording/alerting 규칙을 지원한다고 발표되었습니다. 한도 상향은 AWS Support Center 또는 AWS Service Quotas에서 서비스 할당량 증가를 요청하면 됩니다. 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/)를 참고하세요.
 
 ### Amazon Managed Prometheus (AMP) 연동
 

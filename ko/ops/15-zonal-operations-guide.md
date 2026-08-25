@@ -1,7 +1,7 @@
 # Zonal 클러스터 운영 전략: 트래픽 전환, 업그레이드 롤백, 데이터 AZ 친화
 
 > **지원 버전**: Amazon EKS 1.33+, AWS Load Balancer Controller 2.9+, Kafka 2.4+ (KIP-392), Valkey GLIDE 1.x
-> **마지막 업데이트**: 2026년 7월 15일
+> **마지막 업데이트**: 2026년 7월 21일
 
 < [이전: Tekton Pipelines](14-tekton-pipelines.md) | [목차](./README.md) >
 
@@ -80,6 +80,8 @@ aws elbv2 modify-listener \
 TargetGroupBinding의 기본/고급/멀티포트 설정은 [`networking/03-aws-lb-controller.md`](../networking/03-aws-lb-controller.md#targetgroupbinding)에, NLB 가중치 타겟 그룹과 Route 53 가중치 라우팅의 전체 Terraform 구성은 [`ops/02-infrastructure-advanced.md`](02-infrastructure-advanced.md#nlb-가중치-타겟-그룹)에 있습니다.
 
 **계획된 전환 vs 장애 시 전환**: weight 조정은 업그레이드·배포처럼 **계획된** 전환에 씁니다. AZ 장애처럼 **예기치 않은** 상황은 [ARC(Application Recovery Controller) Zonal Shift](../eks/10-eks-resiliency.md#arc-zonal-shift)가 자동 감지·전환을 담당합니다 — 두 메커니즘은 경쟁하지 않고 계획적/반응적으로 역할이 나뉩니다.
+
+> **2026년 7월 업데이트**: ARC zonal shift/autoshift가 [EKS Auto Mode 클러스터도 지원](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift)하게 되었습니다. Auto Mode에서는 플래그 설정이나 Karpenter 버전 관리 없이 클러스터에서 ARC zonal shift를 활성화하기만 하면, shift 발동 시 장애 AZ의 신규 노드 프로비저닝과 자발적 중단(consolidation·drift)이 자동으로 중단됩니다.
 
 ***
 

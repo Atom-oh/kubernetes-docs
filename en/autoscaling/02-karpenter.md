@@ -1,7 +1,7 @@
 # Karpenter
 
 > **Supported Versions**: Karpenter 1.6 - 1.14, Kubernetes 1.29+ (as of v1.14)
-> **Last Updated**: July 11, 2026
+> **Last Updated**: July 27, 2026
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -409,6 +409,10 @@ Karpenter v1.14, released July 11, 2026, brings:
 - Bug fixes: accounting for the primary IP on secondary ENIs, ensuring the Zonal Shift cache is hydrated, wiring an AWS SDK client timeout into the operator config, and more
 
 See the [v1.14.0 release notes](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0) for details.
+
+Then, on July 17, 2026, a coordinated batch of patch releases (v1.3.8 through v1.11.3) went out across all maintained minor lines, each bumping the upstream `sigs.k8s.io/karpenter` version. If you are on an older line, updating to that line's latest patch is recommended ([release list](https://github.com/aws/karpenter-provider-aws/releases)).
+
+On July 22, 2026, AWS additionally announced Elastic Fabric Adapter (EFA) network device configuration and EC2 placement group support for Karpenter (and EKS Auto Mode) node pools. Network interfaces on EFA-capable instances can be set to EFA-only (which consumes no VPC IP addresses) or standard ENI, and cluster/spread/partition placement strategies can be specified directly in the node pool configuration — useful for distributed training and inference workloads. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/).
 
 ## Node Classes
 

@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **Supported Versions**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **Last Updated**: July 11, 2026
+> **Last Updated**: August 17, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -196,6 +196,7 @@ Synchronization brings the cluster state to match the desired state:
 | [Security](07-security.md) | SSO integration, secret management, TLS, audit logging |
 | [Notifications](08-notifications.md) | Notification services, triggers, templates, subscriptions |
 | [Best Practices](09-best-practices.md) | Repository patterns, performance tuning, troubleshooting, EKS tips |
+| [Rollouts Experiments Deep Dive](10-rollouts-experiment.md) | Experiment CRD, ephemeral ReplicaSet validation, AnalysisRun verdicts |
 
 ## Quick Start
 
@@ -279,9 +280,28 @@ spec:
 
 ## Version Compatibility
 
+### August 2026 Update: ArgoCD 3.5 GA and Patch Releases
+
+ArgoCD v3.5.0 went GA on August 7, 2026, making 3.5 the current stable release line. It was followed on August 12 by coordinated patches for the three maintained release lines: v3.5.1 / v3.4.7 / v3.3.14. v3.5.1 includes bug fixes such as stopping ApplicationSet progressive sync from reconciling in a tight loop and server-side diff Secret-masking fixes (including hiding secrets in the `last-applied-configuration` annotation). See the [v3.5.1 release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.5.1) for details.
+
 ### July 2026 Update: ArgoCD 3.x Patch Releases
 
-ArgoCD v3.4.5 was released on July 9, 2026. The 3.4 line is the current stable release line, and the next minor version, v3.5.0, has reached rc2. The tables below were written against the 2.x era — check the [ArgoCD releases page](https://github.com/argoproj/argo-cd/releases) for up-to-date per-version support information.
+ArgoCD v3.4.5 was released on July 9, 2026. The tables below were written against the 2.x era — check the [ArgoCD releases page](https://github.com/argoproj/argo-cd/releases) for up-to-date per-version support information.
+
+At ArgoCon Japan, held July 28, 2026 in Yokohama as a KubeCon + CloudNativeCon Japan colocated event, the Argo CD lead maintainer shared a proposal for the next version (3.5) ([CNCF blog](https://www.cncf.io/blog/2026/07/20/argocon-japan-2026-meeting-the-maintainers-enterprise-insights-and-the-road-to-argo-cd-3-5/)).
+
+### August 2026 Update: ArgoCD v3.5.0 Released
+
+[ArgoCD v3.5.0](https://github.com/argoproj/argo-cd/releases/tag/v3.5.0) went GA on August 4, 2026, making 3.5 the current stable release line. Notable changes include:
+
+- **Helm 3 → Helm 4 migration**: manifest rendering now uses Helm 4
+- **Source integrity verification (Alpha)**: opt-in signature verification for dry sources in the source hydrator, plus CLI support for Source Integrity configuration
+- **ApplicationSet improvements**: concurrent application management and repository filtering by archived status
+- **Webhook jitter**: configurable jitter for webhook-triggered application refreshes to smooth thundering-herd refresh spikes
+- **UI**: multi-source application creation in the New App panel, ApplicationSet Preview Apps tab, and AppSet nodes in the resource tree
+- **New health checks**: GatewayClass, `BackendTLSPolicy` (Gateway API), VictoriaMetrics, Gardener Shoot, and more
+
+Patch releases v3.4.6 and v3.3.13 also went out on July 31, 2026 for the previous lines.
 
 ### Kubernetes Compatibility
 

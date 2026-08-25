@@ -1,7 +1,7 @@
 # Kubernetes Gateway API
 
 > **Supported Versions**: Gateway API v1.2+
-> **Last Updated**: July 3, 2026
+> **Last Updated**: August 10, 2026
 
 ## Overview
 
@@ -701,7 +701,8 @@ spec:
 Defines TCP traffic routing.
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+# GA in v1 since Gateway API v1.6 (v1alpha2 deprecated)
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: database-route
@@ -718,7 +719,7 @@ spec:
           port: 5432
 ---
 # Multi-backend TCP routing
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: tcp-loadbalance
@@ -769,7 +770,8 @@ spec:
 Defines UDP traffic routing.
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+# GA in v1 since Gateway API v1.6 (v1alpha2 deprecated)
+apiVersion: gateway.networking.k8s.io/v1
 kind: UDPRoute
 metadata:
   name: dns-route
@@ -1167,8 +1169,8 @@ Gateway API provides features at various maturity levels.
 
 | Channel | Maturity | Resources |
 |---------|----------|-----------|
-| **Standard** | GA | GatewayClass, Gateway, HTTPRoute, ReferenceGrant |
-| **Experimental** | Beta/Alpha | GRPCRoute, TCPRoute, TLSRoute, UDPRoute |
+| **Standard** | GA | GatewayClass, Gateway, HTTPRoute, ReferenceGrant, TCPRoute, UDPRoute |
+| **Experimental** | Beta/Alpha | GRPCRoute, TLSRoute |
 
 ### Versions and Compatibility
 
@@ -1179,8 +1181,17 @@ kind: HTTPRoute
 
 # Experimental channel
 apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TCPRoute
+kind: TLSRoute
 ```
+
+### August 2026 Update: Gateway API v1.6 — TCPRoute and UDPRoute Graduate to Standard
+
+Gateway API v1.6.0 was released on June 30, 2026, and [announced on the Kubernetes blog on August 3, 2026](https://kubernetes.io/blog/2026/08/03/gateway-api-v1-6-release/). Two changes matter for the tables above:
+
+- **TCPRoute and UDPRoute are now Standard (GA)**: both moved to the `gateway.networking.k8s.io/v1` API version, giving raw L4 workloads (databases, DNS, VoIP, gaming, IoT telemetry) a portable, stable routing model. The `v1alpha2` version of each is deprecated as of v1.6 and will be removed in a future release.
+- **Experimental API group separation**: experimental resources move to a distinct API group, `gateway.networking.x-k8s.io`, with an `X` prefix (e.g., the new `XBackend` resource) to make the standard vs. experimental boundary explicit.
+
+Implementations are adopting v1.6 quickly — for example, Cilium 1.20 (July 2026) ships Gateway API v1.6.1 support including TCPRoute/UDPRoute.
 
 ## Comparison with Ingress API
 

@@ -7,7 +7,13 @@ const GA_ID = 'G-GWVLEW5JLL'
 const ADSENSE_CLIENT = 'ca-pub-6267917556914416'
 const FAVICON = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="78" font-size="80" text-anchor="middle">☸️</text></svg>')}`
 
-export default withMermaid(defineConfig({
+// Build-memory bisection toggles (all default OFF — normal builds are unaffected):
+//   VP_DISABLE_SEARCH=1     drop local search (MiniSearch indexing of every page)
+//   VP_DISABLE_MERMAID=1    skip the withMermaid wrapper (mermaid bundling)
+const DISABLE_SEARCH = process.env.VP_DISABLE_SEARCH === '1'
+const DISABLE_MERMAID = process.env.VP_DISABLE_MERMAID === '1'
+
+const config = defineConfig({
   title: 'Kubernetes & Amazon EKS Training',
   base: '/kubernetes-docs/',
   srcDir: '.',
@@ -47,7 +53,9 @@ export default withMermaid(defineConfig({
     }
   },
   themeConfig: {
-    search: { provider: 'local' },
+    ...(DISABLE_SEARCH ? {} : { search: { provider: 'local' as const } }),
     outline: 'deep'
   }
-}))
+})
+
+export default DISABLE_MERMAID ? config : withMermaid(config)

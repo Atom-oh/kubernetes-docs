@@ -1,7 +1,7 @@
 # Kubernetes Gateway API
 
 > **지원 버전**: Gateway API v1.2+
-> **마지막 업데이트**: 2026년 7월 3일
+> **마지막 업데이트**: 2026년 8월 10일
 
 ## 개요
 
@@ -701,7 +701,8 @@ spec:
 TCP 트래픽 라우팅을 정의합니다.
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+# Gateway API v1.6부터 v1으로 GA (v1alpha2는 deprecated)
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: database-route
@@ -718,7 +719,7 @@ spec:
           port: 5432
 ---
 # 멀티 백엔드 TCP 라우팅
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: tcp-loadbalance
@@ -769,7 +770,8 @@ spec:
 UDP 트래픽 라우팅을 정의합니다.
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+# Gateway API v1.6부터 v1으로 GA (v1alpha2는 deprecated)
+apiVersion: gateway.networking.k8s.io/v1
 kind: UDPRoute
 metadata:
   name: dns-route
@@ -1167,8 +1169,8 @@ Gateway API는 다양한 성숙도 수준의 기능을 제공합니다.
 
 | 채널 | 성숙도 | 리소스 |
 |------|--------|--------|
-| **Standard** | GA | GatewayClass, Gateway, HTTPRoute, ReferenceGrant |
-| **Experimental** | Beta/Alpha | GRPCRoute, TCPRoute, TLSRoute, UDPRoute |
+| **Standard** | GA | GatewayClass, Gateway, HTTPRoute, ReferenceGrant, TCPRoute, UDPRoute |
+| **Experimental** | Beta/Alpha | GRPCRoute, TLSRoute |
 
 ### 버전 및 호환성
 
@@ -1179,8 +1181,17 @@ kind: HTTPRoute
 
 # Experimental 채널
 apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TCPRoute
+kind: TLSRoute
 ```
+
+### 2026년 8월 업데이트: Gateway API v1.6 — TCPRoute·UDPRoute Standard 승격
+
+Gateway API v1.6.0이 2026년 6월 30일 릴리스되었고, [2026년 8월 3일 Kubernetes 블로그에 공식 소개](https://kubernetes.io/blog/2026/08/03/gateway-api-v1-6-release/)되었습니다. 위 표와 관련해 중요한 변경 사항은 두 가지입니다.
+
+- **TCPRoute와 UDPRoute가 Standard(GA)로 승격**: 두 리소스 모두 `gateway.networking.k8s.io/v1` API 버전으로 이동해, 데이터베이스·DNS·VoIP·게임 서버·IoT 텔레메트리 같은 순수 L4 워크로드에도 이식 가능한 안정 라우팅 모델이 생겼습니다. 각 리소스의 `v1alpha2` 버전은 v1.6부터 deprecated이며 향후 릴리스에서 제거됩니다.
+- **Experimental API 그룹 분리**: 실험적 리소스는 별도 API 그룹인 `gateway.networking.x-k8s.io`로 이동하고 `X` 접두사(예: 신규 `XBackend` 리소스)를 사용해 Standard와 Experimental의 경계가 명확해졌습니다.
+
+구현체들의 v1.6 채택도 빠르게 진행 중입니다. 예를 들어 Cilium 1.20(2026년 7월)은 TCPRoute/UDPRoute를 포함한 Gateway API v1.6.1 지원을 탑재했습니다.
 
 ## Ingress API 비교
 

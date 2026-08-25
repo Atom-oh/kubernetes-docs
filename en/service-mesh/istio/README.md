@@ -1,6 +1,22 @@
 # Istio
 
+> **Last Updated**: August 17, 2026
+
 A practical guide for utilizing Istio Service Mesh on Amazon EKS.
+
+### August 2026 Update: Istio 1.31 Enters Beta
+
+The release process for the next minor version, Istio 1.31, is underway: 1.31.0-alpha.2 was published on August 11, 2026, followed by 1.31.0-beta.0 on August 13 and 1.31.0-beta.1 on August 14. Alpha/beta builds are pre-releases for early validation, not production use — only pick them up if you want to test new features ahead of the GA release. See the [Istio releases page](https://github.com/istio/istio/releases) for details.
+
+### July 2026 Update: Istio 1.30.3 / 1.29.6 Patch Releases
+
+On July 16, 2026, the Istio 1.30.3 and 1.29.6 patch releases were published. Highlights of 1.30.3:
+
+- Improved istiod scalability in ambient mode by scoping XDS pushes from workload/service address changes to only the affected waypoints
+- Fixed a bug where istiod did not pick up updated remote cluster secrets (e.g. during credential/token rotation) until restarted
+- The pilot node untaint controller's taint name is now customizable via the `PILOT_NODE_UNTAINT_CONTROLLERS_TAINT_NAME` environment variable
+
+See the [official announcement](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.3/) for details.
 
 ## Table of Contents
 

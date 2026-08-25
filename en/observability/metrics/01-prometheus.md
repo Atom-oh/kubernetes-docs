@@ -1,7 +1,7 @@
 # Prometheus
 
 > **Supported Versions**: Prometheus 2.x / 3.x
-> **Last Updated**: February 20, 2026
+> **Last Updated**: July 27, 2026
 
 ## Table of Contents
 
@@ -296,6 +296,10 @@ node_disk_io_time_seconds_total
 node_network_receive_bytes_total
 node_network_transmit_bytes_total
 ```
+
+### July 2026 Update: Writing Custom Metrics Exporters
+
+On July 14, 2026, the Kubernetes blog published [Building a Custom Metrics Exporter for Kubernetes](https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/), a walkthrough of writing an exporter from scratch when kube-state-metrics or node-exporter don't cover your signal (queue depth, batch duration, active connections, etc.). Key takeaways: an exporter is just an HTTP server exposing plain-text metrics on `/metrics`; pick the metric type by signal shape (counter for totals, gauge for values that rise and fall, histogram for latency distributions); and name metrics `<namespace>_<name>_<unit>` in `snake_case`. The post also covers packaging the exporter as a container and wiring it up so Prometheus — and ultimately the HorizontalPodAutoscaler — can consume it.
 
 ## PromQL Query Language
 
@@ -744,6 +748,10 @@ spec:
 ```
 
 ## Remote Write and AMP Integration
+
+### July 2026 Update: AMP Workspace Limit Increases
+
+On July 21, 2026, AWS announced that Amazon Managed Service for Prometheus now supports up to 1.5 billion active metric time series and up to 200,000 total recording and alerting rules per workspace. Limits are raised via a service quota increase request in AWS Support Center or AWS Service Quotas. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/) for details.
 
 ### Amazon Managed Prometheus (AMP) Integration
 

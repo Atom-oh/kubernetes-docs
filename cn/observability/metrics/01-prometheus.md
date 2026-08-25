@@ -1,7 +1,7 @@
 # Prometheus
 
 > **支持的版本**: Prometheus 2.x / 3.x
-> **最后更新**: February 20, 2026
+> **最后更新**: July 27, 2026
 
 ## 目录
 
@@ -20,7 +20,7 @@
 
 ## 简介
 
-Prometheus 是一个开源系统监控和告警工具包，最初由 SoundCloud 开发并捐赠给 CNCF（Cloud Native Computing Foundation）。它已成为 Kubernetes 环境中的事实标准监控解决方案。
+Prometheus 是一个开源系统监控和告警工具包，最初由 SoundCloud 开发并捐赠给 CNCF（Cloud Native Computing Foundation）。它已成为 Kubernetes 环境中事实上的标准监控解决方案。
 
 ### 主要功能
 
@@ -28,20 +28,20 @@ Prometheus 是一个开源系统监控和告警工具包，最初由 SoundCloud 
 2. **PromQL**：利用多维数据的灵活查询语言
 3. **基于拉取的采集**：通过 HTTP 定期从目标抓取指标
 4. **服务发现**：在 Kubernetes 等动态环境中自动发现监控目标
-5. **告警管理**：通过 Alertmanager 基于规则定义和路由告警
-6. **独立服务器**：作为单个服务器运行，无需依赖分布式存储
+5. **告警管理**：通过 Alertmanager 进行基于规则的告警定义和路由
+6. **独立服务器**：作为单一服务器运行，无需依赖分布式存储
 
-### 适用 Prometheus 的场景
+### Prometheus 的适用场景
 
 - 记录纯数值时间序列
 - 以机器为中心的监控和高度动态的面向服务架构
 - 多维数据采集和查询
-- 系统整体概览比 100% 准确性更重要时
+- 系统概览比 100% 准确性更重要时
 
-### 不适用 Prometheus 的场景
+### Prometheus 的不适用场景
 
 - 事件日志或追踪
-- 需要 100% 准确性的场景，例如按请求计费
+- 按请求计费等要求 100% 准确性的场景
 - 长期数据保留（需要单独的长期存储）
 
 ## 架构
@@ -111,18 +111,18 @@ flowchart TD
 
 ### 数据流
 
-1. **服务发现**：从 Kubernetes API、DNS、文件等发现抓取目标。
-2. **指标采集**：通过 HTTP 从目标的 `/metrics` 端点抓取指标。
-3. **数据存储**：将采集的指标存储在本地 TSDB 中。
-4. **规则评估**：根据存储的数据评估告警和记录规则。
-5. **告警分发**：将触发的告警发送到 Alertmanager。
-6. **查询服务**：通过 HTTP API 处理 PromQL 查询。
+1. **服务发现**：从 Kubernetes API、DNS、文件等发现抓取目标
+2. **指标采集**：通过 HTTP 从目标的 `/metrics` 端点抓取指标
+3. **数据存储**：将采集到的指标存储在本地 TSDB 中
+4. **规则评估**：根据存储的数据评估告警规则和记录规则
+5. **告警分发**：将触发的告警发送到 Alertmanager
+6. **查询服务**：通过 HTTP API 处理 PromQL 查询
 
 ## 核心组件
 
 ### TSDB（时间序列数据库）
 
-Prometheus 内置的时间序列数据库专为高效存储时间序列数据而设计。
+Prometheus 的内置时间序列数据库专为高效存储时间序列数据而设计。
 
 ```yaml
 # TSDB-related configuration
@@ -156,7 +156,7 @@ data/
 
 ### kube-state-metrics
 
-一个生成 Kubernetes API 对象相关指标的服务。
+一个生成有关 Kubernetes API 对象指标的服务。
 
 ```yaml
 apiVersion: apps/v1
@@ -297,6 +297,10 @@ node_network_receive_bytes_total
 node_network_transmit_bytes_total
 ```
 
+### 2026 年 7 月更新：编写自定义指标 exporter
+
+2026 年 7 月 14 日，Kubernetes 博客发布了[为 Kubernetes 构建自定义指标 exporter](https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/)，介绍了在 kube-state-metrics 或 node-exporter 未覆盖所需信号（队列深度、批处理持续时间、活动连接等）时如何从头编写 exporter。要点包括：exporter 只是一个在 `/metrics` 上公开纯文本指标的 HTTP 服务器；应根据信号形态选择指标类型（总量使用 counter、上下波动的值使用 gauge、延迟分布使用 histogram）；并以 `snake_case` 格式将指标命名为 `<namespace>_<name>_<unit>`。文章还介绍了如何将 exporter 打包为容器并进行连接，以便 Prometheus——以及最终的 HorizontalPodAutoscaler——可以使用它。
+
 ## PromQL 查询语言
 
 PromQL（Prometheus Query Language）是 Prometheus 的函数式查询语言。
@@ -348,7 +352,7 @@ quantile(0.95, http_request_duration_seconds)
 stddev(rate(http_requests_total[5m]))
 ```
 
-### Rate 和 Increase 函数
+### 速率和增量函数
 
 ```promql
 # rate: Average per-second rate of increase (for Counters)
@@ -438,7 +442,7 @@ scrape_configs:
         target_label: pod
 ```
 
-### 基于 Pod Annotation 的抓取
+### 基于 Pod 注解的抓取
 
 ```yaml
 apiVersion: v1
@@ -460,7 +464,7 @@ spec:
 
 ## Prometheus Operator
 
-Prometheus Operator 是一个在 Kubernetes 中以声明式方式管理 Prometheus 的 controller。
+Prometheus Operator 是一个用于在 Kubernetes 中以声明式方式管理 Prometheus 的控制器。
 
 ### 自定义资源定义（CRD）
 
@@ -573,7 +577,7 @@ spec:
 
 ## kube-prometheus-stack 安装
 
-kube-prometheus-stack 是一个综合 Helm chart，其中包括 Prometheus、Alertmanager、Grafana 和相关组件。
+kube-prometheus-stack 是一个全面的 Helm chart，包含 Prometheus、Alertmanager、Grafana 及相关组件。
 
 ### 使用 Helm 安装
 
@@ -744,6 +748,10 @@ spec:
 ```
 
 ## Remote Write 和 AMP 集成
+
+### 2026 年 7 月更新：AMP Workspace 限额提升
+
+2026 年 7 月 21 日，AWS 宣布 Amazon Managed Service for Prometheus 现在每个 Workspace 最多支持 15 亿个活跃指标时间序列，以及最多 200,000 条记录和告警规则。可以通过 AWS Support Center 或 AWS Service Quotas 中的服务配额提升请求来提高限额。详情请参阅[公告](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/)。
 
 ### Amazon Managed Prometheus（AMP）集成
 
@@ -990,4 +998,4 @@ curl http://prometheus:9090/api/v1/alerts
 
 ## 测验
 
-要测试您对本章内容的理解，请尝试 [Prometheus 测验](../../quizzes/observability/metrics/01-prometheus-quiz.md)。
+要测试您对本章的理解，请尝试 [Prometheus 测验](../../quizzes/observability/metrics/01-prometheus-quiz.md)。

@@ -18,9 +18,13 @@ jobs:
   build:
     runs-on: kubernetes-docs-arm
     env:
-      # ko/en are built sequentially so VitePress never holds both locale
-      # graphs in one process. Each locale still needs more than Node's
-      # default 4GiB heap while rendering Mermaid and the local search index.
+      # Only ko/en are published now (see docs/superpowers/plans/2026-08-19-
+      # vitepress-ko-en-docs.md), built sequentially so VitePress never holds
+      # both locale graphs in one process. Each locale still needs more than
+      # Node's default 4GiB heap while rendering Mermaid and the local search
+      # index; a prior 5-locale build OOM'd repeatedly even at 43008MB (RSS
+      # scaled with page count regardless of heap cap), which per-locale
+      # sequencing avoids by bounding peak RSS to one locale at a time.
       NODE_OPTIONS: --max-old-space-size=8192
     steps:
       - uses: actions/checkout@v4

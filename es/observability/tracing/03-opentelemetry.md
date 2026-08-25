@@ -1,11 +1,15 @@
 # OpenTelemetry
 
 > **Versiones compatibles**: OTEL 1.x
-> **Última actualización**: July 13, 2026
+> **Última actualización**: July 27, 2026
 
 ## Introducción
 
-OpenTelemetry (OTel) es un framework de observabilidad para software cloud-native. Proporciona estándares neutrales respecto al proveedor para generar, recopilar y gestionar tres señales: Traces, Metrics y Logs. Como el segundo proyecto más activo de CNCF, se ha convertido en el estándar del sector.
+OpenTelemetry (OTel) es un marco de observabilidad para software nativo de la nube. Proporciona estándares neutrales respecto al proveedor para generar, recopilar y gestionar tres señales: Traces, Metrics y Logs. Como el segundo proyecto más activo de CNCF, se ha convertido en el estándar de la industria.
+
+### Actualización de julio de 2026: graduación de CNCF
+
+OpenTelemetry ha alcanzado oficialmente el estado de **graduado** de CNCF, el nivel de madurez más alto de la fundación, uniéndose a proyectos como Kubernetes y Prometheus. La graduación indica que la gobernanza, las prácticas de seguridad y la adopción del proyecto han sido evaluadas para su uso en producción. Los próximos pasos declarados por la comunidad se centran en madurar las señales restantes (como profiling) y mantener el crecimiento de colaboradores. Consulta la publicación del blog de CNCF ["OpenTelemetry se ha graduado… ¿y ahora qué?"](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/) para conocer el contexto y la hoja de ruta.
 
 ## ¿Qué es OpenTelemetry?
 
@@ -49,7 +53,7 @@ flowchart LR
 
 | Señal | Descripción | Casos de uso |
 |--------|-------------|-----------|
-| **Traces** | Trazado distribuido de solicitudes | Análisis de latencia, mapeo de dependencias |
+| **Traces** | Rastreo distribuido de solicitudes | Análisis de latencia, mapeo de dependencias |
 | **Metrics** | Mediciones numéricas | Uso de recursos, SLI/SLO |
 | **Logs** | Registros de eventos | Depuración, auditoría |
 
@@ -93,11 +97,11 @@ flowchart LR
 
 ## SDK de OpenTelemetry
 
-### Autoinstrumentación
+### Instrumentación automática
 
 Añade instrumentación automáticamente sin cambios en el código.
 
-#### Autoinstrumentación de Java
+#### Instrumentación automática de Java
 
 ```bash
 # Download Java Agent
@@ -142,7 +146,7 @@ spec:
             name: otel-java-agent
 ```
 
-#### Autoinstrumentación de Python
+#### Instrumentación automática de Python
 
 ```bash
 # Installation
@@ -175,7 +179,7 @@ spec:
               value: "true"
 ```
 
-#### Autoinstrumentación de Node.js
+#### Instrumentación automática de Node.js
 
 ```javascript
 // tracing.js
@@ -295,7 +299,7 @@ public class OrderService {
 }
 ```
 
-## Collector de OTEL
+## OTEL Collector
 
 ### Arquitectura
 
@@ -498,11 +502,11 @@ service:
       exporters: [loki]
 ```
 
-## Patrones de despliegue en EKS
+## Patrones de Deployment de EKS
 
 ### Patrón DaemonSet
 
-Despliega el Collector en cada nodo para recopilar datos de todos los Pods de ese nodo:
+Implementa el Collector en cada nodo para recopilar datos de todos los Pods de ese nodo:
 
 ```yaml
 # otel-collector-daemonset.yaml
@@ -584,7 +588,7 @@ spec:
 
 ### Patrón Sidecar
 
-Despliega el Collector como sidecar en cada Pod de aplicación:
+Implementa el Collector como un sidecar en cada Pod de aplicación:
 
 ```yaml
 # application-with-sidecar.yaml
@@ -630,9 +634,9 @@ spec:
             name: otel-sidecar-config
 ```
 
-## Kubernetes Operator
+## Operator de Kubernetes
 
-Autoinstrumentación mediante OpenTelemetry Operator:
+Instrumentación automática mediante OpenTelemetry Operator:
 
 ### Instalación del Operator
 
@@ -644,7 +648,7 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
 ```
 
-### Instrumentation CR
+### CR de Instrumentation
 
 ```yaml
 # instrumentation.yaml
@@ -685,7 +689,7 @@ spec:
     image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:latest
 ```
 
-### Inyección de autoinstrumentación
+### Inyección de instrumentación automática
 
 ```yaml
 # Enable auto-instrumentation on namespace
@@ -720,7 +724,7 @@ spec:
 
 ## Configuración de múltiples backends
 
-Envía datos a varios backends desde un único Collector:
+Envía datos a múltiples backends desde un único Collector:
 
 ```yaml
 exporters:
@@ -756,13 +760,13 @@ service:
       exporters: [otlp/tempo, awsxray, datadog, jaeger]
 ```
 
-### Actualización de julio de 2026: Observación de un límite de red para el tráfico de agentes de IA
+### Actualización de julio de 2026: observación de un límite de red para el tráfico de agentes de IA
 
-Una publicación del blog de CNCF describe un patrón para [crear un límite de red para agentes de IA mediante NGINX y OpenTelemetry](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/). El tráfico saliente de los agentes de IA se fuerza a pasar por un proxy de reenvío (NGINX), y el módulo nativo de OpenTelemetry de NGINX emite un span de OTel para cada solicitud. Esos spans fluyen a través de un Collector de OTel igual que los pipelines descritos anteriormente —se almacenan en un registro de auditoría o se reenvían a Jaeger, Grafana o un SIEM—, lo que permite correlacionar las interacciones de los usuarios con las llamadas externas que un agente realizó en su nombre. Si ejecutas cargas de trabajo de agentes en tu cluster, este es un patrón de observabilidad útil que reutiliza tu pipeline de OTel existente sin cambios.
+Una publicación del blog de CNCF describe un patrón para [crear un límite de red para agentes de IA mediante NGINX y OpenTelemetry](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/). El tráfico saliente de los agentes de IA se fuerza a pasar por un proxy de reenvío (NGINX), y el módulo nativo de OpenTelemetry de NGINX emite un span de OTel por cada solicitud. Esos spans fluyen a través de un OTel Collector igual que los pipelines abordados anteriormente; se conservan en un registro de auditoría o se reenvían a Jaeger, Grafana o un SIEM, lo que permite correlacionar las interacciones de los usuarios con las llamadas externas que un agente realizó en su nombre. Si ejecutas cargas de trabajo de agentes en tu clúster, este es un patrón de observabilidad útil que reutiliza tal cual tu pipeline de OTel existente.
 
 ## Prácticas recomendadas
 
-### 1. Estandariza los atributos de recursos
+### 1. Estandariza los atributos de Resource
 
 ```yaml
 # Follow Semantic Conventions
@@ -862,4 +866,4 @@ processors:
 
 ## Cuestionario
 
-Pon a prueba tus conocimientos con el [Cuestionario de OpenTelemetry](../../quizzes/observability/tracing/03-opentelemetry-quiz.md).
+Pon a prueba tus conocimientos con el [cuestionario de OpenTelemetry](../../quizzes/observability/tracing/03-opentelemetry-quiz.md).

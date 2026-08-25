@@ -1,7 +1,7 @@
 # Prometheus
 
 > **Versiones compatibles**: Prometheus 2.x / 3.x
-> **Última actualización**: February 20, 2026
+> **Última actualización**: July 27, 2026
 
 ## Tabla de contenidos
 
@@ -12,31 +12,30 @@
 - [Descubrimiento de servicios](#service-discovery)
 - [Prometheus Operator](#prometheus-operator)
 - [Instalación de kube-prometheus-stack](#kube-prometheus-stack-installation)
-- [Integración de Alertmanager](#alertmanager-integration)
-- [Escritura remota e integración de AMP](#remote-write-and-amp-integration)
+- [Integración de Remote Write y AMP](#remote-write-and-amp-integration)
 - [Ajuste del rendimiento](#performance-tuning)
 - [Prácticas recomendadas](#best-practices)
 - [Solución de problemas](#troubleshooting)
 
 ## Introducción
 
-Prometheus es un conjunto de herramientas de monitorización y alertas de sistemas de código abierto desarrollado originalmente en SoundCloud y donado a la CNCF (Cloud Native Computing Foundation). Se ha convertido en la solución de monitorización estándar de facto en entornos Kubernetes.
+Prometheus es un conjunto de herramientas de código abierto para la monitorización y las alertas de sistemas, desarrollado originalmente en SoundCloud y donado a la CNCF (Cloud Native Computing Foundation). Se ha convertido en la solución de monitorización estándar de facto en entornos Kubernetes.
 
 ### Características principales
 
 1. **Modelo de datos multidimensional**: Series temporales identificadas por el nombre de la métrica y pares clave-valor (labels)
-2. **PromQL**: Lenguaje de consultas flexible que aprovecha datos multidimensionales
-3. **Recopilación basada en pull**: Obtiene periódicamente métricas de los targets mediante HTTP
+2. **PromQL**: Lenguaje de consulta flexible que aprovecha datos multidimensionales
+3. **Recopilación basada en pull**: Realiza scrape periódicamente de métricas de targets mediante HTTP
 4. **Descubrimiento de servicios**: Descubrimiento automático de targets de monitorización en entornos dinámicos como Kubernetes
-5. **Gestión de alertas**: Definición de alertas basada en reglas y enrutamiento mediante Alertmanager
+5. **Gestión de alertas**: Definición y enrutamiento de alertas basados en reglas mediante Alertmanager
 6. **Servidor independiente**: Funciona como un único servidor sin dependencias de almacenamiento distribuido
 
 ### Cuándo es adecuado Prometheus
 
-- Registro de series temporales puramente numéricas
+- Registrar series temporales estrictamente numéricas
 - Monitorización centrada en máquinas y arquitecturas orientadas a servicios muy dinámicas
 - Recopilación y consulta de datos multidimensionales
-- Cuando una visión general del sistema es más importante que una precisión del 100 %
+- Cuando la visión general del sistema es más importante que una precisión del 100 %
 
 ### Cuándo no es adecuado Prometheus
 
@@ -112,9 +111,9 @@ flowchart TD
 ### Flujo de datos
 
 1. **Descubrimiento de servicios**: Descubre targets de scrape desde la API de Kubernetes, DNS, archivos, etc.
-2. **Recopilación de métricas**: Obtiene métricas del endpoint `/metrics` del target mediante HTTP
+2. **Recopilación de métricas**: Realiza scrape de métricas desde el endpoint `/metrics` del target mediante HTTP
 3. **Almacenamiento de datos**: Almacena las métricas recopiladas en la TSDB local
-4. **Evaluación de reglas**: Evalúa las reglas de alerta y de registro con respecto a los datos almacenados
+4. **Evaluación de reglas**: Evalúa reglas de alertas y de registro frente a los datos almacenados
 5. **Envío de alertas**: Envía las alertas activadas a Alertmanager
 6. **Servicio de consultas**: Procesa consultas PromQL mediante la API HTTP
 
@@ -122,7 +121,7 @@ flowchart TD
 
 ### TSDB (Time Series Database)
 
-La base de datos de series temporales integrada de Prometheus está diseñada para almacenar eficazmente datos de series temporales.
+La base de datos de series temporales integrada de Prometheus está diseñada para almacenar eficientemente datos de series temporales.
 
 ```yaml
 # TSDB-related configuration
@@ -212,7 +211,7 @@ kube_node_status_allocatable{resource="cpu"}
 
 ### node-exporter
 
-Un exporter que expone métricas de hardware y sistema operativo a nivel de host.
+Un exporter que expone métricas de hardware y del sistema operativo a nivel de host.
 
 ```yaml
 apiVersion: apps/v1
@@ -297,9 +296,13 @@ node_network_receive_bytes_total
 node_network_transmit_bytes_total
 ```
 
+### Actualización de julio de 2026: creación de exporters de métricas personalizados
+
+El 14 de julio de 2026, el blog de Kubernetes publicó [Building a Custom Metrics Exporter for Kubernetes](https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/), una guía para crear un exporter desde cero cuando kube-state-metrics o node-exporter no cubren la señal requerida (profundidad de cola, duración de lotes, conexiones activas, etc.). Puntos clave: un exporter es simplemente un servidor HTTP que expone métricas de texto sin formato en `/metrics`; elija el tipo de métrica según la forma de la señal (counter para totales, gauge para valores que suben y bajan, histogram para distribuciones de latencia); y nombre las métricas como `<namespace>_<name>_<unit>` en `snake_case`. La publicación también cubre el empaquetado del exporter como un contenedor y su configuración para que Prometheus —y, en última instancia, el HorizontalPodAutoscaler— puedan consumirlo.
+
 ## Lenguaje de consultas PromQL
 
-PromQL (Prometheus Query Language) es el lenguaje de consultas funcional de Prometheus.
+PromQL (Prometheus Query Language) es el lenguaje de consulta funcional de Prometheus.
 
 ### Consultas básicas
 
@@ -438,7 +441,7 @@ scrape_configs:
         target_label: pod
 ```
 
-### Scraping basado en anotaciones de Pod
+### Scraping basado en annotations de Pod
 
 ```yaml
 apiVersion: v1
@@ -460,7 +463,7 @@ spec:
 
 ## Prometheus Operator
 
-Prometheus Operator es un controlador para gestionar Prometheus de forma declarativa en Kubernetes.
+Prometheus Operator es un controller para gestionar declarativamente Prometheus en Kubernetes.
 
 ### Definiciones de recursos personalizados (CRD)
 
@@ -573,7 +576,7 @@ spec:
 
 ## Instalación de kube-prometheus-stack
 
-kube-prometheus-stack es un Helm chart integral que incluye Prometheus, Alertmanager, Grafana y componentes relacionados.
+kube-prometheus-stack es un chart de Helm integral que incluye Prometheus, Alertmanager, Grafana y componentes relacionados.
 
 ### Instalación con Helm
 
@@ -743,9 +746,13 @@ spec:
       sendResolved: true
 ```
 
-## Escritura remota e integración de AMP
+## Integración de Remote Write y AMP
 
-### Integración de Amazon Managed Prometheus (AMP)
+### Actualización de julio de 2026: aumentos de límites de los workspaces de AMP
+
+El 21 de julio de 2026, AWS anunció que Amazon Managed Service for Prometheus ahora admite hasta 1.500 millones de series temporales de métricas activas y hasta 200.000 reglas totales de registro y alertas por workspace. Los límites se incrementan mediante una solicitud de aumento de cuota de servicio en AWS Support Center o AWS Service Quotas. Consulte el [anuncio](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/) para obtener más información.
+
+### Integración con Amazon Managed Prometheus (AMP)
 
 ```yaml
 # Prometheus configuration
@@ -837,7 +844,7 @@ spec:
   walCompression: true
 ```
 
-### Optimización del scrape
+### Optimización de scrape
 
 ```yaml
 scrape_configs:
@@ -888,7 +895,7 @@ spec:
     replica: $(POD_NAME)
 ```
 
-### Directrices para reglas de alerta
+### Directrices para reglas de alertas
 
 ```yaml
 # Good alert rule example
@@ -919,7 +926,7 @@ spec:
 
 ### Problemas comunes
 
-#### 1. Memoria agotada (OOMKilled)
+#### 1. Sin memoria (OOMKilled)
 
 ```bash
 # Check current memory usage
@@ -931,7 +938,7 @@ curl -s http://prometheus:9090/api/v1/status/tsdb | jq .
 # Solution: Increase memory limit or reduce retention period
 ```
 
-#### 2. Cardinalidad alta
+#### 2. Alta cardinalidad
 
 ```promql
 # Find high cardinality metrics

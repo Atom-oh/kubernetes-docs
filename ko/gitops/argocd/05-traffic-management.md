@@ -1224,6 +1224,8 @@ spec:
 
 Experiment는 여러 버전을 동시에 실행하여 A/B 테스트를 수행합니다.
 
+> 리소스 생성 체인, 이름 규칙, 트래픽 격리, AnalysisRun 판정의 상세 동작은 [Rollouts Experiment 심층 분석](10-rollouts-experiment.md)을 참고하세요.
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Experiment

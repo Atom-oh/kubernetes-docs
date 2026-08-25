@@ -1,7 +1,7 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: July 11, 2026
+> **Last Updated**: August 10, 2026
 
 ## Lab Environment Setup
 
@@ -1712,6 +1712,16 @@ Best practices for Kubernetes cluster security:
 ## Cluster Upgrades
 
 Kubernetes cluster upgrades are necessary to apply new features, security patches, and bug fixes. Upgrades must be carefully planned and executed.
+
+### July 2026 Update: Kubernetes v1.37 in Beta
+
+v1.37.0-beta.0 was published on July 20, 2026, moving the next minor release, v1.37, into the late stage of its release cycle. Code Freeze took effect as scheduled on July 22-23, 2026, and the final v1.37.0 release is planned for August 26, 2026. See the [v1.37 release information](https://www.kubernetes.dev/resources/release/) for the full schedule.
+
+In the same week (July 22-23, 2026), patch releases went out for all maintained lines: [v1.36.3](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.3), [v1.35.7](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.7), and [v1.34.10](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.10). As usual, applying the latest patch for your minor version is recommended.
+
+### August 2026 Update: v1.37 Sneak Peek
+
+On July 31, 2026, the release team published the [Kubernetes v1.37 sneak peek](https://kubernetes.io/blog/2026/07/31/kubernetes-v1-37-sneak-peek/), outlining planned deprecations, removals, and feature changes ahead of the final v1.37.0 release still scheduled for August 26, 2026. Docs Freeze took effect on August 5-6, 2026. Meanwhile, the first tag of the following cycle, v1.38.0-alpha.0, was cut on August 6, 2026.
 
 ### Upgrade Strategies
 

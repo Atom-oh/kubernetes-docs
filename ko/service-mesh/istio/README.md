@@ -1,6 +1,22 @@
 # Istio
 
+> **마지막 업데이트**: 2026년 8월 17일
+
 Amazon EKS에서 Istio Service Mesh를 활용한 실용적인 가이드입니다.
+
+### 2026년 8월 업데이트: Istio 1.31 베타 단계 진입
+
+차기 마이너 버전 Istio 1.31의 릴리스 절차가 진행 중입니다. 2026년 8월 11일 1.31.0-alpha.2에 이어 8월 13일 1.31.0-beta.0, 8월 14일 1.31.0-beta.1이 공개되었습니다. 알파/베타는 프로덕션 용도가 아닌 사전 검증용 프리릴리스이므로, 정식(GA) 릴리스 전 새 기능을 미리 테스트하려는 경우에만 사용하세요. 자세한 내용은 [Istio 릴리스 페이지](https://github.com/istio/istio/releases)를 참고하세요.
+
+### 2026년 7월 업데이트: Istio 1.30.3 / 1.29.6 패치 릴리스
+
+2026년 7월 16일 Istio 1.30.3과 1.29.6 패치 릴리스가 공개되었습니다. 1.30.3의 주요 변경 사항:
+
+- Ambient 모드에서 워크로드/서비스 주소 변경 시 XDS 푸시를 영향받는 waypoint로만 한정해 istiod 확장성 개선
+- 원격 클러스터 시크릿(자격 증명/토큰 로테이션) 갱신을 istiod가 재시작 없이 반영하지 못하던 버그 수정
+- pilot 노드 untaint 컨트롤러의 taint 이름을 `PILOT_NODE_UNTAINT_CONTROLLERS_TAINT_NAME` 환경 변수로 커스터마이징 가능
+
+자세한 내용은 [공식 발표](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.3/)를 참고하세요.
 
 ## 목차
 

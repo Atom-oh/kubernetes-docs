@@ -1,19 +1,19 @@
 # Kubernetes Gateway API
 
 > **対応バージョン**: Gateway API v1.2+
-> **最終更新**: July 3, 2026
+> **最終更新**: August 10, 2026
 
 ## 概要
 
-Gateway API は Kubernetes 向けの次世代 Ingress API であり、既存の Ingress API の制約を克服し、より表現力豊かで拡張可能なネットワークルーティング機能を提供するよう設計されています。SIG-Network によって開発され、Istio、Cilium、Envoy Gateway など、さまざまな実装でサポートされています。
+Gateway API は Kubernetes 向けの次世代 Ingress API であり、既存の Ingress API の制限を克服し、より表現力が高く拡張可能なネットワークルーティング機能を提供するよう設計されています。SIG-Network によって開発され、Istio、Cilium、Envoy Gateway などのさまざまな実装でサポートされています。
 
-### Ingress API の制約
+### Ingress API の制限
 
 | 問題 | 説明 |
 |---------|-------------|
 | **表現力の制限** | HTTP ルーティング以外の TCP/UDP/gRPC のサポートが不十分 |
-| **ロール分離の欠如** | インフラ管理者とアプリケーション開発者の権限を分離することが困難 |
-| **Annotation の乱用** | 実装固有の機能が Annotation で扱われるため、ポータビリティが低下 |
+| **ロール分離なし** | インフラ管理者とアプリケーション開発者の権限を分離しにくい |
+| **Annotation の乱用** | 実装固有の機能を Annotation で処理するため、ポータビリティが低下 |
 | **拡張性の制限** | 新しいプロトコルや機能の追加が困難 |
 | **クロス Namespace** | Namespace をまたぐ複雑なルーティング |
 
@@ -91,15 +91,15 @@ graph TB
 
 ### ロール分離
 
-| ロール | 管理するリソース | 責務 |
+| ロール | 管理対象リソース | 責任 |
 |------|------------------|----------------|
-| **インフラストラクチャプロバイダー** | GatewayClass | 基本的なインフラストラクチャ設定を定義 |
+| **インフラストラクチャプロバイダー** | GatewayClass | 基本インフラストラクチャ設定の定義 |
 | **クラスターオペレーター** | Gateway, ReferenceGrant | Load Balancer のプロビジョニング、権限管理 |
-| **アプリケーション開発者** | HTTPRoute、GRPCRoute など | アプリケーションのルーティングルールを定義 |
+| **アプリケーション開発者** | HTTPRoute, GRPCRoute など | アプリケーションのルーティングルールの定義 |
 
 ## GatewayClass
 
-GatewayClass は、Gateway を作成するときに使用する Controller と設定を定義します。
+GatewayClass は、Gateway の作成時に使用する controller と設定を定義します。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -314,7 +314,7 @@ spec:
 | モード | 説明 | ユースケース |
 |------|-------------|----------|
 | **Terminate** | Gateway で TLS を終端 | 標準 HTTPS |
-| **Passthrough** | TLS をバックエンドに渡す | エンドツーエンド暗号化 |
+| **Passthrough** | TLS を backend に渡す | エンドツーエンド暗号化 |
 
 ```yaml
 # TLS Terminate example
@@ -483,9 +483,9 @@ spec:
           port: 80
 ```
 
-### フィルター
+### Filters
 
-フィルターを使用すると、リクエストとレスポンスを変更できます。
+Filters を使用すると、リクエスト／レスポンスを変更できます。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -647,7 +647,7 @@ spec:
 
 ## GRPCRoute
 
-GRPCRoute は gRPC トラフィックのルーティングルールを定義します。
+gRPC トラフィックのルーティングルールを定義します。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -698,10 +698,11 @@ spec:
 
 ## TCPRoute
 
-TCPRoute は TCP トラフィックのルーティングを定義します。
+TCP トラフィックのルーティングを定義します。
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+# GA in v1 since Gateway API v1.6 (v1alpha2 deprecated)
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: database-route
@@ -718,7 +719,7 @@ spec:
           port: 5432
 ---
 # Multi-backend TCP routing
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: tcp-loadbalance
@@ -741,7 +742,7 @@ spec:
 
 ## TLSRoute
 
-TLSRoute は TLS パススルートラフィックのルーティングを定義します。
+TLS パススルートラフィックのルーティングを定義します。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1alpha2
@@ -766,10 +767,11 @@ spec:
 
 ## UDPRoute
 
-UDPRoute は UDP トラフィックのルーティングを定義します。
+UDP トラフィックのルーティングを定義します。
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+# GA in v1 since Gateway API v1.6 (v1alpha2 deprecated)
+apiVersion: gateway.networking.k8s.io/v1
 kind: UDPRoute
 metadata:
   name: dns-route
@@ -830,7 +832,7 @@ spec:
 
 ## 実装の比較
 
-### 主な実装
+### 主要な実装
 
 | 実装 | Controller | 機能 |
 |----------------|------------|----------|
@@ -846,35 +848,35 @@ spec:
 
 | 機能 | Istio | Cilium | Envoy GW | AWS | Contour |
 |---------|-------|--------|----------|-----|---------|
-| HTTPRoute | はい | はい | はい | はい | はい |
-| GRPCRoute | はい | はい | はい | 一部 | はい |
-| TCPRoute | はい | はい | はい | いいえ | はい |
-| TLSRoute | はい | はい | はい | いいえ | はい |
-| UDPRoute | はい | はい | 一部 | いいえ | いいえ |
-| ReferenceGrant | はい | はい | はい | はい | はい |
-| トラフィック分割 | はい | はい | はい | はい | はい |
-| ヘッダー変更 | はい | はい | はい | 一部 | はい |
-| URL Rewrite | はい | はい | はい | 一部 | はい |
-| ミラーリング | はい | 一部 | はい | いいえ | はい |
+| HTTPRoute | Yes | Yes | Yes | Yes | Yes |
+| GRPCRoute | Yes | Yes | Yes | Partial | Yes |
+| TCPRoute | Yes | Yes | Yes | No | Yes |
+| TLSRoute | Yes | Yes | Yes | No | Yes |
+| UDPRoute | Yes | Yes | Partial | No | No |
+| ReferenceGrant | Yes | Yes | Yes | Yes | Yes |
+| トラフィック分割 | Yes | Yes | Yes | Yes | Yes |
+| Header の変更 | Yes | Yes | Yes | Partial | Yes |
+| URL Rewrite | Yes | Yes | Yes | Partial | Yes |
+| ミラーリング | Yes | Partial | Yes | No | Yes |
 
 ## AWS Load Balancer Controller Gateway API サポート（v3.0 GA）
 
-AWS Load Balancer Controller v3.0.0（2026 年 1 月）以降、Gateway API サポートは GA に到達し、GatewayClass/Gateway/HTTPRoute のロール分離モデルを通じて ALB/NLB を宣言的に管理できるようになりました。
+AWS Load Balancer Controller v3.0.0（2026年1月）以降、Gateway API サポートは GA に到達し、GatewayClass/Gateway/HTTPRoute のロール分離モデルを通じて ALB/NLB を宣言的に管理できるようになりました。
 
-- **背景**: NGINX Ingress Controller のサポートが 2026 年 3 月に終了することに伴い、AWS は LBC v3.0 + Gateway API をネイティブな代替手段として位置付けています。
-- **後方互換性**: 既存の Ingress/Service リソースは引き続き完全にサポートされます。即時の切り替えは不要で、段階的に移行できます。
-- **利点**: ヘッダー/クエリベースのルーティング、重み付けされたトラフィック分散（Blue/Green、Canary）、TCP/UDP/gRPC をカバーするマルチプロトコル設計。
-- **アップグレード時の注意**: Helm で `enableCertManager=true` を指定してインストールしている場合、アップグレード前に `keepTLSSecret=false` を設定してください（v3.0.0 以降では自動的に処理されます）。
+- **背景**: NGINX Ingress Controller が 2026年3月にサポート終了となることを受け、AWS は LBC v3.0 + Gateway API をネイティブな代替手段として位置付けています。
+- **後方互換性**: 既存の Ingress/Service リソースは完全にサポートされたままです。即時の切り替えは不要であり、段階的に移行できます。
+- **利点**: Header/query ベースのルーティング、重み付けトラフィック分散（Blue/Green、Canary）、TCP/UDP/gRPC をカバーするマルチプロトコル設計。
+- **アップグレード時の注意**: Helm で `enableCertManager=true` を指定してインストールしている場合は、アップグレード前に `keepTLSSecret=false` を設定してください（v3.0.0 以降は自動的に処理されます）。
 
-### v3.4.0 移行ツール（2026 年 6 月）
+### v3.4.0 の移行ツール（2026年6月）
 
-既存の ALB ベース Ingress をダウンタイムなしで Gateway API に移行するためのツールが追加されました。
+ダウンタイムなしで、既存の ALB ベース Ingress を Gateway API に移行するためのツールが追加されました。
 
-- **Ingress から Gateway への移行ツール**: 既存の ALB と並行して新しい Gateway API リソースを作成し、ダウンタイムゼロでの移行を可能にします
-- **lbc-migrate CLI**: 既存の Ingress Annotation、ルーティングルール、IngressGroups を Gateway API リソースに自動変換します。`--from-cluster` オプションはクラスターを直接分析します
+- **Ingress から Gateway への移行ツール**: 既存の ALB と並行して新しい Gateway API リソースを作成し、ダウンタイムゼロの移行を可能にします
+- **lbc-migrate CLI**: 既存の Ingress Annotation、ルーティングルール、IngressGroups を Gateway API リソースに自動変換します。`--from-cluster` オプションは Cluster を直接分析します
 - **Migration Console**: 移行前に変換後の設定を検証するための Web UI
 
-> **注意**: Gateway API と NLB の組み合わせにおける動作が変更されました。複数の TCP/UDP/TLS Route が 1 つの Listener にアタッチされている場合、最も古い Route のみがトラフィックを受信します。アップグレード前に L4 Route の設定を確認してください。
+> **注意**: Gateway API + NLB の組み合わせでは動作が変更されました。複数の TCP/UDP/TLS Route が単一の Listener にアタッチされている場合、最も古い Route のみがトラフィックを受信します。アップグレード前に L4 Route 設定を確認してください。
 
 （共通ソース: [AWS Load Balancer Controller Releases](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases)）
 
@@ -1034,7 +1036,7 @@ spec:
           port: 80
 ```
 
-#### ステップ 4: 段階的に移行する
+#### ステップ 4: 段階的な移行
 
 ```yaml
 # Gradual transition via traffic splitting
@@ -1062,12 +1064,12 @@ spec:
 ### 移行チェックリスト
 
 - [ ] 既存の Ingress Annotation を分析する
-- [ ] 実装を選択して GatewayClass を作成する
-- [ ] Gateway リソースを作成して Listener を設定する
+- [ ] 実装を選択し、GatewayClass を作成する
+- [ ] Gateway リソースを作成し、Listener を設定する
 - [ ] ルーティングルールを HTTPRoute に変換する
 - [ ] ReferenceGrant でクロス Namespace アクセスを設定する
 - [ ] TLS 証明書を移行する
-- [ ] トラフィック分割を使用して段階的に移行する
+- [ ] トラフィック分割による段階的な移行
 - [ ] モニタリングとロギングを設定する
 - [ ] 既存の Ingress リソースを削除する
 
@@ -1114,7 +1116,7 @@ spec:
           port: 80
 ```
 
-### ALB Controller との併用
+### ALB Controller との使用
 
 ```yaml
 # Istio Gateway API + ALB Ingress combination
@@ -1161,14 +1163,14 @@ spec:
 
 ## API チャネルと成熟度
 
-Gateway API はさまざまな成熟度レベルの機能を提供します。
+Gateway API は、さまざまな成熟度の機能を提供します。
 
 ### チャネル分類
 
 | チャネル | 成熟度 | リソース |
 |---------|----------|-----------|
-| **Standard** | GA | GatewayClass、Gateway、HTTPRoute、ReferenceGrant |
-| **Experimental** | Beta/Alpha | GRPCRoute、TCPRoute、TLSRoute、UDPRoute |
+| **Standard** | GA | GatewayClass, Gateway, HTTPRoute, ReferenceGrant, TCPRoute, UDPRoute |
+| **Experimental** | Beta/Alpha | GRPCRoute, TLSRoute |
 
 ### バージョンと互換性
 
@@ -1179,23 +1181,32 @@ kind: HTTPRoute
 
 # Experimental channel
 apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TCPRoute
+kind: TLSRoute
 ```
+
+### 2026年8月更新: Gateway API v1.6 — TCPRoute と UDPRoute が Standard に昇格
+
+Gateway API v1.6.0 は 2026年6月30日にリリースされ、[2026年8月3日に Kubernetes ブログで発表されました](https://kubernetes.io/blog/2026/08/03/gateway-api-v1-6-release/)。上記の表では、次の 2 つの変更が重要です。
+
+- **TCPRoute と UDPRoute は Standard（GA）になりました**: どちらも `gateway.networking.k8s.io/v1` API バージョンに移行し、raw L4 ワークロード（データベース、DNS、VoIP、ゲーム、IoT テレメトリ）にポータブルで安定したルーティングモデルを提供します。各リソースの `v1alpha2` バージョンは v1.6 で非推奨となり、将来のリリースで削除されます。
+- **Experimental API group の分離**: experimental リソースは、Standard と Experimental の境界を明確にするため、`gateway.networking.x-k8s.io` という個別の API group に移動し、`X` プレフィックス（例: 新しい `XBackend` リソース）が付きます。
+
+実装は v1.6 を迅速に採用しています。たとえば Cilium 1.20（2026年7月）は、TCPRoute/UDPRoute を含む Gateway API v1.6.1 のサポートを提供しています。
 
 ## Ingress API との比較
 
 | 機能 | Ingress | Gateway API |
 |---------|---------|-------------|
-| **ロール分離** | いいえ | はい（3 層） |
-| **HTTP ルーティング** | はい | はい |
-| **TCP/UDP** | いいえ | はい |
+| **ロール分離** | No | Yes（3 層） |
+| **HTTP ルーティング** | Yes | Yes |
+| **TCP/UDP** | No | Yes |
 | **gRPC** | Annotation 経由 | ネイティブ |
-| **TLS パススルー** | 実装に依存 | はい |
+| **TLS パススルー** | 実装依存 | Yes |
 | **トラフィック分割** | Annotation 経由 | ネイティブ |
-| **ヘッダーベースのルーティング** | Annotation 経由 | ネイティブ |
+| **Header ベースのルーティング** | Annotation 経由 | ネイティブ |
 | **クロス Namespace** | 制限あり | ReferenceGrant |
-| **ポータビリティ** | Annotation に依存 | 標準化済み |
-| **拡張性** | いいえ | CRD |
+| **ポータビリティ** | Annotation 依存 | 標準化 |
+| **拡張性** | No | CRD |
 
 ## ベストプラクティス
 
@@ -1248,11 +1259,11 @@ spec:
 
 ---
 
-## 参考資料
+## 参照
 
-- [Gateway API 公式ドキュメント](https://gateway-api.sigs.k8s.io/)
+- [Gateway API Official Documentation](https://gateway-api.sigs.k8s.io/)
 - [Gateway API GitHub](https://github.com/kubernetes-sigs/gateway-api)
-- [Istio Gateway API サポート](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
+- [Istio Gateway API Support](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
 - [Cilium Gateway API](https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/)
 - [AWS Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/)
 - [Envoy Gateway](https://gateway.envoyproxy.io/)

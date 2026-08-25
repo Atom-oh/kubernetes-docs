@@ -1,21 +1,21 @@
 # Kubernetes Gateway API
 
 > **支持的版本**: Gateway API v1.2+
-> **最后更新**: July 3, 2026
+> **最后更新**: August 10, 2026
 
 ## 概述
 
-Gateway API 是 Kubernetes 的下一代 Ingress API，旨在克服现有 Ingress API 的限制，并提供更具表达力和可扩展的网络路由能力。它由 SIG-Network 开发，受到包括 Istio、Cilium、Envoy Gateway 等多种实现的支持。
+Gateway API 是 Kubernetes 的下一代 Ingress API，旨在克服现有 Ingress API 的限制，并提供更具表达力和可扩展的网络路由能力。它由 SIG-Network 开发，并受到包括 Istio、Cilium、Envoy Gateway 等多种实现的支持。
 
 ### Ingress API 的限制
 
-| 问题 | 描述 |
+| 问题 | 说明 |
 |---------|-------------|
-| **表达能力有限** | 除 HTTP 路由外，对 TCP/UDP/gRPC 的支持较差 |
+| **表达能力有限** | 除 HTTP 路由外，对 TCP/UDP/gRPC 的支持较弱 |
 | **没有角色分离** | 难以分离基础设施管理员和应用开发者的权限 |
-| **滥用注解** | 通过注解处理实现特定功能，降低可移植性 |
+| **滥用注解** | 通过注解处理特定于实现的功能，降低可移植性 |
 | **可扩展性有限** | 难以添加新协议或功能 |
-| **跨 Namespace** | 跨 Namespace 的路由复杂 |
+| **跨 Namespace** | 跨 Namespace 的路由很复杂 |
 
 ### Gateway API 的优势
 
@@ -93,13 +93,13 @@ graph TB
 
 | 角色 | 管理的资源 | 职责 |
 |------|------------------|----------------|
-| **基础设施提供商** | GatewayClass | 定义基础设施的基本配置 |
-| **集群运维人员** | Gateway、ReferenceGrant | Load Balancer 配置、权限管理 |
-| **应用开发者** | HTTPRoute、GRPCRoute 等 | 定义应用路由规则 |
+| **基础设施提供商** | GatewayClass | 定义基础设施基本配置 |
+| **集群运维人员** | Gateway, ReferenceGrant | 负载均衡器预置、权限管理 |
+| **应用开发者** | HTTPRoute, GRPCRoute 等 | 定义应用路由规则 |
 
 ## GatewayClass
 
-GatewayClass 定义创建 Gateway 时要使用的 controller 和配置。
+GatewayClass 定义创建 Gateway 时要使用的控制器和配置。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -175,7 +175,7 @@ spec:
 
 ## Gateway
 
-Gateway 定义实际的 Load Balancer 实例。
+Gateway 定义实际的负载均衡器实例。
 
 ### 基本 Gateway 配置
 
@@ -311,9 +311,9 @@ spec:
 
 ### TLS 模式
 
-| 模式 | 描述 | 使用场景 |
+| 模式 | 说明 | 用例 |
 |------|-------------|----------|
-| **Terminate** | 在 Gateway 处终止 TLS | 标准 HTTPS |
+| **Terminate** | 在 Gateway 终止 TLS | 标准 HTTPS |
 | **Passthrough** | 将 TLS 传递至后端 | 端到端加密 |
 
 ```yaml
@@ -485,7 +485,7 @@ spec:
 
 ### 过滤器
 
-过滤器可用于修改请求/响应。
+过滤器允许修改请求/响应。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -618,7 +618,7 @@ spec:
           weight: 10
 ```
 
-### 超时和重试
+### 超时与重试
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -701,7 +701,8 @@ spec:
 定义 TCP 流量路由。
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+# GA in v1 since Gateway API v1.6 (v1alpha2 deprecated)
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: database-route
@@ -718,7 +719,7 @@ spec:
           port: 5432
 ---
 # Multi-backend TCP routing
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: tcp-loadbalance
@@ -769,7 +770,8 @@ spec:
 定义 UDP 流量路由。
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+# GA in v1 since Gateway API v1.6 (v1alpha2 deprecated)
+apiVersion: gateway.networking.k8s.io/v1
 kind: UDPRoute
 metadata:
   name: dns-route
@@ -832,7 +834,7 @@ spec:
 
 ### 主要实现
 
-| 实现 | Controller | 功能 |
+| 实现 | 控制器 | 功能 |
 |----------------|------------|----------|
 | **Istio** | istio.io/gateway-controller | Service Mesh 集成、高级流量管理 |
 | **Cilium** | io.cilium/gateway-controller | 基于 eBPF、高性能 |
@@ -855,26 +857,26 @@ spec:
 | 流量拆分 | 是 | 是 | 是 | 是 | 是 |
 | Header 修改 | 是 | 是 | 是 | 部分支持 | 是 |
 | URL 重写 | 是 | 是 | 是 | 部分支持 | 是 |
-| 镜像流量 | 是 | 部分支持 | 是 | 否 | 是 |
+| 镜像 | 是 | 部分支持 | 是 | 否 | 是 |
 
 ## AWS Load Balancer Controller Gateway API 支持（v3.0 GA）
 
-从 AWS Load Balancer Controller v3.0.0（2026 年 1 月）开始，Gateway API 支持已达到 GA，可通过 GatewayClass/Gateway/HTTPRoute 角色分离模型声明式管理 ALB/NLB。
+从 AWS Load Balancer Controller v3.0.0（2026 年 1 月）开始，Gateway API 支持达到 GA，可通过 GatewayClass/Gateway/HTTPRoute 角色分离模型声明式地管理 ALB/NLB。
 
-- **背景**：随着 NGINX Ingress Controller 将于 2026 年 3 月停止支持，AWS 将 LBC v3.0 + Gateway API 定位为原生替代方案。
-- **向后兼容性**：现有 Ingress/Service 资源仍获得完全支持——无需立即切换，可逐步迁移。
+- **背景**：随着 NGINX Ingress Controller 于 2026 年 3 月结束支持，AWS 将 LBC v3.0 + Gateway API 定位为原生替代方案。
+- **向后兼容性**：现有的 Ingress/Service 资源仍获得完全支持——无需立即切换，可逐步迁移。
 - **优势**：基于 Header/query 的路由、加权流量分配（Blue/Green、Canary），以及覆盖 TCP/UDP/gRPC 的多协议设计。
-- **升级注意事项**：如果通过 Helm 使用 `enableCertManager=true` 安装，请在升级前设置 `keepTLSSecret=false`（v3.0.0 起会自动处理）。
+- **升级注意事项**：如果通过 Helm 以 `enableCertManager=true` 安装，请在升级前设置 `keepTLSSecret=false`（从 v3.0.0 起会自动处理）。
 
 ### v3.4.0 迁移工具（2026 年 6 月）
 
-新增了可将现有基于 ALB 的 Ingress 无停机迁移至 Gateway API 的工具。
+新增了可将现有基于 ALB 的 Ingress 无停机迁移到 Gateway API 的工具。
 
-- **Ingress 到 Gateway 迁移工具**：在现有 ALB 旁创建新的 Gateway API 资源，实现零停机过渡
+- **Ingress 到 Gateway 迁移工具**：在现有 ALB 旁创建新的 Gateway API 资源，实现零停机切换
 - **lbc-migrate CLI**：自动将现有 Ingress 注解、路由规则和 IngressGroups 转换为 Gateway API 资源；`--from-cluster` 选项直接分析集群
-- **迁移控制台**：在迁移前用于验证已转换配置的 Web UI
+- **迁移控制台**：用于在迁移前验证转换后配置的 Web UI
 
-> **注意**：Gateway API + NLB 组合的行为已更改。如果多个 TCP/UDP/TLS Route 附加到单个 Listener，则只有最早的 Route 会接收流量。请在升级前审查 L4 Route 配置。
+> **注意**：Gateway API + NLB 组合的行为发生变化。如果多个 TCP/UDP/TLS Route 附加到同一个 Listener，只有最早的 Route 会收到流量。请在升级前检查 L4 Route 配置。
 
 （共同来源：[AWS Load Balancer Controller Releases](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases)）
 
@@ -1034,7 +1036,7 @@ spec:
           port: 80
 ```
 
-#### 第 4 步：逐步过渡
+#### 第 4 步：渐进式切换
 
 ```yaml
 # Gradual transition via traffic splitting
@@ -1067,7 +1069,7 @@ spec:
 - [ ] 将路由规则转换为 HTTPRoute
 - [ ] 使用 ReferenceGrant 配置跨 Namespace 访问
 - [ ] 迁移 TLS 证书
-- [ ] 通过流量拆分逐步过渡
+- [ ] 通过流量拆分进行渐进式切换
 - [ ] 设置监控和日志记录
 - [ ] 移除现有 Ingress 资源
 
@@ -1114,7 +1116,7 @@ spec:
           port: 80
 ```
 
-### 与 ALB Controller 配合使用
+### 与 ALB Controller 一起使用
 
 ```yaml
 # Istio Gateway API + ALB Ingress combination
@@ -1159,7 +1161,7 @@ spec:
                   number: 80
 ```
 
-## API 通道与成熟度
+## API 通道和成熟度
 
 Gateway API 提供处于不同成熟度级别的功能。
 
@@ -1167,10 +1169,10 @@ Gateway API 提供处于不同成熟度级别的功能。
 
 | 通道 | 成熟度 | 资源 |
 |---------|----------|-----------|
-| **Standard** | GA | GatewayClass、Gateway、HTTPRoute、ReferenceGrant |
-| **Experimental** | Beta/Alpha | GRPCRoute、TCPRoute、TLSRoute、UDPRoute |
+| **Standard** | GA | GatewayClass, Gateway, HTTPRoute, ReferenceGrant, TCPRoute, UDPRoute |
+| **Experimental** | Beta/Alpha | GRPCRoute, TLSRoute |
 
-### 版本与兼容性
+### 版本和兼容性
 
 ```yaml
 # Standard channel (stable)
@@ -1179,8 +1181,17 @@ kind: HTTPRoute
 
 # Experimental channel
 apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TCPRoute
+kind: TLSRoute
 ```
+
+### 2026 年 8 月更新：Gateway API v1.6 —— TCPRoute 和 UDPRoute 升级为 Standard
+
+Gateway API v1.6.0 于 2026 年 6 月 30 日发布，并于 [2026 年 8 月 3 日在 Kubernetes 博客上公布](https://kubernetes.io/blog/2026/08/03/gateway-api-v1-6-release/)。以下两项变更会影响上面的表格：
+
+- **TCPRoute 和 UDPRoute 现为 Standard（GA）**：两者均迁移到 `gateway.networking.k8s.io/v1` API 版本，为原始 L4 工作负载（数据库、DNS、VoIP、游戏、IoT 遥测）提供可移植、稳定的路由模型。自 v1.6 起，每个资源的 `v1alpha2` 版本均已弃用，并将在未来版本中移除。
+- **Experimental API group 分离**：实验性资源迁移到独立的 API group `gateway.networking.x-k8s.io`，并使用 `X` 前缀（例如新的 `XBackend` 资源），以明确 Standard 与 Experimental 的边界。
+
+各实现正快速采用 v1.6——例如，Cilium 1.20（2026 年 7 月）已提供 Gateway API v1.6.1 支持，包括 TCPRoute/UDPRoute。
 
 ## 与 Ingress API 的对比
 
@@ -1194,7 +1205,7 @@ kind: TCPRoute
 | **流量拆分** | 通过注解 | 原生 |
 | **基于 Header 的路由** | 通过注解 | 原生 |
 | **跨 Namespace** | 有限 | ReferenceGrant |
-| **可移植性** | 取决于注解 | 标准化 |
+| **可移植性** | 依赖注解 | 标准化 |
 | **可扩展性** | 否 | CRD |
 
 ## 最佳实践
@@ -1227,7 +1238,7 @@ spec:
       name: specific-service  # Specific service only
 ```
 
-### 3. Gateway 分离
+### 3. Gateway 隔离
 
 ```yaml
 # Separate Gateway by environment

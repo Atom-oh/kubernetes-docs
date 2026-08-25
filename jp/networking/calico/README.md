@@ -1,74 +1,78 @@
-# Calico 詳解: エンタープライズグレード Kubernetes ネットワーキング
+# Calico 詳解: エンタープライズグレードの Kubernetes ネットワーキング
 
 > **対応バージョン**: Calico v3.29+ / Kubernetes 1.28+
-> **最終更新**: February 22, 2026
+> **最終更新**: July 27, 2026
 
 ## 概要
 
-このセクションでは、Calico の中核となる概念と技術を包括的に解説します。Calico のアーキテクチャ、ネットワーキングモード、ネットワークポリシー、セキュリティ機能、クラウドプロバイダーとの統合を詳しく見ていきます。
+このセクションでは、Calico の中核となる概念と技術を包括的に理解します。Calico のアーキテクチャ、ネットワーキングモード、ネットワークポリシー、セキュリティ機能、およびクラウドプロバイダーとの統合を詳しく解説します。
 
-## Calico とは
+## Calico とは？
 
-Calico は、コンテナ、仮想マシン、ネイティブなホストベースワークロード向けのオープンソースのネットワーキングおよびネットワークセキュリティソリューションです。Tigera によって開発された Calico は、安定性、パフォーマンス、堅牢なネットワークポリシー機能により、世界中の企業から信頼される最も広く導入されている Kubernetes CNI プラグインの 1 つになっています。
+Calico は、コンテナ、仮想マシン、およびネイティブなホストベースのワークロード向けのオープンソースのネットワーキングおよびネットワークセキュリティソリューションです。Tigera によって当初開発された Calico は、最も広く導入されている Kubernetes CNI プラグインの 1 つとなっており、その安定性、パフォーマンス、堅牢なネットワークポリシー機能により、世界中のエンタープライズから信頼されています。
+
+### 2026年7月の更新: Kubernetes 上の VM 向け Calico
+
+2026年7月21日、Tigera は **Calico for VMs on Kubernetes** をリリースしました。これは、単一の Kubernetes ネイティブなコントロールプレーンで、仮想マシンとコンテナの両方にネットワーキングおよびネットワークセキュリティを提供する eBPF ベースのプラットフォームです。VMware/NSX の移行を対象としており、Kubernetes に移行した VM は IP アドレスを維持し、L2 ブリッジ拡張を介して既存の VLAN にとどまることができ、隣接するコンテナと同じ Calico ネットワークポリシー、マイクロセグメンテーション（ポリシー階層およびステージドポリシーを含む）、ルーティング、ロードバランシング、フロー可視性を継承します。詳細は[プレスリリース](https://www.storagenewsletter.com/2026/07/21/tigera-launches-calico-unified-platform-3-23-the-definitive-vmware-migration-solution-with-one-network-and-one-security-model-for-every-vm-and-container-on-kubernetes/)を参照してください。
 
 ### 主な利点
 
-1. **実運用で実証された成熟性**: 2016 年以降、数千の組織が本番環境で使用
-2. **柔軟な Data Plane**: iptables、nftables、eBPF の Data Plane から選択可能
-3. **ネイティブ BGP サポート**: オンプレミスおよびハイブリッドデプロイメント向けの強力な BGP 統合
+1. **実績のある成熟度**: 2016年以降、数千の組織で本番環境に利用
+2. **柔軟なデータプレーン**: iptables、nftables、または eBPF データプレーンから選択可能
+3. **ネイティブ BGP サポート**: オンプレミスおよびハイブリッドデプロイメントのための一級 BGP 統合
 4. **包括的なネットワークポリシー**: Kubernetes NetworkPolicy に加え、拡張された Calico ポリシーを提供
-5. **Windows サポート**: Windows コンテナネットワーキングを完全サポート
-6. **エンタープライズ機能**: Tigera Calico Enterprise はオブザーバビリティ、コンプライアンス、脅威防御を追加
-7. **クラウドネイティブ統合**: AWS、GCP、Azure、オンプレミスインフラストラクチャとシームレスに統合
+5. **Windows サポート**: Windows コンテナネットワーキングを完全にサポート
+6. **エンタープライズ機能**: Tigera Calico Enterprise は可観測性、コンプライアンス、脅威防御を追加
+7. **クラウドネイティブ統合**: AWS、GCP、Azure、およびオンプレミスインフラストラクチャとシームレスに統合
 
 ### Calico を選ぶ理由
 
-- **大規模環境で実証済み**: 数十億件のトランザクションを処理する企業の本番ワークロードを支えています
-- **運用のシンプルさ**: 導入と設定が容易
-- **強力なコミュニティ**: 充実したドキュメントを備えた活発なオープンソースコミュニティ
+- **大規模環境での実証済み**: 数十億件のトランザクションを処理する企業の本番ワークロードを支えます
+- **運用のシンプルさ**: 導入と設定が容易です
+- **強力なコミュニティ**: 豊富なドキュメントを備えた活発なオープンソースコミュニティ
 - **ベンダーの柔軟性**: あらゆる Kubernetes ディストリビューションで一貫して動作
-- **コンプライアンス対応**: 監査ログとポリシー適用の組み込み機能
+- **コンプライアンス対応**: 監査ログおよびポリシー適用の組み込み機能
 
-## バージョンの主なポイント: Calico v3.29
+## バージョンのハイライト: Calico v3.29
 
-Calico v3.29 は、ネットワーキング、セキュリティ、オブザーバビリティ全体で大幅な改善を提供します。
+Calico v3.29 は、ネットワーキング、セキュリティ、可観測性全体にわたり大幅な改善を提供します。
 
 ### ネットワーキングの強化
-- **eBPF Data Plane GA**: 完全な機能同等性を備えた本番対応 eBPF Data Plane
-- **BGP パフォーマンスの改善**: ルート収束を最適化し、メモリ使用量を削減
-- **VXLAN の強化**: 自動 MTU 検出によるクロスサブネットルーティングの改善
-- **IPv6 Dual-Stack**: Dual-Stack ネットワーキング環境を完全サポート
+- **eBPF データプレーン GA**: 完全な機能同等性を備えた本番対応 eBPF データプレーン
+- **BGP パフォーマンスの改善**: ルート収束を最適化し、メモリフットプリントを削減
+- **VXLAN の強化**: 自動 MTU 検出による、より優れたクロスサブネットルーティング
+- **IPv6 デュアルスタック**: デュアルスタックネットワーキング環境を完全にサポート
 
 ### セキュリティの改善
-- **DNS ポリシーの強化**: より細かな FQDN ベースのネットワークポリシー
-- **ポリシー推奨**: 観測されたトラフィックに基づく AI 支援ポリシー生成
-- **暗号化オプション**: ノード間暗号化向けに簡素化された WireGuard 設定
+- **DNS ポリシーの強化**: よりきめ細かな FQDN ベースのネットワークポリシー
+- **ポリシーの推奨**: 観測されたトラフィックに基づく AI 支援ポリシー生成
+- **暗号化オプション**: ノード間暗号化のための簡素化された WireGuard 設定
 
 ### 運用機能
-- **Calico API Server**: Calico リソースのネイティブ Kubernetes API 集約
-- **診断機能の改善**: 強化されたトラブルシューティングツールとヘルスチェック
+- **Calico API Server**: Calico リソース向けのネイティブ Kubernetes API 集約
+- **診断の改善**: 強化されたトラブルシューティングツールとヘルスチェック
 - **リソース最適化**: CPU とメモリ消費量を削減
 
-## CNI 比較
+## CNI の比較
 
 | 機能 | Calico | Cilium |
 |---------|--------|--------|
 | **中核技術** | iptables/eBPF | eBPF |
-| **成熟性** | 非常に高い (2016+) | 高い (2017+) |
+| **成熟度** | 非常に高い (2016+) | 高い (2017+) |
 | **ネットワークポリシー** | L3-L4 (L7 Enterprise) | L3-L7 |
-| **Service Mesh** | 別途 (Enterprise) | 組み込み |
+| **サービスメッシュ** | 別途 (Enterprise) | 組み込み |
 | **BGP サポート** | 強力 (ネイティブ) | サポート済み |
-| **オブザーバビリティ** | 基本 (Enterprise: 高度) | Hubble (強力) |
+| **可観測性** | 基本 (Enterprise: 高度) | Hubble (強力) |
 | **Windows サポート** | 完全 | ベータ |
-| **eBPF Data Plane** | 任意 | 必須 |
+| **eBPF データプレーン** | 任意 | 必須 |
 | **学習曲線** | 中程度 | より急 |
-| **リソース使用量** | 少ない | 多い |
+| **リソース使用量** | 低い | 高い |
 | **kube-proxy 置換** | はい (eBPF モード) | はい |
 | **マルチクラスター** | Federation | Cluster Mesh |
 
-## アーキテクチャ概要
+## アーキテクチャの概要
 
-Calico のアーキテクチャは、ネットワーキングとネットワークセキュリティを提供するために連携する複数の主要コンポーネントで構成されています。
+Calico のアーキテクチャは、ネットワーキングとネットワークセキュリティを提供するために連携する、いくつかの主要コンポーネントで構成されます。
 
 ```mermaid
 flowchart TD
@@ -108,32 +112,32 @@ flowchart TD
     class H,I datastore
 ```
 
-### 主なコンポーネント
+### 主要コンポーネント
 
 | コンポーネント | 役割 | 実行場所 |
 |-----------|------|---------|
-| **Felix** | 各ホスト上でルートと ACL をプログラム | すべてのノード |
+| **Felix** | 各ホストでルートと ACL をプログラム | すべてのノード |
 | **BIRD** | ルート配布のための BGP デーモン | すべてのノード |
-| **confd** | Datastore を監視し、BIRD 設定を生成 | すべてのノード |
+| **confd** | データストアを監視し、BIRD 設定を生成 | すべてのノード |
 | **Typha** | API server の負荷を軽減するキャッシュプロキシ | 専用 Pod |
-| **kube-controllers** | Kubernetes リソースを Calico と同期 | Control Plane |
-| **Calico API Server** | Kubernetes API 集約レイヤー | Control Plane |
+| **kube-controllers** | Kubernetes リソースを Calico と同期 | コントロールプレーン |
+| **Calico API Server** | Kubernetes API 集約レイヤー | コントロールプレーン |
 
 ## ネットワーキングモード
 
-Calico は、さまざまなインフラストラクチャ要件に対応する複数のネットワーキングモードをサポートしています。
+Calico は、さまざまなインフラストラクチャ要件に合わせて複数のネットワーキングモードをサポートしています。
 
 ### 1. IPIP モード (デフォルト)
-- クロスサブネットトラフィック向けの IP-in-IP カプセル化
+- クロスサブネットトラフィックのための IP-in-IP カプセル化
 - MTU: 1480 bytes
 - 最適な用途: クラウド環境、シンプルなセットアップ
 
 ### 2. VXLAN モード
-- VXLAN カプセル化 (UDP port 4789)
+- VXLAN カプセル化 (UDP ポート 4789)
 - MTU: 1450 bytes
-- 最適な用途: 標準的なオーバーレイプロトコルを必要とする環境
+- 最適な用途: 標準オーバーレイプロトコルを必要とする環境
 
-### 3. Direct/Unencapsulated モード
+### 3. ダイレクト/非カプセル化モード
 - カプセル化なし、ネイティブルーティング
 - MTU: 1500 bytes (フル)
 - 最適な用途: BGP を使用するオンプレミス、パフォーマンスが重要なワークロード
@@ -154,7 +158,7 @@ flowchart TD
     G --> H
 ```
 
-## Amazon EKS 統合
+## Amazon EKS との統合
 
 Calico は Amazon EKS とシームレスに統合し、強化されたネットワークポリシー機能を提供します。
 
@@ -190,7 +194,7 @@ kubectl get pods -n calico-system
 
 ### VPC CNI + Calico Policy を使用する EKS
 
-ネットワーキングに AWS VPC CNI を使用しながら、高度なネットワークポリシーを必要とする EKS 環境向け:
+ネットワーキングに AWS VPC CNI を使用し、高度なネットワークポリシーが必要な EKS 環境の場合:
 
 ```bash
 # Install Calico for network policy only
@@ -322,7 +326,7 @@ spec:
       - 443
 ```
 
-## モニタリングとオブザーバビリティ
+## モニタリングと可観測性
 
 ### Prometheus メトリクス
 
@@ -345,8 +349,8 @@ spec:
 |--------|-------------|
 | `felix_active_local_endpoints` | ノード上のアクティブなエンドポイント数 |
 | `felix_iptables_rules` | プログラムされた iptables ルール数 |
-| `felix_ipsets_calico` | 維持されている IP set 数 |
-| `felix_int_dataplane_failures` | Data Plane のプログラミング失敗 |
+| `felix_ipsets_calico` | 維持される IP セット数 |
+| `felix_int_dataplane_failures` | データプレーンのプログラミング失敗 |
 | `felix_cluster_num_hosts` | クラスター内のホスト総数 |
 
 ### ヘルスチェックエンドポイント
@@ -362,7 +366,7 @@ curl -s http://localhost:9098/liveness
 
 ## トラブルシューティング クイックリファレンス
 
-### よく使うコマンド
+### 一般的なコマンド
 
 ```bash
 # Check Calico system status
@@ -392,12 +396,12 @@ kubectl exec -n calico-system calico-node-xxxxx -c calico-node -- birdcl show pr
 | Pod が ContainerCreating で停止する | Felix ログで IPAM エラーを確認 | IPPool 設定を確認 |
 | ノード間接続に失敗する | カプセル化モードを確認 | IPIP/VXLAN が有効であることを確認 |
 | ネットワークポリシーが適用されない | ポリシーの順序とセレクターを確認 | `calicoctl` でポリシーを検証 |
-| Felix の CPU 使用率が高い | iptables ルールが多すぎる | eBPF Data Plane を検討 |
+| Felix の CPU 使用率が高い | iptables ルールが多すぎる | eBPF データプレーンを検討 |
 
 ## 詳解の目次
 
 **[パート 1: Calico の紹介](01-introduction.md)**
-- Calico とは何か、プロジェクトの歴史
+- Calico とは何か、およびプロジェクトの歴史
 - ラボ環境のセットアップ
 - 中核機能の概要
 - ユースケースとデプロイメントシナリオ
@@ -410,39 +414,39 @@ kubectl exec -n calico-system calico-node-xxxxx -c calico-node -- birdcl show pr
 - confd: 設定管理
 - Typha: スケーリングコンポーネント
 - kube-controllers: Kubernetes 統合
-- Datastore オプション
+- データストアのオプション
 - パケットフロー分析
 
 **[パート 3: ネットワーキングモード](03-networking-modes.md)**
 - IPIP カプセル化モード
 - VXLAN カプセル化モード
-- Direct/Unencapsulated モード
+- ダイレクト/非カプセル化モード
 - モードの比較と選択
 - パフォーマンスベンチマーク
-- クラウドプロバイダー互換性
+- クラウドプロバイダーの互換性
 - MTU 最適化
 
 ## 選択ガイド: Calico vs Cilium
 
-### 次の場合は Calico を選択:
-- 本番環境で実証された安定性と成熟性が必要
+### Calico を選ぶ場合:
+- 本番環境で実績のある安定性と成熟度が必要
 - Windows コンテナのサポートが必要
 - 既存のネットワークインフラストラクチャとの BGP 統合が重要
-- 高度な機能よりも運用のシンプルさを優先する
-- リソース効率を重視する
+- 高度な機能より運用のシンプルさを重視する
+- リソース効率が優先事項
 - iptables ベースのネットワーキングにすでに精通している
 
-### 次の場合は Cilium を選択:
+### Cilium を選ぶ場合:
 - 高度な L7 ネットワークポリシーが必要
-- 組み込みの Service Mesh 機能が望ましい
-- Hubble による詳細なオブザーバビリティが重要
+- 組み込みのサービスメッシュ機能が求められる
+- Hubble による深い可観測性が重要
 - 最先端の eBPF 機能を活用したい
 - Cluster Mesh を使用したマルチクラスター接続が必要
 
 ### ハイブリッドアプローチ
-一部の組織では両方を使用しています:
-- 安定性が必要な本番ワークロードには Calico
-- 新機能を試す開発/ステージング環境には Cilium
+一部の組織では両方を使用します:
+- 安定性を必要とする本番ワークロードには Calico
+- 新機能を検証する開発/ステージング環境には Cilium
 
 ## 参考資料
 
@@ -450,9 +454,9 @@ kubectl exec -n calico-system calico-node-xxxxx -c calico-node -- birdcl show pr
 - [Calico GitHub リポジトリ](https://github.com/projectcalico/calico)
 - [Tigera Calico Enterprise](https://www.tigera.io/tigera-products/calico-enterprise/)
 - [Calico ネットワークポリシーガイド](https://docs.tigera.io/calico/latest/network-policy/)
-- [Amazon EKS Calico 統合](https://docs.aws.amazon.com/eks/latest/userguide/calico.html)
+- [Amazon EKS と Calico の統合](https://docs.aws.amazon.com/eks/latest/userguide/calico.html)
 - [calicoctl リファレンス](https://docs.tigera.io/calico/latest/reference/calicoctl/)
-- [Calico eBPF Data Plane](https://docs.tigera.io/calico/latest/operations/ebpf/)
+- [Calico eBPF データプレーン](https://docs.tigera.io/calico/latest/operations/ebpf/)
 
 ## クイズ
 
