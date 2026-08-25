@@ -2,78 +2,78 @@
 
 > **Versiones compatibles**: Terraform >= 1.5, AWS Provider >= 5.40, EKS >= 1.29 **Última actualización**: February 19, 2026
 
-< [Anterior: Infraestructura Terraform de 3 capas](01-infrastructure-setup.md) | [Tabla de contenido](./) | [Siguiente: Pipelines de CI](03-ci-pipelines.md) >
+< [Anterior: Infraestructura de 3 capas con Terraform](01-infrastructure-setup.md) | [Tabla de contenidos](./README.md) | [Siguiente: Pipelines de CI](03-ci-pipelines.md) >
 
 ***
 
 ## Descripción general
 
-Esta guía cubre patrones avanzados de infraestructura para ejecutar workloads de producción en EKS con alta disponibilidad y deployments sin tiempo de inactividad. La arquitectura de clusters Blue/Green permite actualizaciones de cluster sin interrupciones, recuperación ante desastres y gestión del tráfico entre múltiples zonas de disponibilidad.
+Esta guía cubre patrones avanzados de infraestructura para ejecutar cargas de trabajo de EKS en producción con alta disponibilidad y despliegues sin tiempo de inactividad. La arquitectura de clústeres Blue/Green permite actualizaciones de clústeres sin interrupciones, recuperación ante desastres y gestión del tráfico en múltiples zonas de disponibilidad.
 
 **Temas clave:**
 
-* Arquitectura de doble cluster Blue/Green
-* Target groups ponderados de NLB para distribución de tráfico
-* Cambio de tráfico basado en DNS con Route53
-* Ubicación de datos consciente de la zona para workloads con estado
+* Arquitectura de clústeres duales Blue/Green
+* Grupos de destino ponderados de NLB para la distribución del tráfico
+* Conmutación de tráfico basada en DNS con Route53
+* Ubicación de datos consciente de la zona para cargas de trabajo con estado
 * Failover automatizado con CloudWatch y Lambda
 
 ***
 
 ## 1. Descripción general de la arquitectura Blue/Green
 
-### ¿Por qué clusters Blue/Green?
+### ¿Por qué clústeres Blue/Green?
 
-Las actualizaciones tradicionales in-place de clusters conllevan un riesgo significativo:
+Las actualizaciones tradicionales de clústeres in situ conllevan un riesgo significativo:
 
-* Interrupción de workloads durante actualizaciones del control plane
-* El drenaje de Nodes puede causar problemas de capacidad
-* Complejidad de rollback cuando surgen problemas
-* Ventanas de mantenimiento extendidas
+* Interrupción de las cargas de trabajo durante las actualizaciones del plano de control
+* El drenaje de Node puede ocasionar problemas de capacidad
+* Complejidad del rollback cuando surgen problemas
+* Ventanas de mantenimiento prolongadas
 
-La arquitectura Blue/Green elimina estos riesgos manteniendo dos clusters independientes:
+La arquitectura Blue/Green elimina estos riesgos al mantener dos clústeres independientes:
 
-| Aspecto        | Actualización in-place | Blue/Green                     |
-| ------------- | ---------------------- | ------------------------------ |
-| Riesgo de tiempo de inactividad | Medio-alto      | Casi cero                      |
+| Aspecto        | Actualización in situ | Blue/Green                     |
+| ------------- | --------------------- | ------------------------------ |
+| Riesgo de inactividad | Medio-alto      | Casi cero                      |
 | Tiempo de rollback | 30-60 minutos    | Segundos (DNS/NLB)              |
 | Pruebas       | Limitadas          | Tráfico completo de producción        |
-| Costo          | Cluster único   | 2x cluster (durante la transición) |
+| Costo          | Un clúster   | 2x clúster (durante la transición) |
 
 ### Diagrama de arquitectura
 
-![Arquitectura Blue/Green con NLB](../.gitbook/assets/nlb_bluegreen_architecture.png)
+![Arquitectura Blue/Green de NLB](../.gitbook/assets/nlb_bluegreen_architecture.png)
 
-### Justificación del diseño de zona única
+### Fundamento del diseño de zona única
 
-Cada cluster opera en una sola zona de disponibilidad:
+Cada clúster opera en una única zona de disponibilidad:
 
 **Ventajas:**
 
 1. **Localidad de datos**: Los Pods siempre se programan cerca de sus volúmenes de almacenamiento
-2. **Optimización de costos**: Cero costos de transferencia de datos entre AZ
-3. **Aislamiento de fallas**: La falla de una AZ afecta solo a un cluster
-4. **Redes simplificadas**: Sin balanceo de carga multi-AZ complejo
+2. **Optimización de costos**: Costos nulos de transferencia de datos entre AZ
+3. **Aislamiento de fallos**: Un fallo de AZ afecta solo a un clúster
+4. **Red simplificada**: Sin balanceo de carga complejo entre múltiples AZ
 
-**Compensaciones:**
+**Consideraciones:**
 
 * Mayor riesgo de una sola AZ (mitigado por el failover Blue/Green)
-* Requiere planificación cuidadosa de capacidad por zona
+* Requiere una planificación cuidadosa de la capacidad por zona
 
 ### Asignación de zonas
 
-| Cluster | Zona de disponibilidad | Propósito                  |
-| ------- | ----------------- | ------------------------ |
-| Blue    | ap-northeast-2a   | Producción primaria       |
-| Green   | ap-northeast-2c   | Objetivo secundario/de actualización |
+| Clúster | Zona de disponibilidad | Propósito                  |
+| ------- | ---------------------- | ------------------------ |
+| Blue    | ap-northeast-2a   | Producción principal       |
+| Green   | ap-northeast-2c   | Destino secundario/de actualización |
 
 ***
 
-## 2. Target groups ponderados de NLB
+## 2. Grupos de destino ponderados de NLB
 
 ### Configuración de Network Load Balancer
 
-El NLB compartido distribuye el tráfico entre los clusters Blue y Green según los pesos de los target groups.
+El NLB compartido distribuye el tráfico entre los clústeres Blue y Green según los pesos de los grupos de destino.
 
 ```hcl
 # nlb/main.tf
@@ -362,7 +362,7 @@ variable "green_weight" {
 }
 ```
 
-### Outputs
+### Salidas
 
 ```hcl
 # nlb/outputs.tf
@@ -411,9 +411,9 @@ output "current_weights" {
 }
 ```
 
-### Ajuste de pesos para deployments
+### Ajuste de pesos para despliegues
 
-Ajuste los pesos progresivamente para deployments estilo canary:
+Ajusta los pesos progresivamente para despliegues de estilo canary:
 
 ```hcl
 # terraform.tfvars examples for different deployment stages
@@ -435,7 +435,7 @@ blue_weight  = 0
 green_weight = 100
 ```
 
-Aplique los cambios de pesos:
+Aplica los cambios de peso:
 
 ```bash
 # Update weights
@@ -449,11 +449,11 @@ aws elbv2 describe-listeners \
 
 ***
 
-## 3. Cambio de tráfico basado en DNS
+## 3. Conmutación de tráfico basada en DNS
 
 ### Enrutamiento ponderado de Route53
 
-Para un control más granular y enrutamiento global, use registros ponderados de Route53 junto con, o en lugar de, pesos de NLB.
+Para un control más granular y enrutamiento global, utiliza registros ponderados de Route53 junto con los pesos de NLB o en lugar de ellos.
 
 ```hcl
 # dns/main.tf
@@ -702,27 +702,27 @@ variable "green_dns_weight" {
 
 ### Estrategia de TTL
 
-El TTL de DNS afecta la rapidez con la que el tráfico cambia cuando se modifican los pesos:
+El TTL de DNS afecta la rapidez con la que cambia el tráfico cuando se modifican los pesos:
 
-| Valor de TTL    | Tiempo de cambio     | Caso de uso          |
-| ------------ | --------------- | ----------------- |
+| Valor de TTL    | Tiempo de conmutación     | Caso de uso          |
+| ------------ | ------------------------- | ----------------- |
 | 60 segundos   | \~2-3 minutos   | Failover rápido    |
 | 300 segundos  | \~10-15 minutos | Operaciones normales |
 | 3600 segundos | \~1-2 horas     | Enrutamiento estable    |
 
-Para registros Alias de Route53, el TTL se hereda del destino (NLB). Para control explícito de TTL, use registros que no sean alias con direcciones IP.
+Para los registros Alias de Route53, el TTL se hereda del destino (NLB). Para un control explícito del TTL, utiliza registros sin alias con direcciones IP.
 
 ***
 
-## 4. Ubicación de Nodes de datos
+## 4. Ubicación de Data Node
 
 ### Conceptos de afinidad de zona
 
-Para workloads con estado, los Pods deben programarse en la misma zona que sus volúmenes persistentes. EKS Auto Mode gestiona gran parte de esto automáticamente, pero comprender los conceptos ayuda con la resolución de problemas.
+Para las cargas de trabajo con estado, los Pods deben programarse en la misma zona que sus volúmenes persistentes. EKS Auto Mode gestiona gran parte de esto automáticamente, pero comprender los conceptos ayuda a solucionar problemas.
 
 ### Configuración de zona de NodePool
 
-El YAML real de NodePool se gestiona mediante ArgoCD GitOps (consulte [Configuración de GitOps Pipeline](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)), pero estos son los conceptos clave:
+El YAML de NodePool real lo gestiona ArgoCD GitOps (consulta [Configuración del pipeline de GitOps](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)), pero estos son los conceptos clave:
 
 ```yaml
 # Conceptual NodePool for Blue cluster (zone: ap-northeast-2a)
@@ -763,7 +763,7 @@ spec:
 
 ### TopologySpreadConstraints
 
-Asegure que los workloads se distribuyan correctamente dentro de un cluster de una sola zona:
+Asegúrate de que las cargas de trabajo se distribuyan correctamente dentro de un clúster de zona única:
 
 ```yaml
 # Example Deployment with topology constraints
@@ -798,9 +798,9 @@ spec:
               memory: 512Mi
 ```
 
-### Afinidad de Pod para co-ubicación
+### Afinidad de Pod para la coubicación
 
-Co-ubique Pods relacionados para reducir la latencia:
+Coubica los Pods relacionados para reducir la latencia:
 
 ```yaml
 # Cache pods should be near API pods
@@ -840,7 +840,7 @@ spec:
 
 ### StatefulSet con almacenamiento específico de zona
 
-Para bases de datos y otros workloads con estado:
+Para bases de datos y otras cargas de trabajo con estado:
 
 ```yaml
 # PostgreSQL StatefulSet with zone-locked storage
@@ -887,7 +887,7 @@ spec:
             storage: 100Gi
 ```
 
-### Storage Class para aprovisionamiento específico de zona
+### StorageClass para aprovisionamiento específico de zona
 
 ```yaml
 # StorageClass that provisions in specific zone
@@ -910,13 +910,14 @@ volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Retain
 ```
 
+
 ***
 
 ## 5. Automatización de failover
 
 ### Alarmas de CloudWatch
 
-Monitoree la salud del cluster y active failover automatizado:
+Supervisa la salud del clúster y activa el failover automatizado:
 
 ```hcl
 # failover/cloudwatch.tf
@@ -987,7 +988,7 @@ resource "aws_sns_topic_subscription" "email" {
 
 ### Función Lambda de failover
 
-Cambio de pesos automatizado cuando un cluster se vuelve no saludable:
+Conmutación automatizada de pesos cuando un clúster deja de estar en buen estado:
 
 ```hcl
 # failover/lambda.tf
@@ -1225,9 +1226,10 @@ def notify(message, severity):
         )
 ```
 
+
 ### Regla de EventBridge
 
-Active verificaciones de failover en una programación:
+Activa comprobaciones de failover según una programación:
 
 ```hcl
 # failover/eventbridge.tf
@@ -1255,7 +1257,7 @@ resource "aws_lambda_permission" "eventbridge" {
 }
 ```
 
-### Procedimiento de switchover manual
+### Procedimiento de conmutación manual
 
 Para mantenimiento planificado o failover manual:
 
@@ -1376,21 +1378,21 @@ echo "All traffic now routed to: $TO_CLUSTER"
 
 ## Resumen
 
-La arquitectura de cluster Blue/Green con enrutamiento ponderado de NLB proporciona:
+La arquitectura de clústeres Blue/Green con enrutamiento ponderado de NLB proporciona:
 
-1. **Deployments sin tiempo de inactividad**: Cambie el tráfico de forma gradual o instantánea
-2. **Rollback rápido**: Segundos para volver al cluster anterior
-3. **Dominios de falla aislados**: Las fallas de AZ afectan solo a un cluster
-4. **Pruebas en producción**: Dirija un pequeño porcentaje al nuevo cluster
-5. **Recuperación automatizada**: CloudWatch + Lambda para failover automático
+1. **Despliegues sin tiempo de inactividad**: Cambia el tráfico de forma gradual o instantánea
+2. **Rollback rápido**: Segundos para volver al clúster anterior
+3. **Dominios de fallo aislados**: Los fallos de AZ afectan solo a un clúster
+4. **Pruebas en producción**: Dirige un pequeño porcentaje al nuevo clúster
+5. **Recuperación automatizada**: CloudWatch + Lambda para el failover automático
 
 ### Documentación relacionada
 
-* [Infraestructura Terraform de 3 capas](01-infrastructure-setup.md)
+* [Infraestructura de 3 capas con Terraform](01-infrastructure-setup.md)
 * [Pipelines de CI](03-ci-pipelines.md)
-* [Configuración de GitOps Pipeline](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
-* [Introducción a EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
+* [Configuración del pipeline de GitOps](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [Primeros pasos con EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
 
 ***
 
-< [Anterior: Infraestructura Terraform de 3 capas](01-infrastructure-setup.md) | [Tabla de contenido](./) | [Siguiente: Pipelines de CI](03-ci-pipelines.md) >
+< [Anterior: Infraestructura de 3 capas con Terraform](01-infrastructure-setup.md) | [Tabla de contenidos](./README.md) | [Siguiente: Pipelines de CI](03-ci-pipelines.md) >

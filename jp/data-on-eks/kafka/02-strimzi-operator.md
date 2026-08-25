@@ -3,7 +3,7 @@
 > **サポート対象バージョン**: Strimzi 0.45+, Kubernetes 1.28+\
 > **最終更新**: July 9, 2026
 
-## Lab 環境のセットアップ
+## ラボ環境のセットアップ
 
 このドキュメントの例に沿って進めるには、以下のツールと環境が必要です。
 
@@ -11,30 +11,30 @@
 
 * kubectl v1.28 以降
 * Helm v3.12 以降
-* 稼働中の Kubernetes cluster (Amazon EKS 推奨)
-* Amazon EBS CSI driver がインストールされた cluster (ストレージ用)
+* 稼働中の Kubernetes クラスター（Amazon EKS 推奨）
+* Amazon EBS CSI driver がインストールされたクラスター（ストレージ用）
 
-## Strimzi とは?
+## Strimzi とは？
 
-Strimzi は、Operator pattern を使用して Apache Kafka を Kubernetes 上で実行する CNCF Incubating project であり、Kafka cluster のライフサイクル全体を宣言的に管理します。Kafka broker を通常の StatefulSet として手作業で構築することもできますが、実運用では反復的でエラーが起きやすい作業が数多く発生します。
+Strimzi は、Operator パターンを使用して Kubernetes 上で Apache Kafka を実行し、Kafka クラスターのライフサイクル全体を宣言的に管理する CNCF Incubating プロジェクトです。Kafka broker を通常の StatefulSet として手作業で構築することもできますが、実運用には、反復的でエラーが発生しやすい一連のタスクが伴います。
 
-* broker と controller 全体にわたる rolling upgrade と設定変更の順序制御
+* broker と controller 間でローリングアップグレードおよび設定変更の順序を調整すること
 * TLS 証明書の発行、更新、ローテーション
-* partition rebalancing と scale in/out の際のデータの安全な移動
-* user (ACL)、topic、connector などの補助リソースの宣言的管理
+* partition のリバランスおよびスケールイン／アウト時にデータを安全に移動すること
+* user（ACL）、topic、connector などの補助リソースを宣言的に管理すること
 
-Strimzi は、これらすべてを CRD (Custom Resource Definitions) — `Kafka`、`KafkaNodePool`、`KafkaTopic`、`KafkaUser`、`KafkaConnect` — の背後に抽象化します。目的の状態を YAML で宣言すると、Operator が cluster の実際の状態を継続的に reconcile して一致させます。これは、手書きの StatefulSet と大量の shell script を組み合わせるよりも、はるかに信頼性と再現性の高いアプローチです。
+Strimzi は、これらすべてを `Kafka`、`KafkaNodePool`、`KafkaTopic`、`KafkaUser`、`KafkaConnect` という CRD（Custom Resource Definitions）の背後に抽象化します。必要な状態を YAML で宣言すると、Operator がクラスターの実際の状態を継続的に調整し、宣言した状態に一致させます。これは、手書きの StatefulSet と大量の shell script を組み合わせるよりも、はるかに信頼性と再現性の高いアプローチです。
 
-### 主要コンポーネント
+### コアコンポーネント
 
-* **Cluster Operator**: `Kafka`、`KafkaNodePool`、`KafkaConnect` などの cluster level resource を監視し、基盤となる StatefulSet、Pod、Service、ConfigMap を作成および管理します
-* **Topic Operator**: `KafkaTopic` custom resource を実際の Kafka topic と同期します (単方向 — CR が信頼できる情報源であり、実際の topic に適用されます)
-* **User Operator**: `KafkaUser` custom resource に基づいて、SCRAM-SHA-512 または TLS authentication credential と ACL を管理します
-* **Entity Operator**: Topic Operator と User Operator を 1 つの Pod にまとめ、Kafka cluster ごとに 1 回 deploy します
+* **Cluster Operator**: `Kafka`、`KafkaNodePool`、`KafkaConnect` などのクラスターレベルのリソースを監視し、基盤となる StatefulSet、Pod、Service、ConfigMap を作成・管理します
+* **Topic Operator**: `KafkaTopic` custom resource と実際の Kafka topic を同期します（一方向。CR が信頼できる情報源となり、実際の topic に適用されます）
+* **User Operator**: `KafkaUser` custom resource に基づいて SCRAM-SHA-512 または TLS の認証情報と ACL を管理します
+* **Entity Operator**: Topic Operator と User Operator を 1 つの Pod にバンドルし、Kafka クラスターごとに 1 回デプロイします
 
 ## インストール
 
-### オプション 1: Helm Chart (推奨)
+### オプション 1: Helm Chart（推奨）
 
 ```bash
 # Add the Strimzi Helm repository
@@ -52,9 +52,9 @@ kubectl get pods -n kafka
 kubectl get crd | grep strimzi
 ```
 
-### オプション 2: YAML / OperatorHub によるインストール
+### オプション 2: YAML / OperatorHub のインストール
 
-Helm を使わずにインストールすることも、OperatorHub 経由で OLM (Operator Lifecycle Manager) を通じてインストールすることもできます。
+Helm を使わずに、または OperatorHub 経由で OLM（Operator Lifecycle Manager）を使用してインストールすることもできます。
 
 ```bash
 # Apply the install YAML targeting a specific namespace
@@ -64,18 +64,18 @@ curl -L https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.45
   | kubectl apply -f - -n kafka
 ```
 
-デフォルトでは、Cluster Operator は deploy された namespace のみを監視します。追加の namespace を監視するには、Operator Deployment の `STRIMZI_NAMESPACE` environment variable にカンマ区切りの namespace list を設定するか、cluster 全体を監視する場合は `*` を設定します。
+デフォルトでは、Cluster Operator はデプロイ先の namespace のみを監視します。追加の namespace を監視するには、Operator Deployment 上の `STRIMZI_NAMESPACE` 環境変数に namespace のカンマ区切りリストを設定するか、クラスター全体を監視する場合は `*` を設定します。
 
 ```bash
 kubectl set env deployment/strimzi-cluster-operator \
   -n kafka STRIMZI_NAMESPACE=kafka,kafka-staging
 ```
 
-## 主要 CRD
+## コア CRD
 
 ### Kafka と KafkaNodePool
 
-Strimzi 0.45+ 以降では、KRaft mode (ZooKeeper なしの Kafka) がデフォルトであり、broker/controller role を別々の `KafkaNodePool` resource に分割することが標準的な deployment 形態になっています。従来の `Kafka.spec.zookeeper` block は KRaft では不要です。代わりに、各 node pool がそれぞれ role (`controller`、`broker`、または combined `dual-role`)、resource、storage を独立して宣言します。
+Strimzi 0.45+ 以降、KRaft モード（ZooKeeper を使用しない Kafka）がデフォルトとなり、broker と controller の役割を別々の `KafkaNodePool` リソースに分割することが標準的なデプロイ構成になりました。KRaft では、従来の `Kafka.spec.zookeeper` ブロックは不要です。代わりに、各 node pool が role（`controller`、`broker`、または両方を持つ `dual-role`）、リソース、ストレージを個別に宣言します。
 
 ```yaml
 # Controller-only node pool (3 nodes, forming a quorum)
@@ -165,7 +165,7 @@ spec:
     userOperator: {}
 ```
 
-3 つの broker と 3 つの controller が quorum を形成します。これは、KRaft controller quorum が majority vote を必要とするためです。本番 deployment では、通常 controller の数を奇数 (3 または 5) にします。小規模 cluster では、専用の controller node を使わずに単一の `dual-role` pool (`roles: [controller, broker]`) を実行できますが、本番では resource contention を避け、障害を分離するために、controller と broker の role を別々の node pool に分けることが推奨されます。
+KRaft controller quorum には過半数の投票が必要なため、3 つの broker と 3 つの controller で quorum を構成します。本番デプロイでは通常、奇数の controller（3 または 5）を使用します。小規模なクラスターでは、専用の controller node を使用せず、単一の `dual-role` pool（`roles: [controller, broker]`）を実行できます。ただし本番環境では、リソース競合を回避して障害を分離するために、controller と broker の role を別々の node pool に維持することを推奨します。
 
 ### KafkaTopic
 
@@ -209,11 +209,11 @@ spec:
 
 ### KafkaConnect
 
-topic や user とは異なり、`KafkaConnect` は source/sink connector (たとえば Debezium や S3 sink) を実行する別個の worker cluster を定義します。個々の connector は、`KafkaConnector` custom resource を通じて宣言的に管理されます。
+`KafkaConnect` は、topic や user とは異なり、source/sink connector（たとえば Debezium や S3 sink）を実行する別個の worker クラスターを定義します。個々の connector は `KafkaConnector` custom resource を通じて宣言的に管理されます。
 
-## EKS Deployment の考慮事項
+## EKS デプロイ時の考慮事項
 
-### 1. EBS gp3-based StorageClass
+### 1. EBS gp3 ベースの StorageClass
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -231,11 +231,11 @@ allowVolumeExpansion: true
 reclaimPolicy: Retain
 ```
 
-broker は継続的な sequential write が中心となるため、workload が gp3 の baseline throughput (125 MiB/s) を超える場合は、それに応じて `throughput` と `iops` を引き上げてください。`KafkaNodePool.spec.storage` は JBOD (Just a Bunch Of Disks) をサポートしており、broker ごとに複数の `persistent-claim` volume を attach して、I/O を複数の EBS volume に分散できます。
+broker では連続したシーケンシャル書き込みが主な負荷となるため、ワークロードが gp3 のベースライン throughput（125 MiB/s）を超える場合は、`throughput` と `iops` を適宜引き上げてください。`KafkaNodePool.spec.storage` は JBOD（Just a Bunch Of Disks）をサポートしており、broker ごとに複数の `persistent-claim` volume をアタッチして、複数の EBS volume に I/O を分散できます。
 
 ### 2. Pod Anti-Affinity / Topology Spread による AZ 分散
 
-broker Pod が同じ AZ に配置されると、AZ outage によって quorum や partition availability が失われる可能性があります。`KafkaNodePool.spec.template.pod` の下に `topologySpreadConstraints` を追加し、broker を AZ 全体に均等に分散させます。
+broker Pod が同じ AZ に配置されると、AZ 障害によって quorum または partition の可用性が失われる可能性があります。`KafkaNodePool.spec.template.pod` の下に `topologySpreadConstraints` を追加して、broker を AZ 全体に均等に分散してください。
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -266,9 +266,9 @@ spec:
         class: gp3-kafka
 ```
 
-### 3. Listener と External Exposure
+### 3. Listener と外部公開
 
-cluster 内に留まる traffic には `internal` listener (plain または TLS) を使用し、external client が access する必要がある場合にのみ、別の `loadbalancer` または `nodeport` type listener を追加します。
+クラスター内に留まるトラフィックには `internal` listener（plain または TLS）を使用し、外部 client からのアクセスが必要な場合にのみ、別個の `loadbalancer` または `nodeport` type listener を追加してください。
 
 ```yaml
 listeners:
@@ -291,9 +291,9 @@ listeners:
           service.beta.kubernetes.io/aws-load-balancer-scheme: internal
 ```
 
-`type: loadbalancer` では、Strimzi は bootstrap endpoint 用に NLB-backed Service を 1 つ、broker ごとに 1 つずつ provision します。access を VPC 内に留める必要がある場合は `internal` scheme を使用し、完全な public access が必要な場合にのみ `internet-facing` に切り替えます。cost と load balancer の数を減らすには、`nodeport` に切り替え、worker node NodePort を external load balancer または Route 53 record と組み合わせて broker を expose できます。
+`type: loadbalancer` では、Strimzi は bootstrap endpoint 用に 1 つ、broker ごとに 1 つの NLB-backed Service をプロビジョニングします。アクセスを VPC 内に限定する場合は `internal` scheme を使用し、完全なパブリックアクセスが必要な場合にのみ `internet-facing` に切り替えてください。コストと load balancer の数を削減するには、`nodeport` に切り替え、外部 load balancer または Route 53 record と組み合わせた worker node NodePort を介して broker を公開できます。
 
-## Deployment 手順
+## デプロイ手順
 
 ```bash
 # 1. Verify the Cluster Operator is running
@@ -320,14 +320,14 @@ kubectl run kafka-consumer -n kafka -ti --image=quay.io/strimzi/kafka:0.45.0-kaf
   bin/kafka-console-consumer.sh --bootstrap-server my-cluster-kafka-bootstrap:9092 --topic orders --from-beginning
 ```
 
-`Kafka` resource の status condition が `Ready: True` を報告すると、broker と controller は健全な quorum を形成し、listener が active になっています。`kubectl get pods -n kafka` を使用して、各 node pool の Pod (`my-cluster-broker-0`、`my-cluster-controller-0` など) が `Running` であることを確認します。
+`Kafka` resource の status condition が `Ready: True` を報告すると、broker と controller は正常な quorum を形成し、listener がアクティブになっています。`kubectl get pods -n kafka` を使用して、各 node pool（`my-cluster-broker-0`、`my-cluster-controller-0` など）の Pod が `Running` であることを確認してください。
 
 ## 次のステップ
 
-cluster が deploy されたら、次は day-2 operation です。node pool の scaling、Cruise Control を使った partition rebalancing、zero-downtime version upgrade の実行が含まれます。これらは [パート 3: Kafka Operations](./03-kafka-operations.md) で説明します。
+クラスターをデプロイしたら、day-2 operations が続きます。node pool のスケーリング、Cruise Control を使用した partition のリバランス、ダウンタイムなしのバージョンアップグレードです。これらについては、[パート 3: Kafka Operations](./03-kafka-operations.md) で説明します。
 
-[メインページに戻る](./)
+[メインページに戻る](./README.md)
 
-## Quiz
+## クイズ
 
-この章で学んだ内容を確認するには、[Topic Quiz](../../quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md) に挑戦してください。
+この章で学んだ内容を確認するには、[Topic クイズ](../../quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md) に挑戦してください。

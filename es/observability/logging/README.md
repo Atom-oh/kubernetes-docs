@@ -2,15 +2,15 @@
 
 > **Última actualización**: February 20, 2026
 
-El registro de logs eficaz en entornos de Kubernetes es esencial para la visibilidad del sistema, la resolución de problemas y la auditoría de seguridad. Este documento abarca los fundamentos del registro de logs, la arquitectura del pipeline de recopilación de logs y las estrategias de registro de logs para entornos de EKS.
+El registro de logs eficaz en entornos Kubernetes es esencial para la visibilidad del sistema, la resolución de problemas y la auditoría de seguridad. Este documento cubre los fundamentos del registro de logs, la arquitectura del pipeline de recopilación de logs y las estrategias de registro de logs para entornos EKS.
 
-## Tabla de contenidos
+## Tabla de contenido
 
-1. [Fundamentos del registro de logs](./#logging-fundamentals)
-2. [Arquitectura del pipeline de recopilación de logs](./#log-collection-pipeline-architecture)
-3. [Criterios de selección de almacenamiento de logs](./#log-storage-selection-criteria)
-4. [Estrategia de registro de logs de EKS](./#eks-logging-strategy)
-5. [Comparación de soluciones](./#solution-comparison)
+1. [Fundamentos del registro de logs](#logging-fundamentals)
+2. [Arquitectura del pipeline de recopilación de logs](#log-collection-pipeline-architecture)
+3. [Criterios de selección de almacenamiento de logs](#log-storage-selection-criteria)
+4. [Estrategia de registro de logs de EKS](#eks-logging-strategy)
+5. [Comparación de soluciones](#solution-comparison)
 
 ***
 
@@ -18,7 +18,7 @@ El registro de logs eficaz en entornos de Kubernetes es esencial para la visibil
 
 ### Registro de logs estructurado
 
-El registro de logs estructurado genera mensajes de log en un formato consistente, lo que facilita el análisis y el procesamiento. A diferencia de los logs de texto no estructurados, los logs estructurados constan de pares campo-valor que permiten búsquedas y filtrados mucho más eficientes.
+El registro de logs estructurado genera mensajes de log en un formato coherente, lo que facilita el análisis y el procesamiento. A diferencia de los logs de texto no estructurados, los logs estructurados consisten en pares campo-valor que permiten búsquedas y filtrados mucho más eficientes.
 
 #### Logs no estructurados frente a estructurados
 
@@ -46,9 +46,9 @@ El registro de logs estructurado genera mensajes de log en un formato consistent
 | -------------------------- | --------------------------------------------------------- |
 | **Eficiencia de búsqueda** | Filtrado rápido por campos específicos                    |
 | **Consistencia**           | Mismo formato en todos los servicios                      |
-| **Análisis de correlación**| Seguimiento de solicitudes mediante trace\_id, request\_id |
+| **Análisis de correlación** | Seguimiento de solicitudes mediante trace\_id, request\_id |
 | **Automatización**         | Uso inmediato en herramientas de análisis sin procesamiento |
-| **Configuración de alertas** | Fácil creación de reglas de alerta según valores de campos específicos |
+| **Configuración de alertas** | Fácil creación de reglas de alerta basadas en valores de campos específicos |
 
 ### Niveles de log
 
@@ -58,10 +58,10 @@ Los niveles de log indican la importancia y la gravedad de los mensajes. El uso 
 | --------- | ------ | ---------------------------------------- | ---------------------------------------------------- |
 | **TRACE** | 0      | Información de depuración más detallada  | Entrada/salida de funciones, valores de variables    |
 | **DEBUG** | 1      | Información de depuración durante el desarrollo | Consultas SQL, parámetros de solicitud          |
-| **INFO**  | 2      | Información operativa general            | Inicio de Service, finalización de solicitud         |
+| **INFO**  | 2      | Información operativa general            | Inicio de Service, finalización de solicitudes       |
 | **WARN**  | 3      | Situaciones de posibles problemas        | Reintentos en curso, degradación del rendimiento     |
-| **ERROR** | 4      | Se produjo un error (recuperable)        | Error de llamada a API, error de validación          |
-| **FATAL** | 5      | Error crítico (irrecuperable)            | Error de inicio de Service, falta de dependencia requerida |
+| **ERROR** | 4      | Se produjo un error (recuperable)        | Error de llamada API, error de validación            |
+| **FATAL** | 5      | Error crítico (irrecuperable)            | Error al iniciar Service, dependencia requerida ausente |
 
 #### Niveles de log recomendados por entorno
 
@@ -76,9 +76,9 @@ LOG_LEVEL: INFO
 LOG_LEVEL: INFO  # or WARN (for high traffic)
 ```
 
-### Formato de logs JSON
+### Formato de log JSON
 
-En entornos de Kubernetes, el formato JSON es el estándar de facto. La mayoría de los recopiladores de logs y herramientas de análisis admiten JSON de forma nativa.
+En entornos Kubernetes, el formato JSON es el estándar de facto. La mayoría de los recopiladores de logs y herramientas de análisis admiten JSON de forma nativa.
 
 #### Campos JSON recomendados
 
@@ -113,10 +113,10 @@ En entornos de Kubernetes, el formato JSON es el estándar de facto. La mayoría
 | --------------- | ------------- | --------------------------------------------------- |
 | **Básico**      | timestamp     | Marca de tiempo en formato ISO 8601                 |
 |                | level         | Nivel de log                                        |
-|                | message       | Mensaje legible para humanos                        |
+|                | message       | Mensaje legible para las personas                   |
 | **Contexto**    | context.\*    | Información relacionada con la lógica de negocio    |
-| **Kubernetes** | kubernetes.\* | Metadatos de K8s como pod, namespace                |
-| **Traza**      | trace.\*      | IDs de trazado distribuido (integración con OpenTelemetry) |
+| **Kubernetes** | kubernetes.\* | Metadatos de K8s como Pod y namespace               |
+| **Trace**      | trace.\*      | ID de trazado distribuido (integración con OpenTelemetry) |
 
 ***
 
@@ -202,11 +202,11 @@ flowchart TB
 
 Responsable de recopilar logs sin procesar de las fuentes de logs.
 
-| Método          | Ventajas                                   | Desventajas                     | Mejor para                         |
+| Método          | Ventajas                                   | Desventajas                     | Ideal para                       |
 | --------------- | ------------------------------------------ | --------------------------------- | --------------------------------- |
-| **DaemonSet**   | Uso eficiente de recursos, gestión centralizada | Solo uno por nodo             | La mayoría de las cargas de trabajo estándar |
+| **DaemonSet**   | Uso eficiente de recursos, gestión centralizada | Solo uno por nodo              | La mayoría de las cargas de trabajo estándar |
 | **Sidecar**     | Aislamiento por aplicación, procesamiento personalizado | Sobrecarga de recursos | Formatos de log especiales, multi-tenant |
-| **Direct Push** | Entrega en tiempo real, flexible           | Requiere modificación de la aplicación | Requisitos de alto rendimiento |
+| **Direct Push** | Entrega en tiempo real y flexible          | Requiere modificar la aplicación | Requisitos de alto rendimiento    |
 
 #### 2. Capa de procesamiento
 
@@ -247,7 +247,7 @@ Busca y visualiza los logs almacenados.
 
 ### Consideraciones clave
 
-#### 1. Costo
+#### 1. Coste
 
 ```
 Monthly log volume: Estimated cost based on 1TB (2025)
@@ -262,13 +262,13 @@ Monthly log volume: Estimated cost based on 1TB (2025)
 +------------------+------------------+-----------------+
 ```
 
-#### 2. Rendimiento de las consultas
+#### 2. Rendimiento de consultas
 
-| Solución       | Consulta en tiempo real | Agregación | Búsqueda de texto completo | Panel                 |
+| Solución       | Consulta en tiempo real | Agregación | Búsqueda de texto completo | Dashboard             |
 | -------------- | ----------------------- | ---------- | -------------------------- | --------------------- |
 | **Loki**       | Excelente               | Bueno      | Limitada                   | Grafana               |
 | **OpenSearch** | Excelente               | Excelente  | Excelente                  | OpenSearch Dashboards |
-| **CloudWatch** | Bueno                   | Bueno      | Bueno                      | Consola de CloudWatch |
+| **CloudWatch** | Bueno                   | Bueno      | Bueno                      | CloudWatch Console    |
 | **ClickHouse** | Excelente               | Excelente  | Bueno                      | Grafana               |
 
 #### 3. Período de retención
@@ -292,7 +292,7 @@ operational:
 | -------------- | ---------- | ----------- | ------------- |
 | **Loki**       | Baja       | Baja        | Alta          |
 | **OpenSearch** | Media      | Alta        | Media         |
-| **CloudWatch** | Muy baja   | Muy bajas   | Alta          |
+| **CloudWatch** | Muy baja   | Muy baja    | Alta          |
 | **ClickHouse** | Alta       | Media       | Alta          |
 
 ***
@@ -322,11 +322,11 @@ spec:
 **Ventajas:**
 
 * Enfoque nativo de Kubernetes
-* Gestión automática de la rotación de logs (`/var/log/containers/`)
+* Gestión automática de rotación de logs (`/var/log/containers/`)
 * Comando `kubectl logs` disponible
 * No se requiere un montaje de volumen independiente
 
-**Ubicaciones de los archivos de log:**
+**Ubicaciones de archivos de log:**
 
 ```bash
 # Actual log files
@@ -338,7 +338,7 @@ spec:
 
 #### 2. Patrón Sidecar
 
-Se utiliza cuando se requiere registro de logs basado en archivos o procesamiento especial.
+Se utiliza cuando se requiere un registro basado en archivos o procesamiento especial.
 
 ```yaml
 apiVersion: v1
@@ -374,12 +374,12 @@ spec:
 
 * Aplicaciones heredadas (solo registro en archivos)
 * Aislamiento de logs en entornos multi-tenant
-* Análisis especial requerido por aplicación
+* Se requiere análisis especial por aplicación
 * Requisitos de alta seguridad
 
-#### 3. Patrón DaemonSet (el más común)
+#### 3. Patrón DaemonSet (más común)
 
-Un agente por nodo recopila todos los logs de los contenedores.
+Un agente por nodo recopila todos los logs de contenedores.
 
 ```yaml
 apiVersion: apps/v1
@@ -425,9 +425,9 @@ spec:
           path: /var/lib/docker/containers
 ```
 
-### Registro de logs del control plane de EKS
+### Registro de logs del Control Plane de EKS
 
-Los logs del control plane de EKS se envían a CloudWatch Logs.
+Los logs del Control Plane de EKS se envían a CloudWatch Logs.
 
 ```bash
 # Enable control plane logging via AWS CLI
@@ -440,9 +440,9 @@ aws eks update-cluster-config \
 | ------------------------ | ----------------------- | ------------------- |
 | **api**                  | Logs del servidor API   | Obligatorio         |
 | **audit**                | Logs de auditoría de Kubernetes | Obligatorio (seguridad) |
-| **authenticator**        | Logs de autenticación de IAM | Recomendado     |
-| **controllerManager**    | Logs de Controller manager | Opcional          |
-| **scheduler**            | Logs de Scheduler       | Opcional            |
+| **authenticator**        | Logs de autenticación IAM | Recomendado       |
+| **controllerManager**    | Logs del controller manager | Opcional        |
+| **scheduler**            | Logs del scheduler      | Opcional            |
 
 ### Registro de logs de Container Insights
 
@@ -480,11 +480,11 @@ data:
 | **Lenguaje de consulta**    | LogQL      | Lucene/DQL     | Insights QL    | SQL            |
 | **Búsqueda de texto completo** | Limitada | Excelente      | Buena          | Buena          |
 | **Esquema**                 | Sin esquema | Sin esquema   | Sin esquema    | Esquema definido |
-| **Compresión**              | Alta       | Media          | N/D            | Muy alta       |
+| **Compresión**              | Alta       | Media          | N/A            | Muy alta       |
 | **Seguimiento en tiempo real** | Compatible | Compatible   | Limitado       | Compatible     |
 | **Alertas**                 | Grafana    | Integradas     | Integradas     | Grafana        |
-| **Multi-tenancy**           | Compatible | Compatible     | Compatible     | Compatible     |
-| **Backend de S3**           | Nativo     | Solo snapshots | N/D            | Nativo         |
+| **Multi-tenancy**           | Compatible | Compatible    | Compatible     | Compatible     |
+| **Backend S3**              | Nativo     | Solo snapshots | N/A            | Nativo         |
 
 ### Soluciones recomendadas por caso de uso
 
@@ -503,7 +503,7 @@ data:
 +-------------------------------------+---------------------+
 ```
 
-### Simulación de costos (basada en 100 GB/mes de logs)
+### Simulación de costes (basada en 100 GB/mes de logs)
 
 ```
 Estimated monthly cost by solution:
@@ -531,7 +531,7 @@ ClickHouse (self-hosted):
   +- Total: ~$183
 ```
 
-> **Nota**: Los costos reales pueden variar considerablemente según los patrones de consulta, el período de retención y la región.
+> **Nota**: Los costes reales pueden variar significativamente según los patrones de consulta, el período de retención y la región.
 
 ### Diagrama de flujo de decisión
 
@@ -565,7 +565,7 @@ flowchart TD
 
 ## Próximos pasos
 
-Para obtener información detallada sobre cada solución de almacenamiento de logs, consulte los siguientes documentos:
+Para obtener información detallada sobre cada solución de almacenamiento de logs, consulta los siguientes documentos:
 
 * [Grafana Loki](01-loki.md) - Agregación de logs rentable
 * [Amazon OpenSearch Service](02-opensearch.md) - Búsqueda y análisis potentes
@@ -577,4 +577,4 @@ Para obtener información detallada sobre cada solución de almacenamiento de lo
 
 ## Cuestionario
 
-Ponga a prueba sus conocimientos con el [Cuestionario de descripción general de logging](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/observability/logging/README-quiz.md).
+Pon a prueba tus conocimientos con el [Cuestionario de descripción general de Logging](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/observability/logging/README-quiz.md).
