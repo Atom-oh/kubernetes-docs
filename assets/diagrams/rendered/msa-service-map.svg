@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="820" viewBox="0 0 1440 820" role="img" aria-labelledby="title desc">
+  <title id="title">Microservice application service map</title>
+  <desc id="desc">An API gateway routes requests to order and payment services. The services use Aurora, SQS, SNS, and notification and analytics workloads.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#475569"/>
+    </marker>
+    <style>
+      text { font-family: Arial, sans-serif; fill: #172033; }
+      .title { font-size: 30px; font-weight: 700; }
+      .section { font-size: 20px; font-weight: 700; }
+      .label { font-size: 17px; font-weight: 700; }
+      .small { font-size: 14px; }
+      .cluster { fill: #ecfdf5; stroke: #059669; stroke-width: 3; }
+      .aws { fill: #fff7ed; stroke: #ea580c; stroke-width: 3; }
+      .box { fill: #ffffff; stroke: #64748b; stroke-width: 2; }
+      .go { fill: #cffafe; stroke: #0891b2; }
+      .python { fill: #dbeafe; stroke: #2563eb; }
+      .java { fill: #dcfce7; stroke: #16a34a; }
+      .node { fill: #ede9fe; stroke: #7c3aed; }
+      .otel { fill: #e0e7ff; stroke: #4f46e5; }
+      .flow { fill: none; stroke: #475569; stroke-width: 3; marker-end: url(#arrow); }
+      .event { fill: none; stroke: #7c3aed; stroke-width: 3; stroke-dasharray: 9 7; marker-end: url(#arrow); }
+      .telemetry { fill: none; stroke: #2563eb; stroke-width: 2; stroke-dasharray: 5 6; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1440" height="820" fill="#ffffff"/>
+  <text class="title" x="50" y="55">Instrumented MSA Service Map</text>
+  <text class="small" x="50" y="82">Request, event, data, and telemetry paths used in the observability lab</text>
+
+  <rect class="cluster" x="40" y="115" width="930" height="650" rx="8"/>
+  <text class="section" x="65" y="150">Service EKS Cluster</text>
+
+  <rect class="box" x="390" y="175" width="210" height="60" rx="6"/>
+  <text class="label" x="495" y="211" text-anchor="middle">Client</text>
+
+  <rect class="box go" x="365" y="285" width="260" height="80" rx="6"/>
+  <text class="label" x="495" y="319" text-anchor="middle">API Gateway</text>
+  <text class="small" x="495" y="345" text-anchor="middle">Go / Gin</text>
+
+  <rect class="box python" x="120" y="445" width="240" height="85" rx="6"/>
+  <text class="label" x="240" y="480" text-anchor="middle">Order Service</text>
+  <text class="small" x="240" y="506" text-anchor="middle">Python / FastAPI</text>
+
+  <rect class="box java" x="385" y="445" width="240" height="85" rx="6"/>
+  <text class="label" x="505" y="480" text-anchor="middle">Payment Service</text>
+  <text class="small" x="505" y="506" text-anchor="middle">Java / Spring Boot</text>
+
+  <rect class="box node" x="650" y="445" width="240" height="85" rx="6"/>
+  <text class="label" x="770" y="480" text-anchor="middle">Notification Service</text>
+  <text class="small" x="770" y="506" text-anchor="middle">Node.js / Express</text>
+
+  <rect class="box python" x="120" y="620" width="240" height="75" rx="6"/>
+  <text class="label" x="240" y="651" text-anchor="middle">Analytics Batch</text>
+  <text class="small" x="240" y="676" text-anchor="middle">Python / Pandas</text>
+
+  <rect class="box otel" x="485" y="620" width="405" height="75" rx="6"/>
+  <text class="label" x="687" y="651" text-anchor="middle">OpenTelemetry Agent</text>
+  <text class="small" x="687" y="676" text-anchor="middle">Unified workload telemetry export</text>
+
+  <rect class="aws" x="1010" y="115" width="390" height="650" rx="8"/>
+  <text class="section" x="1035" y="150">AWS Services</text>
+
+  <rect class="box" x="1050" y="200" width="310" height="75" rx="6"/>
+  <text class="label" x="1205" y="232" text-anchor="middle">Aurora PostgreSQL</text>
+  <text class="small" x="1205" y="255" text-anchor="middle">Orders, payments, analytics</text>
+
+  <rect class="box" x="1050" y="325" width="145" height="75" rx="6"/>
+  <text class="label" x="1122" y="357" text-anchor="middle">SQS</text>
+  <text class="small" x="1122" y="380" text-anchor="middle">Order events</text>
+
+  <rect class="box" x="1215" y="325" width="145" height="75" rx="6"/>
+  <text class="label" x="1287" y="357" text-anchor="middle">SNS</text>
+  <text class="small" x="1287" y="380" text-anchor="middle">Payment events</text>
+
+  <rect class="box" x="1050" y="450" width="310" height="75" rx="6"/>
+  <text class="label" x="1205" y="482" text-anchor="middle">Amazon MWAA</text>
+  <text class="small" x="1205" y="505" text-anchor="middle">Scheduled analytics workflow</text>
+
+  <rect class="box otel" x="1050" y="575" width="310" height="90" rx="6"/>
+  <text class="label" x="1205" y="610" text-anchor="middle">Observability Backends</text>
+  <text class="small" x="1205" y="635" text-anchor="middle">Metrics / Logs / Traces</text>
+
+  <path class="flow" d="M495 235 V280"/>
+  <path class="flow" d="M430 365 L275 440"/>
+  <path class="flow" d="M560 365 L520 440"/>
+
+  <path class="flow" d="M240 445 V410 H920 Q1000 410 1045 250"/>
+  <path class="flow" d="M505 445 V390 H900 Q980 390 1045 235"/>
+  <path class="event" d="M300 445 V425 H1025 Q1050 425 1050 380"/>
+  <path class="event" d="M1050 380 H980 Q940 380 895 480"/>
+  <path class="event" d="M560 445 V405 H1185 Q1215 405 1215 380"/>
+  <path class="flow" d="M1050 487 C700 550 480 640 365 655"/>
+
+  <path class="telemetry" d="M240 530 L555 615"/>
+  <path class="telemetry" d="M505 530 L640 615"/>
+  <path class="telemetry" d="M770 530 L750 615"/>
+  <path class="telemetry" d="M890 657 H1045"/>
+</svg>

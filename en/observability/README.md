@@ -369,26 +369,26 @@ flowchart LR
 
 This observability section is organized as follows:
 
-### [Logging](./logging/)
+### [Logging](./logging/README.md)
 Tools and strategies for log collection, storage, and analysis:
 - Loki: Lightweight log aggregation system
 - Fluent Bit: High-performance log collector
 - CloudWatch Logs: AWS native logging
 
-### [Metrics](./metrics/)
+### [Metrics](./metrics/README.md)
 Time series metric collection and analysis:
 - Prometheus: Industry standard metrics system
 - VictoriaMetrics: High-performance Prometheus alternative
 - CloudWatch Metrics: AWS native metrics
 
-### [Tracing](./tracing/)
+### [Tracing](./tracing/README.md)
 Distributed tracing and request flow analysis:
 - Tempo: Grafana's distributed tracing backend
 - X-Ray: AWS native distributed tracing
 - OpenTelemetry: Standardized instrumentation
 - Dynatrace: AI-powered APM
 
-### [Grafana (Dashboards)](./grafana/)
+### [Grafana (Dashboards)](./grafana/README.md)
 Unified visualization and dashboards:
 - Data source integration
 - Dashboard design patterns

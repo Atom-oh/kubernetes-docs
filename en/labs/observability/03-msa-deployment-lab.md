@@ -1178,7 +1178,7 @@ Continue to [Part 4: Load Testing and Autoscaling](04-load-testing-scaling-lab.m
 
 ## References
 
-* [ArgoCD Documentation](../../gitops/argocd/)
+* [ArgoCD Documentation](../../gitops/argocd/README.md)
 * [Argo Rollouts Documentation](../../gitops/argocd/05-traffic-management.md)
 * [KEDA Documentation](../../autoscaling/01-keda.md)
 * [Karpenter Documentation](../../autoscaling/02-karpenter.md)
