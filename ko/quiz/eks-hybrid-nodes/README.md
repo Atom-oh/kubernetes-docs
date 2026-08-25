@@ -1,2 +1,0 @@
-# EKS Hybrid Nodes
-

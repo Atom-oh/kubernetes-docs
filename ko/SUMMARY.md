@@ -358,7 +358,7 @@
   * [컨테이너 기술 퀴즈](quizzes/basics/03-container-technology-quiz.md)
   * [Kubernetes 소개 퀴즈](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [eBPF 기초와 실무 활용 퀴즈](quizzes/basics/05-ebpf-fundamentals-quiz.md)
-* [Kubernetes 핵심 개념](quiz/core/README.md)
+* Kubernetes 핵심 개념
   * [클러스터 아키텍처 퀴즈](quizzes/core/01-cluster-architecture-quiz.md)
   * [파드와 워크로드 퀴즈](quizzes/core/02-pods-and-workloads-quiz.md)
   * [서비스와 네트워킹 퀴즈](quizzes/core/03-services-networking-quiz.md)
@@ -370,15 +370,15 @@
   * [클러스터 관리 퀴즈](quizzes/core/09-cluster-administration-quiz.md)
   * [Windows in Kubernetes 퀴즈](quizzes/core/10-windows-in-kubernetes-quiz.md)
   * [Kubernetes 확장 퀴즈](quizzes/core/11-extending-kubernetes-quiz.md)
-* [Scheduling](quiz/scheduling/README.md)
+* Scheduling
   * [Custom Scheduler 퀴즈 - Part 1](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
   * [Custom Scheduler 퀴즈 - Part 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
   * [Custom Scheduler 퀴즈 - Part 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
-* [Autoscaling](quiz/autoscaling/README.md)
+* Autoscaling
   * [KEDA 퀴즈](quizzes/autoscaling/05-keda-quiz.md)
   * [Karpenter 퀴즈](quizzes/autoscaling/06-karpenter-quiz.md)
   * [Knative 퀴즈](quizzes/autoscaling/03-knative-quiz.md)
-* [Amazon EKS](quiz/amazon-eks/README.md)
+* Amazon EKS
   * [EKS 소개 퀴즈](quizzes/eks/01-eks-introduction-quiz.md)
   * [EKS 클러스터 생성 퀴즈 - Part 1](quizzes/eks/02-eks-cluster-creation-part1-quiz.md)
   * [EKS 클러스터 생성 퀴즈 - Part 2](quizzes/eks/02-eks-cluster-creation-part2-quiz.md)
@@ -399,7 +399,7 @@
   * [EKS 복원력과 고가용성 퀴즈](quizzes/eks/10-eks-resiliency-quiz.md)
   * [EKS 고급 디버깅 퀴즈](quizzes/eks/11-eks-advanced-debugging-quiz.md)
   * [Kubernetes 버전별 신규 기능과 로드맵 퀴즈](quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
-* [EKS Hybrid Nodes](quiz/eks-hybrid-nodes/README.md)
+* EKS Hybrid Nodes
   * [사전 요구 사항 퀴즈](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
   * [네트워크 구성 퀴즈](quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
   * [에어갭 환경 구성 퀴즈](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
@@ -410,7 +410,7 @@
   * [운영 및 유지보수 퀴즈](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
   * [베어메탈 서버 OS 설치 퀴즈](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
   * [Hybrid Nodes Gateway 퀴즈](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
-* [EKS Auto Mode](quiz/eks-auto-mode/README.md)
+* EKS Auto Mode
   * [Auto Mode 시작하기 퀴즈](quizzes/eks-auto-mode/01-getting-started-quiz.md)
   * [NodePool 구성 퀴즈](quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
   * [스케일링 동작 퀴즈](quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
@@ -420,7 +420,7 @@
   * [노드 생명주기 퀴즈](quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
   * [워크로드별 최적화 퀴즈](quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
   * [마이그레이션 가이드 퀴즈](quizzes/eks-auto-mode/09-migration-guide-quiz.md)
-* [AI/ML](quiz/ai-ml/README.md)
+* AI/ML
   * [AI/ML 워크로드 퀴즈](quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
   * [AI 인프라스트럭처 퀴즈](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
   * [모델 트레이닝 퀴즈](quizzes/ai-ml/05-model-training-quiz.md)
@@ -428,7 +428,7 @@
   * [vLLM 배포 퀴즈](quizzes/ai-ml/04-vllm-deployment-quiz.md)
   * [Agentic AI 플랫폼 퀴즈](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
   * [AI/ML 모범 사례 퀴즈](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
-* [Data on EKS](quiz/data-on-eks/README.md)
+* Data on EKS
   * [Part 1: Kafka 핵심 개념 퀴즈](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator 퀴즈](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
   * [Part 3: Kafka 운영 퀴즈](quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
@@ -451,10 +451,10 @@
   * [Part 2: Flink Kubernetes Operator 퀴즈](quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
   * [Part 3: 상태 관리, 체크포인팅, 스트리밍 패턴 퀴즈](quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
   * [Part 4: 운영, 고가용성, 그리고 매니지드 Flink 퀴즈](quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
-* [Networking](quiz/networking/README.md)
+* Networking
   * [Networking 개요 퀴즈](quizzes/networking/00-networking-overview-quiz.md)
   * [VPC CNI 퀴즈](quizzes/networking/01-vpc-cni-quiz.md)
-  * [Cilium 딥다이브](quiz/networking/cilium/README.md)
+  * Cilium 딥다이브
     * [Part 1: 소개 퀴즈](quizzes/networking/cilium/01-introduction-quiz.md)
     * [Part 2: eBPF 퀴즈](quizzes/networking/cilium/02-ebpf-quiz.md)
     * [Part 3: 네트워킹 퀴즈](quizzes/networking/cilium/03-networking-quiz.md)
@@ -464,7 +464,7 @@
     * [Part 7: 고급 주제 퀴즈](quizzes/networking/cilium/07-advanced-topics-quiz.md)
     * [네트워킹 개념 퀴즈](quizzes/networking/cilium/networking-concepts-quiz.md)
     * [용어집 퀴즈](quizzes/networking/cilium/glossary-quiz.md)
-  * [Calico 딥다이브](quiz/networking/calico/README.md)
+  * Calico 딥다이브
     * [Part 1: 소개 퀴즈](quizzes/networking/calico/01-introduction-quiz.md)
     * [Part 2: 아키텍처 퀴즈](quizzes/networking/calico/02-architecture-quiz.md)
     * [Part 3: 네트워킹 모드 퀴즈](quizzes/networking/calico/03-networking-modes-quiz.md)
@@ -478,9 +478,9 @@
   * [VPC Lattice 퀴즈](quizzes/networking/02-vpc-lattice-quiz.md)
   * [AWS Load Balancer Controller 퀴즈](quizzes/networking/03-aws-lb-controller-quiz.md)
   * [Gateway API 퀴즈](quizzes/networking/04-gateway-api-quiz.md)
-* [Service Mesh](quiz/service-mesh/README.md)
+* Service Mesh
   * [Istio 퀴즈](quizzes/service-mesh/02-istio-quiz.md)
-  * [Istio 상세 퀴즈](quiz/service-mesh/istio/README.md)
+  * Istio 상세 퀴즈
     * [Traffic Management 퀴즈](quizzes/service-mesh/istio/traffic-management.md)
     * [Security 퀴즈](quizzes/service-mesh/istio/security.md)
     * [Observability 퀴즈](quizzes/service-mesh/istio/observability.md)
@@ -488,20 +488,20 @@
     * [Advanced 퀴즈](quizzes/service-mesh/istio/advanced.md)
     * [Comparison 퀴즈](quizzes/service-mesh/istio/comparison.md)
     * [Basic 퀴즈](quizzes/service-mesh/istio/basic.md)
-  * [Linkerd 상세 퀴즈](quiz/service-mesh/linkerd/README.md)
+  * Linkerd 상세 퀴즈
     * [설치 퀴즈](quizzes/service-mesh/linkerd/installation.md)
     * [아키텍처 퀴즈](quizzes/service-mesh/linkerd/architecture.md)
     * [트래픽 관리 퀴즈](quizzes/service-mesh/linkerd/traffic-management.md)
     * [보안 퀴즈](quizzes/service-mesh/linkerd/security.md)
     * [관찰성 퀴즈](quizzes/service-mesh/linkerd/observability.md)
     * [멀티 클러스터 퀴즈](quizzes/service-mesh/linkerd/multi-cluster.md)
-  * [Cilium Service Mesh 상세 퀴즈](quiz/service-mesh/cilium-service-mesh/README.md)
+  * Cilium Service Mesh 상세 퀴즈
     * [아키텍처 퀴즈](quizzes/service-mesh/cilium-service-mesh/architecture.md)
     * [트래픽 관리 퀴즈](quizzes/service-mesh/cilium-service-mesh/traffic-management.md)
     * [보안 퀴즈](quizzes/service-mesh/cilium-service-mesh/security.md)
     * [관찰성 퀴즈](quizzes/service-mesh/cilium-service-mesh/observability.md)
     * [인그레스 & 게이트웨이 퀴즈](quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
-* [Security & Policy](quiz/security-and-policy/README.md)
+* Security & Policy
   * [Kyverno를 사용한 정책 관리 퀴즈](quizzes/security/01-kyverno-policy-management-quiz.md)
   * [Kubernetes 인증 및 권한 부여 퀴즈](quizzes/security/02-kubernetes-auth-authz-quiz.md)
   * [Pod Security Standards 퀴즈](quizzes/security/03-pod-security-standards-quiz.md)
@@ -514,14 +514,14 @@
   * [cert-manager 퀴즈](quizzes/security/10-cert-manager-quiz.md)
   * [Kubescape 퀴즈](quizzes/security/11-kubescape-quiz.md)
   * [SPIFFE/SPIRE 퀴즈](quizzes/security/12-spiffe-spire-quiz.md)
-* [Container Registry](quiz/container-registry/README.md)
+* Container Registry
   * [Docker Hub 퀴즈](quizzes/container-registry/01-docker-hub-quiz.md)
   * [Amazon ECR 퀴즈](quizzes/container-registry/02-amazon-ecr-quiz.md)
   * [Harbor 퀴즈](quizzes/container-registry/03-harbor-quiz.md)
   * [컨테이너 레지스트리 모범 사례 퀴즈](quizzes/container-registry/04-best-practices-quiz.md)
-* [GitOps](quiz/gitops/README.md)
+* GitOps
   * [ArgoCD 퀴즈](quizzes/gitops/01-argocd-quiz.md)
-  * [ArgoCD 상세 퀴즈](quiz/gitops/argocd/README.md)
+  * ArgoCD 상세 퀴즈
     * [설치 및 구성 퀴즈](quizzes/gitops/argocd/01-installation-quiz.md)
     * [애플리케이션 퀴즈](quizzes/gitops/argocd/02-applications-quiz.md)
     * [동기화 전략 퀴즈](quizzes/gitops/argocd/03-sync-strategies-quiz.md)
@@ -535,40 +535,40 @@
   * [GitOps 도구 비교 퀴즈](quizzes/gitops/03-gitops-comparison-quiz.md)
   * [Flagger Progressive Delivery 퀴즈](quizzes/gitops/04-flagger-quiz.md)
   * [Feature Flags와 OpenFeature 퀴즈](quizzes/gitops/05-feature-flags-quiz.md)
-* [Observability](quiz/observability/README.md)
-  * [Metrics](quiz/observability/metrics/README.md)
+* Observability
+  * Metrics
     * [메트릭 개요 퀴즈](quizzes/observability/metrics/00-metrics-overview-quiz.md)
     * [Prometheus 퀴즈](quizzes/observability/metrics/01-prometheus-quiz.md)
     * [VictoriaMetrics 퀴즈](quizzes/observability/metrics/02-victoriametrics-quiz.md)
     * [Grafana Mimir 퀴즈](quizzes/observability/metrics/03-mimir-quiz.md)
     * [CloudWatch Metrics 퀴즈](quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
     * [Datadog 퀴즈](quizzes/observability/metrics/05-datadog-quiz.md)
-  * [Logging](quiz/observability/logging/README.md)
+  * Logging
     * [로깅 개요 퀴즈](quizzes/observability/logging/README-quiz.md)
     * [Grafana Loki 퀴즈](quizzes/observability/logging/01-loki-quiz.md)
     * [OpenSearch 퀴즈](quizzes/observability/logging/02-opensearch-quiz.md)
     * [CloudWatch Logs 퀴즈](quizzes/observability/logging/03-cloudwatch-logs-quiz.md)
     * [ClickHouse 퀴즈](quizzes/observability/logging/04-clickhouse-quiz.md)
     * [Log Collectors 퀴즈](quizzes/observability/logging/05-collectors-quiz.md)
-  * [Tracing](quiz/observability/tracing/README.md)
+  * Tracing
     * [Grafana Tempo 퀴즈](quizzes/observability/tracing/01-tempo-quiz.md)
     * [AWS X-Ray 퀴즈](quizzes/observability/tracing/02-xray-quiz.md)
     * [OpenTelemetry 퀴즈](quizzes/observability/tracing/03-opentelemetry-quiz.md)
     * [Dynatrace 퀴즈](quizzes/observability/tracing/04-dynatrace-quiz.md)
-  * [Alerting](quiz/observability/alerting/README.md)
+  * Alerting
     * [Alertmanager 퀴즈](quizzes/observability/alerting/01-alertmanager-quiz.md)
     * [CloudWatch Alarms 퀴즈](quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md)
     * [Grafana OnCall 퀴즈](quizzes/observability/alerting/03-grafana-oncall-quiz.md)
   * [Grafana 퀴즈](quizzes/observability/grafana/grafana-quiz.md)
   * [관측성 최적화 가이드 퀴즈](quizzes/observability/09-observability-optimization-quiz.md)
-  * [Observability Labs](quiz/observability/observability-labs/README.md)
+  * Observability Labs
     * [인프라 구성 퀴즈](quizzes/observability/labs/01-infrastructure-setup-quiz.md)
     * [Observability 스택 퀴즈](quizzes/observability/labs/02-observability-stack-quiz.md)
     * [MSA 배포 및 카나리 퀴즈](quizzes/observability/labs/03-msa-deployment-quiz.md)
     * [부하 테스트 및 스케일링 퀴즈](quizzes/observability/labs/04-load-testing-scaling-quiz.md)
     * [알림 및 AIOps 퀴즈](quizzes/observability/labs/05-alerting-aiops-quiz.md)
     * [분산 추적 분석 퀴즈](quizzes/observability/labs/06-distributed-tracing-quiz.md)
-* [Platform Engineering](quiz/platform-engineering/README.md)
+* Platform Engineering
   * [Platform Engineering 개요 퀴즈](quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
   * [Helm 퀴즈](quizzes/platform-engineering/01-helm-quiz.md)
   * [ACK 퀴즈](quizzes/platform-engineering/02-ack-quiz.md)
@@ -577,7 +577,7 @@
   * [Backstage IDP 퀴즈](quizzes/platform-engineering/06-backstage-idp-quiz.md)
   * [Crossplane 퀴즈](quizzes/platform-engineering/07-crossplane-quiz.md)
   * [vCluster 퀴즈](quizzes/platform-engineering/08-vcluster-quiz.md)
-* [운영 가이드](quiz/operations-guide/README.md)
+* 운영 가이드
   * [인프라 구성 기초 퀴즈](quizzes/ops/01-infrastructure-setup-quiz.md)
   * [인프라 구성 고급 퀴즈](quizzes/ops/02-infrastructure-advanced-quiz.md)
   * [CI 파이프라인 구성 퀴즈](quizzes/ops/03-ci-pipelines-quiz.md)

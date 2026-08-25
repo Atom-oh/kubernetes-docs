@@ -358,7 +358,7 @@
   * [Container Technology Quiz](quizzes/basics/03-container-technology-quiz.md)
   * [Introduction to Kubernetes Quiz](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [eBPF Fundamentals and Practical Applications Quiz](quizzes/basics/05-ebpf-fundamentals-quiz.md)
-* [Kubernetes Core Concepts](quiz/core/README.md)
+* Kubernetes Core Concepts
   * [Cluster Architecture Quiz](quizzes/core/01-cluster-architecture-quiz.md)
   * [Pods and Workloads Quiz](quizzes/core/02-pods-and-workloads-quiz.md)
   * [Services and Networking Quiz](quizzes/core/03-services-networking-quiz.md)
@@ -370,15 +370,15 @@
   * [Cluster Administration Quiz](quizzes/core/09-cluster-administration-quiz.md)
   * [Windows in Kubernetes Quiz](quizzes/core/10-windows-in-kubernetes-quiz.md)
   * [Extending Kubernetes Quiz](quizzes/core/11-extending-kubernetes-quiz.md)
-* [Scheduling](quiz/scheduling/README.md)
+* Scheduling
   * [Custom Scheduler Quiz - Part 1](quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
   * [Custom Scheduler Quiz - Part 2](quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
   * [Custom Scheduler Quiz - Part 3](quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
-* [Autoscaling](quiz/autoscaling/README.md)
+* Autoscaling
   * [KEDA Quiz](quizzes/autoscaling/05-keda-quiz.md)
   * [Karpenter Quiz](quizzes/autoscaling/06-karpenter-quiz.md)
   * [Knative Quiz](quizzes/autoscaling/03-knative-quiz.md)
-* [Amazon EKS](quiz/amazon-eks/README.md)
+* Amazon EKS
   * [Introduction to EKS Quiz](quizzes/eks/01-eks-introduction-quiz.md)
   * [EKS Cluster Creation Quiz - Part 1](quizzes/eks/02-eks-cluster-creation-part1-quiz.md)
   * [EKS Cluster Creation Quiz - Part 2](quizzes/eks/02-eks-cluster-creation-part2-quiz.md)
@@ -399,7 +399,7 @@
   * [EKS Resiliency and High Availability Quiz](quizzes/eks/10-eks-resiliency-quiz.md)
   * [EKS Advanced Debugging Quiz](quizzes/eks/11-eks-advanced-debugging-quiz.md)
   * [Kubernetes Version Features and Roadmap Quiz](quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
-* [EKS Hybrid Nodes](quiz/eks-hybrid-nodes/README.md)
+* EKS Hybrid Nodes
   * [Prerequisites Quiz](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
   * [Network Configuration Quiz](quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
   * [Air-Gap Environment Setup Quiz](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
@@ -410,7 +410,7 @@
   * [Operations and Maintenance Quiz](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
   * [Bare Metal OS Setup Quiz](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
   * [Hybrid Nodes Gateway Quiz](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
-* [EKS Auto Mode](quiz/eks-auto-mode/README.md)
+* EKS Auto Mode
   * [Getting Started Quiz](quizzes/eks-auto-mode/01-getting-started-quiz.md)
   * [NodePool Configuration Quiz](quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
   * [Scaling Behavior Quiz](quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
@@ -420,7 +420,7 @@
   * [Node Lifecycle Quiz](quizzes/eks-auto-mode/07-node-lifecycle-quiz.md)
   * [Workload Optimization Quiz](quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
   * [Migration Guide Quiz](quizzes/eks-auto-mode/09-migration-guide-quiz.md)
-* [AI/ML](quiz/ai-ml/README.md)
+* AI/ML
   * [AI/ML Workloads Quiz](quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
   * [AI Infrastructure Quiz](quizzes/ai-ml/06-ai-infrastructure-quiz.md)
   * [Model Training Quiz](quizzes/ai-ml/05-model-training-quiz.md)
@@ -428,7 +428,7 @@
   * [vLLM Deployment Quiz](quizzes/ai-ml/04-vllm-deployment-quiz.md)
   * [Agentic AI Platform on EKS Quiz](quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
   * [AI/ML Best Practices Quiz](quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
-* [Data on EKS](quiz/data-on-eks/README.md)
+* Data on EKS
   * [Part 1: Kafka Fundamentals Quiz](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator Quiz](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
   * [Part 3: Kafka Operations Quiz](quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
@@ -451,10 +451,10 @@
   * [Part 2: Flink Kubernetes Operator Quiz](quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
   * [Part 3: State, Checkpointing, and Streaming Patterns Quiz](quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
   * [Part 4: Operations, High Availability, and Managed Flink Quiz](quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
-* [Networking](quiz/networking/README.md)
+* Networking
   * [Networking Overview Quiz](quizzes/networking/00-networking-overview-quiz.md)
   * [VPC CNI Quiz](quizzes/networking/01-vpc-cni-quiz.md)
-  * [Cilium Deep Dive](quiz/networking/cilium/README.md)
+  * Cilium Deep Dive
     * [Part 1: Introduction Quiz](quizzes/networking/cilium/01-introduction-quiz.md)
     * [Part 2: eBPF Quiz](quizzes/networking/cilium/02-ebpf-quiz.md)
     * [Part 3: Networking Quiz](quizzes/networking/cilium/03-networking-quiz.md)
@@ -464,7 +464,7 @@
     * [Part 7: Advanced Topics Quiz](quizzes/networking/cilium/07-advanced-topics-quiz.md)
     * [Networking Concepts Quiz](quizzes/networking/cilium/networking-concepts-quiz.md)
     * [Glossary Quiz](quizzes/networking/cilium/glossary-quiz.md)
-  * [Calico Deep Dive](quiz/networking/calico/README.md)
+  * Calico Deep Dive
     * [Part 1: Introduction Quiz](quizzes/networking/calico/01-introduction-quiz.md)
     * [Part 2: Architecture Quiz](quizzes/networking/calico/02-architecture-quiz.md)
     * [Part 3: Networking Modes Quiz](quizzes/networking/calico/03-networking-modes-quiz.md)
@@ -478,9 +478,9 @@
   * [VPC Lattice Quiz](quizzes/networking/02-vpc-lattice-quiz.md)
   * [AWS Load Balancer Controller Quiz](quizzes/networking/03-aws-lb-controller-quiz.md)
   * [Gateway API Quiz](quizzes/networking/04-gateway-api-quiz.md)
-* [Service Mesh](quiz/service-mesh/README.md)
+* Service Mesh
   * [Istio Quiz](quizzes/service-mesh/02-istio-quiz.md)
-  * [Istio Detailed Quiz](quiz/service-mesh/istio/README.md)
+  * Istio Detailed Quiz
     * [Traffic Management Quiz](quizzes/service-mesh/istio/traffic-management.md)
     * [Security Quiz](quizzes/service-mesh/istio/security.md)
     * [Observability Quiz](quizzes/service-mesh/istio/observability.md)
@@ -488,20 +488,20 @@
     * [Advanced Quiz](quizzes/service-mesh/istio/advanced.md)
     * [Comparison Quiz](quizzes/service-mesh/istio/comparison.md)
     * [Basic Quiz](quizzes/service-mesh/istio/basic.md)
-  * [Linkerd Detailed Quiz](quiz/service-mesh/linkerd/README.md)
+  * Linkerd Detailed Quiz
     * [Installation Quiz](quizzes/service-mesh/linkerd/installation.md)
     * [Architecture Quiz](quizzes/service-mesh/linkerd/architecture.md)
     * [Traffic Management Quiz](quizzes/service-mesh/linkerd/traffic-management.md)
     * [Security Quiz](quizzes/service-mesh/linkerd/security.md)
     * [Observability Quiz](quizzes/service-mesh/linkerd/observability.md)
     * [Multi-cluster Quiz](quizzes/service-mesh/linkerd/multi-cluster.md)
-  * [Cilium Service Mesh Detailed Quiz](quiz/service-mesh/cilium-service-mesh/README.md)
+  * Cilium Service Mesh Detailed Quiz
     * [Architecture Quiz](quizzes/service-mesh/cilium-service-mesh/architecture.md)
     * [Traffic Management Quiz](quizzes/service-mesh/cilium-service-mesh/traffic-management.md)
     * [Security Quiz](quizzes/service-mesh/cilium-service-mesh/security.md)
     * [Observability Quiz](quizzes/service-mesh/cilium-service-mesh/observability.md)
     * [Ingress Gateway Quiz](quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
-* [Security & Policy](quiz/security-and-policy/README.md)
+* Security & Policy
   * [Policy Management with Kyverno Quiz](quizzes/security/01-kyverno-policy-management-quiz.md)
   * [Kubernetes Authentication and Authorization Quiz](quizzes/security/02-kubernetes-auth-authz-quiz.md)
   * [Pod Security Standards Quiz](quizzes/security/03-pod-security-standards-quiz.md)
@@ -514,14 +514,14 @@
   * [cert-manager Quiz](quizzes/security/10-cert-manager-quiz.md)
   * [Kubescape Quiz](quizzes/security/11-kubescape-quiz.md)
   * [SPIFFE/SPIRE Quiz](quizzes/security/12-spiffe-spire-quiz.md)
-* [Container Registry](quiz/container-registry/README.md)
+* Container Registry
   * [Docker Hub Quiz](quizzes/container-registry/01-docker-hub-quiz.md)
   * [Amazon ECR Quiz](quizzes/container-registry/02-amazon-ecr-quiz.md)
   * [Harbor Quiz](quizzes/container-registry/03-harbor-quiz.md)
   * [Container Registry Best Practices Quiz](quizzes/container-registry/04-best-practices-quiz.md)
-* [GitOps](quiz/gitops/README.md)
+* GitOps
   * [ArgoCD Quiz](quizzes/gitops/01-argocd-quiz.md)
-  * [ArgoCD Detailed Quiz](quiz/gitops/argocd/README.md)
+  * ArgoCD Detailed Quiz
     * [Installation Quiz](quizzes/gitops/argocd/01-installation-quiz.md)
     * [Applications Quiz](quizzes/gitops/argocd/02-applications-quiz.md)
     * [Sync Strategies Quiz](quizzes/gitops/argocd/03-sync-strategies-quiz.md)
@@ -535,40 +535,40 @@
   * [GitOps Tools Comparison Quiz](quizzes/gitops/03-gitops-comparison-quiz.md)
   * [Flagger Progressive Delivery Quiz](quizzes/gitops/04-flagger-quiz.md)
   * [Feature Flags and OpenFeature Quiz](quizzes/gitops/05-feature-flags-quiz.md)
-* [Observability](quiz/observability/README.md)
-  * [Metrics](quiz/observability/metrics/README.md)
+* Observability
+  * Metrics
     * [Metrics Overview Quiz](quizzes/observability/metrics/00-metrics-overview-quiz.md)
     * [Prometheus Quiz](quizzes/observability/metrics/01-prometheus-quiz.md)
     * [VictoriaMetrics Quiz](quizzes/observability/metrics/02-victoriametrics-quiz.md)
     * [Grafana Mimir Quiz](quizzes/observability/metrics/03-mimir-quiz.md)
     * [CloudWatch Metrics Quiz](quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)
     * [Datadog Quiz](quizzes/observability/metrics/05-datadog-quiz.md)
-  * [Logging](quiz/observability/logging/README.md)
+  * Logging
     * [Logging Overview Quiz](quizzes/observability/logging/README-quiz.md)
     * [Grafana Loki Quiz](quizzes/observability/logging/01-loki-quiz.md)
     * [OpenSearch Quiz](quizzes/observability/logging/02-opensearch-quiz.md)
     * [CloudWatch Logs Quiz](quizzes/observability/logging/03-cloudwatch-logs-quiz.md)
     * [ClickHouse Quiz](quizzes/observability/logging/04-clickhouse-quiz.md)
     * [Log Collectors Quiz](quizzes/observability/logging/05-collectors-quiz.md)
-  * [Tracing](quiz/observability/tracing/README.md)
+  * Tracing
     * [Grafana Tempo Quiz](quizzes/observability/tracing/01-tempo-quiz.md)
     * [AWS X-Ray Quiz](quizzes/observability/tracing/02-xray-quiz.md)
     * [OpenTelemetry Quiz](quizzes/observability/tracing/03-opentelemetry-quiz.md)
     * [Dynatrace Quiz](quizzes/observability/tracing/04-dynatrace-quiz.md)
-  * [Alerting](quiz/observability/alerting/README.md)
+  * Alerting
     * [Alertmanager Quiz](quizzes/observability/alerting/01-alertmanager-quiz.md)
     * [CloudWatch Alarms Quiz](quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md)
     * [Grafana OnCall Quiz](quizzes/observability/alerting/03-grafana-oncall-quiz.md)
   * [Grafana Quiz](quizzes/observability/grafana/grafana-quiz.md)
   * [Observability Optimization Guide Quiz](quizzes/observability/09-observability-optimization-quiz.md)
-  * [Observability Labs](quiz/observability/observability-labs/README.md)
+  * Observability Labs
     * [Infrastructure Setup Quiz](quizzes/observability/labs/01-infrastructure-setup-quiz.md)
     * [Observability Stack Quiz](quizzes/observability/labs/02-observability-stack-quiz.md)
     * [MSA Deployment and Canary Quiz](quizzes/observability/labs/03-msa-deployment-quiz.md)
     * [Load Testing and Autoscaling Quiz](quizzes/observability/labs/04-load-testing-scaling-quiz.md)
     * [Alerting and AIOps Quiz](quizzes/observability/labs/05-alerting-aiops-quiz.md)
     * [Distributed Tracing Analysis Quiz](quizzes/observability/labs/06-distributed-tracing-quiz.md)
-* [Platform Engineering](quiz/platform-engineering/README.md)
+* Platform Engineering
   * [Platform Engineering Overview Quiz](quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
   * [Helm Quiz](quizzes/platform-engineering/01-helm-quiz.md)
   * [ACK Quiz](quizzes/platform-engineering/02-ack-quiz.md)
@@ -577,7 +577,7 @@
   * [Backstage IDP Quiz](quizzes/platform-engineering/06-backstage-idp-quiz.md)
   * [Crossplane Quiz](quizzes/platform-engineering/07-crossplane-quiz.md)
   * [vCluster Quiz](quizzes/platform-engineering/08-vcluster-quiz.md)
-* [Operations Guide](quiz/operations-guide/README.md)
+* Operations Guide
   * [Infrastructure Setup Quiz](quizzes/ops/01-infrastructure-setup-quiz.md)
   * [Infrastructure Advanced Quiz](quizzes/ops/02-infrastructure-advanced-quiz.md)
   * [CI Pipelines Quiz](quizzes/ops/03-ci-pipelines-quiz.md)
