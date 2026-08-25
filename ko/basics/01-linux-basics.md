@@ -1010,53 +1010,7 @@ OverlayFS는 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현하�
 
 컨테이너 네트워킹은 주로 브릿지 인터페이스와 NAT(Network Address Translation)를 사용하여 구현됩니다.
 
-```mermaid
-flowchart TB
-    subgraph "Host"
-        subgraph "Container A"
-            CA["eth0
-172.17.0.2"]
-        end
-        
-        subgraph "Container B"
-            CB["eth0
-172.17.0.3"]
-        end
-        
-        BR["Bridge (docker0)
-172.17.0.1/16"]
-        
-        ETH["eth0
-192.168.1.10"]
-        
-        IPTABLES["iptables
-NAT Rules"]
-        
-        CA -- "veth pair" --> BR
-        CB -- "veth pair" --> BR
-        BR --> IPTABLES
-        IPTABLES --> ETH
-    end
-    
-    INTERNET["External Network
-    Internet"]
-    
-    ETH <--> INTERNET
-    
-    %% 스타일 정의
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef bridge fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef host fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef network fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef iptables fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class CA,CB container
-    class BR bridge
-    class ETH host
-    class INTERNET network
-    class IPTABLES iptables
-```
+![단일 호스트에서의 Docker 브리지 네트워킹](../.gitbook/assets/docker-bridge-networking.png)
 
 ### 시스템 호출 필터링 (seccomp)
 

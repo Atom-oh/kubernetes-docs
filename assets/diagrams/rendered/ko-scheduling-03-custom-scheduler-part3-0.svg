@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="pdc-title pdc-desc">
+    <title id="pdc-title">Pod Deletion Cost 기반 ReplicaSet 스케일다운 흐름</title>
+    <desc id="pdc-desc">ReplicaSet 컨트롤러가 스케일 다운 요청을 받아 Pod 목록을 조회하고, 각 Pod의 Pod Deletion Cost 어노테이션 값을 확인한 뒤 비용이 낮은 순으로 정렬하여 가장 낮은 비용의 Pod(Pod-3: -10, Pod-4: 0)부터 삭제하는 과정을 보여준다.</desc>
+
+    <defs>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+        text{ font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif; }
+        .mono{ font-family:'Geist Mono','Amazon Ember Mono',ui-monospace,monospace; }
+      </style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <!-- background -->
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- ===================== ARROWS (drawn before boxes) ===================== -->
+
+    <!-- 1: Start -> Controller (unlabeled, y96..144) -->
+    <line x1="480" y1="120" x2="480" y2="144" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- 2: Controller -> Candidates (labeled, y196..232) -->
+    <line x1="480" y1="196" x2="480" y2="232" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="488" y="204" width="140" height="16" rx="2" fill="#ffffff"/>
+    <text x="558" y="215" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998" text-anchor="middle">POD 목록 조회</text>
+
+    <!-- 3: Candidates -> CheckCost (unlabeled, y320..344) -->
+    <line x1="480" y1="320" x2="480" y2="344" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- 4: CheckCost -> SortSelect (unlabeled, y432..456), accent -->
+    <line x1="480" y1="432" x2="480" y2="456" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- 5: SortSelect -> Deleted (labeled, y508..544) -->
+    <line x1="480" y1="508" x2="480" y2="544" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="488" y="516" width="148" height="16" rx="2" fill="#ffffff"/>
+    <text x="562" y="527" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998" text-anchor="middle">비용 최소부터 삭제</text>
+
+    <!-- ===================== NODES ===================== -->
+
+    <!-- 1. Start (oval / pill) -->
+    <rect x="380" y="72" width="200" height="48" rx="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="100" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">스케일 다운 요청</text>
+
+    <!-- 2. Controller (rect / backend) -->
+    <rect x="360" y="144" width="240" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="376" y="156" width="76" height="14" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+    <text x="414" y="166" class="mono" font-size="7" letter-spacing="0.08em" fill="#232F3E" fill-opacity="0.8" text-anchor="middle">CONTROLLER</text>
+    <text x="480" y="184" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">ReplicaSet Controller</text>
+
+    <!-- 3. Pod candidates (rect / store) -->
+    <rect x="300" y="232" width="360" height="88" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="480" y="248" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Pod 후보 (Deletion Cost 어노테이션)</text>
+
+    <!-- chip row 1 -->
+    <rect x="324" y="260" width="152" height="24" rx="4" fill="#ffffff" stroke="#545B64" stroke-width="0.8"/>
+    <text x="400" y="276" class="mono" font-size="9" fill="#545B64" text-anchor="middle">Pod-1 · cost 100</text>
+    <rect x="484" y="260" width="152" height="24" rx="4" fill="#ffffff" stroke="#545B64" stroke-width="0.8"/>
+    <text x="560" y="276" class="mono" font-size="9" fill="#545B64" text-anchor="middle">Pod-2 · cost 50</text>
+
+    <!-- chip row 2 -->
+    <rect x="324" y="288" width="152" height="24" rx="4" fill="#ffffff" stroke="#EC7211" stroke-width="0.8"/>
+    <text x="400" y="304" class="mono" font-size="9" fill="#EC7211" text-anchor="middle">Pod-3 · cost -10</text>
+    <rect x="484" y="288" width="152" height="24" rx="4" fill="#ffffff" stroke="#EC7211" stroke-width="0.8"/>
+    <text x="560" y="304" class="mono" font-size="9" fill="#EC7211" text-anchor="middle">Pod-4 · cost 0</text>
+
+    <!-- 4. Check cost (rect / focal) -->
+    <rect x="340" y="344" width="280" height="88" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="360" y="358" width="88" height="14" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.6" stroke-width="0.8"/>
+    <text x="404" y="368" class="mono" font-size="7" letter-spacing="0.08em" fill="#EC7211" text-anchor="middle">CHECK</text>
+    <text x="480" y="392" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Pod Deletion Cost 확인</text>
+    <text x="480" y="410" class="mono" font-size="9" fill="#545B64" text-anchor="middle">controller.kubernetes.io/pod-deletion-cost</text>
+
+    <!-- 5. Sort &amp; select (rect / backend) -->
+    <rect x="340" y="456" width="280" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="480" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">비용 낮은 순 정렬 → 선택</text>
+    <text x="480" y="498" class="mono" font-size="9" fill="#545B64" text-anchor="middle">sort by cost asc</text>
+
+    <!-- 6. Deleted (oval / end) -->
+    <rect x="360" y="544" width="240" height="48" rx="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="564" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">삭제: Pod-3, Pod-4</text>
+    <text x="480" y="580" class="mono" font-size="9" fill="#545B64" text-anchor="middle">Pod-1, Pod-2 유지</text>
+  </svg>

@@ -1002,53 +1002,7 @@ OverlayFS is a union mount file system that represents multiple directories as a
 
 Container networking is primarily implemented using bridge interfaces and NAT (Network Address Translation).
 
-```mermaid
-flowchart TB
-    subgraph "Host"
-        subgraph "Container A"
-            CA["eth0
-172.17.0.2"]
-        end
-
-        subgraph "Container B"
-            CB["eth0
-172.17.0.3"]
-        end
-
-        BR["Bridge (docker0)
-172.17.0.1/16"]
-
-        ETH["eth0
-192.168.1.10"]
-
-        IPTABLES["iptables
-NAT Rules"]
-
-        CA -- "veth pair" --> BR
-        CB -- "veth pair" --> BR
-        BR --> IPTABLES
-        IPTABLES --> ETH
-    end
-
-    INTERNET["External Network
-    Internet"]
-
-    ETH <--> INTERNET
-
-    %% Style definitions
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef bridge fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef host fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef network fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef iptables fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class CA,CB container
-    class BR bridge
-    class ETH host
-    class INTERNET network
-    class IPTABLES iptables
-```
+![Docker bridge networking on a single host](../.gitbook/assets/docker-bridge-networking.png)
 
 ### System Call Filtering (seccomp)
 

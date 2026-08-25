@@ -196,51 +196,7 @@ Pod Deletion Cost는 `controller.kubernetes.io/pod-deletion-cost` 어노테이�
 
 다음 다이어그램은 Pod Deletion Cost가 스케일 다운 시 어떻게 작동하는지 보여줍니다:
 
-```mermaid
-flowchart TB
-    subgraph "ReplicaSet Controller"
-        Controller[ReplicaSet Controller]
-        ScaleDown[스케일 다운 요청]
-    end
-
-    subgraph "Pod Selection Process"
-        GetPods[Pod 목록 조회]
-        CheckCost{Pod Deletion Cost<br/>어노테이션 확인}
-        SortPods[비용 기준 정렬]
-        SelectPods[낮은 비용 Pod 선택]
-    end
-
-    subgraph "Pods"
-        Pod1["Pod-1<br/>cost: 100"]
-        Pod2["Pod-2<br/>cost: 50"]
-        Pod3["Pod-3<br/>cost: -10"]
-        Pod4["Pod-4<br/>cost: 0"]
-    end
-
-    Deleted[삭제된 Pod]
-
-    ScaleDown --> Controller
-    Controller --> GetPods
-    GetPods --> CheckCost
-    CheckCost --> SortPods
-    SortPods --> SelectPods
-
-    Pod1 & Pod2 & Pod3 & Pod4 --> CheckCost
-    SelectPods -->|먼저 삭제| Pod3
-    SelectPods -->|다음 삭제| Pod4
-    Pod3 --> Deleted
-    Pod4 --> Deleted
-
-    classDef controller fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef deleted fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-
-    class Controller,ScaleDown controller;
-    class GetPods,CheckCost,SortPods,SelectPods process;
-    class Pod1,Pod2,Pod3,Pod4 pod;
-    class Deleted deleted;
-```
+![ReplicaSet 컨트롤러가 스케일 다운 시 Pod 목록을 조회하고 각 Pod의 Pod Deletion Cost 어노테이션 값을 확인한 뒤 비용이 낮은 순으로 정렬하여 가장 낮은 비용의 Pod(Pod-3: -10, Pod-4: 0)부터 삭제하는 과정을 보여주는 흐름도.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-0.png)
 
 ### 사용 사례
 
