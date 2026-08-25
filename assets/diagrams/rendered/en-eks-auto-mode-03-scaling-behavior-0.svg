@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="automode-scaling-title automode-scaling-desc">
+      <title id="automode-scaling-title">EKS Auto Mode scaling flow</title>
+      <desc id="automode-scaling-desc">Flowchart showing how a pending pod triggers EKS Auto Mode to evaluate its NodePool, provision a right-sized EC2 node, and schedule the pod once the node is ready.</desc>
+      <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ===================== ZONES (bg -> zones -> arrows -> nodes) ===================== -->
+      <!-- Zone A: Trigger -->
+      <rect x="24" y="24" width="912" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="36" y="28" width="72" height="12" rx="2" fill="#ffffff"/>
+      <text x="72" y="37" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">TRIGGER</text>
+
+      <!-- Zone B: Auto Mode Controller -->
+      <rect x="24" y="164" width="912" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="36" y="168" width="168" height="12" rx="2" fill="#ffffff"/>
+      <text x="120" y="177" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AUTO MODE CONTROLLER</text>
+
+      <!-- Zone C: Provisioning & Scheduling -->
+      <rect x="24" y="304" width="912" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="36" y="308" width="176" height="12" rx="2" fill="#ffffff"/>
+      <text x="124" y="317" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PROVISIONING &amp; SCHEDULING</text>
+
+      <!-- ===================== ARROWS (drawn before boxes) ===================== -->
+
+      <!-- Zone A internal: Pod Created -> Schedulable? -->
+      <line x1="176" y1="84" x2="276" y2="84" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Schedulable? -> YES -> Placed on Existing Node (right+up elbow) -->
+      <path d="M 408,84 H 546 Q 554,84 554,76 V 72 Q 554,64 562,64 H 700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="462" y="64" width="30" height="12" rx="2" fill="#ffffff"/>
+      <text x="477" y="73" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+      <!-- Schedulable? -> NO -> Pod Pending (down+right elbow) -->
+      <path d="M 342,110 V 116 Q 342,124 350,124 H 712" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="350" y="104" width="28" height="12" rx="2" fill="#ffffff"/>
+      <text x="364" y="113" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+      <!-- Pod Pending (Zone A) -> Detect & Evaluate NodePool (Zone B), same x, straight vertical -->
+      <path d="M 776,144 V 196" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Zone B internal chain -->
+      <path d="M 694,224 H 620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M 448,224 H 248" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+      <!-- Provision Node (Zone B) -> Start EC2 Instance (Zone C), vertical-primary elbow entering top edge -->
+      <path d="M 172,252 V 286 Q 172,294 180,294 H 198 Q 206,294 206,302 V 336" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+      <!-- Zone C internal chain -->
+      <path d="M 280,364 H 360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M 504,364 H 584" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M 728,364 H 812" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- ===================== NODES ===================== -->
+
+      <!-- 1. Pod Created (start oval) -->
+      <ellipse cx="112" cy="84" rx="64" ry="26" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="112" y="87" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod Created</text>
+
+      <!-- 2. Schedulable? (diamond) -->
+      <polygon points="342,58 408,84 342,110 276,84" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="342" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Schedulable?</text>
+
+      <!-- 3. Placed on Existing Node (end oval, YES branch) -->
+      <ellipse cx="776" cy="64" rx="76" ry="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="776" y="61" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Placed on</text>
+      <text x="776" y="74" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Existing Node</text>
+
+      <!-- 4. Pod Pending (NO branch, continues to Zone B) -->
+      <rect x="712" y="104" width="128" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="776" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod Pending</text>
+
+      <!-- 5. Detect & Evaluate NodePool -->
+      <rect x="694" y="196" width="164" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="776" y="219" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Detect &amp; Evaluate</text>
+      <text x="776" y="234" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">NodePool</text>
+      <text x="776" y="246" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">requirements</text>
+
+      <!-- 6. Select Optimal Instance -->
+      <rect x="448" y="196" width="172" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="534" y="222" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Select Optimal</text>
+      <text x="534" y="237" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Instance</text>
+
+      <!-- 7. Provision Node (focal) -->
+      <rect x="96" y="196" width="152" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="172" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Provision Node</text>
+
+      <!-- 8. Start EC2 Instance -->
+      <rect x="132" y="336" width="148" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="206" y="360" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Start EC2</text>
+      <text x="206" y="375" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Instance</text>
+
+      <!-- 9. Bootstrap & Register kubelet -->
+      <rect x="360" y="336" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="432" y="360" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Bootstrap &amp;</text>
+      <text x="432" y="375" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Register kubelet</text>
+
+      <!-- 10. Node Ready -->
+      <rect x="584" y="336" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="656" y="368" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node Ready</text>
+
+      <!-- 11. Pod Running (end oval) -->
+      <ellipse cx="872" cy="364" rx="60" ry="26" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="872" y="368" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod Running</text>
+
+      <!-- ===================== LEGEND ===================== -->
+      <line x1="30" y1="516" x2="930" y2="516" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="30" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+      <ellipse cx="52" cy="556" rx="18" ry="10" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="82" y="559" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Start / End</text>
+
+      <rect x="190" y="546" width="24" height="20" rx="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="226" y="559" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Step</text>
+
+      <polygon points="330,546 348,556 330,566 312,556" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="358" y="559" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Decision</text>
+
+      <rect x="470" y="546" width="24" height="20" rx="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="506" y="559" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Core Auto Mode action</text>
+    </svg>

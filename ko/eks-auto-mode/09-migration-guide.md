@@ -11,23 +11,7 @@
 
 ## 마이그레이션 단계
 
-```mermaid
-flowchart TD
-    A[1. 현재 상태 분석] --> B[2. Auto Mode 활성화]
-    B --> C[3. NodePool 구성]
-    C --> D[4. 워크로드 마이그레이션]
-    D --> E[5. 기존 노드 그룹 축소]
-    E --> F[6. 기존 노드 그룹 삭제]
-    F --> G[7. 검증 및 최적화]
-
-    style A fill:#e3f2fd
-    style B fill:#e8f5e9
-    style C fill:#fff3e0
-    style D fill:#fce4ec
-    style E fill:#f3e5f5
-    style F fill:#ffebee
-    style G fill:#e0f7fa
-```
+![기존 노드 그룹 기반 EKS 클러스터를 현재 상태 분석부터 Auto Mode 활성화, NodePool 구성, 워크로드 마이그레이션, 기존 노드 그룹 축소·삭제, 검증 및 최적화까지 7단계로 전환하는 순차 흐름도.](../.gitbook/assets/ko-eks-auto-mode-09-migration-guide-0.png)
 
 ## 1단계: 현재 상태 분석
 

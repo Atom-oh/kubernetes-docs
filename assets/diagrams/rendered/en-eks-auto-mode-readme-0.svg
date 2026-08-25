@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="960" height="600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">EKS Auto Mode node provisioning sequence</title>
+  <desc id="ddesc">A sequence diagram showing how EKS Auto Mode reacts to a pending pod: the API server marks the pod pending, the Auto Mode controller matches a NodePool and picks an instance type, launches an EC2 instance, the new node registers with the API server, and the API server schedules the pod onto it, ending with the pod running.</desc>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="600" fill="#FFFFFF"/>
+
+  <!-- ===================== Actor boxes ===================== -->
+  <!-- User: x center 70 -->
+  <rect x="25" y="30" width="90" height="40" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+  <text x="70" y="54" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">User</text>
+
+  <!-- EKS API Server: focal, x center 275 -->
+  <rect x="200" y="30" width="150" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="275" y="54" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">EKS API Server</text>
+
+  <!-- Auto Mode Controller: focal, x center 480 -->
+  <rect x="395" y="30" width="170" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="54" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Auto Mode Controller</text>
+
+  <!-- EC2 Fleet: x center 685 -->
+  <rect x="630" y="30" width="110" height="40" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+  <text x="685" y="54" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">EC2 Fleet</text>
+
+  <!-- New Node: x center 890 -->
+  <rect x="840" y="30" width="100" height="40" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+  <text x="890" y="54" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">New Node</text>
+
+  <!-- ===================== Lifelines ===================== -->
+  <line x1="70"  y1="70" x2="70"  y2="550" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="275" y1="70" x2="275" y2="550" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="480" y1="70" x2="480" y2="550" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="685" y1="70" x2="685" y2="550" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="890" y1="70" x2="890" y2="550" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- ===================== Messages ===================== -->
+
+  <!-- 1: User -> API : Pod creation request (y=100) -->
+  <text x="172" y="92" text-anchor="middle" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.03em" fill="#545B64">Pod creation request</text>
+  <line x1="70" y1="100" x2="271" y2="100" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- 2: API self : Pod Pending state (loop y=140..160) -->
+  <path d="M275,140 H320 V160 H275" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="328" y="153" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.03em" fill="#545B64">Pod Pending state</text>
+
+  <!-- 3: Karpenter -> API : Detect Pending Pod (y=196) -->
+  <text x="378" y="188" text-anchor="middle" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.03em" fill="#545B64">Detect Pending Pod</text>
+  <line x1="480" y1="196" x2="279" y2="196" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- 4: Karpenter self : NodePool matching (loop y=236..256) -->
+  <path d="M480,236 H525 V256 H480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="533" y="249" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.03em" fill="#545B64">NodePool matching</text>
+
+  <!-- 5: Karpenter self : Determine optimal instance type (loop y=292..312) -->
+  <path d="M480,292 H525 V312 H480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="533" y="299" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.03em" fill="#545B64">Determine optimal</text>
+  <text x="533" y="310" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.03em" fill="#545B64">instance type</text>
+
+  <!-- 6: Karpenter -> EC2 : Instance launch request (y=348) -->
+  <text x="582" y="340" text-anchor="middle" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.03em" fill="#545B64">Instance launch request</text>
+  <line x1="480" y1="348" x2="681" y2="348" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- 7: EC2 -> Node : Instance provisioning (y=388) -->
+  <text x="787" y="380" text-anchor="middle" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.03em" fill="#545B64">Instance provisioning</text>
+  <line x1="685" y1="388" x2="886" y2="388" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- 8: Node -> API : Node registration (kubelet) (y=428) -->
+  <text x="582" y="420" text-anchor="middle" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.03em" fill="#545B64">Node registration (kubelet)</text>
+  <line x1="890" y1="428" x2="279" y2="428" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- 9: API -> Node : Pod scheduling (y=468) -->
+  <text x="582" y="460" text-anchor="middle" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.03em" fill="#545B64">Pod scheduling</text>
+  <line x1="275" y1="468" x2="886" y2="468" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- 10: Node -> API : Pod Running (headline success, y=508) -->
+  <text x="582" y="500" text-anchor="middle" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em" fill="#EC7211" font-weight="500">Pod Running</text>
+  <line x1="890" y1="508" x2="279" y2="508" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+  <!-- lifeline end caps -->
+  <circle cx="70" cy="550" r="2.2" fill="#7D8998"/>
+  <circle cx="275" cy="550" r="2.2" fill="#7D8998"/>
+  <circle cx="480" cy="550" r="2.2" fill="#7D8998"/>
+  <circle cx="685" cy="550" r="2.2" fill="#7D8998"/>
+  <circle cx="890" cy="550" r="2.2" fill="#7D8998"/>
+</svg>

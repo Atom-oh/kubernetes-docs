@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="consolidation-title consolidation-desc">
+      <title id="consolidation-title">Node consolidation before and after</title>
+      <desc id="consolidation-desc">Comparison showing three lightly-loaded nodes before consolidation collapsing into one densely-packed node after Auto Mode consolidates workloads and removes the two now-empty nodes.</desc>
+      <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ===================== ZONES ===================== -->
+      <!-- Zone Before -->
+      <rect x="24" y="60" width="380" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="36" y="64" width="188" height="12" rx="2" fill="#ffffff"/>
+      <text x="130" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">BEFORE CONSOLIDATION</text>
+
+      <!-- Zone After -->
+      <rect x="556" y="60" width="380" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="568" y="64" width="176" height="12" rx="2" fill="#ffffff"/>
+      <text x="656" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AFTER CONSOLIDATION</text>
+
+      <!-- ===================== ARROWS ===================== -->
+      <!-- Before -> After: straight horizontal, same y -->
+      <path d="M 404,240 H 556" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <rect x="440" y="220" width="82" height="14" rx="2" fill="#ffffff"/>
+      <text x="481" y="230" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CONSOLIDATE</text>
+
+      <!-- ===================== NODES: Before (3 lightly-loaded) ===================== -->
+      <rect x="56" y="100" width="316" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="214" y="130" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node 1</text>
+      <text x="214" y="148" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cpu 20% · mem 30%</text>
+
+      <rect x="56" y="188" width="316" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="214" y="218" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node 2</text>
+      <text x="214" y="236" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cpu 15% · mem 25%</text>
+
+      <rect x="56" y="276" width="316" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="214" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node 3</text>
+      <text x="214" y="324" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cpu 10% · mem 20%</text>
+
+      <!-- ===================== NODES: After (1 dense survivor + 2 removed) ===================== -->
+      <!-- Focal survivor -->
+      <rect x="588" y="100" width="316" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="746" y="130" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node 1</text>
+      <text x="746" y="148" fill="#232F3E" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">cpu 45% · mem 75%</text>
+
+      <!-- Removed nodes: dashed, optional treatment -->
+      <rect x="588" y="188" width="316" height="72" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="746" y="228" fill="#7D8998" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node 2 — removed</text>
+
+      <rect x="588" y="276" width="316" height="72" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="746" y="316" fill="#7D8998" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node 3 — removed</text>
+
+      <!-- ===================== LEGEND ===================== -->
+      <line x1="30" y1="480" x2="930" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="30" y="496" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+      <rect x="46" y="510" width="24" height="20" rx="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="82" y="523" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Surviving node, repacked</text>
+
+      <rect x="330" y="510" width="24" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="366" y="523" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Drained and removed</text>
+    </svg>

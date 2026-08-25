@@ -11,39 +11,7 @@ This guide explains how EKS Auto Mode handles node provisioning, consolidation, 
 
 Understanding the scaling flow of EKS Auto Mode helps with optimization.
 
-```mermaid
-flowchart TD
-    subgraph Trigger["Trigger"]
-        A[Pod Creation] --> B{Schedulable?}
-        B -->|Yes| C[Place on existing node]
-        B -->|No| D[Pod Pending]
-    end
-
-    subgraph AutoMode["Auto Mode Controller"]
-        D --> E[Detect Pending Pod]
-        E --> F[Evaluate NodePool]
-        F --> G[Analyze Requirements]
-        G --> H[Select Optimal Instance]
-        H --> I[Provision Node]
-    end
-
-    subgraph Provisioning["Provisioning"]
-        I --> J[Start EC2 Instance]
-        J --> K[Node Bootstrap]
-        K --> L[kubelet Registration]
-        L --> M[Node Ready]
-    end
-
-    subgraph Scheduling["Scheduling"]
-        M --> N[Pod Scheduling]
-        N --> O[Pod Running]
-    end
-
-    style Trigger fill:#e1f5fe
-    style AutoMode fill:#fff3e0
-    style Provisioning fill:#f3e5f5
-    style Scheduling fill:#e8f5e9
-```
+![Flowchart showing how a pending pod triggers EKS Auto Mode to detect and evaluate the NodePool, select an optimal instance, provision a new EC2 node, and schedule the pod once the node is ready.](../.gitbook/assets/en-eks-auto-mode-03-scaling-behavior-0.png)
 
 ### Scaling Timeline
 
@@ -117,25 +85,7 @@ spec:
 
 ### Consolidation Visualization
 
-```mermaid
-flowchart LR
-    subgraph Before["Before Consolidation"]
-        N1["Node 1<br/>CPU: 20%<br/>Memory: 30%"]
-        N2["Node 2<br/>CPU: 15%<br/>Memory: 25%"]
-        N3["Node 3<br/>CPU: 10%<br/>Memory: 20%"]
-    end
-
-    subgraph After["After Consolidation"]
-        N4["Node 1<br/>CPU: 45%<br/>Memory: 75%"]
-        N5["(Removed)"]
-        N6["(Removed)"]
-    end
-
-    Before --> |Consolidation| After
-
-    style N5 fill:#ffcdd2
-    style N6 fill:#ffcdd2
-```
+![Before-and-after comparison showing three lightly-loaded nodes consolidating into one densely-packed surviving node while the other two are drained and removed.](../.gitbook/assets/en-eks-auto-mode-03-scaling-behavior-1.png)
 
 ### Consolidation Decision Factors
 

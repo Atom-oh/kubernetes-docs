@@ -53,22 +53,7 @@ EKS Auto Mode는 Karpenter 기반 `expireAfter` 기본값을 사용하며, 노�
 
 ### expireAfter 동작 원리
 
-```mermaid
-flowchart TD
-    A[노드 생성] --> B[expireAfter 타이머 시작]
-    B --> C{만료 시간 도달?}
-    C -->|No| D[계속 운영]
-    D --> C
-    C -->|Yes| E[노드 만료 표시]
-    E --> F{워크로드 존재?}
-    F -->|Yes| G[Pod 퇴거 시작]
-    G --> H[PDB 확인]
-    H --> I[Graceful 종료]
-    F -->|No| J[즉시 종료]
-    I --> J
-    J --> K[노드 삭제]
-    K --> L[필요시 새 노드 프로비저닝]
-```
+![expireAfter 타이머가 만료되면 워크로드 존재 여부에 따라 Pod 퇴거·PDB 확인·Graceful 종료를 거치는 경로와 즉시 종료 경로로 나뉘어 노드를 삭제하고 필요시 새 노드를 프로비저닝하는 노드 만료 처리 흐름을 보여준다.](../.gitbook/assets/ko-eks-auto-mode-07-node-lifecycle-0.png)
 
 ## AMI 관리 전략
 
@@ -168,31 +153,7 @@ kubectl describe nodeclaim <name> | grep -A5 "Status:"
 
 ### Drift 발생 시나리오
 
-```mermaid
-flowchart LR
-    subgraph Triggers["Drift 트리거"]
-        A[NodePool 변경]
-        B[NodeClass 변경]
-        C[AMI 업데이트]
-        D[보안 그룹 변경]
-    end
-
-    subgraph Detection["감지"]
-        E[Auto Mode Controller]
-    end
-
-    subgraph Action["조치"]
-        F[Drift 표시]
-        G[순차적 교체]
-        H[새 노드 프로비저닝]
-    end
-
-    A --> E
-    B --> E
-    C --> E
-    D --> E
-    E --> F --> G --> H
-```
+![NodePool, NodeClass, AMI, 보안 그룹 변경이라는 네 가지 트리거가 Auto Mode Controller로 모여 감지된 뒤 Drift 표시, 순차적 교체, 새 노드 프로비저닝 순으로 조치가 이어지는 Drift 감지 흐름을 보여준다.](../.gitbook/assets/ko-eks-auto-mode-07-node-lifecycle-1.png)
 
 ### AMI 업데이트 주기
 
@@ -309,38 +270,7 @@ KERNEL:.status.nodeInfo.kernelVersion
 
 ### 상호작용 이해
 
-```mermaid
-flowchart TD
-    subgraph Node["노드 상태"]
-        A[신규 노드]
-        B[운영 중]
-        C[저사용률]
-        D[만료 임박]
-    end
-
-    subgraph Consolidation["Consolidation"]
-        E{사용률 < 임계치?}
-        F[Pod 이동]
-        G[노드 제거]
-    end
-
-    subgraph Expiration["Expiration"]
-        H{expireAfter 도달?}
-        I[만료 표시]
-        J[교체 시작]
-    end
-
-    A --> B
-    B --> E
-    E -->|Yes| F --> G
-    E -->|No| B
-    B --> H
-    H -->|Yes| I --> J
-    H -->|No| B
-
-    style G fill:#ffcdd2
-    style J fill:#fff3e0
-```
+![운영 중인 노드가 사용률 저하 시 Consolidation으로 Pod를 이동시켜 제거되거나 expireAfter 도달 시 Expiration으로 교체가 시작되며, 두 조건 모두 만족하지 않으면 다시 운영 중 상태로 돌아오는 흐름을 보여준다.](../.gitbook/assets/ko-eks-auto-mode-07-node-lifecycle-2.png)
 
 ### 권장 조합 설정
 

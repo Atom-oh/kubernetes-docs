@@ -9,23 +9,7 @@ This guide covers how to migrate from existing EKS Managed Node Groups to Auto M
 
 ## Migration Overview
 
-```mermaid
-flowchart TD
-    A[1. Analyze Current State] --> B[2. Enable Auto Mode]
-    B --> C[3. Configure NodePools]
-    C --> D[4. Migrate Workloads]
-    D --> E[5. Scale Down Existing Node Groups]
-    E --> F[6. Delete Existing Node Groups]
-    F --> G[7. Validation and Optimization]
-
-    style A fill:#e3f2fd
-    style B fill:#e8f5e9
-    style C fill:#fff3e0
-    style D fill:#fce4ec
-    style E fill:#f3e5f5
-    style F fill:#ffebee
-    style G fill:#e0f7fa
-```
+![A seven-step top-to-bottom migration path for moving an Amazon EKS cluster onto Auto Mode: analyze the current state, enable Auto Mode, configure NodePools, migrate workloads, scale down and then delete the existing managed node groups, and finish with validation and optimization.](../.gitbook/assets/en-eks-auto-mode-09-migration-guide-0.png)
 
 ---
 

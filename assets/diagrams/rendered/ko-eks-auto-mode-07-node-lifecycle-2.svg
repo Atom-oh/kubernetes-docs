@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="consol-title consol-desc">
+    <title id="consol-title">Consolidation과 Expiration 흐름</title>
+    <desc id="consol-desc">운영 중인 노드가 사용률 저하 시 Consolidation으로 Pod를 이동시켜 제거되거나, expireAfter 도달 시 Expiration으로 교체가 시작되며, 두 판단 모두 조건을 만족하지 않으면 다시 운영 중 상태로 돌아오는 흐름을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ===== Zones ===== -->
+    <rect x="24" y="16" width="912" height="100" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="40" y="20" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="46" y="29" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">노드 상태</text>
+
+    <rect x="80" y="150" width="360" height="236" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="96" y="154" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="102" y="163" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">CONSOLIDATION</text>
+
+    <rect x="520" y="150" width="360" height="236" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="536" y="154" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="542" y="163" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">EXPIRATION</text>
+
+    <!-- ===== Arrows ===== -->
+    <!-- A -> B (straight, same y) -->
+    <line x1="184" y1="58" x2="400" y2="58" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- B -> E (Consolidation check), exits B bottom edge at x=456 -->
+    <path d="M456,100 V132 Q456,140 448,140 H268 Q260,140 260,148 V182" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- B -> H (Expiration check), exits B bottom edge at x=504 -->
+    <path d="M504,100 V132 Q504,140 512,140 H692 Q700,140 700,148 V182" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- E -> F : Yes (accent, primary consolidation path) -->
+    <line x1="260" y1="246" x2="260" y2="270" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- F -> G -->
+    <line x1="260" y1="306" x2="260" y2="330" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- E -> B : No, loop back into B's BOTTOM edge at x=420 (mirrors the H->B routing, clear of the 신규 노드 box at y=44-100) -->
+    <path d="M220,214 H148 Q140,214 140,206 V134 Q140,126 148,126 H412 Q420,126 420,118 V100" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- H -> I : Yes (accent, primary expiration path) -->
+    <line x1="700" y1="246" x2="700" y2="270" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- I -> J -->
+    <line x1="700" y1="306" x2="700" y2="330" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- H -> B : No, loop back into B's BOTTOM edge at x=540 (routes through the gap between the state row y=100 and the zone tops y=150, clear of the unconnected 저사용률/만료임박 boxes at y=44-100) -->
+    <path d="M740,214 H812 Q820,214 820,206 V134 Q820,126 812,126 H548 Q540,126 540,118 V100" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ===== Arrow labels (vertical segments: label to the side, 12px horizontal gap) ===== -->
+    <rect x="272" y="252" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="286" y="261" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">YES</text>
+
+    <rect x="712" y="252" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="726" y="261" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">YES</text>
+
+    <!-- horizontal segments: label above, 8px vertical gap -->
+    <rect x="264" y="106" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="280" y="115" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">NO</text>
+
+    <rect x="664" y="106" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="680" y="115" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">NO</text>
+
+    <!-- ===== Nodes: Node states row ===== -->
+    <rect x="44" y="44" width="140" height="56" rx="6" fill="#ffffff" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+    <text x="114" y="68" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">신규 노드</text>
+    <text x="114" y="82" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">state</text>
+
+    <!-- B: 운영 중 (hub, focal) -->
+    <rect x="400" y="44" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="480" y="70" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">운영 중</text>
+    <text x="480" y="84" fill="#232F3E" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">허브 상태</text>
+
+    <!-- C, D: unconnected state labels from source subgraph -->
+    <rect x="612" y="44" width="140" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="682" y="68" fill="#545B64" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">저사용률</text>
+    <text x="682" y="82" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">참조 상태</text>
+
+    <rect x="768" y="44" width="140" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="838" y="68" fill="#545B64" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">만료 임박</text>
+    <text x="838" y="82" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">참조 상태</text>
+
+    <!-- E: 사용률 < 임계치? (diamond) -->
+    <polygon points="260,182 300,214 260,246 220,214" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="260" y="210" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">사용률 &lt;</text>
+    <text x="260" y="222" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">임계치?</text>
+
+    <!-- F: Pod 이동 -->
+    <rect x="180" y="270" width="160" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="260" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 이동</text>
+
+    <!-- G: 노드 제거 (destructive, danger red) -->
+    <rect x="180" y="330" width="160" height="36" rx="6" fill="rgba(221,52,76,0.06)" stroke="#DD344C" stroke-width="1"/>
+    <text x="260" y="352" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">노드 제거</text>
+
+    <!-- H: expireAfter 도달? (diamond) -->
+    <polygon points="700,182 740,214 700,246 660,214" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="210" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">expireAfter</text>
+    <text x="700" y="222" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">도달?</text>
+
+    <!-- I: 만료 표시 -->
+    <rect x="620" y="270" width="160" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">만료 표시</text>
+
+    <!-- J: 교체 시작 (optional/async, dashed) -->
+    <rect x="620" y="330" width="160" height="36" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="700" y="352" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">교체 시작</text>
+
+    <!-- ===== Legend ===== -->
+    <line x1="24" y1="412" x2="936" y2="412" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="428" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">LEGEND</text>
+
+    <rect x="24" y="444" width="24" height="12" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="56" y="454" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">허브 상태(focal)</text>
+
+    <rect x="220" y="444" width="24" height="12" rx="6" fill="rgba(221,52,76,0.06)" stroke="#DD344C" stroke-width="1"/>
+    <text x="252" y="454" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">파괴적 조치</text>
+
+    <rect x="392" y="444" width="24" height="12" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="424" y="454" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">비동기 후속</text>
+
+    <line x1="576" y1="450" x2="604" y2="450" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="612" y="454" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">판단 통과(YES)</text>
+
+    <line x1="756" y1="450" x2="784" y2="450" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="792" y="454" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">재순환(NO)</text>
+  </svg>

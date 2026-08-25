@@ -86,25 +86,7 @@ EKS Auto Mode is a fully automated node management solution managed by AWS. It i
 
 EKS Auto Mode operates based on Karpenter, but runs within the AWS-managed control plane.
 
-```mermaid
-sequenceDiagram
-    participant User as User
-    participant API as EKS API Server
-    participant Karpenter as Auto Mode Controller
-    participant EC2 as EC2 Fleet
-    participant Node as New Node
-
-    User->>API: Pod creation request
-    API->>API: Pod Pending state
-    Karpenter->>API: Detect Pending Pod
-    Karpenter->>Karpenter: NodePool matching
-    Karpenter->>Karpenter: Determine optimal instance type
-    Karpenter->>EC2: Instance launch request
-    EC2->>Node: Instance provisioning
-    Node->>API: Node registration (kubelet)
-    API->>Node: Pod scheduling
-    Node->>API: Pod Running
-```
+![Sequence diagram showing EKS Auto Mode's node provisioning flow: a pending pod triggers the Auto Mode controller to match a NodePool and pick an instance type, launch an EC2 instance, register the new node, and schedule the pod, ending with the pod running.](../.gitbook/assets/en-eks-auto-mode-readme-0.png)
 
 ### Supported Regions and Limitations
 

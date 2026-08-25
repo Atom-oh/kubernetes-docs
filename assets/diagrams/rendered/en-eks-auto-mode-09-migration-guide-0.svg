@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">EKS Auto Mode migration path</title>
+  <desc id="ddesc">A seven-step top-to-bottom migration path for moving an Amazon EKS cluster onto Auto Mode: analyze the current state, enable Auto Mode, configure NodePools, migrate workloads, scale down and then delete the existing managed node groups, and finish with validation and optimization.</desc>
+
+  <defs>
+<style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="11" cy="11" r="0.8" fill="rgba(35,47,62,0.10)"/>
+    </pattern>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="600" fill="#FFFFFF"/>
+  <rect x="0" y="0" width="960" height="600" fill="url(#dots)" opacity="0.55"/>
+
+  <!-- Header -->
+  <text x="480" y="34" text-anchor="middle" class="mono" font-size="8" font-weight="500" letter-spacing="0.18em" fill="#7D8998">EKS AUTO MODE &#8226; MIGRATION SEQUENCE</text>
+  <text x="480" y="58" text-anchor="middle" class="sans" font-size="17.5" font-weight="700" fill="#232F3E">From managed node groups to Auto Mode</text>
+
+  <!-- Connectors (drawn before nodes) -->
+  <!-- A(94-138) to B(148-192) -->
+  <line x1="480" y1="138" x2="480" y2="148" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- B(148-196) to C(206-250) accent-in -->
+  <line x1="480" y1="196" x2="480" y2="206" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- C to D -->
+  <line x1="480" y1="250" x2="480" y2="260" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- D to E -->
+  <line x1="480" y1="304" x2="480" y2="314" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- E to F -->
+  <line x1="480" y1="358" x2="480" y2="368" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- F to G -->
+  <line x1="480" y1="412" x2="480" y2="422" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Node A: start oval -->
+  <g>
+    <ellipse cx="480" cy="116" rx="150" ry="22" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="120" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="#232F3E">1. Analyze current state</text>
+  </g>
+
+  <!-- Node B: focal rect -->
+  <g>
+    <rect x="330" y="148" width="300" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="342" y="164" width="16" height="16" rx="8" fill="rgba(255,153,0,0.20)"/>
+    <text x="350" y="175" text-anchor="middle" class="mono" font-size="8" font-weight="600" fill="#EC7211">2</text>
+    <text x="490" y="177" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="#232F3E">Enable Auto Mode</text>
+  </g>
+
+  <!-- Node C -->
+  <g>
+    <rect x="330" y="206" width="300" height="44" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="0.8"/>
+    <rect x="342" y="220" width="16" height="16" rx="8" fill="rgba(35,47,62,0.12)"/>
+    <text x="350" y="231" text-anchor="middle" class="mono" font-size="8" font-weight="600" fill="#232F3E">3</text>
+    <text x="490" y="232" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="#232F3E">Configure NodePools</text>
+  </g>
+
+  <!-- Node D -->
+  <g>
+    <rect x="330" y="260" width="300" height="44" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="0.8"/>
+    <rect x="342" y="274" width="16" height="16" rx="8" fill="rgba(35,47,62,0.12)"/>
+    <text x="350" y="285" text-anchor="middle" class="mono" font-size="8" font-weight="600" fill="#232F3E">4</text>
+    <text x="490" y="286" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="#232F3E">Migrate workloads</text>
+  </g>
+
+  <!-- Node E -->
+  <g>
+    <rect x="330" y="314" width="300" height="44" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="0.8"/>
+    <rect x="342" y="328" width="16" height="16" rx="8" fill="rgba(35,47,62,0.12)"/>
+    <text x="350" y="339" text-anchor="middle" class="mono" font-size="8" font-weight="600" fill="#232F3E">5</text>
+    <text x="490" y="336" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="#232F3E">Scale down existing</text>
+    <text x="490" y="349" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="#232F3E">node groups</text>
+  </g>
+
+  <!-- Node F -->
+  <g>
+    <rect x="330" y="368" width="300" height="44" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="0.8"/>
+    <rect x="342" y="382" width="16" height="16" rx="8" fill="rgba(35,47,62,0.12)"/>
+    <text x="350" y="393" text-anchor="middle" class="mono" font-size="8" font-weight="600" fill="#232F3E">6</text>
+    <text x="490" y="390" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="#232F3E">Delete existing</text>
+    <text x="490" y="403" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="#232F3E">node groups</text>
+  </g>
+
+  <!-- Node G: end oval -->
+  <g>
+    <ellipse cx="480" cy="444" rx="160" ry="22" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="448" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="#232F3E">7. Validation and optimization</text>
+  </g>
+
+  <!-- Bottom note callout -->
+  <line x1="230" y1="500" x2="730" y2="500" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+  <text x="480" y="524" text-anchor="middle" class="sans" font-style="italic" font-size="12.5" fill="#545B64">Enabling Auto Mode is the pivotal switch: every later step builds NodePool capacity</text>
+  <text x="480" y="542" text-anchor="middle" class="sans" font-style="italic" font-size="12.5" fill="#545B64">and shifts workloads onto it before the old node groups are retired.</text>
+
+  <text x="480" y="580" text-anchor="middle" class="mono" font-size="7.5" font-weight="500" letter-spacing="0.14em" fill="#7D8998">SEQUENTIAL &#8226; ONE DIRECTION &#8226; NO ROLLBACK BRANCH SHOWN</text>
+</svg>
