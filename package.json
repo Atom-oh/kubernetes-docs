@@ -4,10 +4,14 @@
   "type": "module",
   "scripts": {
     "docs:dev": "vitepress dev",
-    "docs:build": "vitepress build",
-    "docs:preview": "vitepress preview"
+    "docs:build": "node scripts/build-vitepress-locales.mjs",
+    "docs:build:locale": "vitepress build",
+    "docs:preview": "vitepress preview",
+    "docs:test": "node --test scripts/__tests__/*.test.mjs",
+    "docs:validate": "npm run docs:test && node scripts/validate-local-links.mjs && node scripts/validate-image-assets.mjs"
   },
   "devDependencies": {
+    "medium-zoom": "^1.1.0",
     "mermaid": "^11.16.0",
     "sitemap": "^8.0.3",
     "vitepress": "^1.6.4",

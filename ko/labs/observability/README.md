@@ -237,8 +237,8 @@ sequenceDiagram
 ### Observability 기초
 
 * [Prometheus 기초](../../observability/metrics/01-prometheus.md)
-* [Grafana 대시보드](../../observability/grafana/)
-* [Logging Stack 개요](../../observability/logging/)
+* [Grafana 대시보드](../../observability/grafana/README.md)
+* [Logging Stack 개요](../../observability/logging/README.md)
 
 ### EKS 및 인프라
 

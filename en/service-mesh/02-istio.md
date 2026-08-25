@@ -145,9 +145,9 @@ Detailed guides for all Istio features.
 
 | Document | Description |
 |----------|-------------|
-| [Installation Guide](istio/installation.md) | Istio installation and initial setup |
-| [Core Concepts](istio/core-concepts.md) | Basic concepts and terminology of Istio |
-| [Components](istio/components.md) | Istio architecture and components |
+| [Installation Guide](istio/01-installation.md) | Istio installation and initial setup |
+| [Core Concepts](istio/02-basic-concepts.md) | Basic concepts and terminology of Istio |
+| [Components](istio/03-architecture.md) | Istio architecture and components |
 
 ### 🚦 Traffic Management
 
@@ -169,18 +169,18 @@ Detailed guides for all Istio features.
 | Document | Description |
 |----------|-------------|
 | [mTLS](istio/security/01-mtls.md) | Service-to-service mTLS configuration |
-| [Authorization Policy](istio/security/02-authorization-policy.md) | Access control policies |
-| [Request Authentication](istio/security/03-request-authentication.md) | JWT-based authentication |
-| [Peer Authentication](istio/security/04-peer-authentication.md) | Service-to-service authentication |
+| [Authorization Policy](istio/security/03-authorization.md) | Access control policies |
+| [Request Authentication](istio/security/02-authentication.md) | JWT-based authentication |
+| [Peer Authentication](istio/security/02-authentication.md) | Service-to-service authentication |
 
 ### 📊 Observability
 
 | Document | Description |
 |----------|-------------|
 | [Metrics](istio/observability/01-metrics.md) | Prometheus metrics collection |
-| [Distributed Tracing](istio/observability/02-distributed-tracing.md) | Jaeger/Zipkin integration |
+| [Distributed Tracing](istio/observability/02-tracing.md) | Jaeger/Zipkin integration |
 | [Logging](istio/observability/03-logging.md) | Access logs and structured logging |
-| [Visualization](istio/observability/04-visualization.md) | Kiali, Grafana dashboards |
+| [Visualization](istio/observability/04-dashboards.md) | Kiali, Grafana dashboards |
 
 ### 💪 Resilience
 
@@ -318,4 +318,4 @@ The quiz covers the following topics:
 
 ---
 
-**Next Steps**: Refer to the [Installation Guide](istio/installation.md) to install Istio, and learn basic concepts in [Core Concepts](istio/core-concepts.md).
+**Next Steps**: Refer to the [Installation Guide](istio/01-installation.md) to install Istio, and learn basic concepts in [Core Concepts](istio/02-basic-concepts.md).

@@ -972,9 +972,9 @@ spec:
 
 If you've completed AWS integration, refer to the following documents:
 
-1. [**Traffic Management**](traffic-management/): Advanced traffic management features
-2. [**Security**](security/): mTLS and authentication/authorization
-3. [**Observability**](/broken/pages/HT0uW6gT7EfVN0LF8wU5): Metrics, logs, trace collection
+1. [**Traffic Management**](traffic-management/README.md): Advanced traffic management features
+2. [**Security**](security/README.md): mTLS and authentication/authorization
+3. [**Observability**](observability/README.md): Metrics, logs, trace collection
 
 ## References
 

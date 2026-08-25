@@ -207,7 +207,7 @@ The same `KafkaAvroSerializer` class works against Karapace too — just point `
 
 This part covered how a schema registry keeps the data contract between producers and consumers safe as both evolve independently. Part 5 moves on to Kafka Connect and MirrorMaker — integrating with external systems and replicating data across clusters.
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

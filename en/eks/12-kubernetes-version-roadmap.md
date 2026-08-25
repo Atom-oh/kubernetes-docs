@@ -3146,4 +3146,4 @@ To test what you've learned in this document, try the [Kubernetes Version Featur
 
 ---
 
-< [Previous: EKS Advanced Debugging](./11-eks-advanced-debugging.md) | [Table of Contents](./README.md) >
+< [Previous: EKS Advanced Debugging](./11-eks-advanced-debugging.md) | [Table of Contents](../README.md) >

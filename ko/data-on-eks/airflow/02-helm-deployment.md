@@ -201,7 +201,7 @@ kubectl get pods -n airflow -l component=redis
 
 이 문서에서는 두 가지 Airflow Helm 차트와 그중 `apache/airflow`만이 공식 차트인 이유를 정리하고, 실제로 동작하는 Airflow 3 배포를 설치했으며, `KubernetesExecutor`와 `CeleryExecutor`의 선택 기준과 Celery worker의 KEDA 기반 오토스케일링까지 깊이 다뤘습니다. 이 섹션의 다음 장에서는 Kubernetes 위에서의 DAG 작성 패턴 — `KubernetesPodOperator`, 태스크 단위 executor 오버라이드, Part 1에서 소개한 dag-processor에 맞춘 DAG 구조화 — 을 다룹니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

@@ -1542,7 +1542,7 @@ kubectl -n kubernetes-dashboard create token admin-user
 kubectl proxy
 ```
 
-The dashboard can be accessed at http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/.
+The dashboard can be accessed at `http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/`.
 
 ## Conclusion
 

@@ -369,26 +369,26 @@ flowchart LR
 
 이 관측성 섹션은 다음과 같이 구성되어 있습니다:
 
-### [Logging (로깅)](./logging/)
+### [Logging (로깅)](./logging/README.md)
 로그 수집, 저장, 분석을 위한 도구와 전략:
 - Loki: 경량화된 로그 집계 시스템
 - Fluent Bit: 고성능 로그 수집기
 - CloudWatch Logs: AWS 네이티브 로깅
 
-### [Metrics (메트릭)](./metrics/)
+### [Metrics (메트릭)](./metrics/README.md)
 시계열 메트릭 수집과 분석:
 - Prometheus: 업계 표준 메트릭 시스템
 - VictoriaMetrics: 고성능 Prometheus 대안
 - CloudWatch Metrics: AWS 네이티브 메트릭
 
-### [Tracing (추적)](./tracing/)
+### [Tracing (추적)](./tracing/README.md)
 분산 추적과 요청 흐름 분석:
 - Tempo: Grafana의 분산 추적 백엔드
 - X-Ray: AWS 네이티브 분산 추적
 - OpenTelemetry: 표준화된 계측
 - Dynatrace: AI 기반 APM
 
-### [Grafana (대시보드)](./grafana/)
+### [Grafana (대시보드)](./grafana/README.md)
 통합 시각화와 대시보드:
 - 데이터 소스 연동
 - 대시보드 설계 패턴

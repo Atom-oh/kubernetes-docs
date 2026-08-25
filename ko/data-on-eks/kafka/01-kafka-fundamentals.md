@@ -175,7 +175,7 @@ kafka-configs.sh --bootstrap-server localhost:9092 \
 
 이번 문서에서는 Kafka의 핵심 개념 — 브로커/토픽/파티션 구조, 순서 보장의 범위, 컨슈머 그룹의 리밸런싱, KRaft로의 전환, 복제/내구성 설정 — 을 살펴봤습니다. Part 2에서는 **Strimzi Operator**를 사용해 이 모든 개념을 실제 Amazon EKS 클러스터 위에 KRaft 기반 Kafka 클러스터로 배포하는 과정을 다룹니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

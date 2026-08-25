@@ -151,7 +151,7 @@ Compared to the classic agent-based collection:
 - **Broader metric collection** via OTLP instead of the CloudWatch Agent's fixed metric set
 - **High-cardinality filtering** — up to 150 labels per metric, useful for per-pod or per-namespace breakdowns that the classic dimension model can't cheaply express
 - **PromQL support in CloudWatch Query Studio** — query OTel-collected metrics with PromQL directly, without standing up a separate Prometheus or Amazon Managed Service for Prometheus workspace
-- **Automatic accelerator detection** — NVIDIA GPUs, EFA, and AWS Trainium/Inferentia devices are detected automatically, which matters for AI/ML workload observability (see the [AI/ML lecture track](../../ai-ml/) for related GPU workload content)
+- **Automatic accelerator detection** — NVIDIA GPUs, EFA, and AWS Trainium/Inferentia devices are detected automatically, which matters for AI/ML workload observability (see the [AI/ML lecture track](../../ai-ml/01-ai-ml-workloads.md) for related GPU workload content)
 
 Preview regions: US East (N. Virginia), US West (Oregon), Asia Pacific (Sydney), Asia Pacific (Singapore), and Europe (Ireland).
 

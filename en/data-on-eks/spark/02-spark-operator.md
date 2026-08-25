@@ -259,7 +259,7 @@ kubectl delete sparkapplication word-count -n spark-operator
 
 Once you can submit and monitor jobs through the Operator, the next question is usually build-vs-buy: how does this compare to letting AWS manage the Spark runtime for you? That trade-off, along with EMR on EKS's virtual cluster model, is covered in [Part 3: EMR on EKS](./03-emr-on-eks.md).
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

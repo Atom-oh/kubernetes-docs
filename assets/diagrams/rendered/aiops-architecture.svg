@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="820" viewBox="0 0 1440 820" role="img" aria-labelledby="title desc">
+  <title id="title">AIOps incident analysis architecture</title>
+  <desc id="desc">Alerts are routed to an AIOps Lambda agent. The agent gathers logs, metrics, and traces, invokes an Amazon Bedrock model, and sends an analysis to responders.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#475569"/>
+    </marker>
+    <style>
+      text { font-family: Arial, sans-serif; fill: #172033; }
+      .title { font-size: 30px; font-weight: 700; }
+      .section { font-size: 20px; font-weight: 700; }
+      .label { font-size: 17px; font-weight: 700; }
+      .small { font-size: 14px; }
+      .stage { fill: #f8fafc; stroke: #64748b; stroke-width: 2; }
+      .detect { fill: #fee2e2; stroke: #dc2626; }
+      .route { fill: #fef3c7; stroke: #d97706; }
+      .agent { fill: #ede9fe; stroke: #7c3aed; }
+      .telemetry { fill: #dbeafe; stroke: #2563eb; }
+      .ai { fill: #dcfce7; stroke: #16a34a; }
+      .response { fill: #cffafe; stroke: #0891b2; }
+      .box { stroke-width: 2; }
+      .flow { fill: none; stroke: #475569; stroke-width: 3; marker-end: url(#arrow); }
+      .query { fill: none; stroke: #2563eb; stroke-width: 3; stroke-dasharray: 9 7; marker-end: url(#arrow); }
+      .return { fill: none; stroke: #16a34a; stroke-width: 3; stroke-dasharray: 9 7; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1440" height="820" fill="#ffffff"/>
+  <text class="title" x="50" y="55">Alert Analysis and AIOps Response</text>
+  <text class="small" x="50" y="82">Detection, evidence collection, AI-assisted diagnosis, and responder notification</text>
+
+  <rect class="stage detect" x="40" y="135" width="250" height="500" rx="8"/>
+  <text class="section" x="65" y="175">1. Detect</text>
+  <rect class="box" x="75" y="230" width="180" height="80" rx="6" fill="#ffffff" stroke="#dc2626"/>
+  <text class="label" x="165" y="263" text-anchor="middle">Alertmanager</text>
+  <text class="small" x="165" y="288" text-anchor="middle">PrometheusRule</text>
+  <rect class="box" x="75" y="365" width="180" height="80" rx="6" fill="#ffffff" stroke="#dc2626"/>
+  <text class="label" x="165" y="398" text-anchor="middle">CloudWatch</text>
+  <text class="small" x="165" y="423" text-anchor="middle">Alarms and events</text>
+  <rect class="box" x="75" y="500" width="180" height="80" rx="6" fill="#ffffff" stroke="#dc2626"/>
+  <text class="label" x="165" y="533" text-anchor="middle">Grafana OnCall</text>
+  <text class="small" x="165" y="558" text-anchor="middle">Incident routing</text>
+
+  <rect class="stage route" x="330" y="135" width="250" height="500" rx="8"/>
+  <text class="section" x="355" y="175">2. Route</text>
+  <rect class="box" x="365" y="270" width="180" height="90" rx="6" fill="#ffffff" stroke="#d97706"/>
+  <text class="label" x="455" y="306" text-anchor="middle">SNS Topic</text>
+  <text class="small" x="455" y="332" text-anchor="middle">Alert fan-out</text>
+  <rect class="box" x="365" y="430" width="180" height="90" rx="6" fill="#ffffff" stroke="#d97706"/>
+  <text class="label" x="455" y="466" text-anchor="middle">API Gateway</text>
+  <text class="small" x="455" y="492" text-anchor="middle">Direct webhook</text>
+
+  <rect class="stage agent" x="620" y="135" width="300" height="500" rx="8"/>
+  <text class="section" x="645" y="175">3. Investigate</text>
+  <rect class="box" x="660" y="245" width="220" height="115" rx="6" fill="#ffffff" stroke="#7c3aed"/>
+  <text class="label" x="770" y="286" text-anchor="middle">Lambda AIOps Agent</text>
+  <text class="small" x="770" y="314" text-anchor="middle">Normalize alert context</text>
+  <text class="small" x="770" y="338" text-anchor="middle">Query evidence in parallel</text>
+  <rect class="box" x="660" y="435" width="220" height="115" rx="6" fill="#ffffff" stroke="#7c3aed"/>
+  <text class="label" x="770" y="476" text-anchor="middle">Incident Context</text>
+  <text class="small" x="770" y="504" text-anchor="middle">Service, metric, time range</text>
+  <text class="small" x="770" y="528" text-anchor="middle">Logs, metrics, traces</text>
+
+  <rect class="stage telemetry" x="960" y="135" width="440" height="250" rx="8"/>
+  <text class="section" x="985" y="175">Telemetry Evidence</text>
+  <rect class="box" x="995" y="220" width="115" height="85" rx="6" fill="#ffffff" stroke="#2563eb"/>
+  <text class="label" x="1052" y="253" text-anchor="middle">Logs</text>
+  <text class="small" x="1052" y="278" text-anchor="middle">CW / Loki</text>
+  <rect class="box" x="1122" y="220" width="115" height="85" rx="6" fill="#ffffff" stroke="#2563eb"/>
+  <text class="label" x="1179" y="253" text-anchor="middle">Metrics</text>
+  <text class="small" x="1179" y="278" text-anchor="middle">AMP</text>
+  <rect class="box" x="1249" y="220" width="115" height="85" rx="6" fill="#ffffff" stroke="#2563eb"/>
+  <text class="label" x="1306" y="253" text-anchor="middle">Traces</text>
+  <text class="small" x="1306" y="278" text-anchor="middle">X-Ray</text>
+
+  <rect class="stage ai" x="960" y="425" width="440" height="210" rx="8"/>
+  <text class="section" x="985" y="465">4. Analyze and Respond</text>
+  <rect class="box" x="995" y="505" width="170" height="85" rx="6" fill="#ffffff" stroke="#16a34a"/>
+  <text class="label" x="1080" y="538" text-anchor="middle">Amazon Bedrock</text>
+  <text class="small" x="1080" y="563" text-anchor="middle">Root-cause analysis</text>
+  <rect class="box" x="1190" y="505" width="175" height="85" rx="6" fill="#ffffff" stroke="#0891b2"/>
+  <text class="label" x="1277" y="538" text-anchor="middle">Responders</text>
+  <text class="small" x="1277" y="563" text-anchor="middle">Slack / Email / Pager</text>
+
+  <path class="flow" d="M255 270 H360"/>
+  <path class="flow" d="M255 405 C310 405 310 315 360 315"/>
+  <path class="flow" d="M255 540 C315 540 310 475 360 475"/>
+  <path class="flow" d="M545 315 H655"/>
+  <path class="flow" d="M545 475 H655"/>
+  <path class="flow" d="M770 360 V430"/>
+  <path class="query" d="M880 285 H990"/>
+  <text class="small" x="935" y="273" text-anchor="middle">query</text>
+  <path class="return" d="M995 340 H885"/>
+  <text class="small" x="940" y="365" text-anchor="middle">evidence</text>
+  <path class="flow" d="M880 492 C930 492 940 547 990 547"/>
+  <path class="flow" d="M1165 547 H1185"/>
+  <path class="return" d="M1190 600 C1020 720 700 720 535 520"/>
+  <text class="small" x="850" y="735" text-anchor="middle">structured analysis published through SNS</text>
+</svg>

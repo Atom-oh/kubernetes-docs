@@ -151,7 +151,7 @@ eksctl utils update-cluster-logging \
 - **더 넓은 메트릭 수집 범위**: CloudWatch Agent의 고정된 메트릭 세트 대신 OTLP로 수집
 - **높은 카디널리티 필터링**: 메트릭당 최대 150개 라벨 지원으로, 기존 차원(dimension) 모델로는 비용 효율적으로 표현하기 어려운 파드/네임스페이스별 세분화 조회 가능
 - **CloudWatch Query Studio에서 PromQL 지원**: 별도의 Prometheus나 Amazon Managed Service for Prometheus 워크스페이스 없이 OTel로 수집한 메트릭을 PromQL로 바로 쿼리
-- **가속기 자동 감지**: NVIDIA GPU, EFA, AWS Trainium/Inferentia를 자동으로 감지하여 AI/ML 워크로드 관측에 유용 (관련 GPU 워크로드 내용은 [AI/ML 강의 트랙](../../ai-ml/) 참고)
+- **가속기 자동 감지**: NVIDIA GPU, EFA, AWS Trainium/Inferentia를 자동으로 감지하여 AI/ML 워크로드 관측에 유용 (관련 GPU 워크로드 내용은 [AI/ML 강의 트랙](../../ai-ml/01-ai-ml-workloads.md) 참고)
 
 프리뷰 리전: 미국 동부(버지니아 북부), 미국 서부(오레곤), 아시아 태평양(시드니), 아시아 태평양(싱가포르), 유럽(아일랜드)
 

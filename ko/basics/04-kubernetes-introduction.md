@@ -1552,7 +1552,7 @@ kubectl -n kubernetes-dashboard create token admin-user
 kubectl proxy
 ```
 
-대시보드는 http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/에서 접근할 수 있습니다.
+대시보드는 `http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/`에서 접근할 수 있습니다.
 
 ## 결론
 

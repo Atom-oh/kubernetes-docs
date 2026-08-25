@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 import { summarySidebar } from './summary'
+import { vitepressBuildScope } from './site-scope.mjs'
 
 const GA_ID = 'G-GWVLEW5JLL'
 const ADSENSE_CLIENT = 'ca-pub-6267917556914416'
@@ -9,40 +10,25 @@ const FAVICON = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www
 // Build-memory bisection toggles (all default OFF — normal builds are unaffected):
 //   VP_DISABLE_SEARCH=1     drop local search (MiniSearch indexing of every page)
 //   VP_DISABLE_MERMAID=1    skip the withMermaid wrapper (mermaid bundling)
-//   VP_LOCALES=ko,en        build only the listed locales, excluding the rest
-const ALL_LOCALES = ['ko', 'en', 'cn', 'jp', 'es'] as const
-const ACTIVE_LOCALES = process.env.VP_LOCALES
-  ? process.env.VP_LOCALES.split(',').map(s => s.trim()).filter(l => (ALL_LOCALES as readonly string[]).includes(l))
-  : [...ALL_LOCALES]
-const EXCLUDED_LOCALES = ALL_LOCALES.filter(l => !ACTIVE_LOCALES.includes(l))
 const DISABLE_SEARCH = process.env.VP_DISABLE_SEARCH === '1'
 const DISABLE_MERMAID = process.env.VP_DISABLE_MERMAID === '1'
-
-const localeConfig = (label: string, lang: string, dir: string) => ({
-  label,
-  lang,
-  link: `/${dir}/`,
-  themeConfig: { sidebar: summarySidebar(dir) }
-})
-
-const LOCALE_DEFS: Record<string, { label: string; lang: string }> = {
-  ko: { label: '한국어', lang: 'ko-KR' },
-  en: { label: 'English', lang: 'en-US' },
-  cn: { label: '中文', lang: 'zh-CN' },
-  jp: { label: '日本語', lang: 'ja-JP' },
-  es: { label: 'Español', lang: 'es-ES' }
-}
 
 const config = defineConfig({
   title: 'Kubernetes & Amazon EKS Training',
   base: '/kubernetes-docs/',
   srcDir: '.',
-  srcExclude: ['slide/**', 'CLAUDE.md', '**/SUMMARY.md', ...EXCLUDED_LOCALES.map(l => `${l}/**`)],
-  rewrites: {
-    'README.md': 'index.md',
-    ...Object.fromEntries(ACTIVE_LOCALES.map(l => [`${l}/README.md`, `${l}/index.md`]))
+  srcExclude: vitepressBuildScope.srcExclude,
+  rewrites: vitepressBuildScope.rewrites,
+  ignoreDeadLinks: false,
+  markdown: {
+    languageAlias: {
+      promql: 'sql',
+      logql: 'sql',
+      traceql: 'sql',
+      rego: 'hcl',
+      river: 'hcl'
+    }
   },
-  ignoreDeadLinks: true,
   sitemap: {
     hostname: 'https://www.atomai.click/kubernetes-docs/'
   },
@@ -52,13 +38,20 @@ const config = defineConfig({
     ['script', {}, `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)};gtag('js',new Date());gtag('config','${GA_ID}');`],
     ['script', { async: '', src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`, crossorigin: 'anonymous' }]
   ],
-  // The locale menu always lists all five languages so a per-locale batch build
-  // still renders the full language switcher; VP_LOCALES only limits which
-  // content trees are built (links to the other locales resolve after the
-  // per-locale dists are merged).
-  locales: Object.fromEntries(
-    ALL_LOCALES.map(l => [l, localeConfig(LOCALE_DEFS[l].label, LOCALE_DEFS[l].lang, l)])
-  ),
+  locales: {
+    ko: {
+      label: '한국어',
+      lang: 'ko-KR',
+      link: '/ko/',
+      themeConfig: { sidebar: summarySidebar('ko') }
+    },
+    en: {
+      label: 'English',
+      lang: 'en-US',
+      link: '/en/',
+      themeConfig: { sidebar: summarySidebar('en') }
+    }
+  },
   themeConfig: {
     ...(DISABLE_SEARCH ? {} : { search: { provider: 'local' as const } }),
     outline: 'deep'

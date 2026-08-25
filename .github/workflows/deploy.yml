@@ -18,16 +18,14 @@ jobs:
   build:
     runs-on: kubernetes-docs-arm
     env:
-      # A single 5-locale build held the whole module graph (2472 pages) in
-      # one process and OOM'd repeatedly even on a 52Gi pod (see
-      # .github/build-memory-diagnosis.md) — RSS scales at ~2.7GB + 10MB/page
-      # regardless of heap cap, so a bigger cap just grew the observed usage
-      # instead of fixing it. Building one locale at a time bounds peak RSS
-      # to the largest single locale (~8GB, measured) instead of their sum,
-      # and stays flat as more languages/pages are added. 10240MB leaves
-      # ample headroom over that ~8GB peak without inviting the same
-      # cap-chasing behavior the old 43008MB value had.
-      NODE_OPTIONS: --max-old-space-size=10240
+      # Only ko/en are published now (see docs/superpowers/plans/2026-08-19-
+      # vitepress-ko-en-docs.md), built sequentially so VitePress never holds
+      # both locale graphs in one process. Each locale still needs more than
+      # Node's default 4GiB heap while rendering Mermaid and the local search
+      # index; a prior 5-locale build OOM'd repeatedly even at 43008MB (RSS
+      # scaled with page count regardless of heap cap), which per-locale
+      # sequencing avoids by bounding peak RSS to one locale at a time.
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,13 +34,8 @@ jobs:
           cache: npm
       - uses: actions/configure-pages@v4
       - run: npm ci
-      - run: |
-          for l in ko en cn jp es; do
-            rm -rf .vitepress/dist .vitepress/cache
-            VP_LOCALES=$l npm run docs:build
-            mv .vitepress/dist "dist-$l"
-          done
-          python3 scripts/merge-locale-dists.py .vitepress/dist dist-ko dist-en dist-cn dist-jp dist-es
+      - run: npm run docs:validate
+      - run: npm run docs:build
       - run: mkdir -p .vitepress/dist/assets && cp assets/*.html .vitepress/dist/assets/
       - uses: actions/upload-pages-artifact@v3
         with:

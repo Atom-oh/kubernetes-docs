@@ -1,6 +1,6 @@
 # Prerequisites
 
-< [Table of Contents](./) | [Next: Network Configuration](02-network-configuration.md) >
+< [Table of Contents](./README.md) | [Next: Network Configuration](02-network-configuration.md) >
 
 > **Supported Versions**: EKS 1.31+, nodeadm 0.1+ **Last Updated**: February 23, 2026
 
@@ -628,4 +628,4 @@ Not all EKS add-ons are compatible with hybrid nodes. Amazon VPC CNI is **not** 
 
 ***
 
-< [Table of Contents](./) | [Next: Network Configuration](02-network-configuration.md) >
+< [Table of Contents](./README.md) | [Next: Network Configuration](02-network-configuration.md) >

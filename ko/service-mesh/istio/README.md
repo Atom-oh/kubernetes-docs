@@ -20,20 +20,20 @@ Amazon EKS에서 Istio Service Mesh를 활용한 실용적인 가이드입니다
 
 ## 목차
 
-1. [서비스 메시가 정말 필요한가?](./#서비스-메시가-정말-필요한가)
+1. [서비스 메시가 정말 필요한가?](#서비스-메시가-정말-필요한가)
 2. [설치 및 초기 설정](01-installation.md)
 3. [기본 개념](02-basic-concepts.md)
 4. [아키텍처](03-architecture.md)
 5. [AWS 통합](04-aws-integration.md)
 6. [용어집](glossary.md)
-7. [Traffic Management (트래픽 관리)](traffic-management/)
-8. [Security (보안)](security/)
-9. [Observability (관찰성)](observability/)
-10. [Resilience (복원력)](resilience/)
-11. [Advanced (고급 기능)](advanced/)
+7. [Traffic Management (트래픽 관리)](traffic-management/README.md)
+8. [Security (보안)](security/README.md)
+9. [Observability (관찰성)](observability/README.md)
+10. [Resilience (복원력)](resilience/README.md)
+11. [Advanced (고급 기능)](advanced/README.md)
 12. [Troubleshooting (문제 해결)](troubleshooting/common-errors.md)
 13. [모범 사례](best-practices.md)
-14. [대안 비교](comparison/)
+14. [대안 비교](comparison/README.md)
 
 ## Istio란?
 
@@ -351,7 +351,7 @@ flowchart TB
 * Service Mesh 운영 부담 회피
 * 간단한 mTLS 및 관찰성만 필요
 
-**참고**: [Cilium 문서](../../networking/cilium/)
+**참고**: [Cilium 문서](../../networking/cilium/README.md)
 
 ### 의사결정 체크리스트
 
@@ -552,9 +552,9 @@ Istio를 처음 사용하신다면 다음 순서로 문서를 읽어보세요:
 
 1. [**설치 및 초기 설정**](01-installation.md): EKS 클러스터에 Istio 설치
 2. [**기본 개념**](02-basic-concepts.md): Istio의 핵심 개념 이해
-3. [**Traffic Management**](traffic-management/): Gateway, VirtualService, DestinationRule 학습
-4. [**Security**](security/): mTLS, 인증, 권한 부여 설정
-5. [**Observability**](observability/): 메트릭, 로그, 트레이스 수집
+3. [**Traffic Management**](traffic-management/README.md): Gateway, VirtualService, DestinationRule 학습
+4. [**Security**](security/README.md): mTLS, 인증, 권한 부여 설정
+5. [**Observability**](observability/README.md): 메트릭, 로그, 트레이스 수집
 6. [**모범 사례**](best-practices.md): 프로덕션 환경에서의 권장 사항
 
 ### 실습 예제

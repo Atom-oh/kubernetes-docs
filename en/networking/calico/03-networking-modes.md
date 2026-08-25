@@ -721,7 +721,7 @@ Key considerations:
 
 [Previous: Part 2 - Calico Architecture Deep Dive](02-architecture.md)
 
-[Return to Calico Overview](./)
+[Return to Calico Overview](./README.md)
 
 ## Quiz
 

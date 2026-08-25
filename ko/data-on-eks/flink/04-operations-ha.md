@@ -207,7 +207,7 @@ Part 1~4에 걸쳐 이 시리즈는 Flink의 JobManager/TaskManager 아키텍처
 
 ---
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

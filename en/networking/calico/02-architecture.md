@@ -1001,7 +1001,7 @@ Understanding these components and their interactions is essential for:
 
 [Next: Part 3 - Networking Modes](03-networking-modes.md)
 
-[Return to Calico Overview](./)
+[Return to Calico Overview](./README.md)
 
 ## Quiz
 

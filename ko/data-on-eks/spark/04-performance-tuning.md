@@ -222,7 +222,7 @@ Spot 인스턴스 활용, Karpenter 통합을 통한 빈 패킹, 인스턴스 �
 
 이 문서에서는 셔플이 많은 잡을 위한 노드 타입 선택, EBS보다 NVMe 인스턴스 스토어가 셔플 스필에 유리한 이유, On-Demand 드라이버/Spot Executor 분리와 Graceful Decommission이 Spot 중단을 버텨내게 해주는 방식, Karpenter와 DRA라는 두 개의 독립적인 스케일링 루프가 서로 어긋나지 않게 맞추는 법, 그리고 드라이버·Executor 리소스 크기를 설계하는 사고방식을 다뤘습니다. 이 문서가 기반으로 삼은 일반 EKS 비용 기법과 함께, 이는 Spark on EKS의 성능·비용 측면을 마무리하는 내용입니다. 모니터링, 보안, Spark on EKS의 운영(Day-2) 모범 사례는 다음 [Part 5: 모범 사례와 보안](./05-best-practices.md)에서 다룹니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

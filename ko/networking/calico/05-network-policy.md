@@ -1456,4 +1456,4 @@ kubectl exec -n calico-system <calico-node-pod> -c calico-node -- \
 * [Policy Tiers](https://docs.tigera.io/calico/latest/reference/resources/tier)
 * [NetworkSet 레퍼런스](https://docs.tigera.io/calico/latest/reference/resources/networkset)
 
-[이전: Part 4 - BGP 아키텍처 심화](04-bgp-deep-dive.md) | [다음: Part 6 - eBPF 데이터플레인](06-ebpf-dataplane.md) | [메인 페이지로 돌아가기](./)
+[이전: Part 4 - BGP 아키텍처 심화](04-bgp-deep-dive.md) | [다음: Part 6 - eBPF 데이터플레인](06-ebpf-dataplane.md) | [메인 페이지로 돌아가기](./README.md)

@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="840" viewBox="0 0 1440 840" role="img" aria-labelledby="title desc">
+  <title id="title">Full-stack observability lab architecture</title>
+  <desc id="desc">Two EKS clusters connected to AWS managed services. The managed cluster runs GitOps and the observability stack, while the service cluster runs an instrumented microservice application.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#475569"/>
+    </marker>
+    <style>
+      text { font-family: Arial, sans-serif; fill: #172033; }
+      .title { font-size: 30px; font-weight: 700; }
+      .section { font-size: 20px; font-weight: 700; }
+      .label { font-size: 17px; font-weight: 700; }
+      .small { font-size: 14px; }
+      .group { fill: #f8fafc; stroke: #64748b; stroke-width: 2; }
+      .managed { fill: #eef2ff; stroke: #4f46e5; stroke-width: 3; }
+      .service { fill: #ecfdf5; stroke: #059669; stroke-width: 3; }
+      .aws { fill: #fff7ed; stroke: #ea580c; stroke-width: 3; }
+      .box { fill: #ffffff; stroke: #94a3b8; stroke-width: 2; }
+      .metrics { fill: #fee2e2; stroke: #dc2626; }
+      .logs { fill: #fef3c7; stroke: #d97706; }
+      .traces { fill: #dbeafe; stroke: #2563eb; }
+      .delivery { fill: #ede9fe; stroke: #7c3aed; }
+      .flow { fill: none; stroke: #475569; stroke-width: 3; marker-end: url(#arrow); }
+      .telemetry { fill: none; stroke: #2563eb; stroke-width: 3; stroke-dasharray: 10 8; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1440" height="840" fill="#ffffff"/>
+  <text class="title" x="50" y="55">Full-Stack Observability Lab</text>
+  <text class="small" x="50" y="82">GitOps, instrumented services, telemetry pipelines, and AWS managed backends</text>
+
+  <rect class="group managed" x="40" y="115" width="430" height="650" rx="8"/>
+  <text class="section" x="65" y="150">Managed EKS Cluster</text>
+
+  <rect class="box delivery" x="70" y="180" width="170" height="65" rx="6"/>
+  <text class="label" x="155" y="208" text-anchor="middle">Argo CD</text>
+  <text class="small" x="155" y="230" text-anchor="middle">GitOps delivery</text>
+
+  <rect class="box delivery" x="270" y="180" width="170" height="65" rx="6"/>
+  <text class="label" x="355" y="208" text-anchor="middle">Argo Rollouts</text>
+  <text class="small" x="355" y="230" text-anchor="middle">Canary control</text>
+
+  <rect class="group" x="70" y="280" width="370" height="315" rx="6"/>
+  <text class="label" x="90" y="315">Observability Stack</text>
+
+  <rect class="box metrics" x="95" y="345" width="145" height="70" rx="6"/>
+  <text class="label" x="167" y="375" text-anchor="middle">Metrics</text>
+  <text class="small" x="167" y="398" text-anchor="middle">Prometheus / Mimir</text>
+
+  <rect class="box logs" x="270" y="345" width="145" height="70" rx="6"/>
+  <text class="label" x="342" y="375" text-anchor="middle">Logs</text>
+  <text class="small" x="342" y="398" text-anchor="middle">Loki / ClickHouse</text>
+
+  <rect class="box traces" x="95" y="445" width="145" height="70" rx="6"/>
+  <text class="label" x="167" y="475" text-anchor="middle">Traces</text>
+  <text class="small" x="167" y="498" text-anchor="middle">Tempo / OTel</text>
+
+  <rect class="box" x="270" y="445" width="145" height="70" rx="6"/>
+  <text class="label" x="342" y="475" text-anchor="middle">Operations</text>
+  <text class="small" x="342" y="498" text-anchor="middle">Grafana / OnCall</text>
+
+  <rect class="box" x="95" y="535" width="320" height="40" rx="6"/>
+  <text class="small" x="255" y="561" text-anchor="middle">Alertmanager and OpenTelemetry Collector</text>
+
+  <rect class="box" x="70" y="630" width="370" height="85" rx="6"/>
+  <text class="label" x="255" y="665" text-anchor="middle">Load and Failure Injection</text>
+  <text class="small" x="255" y="691" text-anchor="middle">k6 / Locust / controlled service faults</text>
+
+  <rect class="group service" x="505" y="115" width="480" height="650" rx="8"/>
+  <text class="section" x="530" y="150">Service EKS Cluster</text>
+
+  <rect class="box" x="650" y="180" width="190" height="60" rx="6"/>
+  <text class="label" x="745" y="208" text-anchor="middle">API Gateway</text>
+  <text class="small" x="745" y="229" text-anchor="middle">Go / Gin</text>
+
+  <rect class="box" x="545" y="300" width="175" height="70" rx="6"/>
+  <text class="label" x="632" y="330" text-anchor="middle">Order Service</text>
+  <text class="small" x="632" y="353" text-anchor="middle">Python / FastAPI</text>
+
+  <rect class="box" x="770" y="300" width="175" height="70" rx="6"/>
+  <text class="label" x="857" y="330" text-anchor="middle">Payment Service</text>
+  <text class="small" x="857" y="353" text-anchor="middle">Java / Spring Boot</text>
+
+  <rect class="box" x="545" y="425" width="175" height="70" rx="6"/>
+  <text class="label" x="632" y="455" text-anchor="middle">Notification</text>
+  <text class="small" x="632" y="478" text-anchor="middle">Node.js / Express</text>
+
+  <rect class="box" x="770" y="425" width="175" height="70" rx="6"/>
+  <text class="label" x="857" y="455" text-anchor="middle">Analytics Batch</text>
+  <text class="small" x="857" y="478" text-anchor="middle">Python / Pandas</text>
+
+  <rect class="box traces" x="545" y="550" width="400" height="70" rx="6"/>
+  <text class="label" x="745" y="580" text-anchor="middle">OpenTelemetry Agent</text>
+  <text class="small" x="745" y="603" text-anchor="middle">Metrics, logs, and traces from every workload</text>
+
+  <rect class="box" x="545" y="660" width="190" height="55" rx="6"/>
+  <text class="label" x="640" y="694" text-anchor="middle">Karpenter</text>
+  <rect class="box" x="755" y="660" width="190" height="55" rx="6"/>
+  <text class="label" x="850" y="694" text-anchor="middle">KEDA</text>
+
+  <rect class="group aws" x="1020" y="115" width="380" height="650" rx="8"/>
+  <text class="section" x="1045" y="150">AWS Managed Services</text>
+
+  <rect class="box metrics" x="1055" y="185" width="310" height="75" rx="6"/>
+  <text class="label" x="1210" y="216" text-anchor="middle">Metrics and Dashboards</text>
+  <text class="small" x="1210" y="240" text-anchor="middle">AMP / AMG / CloudWatch</text>
+
+  <rect class="box logs" x="1055" y="300" width="310" height="75" rx="6"/>
+  <text class="label" x="1210" y="331" text-anchor="middle">Logs and Search</text>
+  <text class="small" x="1210" y="355" text-anchor="middle">CloudWatch Logs / OpenSearch</text>
+
+  <rect class="box traces" x="1055" y="415" width="310" height="75" rx="6"/>
+  <text class="label" x="1210" y="446" text-anchor="middle">Distributed Tracing</text>
+  <text class="small" x="1210" y="470" text-anchor="middle">AWS X-Ray</text>
+
+  <rect class="box" x="1055" y="530" width="310" height="75" rx="6"/>
+  <text class="label" x="1210" y="561" text-anchor="middle">Application Data</text>
+  <text class="small" x="1210" y="585" text-anchor="middle">Aurora PostgreSQL / SQS / SNS</text>
+
+  <rect class="box" x="1055" y="645" width="310" height="70" rx="6"/>
+  <text class="label" x="1210" y="676" text-anchor="middle">Workflow</text>
+  <text class="small" x="1210" y="700" text-anchor="middle">Amazon MWAA</text>
+
+  <path class="flow" d="M440 212 H500"/>
+  <text class="small" x="470" y="198" text-anchor="middle">deploys</text>
+  <path class="flow" d="M745 240 V295"/>
+  <path class="flow" d="M700 335 H765"/>
+  <path class="flow" d="M632 370 V420"/>
+  <path class="flow" d="M857 370 V420"/>
+  <path class="telemetry" d="M545 585 H470"/>
+  <text class="small" x="505" y="575" text-anchor="middle">telemetry</text>
+  <path class="telemetry" d="M985 585 H1050"/>
+  <text class="small" x="1018" y="575" text-anchor="middle">export</text>
+  <path class="flow" d="M945 335 C1005 335 995 567 1050 567"/>
+</svg>

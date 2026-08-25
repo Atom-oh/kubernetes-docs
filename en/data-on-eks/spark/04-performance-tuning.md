@@ -222,7 +222,7 @@ Most EKS-wide cost techniques — Spot Instance usage, bin-packing via Karpenter
 
 This document covered node type selection for shuffle-heavy jobs, why NVMe instance store beats EBS for shuffle spill, the On-Demand-driver/Spot-executor split and how graceful decommissioning makes Spot interruptions survivable, the two independent Karpenter/DRA scaling loops and how to keep them from working against each other, and how to think about driver/executor resource sizing. Together with the general EKS cost techniques it builds on, this rounds out the performance and cost half of running Spark on EKS. Operational concerns — monitoring, security, and day-2 best practices for Spark on EKS — are covered next in [Part 5: Best Practices and Security](./05-best-practices.md).
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

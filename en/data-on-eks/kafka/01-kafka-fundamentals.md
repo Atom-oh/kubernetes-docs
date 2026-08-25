@@ -175,7 +175,7 @@ A common production-grade combination is `replication.factor=3`, `min.insync.rep
 
 This document covered Kafka's core concepts — the broker/topic/partition model, the scope of ordering guarantees, consumer group rebalancing, the shift to KRaft, and replication/durability settings. Part 2 covers deploying all of these concepts as a KRaft-based Kafka cluster on Amazon EKS using the **Strimzi Operator**.
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

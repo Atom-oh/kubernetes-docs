@@ -1,6 +1,6 @@
 # Network Configuration
 
-< [Previous: Prerequisites](01-prerequisites.md) | [Table of Contents](./) | [Next: Air-Gap Setup](03-airgap-setup.md) >
+< [Previous: Prerequisites](01-prerequisites.md) | [Table of Contents](./README.md) | [Next: Air-Gap Setup](03-airgap-setup.md) >
 
 > **Supported Versions**: EKS 1.31+, nodeadm 0.1+ **Last Updated**: February 23, 2026
 
@@ -1325,4 +1325,4 @@ The following add-ons require webhook placement consideration:
 
 ***
 
-< [Previous: Prerequisites](01-prerequisites.md) | [Table of Contents](./) | [Next: Air-Gap Setup](03-airgap-setup.md) >
+< [Previous: Prerequisites](01-prerequisites.md) | [Table of Contents](./README.md) | [Next: Air-Gap Setup](03-airgap-setup.md) >

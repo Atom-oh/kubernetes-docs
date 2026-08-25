@@ -146,7 +146,7 @@ As with MSK vs. Strimzi in the Kafka series, many teams run both: MWAA for lower
 
 This document covered what MWAA's managed control plane does and doesn't give you — no direct Kubernetes access to the scheduler/api-server/workers themselves, a few-month lag behind upstream Airflow, and S3-based plugin/dependency/DAG delivery instead of Parts 1–3's git-native workflow — along with the `KubernetesPodOperator` + `in_cluster=False` + IAM identity mapping pattern that lets an MWAA DAG still drive workloads on your own EKS cluster. Whether you land on MWAA, self-managed Airflow on EKS, or a mix of both, the decision guide above is the same trade-off analysis you'll see recur across every managed-vs-self-managed choice in this Data on EKS series.
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

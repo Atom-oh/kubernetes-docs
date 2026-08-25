@@ -149,7 +149,7 @@ This matters most in exactly the scenarios that make Kubernetes-based Spark attr
 
 This document covered the fundamentals of running Spark on Kubernetes: how `spark-submit` in cluster mode creates a driver pod that schedules its own executor pods directly against the Kubernetes API, why Dynamic Resource Allocation needs `shuffleTracking.enabled` in the absence of a YARN-style External Shuffle Service, and how graceful decommissioning protects in-flight data when a pod is about to terminate. Part 2 covers deploying and managing Spark applications on EKS declaratively using the **Spark Operator**.
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

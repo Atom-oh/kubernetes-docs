@@ -4,4 +4,6 @@
 node_modules/
 .vitepress/cache/
 .vitepress/dist/
+.vitepress/.locale-builds/
 __pycache__/
+.claude/

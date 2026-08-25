@@ -205,7 +205,7 @@ Satisfying this checklist is a reasonable bar for saying a Spark-on-EKS pipeline
 
 ---
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

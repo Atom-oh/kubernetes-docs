@@ -326,7 +326,7 @@ kubectl run kafka-consumer -n kafka -ti --image=quay.io/strimzi/kafka:0.45.0-kaf
 
 클러스터를 배포했다면 다음으로는 스케일링, Cruise Control을 이용한 파티션 리밸런싱, 무중단 버전 업그레이드 같은 day-2 운영 작업이 필요합니다. 이는 [Part 3: Kafka 운영](./03-kafka-operations.md)에서 다룹니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

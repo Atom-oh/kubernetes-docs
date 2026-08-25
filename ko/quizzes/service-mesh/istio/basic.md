@@ -243,8 +243,8 @@ spec:
 
 **참고 자료:**
 
-* [트래픽 관리](../../../service-mesh/istio/traffic-management/)
-* [보안](../../../service-mesh/istio/security/)
+* [트래픽 관리](../../../service-mesh/istio/traffic-management/README.md)
+* [보안](../../../service-mesh/istio/security/README.md)
 
 </details>
 

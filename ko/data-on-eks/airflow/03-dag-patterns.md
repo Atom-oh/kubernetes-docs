@@ -175,7 +175,7 @@ Airflow 3의 asset/event 기반 스케줄링은 이런 태스크를 다음 단�
 
 이 문서에서는 `KubernetesPodOperator`가 Part 2에서 다룬 `KubernetesExecutor`/`CeleryExecutor` 선택과 무관하게 Pod를 생성한다는 점, `pod_template_file`/`full_pod_spec`/`pod_template_dict`를 지배하는 Pod 스펙 우선순위, `affinity`/`tolerations`와 태스크별 IRSA로 KPO 태스크에 전용 컴퓨트와 범위가 제한된 AWS 권한을 부여하는 방법, 그리고 Airflow 3의 DAG Bundle 모델 — 특히 커밋 단위 버전 관리를 제공해 기존의 단순 `git-sync` 사이드카를 대체하는 `GitDagBundle` — 을 살펴봤습니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

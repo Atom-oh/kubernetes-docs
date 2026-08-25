@@ -229,7 +229,7 @@ A solid Kafka dashboard should cover at least these panel groups:
 
 With metrics collection, alerting, and autoscaling in place, the next step is applying all of this to real operational standards — SLOs, capacity planning, and incident response procedures. That's covered in [Part 8: Best Practices](./08-best-practices.md).
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

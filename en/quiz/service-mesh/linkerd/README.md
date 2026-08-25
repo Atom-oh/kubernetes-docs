@@ -1,2 +1,0 @@
-# Linkerd Detailed Quiz
-

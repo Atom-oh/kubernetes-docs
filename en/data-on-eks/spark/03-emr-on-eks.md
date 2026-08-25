@@ -159,7 +159,7 @@ As with MSK vs. Strimzi in the Kafka series, the two aren't always exclusive —
 
 Part 1 and Part 2 covered running Spark yourself on EKS — directly via `spark-submit` or declaratively via the Spark Operator. This part covered EMR on EKS, AWS's managed alternative that layers a job-run API, an optimized runtime, and native AWS service integration on top of the same underlying EKS infrastructure. The next part in this series turns to performance tuning and cost optimization that applies across all three submission models.
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

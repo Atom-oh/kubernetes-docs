@@ -237,16 +237,10 @@ def render(nodes, lang, existing_paths=frozenset()):
 
     A LEAF node (no children) whose own destination file doesn't exist
     (translation failure) is skipped -- rendered as absent, per #39/#43.
-    But a node WITH children is always rendered regardless of its own
-    file's existence: en/SUMMARY.md's Quiz Collection uses ~16 group-label
-    bullets like '[Observability](quiz/observability/README.md)' whose
-    'quiz/' (singular) path is never a real file -- it's intentionally a
-    label-only placeholder, not a translatable page. Hiding those (as an
-    earlier version of this function did, treating them the same as a
-    missing leaf) orphaned every deeply-nested child at its original
-    indent with no parent bullet above it, making it visually nest under
-    whatever unrelated item preceded it in the file -- a real quality-gate
-    run scored 55/100 catching exactly this for the Observability section."""
+    A node WITH children is always rendered. Quiz category parents are plain
+    group bullets such as '* Observability', so they have no destination file
+    by design. Dropping those groups would orphan every deeply nested child at
+    its original indent and make it appear under an unrelated preceding item."""
     out = []
     for n in nodes:
         already_present = n.path is not None and n.path in existing_paths

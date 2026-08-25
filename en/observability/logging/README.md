@@ -6,11 +6,11 @@ Effective logging in Kubernetes environments is essential for system visibility,
 
 ## Table of Contents
 
-1. [Logging Fundamentals](./#logging-fundamentals)
-2. [Log Collection Pipeline Architecture](./#log-collection-pipeline-architecture)
-3. [Log Storage Selection Criteria](./#log-storage-selection-criteria)
-4. [EKS Logging Strategy](./#eks-logging-strategy)
-5. [Solution Comparison](./#solution-comparison)
+1. [Logging Fundamentals](#logging-fundamentals)
+2. [Log Collection Pipeline Architecture](#log-collection-pipeline-architecture)
+3. [Log Storage Selection Criteria](#log-storage-selection-criteria)
+4. [EKS Logging Strategy](#eks-logging-strategy)
+5. [Solution Comparison](#solution-comparison)
 
 ***
 

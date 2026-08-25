@@ -212,7 +212,7 @@ kubectl logs -n flink deploy/order-events-processor
 
 이번 Part에서는 Flink가 상태를 정확하고 복구 가능하게 유지하는 방법 — 상태 백엔드, 체크포인트와 세이브포인트의 구분, Kafka로의 정확히 한 번 전달, MSK와 S3의 Iceberg를 잇는 스트리밍 패턴 — 을 다뤘습니다. 이 시리즈의 다음 Part는 잡 수준의 관심사에서 클러스터 수준의 운영으로 넘어가, EKS에서 Flink를 프로덕션으로 운영할 때의 모니터링과 스케일링을 다룹니다.
 
-[메인 페이지로 돌아가기](./)
+[메인 페이지로 돌아가기](./README.md)
 
 ## 퀴즈
 

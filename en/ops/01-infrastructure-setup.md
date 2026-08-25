@@ -2,7 +2,7 @@
 
 > **Supported Versions**: Terraform >= 1.10, AWS Provider >= 5.40, EKS >= 1.29 **Last Updated**: February 19, 2026
 
-< [Table of Contents](./) | [Next: NLB Weighted Routing and Blue/Green Clusters](02-infrastructure-advanced.md) >
+< [Table of Contents](./README.md) | [Next: NLB Weighted Routing and Blue/Green Clusters](02-infrastructure-advanced.md) >
 
 ***
 
@@ -1620,4 +1620,4 @@ Kubernetes resources (NodePool definitions, application Deployments) are managed
 
 ***
 
-< [Table of Contents](./) | [Next: NLB Weighted Routing and Blue/Green Clusters](02-infrastructure-advanced.md) >
+< [Table of Contents](./README.md) | [Next: NLB Weighted Routing and Blue/Green Clusters](02-infrastructure-advanced.md) >

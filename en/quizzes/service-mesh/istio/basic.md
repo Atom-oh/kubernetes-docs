@@ -228,8 +228,8 @@ spec:
 
 **Reference:**
 
-* [Traffic Management](../../../service-mesh/istio/traffic-management/)
-* [Security](../../../service-mesh/istio/security/)
+* [Traffic Management](../../../service-mesh/istio/traffic-management/README.md)
+* [Security](../../../service-mesh/istio/security/README.md)
 
 </details>
 

@@ -141,7 +141,7 @@ To exercise the operational pieces covered in this document hands-on:
 
 ---
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 

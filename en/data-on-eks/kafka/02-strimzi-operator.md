@@ -326,7 +326,7 @@ Once the `Kafka` resource's status condition reports `Ready: True`, the brokers 
 
 Once the cluster is deployed, day-2 operations come next: scaling node pools, rebalancing partitions with Cruise Control, and performing zero-downtime version upgrades. These are covered in [Part 3: Kafka Operations](./03-kafka-operations.md).
 
-[Return to Main Page](./)
+[Return to Main Page](./README.md)
 
 ## Quiz
 
