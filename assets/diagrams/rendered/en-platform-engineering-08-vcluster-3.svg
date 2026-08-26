@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vc-saas-title vc-saas-desc">
+    <title id="vc-saas-title">SaaS tenant provisioning with vCluster</title>
+    <desc id="vc-saas-desc">Architecture diagram showing a tenant provisioner creating a separate vCluster per customer, each sized to that customer's tier, all running inside one EKS platform on shared infrastructure.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone: SaaS Platform (EKS) -->
+    <rect x="40" y="56" width="880" height="344" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="48" y="60" width="132" height="12" rx="2" fill="#ffffff"/>
+    <text x="114" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">SAAS PLATFORM (EKS)</text>
+
+    <!-- Arrows (provision) — fanned from three distinct attach points on the CP bottom edge -->
+    <path d="M432,144 V160 Q432,168 424,168 H192 Q184,168 184,176 V192" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <line x1="480" y1="144" x2="480" y2="192" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <path d="M528,144 V160 Q528,168 536,168 H768 Q776,168 776,176 V192" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- Arrow labels -->
+    <rect x="270" y="148" width="76" height="12" rx="2" fill="#ffffff"/>
+    <text x="308" y="157" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROVISION</text>
+
+    <rect x="488" y="162" width="68" height="12" rx="2" fill="#ffffff"/>
+    <text x="522" y="171" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROVISION</text>
+
+    <rect x="614" y="148" width="76" height="12" rx="2" fill="#ffffff"/>
+    <text x="652" y="157" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROVISION</text>
+
+    <!-- Node: Tenant Provisioner (focal) -->
+    <rect x="384" y="88" width="192" height="56" rx="6" fill="#ffffff"/>
+    <rect x="384" y="88" width="192" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="392" y="96" width="24" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.55)" stroke-width="0.8"/>
+    <text x="404" y="105" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CP</text>
+    <text x="480" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Tenant Provisioner</text>
+    <text x="480" y="138" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">control plane</text>
+
+    <!-- Node: customer-a -->
+    <rect x="60" y="192" width="248" height="96" rx="6" fill="#ffffff"/>
+    <rect x="60" y="192" width="248" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="68" y="200" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="80" y="209" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">VC</text>
+    <text x="184" y="244" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">customer-a</text>
+    <text x="184" y="260" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">3 app replicas</text>
+    <text x="184" y="274" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">PostgreSQL</text>
+
+    <!-- Node: customer-b -->
+    <rect x="356" y="192" width="248" height="96" rx="6" fill="#ffffff"/>
+    <rect x="356" y="192" width="248" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="364" y="200" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="376" y="209" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">VC</text>
+    <text x="480" y="244" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">customer-b</text>
+    <text x="480" y="260" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">5 app replicas</text>
+    <text x="480" y="274" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">PostgreSQL + Redis</text>
+
+    <!-- Node: customer-c (enterprise) -->
+    <rect x="652" y="192" width="248" height="96" rx="6" fill="#ffffff"/>
+    <rect x="652" y="192" width="248" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="660" y="200" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="672" y="209" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">VC</text>
+    <text x="776" y="244" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">customer-c</text>
+    <text x="776" y="260" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10 app replicas · Enterprise</text>
+    <text x="776" y="274" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">PostgreSQL + Redis + Kafka</text>
+
+    <!-- Node: Shared Infrastructure -->
+    <rect x="60" y="320" width="840" height="64" rx="6" fill="#ffffff"/>
+    <rect x="60" y="320" width="840" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="68" y="328" width="40" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="88" y="337" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">INFRA</text>
+    <text x="480" y="356" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Shared Infrastructure</text>
+    <text x="480" y="372" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Nodes · Networking · Storage · Monitoring</text>
+
+    <!-- Legend -->
+    <line x1="30" y1="528" x2="930" y2="528" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="546" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <circle cx="220" cy="542" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="232" y="546" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Tenant provisioner</text>
+
+    <circle cx="440" cy="542" r="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="452" y="546" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Per-customer vCluster</text>
+
+    <circle cx="680" cy="542" r="4" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="692" y="546" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Shared infrastructure</text>
+  </svg>

@@ -81,72 +81,13 @@ After completing this document, you will be able to:
 
 Each vCluster runs a lightweight Kubernetes control plane inside a single pod (or StatefulSet) on the host cluster. The virtual control plane consists of an API server, a controller manager, and a data store (etcd or a lightweight alternative). The Syncer component bridges the virtual cluster and the host cluster by synchronizing selected resources between them.
 
-```mermaid
-graph TB
-    subgraph "Host Cluster (EKS)"
-        subgraph "Namespace: team-alpha"
-            subgraph "vCluster Pod"
-                API1[API Server<br/>k3s / k0s / k8s]
-                CM1[Controller Manager]
-                ETCD1[Data Store<br/>SQLite / etcd]
-                SYNC1[Syncer]
-            end
-            SVC1[Service:<br/>vcluster-team-alpha]
-        end
-
-        subgraph "Namespace: team-beta"
-            subgraph "vCluster Pod "
-                API2[API Server]
-                CM2[Controller Manager]
-                ETCD2[Data Store]
-                SYNC2[Syncer]
-            end
-            SVC2[Service:<br/>vcluster-team-beta]
-        end
-
-        NODES[Shared Worker Nodes]
-    end
-
-    API1 --> SYNC1
-    SYNC1 -->|"Sync pods, services<br/>to host namespace"| NODES
-    API2 --> SYNC2
-    SYNC2 -->|"Sync pods, services<br/>to host namespace"| NODES
-
-    DEV1[Developer A<br/>kubectl] -->|kubeconfig| SVC1
-    DEV2[Developer B<br/>kubectl] -->|kubeconfig| SVC2
-
-    style API1 fill:#2196F3,color:#fff
-    style API2 fill:#4CAF50,color:#fff
-    style SYNC1 fill:#FF9800,color:#fff
-    style SYNC2 fill:#FF9800,color:#fff
-    style NODES fill:#9C27B0,color:#fff
-```
+![Architecture diagram showing two teams each running a virtual Kubernetes control plane inside its own namespace, with developers connecting through a per-team Service and both vCluster pods syncing their workloads onto the same shared worker nodes.](../.gitbook/assets/en-platform-engineering-08-vcluster-0.png)
 
 ### Syncer Component
 
 The Syncer is the core innovation behind vCluster. It acts as a bidirectional bridge between the virtual cluster and the host cluster, translating and synchronizing Kubernetes resources across the boundary. When a user creates a Pod inside a vCluster, the Syncer creates a corresponding Pod in the host namespace -- but with rewritten names, labels, and metadata to prevent collisions between virtual clusters.
 
-```mermaid
-sequenceDiagram
-    participant User as Developer
-    participant vAPI as vCluster API Server
-    participant Syncer as Syncer
-    participant Host as Host Cluster API
-
-    User->>vAPI: kubectl apply -f deployment.yaml
-    vAPI->>vAPI: Store in vCluster etcd
-    vAPI->>vAPI: Controller creates Pods
-    Syncer->>vAPI: Watch for new Pods
-    vAPI-->>Syncer: New Pod detected
-    Syncer->>Syncer: Rewrite metadata<br/>(name, namespace, labels)
-    Syncer->>Host: Create Pod in host namespace
-    Host-->>Syncer: Pod scheduled, running
-    Syncer->>vAPI: Update Pod status
-
-    Note over Syncer: Continuous reconciliation loop
-    Host-->>Syncer: Pod status change
-    Syncer->>vAPI: Sync status to vCluster
-```
+![Sequence diagram showing a developer's kubectl apply landing in the vCluster API server, the syncer rewriting object metadata and creating the real Pod on the host cluster, then continuously syncing status back down.](../.gitbook/assets/en-platform-engineering-08-vcluster-1.png)
 
 **Resource synchronization behavior:**
 
@@ -853,30 +794,7 @@ spec:
 
 Assign each development team a dedicated vCluster for their daily work. Teams get cluster-admin access within their vCluster and can install any CRDs or tools they need without affecting others.
 
-```mermaid
-graph TB
-    subgraph "EKS Host Cluster"
-        subgraph "team-frontend"
-            VF[vCluster: frontend<br/>React + Node.js team]
-        end
-        subgraph "team-backend"
-            VB[vCluster: backend<br/>Java + Go team]
-        end
-        subgraph "team-data"
-            VD[vCluster: data<br/>Spark + Flink team]
-        end
-        subgraph "team-ml"
-            VM[vCluster: ml<br/>PyTorch + TensorFlow team]
-        end
-        SHARED[Shared: Nodes, CNI, CSI, Monitoring]
-    end
-
-    style VF fill:#2196F3,color:#fff
-    style VB fill:#4CAF50,color:#fff
-    style VD fill:#FF9800,color:#fff
-    style VM fill:#9C27B0,color:#fff
-    style SHARED fill:#607D8B,color:#fff
-```
+![Diagram showing four independent teams — frontend, backend, data, and ML — each running its own isolated vCluster inside one EKS host cluster, all drawing on the same shared nodes, CNI, CSI, and monitoring stack.](../.gitbook/assets/en-platform-engineering-08-vcluster-2.png)
 
 ```yaml
 # vcluster-team-frontend.yaml
@@ -1171,36 +1089,7 @@ sync:
 
 For SaaS platforms that provide Kubernetes-based functionality to customers, vCluster enables per-customer isolation on shared infrastructure:
 
-```mermaid
-graph TB
-    subgraph "SaaS Platform (EKS)"
-        CP[Control Plane<br/>Tenant Provisioner]
-
-        subgraph "Customer A"
-            VA[vCluster: customer-a<br/>3 app replicas<br/>PostgreSQL]
-        end
-
-        subgraph "Customer B"
-            VB[vCluster: customer-b<br/>5 app replicas<br/>PostgreSQL + Redis]
-        end
-
-        subgraph "Customer C (Enterprise)"
-            VC[vCluster: customer-c<br/>10 app replicas<br/>PostgreSQL + Redis + Kafka]
-        end
-
-        INFRA[Shared Infrastructure<br/>Nodes, Networking, Storage, Monitoring]
-    end
-
-    CP -->|Provision| VA
-    CP -->|Provision| VB
-    CP -->|Provision| VC
-
-    style CP fill:#F44336,color:#fff
-    style VA fill:#2196F3,color:#fff
-    style VB fill:#4CAF50,color:#fff
-    style VC fill:#FF9800,color:#fff
-    style INFRA fill:#607D8B,color:#fff
-```
+![Architecture diagram showing a tenant provisioner creating a separate vCluster per customer, each sized to that customer's tier, all running inside one EKS platform on shared infrastructure.](../.gitbook/assets/en-platform-engineering-08-vcluster-3.png)
 
 ```yaml
 # saas-customer-vcluster.yaml -- Per-customer vCluster with tiered resources
@@ -1807,31 +1696,7 @@ This ApplicationSet automatically creates an ArgoCD Application for every direct
 
 The complete developer workflow for self-service virtual clusters:
 
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant BS as Backstage
-    participant GH as GitHub
-    participant Argo as ArgoCD
-    participant Host as Host Cluster
-    participant VC as vCluster
-
-    Dev->>BS: Request vCluster (form)
-    BS->>GH: Create PR with Helm values
-    GH-->>Dev: PR link
-    Note over GH: Auto-approve via policy<br/>or manual review
-    GH->>Argo: Merge triggers sync
-    Argo->>Host: Create Namespace + Helm Release
-    Host->>VC: vCluster Pod starts
-    VC-->>Host: API Server ready
-    Host-->>Argo: Healthy
-    Argo-->>BS: Status update
-    BS-->>Dev: Kubeconfig + access URL
-
-    Note over Dev,VC: Developer uses vCluster as<br/>a normal Kubernetes cluster
-    Dev->>VC: kubectl apply workloads
-    VC->>Host: Syncer creates Pods on host
-```
+![Sequence diagram showing a developer requesting a vCluster from a Backstage portal, the request flowing through a GitOps pull request and sync into the host cluster, and the developer receiving a kubeconfig once the new vCluster is healthy.](../.gitbook/assets/en-platform-engineering-08-vcluster-4.png)
 
 ---
 

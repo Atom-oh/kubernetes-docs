@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vcluster-syncer-title vcluster-syncer-desc">
+<title id="vcluster-syncer-title">Syncer 이름 변환</title>
+<desc id="vcluster-syncer-desc">가상 클러스터의 Pod, Service, ConfigMap, Ingress가 Syncer를 거쳐 이름과 네임스페이스가 변환된 형태로 호스트 클러스터에 생성되는 과정을 보여준다.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zones -->
+<rect x="40" y="40" width="240" height="460" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="90" y="44" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="160" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">가상 클러스터</text>
+
+<rect x="680" y="40" width="240" height="460" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="740" y="44" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="800" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">호스트 클러스터</text>
+
+<!-- Arrows: virtual -> syncer -->
+<path d="M280,108 H360 Q368,108 368,116 V184 Q368,192 376,192 H400" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M280,196 H400" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M280,284 H360 Q368,284 368,276 V208 Q368,200 376,200 H400" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M280,372 H360 Q368,372 368,364 V212 Q368,204 376,204 H400" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- Arrows: syncer -> host -->
+<path d="M560,192 H600 Q608,192 608,184 V116 Q608,108 616,108 H680" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M560,196 H680" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M560,200 H600 Q608,200 608,208 V276 Q608,284 616,284 H680" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M560,204 H600 Q608,204 608,212 V364 Q608,372 616,372 H680" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- Arrow labels -->
+<rect x="320" y="98" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="356" y="107" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SYNCTOHOST</text>
+<rect x="320" y="186" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="356" y="195" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SYNCTOHOST</text>
+<rect x="320" y="274" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="356" y="283" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SYNCTOHOST</text>
+<rect x="320" y="362" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="356" y="371" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SYNCTOHOST</text>
+
+<!-- Node: virtual resources -->
+<rect x="40" y="80" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="160" y="102" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod: nginx</text>
+<text x="160" y="118" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ns: default</text>
+
+<rect x="40" y="168" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="160" y="190" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service: nginx-svc</text>
+<text x="160" y="206" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ns: default</text>
+
+<rect x="40" y="256" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="160" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ConfigMap: app-config</text>
+<text x="160" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ns: default</text>
+
+<rect x="40" y="344" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="160" y="366" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Ingress: web</text>
+<text x="160" y="382" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ns: default</text>
+
+<!-- Node: Syncer (focal) -->
+<rect x="400" y="164" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480" y="190" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Syncer</text>
+<text x="480" y="206" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">이름 변환 · ns 매핑</text>
+<text x="480" y="218" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">라벨 관리</text>
+
+<!-- Node: host resources -->
+<rect x="680" y="80" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="800" y="102" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod: nginx-x-default-x-vc</text>
+<text x="800" y="118" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ns: vcluster-team-a</text>
+
+<rect x="680" y="168" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="800" y="190" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Svc: nginx-svc-x-default-x-vc</text>
+<text x="800" y="206" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ns: vcluster-team-a</text>
+
+<rect x="680" y="256" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="800" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CM: app-config-x-default-x-vc</text>
+<text x="800" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ns: vcluster-team-a</text>
+
+<rect x="680" y="344" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="800" y="366" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Ing: web-x-default-x-vc</text>
+<text x="800" y="382" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ns: vcluster-team-a</text>
+
+<!-- Legend -->
+<line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+<rect x="40" y="556" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="60" y="564" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Syncer (focal)</text>
+
+<line x1="200" y1="561" x2="228" y2="561" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<text x="236" y="564" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">가상 → Syncer</text>
+
+<line x1="380" y1="561" x2="408" y2="561" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<text x="416" y="564" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Syncer → 호스트 (이름 변환됨)</text>
+</svg>

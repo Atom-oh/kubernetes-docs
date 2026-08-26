@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cp-seq-title cp-seq-desc">
+<title id="cp-seq-title">Claim-to-AWS provisioning sequence</title>
+<desc id="cp-seq-desc">A developer applies a Claim that Kubernetes turns into a Composite Resource; Crossplane creates managed resources, provisions them in AWS, and returns a connection secret, then continuously detects and corrects configuration drift.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- Lifelines: Dev 90, K8s 280, XR 470, MR 660, AWS 850 -->
+<line x1="90" y1="60" x2="90" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="280" y1="60" x2="280" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="470" y1="60" x2="470" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="660" y1="60" x2="660" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="850" y1="60" x2="850" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- Fragment frame (loop, drawn before messages so it sits behind them but after lifelines is fine since frame is translucent wash) -->
+<rect x="648" y="446" width="214" height="80" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<rect x="648" y="446" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="668" y="458" text-anchor="middle" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.12em">LOOP</text>
+<text x="700" y="458" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">[continuous reconciliation]</text>
+
+<!-- Messages -->
+<!-- m1 Dev->K8s -->
+<line x1="90" y1="90" x2="280" y2="90" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="105" y="70" width="150" height="12" rx="2" fill="#ffffff"/>
+<text x="180" y="79" text-anchor="middle" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">KUBECTL APPLY CLAIM</text>
+
+<!-- m2 K8s->XR -->
+<line x1="280" y1="130" x2="470" y2="130" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="300" y="110" width="150" height="12" rx="2" fill="#ffffff"/>
+<text x="375" y="119" text-anchor="middle" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">CREATE XR FROM CLAIM</text>
+
+<!-- self-loop on XR: select composition -->
+<path d="M470,150 H520 V178 H470" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="524" y="156" width="98" height="12" rx="2" fill="#ffffff"/>
+<text x="573" y="165" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">SELECT COMPOSITION</text>
+
+<!-- m3 XR->MR -->
+<line x1="470" y1="210" x2="660" y2="210" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="480" y="190" width="170" height="12" rx="2" fill="#ffffff"/>
+<text x="565" y="199" text-anchor="middle" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">CREATE MANAGED RESOURCES</text>
+
+<!-- m4 MR->AWS -->
+<line x1="660" y1="250" x2="850" y2="250" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="670" y="230" width="170" height="12" rx="2" fill="#ffffff"/>
+<text x="755" y="239" text-anchor="middle" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">PROVISION VIA AWS API</text>
+
+<!-- m5 AWS-->MR return -->
+<line x1="850" y1="290" x2="660" y2="290" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="672" y="270" width="130" height="12" rx="2" fill="#ffffff"/>
+<text x="737" y="279" text-anchor="middle" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">RESOURCE STATUS</text>
+
+<!-- m6 MR-->XR return -->
+<line x1="660" y1="330" x2="470" y2="330" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="480" y="310" width="150" height="12" rx="2" fill="#ffffff"/>
+<text x="555" y="319" text-anchor="middle" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">PROPAGATE STATUS</text>
+
+<!-- m7 XR-->K8s return -->
+<line x1="470" y1="370" x2="280" y2="370" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="290" y="350" width="150" height="12" rx="2" fill="#ffffff"/>
+<text x="365" y="359" text-anchor="middle" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">UPDATE CLAIM STATUS</text>
+
+<!-- m8 K8s-->Dev return, headline accent -->
+<line x1="280" y1="410" x2="90" y2="410" stroke="#EC7211" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+<rect x="100" y="390" width="170" height="12" rx="2" fill="#ffffff"/>
+<text x="185" y="399" text-anchor="middle" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">CONNECTION SECRET</text>
+
+<!-- fragment messages, inside frame 648-862 -->
+<!-- m9 AWS-->MR drift detected -->
+<line x1="850" y1="480" x2="660" y2="480" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="672" y="486" width="130" height="12" rx="2" fill="#ffffff"/>
+<text x="737" y="495" text-anchor="middle" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">DRIFT DETECTED</text>
+
+<!-- m10 MR->AWS correct drift -->
+<line x1="660" y1="510" x2="850" y2="510" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="668" y="516" width="170" height="12" rx="2" fill="#ffffff"/>
+<text x="753" y="525" text-anchor="middle" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">CORRECT DRIFT AUTOMATICALLY</text>
+
+<!-- Actor boxes on top (drawn after lifelines so they sit cleanly) -->
+<rect x="30" y="24" width="120" height="36" rx="6" fill="rgba(35,47,62,0.10)"/>
+<rect x="30" y="24" width="120" height="36" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="90" y="46" text-anchor="middle" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Developer</text>
+
+<rect x="220" y="24" width="120" height="36" rx="6" fill="#ffffff"/>
+<rect x="220" y="24" width="120" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="46" text-anchor="middle" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Kubernetes API</text>
+
+<rect x="410" y="24" width="120" height="36" rx="6" fill="rgba(255,153,0,0.10)"/>
+<rect x="410" y="24" width="120" height="36" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="470" y="46" text-anchor="middle" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">XR + Composition</text>
+
+<rect x="600" y="24" width="120" height="36" rx="6" fill="rgba(35,47,62,0.05)"/>
+<rect x="600" y="24" width="120" height="36" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="660" y="46" text-anchor="middle" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Managed Resources</text>
+
+<rect x="790" y="24" width="120" height="36" rx="6" fill="rgba(35,47,62,0.03)"/>
+<rect x="790" y="24" width="120" height="36" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="850" y="46" text-anchor="middle" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">AWS API</text>
+
+<!-- Legend -->
+<line x1="30" y1="556" x2="930" y2="556" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="572" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+<line x1="140" y1="569" x2="170" y2="569" stroke="#545B64" stroke-width="1"/>
+<text x="178" y="572" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Call</text>
+<line x1="230" y1="569" x2="260" y2="569" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4"/>
+<text x="268" y="572" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Return</text>
+<line x1="340" y1="569" x2="370" y2="569" stroke="#EC7211" stroke-width="1.2" stroke-dasharray="5,4"/>
+<text x="378" y="572" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Headline success</text>
+</svg>

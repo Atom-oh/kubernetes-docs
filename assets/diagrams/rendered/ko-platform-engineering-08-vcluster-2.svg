@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vcluster-seq-title vcluster-seq-desc">
+<title id="vcluster-seq-title">vCluster 리소스 동기화 시퀀스</title>
+<desc id="vcluster-seq-desc">개발자의 kubectl apply 요청이 가상 API 서버를 거쳐 Syncer에서 이름·네임스페이스가 변환되고, 호스트 API 서버와 Kubelet을 통해 실제로 실행된 뒤 상태가 다시 가상 클러스터로 반영되는 흐름을 보여준다.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Lifelines -->
+<line x1="100" y1="96" x2="100" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="300" y1="96" x2="300" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="500" y1="96" x2="500" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="700" y1="96" x2="700" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="900" y1="96" x2="900" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- Activation bars -->
+<rect x="96" y="128" width="8" height="420" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="296" y="140" width="8" height="384" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="496" y="180" width="8" height="308" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="696" y="220" width="8" height="212" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="896" y="260" width="8" height="96" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+<!-- Messages -->
+<!-- 1. Dev -> VAPI -->
+<path d="M100,128 H300" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="140" y="112" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="204" y="121" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">KUBECTL APPLY</text>
+
+<!-- 2. VAPI self-loop: Deployment -> Pod object -->
+<path d="M304,148 H340 Q348,148 348,156 Q348,164 340,164 H304" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="352" y="150" width="132" height="12" rx="2" fill="#ffffff"/>
+<text x="418" y="159" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">DEPLOYMENT→POD 생성</text>
+
+<!-- 3. VAPI -> Syncer -->
+<path d="M300,188 H500" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="340" y="172" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="400" y="181" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">POD 변경 감지 (WATCH)</text>
+
+<!-- 4. Syncer self: name transform -->
+<path d="M504,208 H540 Q548,208 548,216 Q548,224 540,224 H504" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="552" y="210" width="132" height="12" rx="2" fill="#ffffff"/>
+<text x="618" y="219" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">이름 변환 + NS 매핑</text>
+
+<!-- 5. Syncer -> HAPI (headline / accent) -->
+<path d="M500,248 H700" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="540" y="232" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="600" y="241" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">변환된 POD 생성 요청</text>
+
+<!-- 6. HAPI -> Kubelet -->
+<path d="M700,288 H900" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="740" y="272" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="800" y="281" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">스케줄링 + 실행</text>
+
+<!-- 7. Kubelet to HAPI (return, dashed) -->
+<path d="M900,328 H700" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="740" y="332" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="800" y="341" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">POD 상태 업데이트</text>
+
+<!-- 8. HAPI to Syncer (dashed) -->
+<path d="M700,368 H500" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="540" y="372" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="600" y="381" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">상태 변경 감지</text>
+
+<!-- 9. Syncer to VAPI (dashed) -->
+<path d="M500,408 H300" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="340" y="412" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="400" y="421" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">가상 POD 상태 갱신</text>
+
+<!-- 10. VAPI to Dev (dashed, headline) -->
+<path d="M300,448 H100" fill="none" stroke="#EC7211" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+<rect x="140" y="452" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="204" y="461" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">GET PODS (반영됨)</text>
+
+<!-- Actor boxes (drawn after lifelines/messages start, before final labels) -->
+<rect x="20" y="64" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="100" y="93" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">개발자</text>
+
+<rect x="220" y="64" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="300" y="93" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">가상 API Server</text>
+
+<rect x="420" y="64" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="500" y="93" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Syncer</text>
+
+<rect x="620" y="64" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="700" y="93" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">호스트 API Server</text>
+
+<rect x="820" y="64" width="160" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="900" y="93" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">호스트 Kubelet</text>
+
+<!-- Legend -->
+<line x1="40" y1="592" x2="920" y2="592" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="608" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+<line x1="200" y1="608" x2="228" y2="608" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<text x="236" y="611" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">동기 호출</text>
+
+<line x1="340" y1="608" x2="368" y2="608" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<text x="376" y="611" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">응답 / 상태 반영</text>
+
+<line x1="520" y1="608" x2="548" y2="608" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="556" y="611" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">헤드라인 경로</text>
+</svg>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vcluster-selfservice-seq-title vcluster-selfservice-seq-desc">
+<title id="vcluster-selfservice-seq-title">셀프서비스 vCluster 요청 시퀀스</title>
+<desc id="vcluster-selfservice-seq-desc">개발자가 Backstage 템플릿으로 개발 환경을 요청하면 GitHub PR 승인과 ArgoCD 동기화를 거쳐 vCluster가 프로비저닝되고, 완료 알림과 kubeconfig를 받아 바로 접속하는 전체 과정을 보여준다.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Lifelines -->
+<line x1="100" y1="96" x2="100" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="300" y1="96" x2="300" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="500" y1="96" x2="500" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="700" y1="96" x2="700" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="900" y1="96" x2="900" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- Activation bars -->
+<rect x="96" y="128" width="8" height="416" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="296" y="140" width="8" height="380" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="496" y="180" width="8" height="212" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="696" y="220" width="8" height="128" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="896" y="288" width="8" height="120" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+<!-- 1. Dev -> Backstage -->
+<path d="M100,128 H300" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="130" y="112" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="200" y="121" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">환경 요청 템플릿 실행</text>
+
+<!-- 2. Backstage -> GitHub -->
+<path d="M300,168 H500" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="330" y="152" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="400" y="161" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">vCluster 매니페스트 PR</text>
+
+<!-- 3. GitHub self-loop: 승인 + 머지 -->
+<path d="M504,196 H540 Q548,196 548,204 Q548,212 540,212 H504" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="552" y="198" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="622" y="207" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">플랫폼 팀 승인 + 머지</text>
+
+<!-- 4. ArgoCD -> GitHub (poll/webhook) -->
+<path d="M700,232 H500" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="530" y="236" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="600" y="245" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">GIT 변경 감지</text>
+
+<!-- 5. ArgoCD -> vCluster (headline, accent) -->
+<path d="M700,268 H900" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="740" y="252" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="810" y="261" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">HELM 동기화 + POD 생성</text>
+
+<!-- 6. vCluster self: init -->
+<path d="M904,308 H940 Q948,308 948,316 Q948,324 940,324 H904" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="812" y="326" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="882" y="335" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">컨트롤 플레인 초기화</text>
+
+<!-- 7. ArgoCD to Backstage (dashed) -->
+<path d="M700,352 H300" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="330" y="356" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="400" y="365" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">배포 상태 업데이트</text>
+
+<!-- 8. Backstage to Dev (dashed, headline) -->
+<path d="M300,392 H100" fill="none" stroke="#EC7211" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+<rect x="130" y="396" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="200" y="405" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">준비 완료 + KUBECONFIG</text>
+
+<!-- 9. Dev -> vCluster (kubectl access) -->
+<path d="M100,432 H340 Q348,432 348,440 V492 Q348,500 356,500 H900" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="150" y="472" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="220" y="481" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">KUBECTL 접속 · 개발 시작</text>
+
+<!-- Actor boxes -->
+<rect x="20" y="64" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="100" y="93" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">개발자</text>
+
+<rect x="220" y="64" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300" y="93" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backstage</text>
+
+<rect x="420" y="64" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="500" y="93" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">GitHub</text>
+
+<rect x="620" y="64" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="700" y="93" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ArgoCD</text>
+
+<rect x="820" y="64" width="160" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="900" y="93" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vCluster (EKS)</text>
+
+<!-- Legend -->
+<line x1="24" y1="592" x2="920" y2="592" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="24" y="608" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+<line x1="200" y1="608" x2="228" y2="608" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<text x="236" y="611" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">동기 호출</text>
+
+<line x1="340" y1="608" x2="368" y2="608" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<text x="376" y="611" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">응답 / 상태 반영</text>
+
+<line x1="520" y1="608" x2="548" y2="608" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="556" y="611" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">헤드라인 경로</text>
+</svg>

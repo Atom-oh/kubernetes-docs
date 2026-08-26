@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vcluster-gitops-title vcluster-gitops-desc">
+<title id="vcluster-gitops-title">GitOps 기반 vCluster 배포</title>
+<desc id="vcluster-gitops-desc">Backstage 셀프서비스 템플릿이 Git 저장소에 PR을 생성하면 ArgoCD ApplicationSet이 이를 감지해 두 개의 팀별 vCluster를 EKS 호스트 클러스터에 배포하는 GitOps 흐름을 보여준다.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zone: ArgoCD -->
+<rect x="460" y="140" width="380" height="184" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="616" y="144" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="650" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">ArgoCD</text>
+
+<!-- Zone: EKS host -->
+<rect x="460" y="344" width="380" height="100" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="600" y="348" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="650" y="357" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EKS 호스트</text>
+
+<!-- Arrows -->
+<path d="M180,164 H240" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M400,164 H482 Q490,164 490,172 V196 Q490,204 498,204 H580" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M620,232 V238 Q620,246 612,246 H568 Q560,246 560,254 V260" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M700,232 V238 Q700,246 708,246 H752 Q760,246 760,254 V260" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M560,308 V376" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M760,308 V376" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- Arrow labels -->
+<rect x="182" y="148" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="210" y="157" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">TEMPLATE</text>
+
+<rect x="410" y="176" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="438" y="185" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">PR 생성</text>
+
+<rect x="572" y="336" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="592" y="345" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">배포</text>
+
+<rect x="772" y="336" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="792" y="345" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">배포</text>
+
+<!-- Node: Backstage template -->
+<rect x="24" y="136" width="156" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="102" y="160" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backstage IDP</text>
+<text x="102" y="176" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">셀프서비스 템플릿</text>
+
+<!-- Node: Git repo -->
+<rect x="240" y="136" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="320" y="160" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Git 저장소</text>
+<text x="320" y="176" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">platform-gitops/vclusters</text>
+
+<!-- Node: ApplicationSet (focal) -->
+<rect x="580" y="176" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="660" y="208" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ApplicationSet</text>
+
+<!-- Node: App1 -->
+<rect x="490" y="260" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="560" y="288" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App: frontend-dev</text>
+
+<!-- Node: App2 -->
+<rect x="690" y="260" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="760" y="288" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App: backend-staging</text>
+
+<!-- Node: vCluster frontend-dev -->
+<rect x="490" y="376" width="140" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="560" y="396" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vCluster</text>
+<text x="560" y="410" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">frontend-dev</text>
+
+<!-- Node: vCluster backend-staging -->
+<rect x="690" y="376" width="140" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="760" y="396" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vCluster</text>
+<text x="760" y="410" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">backend-staging</text>
+
+<!-- Legend -->
+<line x1="24" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="24" y="496" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+<rect x="24" y="508" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="44" y="516" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">ApplicationSet (focal)</text>
+
+<line x1="220" y1="513" x2="248" y2="513" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<text x="256" y="516" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">GitOps 흐름</text>
+</svg>
