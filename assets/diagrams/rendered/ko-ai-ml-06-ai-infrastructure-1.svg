@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t1 d1">
+      <title id="t1">ML 플랫폼 오케스트레이션 구조</title>
+      <desc id="d1">사용자가 JupyterHub를 통해 Argo Workflows와 Ray 클러스터를 실행하고, Ray 클러스터가 Karpenter로 GPU/Neuron/CPU 노드를 자동 프로비저닝하며, JupyterHub와 Ray가 공유 스토리지(EFS/FSx/S3)에 접근하는 흐름을 보여주는 아키텍처 다이어그램.</desc>
+      <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+        <marker id="arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#7D8998"/></marker>
+      </defs>
+
+      <rect width="960" height="600" fill="#FFFFFF"/>
+
+      <!-- arrows first, behind boxes -->
+      <!-- Users -> JupyterHub -->
+      <line x1="480" y1="112" x2="480" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- JupyterHub -> Argo (fan attach x=416) -->
+      <path d="M416,224 V244 Q416,252 408,252 H216 Q208,252 208,260 V280"
+            fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- JupyterHub -> RayCluster (fan attach x=544) -->
+      <path d="M544,224 V244 Q544,252 552,252 H640 Q648,252 648,260 V280"
+            fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Argo -> RayCluster -->
+      <line x1="300" y1="316" x2="556" y2="316" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- RayCluster -> Karpenter -->
+      <line x1="648" y1="352" x2="648" y2="400" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+      <!-- JupyterHub -> Storage (dashed, fan attach x=480, vertical hop over Argo->RayCluster at y=316) -->
+      <path d="M480,224 V308 a8,8 0 0,0 0,16 V496"
+            fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-soft)"/>
+
+      <!-- RayCluster -> Storage (dashed, fan attach x=592 on RC bottom, entry x=540 on Storage top) -->
+      <path d="M592,352 V372 Q592,380 584,380 H548 Q540,380 540,388 V496"
+            fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-soft)"/>
+
+      <!-- Users (input) -->
+      <rect x="392" y="48" width="176" height="64" rx="6" fill="#FFFFFF"/>
+      <rect x="392" y="48" width="176" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+      <text x="480" y="76" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">데이터 과학자 &amp;</text>
+      <text x="480" y="92" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">ML 엔지니어</text>
+      <text x="480" y="106" fill="#545B64" font-size="9" text-anchor="middle" font-family="'Geist Mono',monospace">users</text>
+
+      <!-- JupyterHub (FOCAL) -->
+      <rect x="372" y="152" width="216" height="72" rx="6" fill="#FFFFFF"/>
+      <rect x="372" y="152" width="216" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <rect x="380" y="160" width="60" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.40)" stroke-width="0.8"/>
+      <text x="410" y="169" fill="rgba(236,114,17,0.8)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">HUB</text>
+      <text x="480" y="196" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">JupyterHub</text>
+      <text x="480" y="212" fill="#545B64" font-size="9" text-anchor="middle" font-family="'Geist Mono',monospace">Hub · Spawner · OAuth</text>
+
+      <!-- Argo -->
+      <rect x="116" y="280" width="184" height="72" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="208" y="316" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Argo Workflows</text>
+      <text x="208" y="332" fill="#545B64" font-size="9" text-anchor="middle" font-family="'Geist Mono',monospace">전처리 · 훈련 · 튜닝</text>
+
+      <!-- RayCluster -->
+      <rect x="556" y="280" width="184" height="72" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="648" y="316" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Ray 클러스터</text>
+      <text x="648" y="332" fill="#545B64" font-size="9" text-anchor="middle" font-family="'Geist Mono',monospace">Train · Tune · Serve</text>
+
+      <!-- Karpenter -->
+      <rect x="556" y="400" width="184" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="648" y="428" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Karpenter</text>
+      <text x="648" y="444" fill="#545B64" font-size="9" text-anchor="middle" font-family="'Geist Mono',monospace">GPU · Neuron · CPU</text>
+
+      <!-- Storage (store) -->
+      <rect x="392" y="496" width="176" height="64" rx="6" fill="#FFFFFF"/>
+      <rect x="392" y="496" width="176" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+      <text x="480" y="524" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">공유 스토리지</text>
+      <text x="480" y="540" fill="#545B64" font-size="9" text-anchor="middle" font-family="'Geist Mono',monospace">EFS · FSx · S3</text>
+    </svg>
