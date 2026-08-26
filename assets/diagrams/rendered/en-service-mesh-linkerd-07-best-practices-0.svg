@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="linkerd-migration-0-title linkerd-migration-0-desc">
+    <title id="linkerd-migration-0-title">Istio-to-Linkerd migration strategy across three phases</title>
+    <desc id="linkerd-migration-0-desc">An eight-step migration path grouped into three phases: preparation (analyze the Istio environment, build a test environment, review feature mapping), parallel operation (migrate by namespace, verify traffic, integrate monitoring), and completion (remove Istio, then optimize Linkerd).</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <!-- background -->
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- phase zones -->
+    <rect x="40" y="40" width="880" height="140" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <rect x="40" y="200" width="880" height="140" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <rect x="40" y="360" width="880" height="140" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+
+    <text x="56" y="60" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0.14em" fill="#7D8998">PHASE 1 · PREPARATION</text>
+    <text x="56" y="220" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0.14em" fill="#7D8998">PHASE 2 · PARALLEL OPERATION</text>
+    <text x="56" y="380" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0.14em" fill="#7D8998">PHASE 3 · COMPLETION</text>
+
+    <!-- connectors (drawn before boxes) -->
+    <!-- A -> B -->
+    <line x1="352" y1="112" x2="392" y2="112" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- B -> C -->
+    <line x1="568" y1="112" x2="608" y2="112" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- C -> D (vertical, phase boundary) -->
+    <line x1="696" y1="144" x2="696" y2="240" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- D -> E -->
+    <line x1="608" y1="272" x2="568" y2="272" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- E -> F -->
+    <line x1="392" y1="272" x2="352" y2="272" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- F -> G (vertical, phase boundary) -->
+    <line x1="264" y1="304" x2="264" y2="400" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- G -> H -->
+    <line x1="352" y1="432" x2="392" y2="432" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Node A: start (oval) -->
+    <rect x="176" y="80" width="176" height="64" rx="32" fill="#ffffff"/>
+    <rect x="176" y="80" width="176" height="64" rx="32" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="264" y="105" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Analyze Istio</text>
+    <text x="264" y="121" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Environment</text>
+
+    <!-- Node B -->
+    <rect x="392" y="80" width="176" height="64" rx="6" fill="#ffffff"/>
+    <rect x="392" y="80" width="176" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="105" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Build Linkerd Test</text>
+    <text x="480" y="121" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Environment</text>
+
+    <!-- Node C -->
+    <rect x="608" y="80" width="176" height="64" rx="6" fill="#ffffff"/>
+    <rect x="608" y="80" width="176" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="696" y="105" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Review Feature</text>
+    <text x="696" y="121" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Mapping</text>
+
+    <!-- Node D -->
+    <rect x="608" y="240" width="176" height="64" rx="6" fill="#ffffff"/>
+    <rect x="608" y="240" width="176" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="696" y="265" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Migrate by</text>
+    <text x="696" y="281" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Namespace</text>
+
+    <!-- Node E -->
+    <rect x="392" y="240" width="176" height="64" rx="6" fill="#ffffff"/>
+    <rect x="392" y="240" width="176" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="276" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Verify Traffic</text>
+
+    <!-- Node F -->
+    <rect x="176" y="240" width="176" height="64" rx="6" fill="#ffffff"/>
+    <rect x="176" y="240" width="176" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="264" y="265" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Integrate</text>
+    <text x="264" y="281" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Monitoring</text>
+
+    <!-- Node G: focal -->
+    <rect x="176" y="400" width="176" height="64" rx="6" fill="#ffffff"/>
+    <rect x="176" y="400" width="176" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="264" y="436" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Remove Istio</text>
+
+    <!-- Node H: end (oval) -->
+    <rect x="392" y="400" width="176" height="64" rx="32" fill="#ffffff"/>
+    <rect x="392" y="400" width="176" height="64" rx="32" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="425" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Optimize</text>
+    <text x="480" y="441" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Linkerd</text>
+
+    <!-- legend -->
+    <line x1="40" y1="512" x2="920" y2="512" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="532" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0.14em" fill="#545B64">LEGEND</text>
+
+    <rect x="40" y="552" width="24" height="16" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="72" y="564" font-family="'Geist Mono',monospace" font-size="9" fill="#545B64">Start / end of migration</text>
+
+    <rect x="272" y="552" width="24" height="16" rx="3" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="304" y="564" font-family="'Geist Mono',monospace" font-size="9" fill="#545B64">Migration step</text>
+
+    <rect x="472" y="552" width="24" height="16" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="504" y="564" font-family="'Geist Mono',monospace" font-size="9" fill="#545B64">Key milestone (cutover)</text>
+
+    <line x1="700" y1="560" x2="732" y2="560" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <text x="740" y="564" font-family="'Geist Mono',monospace" font-size="9" fill="#545B64">Sequence order</text>
+  </svg>

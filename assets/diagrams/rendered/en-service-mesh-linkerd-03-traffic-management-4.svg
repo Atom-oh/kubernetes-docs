@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="canary-title canary-desc">
+    <title id="canary-title">Canary Deployment Traffic Split</title>
+    <desc id="canary-desc">Architecture diagram showing a TrafficSplit apex service dividing incoming traffic between a stable backend at 90 percent and a canary backend at 10 percent.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone -->
+    <rect x="120" y="100" width="720" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="416" y="104" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CANARY DEPLOYMENT</text>
+
+    <!-- Arrows: shared trunk from SVC, then fork (no overlapping strokes) -->
+    <line x1="480" y1="244" x2="480" y2="276" stroke="#545B64" stroke-width="1.2"/>
+    <path d="M 480,276 Q 480,284 472,284 H 388 Q 380,284 380,292 V 336"
+          fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <path d="M 480,276 Q 480,284 488,284 H 572 Q 580,284 580,292 V 336"
+          fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- Labels -->
+    <rect x="402" y="264" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="430" y="273" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">90%</text>
+
+    <rect x="502" y="264" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="530" y="273" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">10%</text>
+
+    <!-- Node: SVC -->
+    <rect x="400" y="160" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="408" y="168" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="424" y="177" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+    <text x="480" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">my-service</text>
+    <text x="480" y="212" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">traffic entry point</text>
+
+    <!-- Node: V1 (focal, stable) -->
+    <rect x="200" y="336" width="180" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="208" y="344" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="222" y="353" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">V1</text>
+    <text x="290" y="376" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">my-service-v1</text>
+    <text x="290" y="392" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">stable: weight 90</text>
+
+    <!-- Node: V2 (canary) -->
+    <rect x="580" y="336" width="180" height="80" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <rect x="588" y="344" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+    <text x="602" y="353" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">V2</text>
+    <text x="670" y="376" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">my-service-v2</text>
+    <text x="670" y="392" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">canary: weight 10</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="496" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="508" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="516" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Stable backend (majority weight)</text>
+
+    <rect x="288" y="508" width="14" height="10" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="308" y="516" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Canary backend (minority weight)</text>
+  </svg>

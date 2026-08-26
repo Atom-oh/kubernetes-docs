@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="istio-title istio-desc">
+    <title id="istio-title">Istio Control Plane와 Data Plane 아키텍처</title>
+    <desc id="istio-desc">istiod가 각 파드의 Envoy 사이드카 프록시에 구성을 배포하고, 사이드카들은 서로 mTLS로 암호화된 트래픽을 주고받는 구조를 보여준다.</desc>
+
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="8 0, 0 3, 8 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones (drawn first) -->
+    <rect x="280" y="56" width="400" height="112" rx="8"
+          fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="416" y="60" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.14em">CONTROL PLANE</text>
+
+    <rect x="40" y="200" width="880" height="280" rx="8"
+          fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="424" y="204" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="213" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.14em">DATA PLANE</text>
+
+    <!-- Config-deploy arrows (istiod -> each sidecar), fanned on istiod's bottom edge -->
+    <path d="M 420,152 V 184 Q 420,192 412,192 H 188 Q 180,192 180,200 V 232"
+          fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <path d="M 480,152 V 232" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <path d="M 540,152 V 184 Q 540,192 548,192 H 772 Q 780,192 780,200 V 232"
+          fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- Config-deploy label (represents all three identical flows) -->
+    <rect x="488" y="160" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="520" y="169" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.06em">구성 배포</text>
+
+    <!-- mTLS mesh between sidecars (bidirectional) -->
+    <line x1="280" y1="276" x2="380" y2="276" stroke="#545B64" stroke-width="1.2"
+          marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+    <line x1="580" y1="276" x2="680" y2="276" stroke="#545B64" stroke-width="1.2"
+          marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+    <path d="M 180,320 V 352 Q 180,360 188,360 H 772 Q 780,360 780,352 V 320"
+          fill="none" stroke="#545B64" stroke-width="1.2"
+          marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+
+    <rect x="298" y="256" width="44" height="12" rx="2" fill="#ffffff"/>
+    <text x="320" y="265" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.06em">mTLS</text>
+
+    <rect x="598" y="256" width="44" height="12" rx="2" fill="#ffffff"/>
+    <text x="620" y="265" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.06em">mTLS</text>
+
+    <rect x="458" y="340" width="44" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="349" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.06em">mTLS</text>
+
+    <!-- Node: istiod (focal) -->
+    <rect x="360" y="88" width="240" height="64" rx="6" fill="#ffffff"/>
+    <rect x="360" y="88" width="240" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="368" y="96" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="382" y="105" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.08em">CP</text>
+    <text x="480" y="122" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif"
+          text-anchor="middle">istiod</text>
+    <text x="480" y="138" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace"
+          text-anchor="middle">서비스 검색 · 구성 관리 · 인증서 관리</text>
+
+    <!-- Node: Pod A -->
+    <rect x="80" y="232" width="200" height="88" rx="6" fill="#ffffff"/>
+    <rect x="80" y="232" width="200" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="88" y="238" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="104" y="247" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.08em">POD</text>
+    <text x="180" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif"
+          text-anchor="middle">Pod A</text>
+    <text x="180" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace"
+          text-anchor="middle">App + Envoy 사이드카</text>
+
+    <!-- Node: Pod B -->
+    <rect x="380" y="232" width="200" height="88" rx="6" fill="#ffffff"/>
+    <rect x="380" y="232" width="200" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="388" y="238" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="404" y="247" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.08em">POD</text>
+    <text x="480" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif"
+          text-anchor="middle">Pod B</text>
+    <text x="480" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace"
+          text-anchor="middle">App + Envoy 사이드카</text>
+
+    <!-- Node: Pod C -->
+    <rect x="680" y="232" width="200" height="88" rx="6" fill="#ffffff"/>
+    <rect x="680" y="232" width="200" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="688" y="238" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="704" y="247" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.08em">POD</text>
+    <text x="780" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif"
+          text-anchor="middle">Pod C</text>
+    <text x="780" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace"
+          text-anchor="middle">App + Envoy 사이드카</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <line x1="40" y1="548" x2="72" y2="548" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <text x="80" y="551" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">구성 배포 (istiod → Envoy)</text>
+    <line x1="360" y1="548" x2="392" y2="548" stroke="#545B64" stroke-width="1.2"
+          marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+    <text x="400" y="551" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">mTLS (사이드카 간 상호 인증 트래픽)</text>
+  </svg>

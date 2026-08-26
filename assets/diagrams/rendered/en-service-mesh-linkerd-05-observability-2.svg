@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="d2title d2desc">
+  <title id="d2title">Linkerd troubleshooting workflow</title>
+  <desc id="d2desc">Starting from a detected issue, the operator checks success rate: a low rate leads to inspecting top traffic then live tap and proxy logs, while normal success but high latency leads to per-route metrics which converge on the same tap-and-logs step; if latency is fine, the operator checks service edges for an mTLS problem, verifying certificates when one is found, before the issue is marked resolved.</desc>
+  <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="32" y="28" class="mono" font-size="8" letter-spacing="0.18em" fill="#7D8998">LINKERD VIZ &#183; RUNBOOK</text>
+  <text x="32" y="52" font-size="20" font-weight="700" fill="#232F3E">Troubleshooting Workflow</text>
+
+  <!-- ============ ARROWS (before nodes) ============ -->
+
+  <!-- 1. START -> CHECK -->
+  <line x1="480" y1="72" x2="480" y2="88" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- 2. CHECK -> TOP (YES) -->
+  <line x1="560" y1="128" x2="700" y2="128" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="612" y="112" width="32" height="12" rx="2" fill="#ffffff"/>
+  <text x="628" y="121" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#EC7211">YES</text>
+
+  <!-- 3. CHECK -> LATENCY (NO) -->
+  <line x1="480" y1="168" x2="480" y2="208" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="488" y="180" width="26" height="12" rx="2" fill="#ffffff"/>
+  <text x="501" y="189" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">NO</text>
+
+  <!-- 4. TOP -> TAPLOGS -->
+  <line x1="780" y1="156" x2="780" y2="220" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- 5. LATENCY -> TAPLOGS (YES) -->
+  <line x1="560" y1="248" x2="700" y2="248" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="612" y="232" width="32" height="12" rx="2" fill="#ffffff"/>
+  <text x="628" y="241" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#EC7211">YES</text>
+
+  <!-- 6. LATENCY -> EDGES (NO) -->
+  <line x1="480" y1="288" x2="480" y2="336" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="488" y="304" width="26" height="12" rx="2" fill="#ffffff"/>
+  <text x="501" y="313" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">NO</text>
+
+  <!-- 7. EDGES -> CHECKTLS -->
+  <line x1="480" y1="392" x2="480" y2="436" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- 8. CHECKTLS -> CERT (YES) -->
+  <line x1="560" y1="476" x2="700" y2="476" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="612" y="460" width="32" height="12" rx="2" fill="#ffffff"/>
+  <text x="628" y="469" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">YES</text>
+
+  <!-- 9. CHECKTLS -> END (NO) -->
+  <line x1="480" y1="516" x2="480" y2="536" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="488" y="518" width="26" height="12" rx="2" fill="#ffffff"/>
+  <text x="501" y="527" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">NO</text>
+
+  <!-- 10. TAPLOGS -> END (right-side corridor, attach B) -->
+  <path d="M860,248 H892 Q900,248 900,256 V576 Q900,584 892,584 H560"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- 11. CERT -> END (elbow, attach A) -->
+  <path d="M780,504 V520 Q780,528 772,528 H568 Q560,528 560,536 V556"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- START (oval) -->
+  <rect x="400" y="24" width="160" height="48" rx="24" fill="#ffffff"/>
+  <rect x="400" y="24" width="160" height="48" rx="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="52" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Issue Detected</text>
+
+  <!-- CHECK (diamond) -->
+  <polygon points="480,88 560,128 480,168 400,128" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="124" text-anchor="middle" font-size="11" font-weight="600" fill="#232F3E">Low success</text>
+  <text x="480" y="138" text-anchor="middle" font-size="11" font-weight="600" fill="#232F3E">rate?</text>
+
+  <!-- TOP -->
+  <rect x="700" y="100" width="160" height="56" rx="6" fill="#ffffff"/>
+  <rect x="700" y="100" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="780" y="124" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">viz top</text>
+  <text x="780" y="140" text-anchor="middle" class="mono" font-size="9" fill="#545B64">busiest paths</text>
+
+  <!-- LATENCY (diamond) -->
+  <polygon points="480,208 560,248 480,288 400,248" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="244" text-anchor="middle" font-size="11" font-weight="600" fill="#232F3E">High</text>
+  <text x="480" y="258" text-anchor="middle" font-size="11" font-weight="600" fill="#232F3E">latency?</text>
+
+  <!-- TAPLOGS (focal) -->
+  <rect x="700" y="220" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="700" y="220" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="780" y="244" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">viz tap + logs</text>
+  <text x="780" y="260" text-anchor="middle" class="mono" font-size="9" fill="#545B64">live trace &amp; proxy logs</text>
+
+  <!-- EDGES -->
+  <rect x="400" y="336" width="160" height="56" rx="6" fill="#ffffff"/>
+  <rect x="400" y="336" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="360" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">viz edges</text>
+  <text x="480" y="376" text-anchor="middle" class="mono" font-size="9" fill="#545B64">service connections</text>
+
+  <!-- CHECKTLS (diamond) -->
+  <polygon points="480,436 560,476 480,516 400,476" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="472" text-anchor="middle" font-size="11" font-weight="600" fill="#232F3E">mTLS</text>
+  <text x="480" y="486" text-anchor="middle" font-size="11" font-weight="600" fill="#232F3E">issue?</text>
+
+  <!-- CERT -->
+  <rect x="700" y="448" width="160" height="56" rx="6" fill="#ffffff"/>
+  <rect x="700" y="448" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="780" y="472" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Check Certificates</text>
+  <text x="780" y="488" text-anchor="middle" class="mono" font-size="9" fill="#545B64">mTLS trust chain</text>
+
+  <!-- END (oval) -->
+  <rect x="400" y="536" width="160" height="64" rx="32" fill="#ffffff"/>
+  <rect x="400" y="536" width="160" height="64" rx="32" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="572" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Issue Resolved</text>
+
+</svg>

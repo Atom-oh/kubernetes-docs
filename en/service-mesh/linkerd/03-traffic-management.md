@@ -9,35 +9,7 @@ Linkerd enables fine-grained control of service-to-service traffic through Servi
 
 ## Traffic Management Architecture
 
-```mermaid
-graph TB
-    subgraph "Traffic Management Components"
-        SP[ServiceProfile<br/>Per-route Config]
-        TS[TrafficSplit<br/>Traffic Distribution]
-        HR[HTTPRoute<br/>Gateway API]
-    end
-
-    subgraph "Proxy Features"
-        LB[Load Balancing<br/>EWMA]
-        RT[Retries]
-        TO[Timeouts]
-        CB[Circuit Breaking<br/>Failure Isolation]
-    end
-
-    subgraph "Destination Controller"
-        DEST[Endpoint Discovery]
-        POLICY[Policy Distribution]
-    end
-
-    SP --> DEST
-    TS --> DEST
-    HR --> DEST
-    DEST --> POLICY
-    POLICY --> LB
-    POLICY --> RT
-    POLICY --> TO
-    POLICY --> CB
-```
+![Architecture diagram showing ServiceProfile, TrafficSplit, and HTTPRoute configuration feeding a destination controller that discovers endpoints and distributes policy to proxy features for load balancing, retries, timeouts, and circuit breaking.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-0.png)
 
 ## ServiceProfile
 
@@ -191,22 +163,7 @@ Linkerd automatically retries failed requests to overcome transient failures.
 
 ### Retry Behavior
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Proxy as linkerd-proxy
-    participant Service as Backend Service
-
-    Client->>Proxy: HTTP Request
-    Proxy->>Service: Request #1
-    Service-->>Proxy: 503 Service Unavailable
-
-    Note over Proxy: Check retry conditions<br/>- isRetryable: true<br/>- Budget available
-
-    Proxy->>Service: Request #2 (retry)
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-```
+![Sequence diagram showing linkerd-proxy transparently retrying a request that failed with a 503 after checking the ServiceProfile retry budget, so the client only ever sees the successful response.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-1.png)
 
 ### Retry Conditions
 
@@ -308,25 +265,7 @@ spec:
 
 ### Timeout Behavior
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Proxy as linkerd-proxy
-    participant Service as Backend Service
-
-    Client->>Proxy: HTTP Request
-    Note over Proxy: Start timeout: 5s
-    Proxy->>Service: Request
-
-    alt Normal response (within 5s)
-        Service-->>Proxy: 200 OK
-        Proxy-->>Client: 200 OK
-    else Timeout (exceeds 5s)
-        Note over Proxy: 5 seconds elapsed
-        Proxy-->>Client: 504 Gateway Timeout
-        Note over Service: Request may continue processing
-    end
-```
+![Sequence diagram showing linkerd-proxy starting a per-route timeout when it forwards a request, and branching on whether the backend service responds within the deadline or the proxy returns a 504 while the backend keeps processing.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-2.png)
 
 ## Load Balancing
 
@@ -334,21 +273,7 @@ Linkerd uses the EWMA (Exponentially Weighted Moving Average) algorithm for inte
 
 ### EWMA Algorithm
 
-```mermaid
-graph LR
-    subgraph "EWMA Load Balancing"
-        REQ[New Request]
-        LB[Load Balancer]
-        E1[Endpoint 1<br/>Latency: 10ms<br/>Score: 0.1]
-        E2[Endpoint 2<br/>Latency: 50ms<br/>Score: 0.5]
-        E3[Endpoint 3<br/>Latency: 20ms<br/>Score: 0.2]
-    end
-
-    REQ --> LB
-    LB -->|Selected| E1
-    LB -.->|Waiting| E2
-    LB -.->|Waiting| E3
-```
+![Architecture diagram showing a new request routed by the load balancer to the endpoint with the lowest exponentially-weighted moving average latency score, while slower endpoints wait for traffic.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-3.png)
 
 **EWMA Characteristics:**
 
@@ -398,17 +323,7 @@ spec:
 
 ### Canary Deployment
 
-```mermaid
-graph TB
-    subgraph "Canary Deployment"
-        SVC[my-service<br/>Traffic Entry Point]
-        V1[my-service-v1<br/>Stable: 90%]
-        V2[my-service-v2<br/>Canary: 10%]
-    end
-
-    SVC -->|90%| V1
-    SVC -->|10%| V2
-```
+![Architecture diagram showing a TrafficSplit apex service dividing incoming traffic between a stable backend at 90 percent and a canary backend at 10 percent.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-4.png)
 
 **Progressive Canary Deployment:**
 
@@ -704,14 +619,7 @@ Linkerd implements the circuit breaker pattern through failure accrual.
 
 ### Failure Accrual Behavior
 
-```mermaid
-stateDiagram-v2
-    [*] --> Closed: Normal State
-    Closed --> Open: Consecutive Failures Exceed Threshold
-    Open --> HalfOpen: Backoff Time Elapsed
-    HalfOpen --> Closed: Probe Succeeds
-    HalfOpen --> Open: Probe Fails
-```
+![State machine showing an endpoint moving from Closed to Open after consecutive failures exceed a threshold, to Half-Open once the backoff elapses, then back to Closed on a successful probe or back to Open if the probe fails.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-5.png)
 
 **Behavior:**
 
@@ -821,29 +729,7 @@ spec:
 
 ### Flagger Deployment Flow
 
-```mermaid
-graph TB
-    subgraph "Flagger Canary Flow"
-        START[Detect Deployment Change]
-        INIT[Initialize Canary<br/>0% Traffic]
-        ANALYZE[Analyze Metrics]
-        STEP[Increase Traffic<br/>+10%]
-        CHECK{Success Criteria<br/>Met?}
-        PROMOTE[Promotion<br/>100% Canary]
-        ROLLBACK[Rollback<br/>0% Canary]
-        END[Complete]
-    end
-
-    START --> INIT
-    INIT --> ANALYZE
-    ANALYZE --> CHECK
-    CHECK -->|Yes| STEP
-    CHECK -->|No| ROLLBACK
-    STEP --> |Below 50%| ANALYZE
-    STEP --> |Reached 50%| PROMOTE
-    PROMOTE --> END
-    ROLLBACK --> END
-```
+![Flowchart showing Flagger detecting a deployment change, initializing a canary at zero traffic, then looping through metric analysis and 10 percent traffic increments until it either promotes the canary to 100 percent or rolls it back on failed success criteria.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-6.png)
 
 ### Flagger Metric Templates
 

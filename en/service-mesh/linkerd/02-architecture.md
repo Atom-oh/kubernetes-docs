@@ -9,67 +9,7 @@ Linkerd follows a service mesh architecture consisting of a control plane and da
 
 ## Overall Architecture
 
-```mermaid
-graph TB
-    subgraph "Control Plane (linkerd namespace)"
-        subgraph "Core Components"
-            DEST[Destination Controller<br/>Service Discovery<br/>Policy Distribution]
-            ID[Identity Controller<br/>Certificate Issuance<br/>CA Management]
-            PI[Proxy Injector<br/>Sidecar Injection<br/>Admission Webhook]
-        end
-
-        subgraph "Policy Engine"
-            POL[Policy Controller<br/>Server/Authorization<br/>Policy Validation]
-        end
-    end
-
-    subgraph "Data Plane"
-        subgraph "Application Pod A"
-            APP_A[Application Container]
-            PROXY_A[linkerd-proxy<br/>Rust Micro Proxy]
-            INIT_A[linkerd-init<br/>iptables Setup]
-        end
-
-        subgraph "Application Pod B"
-            APP_B[Application Container]
-            PROXY_B[linkerd-proxy]
-            INIT_B[linkerd-init]
-        end
-    end
-
-    subgraph "Extensions"
-        VIZ[Viz Extension<br/>Metrics/Dashboard]
-        JAEGER[Jaeger Extension<br/>Distributed Tracing]
-        MC[Multicluster Extension<br/>Cluster Linking]
-    end
-
-    %% Control Plane Interactions
-    PI -->|Webhook| PROXY_A
-    PI -->|Webhook| PROXY_B
-    ID -->|Certificate| PROXY_A
-    ID -->|Certificate| PROXY_B
-    DEST -->|Endpoints| PROXY_A
-    DEST -->|Endpoints| PROXY_B
-    POL -->|Policy| PROXY_A
-    POL -->|Policy| PROXY_B
-
-    %% Data Plane Traffic
-    APP_A --> PROXY_A
-    PROXY_A -->|mTLS| PROXY_B
-    PROXY_B --> APP_B
-
-    %% Extension Interactions
-    VIZ -->|Metrics Collection| PROXY_A
-    VIZ -->|Metrics Collection| PROXY_B
-
-    classDef control fill:#e1f5fe
-    classDef data fill:#f3e5f5
-    classDef ext fill:#e8f5e9
-
-    class DEST,ID,PI,POL control
-    class APP_A,APP_B,PROXY_A,PROXY_B,INIT_A,INIT_B data
-    class VIZ,JAEGER,MC ext
-```
+![Architecture diagram showing Linkerd's control plane (Destination, Identity, Proxy Injector, Policy controllers) configuring the linkerd-proxy sidecars in two application pods, which exchange traffic over mTLS while the Viz extension collects metrics.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-0.png)
 
 ## Control Plane
 
@@ -79,35 +19,7 @@ The control plane is deployed in the `linkerd` namespace and consists of compone
 
 The Destination controller is the core component responsible for service discovery and policy distribution.
 
-```mermaid
-graph LR
-    subgraph "Destination Controller"
-        API[Destination API<br/>gRPC Server]
-        DISC[Service Discovery<br/>Endpoint Lookup]
-        PROF[ServiceProfile<br/>Routing Info]
-        SPLIT[TrafficSplit<br/>Traffic Distribution]
-    end
-
-    subgraph "Kubernetes"
-        SVC[Services]
-        EP[Endpoints]
-        SP[ServiceProfiles]
-        TS[TrafficSplits]
-    end
-
-    subgraph "Proxies"
-        P1[Proxy 1]
-        P2[Proxy 2]
-    end
-
-    SVC --> DISC
-    EP --> DISC
-    SP --> PROF
-    TS --> SPLIT
-
-    API --> P1
-    API --> P2
-```
+![Architecture diagram showing the Destination controller reading Kubernetes Services, Endpoints, ServiceProfiles, and TrafficSplits, then streaming service-discovery, routing, and traffic-split data to proxies over its gRPC API.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-1.png)
 
 **Key Functions:**
 
@@ -136,23 +48,7 @@ service Destination {
 
 The Identity controller handles certificate issuance and management for mTLS.
 
-```mermaid
-sequenceDiagram
-    participant Proxy as linkerd-proxy
-    participant Identity as Identity Controller
-    participant CA as Trust Anchor (CA)
-
-    Note over Proxy: Pod starts
-    Proxy->>Identity: CSR (Certificate Signing Request)
-    Identity->>Identity: Validate ServiceAccount
-    Identity->>CA: Certificate signing request
-    CA-->>Identity: Signed certificate
-    Identity-->>Proxy: Workload certificate
-
-    Note over Proxy: Before certificate expiration
-    Proxy->>Identity: Renewal CSR
-    Identity-->>Proxy: New certificate
-```
+![Sequence diagram showing a linkerd-proxy requesting a certificate from the Identity controller, which validates the pod's ServiceAccount, has the trust anchor sign it, and later reissues a fresh certificate before the original expires.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-2.png)
 
 **Certificate Issuance Process:**
 
@@ -187,26 +83,7 @@ data:
 
 The Proxy Injector operates as a Kubernetes Admission Webhook to automatically inject sidecars into Pods.
 
-```mermaid
-sequenceDiagram
-    participant User as kubectl
-    participant API as API Server
-    participant PI as Proxy Injector
-    participant Pod as Pod
-
-    User->>API: Pod creation request
-    API->>PI: Admission Review
-    PI->>PI: Check injection conditions
-    alt Injection enabled
-        PI->>PI: Add linkerd-proxy container
-        PI->>PI: Add linkerd-init container
-        PI->>PI: Configure volumes/env vars
-        PI-->>API: Mutated Pod Spec
-    else Injection disabled
-        PI-->>API: Original Pod Spec
-    end
-    API->>Pod: Create Pod
-```
+![Sequence diagram showing the Kubernetes API server calling the Proxy Injector admission webhook on pod creation, which either injects the linkerd-proxy sidecar and returns a mutated pod spec, or returns the pod unchanged when injection is disabled.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-3.png)
 
 **Injection Conditions:**
 
@@ -284,38 +161,7 @@ The data plane consists of `linkerd-proxy` sidecars injected into application Po
 
 Linkerd's data plane proxy is an ultra-lightweight micro-proxy written in Rust.
 
-```mermaid
-graph TB
-    subgraph "Pod"
-        subgraph "linkerd-proxy"
-            IN[Inbound Listener<br/>:4143]
-            OUT[Outbound Listener<br/>:4140]
-            ADMIN[Admin Server<br/>:4191]
-
-            subgraph "Processing"
-                TLS[TLS Termination/Origination]
-                LB[Load Balancing<br/>EWMA]
-                RETRY[Retries]
-                TO[Timeouts]
-                CB[Circuit Breaking]
-                METRICS[Metrics Collection]
-            end
-        end
-
-        APP[Application]
-    end
-
-    EXT_IN[External Inbound] --> IN
-    IN --> TLS
-    TLS --> APP
-
-    APP --> OUT
-    OUT --> LB
-    LB --> TLS
-    TLS --> EXT_OUT[External Outbound]
-
-    ADMIN --> METRICS
-```
+![Architecture diagram showing traffic entering the linkerd-proxy sidecar through its inbound listener and TLS termination into the application, and application traffic leaving through the outbound listener, load balancer, and TLS origination back out, while the admin server exposes metrics.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-4.png)
 
 **Proxy Characteristics:**
 
@@ -342,26 +188,7 @@ graph TB
 
 ### Proxy Traffic Flow
 
-```mermaid
-sequenceDiagram
-    participant Client as Client App
-    participant CProxy as Client Proxy<br/>(Outbound)
-    participant SProxy as Server Proxy<br/>(Inbound)
-    participant Server as Server App
-
-    Client->>CProxy: HTTP Request<br/>(localhost)
-    Note over CProxy: iptables redirect
-    CProxy->>CProxy: Lookup target service<br/>(Destination API)
-    CProxy->>CProxy: Load balancing<br/>(EWMA)
-    CProxy->>CProxy: mTLS handshake
-    CProxy->>SProxy: Encrypted Request
-    SProxy->>SProxy: mTLS verification
-    SProxy->>SProxy: Policy check
-    SProxy->>Server: HTTP Request
-    Server-->>SProxy: HTTP Response
-    SProxy-->>CProxy: Encrypted Response
-    CProxy-->>Client: HTTP Response
-```
+![Sequence diagram showing a client app's request transparently redirected into its linkerd-proxy, which resolves and load-balances the destination and opens an mTLS connection to the server's proxy, which verifies the connection and policy before forwarding to the server app and returning the response.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-5.png)
 
 ### linkerd-init (Init Container)
 
@@ -443,27 +270,7 @@ Linkerd uses a hierarchical PKI (Public Key Infrastructure) to implement mTLS.
 
 ### Certificate Hierarchy Structure
 
-```mermaid
-graph TB
-    subgraph "Certificate Hierarchy"
-        TA[Trust Anchor<br/>Root CA<br/>Validity: 10 years]
-        II[Identity Issuer<br/>Intermediate CA<br/>Validity: 1 year]
-        WC1[Workload Cert 1<br/>Validity: 24 hours]
-        WC2[Workload Cert 2<br/>Validity: 24 hours]
-        WC3[Workload Cert 3<br/>Validity: 24 hours]
-    end
-
-    TA --> II
-    II --> WC1
-    II --> WC2
-    II --> WC3
-
-    style TA fill:#ff9800
-    style II fill:#2196f3
-    style WC1 fill:#4caf50
-    style WC2 fill:#4caf50
-    style WC3 fill:#4caf50
-```
+![Tree diagram showing the Linkerd PKI: a long-lived trust anchor root CA signs a one-year intermediate identity issuer, which in turn signs short-lived 24-hour workload certificates for each proxy.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-6.png)
 
 ### Trust Anchor (Root CA)
 
@@ -550,25 +357,7 @@ data:
 
 Each proxy receives a unique workload certificate.
 
-```mermaid
-sequenceDiagram
-    participant Proxy as linkerd-proxy
-    participant ID as Identity Controller
-    participant SA as ServiceAccount
-
-    Note over Proxy: Pod starts
-    Proxy->>SA: Obtain ServiceAccount token
-    Proxy->>Proxy: Generate CSR (with SPIFFE ID)
-    Proxy->>ID: Send CSR + SA token
-    ID->>ID: Validate SA token
-    ID->>ID: Validate SPIFFE ID
-    ID->>ID: Sign certificate with Issuer key
-    ID-->>Proxy: Signed certificate (24-hour validity)
-
-    Note over Proxy: After 22 hours (2 hours before expiration)
-    Proxy->>ID: Renewal CSR
-    ID-->>Proxy: New certificate
-```
+![Sequence diagram showing a linkerd-proxy obtaining its ServiceAccount token, generating a CSR with a SPIFFE identity, and having the Identity controller validate and sign it into a 24-hour workload certificate that is renewed before it expires.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-7.png)
 
 **SPIFFE ID Format:**
 
@@ -621,32 +410,7 @@ kubectl rollout restart deploy -n my-app
 
 ### Injection Workflow
 
-```mermaid
-graph TB
-    subgraph "Injection Flow"
-        REQ[Pod Creation Request]
-        WH[Webhook Call]
-        CHK[Check Injection Conditions]
-        INJ[Inject Sidecar]
-        POD[Create Pod]
-    end
-
-    subgraph "Injection Conditions"
-        NS[Namespace Annotation]
-        POD_ANN[Pod Annotation]
-        WL[Workload Type]
-    end
-
-    REQ --> WH
-    WH --> CHK
-    CHK --> NS
-    CHK --> POD_ANN
-    CHK --> WL
-    NS --> INJ
-    POD_ANN --> INJ
-    WL --> INJ
-    INJ --> POD
-```
+![Flowchart showing a pod creation request triggering the injection webhook, which checks the namespace annotation, pod annotation, and workload type before injecting the linkerd-proxy sidecar and letting pod creation proceed.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-8.png)
 
 ### Injection Annotations
 
@@ -700,39 +464,7 @@ readinessProbe:
 
 ## Inter-Component Communication
 
-```mermaid
-graph TB
-    subgraph "Control Plane"
-        DEST[Destination<br/>:8086]
-        ID[Identity<br/>:8080]
-        PI[Proxy Injector<br/>:8443]
-        POL[Policy<br/>:8090]
-    end
-
-    subgraph "Data Plane"
-        P1[Proxy 1]
-        P2[Proxy 2]
-    end
-
-    subgraph "Kubernetes"
-        API[API Server]
-        WH[Webhook Config]
-    end
-
-    P1 -->|gRPC| DEST
-    P2 -->|gRPC| DEST
-    P1 -->|gRPC| ID
-    P2 -->|gRPC| ID
-    P1 -->|gRPC| POL
-    P2 -->|gRPC| POL
-
-    API -->|Admission| PI
-    WH --> PI
-
-    DEST --> API
-    ID --> API
-    POL --> API
-```
+![Architecture diagram showing proxies calling the Destination, Identity, and Policy controllers over gRPC, and the Kubernetes API server plus webhook configuration invoking the Proxy Injector's admission webhook on pod creation.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-9.png)
 
 **Port Summary:**
 
@@ -750,26 +482,7 @@ graph TB
 
 ### Control Plane Comparison
 
-```mermaid
-graph TB
-    subgraph "Linkerd Control Plane"
-        L_DEST[Destination]
-        L_ID[Identity]
-        L_PI[Proxy Injector]
-    end
-
-    subgraph "Istio Control Plane"
-        ISTIOD[istiod<br/>Pilot + Citadel + Galley]
-    end
-
-    subgraph "Linkerd Data Plane"
-        L_PROXY[linkerd-proxy<br/>Rust, ~10MB]
-    end
-
-    subgraph "Istio Data Plane"
-        ENVOY[Envoy<br/>C++, ~50-100MB]
-    end
-```
+![Side-by-side comparison showing Linkerd's three small, distributed control-plane components and lightweight Rust proxy next to Istio's unified istiod control plane and heavier C++ Envoy proxy.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-10.png)
 
 | Characteristic | Linkerd | Istio |
 |----------------|---------|-------|

@@ -26,39 +26,7 @@ Linkerd는 CNCF(Cloud Native Computing Foundation) 졸업 프로젝트로, 경�
 
 ## Linkerd 아키텍처 개요
 
-```mermaid
-graph TB
-    subgraph "Control Plane"
-        D[Destination<br/>서비스 디스커버리]
-        I[Identity<br/>인증서 발급]
-        P[Proxy Injector<br/>사이드카 주입]
-    end
-
-    subgraph "Data Plane"
-        subgraph "Pod A"
-            A1[Application]
-            AP[linkerd-proxy]
-        end
-        subgraph "Pod B"
-            B1[Application]
-            BP[linkerd-proxy]
-        end
-    end
-
-    subgraph "Extensions"
-        V[Viz<br/>대시보드/메트릭]
-        J[Jaeger<br/>분산 추적]
-        M[Multicluster<br/>다중 클러스터]
-    end
-
-    AP -->|mTLS| BP
-    AP --> D
-    AP --> I
-    P -->|Inject| AP
-    P -->|Inject| BP
-    V --> AP
-    V --> BP
-```
+![Linkerd 컨트롤 플레인(Destination, Identity, Proxy Injector)이 Pod에 주입된 linkerd-proxy 사이드카를 설정·인증하고, 두 프록시가 mTLS로 통신하며 Viz 확장이 이를 관찰하는 구조를 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-service-mesh-linkerd-README-0.png)
 
 ## 서비스 메시 비교
 

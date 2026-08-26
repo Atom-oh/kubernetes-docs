@@ -9,44 +9,7 @@ Cilium Service Mesh는 Hubble을 통해 강력한 네트워크 관찰성을 제�
 
 ## Hubble 아키텍처
 
-```mermaid
-graph TB
-    subgraph "Kubernetes Cluster"
-        subgraph "Node 1"
-            eBPF1[eBPF Programs]
-            Agent1[Cilium Agent]
-            Hubble1[Hubble Observer]
-        end
-
-        subgraph "Node 2"
-            eBPF2[eBPF Programs]
-            Agent2[Cilium Agent]
-            Hubble2[Hubble Observer]
-        end
-
-        Relay[Hubble Relay]
-        UI[Hubble UI]
-    end
-
-    subgraph "External"
-        CLI[Hubble CLI]
-        Prometheus[Prometheus]
-        Grafana[Grafana]
-    end
-
-    eBPF1 --> Agent1
-    Agent1 --> Hubble1
-    eBPF2 --> Agent2
-    Agent2 --> Hubble2
-
-    Hubble1 --> Relay
-    Hubble2 --> Relay
-    Relay --> UI
-    Relay --> CLI
-    Hubble1 --> Prometheus
-    Hubble2 --> Prometheus
-    Prometheus --> Grafana
-```
+![각 노드의 eBPF 프로그램과 Cilium Agent가 수집한 흐름 데이터를 Hubble Observer가 모아 Hubble Relay로 전달하고, Relay는 Hubble UI·CLI로 시각화를 제공하며 Observer의 메트릭은 Prometheus를 거쳐 Grafana 대시보드로 흐른다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-04-observability-0.png)
 
 ### 구성 요소
 
@@ -252,15 +215,7 @@ hubble observe --http-method "POST|PUT"
 
 Hubble UI는 서비스 간 의존성을 시각적으로 보여줍니다:
 
-```mermaid
-graph LR
-    subgraph "Service Map View"
-        FE[Frontend<br/>3 pods] --> BE[Backend<br/>5 pods]
-        BE --> DB[(Database<br/>2 pods)]
-        BE --> Cache[(Redis<br/>3 pods)]
-        FE --> Static[Static Assets<br/>CDN]
-    end
-```
+![Hubble UI의 서비스 맵 화면에서 Frontend가 Backend와 정적 자산 CDN으로 요청을 보내고, Backend는 Database와 Redis 캐시를 호출하는 실시간 서비스 의존성 그래프를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-04-observability-1.png)
 
 ### UI 기능
 
@@ -508,45 +463,13 @@ hubble observe --namespace production -o json | \
 
 ### 서비스 맵 예시
 
-```mermaid
-graph TB
-    subgraph "Production Namespace"
-        ingress[Ingress Controller]
-        frontend[Frontend<br/>RPS: 1000<br/>P99: 50ms]
-        api[API Gateway<br/>RPS: 800<br/>P99: 100ms]
-        users[User Service<br/>RPS: 500<br/>P99: 80ms]
-        orders[Order Service<br/>RPS: 300<br/>P99: 120ms]
-        payments[Payment Service<br/>RPS: 100<br/>P99: 200ms]
-        db[(PostgreSQL)]
-        redis[(Redis)]
-        kafka[Kafka]
-    end
-
-    ingress --> frontend
-    frontend --> api
-    api --> users
-    api --> orders
-    users --> db
-    users --> redis
-    orders --> db
-    orders --> kafka
-    orders --> payments
-    payments --> kafka
-```
+![Production 네임스페이스에서 Ingress부터 Frontend, API Gateway를 거쳐 User·Order·Payment 서비스로 이어지는 요청 흐름과 각 서비스가 PostgreSQL·Redis·Kafka에 접근하는 의존 관계를 RPS·P99 지연 시간과 함께 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-04-observability-2.png)
 
 ## Golden Signals 모니터링
 
 ### 4가지 골든 시그널
 
-```mermaid
-graph LR
-    subgraph "Golden Signals"
-        Latency[Latency<br/>응답 시간]
-        Traffic[Traffic<br/>처리량]
-        Errors[Errors<br/>오류율]
-        Saturation[Saturation<br/>포화도]
-    end
-```
+![Cilium Service Mesh 관찰성이 추적하는 4가지 골든 시그널인 지연 시간, 처리량, 오류율, 포화도를 동등한 4개의 지표 카드로 나란히 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-04-observability-3.png)
 
 ### PromQL 쿼리
 

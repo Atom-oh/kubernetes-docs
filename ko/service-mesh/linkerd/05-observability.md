@@ -9,41 +9,7 @@ Linkerd는 강력한 관찰성 기능을 기본으로 제공합니다. 별도의
 
 ## 관찰성 아키텍처
 
-```mermaid
-graph TB
-    subgraph "Data Plane"
-        P1[Proxy 1<br/>메트릭 수집]
-        P2[Proxy 2<br/>메트릭 수집]
-        P3[Proxy 3<br/>메트릭 수집]
-    end
-
-    subgraph "Viz Extension"
-        PROM[Prometheus<br/>메트릭 저장]
-        GRAF[Grafana<br/>시각화]
-        WEB[Web Dashboard<br/>UI]
-        TAP[Tap API<br/>실시간 스트림]
-        METRICS[Metrics API<br/>집계]
-    end
-
-    subgraph "External (선택)"
-        EXT_PROM[External Prometheus]
-        EXT_GRAF[External Grafana]
-        JAEGER[Jaeger<br/>분산 추적]
-    end
-
-    P1 -->|:4191| PROM
-    P2 -->|:4191| PROM
-    P3 -->|:4191| PROM
-
-    PROM --> GRAF
-    PROM --> METRICS
-    METRICS --> WEB
-    TAP --> WEB
-
-    PROM --> EXT_PROM
-    EXT_PROM --> EXT_GRAF
-    P1 --> JAEGER
-```
+![데이터 플레인 프록시가 수집한 메트릭이 Viz 확장의 Prometheus에 모이고, 이를 통해 Grafana와 Web Dashboard가 시각화되며, 선택적으로 외부 Prometheus/Grafana 및 Jaeger 분산 추적으로 확장되는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-05-observability-0.png)
 
 ## 골든 메트릭
 
@@ -101,23 +67,7 @@ linkerd viz dashboard --address 0.0.0.0
 
 ### 대시보드 기능
 
-```mermaid
-graph TB
-    subgraph "Dashboard Views"
-        NS[Namespace Overview<br/>네임스페이스별 상태]
-        DEPLOY[Deployments<br/>배포 상태]
-        PODS[Pods<br/>Pod 상태]
-        TOPO[Topology<br/>서비스 토폴로지]
-        ROUTES[Routes<br/>라우트별 메트릭]
-        TAP[Tap<br/>실시간 요청]
-    end
-
-    NS --> DEPLOY
-    DEPLOY --> PODS
-    DEPLOY --> ROUTES
-    NS --> TOPO
-    DEPLOY --> TAP
-```
+![Namespace Overview에서 시작해 Deployments 뷰로 좁혀지고, 다시 Pods·Routes·Tap 세부 뷰와 Topology 뷰로 갈라지는 Viz 대시보드의 탐색 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-05-observability-1.png)
 
 **대시보드 뷰:**
 
@@ -789,29 +739,7 @@ spec:
 
 ### 문제 해결 워크플로우
 
-```mermaid
-graph TB
-    START[문제 감지] --> STAT[linkerd viz stat]
-    STAT --> CHECK{성공률<br/>낮음?}
-
-    CHECK -->|예| TOP[linkerd viz top]
-    CHECK -->|아니오| LATENCY{지연 시간<br/>높음?}
-
-    TOP --> TAP[linkerd viz tap]
-    TAP --> LOGS[프록시 로그 확인]
-
-    LATENCY -->|예| ROUTES[linkerd viz routes]
-    LATENCY -->|아니오| EDGES[linkerd viz edges]
-
-    ROUTES --> TAP
-    EDGES --> CHECK_TLS{mTLS<br/>문제?}
-
-    CHECK_TLS -->|예| CERT[인증서 확인]
-    CHECK_TLS -->|아니오| END[문제 해결]
-
-    LOGS --> END
-    CERT --> END
-```
+![성공률과 지연 시간을 차례로 점검해 top·tap·routes·edges 명령으로 원인을 좁혀가고, mTLS 문제 여부를 확인해 최종적으로 문제를 해결하는 진단 절차를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-05-observability-2.png)
 
 ## 다음 단계
 

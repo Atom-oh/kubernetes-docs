@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="layers-title layers-desc">
+  <title id="layers-title">네트워크 계층과 애플리케이션 계층의 보안 책임 분리</title>
+  <desc id="layers-desc">Linkerd가 담당하는 네트워크 레벨의 mTLS 암호화·서비스 인가·워크로드 ID가 애플리케이션 레벨의 JWT/OAuth·RBAC·입력 검증 각각과 짝을 이루며 심층 방어를 구성하는 구조를 보여준다.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Zones -->
+  <rect x="40" y="80" width="880" height="160" rx="8" fill="rgba(255,153,0,0.05)" stroke="rgba(236,114,17,0.35)" stroke-width="0.8" stroke-dasharray="4,4"/>
+  <rect x="380" y="84" width="200" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="93" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NETWORK LEVEL · LINKERD</text>
+
+  <rect x="40" y="360" width="880" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="404" y="364" width="152" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="373" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">APPLICATION LEVEL</text>
+
+  <!-- Arrows: 3 parallel vertical, offset x so none overlap -->
+  <line x1="140" y1="240" x2="140" y2="360" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="480" y1="240" x2="480" y2="360" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="820" y1="240" x2="820" y2="360" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Network level nodes (focal treatment: this tier is automatic / zero-config) -->
+  <g>
+    <rect x="60" y="152" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="60" y="152" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="140" y="176" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">mTLS 암호화</text>
+    <text x="140" y="192" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">전송 구간 자동 암호화</text>
+  </g>
+  <g>
+    <rect x="400" y="152" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="176" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">서비스 인가</text>
+    <text x="480" y="192" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">ServerAuthorization</text>
+  </g>
+  <g>
+    <rect x="740" y="152" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="820" y="176" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">워크로드 ID</text>
+    <text x="820" y="192" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">SPIFFE ID</text>
+  </g>
+
+  <!-- Application level nodes -->
+  <g>
+    <rect x="60" y="432" width="160" height="56" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="140" y="456" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">JWT / OAuth</text>
+    <text x="140" y="472" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">사용자 인증</text>
+  </g>
+  <g>
+    <rect x="400" y="432" width="160" height="56" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="480" y="456" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">애플리케이션 RBAC</text>
+    <text x="480" y="472" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">역할 기반 권한 확인</text>
+  </g>
+  <g>
+    <rect x="740" y="432" width="160" height="56" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="820" y="456" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">입력 검증</text>
+    <text x="820" y="472" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">살균 · 유효성 검사</text>
+  </g>
+
+  <!-- Legend -->
+  <line x1="40" y1="532" x2="920" y2="532" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="220" cy="548" r="4.5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="232" y="551" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif">설정 없이 자동으로 적용되는 방어선</text>
+  <circle cx="560" cy="548" r="4.5" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="572" y="551" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif">애플리케이션이 직접 구현해야 하는 방어선</text>
+</svg>

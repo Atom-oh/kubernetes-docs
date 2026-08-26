@@ -9,35 +9,7 @@ Traffic management in Cilium Service Mesh combines eBPF-based L4 load balancing 
 
 ## Traffic Management Architecture
 
-```mermaid
-graph TB
-    subgraph "Traffic Management Layers"
-        subgraph "L7 - Envoy"
-            HTTP[HTTP Routing]
-            gRPC[gRPC Routing]
-            TLS[TLS Termination]
-            Headers[Header Manipulation]
-        end
-
-        subgraph "L4 - eBPF"
-            LB[Load Balancing]
-            CT[Connection Tracking]
-            NAT[NAT/SNAT]
-            DSR[Direct Server Return]
-        end
-
-        subgraph "L3 - eBPF"
-            Routing[IP Routing]
-            Tunnel[Tunnel/Overlay]
-            Policy[Network Policy]
-        end
-    end
-
-    Client[Client] --> HTTP
-    HTTP --> LB
-    LB --> Routing
-    Routing --> Server[Server]
-```
+![A request from a client passes down through three Cilium traffic-management layers — L7 Envoy HTTP routing, L4 eBPF load balancing, and L3 eBPF IP routing — before reaching the server, with each layer's additional capabilities shown as supporting tags.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-02-traffic-management-0.png)
 
 ## CiliumEnvoyConfig
 
@@ -457,29 +429,7 @@ loadBalancer:
 
 #### Maglev Hashing
 
-```mermaid
-graph TB
-    subgraph "Maglev Consistent Hashing"
-        Client[Client Request]
-        Hash[Hash Function<br/>src_ip + dst_ip + src_port + dst_port + protocol]
-        Table[Lookup Table<br/>65537 entries]
-        Backend[Backend Selection]
-    end
-
-    Client --> Hash
-    Hash --> Table
-    Table --> Backend
-
-    subgraph "Backends"
-        B1[Backend 1]
-        B2[Backend 2]
-        B3[Backend 3]
-    end
-
-    Backend --> B1
-    Backend --> B2
-    Backend --> B3
-```
+![A client request is hashed on its five-tuple, looked up in a 65,537-entry Maglev table, and the resulting backend selection is fanned out consistently to one of three backend pods.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-02-traffic-management-1.png)
 
 ### L7 Load Balancing (Envoy)
 

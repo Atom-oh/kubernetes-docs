@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ttl1 desc1">
+  <title id="ttl1">Three-phase migration from a sidecar service mesh to Cilium Service Mesh</title>
+  <desc id="desc1">Diagram showing the migration strategy from a sidecar mesh to Cilium Service Mesh across three sequential phases: Phase 1 Preparation (install Cilium CNI, coexist with the existing CNI, validate with test workloads), Phase 2 Gradual Transition (convert per namespace, disable sidecar injection, apply Cilium L7 policies), and Phase 3 Complete Transition (convert all workloads, remove Istio or Linkerd, clean up and optimize), with the removal of the old mesh marked as the pivotal milestone.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="var(--paper)"/>
+
+  <!-- Header -->
+  <text x="40" y="40" fill="var(--soft)" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">MIGRATION STRATEGY</text>
+  <text x="40" y="66" fill="var(--ink)" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">From sidecar mesh to Cilium Service Mesh</text>
+
+  <!-- Zones: 3 stacked, x=40..920 (w=880), each h=140, gap 16 -->
+  <!-- Zone 1: y=92..232 -->
+  <!-- Zone 2: y=248..388 -->
+  <!-- Zone 3: y=404..544 -->
+
+  <!-- Zone rects (bg->zones->arrows->nodes order) -->
+  <rect x="40" y="92" width="880" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="760" y="96" width="148" height="16" fill="var(--paper)"/>
+  <text x="834" y="108" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">PHASE 1 · PREPARATION</text>
+
+  <rect x="40" y="248" width="880" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="724" y="252" width="184" height="16" fill="var(--paper)"/>
+  <text x="816" y="264" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">PHASE 2 · GRADUAL TRANSITION</text>
+
+  <rect x="40" y="404" width="880" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="708" y="408" width="200" height="16" fill="var(--paper)"/>
+  <text x="808" y="420" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">PHASE 3 · COMPLETE TRANSITION</text>
+
+  <!-- Node geometry: 3 nodes per zone, w=240 h=64, gap between nodes = 40 -->
+  <!-- x positions: 76, 356, 636 (76+240+40=356; 356+240+40=636; 636+240=876, within 920 bound with 44 margin) -->
+  <!-- zone1 node y = 92+32=124 (center align: zone_h140, node_h64 -> top margin (140-64)/2=38, but leave header room -> use y=140) -->
+
+  <!-- ===== Arrows (drawn before nodes) ===== -->
+  <!-- Within zone 1: A1->A2->A3, same y, straight lines -->
+  <line x1="316" y1="172" x2="356" y2="172" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="596" y1="172" x2="636" y2="172" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- Within zone 2: B1->B2->B3 -->
+  <line x1="316" y1="328" x2="356" y2="328" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="596" y1="328" x2="636" y2="328" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- Within zone 3: C1->C2->C3 -->
+  <line x1="316" y1="484" x2="356" y2="484" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- C2 (focal) -> C3 : accent -->
+  <line x1="596" y1="484" x2="636" y2="484" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- Cross-zone: A3 (bottom, x=756 cx) -> B1 (top, x=196 cx). Elbow: exit bottom of A3, enter top of B1 -->
+  <path d="M 756,204 V 240 Q 756,248 748,248 H 204 Q 196,248 196,256 V 264"
+        fill="none" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- B3 (bottom, x=756) -> C1 (top, x=196). C1 is start of focal chain leading to focal C2, use muted still (C2 itself is focal, not this arrow) -->
+  <path d="M 756,360 V 396 Q 756,404 748,404 H 204 Q 196,404 196,412 V 420"
+        fill="none" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Arrow labels for cross-zone transitions -->
+  <rect x="452" y="228" width="80" height="12" rx="2" fill="var(--paper)"/>
+  <text x="492" y="237" fill="var(--soft)" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NEXT PHASE</text>
+  <rect x="452" y="384" width="80" height="12" rx="2" fill="var(--paper)"/>
+  <text x="492" y="393" fill="var(--soft)" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NEXT PHASE</text>
+
+  <!-- ===== Nodes ===== -->
+  <!-- Zone 1 nodes: A1, A2, A3 -->
+  <g>
+    <rect x="76" y="140" width="240" height="64" rx="6" fill="#ffffff"/>
+    <rect x="76" y="140" width="240" height="64" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+    <text x="196" y="166" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Install Cilium CNI</text>
+    <text x="196" y="184" fill="var(--soft)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">step A1</text>
+  </g>
+  <g>
+    <rect x="356" y="140" width="240" height="64" rx="6" fill="#ffffff"/>
+    <rect x="356" y="140" width="240" height="64" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+    <text x="476" y="166" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Coexist with existing CNI</text>
+    <text x="476" y="184" fill="var(--soft)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">step A2</text>
+  </g>
+  <g>
+    <rect x="636" y="140" width="240" height="64" rx="6" fill="#ffffff"/>
+    <rect x="636" y="140" width="240" height="64" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+    <text x="756" y="166" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Validate with test</text>
+    <text x="756" y="180" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">workloads</text>
+    <text x="756" y="196" fill="var(--soft)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">step A3</text>
+  </g>
+
+  <!-- Zone 2 nodes: B1, B2, B3 -->
+  <g>
+    <rect x="76" y="296" width="240" height="64" rx="6" fill="#ffffff"/>
+    <rect x="76" y="296" width="240" height="64" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+    <text x="196" y="322" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Convert per namespace</text>
+    <text x="196" y="340" fill="var(--soft)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">step B1</text>
+  </g>
+  <g>
+    <rect x="356" y="296" width="240" height="64" rx="6" fill="#ffffff"/>
+    <rect x="356" y="296" width="240" height="64" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+    <text x="476" y="322" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Disable sidecar</text>
+    <text x="476" y="336" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">injection</text>
+    <text x="476" y="352" fill="var(--soft)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">step B2</text>
+  </g>
+  <g>
+    <rect x="636" y="296" width="240" height="64" rx="6" fill="#ffffff"/>
+    <rect x="636" y="296" width="240" height="64" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+    <text x="756" y="322" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Apply Cilium L7</text>
+    <text x="756" y="336" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">policies</text>
+    <text x="756" y="352" fill="var(--soft)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">step B3</text>
+  </g>
+
+  <!-- Zone 3 nodes: C1, C2 (focal), C3 -->
+  <g>
+    <rect x="76" y="452" width="240" height="64" rx="6" fill="#ffffff"/>
+    <rect x="76" y="452" width="240" height="64" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+    <text x="196" y="478" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Convert all workloads</text>
+    <text x="196" y="496" fill="var(--soft)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">step C1</text>
+  </g>
+  <g>
+    <rect x="356" y="452" width="240" height="64" rx="6" fill="#ffffff"/>
+    <rect x="356" y="452" width="240" height="64" rx="6" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="476" y="478" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Remove Istio /</text>
+    <text x="476" y="494" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Linkerd</text>
+    <text x="476" y="510" fill="var(--accent)" font-size="9" font-weight="600" font-family="'Geist Mono',monospace" text-anchor="middle">step C2 · milestone</text>
+  </g>
+  <g>
+    <rect x="636" y="452" width="240" height="64" rx="6" fill="#ffffff"/>
+    <rect x="636" y="452" width="240" height="64" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+    <text x="756" y="478" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cleanup and</text>
+    <text x="756" y="494" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">optimize</text>
+    <text x="756" y="510" fill="var(--soft)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">step C3</text>
+  </g>
+
+  <!-- Footer -->
+  <line x1="40" y1="562" x2="920" y2="562" stroke="var(--rule)" stroke-width="0.8"/>
+  <text x="40" y="580" fill="var(--soft)" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.1em">MILESTONE</text>
+  <text x="40" y="596" fill="var(--muted)" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Removing the sidecar mesh (C2) is the point of no return — validate every namespace before this step.</text>
+</svg>

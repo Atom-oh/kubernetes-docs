@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="960" height="600" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-labelledby="tm0-title tm0-desc">
+  <title id="tm0-title">Cilium Service Mesh 트래픽 관리 계층 구조</title>
+  <desc id="tm0-desc">클라이언트 요청이 L7 Envoy 계층의 HTTP 라우팅, L4 eBPF 계층의 로드 밸런싱, L3 eBPF 계층의 IP 라우팅을 차례로 거쳐 서버에 도달하며, 각 계층에는 함께 제공되는 다른 트래픽 관리 기능들이 있음을 보여준다.</desc>
+
+  <defs>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");
+      .name{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;}
+      .title{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:700;}
+      .mono{font-family:'Geist Mono','Amazon Ember Mono',ui-monospace,monospace;}
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- header -->
+  <text x="24" y="20" class="mono" font-size="8" letter-spacing="0.18em" fill="#7D8998">ARCHITECTURE · CILIUM SERVICE MESH</text>
+  <text x="24" y="42" class="title" font-size="20" fill="#232F3E">트래픽 관리 계층 구조</text>
+  <line x1="24" y1="56" x2="936" y2="56" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+
+  <!-- ============ ZONES (bg, painted first) ============ -->
+  <!-- Zone L7 -->
+  <rect x="140" y="120" width="680" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="228" y="124" width="120" height="12" rx="2" fill="#ffffff"/>
+  <text x="288" y="133" class="mono" font-size="7" letter-spacing="0.14em" text-anchor="middle" fill="rgba(35,47,62,0.40)">L7 · ENVOY</text>
+
+  <!-- Zone L4 -->
+  <rect x="140" y="260" width="680" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="228" y="264" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="284" y="273" class="mono" font-size="7" letter-spacing="0.14em" text-anchor="middle" fill="rgba(35,47,62,0.40)">L4 · eBPF</text>
+
+  <!-- Zone L3 -->
+  <rect x="140" y="400" width="680" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="228" y="404" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="284" y="413" class="mono" font-size="7" letter-spacing="0.14em" text-anchor="middle" fill="rgba(35,47,62,0.40)">L3 · eBPF</text>
+
+  <!-- ============ ARROWS (before nodes) — main request flow, all vertical, straight ============ -->
+  <path d="M 480,96 V 152" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 480,184 V 292" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 480,324 V 432" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 480,464 V 540" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- Client (input treatment) -->
+  <rect x="360" y="64" width="240" height="32" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="480" y="84" class="name" font-size="12" text-anchor="middle" fill="#232F3E">클라이언트</text>
+
+  <!-- Focal 1: HTTP Routing -->
+  <rect x="360" y="152" width="240" height="32" rx="6" fill="#ffffff"/>
+  <rect x="360" y="152" width="240" height="32" rx="6" fill="none" stroke="#232F3E" stroke-width="1.2"/>
+  <text x="480" y="172" class="name" font-size="12" text-anchor="middle" fill="#232F3E">HTTP 라우팅</text>
+
+  <!-- Zone1 sibling chips (optional / not on flow path) -->
+  <g>
+    <rect x="236" y="200" width="152" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="312" y="213" class="mono" font-size="8" text-anchor="middle" fill="#545B64">gRPC 라우팅</text>
+    <rect x="404" y="200" width="152" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="480" y="213" class="mono" font-size="8" text-anchor="middle" fill="#545B64">TLS 종료</text>
+    <rect x="572" y="200" width="152" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="648" y="213" class="mono" font-size="8" text-anchor="middle" fill="#545B64">헤더 조작</text>
+  </g>
+
+  <!-- Focal 2: Load Balancing -->
+  <rect x="360" y="292" width="240" height="32" rx="6" fill="#ffffff"/>
+  <rect x="360" y="292" width="240" height="32" rx="6" fill="none" stroke="#232F3E" stroke-width="1.2"/>
+  <text x="480" y="312" class="name" font-size="12" text-anchor="middle" fill="#232F3E">로드 밸런싱</text>
+
+  <!-- Zone2 sibling chips -->
+  <g>
+    <rect x="236" y="340" width="152" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="312" y="353" class="mono" font-size="8" text-anchor="middle" fill="#545B64">커넥션 트래킹</text>
+    <rect x="404" y="340" width="152" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="480" y="353" class="mono" font-size="8" text-anchor="middle" fill="#545B64">NAT / SNAT</text>
+    <rect x="572" y="340" width="152" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="648" y="353" class="mono" font-size="8" text-anchor="middle" fill="#545B64">DSR</text>
+  </g>
+
+  <!-- Focal 3: IP Routing -->
+  <rect x="360" y="432" width="240" height="32" rx="6" fill="#ffffff"/>
+  <rect x="360" y="432" width="240" height="32" rx="6" fill="none" stroke="#232F3E" stroke-width="1.2"/>
+  <text x="480" y="452" class="name" font-size="12" text-anchor="middle" fill="#232F3E">IP 라우팅</text>
+
+  <!-- Zone3 sibling chips (only 2) -->
+  <g>
+    <rect x="320" y="480" width="152" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="396" y="493" class="mono" font-size="8" text-anchor="middle" fill="#545B64">터널 / 오버레이</text>
+    <rect x="488" y="480" width="152" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="564" y="493" class="mono" font-size="8" text-anchor="middle" fill="#545B64">네트워크 정책</text>
+  </g>
+
+  <!-- Server (input/terminal treatment) -->
+  <rect x="360" y="540" width="240" height="32" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="480" y="560" class="name" font-size="12" text-anchor="middle" fill="#232F3E">서버</text>
+
+  <!-- ============ LEGEND ============ -->
+  <line x1="24" y1="582" x2="936" y2="582" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <line x1="24" y1="594" x2="52" y2="594" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="60" y="597" class="mono" font-size="8" letter-spacing="0.06em" fill="#545B64">요청 흐름 (Client → Server)</text>
+  <rect x="300" y="588" width="24" height="12" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+  <text x="332" y="597" class="mono" font-size="8" letter-spacing="0.06em" fill="#545B64">계층에서 함께 제공되는 기능</text>
+</svg>

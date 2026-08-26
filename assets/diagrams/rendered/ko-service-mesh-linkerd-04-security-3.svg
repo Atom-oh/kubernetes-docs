@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="idissue-title idissue-desc">
+  <title id="idissue-title">워크로드 ID 발급 시퀀스</title>
+  <desc id="idissue-desc">Pod가 ServiceAccount 토큰으로 CSR을 만들어 Identity Controller에 보내면, Controller가 요청을 검증하고 Trust Anchor에 서명을 요청해 24시간짜리 워크로드 인증서를 Pod에 발급하는 흐름을 보여준다.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Lifelines -->
+  <line x1="100" y1="96" x2="100" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="360" y1="96" x2="360" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="620" y1="96" x2="620" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="880" y1="96" x2="880" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- Actor boxes -->
+  <rect x="24" y="48" width="152" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="100" y="72" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">Pod / Proxy</text>
+
+  <rect x="284" y="48" width="152" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="360" y="72" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">ServiceAccount</text>
+
+  <rect x="544" y="48" width="152" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="620" y="72" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">Identity Controller</text>
+
+  <rect x="804" y="48" width="152" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="880" y="72" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">Trust Anchor</text>
+
+  <!-- 1. Pod -> SA -->
+  <line x1="100" y1="120" x2="360" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="150" y="100" width="160" height="12" rx="2" fill="#ffffff"/>
+  <text x="230" y="110" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.01em">SA 토큰 획득</text>
+
+  <!-- 2. Pod self: CSR 생성 -->
+  <path d="M 100,148 H 152 V 168 H 100" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="156" y="150" width="152" height="12" rx="2" fill="#ffffff"/>
+  <text x="232" y="160" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.01em">CSR 생성 (SPIFFE ID)</text>
+
+  <!-- 3. Pod -> ID -->
+  <line x1="100" y1="196" x2="620" y2="196" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="300" y="176" width="180" height="12" rx="2" fill="#ffffff"/>
+  <text x="390" y="186" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.01em">CSR + SA 토큰 전송</text>
+
+  <!-- 4. ID self: 요청 검증 (merged 3 checks) -->
+  <path d="M 620,224 H 672 V 248 H 620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="676" y="228" width="180" height="12" rx="2" fill="#ffffff"/>
+  <text x="766" y="238" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.01em">SA 토큰·Pod·SPIFFE 검증</text>
+
+  <!-- 5. ID -> CA -->
+  <line x1="620" y1="276" x2="880" y2="276" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="680" y="256" width="140" height="12" rx="2" fill="#ffffff"/>
+  <text x="750" y="266" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.01em">인증서 서명 요청</text>
+
+  <!-- 6. CA --> ID : 서명된 인증서 (dashed return) -->
+  <line x1="880" y1="324" x2="620" y2="324" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="680" y="304" width="140" height="12" rx="2" fill="#ffffff"/>
+  <text x="750" y="314" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.01em">서명된 인증서</text>
+
+  <!-- 7. ID --> Pod : 워크로드 인증서 (headline success, accent) -->
+  <line x1="620" y1="372" x2="100" y2="372" stroke="#EC7211" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+  <rect x="300" y="352" width="140" height="12" rx="2" fill="#ffffff"/>
+  <text x="370" y="362" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.01em">워크로드 인증서</text>
+
+  <!-- Note: 24-hour validity -->
+  <rect x="40" y="404" width="200" height="28" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+  <text x="140" y="422" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle" font-style="italic">24시간 동안 유효</text>
+
+  <!-- Legend -->
+  <line x1="24" y1="532" x2="936" y2="532" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="24" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <line x1="220" y1="549" x2="252" y2="549" stroke="#EC7211" stroke-width="1.4" stroke-dasharray="5,4"/>
+  <text x="260" y="552" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif">인증서 발급 완료 (헤드라인)</text>
+  <line x1="500" y1="549" x2="532" y2="549" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4"/>
+  <text x="540" y="552" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif">응답 (return)</text>
+</svg>

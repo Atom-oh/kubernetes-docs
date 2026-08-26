@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ig2-title ig2-desc">
+  <title id="ig2-title">Cilium Gateway vs. AWS load balancer selection guide</title>
+  <desc id="ig2-desc">A decision tree for choosing an ingress path on EKS: it asks whether AWS-native integration and WAF/Shield are needed, and whether high-performance L4 load balancing is required, routing to AWS ALB, NLB plus Cilium, or Cilium Gateway alone.</desc>
+
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <text x="32" y="36" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">FLOWCHART</text>
+  <text x="32" y="60" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Ingress path selection guide</text>
+
+  <!-- ===== Arrows (drawn before nodes) ===== -->
+  <!-- Start -> Q1 : straight vertical -->
+  <line x1="140" y1="132" x2="140" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Q1 -yes-> Q2 : straight horizontal -->
+  <line x1="216" y1="208" x2="344" y2="208" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="264" y="188" width="32" height="12" rx="2" fill="#ffffff"/>
+  <text x="280" y="197" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+  <!-- Q1 -no-> Cilium : straight vertical, both centered at x=140 -->
+  <line x1="140" y1="248" x2="140" y2="368" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="124" y="300" width="32" height="12" rx="2" fill="#ffffff"/>
+  <text x="140" y="309" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+  <!-- Q2 -yes-> ALB : straight horizontal -->
+  <line x1="496" y1="208" x2="620" y2="208" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="542" y="188" width="32" height="12" rx="2" fill="#ffffff"/>
+  <text x="558" y="197" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+  <!-- Q2 -no-> Q3 : straight vertical -->
+  <line x1="420" y1="248" x2="420" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="406" y="264" width="28" height="12" rx="2" fill="#ffffff"/>
+  <text x="420" y="273" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+  <!-- Q3 -yes-> NLBCilium : horizontal, with a hop bridging the ALB->Done column crossing at x=600 -->
+  <path d="M 496,340 H 592 a 8,8 0 0,1 16,0 H 620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="542" y="320" width="32" height="12" rx="2" fill="#ffffff"/>
+  <text x="558" y="329" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+  <!-- Q3 -no-> Cilium : down then left, entering the box's right edge at its vertical center -->
+  <path d="M 420,380 Q 420,388 412,388 H 216" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="300" y="378" width="28" height="12" rx="2" fill="#ffffff"/>
+  <text x="314" y="387" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+  <!-- ALB -> Done : exit left edge, drop down a clear column at x=600, enter Done's top port -->
+  <path d="M 620,208 H 608 Q 600,208 600,216 V 448 Q 600,456 592,456 H 536"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- NLBCilium -> Done : exit right edge, drop down a clear column at x=764, enter Done's right port -->
+  <path d="M 732,340 H 756 Q 764,340 764,348 V 468 Q 764,476 756,476 H 592"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Cilium -> Done : exit bottom edge, enter Done's left port -->
+  <path d="M 140,408 V 468 Q 140,476 148,476 H 480" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- ===== Nodes ===== -->
+  <!-- Start (oval) -->
+  <ellipse cx="140" cy="112" rx="64" ry="20" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="140" y="116" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Start</text>
+
+  <!-- Q1 diamond -->
+  <polygon points="140,168 216,208 140,248 64,208" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="140" y="203" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Need AWS-native</text>
+  <text x="140" y="217" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">integration?</text>
+
+  <!-- Q2 diamond -->
+  <polygon points="420,168 496,208 420,248 344,208" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="420" y="203" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Need WAF/</text>
+  <text x="420" y="217" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Shield?</text>
+
+  <!-- Q3 diamond -->
+  <polygon points="420,300 496,340 420,380 344,340" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="420" y="335" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Need high-perf</text>
+  <text x="420" y="349" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">L4?</text>
+
+  <!-- ALB rect -->
+  <rect x="620" y="188" width="112" height="40" rx="6" fill="#ffffff"/>
+  <rect x="620" y="188" width="112" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="676" y="212" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS ALB</text>
+
+  <!-- NLBCilium rect -->
+  <rect x="620" y="320" width="112" height="40" rx="6" fill="#ffffff"/>
+  <rect x="620" y="320" width="112" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="676" y="344" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">NLB + Cilium</text>
+
+  <!-- Cilium rect (focal — happy path terminus reached from 2 branches) -->
+  <rect x="64" y="368" width="152" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="140" y="392" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cilium Gateway</text>
+
+  <!-- Done (oval) -->
+  <ellipse cx="536" cy="476" rx="56" ry="20" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="536" y="480" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Done</text>
+
+  <!-- Legend -->
+  <line x1="32" y1="524" x2="928" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="32" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <polygon points="180,531 190,537 180,543 170,537" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="198" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">DECISION</text>
+  <rect x="330" y="531" width="16" height="12" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="356" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CILIUM-NATIVE PATH (FOCAL)</text>
+</svg>

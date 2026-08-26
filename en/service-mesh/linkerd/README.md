@@ -26,39 +26,7 @@ Linkerd is a CNCF (Cloud Native Computing Foundation) graduated project and a li
 
 ## Linkerd Architecture Overview
 
-```mermaid
-graph TB
-    subgraph "Control Plane"
-        D[Destination<br/>Service Discovery]
-        I[Identity<br/>Certificate Issuance]
-        P[Proxy Injector<br/>Sidecar Injection]
-    end
-
-    subgraph "Data Plane"
-        subgraph "Pod A"
-            A1[Application]
-            AP[linkerd-proxy]
-        end
-        subgraph "Pod B"
-            B1[Application]
-            BP[linkerd-proxy]
-        end
-    end
-
-    subgraph "Extensions"
-        V[Viz<br/>Dashboard/Metrics]
-        J[Jaeger<br/>Distributed Tracing]
-        M[Multicluster<br/>Multi-cluster]
-    end
-
-    AP -->|mTLS| BP
-    AP --> D
-    AP --> I
-    P -->|Inject| AP
-    P -->|Inject| BP
-    V --> AP
-    V --> BP
-```
+![Diagram showing how Linkerd's control plane components (Destination, Identity, Proxy Injector) configure and secure the linkerd-proxy sidecars injected into application pods, which exchange traffic over mutual TLS, while the Viz extension observes both proxies.](../../.gitbook/assets/en-service-mesh-linkerd-README-0.png)
 
 ## Service Mesh Comparison
 

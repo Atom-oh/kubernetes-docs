@@ -78,47 +78,7 @@ Service resilience patterns:
 
 Istio consists of a **Control Plane** and a **Data Plane**.
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane[Control Plane]
-        Istiod[istiod<br/>Service Discovery, Configuration Management, Certificate Management]
-    end
-
-    subgraph DataPlane[Data Plane]
-        subgraph Pod1[Pod A]
-            App1[App Container]
-            Proxy1[Envoy Proxy]
-        end
-
-        subgraph Pod2[Pod B]
-            App2[App Container]
-            Proxy2[Envoy Proxy]
-        end
-
-        subgraph Pod3[Pod C]
-            App3[App Container]
-            Proxy3[Envoy Proxy]
-        end
-    end
-
-    Istiod -->|Configuration Distribution| Proxy1
-    Istiod -->|Configuration Distribution| Proxy2
-    Istiod -->|Configuration Distribution| Proxy3
-
-    Proxy1 <-->|mTLS| Proxy2
-    Proxy2 <-->|mTLS| Proxy3
-    Proxy1 <-->|mTLS| Proxy3
-
-    %% Style definitions
-    classDef controlPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataPlane fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class Istiod controlPlane;
-    class Proxy1,Proxy2,Proxy3 dataPlane;
-    class App1,App2,App3 app;
-```
+![Istiod in the control plane pushes configuration down to the Envoy sidecar proxies running alongside application containers in three data-plane pods, and those proxies establish mutual TLS connections directly with one another.](../.gitbook/assets/en-service-mesh-02-istio-0.png)
 
 ### Control Plane (istiod)
 

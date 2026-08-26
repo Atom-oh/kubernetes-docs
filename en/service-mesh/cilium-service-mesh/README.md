@@ -19,54 +19,11 @@ The core value of Cilium Service Mesh is a **unified networking and service mesh
 
 ## Sidecar vs Sidecarless Architecture
 
-```mermaid
-graph TB
-    subgraph "Traditional Sidecar Approach (Istio)"
-        direction TB
-        P1A[Pod A]
-        S1A[Sidecar Proxy A]
-        P1B[Pod B]
-        S1B[Sidecar Proxy B]
-
-        P1A --> S1A
-        S1A --> S1B
-        S1B --> P1B
-    end
-
-    subgraph "Cilium Service Mesh Approach"
-        direction TB
-        P2A[Pod A]
-        P2B[Pod B]
-        eBPF1[eBPF Datapath]
-        NodeEnvoy[Node Envoy<br/>L7 Processing]
-
-        P2A --> eBPF1
-        eBPF1 --> NodeEnvoy
-        NodeEnvoy --> eBPF1
-        eBPF1 --> P2B
-    end
-```
+![Comparison showing traditional sidecar proxies handling every pod-to-pod hop versus Cilium routing pod traffic through the kernel eBPF datapath, which calls out to a single shared node-level Envoy only for L7 processing.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-README-0.png)
 
 ### Architecture Comparison Diagram
 
-```mermaid
-flowchart LR
-    subgraph "Sidecar-based (Istio)"
-        direction TB
-        AppA1[App Container] --> ProxyA1[Envoy Sidecar]
-        ProxyA1 --> Network1[Network]
-        Network1 --> ProxyB1[Envoy Sidecar]
-        ProxyB1 --> AppB1[App Container]
-    end
-
-    subgraph "eBPF-based (Cilium)"
-        direction TB
-        AppA2[App Container] --> eBPF2[eBPF<br/>L3/L4]
-        eBPF2 --> SharedProxy[Shared Envoy<br/>L7 Only]
-        SharedProxy --> eBPF3[eBPF<br/>L3/L4]
-        eBPF3 --> AppB2[App Container]
-    end
-```
+![Comparison showing a request crossing the network between two per-pod Envoy sidecars in Istio, versus the same request passing through two lightweight eBPF hops into one shared, node-level Envoy proxy that performs L7 processing only in Cilium.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-README-1.png)
 
 ## Service Mesh Comparison
 
@@ -88,15 +45,7 @@ flowchart LR
 
 ### Resource Usage Comparison
 
-```mermaid
-graph LR
-    subgraph "Memory Usage for 100 Pod Cluster"
-        direction TB
-        Cilium["Cilium SM<br/>~500MB total<br/>(~100MB per node)"]
-        Istio["Istio<br/>~5GB total<br/>(~50MB per Pod)"]
-        Linkerd["Linkerd<br/>~2GB total<br/>(~20MB per Pod)"]
-    end
-```
+![Bar chart comparing total mesh memory overhead across a 100-pod cluster: Cilium Service Mesh at roughly 500MB total using one shared proxy per node, versus Istio at roughly 5GB and Linkerd at roughly 2GB, both driven by a proxy running in every pod.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-README-2.png)
 
 ## When to Choose Cilium Service Mesh
 

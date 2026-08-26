@@ -9,33 +9,7 @@ Cilium Service Mesh는 Kubernetes Ingress Controller와 Gateway API를 네이티
 
 ## 아키텍처
 
-```mermaid
-graph TB
-    subgraph "External"
-        Client[External Client]
-        LB[Cloud Load Balancer<br/>NLB/ALB]
-    end
-
-    subgraph "Kubernetes Cluster"
-        subgraph "Cilium Ingress/Gateway"
-            GW[Gateway<br/>or Ingress]
-            Envoy[Cilium Envoy<br/>L7 Proxy]
-        end
-
-        subgraph "Backend Services"
-            SvcA[Service A]
-            SvcB[Service B]
-            SvcC[Service C]
-        end
-    end
-
-    Client --> LB
-    LB --> GW
-    GW --> Envoy
-    Envoy --> SvcA
-    Envoy --> SvcB
-    Envoy --> SvcC
-```
+![외부 클라이언트가 클라우드 로드밸런서와 Gateway/Ingress를 거쳐 Cilium Envoy L7 프록시에서 세 개의 백엔드 서비스로 라우팅되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-0.png)
 
 ## Cilium Ingress Controller
 
@@ -586,40 +560,7 @@ spec:
 
 ### 하이브리드 아키텍처
 
-```mermaid
-graph TB
-    subgraph "Internet"
-        Client[External Client]
-    end
-
-    subgraph "AWS"
-        ALB[Application<br/>Load Balancer]
-        NLB[Network<br/>Load Balancer]
-    end
-
-    subgraph "EKS Cluster"
-        subgraph "Cilium Layer"
-            CiliumGW[Cilium Gateway<br/>L7 Routing]
-            CiliumLB[Cilium LB<br/>L4 Load Balancing]
-        end
-
-        subgraph "Applications"
-            WebApp[Web App]
-            API[API Server]
-            gRPC[gRPC Service]
-        end
-    end
-
-    Client --> ALB
-    Client --> NLB
-
-    ALB --> CiliumGW
-    NLB --> CiliumLB
-
-    CiliumGW --> WebApp
-    CiliumGW --> API
-    CiliumLB --> gRPC
-```
+![외부 클라이언트의 트래픽이 AWS ALB와 NLB 두 경로로 나뉘어 각각 Cilium Gateway의 L7 라우팅과 Cilium LB의 L4 로드밸런싱을 거쳐 애플리케이션에 도달하는 하이브리드 구성을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-1.png)
 
 ## 멀티테넌트 게이트웨이
 
@@ -832,22 +773,7 @@ spec:
 
 ### 선택 가이드
 
-```mermaid
-graph TB
-    Start[시작] --> Q1{AWS 네이티브<br/>통합 필요?}
-    Q1 -->|Yes| Q2{WAF/Shield<br/>필요?}
-    Q1 -->|No| Cilium[Cilium Gateway]
-
-    Q2 -->|Yes| ALB[AWS ALB]
-    Q2 -->|No| Q3{고성능<br/>L4 필요?}
-
-    Q3 -->|Yes| NLBCilium[NLB + Cilium]
-    Q3 -->|No| Cilium
-
-    ALB --> Done[완료]
-    NLBCilium --> Done
-    Cilium --> Done
-```
+![AWS 네이티브 통합, WAF/Shield, L4 고성능 필요 여부를 순서대로 물어 AWS ALB, NLB+Cilium, Cilium Gateway 중 하나로 귀결되는 인그레스 선택 의사결정 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-2.png)
 
 ## 모니터링
 

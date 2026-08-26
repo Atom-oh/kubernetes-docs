@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="tma-title tma-desc">
+    <title id="tma-title">Linkerd Traffic Management Architecture</title>
+    <desc id="tma-desc">Architecture diagram showing ServiceProfile, TrafficSplit, and HTTPRoute configuration feeding a destination controller that discovers endpoints and distributes policy to proxy features for load balancing, retries, timeouts, and circuit breaking.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones (bg -> zones -> arrows -> nodes) -->
+    <rect x="200" y="40" width="560" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="376" y="44" width="208" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">TRAFFIC MANAGEMENT COMPONENTS</text>
+
+    <rect x="280" y="220" width="400" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="508" y="224" width="144" height="12" rx="2" fill="#ffffff"/>
+    <text x="580" y="233" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">DESTINATION CTRL</text>
+
+    <rect x="144" y="420" width="672" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="412" y="424" width="136" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="433" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PROXY FEATURES</text>
+
+    <!-- Arrows: SP/TS/HR -> DEST (staggered fan-in) -->
+    <path d="M 300,136 V 160 Q 300,168 308,168 H 332 Q 340,168 340,176 V 252" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 480,136 V 176 Q 480,184 472,184 H 388 Q 380,184 380,192 V 252" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 660,136 V 192 Q 660,200 652,200 H 428 Q 420,200 420,208 V 252" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- DEST -> POLICY (same axis, straight, accent) -->
+    <line x1="460" y1="284" x2="500" y2="284" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="462" y="266" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="275" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POLICY</text>
+
+    <!-- POLICY -> LB/RT/TO/CB (staggered fan-out) -->
+    <path d="M 532,316 V 332 Q 532,340 524,340 H 246 Q 238,340 238,348 V 452" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <path d="M 564,316 V 356 Q 564,364 556,364 H 406 Q 398,364 398,372 V 452" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <path d="M 596,316 V 380 Q 596,388 588,388 H 570 Q 562,388 562,396 V 452" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <path d="M 628,316 V 404 Q 628,412 636,412 H 718 Q 726,412 726,420 V 452" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- Node: SP -->
+    <rect x="230" y="72" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="238" y="80" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="252" y="89" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CFG</text>
+    <text x="300" y="108" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ServiceProfile</text>
+    <text x="300" y="124" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">per-route config</text>
+
+    <!-- Node: TS -->
+    <rect x="410" y="72" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="418" y="80" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="432" y="89" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SMI</text>
+    <text x="480" y="108" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TrafficSplit</text>
+    <text x="480" y="124" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">traffic distribution</text>
+
+    <!-- Node: HR -->
+    <rect x="590" y="72" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="598" y="80" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="614" y="89" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">GWAY</text>
+    <text x="660" y="108" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">HTTPRoute</text>
+    <text x="660" y="124" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Gateway API</text>
+
+    <!-- Node: DEST -->
+    <rect x="300" y="252" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="308" y="260" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="324" y="269" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CTRL</text>
+    <text x="380" y="288" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Endpoint Discovery</text>
+    <text x="380" y="304" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">destination controller</text>
+
+    <!-- Node: POLICY (focal) -->
+    <rect x="500" y="252" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="508" y="260" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="524" y="269" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POL</text>
+    <text x="580" y="288" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Policy Distribution</text>
+    <text x="580" y="304" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">to linkerd-proxy</text>
+
+    <!-- Node: LB -->
+    <rect x="164" y="452" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="172" y="460" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="186" y="469" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">LB</text>
+    <text x="234" y="488" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Load Balancing</text>
+    <text x="234" y="504" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">EWMA</text>
+
+    <!-- Node: RT -->
+    <rect x="328" y="452" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="336" y="460" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="350" y="469" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">RT</text>
+    <text x="398" y="488" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Retries</text>
+    <text x="398" y="504" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">retry budget</text>
+
+    <!-- Node: TO -->
+    <rect x="492" y="452" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="500" y="460" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="514" y="469" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">TO</text>
+    <text x="562" y="488" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Timeouts</text>
+    <text x="562" y="504" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">per-route</text>
+
+    <!-- Node: CB -->
+    <rect x="656" y="452" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="664" y="460" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="678" y="469" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CB</text>
+    <text x="726" y="488" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Circuit Breaking</text>
+    <text x="726" y="504" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">failure isolation</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="552" x2="920" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="580" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="60" y="588" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Configuration resource</text>
+
+    <rect x="264" y="580" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="284" y="588" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Focal / policy path</text>
+
+    <rect x="464" y="580" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="484" y="588" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Proxy behavior</text>
+  </svg>

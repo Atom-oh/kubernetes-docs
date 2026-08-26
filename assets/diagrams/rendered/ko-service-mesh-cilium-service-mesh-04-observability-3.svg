@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">Golden Signals</title>
+<desc id="d">Cilium Service Mesh 관찰성이 추적하는 4가지 골든 시그널인 지연 시간, 처리량, 오류율, 포화도를 동등한 4개의 지표 카드로 나란히 보여준다.</desc><defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+
+<rect width="960" height="600" fill="#FFFFFF"/>
+
+<!-- Zone: Golden Signals -->
+<rect x="80" y="220" width="800" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="416" y="224" width="128" height="12" rx="2" fill="#FFFFFF"/>
+<text x="480" y="233" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">GOLDEN SIGNALS</text>
+
+<!-- Four equal signal cards, no hierarchy among them -->
+<rect x="112" y="256" width="168" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="196" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">Latency</text>
+<text x="196" y="316" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">응답 시간</text>
+
+<rect x="320" y="256" width="168" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="404" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">Traffic</text>
+<text x="404" y="316" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">처리량</text>
+
+<rect x="528" y="256" width="168" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="612" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">Errors</text>
+<text x="612" y="316" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">오류율</text>
+
+<rect x="736" y="256" width="168" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="820" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">Saturation</text>
+<text x="820" y="316" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">포화도</text>
+
+</svg>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="hubble-arch-title hubble-arch-desc">
+    <title id="hubble-arch-title">Hubble Architecture</title>
+    <desc id="hubble-arch-desc">Diagram showing each cluster node's eBPF programs feeding the Cilium Agent and Hubble Observer, which forwards flow data to Hubble Relay for the UI and CLI, and separately to Prometheus and Grafana for metrics dashboards.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones (bg -> zones -> arrows -> nodes) -->
+    <rect x="24" y="108" width="532" height="104" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="196" y="112" width="188" height="12" rx="2" fill="#ffffff"/>
+    <text x="290" y="121" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PER-NODE PIPELINE &#215;2</text>
+
+    <rect x="584" y="248" width="352" height="96" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="700" y="252" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="760" y="261" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">METRICS BACKEND</text>
+
+    <!-- Arrow markers -->
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+
+    <!-- Arrows (before boxes) -->
+    <line x1="180" y1="168" x2="220" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="360" y1="168" x2="400" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="540" y1="168" x2="600" y2="168" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+    <path d="M470,196 V230 Q470,238 478,238 H662 Q670,238 670,246 V280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <path d="M740,156 H762 Q770,156 770,148 V112 Q770,104 778,104 H800" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M740,180 H762 Q770,180 770,188 V206 Q770,214 778,214 H800" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <line x1="740" y1="304" x2="800" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Node: eBPF Programs -->
+    <rect x="40" y="140" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="40" y="140" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="110" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">eBPF Programs</text>
+    <text x="110" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kernel datapath</text>
+
+    <!-- Node: Cilium Agent -->
+    <rect x="220" y="140" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="220" y="140" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="290" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Cilium Agent</text>
+    <text x="290" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">per-node daemon</text>
+
+    <!-- Node: Hubble Observer -->
+    <rect x="400" y="140" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="400" y="140" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="470" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Hubble Observer</text>
+    <text x="470" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">embedded in agent</text>
+
+    <!-- Node: Hubble Relay (focal) -->
+    <rect x="600" y="140" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="600" y="140" width="140" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="670" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Hubble Relay</text>
+    <text x="670" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cluster aggregation</text>
+
+    <!-- Node: Hubble UI -->
+    <rect x="800" y="80" width="120" height="48" rx="6" fill="#ffffff"/>
+    <rect x="800" y="80" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="860" y="108" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Hubble UI</text>
+
+    <!-- Node: Hubble CLI -->
+    <rect x="800" y="190" width="120" height="48" rx="6" fill="#ffffff"/>
+    <rect x="800" y="190" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="860" y="218" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Hubble CLI</text>
+
+    <!-- Node: Prometheus -->
+    <rect x="600" y="280" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="600" y="280" width="140" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="670" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Prometheus</text>
+
+    <!-- Node: Grafana -->
+    <rect x="800" y="280" width="120" height="48" rx="6" fill="#ffffff"/>
+    <rect x="800" y="280" width="120" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="860" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Grafana</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="516" x2="920" y2="516" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="548" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="556" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Focal / aggregation point</text>
+
+    <rect x="240" y="548" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="260" y="556" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Node component</text>
+
+    <rect x="420" y="548" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="440" y="556" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Metrics store</text>
+  </svg>

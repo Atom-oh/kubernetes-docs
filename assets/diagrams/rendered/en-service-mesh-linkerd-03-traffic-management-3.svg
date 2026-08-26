@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="ewma-title ewma-desc">
+    <title id="ewma-title">EWMA Load Balancing</title>
+    <desc id="ewma-desc">Architecture diagram showing a new request routed by the load balancer to the endpoint with the lowest exponentially-weighted moving average latency score, while slower endpoints wait for traffic.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone -->
+    <rect x="40" y="100" width="880" height="420" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="404" y="104" width="152" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">EWMA LOAD BALANCING</text>
+
+    <!-- Arrows (behind nodes) -->
+    <line x1="200" y1="320" x2="280" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- LB -> E1 (selected, solid accent, elbow up) -->
+    <path d="M 420,304 H 482 Q 490,304 490,296 V 188 Q 490,180 498,180 H 560"
+          fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- LB -> E2 (waiting, dashed, straight) -->
+    <line x1="420" y1="320" x2="560" y2="320" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <!-- LB -> E3 (waiting, dashed, elbow down) -->
+    <path d="M 420,336 H 482 Q 490,336 490,344 V 452 Q 490,460 498,460 H 560"
+          fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- Labels -->
+    <rect x="499" y="160" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="529" y="169" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SELECTED</text>
+
+    <rect x="460" y="300" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="490" y="309" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WAITING</text>
+
+    <rect x="499" y="440" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="529" y="449" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WAITING</text>
+
+    <!-- Node: REQ -->
+    <rect x="80" y="288" width="120" height="64" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="88" y="296" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.50)" stroke-width="0.8"/>
+    <text x="102" y="305" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">IN</text>
+    <text x="140" y="324" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">New Request</text>
+
+    <!-- Node: LB -->
+    <rect x="280" y="288" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="288" y="296" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="302" y="305" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">LB</text>
+    <text x="350" y="324" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Load Balancer</text>
+
+    <!-- Node: E1 (focal, selected) -->
+    <rect x="560" y="140" width="200" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="568" y="148" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="582" y="157" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EP1</text>
+    <text x="660" y="180" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Endpoint 1</text>
+    <text x="660" y="196" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">latency: 10ms</text>
+    <text x="660" y="210" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">score: 0.1</text>
+
+    <!-- Node: E2 (waiting) -->
+    <rect x="560" y="280" width="200" height="80" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <rect x="568" y="288" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+    <text x="584" y="297" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EP2</text>
+    <text x="660" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Endpoint 2</text>
+    <text x="660" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">latency: 50ms</text>
+    <text x="660" y="350" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">score: 0.5</text>
+
+    <!-- Node: E3 (waiting) -->
+    <rect x="560" y="420" width="200" height="80" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <rect x="568" y="428" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+    <text x="584" y="437" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EP3</text>
+    <text x="660" y="460" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Endpoint 3</text>
+    <text x="660" y="476" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">latency: 20ms</text>
+    <text x="660" y="490" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">score: 0.2</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="568" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Lowest-latency endpoint</text>
+
+    <line x1="284" y1="573" x2="312" y2="573" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="320" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Selected</text>
+
+    <line x1="424" y1="573" x2="452" y2="573" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <text x="460" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Waiting for traffic</text>
+  </svg>

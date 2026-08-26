@@ -9,34 +9,7 @@ Linkerd treats security as a core value, automatically applying mTLS without any
 
 ## Security Architecture
 
-```mermaid
-graph TB
-    subgraph "Security Components"
-        subgraph "Control Plane"
-            ID[Identity Controller<br/>Certificate Issuance]
-            POL[Policy Controller<br/>Authorization Policies]
-        end
-
-        subgraph "Data Plane"
-            P1[Proxy 1<br/>mTLS Termination]
-            P2[Proxy 2<br/>mTLS Termination]
-        end
-    end
-
-    subgraph "Certificate Chain"
-        TA[Trust Anchor<br/>Root CA]
-        II[Identity Issuer<br/>Intermediate CA]
-        WC[Workload Certs<br/>Per Proxy]
-    end
-
-    TA --> II
-    II --> WC
-    ID --> P1
-    ID --> P2
-    POL --> P1
-    POL --> P2
-    P1 <-->|mTLS| P2
-```
+![Architecture diagram showing the certificate chain issuing workload certificates, the control plane's identity and policy controllers pushing identity and authorization into both data-plane proxies, and the two proxies terminating mutual TLS between each other.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-0.png)
 
 ## Automatic mTLS
 
@@ -44,25 +17,7 @@ Linkerd's most powerful security feature is automatically encrypting all mesh tr
 
 ### How mTLS Works
 
-```mermaid
-sequenceDiagram
-    participant App1 as Application A
-    participant P1 as Proxy A
-    participant P2 as Proxy B
-    participant App2 as Application B
-
-    App1->>P1: Plain HTTP
-    Note over P1: Check if destination is in mesh
-    P1->>P1: Initialize TLS with certificate
-    P1->>P2: mTLS Handshake
-    Note over P1,P2: Mutual SPIFFE ID verification
-    P1->>P2: Encrypted Request
-    P2->>P2: TLS Termination
-    P2->>App2: Plain HTTP
-    App2-->>P2: Plain HTTP Response
-    P2-->>P1: Encrypted Response
-    P1-->>App1: Plain HTTP Response
-```
+![Sequence diagram showing plain HTTP from application A being upgraded by its sidecar proxy into a mutually authenticated, encrypted TLS connection to proxy B, which terminates TLS and forwards plain HTTP to application B before the encrypted response returns the same way.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-1.png)
 
 ### mTLS Characteristics
 
@@ -95,23 +50,7 @@ linkerd viz tap deploy/web -n my-app
 
 ### Non-Mesh Traffic Handling
 
-```mermaid
-graph LR
-    subgraph "External"
-        EXT[External Client<br/>Outside Mesh]
-    end
-
-    subgraph "Mesh"
-        P1[Proxy<br/>Inside Mesh]
-        APP[Application]
-    end
-
-    EXT -->|Plain HTTP| P1
-    P1 -->|Plain HTTP| APP
-
-    style EXT fill:#ffcdd2
-    style P1 fill:#c8e6c9
-```
+![Architecture diagram showing an external client outside the mesh sending plain HTTP to a mesh proxy, which forwards it unencrypted to the application because no peer identity exists to negotiate mTLS with.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-2.png)
 
 Traffic from outside the mesh is automatically detected and processed as plaintext:
 
@@ -140,27 +79,7 @@ spiffe://root.linkerd.cluster.local/ns/database/sa/postgres
 
 ### Identity Issuance Process
 
-```mermaid
-sequenceDiagram
-    participant Pod as Pod/Proxy
-    participant SA as ServiceAccount
-    participant ID as Identity Controller
-    participant CA as Trust Anchor
-
-    Note over Pod: Pod starts
-    Pod->>SA: Obtain ServiceAccount token
-    Pod->>Pod: Generate CSR (with SPIFFE ID)
-    Pod->>ID: Send CSR + SA token
-
-    ID->>ID: Validate SA token
-    ID->>ID: Validate Pod info
-    ID->>ID: Generate SPIFFE ID
-    ID->>CA: Certificate signing request
-    CA-->>ID: Signed certificate
-
-    ID-->>Pod: Workload certificate
-    Note over Pod: Valid for 24 hours
-```
+![Sequence diagram showing a pod obtaining its ServiceAccount token, generating a CSR with a SPIFFE ID, and sending it to the Identity Controller, which validates the request, asks the Trust Anchor to sign the certificate, and returns the signed workload certificate to the pod.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-3.png)
 
 ### Verifying Identity
 
@@ -183,24 +102,7 @@ Linkerd provides fine-grained access control through Server, ServerAuthorization
 
 ### Policy Model
 
-```mermaid
-graph TB
-    subgraph "Authorization Model"
-        SRV[Server<br/>Define Inbound Port]
-        SA[ServerAuthorization<br/>Define Access Rights]
-        AP[AuthorizationPolicy<br/>Apply Policy]
-    end
-
-    subgraph "Policy Modes"
-        DENY[default-deny<br/>Explicit Allow Only]
-        ALLOW[default-allow<br/>Explicit Deny Only]
-    end
-
-    SRV --> SA
-    SA --> AP
-    AP --> DENY
-    AP --> ALLOW
-```
+![Architecture diagram showing a Server resource defining an inbound port, a ServerAuthorization granting access to it, and an AuthorizationPolicy applying that grant under either a default-deny or a default-allow policy mode.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-4.png)
 
 ### Server Resource
 
@@ -537,24 +439,7 @@ spec:
 
 ### Certificate Hierarchy
 
-```mermaid
-graph TB
-    subgraph "Certificate Hierarchy"
-        TA[Trust Anchor<br/>Root CA<br/>Validity: 1-10 years]
-        II[Identity Issuer<br/>Intermediate CA<br/>Validity: 1 year]
-        WC1[Workload Cert<br/>Validity: 24 hours]
-        WC2[Workload Cert<br/>Validity: 24 hours]
-    end
-
-    TA --> II
-    II --> WC1
-    II --> WC2
-
-    style TA fill:#ffeb3b
-    style II fill:#03a9f4
-    style WC1 fill:#4caf50
-    style WC2 fill:#4caf50
-```
+![Architecture diagram showing a long-lived Trust Anchor root CA signing a one-year Identity Issuer intermediate CA, which in turn signs each proxy's short-lived 24-hour workload certificate.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-5.png)
 
 ### Trust Anchor Management
 
@@ -793,26 +678,7 @@ helm install linkerd-control-plane linkerd/linkerd-control-plane \
 
 ### Security Layers
 
-```mermaid
-graph TB
-    subgraph "Security Layers"
-        subgraph "Network Level (Linkerd)"
-            MTLS[mTLS Encryption]
-            AUTHZ[Service Authorization]
-            ID[Workload Identity]
-        end
-
-        subgraph "Application Level"
-            JWT[JWT/OAuth]
-            RBAC[Application RBAC]
-            INPUT[Input Validation]
-        end
-    end
-
-    MTLS --> JWT
-    AUTHZ --> RBAC
-    ID --> INPUT
-```
+![Architecture diagram showing Linkerd's network-level mTLS encryption, service authorization, and workload identity each feeding a corresponding application-level control: JWT/OAuth, application RBAC, and input validation.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-6.png)
 
 | Layer | Linkerd Role | Application Role |
 |-------|--------------|------------------|

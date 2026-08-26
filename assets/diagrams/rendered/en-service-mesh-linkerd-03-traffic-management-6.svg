@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="flagger-title flagger-desc">
+    <title id="flagger-title">Flagger Automated Canary Deployment Flow</title>
+    <desc id="flagger-desc">Flowchart showing Flagger detecting a deployment change, initializing a canary at zero traffic, then looping through metric analysis and 10 percent traffic increments until it either promotes the canary to 100 percent or rolls it back on failed success criteria.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Arrows (behind shapes) -->
+    <!-- START(oval) -> INIT -->
+    <line x1="480" y1="72" x2="480" y2="96" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- INIT -> ANALYZE -->
+    <line x1="480" y1="152" x2="480" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- ANALYZE -> CHECK -->
+    <line x1="480" y1="232" x2="480" y2="256" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- CHECK -yes-> STEP (accent, happy path) -->
+    <path d="M 540,296 H 640 Q 648,296 648,304 V 320" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="560" y="280" width="30" height="12" rx="2" fill="#ffffff"/>
+    <text x="575" y="290" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+    <!-- CHECK -no-> ROLLBACK -->
+    <path d="M 420,296 H 320 Q 312,296 312,304 V 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="358" y="280" width="26" height="12" rx="2" fill="#ffffff"/>
+    <text x="371" y="290" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+    <!-- STEP -below50-> ANALYZE (loop back, accent) -->
+    <path d="M 720,352 H 800 Q 808,352 808,344 V 204 Q 808,196 800,196 H 540"
+          fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="742" y="264" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="786" y="274" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">BELOW 50%</text>
+
+    <!-- STEP -reached50-> PROMOTE -->
+    <path d="M 648,384 V 456" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="606" y="410" width="84" height="12" rx="2" fill="#ffffff"/>
+    <text x="648" y="420" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">REACHED 50%</text>
+
+    <!-- ROLLBACK -> END -->
+    <path d="M 312,352 V 400 Q 312,408 320,408 H 452 Q 460,408 460,416 V 508"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- PROMOTE -> END -->
+    <path d="M 648,488 V 500 Q 648,508 640,508 H 520"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Shape: START (oval) -->
+    <rect x="380" y="40" width="200" height="32" rx="16" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="60" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Detect Deployment Change</text>
+
+    <!-- Shape: INIT (rect) -->
+    <rect x="380" y="96" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="118" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Initialize Canary</text>
+    <text x="480" y="134" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">0% traffic</text>
+
+    <!-- Shape: ANALYZE (rect) -->
+    <rect x="380" y="176" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="209" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Analyze Metrics</text>
+
+    <!-- Shape: CHECK (diamond, focal decision) -->
+    <path d="M 480,256 L 540,296 L 480,336 L 420,296 Z" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="480" y="292" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Success</text>
+    <text x="480" y="306" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Criteria Met?</text>
+
+    <!-- Shape: STEP (rect) -->
+    <rect x="568" y="320" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="648" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Increase Traffic</text>
+    <text x="648" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+10%</text>
+
+    <!-- Shape: ROLLBACK (rect) -->
+    <rect x="232" y="320" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="312" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Rollback</text>
+    <text x="312" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">0% canary</text>
+
+    <!-- Shape: PROMOTE (rect) -->
+    <rect x="568" y="456" width="160" height="32" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="648" y="476" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Promotion (100%)</text>
+
+    <!-- Shape: END (oval) -->
+    <rect x="380" y="492" width="200" height="32" rx="16" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="512" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Complete</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="552" x2="920" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <path d="M 44,584 L 54,590 L 44,596 L 34,590 Z" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="64" y="593" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Decision / promotion path</text>
+
+    <line x1="288" y1="590" x2="316" y2="590" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="324" y="593" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Progressive rollout loop</text>
+  </svg>

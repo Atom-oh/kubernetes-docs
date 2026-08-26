@@ -9,52 +9,7 @@ Cilium Service Mesh의 아키텍처는 전통적인 사이드카 기반 서비�
 
 ## 전체 아키텍처
 
-```mermaid
-graph TB
-    subgraph "Kubernetes Node"
-        subgraph "User Space"
-            CA[Cilium Agent]
-            CO[Cilium Operator]
-            NE[Node Envoy<br/>L7 Proxy]
-            HR[Hubble Relay]
-        end
-
-        subgraph "Kernel Space"
-            eBPF[eBPF Programs]
-            TC[TC/XDP Hooks]
-            CT[Connection Tracking]
-            LB[Load Balancer Maps]
-            Policy[Policy Maps]
-        end
-
-        subgraph "Pods"
-            P1[Pod A]
-            P2[Pod B]
-            P3[Pod C]
-        end
-
-        CA --> eBPF
-        CA --> NE
-        eBPF --> TC
-        eBPF --> CT
-        eBPF --> LB
-        eBPF --> Policy
-
-        P1 --> TC
-        P2 --> TC
-        P3 --> TC
-        TC --> NE
-    end
-
-    subgraph "Control Plane"
-        API[Kubernetes API Server]
-        CRD[Cilium CRDs]
-    end
-
-    API --> CA
-    API --> CO
-    CRD --> CA
-```
+![쿠버네티스 노드 안에서 Cilium Agent가 커널의 eBPF 프로그램과 사용자 공간의 노드 Envoy를 제어 플레인 API와 동기화하며 트래픽을 처리하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-0.png)
 
 ## eBPF 데이터패스
 
@@ -62,20 +17,7 @@ graph TB
 
 eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 프로그램을 실행할 수 있게 해주는 기술입니다. 커널을 수정하지 않고도 네트워크, 보안, 관찰성 기능을 구현할 수 있습니다.
 
-```mermaid
-graph LR
-    subgraph "Traditional Networking"
-        App1[Application] --> Kernel1[Kernel<br/>Network Stack]
-        Kernel1 --> NIC1[NIC]
-    end
-
-    subgraph "eBPF Networking"
-        App2[Application] --> eBPF2[eBPF<br/>Programs]
-        eBPF2 --> Kernel2[Kernel<br/>Network Stack]
-        Kernel2 --> NIC2[NIC]
-        eBPF2 -.-> |"Bypass"| NIC2
-    end
-```
+![전통적인 네트워킹은 애플리케이션이 커널 네트워크 스택을 거쳐 NIC로 나가지만, eBPF 네트워킹은 커널 진입 전 단계에서 eBPF 프로그램이 패킷을 처리해 필요 시 네트워크 스택을 우회한다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-1.png)
 
 ### eBPF 훅 포인트
 
@@ -88,54 +30,13 @@ Cilium은 여러 eBPF 훅 포인트를 활용합니다:
 | **Socket Operations** | 소켓 레벨 | 소켓 연결 가속 |
 | **cgroup** | 프로세스 그룹 | 리소스 제어, 정책 적용 |
 
-```mermaid
-graph TB
-    subgraph "Packet Flow with eBPF Hooks"
-        NIC[NIC] --> XDP[XDP Hook]
-        XDP --> TC_IN[TC Ingress]
-        TC_IN --> Stack[Network Stack]
-        Stack --> Socket[Socket Layer]
-        Socket --> App[Application]
-
-        App --> Socket
-        Socket --> Stack
-        Stack --> TC_OUT[TC Egress]
-        TC_OUT --> NIC
-    end
-
-    style XDP fill:#e1f5fe
-    style TC_IN fill:#e1f5fe
-    style TC_OUT fill:#e1f5fe
-    style Socket fill:#e1f5fe
-```
+![패킷이 NIC에서 애플리케이션까지 오가는 동안 XDP, TC, 소켓 계층에 위치한 eBPF 훅 포인트를 양방향으로 통과하는 경로를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-2.png)
 
 ### L3/L4 처리
 
 eBPF에서 L3/L4 처리는 다음과 같이 이루어집니다:
 
-```mermaid
-sequenceDiagram
-    participant Pod as Source Pod
-    participant TC as TC eBPF
-    participant CT as Connection Tracker
-    participant LB as Load Balancer
-    participant Policy as Policy Engine
-    participant Dest as Destination Pod
-
-    Pod->>TC: 패킷 전송
-    TC->>CT: 연결 상태 조회
-
-    alt 새 연결
-        CT->>LB: 서비스 IP 확인
-        LB->>CT: 백엔드 Pod IP 반환
-        CT->>Policy: 정책 평가
-        Policy->>CT: 허용/거부
-    else 기존 연결
-        CT->>TC: 캐시된 결정 반환
-    end
-
-    TC->>Dest: 패킷 전달
-```
+![eBPF TC 훅이 새 연결은 정책 엔진 평가를 거치고 기존 연결은 캐시된 결정을 반환한 뒤 목적지 파드로 패킷을 전달하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-3.png)
 
 #### eBPF 맵 구조
 
@@ -197,32 +98,7 @@ loadBalancer:
 
 ### 사이드카 vs 노드 프록시
 
-```mermaid
-graph TB
-    subgraph "Sidecar Model"
-        subgraph "Pod A"
-            AppA1[App]
-            ProxyA1[Envoy<br/>50MB RAM]
-        end
-        subgraph "Pod B"
-            AppB1[App]
-            ProxyB1[Envoy<br/>50MB RAM]
-        end
-        subgraph "Pod C"
-            AppC1[App]
-            ProxyC1[Envoy<br/>50MB RAM]
-        end
-    end
-
-    subgraph "Node Proxy Model"
-        subgraph "Node"
-            AppA2[Pod A<br/>App]
-            AppB2[Pod B<br/>App]
-            AppC2[Pod C<br/>App]
-            NodeProxy[Shared Envoy<br/>100MB RAM]
-        end
-    end
-```
+![사이드카 모델은 파드마다 별도의 Envoy 프록시를 두지만, 노드 프록시 모델은 노드당 하나의 공유 Envoy가 여러 파드의 트래픽을 함께 처리한다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-4.png)
 
 ### Envoy 배포 방식
 
@@ -239,32 +115,7 @@ cilium-envoy   3         3         3       3            3
 
 ### L7 처리 흐름
 
-```mermaid
-sequenceDiagram
-    participant Client as Client Pod
-    participant eBPF as eBPF Datapath
-    participant Envoy as Node Envoy
-    participant Server as Server Pod
-
-    Client->>eBPF: HTTP Request
-    Note over eBPF: L4 정책 확인
-
-    alt L7 정책 필요
-        eBPF->>Envoy: 트래픽 리다이렉트
-        Note over Envoy: HTTP 파싱<br/>L7 정책 적용<br/>헤더 조작
-        Envoy->>eBPF: 처리된 요청
-    end
-
-    eBPF->>Server: 패킷 전달
-    Server->>eBPF: HTTP Response
-
-    alt L7 정책 필요
-        eBPF->>Envoy: 응답 리다이렉트
-        Envoy->>eBPF: 처리된 응답
-    end
-
-    eBPF->>Client: 응답 전달
-```
+![eBPF 데이터패스가 L7 정책이 필요한 요청과 응답만 노드 Envoy로 리다이렉트해 HTTP 파싱과 정책 적용을 수행시키는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-5.png)
 
 ### Envoy 리소스 설정
 
@@ -297,34 +148,7 @@ envoy:
 
 ### Cilium CRD 구조
 
-```mermaid
-graph TB
-    subgraph "Network Policy CRDs"
-        CNP[CiliumNetworkPolicy]
-        CCNP[CiliumClusterwideNetworkPolicy]
-    end
-
-    subgraph "Envoy Configuration CRDs"
-        CEC[CiliumEnvoyConfig]
-        CCEC[CiliumClusterwideEnvoyConfig]
-    end
-
-    subgraph "Service Mesh CRDs"
-        CLB[CiliumLoadBalancerIPPool]
-        CBGP[CiliumBGPPeeringPolicy]
-        CEG[CiliumEgressGateway]
-    end
-
-    subgraph "Identity CRDs"
-        CID[CiliumIdentity]
-        CEP[CiliumEndpoint]
-    end
-
-    CNP --> CEP
-    CCNP --> CEP
-    CEC --> CEP
-    CCEC --> CEP
-```
+![네트워크 정책과 Envoy 설정을 정의하는 여러 Cilium CRD가 모두 CiliumEndpoint 리소스로 귀결되어 파드의 신원과 정책 상태를 나타낸다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-6.png)
 
 ### CiliumEnvoyConfig
 
@@ -455,48 +279,7 @@ spec:
 
 ### Cilium Agent 역할
 
-```mermaid
-graph TB
-    subgraph "Cilium Agent 역할"
-        direction TB
-
-        subgraph "네트워크 관리"
-            IPAM[IPAM<br/>IP 주소 관리]
-            Routing[라우팅<br/>테이블 관리]
-            LB[로드 밸런싱<br/>서비스 관리]
-        end
-
-        subgraph "정책 관리"
-            Policy[정책 컴파일]
-            Identity[ID 관리]
-            Endpoint[엔드포인트<br/>관리]
-        end
-
-        subgraph "프록시 관리"
-            EnvoyConfig[Envoy 설정<br/>생성]
-            EnvoySync[Envoy 동기화]
-            L7Policy[L7 정책<br/>변환]
-        end
-
-        subgraph "관찰성"
-            FlowLog[Flow 로깅]
-            Metrics[메트릭 수집]
-            Events[이벤트 생성]
-        end
-    end
-
-    API[K8s API] --> IPAM
-    API --> Policy
-    API --> EnvoyConfig
-
-    IPAM --> Routing
-    Policy --> Identity
-    Identity --> Endpoint
-    EnvoyConfig --> EnvoySync
-
-    Endpoint --> FlowLog
-    LB --> Metrics
-```
+![Cilium Agent는 K8s API로부터 받은 정보를 네트워크 관리, 정책 관리, 프록시 관리로 나누어 처리하고, 그 결과를 관찰성 데이터로 축적한다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-7.png)
 
 ### Agent 설정
 
@@ -536,24 +319,7 @@ data:
 
 Cilium은 각 워크로드에 고유한 ID를 할당합니다:
 
-```mermaid
-graph TB
-    subgraph "Identity Assignment"
-        Pod[Pod] --> Labels[Labels]
-        Labels --> Identity[Cilium Identity<br/>Numeric ID]
-        Identity --> SecurityContext[Security Context]
-    end
-
-    subgraph "Identity Components"
-        Namespace[Namespace]
-        ServiceAccount[Service Account]
-        PodLabels[Pod Labels]
-    end
-
-    Namespace --> Identity
-    ServiceAccount --> Identity
-    PodLabels --> Identity
-```
+![네임스페이스, 서비스 어카운트, 파드 레이블 등 파드의 속성이 결합되어 고유한 Cilium Identity 숫자 ID로 변환되고 이는 보안 컨텍스트의 기준이 된다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-8.png)
 
 ### Identity 기반 정책
 
@@ -589,16 +355,7 @@ ID      LABELS
 
 SPIFFE(Secure Production Identity Framework for Everyone)를 통한 워크로드 ID:
 
-```mermaid
-graph LR
-    subgraph "SPIFFE Integration"
-        Workload[Workload] --> Agent[SPIRE Agent]
-        Agent --> Server[SPIRE Server]
-        Server --> CA[Certificate Authority]
-        CA --> SVID[SVID<br/>X.509 Certificate]
-        SVID --> Workload
-    end
-```
+![워크로드가 SPIRE Agent와 Server를 거쳐 인증 기관으로부터 X.509 SVID 인증서를 발급받아 신원 증명에 사용하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-9.png)
 
 ```yaml
 # SPIRE 통합 설정
@@ -624,73 +381,15 @@ spiffe://cluster.local/ns/<namespace>/sa/<service-account>
 
 ### Pod-to-Pod 통신 (동일 노드)
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A
-    participant VethA as veth (Pod A)
-    participant eBPF_In as eBPF Ingress
-    participant CT as CT Map
-    participant Policy as Policy Map
-    participant eBPF_Out as eBPF Egress
-    participant VethB as veth (Pod B)
-    participant PodB as Pod B
-
-    PodA->>VethA: 패킷 전송
-    VethA->>eBPF_In: TC Ingress
-    eBPF_In->>CT: 연결 조회
-    CT->>Policy: 정책 확인
-    Policy->>eBPF_Out: 허용
-    eBPF_Out->>VethB: 직접 전달
-    VethB->>PodB: 패킷 수신
-
-    Note over eBPF_In,eBPF_Out: 커널 내 직접 경로<br/>네트워크 스택 우회
-```
+![같은 노드에 있는 두 파드 사이의 패킷이 eBPF TC 훅에서 연결 및 정책을 확인한 뒤 커널 안에서 네트워크 스택을 거치지 않고 직접 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-10.png)
 
 ### Pod-to-Pod 통신 (다른 노드)
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A (Node 1)
-    participant eBPF1 as eBPF (Node 1)
-    participant Tunnel as Tunnel/Native
-    participant eBPF2 as eBPF (Node 2)
-    participant PodB as Pod B (Node 2)
-
-    PodA->>eBPF1: 패킷 전송
-    Note over eBPF1: 정책 평가<br/>터널 캡슐화
-    eBPF1->>Tunnel: VXLAN/Geneve/Native
-    Tunnel->>eBPF2: 패킷 수신
-    Note over eBPF2: 정책 평가<br/>터널 디캡슐화
-    eBPF2->>PodB: 패킷 전달
-```
+![서로 다른 노드에 있는 두 파드 사이의 패킷이 각 노드의 eBPF에서 정책을 평가하고 VXLAN/Geneve 터널로 캡슐화·디캡슐화되어 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-11.png)
 
 ### L7 처리가 필요한 경우
 
-```mermaid
-sequenceDiagram
-    participant Client as Client Pod
-    participant eBPF_C as eBPF (Client)
-    participant Envoy as Node Envoy
-    participant eBPF_S as eBPF (Server)
-    participant Server as Server Pod
-
-    Client->>eBPF_C: HTTP 요청
-    Note over eBPF_C: L7 정책 감지
-    eBPF_C->>Envoy: 프록시로 리다이렉트
-
-    Note over Envoy: HTTP 파싱<br/>L7 정책 적용<br/>메트릭 수집<br/>트레이싱
-
-    Envoy->>eBPF_S: 요청 전달
-    eBPF_S->>Server: 패킷 전달
-
-    Server->>eBPF_S: HTTP 응답
-    eBPF_S->>Envoy: 응답 전달
-
-    Note over Envoy: 응답 처리<br/>메트릭 업데이트
-
-    Envoy->>eBPF_C: 응답 전달
-    eBPF_C->>Client: 패킷 전달
-```
+![L7 정책이 감지된 요청과 응답만 클라이언트·서버 측 eBPF가 노드 Envoy로 왕복 리다이렉트해 HTTP 파싱, 정책 적용, 메트릭·트레이싱을 수행하는 전체 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-12.png)
 
 ## Istio 사이드카 아키텍처 비교
 
@@ -711,51 +410,13 @@ sequenceDiagram
 
 ### 지연 시간 분석
 
-```mermaid
-graph TB
-    subgraph "Istio 지연 시간 구성요소"
-        I1[앱 → 사이드카] --> I2[사이드카 처리]
-        I2 --> I3[네트워크]
-        I3 --> I4[사이드카 처리]
-        I4 --> I5[사이드카 → 앱]
-
-        I1 -.- |"~0.2ms"| I1
-        I2 -.- |"~0.5ms"| I2
-        I3 -.- |"~0.1ms"| I3
-        I4 -.- |"~0.5ms"| I4
-        I5 -.- |"~0.2ms"| I5
-    end
-
-    subgraph "Cilium 지연 시간 구성요소"
-        C1[앱 → eBPF] --> C2[eBPF 처리]
-        C2 --> C3[네트워크]
-        C3 --> C4[eBPF 처리]
-        C4 --> C5[eBPF → 앱]
-
-        C1 -.- |"~0.02ms"| C1
-        C2 -.- |"~0.05ms"| C2
-        C3 -.- |"~0.1ms"| C3
-        C4 -.- |"~0.05ms"| C4
-        C5 -.- |"~0.02ms"| C5
-    end
-```
+![Istio 사이드카는 프록시 처리 단계에서 대부분의 지연이 발생해 총 1.5ms에 이르지만, Cilium은 네트워크 전송 비용은 동일하면서 프록시 처리 구간이 훨씬 짧아 총 0.24ms에 그친다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-13.png)
 
 ### 리소스 효율성 분석
 
 100개 Pod 클러스터 기준:
 
-```mermaid
-graph LR
-    subgraph "Memory Usage"
-        Istio[Istio<br/>100 pods × 50MB<br/>= 5GB]
-        Cilium[Cilium<br/>5 nodes × 100MB<br/>= 500MB]
-    end
-
-    subgraph "CPU Overhead"
-        IstioC[Istio<br/>100 sidecars<br/>높은 CPU 오버헤드]
-        CiliumC[Cilium<br/>5 Node Envoys<br/>낮은 CPU 오버헤드]
-    end
-```
+![동일한 100개 파드 클러스터에서 파드마다 사이드카를 두는 Istio는 총 메모리 약 5GB를 쓰지만, 노드당 하나의 Envoy만 두는 Cilium은 약 500MB로 CPU 오버헤드도 더 낮다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-14.png)
 
 ## 확장성 고려사항
 

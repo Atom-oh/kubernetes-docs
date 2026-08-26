@@ -9,33 +9,7 @@ Cilium Service Mesh natively supports Kubernetes Ingress Controller and Gateway 
 
 ## Architecture
 
-```mermaid
-graph TB
-    subgraph "External"
-        Client[External Client]
-        LB[Cloud Load Balancer<br/>NLB/ALB]
-    end
-
-    subgraph "Kubernetes Cluster"
-        subgraph "Cilium Ingress/Gateway"
-            GW[Gateway<br/>or Ingress]
-            Envoy[Cilium Envoy<br/>L7 Proxy]
-        end
-
-        subgraph "Backend Services"
-            SvcA[Service A]
-            SvcB[Service B]
-            SvcC[Service C]
-        end
-    end
-
-    Client --> LB
-    LB --> GW
-    GW --> Envoy
-    Envoy --> SvcA
-    Envoy --> SvcB
-    Envoy --> SvcC
-```
+![An external client's request passes through a cloud load balancer into the Kubernetes cluster, where a Gateway or Ingress resource hands it to the Cilium Envoy L7 proxy, which routes it to one of three backend services.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-05-ingress-gateway-0.png)
 
 ## Cilium Ingress Controller
 
@@ -586,40 +560,7 @@ spec:
 
 ### Hybrid Architecture
 
-```mermaid
-graph TB
-    subgraph "Internet"
-        Client[External Client]
-    end
-
-    subgraph "AWS"
-        ALB[Application<br/>Load Balancer]
-        NLB[Network<br/>Load Balancer]
-    end
-
-    subgraph "EKS Cluster"
-        subgraph "Cilium Layer"
-            CiliumGW[Cilium Gateway<br/>L7 Routing]
-            CiliumLB[Cilium LB<br/>L4 Load Balancing]
-        end
-
-        subgraph "Applications"
-            WebApp[Web App]
-            API[API Server]
-            gRPC[gRPC Service]
-        end
-    end
-
-    Client --> ALB
-    Client --> NLB
-
-    ALB --> CiliumGW
-    NLB --> CiliumLB
-
-    CiliumGW --> WebApp
-    CiliumGW --> API
-    CiliumLB --> gRPC
-```
+![An external client reaches an Application Load Balancer for HTTP traffic and a Network Load Balancer for low-level traffic; the ALB hands off to the Cilium Gateway for L7 routing to the web app and API server, while the NLB hands off to Cilium's eBPF-based L4 load balancer for the gRPC service.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-05-ingress-gateway-1.png)
 
 ## Multi-tenant Gateway
 
@@ -832,22 +773,7 @@ spec:
 
 ### Selection Guide
 
-```mermaid
-graph TB
-    Start[Start] --> Q1{Need AWS native<br/>integration?}
-    Q1 -->|Yes| Q2{Need WAF/Shield?}
-    Q1 -->|No| Cilium[Cilium Gateway]
-
-    Q2 -->|Yes| ALB[AWS ALB]
-    Q2 -->|No| Q3{Need high-perf<br/>L4?}
-
-    Q3 -->|Yes| NLBCilium[NLB + Cilium]
-    Q3 -->|No| Cilium
-
-    ALB --> Done[Done]
-    NLBCilium --> Done
-    Cilium --> Done
-```
+![A decision tree for choosing an ingress path on EKS: it asks whether AWS-native integration and WAF/Shield are needed, and whether high-performance L4 load balancing is required, routing to AWS ALB, NLB plus Cilium, or Cilium Gateway alone.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-05-ingress-gateway-2.png)
 
 ## Monitoring
 

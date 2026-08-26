@@ -307,43 +307,13 @@ spec:
 
 ### Benchmark Results
 
-```mermaid
-graph LR
-    subgraph "Latency Comparison (P99)"
-        Native["Native<br/>0.1ms"]
-        Cilium["Cilium SM<br/>0.3ms"]
-        Istio["Istio<br/>2.5ms"]
-    end
-```
+![Bar chart comparing P99 latency added by native pod-to-pod networking (0.1ms), Cilium Service Mesh (0.3ms), and Istio sidecar mesh (2.5ms), showing Cilium's eBPF datapath stays close to native performance while Istio adds an order of magnitude more overhead.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-06-best-practices-0.png)
 
 ## Migration from Sidecar Mesh
 
 ### Migration Strategy
 
-```mermaid
-graph TB
-    subgraph "Phase 1: Preparation"
-        A1[Install Cilium CNI]
-        A2[Coexist with existing CNI]
-        A3[Validate with test workloads]
-    end
-
-    subgraph "Phase 2: Gradual Transition"
-        B1[Convert per namespace]
-        B2[Disable sidecar injection]
-        B3[Apply Cilium L7 policies]
-    end
-
-    subgraph "Phase 3: Complete Transition"
-        C1[Convert all workloads]
-        C2[Remove Istio/Linkerd]
-        C3[Cleanup and optimize]
-    end
-
-    A1 --> A2 --> A3
-    A3 --> B1 --> B2 --> B3
-    B3 --> C1 --> C2 --> C3
-```
+![Diagram of the three-phase migration from a sidecar service mesh to Cilium Service Mesh: Phase 1 Preparation installs Cilium CNI, coexists with the existing CNI, and validates with test workloads; Phase 2 Gradual Transition converts per namespace, disables sidecar injection, and applies Cilium L7 policies; Phase 3 Complete Transition converts all workloads, removes Istio or Linkerd (marked as the pivotal milestone), and cleans up and optimizes.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-06-best-practices-1.png)
 
 ### Migration from Istio
 
@@ -521,22 +491,7 @@ envoy:
 
 ### Gradual L7 Transition
 
-```mermaid
-graph LR
-    subgraph "Phase 1"
-        P1[L3/L4: Cilium<br/>L7: Istio]
-    end
-
-    subgraph "Phase 2"
-        P2[L3/L4: Cilium<br/>L7: Cilium + Istio mixed]
-    end
-
-    subgraph "Phase 3"
-        P3[L3/L4: Cilium<br/>L7: Cilium]
-    end
-
-    P1 --> P2 --> P3
-```
+![Flowchart showing the gradual hand-off of L7 routing from Istio to Cilium across three phases while Cilium retains L3/L4 network policy throughout: Phase 1 (L3/L4 Cilium, L7 Istio), Phase 2 (L3/L4 Cilium, L7 mixed Cilium and Istio), and Phase 3 (L3/L4 and L7 both on Cilium).](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-06-best-practices-2.png)
 
 ## Monitoring and Alerting Setup
 

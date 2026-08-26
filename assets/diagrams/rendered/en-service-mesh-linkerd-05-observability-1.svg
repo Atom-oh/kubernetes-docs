@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="d1title d1desc">
+  <title id="d1title">Linkerd Viz dashboard navigation</title>
+  <desc id="d1desc">From the Namespace Overview, operators drill into the Deployments view, which branches to per-Pod status, per-route metrics, and the live Tap request stream, while the namespace level also links directly to the service Topology view.</desc>
+  <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="32" y="28" class="mono" font-size="8" letter-spacing="0.18em" fill="#7D8998">LINKERD VIZ &#183; DASHBOARD</text>
+  <text x="32" y="52" font-size="20" font-weight="700" fill="#232F3E">Dashboard Views</text>
+
+  <!-- ============ ARROWS (before nodes) ============ -->
+
+  <!-- NS -> TOPO -->
+  <path d="M268,216 V248 Q268,256 260,256 H152 Q144,256 144,264 V280"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- NS -> DEPLOY -->
+  <path d="M348,216 V248 Q348,256 356,256 H468 Q476,256 476,264 V280"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- DEPLOY -> PODS -->
+  <path d="M426,344 V368 Q426,376 418,376 H264 Q256,376 256,384 V408"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- DEPLOY -> ROUTES (straight, shared center x) -->
+  <line x1="476" y1="344" x2="476" y2="408" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- DEPLOY -> TAP -->
+  <path d="M526,344 V368 Q526,376 534,376 H688 Q696,376 696,384 V408"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- Namespace Overview -->
+  <rect x="228" y="152" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="228" y="152" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="308" y="180" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Namespace Overview</text>
+  <text x="308" y="196" text-anchor="middle" class="mono" font-size="9" fill="#545B64">per-namespace status</text>
+
+  <!-- Topology -->
+  <rect x="64" y="280" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="64" y="280" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="144" y="308" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Topology</text>
+  <text x="144" y="324" text-anchor="middle" class="mono" font-size="9" fill="#545B64">service graph</text>
+
+  <!-- Deployments (focal) -->
+  <rect x="396" y="280" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="396" y="280" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="476" y="308" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Deployments</text>
+  <text x="476" y="324" text-anchor="middle" class="mono" font-size="9" fill="#545B64">deployment status</text>
+
+  <!-- Pods -->
+  <rect x="176" y="408" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="176" y="408" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="256" y="436" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Pods</text>
+  <text x="256" y="452" text-anchor="middle" class="mono" font-size="9" fill="#545B64">per-pod status</text>
+
+  <!-- Routes -->
+  <rect x="396" y="408" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="396" y="408" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="476" y="436" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Routes</text>
+  <text x="476" y="452" text-anchor="middle" class="mono" font-size="9" fill="#545B64">per-route metrics</text>
+
+  <!-- Tap -->
+  <rect x="616" y="408" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="616" y="408" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="696" y="436" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Tap</text>
+  <text x="696" y="452" text-anchor="middle" class="mono" font-size="9" fill="#545B64">live request stream</text>
+
+</svg>

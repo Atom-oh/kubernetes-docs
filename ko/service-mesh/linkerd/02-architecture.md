@@ -9,67 +9,7 @@ Linkerd는 컨트롤 플레인과 데이터 플레인으로 구성된 서비스 
 
 ## 전체 아키텍처
 
-```mermaid
-graph TB
-    subgraph "Control Plane (linkerd namespace)"
-        subgraph "Core Components"
-            DEST[Destination Controller<br/>서비스 디스커버리<br/>정책 배포]
-            ID[Identity Controller<br/>인증서 발급<br/>CA 관리]
-            PI[Proxy Injector<br/>사이드카 주입<br/>Admission Webhook]
-        end
-
-        subgraph "Policy Engine"
-            POL[Policy Controller<br/>Server/Authorization<br/>정책 검증]
-        end
-    end
-
-    subgraph "Data Plane"
-        subgraph "Application Pod A"
-            APP_A[Application Container]
-            PROXY_A[linkerd-proxy<br/>Rust 마이크로 프록시]
-            INIT_A[linkerd-init<br/>iptables 설정]
-        end
-
-        subgraph "Application Pod B"
-            APP_B[Application Container]
-            PROXY_B[linkerd-proxy]
-            INIT_B[linkerd-init]
-        end
-    end
-
-    subgraph "Extensions"
-        VIZ[Viz Extension<br/>메트릭/대시보드]
-        JAEGER[Jaeger Extension<br/>분산 추적]
-        MC[Multicluster Extension<br/>클러스터 연결]
-    end
-
-    %% Control Plane Interactions
-    PI -->|Webhook| PROXY_A
-    PI -->|Webhook| PROXY_B
-    ID -->|인증서| PROXY_A
-    ID -->|인증서| PROXY_B
-    DEST -->|엔드포인트| PROXY_A
-    DEST -->|엔드포인트| PROXY_B
-    POL -->|정책| PROXY_A
-    POL -->|정책| PROXY_B
-
-    %% Data Plane Traffic
-    APP_A --> PROXY_A
-    PROXY_A -->|mTLS| PROXY_B
-    PROXY_B --> APP_B
-
-    %% Extension Interactions
-    VIZ -->|메트릭 수집| PROXY_A
-    VIZ -->|메트릭 수집| PROXY_B
-
-    classDef control fill:#e1f5fe
-    classDef data fill:#f3e5f5
-    classDef ext fill:#e8f5e9
-
-    class DEST,ID,PI,POL control
-    class APP_A,APP_B,PROXY_A,PROXY_B,INIT_A,INIT_B data
-    class VIZ,JAEGER,MC ext
-```
+![컨트롤 플레인의 네 컴포넌트가 데이터 플레인의 linkerd-proxy 사이드카를 구성하고, 두 프록시가 mTLS로 애플리케이션 간 트래픽을 중계하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-0.png)
 
 ## 컨트롤 플레인
 
@@ -79,35 +19,7 @@ graph TB
 
 Destination 컨트롤러는 서비스 디스커버리와 정책 배포를 담당하는 핵심 컴포넌트입니다.
 
-```mermaid
-graph LR
-    subgraph "Destination Controller"
-        API[Destination API<br/>gRPC 서버]
-        DISC[Service Discovery<br/>엔드포인트 조회]
-        PROF[ServiceProfile<br/>라우팅 정보]
-        SPLIT[TrafficSplit<br/>트래픽 분할]
-    end
-
-    subgraph "Kubernetes"
-        SVC[Services]
-        EP[Endpoints]
-        SP[ServiceProfiles]
-        TS[TrafficSplits]
-    end
-
-    subgraph "Proxies"
-        P1[Proxy 1]
-        P2[Proxy 2]
-    end
-
-    SVC --> DISC
-    EP --> DISC
-    SP --> PROF
-    TS --> SPLIT
-
-    API --> P1
-    API --> P2
-```
+![Kubernetes의 서비스/엔드포인트와 라우팅 리소스를 감시해 Destination API가 gRPC 스트림으로 프록시에 전달하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-1.png)
 
 **주요 기능:**
 
@@ -136,23 +48,7 @@ service Destination {
 
 Identity 컨트롤러는 mTLS를 위한 인증서 발급과 관리를 담당합니다.
 
-```mermaid
-sequenceDiagram
-    participant Proxy as linkerd-proxy
-    participant Identity as Identity Controller
-    participant CA as Trust Anchor (CA)
-
-    Note over Proxy: Pod 시작
-    Proxy->>Identity: CSR (Certificate Signing Request)
-    Identity->>Identity: 서비스 계정 검증
-    Identity->>CA: 인증서 서명 요청
-    CA-->>Identity: 서명된 인증서
-    Identity-->>Proxy: 워크로드 인증서
-
-    Note over Proxy: 인증서 만료 전
-    Proxy->>Identity: 갱신 CSR
-    Identity-->>Proxy: 새 인증서
-```
+![linkerd-proxy가 CSR을 보내 Identity Controller가 Trust Anchor로 서명을 받아 워크로드 인증서를 발급하고 만료 전 자동 갱신하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-2.png)
 
 **인증서 발급 프로세스:**
 
@@ -187,26 +83,7 @@ data:
 
 Proxy Injector는 Kubernetes Admission Webhook으로 동작하여 Pod에 사이드카를 자동 주입합니다.
 
-```mermaid
-sequenceDiagram
-    participant User as kubectl
-    participant API as API Server
-    participant PI as Proxy Injector
-    participant Pod as Pod
-
-    User->>API: Pod 생성 요청
-    API->>PI: Admission Review
-    PI->>PI: 주입 조건 확인
-    alt 주입 활성화
-        PI->>PI: linkerd-proxy 컨테이너 추가
-        PI->>PI: linkerd-init 컨테이너 추가
-        PI->>PI: 볼륨/환경변수 설정
-        PI-->>API: Mutated Pod Spec
-    else 주입 비활성화
-        PI-->>API: 원본 Pod Spec
-    end
-    API->>Pod: Pod 생성
-```
+![kubectl의 Pod 생성 요청이 API 서버의 Admission Review를 거쳐 Proxy Injector가 주입 조건을 확인하고, 활성화 시 사이드카 컨테이너를 추가해 Mutated Pod Spec을 반환하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-3.png)
 
 **주입 조건:**
 
@@ -284,38 +161,7 @@ spec:
 
 Linkerd의 데이터 플레인 프록시는 Rust로 작성된 초경량 마이크로 프록시입니다.
 
-```mermaid
-graph TB
-    subgraph "Pod"
-        subgraph "linkerd-proxy"
-            IN[Inbound Listener<br/>:4143]
-            OUT[Outbound Listener<br/>:4140]
-            ADMIN[Admin Server<br/>:4191]
-
-            subgraph "Processing"
-                TLS[TLS Termination/Origination]
-                LB[Load Balancing<br/>EWMA]
-                RETRY[Retries]
-                TO[Timeouts]
-                CB[Circuit Breaking]
-                METRICS[Metrics Collection]
-            end
-        end
-
-        APP[Application]
-    end
-
-    EXT_IN[External Inbound] --> IN
-    IN --> TLS
-    TLS --> APP
-
-    APP --> OUT
-    OUT --> LB
-    LB --> TLS
-    TLS --> EXT_OUT[External Outbound]
-
-    ADMIN --> METRICS
-```
+![Pod 안의 linkerd-proxy가 인바운드 트래픽을 TLS 종료 후 애플리케이션에 전달하고, 애플리케이션의 아웃바운드 트래픽을 로드밸런싱과 TLS 처리를 거쳐 다시 내보내는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-4.png)
 
 **프록시 특성:**
 
@@ -342,26 +188,7 @@ graph TB
 
 ### 프록시 트래픽 흐름
 
-```mermaid
-sequenceDiagram
-    participant Client as Client App
-    participant CProxy as Client Proxy<br/>(Outbound)
-    participant SProxy as Server Proxy<br/>(Inbound)
-    participant Server as Server App
-
-    Client->>CProxy: HTTP Request<br/>(localhost)
-    Note over CProxy: iptables 리다이렉트
-    CProxy->>CProxy: 대상 서비스 조회<br/>(Destination API)
-    CProxy->>CProxy: 로드 밸런싱<br/>(EWMA)
-    CProxy->>CProxy: mTLS 핸드셰이크
-    CProxy->>SProxy: Encrypted Request
-    SProxy->>SProxy: mTLS 검증
-    SProxy->>SProxy: 정책 확인
-    SProxy->>Server: HTTP Request
-    Server-->>SProxy: HTTP Response
-    SProxy-->>CProxy: Encrypted Response
-    CProxy-->>Client: HTTP Response
-```
+![클라이언트 프록시가 대상을 조회하고 로드밸런싱과 mTLS 핸드셰이크를 마친 뒤 암호화된 요청을 서버 프록시로 전달하고, 서버 프록시가 검증과 정책 확인 후 애플리케이션에 전달하는 왕복 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-5.png)
 
 ### linkerd-init (Init Container)
 
@@ -443,27 +270,7 @@ Linkerd는 계층적 PKI(Public Key Infrastructure)를 사용하여 mTLS를 구�
 
 ### 인증서 계층 구조
 
-```mermaid
-graph TB
-    subgraph "Certificate Hierarchy"
-        TA[Trust Anchor<br/>Root CA<br/>유효기간: 10년]
-        II[Identity Issuer<br/>Intermediate CA<br/>유효기간: 1년]
-        WC1[Workload Cert 1<br/>유효기간: 24시간]
-        WC2[Workload Cert 2<br/>유효기간: 24시간]
-        WC3[Workload Cert 3<br/>유효기간: 24시간]
-    end
-
-    TA --> II
-    II --> WC1
-    II --> WC2
-    II --> WC3
-
-    style TA fill:#ff9800
-    style II fill:#2196f3
-    style WC1 fill:#4caf50
-    style WC2 fill:#4caf50
-    style WC3 fill:#4caf50
-```
+![Trust Anchor(루트 CA)가 Identity Issuer(중간 CA)에게 서명 권한을 위임하고, Identity Issuer가 24시간짜리 워크로드 인증서 여러 개를 발급하는 계층적 PKI 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-6.png)
 
 ### Trust Anchor (Root CA)
 
@@ -550,25 +357,7 @@ data:
 
 각 프록시는 고유한 워크로드 인증서를 받습니다.
 
-```mermaid
-sequenceDiagram
-    participant Proxy as linkerd-proxy
-    participant ID as Identity Controller
-    participant SA as ServiceAccount
-
-    Note over Proxy: Pod 시작
-    Proxy->>SA: ServiceAccount 토큰 획득
-    Proxy->>Proxy: CSR 생성 (SPIFFE ID 포함)
-    Proxy->>ID: CSR + SA 토큰 전송
-    ID->>ID: SA 토큰 검증
-    ID->>ID: SPIFFE ID 검증
-    ID->>ID: Issuer 키로 인증서 서명
-    ID-->>Proxy: 서명된 인증서 (24시간 유효)
-
-    Note over Proxy: 22시간 후 (만료 2시간 전)
-    Proxy->>ID: 갱신 CSR
-    ID-->>Proxy: 새 인증서
-```
+![linkerd-proxy가 ServiceAccount 토큰과 CSR을 Identity Controller에 보내 SPIFFE ID가 검증된 24시간짜리 인증서를 발급받고, 만료 2시간 전 자동으로 갱신하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-7.png)
 
 **SPIFFE ID 형식:**
 
@@ -621,32 +410,7 @@ kubectl rollout restart deploy -n my-app
 
 ### 주입 워크플로우
 
-```mermaid
-graph TB
-    subgraph "Injection Flow"
-        REQ[Pod 생성 요청]
-        WH[Webhook 호출]
-        CHK[주입 조건 확인]
-        INJ[사이드카 주입]
-        POD[Pod 생성]
-    end
-
-    subgraph "Injection Conditions"
-        NS[네임스페이스 어노테이션]
-        POD_ANN[Pod 어노테이션]
-        WL[워크로드 타입]
-    end
-
-    REQ --> WH
-    WH --> CHK
-    CHK --> NS
-    CHK --> POD_ANN
-    CHK --> WL
-    NS --> INJ
-    POD_ANN --> INJ
-    WL --> INJ
-    INJ --> POD
-```
+![Pod 생성 요청이 Admission Webhook과 주입 조건 확인(네임스페이스/Pod 주석/워크로드 타입)을 거쳐 사이드카가 주입된 뒤 Pod가 생성되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-8.png)
 
 ### 주입 어노테이션
 
@@ -700,39 +464,7 @@ readinessProbe:
 
 ## 컴포넌트 간 통신
 
-```mermaid
-graph TB
-    subgraph "Control Plane"
-        DEST[Destination<br/>:8086]
-        ID[Identity<br/>:8080]
-        PI[Proxy Injector<br/>:8443]
-        POL[Policy<br/>:8090]
-    end
-
-    subgraph "Data Plane"
-        P1[Proxy 1]
-        P2[Proxy 2]
-    end
-
-    subgraph "Kubernetes"
-        API[API Server]
-        WH[Webhook Config]
-    end
-
-    P1 -->|gRPC| DEST
-    P2 -->|gRPC| DEST
-    P1 -->|gRPC| ID
-    P2 -->|gRPC| ID
-    P1 -->|gRPC| POL
-    P2 -->|gRPC| POL
-
-    API -->|Admission| PI
-    WH --> PI
-
-    DEST --> API
-    ID --> API
-    POL --> API
-```
+![데이터 플레인 프록시들이 gRPC로 Destination·Identity·Policy와 통신하고, API 서버가 Webhook Config를 통해 Proxy Injector의 Admission Webhook을 호출하는 통신 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-9.png)
 
 **포트 정리:**
 
@@ -750,26 +482,7 @@ graph TB
 
 ### 컨트롤 플레인 비교
 
-```mermaid
-graph TB
-    subgraph "Linkerd Control Plane"
-        L_DEST[Destination]
-        L_ID[Identity]
-        L_PI[Proxy Injector]
-    end
-
-    subgraph "Istio Control Plane"
-        ISTIOD[istiod<br/>Pilot + Citadel + Galley]
-    end
-
-    subgraph "Linkerd Data Plane"
-        L_PROXY[linkerd-proxy<br/>Rust, ~10MB]
-    end
-
-    subgraph "Istio Data Plane"
-        ENVOY[Envoy<br/>C++, ~50-100MB]
-    end
-```
+![Linkerd는 세 개로 분산된 컨트롤 플레인 컴포넌트와 경량 Rust 프록시를 쓰고, Istio는 통합된 istiod와 무거운 Envoy 프록시를 쓰는 구조적 차이를 나란히 비교해 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-10.png)
 
 | 특성 | Linkerd | Istio |
 |------|---------|-------|
