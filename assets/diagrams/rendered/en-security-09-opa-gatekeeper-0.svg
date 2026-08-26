@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="opagk-title opagk-desc">
+<title id="opagk-title">OPA Gatekeeper architecture</title>
+<desc id="opagk-desc">A Kubernetes API request passes through a validating webhook to the Gatekeeper controller, which asks the embedded OPA engine to evaluate constraint templates and constraints, produces periodic audit results, and separately defines constraint templates as Rego policy that constraints apply to matched target resources.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+</defs>
+
+<!-- background -->
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- ================= ZONES (bg -> zones -> arrows -> nodes) ================= -->
+<rect x="140" y="16" width="680" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="176" y="20" width="192" height="12" rx="2" fill="#ffffff"/>
+<text x="272" y="29" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ADMISSION PIPELINE</text>
+
+<rect x="140" y="472" width="680" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="404" y="476" width="152" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="485" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">POLICY COMPONENTS</text>
+
+<!-- ================= ARROWS (drawn before nodes) ================= -->
+
+<!-- 1. API Server -> Webhook (straight, shared x) -->
+<line x1="480" y1="128" x2="480" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- 2. Webhook -> Gatekeeper Controller (straight, shared x) -->
+<line x1="480" y1="232" x2="480" y2="256" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- 3. Gatekeeper Controller -> OPA Engine (straight, shared x) -->
+<line x1="480" y1="336" x2="480" y2="360" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- 4. Gatekeeper Controller -> Audit Results (straight, shared y) -->
+<line x1="580" y1="296" x2="620" y2="296" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- 5. OPA Engine -> Constraint Templates (elbow, r=8, fanned left attach) -->
+<path d="M452,440 V460 Q452,468 444,468 H412 Q404,468 404,476 V496"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- 6. OPA Engine -> Constraints (elbow, r=8, fanned right attach) -->
+<path d="M508,440 V460 Q508,468 516,468 H548 Q556,468 556,476 V496"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- 7. Constraint Templates -> Rego Policy (straight, shared y, leftward) — label "DEFINES" -->
+<line x1="340" y1="536" x2="284" y2="536" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="288" y="516" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="312" y="525" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DEFINES</text>
+
+<!-- 8. Constraints -> Target Resources (straight, shared y, rightward) — label "APPLIES TO" -->
+<line x1="612" y1="536" x2="684" y2="536" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="616" y="516" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="648" y="525" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">APPLIES TO</text>
+
+<!-- ================= NODES ================= -->
+
+<!-- API Server — input -->
+<rect x="400" y="48" width="160" height="80" rx="6" fill="#ffffff"/>
+<rect x="400" y="48" width="160" height="80" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="408" y="56" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+<text x="422" y="65" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+<text x="480" y="94" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">API Server</text>
+<text x="480" y="110" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kube-apiserver</text>
+
+<!-- Webhook — backend -->
+<rect x="400" y="152" width="160" height="80" rx="6" fill="#ffffff"/>
+<rect x="400" y="152" width="160" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="408" y="160" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="422" y="169" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HOOK</text>
+<text x="480" y="198" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Webhook</text>
+<text x="480" y="214" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">admission webhook</text>
+
+<!-- Gatekeeper Controller — focal -->
+<rect x="380" y="256" width="200" height="80" rx="6" fill="#ffffff"/>
+<rect x="380" y="256" width="200" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<rect x="388" y="264" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+<text x="404" y="273" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CTRL</text>
+<text x="480" y="302" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gatekeeper Controller</text>
+<text x="480" y="318" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">reconciles policy</text>
+
+<!-- Audit Results — store -->
+<rect x="620" y="256" width="144" height="80" rx="6" fill="#ffffff"/>
+<rect x="620" y="256" width="144" height="80" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="628" y="264" width="34" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+<text x="645" y="273" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AUDIT</text>
+<text x="692" y="302" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Audit Results</text>
+<text x="692" y="318" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">periodic scan</text>
+
+<!-- OPA Engine — focal -->
+<rect x="400" y="360" width="160" height="80" rx="6" fill="#ffffff"/>
+<rect x="400" y="360" width="160" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<rect x="408" y="368" width="26" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+<text x="421" y="377" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">OPA</text>
+<text x="480" y="406" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OPA Engine</text>
+<text x="480" y="422" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">policy evaluation</text>
+
+<!-- Rego Policy — store -->
+<rect x="152" y="496" width="128" height="80" rx="6" fill="#ffffff"/>
+<rect x="152" y="496" width="128" height="80" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="160" y="504" width="34" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+<text x="177" y="513" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">REGO</text>
+<text x="216" y="542" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Rego Policy</text>
+<text x="216" y="558" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">constraint logic</text>
+
+<!-- Constraint Templates — store -->
+<rect x="340" y="496" width="128" height="80" rx="6" fill="#ffffff"/>
+<rect x="340" y="496" width="128" height="80" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="348" y="504" width="26" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+<text x="361" y="513" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CRD</text>
+<text x="404" y="536" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Constraint</text>
+<text x="404" y="550" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Templates</text>
+<text x="404" y="566" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">rego + schema</text>
+
+<!-- Constraints — store -->
+<rect x="484" y="496" width="128" height="80" rx="6" fill="#ffffff"/>
+<rect x="484" y="496" width="128" height="80" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="492" y="504" width="26" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+<text x="505" y="513" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CRD</text>
+<text x="548" y="542" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Constraints</text>
+<text x="548" y="558" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">template instance</text>
+
+<!-- Target Resources — store -->
+<rect x="684" y="496" width="128" height="80" rx="6" fill="#ffffff"/>
+<rect x="684" y="496" width="128" height="80" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="692" y="504" width="24" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+<text x="704" y="513" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">OBJ</text>
+<text x="748" y="536" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Target</text>
+<text x="748" y="550" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Resources</text>
+<text x="748" y="566" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">matched objects</text>
+
+</svg>

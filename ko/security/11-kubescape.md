@@ -49,57 +49,7 @@ Kubescape는 개발부터 운영까지 전체 Kubernetes 보안 라이프사이�
 
 ### 아키텍처 개요
 
-```mermaid
-flowchart TB
-    subgraph Input["입력 소스"]
-        CLI[Kubescape CLI]
-        OP[Kubescape Operator]
-        CICD[CI/CD Pipeline]
-    end
-
-    subgraph Frameworks["보안 프레임워크"]
-        NSA[NSA-CISA]
-        CIS[CIS Benchmark]
-        MITRE[MITRE ATT&CK]
-        CUSTOM[커스텀 프레임워크]
-    end
-
-    subgraph Engine["스캔 엔진"]
-        CTRL[Control Evaluator]
-        RISK[Risk Calculator]
-        VULN[Vulnerability Scanner]
-        RBAC[RBAC Analyzer]
-    end
-
-    subgraph Output["출력"]
-        REPORT[리포트 생성]
-        JSON[JSON/SARIF]
-        CLOUD[Kubescape Cloud]
-        ALERT[알림/알람]
-    end
-
-    CLI --> Engine
-    OP --> Engine
-    CICD --> Engine
-
-    Frameworks --> CTRL
-    CTRL --> RISK
-    VULN --> RISK
-    RBAC --> RISK
-
-    RISK --> REPORT
-    REPORT --> JSON
-    REPORT --> CLOUD
-    REPORT --> ALERT
-
-    style CLI fill:#e3f2fd
-    style OP fill:#e3f2fd
-    style CICD fill:#e3f2fd
-    style NSA fill:#fff3e0
-    style CIS fill:#fff3e0
-    style MITRE fill:#fff3e0
-    style RISK fill:#e8f5e9
-```
+![CLI·Operator·CI/CD에서 들어온 스캔 요청이 보안 프레임워크 기준으로 컨트롤 평가·취약점 스캔·RBAC 분석을 거쳐 Risk Calculator에서 통합 위험도를 산정하고, 그 결과가 리포트·JSON/SARIF·Kubescape Cloud·알림으로 출력되는 전체 아키텍처.](../.gitbook/assets/ko-security-11-kubescape-0.png)
 
 ---
 
@@ -364,75 +314,7 @@ kubescape scan framework --use-from custom-framework.yaml
 
 ### 스캔 파이프라인 흐름
 
-```mermaid
-flowchart TB
-    subgraph Input["입력"]
-        CLI[kubescape CLI]
-        MANIFEST[YAML 매니페스트]
-        HELM[Helm 차트]
-        CLUSTER[라이브 클러스터]
-    end
-
-    subgraph Framework["프레임워크 선택"]
-        FW{{"프레임워크"}}
-        NSA[NSA-CISA]
-        CIS[CIS Benchmark]
-        MITRE[MITRE ATT&CK]
-        ALL[AllControls]
-    end
-
-    subgraph Evaluation["컨트롤 평가"]
-        PARSE[리소스 파싱]
-        EVAL[컨트롤 실행]
-        CHECK[규칙 검사]
-    end
-
-    subgraph Scoring["점수 산정"]
-        CALC[리스크 계산]
-        SEV[심각도 분류]
-        PRIO[우선순위 지정]
-    end
-
-    subgraph Output["결과 출력"]
-        PRETTY[Pretty Print]
-        JSON[JSON]
-        SARIF[SARIF]
-        HTML[HTML]
-        PDF[PDF]
-    end
-
-    CLI --> FW
-    MANIFEST --> CLI
-    HELM --> CLI
-    CLUSTER --> CLI
-
-    FW --> NSA
-    FW --> CIS
-    FW --> MITRE
-    FW --> ALL
-
-    NSA --> PARSE
-    CIS --> PARSE
-    MITRE --> PARSE
-    ALL --> PARSE
-
-    PARSE --> EVAL
-    EVAL --> CHECK
-    CHECK --> CALC
-
-    CALC --> SEV
-    SEV --> PRIO
-
-    PRIO --> PRETTY
-    PRIO --> JSON
-    PRIO --> SARIF
-    PRIO --> HTML
-    PRIO --> PDF
-
-    style CLI fill:#e3f2fd
-    style CALC fill:#e8f5e9
-    style JSON fill:#fff3e0
-```
+![CLI 입력이 선택된 프레임워크를 기준으로 리소스 파싱·컨트롤 실행·규칙 검사, 리스크 계산·심각도 분류·우선순위 지정을 거쳐 Pretty Print·JSON·SARIF·HTML/PDF 등 다양한 형식으로 출력되는 단일 스캔 실행 파이프라인.](../.gitbook/assets/ko-security-11-kubescape-1.png)
 
 ### 클러스터 스캔
 
@@ -640,79 +522,7 @@ Dangerous Role Bindings:
 
 ### 지속적 스캔 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph Cluster["Kubernetes 클러스터"]
-        subgraph Operator["Kubescape Operator"]
-            CTRL[Operator Controller]
-            SCHED[Scheduler]
-            CRON[CronJob Trigger]
-        end
-
-        subgraph Scanners["스캐너"]
-            CONFIG[Configuration Scanner]
-            VULN[Vulnerability Scanner]
-            RBAC[RBAC Scanner]
-        end
-
-        subgraph NodeAgents["Node Agents"]
-            NA1[Node Agent 1]
-            NA2[Node Agent 2]
-            NA3[Node Agent 3]
-        end
-
-        subgraph Storage["스토리지"]
-            CRD[(Scan Results CRDs)]
-            BASELINE[(Baseline)]
-        end
-
-        subgraph Targets["스캔 대상"]
-            DEPLOY[Deployments]
-            POD[Pods]
-            SVC[Services]
-            SECRET[Secrets]
-            SA[ServiceAccounts]
-        end
-    end
-
-    subgraph External["외부 연동"]
-        CLOUD[Kubescape Cloud]
-        ALERT[Alerting]
-        SIEM[SIEM/SOAR]
-    end
-
-    CRON -->|"스케줄 트리거"| CTRL
-    CTRL --> SCHED
-    SCHED --> CONFIG
-    SCHED --> VULN
-    SCHED --> RBAC
-
-    CONFIG --> DEPLOY
-    CONFIG --> POD
-    CONFIG --> SVC
-    VULN --> POD
-    RBAC --> SA
-    RBAC --> SECRET
-
-    NA1 -->|"eBPF 이벤트"| CTRL
-    NA2 -->|"eBPF 이벤트"| CTRL
-    NA3 -->|"eBPF 이벤트"| CTRL
-
-    CONFIG --> CRD
-    VULN --> CRD
-    RBAC --> CRD
-
-    CRD <-->|"비교"| BASELINE
-    CRD -->|"변경 탐지"| ALERT
-
-    CRD --> CLOUD
-    ALERT --> SIEM
-
-    style CTRL fill:#e3f2fd
-    style CRD fill:#e8f5e9
-    style BASELINE fill:#fff3e0
-    style ALERT fill:#ffebee
-```
+![클러스터 안에서 CronJob이 Operator Controller를 트리거해 스캐너들이 배포·파드·서비스·Secret·ServiceAccount를 검사하고 Node Agent의 eBPF 이벤트도 Controller로 모여, 그 결과가 CRD로 저장되어 Baseline과 비교되며 변경 감지 시 외부 Alerting과 SIEM/SOAR로 이어지는 구조.](../.gitbook/assets/ko-security-11-kubescape-2.png)
 
 ### Operator 컴포넌트
 
@@ -915,50 +725,7 @@ Priority 3 - Medium (Within 1 Week):
 
 ### CI/CD 워크플로우
 
-```mermaid
-flowchart LR
-    subgraph Dev["개발"]
-        CODE[코드 변경]
-        COMMIT[Git Commit]
-    end
-
-    subgraph CI["CI Pipeline"]
-        TRIGGER[Pipeline 트리거]
-        BUILD[이미지 빌드]
-        SCAN[Kubescape 스캔]
-        THRESHOLD{{"임계값 검사"}}
-    end
-
-    subgraph Gate["보안 게이트"]
-        PASS[Pass]
-        FAIL[Fail]
-    end
-
-    subgraph CD["CD Pipeline"]
-        DEPLOY[배포 진행]
-        BLOCK[배포 차단]
-        NOTIFY[알림 발송]
-    end
-
-    CODE --> COMMIT
-    COMMIT --> TRIGGER
-    TRIGGER --> BUILD
-    BUILD --> SCAN
-
-    SCAN --> THRESHOLD
-
-    THRESHOLD -->|"점수 < 임계값"| PASS
-    THRESHOLD -->|"점수 >= 임계값"| FAIL
-
-    PASS --> DEPLOY
-    FAIL --> BLOCK
-    BLOCK --> NOTIFY
-
-    style SCAN fill:#e3f2fd
-    style THRESHOLD fill:#fff3e0
-    style PASS fill:#e8f5e9
-    style FAIL fill:#ffebee
-```
+![코드 커밋과 이미지 빌드 후 Kubescape 스캔을 거쳐 점수가 임계값을 넘는지 판정하고, 통과하면 배포를 진행하고 실패하면 배포를 차단한 뒤 알림을 보내는 CI/CD 보안 게이트 흐름.](../.gitbook/assets/ko-security-11-kubescape-3.png)
 
 ### GitHub Actions 워크플로우
 
@@ -1563,60 +1330,7 @@ fi
 
 ### 수정 워크플로우
 
-```mermaid
-flowchart TB
-    subgraph Detection["탐지"]
-        SCAN[정기 스캔]
-        ALERT[알림 수신]
-        TRIAGE[심각도 분류]
-    end
-
-    subgraph Analysis["분석"]
-        REVIEW[컨트롤 검토]
-        IMPACT[영향도 분석]
-        DECIDE{{"수정 결정"}}
-    end
-
-    subgraph Remediation["수정"]
-        FIX[코드 수정]
-        EXCEPTION[예외 등록]
-        TEST[테스트]
-        DEPLOY[배포]
-    end
-
-    subgraph Verification["검증"]
-        RESCAN[재스캔]
-        VERIFY{{"통과?"}}
-        CLOSE[이슈 종료]
-        RETRY[재수정]
-    end
-
-    SCAN --> ALERT
-    ALERT --> TRIAGE
-    TRIAGE --> REVIEW
-
-    REVIEW --> IMPACT
-    IMPACT --> DECIDE
-
-    DECIDE -->|"수정 필요"| FIX
-    DECIDE -->|"허용된 리스크"| EXCEPTION
-
-    FIX --> TEST
-    TEST --> DEPLOY
-    EXCEPTION --> CLOSE
-
-    DEPLOY --> RESCAN
-    RESCAN --> VERIFY
-
-    VERIFY -->|"통과"| CLOSE
-    VERIFY -->|"실패"| RETRY
-    RETRY --> FIX
-
-    style SCAN fill:#e3f2fd
-    style FIX fill:#e8f5e9
-    style EXCEPTION fill:#fff3e0
-    style CLOSE fill:#e8f5e9
-```
+![정기 스캔이나 알림으로 발견된 문제를 분류·분석한 뒤 수정이 필요하면 코드를 고쳐 배포하고 재스캔으로 검증하며 실패 시 다시 수정하고, 위험이 허용 가능하면 예외로 등록해 이슈를 종료하는 반복적 수정(Remediation) 워크플로.](../.gitbook/assets/ko-security-11-kubescape-4.png)
 
 ### 보안 강화 체크리스트
 

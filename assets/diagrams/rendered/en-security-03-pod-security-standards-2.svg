@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fc-title fc-desc">
+      <title id="fc-title">PSS migration steps</title>
+      <desc id="fc-desc">Flowchart of the seven-step migration path from PodSecurityPolicy to Pod Security Standards: analyze the current state, map workloads to PSS profiles, validate in a test environment, apply the profile in warn and audit mode, modify non-compliant workloads, switch to enforce mode, and finally remove PSP.</desc>
+
+      <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+        <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+          <circle cx="11" cy="11" r="0.8" fill="rgba(35,47,62,0.10)"/>
+        </pattern>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="960" height="600" fill="#ffffff"/>
+      <rect width="960" height="600" fill="url(#dots)" opacity="0.55"/>
+
+      <!-- Layout: two columns, serpentine flow.
+           Col A center x=280, Col B center x=680. Node 120x56, top y at 56,164,272,380 (col A rows 1-4 minus last),
+           Steps 1-4 down column A, step4->step5 crosses to column B row4, steps5-7 continue...
+           Simpler: single column, 7 rows, gap 20 between rows within 600 height budget won't fit (7*56+6*20=512, plus header/legend). Use it. -->
+
+      <!-- Single column, x center = 480, node w=280 h=48, rows at y = 48,124,200,276,352,428,504 (76px gap) -->
+
+      <!-- Arrows first -->
+      <line x1="480" y1="72" x2="480" y2="100" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="480" y1="148" x2="480" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="480" y1="224" x2="480" y2="252" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="480" y1="300" x2="480" y2="328" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="480" y1="376" x2="480" y2="404" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="480" y1="452" x2="480" y2="480" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+      <!-- Step 1 -->
+      <rect x="340" y="24" width="280" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="348" y="32" width="20" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.35)" stroke-width="0.8"/>
+      <text x="358" y="42" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">1</text>
+      <text x="490" y="52" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Analyze current state</text>
+
+      <!-- Step 2 -->
+      <rect x="340" y="100" width="280" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="348" y="108" width="20" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.35)" stroke-width="0.8"/>
+      <text x="358" y="118" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">2</text>
+      <text x="490" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Map to PSS profiles</text>
+
+      <!-- Step 3 -->
+      <rect x="340" y="176" width="280" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="348" y="184" width="20" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.35)" stroke-width="0.8"/>
+      <text x="358" y="194" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">3</text>
+      <text x="490" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Validate in test environment</text>
+
+      <!-- Step 4 -->
+      <rect x="340" y="252" width="280" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="348" y="260" width="20" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.35)" stroke-width="0.8"/>
+      <text x="358" y="270" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">4</text>
+      <text x="490" y="280" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Apply with warn / audit mode</text>
+
+      <!-- Step 5 -->
+      <rect x="340" y="328" width="280" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="348" y="336" width="20" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.35)" stroke-width="0.8"/>
+      <text x="358" y="346" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">5</text>
+      <text x="490" y="356" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Modify workloads</text>
+
+      <!-- Step 6 -->
+      <rect x="340" y="404" width="280" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="348" y="412" width="20" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.35)" stroke-width="0.8"/>
+      <text x="358" y="422" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">6</text>
+      <text x="490" y="432" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Switch to enforce mode</text>
+
+      <!-- Step 7 (focal — final, coral) -->
+      <rect x="340" y="480" width="280" height="48" rx="6" fill="rgba(255,153,0,0.08)" stroke="#EC7211" stroke-width="1"/>
+      <rect x="348" y="488" width="20" height="14" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+      <text x="358" y="498" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">7</text>
+      <text x="490" y="508" fill="#232F3E" font-size="12" font-weight="700" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Remove PSP</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="552" x2="920" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="40" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+      <rect x="40" y="580" width="24" height="12" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="72" y="590" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Migration step</text>
+
+      <line x1="220" y1="586" x2="248" y2="586" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <text x="256" y="590" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Final removal step</text>
+    </svg>

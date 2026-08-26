@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="spire-arch-title spire-arch-desc">
+<title id="spire-arch-title">SPIRE control plane and node topology</title>
+<desc id="spire-arch-desc">Architecture diagram showing the SPIRE Server and its data store issuing identities to SPIRE Agents on two Kubernetes nodes, fed by a Kubernetes registrar and a SPIFFE CSI driver that mounts SVIDs onto each node.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- ===== Zones ===== -->
+<rect x="300" y="40" width="360" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="418" y="44" width="124" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">EXTERNAL COMPONENTS</text>
+
+<rect x="300" y="208" width="360" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="424" y="212" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="221" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CONTROL PLANE</text>
+
+<rect x="40" y="400" width="380" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="176" y="404" width="108" height="12" rx="2" fill="#ffffff"/>
+<text x="230" y="413" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KUBERNETES NODE 1</text>
+
+<rect x="460" y="400" width="380" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="596" y="404" width="108" height="12" rx="2" fill="#ffffff"/>
+<text x="650" y="413" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KUBERNETES NODE 2</text>
+
+<!-- ===== Arrows (drawn before nodes) ===== -->
+
+<!-- A1 SERVER -> DATASTORE -->
+<line x1="450" y1="268" x2="490" y2="268" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="452" y="252" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="470" y="261" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WRITE</text>
+
+<!-- A2 REGISTRAR -> SERVER (straight, shared x=390) -->
+<line x1="390" y1="120" x2="390" y2="240" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="396" y="172" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="432" y="181" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AUTO-REGISTER</text>
+
+<!-- A3 WORKLOADS1 -> AGENT1 -->
+<line x1="260" y1="460" x2="200" y2="460" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="206" y="444" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="230" y="453" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WORKLOAD API</text>
+
+<!-- A4 WORKLOAD3 -> AGENT2 -->
+<line x1="600" y1="460" x2="700" y2="460" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="626" y="444" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="650" y="453" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WORKLOAD API</text>
+
+<!-- A5 AGENT1 -> SERVER -->
+<path d="M107,432 V368 Q107,360 115,360 H352 Q360,360 360,352 V296" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="150" y="336" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="176" y="345" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ATTEST</text>
+
+<!-- A6 AGENT2 -> SERVER -->
+<path d="M740,432 V368 Q740,360 732,360 H428 Q420,360 420,352 V296" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="558" y="336" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="584" y="345" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ATTEST</text>
+
+<!-- A7 CSI -> AGENT1 (dashed, optional/infra) -->
+<path d="M520,120 V176 Q520,184 512,184 H398 a8,8 0 0,1 -16,0 H161 Q153,184 153,192 V352 a8,8 0 0,0 0,16 V432" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="242" y="168" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="268" y="177" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MOUNT</text>
+
+<!-- A8 CSI -> AGENT2 (dashed) -->
+<path d="M620,120 V176 Q620,184 628,184 H770 Q778,184 778,192 V432" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="700" y="168" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="726" y="177" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MOUNT</text>
+
+<!-- ===== Nodes ===== -->
+
+<!-- REGISTRAR (external) -->
+<rect x="320" y="64" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="320" y="64" width="140" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="328" y="72" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+<text x="342" y="81" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+<text x="390" y="98" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">K8s Registrar</text>
+<text x="390" y="112" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">auto-registration</text>
+
+<!-- CSI (external) -->
+<rect x="500" y="64" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="500" y="64" width="140" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="508" y="72" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+<text x="522" y="81" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+<text x="570" y="98" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SPIFFE CSI Driver</text>
+<text x="570" y="112" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">mounts SVIDs</text>
+
+<!-- SERVER (focal) -->
+<rect x="330" y="240" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="330" y="240" width="120" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="338" y="248" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+<text x="352" y="257" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+<text x="390" y="274" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SPIRE Server</text>
+<text x="390" y="288" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">issues SVIDs</text>
+
+<!-- DATASTORE (store) -->
+<rect x="490" y="240" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="490" y="240" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="498" y="248" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+<text x="512" y="257" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DB</text>
+<text x="560" y="274" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Data Store</text>
+<text x="560" y="288" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">SQLite / PostgreSQL</text>
+
+<!-- AGENT1 (backend) -->
+<rect x="60" y="432" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="432" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="68" y="440" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="82" y="449" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DS</text>
+<text x="130" y="466" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SPIRE Agent</text>
+<text x="130" y="480" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">node 1</text>
+
+<!-- WORKLOADS1 (input, merged pods A+B) -->
+<rect x="260" y="432" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="260" y="432" width="140" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="268" y="440" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+<text x="282" y="449" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+<text x="330" y="466" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Workload Pods A · B</text>
+<text x="330" y="480" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">on node 1</text>
+
+<!-- WORKLOAD3 (input) -->
+<rect x="480" y="432" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="480" y="432" width="120" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="488" y="440" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+<text x="502" y="449" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+<text x="540" y="466" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Workload Pod C</text>
+<text x="540" y="480" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">on node 2</text>
+
+<!-- AGENT2 (backend) -->
+<rect x="700" y="432" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="700" y="432" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="708" y="440" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="722" y="449" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DS</text>
+<text x="760" y="466" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SPIRE Agent</text>
+<text x="760" y="480" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">node 2</text>
+
+<!-- ===== Legend ===== -->
+<line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+<rect x="40" y="568" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="60" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Focal server</text>
+
+<rect x="180" y="568" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="200" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Agent process</text>
+
+<rect x="330" y="568" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="350" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Data store</text>
+
+<rect x="440" y="568" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="460" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Workload</text>
+
+<rect x="560" y="568" width="14" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="580" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">External component</text>
+
+<line x1="740" y1="574" x2="768" y2="574" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<text x="776" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Infra / mount path</text>
+
+</svg>
