@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-basics-05-ebpf-fundamentals-4-title en-basics-05-ebpf-fundamentals-4-desc">
+<title id="en-basics-05-ebpf-fundamentals-4-title">XDP packet verdicts</title>
+<desc id="en-basics-05-ebpf-fundamentals-4-desc">Diagram showing a packet arriving at the NIC and passing through an XDP program, which returns one of five verdicts: drop the packet, pass it to the kernel network stack, transmit it back out the same NIC, redirect it to another interface, or trigger error handling.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+<text x="40" y="52" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">FLOWCHART · XDP HOOK</text>
+<text x="40" y="80" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">XDP packet verdicts</text>
+<rect x="40" y="252" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="40" y="252" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="110.0" y="276.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">NIC</text>
+<text x="110.0" y="294.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">incoming packet</text>
+<line x1="180" y1="280.0" x2="280" y2="280.0" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="280" y="140" width="200" height="280" rx="6" fill="#ffffff"/>
+<rect x="280" y="140" width="200" height="280" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="380.0" y="276.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">XDP Program</text>
+<text x="380.0" y="294.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">runs pre-network-stack</text>
+<path d="M 480,150 H 564.0 Q 570.0,150 570.0,144 V 130.0 Q 570.0,124.0 576.0,124.0 H 660" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="475.0" y="132" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="525.0" y="141" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">XDP_DROP</text>
+<rect x="660" y="100" width="260" height="48" rx="6" fill="#ffffff"/>
+<rect x="660" y="100" width="260" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790.0" y="128.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Drop Packet</text>
+<path d="M 480,210 H 564.0 Q 570.0,210 570.0,204 V 198.0 Q 570.0,192.0 576.0,192.0 H 660" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="475.0" y="192" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="525.0" y="201" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">XDP_PASS</text>
+<rect x="660" y="168" width="260" height="48" rx="6" fill="#ffffff"/>
+<rect x="660" y="168" width="260" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790.0" y="196.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pass to Kernel Stack</text>
+<path d="M 480,280 H 564.0 Q 570.0,280 570.0,274 V 266.0 Q 570.0,260.0 576.0,260.0 H 660" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="475.0" y="262" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="525.0" y="271" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">XDP_TX</text>
+<rect x="660" y="236" width="260" height="48" rx="6" fill="#ffffff"/>
+<rect x="660" y="236" width="260" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790.0" y="264.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Return to Same NIC</text>
+<path d="M 480,350 H 564.0 Q 570.0,350 570.0,344 V 334.0 Q 570.0,328.0 576.0,328.0 H 660" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="475.0" y="332" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="525.0" y="341" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">XDP_REDIRECT</text>
+<rect x="660" y="304" width="260" height="48" rx="6" fill="#ffffff"/>
+<rect x="660" y="304" width="260" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790.0" y="332.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Redirect to Interface</text>
+<path d="M 480,410 H 564.0 Q 570.0,410 570.0,404 V 402.0 Q 570.0,396.0 576.0,396.0 H 660" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="475.0" y="392" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="525.0" y="401" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">XDP_ABORTED</text>
+<rect x="660" y="372" width="260" height="48" rx="6" fill="#ffffff"/>
+<rect x="660" y="372" width="260" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790.0" y="400.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Error Handling</text>
+<line x1="40" y1="544" x2="920" y2="544" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="560" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="116" y="550" width="16" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="150" y="559" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">XDP program (in-driver hook)</text>
+<rect x="346" y="550" width="16" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="380" y="559" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Verdict / outcome</text>
+</svg>

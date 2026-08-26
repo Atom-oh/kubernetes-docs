@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-basics-05-ebpf-fundamentals-5-title ko-basics-05-ebpf-fundamentals-5-desc">
+    <title id="ko-basics-05-ebpf-fundamentals-5-title">Cilium eBPF 데이터플레인 아키텍처</title>
+    <desc id="ko-basics-05-ebpf-fundamentals-5-desc">Cilium Agent가 Kubernetes API로부터 받은 설정을 eBPF 데이터플레인으로 내려보내고, XDP·TC·소켓 프로그램이 각각 DDoS 방어, 네트워크 정책, 로드 밸런싱, 소켓 레벨 라우팅 기능을 구현하는 과정을 보여주는 아키텍처 다이어그램.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="190" y="8" width="580" height="340" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="206" y="12" width="260" height="12" rx="2" fill="#ffffff"/>
+<text x="336.0" y="21" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">CILIUM ARCHITECTURE / Cilium 아키텍처</text>
+<rect x="152" y="380" width="656" height="100" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="168" y="384" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="238.0" y="393" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">FUNCTIONS / 기능</text>
+<line x1="480" y1="92" x2="480" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="164" x2="480" y2="184" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 480,236 V 252 Q 480,260 472,260 H 308 Q 300,260 300,252 V 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="236" x2="480" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 480,236 V 252 Q 480,260 488,260 H 652 Q 660,260 660,252 V 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 300,332 V 364 Q 300,372 292,372 H 248 Q 240,372 240,364 V 412" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 460,332 V 364 Q 460,372 452,372 H 408 Q 400,372 400,364 V 412" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 500,332 V 364 Q 500,372 508,372 H 552 Q 560,372 560,364 V 412" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 660,332 V 364 Q 660,372 668,372 H 712 Q 720,372 720,364 V 412" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="400" y="40" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="400" y="40" width="160" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="60.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubernetes</text>
+<text x="480.0" y="74.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">API</text>
+<rect x="400" y="112" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="400" y="112" width="160" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="132.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cilium</text>
+<text x="480.0" y="146.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Agent</text>
+<rect x="400" y="184" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="400" y="184" width="160" height="52" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480.0" y="204.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF</text>
+<text x="480.0" y="218.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">데이터플레인</text>
+<rect x="230" y="280" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="230" y="280" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300.0" y="310.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">XDP 프로그램</text>
+<rect x="410" y="280" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="410" y="280" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="310.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TC 프로그램</text>
+<rect x="590" y="280" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="590" y="280" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="300.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Socket</text>
+<text x="660.0" y="314.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프로그램</text>
+<rect x="176" y="412" width="128" height="52" rx="6" fill="#ffffff"/>
+<rect x="176" y="412" width="128" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="240.0" y="442.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">DDoS 방어</text>
+<rect x="336" y="412" width="128" height="52" rx="6" fill="#ffffff"/>
+<rect x="336" y="412" width="128" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="400.0" y="442.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">네트워크 정책</text>
+<rect x="496" y="412" width="128" height="52" rx="6" fill="#ffffff"/>
+<rect x="496" y="412" width="128" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="560.0" y="442.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">로드 밸런싱</text>
+<rect x="656" y="412" width="128" height="52" rx="6" fill="#ffffff"/>
+<rect x="656" y="412" width="128" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="720.0" y="432.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">소켓 레벨</text>
+<text x="720.0" y="446.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">라우팅</text>
+  </svg>

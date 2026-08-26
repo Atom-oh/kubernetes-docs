@@ -51,25 +51,7 @@ sudo bpftool feature
 
 > **Key Concept**: eBPF allows you to extend and observe kernel behavior without modifying kernel source code or loading kernel modules.
 
-```mermaid
-graph TB
-    subgraph "User Space"
-        A[Write eBPF Program] --> B[Compile]
-        B --> C[Load into Kernel via System Call]
-    end
-
-    subgraph "Kernel Space"
-        C --> D[Verifier]
-        D --> E[JIT Compilation]
-        E --> F[eBPF Program Execution]
-        F --> G[Event Hook Points]
-    end
-
-    G --> H[Network Packets]
-    G --> I[System Calls]
-    G --> J[Function Calls]
-    G --> K[Tracepoints]
-```
+![A pipeline diagram showing an eBPF program's journey from user-space source code through compilation, kernel verification, JIT compilation, and execution to the event hook point where it runs.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-0.png)
 
 ### 1.2 Evolution from Traditional BPF to eBPF
 
@@ -105,20 +87,7 @@ eBPF is revolutionary for the following reasons:
 4. **Dynamic loading**: Load/unload programs without reboot
 5. **Production stability**: Safe execution without crashes or infinite loops
 
-```mermaid
-graph LR
-    subgraph "Traditional Approach"
-        A1[Develop Kernel Module] --> B1[Compile Kernel]
-        B1 --> C1[Reboot Required]
-        C1 --> D1[System Instability Risk]
-    end
-
-    subgraph "eBPF Approach"
-        A2[Write eBPF Program] --> B2[Runtime Load]
-        B2 --> C2[Execute After Verification]
-        C2 --> D2[Safe Execution Guaranteed]
-    end
-```
+![A side-by-side comparison showing the traditional kernel-module path, which risks a reboot and instability, against the eBPF path, which loads and verifies code at runtime for guaranteed safe execution.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-1.png)
 
 ### 1.4 eBPF vs Kernel Module Comparison
 
@@ -139,19 +108,7 @@ graph LR
 
 ### 2.1 eBPF Execution Flow
 
-```mermaid
-flowchart TB
-    A[Write eBPF Program in C/Rust] --> B[Compile to BPF Bytecode with Clang/LLVM]
-    B --> C[Load into Kernel via bpf System Call]
-    C --> D{Verifier}
-    D -->|Fail| E[Load Rejected + Error Message]
-    D -->|Success| F[JIT Compiler]
-    F --> G[Native Machine Code]
-    G --> H[Attach to Event Hook]
-    H --> I[Execute on Event Trigger]
-    I --> J[Store Data in eBPF Map]
-    J --> K[Read Data from User Space]
-```
+![A flowchart of an eBPF program moving from source code through the kernel verifier and JIT compiler to execution at an event hook, storing results in a map that user space reads back, with a rejected branch when verification fails.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-2.png)
 
 ### 2.2 Verifier
 
@@ -258,20 +215,7 @@ int bpf_get_current_comm(void *buf, u32 size);  // Process name
 
 ### 2.6 Program Lifecycle
 
-```mermaid
-stateDiagram-v2
-    [*] --> Write: Write code in C/Rust
-    Write --> Compile: Clang/LLVM
-    Compile --> Load: bpf() syscall
-    Load --> Verify: Run verifier
-    Verify --> JIT: Verification success
-    Verify --> [*]: Verification failure
-    JIT --> Attach: Attach to hook point
-    Attach --> Execute: On event trigger
-    Execute --> Execute: Repeated execution
-    Attach --> Detach: Explicit detach
-    Detach --> [*]: Program unload
-```
+![State machine diagram of an eBPF program's lifecycle: written code is compiled and loaded via the bpf() syscall, then the verifier either rejects it or passes it to JIT compilation; the JIT-compiled program attaches to a hook point where it either executes repeatedly on each event trigger or is explicitly detached, unloading the program.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-3.png)
 
 ---
 
@@ -281,15 +225,7 @@ stateDiagram-v2
 
 XDP is the fastest way to process packets at the network driver level.
 
-```mermaid
-graph LR
-    A[NIC] --> B{XDP Program}
-    B -->|XDP_DROP| C[Drop Packet]
-    B -->|XDP_PASS| D[Pass to Kernel Stack]
-    B -->|XDP_TX| E[Return to Same NIC]
-    B -->|XDP_REDIRECT| F[Redirect to Another Interface]
-    B -->|XDP_ABORTED| G[Error Handling]
-```
+![Diagram showing a packet arriving at the NIC and passing through an XDP program, which returns one of five verdicts: drop the packet, pass it to the kernel network stack, transmit it back out the same NIC, redirect it to another interface, or trigger error handling.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-4.png)
 
 **XDP Operation Modes**:
 | Mode | Description | Performance |
@@ -624,23 +560,7 @@ bpftool prog show id <ID> --pretty
 
 Cilium is the most representative Kubernetes CNI (Container Network Interface) utilizing eBPF.
 
-```mermaid
-graph TB
-    subgraph "Cilium Architecture"
-        A[Kubernetes API] --> B[Cilium Agent]
-        B --> C[eBPF Dataplane]
-        C --> D[XDP Programs]
-        C --> E[TC Programs]
-        C --> F[Socket Programs]
-    end
-
-    subgraph "Features"
-        D --> G[DDoS Protection]
-        E --> H[Network Policy]
-        E --> I[Load Balancing]
-        F --> J[Socket-level Routing]
-    end
-```
+![An architecture diagram showing Cilium's control plane reading Kubernetes policy and programming a single eBPF dataplane that implements DDoS protection, network policy and load balancing, and socket-level routing.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-5.png)
 
 #### kube-proxy Replacement
 
@@ -775,23 +695,7 @@ eBPF enables deep observation of system and application behavior. Unlike traditi
 
 Hubble is a network observability platform built into Cilium.
 
-```mermaid
-graph TB
-    subgraph "Hubble Architecture"
-        A[Cilium Agent] --> B[eBPF Dataplane]
-        B --> C[Hubble Observer]
-        C --> D[Hubble Relay]
-        D --> E[Hubble UI]
-        D --> F[Hubble CLI]
-    end
-
-    subgraph "Collected Data"
-        B --> G[Network Flows]
-        B --> H[DNS Queries]
-        B --> I[HTTP Requests]
-        B --> J[Policy Decisions]
-    end
-```
+![An architecture diagram showing Cilium's eBPF dataplane collecting network flow, DNS, HTTP, and policy data that Hubble Observer and Relay aggregate for the Hubble CLI and UI.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-6.png)
 
 ```bash
 # Install Hubble
@@ -917,20 +821,7 @@ curl localhost:9103/metrics | grep kepler
 | **Data depth** | Application level | Kernel level |
 | **Protocol support** | Explicit support needed | Automatic parsing |
 
-```mermaid
-graph LR
-    subgraph "Traditional Approach"
-        A1[Application] --> B1[SDK/Agent]
-        B1 --> C1[Metrics Collection]
-        C1 --> D1[Monitoring Backend]
-    end
-
-    subgraph "eBPF Approach"
-        A2[Application] --> B2[Kernel]
-        B2 --> C2[eBPF Program]
-        C2 --> D2[Monitoring Backend]
-    end
-```
+![A side-by-side comparison showing traditional monitoring, which requires an in-process SDK or agent, against eBPF-based monitoring, which observes an unmodified application from a kernel-side hook.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-7.png)
 
 ---
 
@@ -940,23 +831,7 @@ graph LR
 
 Tetragon is an eBPF-based runtime security solution provided by the Cilium project.
 
-```mermaid
-graph TB
-    subgraph "Tetragon Architecture"
-        A[Tetragon Agent] --> B[eBPF Sensors]
-        B --> C[Process Tracing]
-        B --> D[Network Tracing]
-        B --> E[File Tracing]
-    end
-
-    subgraph "Policy Enforcement"
-        C --> F[Process Kill]
-        D --> G[Network Block]
-        E --> H[File Access Deny]
-    end
-
-    I[TracingPolicy CRD] --> A
-```
+![An architecture diagram showing a TracingPolicy custom resource configuring the Tetragon agent's eBPF sensors, which trace and enforce policy on process execution, network activity, and file access in the kernel.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-8.png)
 
 ```bash
 # Install Tetragon

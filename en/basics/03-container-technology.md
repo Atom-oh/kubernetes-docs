@@ -188,21 +188,7 @@ Container images are immutable templates containing applications and their depen
 
 Container images are composed of a stack of multiple layers. Each layer represents changes to the previous layer. This layering approach makes image sharing and caching efficient.
 
-```mermaid
-flowchart TB
-    app["Application Layer<br/>Application code"]
-    dep["Dependencies Layer<br/>npm packages, pip packages, etc."]
-    runtime["Runtime Layer<br/>Node.js, Python, etc."]
-    os["OS Layer<br/>Ubuntu, Alpine, etc."]
-
-    app --> dep --> runtime --> os
-
-    style app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    style dep fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    style runtime fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    style os fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-
-```
+![A layer stack showing how a container image is built from an OS layer up through a runtime layer and a dependencies layer to the application layer, with the application layer highlighted as the layer developers change most often.](../.gitbook/assets/en-basics-03-container-technology-0.png)
 
 ### Image Registries
 

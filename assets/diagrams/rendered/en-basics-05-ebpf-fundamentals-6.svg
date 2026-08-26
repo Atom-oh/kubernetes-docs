@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-basics-05-ebpf-fundamentals-6-title en-basics-05-ebpf-fundamentals-6-desc">
+<title id="en-basics-05-ebpf-fundamentals-6-title">Hubble observability architecture</title>
+<desc id="en-basics-05-ebpf-fundamentals-6-desc">Architecture diagram showing the Cilium agent programming the eBPF dataplane, which both emits collected data (flows, DNS queries, HTTP requests, and policy decisions) and feeds the Hubble Observer; the observer's data reaches Hubble Relay, which aggregates it for the Hubble CLI and the Hubble UI.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+<text x="40" y="52" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ARCHITECTURE · HUBBLE</text>
+<text x="40" y="80" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Hubble architecture</text>
+<rect x="24" y="116" width="912" height="168" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="120" width="130" height="12" rx="2" fill="#ffffff"/>
+<text x="101.0" y="129" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">HUBBLE ARCHITECTURE</text>
+<rect x="60" y="156" width="168" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="156" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="144.0" y="180.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cilium Agent</text>
+<text x="144.0" y="198.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">control plane</text>
+<line x1="228" y1="184.0" x2="280" y2="184.0" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="280" y="156" width="168" height="56" rx="6" fill="#ffffff"/>
+<rect x="280" y="156" width="168" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="364.0" y="180.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF Dataplane</text>
+<text x="364.0" y="198.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kernel programs</text>
+<line x1="448" y1="184.0" x2="500" y2="184.0" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="500" y="156" width="168" height="56" rx="6" fill="#ffffff"/>
+<rect x="500" y="156" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="584.0" y="180.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Hubble Observer</text>
+<text x="584.0" y="198.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">flow collection</text>
+<rect x="500" y="340" width="168" height="64" rx="6" fill="#ffffff"/>
+<rect x="500" y="340" width="168" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="584.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Hubble Relay</text>
+<text x="584.0" y="386.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cluster-wide aggregation</text>
+<line x1="584.0" y1="212" x2="584.0" y2="340" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 560.0,404 V 416 Q 560.0,424 552.0,424 H 488.0 Q 480.0,424 480.0,432 V 460" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="380" y="460" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="380" y="460" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="488.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Hubble CLI</text>
+<text x="480.0" y="506.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kubectl-style query</text>
+<path d="M 608.0,404 V 432 Q 608.0,440 616.0,440 H 752.0 Q 760.0,440 760.0,448 V 460" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="660" y="460" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="660" y="460" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="760.0" y="488.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Hubble UI</text>
+<text x="760.0" y="506.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">flow visualization</text>
+<rect x="150" y="340" width="260" height="64" rx="6" fill="#ffffff"/>
+<rect x="150" y="340" width="260" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Collected Data</text>
+<text x="280.0" y="386.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">flows, DNS, HTTP, policy</text>
+<path d="M 364.0,212 V 252 Q 364.0,260 356.0,260 H 288.0 Q 280.0,260 280.0,268 V 340" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="40" y1="544" x2="920" y2="544" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="560" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="116" y="550" width="16" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="150" y="559" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">eBPF dataplane (data source)</text>
+<rect x="346" y="550" width="16" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="380" y="559" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Observability component</text>
+</svg>

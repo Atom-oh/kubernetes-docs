@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-basics-05-ebpf-fundamentals-1-title ko-basics-05-ebpf-fundamentals-1-desc">
+    <title id="ko-basics-05-ebpf-fundamentals-1-title">커널 모듈 방식과 eBPF 방식 비교</title>
+    <desc id="ko-basics-05-ebpf-fundamentals-1-desc">기존 커널 모듈 개발 방식은 재부팅과 시스템 불안정 위험을 동반하지만, eBPF 방식은 런타임 로드와 검증을 거쳐 안전한 실행을 보장한다는 것을 비교하는 다이어그램.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="20" y="80" width="920" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="84" width="220" height="12" rx="2" fill="#ffffff"/>
+<text x="146.0" y="93" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">EXISTING WAY / 기존 방식</text>
+<rect x="20" y="232" width="920" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="236" width="200" height="12" rx="2" fill="#ffffff"/>
+<text x="136.0" y="245" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">eBPF WAY / eBPF 방식</text>
+<line x1="244" y1="144" x2="268" y2="144" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="468" y1="144" x2="492" y2="144" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="692" y1="144" x2="716" y2="144" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="244" y1="296" x2="268" y2="296" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<line x1="468" y1="296" x2="492" y2="296" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<line x1="692" y1="296" x2="716" y2="296" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="44" y="112" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="44" y="112" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="144.0" y="138.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">커널 모듈</text>
+<text x="144.0" y="152.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">개발</text>
+<rect x="268" y="112" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="268" y="112" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="368.0" y="148.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">커널 컴파일</text>
+<rect x="492" y="112" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="492" y="112" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="592.0" y="148.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">재부팅 필요</text>
+<rect x="716" y="112" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="716" y="112" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="816.0" y="138.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">시스템</text>
+<text x="816.0" y="152.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">불안정 위험</text>
+<rect x="44" y="264" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="44" y="264" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="144.0" y="290.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF</text>
+<text x="144.0" y="304.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프로그램 작성</text>
+<rect x="268" y="264" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="268" y="264" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="368.0" y="300.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">런타임 로드</text>
+<rect x="492" y="264" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="492" y="264" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="592.0" y="300.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">검증 후 실행</text>
+<rect x="716" y="264" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="716" y="264" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="816.0" y="290.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">안전한</text>
+<text x="816.0" y="304.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">실행 보장</text>
+  </svg>

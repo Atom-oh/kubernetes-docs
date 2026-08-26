@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-basics-05-ebpf-fundamentals-8-title ko-basics-05-ebpf-fundamentals-8-desc">
+    <title id="ko-basics-05-ebpf-fundamentals-8-title">Tetragon 런타임 보안 아키텍처</title>
+    <desc id="ko-basics-05-ebpf-fundamentals-8-desc">TracingPolicy CRD로 정의된 정책에 따라 Tetragon Agent의 eBPF 센서가 프로세스, 네트워크, 파일 활동을 추적하고 위반 시 프로세스 킬, 네트워크 차단, 파일 접근 거부로 정책을 즉시 적용하는 과정을 보여주는 아키텍처 다이어그램.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="214" y="60" width="532" height="288" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="230" y="64" width="270" height="12" rx="2" fill="#ffffff"/>
+<text x="365.0" y="73" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">TETRAGON ARCHITECTURE / Tetragon 아키텍처</text>
+<rect x="214" y="364" width="532" height="100" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="230" y="368" width="250" height="12" rx="2" fill="#ffffff"/>
+<text x="355.0" y="377" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">POLICY ENFORCEMENT / 정책 적용</text>
+<line x1="480" y1="60" x2="480" y2="92" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<line x1="480" y1="144" x2="480" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 440,228 V 246 Q 440,254 432,254 H 316 Q 308,254 308,246 V 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="228" x2="480" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 520,228 V 246 Q 520,254 528,254 H 644 Q 652,254 652,246 V 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="308" y1="332" x2="308" y2="396" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="332" x2="480" y2="396" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="652" y1="332" x2="652" y2="396" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="380" y="8" width="200" height="52" rx="6" fill="#ffffff"/>
+<rect x="380" y="8" width="200" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="28.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TracingPolicy</text>
+<text x="480.0" y="42.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CRD</text>
+<rect x="400" y="92" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="400" y="92" width="160" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="112.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Tetragon</text>
+<text x="480.0" y="126.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Agent</text>
+<rect x="400" y="176" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="400" y="176" width="160" height="52" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480.0" y="206.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF 센서</text>
+<rect x="238" y="280" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="238" y="280" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="308.0" y="310.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프로세스 추적</text>
+<rect x="410" y="280" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="410" y="280" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="310.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">네트워크 추적</text>
+<rect x="582" y="280" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="582" y="280" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="652.0" y="310.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">파일 추적</text>
+<rect x="238" y="396" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="238" y="396" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="308.0" y="426.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프로세스 킬</text>
+<rect x="410" y="396" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="410" y="396" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="426.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">네트워크 차단</text>
+<rect x="582" y="396" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="582" y="396" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="652.0" y="426.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">파일 접근 거부</text>
+  </svg>
