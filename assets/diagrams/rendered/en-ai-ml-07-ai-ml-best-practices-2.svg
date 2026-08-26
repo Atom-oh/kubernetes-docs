@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="seq-title seq-desc">
+<title id="seq-title">AI/ML pod cold-start sequence</title>
+<desc id="seq-desc">Sequence diagram showing why a large AI/ML pod takes 5 to 15 minutes to become ready: the scheduler places the pod, the kubelet pulls a 10 to 50 GB image over 2 to 10 minutes, the container is created, and the application spends 1 to 5 minutes loading model weights into GPU memory before passing its health check.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- Header -->
+<text x="40" y="28" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">POD COLD START · SEQUENCE</text>
+<text x="40" y="50" fill="#232F3E" font-size="18" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Where 5–15 minutes go before a large AI/ML pod is ready</text>
+
+<!-- Lifelines: x-centers 88, 284, 480, 676, 872 -->
+<line x1="88"  y1="104" x2="88"  y2="524" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="284" y1="104" x2="284" y2="524" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="480" y1="104" x2="480" y2="524" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="676" y1="104" x2="676" y2="524" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="872" y1="104" x2="872" y2="524" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- Activation bars -->
+<rect x="280" y="140" width="8" height="300" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="476" y="200" width="8" height="60"  fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="672" y="320" width="8" height="120" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="868" y="380" width="8" height="76"  fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+<!-- M1 Scheduler -> Kubelet: Pod Scheduled -->
+<line x1="88" y1="140" x2="280" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="140" y="120" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="184" y="130" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD SCHEDULED</text>
+
+<!-- M2 Kubelet -> Registry: Pull Image Request -->
+<line x1="288" y1="200" x2="476" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="332" y="180" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="382" y="190" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PULL IMAGE REQUEST</text>
+
+<!-- M3 Registry -->> Kubelet: Image Layers (return, dashed) -->
+<line x1="476" y1="260" x2="288" y2="260" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="332" y="240" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="372" y="250" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">IMAGE LAYERS</text>
+
+<!-- M4 Kubelet -> Container: Create Container -->
+<line x1="288" y1="320" x2="672" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="436" y="300" width="108" height="12" rx="2" fill="#ffffff"/>
+<text x="490" y="310" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CREATE CONTAINER</text>
+
+<!-- M5 Container -> App: Start Process (headline, accent) -->
+<line x1="680" y1="380" x2="868" y2="380" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="732" y="360" width="84" height="12" rx="2" fill="#ffffff"/>
+<text x="774" y="370" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">START PROCESS</text>
+
+<!-- M6 App -->> Container: Ready (return, dashed) -->
+<line x1="868" y1="440" x2="680" y2="440" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="750" y="420" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="774" y="430" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">READY</text>
+
+<!-- Timing annotations (editorial asides, right of each interval) -->
+<text x="292" y="172" fill="#7D8998" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic">Node selection: ~100ms</text>
+<text x="440" y="232" fill="#7D8998" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic">Image pull: 2–10 min (10–50GB image)</text>
+<text x="552" y="352" fill="#7D8998" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic">Container creation: ~5s</text>
+<text x="824" y="404" fill="#7D8998" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic" text-anchor="end">Model loading into GPU memory: 1–5 min</text>
+<text x="798" y="464" fill="#7D8998" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic" text-anchor="end">Health check pass: ~30s</text>
+
+<!-- Actor boxes -->
+<rect x="40"  y="72" width="96"  height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="88" y="92" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Scheduler</text>
+
+<rect x="236" y="72" width="96" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="284" y="92" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubelet</text>
+
+<rect x="432" y="72" width="96" height="32" rx="6" fill="#F2F3F3" stroke="#545B64" stroke-width="1"/>
+<text x="480" y="92" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Registry</text>
+
+<rect x="616" y="72" width="120" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="676" y="92" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Container Runtime</text>
+
+<rect x="824" y="72" width="96" height="32" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="872" y="92" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AI/ML App</text>
+
+<line x1="40" y1="548" x2="920" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="564" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">TOTAL COLD START ≈ 5–15 MINUTES — DOMINATED BY IMAGE PULL AND MODEL LOADING</text>
+
+</svg>

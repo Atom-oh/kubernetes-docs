@@ -9,45 +9,7 @@ This guide covers comprehensive best practices for running AI/ML workloads on Am
 
 Running AI/ML workloads efficiently on Kubernetes requires careful consideration across multiple dimensions:
 
-```mermaid
-flowchart TD
-    subgraph BestPractices [AI/ML Best Practices on EKS]
-        Benchmarking[Benchmarking & Performance]
-        Container[Container Optimization]
-        GPU[GPU Selection]
-        Network[Networking]
-        Storage[Storage]
-        Observability[Observability]
-        Cost[Cost Optimization]
-        Security[Security]
-    end
-
-    subgraph Outcomes [Expected Outcomes]
-        Performance[High Performance]
-        Efficiency[Resource Efficiency]
-        Reliability[Reliability]
-        CostSavings[Cost Savings]
-    end
-
-    Benchmarking --> Performance
-    Container --> Performance
-    GPU --> Performance
-    Network --> Performance
-    Storage --> Performance
-    Observability --> Reliability
-    Cost --> CostSavings
-    Security --> Reliability
-    Container --> Efficiency
-    GPU --> Efficiency
-
-    classDef practiceNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef outcomeNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Benchmarking,Container,GPU,Network,Storage,Observability,Cost,Security practiceNode;
-    class Performance,Efficiency,Reliability,CostSavings outcomeNode;
-    class BestPractices,Outcomes default;
-```
+![A flowchart mapping eight AI/ML best-practice areas on EKS — benchmarking, container optimization, GPU selection, networking, storage, observability, cost optimization, and security — to four outcomes, showing that most practices converge on high performance while a smaller set drives resource efficiency, reliability, and cost savings.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-0.png)
 
 ## Benchmarking LLM Inference
 
@@ -57,34 +19,7 @@ Benchmarking is essential for understanding the performance characteristics of y
 
 Understanding the key metrics is crucial for evaluating LLM inference performance:
 
-```mermaid
-flowchart LR
-    subgraph Metrics [LLM Inference Metrics]
-        TTFT[TTFT<br/>Time to First Token]
-        ITL[ITL<br/>Inter-Token Latency]
-        TPS[TPS<br/>Tokens Per Second]
-        E2E[E2E Latency<br/>End-to-End]
-        Throughput[Throughput<br/>Requests/sec]
-    end
-
-    subgraph UserExperience [User Experience Impact]
-        Responsiveness[Perceived Responsiveness]
-        Streaming[Streaming Quality]
-        Capacity[System Capacity]
-    end
-
-    TTFT --> Responsiveness
-    ITL --> Streaming
-    TPS --> Streaming
-    E2E --> Responsiveness
-    Throughput --> Capacity
-
-    classDef metricNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef uxNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class TTFT,ITL,TPS,E2E,Throughput metricNode;
-    class Responsiveness,Streaming,Capacity uxNode;
-```
+![A flowchart mapping five LLM inference metrics — time to first token, inter-token latency, tokens per second, end-to-end latency, and throughput — to the three user-experience outcomes they drive, with perceived responsiveness highlighted as the metric pair to optimize first.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-1.png)
 
 | Metric | Description | Formula | Target Range |
 |--------|-------------|---------|--------------|
@@ -284,32 +219,7 @@ AI/ML containers face unique cold start challenges due to large image sizes and 
 
 ### Cold Start Timeline Analysis
 
-```mermaid
-sequenceDiagram
-    participant Scheduler as K8s Scheduler
-    participant Kubelet as Kubelet
-    participant Registry as Container Registry
-    participant Container as Container Runtime
-    participant App as AI/ML Application
-
-    Note over Scheduler,App: Total Cold Start Time: 5-15 minutes for large AI/ML images
-
-    Scheduler->>Kubelet: Pod Scheduled
-    Note over Kubelet: Node Selection: ~100ms
-
-    Kubelet->>Registry: Pull Image Request
-    Note over Registry,Kubelet: Image Pull: 2-10 minutes<br/>(10-50GB images)
-    Registry-->>Kubelet: Image Layers
-
-    Kubelet->>Container: Create Container
-    Note over Container: Container Creation: ~5s
-
-    Container->>App: Start Process
-    Note over App: Model Loading: 1-5 minutes<br/>(Load weights into GPU memory)
-
-    App-->>Container: Ready
-    Note over App: Health Check Pass: ~30s
-```
+![Sequence diagram showing why a large AI/ML pod takes 5 to 15 minutes to become ready: the scheduler places the pod, the kubelet pulls a 10 to 50 GB image over 2 to 10 minutes, the container is created, and the application spends 1 to 5 minutes loading model weights into GPU memory before passing its health check.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-2.png)
 
 ### Image Size Breakdown
 
