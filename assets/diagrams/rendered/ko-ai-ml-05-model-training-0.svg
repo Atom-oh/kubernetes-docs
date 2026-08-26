@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mtp-title mtp-desc">
+    <title id="mtp-title">분산 모델 훈련 파이프라인</title>
+    <desc id="mtp-desc">S3 데이터 레이크에서 시작해 분산 훈련 워커가 파라미터 서버와 AllReduce로 동기화하고, FSx for Lustre에 체크포인트를 저장한 뒤 평가를 거쳐 모델 레지스트리에 등록되는 흐름을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones (bg -> zones -> arrows -> nodes) -->
+    <rect x="24" y="96" width="176" height="356" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="52" y="100" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="112" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">데이터 준비</text>
+
+    <rect x="232" y="96" width="200" height="356" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="272" y="100" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="332" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">분산 훈련</text>
+
+    <rect x="464" y="96" width="176" height="356" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="486" y="100" width="132" height="12" rx="2" fill="#ffffff"/>
+    <text x="552" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">체크포인팅</text>
+
+    <rect x="672" y="96" width="264" height="356" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="748" y="100" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="804" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">모델 평가</text>
+
+    <!-- Arrows (behind nodes) -->
+    <!-- S3Data (40,148,144,56) -> DataLoader (40,268,144,56): vertical, same x-center -->
+    <line x1="112" y1="204" x2="112" y2="268" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- DataLoader right(184,296) -> Scheduler bottom entry (340,204) -->
+    <path d="M 184,296 H 332 Q 340,296 340,288 V 204"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Scheduler(272,148,152,56) -> Workers(272,268,152,56) vertical, center x=348 -->
+    <line x1="348" y1="204" x2="348" y2="268" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Workers <-> Sync (272,388,152,56) vertical bidirectional -->
+    <line x1="348" y1="324" x2="348" y2="388" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+    <!-- Workers right(424,296) -> FSxLustre bottom entry (500,224) -->
+    <path d="M 424,296 H 492 Q 500,296 500,288 V 224"
+          fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <!-- FSxLustre(488,168,140,56) -> CheckpointMgr(488,288,140,56) vertical, center x=558 -->
+    <line x1="558" y1="224" x2="558" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- CheckpointMgr right(628,316) -> EvalJob bottom entry (712,204) -->
+    <path d="M 628,316 H 704 Q 712,316 712,308 V 204"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- EvalJob -> ModelRegistry vertical, center x=808 -->
+    <line x1="808" y1="204" x2="808" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="94" y="222" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="112" y="231" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">LOAD</text>
+
+    <rect x="322" y="248" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="340" y="257" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RUN</text>
+
+    <rect x="330" y="344" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="348" y="353" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SYNC</text>
+
+    <rect x="482" y="248" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="500" y="257" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SAVE</text>
+
+    <rect x="694" y="248" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="712" y="257" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EVAL</text>
+
+    <!-- Node: S3Data (store) -->
+    <rect x="40" y="148" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="40" y="148" width="144" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="48" y="156" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+    <text x="62" y="165" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">S3</text>
+    <text x="112" y="180" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">S3 데이터 레이크</text>
+    <text x="112" y="196" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">object store</text>
+
+    <!-- Node: DataLoader (merged loader+preprocessing) -->
+    <rect x="40" y="268" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="40" y="268" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="48" y="276" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="62" y="285" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">JOB</text>
+    <text x="112" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">데이터 로더 &amp;</text>
+    <text x="112" y="314" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">전처리 Job</text>
+
+    <!-- Node: Scheduler -->
+    <rect x="272" y="148" width="152" height="56" rx="6" fill="#ffffff"/>
+    <rect x="272" y="148" width="152" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="280" y="156" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="294" y="165" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">JOB</text>
+    <text x="348" y="180" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Job 스케줄러</text>
+    <text x="348" y="196" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kube-scheduler</text>
+
+    <!-- Node: Workers (focal) -->
+    <rect x="272" y="268" width="152" height="56" rx="6" fill="#ffffff"/>
+    <rect x="272" y="268" width="152" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="280" y="276" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="294" y="285" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+    <text x="348" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">워커 Pods</text>
+    <text x="348" y="316" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">distributed training</text>
+
+    <!-- Node: Sync (PS + AllReduce) -->
+    <rect x="272" y="388" width="152" height="56" rx="6" fill="#ffffff"/>
+    <rect x="272" y="388" width="152" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="280" y="396" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="294" y="405" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SYNC</text>
+    <text x="348" y="416" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">파라미터 서버 /</text>
+    <text x="348" y="432" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AllReduce</text>
+
+    <!-- Node: FSxLustre (store) -->
+    <rect x="488" y="168" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="488" y="168" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="496" y="176" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+    <text x="510" y="185" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">FSX</text>
+    <text x="558" y="200" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">FSx for Lustre</text>
+    <text x="558" y="216" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">shared checkpoints</text>
+
+    <!-- Node: CheckpointMgr -->
+    <rect x="488" y="288" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="488" y="288" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="496" y="296" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="510" y="305" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MGR</text>
+    <text x="558" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">체크포인트</text>
+    <text x="558" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">관리자</text>
+
+    <!-- Node: EvalJob (merged eval+metrics) -->
+    <rect x="700" y="148" width="216" height="56" rx="6" fill="#ffffff"/>
+    <rect x="700" y="148" width="216" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="708" y="156" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="722" y="165" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">JOB</text>
+    <text x="808" y="180" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">평가 Job &amp; 메트릭 수집</text>
+    <text x="808" y="196" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">evaluation + metrics</text>
+
+    <!-- Node: ModelRegistry (store) -->
+    <rect x="700" y="308" width="216" height="56" rx="6" fill="#ffffff"/>
+    <rect x="700" y="308" width="216" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="708" y="316" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+    <text x="722" y="325" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">REG</text>
+    <text x="808" y="340" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">모델 레지스트리</text>
+    <text x="808" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">versioned artifacts</text>
+
+    <!-- Legend -->
+    <line x1="24" y1="484" x2="936" y2="484" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="504" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <circle cx="200" cy="500" r="4" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="212" y="504" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">STORE</text>
+    <circle cx="300" cy="500" r="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="312" y="504" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">JOB / PROCESS</text>
+    <circle cx="440" cy="500" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="452" y="504" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">FOCAL / HOT PATH</text>
+  </svg>

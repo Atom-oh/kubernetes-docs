@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="slurm-title slurm-desc">
+    <title id="slurm-title">EKS 기반 Slurm 하이브리드 클러스터</title>
+    <desc id="slurm-desc">ArgoCD, ECR, NLB 같은 외부 서비스가 EKS 클러스터 안의 Slurm 컨트롤 플레인·사용자 접근·GPU 컴퓨트 노드·공유 스토리지·오토스케일링 구성 요소와 어떻게 연결되는지 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="24" y="96" width="152" height="316" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="44" y="100" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="100" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">외부 서비스</text>
+
+    <rect x="200" y="96" width="728" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="228" y="100" width="164" height="12" rx="2" fill="#ffffff"/>
+    <text x="310" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AMAZON EKS 클러스터</text>
+
+    <!-- Arrows (behind nodes) -->
+    <!-- ArgoCD -> Control : straight horizontal -->
+    <line x1="168" y1="168" x2="264" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- NLB -> Access : straight horizontal -->
+    <line x1="168" y1="264" x2="264" y2="264" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- ECR -> Compute : elbow via gap channel + top margin -->
+    <path d="M 168,360 H 180 Q 188,360 188,352 V 88 Q 188,80 196,80 H 566 Q 574,80 574,88 V 140"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Control -> Compute : straight horizontal -->
+    <line x1="444" y1="168" x2="484" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Scaling -> Compute : straight horizontal (leftward) -->
+    <line x1="704" y1="168" x2="664" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Compute -> Storage : straight vertical -->
+    <line x1="574" y1="196" x2="574" y2="236" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Access -> Control : straight vertical (upward) -->
+    <line x1="354" y1="236" x2="354" y2="196" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="196" y="148" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="220" y="157" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">GITOPS</text>
+
+    <rect x="200" y="244" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="216" y="253" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SSH</text>
+
+    <rect x="358" y="60" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="374" y="69" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PULL</text>
+
+    <!-- Node: ArgoCD (external) -->
+    <rect x="40" y="140" width="128" height="56" rx="6" fill="#ffffff"/>
+    <rect x="40" y="140" width="128" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="48" y="148" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="62" y="157" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+    <text x="104" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ArgoCD</text>
+    <text x="104" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">GitOps 배포</text>
+
+    <!-- Node: NLB (external) -->
+    <rect x="40" y="236" width="128" height="56" rx="6" fill="#ffffff"/>
+    <rect x="40" y="236" width="128" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="48" y="244" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="62" y="253" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+    <text x="104" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">NLB</text>
+    <text x="104" y="284" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Network LB</text>
+
+    <!-- Node: ECR (external) -->
+    <rect x="40" y="332" width="128" height="56" rx="6" fill="#ffffff"/>
+    <rect x="40" y="332" width="128" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="48" y="340" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="62" y="349" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+    <text x="104" y="364" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Amazon ECR</text>
+    <text x="104" y="380" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">AWS DLC 이미지</text>
+
+    <!-- Node: Control (Slurm control plane, merged) -->
+    <rect x="264" y="140" width="180" height="56" rx="6" fill="#ffffff"/>
+    <rect x="264" y="140" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="272" y="148" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="286" y="157" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CTL</text>
+    <text x="354" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Slurm 컨트롤 플레인</text>
+    <text x="354" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">slurmctld/dbd/restd</text>
+
+    <!-- Node: Access (LoginPod + JupyterHub, merged) -->
+    <rect x="264" y="236" width="180" height="56" rx="6" fill="#ffffff"/>
+    <rect x="264" y="236" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="272" y="244" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="286" y="253" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ACC</text>
+    <text x="354" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">로그인 Pod /</text>
+    <text x="354" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">JupyterHub</text>
+
+    <!-- Node: Compute (focal) -->
+    <rect x="484" y="140" width="180" height="56" rx="6" fill="#ffffff"/>
+    <rect x="484" y="140" width="180" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="492" y="148" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="506" y="157" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+    <text x="574" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">slurmd Pods ×4</text>
+    <text x="574" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">8x A100 GPU</text>
+
+    <!-- Node: Storage (FSx) -->
+    <rect x="484" y="236" width="180" height="56" rx="6" fill="#ffffff"/>
+    <rect x="484" y="236" width="180" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="492" y="244" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+    <text x="506" y="253" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">FSX</text>
+    <text x="574" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">FSx for Lustre</text>
+    <text x="574" y="284" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">shared storage</text>
+
+    <!-- Node: Scaling (Karpenter + GPU NodePool, merged) -->
+    <rect x="704" y="140" width="180" height="56" rx="6" fill="#ffffff"/>
+    <rect x="704" y="140" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="712" y="148" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="726" y="157" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ASG</text>
+    <text x="794" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Karpenter →</text>
+    <text x="794" y="188" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">GPU NodePool</text>
+
+    <!-- Legend -->
+    <line x1="24" y1="440" x2="936" y2="440" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="460" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <circle cx="200" cy="456" r="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="212" y="460" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">EXTERNAL SERVICE</text>
+    <circle cx="400" cy="456" r="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="412" y="460" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CLUSTER COMPONENT</text>
+    <circle cx="620" cy="456" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="632" y="460" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">GPU COMPUTE (FOCAL)</text>
+  </svg>
