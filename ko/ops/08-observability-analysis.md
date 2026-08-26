@@ -305,84 +305,13 @@ func recordMetricWithExemplar(ctx context.Context, duration float64, labels prom
 
 ### 아키텍처 다이어그램
 
-```mermaid
-flowchart TD
-    subgraph APP["Application Layer"]
-        A1[Service A]
-        A2[Service B]
-        A3[Service C]
-    end
-
-    subgraph OTEL["OpenTelemetry Collector"]
-        B1[Receivers]
-        B2[Processors]
-        B3[Exporters]
-    end
-
-    subgraph STORAGE["Storage Layer"]
-        C1[(Prometheus/AMP)]
-        C2[(Loki)]
-        C3[(Tempo)]
-    end
-
-    subgraph VIZ["Visualization"]
-        D1[Grafana]
-    end
-
-    A1 -->|traces| B1
-    A1 -->|logs| B1
-    A1 -->|metrics| B1
-    A2 -->|traces/logs/metrics| B1
-    A3 -->|traces/logs/metrics| B1
-
-    B1 --> B2
-    B2 --> B3
-
-    B3 -->|metrics| C1
-    B3 -->|logs| C2
-    B3 -->|traces| C3
-
-    D1 -->|query| C1
-    D1 -->|query| C2
-    D1 -->|query| C3
-
-    C1 -.->|exemplars| C3
-    C2 -.->|trace_id| C3
-
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef otel fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef viz fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class A1,A2,A3 app
-    class B1,B2,B3 otel
-    class C1,C2,C3 storage
-    class D1 viz
-```
+![애플리케이션의 트레이스·로그·메트릭이 OpenTelemetry Collector(Receivers→Processors→Exporters)를 거쳐 Prometheus/AMP, Loki, Tempo에 각각 저장되고, Grafana가 세 저장소를 조회하며 Tempo가 exemplar와 trace_id로 메트릭·로그를 연결하는 상관관계 허브 역할을 하는 관찰 가능성 파이프라인 구조를 보여준다.](../.gitbook/assets/ko-ops-08-observability-analysis-0.png)
 
 ### 상관 분석 워크플로우
 
 문제 발생 시 상관 분석을 통한 근본 원인 분석 워크플로우입니다.
 
-```mermaid
-flowchart LR
-    A[Alert 발생] --> B[Metric 확인]
-    B --> C{Exemplar 있음?}
-    C -->|Yes| D[Trace 조회]
-    C -->|No| E[시간 범위로 Trace 검색]
-    D --> F[Span 분석]
-    E --> F
-    F --> G[관련 Log 조회]
-    G --> H[근본 원인 파악]
-    H --> I[해결 조치]
-
-    style A fill:#EB6E85
-    style B fill:#E6522C
-    style D fill:#4285F4
-    style E fill:#4285F4
-    style G fill:#F8B52A
-    style I fill:#00C7B7
-```
+![메트릭 알림이 발생했을 때 exemplar 존재 여부에 따라 트레이스를 바로 조회하거나 시간 범위로 검색한 뒤, 스팬을 분석하고 관련 로그를 확인해 근본 원인을 파악하고 해결 조치로 이어지는 장애 조사 절차를 보여준다.](../.gitbook/assets/ko-ops-08-observability-analysis-1.png)
 
 1. **Alert 발생**: Prometheus에서 알림 트리거
 2. **Metric 확인**: 관련 메트릭 대시보드에서 이상 패턴 확인

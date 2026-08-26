@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc"><defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs>
+  <title id="dtitle">Kafka client-side rack-aware fetch redirect</title>
+  <desc id="ddesc">A Kafka consumer in AZ-a fetches from the leader broker in AZ-b, which redirects it to a follower replica in AZ-a; the consumer re-fetches locally and receives the data without paying inter-AZ transfer cost.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="30" y="28" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">KAFKA · CLIENT-SIDE RACK AWARENESS</text>
+  <text x="30" y="52" fill="#232F3E" font-size="20" font-weight="700" class="sans">AZ-Local Fetch via Rack-Aware Redirect</text>
+
+  <!-- ===== Actor boxes ===== -->
+  <!-- Consumer (focal) cx=160 -->
+  <rect x="80" y="76" width="160" height="48" rx="6" fill="#ffffff"/>
+  <rect x="80" y="76" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="160" y="98" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">Consumer</text>
+  <text x="160" y="114" fill="#545B64" font-size="9" class="mono" text-anchor="middle">client.rack=AZ-a</text>
+
+  <!-- Leader Broker cx=480 -->
+  <rect x="400" y="76" width="160" height="48" rx="6" fill="#ffffff"/>
+  <rect x="400" y="76" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="98" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">Leader Broker</text>
+  <text x="480" y="114" fill="#545B64" font-size="9" class="mono" text-anchor="middle">AZ-b</text>
+
+  <!-- Follower Broker cx=800 -->
+  <rect x="720" y="76" width="160" height="48" rx="6" fill="#ffffff"/>
+  <rect x="720" y="76" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="800" y="98" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">Follower Broker</text>
+  <text x="800" y="114" fill="#545B64" font-size="9" class="mono" text-anchor="middle">AZ-a</text>
+
+  <!-- ===== Lifelines ===== -->
+  <line x1="160" y1="124" x2="160" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="480" y1="124" x2="480" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="800" y1="124" x2="800" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- ===== Activation bars ===== -->
+  <!-- Leader Broker: 170 -> 250 -->
+  <rect x="476" y="170" width="8" height="80" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <!-- Follower Broker: 340 -> 420 -->
+  <rect x="796" y="340" width="8" height="80" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+  <!-- ===== Messages ===== -->
+  <!-- 1: Consumer -> Leader Broker (call) -->
+  <line x1="164" y1="170" x2="476" y2="170" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="228" y="150" width="184" height="12" rx="2" fill="#ffffff"/>
+  <text x="320" y="159" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">FETCH (client.rack=AZ-a)</text>
+
+  <!-- 2: Leader Broker -> Consumer (return, dashed) -->
+  <line x1="476" y1="250" x2="164" y2="250" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="218" y="230" width="204" height="12" rx="2" fill="#ffffff"/>
+  <text x="320" y="239" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">PREFERRED REPLICA: AZ-a FOLLOWER</text>
+
+  <!-- 3: Consumer -> Follower Broker (call) -->
+  <line x1="164" y1="340" x2="796" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="452" y="320" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="500" y="329" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">RE-FETCH</text>
+
+  <!-- 4: Follower Broker -> Consumer (headline success, solid accent) -->
+  <line x1="796" y1="420" x2="164" y2="420" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <rect x="420" y="400" width="176" height="12" rx="2" fill="#ffffff"/>
+  <text x="508" y="409" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">DATA — SAME AZ, NO INTER-AZ COST</text>
+
+  <!-- ===== Legend ===== -->
+  <line x1="30" y1="524" x2="930" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="544" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+
+  <line x1="140" y1="540" x2="176" y2="540" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="184" y="544" fill="#545B64" font-size="8" class="mono" letter-spacing="0.04em">CALL</text>
+
+  <line x1="300" y1="540" x2="336" y2="540" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <text x="344" y="544" fill="#545B64" font-size="8" class="mono" letter-spacing="0.04em">RETURN</text>
+
+  <line x1="460" y1="540" x2="496" y2="540" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <text x="504" y="544" fill="#EC7211" font-size="8" class="mono" letter-spacing="0.04em">HEADLINE SUCCESS (AZ-LOCAL)</text>
+</svg>

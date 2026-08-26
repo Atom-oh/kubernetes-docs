@@ -60,53 +60,7 @@ Tekton은 다음과 같은 환경에서 특히 효과적입니다:
 
 Tekton의 모든 구성 요소는 Kubernetes CRD로 정의됩니다. 다음 다이어그램은 핵심 CRD 간의 관계를 보여줍니다.
 
-```mermaid
-graph TB
-    subgraph "Tekton Core CRDs"
-        Pipeline["Pipeline<br/>(파이프라인 정의)"]
-        PipelineRun["PipelineRun<br/>(파이프라인 실행)"]
-        Task["Task<br/>(작업 정의)"]
-        TaskRun["TaskRun<br/>(작업 실행)"]
-        Workspace["Workspace<br/>(공유 스토리지)"]
-        Result["Result<br/>(결과 전달)"]
-    end
-
-    subgraph "Tekton Triggers"
-        EventListener["EventListener<br/>(이벤트 수신)"]
-        TriggerTemplate["TriggerTemplate<br/>(실행 템플릿)"]
-        TriggerBinding["TriggerBinding<br/>(파라미터 바인딩)"]
-        Interceptor["Interceptor<br/>(이벤트 필터/변환)"]
-    end
-
-    subgraph "Tekton Chains"
-        Chains["Tekton Chains<br/>(서명 & Attestation)"]
-        Provenance["SLSA Provenance"]
-        Signing["OCI 이미지 서명"]
-    end
-
-    PipelineRun --> Pipeline
-    Pipeline --> Task
-    TaskRun --> Task
-    PipelineRun --> TaskRun
-    Pipeline --> Workspace
-    Task --> Result
-    
-    EventListener --> Interceptor
-    Interceptor --> TriggerBinding
-    TriggerBinding --> TriggerTemplate
-    TriggerTemplate --> PipelineRun
-    
-    TaskRun --> Chains
-    Chains --> Provenance
-    Chains --> Signing
-
-    style Pipeline fill:#2196F3,color:#fff
-    style PipelineRun fill:#1565C0,color:#fff
-    style Task fill:#4CAF50,color:#fff
-    style TaskRun fill:#2E7D32,color:#fff
-    style EventListener fill:#FF9800,color:#fff
-    style Chains fill:#9C27B0,color:#fff
-```
+![Trigger가 EventListener부터 TriggerTemplate까지 이벤트를 처리해 새 PipelineRun을 생성하고, PipelineRun이 Pipeline과 TaskRun을 거쳐 Task를 실행한 뒤 결과를 Workspace/Result에 남기며, TaskRun 완료를 Tekton Chains가 감지해 서명과 Provenance를 생성하는 전체 개요를 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-ops-14-tekton-pipelines-0.png)
 
 ### 1.2 핵심 CRD 상세
 
@@ -123,38 +77,7 @@ graph TB
 
 Tekton은 Kubernetes Operator 패턴으로 동작합니다. 핵심 컴포넌트는 다음과 같습니다.
 
-```mermaid
-graph LR
-    subgraph "Tekton 컨트롤 플레인"
-        Controller["tekton-pipelines-controller<br/>(CRD 감시 & Pod 생성)"]
-        Webhook["tekton-pipelines-webhook<br/>(CRD 유효성 검증)"]
-        Resolver["tekton-pipelines-resolver<br/>(원격 리소스 해석)"]
-    end
-
-    subgraph "Tekton 데이터 플레인"
-        Pod1["TaskRun Pod 1<br/>(Step 컨테이너 + Sidecar)"]
-        Pod2["TaskRun Pod 2<br/>(Step 컨테이너 + Sidecar)"]
-        PVC["PVC<br/>(Workspace)"]
-    end
-
-    subgraph "Kubernetes API"
-        APIServer["kube-apiserver"]
-        etcd["etcd"]
-    end
-
-    APIServer --> Controller
-    Controller --> Pod1
-    Controller --> Pod2
-    Webhook --> APIServer
-    Resolver --> APIServer
-    Pod1 --> PVC
-    Pod2 --> PVC
-    APIServer --> etcd
-
-    style Controller fill:#2196F3,color:#fff
-    style Webhook fill:#FF9800,color:#fff
-    style Resolver fill:#4CAF50,color:#fff
-```
+![kube-apiserver를 중심으로 Tekton 컨트롤러가 CRD 변경을 감시해 TaskRun Pod를 생성하고, Webhook과 Resolver가 API 서버를 거쳐 검증·해석하며, 생성된 Pod들이 같은 Workspace PVC를 공유하는 컨트롤 플레인/데이터 플레인 구조를 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-ops-14-tekton-pipelines-1.png)
 
 **컨트롤러 동작 원리:**
 
@@ -744,32 +667,7 @@ tkn task list
 
 Pipeline은 여러 Task를 조합하여 CI/CD 워크플로우를 정의합니다. Task 간 순서, 병렬 실행, 조건부 실행 등을 선언적으로 구성할 수 있습니다.
 
-```mermaid
-graph LR
-    subgraph "CI/CD Pipeline"
-        Clone["git-clone<br/>(소스 클론)"] --> Test["run-tests<br/>(테스트)"]
-        Clone --> Lint["lint<br/>(린트)"]
-        Test --> Build["kaniko-build<br/>(이미지 빌드)"]
-        Lint --> Build
-        Build --> Scan["trivy-scan<br/>(취약점 스캔)"]
-        Scan --> Deploy["deploy<br/>(배포)"]
-    end
-
-    subgraph "Finally Tasks"
-        Notify["notify-slack<br/>(슬랙 알림)"]
-        Cleanup["cleanup<br/>(정리)"]
-    end
-
-    Deploy --> Notify
-    Deploy --> Cleanup
-
-    style Clone fill:#4CAF50,color:#fff
-    style Test fill:#2196F3,color:#fff
-    style Build fill:#FF9800,color:#fff
-    style Scan fill:#9C27B0,color:#fff
-    style Deploy fill:#F44336,color:#fff
-    style Notify fill:#607D8B,color:#fff
-```
+![git-clone 이후 테스트와 린트가 병렬로 실행되고 두 결과가 이미지 빌드로 합류한 뒤 취약점 스캔과 배포로 이어지며, 배포가 끝나면 finally 영역의 슬랙 알림과 정리 작업이 항상 함께 실행되는 CI/CD Task 그래프를 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-ops-14-tekton-pipelines-2.png)
 
 ### 4.2 완전한 CI/CD Pipeline
 
@@ -1099,24 +997,7 @@ spec:
 
 Tekton Triggers는 외부 이벤트(Git push, PR, 태그 생성 등)를 수신하여 자동으로 PipelineRun을 생성합니다.
 
-```mermaid
-sequenceDiagram
-    participant Git as GitHub/GitLab
-    participant EL as EventListener
-    participant IC as Interceptor
-    participant TB as TriggerBinding
-    participant TT as TriggerTemplate
-    participant PR as PipelineRun
-
-    Git->>EL: Webhook 이벤트 전송
-    EL->>IC: 이벤트 필터/검증
-    IC-->>IC: Secret 검증, CEL 필터
-    IC->>TB: 검증된 이벤트 전달
-    TB->>TB: 이벤트 데이터 → 파라미터 매핑
-    TB->>TT: 파라미터 전달
-    TT->>PR: PipelineRun 생성
-    PR->>PR: 파이프라인 실행
-```
+![GitHub 웹훅 이벤트가 EventListener와 Interceptor의 검증을 거쳐 TriggerBinding/Template에서 파라미터로 매핑되고 최종적으로 새 PipelineRun 생성을 트리거하는 순서를 보여주는 시퀀스 다이어그램.](../.gitbook/assets/ko-ops-14-tekton-pipelines-3.png)
 
 ### 5.2 EventListener
 
@@ -1413,43 +1294,7 @@ interceptors:
 
 Tekton Chains는 TaskRun이 완료된 후 자동으로 아티팩트(이미지, 바이너리 등)에 서명하고 공급망 증명(attestation)을 생성합니다. 이를 통해 소프트웨어 공급망의 무결성을 보장합니다.
 
-```mermaid
-graph TB
-    subgraph "빌드 단계"
-        TR["TaskRun<br/>(이미지 빌드)"]
-    end
-
-    subgraph "Tekton Chains 자동 처리"
-        Observe["TaskRun 완료 감지"]
-        Sign["OCI 이미지 서명<br/>(Cosign)"]
-        Provenance["SLSA Provenance 생성"]
-        Attest["in-toto Attestation"]
-        Store["투명성 로그 기록<br/>(Rekor)"]
-    end
-
-    subgraph "검증 단계"
-        Verify["이미지 서명 검증<br/>(Cosign verify)"]
-        Policy["정책 적용<br/>(Kyverno/OPA)"]
-        Admit["Admission Control"]
-    end
-
-    TR --> Observe
-    Observe --> Sign
-    Observe --> Provenance
-    Observe --> Attest
-    Sign --> Store
-    Provenance --> Store
-    Attest --> Store
-
-    Store --> Verify
-    Verify --> Policy
-    Policy --> Admit
-
-    style TR fill:#2196F3,color:#fff
-    style Sign fill:#4CAF50,color:#fff
-    style Provenance fill:#FF9800,color:#fff
-    style Verify fill:#9C27B0,color:#fff
-```
+![이미지 빌드 TaskRun의 완료를 Tekton Chains가 감지해 Cosign 서명과 SLSA Provenance/in-toto Attestation을 생성하고 Rekor 투명성 로그에 기록한 뒤, 배포 시점에 서명 검증과 정책 적용을 거쳐 Admission Control이 허용 여부를 결정하는 흐름을 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-ops-14-tekton-pipelines-4.png)
 
 ### 6.2 Chains 구성
 
@@ -1604,51 +1449,7 @@ spec:
 
 Tekton으로 CI(빌드/테스트/이미지 Push)를, ArgoCD로 CD(GitOps 배포)를 담당하는 분리 아키텍처는 프로덕션 환경에서 가장 권장되는 패턴입니다.
 
-```mermaid
-graph LR
-    subgraph "소스 리포지토리"
-        SRC["app-source<br/>(애플리케이션 코드)"]
-    end
-
-    subgraph "Tekton (CI)"
-        TRG["Trigger<br/>(Webhook 수신)"]
-        Clone["git-clone"]
-        Test["테스트/린트"]
-        Build["이미지 빌드"]
-        Push["ECR Push"]
-        Update["매니페스트 업데이트"]
-    end
-
-    subgraph "GitOps 리포지토리"
-        GITOPS["app-manifests<br/>(K8s 매니페스트)"]
-    end
-
-    subgraph "ArgoCD (CD)"
-        Sync["ArgoCD Sync"]
-        Deploy["K8s 배포"]
-    end
-
-    subgraph "ECR"
-        ECR["Container Registry"]
-    end
-
-    SRC -->|push| TRG
-    TRG --> Clone
-    Clone --> Test
-    Test --> Build
-    Build --> Push
-    Push --> ECR
-    Push --> Update
-    Update -->|commit| GITOPS
-    GITOPS -->|감지| Sync
-    Sync --> Deploy
-    ECR -->|pull| Deploy
-
-    style TRG fill:#FF9800,color:#fff
-    style Build fill:#2196F3,color:#fff
-    style Sync fill:#4CAF50,color:#fff
-    style ECR fill:#9C27B0,color:#fff
-```
+![소스 저장소의 push가 Tekton CI를 트리거해 클론·테스트·이미지 빌드·ECR Push·매니페스트 업데이트를 거치고, 갱신된 매니페스트가 GitOps 저장소에 커밋되면 ArgoCD가 이를 감지해 ECR 이미지를 pull하여 클러스터에 동기화·배포하는 전체 파이프라인을 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-ops-14-tekton-pipelines-5.png)
 
 ### 7.2 매니페스트 업데이트 Task
 

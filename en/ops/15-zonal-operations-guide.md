@@ -119,16 +119,7 @@ Doing this requires the pod to know which AZ it's in. The Kubernetes Downward AP
 
 [KIP-392](https://cwiki.apache.org/confluence/display/KAFKA/KIP-392:+Allow+consumers+to+fetch+from+closest+replica) (Kafka 2.4+) lets a consumer fetch directly from a **follower replica in its own rack (AZ)** instead of always going to the partition leader.
 
-```mermaid
-sequenceDiagram
-    participant C as Consumer (AZ-a)
-    participant L as Leader Broker (AZ-b)
-    participant F as Follower Broker (AZ-a)
-    C->>L: Fetch request (includes client.rack=AZ-a)
-    L->>C: "Go to the AZ-a follower" (preferred replica hint)
-    C->>F: Re-send fetch request
-    F->>C: Returns data (same AZ, no inter-AZ cost)
-```
+![Sequence diagram showing a Kafka consumer in AZ-a fetching from the leader broker in AZ-b, being redirected to a same-AZ follower replica via a rack-aware hint, then re-fetching locally to receive data without paying inter-AZ transfer cost.](../.gitbook/assets/en-ops-15-zonal-operations-guide-0.png)
 
 - **Brokers**: set `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector`, and give every broker a `broker.rack` (AZ ID)
 - **Consumers**: set the `client.rack` consumer property to the consumer's own AZ ID, obtained via one of the zone-awareness methods above

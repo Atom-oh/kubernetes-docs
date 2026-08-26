@@ -335,24 +335,7 @@ spec:
 
 **동작 원리:**
 
-```mermaid
-sequenceDiagram
-    participant PM as PM/기획자
-    participant Ops as 인프라팀
-    participant K8s as Kubernetes
-    participant Karpenter as Karpenter
-    
-    PM->>Ops: D-7: 이벤트 정보 전달
-    Ops->>K8s: Pause Pod 배포 (replicas: 20)
-    K8s->>Karpenter: Pending Pods 감지
-    Karpenter->>K8s: 20개 Node 프로비저닝
-    Note over K8s: Pause Pods가 Node 차지
-    
-    PM->>Ops: D-Day: 이벤트 시작
-    K8s->>K8s: 실제 워크로드 스케일 업
-    K8s->>K8s: Pause Pods 축출 (낮은 Priority)
-    Note over K8s: 실제 워크로드가 즉시 스케줄링
-```
+![PM이 D-7에 이벤트 정보를 전달하면 인프라팀이 Pause Pod로 Karpenter를 통해 노드를 미리 확보해두고, D-Day에 실제 워크로드가 스케일업하면서 낮은 우선순위의 Pause Pod를 축출해 즉시 스케줄링되는 과정을 보여주는 시퀀스 다이어그램.](../.gitbook/assets/ko-ops-12-event-capacity-planning-0.png)
 
 ---
 
@@ -538,25 +521,7 @@ spec:
 
 KEDA는 복수 트리거 중 **가장 높은 replica 수를 선택**합니다. 따라서 Cron이 100을 요구하고 Prometheus가 150을 요구하면 150이 적용됩니다.
 
-```mermaid
-graph TB
-    subgraph "복합 트리거 동작"
-        Cron["Cron 트리거<br/>바닥: 100 Pods"]
-        Prometheus["Prometheus 트리거<br/>주문률 기반"]
-        SQS["SQS 트리거<br/>큐 깊이 기반"]
-        
-        Cron --> Max["MAX 선택"]
-        Prometheus --> Max
-        SQS --> Max
-        Max --> HPA["HPA 적용"]
-        HPA --> Pods["Pod 스케일링"]
-    end
-    
-    style Cron fill:#3498DB,color:#fff
-    style Prometheus fill:#E67E22,color:#fff
-    style SQS fill:#27AE60,color:#fff
-    style Max fill:#8E44AD,color:#fff
-```
+![Cron, Prometheus, SQS 세 트리거가 각각 산출한 목표 Pod 수 중 최댓값(MAX)을 선택해 HPA에 반영하고 실제 Pod 스케일링으로 이어지는 KEDA 복합 트리거 동작을 보여주는 흐름도.](../.gitbook/assets/ko-ops-12-event-capacity-planning-1.png)
 
 ---
 
@@ -564,30 +529,7 @@ graph TB
 
 ### 4.1 Pod-Level과 Node-Level 스케일링 조합
 
-```mermaid
-sequenceDiagram
-    participant KEDA
-    participant HPA
-    participant Scheduler as K8s Scheduler
-    participant Karpenter
-    participant AWS as AWS EC2
-
-    Note over KEDA,AWS: 이벤트 30분 전 (Cron 트리거)
-    KEDA->>HPA: desiredReplicas: 200
-    HPA->>Scheduler: 195개 새 Pod 생성 요청
-    Scheduler->>Scheduler: 기존 Node에 배치 불가 (Pending)
-    Scheduler->>Karpenter: Pending Pod 감지
-    Karpenter->>AWS: 20개 Node 프로비저닝 요청
-    AWS->>Karpenter: ~60-90초 후 Node Ready
-    Karpenter->>Scheduler: 새 Node 등록
-    Scheduler->>Scheduler: Pending Pods 스케줄링
-    
-    Note over KEDA,AWS: 이벤트 시작 (메트릭 트리거)
-    KEDA->>HPA: desiredReplicas: 250 (메트릭 기반)
-    HPA->>Scheduler: 50개 추가 Pod 요청
-    Scheduler->>Karpenter: 추가 Pending 감지
-    Karpenter->>AWS: 5개 Node 추가
-```
+![이벤트 30분 전 Cron 트리거로 KEDA가 200개 Pod를 요청해 Scheduler가 Pending을 감지하면 Karpenter가 AWS EC2에 노드 20대를 프로비저닝하고, 이벤트 시작 후 메트릭 트리거가 목표를 250개로 올려 노드 5대를 추가로 확보하는 과정을 보여주는 시퀀스 다이어그램.](../.gitbook/assets/ko-ops-12-event-capacity-planning-2.png)
 
 ### 4.2 스케일링 타이밍 최적화
 

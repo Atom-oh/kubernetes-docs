@@ -333,24 +333,7 @@ spec:
 
 **How It Works:**
 
-```mermaid
-sequenceDiagram
-    participant PM as PM/Planner
-    participant Ops as Infra Team
-    participant K8s as Kubernetes
-    participant Karpenter as Karpenter
-    
-    PM->>Ops: D-7: Share event details
-    Ops->>K8s: Deploy Pause Pods (replicas: 20)
-    K8s->>Karpenter: Detect Pending Pods
-    Karpenter->>K8s: Provision 20 Nodes
-    Note over K8s: Pause Pods occupy Nodes
-    
-    PM->>Ops: D-Day: Event starts
-    K8s->>K8s: Real workloads scale up
-    K8s->>K8s: Pause Pods evicted (low Priority)
-    Note over K8s: Real workloads scheduled instantly
-```
+![Sequence diagram showing how the infra team reserves node capacity ahead of a traffic event by deploying low-priority pause pods that trigger Karpenter to provision nodes early, then get evicted instantly by real workloads when the event starts.](../.gitbook/assets/en-ops-12-event-capacity-planning-0.png)
 
 ---
 
@@ -534,25 +517,7 @@ spec:
 
 KEDA selects the **maximum replica count** across all triggers. If cron requests 100 and Prometheus requests 150, the result is 150.
 
-```mermaid
-graph TB
-    subgraph "Composite Trigger Behavior"
-        Cron["Cron Trigger<br/>Floor: 100 Pods"]
-        Prometheus["Prometheus Trigger<br/>Order Rate Based"]
-        SQS["SQS Trigger<br/>Queue Depth Based"]
-        
-        Cron --> Max["MAX Selection"]
-        Prometheus --> Max
-        SQS --> Max
-        Max --> HPA["Apply to HPA"]
-        HPA --> Pods["Pod Scaling"]
-    end
-    
-    style Cron fill:#3498DB,color:#fff
-    style Prometheus fill:#E67E22,color:#fff
-    style SQS fill:#27AE60,color:#fff
-    style Max fill:#8E44AD,color:#fff
-```
+![Architecture diagram showing three KEDA triggers — a cron floor, a Prometheus order-rate trigger, and an SQS queue-depth trigger — feeding a MAX selection that sets the single desired replica count applied to the HPA and used for pod scaling.](../.gitbook/assets/en-ops-12-event-capacity-planning-1.png)
 
 ---
 
@@ -560,30 +525,7 @@ graph TB
 
 ### 4.1 Pod-Level and Node-Level Scaling
 
-```mermaid
-sequenceDiagram
-    participant KEDA
-    participant HPA
-    participant Scheduler as K8s Scheduler
-    participant Karpenter
-    participant AWS as AWS EC2
-
-    Note over KEDA,AWS: 30 min before event (Cron trigger)
-    KEDA->>HPA: desiredReplicas: 200
-    HPA->>Scheduler: Request 195 new Pods
-    Scheduler->>Scheduler: Cannot fit on existing Nodes (Pending)
-    Scheduler->>Karpenter: Detect Pending Pods
-    Karpenter->>AWS: Request 20 Nodes
-    AWS->>Karpenter: Nodes Ready (~60-90s)
-    Karpenter->>Scheduler: Register new Nodes
-    Scheduler->>Scheduler: Schedule Pending Pods
-    
-    Note over KEDA,AWS: Event starts (Metric trigger)
-    KEDA->>HPA: desiredReplicas: 250 (metric-based)
-    HPA->>Scheduler: Request 50 additional Pods
-    Scheduler->>Karpenter: Detect additional Pending
-    Karpenter->>AWS: Provision 5 more Nodes
-```
+![Sequence diagram tracing two scaling waves before and at an event: a cron-triggered KEDA scale-up 30 minutes early that makes the scheduler ask Karpenter to provision nodes on AWS EC2 ahead of demand, followed by a smaller metric-triggered wave once the event starts that provisions a few more nodes.](../.gitbook/assets/en-ops-12-event-capacity-planning-2.png)
 
 ### 4.2 Scaling Timing Optimization
 

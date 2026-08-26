@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="finops-cycle-title finops-cycle-desc">
+    <title id="finops-cycle-title">FinOps 라이프사이클</title>
+    <desc id="finops-cycle-desc">Inform, Optimize, Operate 세 단계가 순환하며 각 단계의 핵심 활동을 보여주는 흐름도로, Optimize 단계의 비용 최적화 활동을 중심으로 강조한다.</desc>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <!-- ===== connectors (drawn before boxes) ===== -->
+    <!-- Inform -> Optimize (same y, straight) -->
+    <line x1="280" y1="128" x2="352" y2="128" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- Optimize -> Operate (same y, straight) -->
+    <line x1="600" y1="128" x2="672" y2="128" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- Operate -> Inform (return loop, orthogonal elbow r=8, routed below the row) -->
+    <path d="M 800 216 L 800 292 A 8 8 0 0 1 792 300 L 168 300 A 8 8 0 0 0 160 308 L 160 216"
+          fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- arrow label for the return loop, masked, 8px clear of the stroke -->
+    <rect x="440" y="276" width="80" height="16" rx="2" fill="#ffffff"/>
+    <text x="480" y="288" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.06em">매월 반복</text>
+
+    <!-- ===== Inform box ===== -->
+    <rect x="40" y="40" width="240" height="176" rx="6" fill="#ffffff"/>
+    <rect x="40" y="40" width="240" height="176" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="56" y="64" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace"
+          letter-spacing="0.14em">INFORM</text>
+    <text x="56" y="88" fill="#232F3E" font-size="14" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">가시성 확보</text>
+    <line x1="56" y1="100" x2="264" y2="100" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <text x="56" y="124" fill="#545B64" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 비용 할당</text>
+    <text x="56" y="148" fill="#545B64" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 태깅 전략</text>
+    <text x="56" y="172" fill="#545B64" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 대시보드</text>
+    <text x="56" y="196" fill="#545B64" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 리포팅</text>
+
+    <!-- ===== Optimize box (focal) ===== -->
+    <rect x="360" y="40" width="240" height="176" rx="6" fill="#ffffff"/>
+    <rect x="360" y="40" width="240" height="176" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="376" y="64" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace"
+          letter-spacing="0.14em">OPTIMIZE</text>
+    <text x="376" y="88" fill="#EC7211" font-size="14" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">비용 최적화</text>
+    <line x1="376" y1="100" x2="584" y2="100" stroke="rgba(236,114,17,0.25)" stroke-width="0.8"/>
+    <text x="376" y="124" fill="#545B64" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 라이트사이징</text>
+    <text x="376" y="148" fill="#545B64" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· Spot 활용</text>
+    <text x="376" y="172" fill="#545B64" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 유휴 리소스 제거</text>
+    <text x="376" y="196" fill="#545B64" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 예약 인스턴스</text>
+
+    <!-- ===== Operate box ===== -->
+    <rect x="680" y="40" width="240" height="176" rx="6" fill="#ffffff"/>
+    <rect x="680" y="40" width="240" height="176" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="696" y="64" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace"
+          letter-spacing="0.14em">OPERATE</text>
+    <text x="696" y="88" fill="#232F3E" font-size="14" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">운영 체계화</text>
+    <line x1="696" y1="100" x2="904" y2="100" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <text x="696" y="124" fill="#545B64" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 예산 관리</text>
+    <text x="696" y="148" fill="#545B64" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 정책 자동화</text>
+    <text x="696" y="172" fill="#545B64" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 비용 리뷰</text>
+    <text x="696" y="196" fill="#545B64" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 거버넌스</text>
+
+    <!-- ===== legend strip ===== -->
+    <line x1="40" y1="560" x2="920" y2="560" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="580" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="180" y="571" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="200" y="580" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">단계</text>
+    <rect x="340" y="571" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="360" y="580" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">초점 단계 (비용 최적화)</text>
+  </svg>

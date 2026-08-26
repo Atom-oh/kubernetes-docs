@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="960" height="600" xmlns="http://www.w3.org/2000/svg"
+     role="img" aria-labelledby="composite-title composite-desc"><defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style></defs>
+  <title id="composite-title">Composite KEDA trigger behavior</title>
+  <desc id="composite-desc">Architecture diagram showing three KEDA triggers — a cron floor, a Prometheus order-rate trigger, and an SQS queue-depth trigger — feeding a MAX selection that sets the single desired replica count applied to the HPA and used for pod scaling.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <text x="32" y="40" class="mono" font-size="8" fill="#7D8998" letter-spacing="0.18em">KEDA SCALEDOBJECT</text>
+  <text x="32" y="66" class="sans" font-size="20" font-weight="700" fill="#232F3E">Composite trigger behavior</text>
+
+  <!-- Zone: triggers -->
+  <rect x="64" y="112" width="248" height="336" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="88" y="116" width="80" height="12" rx="2" fill="#ffffff"/>
+  <text x="128" y="125" class="mono" font-size="7" fill="rgba(35,47,62,0.40)" text-anchor="middle" letter-spacing="0.14em">TRIGGERS</text>
+
+  <!-- Trigger nodes: Cron (y=160), Prometheus (y=272), SQS (y=384), each 200x80 -->
+  <rect x="88" y="160" width="200" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="188" y="192" class="sans" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Cron Trigger</text>
+  <text x="188" y="210" class="mono" font-size="9" fill="#545B64" text-anchor="middle">floor: 100 pods</text>
+
+  <rect x="88" y="272" width="200" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="188" y="304" class="sans" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Prometheus Trigger</text>
+  <text x="188" y="322" class="mono" font-size="9" fill="#545B64" text-anchor="middle">order-rate based</text>
+
+  <rect x="88" y="384" width="200" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="188" y="416" class="sans" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">SQS Trigger</text>
+  <text x="188" y="434" class="mono" font-size="9" fill="#545B64" text-anchor="middle">queue-depth based</text>
+
+  <!-- MAX Selection focal node: x=464..624, y=272..352 (center of triggers vertically) -->
+  <rect x="464" y="272" width="160" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="544" y="304" class="sans" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">MAX Selection</text>
+  <text x="544" y="322" class="mono" font-size="9" fill="#EC7211" text-anchor="middle">max(cron,promq,sqs)</text>
+
+  <!-- Apply to HPA: x=752..912, y=272..352 -->
+  <rect x="752" y="272" width="160" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="832" y="304" class="sans" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Apply to HPA</text>
+  <text x="832" y="322" class="mono" font-size="9" fill="#545B64" text-anchor="middle">desiredReplicas</text>
+
+  <!-- Pod Scaling: x=752..912, y=440..520 -->
+  <rect x="752" y="440" width="160" height="80" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="832" y="472" class="sans" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Pod Scaling</text>
+  <text x="832" y="490" class="mono" font-size="9" fill="#545B64" text-anchor="middle">replica count</text>
+
+  <!-- Connectors: Cron -> Max (fan attach on Max left edge, top point) -->
+  <!-- Max left edge x=464, edge length 80 (272..352), 3 attach points at k*80/4 -->
+  <!-- attach y: 272+20=292, 272+40=312, 272+60=332 -->
+  <path d="M 288,200 H 396 Q 404,200 404,208 V 284 Q 404,292 412,292 H 464"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 288,312 H 464" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 288,424 H 396 Q 404,424 404,416 V 340 Q 404,332 412,332 H 464"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Max -> HPA (accent headline) -->
+  <path d="M 624,312 H 752" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="656" y="292" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="688" y="301" class="mono" font-size="8" fill="#EC7211" text-anchor="middle" letter-spacing="0.04em">SELECTED</text>
+
+  <!-- HPA -> Pod Scaling (vertical, top/bottom port) -->
+  <path d="M 832,352 V 440" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="800" y="384" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="832" y="393" class="mono" font-size="8" fill="#7D8998" text-anchor="middle" letter-spacing="0.06em">SCALE</text>
+
+  <!-- Legend -->
+  <line x1="32" y1="556" x2="928" y2="556" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="32" y="572" class="mono" font-size="8" fill="#545B64" letter-spacing="0.14em">LEGEND</text>
+  <line x1="120" y1="568" x2="150" y2="568" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="158" y="572" class="mono" font-size="8" fill="#545B64">TRIGGER SIGNAL</text>
+  <line x1="300" y1="568" x2="330" y2="568" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <text x="338" y="572" class="mono" font-size="8" fill="#EC7211">SELECTED VALUE</text>
+</svg>

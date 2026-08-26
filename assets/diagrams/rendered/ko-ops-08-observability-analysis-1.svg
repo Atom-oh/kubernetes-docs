@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="obs-flow-title obs-flow-desc">
+<title id="obs-flow-title">알림에서 근본 원인까지의 조사 흐름</title>
+<desc id="obs-flow-desc">메트릭 알림이 발생했을 때 exemplar 존재 여부에 따라 트레이스를 조회하거나 시간 범위로 검색한 뒤 스팬을 분석하고 관련 로그를 확인해 근본 원인을 파악하고 해결 조치로 이어지는 조사 절차를 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="960" height="600" fill="#FFFFFF"/>
+
+<text x="40" y="28" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">TROUBLESHOOTING FLOW</text>
+
+<!-- ===== Arrows (behind nodes) ===== -->
+<line x1="200" y1="88" x2="280" y2="88" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="440" y1="88" x2="512" y2="88" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="688" y1="88" x2="760" y2="88" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="600" y1="132" x2="600" y2="224" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="840" y1="112" x2="840" y2="224" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="680" y1="248" x2="760" y2="248" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="840" y1="272" x2="840" y2="384" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="760" y1="408" x2="680" y2="408" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="520" y1="408" x2="440" y2="408" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+<!-- ===== Arrow labels (masked, gap above stroke) ===== -->
+<rect x="610" y="172" width="28" height="12" rx="2" fill="#FFFFFF"/>
+<text x="624" y="181" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">NO</text>
+
+<rect x="700" y="76" width="48" height="12" rx="2" fill="#FFFFFF"/>
+<text x="724" y="85" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">YES</text>
+
+<!-- ===== Nodes ===== -->
+
+<!-- A: start oval -->
+<rect x="40" y="64" width="160" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="120" y="92" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Alert 발생</text>
+
+<!-- B: step -->
+<rect x="280" y="64" width="160" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="360" y="92" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Metric 확인</text>
+
+<!-- C: decision diamond -->
+<polygon points="600,44 688,88 600,132 512,88" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="600" y="84" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Exemplar</text>
+<text x="600" y="98" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">있음?</text>
+
+<!-- D: step (Trace 조회) -->
+<rect x="760" y="64" width="160" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="840" y="92" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Trace 조회</text>
+
+<!-- E: step (시간 범위로 Trace 검색) -->
+<rect x="520" y="224" width="160" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="600" y="248" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">시간 범위로</text>
+<text x="600" y="262" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Trace 검색</text>
+
+<!-- F: merge step (Span 분석) -->
+<rect x="760" y="224" width="160" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="840" y="252" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Span 분석</text>
+
+<!-- G: step (관련 Log 조회) -->
+<rect x="760" y="384" width="160" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="840" y="412" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">관련 Log 조회</text>
+
+<!-- H: step (근본 원인 파악) -->
+<rect x="520" y="384" width="160" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="600" y="412" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">근본 원인 파악</text>
+
+<!-- I: end oval (해결 조치, focal) -->
+<rect x="280" y="384" width="160" height="48" rx="24" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="360" y="412" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">해결 조치</text>
+
+<!-- ===== Legend ===== -->
+<line x1="40" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="496" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEGEND · SHAPE CARRIES TYPE</text>
+
+<rect x="40" y="512" width="24" height="12" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="72" y="522" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">시작/종료(오벌)</text>
+
+<rect x="220" y="512" width="24" height="12" rx="2" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="252" y="522" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">단계(사각형)</text>
+
+<polygon points="412,518 424,512 436,518 424,524" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="448" y="522" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">판단(다이아몬드)</text>
+
+<line x1="604" y1="518" x2="632" y2="518" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="640" y="521" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">최종 해결 경로</text>
+
+</svg>
