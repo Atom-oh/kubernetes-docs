@@ -16,33 +16,7 @@
 
 ApplicationSet은 템플릿을 사용하여 여러 ArgoCD Application을 자동으로 생성하는 컨트롤러입니다. 대규모 배포, 멀티 클러스터 환경, 동적 환경 관리에 유용합니다.
 
-```mermaid
-flowchart LR
-    subgraph Input ["입력"]
-        Generator[Generator]
-        Template[Template]
-    end
-
-    subgraph AppSet ["ApplicationSet Controller"]
-        Process[템플릿 처리]
-    end
-
-    subgraph Output ["출력"]
-        App1[Application 1]
-        App2[Application 2]
-        App3[Application 3]
-        AppN[Application N]
-    end
-
-    Generator --> Process
-    Template --> Process
-    Process --> App1
-    Process --> App2
-    Process --> App3
-    Process --> AppN
-
-    style Process fill:#EB6E85,stroke:#333,color:#fff
-```
+![Generator와 Template 두 입력이 ApplicationSet Controller의 템플릿 처리 단계를 거쳐 여러 개의 Application 리소스로 동시에 생성되는 팬아웃 구조를 보여주는 다이어그램](../../.gitbook/assets/ko-gitops-argocd-04-applicationsets-0.png)
 
 ### 기본 구조
 
@@ -804,31 +778,7 @@ spec:
 
 ### Progressive Sync 흐름
 
-```mermaid
-flowchart TB
-    subgraph Step1 ["Step 1: Dev"]
-        Dev[myapp-dev]
-    end
-
-    subgraph Step2 ["Step 2: Staging"]
-        Staging[myapp-staging]
-    end
-
-    subgraph Step3 ["Step 3: Prod (maxUpdate: 1)"]
-        ProdAP[myapp-prod-ap]
-        ProdUS[myapp-prod-us]
-    end
-
-    Step1 -->|성공 후| Step2
-    Step2 -->|성공 후| Step3
-
-    ProdAP -->|완료 후| ProdUS
-
-    style Dev fill:#90EE90,stroke:#333
-    style Staging fill:#FFD700,stroke:#333
-    style ProdAP fill:#FF6B6B,stroke:#333,color:#fff
-    style ProdUS fill:#FF6B6B,stroke:#333,color:#fff
-```
+![myapp-dev에서 myapp-staging을 거쳐 myapp-prod-ap, myapp-prod-us 순으로 진행되는 3단계 프로그레시브 롤아웃과 Prod 단계의 maxUpdate 1 제약을 보여주는 다이어그램](../../.gitbook/assets/ko-gitops-argocd-04-applicationsets-1.png)
 
 ## 멀티 클러스터 배포 패턴
 
@@ -1037,29 +987,7 @@ spec:
 
 ### 템플릿 병합 동작
 
-```mermaid
-flowchart TB
-    subgraph Input ["입력"]
-        Base[기본 템플릿]
-        Override[생성기별 오버라이드]
-    end
-
-    subgraph Process ["병합"]
-        Merge[Deep Merge]
-    end
-
-    subgraph Output ["결과"]
-        Final[최종 템플릿]
-    end
-
-    Base --> Merge
-    Override --> Merge
-    Merge --> Final
-
-    Note1[오버라이드가 기본 템플릿보다 우선]
-
-    style Merge fill:#FFD700,stroke:#333
-```
+![기본 템플릿과 생성기별 오버라이드가 Deep Merge 단계에서 합쳐져 최종 템플릿이 만들어지고, 오버라이드가 기본값보다 우선한다는 규칙을 편집적 캐아웃으로 강조한 다이어그램](../../.gitbook/assets/ko-gitops-argocd-04-applicationsets-2.png)
 
 ## 다음 단계
 

@@ -17,39 +17,7 @@
 
 AppProject는 ArgoCD에서 Application을 논리적으로 그룹화하고 접근 제어를 설정하는 리소스입니다.
 
-```mermaid
-flowchart TB
-    subgraph ArgoCD ["ArgoCD"]
-        subgraph Project1 ["Project: Frontend"]
-            App1[frontend-web]
-            App2[frontend-mobile]
-        end
-
-        subgraph Project2 ["Project: Backend"]
-            App3[api-gateway]
-            App4[user-service]
-        end
-
-        subgraph Project3 ["Project: Platform"]
-            App5[monitoring]
-            App6[logging]
-        end
-    end
-
-    subgraph Teams ["Teams"]
-        TeamA[Frontend Team]
-        TeamB[Backend Team]
-        TeamC[Platform Team]
-    end
-
-    TeamA --> Project1
-    TeamB --> Project2
-    TeamC --> Project3
-
-    style Project1 fill:#4A90D9,stroke:#333,color:#fff
-    style Project2 fill:#90EE90,stroke:#333
-    style Project3 fill:#FFD700,stroke:#333
-```
+![ArgoCD 안에서 Frontend, Backend, Platform 세 프로젝트가 각각 애플리케이션을 묶고, 그 아래 각 팀이 자신의 프로젝트만 소유하도록 1대1로 연결되는 RBAC 경계를 보여주는 다이어그램.](../../.gitbook/assets/ko-gitops-argocd-06-projects-rbac-0.png)
 
 ### 기본 프로젝트 vs 커스텀 프로젝트
 
@@ -715,43 +683,7 @@ curl -H "Authorization: Bearer $ARGOCD_TOKEN" \
 
 ### 패턴 1: 팀별 프로젝트
 
-```mermaid
-flowchart TB
-    subgraph ArgoCD ["ArgoCD"]
-        subgraph Frontend ["Project: Frontend"]
-            FE1[frontend-web]
-            FE2[frontend-api]
-        end
-
-        subgraph Backend ["Project: Backend"]
-            BE1[user-service]
-            BE2[order-service]
-        end
-
-        subgraph Data ["Project: Data"]
-            DA1[analytics]
-            DA2[ml-pipeline]
-        end
-    end
-
-    subgraph Clusters ["Clusters"]
-        Dev[Dev Cluster]
-        Staging[Staging Cluster]
-        Prod[Prod Cluster]
-    end
-
-    Frontend --> Dev
-    Frontend --> Staging
-    Frontend --> Prod
-
-    Backend --> Dev
-    Backend --> Staging
-    Backend --> Prod
-
-    Data --> Dev
-    Data --> Staging
-    Data --> Prod
-```
+![ArgoCD 안의 Frontend, Backend, Data 세 프로젝트가 모두 동일하게 Dev, Staging, Prod 클러스터 전체로 배포되는 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-gitops-argocd-06-projects-rbac-1.png)
 
 ```yaml
 # Frontend 프로젝트

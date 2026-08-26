@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="argorbac1-title argorbac1-desc">
+    <title id="argorbac1-title">ArgoCD 프로젝트와 팀의 소유권 매핑</title>
+    <desc id="argorbac1-desc">ArgoCD 안에서 Frontend, Backend, Platform 세 프로젝트가 각각 애플리케이션을 묶고, 그 아래 각 팀이 자신의 프로젝트만 소유하도록 1대1로 연결되는 RBAC 경계를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Outer zone: ArgoCD -->
+    <rect x="32" y="56" width="896" height="232" rx="8"
+          fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="64" y="60" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="96" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.14em">ARGOCD</text>
+
+    <!-- Project zone: Frontend -->
+    <rect x="48" y="96" width="272" height="176" rx="8" fill="#ffffff" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+    <rect x="60" y="104" width="164" height="12" rx="2" fill="#ffffff"/>
+    <text x="64" y="113" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace"
+          letter-spacing="0.1em">PROJECT: FRONTEND</text>
+    <rect x="68" y="136" width="232" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="184" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">frontend-web</text>
+    <rect x="68" y="200" width="232" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="184" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">frontend-mobile</text>
+
+    <!-- Project zone: Backend (focal) -->
+    <rect x="344" y="96" width="272" height="176" rx="8" fill="#ffffff" stroke="#EC7211" stroke-width="1.4"/>
+    <rect x="356" y="104" width="164" height="12" rx="2" fill="#ffffff"/>
+    <text x="360" y="113" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace"
+          letter-spacing="0.1em">PROJECT: BACKEND</text>
+    <rect x="364" y="136" width="232" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">api-gateway</text>
+    <rect x="364" y="200" width="232" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">user-service</text>
+
+    <!-- Project zone: Platform -->
+    <rect x="640" y="96" width="272" height="176" rx="8" fill="#ffffff" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+    <rect x="652" y="104" width="164" height="12" rx="2" fill="#ffffff"/>
+    <text x="656" y="113" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace"
+          letter-spacing="0.1em">PROJECT: PLATFORM</text>
+    <rect x="660" y="136" width="232" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="776" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">monitoring</text>
+    <rect x="660" y="200" width="232" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="776" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">logging</text>
+
+    <!-- Arrows: team -> project (drawn before team boxes) -->
+    <line x1="184" y1="376" x2="184" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="376" x2="480" y2="280" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <line x1="776" y1="376" x2="776" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Team nodes -->
+    <rect x="84" y="376" width="200" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="184" y="408" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Frontend Team</text>
+
+    <rect x="380" y="376" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="408" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backend Team</text>
+
+    <rect x="676" y="376" width="200" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="776" y="408" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Platform Team</text>
+
+    <!-- Legend -->
+    <line x1="32" y1="480" x2="928" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="32" y="500" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <rect x="32" y="512" width="14" height="12" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+    <text x="52" y="521" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">PROJECT (RBAC 경계)</text>
+
+    <rect x="228" y="512" width="14" height="12" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="248" y="521" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">APPLICATION</text>
+
+    <rect x="404" y="512" width="14" height="12" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="424" y="521" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">TEAM (RBAC 주체)</text>
+
+    <rect x="608" y="512" width="14" height="12" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="628" y="521" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">1:1 소유 예시</text>
+  </svg>

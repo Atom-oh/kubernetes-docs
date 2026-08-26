@@ -20,29 +20,7 @@
 
 동기화(Sync)는 Git 저장소의 원하는 상태(Desired State)를 Kubernetes 클러스터의 실제 상태(Live State)와 일치시키는 과정입니다.
 
-```mermaid
-flowchart LR
-    subgraph Git ["Git Repository"]
-        Desired[원하는 상태<br/>Desired State]
-    end
-
-    subgraph ArgoCD ["ArgoCD"]
-        Compare[상태 비교]
-        Apply[변경 적용]
-    end
-
-    subgraph K8s ["Kubernetes"]
-        Live[실제 상태<br/>Live State]
-    end
-
-    Desired --> Compare
-    Live --> Compare
-    Compare -->|OutOfSync| Apply
-    Apply --> Live
-
-    style Compare fill:#FFD700,stroke:#333
-    style Apply fill:#90EE90,stroke:#333
-```
+![ArgoCD가 Git 저장소의 원하는 상태와 Kubernetes 클러스터의 실제 상태를 지속적으로 비교하고, 차이(OutOfSync)가 발견되면 변경을 적용해 실제 상태를 원하는 상태로 되돌리는 순환 구조를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-0.png)
 
 ### 동기화 상태
 
@@ -152,20 +130,7 @@ syncPolicy:
 
 **동작 예시:**
 
-```mermaid
-sequenceDiagram
-    participant Git as Git Repo
-    participant ArgoCD as ArgoCD
-    participant K8s as Kubernetes
-
-    Note over Git: deployment-A 삭제
-    Git->>ArgoCD: 변경 감지
-    ArgoCD->>K8s: deployment-A 상태 확인
-    K8s-->>ArgoCD: deployment-A 존재
-    ArgoCD->>ArgoCD: prune=true 확인
-    ArgoCD->>K8s: deployment-A 삭제
-    K8s-->>ArgoCD: 삭제 완료
-```
+![Git에서 deployment-A가 삭제되면 ArgoCD가 변경을 감지하고 prune 옵션이 켜져 있음을 확인한 뒤 Kubernetes 클러스터에서 해당 리소스를 실제로 삭제하는 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-1.png)
 
 ### selfHeal
 
@@ -179,22 +144,7 @@ syncPolicy:
 
 **동작 예시:**
 
-```mermaid
-sequenceDiagram
-    participant User as 사용자
-    participant K8s as Kubernetes
-    participant ArgoCD as ArgoCD
-    participant Git as Git Repo
-
-    User->>K8s: kubectl scale --replicas=5
-    Note over K8s: 레플리카 5로 변경
-    ArgoCD->>K8s: 상태 모니터링
-    ArgoCD->>Git: Git 상태 확인 (replicas: 3)
-    ArgoCD->>ArgoCD: 드리프트 감지
-    ArgoCD->>ArgoCD: selfHeal=true 확인
-    ArgoCD->>K8s: 레플리카 3으로 복구
-    K8s-->>ArgoCD: 복구 완료
-```
+![사용자가 kubectl로 레플리카 수를 직접 바꾸면 ArgoCD가 Git과의 차이를 드리프트로 감지하고 selfHeal 옵션에 따라 클러스터 상태를 Git에 선언된 값으로 되돌리는 과정을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-2.png)
 
 ### allowEmpty
 
@@ -363,35 +313,7 @@ spec:
 
 동기화 웨이브(Sync Wave)는 리소스의 적용 순서를 제어합니다:
 
-```mermaid
-flowchart LR
-    subgraph Wave-1 ["Wave -1"]
-        NS[Namespace]
-        SA[ServiceAccount]
-    end
-
-    subgraph Wave0 ["Wave 0"]
-        CM[ConfigMap]
-        Secret[Secret]
-    end
-
-    subgraph Wave1 ["Wave 1"]
-        Deploy[Deployment]
-        SVC[Service]
-    end
-
-    subgraph Wave2 ["Wave 2"]
-        Ingress[Ingress]
-        HPA[HPA]
-    end
-
-    Wave-1 --> Wave0 --> Wave1 --> Wave2
-
-    style Wave-1 fill:#FFD700,stroke:#333
-    style Wave0 fill:#90EE90,stroke:#333
-    style Wave1 fill:#87CEEB,stroke:#333
-    style Wave2 fill:#DDA0DD,stroke:#333
-```
+![sync-wave 어노테이션 값이 작은 그룹부터 순서대로 리소스가 적용되어, Namespace와 ServiceAccount가 가장 먼저, Ingress와 HPA가 가장 나중에 생성되는 순서를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-3.png)
 
 ### 웨이브 어노테이션
 
@@ -710,22 +632,7 @@ spec:
 
 ### 동기화 윈도우 동작
 
-```mermaid
-flowchart TD
-    Start[동기화 요청] --> Check{윈도우<br/>확인}
-
-    Check --> Allow{Allow<br/>윈도우 활성?}
-    Allow -->|예| Sync[동기화 실행]
-    Allow -->|아니오| Deny{Deny<br/>윈도우 활성?}
-
-    Deny -->|예| Block[동기화 차단]
-    Deny -->|아니오| Default[기본 허용]
-
-    Default --> Sync
-
-    style Sync fill:#90EE90,stroke:#333
-    style Block fill:#FF6B6B,stroke:#333,color:#fff
-```
+![동기화 요청이 들어오면 Allow 윈도우가 활성인지 먼저 확인해 동기화를 실행하고, 아니면 Deny 윈도우가 활성인지 확인해 활성이면 동기화를 차단하고 그렇지 않으면 기본 허용으로 동기화를 실행하는 판정 순서를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-4.png)
 
 ### 윈도우 우선순위
 
@@ -837,28 +744,7 @@ syncPolicy:
 
 ### 재시도 동작
 
-```mermaid
-sequenceDiagram
-    participant ArgoCD as ArgoCD
-    participant K8s as Kubernetes
-
-    ArgoCD->>K8s: 동기화 시도 1
-    K8s-->>ArgoCD: 실패
-    Note over ArgoCD: 5초 대기
-    ArgoCD->>K8s: 동기화 시도 2
-    K8s-->>ArgoCD: 실패
-    Note over ArgoCD: 10초 대기 (5s × 2)
-    ArgoCD->>K8s: 동기화 시도 3
-    K8s-->>ArgoCD: 실패
-    Note over ArgoCD: 20초 대기 (10s × 2)
-    ArgoCD->>K8s: 동기화 시도 4
-    K8s-->>ArgoCD: 실패
-    Note over ArgoCD: 40초 대기 (20s × 2)
-    ArgoCD->>K8s: 동기화 시도 5
-    K8s-->>ArgoCD: 성공
-
-    Note over ArgoCD: limit=5 도달 시 중단
-```
+![ArgoCD가 동기화에 4번 실패할 때마다 5초, 10초, 20초, 40초로 대기 시간을 두 배씩 늘려가며 재시도하다가 다섯 번째 시도에서 성공하고, limit=5에 도달하면 재시도를 중단하는 지수 백오프 동작을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-5.png)
 
 ## 선택적 동기화
 

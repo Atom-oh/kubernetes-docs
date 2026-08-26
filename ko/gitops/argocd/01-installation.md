@@ -411,59 +411,7 @@ kubectl -n argocd delete secret argocd-initial-admin-secret
 
 ### HA 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph LB ["Load Balancer"]
-        ALB[Application Load Balancer]
-    end
-
-    subgraph ArgoCD ["ArgoCD HA"]
-        subgraph APIServers ["API Servers"]
-            API1[API Server 1]
-            API2[API Server 2]
-            API3[API Server 3]
-        end
-
-        subgraph Controllers ["Application Controllers"]
-            Ctrl1[Controller 1<br/>Leader]
-            Ctrl2[Controller 2<br/>Standby]
-        end
-
-        subgraph RepoServers ["Repo Servers"]
-            Repo1[Repo Server 1]
-            Repo2[Repo Server 2]
-            Repo3[Repo Server 3]
-        end
-
-        subgraph RedisHA ["Redis HA"]
-            Master[Redis Master]
-            Replica1[Redis Replica 1]
-            Replica2[Redis Replica 2]
-            Sentinel1[Sentinel 1]
-            Sentinel2[Sentinel 2]
-            Sentinel3[Sentinel 3]
-        end
-    end
-
-    ALB --> API1
-    ALB --> API2
-    ALB --> API3
-
-    API1 --> Master
-    API2 --> Master
-    API3 --> Master
-
-    Ctrl1 --> Repo1
-    Ctrl1 --> Repo2
-    Ctrl1 --> Repo3
-
-    Master --> Replica1
-    Master --> Replica2
-
-    style Ctrl1 fill:#90EE90,stroke:#333
-    style Ctrl2 fill:#FFD700,stroke:#333
-    style Master fill:#FF6B6B,stroke:#333,color:#fff
-```
+![로드밸런서가 API 서버로 요청을 분산하고, API 서버는 Redis에 캐시를 저장하며, 애플리케이션 컨트롤러는 리포지토리 서버에서 매니페스트를 가져오고, Redis는 마스터·리플리카·센티널로 구성된 HA 클러스터를 이루는 ArgoCD 고가용성 구성을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-01-installation-0.png)
 
 ### 컨트롤러 레플리카 설정
 

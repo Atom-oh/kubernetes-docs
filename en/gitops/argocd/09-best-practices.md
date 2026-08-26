@@ -127,33 +127,7 @@ gitops-root/
 
 ### Git Branch Strategy
 
-```mermaid
-flowchart LR
-    subgraph BRANCHES["Git Branches"]
-        DEV["develop"]
-        STG["staging"]
-        MAIN["main"]
-    end
-
-    subgraph ENVS["Environments"]
-        E_DEV["Dev Cluster"]
-        E_STG["Staging Cluster"]
-        E_PROD["Production Cluster"]
-    end
-
-    DEV -->|"merge"| STG
-    STG -->|"merge"| MAIN
-
-    DEV -->|"deploy"| E_DEV
-    STG -->|"deploy"| E_STG
-    MAIN -->|"deploy"| E_PROD
-
-    classDef branch fill:#f9f9f9,stroke:#333,color:black
-    classDef env fill:#326CE5,stroke:#333,color:white
-
-    class DEV,STG,MAIN branch
-    class E_DEV,E_STG,E_PROD env
-```
+![Git branches develop, staging, and main are merged in sequence, each triggering a deploy to its matching environment: develop to the Dev Cluster, staging to the Staging Cluster, and main to the Production Cluster.](../../.gitbook/assets/en-gitops-argocd-09-best-practices-0.png)
 
 ### Directory-Based Promotion
 

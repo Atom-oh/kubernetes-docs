@@ -35,48 +35,7 @@ Standard Kubernetes Deployments only support rolling updates. Argo Rollouts exte
 
 ### Architecture
 
-```mermaid
-flowchart TB
-    subgraph ROLLOUTS["Argo Rollouts"]
-        CTRL["Rollouts Controller"]
-        ANALYSIS["Analysis Controller"]
-    end
-
-    subgraph TRAFFIC["Traffic Management"]
-        INGRESS["Ingress Controller"]
-        MESH["Service Mesh"]
-    end
-
-    subgraph WORKLOADS["Workloads"]
-        ACTIVE["Active ReplicaSet"]
-        PREVIEW["Preview/Canary ReplicaSet"]
-    end
-
-    subgraph METRICS["Metrics"]
-        PROM["Prometheus"]
-        DD["Datadog"]
-        NR["New Relic"]
-    end
-
-    CTRL --> ACTIVE
-    CTRL --> PREVIEW
-    CTRL --> INGRESS
-    CTRL --> MESH
-    ANALYSIS --> PROM
-    ANALYSIS --> DD
-    ANALYSIS --> NR
-    ANALYSIS -->|"Pass/Fail"| CTRL
-
-    classDef rollouts fill:#EB6E85,stroke:#333,color:white
-    classDef traffic fill:#326CE5,stroke:#333,color:white
-    classDef workload fill:#28a745,stroke:#333,color:white
-    classDef metrics fill:#6c757d,stroke:#333,color:white
-
-    class CTRL,ANALYSIS rollouts
-    class INGRESS,MESH traffic
-    class ACTIVE,PREVIEW workload
-    class PROM,DD,NR metrics
-```
+![Architecture diagram showing the Argo Rollouts controller driving an ingress controller, service mesh, and active/preview replica sets, while the Analysis controller queries metrics backends and reports pass/fail back to the controller.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-0.png)
 
 ## Installation
 
@@ -224,41 +183,7 @@ spec:
 
 ### Blue-Green Flow
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Rollout
-    participant Active as Active Service
-    participant Preview as Preview Service
-    participant Analysis
-
-    Note over Rollout: Current: v1 (Blue)
-
-    User->>Rollout: Update image to v2
-    Rollout->>Preview: Create v2 pods (Green)
-    Rollout->>Preview: Route preview traffic
-
-    Note over Preview: v2 receiving preview traffic
-
-    Rollout->>Analysis: Run pre-promotion analysis
-    Analysis-->>Rollout: Analysis passed
-
-    alt Auto-promotion enabled
-        Rollout->>Active: Switch traffic to v2
-    else Manual approval required
-        User->>Rollout: Promote
-        Rollout->>Active: Switch traffic to v2
-    end
-
-    Note over Active: v2 now receiving production traffic
-
-    Rollout->>Analysis: Run post-promotion analysis
-    Analysis-->>Rollout: Analysis passed
-
-    Rollout->>Rollout: Scale down v1 pods
-
-    Note over Rollout: Deployment complete
-```
+![Sequence diagram showing a Rollout shifting traffic from an active v1 service to a preview v2 service, running pre- and post-promotion analysis, and switching production traffic to v2 after either automatic or manually approved promotion.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-1.png)
 
 ### Blue-Green with Auto-Promotion
 
@@ -400,38 +325,7 @@ kubectl argo rollouts promote myapp-canary --full
 
 ### Canary Traffic Flow
 
-```mermaid
-flowchart TB
-    subgraph TRAFFIC["Incoming Traffic (100%)"]
-        REQ["Requests"]
-    end
-
-    subgraph INGRESS["Ingress Controller"]
-        SPLIT["Traffic Split"]
-    end
-
-    subgraph STABLE["Stable Version (v1)"]
-        S1["Pod 1"]
-        S2["Pod 2"]
-        S3["Pod 3"]
-    end
-
-    subgraph CANARY["Canary Version (v2)"]
-        C1["Pod 1"]
-    end
-
-    REQ --> SPLIT
-    SPLIT -->|"90%"| STABLE
-    SPLIT -->|"10%"| CANARY
-
-    classDef traffic fill:#f9f9f9,stroke:#333,color:black
-    classDef stable fill:#28a745,stroke:#333,color:white
-    classDef canary fill:#ffc107,stroke:#333,color:black
-
-    class REQ,SPLIT traffic
-    class S1,S2,S3 stable
-    class C1 canary
-```
+![Architecture diagram showing an ingress controller splitting all incoming requests, sending 90 percent of traffic to three stable v1 pods and 10 percent to one canary v2 pod.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-2.png)
 
 ## Analysis and Verification
 

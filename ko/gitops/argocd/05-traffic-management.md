@@ -18,38 +18,7 @@
 
 Argo Rollouts는 Kubernetes를 위한 프로그레시브 딜리버리(Progressive Delivery) 컨트롤러입니다. 블루/그린 배포, 카나리 배포, 실험, 자동 롤백 등 고급 배포 전략을 제공합니다.
 
-```mermaid
-flowchart TB
-    subgraph Rollouts ["Argo Rollouts"]
-        Controller[Rollouts Controller]
-        Metrics[Metrics Server]
-    end
-
-    subgraph Strategies ["배포 전략"]
-        BlueGreen[블루/그린]
-        Canary[카나리]
-        Experiment[실험]
-    end
-
-    subgraph Integrations ["통합"]
-        Ingress[Ingress Controller]
-        ServiceMesh[Service Mesh]
-        Analysis[Analysis Provider]
-    end
-
-    Controller --> BlueGreen
-    Controller --> Canary
-    Controller --> Experiment
-
-    BlueGreen --> Ingress
-    Canary --> Ingress
-    Canary --> ServiceMesh
-
-    Controller --> Analysis
-    Analysis --> Metrics
-
-    style Controller fill:#EB6E85,stroke:#333,color:#fff
-```
+![Argo Rollouts 컨트롤러가 블루/그린, 카나리, 실험 배포 전략을 실행하고 Ingress Controller, Service Mesh, Analysis Provider와 연동하며 분석 결과를 Metrics Server로 피드백하는 아키텍처를 보여주는 다이어그램입니다.](../../.gitbook/assets/ko-gitops-argocd-05-traffic-management-0.png)
 
 ### 주요 특징
 
@@ -104,25 +73,7 @@ kubectl argo rollouts dashboard
 
 블루/그린 배포는 두 개의 동일한 환경(블루=현재, 그린=새로운)을 유지하고 트래픽을 즉시 전환합니다.
 
-```mermaid
-flowchart TB
-    subgraph Before ["전환 전"]
-        LB1[Load Balancer] --> Blue1[Blue<br/>v1.0.0<br/>Active]
-        Blue1 -.->|대기| Green1[Green<br/>v2.0.0<br/>Preview]
-    end
-
-    subgraph After ["전환 후"]
-        LB2[Load Balancer] --> Green2[Green<br/>v2.0.0<br/>Active]
-        Blue2[Blue<br/>v1.0.0<br/>이전 버전] -.->|삭제 예정| X[X]
-    end
-
-    Before -->|전환| After
-
-    style Blue1 fill:#4A90D9,stroke:#333,color:#fff
-    style Green1 fill:#90EE90,stroke:#333
-    style Green2 fill:#90EE90,stroke:#333
-    style Blue2 fill:#4A90D9,stroke:#333,color:#fff
-```
+![블루/그린 전환 전에는 로드 밸런서가 Blue v1.0.0으로 트래픽을 보내고 Green v2.0.0은 대기 상태이며, 전환 후에는 로드 밸런서가 Green v2.0.0으로 전환되고 이전 버전 Blue v1.0.0은 삭제 대상이 되는 과정을 보여주는 다이어그램입니다.](../../.gitbook/assets/ko-gitops-argocd-05-traffic-management-1.png)
 
 ### 블루/그린 Rollout 정의
 
@@ -258,33 +209,7 @@ kubectl argo rollouts retry rollout my-app-bluegreen -n production
 
 카나리 배포는 새 버전에 점진적으로 트래픽을 이동시켜 위험을 최소화합니다.
 
-```mermaid
-flowchart LR
-    subgraph Traffic ["트래픽 분배"]
-        LB[Load Balancer]
-
-        subgraph Stable ["Stable (v1.0.0)"]
-            S1[Pod 1]
-            S2[Pod 2]
-            S3[Pod 3]
-            S4[Pod 4]
-        end
-
-        subgraph Canary ["Canary (v2.0.0)"]
-            C1[Pod 1]
-        end
-    end
-
-    LB -->|80%| Stable
-    LB -->|20%| Canary
-
-    style LB fill:#FFD700,stroke:#333
-    style S1 fill:#4A90D9,stroke:#333,color:#fff
-    style S2 fill:#4A90D9,stroke:#333,color:#fff
-    style S3 fill:#4A90D9,stroke:#333,color:#fff
-    style S4 fill:#4A90D9,stroke:#333,color:#fff
-    style C1 fill:#90EE90,stroke:#333
-```
+![로드 밸런서가 안정 버전 v1.0.0 파드 4개에 80%, 카나리 버전 v2.0.0 파드 1개에 20%의 트래픽을 분배하는 구조를 보여주는 다이어그램입니다.](../../.gitbook/assets/ko-gitops-argocd-05-traffic-management-2.png)
 
 ### 카나리 Rollout 정의
 
@@ -441,25 +366,7 @@ spec:
 
 ### 카나리 단계 상세
 
-```mermaid
-flowchart TD
-    Start[롤아웃 시작] --> Step1[setWeight: 5%]
-    Step1 --> Pause1[pause: 30s]
-    Pause1 --> Analysis1[Analysis: success-rate]
-    Analysis1 -->|성공| Step2[setWeight: 20%]
-    Analysis1 -->|실패| Rollback[롤백]
-    Step2 --> ManualPause[수동 승격 대기]
-    ManualPause -->|승격| Step3[setWeight: 50%]
-    Step3 --> Pause2[pause: 1m]
-    Pause2 --> Step4[setWeight: 80%]
-    Step4 --> Analysis2[Analysis: success-rate]
-    Analysis2 -->|성공| Complete[100% - 완료]
-    Analysis2 -->|실패| Rollback
-
-    style Start fill:#4A90D9,stroke:#333,color:#fff
-    style Complete fill:#90EE90,stroke:#333
-    style Rollback fill:#FF6B6B,stroke:#333,color:#fff
-```
+![트래픽 비중을 5%에서 20%, 50%, 80%까지 단계적으로 늘리며 각 단계 사이 분석 결과가 성공이면 다음 단계로, 실패면 롤백으로 이어지고 최종 분석에 성공하면 100% 완료되는 단계적 롤아웃 흐름을 보여주는 다이어그램입니다.](../../.gitbook/assets/ko-gitops-argocd-05-traffic-management-3.png)
 
 ## Analysis와 자동 롤백
 
