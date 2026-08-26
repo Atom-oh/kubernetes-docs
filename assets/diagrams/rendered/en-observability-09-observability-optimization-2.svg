@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="ltstorage-title ltstorage-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="ltstorage-title">Prometheus remote-write fanning into three long-term storage backends and one Grafana</title>
+    <desc id="ltstorage-desc">Prometheus's 7-day local storage remote-writes to three long-term backend choices — Thanos, VictoriaMetrics, or AMP — each with its own query layer, all converging on Grafana as the single query surface.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- column eyebrows -->
+    <text x="120" y="56" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">SHORT-TERM · 7D</text>
+    <text x="370" y="56" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LONG-TERM STORAGE</text>
+    <text x="640" y="56" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">QUERY LAYER</text>
+
+    <!-- ===== Connectors ===== -->
+    <path d="M 200,285 H 224 Q 232,285 232,277 V 118 Q 232,110 240,110 H 280"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 200,300 H 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 200,315 H 224 Q 232,315 232,323 V 482 Q 232,490 240,490 H 280"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="216" y="330" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="260" y="339" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REMOTE WRITE</text>
+
+    <path d="M 460,110 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 460,300 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 460,490 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <path d="M 720,110 H 752 Q 760,110 760,118 V 272 Q 760,280 768,280 H 800"
+          fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <path d="M 720,300 H 800" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <path d="M 720,490 H 752 Q 760,490 760,482 V 328 Q 760,320 768,320 H 800"
+          fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- ===== Nodes ===== -->
+    <!-- Prometheus -->
+    <rect x="40" y="270" width="160" height="60" rx="6" fill="#ffffff"/>
+    <rect x="40" y="270" width="160" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="120" y="296" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus</text>
+    <text x="120" y="312" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">local storage</text>
+
+    <!-- Thanos -->
+    <rect x="280" y="80" width="180" height="60" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="280" y="80" width="180" height="60" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="370" y="106" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Thanos</text>
+    <text x="370" y="122" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">S3-based</text>
+
+    <!-- VictoriaMetrics -->
+    <rect x="280" y="270" width="180" height="60" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="280" y="270" width="180" height="60" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="370" y="296" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VictoriaMetrics</text>
+    <text x="370" y="312" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">native storage</text>
+
+    <!-- AMP -->
+    <rect x="280" y="460" width="180" height="60" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="280" y="460" width="180" height="60" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="370" y="486" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AMP</text>
+    <text x="370" y="502" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">AWS managed</text>
+
+    <!-- Thanos Query -->
+    <rect x="560" y="80" width="160" height="60" rx="6" fill="#ffffff"/>
+    <rect x="560" y="80" width="160" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="640" y="106" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Thanos Query</text>
+    <text x="640" y="122" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">query fed</text>
+
+    <!-- vmselect -->
+    <rect x="560" y="270" width="160" height="60" rx="6" fill="#ffffff"/>
+    <rect x="560" y="270" width="160" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="640" y="296" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VictoriaMetrics</text>
+    <text x="640" y="312" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">vmselect</text>
+
+    <!-- AMP Query -->
+    <rect x="560" y="460" width="160" height="60" rx="6" fill="#ffffff"/>
+    <rect x="560" y="460" width="160" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="640" y="486" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AMP</text>
+    <text x="640" y="502" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">query endpoint</text>
+
+    <!-- Grafana (focal) -->
+    <rect x="800" y="260" width="140" height="80" rx="6" fill="#ffffff"/>
+    <rect x="800" y="260" width="140" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="870" y="296" fill="#232F3E" font-size="14" font-weight="700"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana</text>
+    <text x="870" y="314" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">one query surface</text>
+
+    <!-- Legend -->
+    <line x1="24" y1="556" x2="936" y2="556" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="574" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="140" y1="571" x2="172" y2="571" stroke="#545B64" stroke-width="1.2"/>
+    <text x="182" y="574" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Write / query path</text>
+    <line x1="360" y1="571" x2="392" y2="571" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="402" y="574" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Feeds the unified dashboard</text>
+  </svg>

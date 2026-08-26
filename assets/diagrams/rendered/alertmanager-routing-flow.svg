@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="routing-flow-title routing-flow-desc">
+      <title id="routing-flow-title">Routing Flow</title>
+      <desc id="routing-flow-desc">Flowchart showing how Alertmanager routes a received alert down its matcher tree — critical severity to the critical receiver, then service and owner matchers deciding between team-a, the service team, or the default receiver.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- Edges (before nodes) -->
+      <!-- A -> B -->
+      <path d="M 280,100 V 140" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- B -> C (accent, headline) -->
+      <path d="M 360,180 H 560" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <rect x="440" y="164" width="40" height="12" rx="2" fill="#ffffff"/>
+      <text x="460" y="173" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+      <!-- B -> D -->
+      <path d="M 280,220 V 260" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="288" y="230" width="32" height="12" rx="2" fill="#ffffff"/>
+      <text x="304" y="239" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+      <!-- D -> F -->
+      <path d="M 360,300 H 560" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="440" y="284" width="40" height="12" rx="2" fill="#ffffff"/>
+      <text x="460" y="293" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+      <!-- D -> E -->
+      <path d="M 280,340 V 380" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="288" y="350" width="32" height="12" rx="2" fill="#ffffff"/>
+      <text x="304" y="359" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+      <!-- E -> G -->
+      <path d="M 360,420 H 560" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="440" y="404" width="40" height="12" rx="2" fill="#ffffff"/>
+      <text x="460" y="413" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+      <!-- E -> H -->
+      <path d="M 280,460 V 500" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="288" y="470" width="32" height="12" rx="2" fill="#ffffff"/>
+      <text x="304" y="479" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+      <!-- Nodes -->
+      <!-- A: Alert Received (start oval) -->
+      <rect x="200" y="60" width="160" height="40" rx="20" fill="#ffffff"/>
+      <rect x="200" y="60" width="160" height="40" rx="20" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="280" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Alert Received</text>
+
+      <!-- B: Critical? (diamond) -->
+      <polygon points="280,140 360,180 280,220 200,180" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="280" y="184" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Critical?</text>
+
+      <!-- C: critical-receiver (focal) -->
+      <rect x="560" y="160" width="160" height="40" rx="6" fill="rgba(255,153,0,0.10)"/>
+      <rect x="560" y="160" width="160" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="640" y="184" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">critical-receiver</text>
+
+      <!-- D: service=foo,bar? (diamond) -->
+      <polygon points="280,260 360,300 280,340 200,300" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="280" y="298" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">service=foo,bar?</text>
+
+      <!-- F: default-receiver -->
+      <rect x="560" y="280" width="160" height="40" rx="6" fill="#ffffff"/>
+      <rect x="560" y="280" width="160" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="640" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">default-receiver</text>
+
+      <!-- E: owner=team-a? (diamond) -->
+      <polygon points="280,380 360,420 280,460 200,420" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="280" y="418" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">owner=team-a?</text>
+
+      <!-- G: team-a -->
+      <rect x="560" y="400" width="160" height="40" rx="6" fill="#ffffff"/>
+      <rect x="560" y="400" width="160" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="640" y="424" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">team-a</text>
+
+      <!-- H: service-team -->
+      <rect x="200" y="500" width="160" height="40" rx="6" fill="#ffffff"/>
+      <rect x="200" y="500" width="160" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="280" y="524" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">service-team</text>
+    </svg>

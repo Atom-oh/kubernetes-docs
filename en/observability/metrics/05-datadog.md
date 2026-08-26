@@ -33,37 +33,7 @@ Datadog is a unified observability platform for monitoring cloud-scale infrastru
 
 ### Datadog vs Open Source vs CloudWatch
 
-```mermaid
-flowchart LR
-    subgraph DD["Datadog"]
-        D1[Unified Platform]
-        D2[AI Analysis]
-        D3[750+ Integrations]
-        D4[Per-host Pricing]
-    end
-
-    subgraph CW["CloudWatch"]
-        C1[AWS Native]
-        C2[Usage Pricing]
-        C3[AWS Integration]
-        C4[Limited APM]
-    end
-
-    subgraph OS["Open Source"]
-        O1[Full Control]
-        O2[Infrastructure Cost]
-        O3[High Flexibility]
-        O4[Operational Overhead]
-    end
-
-    classDef datadog fill:#632CA6,stroke:#333,stroke-width:1px,color:white
-    classDef cloudwatch fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef opensource fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-
-    class D1,D2,D3,D4 datadog
-    class C1,C2,C3,C4 cloudwatch
-    class O1,O2,O3,O4 opensource
-```
+![Three side-by-side profiles comparing Datadog, Amazon CloudWatch, and a self-hosted open-source stack across platform model, intelligence, integration breadth, and pricing shape.](../../.gitbook/assets/en-observability-metrics-05-datadog-0.png)
 
 | Item | Datadog | CloudWatch | Prometheus+Grafana |
 |------|---------|------------|-------------------|
@@ -79,48 +49,7 @@ flowchart LR
 
 ### Overall Architecture
 
-```mermaid
-flowchart TB
-    subgraph EKS["EKS Cluster"]
-        subgraph NODES["Worker Nodes"]
-            DA[Datadog Agent<br/>DaemonSet]
-            CCA[Cluster Agent]
-            APP[Applications]
-        end
-    end
-
-    subgraph DATADOG["Datadog Platform"]
-        METRICS[Metrics]
-        LOGS[Logs]
-        APM[APM Traces]
-        PROF[Profiling]
-        DASH[Dashboards]
-        ALERT[Monitors]
-        WATCH[Watchdog AI]
-    end
-
-    DA -->|Metrics| METRICS
-    DA -->|Logs| LOGS
-    DA -->|Traces| APM
-    DA -->|Profiles| PROF
-    CCA -->|Cluster Metrics| METRICS
-    CCA -->|Events| DATADOG
-
-    METRICS --> DASH
-    LOGS --> DASH
-    APM --> DASH
-    WATCH --> ALERT
-
-    APP -.->|Instrumentation| DA
-
-    classDef eks fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef agent fill:#632CA6,stroke:#333,stroke-width:1px,color:white
-    classDef datadog fill:#774AA4,stroke:#333,stroke-width:1px,color:white
-
-    class EKS,NODES eks
-    class DA,CCA,APP agent
-    class METRICS,LOGS,APM,PROF,DASH,ALERT,WATCH datadog
-```
+![The Datadog Agent DaemonSet and Cluster Agent collect metrics, logs, traces, and profiles from an EKS cluster's applications and forward them into the Datadog platform, where they feed dashboards, and where Watchdog AI generates monitor alerts.](../../.gitbook/assets/en-observability-metrics-05-datadog-1.png)
 
 ### Components
 
@@ -871,30 +800,7 @@ Estimated total cost: ~$3,350/month
 
 ### Cost Optimization Strategies
 
-```mermaid
-flowchart TD
-    A[Datadog Cost Optimization] --> B[Metric Optimization]
-    A --> C[Log Optimization]
-    A --> D[APM Optimization]
-
-    B --> B1[Limit custom metrics]
-    B --> B2[Manage tag cardinality]
-    B --> B3[Adjust collection interval]
-
-    C --> C1[Log filtering]
-    C --> C2[Sampling]
-    C --> C3[Index exclusion filters]
-
-    D --> D1[Adjust sampling rate]
-    D --> D2[Select services]
-    D --> D3[Optimize instrumentation scope]
-
-    classDef main fill:#632CA6,stroke:#333,stroke-width:1px,color:white
-    classDef strategy fill:#774AA4,stroke:#333,stroke-width:1px,color:white
-
-    class A main
-    class B,C,D,B1,B2,B3,C1,C2,C3,D1,D2,D3 strategy
-```
+![A tree showing Datadog cost optimization branching into metric, log, and APM optimization, each listing its own set of concrete tuning strategies.](../../.gitbook/assets/en-observability-metrics-05-datadog-2.png)
 
 #### 1. Metric Optimization
 

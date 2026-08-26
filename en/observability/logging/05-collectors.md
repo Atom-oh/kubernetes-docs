@@ -19,47 +19,7 @@ Various tools exist for collecting logs in Kubernetes environments. This documen
 
 ### Log Collector Role
 
-```mermaid
-flowchart LR
-    subgraph Sources["Log Sources"]
-        STDOUT[Container stdout]
-        FILE[Log Files]
-        JOURNAL[Systemd Journal]
-    end
-
-    subgraph Collector["Log Collector"]
-        INPUT[Input/Source]
-        PROCESS[Processing/Transform]
-        OUTPUT[Output/Sink]
-    end
-
-    subgraph Destinations["Destinations"]
-        LOKI[Loki]
-        OS[OpenSearch]
-        CW[CloudWatch]
-        S3[S3]
-    end
-
-    STDOUT --> INPUT
-    FILE --> INPUT
-    JOURNAL --> INPUT
-
-    INPUT --> PROCESS
-    PROCESS --> OUTPUT
-
-    OUTPUT --> LOKI
-    OUTPUT --> OS
-    OUTPUT --> CW
-    OUTPUT --> S3
-
-    classDef source fill:#4CAF50,stroke:#333,color:white
-    classDef collector fill:#2196F3,stroke:#333,color:white
-    classDef dest fill:#9C27B0,stroke:#333,color:white
-
-    class STDOUT,FILE,JOURNAL source
-    class INPUT,PROCESS,OUTPUT collector
-    class LOKI,OS,CW,S3 dest
-```
+![Diagram showing container stdout, log files, and the systemd journal all feeding a single log-collector pipeline of input, processing, and output stages, which fans out to Loki, OpenSearch, CloudWatch, and S3.](../../.gitbook/assets/en-observability-logging-05-collectors-0.png)
 
 ### Core Functions
 
@@ -92,48 +52,7 @@ FluentBit is a CNCF project, a lightweight log processor written in C. It starte
 
 ### Architecture
 
-```mermaid
-flowchart LR
-    subgraph Input["Input Plugins"]
-        TAIL[tail]
-        SYSLOG[syslog]
-        TCP[tcp]
-        SYSTEMD[systemd]
-    end
-
-    subgraph Parser["Parser"]
-        JSON[json]
-        REGEX[regex]
-        DOCKER[docker]
-        CRI[cri]
-    end
-
-    subgraph Filter["Filter Plugins"]
-        K8S[kubernetes]
-        MODIFY[modify]
-        GREP[grep]
-        LUA[lua]
-        MULTILINE[multiline]
-    end
-
-    subgraph Buffer["Buffer"]
-        MEM[Memory]
-        FS[Filesystem]
-    end
-
-    subgraph Output["Output Plugins"]
-        LOKI[loki]
-        ES[opensearch]
-        CW[cloudwatch_logs]
-        S3[s3]
-        KAFKA[kafka]
-    end
-
-    Input --> Parser
-    Parser --> Filter
-    Filter --> Buffer
-    Buffer --> Output
-```
+![Diagram of FluentBit's five sequential plugin stages: input plugins, parser, filter plugins, buffer, and output plugins, each shown with its representative plugin names.](../../.gitbook/assets/en-observability-logging-05-collectors-1.png)
 
 ### Complete Configuration Example
 
@@ -549,39 +468,7 @@ Promtail is a log collection agent developed by Grafana Labs specifically for Lo
 
 ### Architecture
 
-```mermaid
-flowchart LR
-    subgraph Discovery["Service Discovery"]
-        K8S_SD[kubernetes_sd]
-        FILE_SD[file_sd]
-        STATIC[static]
-    end
-
-    subgraph Scrape["Scrape Targets"]
-        PODS[Pod Logs]
-        JOURNAL[Journal]
-        SYSLOG[Syslog]
-    end
-
-    subgraph Pipeline["Pipeline Stages"]
-        DOCKER[docker]
-        CRI[cri]
-        JSON[json]
-        REGEX[regex]
-        MULTILINE[multiline]
-        LABELS[labels]
-        TIMESTAMP[timestamp]
-        OUTPUT[output]
-    end
-
-    subgraph Push["Push to Loki"]
-        LOKI[Loki API]
-    end
-
-    Discovery --> Scrape
-    Scrape --> Pipeline
-    Pipeline --> Push
-```
+![Diagram of Promtail's four-stage pipeline: service discovery, scrape targets, pipeline stages, and push to Loki, ending in Loki as the only destination.](../../.gitbook/assets/en-observability-logging-05-collectors-2.png)
 
 ### Complete Configuration Example
 
@@ -1064,32 +951,7 @@ OpenTelemetry Collector uses OTLP (OpenTelemetry Protocol) Proto encoding. Compa
 
 ### Architecture
 
-```mermaid
-flowchart LR
-    subgraph Receivers["Receivers"]
-        OTLP[otlp]
-        FILELOG[filelog]
-        K8SEVENTS[k8sevents]
-        SYSLOG[syslog]
-    end
-
-    subgraph Processors["Processors"]
-        BATCH[batch]
-        MEMORY[memory_limiter]
-        K8SATTR[k8sattributes]
-        FILTER[filter]
-        TRANSFORM[transform]
-    end
-
-    subgraph Exporters["Exporters"]
-        LOKI_EXP[loki]
-        OTLP_EXP[otlphttp]
-        DEBUG[debug]
-    end
-
-    Receivers --> Processors
-    Processors --> Exporters
-```
+![Diagram of the OpenTelemetry Collector's three-stage pipeline: receivers, processors, and exporters, each listing representative component names.](../../.gitbook/assets/en-observability-logging-05-collectors-3.png)
 
 ### Complete Configuration Example
 
@@ -1482,28 +1344,7 @@ OTEL Collector recommended:
 
 ### Decision Flow
 
-```mermaid
-flowchart TD
-    START[Choose Log Collector] --> Q1{Loki-only<br/>destination?}
-
-    Q1 -->|Yes| Q2{Existing<br/>Promtail?}
-    Q1 -->|No| Q3{AWS<br/>environment?}
-
-    Q2 -->|Yes| PROMTAIL[Keep Promtail]
-    Q2 -->|No| ALLOY[Grafana Alloy]
-
-    Q3 -->|Yes| FLUENTBIT[FluentBit]
-    Q3 -->|No| Q4{Need OTEL<br/>standard?}
-
-    Q4 -->|Yes| OTEL[OTEL Collector]
-    Q4 -->|No| FLUENTBIT
-
-    classDef decision fill:#FFE082,stroke:#333
-    classDef solution fill:#81C784,stroke:#333,color:white
-
-    class Q1,Q2,Q3,Q4 decision
-    class PROMTAIL,ALLOY,FLUENTBIT,OTEL solution
-```
+![Decision flowchart for choosing a log collector, routing through Loki-only-destination, existing-tooling, and AWS-environment questions to recommend Promtail, Grafana Alloy, FluentBit, or the OpenTelemetry Collector.](../../.gitbook/assets/en-observability-logging-05-collectors-4.png)
 
 ---
 

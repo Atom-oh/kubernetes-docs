@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="collector-decision-title collector-decision-desc">
+    <title id="collector-decision-title">Decision flow for choosing a log collector</title>
+    <desc id="collector-decision-desc">A decision tree that routes from a Loki-only destination question through existing-tooling and AWS-environment checks to recommend Promtail, Grafana Alloy, FluentBit, or the OpenTelemetry Collector, with FluentBit reached as the fallback from two branches.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- ============ ARROWS (drawn before boxes) ============ -->
+
+    <!-- Start -> Q1 -->
+    <line x1="480" y1="68" x2="480" y2="95" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Q1 -> Q2 (Yes) -->
+    <path d="M410,140 H228 Q220,140 220,148 V215" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Q1 -> Q3 (No) -->
+    <path d="M550,140 H732 Q740,140 740,148 V215" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Q2 -> Promtail (Yes) -->
+    <path d="M150,260 H108 Q100,260 100,268 V348" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Q2 -> Alloy (No) -->
+    <path d="M290,260 H332 Q340,260 340,268 V348" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Q3 -> FluentBit (Yes) -->
+    <path d="M740,305 V468" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <!-- Q3 -> Q4 (No) -->
+    <path d="M810,260 H852 Q860,260 860,268 V335" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Q4 -> OTEL Collector (Yes) -->
+    <line x1="880" y1="425" x2="880" y2="468" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Q4 -> FluentBit (No) — bridges the Q3-Yes vertical line at x=740 -->
+    <path d="M810,380 H748 a8,8 0 0,1 -16,0 H668 Q660,380 660,388 V468" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- Arrow labels -->
+    <rect x="303" y="120" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="319" y="129" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+    <rect x="625" y="120" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="641" y="129" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+    <rect x="113" y="240" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="129" y="249" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+    <rect x="295" y="240" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="311" y="249" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+    <rect x="704" y="324" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="720" y="333" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+    <rect x="815" y="240" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="831" y="249" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+    <rect x="888" y="442" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="904" y="451" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+    <rect x="764" y="360" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="780" y="369" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+    <!-- ============ NODES ============ -->
+
+    <!-- Start -->
+    <rect x="400" y="12" width="160" height="56" rx="28" fill="#ffffff"/>
+    <rect x="400" y="12" width="160" height="56" rx="28" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="44" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Choose Log Collector</text>
+
+    <!-- Q1 -->
+    <polygon points="480,95 550,140 480,185 410,140" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Loki-only</text>
+    <text x="480" y="150" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">destination?</text>
+
+    <!-- Q2 -->
+    <polygon points="220,215 290,260 220,305 150,260" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="220" y="256" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Existing</text>
+    <text x="220" y="270" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Promtail?</text>
+
+    <!-- Q3 -->
+    <polygon points="740,215 810,260 740,305 670,260" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="740" y="256" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS</text>
+    <text x="740" y="270" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">environment?</text>
+
+    <!-- Q4 -->
+    <polygon points="880,335 950,380 880,425 810,380" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="880" y="376" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Need OTEL</text>
+    <text x="880" y="390" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">standard?</text>
+
+    <!-- Promtail -->
+    <rect x="10" y="348" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="10" y="348" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="80" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Keep Promtail</text>
+
+    <!-- Grafana Alloy -->
+    <rect x="250" y="348" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="250" y="348" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="320" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana Alloy</text>
+
+    <!-- FluentBit (focal — reached from two branches) -->
+    <rect x="630" y="468" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="630" y="468" width="140" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="700" y="504" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">FluentBit</text>
+
+    <!-- OTEL Collector -->
+    <rect x="810" y="468" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="810" y="468" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="880" y="504" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OTEL Collector</text>
+  </svg>

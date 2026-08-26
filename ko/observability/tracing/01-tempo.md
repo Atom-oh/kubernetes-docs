@@ -22,55 +22,7 @@ Grafana Tempo는 대규모 분산 추적을 위한 오픈소스 백엔드입니�
 
 Tempo는 다음과 같은 주요 구성 요소로 이루어져 있습니다:
 
-```mermaid
-flowchart TD
-    subgraph Ingestion["데이터 수신"]
-        APP[애플리케이션]
-        OTEL[OTEL Collector]
-    end
-
-    subgraph Tempo["Tempo 클러스터"]
-        DIST[Distributor]
-        ING[Ingester]
-        QUERY[Querier]
-        QFRONT[Query Frontend]
-        COMPACT[Compactor]
-        METRICS[Metrics Generator]
-    end
-
-    subgraph Storage["스토리지"]
-        S3[(S3 / Object Storage)]
-        CACHE[(Memcached / Redis)]
-    end
-
-    subgraph Visualization["시각화"]
-        GRAFANA[Grafana]
-    end
-
-    APP -->|OTLP/Jaeger/Zipkin| OTEL
-    OTEL -->|OTLP| DIST
-    DIST -->|해시 기반 분배| ING
-    ING -->|블록 저장| S3
-    ING -->|메트릭 생성| METRICS
-    METRICS -->|RED 메트릭| GRAFANA
-
-    GRAFANA -->|TraceQL| QFRONT
-    QFRONT -->|쿼리 분할| QUERY
-    QUERY -->|검색| S3
-    QUERY -->|캐시| CACHE
-
-    COMPACT -->|압축/최적화| S3
-
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef tempo fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class APP,OTEL app
-    class DIST,ING,QUERY,QFRONT,COMPACT,METRICS tempo
-    class S3,CACHE storage
-    class GRAFANA grafana
-```
+![애플리케이션의 트레이스가 OTEL Collector와 Tempo 클러스터의 쓰기 경로(Distributor→Ingester)를 거쳐 S3에 저장되고, Metrics Generator가 생성한 RED 메트릭이 Grafana로 전달되며, Grafana의 TraceQL 조회가 Query Frontend와 Querier를 통해 S3와 캐시에서 트레이스를 검색하는 전체 흐름을 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-observability-tracing-01-tempo-0.png)
 
 ### 구성 요소 상세
 

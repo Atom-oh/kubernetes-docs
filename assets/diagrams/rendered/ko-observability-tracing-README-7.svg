@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d7-title d7-desc">
+    <title id="d7-title">분산 추적 솔루션 선택 가이드</title>
+    <desc id="d7-desc">AWS 네이티브 통합, 비용, Grafana 스택 사용 여부, AI 분석 필요성을 차례로 물어 X-Ray·Tempo·Jaeger·Datadog APM·Dynatrace 중 하나로 안내하는 의사결정 트리를 보여준다.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Arrows -->
+    <path d="M552,80 H622 Q630,80 630,88 V212 Q630,220 638,220 H708" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M480,120 V142 Q480,150 472,150 H288 Q280,150 280,158 V180" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M352,220 V262 Q352,270 360,270 H640 Q648,270 648,278 V320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M280,260 V282 Q280,290 288,290 H304 Q312,290 312,298 V320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M384,360 H388 Q396,360 396,368 V460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M312,400 V422 Q312,430 304,430 H236 Q228,430 228,438 V460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M720,360 H724 Q732,360 732,368 V460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M648,400 V422 Q648,430 640,430 H572 Q564,430 564,438 V460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Edge labels -->
+    <rect x="568" y="60" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="580" y="69" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">예</text>
+
+    <rect x="488" y="124" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="508" y="133" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">아니오</text>
+
+    <rect x="360" y="228" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="372" y="237" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">예</text>
+
+    <rect x="288" y="264" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="308" y="273" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">아니오</text>
+
+    <rect x="404" y="400" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="416" y="409" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">예</text>
+
+    <rect x="252" y="410" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="272" y="419" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">아니오</text>
+
+    <rect x="740" y="400" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="752" y="409" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">예</text>
+
+    <rect x="590" y="410" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="610" y="419" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">아니오</text>
+
+    <!-- Q1: AWS 네이티브 통합 필요? (focal, entry) -->
+    <text x="480" y="24" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.18em">START</text>
+    <polygon points="480,40 552,80 480,120 408,80" fill="#ffffff"/>
+    <polygon points="480,40 552,80 480,120 408,80" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="480" y="76" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">AWS 네이티브</text>
+    <text x="480" y="91" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">통합 필요?</text>
+
+    <!-- XRAY (leaf) -->
+    <rect x="708" y="188" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="708" y="188" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="780" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">AWS X-Ray</text>
+
+    <!-- Q2: 비용 최우선? -->
+    <polygon points="280,180 352,220 280,260 208,220" fill="#ffffff"/>
+    <polygon points="280,180 352,220 280,260 208,220" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="280" y="224" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">비용 최우선?</text>
+
+    <!-- Q3: AI 분석 필요? -->
+    <polygon points="312,320 384,360 312,400 240,360" fill="#ffffff"/>
+    <polygon points="312,320 384,360 312,400 240,360" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="312" y="356" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">AI 분석</text>
+    <text x="312" y="371" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">필요?</text>
+
+    <!-- Q4: Grafana 스택 사용 중? -->
+    <polygon points="648,320 720,360 648,400 576,360" fill="#ffffff"/>
+    <polygon points="648,320 720,360 648,400 576,360" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="648" y="356" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Grafana 스택</text>
+    <text x="648" y="371" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">사용 중?</text>
+
+    <!-- Leaves -->
+    <rect x="156" y="460" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="156" y="460" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="228" y="496" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Datadog APM</text>
+
+    <rect x="324" y="460" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="324" y="460" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="396" y="496" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Dynatrace</text>
+
+    <rect x="492" y="460" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="492" y="460" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="564" y="496" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Jaeger</text>
+
+    <rect x="660" y="460" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="660" y="460" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="732" y="496" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Grafana Tempo</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="546" x2="920" y2="546" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="562" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <polygon points="47,582 61,588 47,594 33,588" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="70" y="592" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">시작 질문 (focal)</text>
+
+    <polygon points="247,582 261,588 247,594 233,588" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="270" y="592" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">판단 질문</text>
+
+    <rect x="400" y="583" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="420" y="592" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">추천 솔루션</text>
+  </svg>

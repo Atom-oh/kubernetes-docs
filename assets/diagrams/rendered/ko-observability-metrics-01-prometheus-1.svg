@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="prom-op-title prom-op-desc">
+      <title id="prom-op-title">Prometheus Operator가 관리하는 CRD</title>
+      <desc id="prom-op-desc">Prometheus Operator가 Prometheus, Alertmanager, ThanosRuler 세 리소스를 생성하고, Prometheus는 ServiceMonitor·PodMonitor·PrometheusRule·ScrapeConfig·Probe를, Alertmanager는 AlertmanagerConfig를 각각 하위 커스텀 리소스로 갖는 계층을 보여준다.</desc>
+      <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      </defs>
+
+      <rect width="960" height="600" fill="#ffffff"/>
+
+      <!-- Connectors (before nodes) -->
+      <!-- Root -> level1 bus -->
+      <line x1="480" y1="88" x2="480" y2="112" stroke="#545B64" stroke-width="1.2"/>
+      <line x1="340" y1="112" x2="860" y2="112" stroke="#545B64" stroke-width="1.2"/>
+      <line x1="340" y1="112" x2="340" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="640" y1="112" x2="640" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="860" y1="112" x2="860" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Prometheus -> 5 children bus -->
+      <line x1="340" y1="196" x2="340" y2="220" stroke="#545B64" stroke-width="1.2"/>
+      <line x1="68" y1="220" x2="612" y2="220" stroke="#545B64" stroke-width="1.2"/>
+      <line x1="68" y1="220" x2="68" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="204" y1="220" x2="204" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="340" y1="220" x2="340" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="476" y1="220" x2="476" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="612" y1="220" x2="612" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Alertmanager -> AlertmanagerConfig (offset elbow, clears Prometheus's subtree) -->
+      <path d="M 640,196 V 220 H 776 V 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Root: Prometheus Operator (focal) -->
+      <rect x="392" y="32" width="176" height="56" rx="6" fill="#ffffff"/>
+      <rect x="392" y="32" width="176" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="480" y="56" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus Operator</text>
+      <text x="480" y="72" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">컨트롤러</text>
+
+      <!-- Level 1: Prometheus -->
+      <rect x="268" y="140" width="144" height="56" rx="6" fill="#ffffff"/>
+      <rect x="268" y="140" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="340" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus</text>
+      <text x="340" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">StatefulSet 생성</text>
+
+      <!-- Level 1: Alertmanager -->
+      <rect x="568" y="140" width="144" height="56" rx="6" fill="#ffffff"/>
+      <rect x="568" y="140" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="640" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Alertmanager</text>
+      <text x="640" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">StatefulSet 생성</text>
+
+      <!-- Level 1: ThanosRuler -->
+      <rect x="788" y="140" width="144" height="56" rx="6" fill="#ffffff"/>
+      <rect x="788" y="140" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="860" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ThanosRuler</text>
+      <text x="860" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">장기 저장 룰 평가</text>
+
+      <!-- Level 2: children of Prometheus (leaf, thinner stroke) -->
+      <rect x="8" y="280" width="120" height="48" rx="6" fill="#ffffff"/>
+      <rect x="8" y="280" width="120" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+      <text x="68" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ServiceMonitor</text>
+
+      <rect x="144" y="280" width="120" height="48" rx="6" fill="#ffffff"/>
+      <rect x="144" y="280" width="120" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+      <text x="204" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">PodMonitor</text>
+
+      <rect x="280" y="280" width="120" height="48" rx="6" fill="#ffffff"/>
+      <rect x="280" y="280" width="120" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+      <text x="340" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">PrometheusRule</text>
+
+      <rect x="416" y="280" width="120" height="48" rx="6" fill="#ffffff"/>
+      <rect x="416" y="280" width="120" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+      <text x="476" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ScrapeConfig</text>
+
+      <rect x="552" y="280" width="120" height="48" rx="6" fill="#ffffff"/>
+      <rect x="552" y="280" width="120" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+      <text x="612" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Probe</text>
+
+      <!-- Level 2: child of Alertmanager -->
+      <rect x="696" y="280" width="160" height="48" rx="6" fill="#ffffff"/>
+      <rect x="696" y="280" width="160" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+      <text x="776" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AlertmanagerConfig</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="400" x2="920" y2="400" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="40" y="420" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+      <rect x="150" y="410" width="14" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="172" y="421" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">컨트롤러(오퍼레이터)</text>
+      <rect x="330" y="410" width="14" height="14" rx="3" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="352" y="421" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Operand 리소스</text>
+      <rect x="510" y="410" width="14" height="14" rx="3" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+      <text x="532" y="421" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">설정용 CRD</text>
+    </svg>

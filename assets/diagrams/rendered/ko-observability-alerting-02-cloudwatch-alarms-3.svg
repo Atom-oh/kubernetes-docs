@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="anomaly-title anomaly-desc">
+    <title id="anomaly-title">Anomaly Detection 동작 방식</title>
+    <desc id="anomaly-desc">과거 데이터를 학습해 예상 범위를 만들고, 현재 메트릭이 그 범위를 벗어나면 이상 알림을 발생시키는 CloudWatch Anomaly Detection의 학습·탐지 흐름.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zone: Learning -->
+    <rect x="40" y="140" width="392" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="56" y="144" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="92" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">학습 단계</text>
+
+    <!-- Zone: Detection -->
+    <rect x="472" y="140" width="448" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="488" y="144" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="524" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">탐지 단계</text>
+
+    <!-- ============ ARROWS ============ -->
+    <!-- H -> ML -->
+    <path d="M188,196 H232" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- ML -> B -->
+    <path d="M368,196 H412" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- B(bottom) -> C(left port, elbow down then right) -->
+    <path d="M228,220 V292 Q228,300 236,300 H612" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- M -> C -->
+    <path d="M700,236 V276" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- C -> A (No, accent, right) -->
+    <path d="M748,300 H820" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="762" y="280" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="774" y="289" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">NO</text>
+    <!-- C -> N (Yes, below) -->
+    <path d="M700,324 V392" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="688" y="348" width="26" height="12" rx="2" fill="#ffffff"/>
+    <text x="701" y="357" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">YES</text>
+
+    <!-- ============ NODES ============ -->
+    <!-- H Historical Data -->
+    <rect x="56" y="172" width="132" height="48" rx="6" fill="#ffffff"/>
+    <rect x="56" y="172" width="132" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="122" y="192" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Historical</text>
+    <text x="122" y="206" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Data</text>
+
+    <!-- ML Model -->
+    <rect x="232" y="172" width="136" height="48" rx="6" fill="#ffffff"/>
+    <rect x="232" y="172" width="136" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="300" y="200" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ML Model</text>
+
+    <!-- B Expected Band -->
+    <rect x="412" y="172" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="412" y="172" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="482" y="192" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Expected</text>
+    <text x="482" y="206" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Band</text>
+
+    <!-- M Current Metrics -->
+    <rect x="628" y="188" width="144" height="48" rx="6" fill="#ffffff"/>
+    <rect x="628" y="188" width="144" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="208" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Current</text>
+    <text x="700" y="222" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Metrics</text>
+
+    <!-- C decision diamond -->
+    <polygon points="700,276 748,300 700,324 652,300" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="297" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Band</text>
+    <text x="700" y="309" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">이내?</text>
+
+    <!-- A Anomaly Alert (focal) -->
+    <rect x="820" y="276" width="88" height="48" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="820" y="276" width="88" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="864" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Anomaly</text>
+    <text x="864" y="310" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Alert</text>
+
+    <!-- N Normal -->
+    <rect x="628" y="392" width="144" height="48" rx="6" fill="rgba(35,47,62,0.03)"/>
+    <rect x="628" y="392" width="144" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="700" y="420" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Normal</text>
+
+  </svg>

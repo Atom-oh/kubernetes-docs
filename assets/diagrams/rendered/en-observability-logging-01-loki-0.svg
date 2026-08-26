@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">Grafana Loki architecture: write path, read path, and shared backend store</title>
+  <desc id="ddesc">Log agents send streams into a distributor, which hands them to an ingester that flushes chunks to S3 object storage. Grafana queries through a query frontend into the querier, the read path's hub, which merges live data from the ingester, historical data from S3, and cached results from Redis or Memcached. A compactor writes optimized indexes back into S3.</desc>
+
+  <rect width="960" height="600" fill="var(--paper)"/>
+
+  <!-- Header -->
+  <text x="40" y="32" class="mono" font-size="8" letter-spacing="0.18em" fill="var(--soft)">ARCHITECTURE</text>
+  <text x="40" y="56" font-size="20" font-weight="700" fill="var(--ink)">Loki Read &amp; Write Paths</text>
+
+  <!-- Zones (bg -> zones -> arrows -> nodes) -->
+  <rect x="40" y="64" width="200" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="48" y="68" width="88" height="12" rx="2" fill="var(--paper)"/>
+  <text x="92" y="77" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">INGEST PATH</text>
+
+  <rect x="720" y="64" width="200" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="728" y="68" width="84" height="12" rx="2" fill="var(--paper)"/>
+  <text x="770" y="77" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">QUERY PATH</text>
+
+  <rect x="260" y="432" width="440" height="124" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="268" y="436" width="100" height="12" rx="2" fill="var(--paper)"/>
+  <text x="318" y="445" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">BACKEND STORE</text>
+
+  <!-- Arrow markers -->
+  <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--muted)"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- Arrows (drawn before boxes) -->
+  <!-- a: Log Agents -> Distributor (straight, same x) -->
+  <path d="M140,152 V176" fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- b: Distributor -> Ingester (straight, same x) -->
+  <path d="M140,232 V256" fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- d: Grafana -> Query Frontend (straight, same x) -->
+  <path d="M820,152 V176" fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- e: Query Frontend -> Querier (straight, same x) -->
+  <path d="M820,232 V256" fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- c: Ingester -> S3 Storage (elbow, fan attach at S3 top x=464) -->
+  <path d="M140,312 V384 Q140,392 148,392 H456 Q464,392 464,400 V468" fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="288" y="378" width="40" height="12" rx="2" fill="var(--paper)"/>
+  <text x="308" y="387" fill="var(--soft)" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">FLUSH</text>
+
+  <!-- f: Querier -> Ingester (straight, same y, right edge of Ingester) -->
+  <path d="M740,284 H220" fill="none" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="440" y="266" width="72" height="12" rx="2" fill="var(--paper)"/>
+  <text x="476" y="275" fill="var(--accent)" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">LIVE READ</text>
+
+  <!-- g: Querier -> S3 Storage (elbow, fan attach at querier bottom x=792, S3 top x=504) -->
+  <path d="M792,312 V384 Q792,392 784,392 H512 Q504,392 504,400 V468" fill="none" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- h: Querier -> Redis/Memcached (elbow, fan attach at querier bottom x=848, offset track y=404) -->
+  <path d="M848,312 V396 Q848,404 840,404 H628 Q620,404 620,412 V468" fill="none" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- i: Compactor -> S3 Storage (straight, same y) -->
+  <path d="M404,504 H428" fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Nodes -->
+  <!-- Log Agents (input) -->
+  <rect x="64" y="96" width="152" height="56" rx="6" fill="#ffffff"/>
+  <rect x="64" y="96" width="152" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="var(--soft)" stroke-width="1"/>
+  <text x="140" y="118" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Log Agents</text>
+  <text x="140" y="134" font-size="9" class="mono" fill="var(--muted)" text-anchor="middle">Promtail · FluentBit · Alloy</text>
+
+  <!-- Distributor -->
+  <rect x="60" y="176" width="160" height="56" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+  <text x="140" y="200" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Distributor</text>
+  <text x="140" y="216" font-size="9" class="mono" fill="var(--muted)" text-anchor="middle">validate · rate-limit</text>
+
+  <!-- Ingester -->
+  <rect x="60" y="256" width="160" height="56" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+  <text x="140" y="280" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Ingester</text>
+  <text x="140" y="296" font-size="9" class="mono" fill="var(--muted)" text-anchor="middle">WAL · chunk buffer</text>
+
+  <!-- Grafana (external) -->
+  <rect x="744" y="96" width="152" height="56" rx="6" fill="#ffffff"/>
+  <rect x="744" y="96" width="152" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="820" y="120" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Grafana</text>
+  <text x="820" y="136" font-size="9" class="mono" fill="var(--muted)" text-anchor="middle">LogQL client</text>
+
+  <!-- Query Frontend (merges Query Frontend + Query Scheduler) -->
+  <rect x="740" y="176" width="160" height="56" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+  <text x="820" y="198" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Query Frontend</text>
+  <text x="820" y="212" font-size="9" class="mono" fill="var(--muted)" text-anchor="middle">split · cache · schedule</text>
+
+  <!-- Querier (FOCAL) -->
+  <rect x="740" y="256" width="160" height="56" rx="6" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+  <text x="820" y="280" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Querier</text>
+  <text x="820" y="296" font-size="9" class="mono" fill="var(--muted)" text-anchor="middle">merge · dedupe</text>
+
+  <!-- Compactor -->
+  <rect x="284" y="476" width="120" height="56" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+  <text x="344" y="500" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Compactor</text>
+  <text x="344" y="516" font-size="9" class="mono" fill="var(--muted)" text-anchor="middle">retention</text>
+
+  <!-- S3 Storage (cylinder / store) -->
+  <g>
+    <rect x="428" y="476" width="112" height="56" fill="rgba(35,47,62,0.05)"/>
+    <path d="M428,484 A56,8 0 0 1 540,484 V524 A56,8 0 0 1 428,524 Z" fill="rgba(35,47,62,0.05)" stroke="var(--muted)" stroke-width="1"/>
+    <ellipse cx="484" cy="484" rx="56" ry="8" fill="rgba(35,47,62,0.05)" stroke="var(--muted)" stroke-width="1"/>
+    <text x="484" y="508" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">S3 Storage</text>
+    <text x="484" y="522" font-size="9" class="mono" fill="var(--muted)" text-anchor="middle">chunks + index</text>
+  </g>
+
+  <!-- Redis/Memcached (cylinder / store) -->
+  <g>
+    <rect x="564" y="476" width="112" height="56" fill="rgba(35,47,62,0.05)"/>
+    <path d="M564,484 A56,8 0 0 1 676,484 V524 A56,8 0 0 1 564,524 Z" fill="rgba(35,47,62,0.05)" stroke="var(--muted)" stroke-width="1"/>
+    <ellipse cx="620" cy="484" rx="56" ry="8" fill="rgba(35,47,62,0.05)" stroke="var(--muted)" stroke-width="1"/>
+    <text x="620" y="506" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Redis /</text>
+    <text x="620" y="520" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Memcached</text>
+  </g>
+
+  <!-- Legend -->
+  <line x1="40" y1="572" x2="920" y2="572" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="588" fill="var(--muted)" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+  <rect x="150" y="580" width="14" height="10" rx="2" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+  <text x="172" y="588" fill="var(--muted)" font-size="8" class="mono">READ-PATH HUB</text>
+  <rect x="330" y="580" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="var(--muted)" stroke-width="1"/>
+  <text x="352" y="588" fill="var(--muted)" font-size="8" class="mono">PERSISTENT STORE</text>
+</svg>

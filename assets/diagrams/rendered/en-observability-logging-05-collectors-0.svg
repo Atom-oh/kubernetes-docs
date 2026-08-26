@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="collector-role-title collector-role-desc">
+    <title id="collector-role-title">Log collector role in a Kubernetes cluster</title>
+    <desc id="collector-role-desc">Container stdout, log files, and the systemd journal all feed a single collector pipeline of input, processing, and output stages, which fans the normalized logs out to Loki, OpenSearch, CloudWatch, and S3.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- ============ ZONES ============ -->
+    <rect x="48" y="144" width="864" height="108" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="416" y="148" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="157" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LOG COLLECTOR</text>
+
+    <rect x="24" y="340" width="912" height="148" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="404" y="344" width="152" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="353" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">DESTINATIONS</text>
+
+    <!-- ============ ARROWS ============ -->
+
+    <!-- Sources -> Input -->
+    <path d="M480,104 V128 Q480,136 472,136 H216 Q208,136 208,144 V176" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Input -> Processing -->
+    <line x1="320" y1="208" x2="368" y2="208" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Processing -> Output -->
+    <line x1="592" y1="208" x2="640" y2="208" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Output -> Loki / OpenSearch / CloudWatch / S3 (fanned attach points on Output bottom edge) -->
+    <path d="M684,240 V244 Q684,252 676,252 H164 Q156,252 156,260 V388" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M730,240 V272 Q730,280 722,280 H380 Q372,280 372,288 V388" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M774,240 V300 Q774,308 766,308 H596 Q588,308 588,316 V388" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M820,240 V328 Q820,336 812,336 H812 Q804,336 804,344 V388" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ============ NODES ============ -->
+
+    <!-- Sources (input treatment) -->
+    <rect x="340" y="40" width="280" height="64" rx="6" fill="#ffffff"/>
+    <rect x="340" y="40" width="280" height="64" rx="6" fill="rgba(125,137,152,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="348" y="48" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+    <text x="362" y="57" fill="rgba(125,137,152,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SRC</text>
+    <text x="480" y="76" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Log Sources</text>
+    <text x="480" y="92" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">stdout &#183; log files &#183; systemd journal</text>
+
+    <!-- Input -->
+    <rect x="96" y="176" width="224" height="64" rx="6" fill="#ffffff"/>
+    <rect x="96" y="176" width="224" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="208" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Input / Source</text>
+    <text x="208" y="220" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">read logs from source</text>
+
+    <!-- Processing -->
+    <rect x="368" y="176" width="224" height="64" rx="6" fill="#ffffff"/>
+    <rect x="368" y="176" width="224" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Processing / Transform</text>
+    <text x="480" y="220" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">parse &#183; filter &#183; enrich</text>
+
+    <!-- Output (focal) -->
+    <rect x="640" y="176" width="224" height="64" rx="6" fill="#ffffff"/>
+    <rect x="640" y="176" width="224" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="752" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Output / Sink</text>
+    <text x="752" y="220" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">buffer &#183; send to destinations</text>
+
+    <!-- Loki -->
+    <rect x="60" y="388" width="192" height="64" rx="6" fill="#ffffff"/>
+    <rect x="60" y="388" width="192" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="156" y="416" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Loki</text>
+    <text x="156" y="432" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">log aggregation</text>
+
+    <!-- OpenSearch -->
+    <rect x="276" y="388" width="192" height="64" rx="6" fill="#ffffff"/>
+    <rect x="276" y="388" width="192" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="372" y="416" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OpenSearch</text>
+    <text x="372" y="432" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">search &#183; analytics</text>
+
+    <!-- CloudWatch -->
+    <rect x="492" y="388" width="192" height="64" rx="6" fill="#ffffff"/>
+    <rect x="492" y="388" width="192" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="588" y="416" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudWatch</text>
+    <text x="588" y="432" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">AWS managed logs</text>
+
+    <!-- S3 -->
+    <rect x="708" y="388" width="192" height="64" rx="6" fill="#ffffff"/>
+    <rect x="708" y="388" width="192" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="804" y="416" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">S3</text>
+    <text x="804" y="432" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">object archive / backup</text>
+  </svg>

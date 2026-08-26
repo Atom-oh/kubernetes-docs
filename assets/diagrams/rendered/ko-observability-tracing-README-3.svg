@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d3-title d3-desc">
+    <title id="d3-title">Trace 트리 구조</title>
+    <desc id="d3-desc">Root Span인 API Gateway가 Auth·Order 두 Child Span을 낳고, Order Span이 다시 Payment·Inventory Grandchild Span으로 갈라지는 부모-자식 트리 구조를 보여준다.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Tree connectors: drop + bus + drop -->
+    <line x1="480" y1="104" x2="480" y2="140" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="220" y1="140" x2="680" y2="140" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="220" y1="140" x2="220" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="680" y1="140" x2="680" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <line x1="680" y1="244" x2="680" y2="280" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="580" y1="280" x2="780" y2="280" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="580" y1="280" x2="580" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="780" y1="280" x2="780" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Root (focal) -->
+    <rect x="400" y="40" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="400" y="40" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="480" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Root Span</text>
+    <text x="480" y="84" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">API Gateway · span001</text>
+
+    <!-- Child 1: Auth -->
+    <rect x="140" y="180" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="140" y="180" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="220" y="208" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Child Span</text>
+    <text x="220" y="224" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Auth Service · span002</text>
+
+    <!-- Child 2: Order -->
+    <rect x="600" y="180" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="600" y="180" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="680" y="208" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Child Span</text>
+    <text x="680" y="224" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Order Service · span003</text>
+
+    <!-- Grandchild 1: Payment -->
+    <rect x="500" y="320" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="500" y="320" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+    <text x="580" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Grandchild Span</text>
+    <text x="580" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Payment Service · span004</text>
+
+    <!-- Grandchild 2: Inventory -->
+    <rect x="700" y="320" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="700" y="320" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+    <text x="780" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Grandchild Span</text>
+    <text x="780" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Inventory Service · span005</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="440" x2="920" y2="440" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="456" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="472" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="480" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Root Span (focal)</text>
+
+    <rect x="220" y="472" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="480" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Child Span</text>
+
+    <rect x="360" y="472" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+    <text x="380" y="480" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Grandchild Span (leaf)</text>
+  </svg>

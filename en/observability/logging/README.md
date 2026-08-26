@@ -124,77 +124,7 @@ In Kubernetes environments, JSON format is the de facto standard. Most log colle
 
 ### Architecture Overview
 
-```mermaid
-flowchart TB
-    subgraph Sources["Log Sources"]
-        APP[Application Logs]
-        SYS[System Logs]
-        K8S[Kubernetes Events]
-        CTRL[Control Plane Logs]
-    end
-
-    subgraph Collection["Collection Layer"]
-        DS[DaemonSet Agent<br/>FluentBit/Promtail]
-        SC[Sidecar Container]
-        OTEL[OTEL Collector]
-    end
-
-    subgraph Processing["Processing Layer"]
-        PARSE[Parsing/Normalization]
-        ENRICH[Metadata Enrichment]
-        FILTER[Filtering/Sampling]
-        BUFFER[Buffering]
-    end
-
-    subgraph Storage["Storage Layer"]
-        LOKI[(Grafana Loki)]
-        OS[(OpenSearch)]
-        CW[(CloudWatch Logs)]
-        CH[(ClickHouse)]
-    end
-
-    subgraph Analysis["Analysis Layer"]
-        GRAFANA[Grafana]
-        KIBANA[OpenSearch Dashboards]
-        CWINSIGHTS[CloudWatch Insights]
-    end
-
-    APP --> DS
-    SYS --> DS
-    K8S --> OTEL
-    CTRL --> DS
-    APP --> SC
-
-    DS --> PARSE
-    SC --> PARSE
-    OTEL --> PARSE
-
-    PARSE --> ENRICH
-    ENRICH --> FILTER
-    FILTER --> BUFFER
-
-    BUFFER --> LOKI
-    BUFFER --> OS
-    BUFFER --> CW
-    BUFFER --> CH
-
-    LOKI --> GRAFANA
-    OS --> KIBANA
-    CW --> CWINSIGHTS
-    CH --> GRAFANA
-
-    classDef source fill:#4CAF50,stroke:#333,color:white
-    classDef collect fill:#2196F3,stroke:#333,color:white
-    classDef process fill:#FF9800,stroke:#333,color:white
-    classDef store fill:#9C27B0,stroke:#333,color:white
-    classDef analyze fill:#F44336,stroke:#333,color:white
-
-    class APP,SYS,K8S,CTRL source
-    class DS,SC,OTEL collect
-    class PARSE,ENRICH,FILTER,BUFFER process
-    class LOKI,OS,CW,CH store
-    class GRAFANA,KIBANA,CWINSIGHTS analyze
-```
+![A five-stage log collection pipeline: raw sources (application, system, Kubernetes, control plane logs) flow through a collection layer of agents, into a processing layer that parses, enriches, filters, and buffers records, then fan out into a storage layer of four backends, which are each queried by a matching analysis tool.](../../.gitbook/assets/en-observability-logging-README-0.png)
 
 ### Layer Responsibilities
 
@@ -535,31 +465,7 @@ ClickHouse (self-hosted):
 
 ### Decision Flowchart
 
-```mermaid
-flowchart TD
-    START[Choose Log Storage] --> Q1{Existing Grafana<br/>stack?}
-
-    Q1 -->|Yes| Q2{Need full-text<br/>search?}
-    Q1 -->|No| Q3{Prefer AWS<br/>native?}
-
-    Q2 -->|Yes| OS[OpenSearch]
-    Q2 -->|No| LOKI[Loki]
-
-    Q3 -->|Yes| Q4{Analysis<br/>complexity?}
-    Q3 -->|No| Q5{Cost vs<br/>Features?}
-
-    Q4 -->|Simple| CW[CloudWatch Logs]
-    Q4 -->|Complex| OS
-
-    Q5 -->|Cost first| LOKI
-    Q5 -->|Features first| OS
-
-    classDef decision fill:#FFE082,stroke:#333
-    classDef solution fill:#81C784,stroke:#333,color:white
-
-    class Q1,Q2,Q3,Q4,Q5 decision
-    class OS,LOKI,CW solution
-```
+![A decision tree for choosing a log storage backend: it branches on an existing Grafana stack, need for full-text search, preference for AWS-native tooling, analysis complexity, and cost versus features, converging on Loki, OpenSearch, or CloudWatch Logs.](../../.gitbook/assets/en-observability-logging-README-1.png)
 
 ***
 

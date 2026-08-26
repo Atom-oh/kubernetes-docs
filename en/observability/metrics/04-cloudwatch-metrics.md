@@ -33,28 +33,7 @@ Amazon CloudWatch is AWS's native monitoring and observability service. Using Cl
 
 ### CloudWatch vs Open Source Solutions
 
-```mermaid
-flowchart LR
-    subgraph CW["CloudWatch"]
-        C1[Fully Managed]
-        C2[AWS Native]
-        C3[Usage-based Cost]
-        C4[15 Month Retention]
-    end
-
-    subgraph OS["Open Source<br/>Prometheus/VM"]
-        O1[Self-managed]
-        O2[Cloud Neutral]
-        O3[Infrastructure Cost Only]
-        O4[Unlimited Retention]
-    end
-
-    classDef cw fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef os fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-
-    class C1,C2,C3,C4 cw
-    class O1,O2,O3,O4 os
-```
+![Comparison of Amazon CloudWatch against a self-managed Prometheus/VictoriaMetrics stack across four properties: management model, cloud integration, cost model, and metric retention.](../../.gitbook/assets/en-observability-metrics-04-cloudwatch-metrics-0.png)
 
 | Item | CloudWatch | Prometheus/VM |
 |------|------------|---------------|
@@ -71,37 +50,7 @@ Container Insights is a CloudWatch feature for monitoring containerized workload
 
 ### Architecture
 
-```mermaid
-flowchart TB
-    subgraph EKS["EKS Cluster"]
-        subgraph NODES["Worker Nodes"]
-            CW1[CloudWatch Agent<br/>DaemonSet]
-            FB[Fluent Bit<br/>DaemonSet]
-            APP[Applications]
-        end
-    end
-
-    subgraph CLOUDWATCH["CloudWatch"]
-        CI[Container Insights<br/>Metrics]
-        CL[CloudWatch Logs]
-        PM[Performance Monitoring]
-    end
-
-    CW1 -->|Metrics| CI
-    FB -->|Logs| CL
-    CI --> PM
-    CL --> PM
-    APP -.->|expose| CW1
-    APP -.->|stdout/stderr| FB
-
-    classDef eks fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef cw fill:#146EB4,stroke:#333,stroke-width:1px,color:white
-    classDef agent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class EKS,NODES eks
-    class CI,CL,PM cw
-    class CW1,FB,APP agent
-```
+![Architecture diagram showing applications on EKS worker nodes exposing metrics and stdout to a CloudWatch Agent and Fluent Bit DaemonSet, which feed Container Insights metrics and CloudWatch Logs, both converging on performance monitoring.](../../.gitbook/assets/en-observability-metrics-04-cloudwatch-metrics-1.png)
 
 ### Collected Metrics
 
@@ -971,29 +920,7 @@ resource "aws_cloudwatch_metric_alarm" "node_not_ready" {
 
 ### Cost Optimization Strategies
 
-```mermaid
-flowchart TD
-    A[CloudWatch Cost Optimization] --> B[Metric Optimization]
-    A --> C[Log Optimization]
-    A --> D[Dashboard Optimization]
-
-    B --> B1[Minimize high-resolution metrics]
-    B --> B2[Remove unnecessary dimensions]
-    B --> B3[Adjust collection interval]
-
-    C --> C1[Set log retention period]
-    C --> C2[Log filtering]
-    C --> C3[Use log classes]
-
-    D --> D1[Consolidate dashboards]
-    D --> D2[Optimize queries]
-
-    classDef main fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef strategy fill:#146EB4,stroke:#333,stroke-width:1px,color:white
-
-    class A main
-    class B,C,D,B1,B2,B3,C1,C2,C3,D1,D2 strategy
-```
+![Tree diagram showing CloudWatch cost optimization branching into metric, log, and dashboard optimization, each listing its specific tactics.](../../.gitbook/assets/en-observability-metrics-04-cloudwatch-metrics-2.png)
 
 ### 1. Metric Collection Optimization
 

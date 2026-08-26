@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="oncall-schedule-title oncall-schedule-desc">
+    <title id="oncall-schedule-title">온콜 스케줄 개념</title>
+    <desc id="oncall-schedule-desc">주간/야간 로테이션, 1차·2차·백업 담당자 레이어, 휴가 대체와 임시 변경 오버라이드가 합쳐져 하나의 최종 온콜 스케줄을 구성하는 과정을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="80" width="220" height="196" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="112" y="84" width="76" height="12" rx="2" fill="#ffffff"/>
+    <text x="150" y="93" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">로테이션</text>
+
+    <rect x="300" y="60" width="220" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="380" y="64" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="410" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">레이어</text>
+
+    <rect x="560" y="80" width="220" height="196" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="628" y="84" width="84" height="12" rx="2" fill="#ffffff"/>
+    <text x="670" y="93" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">오버라이드</text>
+
+    <!-- Arrows (behind nodes) -->
+    <path d="M230,152 H262 Q270,152 270,144 V116 Q270,108 278,108 H330" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M230,224 H292 Q300,224 300,216 V136 Q300,128 308,128 H330" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <path d="M490,116 H647 Q655,116 655,124 V164 Q655,172 663,172 H820" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <path d="M750,152 H777 Q785,152 785,160 V196 Q785,204 793,204 H820" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M490,208 H647 Q655,208 655,216 V228 Q655,236 663,236 H820" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M750,224 H777 Q785,224 785,232 V260 Q785,268 793,268 H820" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M490,300 H647 Q655,300 655,308 V312 Q655,320 663,320 H820" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Node: R1 주간 로테이션 -->
+    <rect x="70" y="124" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="150" y="156" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">주간 로테이션</text>
+
+    <!-- Node: R2 야간 로테이션 -->
+    <rect x="70" y="196" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="150" y="228" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">야간 로테이션</text>
+
+    <!-- Node: L1 1차 담당자 -->
+    <rect x="330" y="88" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="410" y="120" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">1차 담당자</text>
+
+    <!-- Node: L2 2차 담당자 -->
+    <rect x="330" y="180" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="410" y="212" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">2차 담당자</text>
+
+    <!-- Node: L3 백업 담당자 -->
+    <rect x="330" y="272" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="410" y="304" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">백업 담당자</text>
+
+    <!-- Node: O1 휴가 대체 -->
+    <rect x="590" y="124" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="670" y="156" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">휴가 대체</text>
+
+    <!-- Node: O2 임시 변경 -->
+    <rect x="590" y="196" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="670" y="228" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">임시 변경</text>
+
+    <!-- Node: Final 최종 스케줄 (focal) -->
+    <rect x="820" y="140" width="120" height="200" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="880" y="232" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">최종</text>
+    <text x="880" y="248" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">스케줄</text>
+
+  </svg>

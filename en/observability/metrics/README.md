@@ -154,38 +154,7 @@ http_request_duration_seconds{quantile="0.99"}           # p99 latency (direct q
 
 There are two main models for metrics collection:
 
-```mermaid
-flowchart LR
-    subgraph PULL["Pull Model (Prometheus)"]
-        direction TB
-        P[Prometheus Server]
-        A1[App 1 /metrics]
-        A2[App 2 /metrics]
-        A3[App 3 /metrics]
-        P -->|HTTP GET| A1
-        P -->|HTTP GET| A2
-        P -->|HTTP GET| A3
-    end
-
-    subgraph PUSH["Push Model (Datadog, CloudWatch)"]
-        direction TB
-        C[Collector/Gateway]
-        B1[App 1]
-        B2[App 2]
-        B3[App 3]
-        B1 -->|HTTP POST| C
-        B2 -->|HTTP POST| C
-        B3 -->|HTTP POST| C
-    end
-
-    classDef server fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef collector fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-
-    class P server
-    class A1,A2,A3,B1,B2,B3 app
-    class C collector
-```
+![Diagram comparing the pull model, where a Prometheus server scrapes /metrics endpoints from applications over HTTP GET, against the push model, where applications send metrics via HTTP POST to a central collector such as Datadog or CloudWatch.](../../.gitbook/assets/metrics-pull-push-model.png)
 
 ### Pull Model
 
@@ -335,40 +304,7 @@ count(count by (endpoint)(http_requests_total))
 
 Prometheus is an excellent real-time monitoring tool but has limitations for long-term data storage:
 
-```mermaid
-flowchart TD
-    subgraph SHORT["Short-term Storage (Prometheus)"]
-        P[Prometheus<br/>15-30 day retention]
-        R1[Real-time alerts]
-        R2[Recent trends]
-        R3[Immediate debugging]
-    end
-
-    subgraph LONG["Long-term Storage (Remote Storage)"]
-        L[VictoriaMetrics<br/>Mimir / Thanos<br/>1+ year retention]
-        L1[Capacity planning]
-        L2[Annual trends]
-        L3[Compliance]
-        L4[Cost analysis]
-    end
-
-    P --> L
-    P --> R1
-    P --> R2
-    P --> R3
-    L --> L1
-    L --> L2
-    L --> L3
-    L --> L4
-
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef remote fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef usecase fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class P prometheus
-    class L remote
-    class R1,R2,R3,L1,L2,L3,L4 usecase
-```
+![Diagram showing Prometheus, with 15-30 day retention, serving real-time alerts, recent trends, and immediate debugging directly, while also forwarding data via remote_write into long-term storage such as VictoriaMetrics, Mimir, or Thanos, which retains a year or more for capacity planning, annual trends, compliance, and cost analysis.](../../.gitbook/assets/metrics-retention-tiers.png)
 
 **Problems with Prometheus long-term storage**:
 
@@ -443,79 +379,13 @@ remote_write:
 
 ### Selection Guide
 
-```mermaid
-flowchart TD
-    A[Metrics Solution Selection] --> B{Team size and<br/>operational capability?}
-
-    B -->|Small/Limited| C{AWS environment?}
-    B -->|Medium| D{Cost priority?}
-    B -->|Large/Expert| E{Multi-cloud?}
-
-    C -->|Yes| F[CloudWatch<br/>Container Insights]
-    C -->|No| G[Datadog]
-
-    D -->|Yes| H[VictoriaMetrics]
-    D -->|No| I[Amazon Managed<br/>Prometheus]
-
-    E -->|Yes| J[VictoriaMetrics<br/>or Mimir]
-    E -->|No| K[AMP + Grafana<br/>Managed Service]
-
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef solution fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class A,B,C,D,E decision
-    class F,G,H,I,J,K solution
-```
+![Decision tree for picking a metrics stack: starting from team size and operational capability, it branches on AWS environment for small teams, cost priority for medium teams, and multi-cloud need for large/expert teams, ending at CloudWatch, Datadog, VictoriaMetrics, Amazon Managed Prometheus, or an AMP + Grafana managed setup.](../../.gitbook/assets/metrics-solution-decision-tree.png)
 
 ## Metrics Collection Architecture
 
 ### Kubernetes Environment Metrics Collection Structure
 
-```mermaid
-flowchart TB
-    subgraph TARGETS["Metric Sources"]
-        N[node-exporter<br/>Node metrics]
-        K[kube-state-metrics<br/>K8s object metrics]
-        C[cAdvisor<br/>Container metrics]
-        A[Applications<br/>/metrics]
-    end
-
-    subgraph COLLECT["Collection Layer"]
-        P[Prometheus<br/>or vmagent]
-    end
-
-    subgraph STORE["Storage Layer"]
-        S1[Prometheus TSDB<br/>Short-term]
-        S2[VictoriaMetrics<br/>Long-term]
-    end
-
-    subgraph QUERY["Query/Visualization"]
-        G[Grafana]
-        AL[Alertmanager]
-    end
-
-    N --> P
-    K --> P
-    C --> P
-    A --> P
-
-    P --> S1
-    P -->|remote_write| S2
-
-    S1 --> G
-    S2 --> G
-    S1 --> AL
-
-    classDef source fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef collector fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef query fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class N,K,C,A source
-    class P collector
-    class S1,S2 storage
-    class G,AL query
-```
+![Diagram showing node-exporter, kube-state-metrics, cAdvisor, and application /metrics endpoints all scraped by Prometheus or vmagent, which writes into short-term Prometheus TSDB and, via remote_write, into long-term VictoriaMetrics storage; both feed Grafana for visualization, and Prometheus TSDB also feeds Alertmanager.](../../.gitbook/assets/metrics-collection-architecture.png)
 
 ### Key Metric Sources
 

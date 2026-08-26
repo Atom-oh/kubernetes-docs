@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="dd-arch-title dd-arch-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="dd-arch-title">Datadog EKS integration architecture</title>
+    <desc id="dd-arch-desc">The Datadog Agent DaemonSet and Cluster Agent collect metrics, logs, traces, and profiles from an EKS cluster's applications and forward them into the Datadog platform, where they feed dashboards, and where Watchdog AI generates monitor alerts.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones (bg) -->
+    <rect x="40" y="140" width="380" height="380" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="56" y="144" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="60" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">EKS CLUSTER</text>
+
+    <rect x="540" y="140" width="380" height="380" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="556" y="144" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="560" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">DATADOG PLATFORM</text>
+
+    <!-- ===== Arrows (drawn before nodes) ===== -->
+    <!-- Applications -.-> Datadog Agent (dashed, same x, straight) -->
+    <line x1="230" y1="224" x2="230" y2="264" stroke="rgba(35,47,62,0.30)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="200" y="234" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="230" y="243" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">INSTRUMENT</text>
+
+    <!-- Datadog Agent -> Metrics (fan pt1 y=276) mid=400 -->
+    <path d="M 310,276 H 392 Q 400,276 400,284 V 190 Q 400,182 408,182 H 560"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="376" y="188" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="400" y="197" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">METRICS</text>
+
+    <!-- Datadog Agent -> Logs (fan pt2 y=288) mid=420 -->
+    <path d="M 310,288 H 412 Q 420,288 420,296 V 258 Q 420,250 428,250 H 560"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="396" y="256" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="420" y="265" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">LOGS</text>
+
+    <!-- Datadog Agent -> APM Traces (fan pt3 y=300) mid=440 -->
+    <path d="M 310,300 H 432 Q 440,300 440,308 V 326 Q 440,334 448,334 H 560"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="404" y="316" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="440" y="325" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">TRACES+PROF</text>
+
+    <!-- Cluster Agent -> Metrics (fan pt2 y=205) mid=468 -->
+    <path d="M 310,376 H 460 Q 468,376 468,368 V 213 Q 468,205 476,205 H 560"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="432" y="352" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="484" y="361" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CLUSTER METRICS</text>
+
+    <!-- Metrics -> Dashboards (fan pt1 y=255) mid=720 -->
+    <path d="M 690,198 H 712 Q 720,198 720,206 V 247 Q 720,255 728,255 H 750"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Logs -> Dashboards (straight, same y=266) -->
+    <line x1="690" y1="266" x2="750" y2="266" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- APM Traces -> Dashboards (fan pt3 y=277) mid=720 -->
+    <path d="M 690,334 H 712 Q 720,334 720,326 V 285 Q 720,277 728,277 H 750"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Watchdog AI -> Monitors (straight, same y=402) -->
+    <line x1="690" y1="402" x2="750" y2="402" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ===== Nodes ===== -->
+    <!-- Applications (input) -->
+    <rect x="150" y="176" width="160" height="48" rx="6" fill="#ffffff"/>
+    <rect x="150" y="176" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="230" y="204" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Applications</text>
+
+    <!-- Datadog Agent (focal) -->
+    <rect x="150" y="264" width="160" height="48" rx="6" fill="#ffffff"/>
+    <rect x="150" y="264" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="230" y="284" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Datadog Agent</text>
+    <text x="230" y="298" fill="#545B64" font-size="9" text-anchor="middle" font-family="'Geist Mono', monospace">daemonset</text>
+
+    <!-- Cluster Agent -->
+    <rect x="150" y="352" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="230" y="380" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Cluster Agent</text>
+
+    <!-- Metrics -->
+    <rect x="560" y="176" width="130" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="625" y="202" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Metrics</text>
+
+    <!-- Logs -->
+    <rect x="560" y="244" width="130" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="625" y="270" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Logs</text>
+
+    <!-- APM Traces -->
+    <rect x="560" y="312" width="130" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="625" y="338" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">APM Traces</text>
+
+    <!-- Dashboards -->
+    <rect x="750" y="244" width="150" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="825" y="270" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Dashboards</text>
+
+    <!-- Watchdog AI -->
+    <rect x="560" y="380" width="130" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="625" y="406" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Watchdog AI</text>
+
+    <!-- Monitors -->
+    <rect x="750" y="380" width="150" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="825" y="406" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Monitors</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="548" x2="920" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="564" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="140" y1="560" x2="172" y2="560" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="180" y="564" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">TELEMETRY FLOW</text>
+    <line x1="340" y1="560" x2="372" y2="560" stroke="rgba(35,47,62,0.30)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <text x="380" y="564" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">OPTIONAL INSTRUMENTATION</text>
+    <rect x="640" y="554" width="14" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="662" y="564" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">PRIMARY COLLECTOR</text>
+  </svg>

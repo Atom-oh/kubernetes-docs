@@ -15,37 +15,7 @@ OpenTelemetry가 CNCF의 최고 성숙 단계인 **졸업(graduated)** 프로젝
 
 OpenTelemetry는 OpenTracing과 OpenCensus 프로젝트가 합쳐져 탄생했습니다:
 
-```mermaid
-flowchart LR
-    subgraph History["역사"]
-        OT[OpenTracing<br/>2016]
-        OC[OpenCensus<br/>2017]
-        OTEL[OpenTelemetry<br/>2019]
-    end
-
-    OT --> OTEL
-    OC --> OTEL
-
-    subgraph Components["구성 요소"]
-        SPEC[Specification]
-        SDK[SDKs]
-        COLLECTOR[Collector]
-        PROTO[Protocol]
-    end
-
-    OTEL --> SPEC
-    OTEL --> SDK
-    OTEL --> COLLECTOR
-    OTEL --> PROTO
-
-    classDef history fill:#E8E8E8,stroke:#333,stroke-width:1px,color:black
-    classDef current fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef component fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class OT,OC history
-    class OTEL current
-    class SPEC,SDK,COLLECTOR,PROTO component
-```
+![2016년 OpenTracing과 2017년 OpenCensus가 2019년 OpenTelemetry로 통합되었고, OpenTelemetry가 Specification, SDKs, Collector, Protocol의 네 가지 핵심 구성 요소로 이어짐을 보여주는 다이어그램.](../../.gitbook/assets/ko-observability-tracing-03-opentelemetry-0.png)
 
 ## 핵심 개념
 
@@ -57,83 +27,11 @@ flowchart LR
 | **Metrics** | 수치 측정값 | 리소스 사용량, SLI/SLO |
 | **Logs** | 이벤트 기록 | 디버깅, 감사 |
 
-```mermaid
-flowchart TD
-    subgraph Signals["OpenTelemetry 신호"]
-        direction TB
-
-        subgraph Traces["Traces"]
-            T1[Span]
-            T2[SpanContext]
-            T3[Links]
-        end
-
-        subgraph Metrics["Metrics"]
-            M1[Counter]
-            M2[Gauge]
-            M3[Histogram]
-        end
-
-        subgraph Logs["Logs"]
-            L1[LogRecord]
-            L2[Severity]
-            L3[Body]
-        end
-    end
-
-    OTEL[OpenTelemetry] --> Traces
-    OTEL --> Metrics
-    OTEL --> Logs
-
-    Traces <-->|TraceID 연결| Logs
-    Metrics <-->|Exemplar| Traces
-
-    classDef traces fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef metrics fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef logs fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class T1,T2,T3 traces
-    class M1,M2,M3 metrics
-    class L1,L2,L3 logs
-```
+![OpenTelemetry가 Traces, Metrics, Logs 세 가지 신호를 생성하며, 각 신호가 포함하는 구성요소(Span/SpanContext/Links, Counter/Gauge/Histogram, LogRecord/Severity/Body)와, Traces-Logs가 TraceID로, Metrics-Traces가 Exemplar로 서로 연결됨을 보여주는 다이어그램.](../../.gitbook/assets/ko-observability-tracing-03-opentelemetry-1.png)
 
 ### 핵심 컴포넌트
 
-```mermaid
-flowchart LR
-    subgraph App["애플리케이션"]
-        API[OTel API]
-        SDK[OTel SDK]
-    end
-
-    subgraph Pipeline["데이터 파이프라인"]
-        RECV[Receivers]
-        PROC[Processors]
-        EXPORT[Exporters]
-    end
-
-    subgraph Backends["백엔드"]
-        TEMPO[Tempo]
-        PROM[Prometheus]
-        LOKI[Loki]
-        XRAY[X-Ray]
-        DD[Datadog]
-    end
-
-    API --> SDK
-    SDK --> RECV
-    RECV --> PROC
-    PROC --> EXPORT
-    EXPORT --> TEMPO & PROM & LOKI & XRAY & DD
-
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef pipeline fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef backend fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class API,SDK app
-    class RECV,PROC,EXPORT pipeline
-    class TEMPO,PROM,LOKI,XRAY,DD backend
-```
+![애플리케이션의 OTel API와 SDK에서 시작해 Receivers, Processors, Exporters 파이프라인을 거쳐 Tempo·Prometheus·Loki·X-Ray·Datadog 등 여러 백엔드로 데이터가 전달되는 흐름을 보여주는 다이어그램.](../../.gitbook/assets/ko-observability-tracing-03-opentelemetry-2.png)
 
 ## OpenTelemetry SDK
 
@@ -496,50 +394,7 @@ class UserService:
 
 ### 아키텍처
 
-```mermaid
-flowchart LR
-    subgraph Receivers["Receivers"]
-        OTLP[OTLP]
-        JAEGER[Jaeger]
-        ZIPKIN[Zipkin]
-        PROM_RECV[Prometheus]
-        KAFKA_RECV[Kafka]
-    end
-
-    subgraph Processors["Processors"]
-        BATCH[Batch]
-        MEMORY[Memory Limiter]
-        ATTR[Attributes]
-        FILTER[Filter]
-        TAIL[Tail Sampling]
-        RESOURCE[Resource]
-    end
-
-    subgraph Exporters["Exporters"]
-        OTLP_EXP[OTLP]
-        TEMPO_EXP[Tempo]
-        XRAY_EXP[AWS X-Ray]
-        PROM_EXP[Prometheus]
-        LOKI_EXP[Loki]
-        DD_EXP[Datadog]
-    end
-
-    OTLP & JAEGER & ZIPKIN & PROM_RECV & KAFKA_RECV --> BATCH
-    BATCH --> MEMORY
-    MEMORY --> ATTR
-    ATTR --> FILTER
-    FILTER --> TAIL
-    TAIL --> RESOURCE
-    RESOURCE --> OTLP_EXP & TEMPO_EXP & XRAY_EXP & PROM_EXP & LOKI_EXP & DD_EXP
-
-    classDef receiver fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef processor fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef exporter fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class OTLP,JAEGER,ZIPKIN,PROM_RECV,KAFKA_RECV receiver
-    class BATCH,MEMORY,ATTR,FILTER,TAIL,RESOURCE processor
-    class OTLP_EXP,TEMPO_EXP,XRAY_EXP,PROM_EXP,LOKI_EXP,DD_EXP exporter
-```
+![OTel Collector 내부에서 Receivers가 수집한 데이터가 Batch, Memory Limiter, Attributes, Filter, Tail Sampling, Resource 프로세서 체인을 순서대로 거쳐 Exporters로 전달되며, Tail Sampling이 수집 여부를 결정하는 핵심 단계임을 보여주는 다이어그램.](../../.gitbook/assets/ko-observability-tracing-03-opentelemetry-3.png)
 
 ### Collector 설정
 

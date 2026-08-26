@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-observability-alerting-03-grafana-oncall-0-title en-observability-alerting-03-grafana-oncall-0-desc">
+<title id="en-observability-alerting-03-grafana-oncall-0-title">Grafana OnCall Component Architecture</title>
+<desc id="en-observability-alerting-03-grafana-oncall-0-desc">Architecture diagram showing alert sources feeding a central Alert Engine that reads and writes PostgreSQL and Redis/Celery state, drives routing, escalation chains, and schedules to build alert groups, which fan out to notification channels.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="8" y="8" width="172" height="272" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="20" y="12" width="94" height="12" rx="2" fill="#ffffff"/>
+<text x="67.0" y="21" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ALERT SOURCES</text>
+<rect x="188" y="8" width="200" height="272" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="200" y="12" width="130" height="12" rx="2" fill="#ffffff"/>
+<text x="265.0" y="21" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">GRAFANA ONCALL CORE</text>
+<rect x="404" y="94" width="184" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="416" y="98" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="448.0" y="107" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">FEATURES</text>
+<path d="M 164,62 H 176.0 Q 184.0,62 184.0,54 V 60 Q 184.0,52 192.0,52 H 204" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 164,122 H 176.0 Q 184.0,122 184.0,114 V 72 Q 184.0,64 192.0,64 H 204" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 164,182 H 176.0 Q 184.0,182 184.0,174 V 84 Q 184.0,76 192.0,76 H 204" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 164,242 H 176.0 Q 184.0,242 184.0,234 V 96 Q 184.0,88 192.0,88 H 204" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 288,100 L 288,124" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M 260,184 H 234 Q 242,184 242,192 V 216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 316,184 H 326 Q 334,184 334,192 V 216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="269.0" y="192" width="38" height="12" rx="2" fill="#ffffff"/><text x="288" y="201" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WRITE</text>
+<path d="M 372,154 L 420,154" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M 496,182 L 496,222" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 496,270 L 496,310" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 572,334 L 636,334" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<rect x="24" y="40" width="132" height="44" rx="6" fill="#ffffff"/>
+<rect x="24" y="40" width="132" height="44" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="90.0" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Alertmanager</text>
+<rect x="24" y="100" width="132" height="44" rx="6" fill="#ffffff"/>
+<rect x="24" y="100" width="132" height="44" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="90.0" y="126.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Grafana Alerting</text>
+<rect x="24" y="160" width="132" height="44" rx="6" fill="#ffffff"/>
+<rect x="24" y="160" width="132" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="90.0" y="186.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">CloudWatch</text>
+<rect x="24" y="220" width="132" height="44" rx="6" fill="#ffffff"/>
+<rect x="24" y="220" width="132" height="44" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="90.0" y="246.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Webhook</text>
+<rect x="204" y="40" width="168" height="60" rx="6" fill="#ffffff"/>
+<rect x="204" y="40" width="168" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="288.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API Server</text>
+<text x="288.0" y="80.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">REST · webhook</text>
+<rect x="204" y="124" width="168" height="60" rx="6" fill="#ffffff"/>
+<rect x="204" y="124" width="168" height="60" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="288.0" y="148.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Alert Engine</text>
+<text x="288.0" y="164.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">grouping · dedup</text>
+<rect x="204" y="216" width="76" height="48" rx="6" fill="#ffffff"/>
+<rect x="204" y="216" width="76" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="242.0" y="244.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">PostgreSQL</text>
+<rect x="296" y="216" width="76" height="48" rx="6" fill="#ffffff"/>
+<rect x="296" y="216" width="76" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="334.0" y="244.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Redis + Celery</text>
+<rect x="420" y="126" width="152" height="56" rx="6" fill="#ffffff"/>
+<rect x="420" y="126" width="152" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="496.0" y="148.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Routing &amp; Escalation</text>
+<text x="496.0" y="164.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">chain lookup</text>
+<rect x="420" y="222" width="152" height="48" rx="6" fill="#ffffff"/>
+<rect x="420" y="222" width="152" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="496.0" y="250.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Schedules</text>
+<rect x="420" y="310" width="152" height="48" rx="6" fill="#ffffff"/>
+<rect x="420" y="310" width="152" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="496.0" y="338.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Alert Groups</text>
+<rect x="636" y="306" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="636" y="306" width="200" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="736.0" y="328.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Notification Channels</text>
+<text x="736.0" y="344.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Slack · Teams · Phone</text>
+<line x1="24" y1="500" x2="936" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="24" y="518" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="140" y="512" width="10" height="10" rx="2" fill="none" stroke="#EC7211" stroke-width="1.4"/>
+<text x="156" y="521" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">FOCAL — ALERT ENGINE</text>
+<rect x="400" y="512" width="10" height="10" rx="2" fill="none" stroke="#232F3E" stroke-width="1.4"/>
+<text x="416" y="521" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">BACKEND SERVICE</text>
+<rect x="620" y="512" width="10" height="10" rx="2" fill="none" stroke="#7D8998" stroke-width="1.4"/>
+<text x="636" y="521" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">SOURCE / EXTERNAL</text>
+<rect x="840" y="512" width="10" height="10" rx="2" fill="none" stroke="#545B64" stroke-width="1.4"/>
+<text x="856" y="521" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">DATA STORE</text>
+</svg>

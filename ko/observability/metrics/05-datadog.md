@@ -33,37 +33,7 @@ Datadog은 클라우드 규모의 인프라, 애플리케이션, 로그를 모�
 
 ### Datadog vs 오픈소스 vs CloudWatch
 
-```mermaid
-flowchart LR
-    subgraph DD["Datadog"]
-        D1[통합 플랫폼]
-        D2[AI 분석]
-        D3[750+ 통합]
-        D4[호스트당 과금]
-    end
-
-    subgraph CW["CloudWatch"]
-        C1[AWS 네이티브]
-        C2[사용량 과금]
-        C3[AWS 통합]
-        C4[제한된 APM]
-    end
-
-    subgraph OS["오픈소스"]
-        O1[완전 제어]
-        O2[인프라 비용]
-        O3[높은 유연성]
-        O4[운영 오버헤드]
-    end
-
-    classDef datadog fill:#632CA6,stroke:#333,stroke-width:1px,color:white
-    classDef cloudwatch fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef opensource fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-
-    class D1,D2,D3,D4 datadog
-    class C1,C2,C3,C4 cloudwatch
-    class O1,O2,O3,O4 opensource
-```
+![Datadog, CloudWatch, 오픈소스(Prometheus+Grafana) 세 가지 모니터링 방식을 통합 플랫폼 여부, AI 분석, 통합 범위, 과금 방식 네 가지 기준으로 나란히 비교하는 다이어그램.](../../.gitbook/assets/ko-observability-metrics-05-datadog-0.png)
 
 | 항목 | Datadog | CloudWatch | Prometheus+Grafana |
 |------|---------|------------|-------------------|
@@ -79,48 +49,7 @@ flowchart LR
 
 ### 전체 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph EKS["EKS Cluster"]
-        subgraph NODES["Worker Nodes"]
-            DA[Datadog Agent<br/>DaemonSet]
-            CCA[Cluster Agent]
-            APP[Applications]
-        end
-    end
-
-    subgraph DATADOG["Datadog Platform"]
-        METRICS[Metrics]
-        LOGS[Logs]
-        APM[APM Traces]
-        PROF[Profiling]
-        DASH[Dashboards]
-        ALERT[Monitors]
-        WATCH[Watchdog AI]
-    end
-
-    DA -->|메트릭| METRICS
-    DA -->|로그| LOGS
-    DA -->|트레이스| APM
-    DA -->|프로파일| PROF
-    CCA -->|클러스터 메트릭| METRICS
-    CCA -->|이벤트| DATADOG
-
-    METRICS --> DASH
-    LOGS --> DASH
-    APM --> DASH
-    WATCH --> ALERT
-
-    APP -.->|계측| DA
-
-    classDef eks fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef agent fill:#632CA6,stroke:#333,stroke-width:1px,color:white
-    classDef datadog fill:#774AA4,stroke:#333,stroke-width:1px,color:white
-
-    class EKS,NODES eks
-    class DA,CCA,APP agent
-    class METRICS,LOGS,APM,PROF,DASH,ALERT,WATCH datadog
-```
+![EKS 클러스터의 Datadog Agent와 Cluster Agent가 메트릭, 로그, 트레이스를 Datadog 플랫폼으로 전송하고, 플랫폼은 이를 대시보드로 모으며 Watchdog AI가 이상을 감지해 모니터로 알림을 보내는 흐름을 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-observability-metrics-05-datadog-1.png)
 
 ### 구성 요소
 
@@ -871,30 +800,7 @@ APM (50개 서비스): 50 × $31 = $1,550/월
 
 ### 비용 최적화 전략
 
-```mermaid
-flowchart TD
-    A[Datadog 비용 최적화] --> B[메트릭 최적화]
-    A --> C[로그 최적화]
-    A --> D[APM 최적화]
-
-    B --> B1[커스텀 메트릭 제한]
-    B --> B2[태그 카디널리티 관리]
-    B --> B3[수집 간격 조정]
-
-    C --> C1[로그 필터링]
-    C --> C2[샘플링]
-    C --> C3[인덱스 제외 필터]
-
-    D --> D1[샘플링 레이트 조정]
-    D --> D2[서비스 선별]
-    D --> D3[계측 범위 최적화]
-
-    classDef main fill:#632CA6,stroke:#333,stroke-width:1px,color:white
-    classDef strategy fill:#774AA4,stroke:#333,stroke-width:1px,color:white
-
-    class A main
-    class B,C,D,B1,B2,B3,C1,C2,C3,D1,D2,D3 strategy
-```
+![Datadog 비용 최적화가 메트릭 최적화, 로그 최적화, APM 최적화 세 갈래로 나뉘고 각 갈래마다 세부 실행 방법이 딸린 트리 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-observability-metrics-05-datadog-2.png)
 
 #### 1. 메트릭 최적화
 

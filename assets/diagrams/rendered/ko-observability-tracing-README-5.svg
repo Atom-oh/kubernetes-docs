@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d5-title d5-desc">
+    <title id="d5-title">Tail-based Sampling</title>
+    <desc id="d5-desc">요청이 끝날 때까지 모든 Span을 모아둔 뒤 오류나 지연이 있으면 보관하고 정상이면 삭제하는 테일 기반 샘플링 흐름을 보여준다.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Arrows -->
+    <line x1="184" y1="300" x2="240" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="384" y1="300" x2="400" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M480,244 H592 Q600,244 600,236 V180 Q600,172 608,172 H720" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M480,356 H592 Q600,356 600,364 V420 Q600,428 608,428 H720" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Labels -->
+    <rect x="612" y="204" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="660" y="213" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">오류 또는 지연</text>
+
+    <rect x="612" y="386" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="632" y="395" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">정상</text>
+
+    <!-- Node: 요청 수신 (input) -->
+    <rect x="40" y="268" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="40" y="268" width="144" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="112" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">요청 수신</text>
+
+    <!-- Node: 모든 Span 수집 -->
+    <rect x="240" y="268" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="240" y="268" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="312" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">모든 Span</text>
+    <text x="312" y="314" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">수집</text>
+
+    <!-- Diamond: 분석 (focal) -->
+    <polygon points="480,244 560,300 480,356 400,300" fill="#ffffff"/>
+    <polygon points="480,244 560,300 480,356 400,300" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="480" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">분석</text>
+    <text x="480" y="312" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">오류? 지연?</text>
+
+    <!-- Node: 보관 (kept) -->
+    <rect x="720" y="140" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="720" y="140" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="792" y="176" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">보관</text>
+
+    <!-- Node: 삭제 (dropped) -->
+    <rect x="720" y="396" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="720" y="396" width="144" height="64" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="792" y="432" fill="#545B64" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">삭제</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <polygon points="47,536 61,542 47,548 33,542" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="70" y="546" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">분석 지점 (focal)</text>
+
+    <rect x="240" y="537" width="14" height="10" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,2"/>
+    <text x="260" y="546" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">삭제되는 경로</text>
+  </svg>

@@ -60,65 +60,7 @@ OpenSearch is an open-source project created by AWS in 2021 by forking Elasticse
 
 ### OpenSearch Cluster Architecture
 
-```mermaid
-flowchart TB
-    subgraph Client["Clients"]
-        APP[Application]
-        FB[FluentBit]
-        KDF[Kinesis Data Firehose]
-    end
-
-    subgraph VPC["VPC"]
-        subgraph AZ1["AZ-a"]
-            MASTER1[Master Node]
-            DATA1[Data Node]
-            WARM1[UltraWarm Node]
-        end
-
-        subgraph AZ2["AZ-b"]
-            MASTER2[Master Node]
-            DATA2[Data Node]
-            WARM2[UltraWarm Node]
-        end
-
-        subgraph AZ3["AZ-c"]
-            MASTER3[Master Node]
-            DATA3[Data Node]
-        end
-    end
-
-    subgraph Storage["Storage"]
-        EBS[(EBS)]
-        S3[(S3 - Cold Storage)]
-    end
-
-    APP --> DATA1
-    FB --> DATA1
-    KDF --> DATA2
-
-    MASTER1 <--> MASTER2
-    MASTER2 <--> MASTER3
-    MASTER1 <--> MASTER3
-
-    DATA1 <--> DATA2
-    DATA1 --> WARM1
-    DATA2 --> WARM2
-
-    DATA1 --> EBS
-    DATA2 --> EBS
-    WARM1 --> S3
-    WARM2 --> S3
-
-    classDef master fill:#FF6B6B,stroke:#333,color:white
-    classDef data fill:#4ECDC4,stroke:#333,color:white
-    classDef warm fill:#FFE66D,stroke:#333
-    classDef storage fill:#95E1D3,stroke:#333
-
-    class MASTER1,MASTER2,MASTER3 master
-    class DATA1,DATA2 data
-    class WARM1,WARM2 warm
-    class EBS,S3 storage
-```
+![Application, FluentBit, and Kinesis Data Firehose feed logs into the data nodes of a multi-AZ OpenSearch cluster coordinated by dedicated master nodes; data nodes write hot data to EBS and roll aging data into UltraWarm, which migrates it on to S3-backed cold storage.](../../.gitbook/assets/en-observability-logging-02-opensearch-0.png)
 
 ### Node Types
 
@@ -133,27 +75,7 @@ flowchart TB
 
 ### Data Flow
 
-```mermaid
-sequenceDiagram
-    participant App as Application
-    participant FB as FluentBit
-    participant OS as OpenSearch
-    participant EBS as EBS Storage
-    participant UW as UltraWarm
-    participant S3 as Cold Storage
-
-    App->>FB: Send logs
-    FB->>OS: Bulk API call
-    OS->>EBS: Index (Hot)
-
-    Note over OS,EBS: After 7 days
-
-    OS->>UW: Move to UltraWarm<br/>by ISM policy
-
-    Note over UW,S3: After 30 days
-
-    UW->>S3: Move to<br/>Cold storage
-```
+![An application sends logs through FluentBit into OpenSearch, which indexes them to EBS as hot data, then an ISM policy moves data older than 7 days to UltraWarm and data older than 30 days on to S3-backed cold storage.](../../.gitbook/assets/en-observability-logging-02-opensearch-1.png)
 
 ---
 

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="maturity-title maturity-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="maturity-title">관측성 성숙도 4단계</title>
+    <desc id="maturity-desc">기본 모니터링에서 시작해 중앙 집중화, 3축 상관분석을 거쳐 AIOps 기반 자동 이상 탐지로 발전하는 관측성 성숙도 단계를 보여준다.</desc>
+    <defs><style>@import url(https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap);</style>
+      <marker id="m-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="m-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Arrows -->
+    <line x1="256" y1="240" x2="304" y2="240" stroke="#545B64" stroke-width="1.2" marker-end="url(#m-arrow)"/>
+    <rect x="260" y="220" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="280" y="229" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">수집</text>
+
+    <line x1="456" y1="240" x2="564" y2="240" stroke="#545B64" stroke-width="1.2" marker-end="url(#m-arrow)"/>
+    <rect x="490" y="220" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="510" y="229" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">연결</text>
+
+    <line x1="716" y1="240" x2="800" y2="240" stroke="#EC7211" stroke-width="1.2" marker-end="url(#m-arrow-accent)"/>
+    <rect x="726" y="220" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="758" y="229" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">AI 분석</text>
+
+    <!-- L1 -->
+    <rect x="104" y="212" width="152" height="56" rx="6" fill="#ffffff"/>
+    <rect x="104" y="212" width="152" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="180" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Level 1</text>
+    <text x="180" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">기본 모니터링</text>
+
+    <!-- L2 -->
+    <rect x="304" y="212" width="152" height="56" rx="6" fill="#ffffff"/>
+    <rect x="304" y="212" width="152" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="380" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Level 2</text>
+    <text x="380" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">중앙 집중화</text>
+
+    <!-- L3 -->
+    <rect x="564" y="212" width="152" height="56" rx="6" fill="#ffffff"/>
+    <rect x="564" y="212" width="152" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="640" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Level 3</text>
+    <text x="640" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">상관분석</text>
+
+    <!-- L4 (focal) -->
+    <rect x="800" y="212" width="152" height="56" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="800" y="212" width="152" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="876" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Level 4</text>
+    <text x="876" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">AIOps</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="140" y="528" width="14" height="14" rx="3" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="164" y="539" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">진행 단계</text>
+    <rect x="320" y="528" width="14" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="344" y="539" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">목표 성숙도 단계</text>
+  </svg>

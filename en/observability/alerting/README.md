@@ -20,29 +20,7 @@
 
 Modern observability consists of three core pillars:
 
-```mermaid
-graph TB
-    subgraph Observability["Observability"]
-        M[Metrics]
-        L[Logs]
-        T[Traces]
-    end
-
-    subgraph Alerting["Alerting"]
-        A[Alert Rules]
-        N[Notifications]
-        E[Escalation]
-    end
-
-    M --> A
-    L --> A
-    T --> A
-    A --> N
-    N --> E
-
-    style Observability fill:#e1f5fe
-    style Alerting fill:#fff3e0
-```
+![Architecture diagram showing metrics, logs, and traces feeding a shared alert-rules engine that notifies and escalates to responders.](../../.gitbook/assets/en-observability-alerting-readme-0.png)
 
 - **Metrics**: Quantitative state of the system (CPU, memory, request count, etc.)
 - **Logs**: Detailed records of events
@@ -74,30 +52,7 @@ graph TB
 
 Alerts go through the following lifecycle:
 
-```mermaid
-stateDiagram-v2
-    [*] --> Inactive: Normal state
-    Inactive --> Pending: Threshold exceeded
-    Pending --> Firing: Wait time elapsed
-    Firing --> Notified: Alert sent
-    Notified --> Acknowledged: Responder confirmed
-    Acknowledged --> InProgress: Action in progress
-    InProgress --> Resolved: Problem solved
-    Resolved --> [*]: End
-
-    Pending --> Inactive: Returns within threshold
-    Firing --> Inactive: Auto-resolved
-
-    note right of Pending
-        Held during the wait time
-        specified in the for clause
-    end note
-
-    note right of Firing
-        Alert is active
-        Waiting to be sent to receivers
-    end note
-```
+![State machine showing an alert moving from inactive through pending, firing, notification, and acknowledgment to resolution, with early-return paths back to inactive.](../../.gitbook/assets/en-observability-alerting-readme-1.png)
 
 ### 1. Detection
 
@@ -134,19 +89,7 @@ groups:
 - **Severity-based**: Different escalation paths based on severity
 - **Automatic escalation**: Automatic escalation according to defined rules
 
-```mermaid
-graph LR
-    A[Alert Fired] --> B{Primary<br/>Response?}
-    B -->|Yes| C[Action Proceeds]
-    B -->|No, 15min elapsed| D{Secondary<br/>Response?}
-    D -->|Yes| C
-    D -->|No, 15min elapsed| E{Team Lead<br/>Response?}
-    E -->|Yes| C
-    E -->|No, 15min elapsed| F[Entire Team Alert]
-
-    style A fill:#ffcdd2
-    style C fill:#c8e6c9
-```
+![Flowchart showing an alert escalating every 15 minutes from the primary on-call through secondary and team-lead responders to a full-team page, until any responder acts.](../../.gitbook/assets/en-observability-alerting-readme-2.png)
 
 ### 4. Resolution
 
@@ -178,26 +121,7 @@ Runbook: https://wiki.company.com/db-connection-exhausted
 
 Too many alerts can cause important alerts to be missed.
 
-```mermaid
-graph TB
-    subgraph Problem["Alert Fatigue Vicious Cycle"]
-        A[Excessive Alerts] --> B[Alerts Ignored]
-        B --> C[Important Alerts Missed]
-        C --> D[Incident Occurs]
-        D --> E[More Alerts Added]
-        E --> A
-    end
-
-    subgraph Solution["Solution"]
-        F[Alert Refinement] --> G[Appropriate Thresholds]
-        G --> H[Alert Grouping]
-        H --> I[Regular Review]
-        I --> F
-    end
-
-    style Problem fill:#ffcdd2
-    style Solution fill:#c8e6c9
-```
+![Two reinforcing cycles: a vicious cycle where excessive alerts get ignored and cause missed incidents that add even more alerts, alongside a prevention cycle where refining alerts into better thresholds and grouping is sustained by regular review.](../../.gitbook/assets/en-observability-alerting-readme-3.png)
 
 **Alert fatigue prevention strategies:**
 
@@ -271,29 +195,7 @@ annotations:
 
 Alerts should be delivered to appropriate receivers based on various criteria:
 
-```mermaid
-graph TB
-    A[Alert Fired] --> B{Severity?}
-
-    B -->|Critical| C[Immediate Phone/SMS]
-    B -->|High| D[Slack + PagerDuty]
-    B -->|Warning| E[Slack Channel]
-    B -->|Info| F[Email]
-
-    C --> G{Team?}
-    D --> G
-    E --> G
-
-    G -->|Infrastructure| H[SRE Team]
-    G -->|Application| I[Dev Team]
-    G -->|Database| J[DBA Team]
-    G -->|Security| K[Security Team]
-
-    style C fill:#ffcdd2
-    style D fill:#fff3e0
-    style E fill:#fff9c4
-    style F fill:#e8f5e9
-```
+![Architecture diagram grouping Amazon EKS alerting targets into four areas: control plane (API server, etcd, scheduler/controller manager), data plane (node, pod, container status), networking (VPC CNI, Service/Ingress, CoreDNS), and storage (EBS/EFS CSI, PV/PVC).](../../.gitbook/assets/en-observability-alerting-readme-4.png)
 
 ### Routing Tree Design
 
@@ -353,16 +255,7 @@ Set up time-based escalation policies to ensure alerts are not ignored:
 
 On-call refers to a designated responder responsible for system issues during a specified period.
 
-```mermaid
-gantt
-    title Weekly On-Call Rotation
-    dateFormat  YYYY-MM-DD
-    section SRE Team
-    Engineer A    :a1, 2025-02-17, 7d
-    Engineer B    :a2, after a1, 7d
-    Engineer C    :a3, after a2, 7d
-    Engineer D    :a4, after a3, 7d
-```
+![Flowchart showing an alert routed first by severity to a phone, PagerDuty, Slack, or email channel, then, for the three actionable severities, routed again by owning team to SRE, dev, DBA, or security.](../../.gitbook/assets/en-observability-alerting-readme-5.png)
 
 ### On-Call Best Practices
 
@@ -386,40 +279,7 @@ gantt
 
 ### EKS-Specific Alerting Areas
 
-```mermaid
-graph TB
-    subgraph EKS["Amazon EKS Alerting Areas"]
-        subgraph Control["Control Plane"]
-            API[API Server]
-            ETCD[etcd]
-            SCH[Scheduler]
-            CM[Controller Manager]
-        end
-
-        subgraph Data["Data Plane"]
-            Node[Node Status]
-            Pod[Pod Status]
-            Cont[Container Status]
-        end
-
-        subgraph Network["Networking"]
-            VPC[VPC CNI]
-            SVC[Service/Ingress]
-            DNS[CoreDNS]
-        end
-
-        subgraph Storage["Storage"]
-            EBS[EBS CSI]
-            EFS[EFS CSI]
-            PV[PV/PVC]
-        end
-    end
-
-    style Control fill:#e3f2fd
-    style Data fill:#e8f5e9
-    style Network fill:#fff3e0
-    style Storage fill:#fce4ec
-```
+![Flowchart guiding the choice of an alerting solution: whether on-call management is needed, then AWS-native preference or budget, ending at CloudWatch Alarms, Alertmanager, Grafana OnCall, PagerDuty, or OpsGenie.](../../.gitbook/assets/en-observability-alerting-readme-6.png)
 
 ### Alerting Strategy by Layer
 
@@ -558,28 +418,7 @@ EKS integrates with various AWS services, so alerts for these are also needed:
 
 ### Solution Selection Guide
 
-```mermaid
-graph TB
-    A[Select Alerting Solution] --> B{Need On-Call<br/>Management?}
-
-    B -->|No| C{Prefer AWS<br/>Native?}
-    B -->|Yes| D{Budget?}
-
-    C -->|Yes| E[CloudWatch Alarms]
-    C -->|No| F[Alertmanager]
-
-    D -->|Open Source| G[Grafana OnCall]
-    D -->|Enterprise| H{Existing Tools?}
-
-    H -->|None| I[PagerDuty]
-    H -->|Atlassian| J[OpsGenie]
-
-    style E fill:#ff9800
-    style F fill:#4caf50
-    style G fill:#2196f3
-    style I fill:#8bc34a
-    style J fill:#03a9f4
-```
+![Architecture diagram of a hybrid alerting pipeline: Prometheus and CloudWatch feed Alertmanager, which routes to Grafana OnCall and PagerDuty for on-call management, fanning out to Slack, email, and SMS notification channels.](../../.gitbook/assets/en-observability-alerting-readme-7.png)
 
 #### Recommended Solutions by Situation
 
@@ -593,43 +432,7 @@ graph TB
 
 Most production environments use a combination of solutions:
 
-```mermaid
-graph LR
-    subgraph Sources["Alert Sources"]
-        P[Prometheus]
-        CW[CloudWatch]
-    end
-
-    subgraph Routing["Routing"]
-        AM[Alertmanager]
-    end
-
-    subgraph OnCall["On-Call Management"]
-        GO[Grafana OnCall]
-        PD[PagerDuty]
-    end
-
-    subgraph Notification["Notification Channels"]
-        S[Slack]
-        E[Email]
-        SMS[SMS]
-    end
-
-    P --> AM
-    CW --> AM
-    AM --> GO
-    AM --> PD
-    GO --> S
-    GO --> SMS
-    PD --> S
-    PD --> E
-    PD --> SMS
-
-    style Sources fill:#e3f2fd
-    style Routing fill:#fff3e0
-    style OnCall fill:#e8f5e9
-    style Notification fill:#fce4ec
-```
+![Gantt chart showing four SRE engineers each taking a sequential seven-day on-call shift over four weeks.](../../.gitbook/assets/en-observability-alerting-readme-8.png)
 
 **Recommended Architecture:**
 

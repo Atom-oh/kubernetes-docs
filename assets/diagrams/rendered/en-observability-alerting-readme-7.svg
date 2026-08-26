@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-observability-alerting-readme-7-title en-observability-alerting-readme-7-desc">
+<title id="en-observability-alerting-readme-7-title">Hybrid alerting pipeline from sources to notification channels</title>
+<desc id="en-observability-alerting-readme-7-desc">Architecture diagram of a hybrid alerting pipeline: Prometheus and CloudWatch feed Alertmanager, which routes to Grafana OnCall and PagerDuty for on-call management, fanning out to Slack, email, and SMS notification channels.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 194.0,196.0 H 220 Q 228,196.0 228,204.0 V 238.66666666666666 Q 228,246.66666666666666 236,246.66666666666666 H 262.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 194.0,316.0 H 220 Q 228,316.0 228,308.0 V 273.3333333333333 Q 228,265.3333333333333 236,265.3333333333333 H 262.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 394.0,246.66666666666666 H 420 Q 428,246.66666666666666 428,238.66666666666666 V 204.0 Q 428,196.0 436,196.0 H 462.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 394.0,265.3333333333333 H 420 Q 428,265.3333333333333 428,273.3333333333333 V 308.0 Q 428,316.0 436,316.0 H 462.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 594.0,186.66666666666666 H 620 Q 628,186.66666666666666 628,178.66666666666666 V 158.66666666666666 Q 628,150.66666666666666 636,150.66666666666666 H 662.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 594.0,302.0 H 620 Q 628,302.0 628,294.0 V 177.33333333333334 Q 628,169.33333333333334 636,169.33333333333334 H 662.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 594.0,316.0 H 620 Q 628,316.0 628,308.0 V 276.0 Q 628,268.0 636,268.0 H 662.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 594.0,205.33333333333334 H 620 Q 628,205.33333333333334 628,213.33333333333334 V 358.6666666666667 Q 628,366.6666666666667 636,366.6666666666667 H 662.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 594.0,330.0 H 620 Q 628,330.0 628,338.0 V 377.3333333333333 Q 628,385.3333333333333 636,385.3333333333333 H 662.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="40" y="96" width="176" height="384" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.16)" stroke-width="1"/><text x="52" y="116" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em" text-transform="uppercase">ALERT SOURCES</text>
+<rect x="240" y="96" width="176" height="384" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.16)" stroke-width="1"/><text x="252" y="116" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em" text-transform="uppercase">ROUTING</text>
+<rect x="440" y="96" width="176" height="384" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.16)" stroke-width="1"/><text x="452" y="116" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em" text-transform="uppercase">ON-CALL MGMT</text>
+<rect x="640" y="96" width="176" height="384" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.16)" stroke-width="1"/><text x="652" y="116" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em" text-transform="uppercase">NOTIFICATION</text>
+<rect x="62.0" y="168" width="132" height="56" rx="6" fill="#ffffff"/>
+<rect x="62.0" y="168" width="132" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="128.0" y="198.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Prometheus</text>
+<rect x="62.0" y="288" width="132" height="56" rx="6" fill="#ffffff"/>
+<rect x="62.0" y="288" width="132" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="128.0" y="318.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">CloudWatch</text>
+<rect x="262.0" y="228" width="132" height="56" rx="6" fill="#ffffff"/>
+<rect x="262.0" y="228" width="132" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="328.0" y="258.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Alertmanager</text>
+<rect x="462.0" y="168" width="132" height="56" rx="6" fill="#ffffff"/>
+<rect x="462.0" y="168" width="132" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="528.0" y="198.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Grafana OnCall</text>
+<rect x="462.0" y="288" width="132" height="56" rx="6" fill="#ffffff"/>
+<rect x="462.0" y="288" width="132" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="528.0" y="318.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">PagerDuty</text>
+<rect x="662.0" y="132" width="132" height="56" rx="6" fill="#ffffff"/>
+<rect x="662.0" y="132" width="132" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="728.0" y="162.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Slack</text>
+<rect x="662.0" y="240" width="132" height="56" rx="6" fill="#ffffff"/>
+<rect x="662.0" y="240" width="132" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="728.0" y="270.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Email</text>
+<rect x="662.0" y="348" width="132" height="56" rx="6" fill="#ffffff"/>
+<rect x="662.0" y="348" width="132" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="728.0" y="378.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">SMS</text>
+</svg>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="pullpush-title pullpush-desc">
+  <title id="pullpush-title">Pull vs. push metrics collection models</title>
+  <desc id="pullpush-desc">Diagram comparing the pull model, where a Prometheus server scrapes /metrics endpoints from applications over HTTP GET, against the push model, where applications send metrics via HTTP POST to a central collector such as Datadog or CloudWatch.</desc>
+  <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Zones (bg -> zones -> arrows -> nodes) -->
+  <rect x="40" y="128" width="400" height="328" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="165" y="132" width="150" height="12" rx="2" fill="#ffffff"/>
+  <text x="240" y="141" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">PULL MODEL &#183; PROMETHEUS</text>
+
+  <rect x="520" y="128" width="400" height="328" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="642" y="132" width="196" height="12" rx="2" fill="#ffffff"/>
+  <text x="740" y="141" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">PUSH MODEL &#183; DATADOG, CLOUDWATCH</text>
+
+  <!-- Arrows: pull zone, hub (216) -> targets (304), fan on hub right edge at 284/300/316 -->
+  <path d="M 216,284 H 264 Q 272,284 272,276 V 196 Q 272,188 280,188 H 304" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+  <line x1="216" y1="300" x2="304" y2="300" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+  <path d="M 216,316 H 264 Q 272,316 272,324 V 404 Q 272,412 280,412 H 304" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+
+  <!-- label on the straight middle arrow -->
+  <rect x="242" y="288" width="32" height="12" rx="2" fill="#ffffff"/>
+  <text x="258" y="297" fill="#0972D3" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">GET</text>
+
+  <!-- Arrows: push zone, sources (656) -> hub (744), fan on hub left edge at 284/300/316 -->
+  <path d="M 656,188 H 692 Q 700,188 700,196 V 276 Q 700,284 708,284 H 744" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+  <line x1="656" y1="300" x2="744" y2="300" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+  <path d="M 656,412 H 692 Q 700,412 700,404 V 324 Q 700,316 708,316 H 744" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+
+  <rect x="684" y="288" width="36" height="12" rx="2" fill="#ffffff"/>
+  <text x="702" y="297" fill="#0972D3" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">POST</text>
+
+  <!-- Node: Prometheus Server (focal hub) -->
+  <rect x="64" y="268" width="152" height="64" rx="6" fill="#ffffff"/>
+  <rect x="64" y="268" width="152" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <rect x="72" y="276" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="86" y="285" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">SRV</text>
+  <text x="140" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus Server</text>
+  <text x="140" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">central scraper</text>
+
+  <!-- Node: App 1 /metrics -->
+  <rect x="304" y="160" width="112" height="56" rx="6" fill="#ffffff"/>
+  <rect x="304" y="160" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="312" y="168" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="326" y="177" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+  <text x="360" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App 1</text>
+  <text x="360" y="210" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">/metrics</text>
+
+  <!-- Node: App 2 /metrics -->
+  <rect x="304" y="272" width="112" height="56" rx="6" fill="#ffffff"/>
+  <rect x="304" y="272" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="312" y="280" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="326" y="289" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+  <text x="360" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App 2</text>
+  <text x="360" y="322" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">/metrics</text>
+
+  <!-- Node: App 3 /metrics -->
+  <rect x="304" y="384" width="112" height="56" rx="6" fill="#ffffff"/>
+  <rect x="304" y="384" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="312" y="392" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="326" y="401" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+  <text x="360" y="420" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App 3</text>
+  <text x="360" y="434" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">/metrics</text>
+
+  <!-- Node: App 1 (push source) -->
+  <rect x="544" y="160" width="112" height="56" rx="6" fill="#ffffff"/>
+  <rect x="544" y="160" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="552" y="168" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="566" y="177" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+  <text x="600" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App 1</text>
+
+  <!-- Node: App 2 (push source) -->
+  <rect x="544" y="272" width="112" height="56" rx="6" fill="#ffffff"/>
+  <rect x="544" y="272" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="552" y="280" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="566" y="289" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+  <text x="600" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App 2</text>
+
+  <!-- Node: App 3 (push source) -->
+  <rect x="544" y="384" width="112" height="56" rx="6" fill="#ffffff"/>
+  <rect x="544" y="384" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="552" y="392" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="566" y="401" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+  <text x="600" y="420" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App 3</text>
+
+  <!-- Node: Collector/Gateway (focal hub) -->
+  <rect x="744" y="268" width="152" height="64" rx="6" fill="#ffffff"/>
+  <rect x="744" y="268" width="152" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <rect x="752" y="276" width="24" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="764" y="285" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">GW</text>
+  <text x="820" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Collector / Gateway</text>
+  <text x="820" y="316" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Datadog &#183; CloudWatch</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="484" x2="920" y2="484" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="500" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+  <rect x="40" y="516" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="60" y="525" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Collector / hub</text>
+
+  <rect x="196" y="516" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="216" y="525" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Application</text>
+
+  <line x1="360" y1="521" x2="388" y2="521" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+  <text x="396" y="525" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">HTTP call</text>
+</svg>

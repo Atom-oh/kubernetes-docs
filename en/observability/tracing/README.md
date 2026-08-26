@@ -17,36 +17,7 @@ In microservices environments, traditional logging and metrics alone cannot answ
 - Where did errors occur?
 - What are the dependencies between services?
 
-```mermaid
-flowchart TD
-    subgraph Problem["Problem: Complex Request Flow"]
-        U[User] --> A[API Gateway]
-        A --> B[Auth Service]
-        A --> C[Product Service]
-        C --> D[Inventory Service]
-        C --> E[Pricing Service]
-        A --> F[Order Service]
-        F --> G[Payment Service]
-        F --> H[Notification Service]
-        G --> I[Fraud Detection]
-    end
-
-    Q1[Where did latency occur?]
-    Q2[What's the root cause of errors?]
-    Q3[What are the service dependencies?]
-
-    Problem -.-> Q1
-    Problem -.-> Q2
-    Problem -.-> Q3
-
-    classDef user fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef question fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class U user
-    class A,B,C,D,E,F,G,H,I service
-    class Q1,Q2,Q3 question
-```
+![Tree diagram showing a user request fanning out through an API gateway into auth, product, and order services and their downstream dependencies, illustrating why traditional logging and metrics cannot answer where latency or errors occur across the call tree.](../../.gitbook/assets/en-observability-tracing-README-0.png)
 
 ## Core Concepts
 
@@ -54,32 +25,7 @@ flowchart TD
 
 A Trace represents the complete journey of a single request. It is the collection of all operations generated as a request passes through the system.
 
-```mermaid
-flowchart LR
-    subgraph Trace["Trace: Complete Request Journey"]
-        direction LR
-        S1[API Gateway<br/>150ms]
-        S2[User Service<br/>50ms]
-        S3[Order Service<br/>200ms]
-        S4[Payment Service<br/>300ms]
-        S5[Notification<br/>100ms]
-    end
-
-    S1 --> S2
-    S1 --> S3
-    S3 --> S4
-    S3 --> S5
-
-    Total[Total Duration: 500ms]
-
-    Trace --> Total
-
-    classDef span fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef total fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class S1,S2,S3,S4,S5 span
-    class Total total
-```
+![Flowchart showing a trace as a container of five timed spans across an API gateway, user, order, payment, and notification service, whose branching durations sum to a total request duration of 500 milliseconds.](../../.gitbook/assets/en-observability-tracing-README-1.png)
 
 ### 2. Span
 
@@ -96,79 +42,13 @@ A Span represents a single unit of work. Each Span contains the following inform
 | **Tags** | Metadata | `http.status_code=200` |
 | **Logs** | Event records | `error: connection timeout` |
 
-```mermaid
-flowchart TD
-    subgraph SpanStructure["Span Structure"]
-        direction TB
-
-        subgraph Header["Header Information"]
-            TID[TraceID: abc123]
-            SID[SpanID: span001]
-            PID[ParentSpanID: null]
-        end
-
-        subgraph Timing["Timing Information"]
-            ST[Start: 10:30:00.000]
-            DUR[Duration: 150ms]
-        end
-
-        subgraph Metadata["Metadata"]
-            OP[Operation: HTTP GET /users]
-            TAGS[Tags: service=api, http.method=GET]
-            LOGS[Logs: request received, response sent]
-        end
-
-        subgraph Status["Status"]
-            CODE[Status: OK]
-        end
-    end
-
-    Header --> Timing
-    Timing --> Metadata
-    Metadata --> Status
-
-    classDef header fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef timing fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef metadata fill:#34A853,stroke:#333,stroke-width:1px,color:white
-    classDef status fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-
-    class TID,SID,PID header
-    class ST,DUR timing
-    class OP,TAGS,LOGS metadata
-    class CODE status
-```
+![Flowchart showing the four record groups that make up one span — header identifiers, timing, metadata tags and logs, and status — flowing top to bottom from identification to outcome.](../../.gitbook/assets/en-observability-tracing-README-2.png)
 
 ### 3. Span Relationships and Hierarchy
 
 Spans form parent-child relationships creating a tree structure:
 
-```mermaid
-flowchart TD
-    subgraph TraceTree["Trace Tree Structure"]
-        ROOT[Root Span<br/>API Gateway<br/>TraceID: abc123<br/>SpanID: span001]
-
-        CHILD1[Child Span<br/>Auth Service<br/>SpanID: span002<br/>Parent: span001]
-
-        CHILD2[Child Span<br/>Order Service<br/>SpanID: span003<br/>Parent: span001]
-
-        GRANDCHILD1[Grandchild Span<br/>Payment Service<br/>SpanID: span004<br/>Parent: span003]
-
-        GRANDCHILD2[Grandchild Span<br/>Inventory Service<br/>SpanID: span005<br/>Parent: span003]
-    end
-
-    ROOT --> CHILD1
-    ROOT --> CHILD2
-    CHILD2 --> GRANDCHILD1
-    CHILD2 --> GRANDCHILD2
-
-    classDef root fill:#E6522C,stroke:#333,stroke-width:2px,color:white
-    classDef child fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef grandchild fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class ROOT root
-    class CHILD1,CHILD2 child
-    class GRANDCHILD1,GRANDCHILD2 grandchild
-```
+![Tree diagram showing a root span at the API gateway with two child spans for auth and order service, where the order service span itself has two grandchild spans for payment and inventory service.](../../.gitbook/assets/en-observability-tracing-README-3.png)
 
 ### 4. SpanContext
 
@@ -235,29 +115,7 @@ Tracing all requests causes cost and performance issues. Sampling manages this.
 
 Sampling decision at request start:
 
-```mermaid
-flowchart LR
-    subgraph HeadBased["Head-based Sampling"]
-        REQ[Request Received]
-        DEC{Sampling<br/>Decision}
-        TRACE[Collect Trace]
-        SKIP[Skip Trace]
-    end
-
-    REQ --> DEC
-    DEC -->|10% Sample| TRACE
-    DEC -->|90% Skip| SKIP
-
-    classDef request fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef trace fill:#34A853,stroke:#333,stroke-width:1px,color:white
-    classDef skip fill:#E8E8E8,stroke:#333,stroke-width:1px,color:black
-
-    class REQ request
-    class DEC decision
-    class TRACE trace
-    class SKIP skip
-```
+![Flowchart showing head-based sampling: a request arrives, a sampling decision is made immediately, and the request is either collected as a full trace at roughly 10 percent or skipped at roughly 90 percent, with no knowledge of the eventual outcome.](../../.gitbook/assets/en-observability-tracing-README-4.png)
 
 **Advantages:**
 - Simple implementation
@@ -280,33 +138,7 @@ sampling:
 
 Sampling decision after request completion based on results:
 
-```mermaid
-flowchart LR
-    subgraph TailBased["Tail-based Sampling"]
-        REQ[Request Received]
-        COLLECT[Collect All Spans]
-        ANALYZE{Analyze<br/>Error? Latency?}
-        KEEP[Keep]
-        DROP[Drop]
-    end
-
-    REQ --> COLLECT
-    COLLECT --> ANALYZE
-    ANALYZE -->|Error or Latency| KEEP
-    ANALYZE -->|Normal| DROP
-
-    classDef request fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef collect fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef analyze fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef keep fill:#34A853,stroke:#333,stroke-width:1px,color:white
-    classDef drop fill:#E8E8E8,stroke:#333,stroke-width:1px,color:black
-
-    class REQ request
-    class COLLECT collect
-    class ANALYZE analyze
-    class KEEP keep
-    class DROP drop
-```
+![Flowchart showing tail-based sampling: a request is received, every span is collected first, the full set is analyzed for errors or high latency, and only then is the trace kept or dropped based on what actually happened.](../../.gitbook/assets/en-observability-tracing-README-5.png)
 
 **Advantages:**
 - Never miss important requests (errors, latency)
@@ -379,30 +211,7 @@ http_request_duration_seconds_bucket{le="1.0"} 1500 # {traceID="def456"}
 
 ### Correlation in Grafana
 
-```mermaid
-flowchart LR
-    subgraph Correlation["Grafana Correlation"]
-        M[Metrics Dashboard<br/>Response Time Spike]
-        E[Exemplar<br/>TraceID: abc123]
-        T[Tempo<br/>Trace Details]
-        L[Loki<br/>Related Logs]
-    end
-
-    M -->|Click Exemplar| E
-    E -->|View Trace| T
-    T -->|Log Link| L
-    L -->|Metric Link| M
-
-    classDef metric fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef exemplar fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef trace fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef log fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class M metric
-    class E exemplar
-    class T trace
-    class L log
-```
+![Flowchart showing a click-through loop in Grafana: a metrics dashboard spike leads to an exemplar carrying a trace ID, the exemplar opens the full trace in Tempo, the trace links out to related logs in Loki, and the logs link back to the metric that started the investigation.](../../.gitbook/assets/en-observability-tracing-README-6.png)
 
 ## Solution Comparison
 
@@ -422,39 +231,7 @@ flowchart LR
 
 ### Selection Guide
 
-```mermaid
-flowchart TD
-    START[Select Distributed Tracing Solution]
-
-    Q1{Need AWS Native<br/>Integration?}
-    Q2{Cost Priority?}
-    Q3{Need AI Analysis?}
-    Q4{Using Grafana<br/>Stack?}
-
-    XRAY[AWS X-Ray]
-    TEMPO[Grafana Tempo]
-    JAEGER[Jaeger]
-    DATADOG[Datadog APM]
-    DYNATRACE[Dynatrace]
-
-    START --> Q1
-    Q1 -->|Yes| XRAY
-    Q1 -->|No| Q2
-    Q2 -->|Yes| Q4
-    Q4 -->|Yes| TEMPO
-    Q4 -->|No| JAEGER
-    Q2 -->|No| Q3
-    Q3 -->|Yes| DYNATRACE
-    Q3 -->|No| DATADOG
-
-    classDef question fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef solution fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-
-    class Q1,Q2,Q3,Q4 question
-    class TEMPO,JAEGER,DATADOG,DYNATRACE solution
-    class XRAY aws
-```
+![Decision tree for selecting a distributed tracing solution: it checks for AWS-native integration first, then cost priority, then whether AI-assisted analysis or an existing Grafana stack matters, ending at AWS X-Ray, Grafana Tempo, Jaeger, Datadog APM, or Dynatrace.](../../.gitbook/assets/en-observability-tracing-README-7.png)
 
 ## Best Practices
 

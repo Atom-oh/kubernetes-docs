@@ -35,25 +35,7 @@ Prometheus Alertmanager is a component that processes alerts sent from Prometheu
 
 ### Prometheus Alert Flow
 
-```mermaid
-sequenceDiagram
-    participant P as Prometheus
-    participant AM as Alertmanager
-    participant R as Receiver (Slack/PagerDuty)
-
-    P->>P: Evaluate alert rules
-    Note over P: When expr condition is met<br/>transition to Pending state
-    P->>P: Wait for 'for' duration
-    Note over P: If condition persists<br/>during 'for' period, fire
-    P->>AM: Send alert (POST /api/v2/alerts)
-    AM->>AM: Deduplication
-    AM->>AM: Grouping
-    AM->>AM: Routing decision
-    AM->>AM: Check Inhibition
-    AM->>AM: Check Silence
-    AM->>R: Send notification
-    R-->>AM: Send result
-```
+![Sequence diagram showing Prometheus evaluating and firing an alert, Alertmanager running it through deduplication, grouping, routing, inhibition and silence checks, then notifying a receiver, which confirms delivery.](../../.gitbook/assets/alertmanager-alert-flow.png)
 
 ---
 
@@ -61,46 +43,7 @@ sequenceDiagram
 
 ### Alertmanager Internal Structure
 
-```mermaid
-graph TB
-    subgraph Alertmanager["Alertmanager"]
-        API[API<br/>/api/v2/alerts]
-
-        subgraph Pipeline["Alert Pipeline"]
-            D[Dispatcher<br/>Routing]
-            I[Inhibitor<br/>Suppression]
-            S[Silencer<br/>Muting]
-            AG[Aggregation Group<br/>Grouping]
-            NP[Notification Pipeline<br/>Alert Sending]
-        end
-
-        subgraph Storage["Storage"]
-            NF[nflog<br/>Alert Log]
-            SL[Silences<br/>Silence Rules]
-        end
-
-        subgraph Cluster["Cluster"]
-            GS[Gossip Protocol<br/>State Sync]
-        end
-    end
-
-    P[Prometheus] -->|alerts| API
-    API --> D
-    D --> I
-    I --> S
-    S --> AG
-    AG --> NP
-    NP --> R[Receivers]
-
-    NP -.->|record| NF
-    S -.->|query| SL
-    GS -.->|sync| NF
-    GS -.->|sync| SL
-
-    style Pipeline fill:#e3f2fd
-    style Storage fill:#fff3e0
-    style Cluster fill:#e8f5e9
-```
+![Architecture diagram showing alerts entering Alertmanager's API, flowing through a pipeline of dispatcher, inhibitor, silencer, aggregation and notification stages to receivers, while a clustered gossip protocol keeps the notification log and silence store synced across replicas.](../../.gitbook/assets/alertmanager-internal-structure.png)
 
 ### Component Description
 
@@ -287,28 +230,7 @@ rules:
 
 ### Alert States
 
-```mermaid
-stateDiagram-v2
-    [*] --> Inactive: Condition not met
-    Inactive --> Pending: expr condition met
-    Pending --> Firing: for duration elapsed
-    Firing --> Inactive: Condition not met
-    Pending --> Inactive: Condition not met within for duration
-
-    note right of Inactive
-        Alert has not fired
-    end note
-
-    note right of Pending
-        Condition is met but
-        waiting for 'for' duration
-    end note
-
-    note right of Firing
-        Alert is active
-        Sent to Alertmanager
-    end note
-```
+![State machine showing an alert moving from Inactive to Pending once its PromQL condition is met, then to Firing once the 'for' duration elapses, with paths back to Inactive if the condition clears.](../../.gitbook/assets/alertmanager-alert-states.png)
 
 ---
 
@@ -353,21 +275,7 @@ route:
 
 ### Routing Flow
 
-```mermaid
-graph TB
-    A[Alert Received] --> B{Critical?}
-    B -->|Yes| C[critical-receiver]
-    B -->|No| D{service=foo,bar?}
-    D -->|Yes| E{owner=team-a?}
-    D -->|No| F[default-receiver]
-    E -->|Yes| G[team-a]
-    E -->|No| H[service-team]
-
-    style C fill:#ffcdd2
-    style F fill:#e8f5e9
-    style G fill:#bbdefb
-    style H fill:#fff9c4
-```
+![Flowchart showing how Alertmanager routes a received alert down its matcher tree — critical severity to the critical receiver, then service and owner matchers deciding between team-a, the service team, or the default receiver.](../../.gitbook/assets/alertmanager-routing-flow.png)
 
 ### Matchers
 
@@ -593,27 +501,7 @@ receivers:
 
 Inhibition is a feature that suppresses related alerts when a specific alert fires.
 
-```mermaid
-graph LR
-    subgraph Without_Inhibition["Without Inhibition"]
-        A1[NodeDown] -->|sent| R1[Receiver]
-        A2[PodNotReady] -->|sent| R1
-        A3[ServiceUnavailable] -->|sent| R1
-    end
-
-    subgraph With_Inhibition["With Inhibition"]
-        B1[NodeDown] -->|sent| R2[Receiver]
-        B2[PodNotReady] -.->|suppressed| X1((X))
-        B3[ServiceUnavailable] -.->|suppressed| X2((X))
-    end
-
-    style A1 fill:#ffcdd2
-    style A2 fill:#ffcdd2
-    style A3 fill:#ffcdd2
-    style B1 fill:#ffcdd2
-    style B2 fill:#e0e0e0
-    style B3 fill:#e0e0e0
-```
+![Architecture diagram contrasting alert delivery without inhibition, where three related alerts all reach the receiver, against delivery with inhibition, where a node-down alert still reaches the receiver while the pod and service alerts it implies are suppressed.](../../.gitbook/assets/alertmanager-inhibition-concept.png)
 
 ### Inhibition Rule Configuration
 
@@ -723,28 +611,7 @@ curl -X POST http://alertmanager:9093/api/v2/silences \
 
 ### Silence Management Best Practices
 
-```mermaid
-graph TB
-    A[Silence Needed] --> B{Type?}
-
-    B -->|Maintenance| C[Duration of planned time]
-    B -->|Deployment| D[Until deployment complete]
-    B -->|Investigation| E[Max 4 hours]
-    B -->|Known Issue| F[Until fix complete]
-
-    C --> G[Clear comment]
-    D --> G
-    E --> G
-    F --> G
-
-    G --> H[Regular review]
-    H --> I{Expired?}
-    I -->|Yes| J[Auto-removed]
-    I -->|No| K[Manual review]
-
-    style G fill:#fff9c4
-    style H fill:#e8f5e9
-```
+![Flowchart showing a silence's duration set by its type — maintenance, deployment, investigation, or known issue — followed by a mandatory comment, regular review, and either automatic removal on expiry or a manual review.](../../.gitbook/assets/alertmanager-silence-best-practices.png)
 
 **Recommendations:**
 
@@ -851,24 +718,7 @@ data:
 
 ### Clustering Architecture
 
-```mermaid
-graph TB
-    P[Prometheus] -->|alerts| AM1[Alertmanager 1]
-    P -->|alerts| AM2[Alertmanager 2]
-    P -->|alerts| AM3[Alertmanager 3]
-
-    subgraph Cluster["Alertmanager Cluster"]
-        AM1 <-->|Gossip| AM2
-        AM2 <-->|Gossip| AM3
-        AM3 <-->|Gossip| AM1
-    end
-
-    AM1 --> R[Receivers]
-    AM2 -.->|dedup| AM1
-    AM3 -.->|dedup| AM1
-
-    style Cluster fill:#e3f2fd
-```
+![Architecture diagram showing Prometheus sending the same alerts to a three-replica Alertmanager cluster, the replicas gossiping state amongst themselves in a ring, replicas 2 and 3 forwarding their view to replica 1 for deduplication, and replica 1 forwarding to the receivers.](../../.gitbook/assets/alertmanager-clustering-architecture.png)
 
 ### StatefulSet Configuration
 

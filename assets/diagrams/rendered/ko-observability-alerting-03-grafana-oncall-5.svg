@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="slack-workflow-title slack-workflow-desc">
+    <title id="slack-workflow-title">Slack 워크플로우</title>
+    <desc id="slack-workflow-desc">알림이 Slack 채널에 버튼과 함께 게시되고, 사용자가 Acknowledge 또는 Resolve 버튼을 클릭하면 OnCall이 상태를 갱신하고 메시지를 갱신하는 두 가지 처리 경로를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Actors: A=Alert cx=120, O=OnCall cx=360, S=Slack cx=600, U=User cx=840 -->
+    <g font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">
+      <rect x="60" y="24" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="120" y="48" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Alert</text>
+
+      <rect x="300" y="24" width="120" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="360" y="48" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">OnCall</text>
+
+      <rect x="540" y="24" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="600" y="48" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Slack</text>
+
+      <rect x="780" y="24" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="840" y="48" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">User</text>
+    </g>
+
+    <!-- Lifelines -->
+    <g stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3">
+      <line x1="120" y1="64" x2="120" y2="560"/>
+      <line x1="360" y1="64" x2="360" y2="560"/>
+      <line x1="600" y1="64" x2="600" y2="560"/>
+      <line x1="840" y1="64" x2="840" y2="560"/>
+    </g>
+
+    <!-- 1. A->O 알림 발생 -->
+    <line x1="120" y1="92" x2="360" y2="92" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="196" y="72" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="82" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">알림 발생</text>
+
+    <!-- 2. O->S 채널에 메시지 전송 -->
+    <line x1="360" y1="120" x2="600" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="416" y="100" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="110" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">채널에 메시지 전송</text>
+
+    <!-- 3. S->U 알림 표시(버튼 포함) -->
+    <line x1="600" y1="148" x2="840" y2="148" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="644" y="128" width="152" height="12" rx="2" fill="#ffffff"/>
+    <text x="720" y="138" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">알림 표시(버튼 포함)</text>
+
+    <!-- OPT fragment 1: Acknowledge -->
+    <rect x="336" y="176" width="528" height="128" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <rect x="336" y="176" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <text x="356" y="188" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">OPT</text>
+    <text x="384" y="188" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">[Acknowledge]</text>
+
+    <!-- 4. U->S "Acknowledge" 클릭 -->
+    <line x1="840" y1="216" x2="600" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="656" y="196" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="720" y="206" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">Acknowledge 클릭</text>
+
+    <!-- 5. S->O 확인 요청 -->
+    <line x1="600" y1="244" x2="360" y2="244" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="440" y="224" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="234" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">확인 요청</text>
+
+    <!-- 6. O self 상태 업데이트 -->
+    <path d="M 360,268 H 400 V 280 H 360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="406" y="264" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="450" y="274" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">상태 업데이트</text>
+
+    <!-- OPT fragment 2: Resolve -->
+    <rect x="96" y="320" width="768" height="216" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <rect x="96" y="320" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <text x="116" y="332" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">OPT</text>
+    <text x="144" y="332" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">[Resolve]</text>
+
+    <!-- 7. U->S "Resolve" 클릭 -->
+    <line x1="840" y1="360" x2="600" y2="360" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="672" y="340" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="720" y="350" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">Resolve 클릭</text>
+
+    <!-- 8. S->O 해결 요청 -->
+    <line x1="600" y1="388" x2="360" y2="388" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="440" y="368" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="378" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">해결 요청</text>
+
+    <!-- 9. O self 상태 업데이트 -->
+    <path d="M 360,412 H 400 V 424 H 360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="406" y="408" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="450" y="418" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">상태 업데이트</text>
+
+    <!-- 10. O->S 메시지 업데이트 -->
+    <line x1="360" y1="448" x2="600" y2="448" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="416" y="428" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="438" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">메시지 업데이트</text>
+
+    <!-- 11. O->A 해결 알림 (headline) -->
+    <line x1="360" y1="476" x2="120" y2="476" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="196" y="456" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="466" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">해결 알림</text>
+
+  </svg>

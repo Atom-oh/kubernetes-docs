@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="tail-title tail-desc">
+    <title id="tail-title">Tail-based sampling decides after the fact</title>
+    <desc id="tail-desc">Flowchart showing tail-based sampling: a request is received, every span is collected first, the full set is analyzed for errors or high latency, and only then is the trace kept or dropped based on what actually happened.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- connectors -->
+    <line x1="150" y1="284" x2="216" y2="284" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="376" y1="284" x2="440" y2="284" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="600" y1="248" x2="600" y2="176" stroke="#EC7211" stroke-width="1.4"/>
+    <line x1="600" y1="176" x2="760" y2="176" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <line x1="600" y1="320" x2="600" y2="392" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="600" y1="392" x2="760" y2="392" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- labels -->
+    <rect x="632" y="160" width="118" height="14" rx="2" fill="#ffffff"/>
+    <text x="691" y="171" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">ERROR OR LATENCY</text>
+    <rect x="656" y="376" width="60" height="14" rx="2" fill="#ffffff"/>
+    <text x="686" y="387" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">NORMAL</text>
+
+    <!-- REQ: oval -->
+    <rect x="20" y="260" width="130" height="48" rx="24" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="85" y="288" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Request Received</text>
+
+    <!-- COLLECT: rectangle -->
+    <rect x="216" y="260" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="296" y="288" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Collect All Spans</text>
+
+    <!-- ANALYZE: diamond -->
+    <polygon points="600,248 680,284 600,320 520,284" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="600" y="280" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Analyze:</text>
+    <text x="600" y="294" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">error / latency?</text>
+
+    <!-- KEEP: rectangle (focal) -->
+    <rect x="760" y="148" width="140" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="830" y="180" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Keep</text>
+
+    <!-- DROP: rectangle -->
+    <rect x="760" y="364" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="830" y="396" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Drop</text>
+
+    <!-- annotation -->
+    <text x="20" y="480" fill="#232F3E" font-size="14" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Never misses an error or a slow request — at the cost of holding</text>
+    <text x="20" y="504" fill="#545B64" font-size="14" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">every span in memory until the whole request is finished.</text>
+
+    <!-- legend -->
+    <line x1="30" y1="540" x2="930" y2="540" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <text x="30" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.16em">LEGEND</text>
+    <line x1="180" y1="552" x2="204" y2="552" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="212" y="556" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Retained trace</text>
+  </svg>

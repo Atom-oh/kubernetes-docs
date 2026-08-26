@@ -51,101 +51,11 @@ Grafana OnCall is an open-source on-call management tool that provides alert rou
 
 ### Grafana OnCall Components
 
-```mermaid
-graph TB
-    subgraph Sources["Alert Sources"]
-        AM[Alertmanager]
-        GA[Grafana Alerting]
-        CW[CloudWatch]
-        WH[Webhook]
-    end
-
-    subgraph OnCall["Grafana OnCall"]
-        subgraph Core["Core Components"]
-            API[API Server]
-            Engine[Alert Engine]
-            Scheduler[Scheduler]
-        end
-
-        subgraph Data["Data Storage"]
-            DB[(PostgreSQL)]
-            Redis[(Redis)]
-            Celery[Celery Workers]
-        end
-
-        subgraph Features["Features"]
-            Routes[Routes]
-            Escalation[Escalation Chains]
-            Schedules[Schedules]
-            Groups[Alert Groups]
-        end
-    end
-
-    subgraph Notifications["Notification Channels"]
-        Slack[Slack]
-        Teams[MS Teams]
-        Phone[Phone Call]
-        SMS[SMS]
-        Email[Email]
-        Mobile[Mobile App]
-    end
-
-    AM --> API
-    GA --> API
-    CW --> API
-    WH --> API
-
-    API --> Engine
-    Engine --> Routes
-    Routes --> Escalation
-    Escalation --> Schedules
-    Schedules --> Groups
-
-    Engine --> DB
-    Engine --> Redis
-    Celery --> Redis
-
-    Groups --> Slack
-    Groups --> Teams
-    Groups --> Phone
-    Groups --> SMS
-    Groups --> Email
-    Groups --> Mobile
-
-    style Core fill:#ff5722,color:#ffffff
-    style Data fill:#2196f3,color:#ffffff
-    style Features fill:#4caf50,color:#ffffff
-```
+![Architecture diagram showing alert sources feeding a central Alert Engine that reads and writes PostgreSQL and Redis/Celery state, drives routing, escalation chains, and schedules to build alert groups, which fan out to notification channels.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png)
 
 ### Alert Processing Flow
 
-```mermaid
-sequenceDiagram
-    participant S as Alert Source
-    participant O as OnCall
-    participant R as Route
-    participant E as Escalation Chain
-    participant SC as Schedule
-    participant N as Notification
-
-    S->>O: Alert received
-    O->>O: Alert grouping
-    O->>R: Evaluate routing rules
-    R->>E: Select escalation chain
-    E->>SC: Query current on-call responder
-    SC-->>E: Responder info
-    E->>N: Send notification
-
-    alt No response
-        E->>E: Wait time elapsed
-        E->>SC: Query next responder
-        SC-->>E: Next responder
-        E->>N: Escalation notification
-    end
-
-    N->>O: Responder acknowledges
-    O->>S: Status update
-```
+![Sequence diagram of an alert moving from source through OnCall routing and an escalation chain to a notified responder, with an optional re-escalation to the next responder when the first does not respond in time, ending in acknowledgement and a status update back to the source.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-1.png)
 
 ---
 
@@ -463,36 +373,7 @@ response = requests.post(
 
 ### Schedule Concept
 
-```mermaid
-graph TB
-    subgraph Schedule["On-Call Schedule"]
-        subgraph Rotation["Rotation"]
-            R1[Day Rotation]
-            R2[Night Rotation]
-        end
-
-        subgraph Layers["Layers"]
-            L1[Primary Responder]
-            L2[Secondary Responder]
-            L3[Backup Responder]
-        end
-
-        subgraph Override["Override"]
-            O1[Vacation Replacement]
-            O2[Temporary Change]
-        end
-    end
-
-    R1 --> L1
-    R2 --> L1
-    L1 --> Final[Final Schedule]
-    L2 --> Final
-    L3 --> Final
-    O1 --> Final
-    O2 --> Final
-
-    style Schedule fill:#e3f2fd
-```
+![Diagram showing how day and night rotations feed layered responders (primary, secondary, backup), and temporary overrides, all resolving into one final on-call schedule.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-2.png)
 
 ### Creating Schedule (API)
 
@@ -595,27 +476,7 @@ curl -X POST https://oncall.example.com/api/v1/schedules/<schedule-id>/overrides
 
 ### Escalation Chain Structure
 
-```mermaid
-graph TB
-    A[Alert Fired] --> B[Step 1: Current On-Call]
-
-    B --> C{Response<br/>within 15min?}
-    C -->|Yes| D[Alert Resolved]
-    C -->|No| E[Step 2: Secondary On-Call]
-
-    E --> F{Response<br/>within 15min?}
-    F -->|Yes| D
-    F -->|No| G[Step 3: Team Lead]
-
-    G --> H{Response<br/>within 15min?}
-    H -->|Yes| D
-    H -->|No| I[Step 4: Entire Team]
-
-    style B fill:#4caf50
-    style E fill:#ff9800
-    style G fill:#f44336
-    style I fill:#9c27b0
-```
+![Flowchart showing a four-step escalation chain: each step waits 15 minutes for a response before escalating to the next responder tier, from the current on-call through secondary, team lead, and finally the entire team, with any timely response resolving the alert.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png)
 
 ### Creating Escalation Chain
 
@@ -757,28 +618,7 @@ warning-chain:
 
 ### Route Settings
 
-```mermaid
-graph TB
-    A[Alert Received] --> B{Integration<br/>Type?}
-
-    B -->|Alertmanager| C{Labels?}
-    B -->|Grafana| D{Folder?}
-    B -->|CloudWatch| E{Namespace?}
-
-    C -->|severity=critical| F[Critical Chain]
-    C -->|team=infra| G[Infra Chain]
-    C -->|default| H[Default Chain]
-
-    D -->|Production| F
-    D -->|Staging| I[Low Priority Chain]
-
-    E -->|AWS/EKS| G
-    E -->|AWS/RDS| J[DBA Chain]
-
-    style F fill:#f44336,color:#ffffff
-    style G fill:#ff9800,color:#ffffff
-    style H fill:#4caf50,color:#ffffff
-```
+![Flowchart showing how routing decisions branch on the integration type — Alertmanager labels, Grafana folders, or CloudWatch namespaces — to select a critical, infra, default, low-priority, or DBA escalation chain.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-4.png)
 
 ### Creating Routes
 
@@ -876,32 +716,7 @@ curl -X POST https://oncall.example.com/api/v1/slack_channels/ \
 
 ### Slack Workflow
 
-```mermaid
-sequenceDiagram
-    participant A as Alert
-    participant O as OnCall
-    participant S as Slack
-    participant U as User
-
-    A->>O: Alert fired
-    O->>S: Send message to channel
-    S->>U: Display alert (with buttons)
-
-    alt Acknowledge
-        U->>S: Click "Acknowledge" button
-        S->>O: Acknowledge request
-        O->>O: Update status
-        O->>S: Update message
-    end
-
-    alt Resolve
-        U->>S: Click "Resolve" button
-        S->>O: Resolve request
-        O->>O: Update status
-        O->>S: Update message
-        O->>A: Resolution notification
-    end
-```
+![Sequence diagram of a Slack-based ChatOps workflow: an alert posts to a channel with action buttons, and a user's Acknowledge or Resolve click round-trips through Slack to update OnCall's alert status, with a resolve also notifying the alert source.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-5.png)
 
 ### MS Teams Integration
 
@@ -961,28 +776,7 @@ telegram:
 
 Grafana IRM (formerly Grafana Incident) is an incident management tool that integrates with OnCall to manage the entire workflow from alerts to incidents.
 
-```mermaid
-graph LR
-    subgraph OnCall["Grafana OnCall"]
-        A[Alert] --> B[Alert Group]
-        B --> C[Escalation]
-    end
-
-    subgraph IRM["Grafana IRM"]
-        D[Incident Created]
-        E[Investigation]
-        F[Resolution]
-        G[Post-mortem]
-    end
-
-    C -->|"High Severity"| D
-    D --> E
-    E --> F
-    F --> G
-
-    style OnCall fill:#ff5722
-    style IRM fill:#2196f3
-```
+![Architecture diagram showing an alert escalating within Grafana OnCall and, on high severity, handing off to Grafana IRM, which carries it through incident creation, investigation, resolution, and post-mortem.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-6.png)
 
 ### Automatic Incident Creation
 
@@ -1042,25 +836,7 @@ user-preferences:
 
 ### Notification Channel Priority
 
-```mermaid
-graph TB
-    A[Alert Fired] --> B{Importance?}
-
-    B -->|Important| C[All Channels]
-    B -->|Default| D[Default Channels Only]
-
-    C --> E[Push Notification]
-    C --> F[Phone Call]
-    C --> G[SMS]
-    C --> H[Slack]
-    C --> I[Email]
-
-    D --> H
-    D --> I
-
-    style C fill:#f44336
-    style D fill:#4caf50
-```
+![Flowchart showing that an important alert fans out to every notification channel — push, phone, SMS, Slack, and email — while a default-priority alert reaches only Slack and email.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png)
 
 ---
 
@@ -1084,37 +860,7 @@ graph TB
 
 ### Migration Considerations
 
-```mermaid
-graph TB
-    subgraph Current["Currently Using"]
-        P[PagerDuty/OpsGenie]
-    end
-
-    subgraph Consider["Consider Grafana OnCall When"]
-        A[Need Cost Reduction?]
-        B[Using Grafana Stack?]
-        C[Prefer Self-Hosting?]
-        D[Basic Features Sufficient?]
-    end
-
-    subgraph Decision["Decision"]
-        Y[Migrate to OnCall]
-        N[Keep Current]
-    end
-
-    P --> A
-    A -->|Yes| B
-    A -->|No| N
-    B -->|Yes| C
-    B -->|No| N
-    C -->|Yes| D
-    C -->|No| D
-    D -->|Yes| Y
-    D -->|No| N
-
-    style Y fill:#4caf50
-    style N fill:#ff9800
-```
+![Flowchart of the migration decision from PagerDuty or OpsGenie: cost reduction, Grafana Stack usage, self-hosting preference, and feature sufficiency each gate whether a team migrates to Grafana OnCall or keeps its current tool.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png)
 
 ### Migration Checklist
 

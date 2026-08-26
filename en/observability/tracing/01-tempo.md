@@ -22,55 +22,7 @@ Grafana Tempo is an open-source backend for large-scale distributed tracing. Tem
 
 Tempo consists of the following main components:
 
-```mermaid
-flowchart TD
-    subgraph Ingestion["Data Ingestion"]
-        APP[Applications]
-        OTEL[OTEL Collector]
-    end
-
-    subgraph Tempo["Tempo Cluster"]
-        DIST[Distributor]
-        ING[Ingester]
-        QUERY[Querier]
-        QFRONT[Query Frontend]
-        COMPACT[Compactor]
-        METRICS[Metrics Generator]
-    end
-
-    subgraph Storage["Storage"]
-        S3[(S3 / Object Storage)]
-        CACHE[(Memcached / Redis)]
-    end
-
-    subgraph Visualization["Visualization"]
-        GRAFANA[Grafana]
-    end
-
-    APP -->|OTLP/Jaeger/Zipkin| OTEL
-    OTEL -->|OTLP| DIST
-    DIST -->|Hash-based distribution| ING
-    ING -->|Block storage| S3
-    ING -->|Metric generation| METRICS
-    METRICS -->|RED metrics| GRAFANA
-
-    GRAFANA -->|TraceQL| QFRONT
-    QFRONT -->|Query splitting| QUERY
-    QUERY -->|Search| S3
-    QUERY -->|Cache| CACHE
-
-    COMPACT -->|Compaction/Optimization| S3
-
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef tempo fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class APP,OTEL app
-    class DIST,ING,QUERY,QFRONT,COMPACT,METRICS tempo
-    class S3,CACHE storage
-    class GRAFANA grafana
-```
+![Architecture diagram showing applications sending traces through an OTEL Collector into Tempo's distributor and ingester, which writes trace blocks to S3 and generates RED metrics for Grafana, which in turn queries back through the query frontend and querier that search S3 and read from a Memcached/Redis cache, while a separate compactor writes retention-managed blocks to the same S3 store.](../../.gitbook/assets/en-observability-tracing-01-tempo-0.png)
 
 ### Component Details
 

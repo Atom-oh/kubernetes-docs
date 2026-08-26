@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="prom-arch-title prom-arch-desc">
+      <title id="prom-arch-title">Prometheus 서버 아키텍처</title>
+      <desc id="prom-arch-desc">서비스 디스커버리와 대상으로부터 Retrieval이 메트릭을 스크랩해 TSDB에 저장하고, HTTP Server가 시각화 도구에 쿼리 API를 제공하며 Alert Rules가 Alertmanager를 거쳐 알림 채널로 전달되는 흐름을 보여준다.</desc>
+      <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="960" height="600" fill="#ffffff"/>
+
+      <!-- Zone: Prometheus Server -->
+      <rect x="300" y="40" width="280" height="400" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="392" y="44" width="96" height="12" rx="2" fill="#ffffff"/>
+      <text x="440" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PROMETHEUS SERVER</text>
+
+      <!-- Arrows (behind nodes) -->
+      <!-- SD -> R -->
+      <path d="M 200,324 H 268 Q 276,324 276,316 V 112 Q 276,104 284,104 H 332"
+            fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- R -> J1 (scrape) -->
+      <path d="M 332,88 H 284 Q 276,88 276,80 V 72 Q 276,64 268,64 H 200"
+            fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- J2 -> PG (push) -->
+      <path d="M 200,164 H 220" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <!-- R -> PG (scrape) -->
+      <path d="M 332,100 H 300 Q 292,100 292,108 V 176 Q 292,184 284,184 H 260"
+            fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <!-- R -> T -->
+      <line x1="440" y1="132" x2="440" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- T -> H -->
+      <line x1="440" y1="208" x2="440" y2="228" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- T -> A -->
+      <line x1="440" y1="264" x2="440" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- A -> AM (alerts, accent) -->
+      <path d="M 548,332 H 620 Q 628,332 628,324 V 116 Q 628,108 636,108 H 700"
+            fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <!-- AM -> Notify -->
+      <line x1="790" y1="132" x2="790" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- H -> Consumers -->
+      <path d="M 548,256 H 660 Q 668,256 668,264 V 300 Q 668,308 676,308 H 700"
+            fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Arrow labels -->
+      <rect x="257" y="248" width="38" height="12" rx="2" fill="#ffffff"/>
+      <text x="276" y="257" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DISCOVER</text>
+
+      <rect x="257" y="52" width="38" height="12" rx="2" fill="#ffffff"/>
+      <text x="276" y="61" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCRAPE</text>
+
+      <rect x="257" y="150" width="38" height="12" rx="2" fill="#ffffff"/>
+      <text x="276" y="159" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCRAPE</text>
+
+      <rect x="611" y="96" width="34" height="12" rx="2" fill="#ffffff"/>
+      <text x="628" y="105" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ALERTS</text>
+
+      <!-- Node: SD (외부, external) -->
+      <rect x="40" y="292" width="160" height="64" rx="6" fill="#ffffff"/>
+      <rect x="40" y="292" width="160" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="120" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">서비스 디스커버리</text>
+      <text x="120" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">K8s · DNS · File · Consul</text>
+
+      <!-- Node: J1 Jobs/Exporters (input) -->
+      <rect x="40" y="32" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="40" y="32" width="160" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+      <text x="120" y="56" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Jobs / Exporters</text>
+      <text x="120" y="72" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">/metrics endpoint</text>
+
+      <!-- Node: J2 Short-lived Jobs (input) -->
+      <rect x="40" y="136" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="40" y="136" width="160" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+      <text x="120" y="160" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Short-lived Jobs</text>
+      <text x="120" y="176" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">batch / cron</text>
+
+      <!-- Node: PG Pushgateway (optional/async) -->
+      <rect x="220" y="164" width="140" height="40" rx="6" fill="#ffffff"/>
+      <rect x="220" y="164" width="140" height="40" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="290" y="188" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pushgateway</text>
+
+      <!-- Node: R Retrieval (focal) -->
+      <rect x="332" y="76" width="216" height="56" rx="6" fill="#ffffff"/>
+      <rect x="332" y="76" width="216" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="440" y="100" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Retrieval</text>
+      <text x="440" y="116" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">메트릭 수집 (pull)</text>
+
+      <!-- Node: T TSDB (store) -->
+      <rect x="332" y="152" width="216" height="56" rx="6" fill="#ffffff"/>
+      <rect x="332" y="152" width="216" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+      <text x="440" y="176" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TSDB</text>
+      <text x="440" y="192" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">시계열 DB</text>
+
+      <!-- Node: H HTTP Server (backend) -->
+      <rect x="332" y="228" width="216" height="56" rx="6" fill="#ffffff"/>
+      <rect x="332" y="228" width="216" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="440" y="252" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">HTTP Server</text>
+      <text x="440" y="268" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">쿼리 API (PromQL)</text>
+
+      <!-- Node: A Alert Rules (backend) -->
+      <rect x="332" y="304" width="216" height="56" rx="6" fill="#ffffff"/>
+      <rect x="332" y="304" width="216" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="440" y="328" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Alert Rules</text>
+      <text x="440" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">알림 규칙 평가</text>
+
+      <!-- Node: AM Alertmanager (backend) -->
+      <rect x="700" y="76" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="700" y="76" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="780" y="100" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Alertmanager</text>
+      <text x="780" y="116" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">그룹핑 · 라우팅</text>
+
+      <!-- Node: Notify (external) -->
+      <rect x="700" y="176" width="180" height="56" rx="6" fill="#ffffff"/>
+      <rect x="700" y="176" width="180" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="790" y="200" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">알림 채널</text>
+      <text x="790" y="216" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Email · Slack · PagerDuty</text>
+
+      <!-- Node: Consumers (external) -->
+      <rect x="700" y="280" width="180" height="56" rx="6" fill="#ffffff"/>
+      <rect x="700" y="280" width="180" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="790" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">시각화 / API</text>
+      <text x="790" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Grafana · API · UI</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="40" y="520" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+      <line x1="150" y1="516" x2="180" y2="516" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="188" y="519" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">스크랩 / 내부 흐름</text>
+      <line x1="330" y1="516" x2="360" y2="516" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="368" y="519" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">푸시 / 선택적 경로</text>
+      <line x1="530" y1="516" x2="560" y2="516" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <text x="568" y="519" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">알림 트리거</text>
+    </svg>

@@ -57,65 +57,7 @@ OpenSearch는 2021년 AWS가 Elasticsearch 7.10을 포크하여 만든 오픈소
 
 ### OpenSearch 클러스터 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph Client["클라이언트"]
-        APP[애플리케이션]
-        FB[FluentBit]
-        KDF[Kinesis Data Firehose]
-    end
-
-    subgraph VPC["VPC"]
-        subgraph AZ1["AZ-a"]
-            MASTER1[Master Node]
-            DATA1[Data Node]
-            WARM1[UltraWarm Node]
-        end
-
-        subgraph AZ2["AZ-b"]
-            MASTER2[Master Node]
-            DATA2[Data Node]
-            WARM2[UltraWarm Node]
-        end
-
-        subgraph AZ3["AZ-c"]
-            MASTER3[Master Node]
-            DATA3[Data Node]
-        end
-    end
-
-    subgraph Storage["스토리지"]
-        EBS[(EBS)]
-        S3[(S3 - Cold Storage)]
-    end
-
-    APP --> DATA1
-    FB --> DATA1
-    KDF --> DATA2
-
-    MASTER1 <--> MASTER2
-    MASTER2 <--> MASTER3
-    MASTER1 <--> MASTER3
-
-    DATA1 <--> DATA2
-    DATA1 --> WARM1
-    DATA2 --> WARM2
-
-    DATA1 --> EBS
-    DATA2 --> EBS
-    WARM1 --> S3
-    WARM2 --> S3
-
-    classDef master fill:#FF6B6B,stroke:#333,color:white
-    classDef data fill:#4ECDC4,stroke:#333,color:white
-    classDef warm fill:#FFE66D,stroke:#333
-    classDef storage fill:#95E1D3,stroke:#333
-
-    class MASTER1,MASTER2,MASTER3 master
-    class DATA1,DATA2 data
-    class WARM1,WARM2 warm
-    class EBS,S3 storage
-```
+![애플리케이션, FluentBit, Kinesis Data Firehose가 VPC 내 Multi-AZ OpenSearch 클러스터의 Data Node로 로그를 전송하고, Master Node가 클러스터를 관리하며, Data Node가 UltraWarm을 거쳐 S3 Cold Storage로 데이터를 이동시키는 구조를 보여준다.](../../.gitbook/assets/ko-observability-logging-02-opensearch-0.png)
 
 ### 노드 유형
 
@@ -130,27 +72,7 @@ flowchart TB
 
 ### 데이터 흐름
 
-```mermaid
-sequenceDiagram
-    participant App as 애플리케이션
-    participant FB as FluentBit
-    participant OS as OpenSearch
-    participant EBS as EBS Storage
-    participant UW as UltraWarm
-    participant S3 as Cold Storage
-
-    App->>FB: 로그 전송
-    FB->>OS: Bulk API 호출
-    OS->>EBS: 인덱싱 (Hot)
-
-    Note over OS,EBS: 7일 후
-
-    OS->>UW: ISM 정책에 의해<br/>UltraWarm으로 이동
-
-    Note over UW,S3: 30일 후
-
-    UW->>S3: Cold 스토리지로<br/>이동
-```
+![애플리케이션의 로그가 FluentBit의 Bulk API 호출로 OpenSearch에 색인되고, 7일 후 ISM 정책에 따라 UltraWarm으로, 30일 후 다시 S3 Cold Storage로 자동 이동하는 라이프사이클을 보여준다.](../../.gitbook/assets/ko-observability-logging-02-opensearch-1.png)
 
 ---
 

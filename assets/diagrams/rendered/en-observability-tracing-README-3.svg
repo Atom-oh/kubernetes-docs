@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="tree-title tree-desc">
+    <title id="tree-title">Spans form a parent-child tree</title>
+    <desc id="tree-desc">Tree diagram showing a root span at the API gateway with two child spans for auth and order service, where the order service span itself has two grandchild spans for payment and inventory service.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- connectors: ROOT -> bus -> CHILD1, CHILD2 -->
+    <line x1="480" y1="164" x2="480" y2="184" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="240" y1="184" x2="700" y2="184" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="240" y1="184" x2="240" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="700" y1="184" x2="700" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- CHILD2 -> bus2 -> GRANDCHILD1, GRANDCHILD2 -->
+    <line x1="700" y1="264" x2="700" y2="284" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="580" y1="284" x2="820" y2="284" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="580" y1="284" x2="580" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="820" y1="284" x2="820" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ROOT (focal) -->
+    <rect x="380" y="100" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="122" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Root Span · API Gateway</text>
+    <text x="480" y="138" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">TraceID: abc123</text>
+    <text x="480" y="152" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">SpanID: span001</text>
+
+    <!-- CHILD1: Auth Service -->
+    <rect x="140" y="200" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="222" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Child Span · Auth Service</text>
+    <text x="240" y="238" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">SpanID: span002</text>
+    <text x="240" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Parent: span001</text>
+
+    <!-- CHILD2: Order Service -->
+    <rect x="600" y="200" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="222" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Child Span · Order Service</text>
+    <text x="700" y="238" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">SpanID: span003</text>
+    <text x="700" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Parent: span001</text>
+
+    <!-- GRANDCHILD1: Payment Service -->
+    <rect x="480" y="300" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="0.8"/>
+    <text x="580" y="322" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grandchild · Payment Svc</text>
+    <text x="580" y="338" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">SpanID: span004</text>
+    <text x="580" y="352" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Parent: span003</text>
+
+    <!-- GRANDCHILD2: Inventory Service -->
+    <rect x="720" y="300" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="0.8"/>
+    <text x="820" y="322" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grandchild · Inventory Svc</text>
+    <text x="820" y="338" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">SpanID: span005</text>
+    <text x="820" y="352" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Parent: span003</text>
+
+    <!-- legend -->
+    <line x1="30" y1="440" x2="930" y2="440" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <text x="30" y="456" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.16em">LEGEND</text>
+    <rect x="180" y="448" width="20" height="12" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="208" y="458" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Root span (trace entry point)</text>
+  </svg>

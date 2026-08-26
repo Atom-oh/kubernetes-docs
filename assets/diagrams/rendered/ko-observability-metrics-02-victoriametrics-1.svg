@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vmdecide-title vmdecide-desc">
+    <title id="vmdecide-title">VictoriaMetrics 배포 모드 선택 흐름도</title>
+    <desc id="vmdecide-desc">일일 수집량이 많으면 곧바로 클러스터 모드로, 적더라도 고가용성과 복잡성 감수 여부에 따라 결국 vmsingle 단일 노드, 복제 스토리지를 더한 vmsingle, 또는 클러스터 모드 중 하나로 귀결되는 의사결정 흐름.</desc>
+    <defs>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      </style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="640" fill="#ffffff"/>
+
+    <!-- ===== Arrows (drawn before boxes) ===== -->
+
+    <!-- A -> B : straight vertical -->
+    <path d="M480,64 V96" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- B(bottom vertex 480,184) -> C(top 264,236) : S-elbow -->
+    <path d="M480,184 V206 Q480,214 472,214 H272 Q264,214 264,222 V236"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="336" y="196" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="380" y="205" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">&lt; 100M 샘플/일</text>
+
+    <!-- B(right vertex 552,140) -> D(top 760,252) : single bend -->
+    <path d="M552,140 H752 Q760,140 760,148 V252"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="600" y="120" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="644" y="129" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">&gt; 100M 샘플/일</text>
+
+    <!-- C(bottom vertex 264,324) -> E(top 140,392) : S-elbow -->
+    <path d="M264,324 V354 Q264,362 256,362 H148 Q140,362 140,370 V392"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="176" y="352" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="194" y="361" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">아니오</text>
+
+    <!-- C(right vertex 336,280) -> F(top 420,376) : single bend -->
+    <path d="M336,280 H412 Q420,280 420,288 V376"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="352" y="260" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="364" y="269" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">예</text>
+
+    <!-- F(right vertex 492,420) -> D(bottom 760,308) : single bend, going up -->
+    <path d="M492,420 H752 Q760,420 760,412 V308"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="596" y="400" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="608" y="409" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">예</text>
+
+    <!-- F(bottom vertex 420,464) -> G(top 420,512) : straight vertical -->
+    <path d="M420,464 V512" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="424" y="472" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="442" y="481" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">아니오</text>
+
+    <!-- ===== Nodes ===== -->
+
+    <!-- A: start oval -->
+    <rect x="400" y="16" width="160" height="48" rx="20" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="36" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VictoriaMetrics</text>
+    <text x="480" y="50" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">배포 모드 선택</text>
+
+    <!-- B: diamond decision -->
+    <polygon points="480,96 552,140 480,184 408,140" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">일일 수집량?</text>
+    <text x="480" y="150" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">samples / day</text>
+
+    <!-- C: diamond decision -->
+    <polygon points="264,236 336,280 264,324 192,280" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="264" y="276" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">고가용성</text>
+    <text x="264" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">필요?</text>
+
+    <!-- D: solution rect (focal) -->
+    <rect x="664" y="252" width="192" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="760" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클러스터 모드</text>
+    <text x="760" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">vminsert / vmstorage / vmselect</text>
+
+    <!-- E: solution rect -->
+    <rect x="44" y="392" width="192" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="140" y="418" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vmsingle</text>
+    <text x="140" y="434" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">단일 노드</text>
+
+    <!-- F: diamond decision -->
+    <polygon points="420,376 492,420 420,464 348,420" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="420" y="416" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">복잡성</text>
+    <text x="420" y="432" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">감수?</text>
+
+    <!-- G: solution rect -->
+    <rect x="316" y="512" width="208" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="420" y="538" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vmsingle + 복제 스토리지</text>
+    <text x="420" y="554" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">replicated storage</text>
+
+    <!-- Legend -->
+    <line x1="32" y1="600" x2="928" y2="600" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="32" y="616" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="132" y="600" width="20" height="16" rx="20" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="164" y="612" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">시작</text>
+    <polygon points="252,600 268,608 252,616 236,608" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="284" y="612" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">결정</text>
+    <rect x="372" y="600" width="20" height="16" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="404" y="612" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">권장 결론(대규모)</text>
+  </svg>

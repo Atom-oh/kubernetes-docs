@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 296" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-observability-logging-05-collectors-3-title ko-observability-logging-05-collectors-3-desc">
+<title id="ko-observability-logging-05-collectors-3-title">OpenTelemetry Collector 파이프라인 단계</title>
+<desc id="ko-observability-logging-05-collectors-3-desc">OTel Collector가 여러 리시버로 수집한 로그를 프로세서 단계에서 가공한 뒤 익스포터로 내보내는 구조를 보여준다.</desc>
+<defs>
+<style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");
+text { font-synthesis: none; }</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+<rect x="40" y="60" width="274.6666666666667" height="176" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="52" y="54" width="70" height="12" rx="2" fill="#FFFFFF"/>
+<text x="87.0" y="63" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">Receivers</text>
+<rect x="342.6666666666667" y="60" width="274.6666666666667" height="176" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="354.6666666666667" y="54" width="76" height="12" rx="2" fill="#FFFFFF"/>
+<text x="392.6666666666667" y="63" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">Processors</text>
+<rect x="645.3333333333334" y="60" width="274.6666666666667" height="176" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="657.3333333333334" y="54" width="70" height="12" rx="2" fill="#FFFFFF"/>
+<text x="692.3333333333334" y="63" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">Exporters</text>
+<path d="M 314.6666666666667,148.0 H 342.6666666666667" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M 617.3333333333334,148.0 H 645.3333333333334" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="50" y="106.0" width="254.66666666666669" height="20" rx="4" fill="#FFFFFF" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="177.33333333333334" y="119.0" fill="#232F3E" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">otlp</text>
+<rect x="50" y="134.0" width="254.66666666666669" height="20" rx="4" fill="#FFFFFF" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="177.33333333333334" y="147.0" fill="#232F3E" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">filelog</text>
+<rect x="50" y="162.0" width="254.66666666666669" height="20" rx="4" fill="#FFFFFF" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="177.33333333333334" y="175.0" fill="#232F3E" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">k8sevents</text>
+<rect x="50" y="190.0" width="254.66666666666669" height="20" rx="4" fill="#FFFFFF" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="177.33333333333334" y="203.0" fill="#232F3E" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">syslog</text>
+<rect x="352.6666666666667" y="92.0" width="254.66666666666669" height="20" rx="4" fill="rgba(255,153,0,0.08)" stroke="#EC7211" stroke-width="0.8"/>
+<text x="480.0" y="105.0" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">batch</text>
+<rect x="352.6666666666667" y="120.0" width="254.66666666666669" height="20" rx="4" fill="rgba(255,153,0,0.08)" stroke="#EC7211" stroke-width="0.8"/>
+<text x="480.0" y="133.0" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">memory_limiter</text>
+<rect x="352.6666666666667" y="148.0" width="254.66666666666669" height="20" rx="4" fill="rgba(255,153,0,0.08)" stroke="#EC7211" stroke-width="0.8"/>
+<text x="480.0" y="161.0" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">k8sattributes</text>
+<rect x="352.6666666666667" y="176.0" width="254.66666666666669" height="20" rx="4" fill="rgba(255,153,0,0.08)" stroke="#EC7211" stroke-width="0.8"/>
+<text x="480.0" y="189.0" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">filter</text>
+<rect x="352.6666666666667" y="204.0" width="254.66666666666669" height="20" rx="4" fill="rgba(255,153,0,0.08)" stroke="#EC7211" stroke-width="0.8"/>
+<text x="480.0" y="217.0" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">transform</text>
+<rect x="655.3333333333334" y="120.0" width="254.66666666666669" height="20" rx="4" fill="#FFFFFF" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="782.6666666666667" y="133.0" fill="#232F3E" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">loki</text>
+<rect x="655.3333333333334" y="148.0" width="254.66666666666669" height="20" rx="4" fill="#FFFFFF" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="782.6666666666667" y="161.0" fill="#232F3E" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">otlphttp</text>
+<rect x="655.3333333333334" y="176.0" width="254.66666666666669" height="20" rx="4" fill="#FFFFFF" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="782.6666666666667" y="189.0" fill="#232F3E" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">debug</text>
+<line x1="40" y1="268" x2="920" y2="268" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="40" y="270" width="14" height="14" rx="3" fill="rgba(255,153,0,0.08)" stroke="#EC7211" stroke-width="1"/>
+<text x="62" y="281" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">핵심 단계: Processors (배치 · 메모리 제한 · k8s 속성 · 필터 · 변환)</text>
+</svg>

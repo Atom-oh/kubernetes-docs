@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="oncall-flow-title oncall-flow-desc">
+    <title id="oncall-flow-title">알림 처리 흐름</title>
+    <desc id="oncall-flow-desc">알림 소스가 보낸 알림이 라우팅과 에스컬레이션 체인을 거쳐 온콜 담당자에게 전달되고, 응답이 없으면 다음 담당자로 에스컬레이션된 뒤 확인 처리되는 과정을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Actors -->
+    <!-- S=Alert Source cx=90, O=OnCall cx=250, R=Route cx=400, E=Escalation Chain cx=560, SC=Schedule cx=720, N=Notification cx=870 -->
+    <g font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">
+      <rect x="30" y="24" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="90" y="48" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Alert Source</text>
+
+      <rect x="190" y="24" width="120" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="250" y="48" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">OnCall</text>
+
+      <rect x="352" y="24" width="96" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="400" y="48" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Route</text>
+
+      <rect x="490" y="24" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="560" y="48" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Escalation Chain</text>
+
+      <rect x="664" y="24" width="112" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="720" y="48" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Schedule</text>
+
+      <rect x="810" y="24" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="870" y="48" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Notification</text>
+    </g>
+
+    <!-- Lifelines -->
+    <g stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3">
+      <line x1="90" y1="64" x2="90" y2="560"/>
+      <line x1="250" y1="64" x2="250" y2="560"/>
+      <line x1="400" y1="64" x2="400" y2="560"/>
+      <line x1="560" y1="64" x2="560" y2="560"/>
+      <line x1="720" y1="64" x2="720" y2="560"/>
+      <line x1="870" y1="64" x2="870" y2="560"/>
+    </g>
+
+    <!-- Messages -->
+    <!-- 1. S->O 알림 수신 -->
+    <line x1="90" y1="92" x2="250" y2="92" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="140" y="72" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="172" y="82" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">알림 수신</text>
+
+    <!-- 2. O self 알림 그룹화 -->
+    <path d="M 250,116 H 290 V 128 H 250" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="296" y="112" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="332" y="122" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">알림 그룹화</text>
+
+    <!-- 3. O->R 라우팅 규칙 평가 -->
+    <line x1="250" y1="152" x2="400" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="270" y="132" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="326" y="142" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">라우팅 규칙 평가</text>
+
+    <!-- 4. R->E 에스컬레이션 체인 선택 -->
+    <line x1="400" y1="180" x2="560" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="416" y="160" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="170" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">에스컬레이션 체인 선택</text>
+
+    <!-- 5. E->SC 현재 온콜 담당자 조회 -->
+    <line x1="560" y1="208" x2="720" y2="208" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="576" y="188" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="640" y="198" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">담당자 조회</text>
+
+    <!-- 6. SC-->E 담당자 정보 (dashed return) -->
+    <line x1="720" y1="236" x2="560" y2="236" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="596" y="216" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="640" y="226" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">담당자 정보</text>
+
+    <!-- 7. E->N 알림 전송 (headline) -->
+    <line x1="560" y1="264" x2="870" y2="264" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="690" y="244" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="716" y="254" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">알림 전송</text>
+
+    <!-- OPT fragment: 응답 없음 -->
+    <rect x="524" y="292" width="382" height="164" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <rect x="524" y="292" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <text x="544" y="304" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">OPT</text>
+    <text x="572" y="304" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">[응답 없음]</text>
+
+    <!-- note: 대기 시간 경과 (no arrow — passage of time, not a message) -->
+    <text x="576" y="338" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" font-style="italic" letter-spacing="0.02em">대기 시간 경과…</text>
+
+    <!-- E->SC 다음 담당자 조회 -->
+    <line x1="560" y1="368" x2="720" y2="368" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="576" y="348" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="640" y="358" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">다음 담당자 조회</text>
+
+    <!-- SC-->E 다음 담당자 dashed return -->
+    <line x1="720" y1="396" x2="560" y2="396" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="600" y="376" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="640" y="386" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">다음 담당자</text>
+
+    <!-- E->N 에스컬레이션 알림 -->
+    <line x1="560" y1="440" x2="870" y2="440" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="654" y="420" width="124" height="12" rx="2" fill="#ffffff"/>
+    <text x="716" y="430" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">에스컬레이션 알림</text>
+
+    <!-- N->O 담당자 확인 -->
+    <line x1="870" y1="492" x2="250" y2="492" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="500" y="472" width="168" height="12" rx="2" fill="#ffffff"/>
+    <text x="584" y="482" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">담당자 확인(Acknowledge)</text>
+
+    <!-- O->S 상태 업데이트 -->
+    <line x1="250" y1="524" x2="90" y2="524" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="112" y="504" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="156" y="514" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">상태 업데이트</text>
+
+  </svg>

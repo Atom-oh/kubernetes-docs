@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-observability-alerting-readme-1-title en-observability-alerting-readme-1-desc">
+<title id="en-observability-alerting-readme-1-title">Alert lifecycle state machine</title>
+<desc id="en-observability-alerting-readme-1-desc">State machine showing an alert moving from inactive through pending, firing, notification, and acknowledgment to resolution, with early-return paths back to inactive.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<circle cx="44" cy="176.0" r="6" fill="#232F3E"/>
+<path d="M 50,176.0 H 88" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="96" y="148" width="124" height="56" rx="8" fill="#ffffff"/><rect x="96" y="148" width="124" height="56" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/><text x="158.0" y="180.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Inactive</text>
+<rect x="268" y="148" width="124" height="56" rx="8" fill="#ffffff"/><rect x="268" y="148" width="124" height="56" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/><text x="330.0" y="180.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pending</text>
+<rect x="440" y="148" width="124" height="56" rx="8" fill="#ffffff"/><rect x="440" y="148" width="124" height="56" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/><text x="502.0" y="180.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Firing</text>
+<rect x="612" y="148" width="132" height="56" rx="8" fill="#ffffff"/><rect x="612" y="148" width="132" height="56" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/><text x="678.0" y="180.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Notified</text>
+<rect x="96" y="348" width="148" height="56" rx="8" fill="#ffffff"/><rect x="96" y="348" width="148" height="56" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/><text x="170.0" y="380.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Acknowledged</text>
+<rect x="284" y="348" width="132" height="56" rx="8" fill="#ffffff"/><rect x="284" y="348" width="132" height="56" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/><text x="350.0" y="380.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">InProgress</text>
+<rect x="456" y="348" width="124" height="56" rx="8" fill="#ffffff"/><rect x="456" y="348" width="124" height="56" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/><text x="518.0" y="380.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Resolved</text>
+<circle cx="620" cy="376.0" r="8" fill="none" stroke="#232F3E" stroke-width="1.2"/>
+<circle cx="620" cy="376.0" r="5" fill="#232F3E"/>
+<path d="M 220,176.0 H 260" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="191" y="150.0" width="106" height="12" rx="2" fill="#ffffff"/><text x="244.0" y="159.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">THRESHOLD EXCEEDED</text>
+<path d="M 392,176.0 H 432" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="378" y="150.0" width="76" height="12" rx="2" fill="#ffffff"/><text x="416.0" y="159.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">WAIT ELAPSED</text>
+<path d="M 564,176.0 H 604" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="555" y="150.0" width="66" height="12" rx="2" fill="#ffffff"/><text x="588.0" y="159.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ALERT SENT</text>
+<path d="M 678.0,204 V 268 Q 678.0,276 670.0,276 H 178.0 Q 170.0,276 170.0,284 V 348" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="603" y="254" width="150" height="12" rx="2" fill="#ffffff"/><text x="678.0" y="263" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">RESPONDER CONFIRMED</text>
+<path d="M 244,376.0 H 276" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="211" y="350.0" width="106" height="12" rx="2" fill="#ffffff"/><text x="264.0" y="359.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ACTION IN PROGRESS</text>
+<path d="M 416,376.0 H 448" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="393" y="350.0" width="86" height="12" rx="2" fill="#ffffff"/><text x="436.0" y="359.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">PROBLEM SOLVED</text>
+<path d="M 580,376.0 H 604" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="580" y="350.0" width="31" height="12" rx="2" fill="#ffffff"/><text x="596.0" y="359.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">END</text>
+<path d="M 330.0,148 C 330.0,96 178.66666666666669,96 178.66666666666669,148" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="164" y="92" width="180" height="12" rx="2" fill="#ffffff"/><text x="254.33333333333334" y="101" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">RETURNS WITHIN THRESHOLD</text>
+<path d="M 502.0,148 C 502.0,60 137.33333333333334,60 137.33333333333334,148" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="265" y="56" width="110" height="12" rx="2" fill="#ffffff"/><text x="319.6666666666667" y="65" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">AUTO-RESOLVED</text>
+<text x="330.0" y="220" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">HELD FOR &quot;for:&quot; DURATION</text>
+<text x="502.0" y="220" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">WAITING ON RECEIVERS</text>
+</svg>

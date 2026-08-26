@@ -30,64 +30,7 @@ Amazon CloudWatch Logs is a fully managed log monitoring service from AWS. It na
 
 ### Key Concepts
 
-```mermaid
-flowchart TB
-    subgraph Sources["Log Sources"]
-        EKS[EKS Cluster]
-        APP[Application]
-        LAMBDA[Lambda]
-    end
-
-    subgraph CWL["CloudWatch Logs"]
-        LG[Log Group<br/>/aws/eks/cluster/logs]
-        LS1[Log Stream 1]
-        LS2[Log Stream 2]
-        LS3[Log Stream 3]
-    end
-
-    subgraph Features["Features"]
-        INSIGHTS[Logs Insights]
-        METRIC[Metric Filters]
-        SUB[Subscription Filters]
-        ALARM[CloudWatch Alarms]
-    end
-
-    subgraph Destinations["Destinations"]
-        S3[(S3)]
-        KDF[Kinesis Data Firehose]
-        LAMBDA2[Lambda]
-        OS[OpenSearch]
-    end
-
-    EKS --> LG
-    APP --> LG
-    LAMBDA --> LG
-
-    LG --> LS1
-    LG --> LS2
-    LG --> LS3
-
-    LG --> INSIGHTS
-    LG --> METRIC
-    LG --> SUB
-
-    METRIC --> ALARM
-
-    SUB --> S3
-    SUB --> KDF
-    SUB --> LAMBDA2
-    KDF --> OS
-
-    classDef source fill:#4CAF50,stroke:#333,color:white
-    classDef cwl fill:#FF9800,stroke:#333,color:white
-    classDef feature fill:#2196F3,stroke:#333,color:white
-    classDef dest fill:#9C27B0,stroke:#333,color:white
-
-    class EKS,APP,LAMBDA source
-    class LG,LS1,LS2,LS3 cwl
-    class INSIGHTS,METRIC,SUB,ALARM feature
-    class S3,KDF,LAMBDA2,OS dest
-```
+![Diagram showing EKS, application, and Lambda log sources writing into a central CloudWatch Log Group that organizes log streams and feeds three features—Logs Insights, Metric Filters, and Subscription Filters—where Metric Filters trigger CloudWatch Alarms and Subscription Filters fan out to S3, Kinesis Data Firehose, and Lambda, with Firehose loading into OpenSearch.](../../.gitbook/assets/en-observability-logging-03-cloudwatch-logs-0.png)
 
 ### Terminology
 

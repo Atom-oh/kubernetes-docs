@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="state2-title state2-desc">
+    <title id="state2-title">알림 상태 전환</title>
+    <desc id="state2-desc">알림이 Inactive 상태에서 expr 조건이 충족되면 Pending으로, for 기간이 지나면 Firing으로 전환되고, 조건이 사라지면 다시 Inactive로 돌아가는 상태 다이어그램입니다.</desc>
+    <defs><style>@import url(https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Transitions (behind boxes) -->
+    <!-- start -> Inactive -->
+    <line x1="88" y1="300" x2="180" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Inactive -> Pending -->
+    <line x1="320" y1="300" x2="420" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Pending -> Firing -->
+    <line x1="560" y1="300" x2="660" y2="300" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- Firing -> Inactive (curved, above) -->
+    <path d="M 700,260 C 700,144 320,144 250,260" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Pending -> Inactive (curved, below) -->
+    <path d="M 460,340 C 460,432 320,432 250,340" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- start dot -->
+    <circle cx="80" cy="300" r="6" fill="#232F3E"/>
+
+    <!-- State: Inactive -->
+    <rect x="180" y="260" width="140" height="80" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="250" y="304" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Inactive</text>
+
+    <!-- State: Pending -->
+    <rect x="420" y="260" width="140" height="80" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="490" y="304" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pending</text>
+
+    <!-- State: Firing (focal) -->
+    <rect x="660" y="260" width="140" height="80" rx="8" fill="#FFF8F0" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="730" y="304" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Firing</text>
+
+    <!-- Transition labels -->
+    <rect x="92" y="284" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="132" y="293" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">조건 미충족</text>
+
+    <rect x="332" y="284" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="380" y="293" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">expr 조건 충족</text>
+
+    <rect x="568" y="284" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="612" y="293" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">for 기간 경과</text>
+
+    <rect x="436" y="128" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="476" y="137" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">조건 미충족</text>
+
+    <rect x="316" y="404" width="160" height="12" rx="2" fill="#ffffff"/>
+    <text x="396" y="413" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">for 기간 내 조건 미충족</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <circle cx="52" cy="500" r="6" fill="#232F3E"/>
+    <text x="64" y="503" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.08em">시작</text>
+    <line x1="180" y1="500" x2="208" y2="500" stroke="#EC7211" stroke-width="1.4"/>
+    <text x="216" y="503" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.08em">Alertmanager로 전송됨</text>
+    <line x1="440" y1="500" x2="468" y2="500" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="476" y="503" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.08em">기간 내 해소</text>
+  </svg>

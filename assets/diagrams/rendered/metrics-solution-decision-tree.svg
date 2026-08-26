@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="selection-title selection-desc">
+  <title id="selection-title">Metrics solution selection decision tree</title>
+  <desc id="selection-desc">Decision tree for picking a metrics stack: starting from team size and operational capability, it branches on AWS environment for small teams, cost priority for medium teams, and multi-cloud need for large/expert teams, ending at CloudWatch, Datadog, VictoriaMetrics, Amazon Managed Prometheus, or an AMP + Grafana managed setup.</desc>
+  <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Arrows (drawn before boxes) -->
+  <!-- A -> B -->
+  <line x1="480" y1="80" x2="480" y2="116" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+  <!-- B -> C (Small/Limited) -->
+  <path d="M 456,192 V 236 Q 456,244 448,244 H 188 Q 180,244 180,252 V 296" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- B -> D (Medium) -->
+  <line x1="480" y1="204" x2="480" y2="296" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- B -> E (Large/Expert) -->
+  <path d="M 504,192 V 236 Q 504,244 512,244 H 772 Q 780,244 780,252 V 296" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <rect x="273" y="224" width="90" height="12" rx="2" fill="#ffffff"/>
+  <text x="318" y="233" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.03em">SMALL/LIMITED</text>
+  <rect x="452" y="244" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="253" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MEDIUM</text>
+  <rect x="597" y="224" width="90" height="12" rx="2" fill="#ffffff"/>
+  <text x="642" y="233" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.03em">LARGE/EXPERT</text>
+
+  <!-- C -> F (Yes), C -> G (No) -->
+  <path d="M 152,372 V 408 Q 152,416 144,416 H 116 Q 108,416 108,424 V 460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 208,372 V 408 Q 208,416 216,416 H 244 Q 252,416 252,424 V 460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="117" y="396" width="26" height="12" rx="2" fill="#ffffff"/>
+  <text x="130" y="405" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+  <rect x="217" y="396" width="26" height="12" rx="2" fill="#ffffff"/>
+  <text x="230" y="405" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+  <!-- D -> H (Yes), D -> I (No) -->
+  <path d="M 452,372 V 408 Q 452,416 444,416 H 416 Q 408,416 408,424 V 460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 508,372 V 408 Q 508,416 516,416 H 544 Q 552,416 552,424 V 460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="417" y="396" width="26" height="12" rx="2" fill="#ffffff"/>
+  <text x="430" y="405" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+  <rect x="517" y="396" width="26" height="12" rx="2" fill="#ffffff"/>
+  <text x="530" y="405" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+  <!-- E -> J (Yes), E -> K (No) -->
+  <path d="M 752,372 V 408 Q 752,416 744,416 H 716 Q 708,416 708,424 V 460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 808,372 V 408 Q 808,416 816,416 H 844 Q 852,416 852,424 V 460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="717" y="396" width="26" height="12" rx="2" fill="#ffffff"/>
+  <text x="730" y="405" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+  <rect x="817" y="396" width="26" height="12" rx="2" fill="#ffffff"/>
+  <text x="830" y="405" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+  <!-- Node: A start (oval) -->
+  <rect x="340" y="32" width="280" height="48" rx="24" fill="#ffffff"/>
+  <rect x="340" y="32" width="280" height="48" rx="24" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="480" y="60" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Metrics Solution Selection</text>
+
+  <!-- Node: B decision (focal) -->
+  <polygon points="480,116 568,160 480,204 392,160" fill="#ffffff"/>
+  <polygon points="480,116 568,160 480,204 392,160" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="154" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Team size &amp;</text>
+  <text x="480" y="168" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">operational capability?</text>
+
+  <!-- Node: C decision -->
+  <polygon points="180,296 268,340 180,384 92,340" fill="#ffffff"/>
+  <polygon points="180,296 268,340 180,384 92,340" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="180" y="336" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS</text>
+  <text x="180" y="350" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">environment?</text>
+
+  <!-- Node: D decision -->
+  <polygon points="480,296 568,340 480,384 392,340" fill="#ffffff"/>
+  <polygon points="480,296 568,340 480,384 392,340" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="336" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cost</text>
+  <text x="480" y="350" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">priority?</text>
+
+  <!-- Node: E decision -->
+  <polygon points="780,296 868,340 780,384 692,340" fill="#ffffff"/>
+  <polygon points="780,296 868,340 780,384 692,340" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="780" y="344" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Multi-cloud?</text>
+
+  <!-- Node: F outcome -->
+  <rect x="48" y="460" width="120" height="64" rx="6" fill="#ffffff"/>
+  <rect x="48" y="460" width="120" height="64" rx="6" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+  <text x="108" y="486" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudWatch</text>
+  <text x="108" y="500" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Container Insights</text>
+
+  <!-- Node: G outcome -->
+  <rect x="192" y="460" width="120" height="64" rx="6" fill="#ffffff"/>
+  <rect x="192" y="460" width="120" height="64" rx="6" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+  <text x="252" y="496" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Datadog</text>
+
+  <!-- Node: H outcome -->
+  <rect x="348" y="460" width="120" height="64" rx="6" fill="#ffffff"/>
+  <rect x="348" y="460" width="120" height="64" rx="6" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+  <text x="408" y="496" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VictoriaMetrics</text>
+
+  <!-- Node: I outcome -->
+  <rect x="492" y="460" width="120" height="64" rx="6" fill="#ffffff"/>
+  <rect x="492" y="460" width="120" height="64" rx="6" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+  <text x="552" y="486" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Amazon Managed</text>
+  <text x="552" y="500" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus</text>
+
+  <!-- Node: J outcome -->
+  <rect x="648" y="460" width="120" height="64" rx="6" fill="#ffffff"/>
+  <rect x="648" y="460" width="120" height="64" rx="6" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+  <text x="708" y="486" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VictoriaMetrics</text>
+  <text x="708" y="500" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">or Mimir</text>
+
+  <!-- Node: K outcome -->
+  <rect x="792" y="460" width="120" height="64" rx="6" fill="#ffffff"/>
+  <rect x="792" y="460" width="120" height="64" rx="6" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+  <text x="852" y="486" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AMP + Grafana</text>
+  <text x="852" y="500" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Managed Service</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="548" x2="920" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <polygon points="47,558 57,564 47,570 37,564" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="66" y="568" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Key decision (focal)</text>
+
+  <polygon points="223,558 233,564 223,570 213,564" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="242" y="568" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Decision</text>
+
+  <rect x="352" y="558" width="16" height="12" rx="3" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+  <text x="378" y="568" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Outcome</text>
+
+  <rect x="460" y="558" width="22" height="12" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="492" y="568" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Start</text>
+</svg>

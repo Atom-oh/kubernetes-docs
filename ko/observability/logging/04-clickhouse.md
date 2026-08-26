@@ -64,102 +64,11 @@ ClickHouse는 OLAP(Online Analytical Processing) 워크로드에 최적화된 �
 
 ### ClickHouse 클러스터 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph Collectors["수집기"]
-        FB[FluentBit]
-        VECTOR[Vector]
-        OTEL[OTEL Collector]
-    end
-
-    subgraph Kafka["메시지 큐 (선택)"]
-        KAFKA_TOPIC[Kafka Topic]
-    end
-
-    subgraph ClickHouse["ClickHouse 클러스터"]
-        subgraph Shard1["Shard 1"]
-            R1_1[Replica 1]
-            R1_2[Replica 2]
-        end
-        subgraph Shard2["Shard 2"]
-            R2_1[Replica 1]
-            R2_2[Replica 2]
-        end
-        subgraph Shard3["Shard 3"]
-            R3_1[Replica 1]
-            R3_2[Replica 2]
-        end
-        ZK[ZooKeeper/ClickHouse Keeper]
-    end
-
-    subgraph Storage["스토리지"]
-        S3[(S3 - Cold Data)]
-        EBS[(EBS - Hot Data)]
-    end
-
-    subgraph Visualization["시각화"]
-        GRAFANA[Grafana]
-        SUPERSET[Apache Superset]
-    end
-
-    FB --> KAFKA_TOPIC
-    VECTOR --> KAFKA_TOPIC
-    OTEL --> KAFKA_TOPIC
-
-    KAFKA_TOPIC --> R1_1
-    KAFKA_TOPIC --> R2_1
-    KAFKA_TOPIC --> R3_1
-
-    R1_1 <--> R1_2
-    R2_1 <--> R2_2
-    R3_1 <--> R3_2
-
-    ZK --> Shard1
-    ZK --> Shard2
-    ZK --> Shard3
-
-    R1_1 --> EBS
-    R2_1 --> EBS
-    R3_1 --> EBS
-
-    EBS --> S3
-
-    GRAFANA --> R1_1
-    GRAFANA --> R2_1
-    SUPERSET --> R3_1
-
-    classDef collector fill:#4CAF50,stroke:#333,color:white
-    classDef queue fill:#FF9800,stroke:#333,color:white
-    classDef ch fill:#FFEB3B,stroke:#333
-    classDef storage fill:#2196F3,stroke:#333,color:white
-    classDef viz fill:#9C27B0,stroke:#333,color:white
-
-    class FB,VECTOR,OTEL collector
-    class KAFKA_TOPIC queue
-    class R1_1,R1_2,R2_1,R2_2,R3_1,R3_2,ZK ch
-    class S3,EBS storage
-    class GRAFANA,SUPERSET viz
-```
+![수집기가 Kafka를 거쳐 3개 샤드(각 2개 레플리카)로 구성된 ClickHouse 클러스터에 로그를 적재하고, ZooKeeper/Keeper가 샤드 간 복제를 조정하며, 데이터가 EBS(Hot)에서 S3(Cold)로 이동하고 Grafana/Superset이 클러스터를 조회하는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-logging-04-clickhouse-0.png)
 
 ### 데이터 흐름
 
-```mermaid
-sequenceDiagram
-    participant App as 애플리케이션
-    participant FB as FluentBit
-    participant Kafka as Kafka (선택)
-    participant CH as ClickHouse
-    participant S3 as S3 (Cold)
-
-    App->>FB: 로그 생성
-    FB->>Kafka: 버퍼링
-    Kafka->>CH: Kafka Engine 수집
-    CH->>CH: MergeTree 테이블 저장
-
-    Note over CH: TTL 정책에 따라
-
-    CH->>S3: Cold 데이터 이동
-```
+![애플리케이션이 생성한 로그가 FluentBit와 Kafka를 거쳐 ClickHouse의 MergeTree 테이블에 저장되고, TTL 정책에 따라 일정 시간이 지나면 S3 Cold 스토리지로 이동하는 순서를 보여준다.](../../.gitbook/assets/ko-observability-logging-04-clickhouse-1.png)
 
 ***
 

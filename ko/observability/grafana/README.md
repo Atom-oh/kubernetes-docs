@@ -20,63 +20,7 @@ Grafana는 메트릭, 로그, 추적 데이터를 시각화하고 분석하기 �
 
 ## 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph Users["사용자"]
-        BROWSER[웹 브라우저]
-        API_CLIENT[API 클라이언트]
-    end
-
-    subgraph Grafana["Grafana Server"]
-        FRONTEND[Frontend<br/>React]
-        BACKEND[Backend<br/>Go]
-        ALERTING[Alerting Engine]
-        PLUGINS[Plugin System]
-    end
-
-    subgraph Storage["스토리지"]
-        DB[(PostgreSQL/MySQL)]
-        CACHE[(Redis/Memcached)]
-    end
-
-    subgraph DataSources["데이터 소스"]
-        PROM[Prometheus]
-        VM[VictoriaMetrics]
-        LOKI[Loki]
-        TEMPO[Tempo]
-        CW[CloudWatch]
-        ES[Elasticsearch]
-    end
-
-    subgraph Notifications["알림 채널"]
-        SLACK[Slack]
-        PAGERDUTY[PagerDuty]
-        EMAIL[Email]
-        WEBHOOK[Webhook]
-    end
-
-    BROWSER & API_CLIENT --> FRONTEND
-    FRONTEND --> BACKEND
-    BACKEND --> DB
-    BACKEND --> CACHE
-    BACKEND --> PLUGINS
-
-    PLUGINS --> PROM & VM & LOKI & TEMPO & CW & ES
-
-    ALERTING --> SLACK & PAGERDUTY & EMAIL & WEBHOOK
-
-    classDef user fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef storage fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-    classDef datasource fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef notification fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class BROWSER,API_CLIENT user
-    class FRONTEND,BACKEND,ALERTING,PLUGINS grafana
-    class DB,CACHE storage
-    class PROM,VM,LOKI,TEMPO,CW,ES datasource
-    class SLACK,PAGERDUTY,EMAIL,WEBHOOK notification
-```
+![사용자의 요청이 Grafana 서버 내부의 Frontend와 Backend를 거쳐 PostgreSQL/Redis 저장소에 기록되고, Plugin System을 통해 여러 데이터 소스를 조회하며, Alerting Engine이 별도로 알림 채널로 알림을 전송하는 아키텍처를 보여준다.](../../.gitbook/assets/ko-observability-grafana-readme-0.png)
 
 ## Helm 배포
 

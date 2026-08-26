@@ -37,33 +37,7 @@ VictoriaMetrics는 고성능, 비용 효율적인 시계열 데이터베이스 �
 
 ### VictoriaMetrics vs Prometheus
 
-```mermaid
-flowchart LR
-    subgraph PROM["Prometheus"]
-        P1[단일 노드]
-        P2[중간 압축률]
-        P3[PromQL]
-        P4[15-30일 보존]
-    end
-
-    subgraph VM["VictoriaMetrics"]
-        V1[단일/클러스터]
-        V2[7x 압축률]
-        V3[MetricsQL<br/>PromQL 호환]
-        V4[무제한 보존]
-    end
-
-    P1 -.->|확장 필요| V1
-    P2 -.->|스토리지 절약| V2
-    P3 -.->|완벽 호환| V3
-    P4 -.->|장기 저장| V4
-
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef vm fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-
-    class P1,P2,P3,P4 prometheus
-    class V1,V2,V3,V4 vm
-```
+![Prometheus와 VictoriaMetrics를 아키텍처, 압축률, 쿼리 언어, 보존 기간 네 가지 기준으로 나란히 비교하고 각 항목이 어떻게 대응되는지 화살표로 보여주는 다이어그램.](../../.gitbook/assets/ko-observability-metrics-02-victoriametrics-0.png)
 
 | 항목 | Prometheus | VictoriaMetrics |
 |------|------------|-----------------|
@@ -81,25 +55,7 @@ VictoriaMetrics는 두 가지 배포 모드를 제공합니다:
 
 ### 선택 가이드
 
-```mermaid
-flowchart TD
-    A[VictoriaMetrics<br/>배포 모드 선택] --> B{일일 수집량?}
-
-    B -->|< 100M 샘플/일| C{고가용성 필요?}
-    B -->|> 100M 샘플/일| D[클러스터 모드]
-
-    C -->|아니오| E[vmsingle<br/>단일 노드]
-    C -->|예| F{복잡성 감수?}
-
-    F -->|예| D
-    F -->|아니오| G[vmsingle +<br/>복제 스토리지]
-
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef solution fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-
-    class A,B,C,F decision
-    class D,E,G solution
-```
+![일일 수집량과 고가용성 요구, 복잡성 감수 여부에 따라 VictoriaMetrics를 vmsingle 단일 노드, 복제 스토리지를 더한 vmsingle, 또는 클러스터 모드 중 하나로 배포하도록 안내하는 의사결정 흐름도.](../../.gitbook/assets/ko-observability-metrics-02-victoriametrics-1.png)
 
 ## 단일 노드 모드
 
@@ -218,62 +174,7 @@ spec:
 
 ### 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph WRITE["쓰기 경로"]
-        VA[vmagent<br/>메트릭 수집]
-        P[Prometheus<br/>remote_write]
-    end
-
-    subgraph VMINSERT["vminsert (라우팅)"]
-        I1[vminsert-1]
-        I2[vminsert-2]
-        I3[vminsert-3]
-    end
-
-    subgraph VMSTORAGE["vmstorage (저장)"]
-        S1[vmstorage-1]
-        S2[vmstorage-2]
-        S3[vmstorage-3]
-    end
-
-    subgraph VMSELECT["vmselect (쿼리)"]
-        Q1[vmselect-1]
-        Q2[vmselect-2]
-        Q3[vmselect-3]
-    end
-
-    subgraph READ["읽기 경로"]
-        G[Grafana]
-        AL[vmalert]
-    end
-
-    VA --> I1 & I2 & I3
-    P --> I1 & I2 & I3
-
-    I1 --> S1 & S2 & S3
-    I2 --> S1 & S2 & S3
-    I3 --> S1 & S2 & S3
-
-    Q1 --> S1 & S2 & S3
-    Q2 --> S1 & S2 & S3
-    Q3 --> S1 & S2 & S3
-
-    G --> Q1 & Q2 & Q3
-    AL --> Q1 & Q2 & Q3
-
-    classDef agent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef insert fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef select fill:#9B59B6,stroke:#333,stroke-width:1px,color:white
-    classDef client fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class VA,P agent
-    class I1,I2,I3 insert
-    class S1,S2,S3 storage
-    class Q1,Q2,Q3 select
-    class G,AL client
-```
+![vmagent와 Prometheus가 vminsert를 거쳐 쓰고 Grafana와 vmalert가 vmselect를 거쳐 질의하며, 두 경로 모두 수평 확장되는 vmstorage에서 만나는 VictoriaMetrics 클러스터 아키텍처.](../../.gitbook/assets/ko-observability-metrics-02-victoriametrics-2.png)
 
 ### 구성 요소
 

@@ -46,68 +46,7 @@ Prometheus는 SoundCloud에서 개발되어 CNCF(Cloud Native Computing Foundati
 
 ## 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph PROM["Prometheus Server"]
-        R[Retrieval<br/>메트릭 수집]
-        T[TSDB<br/>시계열 DB]
-        H[HTTP Server<br/>쿼리 API]
-        A[Alert Rules<br/>알림 규칙]
-    end
-
-    subgraph TARGETS["스크랩 대상"]
-        J1[Jobs/Exporters]
-        J2[Short-lived Jobs]
-        PG[Pushgateway]
-    end
-
-    subgraph SD["서비스 디스커버리"]
-        K8S[Kubernetes]
-        DNS[DNS]
-        FILE[File SD]
-        CONSUL[Consul]
-    end
-
-    subgraph ALERT["알림 처리"]
-        AM[Alertmanager]
-        EM[Email]
-        SL[Slack]
-        PD[PagerDuty]
-    end
-
-    subgraph VIS["시각화/API"]
-        GF[Grafana]
-        API[API Clients]
-        UI[Prometheus UI]
-    end
-
-    SD --> R
-    R -->|scrape| J1
-    J2 -->|push| PG
-    R -->|scrape| PG
-    R --> T
-    T --> H
-    T --> A
-    A -->|alerts| AM
-    AM --> EM
-    AM --> SL
-    AM --> PD
-    H --> GF
-    H --> API
-    H --> UI
-
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef targets fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef sd fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef alert fill:#EB6E85,stroke:#333,stroke-width:1px,color:white
-    classDef vis fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class R,T,H,A prometheus
-    class J1,J2,PG targets
-    class K8S,DNS,FILE,CONSUL sd
-    class AM,EM,SL,PD alert
-    class GF,API,UI vis
-```
+![서비스 디스커버리와 대상으로부터 Retrieval이 메트릭을 스크랩해 TSDB에 저장하고, HTTP Server가 시각화 도구에 쿼리 API를 제공하며 Alert Rules가 Alertmanager를 거쳐 알림 채널로 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-metrics-01-prometheus-0.png)
 
 ### 데이터 흐름
 
@@ -568,28 +507,7 @@ Prometheus Operator는 Kubernetes에서 Prometheus를 선언적으로 관리하�
 
 ### 커스텀 리소스 정의 (CRDs)
 
-```mermaid
-flowchart TD
-    PO[Prometheus Operator] --> P[Prometheus]
-    PO --> AM[Alertmanager]
-    PO --> TM[ThanosRuler]
-
-    P --> SM[ServiceMonitor]
-    P --> PM[PodMonitor]
-    P --> PR[PrometheusRule]
-    P --> SC[ScrapeConfig]
-    P --> PB[Probe]
-
-    AM --> AMC[AlertmanagerConfig]
-
-    classDef operator fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef resource fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef config fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class PO operator
-    class P,AM,TM resource
-    class SM,PM,PR,SC,PB,AMC config
-```
+![Prometheus Operator가 Prometheus, Alertmanager, ThanosRuler를 생성하고, Prometheus는 ServiceMonitor·PodMonitor·PrometheusRule·ScrapeConfig·Probe를, Alertmanager는 AlertmanagerConfig를 하위 커스텀 리소스로 갖는 계층 구조를 보여준다.](../../.gitbook/assets/ko-observability-metrics-01-prometheus-1.png)
 
 ### Prometheus 리소스
 

@@ -124,77 +124,7 @@ Kubernetes 환경에서 JSON 형식은 사실상 표준입니다. 대부분의 �
 
 ### 전체 아키텍처 개요
 
-```mermaid
-flowchart TB
-    subgraph Sources["로그 소스"]
-        APP[애플리케이션 로그]
-        SYS[시스템 로그]
-        K8S[Kubernetes 이벤트]
-        CTRL[컨트롤 플레인 로그]
-    end
-
-    subgraph Collection["수집 계층"]
-        DS[DaemonSet 에이전트<br/>FluentBit/Promtail]
-        SC[Sidecar 컨테이너]
-        OTEL[OTEL Collector]
-    end
-
-    subgraph Processing["처리 계층"]
-        PARSE[파싱/정규화]
-        ENRICH[메타데이터 추가]
-        FILTER[필터링/샘플링]
-        BUFFER[버퍼링]
-    end
-
-    subgraph Storage["저장 계층"]
-        LOKI[(Grafana Loki)]
-        OS[(OpenSearch)]
-        CW[(CloudWatch Logs)]
-        CH[(ClickHouse)]
-    end
-
-    subgraph Analysis["분석 계층"]
-        GRAFANA[Grafana]
-        KIBANA[OpenSearch Dashboards]
-        CWINSIGHTS[CloudWatch Insights]
-    end
-
-    APP --> DS
-    SYS --> DS
-    K8S --> OTEL
-    CTRL --> DS
-    APP --> SC
-
-    DS --> PARSE
-    SC --> PARSE
-    OTEL --> PARSE
-
-    PARSE --> ENRICH
-    ENRICH --> FILTER
-    FILTER --> BUFFER
-
-    BUFFER --> LOKI
-    BUFFER --> OS
-    BUFFER --> CW
-    BUFFER --> CH
-
-    LOKI --> GRAFANA
-    OS --> KIBANA
-    CW --> CWINSIGHTS
-    CH --> GRAFANA
-
-    classDef source fill:#4CAF50,stroke:#333,color:white
-    classDef collect fill:#2196F3,stroke:#333,color:white
-    classDef process fill:#FF9800,stroke:#333,color:white
-    classDef store fill:#9C27B0,stroke:#333,color:white
-    classDef analyze fill:#F44336,stroke:#333,color:white
-
-    class APP,SYS,K8S,CTRL source
-    class DS,SC,OTEL collect
-    class PARSE,ENRICH,FILTER,BUFFER process
-    class LOKI,OS,CW,CH store
-    class GRAFANA,KIBANA,CWINSIGHTS analyze
-```
+![애플리케이션·시스템·Kubernetes·컨트롤 플레인 로그가 수집(DaemonSet/Sidecar/OTEL), 처리(파싱·정규화·필터링·버퍼링), 저장(Loki·OpenSearch·CloudWatch·ClickHouse), 분석(Grafana 등)의 5단계를 순서대로 거치는 로그 파이프라인 아키텍처.](../../.gitbook/assets/ko-observability-logging-README-0.png)
 
 ### 계층별 역할
 
@@ -524,31 +454,7 @@ ClickHouse (자체 호스팅):
 
 ### 의사결정 플로우차트
 
-```mermaid
-flowchart TD
-    START[로그 저장소 선택] --> Q1{기존 Grafana<br/>스택 보유?}
-
-    Q1 -->|예| Q2{전문 검색<br/>필요?}
-    Q1 -->|아니오| Q3{AWS 네이티브<br/>선호?}
-
-    Q2 -->|예| OS[OpenSearch]
-    Q2 -->|아니오| LOKI[Loki]
-
-    Q3 -->|예| Q4{분석 복잡성?}
-    Q3 -->|아니오| Q5{비용 vs 기능?}
-
-    Q4 -->|단순| CW[CloudWatch Logs]
-    Q4 -->|복잡| OS
-
-    Q5 -->|비용 우선| LOKI
-    Q5 -->|기능 우선| OS
-
-    classDef decision fill:#FFE082,stroke:#333
-    classDef solution fill:#81C784,stroke:#333,color:white
-
-    class Q1,Q2,Q3,Q4,Q5 decision
-    class OS,LOKI,CW solution
-```
+![기존 Grafana 스택 보유 여부, 전문 검색 필요성, AWS 네이티브 선호도, 분석 복잡성, 비용과 기능의 우선순위를 순서대로 물어 Loki·OpenSearch·CloudWatch Logs 중 하나를 추천하는 의사결정 플로우차트.](../../.gitbook/assets/ko-observability-logging-README-1.png)
 
 ---
 

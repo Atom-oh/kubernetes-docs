@@ -17,36 +17,7 @@
 - 어디서 오류가 발생했는가?
 - 서비스 간 의존성은 어떻게 되는가?
 
-```mermaid
-flowchart TD
-    subgraph Problem["문제: 복잡한 요청 흐름"]
-        U[사용자] --> A[API Gateway]
-        A --> B[Auth Service]
-        A --> C[Product Service]
-        C --> D[Inventory Service]
-        C --> E[Pricing Service]
-        A --> F[Order Service]
-        F --> G[Payment Service]
-        F --> H[Notification Service]
-        G --> I[Fraud Detection]
-    end
-
-    Q1[어디서 지연이 발생했나?]
-    Q2[오류의 근본 원인은?]
-    Q3[서비스 의존성은?]
-
-    Problem -.-> Q1
-    Problem -.-> Q2
-    Problem -.-> Q3
-
-    classDef user fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef question fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class U user
-    class A,B,C,D,E,F,G,H,I service
-    class Q1,Q2,Q3 question
-```
+![사용자 요청이 API Gateway를 거쳐 여러 마이크로서비스로 분기되며, 지연 지점과 오류 원인, 서비스 의존성을 기존 모니터링으로는 파악하기 어렵다는 문제를 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-0.png)
 
 ## 핵심 개념
 
@@ -54,32 +25,7 @@ flowchart TD
 
 Trace는 단일 요청의 전체 여정을 나타냅니다. 하나의 요청이 시스템을 통과하면서 생성되는 모든 작업의 집합입니다.
 
-```mermaid
-flowchart LR
-    subgraph Trace["Trace: 전체 요청 여정"]
-        direction LR
-        S1[API Gateway<br/>150ms]
-        S2[User Service<br/>50ms]
-        S3[Order Service<br/>200ms]
-        S4[Payment Service<br/>300ms]
-        S5[Notification<br/>100ms]
-    end
-
-    S1 --> S2
-    S1 --> S3
-    S3 --> S4
-    S3 --> S5
-
-    Total[총 소요 시간: 500ms]
-
-    Trace --> Total
-
-    classDef span fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef total fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class S1,S2,S3,S4,S5 span
-    class Total total
-```
+![API Gateway에서 시작한 하나의 요청이 User·Order·Payment·Notification 서비스로 분기되며 각 구간(Span)의 소요 시간이 합산되어 총 500ms의 Trace를 이룬다.](../../.gitbook/assets/ko-observability-tracing-README-1.png)
 
 ### 2. Span (스팬)
 
@@ -96,79 +42,13 @@ Span은 하나의 작업 단위를 나타냅니다. 각 Span은 다음 정보를
 | **Tags** | 메타데이터 | `http.status_code=200` |
 | **Logs** | 이벤트 기록 | `error: connection timeout` |
 
-```mermaid
-flowchart TD
-    subgraph SpanStructure["Span 구조"]
-        direction TB
-
-        subgraph Header["헤더 정보"]
-            TID[TraceID: abc123]
-            SID[SpanID: span001]
-            PID[ParentSpanID: null]
-        end
-
-        subgraph Timing["시간 정보"]
-            ST[Start: 10:30:00.000]
-            DUR[Duration: 150ms]
-        end
-
-        subgraph Metadata["메타데이터"]
-            OP[Operation: HTTP GET /users]
-            TAGS[Tags: service=api, http.method=GET]
-            LOGS[Logs: request received, response sent]
-        end
-
-        subgraph Status["상태"]
-            CODE[Status: OK]
-        end
-    end
-
-    Header --> Timing
-    Timing --> Metadata
-    Metadata --> Status
-
-    classDef header fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef timing fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef metadata fill:#34A853,stroke:#333,stroke-width:1px,color:white
-    classDef status fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-
-    class TID,SID,PID header
-    class ST,DUR timing
-    class OP,TAGS,LOGS metadata
-    class CODE status
-```
+![하나의 Span이 식별자 헤더, 시간 정보, 운영 메타데이터, 최종 상태의 네 그룹으로 구성되어 순서대로 채워지는 구조를 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-2.png)
 
 ### 3. Span 관계와 계층 구조
 
 Span들은 부모-자식 관계를 형성하여 트리 구조를 이룹니다:
 
-```mermaid
-flowchart TD
-    subgraph TraceTree["Trace 트리 구조"]
-        ROOT[Root Span<br/>API Gateway<br/>TraceID: abc123<br/>SpanID: span001]
-
-        CHILD1[Child Span<br/>Auth Service<br/>SpanID: span002<br/>Parent: span001]
-
-        CHILD2[Child Span<br/>Order Service<br/>SpanID: span003<br/>Parent: span001]
-
-        GRANDCHILD1[Grandchild Span<br/>Payment Service<br/>SpanID: span004<br/>Parent: span003]
-
-        GRANDCHILD2[Grandchild Span<br/>Inventory Service<br/>SpanID: span005<br/>Parent: span003]
-    end
-
-    ROOT --> CHILD1
-    ROOT --> CHILD2
-    CHILD2 --> GRANDCHILD1
-    CHILD2 --> GRANDCHILD2
-
-    classDef root fill:#E6522C,stroke:#333,stroke-width:2px,color:white
-    classDef child fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef grandchild fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class ROOT root
-    class CHILD1,CHILD2 child
-    class GRANDCHILD1,GRANDCHILD2 grandchild
-```
+![Root Span인 API Gateway가 Auth·Order 두 Child Span을 낳고, Order Span이 다시 Payment·Inventory Grandchild Span으로 갈라지는 부모-자식 트리 구조를 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-3.png)
 
 ### 4. SpanContext (스팬 컨텍스트)
 
@@ -235,29 +115,7 @@ X-B3-Sampled: 1
 
 요청 시작 시점에 샘플링 결정:
 
-```mermaid
-flowchart LR
-    subgraph HeadBased["Head-based Sampling"]
-        REQ[요청 수신]
-        DEC{샘플링<br/>결정}
-        TRACE[추적 수집]
-        SKIP[추적 건너뜀]
-    end
-
-    REQ --> DEC
-    DEC -->|10% 샘플| TRACE
-    DEC -->|90% 건너뜀| SKIP
-
-    classDef request fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef trace fill:#34A853,stroke:#333,stroke-width:1px,color:white
-    classDef skip fill:#E8E8E8,stroke:#333,stroke-width:1px,color:black
-
-    class REQ request
-    class DEC decision
-    class TRACE trace
-    class SKIP skip
-```
+![요청이 도착하는 시점에 샘플링 여부를 즉시 결정해, 10%는 추적을 수집하고 90%는 건너뛰는 헤드 기반 샘플링 흐름을 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-4.png)
 
 **장점:**
 - 구현이 간단함
@@ -280,33 +138,7 @@ sampling:
 
 요청 완료 후 결과를 보고 샘플링 결정:
 
-```mermaid
-flowchart LR
-    subgraph TailBased["Tail-based Sampling"]
-        REQ[요청 수신]
-        COLLECT[모든 Span 수집]
-        ANALYZE{분석<br/>오류? 지연?}
-        KEEP[보관]
-        DROP[삭제]
-    end
-
-    REQ --> COLLECT
-    COLLECT --> ANALYZE
-    ANALYZE -->|오류 또는 지연| KEEP
-    ANALYZE -->|정상| DROP
-
-    classDef request fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef collect fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef analyze fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef keep fill:#34A853,stroke:#333,stroke-width:1px,color:white
-    classDef drop fill:#E8E8E8,stroke:#333,stroke-width:1px,color:black
-
-    class REQ request
-    class COLLECT collect
-    class ANALYZE analyze
-    class KEEP keep
-    class DROP drop
-```
+![요청이 끝날 때까지 모든 Span을 모아둔 뒤 오류나 지연이 있으면 보관하고 정상이면 삭제하는 테일 기반 샘플링 흐름을 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-5.png)
 
 **장점:**
 - 중요한 요청(오류, 지연)을 놓치지 않음
@@ -379,30 +211,7 @@ http_request_duration_seconds_bucket{le="1.0"} 1500 # {traceID="def456"}
 
 ### Grafana에서의 상관분석
 
-```mermaid
-flowchart LR
-    subgraph Correlation["Grafana 상관분석"]
-        M[메트릭 대시보드<br/>응답 시간 스파이크]
-        E[Exemplar<br/>TraceID: abc123]
-        T[Tempo<br/>Trace 상세]
-        L[Loki<br/>관련 로그]
-    end
-
-    M -->|Exemplar 클릭| E
-    E -->|Trace 조회| T
-    T -->|로그 링크| L
-    L -->|메트릭 연결| M
-
-    classDef metric fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef exemplar fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef trace fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef log fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class M metric
-    class E exemplar
-    class T trace
-    class L log
-```
+![메트릭 대시보드의 응답 시간 스파이크에서 Exemplar를 클릭해 Tempo의 Trace로, 다시 Loki의 로그로 이어졌다가 메트릭으로 되돌아오는 4단계 상관분석 순환을 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-6.png)
 
 ## 솔루션 비교
 
@@ -422,39 +231,7 @@ flowchart LR
 
 ### 선택 가이드
 
-```mermaid
-flowchart TD
-    START[분산 추적 솔루션 선택]
-
-    Q1{AWS 네이티브<br/>통합 필요?}
-    Q2{비용 최우선?}
-    Q3{AI 분석 필요?}
-    Q4{Grafana 스택<br/>사용 중?}
-
-    XRAY[AWS X-Ray]
-    TEMPO[Grafana Tempo]
-    JAEGER[Jaeger]
-    DATADOG[Datadog APM]
-    DYNATRACE[Dynatrace]
-
-    START --> Q1
-    Q1 -->|예| XRAY
-    Q1 -->|아니오| Q2
-    Q2 -->|예| Q4
-    Q4 -->|예| TEMPO
-    Q4 -->|아니오| JAEGER
-    Q2 -->|아니오| Q3
-    Q3 -->|예| DYNATRACE
-    Q3 -->|아니오| DATADOG
-
-    classDef question fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef solution fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-
-    class Q1,Q2,Q3,Q4 question
-    class TEMPO,JAEGER,DATADOG,DYNATRACE solution
-    class XRAY aws
-```
+![AWS 네이티브 통합, 비용, Grafana 스택 사용 여부, AI 분석 필요성을 차례로 물어 X-Ray·Tempo·Jaeger·Datadog APM·Dynatrace 중 하나로 안내하는 의사결정 트리를 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-7.png)
 
 ## Best Practices
 

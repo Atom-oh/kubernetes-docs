@@ -19,51 +19,7 @@ Dynatrace is an AI-powered full-stack observability platform. Through OneAgent t
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    subgraph EKS["Amazon EKS Cluster"]
-        subgraph Nodes["Worker Nodes"]
-            OA1[OneAgent<br/>DaemonSet]
-            OA2[OneAgent<br/>DaemonSet]
-        end
-
-        subgraph Apps["Applications"]
-            APP1[Service A]
-            APP2[Service B]
-            APP3[Service C]
-        end
-
-        subgraph Operator["Dynatrace Operator"]
-            DYN_OP[Operator Pod]
-            WEBHOOK[Webhook]
-        end
-
-        ACTIVEGATE[ActiveGate<br/>StatefulSet]
-    end
-
-    subgraph Dynatrace["Dynatrace Platform"]
-        SaaS[Dynatrace SaaS]
-        DAVIS[Davis AI Engine]
-        GRAIL[Grail Data Lakehouse]
-    end
-
-    OA1 & OA2 -->|Metrics/Traces/Logs| ACTIVEGATE
-    ACTIVEGATE -->|Encrypted Connection| SaaS
-    SaaS --> DAVIS
-    SaaS --> GRAIL
-
-    APP1 & APP2 & APP3 -.->|Auto-instrumentation| OA1 & OA2
-
-    classDef node fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef dynatrace fill:#6F2DA8,stroke:#333,stroke-width:1px,color:white
-    classDef operator fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class OA1,OA2,ACTIVEGATE node
-    class APP1,APP2,APP3 app
-    class SaaS,DAVIS,GRAIL dynatrace
-    class DYN_OP,WEBHOOK operator
-```
+![OneAgent runs as a DaemonSet on EKS worker nodes and auto-instruments applications; telemetry flows through the in-cluster ActiveGate to Dynatrace SaaS, which feeds the Davis AI engine and Grail data lakehouse, while a Dynatrace Operator manages the in-cluster components via a mutating webhook.](../../.gitbook/assets/en-observability-tracing-04-dynatrace-0.png)
 
 ## EKS Deployment with Helm
 
@@ -309,43 +265,7 @@ spec:
 
 ### How Davis AI Works
 
-```mermaid
-flowchart TD
-    subgraph DataCollection["Data Collection"]
-        METRICS[Metrics]
-        TRACES[Traces]
-        LOGS[Logs]
-        EVENTS[Events]
-        TOPO[Topology]
-    end
-
-    subgraph DavisAI["Davis AI Engine"]
-        BASELINE[Baseline Learning]
-        ANOMALY[Anomaly Detection]
-        CORRELATE[Correlation Analysis]
-        ROOT[Root Cause Identification]
-    end
-
-    subgraph Output["Analysis Results"]
-        PROBLEM[Problem Card]
-        IMPACT[Impact Analysis]
-        REMEDIATION[Remediation Suggestions]
-    end
-
-    METRICS & TRACES & LOGS & EVENTS & TOPO --> BASELINE
-    BASELINE --> ANOMALY
-    ANOMALY --> CORRELATE
-    CORRELATE --> ROOT
-    ROOT --> PROBLEM & IMPACT & REMEDIATION
-
-    classDef data fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef ai fill:#6F2DA8,stroke:#333,stroke-width:1px,color:white
-    classDef output fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class METRICS,TRACES,LOGS,EVENTS,TOPO data
-    class BASELINE,ANOMALY,CORRELATE,ROOT ai
-    class PROBLEM,IMPACT,REMEDIATION output
-```
+![Five telemetry signal types feed a baseline-learning stage in the Davis AI engine, which detects anomalies, correlates them, and identifies a root cause; the root cause then produces a problem card, an impact analysis, and remediation suggestions.](../../.gitbook/assets/en-observability-tracing-04-dynatrace-1.png)
 
 ### Problem Alert Configuration
 

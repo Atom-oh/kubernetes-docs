@@ -25,38 +25,7 @@ In modern cloud-native environments, **observability** is the ability to underst
 
 ### 1.1 Relationship Between Logging, Metrics, and Tracing
 
-```mermaid
-graph TB
-    subgraph "Three Pillars of Observability"
-        L[Logging]
-        M[Metrics]
-        T[Tracing]
-    end
-
-    subgraph "Data Characteristics"
-        L --> L1[Event-based]
-        L --> L2[Unstructured data]
-        L --> L3[Optimal for debugging]
-
-        M --> M1[Time-series data]
-        M --> M2[Aggregated values]
-        M --> M3[Optimal for alerting]
-
-        T --> T1[Request flow tracking]
-        T --> T2[Causality analysis]
-        T --> T3[Optimal for performance analysis]
-    end
-
-    subgraph "Interconnections"
-        L -.->|Exemplars| M
-        M -.->|Context| T
-        T -.->|Correlation ID| L
-    end
-
-    style L fill:#e1f5fe
-    style M fill:#fff3e0
-    style T fill:#f3e5f5
-```
+![Logging, Metrics, and Tracing shown as three peer pillars, each with its own data shape and best-fit question, linked by a dashed cycle of correlation signals — exemplars, trace context, and correlation IDs — that let an engineer jump between them.](../.gitbook/assets/en-observability-09-observability-optimization-0.png)
 
 ### 1.2 Role of Each Pillar and Selection Criteria
 
@@ -68,71 +37,7 @@ graph TB
 
 ### 1.3 Overall EKS Observability Architecture
 
-```mermaid
-graph TB
-    subgraph "EKS Cluster"
-        subgraph "Workloads"
-            APP[Application Pod]
-            SIDE[Sidecar/Agent]
-        end
-
-        subgraph "Collection Layer"
-            FB[Fluent Bit<br/>DaemonSet]
-            OTEL[OTel Collector<br/>DaemonSet]
-            PROM[Prometheus]
-        end
-
-        subgraph "eBPF Layer"
-            HUBBLE[Cilium Hubble]
-            PIXIE[Pixie]
-            COROOT[Coroot]
-        end
-    end
-
-    subgraph "Storage Layer"
-        subgraph "Log Storage"
-            CWL[CloudWatch Logs]
-            LOKI[Loki]
-            OS[OpenSearch]
-        end
-
-        subgraph "Metrics Storage"
-            AMP[Amazon Managed<br/>Prometheus]
-            VM[VictoriaMetrics]
-        end
-
-        subgraph "Trace Storage"
-            XRAY[X-Ray]
-            TEMPO[Grafana Tempo]
-            JAEGER[Jaeger]
-        end
-    end
-
-    subgraph "Visualization Layer"
-        GRAFANA[Grafana]
-        CWD[CloudWatch<br/>Dashboard]
-    end
-
-    APP --> FB
-    APP --> OTEL
-    FB --> CWL
-    FB --> LOKI
-    FB --> OS
-    OTEL --> AMP
-    OTEL --> XRAY
-    OTEL --> TEMPO
-    PROM --> AMP
-    PROM --> VM
-
-    CWL --> GRAFANA
-    LOKI --> GRAFANA
-    AMP --> GRAFANA
-    VM --> GRAFANA
-    TEMPO --> GRAFANA
-
-    style APP fill:#c8e6c9
-    style GRAFANA fill:#ffecb3
-```
+![Application pods emit data to Fluent Bit and the OTel Collector, which fan out to log, metrics, and trace storage backends alongside Prometheus, all converging into Grafana as the single-pane-of-glass dashboard.](../.gitbook/assets/en-observability-09-observability-optimization-1.png)
 
 ---
 
@@ -433,36 +338,7 @@ spec:
 
 ### 3.4 Long-term Storage Strategy
 
-```mermaid
-graph LR
-    subgraph "Short-term Storage (7 days)"
-        PROM[Prometheus<br/>Local Storage]
-    end
-
-    subgraph "Long-term Storage Options"
-        THANOS[Thanos<br/>S3-based]
-        VM[VictoriaMetrics<br/>Native Storage]
-        AMP[AMP<br/>AWS Managed]
-    end
-
-    subgraph "Query Layer"
-        TQ[Thanos Query]
-        VMQ[VictoriaMetrics<br/>vmselect]
-        AMPQ[AMP<br/>Query Endpoint]
-    end
-
-    PROM -->|Remote Write| THANOS
-    PROM -->|Remote Write| VM
-    PROM -->|Remote Write| AMP
-
-    THANOS --> TQ
-    VM --> VMQ
-    AMP --> AMPQ
-
-    TQ --> GRAFANA[Grafana]
-    VMQ --> GRAFANA
-    AMPQ --> GRAFANA
-```
+![Prometheus's 7-day local storage remote-writes to three long-term backend choices — Thanos, VictoriaMetrics, or AMP — each with its own query layer, all converging on Grafana as the single query surface.](../.gitbook/assets/en-observability-09-observability-optimization-2.png)
 
 ---
 
@@ -472,59 +348,7 @@ graph LR
 
 OpenTelemetry (OTel) is a vendor-neutral standard for collecting and exporting observability data (traces, metrics, logs).
 
-```mermaid
-graph TB
-    subgraph "Application Layer"
-        APP1[Service A<br/>OTel SDK]
-        APP2[Service B<br/>OTel SDK]
-        APP3[Service C<br/>Auto-instrumentation]
-    end
-
-    subgraph "OTel Collector"
-        subgraph "Receivers"
-            OTLP[OTLP Receiver]
-            JAEGER_R[Jaeger Receiver]
-            ZIPKIN_R[Zipkin Receiver]
-        end
-
-        subgraph "Processors"
-            BATCH[Batch Processor]
-            ATTR[Attributes Processor]
-            TAIL[Tail Sampling]
-        end
-
-        subgraph "Exporters"
-            OTLP_E[OTLP Exporter]
-            XRAY_E[X-Ray Exporter]
-            PROM_E[Prometheus Exporter]
-        end
-    end
-
-    subgraph "Backends"
-        TEMPO[Grafana Tempo]
-        XRAY[AWS X-Ray]
-        JAEGER[Jaeger]
-    end
-
-    APP1 -->|OTLP| OTLP
-    APP2 -->|OTLP| OTLP
-    APP3 -->|OTLP| OTLP
-
-    OTLP --> BATCH
-    JAEGER_R --> BATCH
-    ZIPKIN_R --> BATCH
-
-    BATCH --> ATTR
-    ATTR --> TAIL
-
-    TAIL --> OTLP_E
-    TAIL --> XRAY_E
-    TAIL --> PROM_E
-
-    OTLP_E --> TEMPO
-    XRAY_E --> XRAY
-    OTLP_E --> JAEGER
-```
+![Application services send OTLP data through the OTel Collector's receive, batch, and attribute stages into tail sampling, which decides what survives and routes surviving spans to Tempo/Jaeger, AWS X-Ray, or a Prometheus exporter.](../.gitbook/assets/en-observability-09-observability-optimization-3.png)
 
 ### 4.2 Tracing Backend Comparison
 
@@ -756,26 +580,7 @@ spec:
 
 **eBPF (extended Berkeley Packet Filter)** is a technology that allows safe program execution within the Linux kernel. The biggest advantage of eBPF-based monitoring is achieving observability **without code modifications**.
 
-```mermaid
-graph TB
-    subgraph "Traditional Instrumentation"
-        A1[Application Code] --> A2[Add SDK]
-        A2 --> A3[Modify/Redeploy Code]
-        A3 --> A4[Data Collection]
-    end
-
-    subgraph "eBPF Instrumentation"
-        B1[Application Code] --> B2[No Changes]
-        B3[eBPF Program] --> B4[Kernel-level Hooks]
-        B4 --> B5[Data Collection]
-        B2 -.-> B4
-    end
-
-    style A2 fill:#ffcdd2
-    style A3 fill:#ffcdd2
-    style B2 fill:#c8e6c9
-    style B3 fill:#c8e6c9
-```
+![Traditional code-based instrumentation requires adding an SDK and redeploying code before data collection begins, while eBPF instrumentation reaches the same data collection through kernel-level hooks without any change to the running application.](../.gitbook/assets/en-observability-09-observability-optimization-4.png)
 
 | Characteristic | Traditional Instrumentation | eBPF Instrumentation |
 |---|---|---|
@@ -1147,24 +952,7 @@ done
 
 ### 6.4 Log/Metrics Storage Cost Reduction Strategies
 
-```mermaid
-graph TB
-    subgraph "Cost Reduction Strategies"
-        A[Data Collection] --> B{Priority Classification}
-
-        B -->|High| C[Full Storage<br/>Long-term Retention]
-        B -->|Medium| D[Sampling<br/>Medium-term Retention]
-        B -->|Low| E[Aggregation Only<br/>Short-term Retention]
-
-        C --> F[S3 Glacier<br/>Deep Archive]
-        D --> G[S3 Standard-IA]
-        E --> H[Memory/Local]
-    end
-
-    style C fill:#ffcdd2
-    style D fill:#fff9c4
-    style E fill:#c8e6c9
-```
+![Collected data is classified by priority — high-priority data gets full storage and long-term retention in Glacier, medium-priority data is sampled into Standard-IA, and low-priority data is aggregated only and kept in fast local memory.](../.gitbook/assets/en-observability-09-observability-optimization-5.png)
 
 | Strategy | Target | Expected Savings |
 |---|---|---|
@@ -1515,28 +1303,7 @@ data:
 
 ### 8.3 Cross-Tool Data Correlation Analysis
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Grafana
-    participant Prometheus
-    participant Loki
-    participant Tempo
-
-    User->>Grafana: Investigate slow API response
-    Grafana->>Prometheus: Query P99 latency
-    Prometheus-->>Grafana: Metrics + Exemplar (traceID)
-
-    Grafana->>Tempo: Lookup trace by traceID
-    Tempo-->>Grafana: Full request flow
-
-    Note over Grafana: Identify bottleneck service
-
-    Grafana->>Loki: Query service logs<br/>(traceID filter)
-    Loki-->>Grafana: Related logs
-
-    Grafana-->>User: Unified analysis results
-```
+![A user's slow-API investigation flows entirely through Grafana, which queries Prometheus for a P99 exemplar, follows the trace ID into Tempo to find the bottleneck service, then filters Loki logs by that same trace ID before returning one unified answer.](../.gitbook/assets/en-observability-09-observability-optimization-6.png)
 
 ### 8.4 Maintaining Monitoring System Performance at Large Scale
 
@@ -1585,57 +1352,7 @@ spec:
 
 ### 8.5 High Availability Observability Stack Configuration
 
-```mermaid
-graph TB
-    subgraph "Data Collection Layer (HA)"
-        FB1[Fluent Bit<br/>Node 1]
-        FB2[Fluent Bit<br/>Node 2]
-        FB3[Fluent Bit<br/>Node N]
-    end
-
-    subgraph "Collector Layer (HA)"
-        OTEL1[OTel Collector 1]
-        OTEL2[OTel Collector 2]
-        LB[Load Balancer]
-    end
-
-    subgraph "Storage Layer (HA)"
-        subgraph "Loki HA"
-            LOKI1[Loki Write 1]
-            LOKI2[Loki Write 2]
-            LOKI3[Loki Read 1]
-            LOKI4[Loki Read 2]
-        end
-
-        subgraph "VictoriaMetrics HA"
-            VM1[vminsert 1]
-            VM2[vminsert 2]
-            VM3[vmselect 1]
-            VM4[vmselect 2]
-            VMS[vmstorage x3]
-        end
-    end
-
-    subgraph "Shared Storage"
-        S3[(S3 Bucket)]
-    end
-
-    FB1 --> LB
-    FB2 --> LB
-    FB3 --> LB
-    LB --> OTEL1
-    LB --> OTEL2
-
-    OTEL1 --> LOKI1
-    OTEL2 --> LOKI2
-    OTEL1 --> VM1
-    OTEL2 --> VM2
-
-    LOKI1 --> S3
-    LOKI2 --> S3
-    VM1 --> VMS
-    VM2 --> VMS
-```
+![Multiple Fluent Bit agents fan into a load balancer that spreads work across a redundant pair of OTel Collectors, which write logs to an HA Loki-write pair backed by shared S3 and metrics to an HA vminsert pair backed by replicated vmstorage.](../.gitbook/assets/en-observability-09-observability-optimization-7.png)
 
 ---
 
@@ -1643,37 +1360,7 @@ graph TB
 
 ### 9.1 Phased Adoption Strategy
 
-```mermaid
-graph LR
-    subgraph "Phase 1: Basic"
-        A1[CloudWatch Logs]
-        A2[CloudWatch Metrics]
-        A3[Container Insights]
-    end
-
-    subgraph "Phase 2: Intermediate"
-        B1[Prometheus + Grafana]
-        B2[Fluent Bit + Loki]
-        B3[X-Ray Tracing]
-    end
-
-    subgraph "Phase 3: Advanced"
-        C1[VictoriaMetrics/AMP]
-        C2[OpenTelemetry]
-        C3[eBPF Monitoring]
-        C4[Cost Monitoring]
-    end
-
-    A1 --> B2
-    A2 --> B1
-    A3 --> B3
-
-    B1 --> C1
-    B2 --> C2
-    B3 --> C2
-    C1 --> C4
-    C2 --> C3
-```
+![A three-phase adoption path: Phase 1 uses CloudWatch-only basics, Phase 2 layers on the Prometheus/Grafana and Loki/X-Ray stack, and Phase 3 arrives at OpenTelemetry, eBPF monitoring, and cost monitoring as the advanced end state.](../.gitbook/assets/en-observability-09-observability-optimization-8.png)
 
 | Phase | Components | Duration | Cost | Operational Complexity |
 |---|---|---|---|---|

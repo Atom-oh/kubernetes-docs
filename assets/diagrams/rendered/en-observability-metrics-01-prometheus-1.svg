@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="prom-crd-title prom-crd-desc">
+    <title id="prom-crd-title">Prometheus Operator custom resource hierarchy</title>
+    <desc id="prom-crd-desc">Prometheus Operator manages three top-level custom resources — Prometheus, Alertmanager, and ThanosRuler — where Prometheus in turn governs the ServiceMonitor, PodMonitor, PrometheusRule, ScrapeConfig, and Probe resources, and Alertmanager governs AlertmanagerConfig.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- ===== connectors (drawn before nodes) ===== -->
+    <!-- PO tree: trunk + bus + 3 drops -->
+    <line x1="480" y1="136" x2="480" y2="168" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="252" y1="168" x2="836" y2="168" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="252" y1="168" x2="252" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="168" x2="480" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="836" y1="168" x2="836" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- P tree: trunk + bus + 5 drops -->
+    <line x1="252" y1="264" x2="252" y2="296" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="80" y1="296" x2="720" y2="296" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="80" y1="296" x2="80" y2="328" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="240" y1="296" x2="240" y2="328" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="400" y1="296" x2="400" y2="328" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="560" y1="296" x2="560" y2="328" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="720" y1="296" x2="720" y2="328" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- AM -> AMC: single child, straight drop -->
+    <line x1="836" y1="264" x2="836" y2="328" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ===== nodes ===== -->
+    <!-- Prometheus Operator (focal) -->
+    <rect x="400" y="72" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="400" y="72" width="160" height="64" rx="6" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text class="name" x="480" y="102" text-anchor="middle">Prometheus Operator</text>
+    <text class="sub" x="480" y="118" text-anchor="middle">controller</text>
+
+    <!-- Prometheus -->
+    <rect x="182" y="200" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="182" y="200" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text class="name" x="252" y="230" text-anchor="middle">Prometheus</text>
+    <text class="sub" x="252" y="246" text-anchor="middle">CRD</text>
+
+    <!-- ThanosRuler -->
+    <rect x="410" y="200" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="410" y="200" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text class="name" x="480" y="230" text-anchor="middle">ThanosRuler</text>
+    <text class="sub" x="480" y="246" text-anchor="middle">CRD</text>
+
+    <!-- Alertmanager -->
+    <rect x="766" y="200" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="766" y="200" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text class="name" x="836" y="230" text-anchor="middle">Alertmanager</text>
+    <text class="sub" x="836" y="246" text-anchor="middle">CRD</text>
+
+    <!-- ServiceMonitor -->
+    <rect x="20" y="328" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="20" y="328" width="120" height="56" rx="6" fill="var(--ext-fill)" stroke="var(--ext-stroke)" stroke-width="1"/>
+    <text class="name" x="80" y="354" text-anchor="middle">ServiceMonitor</text>
+    <text class="sub" x="80" y="369" text-anchor="middle">scrape target</text>
+
+    <!-- PodMonitor -->
+    <rect x="180" y="328" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="180" y="328" width="120" height="56" rx="6" fill="var(--ext-fill)" stroke="var(--ext-stroke)" stroke-width="1"/>
+    <text class="name" x="240" y="354" text-anchor="middle">PodMonitor</text>
+    <text class="sub" x="240" y="369" text-anchor="middle">scrape target</text>
+
+    <!-- PrometheusRule -->
+    <rect x="340" y="328" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="340" y="328" width="120" height="56" rx="6" fill="var(--ext-fill)" stroke="var(--ext-stroke)" stroke-width="1"/>
+    <text class="name" x="400" y="354" text-anchor="middle">PrometheusRule</text>
+    <text class="sub" x="400" y="369" text-anchor="middle">alert · record</text>
+
+    <!-- ScrapeConfig -->
+    <rect x="500" y="328" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="500" y="328" width="120" height="56" rx="6" fill="var(--ext-fill)" stroke="var(--ext-stroke)" stroke-width="1"/>
+    <text class="name" x="560" y="354" text-anchor="middle">ScrapeConfig</text>
+    <text class="sub" x="560" y="369" text-anchor="middle">scrape target</text>
+
+    <!-- Probe -->
+    <rect x="660" y="328" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="660" y="328" width="120" height="56" rx="6" fill="var(--ext-fill)" stroke="var(--ext-stroke)" stroke-width="1"/>
+    <text class="name" x="720" y="354" text-anchor="middle">Probe</text>
+    <text class="sub" x="720" y="369" text-anchor="middle">blackbox check</text>
+
+    <!-- AlertmanagerConfig -->
+    <rect x="766" y="328" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="766" y="328" width="140" height="56" rx="6" fill="var(--ext-fill)" stroke="var(--ext-stroke)" stroke-width="1"/>
+    <text class="name" x="836" y="354" text-anchor="middle">AlertmanagerConfig</text>
+    <text class="sub" x="836" y="369" text-anchor="middle">routing tree</text>
+  </svg>

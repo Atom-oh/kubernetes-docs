@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cwstate-title cwstate-desc">
+    <title id="cwstate-title">CloudWatch Alarm 상태 전이</title>
+    <desc id="cwstate-desc">CloudWatch Alarm이 OK, ALARM, INSUFFICIENT_DATA 세 상태 사이를 데이터 수신과 임계값 초과 여부에 따라 오가는 상태 전이도.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Start dot -->
+    <circle cx="120" cy="152" r="6" fill="#232F3E"/>
+
+    <!-- ============ TRANSITIONS (before nodes) ============ -->
+
+    <!-- start -> OK -->
+    <path d="M126,152 H260" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="150" y="132" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="194" y="141" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">임계값 이내</text>
+
+    <!-- OK -> ALARM (top arc, forward, accent) -->
+    <path d="M400,140 Q560,60 720,140" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="512" y="76" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="560" y="85" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">임계값 초과</text>
+
+    <!-- ALARM -> OK (bottom arc, return) -->
+    <path d="M720,188 Q560,268 400,188" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="512" y="216" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="560" y="225" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">정상 복귀</text>
+
+    <!-- OK -> INSUFFICIENT_DATA (down-left diagonal via elbow) -->
+    <path d="M320,188 V420 Q320,428 328,428 H420" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="252" y="292" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="300" y="301" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">데이터 없음</text>
+
+    <!-- ALARM -> INSUFFICIENT_DATA -->
+    <path d="M760,188 V420 Q760,428 752,428 H628" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="672" y="292" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="720" y="301" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">데이터 없음</text>
+
+    <!-- INSUFFICIENT_DATA -> OK (return, offset from OK->INSUFFICIENT to avoid overlap) -->
+    <path d="M400,436 Q380,436 380,428 V236 Q380,228 372,228 H348" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="332" y="330" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="380" y="339" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">데이터 수신</text>
+
+    <!-- INSUFFICIENT_DATA -> ALARM (offset from ALARM->INSUFFICIENT to avoid overlap) -->
+    <path d="M648,436 Q668,436 668,428 V236 Q668,228 676,228 H700" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="612" y="330" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="668" y="339" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">수신+초과</text>
+
+    <!-- ============ NODES ============ -->
+
+    <!-- OK -->
+    <rect x="260" y="152" width="140" height="48" rx="8" fill="#ffffff"/>
+    <rect x="260" y="152" width="140" height="48" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="330" y="180" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OK</text>
+
+    <!-- ALARM (focal) -->
+    <rect x="620" y="152" width="140" height="48" rx="8" fill="rgba(255,153,0,0.10)"/>
+    <rect x="620" y="152" width="140" height="48" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="690" y="180" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ALARM</text>
+
+    <!-- INSUFFICIENT_DATA -->
+    <rect x="420" y="404" width="228" height="48" rx="8" fill="#ffffff"/>
+    <rect x="420" y="404" width="228" height="48" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="534" y="432" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">INSUFFICIENT_DATA</text>
+
+    <!-- Annotations (Geist Mono, muted, below each state) -->
+    <text x="330" y="220" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">메트릭이 정상 범위</text>
+    <text x="690" y="220" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">임계값 초과, 액션 실행</text>
+    <text x="534" y="472" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">평가에 필요한 데이터 부족</text>
+
+  </svg>

@@ -46,68 +46,7 @@ Prometheus is an open-source systems monitoring and alerting toolkit originally 
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    subgraph PROM["Prometheus Server"]
-        R[Retrieval<br/>Metric Collection]
-        T[TSDB<br/>Time Series DB]
-        H[HTTP Server<br/>Query API]
-        A[Alert Rules]
-    end
-
-    subgraph TARGETS["Scrape Targets"]
-        J1[Jobs/Exporters]
-        J2[Short-lived Jobs]
-        PG[Pushgateway]
-    end
-
-    subgraph SD["Service Discovery"]
-        K8S[Kubernetes]
-        DNS[DNS]
-        FILE[File SD]
-        CONSUL[Consul]
-    end
-
-    subgraph ALERT["Alert Processing"]
-        AM[Alertmanager]
-        EM[Email]
-        SL[Slack]
-        PD[PagerDuty]
-    end
-
-    subgraph VIS["Visualization/API"]
-        GF[Grafana]
-        API[API Clients]
-        UI[Prometheus UI]
-    end
-
-    SD --> R
-    R -->|scrape| J1
-    J2 -->|push| PG
-    R -->|scrape| PG
-    R --> T
-    T --> H
-    T --> A
-    A -->|alerts| AM
-    AM --> EM
-    AM --> SL
-    AM --> PD
-    H --> GF
-    H --> API
-    H --> UI
-
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef targets fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef sd fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef alert fill:#EB6E85,stroke:#333,stroke-width:1px,color:white
-    classDef vis fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class R,T,H,A prometheus
-    class J1,J2,PG targets
-    class K8S,DNS,FILE,CONSUL sd
-    class AM,EM,SL,PD alert
-    class GF,API,UI vis
-```
+![Prometheus architecture diagram showing service discovery feeding the Retrieval component, which scrapes exporters and Pushgateway targets and writes into the TSDB; the TSDB serves the HTTP query API out to Grafana, API clients, and the Prometheus UI, and feeds alert rule evaluation into Alertmanager, which routes to email, Slack, and PagerDuty.](../../.gitbook/assets/en-observability-metrics-01-prometheus-0.png)
 
 ### Data Flow
 
@@ -468,28 +407,7 @@ Prometheus Operator is a controller for declaratively managing Prometheus in Kub
 
 ### Custom Resource Definitions (CRDs)
 
-```mermaid
-flowchart TD
-    PO[Prometheus Operator] --> P[Prometheus]
-    PO --> AM[Alertmanager]
-    PO --> TM[ThanosRuler]
-
-    P --> SM[ServiceMonitor]
-    P --> PM[PodMonitor]
-    P --> PR[PrometheusRule]
-    P --> SC[ScrapeConfig]
-    P --> PB[Probe]
-
-    AM --> AMC[AlertmanagerConfig]
-
-    classDef operator fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef resource fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef config fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class PO operator
-    class P,AM,TM resource
-    class SM,PM,PR,SC,PB,AMC config
-```
+![Hierarchy diagram of Prometheus Operator custom resources, showing the Operator managing Prometheus, Alertmanager, and ThanosRuler, with Prometheus in turn governing ServiceMonitor, PodMonitor, PrometheusRule, ScrapeConfig, and Probe, and Alertmanager governing AlertmanagerConfig.](../../.gitbook/assets/en-observability-metrics-01-prometheus-1.png)
 
 ### ServiceMonitor
 

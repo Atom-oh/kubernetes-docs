@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="correlate-title correlate-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="correlate-title">Sequence of a Grafana-led investigation of a slow API response across Prometheus, Tempo, and Loki</title>
+    <desc id="correlate-desc">A user's slow-API investigation flows entirely through Grafana, which queries Prometheus for a P99 exemplar, follows the trace ID into Tempo to find the bottleneck service, then filters Loki logs by that same trace ID before returning one unified answer.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- ===== Lifelines ===== -->
+    <line x1="100" y1="80" x2="100" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="288" y1="80" x2="288" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="476" y1="80" x2="476" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="664" y1="80" x2="664" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="852" y1="80" x2="852" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- ===== Activation bars ===== -->
+    <rect x="284" y="100" width="8" height="396" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="0.8"/>
+    <rect x="472" y="152" width="8" height="64" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+    <rect x="660" y="272" width="8" height="64" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+    <rect x="848" y="372" width="8" height="64" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+    <!-- ===== Messages ===== -->
+    <!-- m1 User -> Grafana -->
+    <path d="M 100,112 H 288" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="130" y="94" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="194" y="103" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">INVESTIGATE SLOW API</text>
+
+    <!-- m2 Grafana -> Prometheus -->
+    <path d="M 288,160 H 476" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="330" y="142" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="382" y="151" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">QUERY P99 LATENCY</text>
+
+    <!-- m3 Prometheus --> Grafana (return) -->
+    <path d="M 476,208 H 288" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="322" y="190" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="382" y="199" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">METRICS + EXEMPLAR</text>
+
+    <!-- Note -->
+    <rect x="296" y="240" width="220" height="16" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+    <text x="306" y="251" fill="#545B64" font-size="10" font-style="italic"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Identify bottleneck service</text>
+
+    <!-- m4 Grafana -> Tempo -->
+    <path d="M 288,280 H 664" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="418" y="262" width="116" height="12" rx="2" fill="#ffffff"/>
+    <text x="476" y="271" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">LOOKUP TRACE BY ID</text>
+
+    <!-- m5 Tempo --> Grafana -->
+    <path d="M 664,328 H 288" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="420" y="310" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="476" y="319" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">FULL REQUEST FLOW</text>
+
+    <!-- m6 Grafana -> Loki -->
+    <path d="M 288,380 H 852" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="510" y="362" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="570" y="371" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">QUERY LOGS (TRACE ID)</text>
+
+    <!-- m7 Loki --> Grafana -->
+    <path d="M 852,428 H 288" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="518" y="410" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="570" y="419" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">RELATED LOGS</text>
+
+    <!-- m8 Grafana --> User (headline result) -->
+    <path d="M 288,480 H 100" fill="none" stroke="#EC7211" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+    <rect x="112" y="462" width="164" height="12" rx="2" fill="#ffffff"/>
+    <text x="194" y="471" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">UNIFIED ANALYSIS RESULTS</text>
+
+    <!-- ===== Actor boxes ===== -->
+    <rect x="40" y="40" width="120" height="40" rx="6" fill="#ffffff"/>
+    <rect x="40" y="40" width="120" height="40" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="100" y="64" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">User</text>
+
+    <rect x="228" y="40" width="120" height="40" rx="6" fill="#ffffff"/>
+    <rect x="228" y="40" width="120" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="288" y="64" fill="#232F3E" font-size="12" font-weight="700"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana</text>
+
+    <rect x="416" y="40" width="120" height="40" rx="6" fill="#ffffff"/>
+    <rect x="416" y="40" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="476" y="64" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus</text>
+
+    <rect x="604" y="40" width="120" height="40" rx="6" fill="#ffffff"/>
+    <rect x="604" y="40" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="664" y="64" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Tempo</text>
+
+    <rect x="792" y="40" width="120" height="40" rx="6" fill="#ffffff"/>
+    <rect x="792" y="40" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="852" y="64" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Loki</text>
+
+    <!-- Legend -->
+    <line x1="24" y1="520" x2="936" y2="520" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="538" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="140" y1="535" x2="172" y2="535" stroke="#545B64" stroke-width="1.2"/>
+    <text x="182" y="538" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Call</text>
+    <line x1="230" y1="535" x2="262" y2="535" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4"/>
+    <text x="272" y="538" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Return</text>
+    <line x1="340" y1="535" x2="372" y2="535" stroke="#EC7211" stroke-width="1.2" stroke-dasharray="5,4"/>
+    <text x="382" y="538" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Final unified result</text>
+  </svg>

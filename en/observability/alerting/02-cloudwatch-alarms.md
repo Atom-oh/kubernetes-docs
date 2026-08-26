@@ -48,90 +48,13 @@ Amazon CloudWatch Alarms is the alerting feature of AWS's native monitoring serv
 
 ### CloudWatch Alarms Operation Flow
 
-```mermaid
-graph TB
-    subgraph Sources["Metric Sources"]
-        EC2[EC2]
-        EKS[EKS]
-        RDS[RDS]
-        Lambda[Lambda]
-        Custom[Custom Metrics]
-    end
-
-    subgraph CloudWatch["Amazon CloudWatch"]
-        Metrics[Metrics]
-        Alarms[Alarms]
-        Math[Metrics Math]
-        AD[Anomaly Detection]
-    end
-
-    subgraph Actions["Alarm Actions"]
-        SNS[SNS Topic]
-        AS[Auto Scaling]
-        EC2A[EC2 Actions]
-        SSM[Systems Manager]
-    end
-
-    subgraph Notifications["Notification Channels"]
-        Email[Email]
-        SMS[SMS]
-        Lambda2[Lambda Function]
-        HTTP[HTTP/HTTPS]
-    end
-
-    EC2 --> Metrics
-    EKS --> Metrics
-    RDS --> Metrics
-    Lambda --> Metrics
-    Custom --> Metrics
-
-    Metrics --> Alarms
-    Metrics --> Math
-    Math --> Alarms
-    Metrics --> AD
-    AD --> Alarms
-
-    Alarms --> SNS
-    Alarms --> AS
-    Alarms --> EC2A
-    Alarms --> SSM
-
-    SNS --> Email
-    SNS --> SMS
-    SNS --> Lambda2
-    SNS --> HTTP
-
-    style CloudWatch fill:#ff9900,color:#ffffff
-    style Actions fill:#3f8624,color:#ffffff
-    style Notifications fill:#146eb4,color:#ffffff
-```
+![Metrics from EC2, EKS, RDS, Lambda, and custom sources feed CloudWatch Metrics, which alarms evaluate directly or via metric math and anomaly detection bands; triggered alarms fan out to SNS and other actions, and SNS forwards to notification channels.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-0.png)
 
 ### Alarm States
 
 CloudWatch Alarms have three states:
 
-```mermaid
-stateDiagram-v2
-    [*] --> OK: Within threshold
-    OK --> ALARM: Threshold exceeded
-    ALARM --> OK: Returns to normal
-    OK --> INSUFFICIENT_DATA: No data
-    ALARM --> INSUFFICIENT_DATA: No data
-    INSUFFICIENT_DATA --> OK: Data received
-    INSUFFICIENT_DATA --> ALARM: Data received + threshold exceeded
-
-    note right of OK
-        Metric is within normal range
-    end note
-
-    note right of ALARM
-        Threshold exceeded, actions execute
-    end note
-
-    note right of INSUFFICIENT_DATA
-        Insufficient data for evaluation
-    end note
-```
+![A CloudWatch alarm starts OK, moves to ALARM when its threshold is exceeded and back to OK once the metric returns to normal, and falls into INSUFFICIENT_DATA from either state when metric data stops arriving until data resumes.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-1.png)
 
 ---
 
@@ -275,28 +198,7 @@ math-functions:
 
 Composite Alarms can combine multiple Metric Alarms to define complex conditions.
 
-```mermaid
-graph TB
-    subgraph MetricAlarms["Metric Alarms"]
-        A1[High CPU Alarm]
-        A2[High Memory Alarm]
-        A3[High Disk Alarm]
-    end
-
-    subgraph CompositeAlarm["Composite Alarm"]
-        CA[Server Resource<br/>Critical Alarm]
-        Rule["Rule: (CPU AND Memory)<br/>OR Disk"]
-    end
-
-    A1 --> CA
-    A2 --> CA
-    A3 --> CA
-    Rule --> CA
-
-    CA --> Action[SNS/Lambda]
-
-    style CompositeAlarm fill:#ff9900
-```
+![Three metric alarms and a combining rule feed a composite alarm that evaluates the boolean condition across them, and only the composite alarm triggers the downstream SNS/Lambda action.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-2.png)
 
 ### Creating Composite Alarms
 
@@ -401,23 +303,7 @@ aws cloudwatch set-alarm-state \
 
 CloudWatch Anomaly Detection uses machine learning to learn normal patterns of metrics and detect outliers.
 
-```mermaid
-graph LR
-    subgraph Learning["Learning Phase"]
-        H[Historical Data] --> ML[ML Model]
-        ML --> B[Expected Band]
-    end
-
-    subgraph Detection["Detection Phase"]
-        M[Current Metrics] --> C{Within Band?}
-        B --> C
-        C -->|No| A[Anomaly Alert]
-        C -->|Yes| N[Normal]
-    end
-
-    style Learning fill:#e3f2fd
-    style Detection fill:#fff3e0
-```
+![A learning phase trains an ML model on historical data to produce an expected band, and a detection phase checks current metrics against that band, raising an anomaly alert when they fall outside it or marking the metric normal when they fall within it.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png)
 
 ### Creating Anomaly Detection Alarms
 
@@ -647,18 +533,7 @@ aws events put-targets \
 
 ### Automatic Response Configuration
 
-```mermaid
-graph LR
-    A[CloudWatch Alarm] --> B[EventBridge]
-    B --> C{Event Rule}
-    C --> D[Lambda: Auto Scaling]
-    C --> E[Lambda: Instance Restart]
-    C --> F[Lambda: Slack Notification]
-    C --> G[SSM: Runbook Execution]
-    C --> H[Step Functions: Recovery Workflow]
-
-    style B fill:#ff9900
-```
+![A CloudWatch alarm state change flows through EventBridge to an event rule that dispatches it to one of five automated responses: auto scaling, instance restart, Slack notification, an SSM runbook, or a Step Functions recovery workflow.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-4.png)
 
 ### EventBridge Event Pattern
 
@@ -902,26 +777,7 @@ aws cloudwatch put-metric-alarm \
 
 ### Cost Optimization Strategies
 
-```mermaid
-graph TB
-    A[Cost Optimization] --> B[Minimize Alarm Count]
-    A --> C[Optimize Resolution]
-    A --> D[Use Composite Alarms]
-    A --> E[Remove Unnecessary Alarms]
-
-    B --> B1[Consolidate Duplicate Alarms]
-    B --> B2[Replace with Composite]
-
-    C --> C1[Set Resolution by Priority]
-    C --> C2[Minimize High Resolution]
-
-    D --> D1[Combine Multiple Metric Alarms<br/>into One Composite]
-
-    E --> E1[Delete Unused Alarms]
-    E --> E2[Regular Review]
-
-    style A fill:#ff9900
-```
+![Four cost-optimization strategies branch from a central goal — minimizing alarm count, optimizing evaluation resolution, using composite alarms, and removing unnecessary alarms — each broken down into concrete tactics.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png)
 
 ### Recommended Settings
 

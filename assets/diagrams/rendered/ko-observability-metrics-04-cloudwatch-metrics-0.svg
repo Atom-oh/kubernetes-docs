@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="cwcompare-title cwcompare-desc">
+    <title id="cwcompare-title">CloudWatch와 오픈소스 모니터링 비교</title>
+    <desc id="cwcompare-desc">CloudWatch는 완전 관리형·AWS 네이티브·사용량 기반 비용·15개월 보존을 제공하고, Prometheus/VictoriaMetrics 같은 오픈소스 스택은 자체 운영·클라우드 중립·인프라 비용만·무제한 보존이라는 상반된 특성을 가진다는 것을 보여준다.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone: CloudWatch (focal) -->
+    <rect x="40" y="96" width="420" height="336" rx="8"
+          fill="rgba(255,153,0,0.04)" stroke="#EC7211" stroke-width="1" stroke-dasharray="0"/>
+    <rect x="60" y="100" width="112" height="16" rx="2" fill="#ffffff"/>
+    <text x="116" y="112" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.12em">CLOUDWATCH</text>
+
+    <!-- Zone: Open source -->
+    <rect x="500" y="96" width="420" height="336" rx="8"
+          fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+    <rect x="520" y="100" width="200" height="16" rx="2" fill="#ffffff"/>
+    <text x="620" y="112" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.12em">오픈소스 · PROMETHEUS/VM</text>
+
+    <!-- CloudWatch feature nodes -->
+    <g>
+      <rect x="60" y="128" width="380" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="250" y="163" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">완전 관리형</text>
+    </g>
+    <g>
+      <rect x="60" y="204" width="380" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="250" y="239" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS 네이티브</text>
+    </g>
+    <g>
+      <rect x="60" y="280" width="380" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="250" y="315" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">사용량 기반 비용</text>
+    </g>
+    <g>
+      <rect x="60" y="356" width="380" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="250" y="391" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">15개월 보존</text>
+    </g>
+
+    <!-- Open source feature nodes -->
+    <g>
+      <rect x="520" y="128" width="380" height="60" rx="6" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="1"/>
+      <text x="710" y="163" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">자체 운영</text>
+    </g>
+    <g>
+      <rect x="520" y="204" width="380" height="60" rx="6" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="1"/>
+      <text x="710" y="239" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라우드 중립</text>
+    </g>
+    <g>
+      <rect x="520" y="280" width="380" height="60" rx="6" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="1"/>
+      <text x="710" y="315" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">인프라 비용만</text>
+    </g>
+    <g>
+      <rect x="520" y="356" width="380" height="60" rx="6" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="1"/>
+      <text x="710" y="391" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">무제한 보존</text>
+    </g>
+
+    <!-- Legend -->
+    <line x1="40" y1="472" x2="920" y2="472" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="488" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <rect x="40" y="500" width="14" height="10" rx="2" fill="rgba(255,153,0,0.04)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="509" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">관리형 서비스 (이 문서 주제)</text>
+    <rect x="320" y="500" width="14" height="10" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+    <text x="340" y="509" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">자체 운영 오픈소스</text>
+  </svg>

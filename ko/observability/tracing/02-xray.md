@@ -19,56 +19,7 @@ AWS X-Ray는 분산 애플리케이션의 요청을 추적하고 분석하는 AW
 
 ## 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph EKS["Amazon EKS 클러스터"]
-        subgraph Apps["애플리케이션 Pod"]
-            APP1[Service A<br/>X-Ray SDK]
-            APP2[Service B<br/>X-Ray SDK]
-            APP3[Service C<br/>X-Ray SDK]
-        end
-
-        subgraph Collector["데이터 수집"]
-            DAEMON[X-Ray Daemon<br/>DaemonSet]
-            ADOT[ADOT Collector<br/>Sidecar/DaemonSet]
-        end
-    end
-
-    subgraph AWS["AWS 서비스"]
-        XRAY[AWS X-Ray]
-        CW[CloudWatch]
-        LENS[ServiceLens]
-        INSIGHTS[X-Ray Insights]
-    end
-
-    subgraph Other["기타 AWS 서비스"]
-        LAMBDA[Lambda]
-        APIGW[API Gateway]
-        SQS[SQS]
-        SNS[SNS]
-    end
-
-    APP1 & APP2 & APP3 -->|세그먼트| DAEMON
-    APP1 & APP2 & APP3 -->|OTLP| ADOT
-    DAEMON -->|UDP/TCP| XRAY
-    ADOT -->|OTLP| XRAY
-
-    LAMBDA & APIGW & SQS & SNS -->|자동 계측| XRAY
-
-    XRAY --> CW
-    XRAY --> LENS
-    XRAY --> INSIGHTS
-
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef collector fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef other fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-
-    class APP1,APP2,APP3 app
-    class DAEMON,ADOT collector
-    class XRAY,CW,LENS,INSIGHTS aws
-    class LAMBDA,APIGW,SQS,SNS other
-```
+![EKS 클러스터의 애플리케이션 Pod가 X-Ray Daemon과 ADOT Collector를 통해 세그먼트를 전송하고, Lambda 등 다른 AWS 서비스의 자동 계측 데이터와 함께 AWS X-Ray로 모여 CloudWatch, ServiceLens, X-Ray Insights로 전달되는 트레이싱 아키텍처를 보여준다.](../../.gitbook/assets/ko-observability-tracing-02-xray-0.png)
 
 ## X-Ray Daemon 배포
 
@@ -726,35 +677,7 @@ aws xray get-sampling-statistic-summaries
 
 ### X-Ray 콘솔에서 서비스 맵 활용
 
-```mermaid
-flowchart TD
-    subgraph ServiceMap["X-Ray 서비스 맵"]
-        CLIENT[Client<br/>응답 시간: 250ms]
-        APIGW[API Gateway<br/>응답 시간: 50ms]
-        AUTH[Auth Service<br/>응답 시간: 30ms]
-        ORDER[Order Service<br/>응답 시간: 100ms]
-        PAYMENT[Payment Service<br/>응답 시간: 150ms<br/>오류율: 2%]
-        DB[(DynamoDB<br/>응답 시간: 20ms)]
-        CACHE[(ElastiCache<br/>응답 시간: 5ms)]
-    end
-
-    CLIENT --> APIGW
-    APIGW --> AUTH
-    APIGW --> ORDER
-    ORDER --> PAYMENT
-    ORDER --> DB
-    ORDER --> CACHE
-    PAYMENT --> DB
-
-    classDef healthy fill:#34A853,stroke:#333,stroke-width:1px,color:white
-    classDef warning fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef error fill:#EA4335,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-
-    class CLIENT,APIGW,AUTH,ORDER healthy
-    class PAYMENT warning
-    class DB,CACHE storage
-```
+![클라이언트 요청이 API Gateway를 거쳐 Auth Service와 Order Service로 분기되고, Order Service가 Payment Service·DynamoDB·ElastiCache를 호출하는 각 경로의 응답 시간과 Payment Service의 오류율을 보여주는 X-Ray 서비스 맵.](../../.gitbook/assets/ko-observability-tracing-02-xray-1.png)
 
 ### 프로그래밍 방식으로 서비스 맵 조회
 

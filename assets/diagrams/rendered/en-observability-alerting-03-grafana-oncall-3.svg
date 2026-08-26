@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-observability-alerting-03-grafana-oncall-3-title en-observability-alerting-03-grafana-oncall-3-desc">
+<title id="en-observability-alerting-03-grafana-oncall-3-title">Grafana OnCall Escalation Chain Steps</title>
+<desc id="en-observability-alerting-03-grafana-oncall-3-desc">Flowchart showing a four-step escalation chain: each step waits 15 minutes for a response before escalating to the next responder tier, from the current on-call through secondary, team lead, and finally the entire team, with any timely response resolving the alert.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 420,56 L 420,88" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 420,128 L 420,160" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 490,192 H 607.0 Q 615.0,192 615.0,200 V 334 Q 615.0,342 623.0,342 H 740" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M 420,224 L 420,256" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 420,296 L 420,324" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 490,356 L 740,356" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 420,388 L 420,420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 420,460 L 420,488" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 490,520 H 607.0 Q 615.0,520 615.0,512 V 378 Q 615.0,370 623.0,370 H 740" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 350,520 L 300,520" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="428" y="233" width="20" height="14" rx="2" fill="#ffffff"/><text x="438.0" y="243" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<rect x="428" y="397" width="20" height="14" rx="2" fill="#ffffff"/><text x="438.0" y="407" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<rect x="305" y="513" width="20" height="14" rx="2" fill="#ffffff"/><text x="315.0" y="523" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<rect x="569.0" y="172" width="92" height="12" rx="2" fill="#ffffff"/><text x="615" y="181" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES · RESOLVED</text>
+<rect x="602.0" y="336" width="26" height="12" rx="2" fill="#ffffff"/><text x="615" y="345" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<rect x="602.0" y="400" width="26" height="12" rx="2" fill="#ffffff"/><text x="615" y="409" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<ellipse cx="420" cy="36" rx="80.0" ry="20.0" fill="#ffffff"/>
+<ellipse cx="420" cy="36" rx="80.0" ry="20.0" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="420" y="40" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Alert Fired</text>
+<rect x="340" y="88" width="160" height="40" rx="6" fill="#ffffff"/>
+<rect x="340" y="88" width="160" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420.0" y="112.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Step 1: Current On-Call</text>
+<polygon points="420,160.0 490.0,192 420,224.0 350.0,192" fill="#ffffff"/>
+<polygon points="420,160.0 490.0,192 420,224.0 350.0,192" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420" y="190" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Response</text>
+<text x="420" y="204" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">within 15min?</text>
+<rect x="340" y="256" width="160" height="40" rx="6" fill="#ffffff"/>
+<rect x="340" y="256" width="160" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420.0" y="280.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Step 2: Secondary On-Call</text>
+<polygon points="420,324.0 490.0,356 420,388.0 350.0,356" fill="#ffffff"/>
+<polygon points="420,324.0 490.0,356 420,388.0 350.0,356" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420" y="354" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Response</text>
+<text x="420" y="368" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">within 15min?</text>
+<rect x="340" y="420" width="160" height="40" rx="6" fill="#ffffff"/>
+<rect x="340" y="420" width="160" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420.0" y="444.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Step 3: Team Lead</text>
+<polygon points="420,488.0 490.0,520 420,552.0 350.0,520" fill="#ffffff"/>
+<polygon points="420,488.0 490.0,520 420,552.0 350.0,520" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420" y="518" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Response</text>
+<text x="420" y="532" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">within 15min?</text>
+<rect x="140" y="496" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="140" y="496" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220.0" y="524.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Step 4: Entire Team</text>
+<ellipse cx="830" cy="356" rx="90.0" ry="28.0" fill="#ffffff"/>
+<ellipse cx="830" cy="356" rx="90.0" ry="28.0" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="830" y="360" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Alert Resolved</text>
+<line x1="24" y1="576" x2="936" y2="576" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="24" y="592" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<ellipse cx="145" cy="581" rx="7" ry="5" fill="none" stroke="#232F3E" stroke-width="1.2"/>
+<text x="158" y="585" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">OVAL = START / END</text>
+<polygon points="425,576 431,581 425,586 419,581" fill="none" stroke="#232F3E" stroke-width="1.2"/>
+<text x="438" y="585" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">DIAMOND = DECISION</text>
+<rect x="700" y="576" width="10" height="10" rx="2" fill="none" stroke="#EC7211" stroke-width="1.4"/>
+<text x="718" y="585" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">FOCAL — RESOLUTION</text>
+</svg>

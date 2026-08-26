@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="xray-arch-title xray-arch-desc">
+  <title id="xray-arch-title">X-Ray Trace Collection Architecture on EKS</title>
+  <desc id="xray-arch-desc">Application pods in an Amazon EKS cluster instrumented with the X-Ray SDK send trace segments to an X-Ray daemon and OTLP data to an ADOT collector; both forward traces to AWS X-Ray, which also receives auto-instrumented traces from Lambda, API Gateway, SQS, and SNS, and feeds CloudWatch, ServiceLens, and X-Ray Insights.</desc>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- ============ HEADER ============ -->
+  <text x="32" y="28" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">AWS X-RAY · ARCHITECTURE</text>
+  <text x="32" y="54" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Trace Collection Architecture on EKS</text>
+  <text x="32" y="74" fill="#545B64" font-size="12" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">From instrumented pods to centralized trace analysis</text>
+
+  <!-- ============ ZONES (bg -> zones -> arrows -> nodes) ============ -->
+  <rect x="32" y="144" width="440" height="304" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="48" y="148" width="184" height="12" rx="2" fill="#ffffff"/>
+  <text x="140" y="157" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AMAZON EKS CLUSTER</text>
+
+  <rect x="504" y="144" width="432" height="316" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="520" y="148" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="564" y="157" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AWS CLOUD</text>
+
+  <!-- ============ ARROW MARKERS ============ -->
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <!-- ============ ARROWS (drawn before nodes) ============ -->
+
+  <!-- Apps -> Daemon (straight vertical, x=148) -->
+  <path d="M148,268 V288" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Apps -> ADOT (straight vertical, x=356) -->
+  <path d="M356,268 V328" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Daemon -> X-Ray (straight horizontal, y=332) -->
+  <path d="M232,332 H536" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- ADOT -> X-Ray (straight horizontal, y=372) -->
+  <path d="M440,372 H536" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Other AWS Services -> X-Ray (straight vertical, x=620) -->
+  <path d="M620,260 V308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- X-Ray -> CloudWatch -->
+  <path d="M704,330 Q712,330 712,322 V228 Q712,220 720,220 H744" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- X-Ray -> ServiceLens -->
+  <path d="M704,352 H716 Q724,352 724,344 V316 Q724,308 732,308 H744" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- X-Ray -> X-Ray Insights -->
+  <path d="M704,374 H728 Q736,374 736,382 V388 Q736,396 744,396" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- ============ ARROW LABELS (masked, gapped) ============ -->
+
+  <!-- SEGMENTS beside vertical A1 -->
+  <rect x="156" y="252" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="188" y="261" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SEGMENTS</text>
+
+  <!-- OTLP beside vertical A2 -->
+  <rect x="364" y="292" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="384" y="301" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OTLP</text>
+
+  <!-- UDP/TCP above Daemon -> X-Ray -->
+  <rect x="356" y="312" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="384" y="321" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">UDP/TCP</text>
+
+  <!-- OTLP above ADOT -> X-Ray -->
+  <rect x="460" y="352" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="361" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OTLP</text>
+
+  <!-- AUTO-INSTR beside Other AWS -> X-Ray -->
+  <rect x="628" y="278" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="664" y="287" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AUTO-INSTR</text>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- Apps (Service A/B/C) -->
+  <rect x="64" y="188" width="360" height="80" rx="6" fill="#ffffff"/>
+  <rect x="64" y="188" width="360" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="72" y="196" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="88" y="205" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+  <text x="244" y="226" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service A · Service B · Service C</text>
+  <text x="244" y="244" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">X-Ray SDK instrumented</text>
+
+  <!-- Daemon -->
+  <rect x="64" y="288" width="168" height="88" rx="6" fill="#ffffff"/>
+  <rect x="64" y="288" width="168" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="72" y="296" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="88" y="305" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+  <text x="148" y="330" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">X-Ray Daemon</text>
+  <text x="148" y="348" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">DaemonSet · :2000</text>
+
+  <!-- ADOT -->
+  <rect x="272" y="328" width="168" height="88" rx="6" fill="#ffffff"/>
+  <rect x="272" y="328" width="168" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="280" y="336" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="296" y="345" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+  <text x="356" y="370" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ADOT Collector</text>
+  <text x="356" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Sidecar / DaemonSet</text>
+
+  <!-- Other AWS Services -->
+  <rect x="536" y="188" width="168" height="72" rx="6" fill="#ffffff"/>
+  <rect x="536" y="188" width="168" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="544" y="196" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="560" y="205" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+  <text x="620" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Lambda · API GW · SQS · SNS</text>
+  <text x="620" y="246" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Auto-instrumented</text>
+
+  <!-- X-Ray (focal) -->
+  <rect x="536" y="308" width="168" height="88" rx="6" fill="#ffffff"/>
+  <rect x="536" y="308" width="168" height="88" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="544" y="316" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.60)" stroke-width="0.8"/>
+  <text x="560" y="325" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+  <text x="620" y="350" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS X-Ray</text>
+  <text x="620" y="368" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Trace store &amp; analysis</text>
+
+  <!-- CloudWatch -->
+  <rect x="744" y="188" width="152" height="64" rx="6" fill="#ffffff"/>
+  <rect x="744" y="188" width="152" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="752" y="196" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="768" y="205" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+  <text x="820" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudWatch</text>
+  <text x="820" y="240" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Metrics &amp; logs</text>
+
+  <!-- ServiceLens -->
+  <rect x="744" y="276" width="152" height="64" rx="6" fill="#ffffff"/>
+  <rect x="744" y="276" width="152" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="752" y="284" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="768" y="293" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+  <text x="820" y="312" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ServiceLens</text>
+  <text x="820" y="328" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Unified observability</text>
+
+  <!-- X-Ray Insights -->
+  <rect x="744" y="364" width="152" height="64" rx="6" fill="#ffffff"/>
+  <rect x="744" y="364" width="152" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="752" y="372" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="768" y="381" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+  <text x="820" y="400" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">X-Ray Insights</text>
+  <text x="820" y="416" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Anomaly detection</text>
+
+  <!-- ============ LEGEND ============ -->
+  <line x1="32" y1="548" x2="928" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="32" y="566" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+  <rect x="112" y="558" width="16" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="136" y="566" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">AWS X-Ray — trace ingestion &amp; analysis hub</text>
+
+  <line x1="452" y1="563" x2="480" y2="563" stroke="#545B64" stroke-width="1.2"/>
+  <text x="492" y="566" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Trace &amp; telemetry data</text>
+
+  <line x1="676" y1="563" x2="704" y2="563" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="716" y="566" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Trace fan-out to analysis services</text>
+
+</svg>

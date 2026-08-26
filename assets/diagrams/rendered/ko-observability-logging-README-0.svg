@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="pipe-title pipe-desc">
+<title id="pipe-title">로그 수집 파이프라인 5단계 아키텍처</title>
+<desc id="pipe-desc">애플리케이션·시스템·Kubernetes·컨트롤 플레인 로그가 DaemonSet/Sidecar/OTEL 수집기를 거쳐 파싱·정규화·필터링·버퍼링되고, Loki·OpenSearch·CloudWatch·ClickHouse에 저장된 뒤 Grafana 등 분석 도구로 조회되는 순차 파이프라인.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    .name{ font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif; font-weight:600; font-size:13px; }
+    .sub9{ font-family:'Geist Mono',ui-monospace,monospace; font-size:9px; }
+    .tag{ font-family:'Geist Mono',ui-monospace,monospace; font-size:7px; letter-spacing:0.08em; }
+    .lbl{ font-family:'Geist Mono',ui-monospace,monospace; font-size:8px; letter-spacing:0.06em; }
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- ================= ARROWS (behind nodes) ================= -->
+<!-- SRC -> COLLECT -->
+<path d="M 480,128 V 168" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="500" y="140" width="64" height="16" rx="2" fill="#ffffff"/>
+<text y="151" class="lbl" fill="#7D8998" text-anchor="start"><tspan x="524.0">수</tspan><tspan x="532.0">집</tspan></text>
+
+<!-- COLLECT -> PROC -->
+<path d="M 480,232 V 272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="500" y="244" width="64" height="16" rx="2" fill="#ffffff"/>
+<text y="255" class="lbl" fill="#7D8998" text-anchor="start"><tspan x="524.0">전</tspan><tspan x="532.0">달</tspan></text>
+
+<!-- PROC -> STORE -->
+<path d="M 480,336 V 376" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="500" y="348" width="64" height="16" rx="2" fill="#ffffff"/>
+<text y="359" class="lbl" fill="#EC7211" text-anchor="start"><tspan x="524.0">적</tspan><tspan x="532.0">재</tspan></text>
+
+<!-- STORE -> VIZ -->
+<path d="M 480,440 V 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="500" y="452" width="64" height="16" rx="2" fill="#ffffff"/>
+<text y="463" class="lbl" fill="#7D8998" text-anchor="start"><tspan x="524.0">조</tspan><tspan x="532.0">회</tspan></text>
+
+<!-- ================= NODES ================= -->
+<!-- 1. Sources (input treatment) -->
+<rect x="320" y="64" width="320" height="64" rx="6" fill="#ffffff"/>
+<rect x="320" y="64" width="320" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="328" y="72" width="48" height="12" rx="2" fill="transparent" stroke="#7D899866" stroke-width="0.8"/>
+<text x="352" y="81" class="tag" fill="#545B64" text-anchor="middle">SRC</text>
+<text y="96" class="name" fill="#232F3E" text-anchor="start"><tspan x="454.2">로</tspan><tspan x="466.2">그</tspan><tspan x="481.8">소</tspan><tspan x="493.8">스</tspan></text>
+<text x="480" y="114" class="sub9" fill="#545B64" text-anchor="middle">APP · SYS · K8S · CTRL</text>
+
+<!-- 2. Collection layer -->
+<rect x="320" y="168" width="320" height="64" rx="6" fill="#ffffff"/>
+<rect x="320" y="168" width="320" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="328" y="176" width="48" height="12" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+<text x="352" y="185" class="tag" fill="#545B64" text-anchor="middle">COLL</text>
+<text y="200" class="name" fill="#232F3E" text-anchor="start"><tspan x="454.2">수</tspan><tspan x="466.2">집</tspan><tspan x="481.8">계</tspan><tspan x="493.8">층</tspan></text>
+<text x="480" y="218" class="sub9" fill="#545B64" text-anchor="middle">DaemonSet · Sidecar · OTEL Collector</text>
+
+<!-- 3. Processing layer (FOCAL) -->
+<rect x="320" y="272" width="320" height="64" rx="6" fill="#ffffff"/>
+<rect x="320" y="272" width="320" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<rect x="328" y="280" width="48" height="12" rx="2" fill="transparent" stroke="#EC721180" stroke-width="0.8"/>
+<text x="352" y="289" class="tag" fill="#EC7211" text-anchor="middle">PROC</text>
+<text y="304" class="name" fill="#232F3E" text-anchor="start"><tspan x="454.2">처</tspan><tspan x="466.2">리</tspan><tspan x="481.8">계</tspan><tspan x="493.8">층</tspan></text>
+<text x="480" y="322" class="sub9" fill="#545B64" text-anchor="middle">Parse → Enrich → Filter → Buffer</text>
+
+<!-- 4. Storage layer (store treatment) -->
+<rect x="320" y="376" width="320" height="64" rx="6" fill="#ffffff"/>
+<rect x="320" y="376" width="320" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="328" y="384" width="48" height="12" rx="2" fill="transparent" stroke="#545B6466" stroke-width="0.8"/>
+<text x="352" y="393" class="tag" fill="#545B64" text-anchor="middle">STORE</text>
+<text y="408" class="name" fill="#232F3E" text-anchor="start"><tspan x="454.2">저</tspan><tspan x="466.2">장</tspan><tspan x="481.8">계</tspan><tspan x="493.8">층</tspan></text>
+<text x="480" y="426" class="sub9" fill="#545B64" text-anchor="middle">Loki · OpenSearch · CloudWatch · ClickHouse</text>
+
+<!-- 5. Analysis layer -->
+<rect x="320" y="480" width="320" height="64" rx="6" fill="#ffffff"/>
+<rect x="320" y="480" width="320" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="328" y="488" width="48" height="12" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+<text x="352" y="497" class="tag" fill="#545B64" text-anchor="middle">VIZ</text>
+<text y="512" class="name" fill="#232F3E" text-anchor="start"><tspan x="454.2">분</tspan><tspan x="466.2">석</tspan><tspan x="481.8">계</tspan><tspan x="493.8">층</tspan></text>
+<text x="480" y="530" class="sub9" fill="#545B64" text-anchor="middle">Grafana · OpenSearch Dashboards · CW Insights</text>
+
+<!-- ================= LEGEND ================= -->
+<line x1="30" y1="562" x2="930" y2="562" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="580" class="lbl" fill="#545B64" letter-spacing="0.14em">LEGEND</text>
+<rect x="120" y="572" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text y="581" class="sub9" fill="#545B64"><tspan x="140.0">입</tspan><tspan x="149.0">력</tspan><tspan x="158.0">(</tspan><tspan x="162.9">소</tspan><tspan x="171.9">스</tspan><tspan x="180.9">)</tspan></text>
+<rect x="260" y="572" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text y="581" class="sub9" fill="#545B64"><tspan x="280.0">처</tspan><tspan x="289.0">리</tspan><tspan x="300.7">단</tspan><tspan x="309.7">계</tspan></text>
+<rect x="400" y="572" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text y="581" class="sub9" fill="#545B64"><tspan x="420.0">핵</tspan><tspan x="429.0">심</tspan><tspan x="440.7">변</tspan><tspan x="449.7">환</tspan><tspan x="458.7">(</tspan><tspan x="463.6">강</tspan><tspan x="472.6">조</tspan><tspan x="481.6">)</tspan></text>
+<rect x="580" y="572" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text y="581" class="sub9" fill="#545B64"><tspan x="600.0">저</tspan><tspan x="609.0">장</tspan><tspan x="618.0">소</tspan></text>
+</svg>

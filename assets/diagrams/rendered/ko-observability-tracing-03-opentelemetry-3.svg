@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d3-title d3-desc">
+    <title id="d3-title">Receivers → Processors → Exporters 파이프라인</title>
+    <desc id="d3-desc">OTel Collector 내부에서 Receivers가 수집한 데이터가 Batch, Memory Limiter, Attributes, Filter, Tail Sampling, Resource 프로세서 체인을 순서대로 거쳐 Exporters로 전달되며, Tail Sampling이 수집 여부를 결정하는 핵심 단계임을 보여주는 다이어그램.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style></defs><defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zone: Processors -->
+    <rect x="136" y="268" width="688" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="424" y="272" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="281" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PROCESSORS</text>
+
+    <!-- Arrows (straight chain, shared y=332) -->
+    <line x1="132" y1="332" x2="156" y2="332" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="244" y1="332" x2="268" y2="332" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="356" y1="332" x2="380" y2="332" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="468" y1="332" x2="492" y2="332" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="580" y1="332" x2="604" y2="332" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <line x1="692" y1="332" x2="716" y2="332" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <line x1="804" y1="332" x2="828" y2="332" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Node: Receivers -->
+    <rect x="44" y="300" width="88" height="64" rx="6" fill="#ffffff"/>
+    <rect x="44" y="300" width="88" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="88" y="330" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Receivers</text>
+    <text x="88" y="346" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">OTLP+4</text>
+
+    <!-- Node: Batch -->
+    <rect x="156" y="300" width="88" height="64" rx="6" fill="#ffffff"/>
+    <rect x="156" y="300" width="88" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="200" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Batch</text>
+
+    <!-- Node: Memory Limiter -->
+    <rect x="268" y="300" width="88" height="64" rx="6" fill="#ffffff"/>
+    <rect x="268" y="300" width="88" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="312" y="330" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Memory</text>
+    <text x="312" y="344" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Limiter</text>
+
+    <!-- Node: Attributes -->
+    <rect x="380" y="300" width="88" height="64" rx="6" fill="#ffffff"/>
+    <rect x="380" y="300" width="88" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="424" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Attributes</text>
+
+    <!-- Node: Filter -->
+    <rect x="492" y="300" width="88" height="64" rx="6" fill="#ffffff"/>
+    <rect x="492" y="300" width="88" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="536" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Filter</text>
+
+    <!-- Node: Tail Sampling (focal) -->
+    <rect x="604" y="300" width="88" height="64" rx="6" fill="#ffffff"/>
+    <rect x="604" y="300" width="88" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="648" y="330" fill="#232F3E" font-size="12" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Tail</text>
+    <text x="648" y="344" fill="#232F3E" font-size="12" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Sampling</text>
+
+    <!-- Node: Resource -->
+    <rect x="716" y="300" width="88" height="64" rx="6" fill="#ffffff"/>
+    <rect x="716" y="300" width="88" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="760" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Resource</text>
+
+    <!-- Node: Exporters -->
+    <rect x="828" y="300" width="88" height="64" rx="6" fill="#ffffff"/>
+    <rect x="828" y="300" width="88" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="872" y="330" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Exporters</text>
+    <text x="872" y="346" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">OTLP+5</text>
+
+    <!-- Legend -->
+    <line x1="20" y1="460" x2="920" y2="460" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="20" y="476" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="20" y="490" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="40" y="498" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">샘플링 결정 지점 (focal)</text>
+
+    <rect x="270" y="490" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="290" y="498" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">프로세서 단계</text>
+
+    <rect x="440" y="490" width="14" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="460" y="498" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">수신/전송 엔드포인트</text>
+  </svg>

@@ -51,101 +51,11 @@ Grafana OnCall은 오픈소스 온콜 관리 도구로, 알림 라우팅, 온콜
 
 ### Grafana OnCall 구성 요소
 
-```mermaid
-graph TB
-    subgraph Sources["알림 소스"]
-        AM[Alertmanager]
-        GA[Grafana Alerting]
-        CW[CloudWatch]
-        WH[Webhook]
-    end
-
-    subgraph OnCall["Grafana OnCall"]
-        subgraph Core["핵심 컴포넌트"]
-            API[API Server]
-            Engine[Alert Engine]
-            Scheduler[Scheduler]
-        end
-
-        subgraph Data["데이터 저장소"]
-            DB[(PostgreSQL)]
-            Redis[(Redis)]
-            Celery[Celery Workers]
-        end
-
-        subgraph Features["기능"]
-            Routes[Routes]
-            Escalation[Escalation Chains]
-            Schedules[Schedules]
-            Groups[Alert Groups]
-        end
-    end
-
-    subgraph Notifications["알림 채널"]
-        Slack[Slack]
-        Teams[MS Teams]
-        Phone[Phone Call]
-        SMS[SMS]
-        Email[Email]
-        Mobile[Mobile App]
-    end
-
-    AM --> API
-    GA --> API
-    CW --> API
-    WH --> API
-
-    API --> Engine
-    Engine --> Routes
-    Routes --> Escalation
-    Escalation --> Schedules
-    Schedules --> Groups
-
-    Engine --> DB
-    Engine --> Redis
-    Celery --> Redis
-
-    Groups --> Slack
-    Groups --> Teams
-    Groups --> Phone
-    Groups --> SMS
-    Groups --> Email
-    Groups --> Mobile
-
-    style Core fill:#ff5722,color:#ffffff
-    style Data fill:#2196f3,color:#ffffff
-    style Features fill:#4caf50,color:#ffffff
-```
+![여러 알림 소스가 API Server로 들어와 Alert Engine, Routes, Escalation Chains, Schedules, Alert Groups를 거쳐 다양한 알림 채널로 전달되는 Grafana OnCall의 내부 구성을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-0.png)
 
 ### 알림 처리 흐름
 
-```mermaid
-sequenceDiagram
-    participant S as Alert Source
-    participant O as OnCall
-    participant R as Route
-    participant E as Escalation Chain
-    participant SC as Schedule
-    participant N as Notification
-
-    S->>O: 알림 수신
-    O->>O: 알림 그룹화
-    O->>R: 라우팅 규칙 평가
-    R->>E: 에스컬레이션 체인 선택
-    E->>SC: 현재 온콜 담당자 조회
-    SC-->>E: 담당자 정보
-    E->>N: 알림 전송
-
-    alt 응답 없음
-        E->>E: 대기 시간 경과
-        E->>SC: 다음 담당자 조회
-        SC-->>E: 다음 담당자
-        E->>N: 에스컬레이션 알림
-    end
-
-    N->>O: 담당자 확인(Acknowledge)
-    O->>S: 상태 업데이트
-```
+![알림 소스가 보낸 알림이 라우팅과 에스컬레이션 체인을 거쳐 온콜 담당자에게 전달되고, 응답이 없으면 다음 담당자로 에스컬레이션된 뒤 확인 처리되는 과정을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-1.png)
 
 ---
 
@@ -463,36 +373,7 @@ response = requests.post(
 
 ### 스케줄 개념
 
-```mermaid
-graph TB
-    subgraph Schedule["온콜 스케줄"]
-        subgraph Rotation["로테이션"]
-            R1[주간 로테이션]
-            R2[야간 로테이션]
-        end
-
-        subgraph Layers["레이어"]
-            L1[1차 담당자]
-            L2[2차 담당자]
-            L3[백업 담당자]
-        end
-
-        subgraph Override["오버라이드"]
-            O1[휴가 대체]
-            O2[임시 변경]
-        end
-    end
-
-    R1 --> L1
-    R2 --> L1
-    L1 --> Final[최종 스케줄]
-    L2 --> Final
-    L3 --> Final
-    O1 --> Final
-    O2 --> Final
-
-    style Schedule fill:#e3f2fd
-```
+![주간/야간 로테이션, 1차·2차·백업 담당자 레이어, 휴가 대체와 임시 변경 오버라이드가 합쳐져 하나의 최종 온콜 스케줄을 구성하는 과정을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-2.png)
 
 ### 스케줄 생성 (API)
 
@@ -595,27 +476,7 @@ curl -X POST https://oncall.example.com/api/v1/schedules/<schedule-id>/overrides
 
 ### 에스컬레이션 체인 구조
 
-```mermaid
-graph TB
-    A[알림 발생] --> B[Step 1: 현재 온콜]
-
-    B --> C{15분 내<br/>응답?}
-    C -->|Yes| D[알림 해결]
-    C -->|No| E[Step 2: 2차 온콜]
-
-    E --> F{15분 내<br/>응답?}
-    F -->|Yes| D
-    F -->|No| G[Step 3: 팀 리드]
-
-    G --> H{15분 내<br/>응답?}
-    H -->|Yes| D
-    H -->|No| I[Step 4: 전체 팀]
-
-    style B fill:#4caf50
-    style E fill:#ff9800
-    style G fill:#f44336
-    style I fill:#9c27b0
-```
+![알림이 발생하면 현재 온콜, 2차 온콜, 팀 리드, 전체 팀 순으로 15분마다 응답 여부를 확인하며 단계적으로 에스컬레이션되고, 응답이 확인되면 알림이 해결되는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-3.png)
 
 ### 에스컬레이션 체인 생성
 
@@ -757,28 +618,7 @@ warning-chain:
 
 ### 라우트 설정
 
-```mermaid
-graph TB
-    A[알림 수신] --> B{Integration<br/>Type?}
-
-    B -->|Alertmanager| C{Labels?}
-    B -->|Grafana| D{Folder?}
-    B -->|CloudWatch| E{Namespace?}
-
-    C -->|severity=critical| F[Critical Chain]
-    C -->|team=infra| G[Infra Chain]
-    C -->|default| H[Default Chain]
-
-    D -->|Production| F
-    D -->|Staging| I[Low Priority Chain]
-
-    E -->|AWS/EKS| G
-    E -->|AWS/RDS| J[DBA Chain]
-
-    style F fill:#f44336,color:#ffffff
-    style G fill:#ff9800,color:#ffffff
-    style H fill:#4caf50,color:#ffffff
-```
+![수신된 알림이 Integration 유형과 레이블·폴더·네임스페이스 조건에 따라 Critical, Infra, Default, Low Priority, DBA 다섯 개의 에스컬레이션 체인 중 하나로 라우팅되는 규칙을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-4.png)
 
 ### 라우트 생성
 
@@ -876,32 +716,7 @@ curl -X POST https://oncall.example.com/api/v1/slack_channels/ \
 
 ### Slack 워크플로우
 
-```mermaid
-sequenceDiagram
-    participant A as Alert
-    participant O as OnCall
-    participant S as Slack
-    participant U as User
-
-    A->>O: 알림 발생
-    O->>S: 채널에 메시지 전송
-    S->>U: 알림 표시 (버튼 포함)
-
-    alt Acknowledge
-        U->>S: "Acknowledge" 버튼 클릭
-        S->>O: 확인 요청
-        O->>O: 상태 업데이트
-        O->>S: 메시지 업데이트
-    end
-
-    alt Resolve
-        U->>S: "Resolve" 버튼 클릭
-        S->>O: 해결 요청
-        O->>O: 상태 업데이트
-        O->>S: 메시지 업데이트
-        O->>A: 해결 알림
-    end
-```
+![알림이 Slack 채널에 버튼과 함께 게시되고, 사용자가 Acknowledge 또는 Resolve 버튼을 클릭하면 OnCall이 상태를 갱신하고 메시지를 갱신하는 두 가지 처리 경로를 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-5.png)
 
 ### MS Teams 통합
 
@@ -961,28 +776,7 @@ telegram:
 
 Grafana IRM(구 Grafana Incident)은 인시던트 관리 도구로, OnCall과 통합하여 알림에서 인시던트까지 전체 워크플로우를 관리합니다.
 
-```mermaid
-graph LR
-    subgraph OnCall["Grafana OnCall"]
-        A[Alert] --> B[Alert Group]
-        B --> C[Escalation]
-    end
-
-    subgraph IRM["Grafana IRM"]
-        D[Incident Created]
-        E[Investigation]
-        F[Resolution]
-        G[Post-mortem]
-    end
-
-    C -->|"심각도 높음"| D
-    D --> E
-    E --> F
-    F --> G
-
-    style OnCall fill:#ff5722
-    style IRM fill:#2196f3
-```
+![Grafana OnCall에서 발생한 알림이 알림 그룹과 에스컬레이션을 거쳐 심각도가 높으면 Grafana IRM의 인시던트로 생성되고, 조사와 해결, 포스트모템 단계로 이어지는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-6.png)
 
 ### 자동 인시던트 생성
 
@@ -1042,25 +836,7 @@ user-preferences:
 
 ### 알림 채널 우선순위
 
-```mermaid
-graph TB
-    A[알림 발생] --> B{중요도?}
-
-    B -->|Important| C[모든 채널]
-    B -->|Default| D[기본 채널만]
-
-    C --> E[Push Notification]
-    C --> F[Phone Call]
-    C --> G[SMS]
-    C --> H[Slack]
-    C --> I[Email]
-
-    D --> H
-    D --> I
-
-    style C fill:#f44336
-    style D fill:#4caf50
-```
+![알림의 중요도에 따라 Important 알림은 Push·전화·SMS·Slack·Email 모든 채널로, Default 알림은 Slack과 Email 기본 채널로만 전달되는 우선순위 규칙을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-7.png)
 
 ---
 
@@ -1084,37 +860,7 @@ graph TB
 
 ### 마이그레이션 고려사항
 
-```mermaid
-graph TB
-    subgraph Current["현재 사용 중"]
-        P[PagerDuty/OpsGenie]
-    end
-
-    subgraph Consider["Grafana OnCall 고려 시"]
-        A[비용 절감 필요?]
-        B[Grafana 스택 사용?]
-        C[자체 호스팅 선호?]
-        D[기본 기능으로 충분?]
-    end
-
-    subgraph Decision["결정"]
-        Y[OnCall로 마이그레이션]
-        N[현재 유지]
-    end
-
-    P --> A
-    A -->|Yes| B
-    A -->|No| N
-    B -->|Yes| C
-    B -->|No| N
-    C -->|Yes| D
-    C -->|No| D
-    D -->|Yes| Y
-    D -->|No| N
-
-    style Y fill:#4caf50
-    style N fill:#ff9800
-```
+![PagerDuty나 OpsGenie 사용자가 비용 절감, Grafana 스택 사용, 자체 호스팅 선호, 기본 기능 충분성을 차례로 검토해 Grafana OnCall로 마이그레이션할지 현재 도구를 유지할지 결정하는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-8.png)
 
 ### 마이그레이션 체크리스트
 

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-observability-alerting-03-grafana-oncall-2-title en-observability-alerting-03-grafana-oncall-2-desc">
+<title id="en-observability-alerting-03-grafana-oncall-2-title">On-Call Schedule Composition</title>
+<desc id="en-observability-alerting-03-grafana-oncall-2-desc">Diagram showing how day and night rotations feed layered responders (primary, secondary, backup), and temporary overrides, all resolving into one final on-call schedule.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="24" y="32" width="240" height="144" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="36" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="68.0" y="45" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ROTATION</text>
+<rect x="24" y="192" width="240" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="196" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="62.0" y="205" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LAYERS</text>
+<rect x="24" y="384" width="240" height="144" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="388" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="68.0" y="397" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">OVERRIDE</text>
+<path d="M 144,104 H 104 Q 112,104 112,112 V 224" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 144,160 H 168 Q 176,160 176,168 V 224" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 240,244 H 452.0 Q 460.0,244 460.0,252 V 268 Q 460.0,276 468.0,276 H 680" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 240,300 H 452.0 Q 460.0,300 460.0,292 V 300 Q 460.0,292 468.0,292 H 680" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 240,356 H 452.0 Q 460.0,356 460.0,348 V 316 Q 460.0,308 468.0,308 H 680" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 240,436 H 739 Q 747,436 747,428 V 324" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 240,492 H 805 Q 813,492 813,484 V 324" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="48" y="64" width="192" height="40" rx="6" fill="#ffffff"/>
+<rect x="48" y="64" width="192" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="144.0" y="88.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Day Rotation</text>
+<rect x="48" y="120" width="192" height="40" rx="6" fill="#ffffff"/>
+<rect x="48" y="120" width="192" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="144.0" y="144.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Night Rotation</text>
+<rect x="48" y="224" width="192" height="40" rx="6" fill="#ffffff"/>
+<rect x="48" y="224" width="192" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="144.0" y="248.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Primary Responder</text>
+<rect x="48" y="280" width="192" height="40" rx="6" fill="#ffffff"/>
+<rect x="48" y="280" width="192" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="144.0" y="304.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Secondary Responder</text>
+<rect x="48" y="336" width="192" height="40" rx="6" fill="#ffffff"/>
+<rect x="48" y="336" width="192" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="144.0" y="360.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Backup Responder</text>
+<rect x="48" y="416" width="192" height="40" rx="6" fill="#ffffff"/>
+<rect x="48" y="416" width="192" height="40" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="144.0" y="440.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Vacation Replacement</text>
+<rect x="48" y="472" width="192" height="40" rx="6" fill="#ffffff"/>
+<rect x="48" y="472" width="192" height="40" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="144.0" y="496.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Temporary Change</text>
+<rect x="680" y="260" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="680" y="260" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="780.0" y="286.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Final Schedule</text>
+<text x="780.0" y="302.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">resolved calendar</text>
+<line x1="24" y1="556" x2="936" y2="556" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="24" y="572" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="140" y="564" width="10" height="10" rx="2" fill="none" stroke="#EC7211" stroke-width="1.4" stroke-dasharray="0"/>
+<text x="156" y="573" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">FOCAL — RESOLVED SCHEDULE</text>
+<rect x="420" y="564" width="10" height="10" rx="2" fill="none" stroke="#232F3E" stroke-width="1.4" stroke-dasharray="0"/>
+<text x="436" y="573" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">ROTATION / LAYER</text>
+<rect x="700" y="564" width="10" height="10" rx="2" fill="none" stroke="rgba(35,47,62,0.20)" stroke-width="1.4" stroke-dasharray="4,3"/>
+<text x="716" y="573" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">OVERRIDE (TEMPORARY)</text>
+</svg>
