@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-comparison-02-istio-vs-lattice-3-title ko-service-mesh-istio-comparison-02-istio-vs-lattice-3-desc">
+<title id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-3-title">Istio 운영 복잡도가 초래하는 실제 영향</title>
+<desc id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-3-desc">사이드카 관리, 업그레이드 복잡도, 리소스 오버헤드, 트러블슈팅, 설정 검증, 인증서 관리라는 여섯 가지 운영 과제가 각각 운영 비용 증가, 장애 위험 증가, 배포 시간 증가로 이어지는 인과 관계를 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="60" y="60" width="420" height="480" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="70" y="64" width="180" height="12" rx="2" fill="#ffffff"/>
+<text x="160.0" y="73" fill="rgba(35,47,62,0.42)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.13em">ISTIO 운영 복잡도</text>
+<rect x="640" y="150" width="260" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="650" y="154" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="680.0" y="163" fill="rgba(35,47,62,0.42)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.13em">영향</text>
+<path d="M 440,133.0 H 498 Q 490,133.0 490,141.0 V 195.33333333333334 Q 490,203.33333333333334 498,203.33333333333334 H 670" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 440,277.0 H 518 Q 510,277.0 510,269.0 V 234.66666666666666 Q 510,226.66666666666666 518,226.66666666666666 H 670" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 440,205.0 H 538 Q 530,205.0 530,213.0 V 299.5 Q 530,307.5 538,307.5 H 670" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 440,349.0 H 558 Q 550,349.0 550,341.0 V 333.0 Q 550,325.0 558,325.0 H 670" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 440,421.0 H 578 Q 570,421.0 570,413.0 V 350.5 Q 570,342.5 578,342.5 H 670" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 440,493.0 H 598 Q 590,493.0 590,485.0 V 443.0 Q 590,435.0 598,435.0 H 670" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="100" y="104" width="340" height="58" rx="6" fill="#ffffff"/>
+<rect x="100" y="104" width="340" height="58" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="270.0" y="131.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Sidecar 관리</text>
+<text x="270.0" y="148.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">모든 파드에 프록시 주입</text>
+<rect x="100" y="176" width="340" height="58" rx="6" fill="#ffffff"/>
+<rect x="100" y="176" width="340" height="58" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="270.0" y="203.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">업그레이드 복잡도</text>
+<text x="270.0" y="220.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">수동 Canary 프로세스</text>
+<rect x="100" y="248" width="340" height="58" rx="6" fill="#ffffff"/>
+<rect x="100" y="248" width="340" height="58" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="270.0" y="275.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">리소스 오버헤드</text>
+<text x="270.0" y="292.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">CPU/Memory 2배 증가</text>
+<rect x="100" y="320" width="340" height="58" rx="6" fill="#ffffff"/>
+<rect x="100" y="320" width="340" height="58" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="270.0" y="347.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">트러블슈팅</text>
+<text x="270.0" y="364.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">복잡한 디버깅</text>
+<rect x="100" y="392" width="340" height="58" rx="6" fill="#ffffff"/>
+<rect x="100" y="392" width="340" height="58" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="270.0" y="419.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">설정 검증</text>
+<text x="270.0" y="436.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">CRD 간 의존성</text>
+<rect x="100" y="464" width="340" height="58" rx="6" fill="#ffffff"/>
+<rect x="100" y="464" width="340" height="58" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="270.0" y="491.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">인증서 관리</text>
+<text x="270.0" y="508.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">CA 및 갱신</text>
+<rect x="670" y="180" width="200" height="70" rx="6" fill="#ffffff"/>
+<rect x="670" y="180" width="200" height="70" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="770.0" y="213.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">운영 비용 증가</text>
+<text x="770.0" y="230.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">전문 인력 필요</text>
+<rect x="670" y="290" width="200" height="70" rx="6" fill="#ffffff"/>
+<rect x="670" y="290" width="200" height="70" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="770.0" y="323.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">장애 위험 증가</text>
+<text x="770.0" y="340.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">복잡한 아키텍처</text>
+<rect x="670" y="400" width="200" height="70" rx="6" fill="#ffffff"/>
+<rect x="670" y="400" width="200" height="70" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="770.0" y="433.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">배포 시간 증가</text>
+<text x="770.0" y="450.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">파드 재시작 필요</text>
+</svg>

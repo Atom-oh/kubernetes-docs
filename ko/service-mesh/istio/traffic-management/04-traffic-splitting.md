@@ -18,38 +18,7 @@
 
 트래픽 분할은 VirtualService의 `weight` 필드를 사용하여 여러 서비스 버전 간에 트래픽을 비율로 분배합니다.
 
-```mermaid
-flowchart TB
-    User[사용자 요청<br/>100%]
-
-    subgraph VirtualService["VirtualService"]
-        Split[트래픽 분할]
-    end
-
-    subgraph Services["서비스 버전"]
-        V1[Version 1<br/>90%]
-        V2[Version 2<br/>10%]
-    end
-
-    User -->|100%| Split
-    Split -->|90%| V1
-    Split -->|10%| V2
-
-    V1 -->|안정적| Result1[90명의 사용자]
-    V2 -->|새 기능| Result2[10명의 사용자]
-
-    %% 스타일 정의
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef split fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class User user;
-    class Split split;
-    class V1,V2 service;
-    class Result1,Result2 result;
-```
+![VirtualService가 사용자 요청을 가중치 기반으로 분할하여 Version 1에 90%, Version 2에 10%의 트래픽을 전달하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-0.png)
 
 ### 기본 구조
 
@@ -79,86 +48,11 @@ Canary 배포는 새 버전을 소수의 사용자에게만 먼저 배포하여 
 
 ### Argo Rollouts + Istio 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph ArgoRollouts["Argo Rollouts Controller"]
-        Rollout[Rollout 리소스<br/>배포 전략 정의]
-        Analysis[AnalysisTemplate<br/>메트릭 분석]
-    end
-
-    subgraph Istio["Istio Service Mesh"]
-        VS[VirtualService<br/>트래픽 분할]
-        DR[DestinationRule<br/>서브셋 정의]
-    end
-
-    subgraph K8s["Kubernetes"]
-        Stable[Stable Pods<br/>v1]
-        Canary[Canary Pods<br/>v2]
-    end
-
-    subgraph Monitoring["모니터링"]
-        Prometheus[Prometheus<br/>메트릭 수집]
-        Grafana[Grafana<br/>시각화]
-    end
-
-    Rollout -->|생성/업데이트| VS
-    Rollout -->|생성| DR
-    Rollout -->|관리| Stable
-    Rollout -->|관리| Canary
-
-    VS -->|90% 트래픽| Stable
-    VS -->|10% 트래픽| Canary
-
-    Analysis -->|메트릭 쿼리| Prometheus
-    Analysis -->|승인/거부| Rollout
-
-    Stable -.->|메트릭 전송| Prometheus
-    Canary -.->|메트릭 전송| Prometheus
-    Prometheus -.->|시각화| Grafana
-
-    %% 스타일 정의
-    classDef argo fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef k8s fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef monitor fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Rollout,Analysis argo;
-    class VS,DR istio;
-    class Stable,Canary k8s;
-    class Prometheus,Grafana monitor;
-```
+![Argo Rollouts가 VirtualService, DestinationRule과 파드 버전을 관리하고, AnalysisTemplate이 Prometheus 메트릭을 조회해 Canary 배포를 승인하거나 거부하는 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-1.png)
 
 ### Canary 배포 흐름
 
-```mermaid
-flowchart LR
-    Start[시작<br/>v1: 100%]
-    Step1[1단계<br/>v1: 90%, v2: 10%]
-    Step2[2단계<br/>v1: 75%, v2: 25%]
-    Step3[3단계<br/>v1: 50%, v2: 50%]
-    Step4[4단계<br/>v1: 25%, v2: 75%]
-    End[완료<br/>v2: 100%]
-
-    Start -->|메트릭 OK| Step1
-    Step1 -->|메트릭 OK| Step2
-    Step2 -->|메트릭 OK| Step3
-    Step3 -->|메트릭 OK| Step4
-    Step4 -->|메트릭 OK| End
-
-    Step1 -.->|에러율 > 5%| Rollback[자동 롤백<br/>v1: 100%]
-    Step2 -.->|지연시간 > 500ms| Rollback
-    Step3 -.->|메트릭 실패| Rollback
-    Step4 -.->|메트릭 실패| Rollback
-
-    %% 스타일 정의
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef rollback fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Start,Step1,Step2,Step3,Step4,End normal;
-    class Rollback rollback;
-```
+![Canary 배포가 신규 버전 트래픽을 10%에서 75%까지 단계적으로 올리며, 각 단계에서 에러율·지연시간·메트릭 실패 조건에 걸리면 v1 100%로 자동 롤백되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-2.png)
 
 ### 1단계: Argo Rollouts 설치
 
@@ -1078,87 +972,11 @@ Blue/Green 배포는 두 개의 동일한 프로덕션 환경을 유지하고, �
 
 ### Argo Rollouts Blue/Green 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph ArgoRollouts["Argo Rollouts Controller"]
-        Rollout[Rollout 리소스<br/>Blue/Green 전략]
-        PreAnalysis[PrePromotion<br/>Analysis]
-        PostAnalysis[PostPromotion<br/>Analysis]
-    end
-
-    subgraph Services["Kubernetes Services"]
-        ActiveSvc[Active Service<br/>프로덕션 트래픽]
-        PreviewSvc[Preview Service<br/>테스트 트래픽]
-    end
-
-    subgraph Pods["Pod 환경"]
-        Blue[Blue Pods<br/>현재 버전]
-        Green[Green Pods<br/>새 버전]
-    end
-
-    subgraph Gateway["Istio Gateway"]
-        Ingress[Ingress Gateway<br/>외부 트래픽]
-    end
-
-    Rollout -->|관리| ActiveSvc
-    Rollout -->|관리| PreviewSvc
-    Rollout -->|배포| Blue
-    Rollout -->|배포| Green
-
-    PreAnalysis -->|테스트| PreviewSvc
-    PostAnalysis -->|검증| ActiveSvc
-
-    ActiveSvc -->|100% 트래픽| Blue
-    PreviewSvc -->|테스트 트래픽| Green
-
-    Ingress --> ActiveSvc
-    Ingress -.->|테스트 전용| PreviewSvc
-
-    %% 스타일 정의
-    classDef argo fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef gateway fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Rollout,PreAnalysis,PostAnalysis argo;
-    class ActiveSvc,PreviewSvc service;
-    class Blue,Green pod;
-    class Ingress gateway;
-```
+![Argo Rollouts가 Green 파드를 Blue와 함께 배포해 Preview Service로 검증한 뒤, 검증이 끝나면 Active Service의 프로덕션 트래픽을 Blue에서 Green으로 전환하는 Blue/Green 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-3.png)
 
 ### Blue/Green 배포 흐름
 
-```mermaid
-flowchart LR
-    Start[시작<br/>Blue 활성]
-    Deploy[Green 배포]
-    PreTest[사전 테스트<br/>Preview Service]
-    Manual[수동 승인<br/>또는 자동]
-    Switch[트래픽 전환<br/>Blue → Green]
-    PostTest[사후 검증]
-    ScaleDown[Blue 축소<br/>30초 후]
-    End[완료<br/>Green 활성]
-
-    Start --> Deploy
-    Deploy --> PreTest
-    PreTest -->|성공| Manual
-    PreTest -.->|실패| Rollback[롤백<br/>Green 삭제]
-    Manual -->|승인| Switch
-    Manual -.->|거부| Rollback
-    Switch --> PostTest
-    PostTest -->|성공| ScaleDown
-    PostTest -.->|실패| QuickRollback[즉시 롤백<br/>Blue로 전환]
-    ScaleDown --> End
-
-    %% 스타일 정의
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef rollback fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Start,Deploy,PreTest,Manual,Switch,PostTest,ScaleDown,End normal;
-    class Rollback,QuickRollback rollback;
-```
+![Blue/Green 배포가 Green을 배포·사전 테스트하고 승인 후 트래픽을 전환하며, 사전 테스트·승인·사후 검증 중 하나라도 실패하면 Blue로 자동 롤백되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-4.png)
 
 ### 1단계: Service 정의
 
@@ -1478,55 +1296,7 @@ kubectl argo rollouts undo reviews --to-revision=3
 
 A/B 테스트는 두 가지 버전을 동시에 실행하고, 특정 기준으로 사용자를 분류하여 효과를 측정합니다.
 
-```mermaid
-flowchart TB
-    Users[전체 사용자]
-
-    subgraph Segmentation["사용자 세분화"]
-        GroupA[그룹 A<br/>50%]
-        GroupB[그룹 B<br/>50%]
-    end
-
-    subgraph Versions["버전"]
-        VersionA[Version A<br/>기존 UI]
-        VersionB[Version B<br/>새 UI]
-    end
-
-    subgraph Metrics["메트릭 수집"]
-        MetricA[전환율<br/>클릭율<br/>체류 시간]
-        MetricB[전환율<br/>클릭율<br/>체류 시간]
-    end
-
-    Users --> GroupA
-    Users --> GroupB
-
-    GroupA --> VersionA
-    GroupB --> VersionB
-
-    VersionA --> MetricA
-    VersionB --> MetricB
-
-    MetricA --> Analysis[A/B 테스트<br/>분석]
-    MetricB --> Analysis
-
-    Analysis --> Decision{어느 버전이<br/>더 나은가?}
-    Decision -->|A가 우수| KeepA[A 유지]
-    Decision -->|B가 우수| AdoptB[B 채택]
-
-    %% 스타일 정의
-    classDef users fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef group fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef version fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef metric fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef analysis fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Users users;
-    class GroupA,GroupB group;
-    class VersionA,VersionB version;
-    class MetricA,MetricB metric;
-    class Analysis,Decision,KeepA,AdoptB analysis;
-```
+![전체 사용자를 그룹 A/B로 50대50 나눠 Version A/B를 노출하고, 각 버전의 전환·클릭·체류시간 메트릭을 분석해 더 나은 버전을 유지하거나 채택하는 A/B 테스트 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-5.png)
 
 ### Cookie 기반 A/B 테스트
 

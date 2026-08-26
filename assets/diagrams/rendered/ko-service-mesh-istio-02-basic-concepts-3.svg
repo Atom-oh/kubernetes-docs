@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+<title id="dtitle">Google, IBM, Lyft의 협력으로 탄생한 Istio</title>
+<desc id="ddesc">Google, IBM, Lyft 세 기업이 각자의 강점을 바탕으로 Istio의 Control Plane과 Data Plane을 만든 협력 관계를 보여주는 다이어그램</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="60" width="300" height="460" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="52" y="64" width="37" height="12" rx="2" fill="#ffffff"/>
+<text x="70.5" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">참여 기업</text>
+
+<rect x="600" y="140" width="320" height="300" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="612" y="144" width="102" height="12" rx="2" fill="#ffffff"/>
+<text x="663.0" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">Istio Service Mesh</text>
+
+<path d="M 340,124 H 482.0 Q 490.0,124 490.0,132 V 186 Q 490.0,194 498.0,194 H 640" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 340,244 H 482.0 Q 490.0,244 490.0,236 V 244 Q 490.0,236 498.0,236 H 640" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 340,364 H 482.0 Q 490.0,364 490.0,372 V 358 Q 490.0,366 498.0,366 H 640" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="80" y="100" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="80" y="100" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="190.0" y="128.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Google</text>
+<text x="190.0" y="144.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Kubernetes 경험</text>
+<rect x="80" y="220" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="80" y="220" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="190.0" y="248.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">IBM</text>
+<text x="190.0" y="264.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">엔터프라이즈 요구사항</text>
+<rect x="80" y="340" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="80" y="340" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="190.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Lyft</text>
+<text x="190.0" y="384.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Envoy Proxy</text>
+<rect x="640" y="180" width="240" height="90" rx="6" fill="#ffffff"/>
+<rect x="640" y="180" width="240" height="90" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="760.0" y="221.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Control Plane</text>
+<text x="760.0" y="237.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Google 주도</text>
+<rect x="640" y="350" width="240" height="90" rx="6" fill="#ffffff"/>
+<rect x="640" y="350" width="240" height="90" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="760.0" y="391.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Data Plane</text>
+<text x="760.0" y="407.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Envoy 기반</text>
+</svg>

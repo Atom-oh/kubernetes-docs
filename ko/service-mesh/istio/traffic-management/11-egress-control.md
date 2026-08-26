@@ -12,31 +12,7 @@ Egress 제어는 메시 외부로 나가는 트래픽을 관리하고 보안을 
 
 ## Egress 개요
 
-```mermaid
-flowchart LR
-    Pod[파드]
-    
-    subgraph Mesh["Service Mesh"]
-        Sidecar[Envoy<br/>Sidecar]
-        EgressGW[Egress<br/>Gateway]
-    end
-    
-    External[외부 서비스<br/>api.external.com]
-    
-    Pod --> Sidecar
-    Sidecar --> EgressGW
-    EgressGW --> External
-    
-    %% 스타일 정의
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef mesh fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class Pod pod;
-    class Sidecar,EgressGW mesh;
-    class External external;
-```
+![파드에서 나가는 트래픽이 사이드카 프록시와 이그레스 게이트웨이를 거쳐 외부 서비스로 전달되는 경로를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-11-egress-control-0.png)
 
 ## ServiceEntry 설정
 

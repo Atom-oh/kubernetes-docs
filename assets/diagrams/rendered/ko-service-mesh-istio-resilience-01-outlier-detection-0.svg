@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="od-overview-title od-overview-desc">
+<title id="od-overview-title">Outlier Detection 트래픽 분리 개요</title>
+<desc id="od-overview-desc">클라이언트 요청이 Envoy Proxy의 Outlier Detection을 거쳐 정상 파드로만 전달되고, 지연시간과 에러율이 높은 비정상 파드는 트래픽에서 제외되었다가 일정 시간 후 복구를 시도하는 과정을 보여준다.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+
+<!-- Zones (bg -> zones -> arrows -> nodes) -->
+<rect x="80" y="320" width="420" height="180" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="96" y="324" width="88" height="16" rx="2" fill="#FFFFFF"/>
+<text x="140" y="336" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">정상 파드</text>
+
+<rect x="560" y="320" width="280" height="180" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="576" y="324" width="104" height="16" rx="2" fill="#FFFFFF"/>
+<text x="628" y="336" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">비정상 파드</text>
+
+<!-- Arrows (before nodes) -->
+<!-- Request -> Envoy : straight vertical -->
+<path d="M480,96 V160" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Envoy -> P1 (432) mid_y=260, turn left to x=195 -->
+<path d="M432,224 V252 Q432,260 424,260 H203 Q195,260 195,268 V380"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="278" y="248" width="72" height="14" rx="2" fill="#FFFFFF"/>
+<text x="314" y="258" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">TRAFFIC</text>
+
+<!-- Envoy -> P2 (464) mid_y=290, turn left to x=405 -->
+<path d="M464,224 V282 Q464,290 456,290 H413 Q405,290 405,298 V380"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="398" y="278" width="72" height="14" rx="2" fill="#FFFFFF"/>
+<text x="434" y="288" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">TRAFFIC</text>
+
+<!-- Envoy -> P3 dashed (496) mid_y=320, turn right to x=660, "EJECTED" -->
+<path d="M496,224 V312 Q496,320 504,320 H652 Q660,320 660,328 V380"
+      fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="542" y="308" width="76" height="14" rx="2" fill="#FFFFFF"/>
+<text x="580" y="318" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">EJECTED</text>
+
+<!-- P3 -> Envoy dashed (740 -> 528) mid_y=300, turn left, "RETRY 30S" -->
+<path d="M740,380 V308 Q740,300 732,300 H536 Q528,300 528,292 V224"
+      fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="586" y="288" width="88" height="14" rx="2" fill="#FFFFFF"/>
+<text x="630" y="298" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">RETRY 30S</text>
+
+<!-- Nodes -->
+<!-- Request -->
+<rect x="400" y="40" width="160" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="400" y="40" width="160" height="56" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="480" y="72" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라이언트 요청</text>
+
+<!-- Envoy (focal) -->
+<rect x="400" y="160" width="160" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="400" y="160" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480" y="188" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Proxy</text>
+<text x="480" y="204" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">outlier-detection</text>
+
+<!-- P1 healthy -->
+<rect x="120" y="380" width="150" height="88" rx="6" fill="#FFFFFF"/>
+<rect x="120" y="380" width="150" height="88" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="195" y="410" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 1</text>
+<text x="195" y="426" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">latency 50ms</text>
+<text x="195" y="440" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">error 0%</text>
+
+<!-- P2 healthy -->
+<rect x="330" y="380" width="150" height="88" rx="6" fill="#FFFFFF"/>
+<rect x="330" y="380" width="150" height="88" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="405" y="410" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 2</text>
+<text x="405" y="426" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">latency 60ms</text>
+<text x="405" y="440" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">error 1%</text>
+
+<!-- P3 unhealthy (ejected -> dashed border) -->
+<rect x="620" y="380" width="160" height="88" rx="6" fill="#FFFFFF"/>
+<rect x="620" y="380" width="160" height="88" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="700" y="410" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 3</text>
+<text x="700" y="426" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">latency 5000ms</text>
+<text x="700" y="440" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">error 80%</text>
+
+<!-- Legend -->
+<line x1="30" y1="540" x2="930" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<circle cx="180" cy="552" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="192" y="556" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Outlier Detection 실행 지점</text>
+<circle cx="440" cy="552" r="4" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="452" y="556" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">정상 파드 (트래픽 수신)</text>
+<circle cx="680" cy="552" r="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="2,2"/>
+<text x="692" y="556" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">제외된 파드 (30초 후 복구 시도)</text>
+</svg>

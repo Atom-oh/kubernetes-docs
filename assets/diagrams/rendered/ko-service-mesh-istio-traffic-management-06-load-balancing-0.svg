@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="lb-compare-title lb-compare-desc">
+    <title id="lb-compare-title">로드 밸런싱 없이와 사용 시의 부하 분산 비교</title>
+    <desc id="lb-compare-desc">로드 밸런싱 없이 단일 서비스에 요청이 몰려 100% 과부하가 발생하는 상황과, 로드 밸런서가 요청을 세 서비스에 33%씩 균등하게 분산하는 상황을 나란히 비교해서 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- zones -->
+    <rect x="24" y="56" width="444" height="488" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="36" y="60" width="168" height="12" rx="2" fill="#ffffff"/>
+    <text x="120" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">로드 밸런싱 없이</text>
+
+    <rect x="492" y="56" width="444" height="488" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="504" y="60" width="168" height="12" rx="2" fill="#ffffff"/>
+    <text x="588" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">로드 밸런싱 사용</text>
+
+    <!-- ===== Arrows (drawn before boxes) ===== -->
+    <!-- C1 -> S1 -->
+    <line x1="246" y1="152" x2="246" y2="236" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="254" y="188" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="280" y="197" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">과부하</text>
+
+    <!-- C2 -> LB -->
+    <line x1="714" y1="152" x2="714" y2="198" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- LB -> S4 (left elbow) -->
+    <path d="M 674,242 V 298 Q 674,306 666,306 H 614 Q 606,306 606,314 V 370"
+          fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="616" y="286" width="34" height="12" rx="2" fill="#ffffff"/>
+    <text x="633" y="295" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">33%</text>
+
+    <!-- LB -> S5 (straight) -->
+    <line x1="714" y1="242" x2="714" y2="370" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="722" y="300" width="34" height="12" rx="2" fill="#ffffff"/>
+    <text x="739" y="309" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">33%</text>
+
+    <!-- LB -> S6 (right elbow) -->
+    <path d="M 754,242 V 298 Q 754,306 762,306 H 814 Q 822,306 822,314 V 370"
+          fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="782" y="286" width="34" height="12" rx="2" fill="#ffffff"/>
+    <text x="799" y="295" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">34%</text>
+
+    <!-- ===== Nodes ===== -->
+    <!-- C1 -->
+    <rect x="174" y="112" width="144" height="40" rx="6" fill="#ffffff"/>
+    <rect x="174" y="112" width="144" height="40" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="246" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">모든 요청</text>
+
+    <!-- S1 (overloaded) -->
+    <rect x="156" y="236" width="180" height="48" rx="6" fill="#ffffff"/>
+    <rect x="156" y="236" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="246" y="256" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">서비스 1</text>
+    <text x="246" y="272" fill="#DD344C" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">100% 부하</text>
+
+    <!-- S2, S3 idle (unconnected) -->
+    <rect x="70" y="370" width="140" height="44" rx="6" fill="#ffffff"/>
+    <rect x="70" y="370" width="140" height="44" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+    <text x="140" y="390" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">서비스 2</text>
+    <text x="140" y="405" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">0% 부하</text>
+
+    <rect x="282" y="370" width="140" height="44" rx="6" fill="#ffffff"/>
+    <rect x="282" y="370" width="140" height="44" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+    <text x="352" y="390" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">서비스 3</text>
+    <text x="352" y="405" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">0% 부하</text>
+
+    <!-- C2 -->
+    <rect x="642" y="112" width="144" height="40" rx="6" fill="#ffffff"/>
+    <rect x="642" y="112" width="144" height="40" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="714" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">요청 분산</text>
+
+    <!-- LB (focal) -->
+    <rect x="634" y="198" width="160" height="44" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="634" y="198" width="160" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="714" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">로드 밸런서</text>
+
+    <!-- S4, S5, S6 balanced -->
+    <rect x="540" y="370" width="132" height="44" rx="6" fill="#ffffff"/>
+    <rect x="540" y="370" width="132" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="606" y="390" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">서비스 1</text>
+    <text x="606" y="405" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">33% 부하</text>
+
+    <rect x="648" y="370" width="132" height="44" rx="6" fill="#ffffff"/>
+    <rect x="648" y="370" width="132" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="714" y="390" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">서비스 2</text>
+    <text x="714" y="405" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">33% 부하</text>
+
+    <rect x="756" y="370" width="132" height="44" rx="6" fill="#ffffff"/>
+    <rect x="756" y="370" width="132" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="822" y="390" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">서비스 3</text>
+    <text x="822" y="405" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">34% 부하</text>
+  </svg>

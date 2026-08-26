@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-comparison-02-istio-vs-lattice-2-title ko-service-mesh-istio-comparison-02-istio-vs-lattice-2-desc">
+<title id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-2-title">보안 기능 비교: Istio vs VPC Lattice</title>
+<desc id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-2-desc">Istio는 자동 mTLS, 세밀한 L7 Authorization, JWT 인증, External CA 통합, EnvoyFilter 기반 Rate Limiting을 제공하고, VPC Lattice는 ACM 기반 TLS, IAM 인증, SigV4, PrivateLink 네트워크 격리, WAF 통합을 제공한다는 것을 나란히 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="60" y="60" width="380" height="460" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="70" y="64" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="140.0" y="73" fill="rgba(35,47,62,0.42)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.13em">ISTIO SECURITY</text>
+<rect x="520" y="60" width="380" height="460" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="530" y="64" width="190" height="12" rx="2" fill="#ffffff"/>
+<text x="625.0" y="73" fill="rgba(35,47,62,0.42)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.13em">VPC LATTICE SECURITY</text>
+<rect x="100" y="108" width="300" height="60" rx="6" fill="#ffffff"/>
+<rect x="100" y="108" width="300" height="60" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="250.0" y="136.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">mTLS</text>
+<text x="250.0" y="153.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">자동 인증서</text>
+<rect x="100" y="190" width="300" height="60" rx="6" fill="#ffffff"/>
+<rect x="100" y="190" width="300" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="250.0" y="218.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">L7 Authorization</text>
+<text x="250.0" y="235.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">매우 세밀함</text>
+<rect x="100" y="272" width="300" height="60" rx="6" fill="#ffffff"/>
+<rect x="100" y="272" width="300" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="250.0" y="300.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">JWT 인증</text>
+<text x="250.0" y="317.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">통합 지원</text>
+<rect x="100" y="354" width="300" height="60" rx="6" fill="#ffffff"/>
+<rect x="100" y="354" width="300" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="250.0" y="382.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">External CA</text>
+<text x="250.0" y="399.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">통합 가능</text>
+<rect x="100" y="436" width="300" height="60" rx="6" fill="#ffffff"/>
+<rect x="100" y="436" width="300" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="250.0" y="464.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Rate Limiting</text>
+<text x="250.0" y="481.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">EnvoyFilter</text>
+<rect x="560" y="108" width="300" height="60" rx="6" fill="#ffffff"/>
+<rect x="560" y="108" width="300" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="710.0" y="136.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">TLS</text>
+<text x="710.0" y="153.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">ACM 통합</text>
+<rect x="560" y="190" width="300" height="60" rx="6" fill="#ffffff"/>
+<rect x="560" y="190" width="300" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="710.0" y="218.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">IAM 기반</text>
+<text x="710.0" y="235.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Service 레벨</text>
+<rect x="560" y="272" width="300" height="60" rx="6" fill="#ffffff"/>
+<rect x="560" y="272" width="300" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="710.0" y="300.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">SigV4</text>
+<text x="710.0" y="317.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">AWS 네이티브</text>
+<rect x="560" y="354" width="300" height="60" rx="6" fill="#ffffff"/>
+<rect x="560" y="354" width="300" height="60" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="710.0" y="382.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS PrivateLink</text>
+<text x="710.0" y="399.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">네트워크 격리</text>
+<rect x="560" y="436" width="300" height="60" rx="6" fill="#ffffff"/>
+<rect x="560" y="436" width="300" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="710.0" y="464.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">WAF 통합</text>
+<text x="710.0" y="481.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">가능</text>
+</svg>

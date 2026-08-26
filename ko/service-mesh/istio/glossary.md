@@ -495,23 +495,7 @@ Downstream (클라이언트)  →  Envoy Proxy  →  Upstream (백엔드)
 
 #### 1. Sidecar Mode - 아웃바운드 요청
 
-```mermaid
-flowchart LR
-    App[애플리케이션<br/>Downstream]
-    Envoy[Envoy Sidecar]
-    Backend[Backend 서비스<br/>Upstream]
-
-    App -->|"요청 전송<br/>(Downstream → Envoy)"| Envoy
-    Envoy -->|"요청 전달<br/>(Envoy → Upstream)"| Backend
-
-    classDef downstream fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef proxy fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef upstream fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class App downstream;
-    class Envoy proxy;
-    class Backend upstream;
-```
+![애플리케이션(Downstream)이 Envoy Sidecar로 요청을 보내고 Envoy가 이를 Backend 서비스(Upstream)로 전달하는 흐름을 보여주는 3단계 흐름도입니다.](../../.gitbook/assets/ko-service-mesh-istio-glossary-0.png)
 
 **관점**:
 - **Envoy 입장**: 애플리케이션이 Downstream (요청 보내는 쪽)
@@ -519,23 +503,7 @@ flowchart LR
 
 #### 2. Ingress Gateway - 외부 요청
 
-```mermaid
-flowchart LR
-    Client[외부 클라이언트<br/>Downstream]
-    Gateway[Ingress Gateway<br/>Envoy]
-    Service[내부 서비스<br/>Upstream]
-
-    Client -->|"HTTP 요청<br/>(Downstream → Envoy)"| Gateway
-    Gateway -->|"라우팅<br/>(Envoy → Upstream)"| Service
-
-    classDef downstream fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef proxy fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef upstream fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class Client downstream;
-    class Gateway proxy;
-    class Service upstream;
-```
+![외부 클라이언트(Downstream)가 Ingress Gateway로 HTTP 요청을 보내고 Gateway가 이를 내부 서비스(Upstream)로 라우팅하는 흐름을 보여주는 3단계 흐름도입니다.](../../.gitbook/assets/ko-service-mesh-istio-glossary-1.png)
 
 **Downstream 관련 Envoy 설정**:
 
@@ -905,21 +873,7 @@ AWS API 요청을 인증하기 위한 서명 프로토콜입니다.
 
 **작동 방식**:
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as 클라이언트
-    participant Envoy as Envoy Proxy
-    participant AWS as AWS 서비스
-
-    Client->>Envoy: HTTP 요청
-    Envoy->>Envoy: AWS Credentials 로드
-    Envoy->>Envoy: SigV4 서명 생성<br/>HMAC-SHA256
-    Envoy->>AWS: Authorization 헤더 추가<br/>AWS4-HMAC-SHA256
-    AWS->>AWS: 서명 검증
-    AWS->>Envoy: 응답
-    Envoy->>Client: 응답
-```
+![클라이언트의 HTTP 요청을 받은 Envoy Proxy가 AWS Credentials를 로드해 SigV4 서명(HMAC-SHA256)을 생성하고 Authorization 헤더를 추가해 AWS 서비스로 전달하면, AWS가 서명을 검증한 뒤 응답이 Envoy를 거쳐 클라이언트로 돌아오는 시퀀스를 보여줍니다.](../../.gitbook/assets/ko-service-mesh-istio-glossary-2.png)
 
 **서명 구성 요소**:
 

@@ -256,27 +256,7 @@ spec:
 
 #### 점진적 Istio 도입
 
-```mermaid
-flowchart LR
-    Start[시작]
-    Phase1[Phase 1<br/>Observability]
-    Phase2[Phase 2<br/>mTLS PERMISSIVE]
-    Phase3[Phase 3<br/>mTLS STRICT]
-    Phase4[Phase 4<br/>Advanced Features]
-    End[완전 도입]
-
-    Start --> Phase1
-    Phase1 --> Phase2
-    Phase2 --> Phase3
-    Phase3 --> Phase4
-    Phase4 --> End
-
-    %% 스타일 정의
-    classDef phase fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Start,Phase1,Phase2,Phase3,Phase4,End phase;
-```
+![Istio를 시작에서 완전 도입까지 5단계로 점진 도입하는 흐름을 보여주며, Observability 확보 후 mTLS를 PERMISSIVE로 켜고 STRICT로 강화한 다음 고급 기능을 도입하는 과정을 강조한다.](../../.gitbook/assets/ko-service-mesh-istio-best-practices-0.png)
 
 **Phase 1: Observability (1-2주)**
 ```bash

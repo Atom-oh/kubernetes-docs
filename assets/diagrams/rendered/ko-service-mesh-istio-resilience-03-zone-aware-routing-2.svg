@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="zar2-title zar2-desc">
+    <title id="zar2-title">Istiod의 Node 기반 Locality 자동 파악 과정</title>
+    <desc id="zar2-desc">Pod 자체에는 Zone 레이블이 없어도, Istiod의 Service Discovery가 Pod가 실행 중인 Node의 topology 레이블을 조회해 Locality를 파악하고 이를 EDS로 만들어 Envoy Proxy에 xDS로 전달하는 과정을 보여준다.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <style>
+        text{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;}
+        .mono{font-family:'Geist Mono',monospace;}
+      </style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- zones -->
+    <rect x="272" y="100" width="420" height="140" rx="8" fill="rgba(255,153,0,0.05)" stroke="rgba(236,114,17,0.35)" stroke-width="0.8" stroke-dasharray="4,4"/>
+    <rect x="284" y="104" width="188" height="12" rx="2" fill="#ffffff"/>
+    <text x="378" y="113" fill="#EC7211" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.1em">ISTIOD · CONTROL PLANE</text>
+
+    <rect x="80" y="340" width="280" height="180" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="92" y="344" width="248" height="12" rx="2" fill="#ffffff"/>
+    <text x="216" y="353" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.06em">NODE 1 · zone=us-east-1a</text>
+
+    <rect x="400" y="340" width="180" height="180" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="412" y="344" width="156" height="12" rx="2" fill="#ffffff"/>
+    <text x="490" y="353" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.06em">NODE 2 · zone=us-east-1b</text>
+
+    <!-- arrows first -->
+    <!-- Discovery -> EDS (straight) -->
+    <path d="M424,176 H468" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="430" y="156" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="446" y="165" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">조회</text>
+
+    <!-- Discovery -> Node1 zone -->
+    <path d="M328,204 V264 Q328,272 320,272 H228 Q220,272 220,280 V340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="252" y="292" width="76" height="12" rx="2" fill="#ffffff"/>
+    <text x="290" y="301" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">노드 레이블 조회</text>
+
+    <!-- Discovery -> Node2 zone -->
+    <path d="M380,204 V264 Q380,272 388,272 H482 Q490,272 490,280 V340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="418" y="292" width="76" height="12" rx="2" fill="#ffffff"/>
+    <text x="456" y="301" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">노드 레이블 조회</text>
+
+    <!-- EDS -> Envoy -->
+    <path d="M538,204 V284 Q538,292 546,292 H752 Q760,292 760,300 V380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="716" y="332" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="746" y="341" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">xDS 푸시</text>
+
+    <!-- Discovery (focal) -->
+    <rect x="284" y="148" width="140" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="354" y="180" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Service Discovery</text>
+
+    <!-- EDS -->
+    <rect x="468" y="148" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="538" y="180" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">EDS 생성</text>
+
+    <!-- Pod1 -->
+    <rect x="104" y="400" width="112" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="160" y="424" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod A</text>
+    <text x="160" y="440" fill="#545B64" font-size="9" class="mono" text-anchor="middle">zone 레이블 없음</text>
+
+    <!-- Pod2 -->
+    <rect x="232" y="400" width="112" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="288" y="424" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod B</text>
+    <text x="288" y="440" fill="#545B64" font-size="9" class="mono" text-anchor="middle">zone 레이블 없음</text>
+
+    <!-- Pod3 -->
+    <rect x="424" y="400" width="112" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="480" y="424" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod C</text>
+    <text x="480" y="440" fill="#545B64" font-size="9" class="mono" text-anchor="middle">zone 레이블 없음</text>
+
+    <!-- Envoy -->
+    <rect x="680" y="380" width="160" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="760" y="408" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Envoy Proxy</text>
+    <text x="760" y="424" fill="#545B64" font-size="9" class="mono" text-anchor="middle">locality-aware LB</text>
+
+    <!-- legend -->
+    <line x1="32" y1="552" x2="928" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="32" y="572" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+    <rect x="140" y="562" width="20" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="170" y="572" fill="#545B64" font-size="9" class="mono">Locality 파악 허브 (Service Discovery)</text>
+    <rect x="500" y="562" width="20" height="12" rx="3" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="530" y="572" fill="#545B64" font-size="9" class="mono">Zone 레이블이 없는 Pod</text>
+  </svg>

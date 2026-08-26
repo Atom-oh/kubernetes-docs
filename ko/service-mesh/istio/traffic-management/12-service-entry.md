@@ -20,32 +20,7 @@ ServiceEntry는 Istio 서비스 메시에 외부 서비스를 등록하여 메�
 
 Istio 메시는 기본적으로 외부 서비스에 대한 트래픽을 제어하지 않습니다. ServiceEntry를 사용하면:
 
-```mermaid
-flowchart TB
-    subgraph Without["ServiceEntry 없이"]
-        A1[메시 내부<br/>서비스] -->|알 수 없는 트래픽| E1[외부 API]
-        A1 -.->|모니터링 없음| E1
-        A1 -.->|정책 적용 불가| E1
-        A1 -.->|Circuit Breaker 없음| E1
-    end
-
-    subgraph With["ServiceEntry 사용"]
-        A2[메시 내부<br/>서비스] -->|등록된 트래픽| E2[외부 API<br/>ServiceEntry]
-        A2 -->|모니터링 가능| E2
-        A2 -->|정책 적용| E2
-        A2 -->|Circuit Breaker| E2
-    end
-
-    %% 스타일 정의
-    classDef internal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef unknown fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class A1,A2 internal;
-    class E2 external;
-    class E1 unknown;
-```
+![ServiceEntry 없이는 외부 API로 나가는 트래픽이 모니터링도 정책도 Circuit Breaker도 없는 블랙홀이지만, ServiceEntry로 등록하면 동일한 트래픽에 모니터링·정책·Circuit Breaker가 모두 적용됨을 두 패널로 비교한 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-12-service-entry-0.png)
 
 ### 주요 이점
 
@@ -61,32 +36,7 @@ flowchart TB
 
 ServiceEntry는 외부 서비스를 Istio 서비스 레지스트리에 추가합니다.
 
-```mermaid
-flowchart LR
-    subgraph Mesh["Service Mesh"]
-        App[애플리케이션]
-        SE[ServiceEntry<br/>등록]
-    end
-
-    subgraph External["External Services"]
-        API[외부 API<br/>api.example.com]
-        DB[외부 DB<br/>db.example.com]
-    end
-
-    App -->|1. 요청| SE
-    SE -->|2. 트래픽 제어<br/>모니터링<br/>보안| API
-    SE -->|2. 트래픽 제어<br/>모니터링<br/>보안| DB
-
-    %% 스타일 정의
-    classDef meshService fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef serviceEntry fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App meshService;
-    class SE serviceEntry;
-    class API,DB external;
-```
+![메시 내부 애플리케이션의 요청이 ServiceEntry(포커스 노드)를 거쳐 외부 API와 외부 DB로 나가며, 그 경로에 트래픽 제어·모니터링·보안이 적용되는 흐름을 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-12-service-entry-1.png)
 
 ### 기본 구조
 

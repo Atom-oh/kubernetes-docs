@@ -21,30 +21,7 @@ Circuit Breaker는 장애가 발생한 서비스를 자동으로 격리하여 �
 
 마이크로서비스 아키텍처에서 한 서비스의 장애가 다른 서비스로 전파되는 것을 방지합니다.
 
-```mermaid
-flowchart TB
-    subgraph Without["Circuit Breaker 없이"]
-        A1[서비스 A] -->|느린 응답| B1[서비스 B<br/>장애]
-        A1 -->|리소스 고갈| A1
-        A1 -->|타임아웃 누적| C1[서비스 C<br/>장애]
-        C1 -->|연쇄 장애| D1[서비스 D<br/>장애]
-    end
-
-    subgraph With["Circuit Breaker 사용"]
-        A2[서비스 A] -->|빠른 실패| B2[서비스 B<br/>Circuit Open]
-        A2 -->|정상 동작| C2[서비스 C<br/>정상]
-        C2 -->|정상 동작| D2[서비스 D<br/>정상]
-    end
-
-    %% 스타일 정의
-    classDef failure fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class A1,B1,C1,D1 failure;
-    class A2,C2,D2 normal;
-    class B2 failure;
-```
+![Circuit Breaker가 없으면 서비스 A의 장애가 서비스 B, C, D로 연쇄 전파되어 모두 장애 상태가 되지만, Circuit Breaker를 사용하면 서비스 A가 장애 서비스 B를 향해 빠르게 실패 처리하고 서비스 C, D는 정상 동작을 유지한다는 것을 비교해서 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-07-circuit-breaker-0.png)
 
 ### 주요 이점
 
@@ -57,29 +34,7 @@ flowchart TB
 
 ## Circuit Breaker 개요
 
-```mermaid
-stateDiagram-v2
-    [*] --> Closed
-    Closed --> Open: 연속 에러 임계값 초과
-    Open --> HalfOpen: 대기 시간 경과
-    HalfOpen --> Closed: 요청 성공
-    HalfOpen --> Open: 요청 실패
-    
-    note right of Closed
-        정상 상태
-        모든 요청 통과
-    end note
-    
-    note right of Open
-        차단 상태
-        요청 즉시 실패
-    end note
-    
-    note right of HalfOpen
-        테스트 상태
-        제한된 요청 허용
-    end note
-```
+![Circuit Breaker는 정상 상태인 Closed에서 연속 에러가 임계값을 넘으면 즉시 실패하는 Open 상태로 전환되고, 대기 시간이 지나면 제한된 요청만 허용하는 HalfOpen을 거쳐 요청이 성공하면 Closed로 복귀하고 다시 실패하면 Open으로 돌아간다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-07-circuit-breaker-1.png)
 
 ## Connection Pool 설정
 
@@ -615,62 +570,11 @@ istioctl proxy-config cluster <pod-name> -o json | \
 
 #### Circuit Breaker의 역할과 한계
 
-```mermaid
-flowchart TB
-    subgraph WhatItDoes["✅ Circuit Breaker가 하는 것"]
-        CB1[장애 서비스 격리]
-        CB2[Cascading Failure 방지]
-        CB3[시스템 리소스 보호]
-        CB4[자동 복구 시도]
-    end
-
-    subgraph WhatItDoesNot["❌ Circuit Breaker가 하지 않는 것"]
-        CB5[중복 요청 방지]
-        CB6[데이터 정합성 보장]
-        CB7[트랜잭션 관리]
-        CB8[멱등성 보장]
-    end
-
-    %% 스타일 정의
-    classDef good fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef bad fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class CB1,CB2,CB3,CB4 good;
-    class CB5,CB6,CB7,CB8 bad;
-```
+![Circuit Breaker는 장애 서비스 격리, 연쇄 장애 방지, 리소스 보호, 자동 복구 시도를 담당하지만, 중복 요청 방지, 데이터 정합성 보장, 트랜잭션 관리, 멱등성 보장은 담당하지 않는다는 역할과 한계를 좌우로 대비해서 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-07-circuit-breaker-2.png)
 
 #### 문제 시나리오: Retry + Circuit Breaker
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant Proxy as Istio Proxy<br/>(VirtualService Retry)
-    participant Service as Payment Service
-    participant DB as Database
-
-    Note over Proxy: Retry: attempts=3<br/>Circuit Breaker: consecutiveErrors=5
-
-    Client->>Proxy: POST /payment (결제 요청)
-
-    Proxy->>Service: Attempt 1
-    Service->>DB: INSERT payment (성공)
-    Service--xProxy: Timeout (응답 손실)
-    Note over Proxy: ⚠️ Retry 1/3
-
-    Proxy->>Service: Attempt 2 (같은 요청)
-    Service->>DB: INSERT payment (중복!)
-    Service--xProxy: Timeout (응답 손실)
-    Note over Proxy: ⚠️ Retry 2/3
-
-    Proxy->>Service: Attempt 3 (같은 요청)
-    Service->>DB: INSERT payment (중복!)
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-
-    Note over DB: ❌ 결제 3회 중복!<br/>Circuit Breaker는 5회 에러 후 작동
-```
+![결제 요청이 타임아웃으로 3번 재시도되는 동안 매번 실제로는 결제가 성공해 데이터베이스에 3건이 중복 기록되지만, Circuit Breaker는 5번 연속 에러가 나야 작동하기 때문에 재시도 도중의 중복은 막지 못한다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-07-circuit-breaker-3.png)
 
 **문제**: Circuit Breaker가 작동하기 전(5번 연속 에러)에 이미 **3번의 중복 결제**가 발생했습니다.
 

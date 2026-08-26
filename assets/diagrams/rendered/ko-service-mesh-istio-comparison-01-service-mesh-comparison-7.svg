@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-comparison-01-service-mesh-comparison-7-title ko-service-mesh-istio-comparison-01-service-mesh-comparison-7-desc">
+<title id="ko-service-mesh-istio-comparison-01-service-mesh-comparison-7-title">Kong Mesh 정책 전파 메커니즘</title>
+<desc id="ko-service-mesh-istio-comparison-01-service-mesh-comparison-7-desc">정책을 적용하면 스코프에 따라 Global CP 또는 Zone CP에 저장되고, 두 경로 모두 최종적으로 Data Plane의 xDS 설정을 갱신해 Envoy에 실시간으로 반영된다.</desc>
+
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+  </marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="140" y1="168.0" x2="180" y2="168.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="330" y1="168.0" x2="360" y2="168.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 460,158 H 512 Q 520,158 520,150 V 64.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="474.0" y="138" width="32" height="12" rx="2" fill="#ffffff"/><text x="490.0" y="147" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<path d="M 460,178 H 512 Q 520,178 520,186 V 284.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="474.0" y="158" width="32" height="12" rx="2" fill="#ffffff"/><text x="490.0" y="167" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<path d="M 700,64.0 H 752 Q 760,64.0 760,72.0 V 180.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="714.0" y="44.0" width="32" height="12" rx="2" fill="#ffffff"/><text x="730.0" y="53.0" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">SYNC</text>
+<path d="M 700,284.0 H 752 Q 760,284.0 760,276.0 V 180.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="711.0" y="264.0" width="38" height="12" rx="2" fill="#ffffff"/><text x="730.0" y="273.0" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">LOCAL</text>
+<line x1="850.0" y1="208" x2="850.0" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="850.0" y1="384" x2="850.0" y2="420" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="20" y="140" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="20" y="140" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="80.0" y="172.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">정책 생성/수정</text>
+<rect x="180" y="140" width="150" height="56" rx="6" fill="#ffffff"/>
+<rect x="180" y="140" width="150" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="255.0" y="167.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">kubectl apply -f</text>
+<text x="255.0" y="185.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle">policy.yaml</text>
+<rect x="360" y="140" width="100" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="140" width="100" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="410.0" y="172.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Global CP
+적용?</text>
+<rect x="520" y="40" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="520" y="40" width="180" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="610.0" y="68.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Global CP
+정책 저장</text>
+<rect x="520" y="260" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="520" y="260" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="610.0" y="288.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Zone CP
+로컬 정책 저장</text>
+<rect x="760" y="152" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="760" y="152" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="850.0" y="184.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Zone CP 수신</text>
+<rect x="760" y="320" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="760" y="320" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="850.0" y="351.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Data Plane</text>
+<text x="850.0" y="369.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle">xDS 업데이트</text>
+<rect x="760" y="420" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="760" y="420" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="850.0" y="451.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Envoy 설정 적용</text>
+<text x="850.0" y="469.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle">실시간 트래픽 제어</text>
+<line x1="20" y1="512" x2="930" y2="512" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<line x1="20" y1="522" x2="38" y2="522" stroke="#EC7211" stroke-width="1.6"/>
+<text x="44" y="525" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" letter-spacing="0.04em">GLOBAL CP 저장</text>
+</svg>

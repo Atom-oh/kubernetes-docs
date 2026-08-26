@@ -16,41 +16,7 @@ Rate Limiting은 서비스를 과부하로부터 보호하고, 공정한 리소�
 
 Rate Limiting은 다음과 같은 상황에서 필요합니다:
 
-```mermaid
-flowchart TB
-    Client1[클라이언트 1<br/>100 req/s]
-    Client2[클라이언트 2<br/>50 req/s]
-    Client3[클라이언트 3<br/>200 req/s]
-
-    subgraph RateLimiter["Rate Limiter"]
-        RL[Token Bucket<br/>100 req/s 제한]
-    end
-
-    subgraph Service["서비스"]
-        S1[Pod 1<br/>처리 가능: 50 req/s]
-        S2[Pod 2<br/>처리 가능: 50 req/s]
-    end
-
-    Client1 -->|100 req/s| RL
-    Client2 -->|50 req/s| RL
-    Client3 -->|200 req/s| RL
-
-    RL -->|100 req/s<br/>허용| S1
-    RL -->|100 req/s<br/>허용| S2
-    RL -.->|250 req/s<br/>차단| Reject[429 Too Many Requests]
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef limiter fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef reject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client1,Client2,Client3 client;
-    class RL limiter;
-    class S1,S2 service;
-    class Reject reject;
-```
+![세 클라이언트의 요청이 Token Bucket 방식의 Rate Limiter를 거쳐, 처리 가능한 두 Pod로는 허용되고 초과된 요청은 429 오류로 차단되는 흐름을 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-02-rate-limiting-0.png)
 
 ### Rate Limiting의 목적
 
@@ -98,34 +64,7 @@ flowchart TB
 
 ### Token Bucket 알고리즘
 
-```mermaid
-flowchart TB
-    Bucket[Token Bucket<br/>최대: 100 tokens]
-    Refill[Refill<br/>10 tokens/sec]
-    Request[요청 도착]
-    Check{토큰<br/>있음?}
-    Allow[요청 허용<br/>토큰 1개 소비]
-    Reject[요청 거부<br/>429 반환]
-
-    Refill -.->|매초 10개 추가| Bucket
-    Request --> Check
-    Bucket --> Check
-    Check -->|Yes| Allow
-    Check -->|No| Reject
-    Allow -.->|토큰 감소| Bucket
-
-    %% 스타일 정의
-    classDef bucket fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef reject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Bucket,Refill bucket;
-    class Request,Allow process;
-    class Check decision;
-    class Reject reject;
-```
+![Refill이 주기적으로 토큰을 채우는 Token Bucket에서 요청이 도착하면 토큰 보유 여부를 판정해 허용 시 토큰을 소비하고 부족하면 429로 거부하는 순환 흐름을 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-02-rate-limiting-1.png)
 
 ### 기본 설정
 
@@ -291,51 +230,7 @@ spec:
 
 ### 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph Clients["클라이언트들"]
-        C1[Client 1]
-        C2[Client 2]
-        C3[Client 3]
-    end
-
-    subgraph Gateway["Istio Gateway"]
-        IG[Ingress Gateway<br/>Envoy Proxy]
-    end
-
-    subgraph RateLimitService["Rate Limit Service"]
-        RLS[Rate Limit Server<br/>envoyproxy/ratelimit]
-        Cache[In-Memory Cache]
-    end
-
-    subgraph Backend["백엔드 서비스"]
-        S1[Service A]
-        S2[Service B]
-    end
-
-    C1 -->|요청| IG
-    C2 -->|요청| IG
-    C3 -->|요청| IG
-
-    IG -->|"1. Rate Limit 확인<br/>(gRPC)"| RLS
-    RLS -->|"2. 허용/거부 응답"| IG
-    RLS -.->|캐시 조회/업데이트| Cache
-
-    IG -->|"3. 허용된 요청만<br/>전달"| S1
-    IG -->|"3. 허용된 요청만<br/>전달"| S2
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef ratelimit fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class C1,C2,C3 client;
-    class IG gateway;
-    class RLS,Cache ratelimit;
-    class S1,S2 service;
-```
+![Ingress Gateway가 클라이언트 요청마다 중앙 Rate Limit Server에 gRPC로 허용 여부를 확인하고, 서버는 캐시를 조회한 뒤 응답을 돌려주며 허용된 요청만 백엔드 서비스로 전달되는 글로벌 Rate Limiting 아키텍처를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-02-rate-limiting-2.png)
 
 ### 구성 방법
 

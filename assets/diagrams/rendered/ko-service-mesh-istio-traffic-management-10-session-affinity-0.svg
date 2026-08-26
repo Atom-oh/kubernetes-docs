@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">Consistent Hash 기반 Session Affinity</title>
+  <desc id="ddesc">사용자 A의 요청이 Load Balancer의 Consistent Hash 로직을 거쳐 항상 동일한 Pod 1로 라우팅되고, Pod 2와 Pod 3는 같은 파드 풀에 있지만 이 사용자의 요청을 받지 않는 모습을 보여준다.</desc>
+
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="32" class="mono" font-size="8" font-weight="500" fill="#7D8998" letter-spacing="0.18em">ISTIO · TRAFFIC MANAGEMENT</text>
+  <text x="40" y="56" font-size="20" font-weight="700" fill="#232F3E">Consistent Hash 기반 Session Affinity</text>
+
+  <!-- ===== Arrows (drawn before boxes) ===== -->
+
+  <!-- User -> Hash : straight vertical -->
+  <line x1="480" y1="144" x2="480" y2="228" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="426" y="174" width="108" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="183" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">USER_ID=123</text>
+
+  <!-- Hash -> Pod 1 : orthogonal elbow, accent (always routes to the same pod) -->
+  <path d="M 480 288
+           L 480 332
+           Q 480 340 472 340
+           L 268 340
+           Q 260 340 260 348
+           L 260 400"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="366" y="320" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="402" y="329" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#EC7211">항상 동일</text>
+
+  <!-- ===== Zone: Load Balancer ===== -->
+  <rect x="300" y="200" width="360" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="#D5DBDB" stroke-width="1"/>
+  <text x="316" y="220" class="mono" font-size="8" font-weight="500" fill="#7D8998" letter-spacing="0.14em">LOAD BALANCER</text>
+
+  <!-- Hash node (focal) -->
+  <rect x="380" y="228" width="200" height="60" rx="6" fill="#ffffff"/>
+  <rect x="380" y="228" width="200" height="60" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="254" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Consistent Hash</text>
+  <text x="480" y="272" text-anchor="middle" class="mono" font-size="9" fill="#545B64">User ID 기반</text>
+
+  <!-- ===== Zone: Pods ===== -->
+  <rect x="140" y="360" width="680" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="#D5DBDB" stroke-width="1"/>
+  <text x="156" y="380" class="mono" font-size="8" font-weight="500" fill="#7D8998" letter-spacing="0.14em">파드</text>
+
+  <!-- Pod 1 (focal target) -->
+  <rect x="170" y="400" width="180" height="88" rx="6" fill="#ffffff"/>
+  <rect x="170" y="400" width="180" height="88" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="260" y="438" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Pod 1</text>
+  <text x="260" y="456" text-anchor="middle" class="mono" font-size="9" fill="#545B64">세션 A</text>
+
+  <!-- Pod 2 -->
+  <rect x="390" y="400" width="180" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="450" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Pod 2</text>
+
+  <!-- Pod 3 -->
+  <rect x="610" y="400" width="180" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="700" y="450" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Pod 3</text>
+
+  <!-- User node -->
+  <rect x="400" y="88" width="160" height="56" rx="6" fill="#ffffff"/>
+  <rect x="400" y="88" width="160" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="480" y="120" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">사용자 A</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="548" x2="920" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <line x1="40" y1="568" x2="72" y2="568" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="80" y="571" class="mono" font-size="8" fill="#545B64" letter-spacing="0.04em">동일 사용자 → 항상 같은 Pod로 라우팅</text>
+</svg>

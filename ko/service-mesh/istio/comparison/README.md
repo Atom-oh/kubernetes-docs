@@ -68,36 +68,7 @@ Istio 내부에서 sidecar 모드와 ambient 모드 중 무엇을 선택할지, 
 
 ### Service Mesh 선택 기준
 
-```mermaid
-flowchart TD
-    Start[Service Mesh 필요?]
-    Start -->|Yes| Q1{플랫폼?}
-    Start -->|No| NoMesh[기본 K8s Service 사용]
-
-    Q1 -->|Kubernetes Only| Q2{복잡도 수용 가능?}
-    Q1 -->|Multi-Platform| ConsulKong[Consul/Kong Mesh 고려]
-
-    Q2 -->|Yes, 풍부한 기능 필요| Istio[Istio 선택]
-    Q2 -->|No, 단순함 우선| Linkerd[Linkerd 선택]
-
-    Q3{AWS 중심?}
-    Q3 -->|Yes| Q4{서버리스/간편함?}
-    Q3 -->|No| Q5{멀티 클라우드?}
-
-    Q4 -->|Yes| Lattice[VPC Lattice]
-    Q4 -->|No| IstioEKS[Istio on EKS]
-
-    Q5 -->|Yes| IstioMulti[Istio Multi-cluster]
-    Q5 -->|No| Regional[Regional 솔루션]
-
-    classDef meshSolution fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef decision fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef awsSolution fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class Istio,Linkerd,ConsulKong,IstioEKS,IstioMulti meshSolution;
-    class Start,Q1,Q2,Q3,Q4,Q5 decision;
-    class Lattice awsSolution;
-```
+![플랫폼과 요구사항에 따라 Service Mesh 솔루션을 선택하는 두 개의 의사결정 트리로, 왼쪽은 Kubernetes 환경에서 Istio·Linkerd·Consul/Kong Mesh 중 선택하는 경로를, 오른쪽은 AWS 중심 아키텍처에서 VPC Lattice·Istio on EKS·Istio Multi-cluster·리전별 솔루션 중 선택하는 경로를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-README-0.png)
 
 ### 사용 사례별 권장 사항
 

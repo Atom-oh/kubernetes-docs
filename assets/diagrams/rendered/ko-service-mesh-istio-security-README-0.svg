@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+         aria-labelledby="ko-sm-istio-sec-0-title ko-sm-istio-sec-0-desc">
+      <title id="ko-sm-istio-sec-0-title">Istio 보안 아키텍처 계층</title>
+      <desc id="ko-sm-istio-sec-0-desc">Control Plane(istiod)이 인증서와 정책을 사이드카에 배포하고, 두 Envoy 사이드카가 mTLS로 파드 간 트래픽을 암호화하며, Identity부터 Authorization까지 5단계 보안 계층이 순서대로 적용되는 구조를 보여준다.</desc>
+      <defs>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+        </style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+        </marker>
+        <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+          <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+        </marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+        </marker>
+        <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+          <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+        </marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ===================== ZONES (bg -> zones -> arrows -> labels -> nodes) ===================== -->
+
+      <!-- Zone 1: Control Plane -->
+      <rect x="40" y="40" width="240" height="184" rx="8"
+            fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="48" y="44" width="160" height="12" rx="2" fill="#ffffff"/>
+      <text x="128" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.10em">CONTROL PLANE (ISTIOD)</text>
+
+      <!-- Zone 2: Data Plane -->
+      <rect x="288" y="40" width="624" height="184" rx="8"
+            fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="296" y="44" width="196" height="12" rx="2" fill="#ffffff"/>
+      <text x="394" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.10em">DATA PLANE (ENVOY PROXY)</text>
+      <text x="442" y="100" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.08em">POD A</text>
+      <text x="758" y="100" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.08em">POD B</text>
+
+      <!-- Zone 3: Security layer sequence -->
+      <rect x="24" y="348" width="912" height="104" rx="8"
+            fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="32" y="352" width="252" height="12" rx="2" fill="#ffffff"/>
+      <text x="158" y="361" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.10em">보안 계층 적용 순서 (5단계)</text>
+
+      <!-- ===================== ARROWS ===================== -->
+
+      <!-- CA -> data plane (cert issuance), upper channel -->
+      <path d="M104,104 V76 Q104,68 112,68 H288" fill="none" stroke="#545B64" stroke-width="1"
+            stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <!-- ConfigAPI -> data plane (policy push), lower channel -->
+      <path d="M216,104 V92 Q216,84 224,84 H288" fill="none" stroke="#545B64" stroke-width="1"
+            stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+      <!-- App1 -> Envoy1 (plaintext, in-pod) -->
+      <line x1="400" y1="132" x2="420" y2="132" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <!-- Envoy1 <-> Envoy2 (mTLS, focal) -->
+      <line x1="580" y1="132" x2="620" y2="132" stroke="#EC7211" stroke-width="1.2"
+            marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+      <!-- Envoy2 -> App2 (plaintext, in-pod) -->
+      <line x1="780" y1="132" x2="800" y2="132" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- Security layer chain -->
+      <line x1="184" y1="408" x2="224" y2="408" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="368" y1="408" x2="408" y2="408" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="552" y1="408" x2="592" y2="408" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="736" y1="408" x2="776" y2="408" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- ===================== ARROW LABELS (masked, 8px gap) ===================== -->
+
+      <rect x="222" y="48" width="56" height="12" rx="2" fill="#ffffff"/>
+      <text x="250" y="57" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.04em">인증서 발급</text>
+
+      <rect x="168" y="64" width="48" height="12" rx="2" fill="#ffffff"/>
+      <text x="192" y="73" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.04em">정책 배포</text>
+
+      <rect x="586" y="112" width="28" height="12" rx="2" fill="#ffffff"/>
+      <text x="600" y="121" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.04em">mTLS</text>
+
+      <!-- ===================== NODES ===================== -->
+
+      <!-- CA -->
+      <rect x="56" y="104" width="96" height="56" rx="6" fill="#ffffff"/>
+      <rect x="56" y="104" width="96" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="104" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Certificate</text>
+      <text x="104" y="142" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Authority</text>
+      <text x="104" y="154" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">CA 인증서 관리</text>
+
+      <!-- ConfigAPI -->
+      <rect x="168" y="104" width="96" height="56" rx="6" fill="#ffffff"/>
+      <rect x="168" y="104" width="96" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="216" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Config API</text>
+      <text x="216" y="146" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">보안 정책 배포</text>
+
+      <!-- App1 -->
+      <rect x="304" y="104" width="96" height="56" rx="6" fill="#ffffff"/>
+      <rect x="304" y="104" width="96" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="352" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">애플리케이션</text>
+
+      <!-- Envoy1 (focal) -->
+      <rect x="420" y="104" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="420" y="104" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="500" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy Sidecar</text>
+      <text x="500" y="142" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">mTLS 종료 · 정책 적용</text>
+
+      <!-- Envoy2 (focal) -->
+      <rect x="620" y="104" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="620" y="104" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="700" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy Sidecar</text>
+      <text x="700" y="142" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">mTLS 종료 · 정책 적용</text>
+
+      <!-- App2 -->
+      <rect x="800" y="104" width="96" height="56" rx="6" fill="#ffffff"/>
+      <rect x="800" y="104" width="96" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="848" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">애플리케이션</text>
+
+      <!-- Security layer chain: 1..5 -->
+      <rect x="40" y="380" width="144" height="56" rx="6" fill="#ffffff"/>
+      <rect x="40" y="380" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="112" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">1. Identity</text>
+      <text x="112" y="418" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">SPIFFE ID 기반</text>
+
+      <rect x="224" y="380" width="144" height="56" rx="6" fill="#ffffff"/>
+      <rect x="224" y="380" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="296" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">2. Cert Mgmt</text>
+      <text x="296" y="418" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">자동 발급/갱신</text>
+
+      <rect x="408" y="380" width="144" height="56" rx="6" fill="#ffffff"/>
+      <rect x="408" y="380" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="480" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">3. Peer Auth</text>
+      <text x="480" y="418" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">서비스 간 mTLS</text>
+
+      <rect x="592" y="380" width="144" height="56" rx="6" fill="#ffffff"/>
+      <rect x="592" y="380" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="664" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">4. Req Auth</text>
+      <text x="664" y="418" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">최종 사용자 JWT</text>
+
+      <rect x="776" y="380" width="144" height="56" rx="6" fill="#ffffff"/>
+      <rect x="776" y="380" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="848" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">5. Authorization</text>
+      <text x="848" y="418" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">접근 제어</text>
+
+      <!-- ===================== LEGEND ===================== -->
+      <line x1="30" y1="472" x2="930" y2="472" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="30" y="492" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+      <line x1="140" y1="489" x2="172" y2="489" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="180" y="492" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Control Plane 배포(인증서/정책)</text>
+
+      <line x1="480" y1="489" x2="512" y2="489" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <text x="520" y="492" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">애플리케이션 ↔ 사이드카 트래픽</text>
+
+      <line x1="760" y1="489" x2="792" y2="489" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+      <text x="800" y="492" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">mTLS 암호화(핵심)</text>
+    </svg>

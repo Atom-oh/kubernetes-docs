@@ -21,41 +21,7 @@ DestinationRule은 VirtualService가 트래픽을 라우팅한 후, 해당 트�
 
 DestinationRule은 **라우팅 이후의 트래픽 정책**을 정의합니다. VirtualService가 "어디로" 보낼지 결정한다면, DestinationRule은 "어떻게" 처리할지 결정합니다.
 
-```mermaid
-flowchart LR
-    Client[클라이언트 요청]
-
-    subgraph VS[VirtualService]
-        Route[라우팅 결정<br/>어디로?]
-    end
-
-    subgraph DR[DestinationRule]
-        Policy[트래픽 정책<br/>어떻게?]
-    end
-
-    subgraph Services[서비스]
-        V1[Version 1]
-        V2[Version 2]
-    end
-
-    Client --> Route
-    Route -->|90%| Policy
-    Route -->|10%| Policy
-    Policy --> V1
-    Policy --> V2
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef routing fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client client;
-    class Route routing;
-    class Policy policy;
-    class V1,V2 service;
-```
+![클라이언트 요청이 VirtualService의 라우팅 결정을 거쳐 DestinationRule의 트래픽 정책에 따라 두 버전으로 분배되는 흐름을 보여줍니다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-03-destination-rule-0.png)
 
 ### DestinationRule의 주요 역할
 
@@ -73,47 +39,7 @@ flowchart LR
 
 ### 역할 비교
 
-```mermaid
-flowchart TD
-    Request[HTTP 요청<br/>Host: reviews]
-
-    subgraph VS[VirtualService 역할]
-        Match{조건 매칭}
-        Route[라우팅 결정]
-    end
-
-    subgraph DR[DestinationRule 역할]
-        Subset[Subset 선택]
-        Policy[정책 적용]
-    end
-
-    subgraph Pods[파드]
-        P1[reviews-v1-pod1]
-        P2[reviews-v1-pod2]
-        P3[reviews-v2-pod1]
-    end
-
-    Request --> Match
-    Match -->|헤더, 경로 등| Route
-    Route -->|subset: v1<br/>weight: 90%| Subset
-    Route -->|subset: v2<br/>weight: 10%| Subset
-    Subset --> Policy
-    Policy -->|로드 밸런싱| P1
-    Policy -->|로드 밸런싱| P2
-    Policy -->|로드 밸런싱| P3
-
-    %% 스타일 정의
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef vs fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dr fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Request request;
-    class Match,Route vs;
-    class Subset,Policy dr;
-    class P1,P2,P3 pod;
-```
+![HTTP 요청이 조건 매칭과 라우팅 결정을 거쳐 DestinationRule의 Subset 선택과 정책 적용을 통해 v1·v2 파드로 로드 밸런싱되는 과정을 보여줍니다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-03-destination-rule-1.png)
 
 ### 책임 분리
 
@@ -172,37 +98,7 @@ Subset은 서비스의 **논리적 그룹**을 정의합니다. 주로 버전, �
 
 ### Subset의 본질
 
-```mermaid
-flowchart TB
-    Service[Kubernetes Service<br/>reviews]
-
-    subgraph DR[DestinationRule Subset 정의]
-        S1[Subset: v1<br/>labels: version=v1]
-        S2[Subset: v2<br/>labels: version=v2]
-    end
-
-    subgraph Pods[실제 파드]
-        P1[reviews-v1-abc<br/>version=v1]
-        P2[reviews-v1-def<br/>version=v1]
-        P3[reviews-v2-xyz<br/>version=v2]
-    end
-
-    Service --> S1
-    Service --> S2
-    S1 -.->|레이블 매칭| P1
-    S1 -.->|레이블 매칭| P2
-    S2 -.->|레이블 매칭| P3
-
-    %% 스타일 정의
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef subset fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Service service;
-    class S1,S2 subset;
-    class P1,P2,P3 pod;
-```
+![Kubernetes Service가 정의한 Subset v1·v2가 레이블 매칭을 통해 실제 파드들과 연결되는 관계를 보여줍니다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-03-destination-rule-2.png)
 
 ### Subset 사용 시나리오
 
@@ -425,36 +321,7 @@ DestinationRule의 `trafficPolicy`는 다양한 트래픽 제어 기능을 제�
 
 ### Traffic Policy 계층 구조
 
-```mermaid
-flowchart TD
-    DR[DestinationRule]
-
-    subgraph Global[전역 Traffic Policy]
-        GP[모든 subset에 적용]
-    end
-
-    subgraph Subset1[Subset: v1]
-        SP1[v1 전용 정책<br/>전역 정책 오버라이드]
-    end
-
-    subgraph Subset2[Subset: v2]
-        SP2[전역 정책 상속]
-    end
-
-    DR --> Global
-    Global --> Subset1
-    Global --> Subset2
-
-    %% 스타일 정의
-    classDef dr fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef global fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef subset fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class DR dr;
-    class GP global;
-    class SP1,SP2 subset;
-```
+![전역 Traffic Policy가 모든 subset에 기본으로 적용되고, v1은 이를 오버라이드하며 v2는 그대로 상속받는 계층 구조를 보여줍니다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-03-destination-rule-3.png)
 
 ### Traffic Policy 구성 요소
 

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="phase-rollout-title phase-rollout-desc">
+    <title id="phase-rollout-title">서비스 메시 점진적 도입 단계</title>
+    <desc id="phase-rollout-desc">관찰성 확보, mTLS 보안 적용, Canary 트래픽 관리, 전체 기능 활용까지 4단계로 서비스 메시를 점진적으로 도입하는 순서를 보여주는 프로세스 다이어그램.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="d4-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Arrows -->
+    <line x1="240" y1="300" x2="288" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)"/>
+    <line x1="452" y1="300" x2="500" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)"/>
+    <line x1="664" y1="300" x2="712" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)"/>
+
+    <!-- Edge labels -->
+    <rect x="248" y="284" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="264" y="293" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">검증 후</text>
+
+    <rect x="460" y="284" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="476" y="293" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">검증 후</text>
+
+    <rect x="672" y="284" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="688" y="293" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">검증 후</text>
+
+    <!-- Phase 1 -->
+    <rect x="52" y="260" width="188" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="64" y="270" width="52" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="90" y="280" fill="rgba(35,47,62,0.7)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.08em">PHASE 1</text>
+    <text x="146" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">관찰성</text>
+    <text x="146" y="318" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">metrics only</text>
+
+    <!-- Phase 2 -->
+    <rect x="288" y="260" width="164" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="300" y="270" width="52" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="326" y="280" fill="rgba(35,47,62,0.7)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.08em">PHASE 2</text>
+    <text x="370" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">보안</text>
+    <text x="370" y="318" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">mTLS 적용</text>
+
+    <!-- Phase 3 -->
+    <rect x="500" y="260" width="164" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="512" y="270" width="52" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="538" y="280" fill="rgba(35,47,62,0.7)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.08em">PHASE 3</text>
+    <text x="582" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">트래픽 관리</text>
+    <text x="582" y="318" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">Canary 배포</text>
+
+    <!-- Phase 4 (focal) -->
+    <rect x="712" y="252" width="196" height="96" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="724" y="262" width="52" height="14" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="750" y="272" fill="#EC7211" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.08em">PHASE 4</text>
+    <text x="810" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">고급 기능</text>
+    <text x="810" y="316" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">모든 기능 활용</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="496" fill="#545B64" font-size="8" font-family="var(--font-mono)" letter-spacing="0.14em">LEGEND</text>
+    <rect x="140" y="486" width="24" height="12" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="172" y="496" fill="#545B64" font-size="8.5" font-family="var(--font-cjk)">도입 단계</text>
+    <rect x="280" y="486" width="24" height="12" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="312" y="496" fill="#545B64" font-size="8.5" font-family="var(--font-cjk)">최종 목표 단계</text>
+  </svg>

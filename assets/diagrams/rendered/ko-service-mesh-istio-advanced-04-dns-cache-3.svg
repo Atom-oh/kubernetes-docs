@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d3-title d3-desc">
+  <title id="d3-title">DNS Proxy 단계적 롤아웃 절차</title>
+  <desc id="d3-desc">테스트 환경에서 DNS Proxy를 활성화해 검증하고, 검증에 실패하면 문제 해결 후 다시 테스트하며, 검증에 성공하면 스테이징에 적용해 모니터링하고, 모니터링에서 문제가 발견되면 롤백 후 문제를 해결하며, 모니터링이 정상이면 프로덕션에 점진적으로 적용해 완료하는 단계적 배포 절차를 보여준다.</desc>
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- ===== Arrows (before nodes) ===== -->
+
+  <!-- Start -> Test -->
+  <path d="M164,116 V160" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Test -> Validate -->
+  <path d="M164,224 V264" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Validate -> Debug (No) -->
+  <path d="M124,308 Q100,308 100,320 V352 Q100,364 112,364 H160"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="72" y="322" width="24" height="12" fill="#ffffff"/>
+  <text x="84" y="331" fill="#545B64" font-size="8" class="mono" text-anchor="middle">NO</text>
+
+  <!-- Debug -> Test (loop back) -->
+  <path d="M164,340 V240 Q164,232 156,232 H148"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+
+  <!-- Validate -> Stage (Yes) -->
+  <path d="M204,296 H316" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="246" y="280" width="28" height="12" fill="#ffffff"/>
+  <text x="260" y="289" fill="#EC7211" font-size="8" class="mono" text-anchor="middle">YES</text>
+
+  <!-- Stage -> Monitor -->
+  <path d="M396,320 V360" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Monitor -> Rollback (No) -->
+  <path d="M356,404 Q332,404 332,416 V448 Q332,460 344,460 H392"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="304" y="418" width="24" height="12" fill="#ffffff"/>
+  <text x="316" y="427" fill="#545B64" font-size="8" class="mono" text-anchor="middle">NO</text>
+
+  <!-- Rollback -> Debug -->
+  <path d="M392,476 Q220,476 220,460 V388"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+
+  <!-- Monitor -> Prod (Yes) -->
+  <path d="M436,392 H588" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="498" y="376" width="28" height="12" fill="#ffffff"/>
+  <text x="512" y="385" fill="#EC7211" font-size="8" class="mono" text-anchor="middle">YES</text>
+
+  <!-- Prod -> Complete -->
+  <path d="M668,416 V456" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- ===== Nodes ===== -->
+
+  <!-- Start (oval) -->
+  <rect x="124" y="80" width="80" height="36" rx="18" fill="#ffffff"/>
+  <rect x="124" y="80" width="80" height="36" rx="18" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="164" y="102" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">시작</text>
+
+  <!-- Test (rect, warning) -->
+  <rect x="84" y="160" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="84" y="160" width="160" height="64" rx="6" fill="rgba(255,153,0,0.06)" stroke="#7D8998" stroke-width="1"/>
+  <text x="164" y="186" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">테스트 환경</text>
+  <text x="164" y="202" fill="#545B64" font-size="9" class="mono" text-anchor="middle">DNS Proxy 활성화</text>
+
+  <!-- Validate (diamond) -->
+  <path d="M164,264 L214,296 L164,328 L114,296 Z" fill="#ffffff"/>
+  <path d="M164,264 L214,296 L164,328 L114,296 Z" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="164" y="292" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">검증</text>
+  <text x="164" y="306" fill="#545B64" font-size="9" class="mono" text-anchor="middle">성공?</text>
+
+  <!-- Debug (rect, error) -->
+  <rect x="84" y="340" width="160" height="48" rx="6" fill="#ffffff"/>
+  <rect x="84" y="340" width="160" height="48" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1"/>
+  <text x="164" y="368" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">문제 해결</text>
+
+  <!-- Stage (rect, warning) -->
+  <rect x="316" y="264" width="160" height="56" rx="6" fill="#ffffff"/>
+  <rect x="316" y="264" width="160" height="56" rx="6" fill="rgba(255,153,0,0.06)" stroke="#7D8998" stroke-width="1"/>
+  <text x="396" y="288" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">스테이징 환경</text>
+  <text x="396" y="304" fill="#545B64" font-size="9" class="mono" text-anchor="middle">적용</text>
+
+  <!-- Monitor (diamond) -->
+  <path d="M396,360 L446,392 L396,424 L346,392 Z" fill="#ffffff"/>
+  <path d="M396,360 L446,392 L396,424 L346,392 Z" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="396" y="388" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">모니터링</text>
+  <text x="396" y="402" fill="#545B64" font-size="9" class="mono" text-anchor="middle">정상?</text>
+
+  <!-- Rollback (rect, error) -->
+  <rect x="392" y="452" width="160" height="48" rx="6" fill="#ffffff"/>
+  <rect x="392" y="452" width="160" height="48" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1"/>
+  <text x="472" y="480" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">롤백</text>
+
+  <!-- Prod (rect, focal) -->
+  <rect x="588" y="360" width="160" height="56" rx="6" fill="#ffffff"/>
+  <rect x="588" y="360" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="668" y="384" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">프로덕션</text>
+  <text x="668" y="400" fill="#EC7211" font-size="9" class="mono" text-anchor="middle">점진적 적용</text>
+
+  <!-- Complete (oval, success) -->
+  <rect x="608" y="456" width="120" height="40" rx="20" fill="#ffffff"/>
+  <rect x="608" y="456" width="120" height="40" rx="20" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="668" y="480" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">완료</text>
+
+  <!-- ===== Legend ===== -->
+  <line x1="24" y1="536" x2="936" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="24" y="552" fill="#545B64" font-size="8" class="mono" letter-spacing="0.18em">LEGEND</text>
+
+  <rect x="24" y="564" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="44" y="572" fill="#545B64" font-size="8.5">정상 경로 · 완료</text>
+
+  <rect x="180" y="564" width="14" height="10" rx="2" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1"/>
+  <text x="200" y="572" fill="#545B64" font-size="8.5">실패 · 롤백 처리</text>
+
+  <line x1="356" y1="569" x2="380" y2="569" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4"/>
+  <text x="388" y="572" fill="#545B64" font-size="8.5">재시도 루프</text>
+</svg>

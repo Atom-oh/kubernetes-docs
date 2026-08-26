@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="policy-hierarchy-title policy-hierarchy-desc">
+    <title id="policy-hierarchy-title">DestinationRule 트래픽 정책의 계층 구조</title>
+    <desc id="policy-hierarchy-desc">전역 Traffic Policy가 모든 subset에 기본으로 적용되고, v1은 이를 오버라이드하며 v2는 그대로 상속받는 계층 구조를 보여줍니다.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Arrows (behind boxes) -->
+    <line x1="480" y1="104" x2="480" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 440,252 V 288 Q 440,296 432,296 H 328 Q 320,296 320,304 V 340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 520,252 V 288 Q 520,296 528,296 H 632 Q 640,296 640,304 V 340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Node: DR (backend) -->
+    <rect x="400" y="40" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="400" y="40" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="408" y="48" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="422" y="57" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DR</text>
+    <text x="480" y="76" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">DestinationRule</text>
+
+    <!-- Node: Global policy (backend) -->
+    <rect x="360" y="180" width="240" height="72" rx="6" fill="#ffffff"/>
+    <rect x="360" y="180" width="240" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="368" y="188" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="384" y="197" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ALL</text>
+    <text x="480" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">전역 Traffic Policy</text>
+    <text x="480" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">모든 subset에 적용</text>
+
+    <!-- Node: Subset v1 override (focal) -->
+    <rect x="200" y="340" width="240" height="72" rx="6" fill="#ffffff"/>
+    <rect x="200" y="340" width="240" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="208" y="348" width="24" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="220" y="357" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">V1</text>
+    <text x="320" y="376" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Subset: v1</text>
+    <text x="320" y="392" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">전역 정책 오버라이드</text>
+
+    <!-- Node: Subset v2 inherit (backend) -->
+    <rect x="520" y="340" width="240" height="72" rx="6" fill="#ffffff"/>
+    <rect x="520" y="340" width="240" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="528" y="348" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="540" y="357" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">V2</text>
+    <text x="640" y="376" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Subset: v2</text>
+    <text x="640" y="392" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">전역 정책 상속</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="470" x2="920" y2="470" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="486" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="502" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="60" y="511" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">전역 정책 / 상속</text>
+
+    <rect x="240" y="502" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="260" y="511" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Subset 오버라이드 (초점)</text>
+
+    <line x1="480" y1="507" x2="508" y2="507" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="516" y="511" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">정책 전파</text>
+  </svg>

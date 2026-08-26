@@ -24,86 +24,13 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 ### 의사결정 흐름
 
-```mermaid
-flowchart TD
-    Start[Multi-cluster<br/>고려]
-
-    Q1{여러 클러스터가<br/>이미 있는가?}
-    Q2{지역적 분리<br/>필요?}
-    Q3{DR/HA<br/>필수?}
-    Q4{강력한 L7<br/>기능 필요?}
-    Q5{운영 복잡도<br/>감당 가능?}
-
-    SingleCluster[Single-cluster<br/>Istio<br/>가장 간단]
-    VPCLattice[AWS VPC Lattice<br/>AWS 관리형]
-    MultiClusterIstio[Multi-cluster<br/>Istio<br/>전체 제어]
-    Hybrid[Hybrid:<br/>Istio + Lattice<br/>최선의 조합]
-
-    Start --> Q1
-    Q1 -->|No| SingleCluster
-    Q1 -->|Yes| Q2
-    Q2 -->|No| SingleCluster
-    Q2 -->|Yes| Q3
-    Q3 -->|No| VPCLattice
-    Q3 -->|Yes| Q4
-    Q4 -->|No| VPCLattice
-    Q4 -->|Yes| Q5
-    Q5 -->|No| VPCLattice
-    Q5 -->|Yes| Hybrid
-
-    Hybrid -.->|옵션| MultiClusterIstio
-
-    %% 스타일 정의
-    classDef question fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-    classDef simple fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef managed fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef advanced fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef hybrid fill:#3B48CC,stroke:#333,stroke-width:2px,color:white;
-
-    %% 클래스 적용
-    class Q1,Q2,Q3,Q4,Q5 question;
-    class SingleCluster simple;
-    class VPCLattice managed;
-    class MultiClusterIstio advanced;
-    class Hybrid hybrid;
-```
+![다섯 가지 질문(클러스터 존재 여부, 지역 분리, DR/HA, 강력한 L7 기능, 운영 복잡도 감당 가능성)을 거쳐 Single-cluster, AWS VPC Lattice, Hybrid, Multi-cluster Istio 중 하나로 이어지는 Multi-cluster 도입 의사결정 흐름도.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-0.png)
 
 ### Multi-cluster가 필요한 경우 ✅
 
 #### 1. 지리적 분산 및 지연 시간 최적화
 
-```mermaid
-flowchart LR
-    subgraph US[미국 리전]
-        C1[EKS Cluster<br/>us-east-1]
-    end
-
-    subgraph EU[유럽 리전]
-        C2[EKS Cluster<br/>eu-west-1]
-    end
-
-    subgraph APAC[아시아 리전]
-        C3[EKS Cluster<br/>ap-northeast-2]
-    end
-
-    Mesh[Istio Mesh<br/>통합 관리]
-
-    Mesh -.->|구성 동기화| C1
-    Mesh -.->|구성 동기화| C2
-    Mesh -.->|구성 동기화| C3
-
-    C1 <-->|Cross-region<br/>mTLS| C2
-    C2 <-->|Cross-region<br/>mTLS| C3
-    C1 <-->|Cross-region<br/>mTLS| C3
-
-    %% 스타일 정의
-    classDef cluster fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef mesh fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    %% 클래스 적용
-    class C1,C2,C3 cluster;
-    class Mesh mesh;
-```
+![Istio Mesh가 미국, 유럽, 아시아 세 리전의 EKS 클러스터에 구성을 동기화하고, 세 클러스터가 서로 Cross-region mTLS로 통신하는 지리적 분산 아키텍처.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-1.png)
 
 **필요한 경우**:
 
@@ -113,42 +40,7 @@ flowchart LR
 
 #### 2. 재해 복구 (Disaster Recovery)
 
-```mermaid
-flowchart TB
-    subgraph Active[활성 클러스터<br/>Primary Region]
-        Prod1[Production<br/>워크로드]
-    end
-
-    subgraph Standby[대기 클러스터<br/>DR Region]
-        Prod2[Standby<br/>워크로드]
-    end
-
-    DNS[Global DNS<br/>Route53]
-    Users[사용자]
-
-    Users -->|정상| DNS
-    DNS -->|100% 트래픽| Active
-    DNS -.->|0% 트래픽| Standby
-
-    Active -.->|실시간<br/>구성 복제| Standby
-
-    Failover[재해 발생]
-    Failover -->|Failover| DNS
-    DNS -->|0% 트래픽| Active
-    DNS -->|100% 트래픽| Standby
-
-    %% 스타일 정의
-    classDef active fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef standby fill:#3B48CC,stroke:#333,stroke-width:2px,color:white;
-    classDef dns fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef failover fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-
-    %% 클래스 적용
-    class Prod1 active;
-    class Prod2 standby;
-    class DNS dns;
-    class Failover failover;
-```
+![Global DNS(Route53)가 평상시 100% 트래픽을 활성 클러스터로, 재해 발생 시 대기 클러스터로 전환하며 두 클러스터가 실시간 구성 복제로 연결된 Active-Standby 재해 복구 구조.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-2.png)
 
 **필요한 경우**:
 
@@ -176,32 +68,7 @@ flowchart TB
 
 #### 1. 단일 리전, 소규모 서비스
 
-```mermaid
-flowchart TD
-    subgraph SingleCluster[단일 EKS 클러스터]
-        NS1[Namespace: prod]
-        NS2[Namespace: staging]
-        NS3[Namespace: dev]
-
-        Istio[Istio Control Plane]
-
-        Istio -.->|관리| NS1
-        Istio -.->|관리| NS2
-        Istio -.->|관리| NS3
-    end
-
-    Note[Multi-cluster 불필요<br/>- Namespace 분리로 충분<br/>- NetworkPolicy로 격리<br/>- 단순한 관리]
-
-    %% 스타일 정의
-    classDef namespace fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef istio fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef note fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class NS1,NS2,NS3 namespace;
-    class Istio istio;
-    class Note note;
-```
+![Istio Control Plane이 하나의 EKS 클러스터 안에서 prod, staging, dev 세 Namespace를 관리하며 Multi-cluster 없이도 환경을 분리할 수 있음을 보여주는 단일 클러스터 구성.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-3.png)
 
 **대신 사용**:
 
@@ -376,36 +243,7 @@ flowchart TD
 
 #### 패턴 1: Istio Multi-cluster만 사용
 
-```mermaid
-flowchart TB
-    subgraph Cluster1[클러스터 1<br/>us-east-1]
-        Istiod1[Istiod]
-        EWG1[East-West<br/>Gateway]
-        App1[App Services]
-    end
-
-    subgraph Cluster2[클러스터 2<br/>us-west-2]
-        Istiod2[Istiod]
-        EWG2[East-West<br/>Gateway]
-        App2[App Services]
-    end
-
-    Istiod1 <-.->|서비스<br/>디스커버리| Istiod2
-    EWG1 <-->|mTLS<br/>Cross-region| EWG2
-
-    App1 -->|Envoy| EWG1
-    EWG2 -->|Envoy| App2
-
-    %% 스타일 정의
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Istiod1,Istiod2 istio;
-    class EWG1,EWG2 gateway;
-    class App1,App2 app;
-```
+![두 클러스터의 Istiod가 서비스 디스커버리로 동기화되고 East-West Gateway가 Cross-region mTLS로 연결되어 각 클러스터의 App Services를 서로 라우팅하는 Istio-only Multi-cluster 패턴.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-4.png)
 
 **장점**:
 
@@ -421,35 +259,7 @@ flowchart TB
 
 #### 패턴 2: VPC Lattice만 사용
 
-```mermaid
-flowchart TB
-    subgraph VPC1[VPC 1<br/>us-east-1]
-        App1[App Services]
-    end
-
-    subgraph VPC2[VPC 2<br/>us-west-2]
-        App2[App Services]
-    end
-
-    subgraph Lattice[AWS VPC Lattice]
-        SN[Service Network]
-        SVC1[Service 1]
-        SVC2[Service 2]
-    end
-
-    App1 -->|등록| SVC1
-    App2 -->|등록| SVC2
-    SVC1 <-->|라우팅| SN
-    SVC2 <-->|라우팅| SN
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lattice fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    %% 클래스 적용
-    class App1,App2 app;
-    class SN,SVC1,SVC2 lattice;
-```
+![두 VPC의 App Services가 각각 VPC Lattice Service에 등록되고 Service Network를 통해 서로 라우팅되는 AWS VPC Lattice 단독 사용 패턴.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-5.png)
 
 **장점**:
 
@@ -465,47 +275,7 @@ flowchart TB
 
 #### 패턴 3: Hybrid (권장)
 
-```mermaid
-flowchart TB
-    subgraph Cluster1[클러스터 1<br/>us-east-1]
-        subgraph IstioMesh1[Istio Mesh]
-            Istiod1[Istiod]
-            App1A[Service A]
-            App1B[Service B]
-        end
-    end
-
-    subgraph Cluster2[클러스터 2<br/>us-west-2]
-        subgraph IstioMesh2[Istio Mesh]
-            Istiod2[Istiod]
-            App2A[Service A]
-            App2B[Service B]
-        end
-    end
-
-    subgraph Lattice[AWS VPC Lattice]
-        SN[Service Network<br/>Cross-cluster]
-    end
-
-    IstioMesh1 -->|클러스터 내부:<br/>Istio 전체 기능| App1A
-    App1A <-->|클러스터 내부:<br/>mTLS, Retry| App1B
-
-    IstioMesh2 -->|클러스터 내부:<br/>Istio 전체 기능| App2A
-    App2A <-->|클러스터 내부:<br/>mTLS, Retry| App2B
-
-    App1B <-->|클러스터 간:<br/>VPC Lattice| SN
-    SN <-->|클러스터 간:<br/>VPC Lattice| App2B
-
-    %% 스타일 정의
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lattice fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    %% 클래스 적용
-    class Istiod1,Istiod2 istio;
-    class App1A,App1B,App2A,App2B app;
-    class SN lattice;
-```
+![두 클러스터 내부에서는 Istio Mesh가 Service A와 Service B 사이의 mTLS·Retry를 담당하고, 클러스터 간 통신은 AWS VPC Lattice Service Network가 담당하는 Hybrid 아키텍처.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-6.png)
 
 **장점**:
 
@@ -538,33 +308,7 @@ Multi-cluster Service Mesh를 사용하면:
 
 ### Primary-Remote
 
-```mermaid
-flowchart TB
-    subgraph PrimaryCluster["Primary Cluster<br/>us-east-1"]
-        Istiod[Istiod<br/>Control Plane]
-        ServiceA[Service A]
-    end
-
-    subgraph RemoteCluster["Remote Cluster<br/>us-west-2"]
-        ServiceB[Service B]
-        ServiceC[Service C]
-    end
-
-    Istiod -.->|구성 푸시| ServiceB
-    Istiod -.->|구성 푸시| ServiceC
-    ServiceA <-->|mTLS| ServiceB
-    ServiceB <-->|mTLS| ServiceC
-
-    %% 스타일 정의
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef remote fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Istiod primary;
-    class ServiceB,ServiceC remote;
-    class ServiceA service;
-```
+![Primary 클러스터의 단일 Istiod Control Plane이 Remote 클러스터의 Service B, C에 구성을 푸시하고, 세 서비스가 mTLS로 서로 통신하는 Primary-Remote 토폴로지.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-7.png)
 
 **특징**:
 
@@ -575,29 +319,7 @@ flowchart TB
 
 ### Multi-Primary
 
-```mermaid
-flowchart TB
-    subgraph Cluster1["Cluster 1<br/>us-east-1"]
-        Istiod1[Istiod<br/>Control Plane]
-        ServiceA1[Service A]
-    end
-
-    subgraph Cluster2["Cluster 2<br/>us-west-2"]
-        Istiod2[Istiod<br/>Control Plane]
-        ServiceA2[Service A]
-    end
-
-    Istiod1 <-.->|동기화| Istiod2
-    ServiceA1 <-->|로드 밸런싱| ServiceA2
-
-    %% 스타일 정의
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Istiod1,Istiod2 primary;
-    class ServiceA1,ServiceA2 service;
-```
+![두 클러스터가 각각 독립적인 Istiod Control Plane을 두고 서로 동기화하며, Service A 인스턴스 사이에서 로드 밸런싱으로 트래픽을 분산하는 Multi-Primary 토폴로지.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-8.png)
 
 **특징**:
 
@@ -874,26 +596,7 @@ spec:
 
 ### 트래픽 흐름
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App1 as Cluster 1<br/>Service A
-    participant Envoy1 as Envoy<br/>(Cluster 1)
-    participant Lattice as VPC Lattice
-    participant App2 as Cluster 2<br/>Service B
-
-    Note over App1,App2: 클러스터 간 호출
-
-    App1->>Envoy1: 1\. HTTP 요청
-    Note over Envoy1: Istio가 로컬에서<br/>메트릭 수집
-    Envoy1->>Lattice: 2\. VPC Lattice DNS로 라우팅
-    Note over Lattice: AWS가 관리하는<br/>서비스 디스커버리
-    Lattice->>App2: 3\. Cluster 2의 서비스로 전달
-    Note over App2: Cluster 2에서<br/>Istio가 메트릭 수집
-    App2->>Lattice: 4\. 응답
-    Lattice->>Envoy1: 5\. 응답 전달
-    Envoy1->>App1: 6\. 응답
-```
+![Cluster 1의 Service A가 Envoy를 거쳐 VPC Lattice를 경유해 Cluster 2의 Service B에 도달하고, 각 클러스터에서 Istio가 독립적으로 메트릭을 수집하며 응답이 같은 경로로 되돌아오는 요청-응답 시퀀스.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-9.png)
 
 ### 장점과 고려사항
 
@@ -916,55 +619,7 @@ sequenceDiagram
 
 #### 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph US[미국 리전<br/>us-east-1]
-        subgraph Cluster1[EKS Cluster 1]
-            Istiod1[Istiod]
-            Frontend1[Frontend<br/>Service]
-            Cart1[Cart<br/>Service]
-            Order1[Order<br/>Service]
-        end
-    end
-
-    subgraph EU[유럽 리전<br/>eu-west-1]
-        subgraph Cluster2[EKS Cluster 2]
-            Istiod2[Istiod]
-            Frontend2[Frontend<br/>Service]
-            Cart2[Cart<br/>Service]
-            Order2[Order<br/>Service]
-        end
-    end
-
-    subgraph Payment[결제 서비스<br/>ap-northeast-2]
-        subgraph Cluster3[EKS Cluster 3]
-            Istiod3[Istiod]
-            Payment3[Payment<br/>Service]
-        end
-    end
-
-    Lattice[VPC Lattice<br/>Service Network]
-
-    Frontend1 <-->|Istio<br/>내부 호출| Cart1
-    Cart1 <-->|Istio| Order1
-
-    Frontend2 <-->|Istio<br/>내부 호출| Cart2
-    Cart2 <-->|Istio| Order2
-
-    Order1 -->|VPC Lattice| Lattice
-    Order2 -->|VPC Lattice| Lattice
-    Lattice -->|라우팅| Payment3
-
-    %% 스타일 정의
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lattice fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    %% 클래스 적용
-    class Istiod1,Istiod2,Istiod3 istio;
-    class Frontend1,Cart1,Order1,Frontend2,Cart2,Order2,Payment3 app;
-    class Lattice lattice;
-```
+![미국과 유럽 리전의 각 EKS 클러스터 내부에서 Frontend, Cart, Order 서비스가 Istio로 통신하고, 두 리전의 Order 서비스가 VPC Lattice Service Network를 통해 아시아 리전의 결제 서비스로 라우팅되는 글로벌 전자상거래 하이브리드 구성.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-10.png)
 
 **의사결정**:
 

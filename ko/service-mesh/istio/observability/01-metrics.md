@@ -31,48 +31,7 @@ Istio는 Google의 SRE 원칙에 따른 Golden Signals를 자동으로 수집합
 
 ### 메트릭 수집 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph "Application Pods"
-        App1[App Container]
-        Envoy1[Envoy Sidecar]
-        App1 -.-> Envoy1
-    end
-
-    subgraph "Istio Control Plane"
-        Istiod[istiod]
-        Telemetry[Telemetry Config]
-    end
-
-    subgraph "Metrics Backend"
-        Prometheus[Prometheus]
-        OTEL[OpenTelemetry<br/>Collector]
-    end
-
-    subgraph "Visualization"
-        Grafana[Grafana]
-        Kiali[Kiali]
-    end
-
-    Envoy1 -->|Scrape /stats/prometheus| Prometheus
-    Envoy1 -->|Push Metrics| OTEL
-    Istiod -->|Configure| Envoy1
-    Telemetry -.->|Applied by| Istiod
-
-    Prometheus --> Grafana
-    Prometheus --> Kiali
-    OTEL --> Prometheus
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef istioComponent fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoring fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef visualization fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    class App1 k8sComponent;
-    class Envoy1,Istiod,Telemetry istioComponent;
-    class Prometheus,OTEL monitoring;
-    class Grafana,Kiali visualization;
-```
+![애플리케이션 파드의 Envoy 사이드카가 istiod의 설정을 받아 메트릭을 생성하고, Prometheus에 스크레이프되거나 OpenTelemetry Collector로 푸시된 뒤, Prometheus를 거쳐 Grafana와 Kiali로 시각화되는 Istio 메트릭 수집 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-observability-01-metrics-0.png)
 
 ## Istio 표준 메트릭
 

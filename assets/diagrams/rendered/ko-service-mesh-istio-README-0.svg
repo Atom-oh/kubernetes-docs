@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="sm-decision-title sm-decision-desc">
+    <title id="sm-decision-title">서비스 메시 도입 의사결정 흐름</title>
+    <desc id="sm-decision-desc">마이크로서비스 규모, 트래픽/보안/관찰성 요구, 운영 리소스를 차례로 점검해 서비스 메시 도입 여부를 판단하는 의사결정 흐름도.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="d0-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="d0-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Arrows (behind nodes) -->
+    <line x1="280" y1="76"  x2="280" y2="96"  stroke="#545B64" stroke-width="1.2" marker-end="url(#d0-arrow)"/>
+    <line x1="280" y1="168" x2="280" y2="188" stroke="#545B64" stroke-width="1.2" marker-end="url(#d0-arrow)"/>
+    <line x1="340" y1="132" x2="470" y2="132" stroke="#545B64" stroke-width="1.2" marker-end="url(#d0-arrow)"/>
+    <line x1="280" y1="260" x2="280" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#d0-arrow)"/>
+    <line x1="340" y1="224" x2="480" y2="224" stroke="#545B64" stroke-width="1.2" marker-end="url(#d0-arrow)"/>
+    <line x1="280" y1="352" x2="280" y2="372" stroke="#545B64" stroke-width="1.2" marker-end="url(#d0-arrow)"/>
+    <line x1="340" y1="316" x2="610" y2="316" stroke="#545B64" stroke-width="1.2" marker-end="url(#d0-arrow)"/>
+    <line x1="340" y1="408" x2="610" y2="408" stroke="#545B64" stroke-width="1.2" marker-end="url(#d0-arrow)"/>
+    <line x1="280" y1="444" x2="280" y2="464" stroke="#EC7211" stroke-width="1.4" marker-end="url(#d0-arrow-accent)"/>
+
+    <!-- Edge labels -->
+    <rect x="264" y="170" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="280" y="179" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.1em">YES</text>
+
+    <rect x="388" y="120" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="402" y="129" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.1em">NO</text>
+
+    <rect x="264" y="262" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="280" y="271" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.1em">YES</text>
+
+    <rect x="396" y="212" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="410" y="221" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.1em">NO</text>
+
+    <rect x="264" y="354" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="280" y="363" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.1em">YES</text>
+
+    <rect x="461" y="304" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="475" y="313" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.1em">NO</text>
+
+    <rect x="461" y="396" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="475" y="405" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.1em">NO</text>
+
+    <rect x="264" y="446" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="280" y="455" fill="#EC7211" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.1em">YES</text>
+
+    <!-- Start -->
+    <rect x="200" y="36" width="160" height="40" rx="20" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="280" y="60" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">서비스 메시 도입 검토</text>
+
+    <!-- Q1 -->
+    <polygon points="280,96 340,132 280,168 220,132" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="280" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">마이크로서비스</text>
+    <text x="280" y="142" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">아키텍처?</text>
+
+    <!-- Q2 -->
+    <polygon points="280,188 340,224 280,260 220,224" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="280" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">10개 이상</text>
+    <text x="280" y="234" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">서비스?</text>
+
+    <!-- Q3 merged -->
+    <polygon points="280,280 340,316 280,352 220,316" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="280" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">복잡한 요구사항?</text>
+    <text x="280" y="321" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle">traffic·sec·obs.</text>
+
+    <!-- Q6 -->
+    <polygon points="280,372 340,408 280,444 220,408" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="280" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">운영 리소스</text>
+    <text x="280" y="418" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">확보?</text>
+
+    <!-- NoNeed -->
+    <rect x="470" y="108" width="180" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="560" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">Service Mesh</text>
+    <text x="560" y="144" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">불필요</text>
+
+    <!-- Alternatives -->
+    <rect x="480" y="192" width="200" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="580" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">대안 솔루션</text>
+    <text x="580" y="232" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">NetworkPolicy</text>
+    <text x="580" y="244" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">Ingress · CNI</text>
+
+    <!-- Consider -->
+    <rect x="610" y="300" width="180" height="120" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="700" y="352" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">신중한 검토</text>
+    <text x="700" y="368" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">단계적 도입 고려</text>
+
+    <!-- NeedMesh (focal) -->
+    <rect x="200" y="464" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="280" y="484" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">Service Mesh</text>
+    <text x="280" y="500" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">권장</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="548" x2="920" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="564" fill="#545B64" font-size="8" font-family="var(--font-mono)" letter-spacing="0.14em">LEGEND</text>
+    <polygon points="140,558 152,552 164,558 152,564" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="172" y="562" fill="#545B64" font-size="8.5" font-family="var(--font-cjk)">결정 지점</text>
+    <rect x="280" y="552" width="24" height="12" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="312" y="562" fill="#545B64" font-size="8.5" font-family="var(--font-cjk)">결과 / 대안</text>
+    <line x1="440" y1="558" x2="468" y2="558" stroke="#EC7211" stroke-width="1.4" marker-end="url(#d0-arrow-accent)"/>
+    <text x="476" y="562" fill="#545B64" font-size="8.5" font-family="var(--font-cjk)">권장 경로</text>
+  </svg>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="amb06-title amb06-desc">
+<title id="amb06-title">Ambient Mode의 전체 트래픽 흐름: L4 전용 경로와 L7 경로</title>
+<desc id="amb06-desc">Sidecar 없이 동작하는 클라이언트와 서버 애플리케이션 사이에서, ztunnel만 거치는 L4 전용 경로와 Waypoint 프록시를 추가로 거치는 L7 경로 두 시나리오의 요청·응답 흐름을 비교하는 시퀀스 다이어그램.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="88" y1="108" x2="88" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="280" y1="108" x2="280" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="472" y1="108" x2="472" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="664" y1="108" x2="664" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="856" y1="108" x2="856" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="76" y="120" width="792" height="356" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<rect x="76" y="120" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="96" y="132" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ALT</text>
+<line x1="84" y1="300" x2="860" y2="300" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="92" y="152" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">[L4 ONLY]</text>
+<text x="92" y="316" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">[L7 NEEDED]</text>
+<line x1="88" y1="176" x2="280" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="159.0" y="156" width="50" height="12" rx="2" fill="#ffffff"/>
+<text x="184.0" y="165" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">1. TCP</text>
+<line x1="280" y1="212" x2="664" y2="212" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+<rect x="443.5" y="192" width="57" height="12" rx="2" fill="#ffffff"/>
+<text x="472.0" y="201" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">2. mTLS</text>
+<line x1="664" y1="248" x2="856" y2="248" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="714.0" y="228" width="92" height="12" rx="2" fill="#ffffff"/>
+<text x="760.0" y="237" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">3. PLAIN TCP</text>
+<line x1="88" y1="344" x2="280" y2="344" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="155.5" y="324" width="57" height="12" rx="2" fill="#ffffff"/>
+<text x="184.0" y="333" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">1. HTTP</text>
+<line x1="280" y1="380" x2="472" y2="380" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="344.0" y="360" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="376.0" y="369" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">2. HBONE</text>
+<line x1="472" y1="416" x2="664" y2="416" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="539.5" y="396" width="57" height="12" rx="2" fill="#ffffff"/>
+<text x="568.0" y="405" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">3. mTLS</text>
+<line x1="664" y1="452" x2="856" y2="452" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="710.5" y="432" width="99" height="12" rx="2" fill="#ffffff"/>
+<text x="760.0" y="441" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">4. PLAIN HTTP</text>
+<rect x="18" y="60" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="18" y="60" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="88.0" y="79.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Client App</text>
+<text x="88.0" y="93.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">(No Sidecar)</text>
+<rect x="210" y="60" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="210" y="60" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280.0" y="79.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Client Node</text>
+<text x="280.0" y="93.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ztunnel</text>
+<rect x="402" y="60" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="402" y="60" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="472.0" y="79.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Waypoint Proxy</text>
+<text x="472.0" y="93.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">(L7 Optional)</text>
+<rect x="594" y="60" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="594" y="60" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="664.0" y="79.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Server Node</text>
+<text x="664.0" y="93.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ztunnel</text>
+<rect x="786" y="60" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="786" y="60" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="856.0" y="79.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Server App</text>
+<text x="856.0" y="93.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">(No Sidecar)</text>
+</svg>

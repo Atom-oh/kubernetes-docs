@@ -21,35 +21,7 @@ Istio는 Envoy를 통해 다양한 로드 밸런싱 알고리즘을 제공하여
 
 로드 밸런싱은 트래픽을 여러 인스턴스에 분산시켜 시스템 전체의 처리량과 안정성을 향상시킵니다.
 
-```mermaid
-flowchart TB
-    subgraph Without["로드 밸런싱 없이"]
-        C1[모든 요청] -->|과부하| S1[서비스 1<br/>100% 부하]
-        S2[서비스 2<br/>0% 부하]
-        S3[서비스 3<br/>0% 부하]
-    end
-
-    subgraph With["로드 밸런싱 사용"]
-        C2[요청 분산] --> LB[로드 밸런서]
-        LB -->|33%| S4[서비스 1<br/>33% 부하]
-        LB -->|33%| S5[서비스 2<br/>33% 부하]
-        LB -->|34%| S6[서비스 3<br/>34% 부하]
-    end
-
-    %% 스타일 정의
-    classDef overload fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef idle fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef balanced fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class C1,C2 client;
-    class S1 overload;
-    class S2,S3 idle;
-    class LB lb;
-    class S4,S5,S6 balanced;
-```
+![로드 밸런싱 없이 단일 서비스에 요청이 몰려 100% 과부하가 발생하는 상황과, 로드 밸런서가 요청을 세 서비스에 33%씩 균등하게 분산하는 상황을 나란히 비교한다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-0.png)
 
 ### 주요 이점
 
@@ -63,35 +35,7 @@ flowchart TB
 
 ## 로드 밸런싱 개요
 
-```mermaid
-flowchart TB
-    Client[클라이언트 요청]
-    
-    subgraph LB["Load Balancer"]
-        Algorithm[로드 밸런싱<br/>알고리즘]
-    end
-    
-    subgraph Pods["파드"]
-        Pod1[Pod 1<br/>부하: 30%]
-        Pod2[Pod 2<br/>부하: 50%]
-        Pod3[Pod 3<br/>부하: 20%]
-    end
-    
-    Client --> Algorithm
-    Algorithm -->|Round Robin| Pod1
-    Algorithm -->|Least Request| Pod3
-    Algorithm -->|Random| Pod2
-    
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class Client client;
-    class Algorithm lb;
-    class Pod1,Pod2,Pod3 pod;
-```
+![클라이언트 요청이 로드 밸런서의 알고리즘을 거쳐 서로 다른 부하를 가진 세 파드 중 하나로 라우팅되는 개요를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-1.png)
 
 ## 로드 밸런싱 알고리즘
 
@@ -111,31 +55,7 @@ Istio는 다음과 같은 로드 밸런싱 알고리즘을 제공합니다.
 
 요청을 순차적으로 각 엔드포인트에 분배합니다.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant LB as Load Balancer<br/>(ROUND_ROBIN)
-    participant Pod1 as Pod 1
-    participant Pod2 as Pod 2
-    participant Pod3 as Pod 3
-
-    Client->>LB: Request 1
-    LB->>Pod1: Route
-    Pod1-->>Client: Response
-
-    Client->>LB: Request 2
-    LB->>Pod2: Route
-    Pod2-->>Client: Response
-
-    Client->>LB: Request 3
-    LB->>Pod3: Route
-    Pod3-->>Client: Response
-
-    Client->>LB: Request 4
-    LB->>Pod1: Route (순환)
-    Pod1-->>Client: Response
-```
+![클라이언트가 보낸 4번의 요청을 로드 밸런서가 Pod 1, Pod 2, Pod 3에 순서대로 라우팅하고 네 번째 요청에서 다시 Pod 1로 순환하는 ROUND_ROBIN 동작을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-2.png)
 
 **설정 예제:**
 
@@ -168,35 +88,7 @@ spec:
 
 가장 적은 활성 요청을 처리 중인 엔드포인트로 라우팅합니다.
 
-```mermaid
-flowchart LR
-    Client[클라이언트<br/>새 요청]
-    LB[Load Balancer<br/>LEAST_REQUEST]
-
-    subgraph Pods[파드 상태]
-        Pod1[Pod 1<br/>활성 요청: 5개]
-        Pod2[Pod 2<br/>활성 요청: 2개 ✅]
-        Pod3[Pod 3<br/>활성 요청: 8개]
-    end
-
-    Client --> LB
-    LB -.->|검사| Pod1
-    LB -.->|검사| Pod2
-    LB -.->|검사| Pod3
-    LB -->|최소 부하로<br/>라우팅| Pod2
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef selected fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-
-    %% 클래스 적용
-    class Client client;
-    class LB lb;
-    class Pod1,Pod3 pod;
-    class Pod2 selected;
-```
+![로드 밸런서가 세 파드의 활성 요청 수를 확인한 뒤 활성 요청이 가장 적은 Pod 2로 새 요청을 라우팅하는 LEAST_REQUEST 동작을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-3.png)
 
 **설정 예제:**
 
@@ -328,43 +220,7 @@ Consistent Hash는 특정 속성을 기반으로 항상 같은 엔드포인트�
 
 ### Consistent Hash 동작 원리
 
-```mermaid
-flowchart TD
-    subgraph Requests[요청]
-        R1[User A<br/>Cookie: abc123]
-        R2[User B<br/>Cookie: def456]
-        R3[User A<br/>Cookie: abc123]
-    end
-
-    subgraph Hash[해시 계산]
-        H1[Hash abc123<br/>→ 0x1A2B]
-        H2[Hash def456<br/>→ 0x7C8D]
-        H3[Hash abc123<br/>→ 0x1A2B]
-    end
-
-    subgraph Ring[Consistent Hash Ring]
-        P1[Pod 1<br/>0x0000-0x4FFF]
-        P2[Pod 2<br/>0x5000-0x9FFF]
-        P3[Pod 3<br/>0xA000-0xFFFF]
-    end
-
-    R1 -->|1| H1
-    H1 -->|2| P1
-    R2 -->|1| H2
-    H2 -->|2| P2
-    R3 -->|1| H3
-    H3 -->|2| P1
-
-    %% 스타일 정의
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef hash fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class R1,R2,R3 request;
-    class H1,H2,H3 hash;
-    class P1,P2,P3 pod;
-```
+![동일한 쿠키를 가진 User A의 두 요청이 항상 같은 해시 값을 거쳐 같은 Pod 1로 라우팅되어 세션이 유지되는 Consistent Hash 동작 원리를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-4.png)
 
 ### 1. HTTP Header 기반
 
@@ -515,29 +371,7 @@ spec:
 
 #### 1. 불균형 위험
 
-```mermaid
-flowchart LR
-    subgraph Problem[문제 상황]
-        Users[1000명 사용자]
-        P1[Pod 1<br/>800명 ⚠️]
-        P2[Pod 2<br/>150명]
-        P3[Pod 3<br/>50명]
-    end
-
-    Users -->|80%| P1
-    Users -->|15%| P2
-    Users -->|5%| P3
-
-    %% 스타일 정의
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef overload fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Users user;
-    class P1 overload;
-    class P2,P3 normal;
-```
+![1000명의 사용자 중 80%가 같은 해시 값으로 몰려 Pod 1이 과부하 상태가 되는 Consistent Hash의 불균형 위험을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-5.png)
 
 **원인**: 특정 해시 값에 트래픽이 집중되는 경우
 
@@ -926,45 +760,7 @@ spec:
 
 ### 결정 트리
 
-```mermaid
-flowchart TD
-    Start[로드 밸런싱 필요]
-
-    Q1{세션 유지<br/>필요?}
-    Q2{트래픽<br/>매우 높음?}
-    Q3{응답 시간<br/>불균일?}
-    Q4{지리적<br/>분산?}
-    Q5{TCP<br/>프록시?}
-
-    R1[CONSISTENT_HASH<br/>httpCookie 또는<br/>httpHeaderName]
-    R2[RANDOM]
-    R3[LEAST_REQUEST]
-    R4[LEAST_REQUEST +<br/>Locality Setting]
-    R5[PASSTHROUGH]
-    R6[ROUND_ROBIN<br/>기본값]
-
-    Start --> Q1
-    Q1 -->|Yes| R1
-    Q1 -->|No| Q2
-    Q2 -->|Yes| R2
-    Q2 -->|No| Q3
-    Q3 -->|Yes| Q4
-    Q3 -->|No| Q4
-    Q4 -->|Yes| R4
-    Q4 -->|No| Q5
-    Q5 -->|Yes| R5
-    Q5 -->|No| R6
-
-    %% 스타일 정의
-    classDef question fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Start start;
-    class Q1,Q2,Q3,Q4,Q5 question;
-    class R1,R2,R3,R4,R5,R6 result;
-```
+![세션 유지, 트래픽 규모, 지리적 분산 여부를 차례로 물어 CONSISTENT_HASH, RANDOM, LEAST_REQUEST+Locality, PASSTHROUGH/ROUND_ROBIN 중 알맞은 알고리즘으로 안내하는 결정 트리를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-6.png)
 
 ### 서비스 유형별 권장 알고리즘
 

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="xffseq-title xffseq-desc">
+  <title id="xffseq-title">X-Forwarded-For 헤더 전파 시퀀스</title>
+  <desc id="xffseq-desc">클라이언트의 요청이 로드 밸런서와 Istio Gateway를 거쳐 Envoy Sidecar에 도달하는 과정에서 X-Forwarded-For 헤더에 각 홉의 IP가 누적되는 과정을 보여준다.</desc>
+  <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Lifelines -->
+  <line x1="88"  y1="104" x2="88"  y2="524" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="264" y1="104" x2="264" y2="524" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="440" y1="104" x2="440" y2="524" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="616" y1="104" x2="616" y2="524" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="792" y1="104" x2="792" y2="524" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- Messages (arrows before boxes) -->
+  <line x1="88" y1="184" x2="256" y2="184" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="130" y="164" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="162" y="173" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">HTTP 요청</text>
+
+  <line x1="264" y1="252" x2="432" y2="252" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="270" y="232" width="184" height="12" rx="2" fill="#ffffff"/>
+  <text x="362" y="241" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">XFF: 203.0.113.5</text>
+
+  <line x1="440" y1="320" x2="608" y2="320" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <rect x="416" y="300" width="232" height="12" rx="2" fill="#ffffff"/>
+  <text x="532" y="309" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.01em">XFF: 203.0.113.5, 10.0.1.100</text>
+
+  <line x1="616" y1="392" x2="784" y2="392" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="628" y="372" width="164" height="12" rx="2" fill="#ffffff"/>
+  <text x="710" y="381" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">XFF 헤더 전달</text>
+
+  <!-- use_remote_address note near Envoy -->
+  <rect x="620" y="424" width="220" height="34" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.15)" stroke-width="0.8"/>
+  <text x="630" y="438" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.01em">use_remote_address 설정에</text>
+  <text x="630" y="450" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.01em">따라 XFF 처리 방식 결정</text>
+
+  <!-- Actor boxes (top) -->
+  <rect x="20" y="60" width="136" height="44" rx="6" fill="#ffffff"/>
+  <rect x="20" y="60" width="136" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="88" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라이언트</text>
+  <text x="88" y="96" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">203.0.113.5</text>
+
+  <rect x="196" y="60" width="136" height="44" rx="6" fill="#ffffff"/>
+  <rect x="196" y="60" width="136" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="264" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">로드 밸런서</text>
+  <text x="264" y="96" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.0.1.100</text>
+
+  <rect x="372" y="60" width="136" height="44" rx="6" fill="#ffffff"/>
+  <rect x="372" y="60" width="136" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="440" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio Gateway</text>
+  <text x="440" y="96" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.0.2.50</text>
+
+  <!-- Focal: Envoy Sidecar -->
+  <rect x="548" y="60" width="136" height="44" rx="6" fill="#ffffff"/>
+  <rect x="548" y="60" width="136" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="616" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Sidecar</text>
+  <text x="616" y="96" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.244.1.10</text>
+
+  <rect x="724" y="60" width="136" height="44" rx="6" fill="#ffffff"/>
+  <rect x="724" y="60" width="136" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="792" y="86" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">애플리케이션</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="548" x2="930" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+  <line x1="160" y1="564" x2="192" y2="564" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="200" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">HOP 전달</text>
+  <line x1="340" y1="564" x2="372" y2="564" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <text x="380" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">XFF 처리 지점</text>
+</svg>

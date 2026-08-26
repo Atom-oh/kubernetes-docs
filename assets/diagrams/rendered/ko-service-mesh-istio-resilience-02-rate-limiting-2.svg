@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="rl-global-title rl-global-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="rl-global-title">글로벌 Rate Limiting 아키텍처</title>
+    <desc id="rl-global-desc">Ingress Gateway가 클라이언트 요청마다 중앙 Rate Limit Server에 gRPC로 허용 여부를 확인하고, 서버는 캐시를 조회한 뒤 응답을 돌려주며 허용된 요청만 백엔드 서비스로 전달되는 구조를 보여줍니다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones (drawn first) -->
+    <rect x="60" y="140" width="200" height="244" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="100" y="144" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="160" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">클라이언트들</text>
+
+    <rect x="316" y="248" width="228" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="360" y="252" width="140" height="12" rx="2" fill="#ffffff"/>
+    <text x="430" y="261" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ISTIO GATEWAY</text>
+
+    <rect x="636" y="168" width="268" height="232" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="676" y="172" width="188" height="12" rx="2" fill="#ffffff"/>
+    <text x="770" y="181" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">RATE LIMIT SERVICE</text>
+
+    <rect x="276" y="428" width="348" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="404" y="432" width="92" height="12" rx="2" fill="#ffffff"/>
+    <text x="450" y="441" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">백엔드 서비스</text>
+
+    <!-- Arrows (before nodes) -->
+    <!-- Clients -> IG (fan into IG left edge at y=298,316,334) -->
+    <path d="M 244,200 H 304 Q 312,200 312,208 V 290 Q 312,298 320,298 H 340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="244" y1="272" x2="340" y2="272" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 244,344 H 304 Q 312,344 312,336 V 342 Q 312,334 320,334 H 340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="256" y="252" width="34" height="12" rx="2" fill="#ffffff"/>
+    <text x="273" y="261" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">요청</text>
+
+    <!-- IG -> RLS (request, accent) -->
+    <path d="M 520,300 H 620 Q 628,300 628,292 V 228 Q 628,220 636,220 H 660" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="536" y="248" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="600" y="257" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">1.RATELIMIT 확인(gRPC)</text>
+
+    <!-- RLS -> IG (response, dashed) -->
+    <path d="M 660,244 H 600 Q 592,244 592,252 V 292 a 8,8 0 0,0 0,16 V 312 Q 592,320 584,320 H 520" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="598" y="296" width="84" height="12" rx="2" fill="#ffffff"/>
+    <text x="640" y="305" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">2.허용/거부</text>
+
+    <!-- RLS -> Cache (dashed, straight) -->
+    <line x1="770" y1="264" x2="770" y2="320" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="714" y="284" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="770" y="293" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">캐시 조회/업데이트</text>
+
+    <!-- IG -> Service A (straight vertical) -->
+    <line x1="370" y1="352" x2="370" y2="460" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- IG -> Service B -->
+    <path d="M 500,352 V 412 Q 500,420 508,420 H 542 Q 550,420 550,428 V 460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="386" y="380" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="430" y="389" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">3.허용된 요청만</text>
+
+    <!-- Nodes -->
+    <!-- Clients -->
+    <rect x="76" y="172" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="76" y="172" width="168" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="160" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client 1</text>
+
+    <rect x="76" y="244" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="76" y="244" width="168" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="160" y="276" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client 2</text>
+
+    <rect x="76" y="316" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="76" y="316" width="168" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="160" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client 3</text>
+
+    <!-- Ingress Gateway (focal) -->
+    <rect x="340" y="280" width="200" height="72" rx="6" fill="#ffffff"/>
+    <rect x="340" y="280" width="200" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="440" y="310" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Ingress Gateway</text>
+    <text x="440" y="328" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Envoy Proxy</text>
+
+    <!-- Rate Limit Server -->
+    <rect x="660" y="200" width="220" height="64" rx="6" fill="#ffffff"/>
+    <rect x="660" y="200" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="770" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Rate Limit Server</text>
+    <text x="770" y="246" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">envoyproxy/ratelimit</text>
+
+    <!-- Cache -->
+    <rect x="660" y="320" width="220" height="56" rx="6" fill="#ffffff"/>
+    <rect x="660" y="320" width="220" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="770" y="352" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">In-Memory Cache</text>
+
+    <!-- Service A -->
+    <rect x="300" y="460" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="300" y="460" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="370" y="492" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service A</text>
+
+    <!-- Service B -->
+    <rect x="480" y="460" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="480" y="460" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="550" y="492" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service B</text>
+
+    <!-- Legend -->
+    <line x1="30" y1="560" x2="930" y2="560" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="576" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <circle cx="180" cy="572" r="7" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="196" y="575" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Ingress Gateway (핵심)</text>
+
+    <circle cx="416" cy="572" r="7" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="432" y="575" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">서비스/서버</text>
+
+    <circle cx="572" cy="572" r="7" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="588" y="575" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">캐시(저장소)</text>
+
+    <line x1="716" y1="572" x2="740" y2="572" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="750" y="575" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">비동기/조회</text>
+  </svg>

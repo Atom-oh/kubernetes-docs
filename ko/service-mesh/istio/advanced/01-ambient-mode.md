@@ -40,33 +40,7 @@ Ambient Mode의 해결책:
 
 ### 핵심 개념
 
-```mermaid
-flowchart TB
-    subgraph SidecarMode["Sidecar Mode (기존)"]
-        App1[Application<br/>Container]
-        Sidecar1[Envoy<br/>Sidecar]
-        App1 <--> Sidecar1
-    end
-
-    subgraph AmbientMode["Ambient Mode (신규)"]
-        App2[Application<br/>Container Only]
-        Node[Node-level<br/>ztunnel<br/>L4 Proxy]
-        Waypoint[Waypoint<br/>Proxy<br/>L7 Features]
-        
-        App2 -->|투명하게| Node
-        Node -->|L7 필요 시| Waypoint
-    end
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef sidecar fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef ambient fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class App1,App2 app;
-    class Sidecar1 sidecar;
-    class Node,Waypoint ambient;
-```
+![애플리케이션 컨테이너에 사이드카 프록시가 붙는 Sidecar 방식과, 노드 단위 ztunnel과 선택적 Waypoint 프록시로 트래픽을 처리하는 Ambient 방식을 나란히 비교하는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-0.png)
 
 ### Ambient Mode의 장점
 
@@ -81,38 +55,7 @@ flowchart TB
 
 #### Sidecar Mode
 
-```mermaid
-flowchart TB
-    subgraph Pod1["Pod"]
-        App1[App<br/>Container]
-        Envoy1[Envoy<br/>Sidecar]
-    end
-
-    subgraph Pod2["Pod"]
-        App2[App<br/>Container]
-        Envoy2[Envoy<br/>Sidecar]
-    end
-
-    subgraph Pod3["Pod"]
-        App3[App<br/>Container]
-        Envoy3[Envoy<br/>Sidecar]
-    end
-
-    App1 <--> Envoy1
-    App2 <--> Envoy2
-    App3 <--> Envoy3
-
-    Envoy1 <-->|mTLS| Envoy2
-    Envoy2 <-->|mTLS| Envoy3
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class App1,App2,App3 app;
-    class Envoy1,Envoy2,Envoy3 envoy;
-```
+![세 개의 파드 각각에 App 컨테이너와 Envoy Sidecar가 함께 배치되고, Envoy들이 서로 mTLS로 직접 통신하는 Sidecar Mode의 구조를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-1.png)
 
 **특징**:
 - 각 파드에 Envoy 프록시 주입
@@ -122,42 +65,7 @@ flowchart TB
 
 #### Ambient Mode
 
-```mermaid
-flowchart TB
-    subgraph Node["Kubernetes Node"]
-        subgraph Pods["Application Pods"]
-            App1[App<br/>Pod 1]
-            App2[App<br/>Pod 2]
-            App3[App<br/>Pod 3]
-        end
-
-        Ztunnel[ztunnel<br/>L4 Proxy<br/>mTLS, Telemetry]
-    end
-
-    subgraph WaypointLayer["Waypoint Proxy (Optional)"]
-        Waypoint[Waypoint<br/>L7 Proxy<br/>Advanced Routing]
-    end
-
-    App1 -->|투명| Ztunnel
-    App2 -->|투명| Ztunnel
-    App3 -->|투명| Ztunnel
-
-    Ztunnel -->|L4 only| Service[Service]
-    Ztunnel -.->|L7 needed| Waypoint
-    Waypoint --> Service
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef waypoint fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App1,App2,App3 app;
-    class Ztunnel ztunnel;
-    class Waypoint waypoint;
-    class Service service;
-```
+![노드에 배치된 ztunnel이 애플리케이션 파드의 트래픽을 투명하게 처리해 L4 서비스로 직접 전달하고, L7 기능이 필요할 때만 선택적으로 Waypoint 프록시를 경유하는 구조를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-2.png)
 
 **특징**:
 - 노드당 하나의 ztunnel
@@ -229,39 +137,7 @@ ztunnel은 Ambient Mode의 핵심 구성 요소로, **노드 레벨에서 실행
 
 #### ztunnel 역할
 
-```mermaid
-flowchart TB
-    App[Application Pod]
-    Ztunnel[ztunnel<br/>DaemonSet]
-    
-    subgraph ZtunnelFeatures["ztunnel 기능"]
-        MTLS[mTLS<br/>암호화]
-        L4Telemetry[L4 Telemetry<br/>메트릭 수집]
-        Identity[Identity<br/>Service Account]
-        L4LB[L4 Load Balancing]
-    end
-
-    Target[Target Service]
-
-    App -->|TCP 연결| Ztunnel
-    Ztunnel -->|mTLS 적용| MTLS
-    MTLS -->|메트릭 수집| L4Telemetry
-    L4Telemetry -->|Identity 확인| Identity
-    Identity -->|로드 밸런싱| L4LB
-    L4LB -->|전송| Target
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef feature fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef target fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App app;
-    class Ztunnel ztunnel;
-    class MTLS,L4Telemetry,Identity,L4LB feature;
-    class Target target;
-```
+![애플리케이션 파드에서 들어온 TCP 연결이 ztunnel 내부에서 mTLS 암호화, 텔레메트리 수집, Identity 확인, L4 로드 밸런싱을 순서대로 거쳐 대상 서비스로 전달되는 과정을 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-3.png)
 
 **ztunnel 특징**:
 - Rust로 작성 (성능 최적화)
@@ -322,43 +198,7 @@ Waypoint는 **L7 기능이 필요한 경우 사용하는 선택적 프록시**�
 
 #### Waypoint 배포 단위
 
-```mermaid
-flowchart TD
-    subgraph Namespace["Namespace: production"]
-        subgraph SA1["ServiceAccount: frontend"]
-            Pod1[Frontend Pod 1]
-            Pod2[Frontend Pod 2]
-        end
-
-        subgraph SA2["ServiceAccount: backend"]
-            Pod3[Backend Pod 1]
-            Pod4[Backend Pod 2]
-        end
-
-        WP1[Waypoint<br/>for frontend]
-        WP2[Waypoint<br/>for backend]
-    end
-
-    Ztunnel[ztunnel]
-
-    Ztunnel -->|L7 routing| WP1
-    Ztunnel -->|L7 routing| WP2
-
-    WP1 --> Pod1
-    WP1 --> Pod2
-    WP2 --> Pod3
-    WP2 --> Pod4
-
-    %% 스타일 정의
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef waypoint fill:#3B48CC,stroke:#333,stroke-width:2px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Pod1,Pod2,Pod3,Pod4 pod;
-    class WP1,WP2 waypoint;
-    class Ztunnel ztunnel;
-```
+![하나의 Namespace 안에서 frontend와 backend ServiceAccount가 각자 별도의 Waypoint 프록시를 공유하고, ztunnel이 L7 라우팅이 필요한 트래픽을 해당 Waypoint로 전달하는 구조를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-4.png)
 
 **배포 옵션**:
 - **ServiceAccount 기반**: 특정 SA를 가진 파드만 해당 Waypoint 사용
@@ -367,37 +207,7 @@ flowchart TD
 
 #### Waypoint 역할
 
-```mermaid
-flowchart TB
-    Ztunnel[ztunnel]
-    
-    subgraph WaypointFeatures["Waypoint 기능"]
-        L7Routing[L7 Routing<br/>Path, Header]
-        Retry[Retry/Timeout]
-        CircuitBreaker[Circuit Breaker]
-        FaultInjection[Fault Injection]
-        HeaderManip[Header 조작]
-    end
-
-    Target[Target Service]
-
-    Ztunnel -->|L7 필요 시| L7Routing
-    L7Routing --> Retry
-    Retry --> CircuitBreaker
-    CircuitBreaker --> FaultInjection
-    FaultInjection --> HeaderManip
-    HeaderManip --> Target
-
-    %% 스타일 정의
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef feature fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef target fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Ztunnel ztunnel;
-    class L7Routing,Retry,CircuitBreaker,FaultInjection,HeaderManip feature;
-    class Target target;
-```
+![ztunnel에서 L7 처리가 필요한 트래픽을 넘겨받은 Waypoint가 경로 라우팅, 재시도, 서킷 브레이커, 폴트 인젝션, 헤더 조작을 순서대로 적용한 뒤 대상 서비스로 전달하는 과정을 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-5.png)
 
 **Waypoint 특징**:
 - Service Account별 또는 Namespace별 배포
@@ -425,36 +235,7 @@ spec:
 
 다음은 Ambient Mode에서 **Sidecar 없이** 트래픽이 어떻게 흐르는지 보여주는 종합 다이어그램입니다:
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant ClientApp as Client App<br/>(No Sidecar)
-    participant ClientZtunnel as Client Node<br/>ztunnel
-    participant Waypoint as Waypoint Proxy<br/>(L7 Optional)
-    participant ServerZtunnel as Server Node<br/>ztunnel
-    participant ServerApp as Server App<br/>(No Sidecar)
-
-    Note over ClientApp,ServerApp: L4 Only Path (Basic Scenario)
-    ClientApp->>ClientZtunnel: 1. TCP request
-    Note over ClientZtunnel: mTLS encrypt<br/>L4 metrics
-    ClientZtunnel->>ServerZtunnel: 2. mTLS connection
-    Note over ServerZtunnel: mTLS decrypt<br/>L4 metrics
-    ServerZtunnel->>ServerApp: 3. Plain TCP
-    ServerApp->>ServerZtunnel: 4. Response
-    ServerZtunnel->>ClientZtunnel: 5. mTLS response
-    ClientZtunnel->>ClientApp: 6. Plain response
-
-    Note over ClientApp,ServerApp: L7 Path (Advanced Routing)
-    ClientApp->>ClientZtunnel: 1. HTTP request
-    ClientZtunnel->>Waypoint: 2. HBONE tunnel
-    Note over Waypoint: L7 routing<br/>Header matching<br/>Circuit breaker<br/>Retry logic
-    Waypoint->>ServerZtunnel: 3. mTLS to target
-    ServerZtunnel->>ServerApp: 4. Plain HTTP
-    ServerApp->>ServerZtunnel: 5. Response
-    ServerZtunnel->>Waypoint: 6. mTLS response
-    Waypoint->>ClientZtunnel: 7. HBONE tunnel
-    ClientZtunnel->>ClientApp: 8. Response
-```
+![Sidecar 없이 동작하는 클라이언트와 서버 애플리케이션 사이에서, ztunnel만 거치는 L4 전용 경로와 Waypoint 프록시를 추가로 거치는 L7 경로 두 시나리오의 요청·응답 흐름을 비교하는 시퀀스 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-6.png)
 
 **트래픽 흐름 분석**:
 
@@ -483,29 +264,7 @@ sequenceDiagram
 - **효율적**: 최소한의 오버헤드
 - **방화벽 친화적**: 표준 HTTP/2 포트 사용
 
-```mermaid
-flowchart LR
-    App[Application<br/>Plain TCP]
-    ZtunnelSrc[Source<br/>ztunnel]
-    Network[Network<br/>HBONE/HTTP2<br/>mTLS]
-    ZtunnelDst[Destination<br/>ztunnel]
-    Target[Target App<br/>Plain TCP]
-
-    App -->|Plain| ZtunnelSrc
-    ZtunnelSrc -->|HBONE Tunnel| Network
-    Network -->|HBONE Tunnel| ZtunnelDst
-    ZtunnelDst -->|Plain| Target
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef network fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App,Target app;
-    class ZtunnelSrc,ZtunnelDst ztunnel;
-    class Network network;
-```
+![애플리케이션이 보낸 평문 TCP 트래픽이 출발지 ztunnel에서 HBONE(HTTP/2 기반 mTLS) 터널로 감싸져 네트워크를 통과한 뒤, 도착지 ztunnel에서 다시 평문으로 풀려 대상 앱에 전달되는 과정을 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-7.png)
 
 ## 설치 및 구성
 
@@ -626,27 +385,7 @@ spec:
 
 #### 단계별 마이그레이션
 
-```mermaid
-flowchart LR
-    Start[Sidecar Mode<br/>운영 중]
-    Install[Ambient<br/>컴포넌트 설치]
-    Label[Namespace<br/>Label 추가]
-    Remove[Sidecar<br/>제거]
-    Waypoint[Waypoint<br/>배포]
-    End[Ambient Mode<br/>완전 전환]
-
-    Start --> Install
-    Install --> Label
-    Label --> Remove
-    Remove --> Waypoint
-    Waypoint --> End
-
-    %% 스타일 정의
-    classDef step fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Start,Install,Label,Remove,Waypoint,End step;
-```
+![운영 중인 Sidecar Mode에서 Ambient 컴포넌트 설치, Namespace 레이블 추가, Sidecar 제거, Waypoint 배포를 거쳐 Ambient Mode로 완전히 전환되는 5단계 마이그레이션 절차를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-8.png)
 
 #### 1단계: Ambient 컴포넌트 설치
 
@@ -741,35 +480,7 @@ kubectl delete gateway -n default --all
 
 ### 리소스 사용량 시각화
 
-```mermaid
-graph TD
-    subgraph Comparison["100 Pods Cluster"]
-        subgraph Sidecar["Sidecar Mode"]
-            SM[총 메모리: 5GB<br/>총 CPU: 10 vCPU<br/>파드당: 50MB + 0.1 CPU]
-        end
-
-        subgraph Ambient["Ambient Mode"]
-            AM[총 메모리: 700MB<br/>총 CPU: 1.5 vCPU<br/>10 ztunnels + 1 waypoint]
-        end
-
-        subgraph Savings["절감량"]
-            Save[메모리: 86% 절감<br/>CPU: 85% 절감<br/>비용: ~80% 절감]
-        end
-    end
-
-    Sidecar -.->|비교| Ambient
-    Ambient -.->|결과| Savings
-
-    %% 스타일 정의
-    classDef sidecar fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef ambient fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef savings fill:#3B48CC,stroke:#333,stroke-width:2px,color:white;
-
-    %% 클래스 적용
-    class SM sidecar;
-    class AM ambient;
-    class Save savings;
-```
+![100개 파드 클러스터를 기준으로 Sidecar Mode와 Ambient Mode의 메모리·CPU 사용량을 비교하고, 그 결과로 얻어지는 리소스 절감 효과를 정리한 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-9.png)
 
 ### 리소스 절감 계산
 
@@ -793,36 +504,7 @@ cpu_saved = sidecar_cpu - ambient_cpu          # 8.5 vCPU (~85%)
 
 ### 언제 Ambient Mode를 선택해야 하는가?
 
-```mermaid
-flowchart TD
-    Start{Service Mesh<br/>도입 검토}
-
-    ResourceConstrained{리소스<br/>제약 있음?}
-    L7Required{복잡한 L7<br/>기능 필요?}
-    SimpleMesh{간단한 보안<br/>+ 텔레메트리?}
-
-    Sidecar[Sidecar Mode<br/>권장]
-    AmbientL4[Ambient Mode<br/>ztunnel only]
-    AmbientL7[Ambient Mode<br/>+ Waypoint]
-
-    Start --> ResourceConstrained
-    ResourceConstrained -->|Yes| SimpleMesh
-    ResourceConstrained -->|No| L7Required
-
-    SimpleMesh -->|Yes| AmbientL4
-    SimpleMesh -->|No| AmbientL7
-
-    L7Required -->|모든 서비스| Sidecar
-    L7Required -->|일부 서비스만| AmbientL7
-
-    %% 스타일 정의
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-    classDef solution fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    %% 클래스 적용
-    class ResourceConstrained,L7Required,SimpleMesh decision;
-    class Sidecar,AmbientL4,AmbientL7 solution;
-```
+![리소스 제약과 필요한 L7 기능의 범위에 따라 ztunnel만 사용하는 Ambient Mode, Waypoint를 추가한 Ambient Mode, 또는 Sidecar Mode 중 무엇을 선택해야 하는지 안내하는 의사결정 트리.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-10.png)
 
 **Ambient Mode 권장 시나리오**:
 - ✅ 수백 개 이상의 마이크로서비스
@@ -952,27 +634,7 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 ### 비교 자료
 
-```mermaid
-graph LR
-    subgraph Evolution["Istio 진화"]
-        V1[Istio 1.0<br/>2018<br/>Sidecar Mode]
-        V2[Istio 1.15<br/>2022<br/>Ambient Beta]
-        V3[Istio 1.28<br/>2024<br/>Ambient Stable]
-    end
-
-    V1 -->|리소스 최적화| V2
-    V2 -->|안정화| V3
-
-    %% 스타일 정의
-    classDef old fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef beta fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef stable fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    %% 클래스 적용
-    class V1 old;
-    class V2 beta;
-    class V3 stable;
-```
+![Istio 1.0의 Sidecar Mode에서 시작해 1.15의 Ambient Beta를 거쳐 1.28의 Ambient Stable로 이어지는 데이터 플레인 아키텍처의 진화 과정을 보여주는 타임라인.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-11.png)
 
 **프로덕션 사용 현황** (2025년 기준):
 - 🏢 **Solo.io**: 사내 클러스터 전체를 Ambient Mode로 마이그레이션

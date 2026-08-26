@@ -22,46 +22,7 @@ Istio의 복원력(Resilience) 기능은 서비스 메시가 장애 상황에서
 
 ### 핵심 복원력 패턴
 
-```mermaid
-flowchart TB
-    Request[클라이언트 요청]
-
-    subgraph Resilience["Istio Resilience 패턴"]
-        Outlier[Outlier Detection<br/>비정상 인스턴스 제외]
-        RateLimit[Rate Limiting<br/>요청 속도 제한]
-        ZoneAware[Zone Aware Routing<br/>지역 우선 라우팅]
-    end
-
-    subgraph Healthy["정상 인스턴스"]
-        Pod1[Pod 1<br/>Zone A]
-        Pod2[Pod 2<br/>Zone B]
-    end
-
-    subgraph Unhealthy["비정상 인스턴스"]
-        Pod3[Pod 3<br/>에러 발생]
-    end
-
-    Request --> Outlier
-    Outlier --> RateLimit
-    RateLimit --> ZoneAware
-
-    ZoneAware -->|우선| Pod1
-    ZoneAware -->|장애조치| Pod2
-
-    Outlier -.->|제외| Pod3
-
-    %% 스타일 정의
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef resilience fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef healthy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Request request;
-    class Outlier,RateLimit,ZoneAware resilience;
-    class Pod1,Pod2 healthy;
-    class Pod3 unhealthy;
-```
+![클라이언트 요청이 Outlier Detection, Rate Limiting, Zone Aware Routing을 차례로 거쳐 정상 Pod로 우선 전달되고 비정상 Pod는 제외되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-README-0.png)
 
 ### 1. Outlier Detection (이상 감지)
 
@@ -172,23 +133,7 @@ spec:
 ```
 
 **작동 방식**:
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as 클라이언트
-    participant Envoy as Envoy Proxy
-    participant Service as 서비스
-
-    Client->>Envoy: 요청 1-100 (정상)
-    Envoy->>Service: 전달
-    Service->>Envoy: 응답
-    Envoy->>Client: 응답
-
-    Client->>Envoy: 요청 101 (제한 초과)
-    Envoy-->>Client: 503 Circuit Breaker Open
-
-    Note over Envoy,Service: 연결 수 제한 도달<br/>새 연결 차단
-```
+![Envoy 프록시가 정상 요청은 서비스로 전달하다가 연결 수 제한에 도달하면 이후 요청을 즉시 503으로 거부하는 Circuit Breaker의 동작 순서를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-README-1.png)
 
 **주요 기능**:
 - TCP 연결 수 제한
@@ -237,24 +182,7 @@ retries:
 ```
 
 **작동 방식**:
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as 클라이언트
-    participant Envoy as Envoy Proxy
-    participant Pod1 as Pod 1 (실패)
-    participant Pod2 as Pod 2 (성공)
-
-    Client->>Envoy: 요청
-    Envoy->>Pod1: 시도 1
-    Pod1-->>Envoy: 503 Service Unavailable
-
-    Note over Envoy: Retry 조건 충족<br/>다른 Pod로 재시도
-
-    Envoy->>Pod2: 시도 2
-    Pod2->>Envoy: 200 OK
-    Envoy->>Client: 200 OK
-```
+![Envoy 프록시가 실패한 Pod 1에서 503을 받은 뒤 재시도 조건을 확인하고 다른 Pod 2로 요청을 재전송해 최종적으로 성공 응답을 클라이언트에 전달하는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-README-2.png)
 
 ### 6. Timeout (타임아웃)
 
@@ -469,58 +397,7 @@ spec:
 
 ## 복원력 아키텍처
 
-```mermaid
-flowchart TB
-    Client[클라이언트]
-
-    subgraph Gateway["Ingress Gateway"]
-        GW[Gateway<br/>Rate Limiting]
-    end
-
-    subgraph ServiceA["Service A"]
-        A1[Pod A1<br/>Zone A<br/>정상]
-        A2[Pod A2<br/>Zone B<br/>정상]
-        A3[Pod A3<br/>Zone A<br/>비정상]
-    end
-
-    subgraph ServiceB["Service B"]
-        B1[Pod B1<br/>Zone A]
-        B2[Pod B2<br/>Zone B]
-    end
-
-    subgraph Policies["Resilience Policies"]
-        OD[Outlier Detection<br/>A3 제외됨]
-        RL[Rate Limiting<br/>100 req/s]
-        ZA[Zone Aware<br/>A → B 같은 Zone]
-    end
-
-    Client -->|요청| GW
-    GW -->|Rate 제한 통과| OD
-    OD -->|정상 파드만| A1
-    OD -->|정상 파드만| A2
-    OD -.->|제외| A3
-
-    A1 -->|Zone A → Zone A 우선| B1
-    A2 -->|Zone B → Zone B 우선| B2
-
-    ZA -.->|영향| B1
-    ZA -.->|영향| B2
-    RL -.->|적용| GW
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client client;
-    class GW gateway;
-    class A1,A2,B1,B2 service;
-    class A3 unhealthy;
-    class OD,RL,ZA policy;
-```
+![클라이언트 요청이 Gateway의 Rate Limiting을 지나 Outlier Detection으로 비정상 Pod A3를 제외하고 정상 Pod만 Service B로 전달하며, Zone Aware Routing이 같은 가용 영역으로 우선 라우팅하는 전체 복원력 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-README-3.png)
 
 ## 복원력 메트릭
 

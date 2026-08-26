@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cfalb-title cfalb-desc">
+  <title id="cfalb-title">CloudFront + ALB 2홉 XFF 흐름</title>
+  <desc id="cfalb-desc">클라이언트 요청이 CloudFront와 AWS ALB를 차례로 거쳐 Istio Gateway에 도달하면서 X-Forwarded-For 헤더에 두 홉의 IP가 누적되는 흐름을 보여준다.</desc>
+  <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Arrows first -->
+  <line x1="128" y1="280" x2="212" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="132" y="260" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="170" y="269" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.01em">XFF: (없음)</text>
+
+  <line x1="312" y1="280" x2="396" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="316" y="260" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="354" y="269" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.01em">XFF: 1개</text>
+
+  <line x1="496" y1="280" x2="580" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="500" y="260" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="538" y="269" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.01em">XFF: 2개 IP</text>
+
+  <line x1="680" y1="280" x2="764" y2="280" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <rect x="668" y="260" width="128" height="12" rx="2" fill="#ffffff"/>
+  <text x="732" y="269" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.01em">XFF: 3개 IP</text>
+
+  <!-- Nodes: Client, CF, ALB, Gateway, App -->
+  <rect x="32" y="256" width="96" height="48" rx="6" fill="#ffffff"/>
+  <rect x="32" y="256" width="96" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="80" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라이언트</text>
+  <text x="80" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">203.0.113.5</text>
+
+  <rect x="216" y="256" width="96" height="48" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="216" y="256" width="96" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="264" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudFront</text>
+  <text x="264" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">172.64.0.1</text>
+
+  <rect x="400" y="256" width="96" height="48" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="400" y="256" width="96" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="448" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS ALB</text>
+  <text x="448" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.0.1.100</text>
+
+  <!-- Focal: Istio Gateway -->
+  <rect x="584" y="256" width="96" height="48" rx="6" fill="#ffffff"/>
+  <rect x="584" y="256" width="96" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="632" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio</text>
+  <text x="632" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gateway</text>
+
+  <rect x="768" y="256" width="96" height="48" rx="6" fill="#ffffff"/>
+  <rect x="768" y="256" width="96" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="816" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">앱</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="404" x2="930" y2="404" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="424" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+  <line x1="160" y1="420" x2="192" y2="420" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="200" y="424" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">HOP 전달</text>
+  <line x1="340" y1="420" x2="372" y2="420" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <text x="380" y="424" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">xff_num_trusted_hops: 2 적용 지점</text>
+</svg>

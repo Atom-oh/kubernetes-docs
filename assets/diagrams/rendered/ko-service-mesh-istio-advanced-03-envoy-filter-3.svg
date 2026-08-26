@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cfnlbalb-title cfnlbalb-desc">
+  <title id="cfnlbalb-title">CloudFront + NLB + ALB 체인 XFF 흐름</title>
+  <desc id="cfnlbalb-desc">클라이언트 요청이 CloudFront, L4인 NLB, ALB를 차례로 거쳐 Istio Gateway에 도달하며, NLB는 XFF 헤더를 읽거나 수정하지 않아 체인에 영향을 주지 않는다는 것을 보여준다.</desc>
+  <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#7D8998"/></marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Arrows first -->
+  <line x1="108" y1="280" x2="180" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="110" y="260" width="70" height="12" rx="2" fill="#ffffff"/>
+  <text x="145" y="269" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.01em">XFF: (없음)</text>
+
+  <line x1="268" y1="280" x2="340" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="270" y="260" width="68" height="12" rx="2" fill="#ffffff"/>
+  <text x="304" y="269" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.01em">XFF: 1개</text>
+
+  <!-- NLB -> ALB dashed, L4 passthrough (soft) -->
+  <line x1="428" y1="280" x2="500" y2="280" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-soft)"/>
+  <rect x="430" y="260" width="68" height="12" rx="2" fill="#ffffff"/>
+  <text x="464" y="269" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.01em">L4 · 그대로</text>
+
+  <line x1="588" y1="280" x2="660" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="590" y="260" width="66" height="12" rx="2" fill="#ffffff"/>
+  <text x="623" y="269" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.01em">XFF: 2개</text>
+
+  <line x1="748" y1="280" x2="820" y2="280" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <rect x="750" y="260" width="70" height="12" rx="2" fill="#ffffff"/>
+  <text x="785" y="269" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.01em">XFF: 3개</text>
+
+  <!-- Nodes: Client, CF, NLB, ALB, Gateway, App — width 84, gap 24 -->
+  <rect x="24" y="256" width="84" height="48" rx="6" fill="#ffffff"/>
+  <rect x="24" y="256" width="84" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="66" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라이언트</text>
+  <text x="66" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">.5</text>
+
+  <rect x="184" y="256" width="84" height="48" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="184" y="256" width="84" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="226" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudFront</text>
+  <text x="226" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">L7</text>
+
+  <rect x="344" y="256" width="84" height="48" rx="6" fill="rgba(35,47,62,0.02)"/>
+  <rect x="344" y="256" width="84" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="386" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS NLB</text>
+  <text x="386" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">L4</text>
+
+  <rect x="504" y="256" width="84" height="48" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="504" y="256" width="84" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="546" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS ALB</text>
+  <text x="546" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">L7</text>
+
+  <!-- Focal: Istio Gateway -->
+  <rect x="664" y="256" width="84" height="48" rx="6" fill="#ffffff"/>
+  <rect x="664" y="256" width="84" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="706" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio</text>
+  <text x="706" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gateway</text>
+
+  <rect x="824" y="256" width="84" height="48" rx="6" fill="#ffffff"/>
+  <rect x="824" y="256" width="84" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="866" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">앱</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="404" x2="930" y2="404" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="424" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+  <line x1="160" y1="420" x2="192" y2="420" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="200" y="424" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">L7 홉 (XFF 갱신)</text>
+  <line x1="400" y1="420" x2="432" y2="420" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-soft)"/>
+  <text x="440" y="424" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">L4 패스스루 (미카운트)</text>
+  <line x1="640" y1="420" x2="672" y2="420" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <text x="680" y="424" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">xff_num_trusted_hops: 2 적용 지점</text>
+</svg>

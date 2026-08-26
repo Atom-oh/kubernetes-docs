@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="init-seq-title init-seq-desc">
+    <title id="init-seq-title">istio-init의 트래픽 리다이렉트 설정</title>
+    <desc id="init-seq-desc">파드 시작 시 istio-init이 iptables 규칙을 설정해 모든 트래픽을 Envoy로 리다이렉트하고, 이후 애플리케이션의 아웃바운드 요청이 iptables를 거쳐 Envoy로 전달되며 Envoy 자신의 요청만 iptables를 우회하는 과정을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Lifelines -->
+    <line x1="96" y1="112" x2="96" y2="540" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="288" y1="112" x2="288" y2="540" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="480" y1="112" x2="480" y2="540" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="672" y1="112" x2="672" y2="540" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="864" y1="112" x2="864" y2="540" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- Messages -->
+    <line x1="96" y1="152" x2="288" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="288" y1="188" x2="480" y2="188" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="288" y1="236" x2="96" y2="236" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <line x1="96" y1="280" x2="672" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="96" y1="316" x2="864" y2="316" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="672" y1="360" x2="480" y2="360" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="396" x2="864" y2="396" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <path d="M 864,420 L 916,420 L 916,444 L 864,444" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <line x1="864" y1="492" x2="480" y2="492" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Notes -->
+    <rect x="380" y="196" width="200" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+    <text x="480" y="209" fill="#232F3E" font-style="italic" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">모든 트래픽을 Envoy로 리다이렉트</text>
+
+    <rect x="572" y="500" width="200" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+    <text x="672" y="513" fill="#232F3E" font-style="italic" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy UID는 iptables 우회</text>
+
+    <!-- Message labels -->
+    <rect x="140" y="134" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="192" y="143" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">Init Container 시작</text>
+
+    <rect x="332" y="170" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="384" y="179" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">iptables 규칙 설정</text>
+
+    <rect x="144" y="218" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="192" y="227" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">완료 (Exit 0)</text>
+
+    <rect x="332" y="262" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="384" y="271" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">애플리케이션 시작</text>
+
+    <rect x="428" y="298" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="307" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">Envoy 시작</text>
+
+    <rect x="524" y="342" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="576" y="351" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">아웃바운드 요청</text>
+
+    <rect x="620" y="378" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="672" y="387" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">리다이렉트 (15001)</text>
+
+    <rect x="920" y="426" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="938" y="435" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">라우팅</text>
+
+    <rect x="620" y="474" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="672" y="483" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">실제 요청 전송</text>
+
+    <!-- Actor: Kubernetes -->
+    <rect x="24" y="56" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="24" y="56" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="32" y="64" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="46" y="73" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+    <text x="96" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubernetes</text>
+    <text x="96" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kubelet</text>
+
+    <!-- Actor: istio-init -->
+    <rect x="216" y="56" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="216" y="56" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="224" y="64" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="240" y="73" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">INIT</text>
+    <text x="288" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">istio-init</text>
+    <text x="288" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">init container</text>
+
+    <!-- Actor: iptables -->
+    <rect x="408" y="56" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="408" y="56" width="144" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="416" y="64" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="430" y="73" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NAT</text>
+    <text x="480" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">iptables</text>
+    <text x="480" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">NAT table</text>
+
+    <!-- Actor: 애플리케이션 -->
+    <rect x="600" y="56" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="600" y="56" width="144" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="608" y="64" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+    <text x="622" y="73" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+    <text x="672" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">애플리케이션</text>
+    <text x="672" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">container</text>
+
+    <!-- Actor: Envoy Proxy (focal) -->
+    <rect x="792" y="56" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="792" y="56" width="144" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="800" y="64" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="816" y="73" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DATA</text>
+    <text x="864" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Proxy</text>
+    <text x="864" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">UID 1337</text>
+
+    <!-- Legend -->
+    <line x1="24" y1="560" x2="936" y2="560" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="576" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <line x1="24" y1="588" x2="52" y2="588" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="60" y="591" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Envoy 리다이렉트 경로(focal)</text>
+    <line x1="356" y1="588" x2="384" y2="588" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <text x="392" y="591" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">완료 반환(return)</text>
+  </svg>

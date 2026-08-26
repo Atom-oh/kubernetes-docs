@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dnsproxy-seq-title dnsproxy-seq-desc">
+    <title id="dnsproxy-seq-title">Envoy DNS Proxy의 분기 처리</title>
+    <desc id="dnsproxy-seq-desc">애플리케이션의 DNS 쿼리가 iptables를 거쳐 Envoy DNS Proxy로 리다이렉트된 뒤, 메시 내부 서비스면 Istiod에 xDS로 조회하고 외부 도메인이면 CoreDNS에 위임해 IP를 반환받아 애플리케이션에 전달하는 분기 처리를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Lifelines -->
+    <line x1="96" y1="112" x2="96" y2="540" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="288" y1="112" x2="288" y2="540" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="480" y1="112" x2="480" y2="540" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="672" y1="112" x2="672" y2="540" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="864" y1="112" x2="864" y2="540" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- ALT frame (Envoy, CoreDNS, Istiod participate) -->
+    <rect x="456" y="240" width="432" height="224" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <rect x="456" y="240" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <text x="476" y="252" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ALT</text>
+    <text x="468" y="260" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.02em">[Istio Service]</text>
+    <line x1="464" y1="360" x2="880" y2="360" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="468" y="376" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.02em">[외부 DNS]</text>
+
+    <!-- Messages -->
+    <line x1="96" y1="160" x2="288" y2="160" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="288" y1="204" x2="480" y2="204" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="288" x2="864" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="864" y1="324" x2="480" y2="324" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <line x1="480" y1="404" x2="672" y2="404" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="672" y1="440" x2="480" y2="440" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <line x1="480" y1="500" x2="96" y2="500" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+    <!-- Message labels -->
+    <rect x="140" y="142" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="192" y="151" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">DNS 쿼리 (UDP 53)</text>
+
+    <rect x="332" y="186" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="384" y="195" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">리다이렉트 (15053)</text>
+
+    <rect x="552" y="270" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="608" y="279" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">Service 조회 (xDS)</text>
+
+    <rect x="708" y="306" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="760" y="315" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">ClusterIP 반환</text>
+
+    <rect x="524" y="386" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="576" y="395" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">DNS 쿼리</text>
+
+    <rect x="524" y="422" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="576" y="431" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">IP 반환</text>
+
+    <rect x="128" y="482" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="180" y="491" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">IP 반환</text>
+
+    <!-- Actor: 애플리케이션 -->
+    <rect x="24" y="56" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="24" y="56" width="144" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="32" y="64" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+    <text x="46" y="73" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+    <text x="96" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">애플리케이션</text>
+    <text x="96" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">DNS client</text>
+
+    <!-- Actor: iptables -->
+    <rect x="216" y="56" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="216" y="56" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="224" y="64" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="238" y="73" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NAT</text>
+    <text x="288" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">iptables</text>
+    <text x="288" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">UDP 53 redirect</text>
+
+    <!-- Actor: Envoy DNS Proxy (focal) -->
+    <rect x="408" y="56" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="408" y="56" width="144" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="416" y="64" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="432" y="73" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DATA</text>
+    <text x="480" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy</text>
+    <text x="480" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">DNS Proxy · 15053</text>
+
+    <!-- Actor: CoreDNS -->
+    <rect x="600" y="56" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="600" y="56" width="144" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="608" y="64" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+    <text x="622" y="73" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+    <text x="672" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CoreDNS</text>
+    <text x="672" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">외부 도메인</text>
+
+    <!-- Actor: Istiod -->
+    <rect x="792" y="56" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="792" y="56" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="800" y="64" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="816" y="73" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CTRL</text>
+    <text x="864" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istiod</text>
+    <text x="864" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">메시 서비스</text>
+
+    <!-- Legend -->
+    <line x1="24" y1="560" x2="936" y2="560" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="576" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <line x1="24" y1="588" x2="52" y2="588" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="60" y="591" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">IP 반환(headline)</text>
+    <line x1="284" y1="588" x2="312" y2="588" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <text x="320" y="591" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">응답 반환(return)</text>
+  </svg>

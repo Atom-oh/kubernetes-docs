@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ca-seq-title ca-seq-desc">
+    <title id="ca-seq-title">인증서 발급과 갱신 흐름</title>
+    <desc id="ca-seq-desc">Envoy가 Istiod에 CSR을 보내면 Istiod가 SPIFFE Identity를 검증하고 서명한 뒤 X.509 인증서를 발급하며, 만료 전 동일한 절차로 인증서를 갱신하는 과정을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Lifelines -->
+    <line x1="160" y1="120" x2="160" y2="500" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="480" y1="120" x2="480" y2="500" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="800" y1="120" x2="800" y2="500" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- Messages -->
+    <line x1="160" y1="160" x2="480" y2="160" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="204" x2="800" y2="204" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="800" y1="248" x2="480" y2="248" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <!-- self message: sign cert -->
+    <path d="M 480,292 L 516,292 L 516,316 L 480,316" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- headline: cert issued -->
+    <line x1="480" y1="356" x2="160" y2="356" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <line x1="160" y1="420" x2="480" y2="420" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="460" x2="160" y2="460" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Note callout -->
+    <rect x="76" y="376" width="168" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+    <text x="160" y="389" fill="#232F3E" font-style="italic" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">인증서 사용 · mTLS 통신</text>
+
+    <!-- Message labels -->
+    <rect x="252" y="144" width="136" height="12" rx="2" fill="#ffffff"/>
+    <text x="320" y="153" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">CSR 요청 (CSR)</text>
+
+    <rect x="572" y="188" width="136" height="12" rx="2" fill="#ffffff"/>
+    <text x="640" y="197" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">Identity 검증 (SA)</text>
+
+    <rect x="592" y="232" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="640" y="241" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">검증 완료</text>
+
+    <rect x="524" y="298" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="572" y="307" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">인증서 서명</text>
+
+    <rect x="240" y="340" width="160" height="12" rx="2" fill="#ffffff"/>
+    <text x="320" y="349" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">X.509 발급 (TTL 24H)</text>
+
+    <rect x="228" y="404" width="184" height="12" rx="2" fill="#ffffff"/>
+    <text x="320" y="413" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">갱신 요청 (만료 전)</text>
+
+    <rect x="252" y="444" width="136" height="12" rx="2" fill="#ffffff"/>
+    <text x="320" y="453" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">새 인증서 발급</text>
+
+    <!-- Actor: Envoy (backend) -->
+    <rect x="88" y="64" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="88" y="64" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="96" y="72" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="112" y="81" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DATA</text>
+    <text x="160" y="96" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy</text>
+    <text x="160" y="112" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sidecar proxy</text>
+
+    <!-- Actor: Istiod (focal) -->
+    <rect x="400" y="64" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="400" y="64" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="408" y="72" width="36" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="426" y="81" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CTRL</text>
+    <text x="480" y="96" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istiod</text>
+    <text x="480" y="112" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Certificate Authority</text>
+
+    <!-- Actor: SPIFFE (external) -->
+    <rect x="728" y="64" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="728" y="64" width="144" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="736" y="72" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+    <text x="750" y="81" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+    <text x="800" y="96" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SPIFFE</text>
+    <text x="800" y="112" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ServiceAccount ID</text>
+
+    <!-- Legend -->
+    <line x1="88" y1="524" x2="872" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="88" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <line x1="88" y1="556" x2="116" y2="556" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="124" y="559" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">발급 성공(headline)</text>
+    <line x1="336" y1="556" x2="364" y2="556" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <text x="372" y="559" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">검증 반환(return)</text>
+  </svg>

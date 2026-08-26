@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="diagram" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d1-title d1-desc">
+  <title id="d1-title">RPS 기반 스케일링 결정 루프</title>
+  <desc id="d1-desc">RPS 임계값에 따라 레플리카를 늘리거나 줄이고 다시 대기 상태로 순환하는 KEDA 스케일링 결정 루프</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- ============ Connectors (drawn first) ============ -->
+
+  <!-- Start -> Query -->
+  <line x1="480" y1="64" x2="480" y2="96" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Query -> Check -->
+  <line x1="480" y1="152" x2="480" y2="188" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Check -yes-> ScaleOut (accent: happy scale-out path) -->
+  <line x1="552" y1="232" x2="680" y2="232" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="586" y="212" width="30" height="14" rx="2" fill="#ffffff"/>
+  <text x="601" y="223" class="mono" font-size="8" fill="#EC7211" text-anchor="middle">YES</text>
+
+  <!-- Check -no-> Check2 -->
+  <line x1="480" y1="276" x2="480" y2="300" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="488" y="278" width="26" height="14" rx="2" fill="#ffffff"/>
+  <text x="501" y="289" class="mono" font-size="8" fill="#545B64" text-anchor="middle">NO</text>
+
+  <!-- Check2 -yes-> ScaleIn -->
+  <line x1="552" y1="344" x2="680" y2="344" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="586" y="324" width="30" height="14" rx="2" fill="#ffffff"/>
+  <text x="601" y="335" class="mono" font-size="8" fill="#545B64" text-anchor="middle">YES</text>
+
+  <!-- Check2 -no-> Wait -->
+  <line x1="480" y1="388" x2="480" y2="428" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="488" y="398" width="26" height="14" rx="2" fill="#ffffff"/>
+  <text x="501" y="409" class="mono" font-size="8" fill="#545B64" text-anchor="middle">NO</text>
+
+  <!-- ScaleOut -> Wait (elbow: down then left, fan attach at y=444) -->
+  <path d="M760,260 V444 Q760,452 752,452 H568" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- ScaleIn -> Wait (elbow: down then left, fan attach at y=468) -->
+  <path d="M760,372 V468 Q760,476 752,476 H568" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Wait -> Start (loop back, elbow via left margin) -->
+  <path d="M400,456 H140 Q132,456 132,448 V48 Q132,40 140,40 H420" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="70" y="240" width="76" height="14" rx="2" fill="#ffffff"/>
+  <text x="108" y="251" class="mono" font-size="8" fill="#7D8998" text-anchor="middle" letter-spacing="0.02em">30초 후 재평가</text>
+
+  <!-- ============ Nodes ============ -->
+
+  <!-- Start (oval) -->
+  <rect x="420" y="16" width="120" height="48" rx="24" fill="#ffffff"/>
+  <rect x="420" y="16" width="120" height="48" rx="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="44" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">메트릭 수집</text>
+
+  <!-- Query (rect) -->
+  <rect x="400" y="96" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="120" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">PromQL 쿼리 실행</text>
+  <text x="480" y="136" class="mono" font-size="9" fill="#545B64" text-anchor="middle">rate(...[1m])</text>
+
+  <!-- Check (diamond) -->
+  <rect x="408" y="188" width="144" height="88" fill="#ffffff"/>
+  <polygon points="480,188 552,232 480,276 408,232" fill="#ffffff" stroke="rgba(255,153,0,0.60)" stroke-width="1.2"/>
+  <text x="480" y="228" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">RPS &gt;</text>
+  <text x="480" y="244" class="mono" font-size="9" fill="#545B64" text-anchor="middle">100 ?</text>
+
+  <!-- ScaleOut (rect, focal) -->
+  <rect x="680" y="204" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="760" y="228" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">레플리카 증가</text>
+  <text x="760" y="244" class="mono" font-size="9" fill="#545B64" text-anchor="middle">scale out</text>
+
+  <!-- Check2 (diamond) -->
+  <rect x="408" y="300" width="144" height="88" fill="#ffffff"/>
+  <polygon points="480,300 552,344 480,388 408,344" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="340" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">RPS &lt;</text>
+  <text x="480" y="356" class="mono" font-size="9" fill="#545B64" text-anchor="middle">50 ?</text>
+
+  <!-- ScaleIn (rect) -->
+  <rect x="680" y="316" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="760" y="340" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">레플리카 감소</text>
+  <text x="760" y="356" class="mono" font-size="9" fill="#545B64" text-anchor="middle">scale in</text>
+
+  <!-- Wait (rect) -->
+  <rect x="400" y="428" width="160" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="480" y="452" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">대기</text>
+  <text x="480" y="468" class="mono" font-size="9" fill="#545B64" text-anchor="middle">cooldownPeriod</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="530" x2="930" y2="530" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="548" class="mono" font-size="8" fill="#545B64" letter-spacing="0.14em">LEGEND</text>
+  <polygon points="180,540 190,547 180,554 170,547" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="198" y="551" class="mono" font-size="8" fill="#545B64">DECISION</text>
+  <rect x="300" y="540" width="20" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="328" y="551" class="mono" font-size="8" fill="#545B64">SCALE OUT (FOCAL)</text>
+</svg>

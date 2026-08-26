@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-traffic-management-08-fault-injection-4-title ko-service-mesh-istio-traffic-management-08-fault-injection-4-desc">
+<title id="ko-service-mesh-istio-traffic-management-08-fault-injection-4-title">Progressive Chaos Engineering 단계</title>
+<desc id="ko-service-mesh-istio-traffic-management-08-fault-injection-4-desc">1%에서 50%까지 장애 비율을 단계적으로 늘리며 모니터링 결과가 정상이면 다음 단계로 진행하고, 문제가 발견되면 즉시 수정 및 개선 단계로 이동한다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="378.0" y="420" width="384" height="72" rx="6" fill="#ffffff"/>
+<rect x="378.0" y="420" width="384" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="570.0" y="458.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">수정 및 개선</text>
+<rect x="60" y="108" width="172" height="72" rx="6" fill="#ffffff"/>
+<rect x="60" y="108" width="172" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="146.0" y="140.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">1단계</text>
+<text x="146.0" y="160.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">1-5% 장애</text>
+<rect x="272" y="108" width="172" height="72" rx="6" fill="#ffffff"/>
+<rect x="272" y="108" width="172" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="358.0" y="140.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">2단계</text>
+<text x="358.0" y="160.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">5-10% 장애</text>
+<rect x="484" y="108" width="172" height="72" rx="6" fill="#ffffff"/>
+<rect x="484" y="108" width="172" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="570.0" y="140.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">3단계</text>
+<text x="570.0" y="160.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">10-20% 장애</text>
+<rect x="696" y="108" width="172" height="72" rx="6" fill="#ffffff"/>
+<rect x="696" y="108" width="172" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="782.0" y="140.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">4단계</text>
+<text x="782.0" y="160.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">20-50% 장애</text>
+<line x1="232" y1="128" x2="272" y2="128" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="238.0" y="108" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="252.0" y="117" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">OK</text>
+<line x1="444" y1="128" x2="484" y2="128" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="450.0" y="108" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="464.0" y="117" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">OK</text>
+<line x1="656" y1="128" x2="696" y2="128" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="662.0" y="108" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="676.0" y="117" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">OK</text>
+<path d="M 146.0,180 V 412 Q 146.0,420 154.0,420 H 454.8" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<path d="M 358.0,180 V 412 Q 358.0,420 366.0,420 H 531.6" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<path d="M 570.0,180 V 412 Q 570.0,420 578.0,420 H 608.4" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<path d="M 782.0,180 V 412 Q 782.0,420 774.0,420 H 685.2" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="150.0" y="228" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="170.0" y="237" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">문제 발견</text>
+</svg>

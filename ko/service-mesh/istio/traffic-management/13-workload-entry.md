@@ -27,52 +27,7 @@ WorkloadEntry는 Istio Custom Resource Definition (CRD)으로, 메시 외부에 
 
 ### 사용 시나리오
 
-```mermaid
-flowchart TB
-    subgraph Legacy[레거시 환경]
-        VM1[VM<br/>레거시 앱]
-        VM2[VM<br/>데이터베이스]
-        BM[베어메탈<br/>고성능 서버]
-    end
-
-    subgraph K8S[Kubernetes 클러스터]
-        subgraph Pod1[파드]
-            App1[신규 앱]
-            Envoy1[Envoy]
-        end
-
-        subgraph Pod2[파드]
-            App2[마이크로서비스]
-            Envoy2[Envoy]
-        end
-    end
-
-    subgraph Istiod[Control Plane]
-        CP[istiod]
-    end
-
-    VM1 -.->|메시 등록| CP
-    VM2 -.->|메시 등록| CP
-    BM -.->|메시 등록| CP
-
-    CP -.->|구성 전달| Envoy1
-    CP -.->|구성 전달| Envoy2
-
-    App1 <-->|mTLS| VM1
-    App2 <-->|mTLS| VM2
-
-    %% 스타일 정의
-    classDef vm fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class VM1,VM2,BM vm;
-    class App1,App2 k8sApp;
-    class Envoy1,Envoy2 proxy;
-    class CP controlPlane;
-```
+![레거시 VM과 베어메탈 서버가 WorkloadEntry로 istiod에 등록되고, istiod가 Kubernetes 파드의 Envoy에 구성을 전달하여 VM과 파드가 mTLS로 통신하는 하이브리드 아키텍처를 보여주는 흐름도.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-0.png)
 
 **주요 사용 사례**:
 1. **점진적 마이그레이션**: 레거시 애플리케이션을 단계적으로 Kubernetes로 이전
@@ -98,78 +53,13 @@ flowchart TB
 
 ### 트래픽 흐름 비교
 
-```mermaid
-flowchart LR
-    subgraph PodFlow[Kubernetes 파드 흐름]
-        Client1[클라이언트]
-        K8sService[Service<br/>자동 디스커버리]
-        K8sPod[Pod<br/>Envoy 자동 주입]
-
-        Client1 -->|1\. 요청| K8sService
-        K8sService -->|2\. 라우팅| K8sPod
-    end
-
-    subgraph VMFlow[WorkloadEntry 흐름]
-        Client2[클라이언트]
-        ServiceEntry[ServiceEntry<br/>수동 등록]
-        WorkloadEntry[WorkloadEntry<br/>VM + Envoy]
-
-        Client2 -->|1\. 요청| ServiceEntry
-        ServiceEntry -->|2\. 라우팅| WorkloadEntry
-    end
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef vm fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client1,Client2 client;
-    class K8sService,K8sPod k8s;
-    class ServiceEntry,WorkloadEntry vm;
-```
+![Kubernetes 파드 경로는 Service가 자동으로 디스커버리·라우팅을 처리하는 반면, WorkloadEntry 경로는 ServiceEntry로 수동 등록해야 함을 나란히 비교하는 흐름도.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-1.png)
 
 ## 아키텍처
 
 ### VM 워크로드 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph VM[Virtual Machine]
-        App[레거시<br/>애플리케이션<br/>Port 8080]
-        EnvoyVM[Envoy Sidecar<br/>수동 설치]
-    end
-
-    subgraph K8S[Kubernetes 클러스터]
-        subgraph Pod[파드]
-            PodApp[애플리케이션]
-            EnvoyPod[Envoy<br/>자동 주입]
-        end
-
-        Istiod[istiod<br/>Control Plane]
-    end
-
-    App <-->|로컬 통신| EnvoyVM
-    PodApp <-->|로컬 통신| EnvoyPod
-
-    EnvoyVM <-->|mTLS 트래픽| EnvoyPod
-
-    Istiod -.->|xDS 구성<br/>ServiceEntry<br/>DestinationRule| EnvoyVM
-    Istiod -.->|xDS 구성| EnvoyPod
-    Istiod -.->|인증서 발급<br/>Service Account| EnvoyVM
-
-    %% 스타일 정의
-    classDef vmApp fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App vmApp;
-    class PodApp k8sApp;
-    class EnvoyVM,EnvoyPod proxy;
-    class Istiod controlPlane;
-```
+![VM에 수동 설치된 Envoy와 파드에 자동 주입된 Envoy가 mTLS로 통신하고, istiod가 양쪽에 xDS 구성을 배포하며 VM 측에는 인증서까지 별도로 발급하는 아키텍처를 보여주는 흐름도.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-2.png)
 
 ### 주요 구성 요소
 
@@ -322,25 +212,7 @@ spec:
 
 ### 동작 흐름
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Kubernetes<br/>파드
-    participant DNS as Istio DNS
-    participant Envoy as Envoy Proxy
-    participant VM as VM<br/>WorkloadEntry
-
-    Client->>DNS: api.legacy.internal 조회
-    DNS->>Client: 240.240.1.1 (가상 IP)
-
-    Client->>Envoy: HTTP 요청<br/>240.240.1.1:8080
-    Envoy->>Envoy: ServiceEntry 조회<br/>workloadSelector 매칭
-    Envoy->>Envoy: WorkloadEntry 발견<br/>192.168.1.100
-
-    Envoy->>VM: mTLS 연결<br/>192.168.1.100:8080
-    VM->>Envoy: 응답
-    Envoy->>Client: 응답
-```
+![Kubernetes 파드가 DNS로 가상 IP를 조회한 뒤 Envoy가 ServiceEntry의 workloadSelector로 WorkloadEntry를 찾아 VM으로 mTLS 연결을 맺고 응답을 돌려주는 순서를 보여주는 시퀀스 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-3.png)
 
 ### 로드 밸런싱
 
@@ -1186,19 +1058,7 @@ kubectl apply -f serviceentries-backup.yaml
 
 ### 7. 점진적 마이그레이션 전략
 
-```mermaid
-flowchart TD
-    Phase1[1단계:<br/>VM 메시 등록] --> Phase2[2단계:<br/>트래픽 분할]
-    Phase2 --> Phase3[3단계:<br/>Kubernetes 배포]
-    Phase3 --> Phase4[4단계:<br/>트래픽 전환]
-    Phase4 --> Phase5[5단계:<br/>VM 제거]
-
-    %% 스타일 정의
-    classDef phase fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Phase1,Phase2,Phase3,Phase4,Phase5 phase;
-```
+![VM 메시 등록부터 VM 제거까지, WorkloadEntry를 이용한 5단계 점진적 마이그레이션 흐름을 보여주며 4단계 트래픽 전환이 핵심 지점으로 강조되어 있다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-13-workload-entry-4.png)
 
 **1단계: VM 메시 등록**
 ```yaml

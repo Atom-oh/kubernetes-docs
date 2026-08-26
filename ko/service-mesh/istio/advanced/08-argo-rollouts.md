@@ -31,32 +31,7 @@ Argo Rollouts는 Kubernetes를 위한 Progressive Delivery 컨트롤러로, 고�
 
 ### Istio 통합의 장점
 
-```mermaid
-flowchart LR
-    subgraph "Without Argo Rollouts"
-        direction TB
-        D1[Deployment v1<br/>100%]
-        D2[Deployment v2<br/>0%]
-        Manual[수동 트래픽 조정<br/>VirtualService 직접 수정]
-        D1 --> Manual
-        D2 --> Manual
-    end
-
-    subgraph "With Argo Rollouts + Istio"
-        direction TB
-        R1[Rollout<br/>자동 버전 관리]
-        Auto[자동 트래픽 조정<br/>메트릭 기반 진행]
-        Analysis[Analysis<br/>성공률/레이턴시 검증]
-        R1 --> Auto
-        Auto --> Analysis
-    end
-
-    classDef manual fill:#FFB74D,stroke:#333,stroke-width:2px,color:black;
-    classDef auto fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    class Manual manual;
-    class R1,Auto,Analysis auto;
-```
+![VirtualService를 직접 수정하는 수동 트래픽 조정 방식과, Argo Rollouts가 메트릭을 검증하며 자동으로 트래픽을 전환하는 방식을 좌우로 대비하는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-0.png)
 
 **주요 이점**:
 - ✅ **자동화된 Canary 배포**: VirtualService weight 자동 조정
@@ -77,122 +52,11 @@ flowchart LR
 
 ### 전체 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph "Control Plane"
-        ArgoCD[ArgoCD<br/>GitOps 배포]
-        Rollouts[Argo Rollouts<br/>Controller]
-        Istiod[Istiod<br/>Istio Control Plane]
-    end
-
-    subgraph "Data Plane"
-        direction TB
-
-        subgraph "Istio Ingress Gateway"
-            Gateway[Gateway<br/>외부 트래픽]
-        end
-
-        subgraph "VirtualService (test)"
-            VS[VirtualService<br/>라우팅 규칙]
-        end
-
-        subgraph "Services"
-            StableService[test-stable<br/>Service]
-            CanaryService[test-canary<br/>Service]
-        end
-
-        subgraph "Rollout Managed Pods"
-            StablePods[Stable Pods<br/>v1]
-            CanaryPods[Canary Pods<br/>v2]
-        end
-
-        subgraph "DestinationRule"
-            DR[DestinationRule<br/>Subsets]
-        end
-    end
-
-    subgraph "Observability"
-        Prometheus[Prometheus<br/>메트릭 수집]
-        AnalysisRun[AnalysisRun<br/>메트릭 검증]
-    end
-
-    ArgoCD -->|배포| Rollouts
-    Rollouts -->|VirtualService weight 조정| VS
-    Rollouts -->|ReplicaSet 관리| StablePods
-    Rollouts -->|ReplicaSet 관리| CanaryPods
-    Rollouts -->|AnalysisRun 생성| AnalysisRun
-
-    Gateway --> VS
-    VS -->|90% stable subset| DR
-    VS -->|10% canary subset| DR
-    DR --> StableService
-    DR --> CanaryService
-    StableService --> StablePods
-    CanaryService --> CanaryPods
-
-    Istiod -.->|xDS Config| Gateway
-    Istiod -.->|설정 동기화| VS
-    Istiod -.->|설정 동기화| DR
-
-    StablePods -.->|메트릭| Prometheus
-    CanaryPods -.->|메트릭| Prometheus
-    Prometheus -->|쿼리| AnalysisRun
-    AnalysisRun -.->|성공/실패| Rollouts
-
-    classDef control fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef routing fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef observ fill:#FFA726,stroke:#333,stroke-width:2px,color:white;
-
-    class ArgoCD,Rollouts,Istiod control;
-    class Gateway,VS,DR,StableService,CanaryService routing;
-    class StablePods,CanaryPods app;
-    class Prometheus,AnalysisRun observ;
-```
+![ArgoCD가 배포한 Argo Rollouts 컨트롤러가 VirtualService 가중치와 Pod를 관리하며, Istiod가 데이터 플레인 설정을 동기화하고, Prometheus 메트릭을 AnalysisRun이 검증해 Rollouts에 성공/실패를 되돌려주는 흐름을 보여주는 아키텍처.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-1.png)
 
 ### 트래픽 흐름
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant User as 사용자
-    participant Gateway as Istio Gateway
-    participant VS as VirtualService
-    participant Stable as Stable Pod (v1)
-    participant Canary as Canary Pod (v2)
-    participant Rollouts as Argo Rollouts
-    participant Prom as Prometheus
-
-    Note over User,Prom: 초기 상태: v1 100%
-
-    Rollouts->>VS: setWeight: 10<br/>stable: 90%, canary: 10%
-
-    User->>Gateway: HTTP 요청
-    Gateway->>VS: 트래픽 전달
-
-    alt 90% 트래픽
-        VS->>Stable: subset: stable
-        Stable->>VS: 응답
-    else 10% 트래픽
-        VS->>Canary: subset: canary
-        Canary->>VS: 응답
-    end
-
-    VS->>Gateway: 응답
-    Gateway->>User: 응답
-
-    Stable->>Prom: 메트릭 (성공률, 레이턴시)
-    Canary->>Prom: 메트릭 (성공률, 레이턴시)
-
-    Rollouts->>Prom: Analysis 쿼리<br/>(Canary 성공률 >= 95%?)
-    Prom->>Rollouts: 메트릭 결과
-
-    alt 성공률 >= 95%
-        Rollouts->>VS: setWeight: 50<br/>자동 진행
-    else 성공률 < 95%
-        Rollouts->>VS: setWeight: 0<br/>자동 롤백
-    end
-```
+![Argo Rollouts가 VirtualService 가중치를 조정해 요청을 Stable/Canary Pod로 나눠 보내고, Pod가 보낸 메트릭을 Prometheus가 집계해 Rollouts에 돌려주면 성공률에 따라 자동으로 진행하거나 롤백하는 시퀀스.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-2.png)
 
 ## 핵심 개념
 
@@ -361,39 +225,7 @@ spec:
 ```
 
 **AnalysisRun**:
-```mermaid
-flowchart TD
-    Start[AnalysisRun 시작]
-    Start --> M1[측정 1: 30초 대기]
-    M1 --> C1{성공률 >= 95%?}
-    C1 -->|Yes| M2[측정 2: 30초 대기]
-    C1 -->|No| Fail1[실패 카운트 1]
-
-    M2 --> C2{성공률 >= 95%?}
-    C2 -->|Yes| M3[측정 3: 30초 대기]
-    C2 -->|No| Fail2[실패 카운트 2<br/>전체 실패!]
-
-    M3 --> C3{성공률 >= 95%?}
-    C3 -->|Yes| M4[측정 4: 30초 대기]
-    C3 -->|No| Fail3[실패 카운트 2<br/>전체 실패!]
-
-    M4 --> C4{성공률 >= 95%?}
-    C4 -->|Yes| M5[측정 5: 30초 대기]
-    M5 --> C5{성공률 >= 95%?}
-    C5 -->|Yes| Success[전체 성공!<br/>다음 단계 진행]
-
-    Fail1 --> M2
-    Fail2 --> Rollback[자동 롤백]
-    Fail3 --> Rollback
-
-    classDef success fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef failure fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef check fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class Success success;
-    class Fail2,Fail3,Rollback failure;
-    class C1,C2,C3,C4,C5 check;
-```
+![AnalysisRun이 30초마다 성공률을 반복 측정하며, 모든 측정이 통과하면 다음 단계로 진행하고 실패가 임계치(2회)에 도달하면 자동 롤백하는 판정 흐름도.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-3.png)
 
 ## 설정 및 구성
 
@@ -612,17 +444,7 @@ spec:
 ```
 
 **트래픽 전환 그래프**:
-```mermaid
-flowchart LR
-    T0[0%<br/>Canary] --> T1[10%<br/>5분 대기]
-    T1 --> T2[30%<br/>5분 대기]
-    T2 --> T3[50%<br/>10분 대기]
-    T3 --> T4[80%<br/>10분 대기]
-    T4 --> T5[100%<br/>완료]
-
-    classDef current fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    class T3 current;
-```
+![Canary 트래픽 비중이 0%에서 시작해 10%, 30%, 50%, 80%를 거쳐 대기 시간을 두고 100%까지 단계적으로 전환되는 흐름을 보여주는 다이어그램. 50% 단계가 현재 진행 지점으로 강조되어 있다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-4.png)
 
 ### 2. Header 기반 라우팅
 
@@ -817,28 +639,7 @@ spec:
 ```
 
 **동작**:
-```mermaid
-flowchart TD
-    S1[Step 1: setWeight 10<br/>2분 대기]
-    S2[Step 2: setWeight 30<br/>2분 대기]
-    S3[Step 3: setWeight 50]
-
-    A1[Analysis 시작]
-    A2[30초마다 측정]
-    A3[실패 시 즉시 롤백]
-
-    S1 --> S2
-    S2 --> S3
-    S2 --> A1
-    A1 --> A2
-    A2 --> A3
-
-    classDef steps fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef analysis fill:#FFA726,stroke:#333,stroke-width:2px,color:white;
-
-    class S1,S2,S3 steps;
-    class A1,A2,A3 analysis;
-```
+![2단계에서 시작된 백그라운드 Analysis가 이후 Canary 단계들과 나란히 30초마다 계속 측정하며, 실패 시 즉시 롤백하는 병행 구조를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-5.png)
 
 ### 3. 복합 메트릭 분석
 
@@ -1002,31 +803,7 @@ spec:
 ```
 
 **동작 흐름**:
-```mermaid
-flowchart TD
-    Start[새 버전 배포 시작]
-    Start --> Preview[Preview 환경에 배포]
-    Preview --> PreAnalysis{사전 분석<br/>smoke-test}
-
-    PreAnalysis -->|실패| Abort1[배포 중단]
-    PreAnalysis -->|성공| Wait[수동 승인 대기<br/>autoPromotion=false]
-
-    Wait -->|promote 명령| Switch[Active Service 전환<br/>Blue → Green]
-    Switch --> PostAnalysis{사후 분석<br/>comprehensive}
-
-    PostAnalysis -->|실패| Rollback[이전 버전으로 롤백<br/>Green → Blue]
-    PostAnalysis -->|성공| Scale[10분 후 이전 버전 삭제]
-
-    Scale --> End[배포 완료]
-
-    classDef success fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef failure fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef check fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    class End success;
-    class Abort1,Rollback failure;
-    class PreAnalysis,PostAnalysis check;
-```
+![새 버전을 Preview 환경에 배포해 사전 분석을 통과한 뒤 수동 승인으로 Active Service를 Blue에서 Green으로 전환하고, 사후 분석 결과에 따라 이전 버전을 정리하거나 롤백하는 배포 승인 흐름도.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-6.png)
 
 ### 2. Canary with Experiment
 

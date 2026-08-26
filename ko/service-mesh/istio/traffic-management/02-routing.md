@@ -19,44 +19,7 @@ Istio의 고급 라우팅 기능을 사용하면 요청의 다양한 속성을 �
 
 VirtualService의 라우팅 규칙은 **Match 조건**과 **Route 대상**으로 구성됩니다.
 
-```mermaid
-flowchart LR
-    Request[들어오는 요청]
-
-    subgraph VirtualService["VirtualService 라우팅"]
-        Match1[Match 조건 1<br/>URI = /api/v1]
-        Match2[Match 조건 2<br/>Header = Mobile]
-        Match3[Match 조건 3<br/>기본값]
-
-        Route1[Route 1<br/>→ api-v1]
-        Route2[Route 2<br/>→ mobile-app]
-        Route3[Route 3<br/>→ web-app]
-    end
-
-    Request --> Match1
-    Request --> Match2
-    Request --> Match3
-
-    Match1 -->|일치| Route1
-    Match2 -->|일치| Route2
-    Match3 -->|일치| Route3
-
-    Route1 --> Service1[API v1<br/>Service]
-    Route2 --> Service2[Mobile App<br/>Service]
-    Route3 --> Service3[Web App<br/>Service]
-
-    %% 스타일 정의
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef match fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef route fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Request request;
-    class Match1,Match2,Match3 match;
-    class Route1,Route2,Route3 route;
-    class Service1,Service2,Service3 service;
-```
+![들어오는 요청이 VirtualService의 세 가지 규칙(API v1 트래픽, 모바일 클라이언트, 기본 폴백)에 순서대로 매칭되어 각각 api-v1, mobile-app, web-app 서비스로 라우팅되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-02-routing-0.png)
 
 ### 기본 구조
 

@@ -22,60 +22,7 @@ Istio의 로깅 기능을 통해 서비스 메시의 모든 활동을 기록하�
 
 ### Istio 로그 계층
 
-```mermaid
-flowchart TD
-    subgraph "Application Pod"
-        App[Application Container]
-        Envoy[Envoy Proxy]
-        App --> Envoy
-    end
-
-    subgraph "Istio Control Plane"
-        Istiod[istiod]
-        TelemetryAPI[Telemetry API]
-    end
-
-    subgraph "Log Collection"
-        Promtail[Promtail Agent]
-        FluentBit[Fluent Bit]
-        OTELCol[OpenTelemetry Collector]
-    end
-
-    subgraph "Log Storage & Query"
-        Loki[Grafana Loki]
-        ES[Elasticsearch]
-    end
-
-    subgraph "Visualization"
-        Grafana[Grafana]
-    end
-
-    Envoy -->|Access Logs| Promtail
-    Envoy -->|Access Logs| FluentBit
-    Envoy -->|OTLP Logs| OTELCol
-
-    Istiod -->|Configure| Envoy
-    TelemetryAPI -.->|Apply Config| Istiod
-
-    Promtail --> Loki
-    FluentBit --> ES
-    OTELCol --> Loki
-
-    Loki --> Grafana
-    ES --> Grafana
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef istioComponent fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef logCollector fill:#00D9FF,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef visualization fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    class App k8sComponent;
-    class Envoy,Istiod,TelemetryAPI istioComponent;
-    class Promtail,FluentBit,OTELCol logCollector;
-    class Loki,ES storage;
-    class Grafana visualization;
-```
+![애플리케이션 파드의 Envoy 프록시가 생성한 액세스 로그를 Promtail, Fluent Bit, OpenTelemetry Collector가 각각 Loki와 Elasticsearch로 전달하고, Grafana가 이를 조회하는 로그 파이프라인과 istiod가 Envoy를 설정하는 제어 경로를 함께 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-observability-03-logging-0.png)
 
 ### 로그 유형
 
