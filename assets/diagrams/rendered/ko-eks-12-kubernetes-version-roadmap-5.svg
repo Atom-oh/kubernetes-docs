@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-12-kubernetes-version-roadmap-5-title ko-eks-12-kubernetes-version-roadmap-5-desc">
+<title id="ko-eks-12-kubernetes-version-roadmap-5-title">EKS EOL 자동 업그레이드 흐름</title>
+<desc id="ko-eks-12-kubernetes-version-roadmap-5-desc">Extended Support 종료 시점이 다가오면 AWS EKS가 관리자에게 단계적으로 알림을 보내고, 종료일에 컨트롤 플레인만 자동 업그레이드되며 노드 그룹은 관리자가 수동으로 업그레이드해야 함을 보여준다.</desc>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style><defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="140" y1="80" x2="140" y2="488" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="380" y1="80" x2="380" y2="488" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="600" y1="80" x2="600" y2="488" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="820" y1="80" x2="820" y2="488" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="140" y1="80" x2="140" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="380" y1="80" x2="380" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="600" y1="80" x2="600" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="820" y1="80" x2="820" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<path d="M140 100 L380 100" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="230.0" y="80" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="260.0" y="89" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">60일 전 알림</text>
+<path d="M140 144 L380 144" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="227.0" y="124" width="66" height="12" rx="2" fill="#ffffff"/>
+<text x="260.0" y="133" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">30일 전 추가 알림</text>
+<path d="M140 188 L380 188" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="230.0" y="168" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="260.0" y="177" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">7일 전 최종 경고</text>
+<rect x="100" y="220" width="760" height="24" rx="4" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="480.0" y="236" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Extended Support 종료일 도달</text>
+<path d="M140 272 L600 272" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="328.0" y="252" width="84" height="12" rx="2" fill="#ffffff"/>
+<text x="370.0" y="261" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">CP 자동 업그레이드 시작</text>
+<path d="M600 316 L140 316" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="340.0" y="296" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="370.0" y="305" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">업그레이드 완료</text>
+<rect x="720" y="344" width="140" height="24" rx="4" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="790.0" y="360" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">⚠ 노드 그룹은 자동 업그레이드 대상 아님</text>
+<path d="M140 396 L380 396" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="218.0" y="376" width="84" height="12" rx="2" fill="#ffffff"/>
+<text x="260.0" y="385" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">CP 업그레이드 완료 알림</text>
+<path d="M380 440 L820 440" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="558.0" y="420" width="84" height="12" rx="2" fill="#ffffff"/>
+<text x="600.0" y="429" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">노드 그룹 수동 업그레이드</text>
+<rect x="70.0" y="40" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="70.0" y="40" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="64.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS EKS</text>
+<rect x="310.0" y="40" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="310.0" y="40" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="380.0" y="64.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">클러스터 관리자</text>
+<rect x="530.0" y="40" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="530.0" y="40" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="600.0" y="64.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">컨트롤 플레인</text>
+<rect x="750.0" y="40" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="750.0" y="40" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="820.0" y="64.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">노드 그룹</text>
+
+</svg>

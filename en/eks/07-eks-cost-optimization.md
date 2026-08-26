@@ -20,39 +20,7 @@ Amazon EKS (Elastic Kubernetes Service) makes it easy to deploy, manage, and sca
 
 The costs incurred when using Amazon EKS consist of the following components:
 
-```mermaid
-flowchart TD
-    EKSCost[EKS Total Cost] --> ControlPlane["EKS Control Plane
-                $0.10/hour"]
-    EKSCost --> Compute[Compute Cost]
-    EKSCost --> Storage[Storage Cost]
-    EKSCost --> Networking[Networking Cost]
-    EKSCost --> Others[Other Costs]
-
-    Compute --> EC2[EC2 Instances]
-    Compute --> Fargate[Fargate]
-
-    Storage --> EBS[EBS Volumes]
-    Storage --> EFS[EFS]
-    Storage --> S3[S3]
-
-    Networking --> DataTransfer[Data Transfer]
-    Networking --> LoadBalancer[Load Balancer]
-    Networking --> NAT[NAT Gateway]
-
-    Others --> CloudWatch[CloudWatch]
-    Others --> ECR[ECR]
-    Others --> OtherServices[Other AWS Services]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ControlPlane,EC2,Fargate,EBS,EFS,S3,DataTransfer,LoadBalancer,NAT,CloudWatch,ECR,OtherServices awsService;
-```
+![Tree diagram showing EKS total cost broken into control plane, compute, storage, networking, and other cost components, each with their underlying AWS services.](../.gitbook/assets/en-eks-07-eks-cost-optimization-0.png)
 
 ## FinOps Principles and EKS
 
@@ -60,40 +28,7 @@ FinOps (Financial Operations) is an operational model for cloud cost management 
 
 ### Core Principles of the FinOps Framework
 
-```mermaid
-flowchart TD
-    subgraph FinOps [FinOps Core Principles]
-        Visibility[Visibility and Transparency]
-        Accountability[Shared Accountability]
-        Optimization[Continuous Optimization]
-        Forecasting[Forecasting and Planning]
-        RealTime[Real-time Decision Making]
-        Culture[Cost-aware Culture]
-    end
-
-    subgraph Implementation [EKS Implementation Methods]
-        Tagging[Resource Tagging Strategy]
-        Allocation[Cost Allocation]
-        Monitoring[Cost Monitoring Tools]
-        Governance[Governance Policies]
-        Automation[Automated Optimization]
-    end
-
-    Visibility --> Tagging
-    Accountability --> Allocation
-    Optimization --> Automation
-    Forecasting --> Monitoring
-    RealTime --> Monitoring
-    Culture --> Governance
-
-    classDef finopsPrinciple fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef implementation fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Visibility,Accountability,Optimization,Forecasting,RealTime,Culture finopsPrinciple;
-    class Tagging,Allocation,Monitoring,Governance,Automation implementation;
-    class FinOps,Implementation default;
-```
+![Diagram mapping six FinOps core principles on the left to five EKS implementation methods on the right, showing which implementation method operationalizes each principle.](../.gitbook/assets/en-eks-07-eks-cost-optimization-1.png)
 
 ### Applying FinOps to EKS
 
@@ -165,44 +100,7 @@ Cost related to networking for the EKS cluster:
 
 Compute cost is typically the largest cost component of an EKS cluster. You can optimize compute costs using the following strategies.
 
-```mermaid
-flowchart TD
-    ComputeCost[Compute Cost Optimization] --> InstanceType[Instance Type Optimization]
-    ComputeCost --> SpotInstances[Spot Instance Utilization]
-    ComputeCost --> SavingsPlans["Savings Plans and
-                Reserved Instances"]
-    ComputeCost --> AutoScaling[Auto Scaling Optimization]
-    ComputeCost --> FargateVsEC2["Fargate vs EC2
-                Cost Comparison"]
-
-    InstanceType --> Family[Instance Family Selection]
-    InstanceType --> Size[Instance Size Optimization]
-    InstanceType --> Generation[Instance Generation Consideration]
-
-    SpotInstances --> WorkloadTypes[Suitable Workload Types]
-    SpotInstances --> ManagedNodeGroups[Managed Node Groups]
-    SpotInstances --> Karpenter[Karpenter Utilization]
-    SpotInstances --> InterruptionHandling[Interruption Handling]
-
-    SavingsPlans --> ComputeSP[Compute Savings Plans]
-    SavingsPlans --> EC2SP[EC2 Instance Savings Plans]
-    SavingsPlans --> RI[Reserved Instances]
-
-    AutoScaling --> CA[Cluster Autoscaler]
-    AutoScaling --> KarpenterAS[Karpenter]
-    AutoScaling --> HPA[Horizontal Pod Autoscaler]
-    AutoScaling --> VPA[Vertical Pod Autoscaler]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ComputeSP,EC2SP,RI,SpotInstances,ManagedNodeGroups awsService;
-    class CA,KarpenterAS,HPA,VPA,Karpenter k8sComponent;
-    class ComputeCost,InstanceType,Family,Size,Generation,WorkloadTypes,InterruptionHandling,SavingsPlans,AutoScaling,FargateVsEC2 default;
-```
+![Tree diagram showing five compute cost optimization strategies for EKS: instance type optimization, spot instance utilization, savings plans and reserved instances, auto scaling optimization, and Fargate vs EC2 cost comparison.](../.gitbook/assets/en-eks-07-eks-cost-optimization-2.png)
 
 ### Selecting the Right Instance Type
 
@@ -526,46 +424,7 @@ VPA Modes:
 
 Storage is an important cost component of EKS clusters. You can optimize storage costs using the following strategies.
 
-```mermaid
-flowchart TD
-    StorageCost[Storage Cost Optimization] --> EBSOptimize[EBS Volume Optimization]
-    StorageCost --> EFSOptimize[EFS Cost Optimization]
-    StorageCost --> S3Optimize[S3 Cost Optimization]
-
-    EBSOptimize --> VolumeType[Select Appropriate Volume Type]
-    EBSOptimize --> GP3Migration[Migrate to gp3]
-    EBSOptimize --> VolumeSize[Volume Size Optimization]
-    EBSOptimize --> LifecycleManagement[Volume Lifecycle Management]
-
-    EFSOptimize --> ThroughputMode[Select Appropriate Throughput Mode]
-    EFSOptimize --> EFSLifecycle[Lifecycle Management]
-    EFSOptimize --> AccessPatterns[Access Pattern Optimization]
-
-    S3Optimize --> StorageClass[Storage Class Optimization]
-    S3Optimize --> LifecyclePolicy[Lifecycle Policy]
-    S3Optimize --> RequestOptimize[S3 Request Optimization]
-
-    VolumeType --> GP3[gp3: General Purpose SSD]
-    VolumeType --> GP2[gp2: Previous Generation General Purpose SSD]
-    VolumeType --> IO[io1/io2: Provisioned IOPS SSD]
-    VolumeType --> ST1[st1: Throughput Optimized HDD]
-    VolumeType --> SC1[sc1: Cold HDD]
-
-    StorageClass --> Standard[S3 Standard]
-    StorageClass --> IntelligentTiering[S3 Intelligent-Tiering]
-    StorageClass --> StandardIA[S3 Standard-IA]
-    StorageClass --> OneZoneIA[S3 One Zone-IA]
-    StorageClass --> Glacier[S3 Glacier]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class GP3,GP2,IO,ST1,SC1,Standard,IntelligentTiering,StandardIA,OneZoneIA,Glacier awsService;
-    class StorageCost,EBSOptimize,EFSOptimize,S3Optimize,VolumeType,GP3Migration,VolumeSize,LifecycleManagement,ThroughputMode,EFSLifecycle,AccessPatterns,StorageClass,LifecyclePolicy,RequestOptimize default;
-```
+![Tree diagram showing three storage cost optimization areas for EKS: EBS volume optimization, EFS cost optimization, and S3 cost optimization, each with their key tactics.](../.gitbook/assets/en-eks-07-eks-cost-optimization-3.png)
 
 ### EBS Volume Optimization
 
@@ -713,44 +572,7 @@ Optimize S3 request costs:
 
 Networking costs can be significant, especially with large data transfers. You can optimize networking costs using the following strategies.
 
-```mermaid
-flowchart TD
-    NetworkCost[Networking Cost Optimization] --> DataTransfer[Data Transfer Optimization]
-    NetworkCost --> LoadBalancer[Load Balancer Optimization]
-    NetworkCost --> NATGateway[NAT Gateway Optimization]
-
-    DataTransfer --> RegionalComm[Utilize Intra-region Communication]
-    DataTransfer --> AZRouting[Availability Zone Aware Routing]
-    DataTransfer --> Compression[Use Compression]
-
-    LoadBalancer --> LBType[Select Appropriate Load Balancer Type]
-    LoadBalancer --> LBSharing[Load Balancer Sharing]
-    LoadBalancer --> IdleLB[Remove Idle Load Balancers]
-
-    NATGateway --> NATSharing[NAT Gateway Sharing]
-    NATGateway --> VPCEndpoints[Use VPC Endpoints]
-    NATGateway --> OutboundTraffic[Outbound Traffic Optimization]
-
-    LBType --> NLB[Network Load Balancer]
-    LBType --> ALB[Application Load Balancer]
-    LBType --> CLB[Classic Load Balancer]
-
-    VPCEndpoints --> S3Endpoint[S3 VPC Endpoint]
-    VPCEndpoints --> DynamoDBEndpoint[DynamoDB VPC Endpoint]
-    VPCEndpoints --> ECREndpoint[ECR VPC Endpoint]
-    VPCEndpoints --> CloudWatchEndpoint[CloudWatch Logs VPC Endpoint]
-    VPCEndpoints --> STSEndpoint[STS VPC Endpoint]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class NLB,ALB,CLB,S3Endpoint,DynamoDBEndpoint,ECREndpoint,CloudWatchEndpoint,STSEndpoint awsService;
-    class AZRouting k8sComponent;
-    class NetworkCost,DataTransfer,LoadBalancer,NATGateway,RegionalComm,Compression,LBType,LBSharing,IdleLB,NATSharing,VPCEndpoints,OutboundTraffic default;
-```
+![Tree diagram showing three networking cost optimization areas for EKS: data transfer optimization, load balancer optimization, and NAT gateway optimization, each with their key tactics.](../.gitbook/assets/en-eks-07-eks-cost-optimization-4.png)
 
 ### Data Transfer Optimization
 
@@ -906,41 +728,7 @@ Optimize outbound traffic passing through NAT gateway:
 
 Effective resource management and governance is important for controlling EKS cluster costs. You can effectively manage resources using the following strategies.
 
-```mermaid
-flowchart TD
-    ResourceGov[Resource Management and Governance] --> ResourceReqLim[Resource Requests and Limits Optimization]
-    ResourceGov --> NamespaceQuota[Namespaces and Resource Quotas]
-    ResourceGov --> CostAllocation[Cost Allocation and Tagging]
-
-    ResourceReqLim --> RequestSetting[Set Appropriate Resource Requests]
-    ResourceReqLim --> LimitSetting[Set Resource Limits]
-    ResourceReqLim --> QoSClasses[Understanding QoS Classes]
-
-    NamespaceQuota --> NamespaceSeparation[Namespace-based Separation]
-    NamespaceQuota --> ResourceQuotas[Set Resource Quotas]
-    NamespaceQuota --> LimitRanges[Set LimitRange]
-
-    CostAllocation --> ResourceTagging[Resource Tagging]
-    CostAllocation --> K8sLabels[Kubernetes Labels and Annotations]
-    CostAllocation --> Kubecost[Using Kubecost]
-
-    QoSClasses --> Guaranteed["Guaranteed
-                Request = Limit"]
-    QoSClasses --> Burstable["Burstable
-                Request < Limit"]
-    QoSClasses --> BestEffort["BestEffort
-                No Request and Limit"]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ResourceTagging awsService;
-    class NamespaceSeparation,ResourceQuotas,LimitRanges,K8sLabels,Guaranteed,Burstable,BestEffort,Kubecost k8sComponent;
-    class ResourceGov,ResourceReqLim,NamespaceQuota,CostAllocation,RequestSetting,LimitSetting,QoSClasses default;
-```
+![Tree diagram showing three resource management and governance areas for EKS: resource requests and limits optimization, namespaces and resource quotas, and cost allocation and tagging.](../.gitbook/assets/en-eks-07-eks-cost-optimization-5.png)
 
 ### Resource Requests and Limits Optimization
 
@@ -1113,38 +901,7 @@ Kubecost provides the following features:
 
 To effectively optimize costs, you need to continuously monitor and analyze costs. You can monitor and analyze EKS cluster costs using the following tools and strategies.
 
-```mermaid
-flowchart TD
-    CostMonitoring[Cost Monitoring and Analysis] --> CostExplorer[AWS Cost Explorer]
-    CostMonitoring --> KubecostTool[Kubecost]
-    CostMonitoring --> ContainerInsights[CloudWatch Container Insights]
-    CostMonitoring --> CustomDashboard[Custom Cost Dashboard]
-
-    CostExplorer --> CostAnalysis[Cost Analysis]
-    CostExplorer --> AnomalyDetection[Cost Anomaly Detection]
-    CostExplorer --> Budgets[Cost Budget Setting]
-
-    KubecostTool --> KubecostDashboard[Kubecost Dashboard]
-    KubecostTool --> KubecostAlerts[Kubecost Alerts]
-
-    ContainerInsights --> ResourceUsage[Resource Usage Monitoring]
-    ContainerInsights --> CostInsights[Cost Optimization Insights]
-
-    CustomDashboard --> GrafanaDashboard[Grafana Dashboard]
-    CustomDashboard --> OptimizationScore[Cost Optimization Score]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CostExplorer,AnomalyDetection,Budgets,ContainerInsights,ResourceUsage,CostInsights awsService;
-    class KubecostTool,KubecostDashboard,KubecostAlerts k8sComponent;
-    class GrafanaDashboard grafana;
-    class CostMonitoring,CostAnalysis,CustomDashboard,OptimizationScore default;
-```
+![Tree diagram showing four cost monitoring and analysis tools for EKS: AWS Cost Explorer, Kubecost, CloudWatch Container Insights, and custom cost dashboards, each with their key capabilities.](../.gitbook/assets/en-eks-07-eks-cost-optimization-6.png)
 
 ### AWS Cost Explorer
 
@@ -1343,49 +1100,7 @@ Calculate cost optimization scores to track cluster cost efficiency:
 
 Let's look at best practices for optimizing EKS cluster costs.
 
-```mermaid
-flowchart TD
-    BestPractices[Cost Optimization Best Practices] --> GeneralPractices[General Best Practices]
-    BestPractices --> WorkloadSpecific[Workload-specific Optimization]
-    BestPractices --> FinancialServices[Cost Optimization for Financial Services]
-
-    GeneralPractices --> ContinuousOpt[Continuous Cost Optimization]
-    GeneralPractices --> CostCulture[Building Cost-aware Culture]
-    GeneralPractices --> Automation[Utilizing Automation]
-
-    WorkloadSpecific --> DevTest[Development and Test Environments]
-    WorkloadSpecific --> BatchWorkloads[Batch Workloads]
-    WorkloadSpecific --> WebApps[Web Applications]
-    WorkloadSpecific --> DBWorkloads[Database Workloads]
-
-    FinancialServices --> ComplianceCost[Regulatory Compliance Cost Management]
-    FinancialServices --> HABalance[High Availability and Cost Balance]
-    FinancialServices --> SecurityBalance[Security Requirements and Cost Balance]
-
-    ContinuousOpt --> Measure[Measure]
-    ContinuousOpt --> Analyze[Analyze]
-    ContinuousOpt --> Optimize[Optimize]
-    ContinuousOpt --> Monitor[Monitor]
-    ContinuousOpt --> Iterate[Iterate]
-
-    DevTest --> AutoShutdown[Auto shutdown environments when not in use]
-    DevTest --> DevSpot[Use spot instances]
-    DevTest --> ResourceLimits[Set resource limits]
-
-    BatchWorkloads --> BatchSpot[Use spot instances]
-    BatchWorkloads --> OffPeak[Schedule runs during off-peak hours]
-    BatchWorkloads --> ResourceRelease[Release resources after job completion]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class DevSpot,BatchSpot awsService;
-    class ResourceLimits,ResourceRelease k8sComponent;
-    class BestPractices,GeneralPractices,WorkloadSpecific,FinancialServices,ContinuousOpt,CostCulture,Automation,DevTest,BatchWorkloads,WebApps,DBWorkloads,ComplianceCost,HABalance,SecurityBalance,Measure,Analyze,Optimize,Monitor,Iterate,AutoShutdown,OffPeak default;
-```
+![Tree diagram showing three categories of EKS cost optimization best practices: general best practices, workload-specific optimization, and financial services cost optimization.](../.gitbook/assets/en-eks-07-eks-cost-optimization-7.png)
 
 ### General Best Practices
 

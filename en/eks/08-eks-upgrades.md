@@ -17,46 +17,7 @@ Keeping your Amazon EKS cluster up to date is important for security, stability,
 
 ## EKS Upgrade Overview
 
-```mermaid
-flowchart TD
-    UpgradeOverview[EKS Upgrade Overview] --> VersionManagement[EKS Version Management]
-    UpgradeOverview --> UpgradeComponents[Upgrade Components]
-    UpgradeOverview --> UpgradePath[Upgrade Path]
-    UpgradeOverview --> UpgradeOrder[Upgrade Order]
-
-    VersionManagement --> Support["Version Support
-                Minimum 4 versions supported simultaneously"]
-    VersionManagement --> SupportPeriod["Support Period
-                Approximately 14 months"]
-    VersionManagement --> Deprecation["Version Deprecation
-                Minimum 60 days notice"]
-
-    UpgradeComponents --> ControlPlane[EKS Control Plane]
-    UpgradeComponents --> NodeGroups[Node Groups]
-    UpgradeComponents --> Addons[Add-ons]
-    UpgradeComponents --> SelfManaged[Self-managed Components]
-
-    UpgradePath --> CorrectPath["Correct Path
-                1.24 → 1.25 → 1.26 → 1.27"]
-    UpgradePath --> InvalidPath["Not Supported
-                1.24 → 1.26"]
-
-    UpgradeOrder --> Step1[1. Upgrade Planning and Preparation]
-    UpgradeOrder --> Step2[2. EKS Control Plane Upgrade]
-    UpgradeOrder --> Step3[3. Add-on Upgrade]
-    UpgradeOrder --> Step4[4. Node Group Upgrade]
-    UpgradeOrder --> Step5[5. Upgrade Validation]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ControlPlane,NodeGroups,Addons awsService;
-    class SelfManaged k8sComponent;
-    class UpgradeOverview,VersionManagement,UpgradeComponents,UpgradePath,UpgradeOrder,Support,SupportPeriod,Deprecation,CorrectPath,InvalidPath,Step1,Step2,Step3,Step4,Step5 default;
-```
+![Tree diagram showing the four pillars of an EKS upgrade: version management policy, the components that get upgraded, the required version-by-version upgrade path, and the recommended upgrade order.](../.gitbook/assets/en-eks-08-eks-upgrades-0.png)
 
 ### EKS Version Management
 
@@ -99,42 +60,7 @@ The general upgrade order is as follows:
 
 ## Upgrade Planning and Preparation
 
-```mermaid
-flowchart TD
-    UpgradePlanning[Upgrade Planning and Preparation] --> Assessment[Upgrade Assessment]
-    UpgradePlanning --> Preparation[Pre-upgrade Preparation]
-
-    Assessment --> Compatibility[Version Compatibility Check]
-    Assessment --> ResourceReq[Resource Requirements Assessment]
-    Assessment --> Schedule[Upgrade Schedule Planning]
-
-    Compatibility --> DeprecatedAPI[Check Deprecated APIs]
-    Compatibility --> FeatureChanges[Review Feature Changes]
-    Compatibility --> AddonCompat[Check Add-on Compatibility]
-
-    ResourceReq --> ClusterCapacity[Check Cluster Capacity]
-    ResourceReq --> Downtime[Downtime Tolerance]
-    ResourceReq --> RollbackPlan[Rollback Plan]
-
-    Schedule --> MaintenanceWindow[Set Maintenance Window]
-    Schedule --> PhaseApproach[Phased Approach]
-    Schedule --> RollbackWindow[Plan Rollback Window]
-
-    Preparation --> ClusterState[Check Cluster State]
-    Preparation --> Backup[Create Backup]
-    Preparation --> TestUpgrade[Test Upgrade]
-    Preparation --> Documentation[Create Upgrade Documentation]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ClusterCapacity,MaintenanceWindow awsService;
-    class DeprecatedAPI,AddonCompat,ClusterState k8sComponent;
-    class UpgradePlanning,Assessment,Preparation,Compatibility,ResourceReq,Schedule,FeatureChanges,Downtime,RollbackPlan,PhaseApproach,RollbackWindow,Backup,TestUpgrade,Documentation default;
-```
+![Tree diagram showing upgrade planning split into an assessment phase (compatibility, resource, and schedule checks) and a pre-upgrade preparation phase (cluster state, backup, test, documentation).](../.gitbook/assets/en-eks-08-eks-upgrades-1.png)
 
 ### Upgrade Assessment
 
@@ -225,42 +151,7 @@ Document the upgrade process:
 
 ## EKS Control Plane Upgrade
 
-```mermaid
-flowchart TD
-    ControlPlaneUpgrade[EKS Control Plane Upgrade] --> Preparation[Control Plane Upgrade Preparation]
-    ControlPlaneUpgrade --> Execution[Control Plane Upgrade Execution]
-    ControlPlaneUpgrade --> Monitoring[Control Plane Upgrade Monitoring]
-    ControlPlaneUpgrade --> Troubleshooting[Control Plane Upgrade Troubleshooting]
-
-    Preparation --> CheckVersion[Check Current Version]
-    Preparation --> AvailableVersions[Check Available Versions]
-    Preparation --> UpgradePlan[Create Upgrade Plan]
-
-    Execution --> Console[Using AWS Management Console]
-    Execution --> CLI[Using AWS CLI]
-    Execution --> Eksctl[Using eksctl]
-
-    Monitoring --> CheckStatus[Check Upgrade Status]
-    Monitoring --> ClusterState[Monitor Cluster State]
-    Monitoring --> CloudWatchMetrics[Monitor CloudWatch Metrics]
-
-    Troubleshooting --> CommonIssues[Common Issues]
-    Troubleshooting --> TroubleshootingSteps[Troubleshooting Steps]
-
-    CommonIssues --> UpgradeFailure[Upgrade Failure]
-    CommonIssues --> APIAvailability[API Server Availability Issues]
-    CommonIssues --> CompatibilityIssues[Compatibility Issues]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class Console,CLI,CloudWatchMetrics awsService;
-    class Eksctl,ClusterState,APIAvailability k8sComponent;
-    class ControlPlaneUpgrade,Preparation,Execution,Monitoring,Troubleshooting,CheckVersion,AvailableVersions,UpgradePlan,CheckStatus,CommonIssues,TroubleshootingSteps,UpgradeFailure,CompatibilityIssues default;
-```
+![Tree diagram showing the four stages of a control plane upgrade: preparation, execution via console/CLI/eksctl, monitoring, and troubleshooting common issues.](../.gitbook/assets/en-eks-08-eks-upgrades-2.png)
 
 ### Control Plane Upgrade Preparation
 
@@ -377,50 +268,7 @@ Common issues that may occur during control plane upgrade:
 
 After upgrading the control plane, you need to upgrade the node groups. There are several strategies for node group upgrades, each with advantages and disadvantages.
 
-```mermaid
-flowchart TD
-    NodeGroupUpgrade[Node Group Upgrade] --> UpgradeStrategies[Node Group Upgrade Strategies]
-    NodeGroupUpgrade --> ManagedNG[Managed Node Group Upgrade]
-    NodeGroupUpgrade --> SelfManagedNG[Self-managed Node Group Upgrade]
-    NodeGroupUpgrade --> FargateUpgrade[Fargate Node Upgrade]
-    NodeGroupUpgrade --> MonitoringValidation[Node Upgrade Monitoring and Validation]
-
-    UpgradeStrategies --> ManagedStrategy[Managed Node Groups]
-    UpgradeStrategies --> SelfManagedStrategy[Self-managed Node Groups]
-    UpgradeStrategies --> FargateStrategy[Fargate]
-
-    ManagedStrategy --> RollingUpgrade[Rolling Upgrade]
-    ManagedStrategy --> AutoDraining[Auto Draining]
-    ManagedStrategy --> VersionTracking[Version Tracking]
-
-    SelfManagedStrategy --> BlueGreen[Blue/Green Deployment]
-    SelfManagedStrategy --> RollingManual[Rolling Upgrade]
-    SelfManagedStrategy --> InPlace[In-place Upgrade]
-
-    ManagedNG --> CheckManagedVersion[Check Managed Node Group Version]
-    ManagedNG --> ConsoleManagedUpgrade[Using AWS Management Console]
-    ManagedNG --> CLIManagedUpgrade[Using AWS CLI]
-    ManagedNG --> EksctlManagedUpgrade[Using eksctl]
-    ManagedNG --> ManagedConfig[Managed Node Group Upgrade Configuration]
-
-    SelfManagedNG --> BlueGreenDeploy[Blue/Green Deployment]
-    SelfManagedNG --> RollingUpgradeSelf[Rolling Upgrade]
-    SelfManagedNG --> InPlaceUpgrade[In-place Upgrade]
-
-    MonitoringValidation --> CheckNodeVersion[Check Node Version]
-    MonitoringValidation --> CheckNodeStatus[Check Node Status]
-    MonitoringValidation --> CheckPodDeployment[Check Pod Deployment]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ManagedNG,ConsoleManagedUpgrade,CLIManagedUpgrade,FargateUpgrade,FargateStrategy awsService;
-    class EksctlManagedUpgrade,RollingUpgrade,AutoDraining,BlueGreen,RollingManual,InPlace,CheckNodeVersion,CheckNodeStatus,CheckPodDeployment k8sComponent;
-    class NodeGroupUpgrade,UpgradeStrategies,SelfManagedNG,ManagedStrategy,SelfManagedStrategy,VersionTracking,CheckManagedVersion,ManagedConfig,BlueGreenDeploy,RollingUpgradeSelf,InPlaceUpgrade,MonitoringValidation default;
-```
+![Tree diagram showing node group upgrade strategies for managed and self-managed node groups, Fargate's automatic upgrade model, and post-upgrade monitoring and validation steps.](../.gitbook/assets/en-eks-08-eks-upgrades-3.png)
 
 ### Node Group Upgrade Strategies
 
@@ -643,42 +491,7 @@ kubectl get pods --all-namespaces -o wide | grep -v Running
 
 EKS clusters include several add-ons that also need to be upgraded.
 
-```mermaid
-flowchart TD
-    AddonUpgrade[Add-on Upgrade] --> ManagedAddons[AWS Managed Add-ons]
-    AddonUpgrade --> SelfManagedAddons[Self-managed Add-ons]
-    AddonUpgrade --> KeyAddonGuides[Key Add-on Upgrade Guides]
-    AddonUpgrade --> AddonTroubleshooting[Add-on Upgrade Troubleshooting]
-
-    ManagedAddons --> ListAddons[Check Managed Add-on List]
-    ManagedAddons --> CheckAddonVersion[Check Managed Add-on Version]
-    ManagedAddons --> AvailableVersions[Check Available Add-on Versions]
-    ManagedAddons --> UpgradeAddons[Upgrade Managed Add-ons]
-
-    SelfManagedAddons --> HelmUpgrade[Upgrade Using Helm]
-    SelfManagedAddons --> KubectlUpgrade[Upgrade Using kubectl]
-
-    KeyAddonGuides --> CoreDNSUpgrade[CoreDNS Upgrade]
-    KeyAddonGuides --> KubeProxyUpgrade[kube-proxy Upgrade]
-    KeyAddonGuides --> VPCCNIUpgrade[VPC CNI Upgrade]
-
-    AddonTroubleshooting --> CommonAddonIssues[Common Issues]
-    AddonTroubleshooting --> TroubleshootingSteps[Troubleshooting Steps]
-
-    CommonAddonIssues --> ConfigConflicts[Configuration Conflicts]
-    CommonAddonIssues --> CompatibilityIssues[Compatibility Issues]
-    CommonAddonIssues --> ResourceConstraints[Resource Constraints]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ManagedAddons,UpgradeAddons awsService;
-    class CoreDNSUpgrade,KubeProxyUpgrade,VPCCNIUpgrade,HelmUpgrade,KubectlUpgrade k8sComponent;
-    class AddonUpgrade,SelfManagedAddons,KeyAddonGuides,AddonTroubleshooting,ListAddons,CheckAddonVersion,AvailableVersions,CommonAddonIssues,TroubleshootingSteps,ConfigConflicts,CompatibilityIssues,ResourceConstraints default;
-```
+![Tree diagram showing how AWS managed add-ons, self-managed add-ons, key add-on guides (CoreDNS, kube-proxy, VPC CNI), and add-on troubleshooting fit together in the upgrade process.](../.gitbook/assets/en-eks-08-eks-upgrades-4.png)
 
 ### AWS Managed Add-ons
 
@@ -835,54 +648,7 @@ kubectl get events -n kube-system --sort-by='.lastTimestamp'
 
 After the upgrade is complete, you need to validate that the cluster is operating normally and resolve any issues that may occur.
 
-```mermaid
-flowchart TD
-    ValidationTroubleshooting[Upgrade Validation and Troubleshooting] --> Validation[Upgrade Validation]
-    ValidationTroubleshooting --> Troubleshooting[Upgrade Troubleshooting]
-
-    Validation --> VersionCheck[Check Cluster Version]
-    Validation --> ClusterStateCheck[Check Cluster State]
-    Validation --> WorkloadValidation[Workload Validation]
-    Validation --> FunctionalTesting[Functional Testing]
-
-    ClusterStateCheck --> NodeStatus[Check Node Status]
-    ClusterStateCheck --> PodStatus[Check Pod Status]
-    ClusterStateCheck --> NamespaceStatus[Check Namespace Status]
-    ClusterStateCheck --> ServiceStatus[Check Service Status]
-
-    WorkloadValidation --> DeploymentStatus[Check Deployment Status]
-    WorkloadValidation --> StatefulSetStatus[Check StatefulSet Status]
-    WorkloadValidation --> DaemonSetStatus[Check DaemonSet Status]
-    WorkloadValidation --> EndpointStatus[Check Service Endpoints]
-
-    FunctionalTesting --> PodCreation[Pod Creation Test]
-    FunctionalTesting --> ServiceCreation[Service Creation Test]
-    FunctionalTesting --> ScalingTest[Scaling Test]
-
-    Troubleshooting --> CommonIssues[Common Upgrade Issues]
-    Troubleshooting --> TroubleshootingSteps[Troubleshooting Steps]
-    Troubleshooting --> RollbackProcedure[Rollback Procedure]
-
-    CommonIssues --> ControlPlaneIssues[Control Plane Upgrade Failure]
-    CommonIssues --> NodeIssues[Node Upgrade Issues]
-    CommonIssues --> AddonIssues[Add-on Upgrade Issues]
-    CommonIssues --> WorkloadIssues[Workload Issues]
-
-    TroubleshootingSteps --> CheckLogs[Check Logs]
-    TroubleshootingSteps --> CheckEvents[Check Events]
-    TroubleshootingSteps --> CheckResourceStatus[Check Resource Status]
-    TroubleshootingSteps --> CheckAPIVersion[Check API Version]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ControlPlaneIssues awsService;
-    class NodeStatus,PodStatus,NamespaceStatus,ServiceStatus,DeploymentStatus,StatefulSetStatus,DaemonSetStatus,EndpointStatus,PodCreation,ServiceCreation,ScalingTest,NodeIssues,AddonIssues,WorkloadIssues,CheckLogs,CheckEvents,CheckResourceStatus,CheckAPIVersion k8sComponent;
-    class ValidationTroubleshooting,Validation,Troubleshooting,VersionCheck,ClusterStateCheck,WorkloadValidation,FunctionalTesting,CommonIssues,TroubleshootingSteps,RollbackProcedure default;
-```
+![Tree diagram showing post-upgrade validation across cluster state, workload, and functional testing, alongside troubleshooting of common upgrade issues and the rollback procedure.](../.gitbook/assets/en-eks-08-eks-upgrades-5.png)
 
 ### Upgrade Validation
 
@@ -1071,40 +837,7 @@ aws eks update-addon \
 
 In large-scale environments, automating the upgrade process is important. You can automate EKS upgrades using the following tools and methods.
 
-```mermaid
-flowchart TD
-    UpgradeAutomation[Upgrade Automation] --> EksctlAutomation[Automation Using eksctl]
-    UpgradeAutomation --> CLIScriptAutomation[Automation Using AWS CLI and Scripts]
-    UpgradeAutomation --> GitOpsAutomation[Automation Using GitOps]
-    UpgradeAutomation --> BestPractices[Automation Best Practices]
-
-    EksctlAutomation --> ClusterUpgrade[Cluster Upgrade]
-    EksctlAutomation --> NodegroupUpgrade[Node Group Upgrade]
-
-    CLIScriptAutomation --> VariableSetup[Variable Setup]
-    CLIScriptAutomation --> ClusterUpgradeScript[Cluster Upgrade Script]
-    CLIScriptAutomation --> AddonUpgradeScript[Add-on Upgrade Script]
-    CLIScriptAutomation --> NodegroupUpgradeScript[Node Group Upgrade Script]
-
-    GitOpsAutomation --> GitConfig[Store Cluster Configuration in Git Repository]
-    GitOpsAutomation --> CICDPipeline[Configure CI/CD Pipeline]
-
-    BestPractices --> GradualApproach[Gradual Approach]
-    BestPractices --> RollbackPlan[Rollback Plan]
-    BestPractices --> ValidationSteps[Validation Steps]
-    BestPractices --> Notifications[Notifications]
-    BestPractices --> Documentation[Documentation]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CLIScriptAutomation,VariableSetup,ClusterUpgradeScript,AddonUpgradeScript,NodegroupUpgradeScript awsService;
-    class EksctlAutomation,ClusterUpgrade,NodegroupUpgrade,GitOpsAutomation,GitConfig,CICDPipeline k8sComponent;
-    class UpgradeAutomation,BestPractices,GradualApproach,RollbackPlan,ValidationSteps,Notifications,Documentation default;
-```
+![Tree diagram showing three automation approaches for EKS upgrades -- eksctl, AWS CLI scripts, and GitOps -- alongside the automation best practices that apply across all of them.](../.gitbook/assets/en-eks-08-eks-upgrades-6.png)
 
 ### Automation Using eksctl
 
@@ -1269,59 +1002,7 @@ Best practices for EKS upgrade automation:
 
 Let's look at best practices for EKS cluster upgrades.
 
-```mermaid
-flowchart TD
-    BestPractices[Upgrade Best Practices] --> GeneralPractices[General Best Practices]
-    BestPractices --> LargeClusterPractices[Best Practices for Large Clusters]
-    BestPractices --> FinancialServicesPractices[Best Practices for Financial Services]
-
-    GeneralPractices --> UpgradePlanning[Upgrade Planning]
-    GeneralPractices --> UpgradePreparation[Upgrade Preparation]
-    GeneralPractices --> UpgradeExecution[Upgrade Execution]
-    GeneralPractices --> PostUpgrade[Post-upgrade]
-
-    UpgradePlanning --> VersionSelection[Version Selection]
-    UpgradePlanning --> UpgradeSchedule[Upgrade Schedule]
-    UpgradePlanning --> PhaseApproach[Phased Approach]
-    UpgradePlanning --> RollbackPlanning[Rollback Planning]
-
-    UpgradePreparation --> Backup[Backup]
-    UpgradePreparation --> ResourceAllocation[Resource Allocation]
-    UpgradePreparation --> CompatibilityCheck[Compatibility Check]
-    UpgradePreparation --> DeprecatedAPIIdentification[Deprecated API Identification]
-
-    UpgradeExecution --> ControlPlaneFirst[Control Plane First]
-    UpgradeExecution --> AddonsNext[Add-ons Next]
-    UpgradeExecution --> NodesLast[Nodes Last]
-    UpgradeExecution --> GradualNodeUpgrade[Gradual Node Upgrade]
-
-    PostUpgrade --> Validation[Validation]
-    PostUpgrade --> Monitoring[Monitoring]
-    PostUpgrade --> Documentation[Documentation]
-    PostUpgrade --> Learning[Learning]
-
-    LargeClusterPractices --> CanaryDeployment[Canary Deployment]
-    LargeClusterPractices --> Automation[Automation]
-    LargeClusterPractices --> EnhancedMonitoring[Enhanced Monitoring]
-    LargeClusterPractices --> CommunicationPlan[Communication Plan]
-    LargeClusterPractices --> AutomatedRollback[Automated Rollback]
-
-    FinancialServicesPractices --> ComplianceCheck[Regulatory Compliance]
-    FinancialServicesPractices --> RiskAssessment[Risk Assessment]
-    FinancialServicesPractices --> ChangeManagement[Change Management]
-    FinancialServicesPractices --> EnhancedTesting[Enhanced Testing]
-    FinancialServicesPractices --> EnhancedDocumentation[Enhanced Documentation]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ResourceAllocation,EnhancedMonitoring awsService;
-    class ControlPlaneFirst,AddonsNext,NodesLast,GradualNodeUpgrade,CanaryDeployment,Automation,AutomatedRollback k8sComponent;
-    class BestPractices,GeneralPractices,LargeClusterPractices,FinancialServicesPractices,UpgradePlanning,UpgradePreparation,UpgradeExecution,PostUpgrade,VersionSelection,UpgradeSchedule,PhaseApproach,RollbackPlanning,Backup,CompatibilityCheck,DeprecatedAPIIdentification,Validation,Monitoring,Documentation,Learning,CommunicationPlan,ComplianceCheck,RiskAssessment,ChangeManagement,EnhancedTesting,EnhancedDocumentation default;
-```
+![Tree diagram showing general EKS upgrade best practices across planning, preparation, execution, and post-upgrade, plus additional practices for large clusters and for financial-services compliance.](../.gitbook/assets/en-eks-08-eks-upgrades-7.png)
 
 ### General Best Practices
 

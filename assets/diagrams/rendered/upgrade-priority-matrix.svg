@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 610" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="upgrade-priority-matrix-title upgrade-priority-matrix-desc">
+<title id="upgrade-priority-matrix-title">Upgrade Priority Matrix</title>
+<desc id="upgrade-priority-matrix-desc">Quadrant chart plotting five EKS fleet profiles by upgrade effort and extended-support cost risk, from a single simple cluster that can be monitored to a fifty-plus cluster enterprise fleet that carries the highest cost risk and belongs in the plan-and-schedule quadrant.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1D8102"/></marker>
+    <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#DD344C"/></marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="140" y1="300" x2="820" y2="300" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="480" y1="560" x2="480" y2="80" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<text x="140" y="316" fill="#232F3E" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">SIMPLE</text>
+<text x="820" y="316" fill="#232F3E" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.18em">COMPLEX</text>
+<text x="480" y="72" fill="#232F3E" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.18em">URGENT</text>
+<text x="480" y="576" fill="#232F3E" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.18em">STABLE</text>
+<text x="770" y="108" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.14em">PLAN &amp; SCHEDULE</text>
+<text x="190" y="108" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.14em">UPGRADE IMMEDIATELY</text>
+<text x="190" y="548" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.14em">MONITOR</text>
+<text x="770" y="548" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.14em">INVEST IN AUTOMATION</text>
+<circle cx="300" cy="426" r="4" fill="#545B64"/>
+<rect x="308" y="431" width="131" height="14" rx="2" fill="#ffffff" opacity="0.9"/>
+<text x="310" y="442" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="start">1 cluster, simple apps</text>
+<circle cx="420" cy="354" r="4" fill="#545B64"/>
+<rect x="428" y="359" width="159" height="14" rx="2" fill="#ffffff" opacity="0.9"/>
+<text x="430" y="370" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="start">5 clusters, mixed workloads</text>
+<circle cx="540" cy="282" r="4" fill="#545B64"/>
+<rect x="548" y="263" width="154" height="14" rx="2" fill="#ffffff" opacity="0.9"/>
+<text x="550" y="274" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="start">10 clusters, stateful apps</text>
+<circle cx="630" cy="228" r="4" fill="#545B64"/>
+<rect x="638" y="209" width="137" height="14" rx="2" fill="#ffffff" opacity="0.9"/>
+<text x="640" y="220" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="start">25 clusters, multi-team</text>
+<circle cx="720" cy="156" r="5" fill="#EC7211"/>
+<rect x="728" y="137" width="142" height="14" rx="2" fill="#ffffff" opacity="0.9"/>
+<text x="730" y="148" fill="#EC7211" font-size="10" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="start">50+ clusters, enterprise</text>
+<circle cx="30" cy="596" r="4" fill="#545B64"/>
+<text x="42" y="600" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Fleet profile</text>
+<circle cx="180" cy="596" r="5" fill="#EC7211"/>
+<text x="194" y="600" fill="#EC7211" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Highest cost-risk exposure</text>
+</svg>

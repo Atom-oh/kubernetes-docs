@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-05-eks-security-0-title ko-eks-05-eks-security-0-desc">
+<title id="ko-eks-05-eks-security-0-title">EKS 보안 아키텍처</title>
+<desc id="ko-eks-05-eks-security-0-desc">AWS가 책임지는 컨트롤 플레인·etcd·KMS 영역과 고객이 책임지는 워커 노드·파드·보안 그룹·네트워크 정책 영역이 IAM 인증과 암호화된 통신으로 연결되는 EKS 공동 책임 모델을 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="40" width="880" height="150" rx="8" fill="rgba(35,47,62,0.025)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="48" y="44" width="64" height="14" rx="2" fill="#ffffff"/>
+<text x="52" y="54" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.10em">AWS 책임</text>
+<rect x="40" y="220" width="880" height="260" rx="8" fill="rgba(35,47,62,0.025)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="48" y="224" width="56" height="14" rx="2" fill="#ffffff"/>
+<text x="52" y="234" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.10em">고객 책임</text>
+<path d="M 580,108 H 652 Q 660,108 660,100 V 94.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 580,132 H 652 Q 660,132 660,140 V 154.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="602.0" y="88" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="620.0" y="97" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">TLS</text>
+<rect x="606.0" y="140" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="620.0" y="149" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">관리</text>
+<path d="M 280,120.0 H 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+<rect x="304.0" y="100.0" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="330.0" y="109.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">인증/인가</text>
+<path d="M 480.0,148 H 198.0 Q 190.0,148 190.0,156 V 268" fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+<rect x="490.0" y="202.0" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="520.0" y="211.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">암호화 통신</text>
+<path d="M 280,292.0 H 360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="306.0" y="272.0" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="320.0" y="281.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">실행</text>
+<path d="M 190.0,316 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="200.0" y="342.0" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="214.0" y="351.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">적용</text>
+<path d="M 410.0,316 H 408.0 Q 400.0,316 400.0,324 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="372.0" y="342.0" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="386.0" y="351.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">사용</text>
+<path d="M 460.0,316 H 612.0 Q 620.0,316 620.0,324 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="606.0" y="360" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="620.0" y="369" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">적용</text>
+<path d="M 510.0,316 H 832.0 Q 840.0,316 840.0,324 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="826.0" y="360" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="840.0" y="369" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">사용</text>
+<rect x="380" y="92" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="380" y="92" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="124.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EKS 컨트롤 플레인</text>
+<rect x="660" y="72" width="140" height="44" rx="6" fill="#ffffff"/>
+<rect x="660" y="72" width="140" height="44" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="730.0" y="98.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">etcd</text>
+<rect x="660" y="132" width="140" height="44" rx="6" fill="#ffffff"/>
+<rect x="660" y="132" width="140" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="730.0" y="158.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS KMS</text>
+<rect x="100" y="96" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="100" y="96" width="180" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="190.0" y="124.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS IAM</text>
+<rect x="100" y="268" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="100" y="268" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="190.0" y="296.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">워커 노드</text>
+<rect x="360" y="268" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="360" y="268" width="200" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="460.0" y="296.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">파드 / 컨테이너</text>
+<rect x="100" y="380" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="100" y="380" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="180.0" y="406.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">보안 그룹</text>
+<rect x="320" y="380" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="320" y="380" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="400.0" y="406.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">서비스 계정</text>
+<rect x="540" y="380" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="540" y="380" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="620.0" y="406.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">네트워크 정책</text>
+<rect x="760" y="380" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="760" y="380" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840.0" y="406.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kubernetes Secrets</text>
+<line x1="30" y1="544" x2="930" y2="544" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<line x1="30" y1="552" x2="50" y2="552" stroke="#545B64" stroke-width="1.2"/>
+<text x="56" y="555" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">관리/통신</text>
+<line x1="126" y1="552" x2="146" y2="552" stroke="#EC7211" stroke-width="1.2"/>
+<text x="152" y="555" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">핵심 컴포넌트</text>
+
+</svg>

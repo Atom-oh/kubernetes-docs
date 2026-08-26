@@ -8,39 +8,7 @@
 
 Kubernetes에서는 다음과 같은 서비스 유형을 제공합니다:
 
-```mermaid
-flowchart TD
-    subgraph Service_Types ["Kubernetes 서비스 유형"]
-        ClusterIP[ClusterIP<br>클러스터 내부에서만 액세스 가능]
-        NodePort[NodePort<br>모든 노드의 특정 포트를 통해 액세스 가능]
-        LoadBalancer[LoadBalancer<br>외부 로드 밸런서를 통해 액세스 가능]
-        ExternalName[ExternalName<br>외부 서비스에 대한 CNAME 레코드 제공]
-    end
-    
-    subgraph Access_Methods ["액세스 방법"]
-        Internal[클러스터 내부]
-        Node_Access[노드 IP:포트]
-        External_LB[외부 로드 밸런서]
-        DNS[DNS CNAME]
-    end
-    
-    ClusterIP --> Internal
-    NodePort --> Node_Access
-    LoadBalancer --> External_LB
-    ExternalName --> DNS
-    
-    %% 클래스 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class ClusterIP,NodePort,LoadBalancer,ExternalName k8sComponent;
-    class External_LB awsService;
-    class Internal,Node_Access,DNS default;
-```
+![ClusterIP, NodePort, LoadBalancer, ExternalName 네 가지 Kubernetes 서비스 유형이 각각 클러스터 내부, 노드 IP:포트, 외부 로드 밸런서, DNS CNAME이라는 접근 방법에 1대1로 대응됨을 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-0.png)
 
 1. **ClusterIP**: 클러스터 내부에서만 액세스 가능한 서비스
 2. **NodePort**: 모든 노드의 특정 포트를 통해 액세스 가능한 서비스
@@ -120,58 +88,7 @@ spec:
 
 EKS는 Kubernetes 서비스를 AWS 로드 밸런서와 통합하여 외부에서 애플리케이션에 액세스할 수 있게 합니다.
 
-```mermaid
-flowchart TD
-    subgraph Internet ["인터넷"]
-        Users((사용자))
-    end
-    
-    subgraph AWS_Cloud ["AWS 클라우드"]
-        subgraph Load_Balancers ["AWS 로드 밸런서"]
-            CLB[Classic Load Balancer]
-            NLB[Network Load Balancer]
-            ALB[Application Load Balancer]
-        end
-        
-        subgraph EKS_Cluster ["EKS 클러스터"]
-            subgraph Services ["Kubernetes 서비스"]
-                Service1[LoadBalancer 서비스]
-                Service2[NodePort 서비스]
-                Ingress[Ingress 리소스]
-            end
-            
-            subgraph Pods ["포드"]
-                Pod1[포드 1]
-                Pod2[포드 2]
-                Pod3[포드 3]
-            end
-        end
-    end
-    
-    Users --> CLB
-    Users --> NLB
-    Users --> ALB
-    CLB --> Service1
-    NLB --> Service1
-    ALB --> Ingress
-    Ingress --> Service2
-    Service1 --> Pod1
-    Service1 --> Pod2
-    Service2 --> Pod3
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class CLB,NLB,ALB awsService;
-    class Service1,Service2,Ingress k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
-    class Users default;
-```
+![인터넷 사용자가 CLB, NLB, ALB 세 종류의 AWS 로드 밸런서를 통해 EKS 클러스터에 접근하며, CLB와 NLB는 LoadBalancer 서비스로, ALB는 Ingress를 거쳐 NodePort 서비스로 연결되고 최종적으로 포드에 도달하는 흐름을 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-1.png)
 
 ### Classic Load Balancer(CLB)
 
@@ -233,48 +150,7 @@ metadata:
 
 ALB를 사용하려면 AWS Load Balancer Controller를 설치하고 Ingress 리소스를 사용해야 합니다:
 
-```mermaid
-flowchart TD
-    subgraph AWS_Cloud ["AWS 클라우드"]
-        subgraph VPC ["VPC"]
-            subgraph Public_Subnets ["퍼블릭 서브넷"]
-                ALB[Application Load Balancer]
-            end
-            
-            subgraph Private_Subnets ["프라이빗 서브넷"]
-                subgraph EKS_Cluster ["EKS 클러스터"]
-                    ALBIC[AWS Load Balancer Controller]
-                    Ingress[Ingress 리소스]
-                    Service1[서비스 1]
-                    Service2[서비스 2]
-                    Pod1[포드 1]
-                    Pod2[포드 2]
-                end
-            end
-        end
-    end
-    
-    Internet((인터넷)) --> ALB
-    ALB --> Ingress
-    ALBIC --> ALB
-    Ingress --> Service1
-    Ingress --> Service2
-    Service1 --> Pod1
-    Service2 --> Pod2
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class ALB,Public_Subnets,Private_Subnets awsService;
-    class ALBIC,Ingress,Service1,Service2 k8sComponent;
-    class Pod1,Pod2 userApp;
-    class Internet default;
-```
+![인터넷 트래픽이 퍼블릭 서브넷의 Application Load Balancer를 거쳐 프라이빗 서브넷 EKS 클러스터의 Ingress 리소스로 들어가고, AWS Load Balancer Controller가 ALB 구성을 갱신하며, Ingress가 두 서비스를 통해 각각의 포드로 라우팅되는 경로를 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-2.png)
 
 1. AWS Load Balancer Controller 설치:
 
@@ -354,26 +230,7 @@ metadata:
 
 ### 서비스 및 로드 밸런서 모범 사례
 
-```mermaid
-flowchart TD
-    A[서비스 및 로드 밸런서 모범 사례] --> B[내부 서비스에는 ClusterIP 사용]
-    A --> C[외부 서비스에는 LoadBalancer 또는 Ingress 사용]
-    A --> D[경로 기반 라우팅, SSL 종료, 인증 등이 필요한 경우 ALB 사용]
-    A --> E[TCP/UDP 트래픽, 고성능, 정적 IP가 필요한 경우 NLB 사용]
-    A --> F[클러스터 내부에서만 액세스하는 서비스에는 내부 로드 밸런서 사용]
-    A --> G[고가용성을 위해 교차 영역 로드 밸런싱 활성화]
-    A --> H[적절한 대상 유형 선택]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class A,B,C,D,E,F,G,H default;
-```
+![서비스 및 로드 밸런서 선택의 핵심 원칙 하나에서 ClusterIP 사용, LoadBalancer/Ingress 사용, ALB 사용 조건, NLB 사용 조건, 내부 로드 밸런서 사용, 교차 영역 로드 밸런싱, 대상 유형 선택이라는 일곱 가지 실천 항목이 뻗어나가는 구조를 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-3.png)
 
 1. **내부 서비스에는 ClusterIP 사용**: 클러스터 내부에서만 액세스하는 서비스에는 ClusterIP 유형을 사용합니다.
 2. **외부 서비스에는 LoadBalancer 또는 Ingress 사용**: 외부에서 액세스해야 하는 서비스에는 LoadBalancer 유형 또는 Ingress 리소스를 사용합니다.
@@ -387,52 +244,7 @@ flowchart TD
 
 네트워크 정책은 포드 간 통신을 제어하는 데 사용됩니다. EKS에서 네트워크 정책을 사용하려면 네트워크 정책을 지원하는 CNI 플러그인(예: Calico, Cilium)을 설치해야 합니다.
 
-```mermaid
-flowchart TD
-    subgraph EKS_Cluster ["EKS 클러스터"]
-        subgraph Network_Policies ["네트워크 정책"]
-            NP1[네임스페이스 격리 정책]
-            NP2[특정 포드 간 통신 허용 정책]
-            NP3[외부 트래픽 제한 정책]
-            NP4[이그레스 트래픽 제한 정책]
-        end
-        
-        subgraph Namespaces ["네임스페이스"]
-            subgraph NS1 ["네임스페이스 1"]
-                Pod1[프론트엔드 포드]
-                Pod2[백엔드 포드]
-            end
-            
-            subgraph NS2 ["네임스페이스 2"]
-                Pod3[데이터베이스 포드]
-            end
-        end
-        
-        NP1 --> NS1
-        NP1 --> NS2
-        NP2 --> Pod1
-        NP2 --> Pod2
-        NP3 --> Pod1
-        NP4 --> Pod2
-        Pod1 --> Pod2
-        Pod2 --> Pod3
-    end
-    
-    External((외부 서비스)) --> Pod1
-    Pod2 --> External
-    
-    %% 클래스 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class NP1,NP2,NP3,NP4,NS1,NS2 k8sComponent;
-    class Pod1,Pod2 userApp;
-    class Pod3 dataStore;
-    class External default;
-```
+![네임스페이스 격리, 특정 포드 간 통신 허용, 외부 트래픽 제한, 이그레스 제한이라는 네 가지 네트워크 정책이 프론트엔드·백엔드·데이터베이스 포드 사이의 통신과 외부 서비스로의 접근을 각각 어떻게 제어하는지 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-4.png)
 
 ### Calico 설치
 
@@ -560,24 +372,7 @@ spec:
 
 ### 네트워크 정책 모범 사례
 
-```mermaid
-flowchart TD
-    A[네트워크 정책 모범 사례] --> B[기본 거부 정책 적용]
-    A --> C[네임스페이스 격리]
-    A --> D[최소 권한 원칙 적용]
-    A --> E[이그레스 트래픽 제한]
-    A --> F[정책 테스트]
-    
-    %% 클래스 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class A,B,C,D,E,F default;
-```
+![네트워크 정책 모범 사례라는 원칙 하나에서 기본 거부 정책 적용, 네임스페이스 격리, 최소 권한 원칙, 이그레스 트래픽 제한, 정책 테스트라는 다섯 가지 실천 항목이 뻗어나가는 구조를 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-5.png)
 
 1. **기본 거부 정책 적용**: 모든 트래픽을 기본적으로 거부하고 필요한 트래픽만 명시적으로 허용합니다.
 2. **네임스페이스 격리**: 네임스페이스 간 통신을 제한하여 보안을 강화합니다.
@@ -596,20 +391,7 @@ flowchart TD
 
 Gateway API는 Kubernetes의 차세대 서비스 네트워킹 API로, 기존 Ingress 리소스의 한계를 극복하고 더 풍부한 라우팅 기능을 제공합니다. AWS Load Balancer Controller는 Gateway API를 지원하여 L4(NLB) 및 L7(ALB) 라우팅을 Gateway 리소스를 통해 구성할 수 있습니다.
 
-```mermaid
-flowchart TD
-    GC[GatewayClass] --> GW[Gateway]
-    GW --> HR[HTTPRoute - L7/ALB]
-    GW --> TR[TCPRoute - L4/NLB]
-    HR --> SVC1[Service A]
-    HR --> SVC2[Service B]
-    TR --> SVC3[Service C]
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    class GC,GW,HR,TR k8sComponent;
-    class SVC1,SVC2,SVC3 awsService;
-```
+![GatewayClass가 Gateway를 정의하고, Gateway가 L7 트래픽을 처리하는 HTTPRoute와 L4 트래픽을 처리하는 TCPRoute로 나뉘어 각각 ALB와 NLB를 통해 세 서비스로 라우팅되는 계층 구조를 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-6.png)
 
 ### 사전 요구 사항
 

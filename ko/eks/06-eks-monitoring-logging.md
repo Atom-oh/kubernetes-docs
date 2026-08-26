@@ -32,51 +32,7 @@ Amazon EKS 클러스터에서 모니터링과 로깅은 다음과 같은 이유�
 
 EKS 클러스터의 포괄적인 모니터링 및 로깅 아키텍처는 다음과 같은 구성 요소로 이루어집니다:
 
-```mermaid
-flowchart TD
-    subgraph EKS["Amazon EKS 클러스터"]
-        CP[컨트롤 플레인 로그] --> CWL
-        subgraph Nodes["워커 노드"]
-            Pods[파드/컨테이너] --> Fluent
-            NodeExporter[노드 익스포터] --> Prometheus
-            kubelet --> Prometheus
-        end
-    end
-    
-    subgraph AWS["AWS 서비스"]
-        CWL[CloudWatch Logs]
-        CWM[CloudWatch Metrics]
-        XRay[X-Ray]
-        ES[Amazon OpenSearch]
-    end
-    
-    subgraph Monitoring["모니터링 스택"]
-        Prometheus[Prometheus] --> Alertmanager
-        Alertmanager[Alertmanager] --> Notification[알림 채널]
-        Prometheus --> Grafana
-    end
-    
-    subgraph Logging["로깅 스택"]
-        Fluent[Fluent Bit/Fluentd] --> CWL
-        Fluent --> ES
-        ES --> Kibana[OpenSearch Dashboards]
-    end
-    
-    CWL --> ES
-    Prometheus --> CWM
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class CWL,CWM,XRay,ES awsService;
-    class CP,Pods,NodeExporter,kubelet,Prometheus,Alertmanager k8sComponent;
-    class Fluent,Grafana,Kibana,Notification userApp;
-```
+![EKS 클러스터의 컨트롤 플레인 로그와 워커 노드가 Prometheus 기반 모니터링 스택과 Fluent Bit 기반 로깅 스택을 거쳐 CloudWatch·OpenSearch로 전달되고, 다시 Grafana·OpenSearch Dashboards·알림 채널로 시각화·통보되는 흐름을 보여준다.](../.gitbook/assets/ko-eks-06-eks-monitoring-logging-0.png)
 
 ### 모니터링 및 로깅 전략
 
@@ -187,30 +143,7 @@ EKS Capabilities는 Argo CD, AWS Controllers for Kubernetes(ACK), kro를 EKS 컨
 
 EKS에서 일반적인 컨테이너 로깅 아키텍처는 다음과 같습니다:
 
-```mermaid
-flowchart LR
-    subgraph Node["워커 노드"]
-        Containers[컨테이너] --> |stdout/stderr| kubelet
-        kubelet --> |/var/log/containers/| LogAgent[로그 에이전트]
-    end
-    
-    LogAgent --> CWL[CloudWatch Logs]
-    LogAgent --> ES[Amazon OpenSearch]
-    LogAgent --> S3[Amazon S3]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class CWL,ES,S3 awsService;
-    class kubelet k8sComponent;
-    class Containers userApp;
-    class LogAgent default;
-```
+![워커 노드의 컨테이너 표준출력이 kubelet을 거쳐 로그 에이전트로 모이고, 그 에이전트가 CloudWatch Logs, Amazon OpenSearch, Amazon S3 세 곳으로 로그를 분산 전달하는 흐름을 보여준다.](../.gitbook/assets/ko-eks-06-eks-monitoring-logging-1.png)
 
 ### Fluent Bit를 사용한 로그 수집
 
@@ -389,89 +322,7 @@ Fluent Bit에서 로그 파싱을 위한 구성:
 
 효과적인 클러스터 모니터링은 EKS 클러스터의 상태, 성능 및 리소스 사용량을 추적하는 데 필수적입니다. 이 섹션에서는 EKS 클러스터를 모니터링하기 위한 다양한 도구와 기술을 살펴봅니다.
 
-```mermaid
-flowchart TD
-    subgraph Monitoring_Solutions ["모니터링 솔루션"]
-        subgraph AWS_Solutions ["AWS 솔루션"]
-            CW_CI["CloudWatch
-                Container Insights"]
-            CW_LA["CloudWatch
-                Logs Insights"]
-            CW_Alarms["CloudWatch
-                경보"]
-            AMP["Amazon Managed
-                Prometheus"]
-            AMG["Amazon Managed
-                Grafana"]
-        end
-        
-        subgraph K8s_Solutions ["Kubernetes 솔루션"]
-            Prometheus[Prometheus]
-            Grafana[Grafana]
-            Kube_State[kube-state-metrics]
-            Node_Exporter[Node Exporter]
-            K8s_Dashboard["Kubernetes
-                대시보드"]
-        end
-        
-        subgraph Tracing_Solutions ["추적 솔루션"]
-            XRay[AWS X-Ray]
-            Jaeger[Jaeger]
-            OpenTelemetry[OpenTelemetry]
-        end
-    end
-    
-    subgraph Monitoring_Targets ["모니터링 대상"]
-        subgraph Cluster_Level ["클러스터 수준"]
-            Control_Plane[컨트롤 플레인]
-            API_Server[API 서버]
-            Scheduler[스케줄러]
-            Controller[컨트롤러 관리자]
-        end
-        
-        subgraph Node_Level ["노드 수준"]
-            CPU[CPU 사용량]
-            Memory[메모리 사용량]
-            Disk[디스크 I/O]
-            Network[네트워크 I/O]
-        end
-        
-        subgraph Pod_Level ["파드 수준"]
-            Pod_CPU[파드 CPU]
-            Pod_Memory[파드 메모리]
-            Pod_Network[파드 네트워크]
-            Restarts[재시작 횟수]
-        end
-    end
-    
-    CW_CI --> Cluster_Level
-    CW_CI --> Node_Level
-    CW_CI --> Pod_Level
-    
-    Prometheus --> Kube_State
-    Prometheus --> Node_Exporter
-    Kube_State --> Cluster_Level
-    Node_Exporter --> Node_Level
-    
-    Prometheus --> Grafana
-    AMP --> AMG
-    
-    XRay --> API_Server
-    OpenTelemetry --> Pod_Level
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class CW_CI,CW_LA,CW_Alarms,AMP,AMG,XRay awsService;
-    class Prometheus,Grafana,Kube_State,Node_Exporter,K8s_Dashboard,Control_Plane,API_Server,Scheduler,Controller k8sComponent;
-    class Jaeger,OpenTelemetry userApp;
-    class CPU,Memory,Disk,Network,Pod_CPU,Pod_Memory,Pod_Network,Restarts default;
-```
+![AWS 솔루션, Kubernetes 솔루션, 추적 솔루션이라는 세 축의 모니터링 도구가 클러스터·노드·파드 수준의 관찰 대상을 각각 어떻게 나누어 커버하는지 보여준다.](../.gitbook/assets/ko-eks-06-eks-monitoring-logging-2.png)
 
 ### CloudWatch Container Insights
 
@@ -885,80 +736,7 @@ Grafana에서 사용자 정의 대시보드를 생성하여 애플리케이션 �
 
 효과적인 알림 및 이벤트 관리는 EKS 클러스터에서 문제를 신속하게 감지하고 대응하는 데 필수적입니다. 이 섹션에서는 EKS 클러스터에서 알림 및 이벤트를 관리하기 위한 다양한 도구와 기술을 살펴봅니다.
 
-```mermaid
-flowchart TD
-    subgraph Alert_Sources ["알림 소스"]
-        subgraph Metrics ["지표 기반"]
-            CW_Metrics[CloudWatch 지표]
-            Prom_Metrics[Prometheus 지표]
-            Custom_Metrics[사용자 정의 지표]
-        end
-        
-        subgraph Logs ["로그 기반"]
-            CW_Logs[CloudWatch 로그]
-            ES_Logs[OpenSearch 로그]
-            Loki_Logs[Loki 로그]
-        end
-        
-        subgraph Events ["이벤트 기반"]
-            K8s_Events[Kubernetes 이벤트]
-            AWS_Events[AWS 이벤트]
-            App_Events[애플리케이션 이벤트]
-        end
-    end
-    
-    subgraph Alert_Processing ["알림 처리"]
-        CW_Alarms[CloudWatch 경보]
-        Prom_AM["Prometheus
-                Alertmanager"]
-        EventBridge[Amazon EventBridge]
-        Event_Router[이벤트 라우터]
-    end
-    
-    subgraph Notification_Channels ["알림 채널"]
-        SNS[Amazon SNS]
-        SQS[Amazon SQS]
-        Lambda[AWS Lambda]
-        Email[이메일]
-        Slack[Slack]
-        PagerDuty[PagerDuty]
-        OpsGenie[OpsGenie]
-    end
-    
-    CW_Metrics --> CW_Alarms
-    Prom_Metrics --> Prom_AM
-    Custom_Metrics --> Prom_AM
-    
-    CW_Logs --> CW_Alarms
-    ES_Logs --> Event_Router
-    Loki_Logs --> Prom_AM
-    
-    K8s_Events --> Event_Router
-    AWS_Events --> EventBridge
-    App_Events --> Event_Router
-    
-    CW_Alarms --> SNS
-    Prom_AM --> Slack
-    Prom_AM --> PagerDuty
-    EventBridge --> Lambda
-    EventBridge --> SNS
-    Event_Router --> OpsGenie
-    
-    SNS --> Email
-    SNS --> SQS
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class CW_Metrics,CW_Logs,CW_Alarms,EventBridge,SNS,SQS,Lambda,AWS_Events awsService;
-    class K8s_Events,Prom_AM k8sComponent;
-    class Prom_Metrics,Custom_Metrics,ES_Logs,Loki_Logs,App_Events,Event_Router,Email,Slack,PagerDuty,OpsGenie userApp;
-```
+![지표·로그·이벤트 기반의 알림 소스가 CloudWatch 경보, Prometheus Alertmanager, EventBridge, 이벤트 라우터라는 네 처리 경로를 거쳐 SNS, Lambda, Slack 등 알림 채널로 전달되는 흐름을 보여준다.](../.gitbook/assets/ko-eks-06-eks-monitoring-logging-3.png)
 
 ### CloudWatch 경보
 
@@ -1349,78 +1127,7 @@ PagerDuty와 같은 도구를 사용하여 알림 에스컬레이션 정책을 �
 
 로그 분석 및 시각화는 EKS 클러스터에서 발생하는 문제를 진단하고 해결하는 데 중요한 역할을 합니다. 이 섹션에서는 EKS 클러스터의 로그를 분석하고 시각화하기 위한 다양한 도구와 기술을 살펴봅니다.
 
-```mermaid
-flowchart TD
-    subgraph Log_Sources ["로그 소스"]
-        CP_Logs[컨트롤 플레인 로그]
-        Container_Logs[컨테이너 로그]
-        App_Logs[애플리케이션 로그]
-        AWS_Service_Logs[AWS 서비스 로그]
-    end
-    
-    subgraph Log_Collection ["로그 수집"]
-        Fluent_Bit[Fluent Bit]
-        Fluentd[Fluentd]
-        CloudWatch_Agent[CloudWatch 에이전트]
-        Vector[Vector]
-    end
-    
-    subgraph Log_Storage ["로그 저장"]
-        CW_Logs[CloudWatch Logs]
-        OpenSearch[Amazon OpenSearch]
-        S3[Amazon S3]
-        Loki[Grafana Loki]
-    end
-    
-    subgraph Log_Analysis ["로그 분석"]
-        CW_Insights[CloudWatch Logs Insights]
-        OS_Dashboards[OpenSearch Dashboards]
-        Athena[Amazon Athena]
-        Grafana_Explore[Grafana Explore]
-    end
-    
-    subgraph Visualization ["시각화"]
-        OS_Visualizations[OpenSearch 시각화]
-        Grafana_Dashboards[Grafana 대시보드]
-        QuickSight[Amazon QuickSight]
-        Custom_Dashboards[사용자 정의 대시보드]
-    end
-    
-    CP_Logs --> CW_Logs
-    Container_Logs --> Fluent_Bit
-    App_Logs --> Fluent_Bit
-    AWS_Service_Logs --> CW_Logs
-    
-    Fluent_Bit --> CW_Logs
-    Fluent_Bit --> OpenSearch
-    Fluent_Bit --> S3
-    Fluentd --> Loki
-    CloudWatch_Agent --> CW_Logs
-    Vector --> OpenSearch
-    
-    CW_Logs --> CW_Insights
-    OpenSearch --> OS_Dashboards
-    S3 --> Athena
-    Loki --> Grafana_Explore
-    
-    CW_Insights --> Custom_Dashboards
-    OS_Dashboards --> OS_Visualizations
-    Athena --> QuickSight
-    Grafana_Explore --> Grafana_Dashboards
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class CW_Logs,CW_Insights,OpenSearch,S3,Athena,QuickSight,CloudWatch_Agent,AWS_Service_Logs awsService;
-    class CP_Logs k8sComponent;
-    class Fluent_Bit,Fluentd,Vector,Container_Logs,App_Logs userApp;
-    class OS_Dashboards,OS_Visualizations,Grafana_Dashboards,Grafana_Explore,Custom_Dashboards,Loki dataStore;
-```
+![여러 로그 소스가 수집 에이전트를 거쳐 CloudWatch Logs, OpenSearch, S3, Loki 네 가지 저장소로 나뉘어 들어가고, 각 저장소가 자신과 짝을 이루는 분석·시각화 도구로 이어지는 흐름을 보여준다.](../.gitbook/assets/ko-eks-06-eks-monitoring-logging-4.png)
 
 ### CloudWatch Logs Insights
 
@@ -1898,96 +1605,7 @@ route:
 
 EKS 클러스터에서 발생하는 문제를 해결하고 디버깅하기 위한 다양한 기술을 살펴보겠습니다.
 
-```mermaid
-flowchart TD
-    subgraph Troubleshooting_Areas ["문제 해결 영역"]
-        subgraph Cluster_Issues ["클러스터 문제"]
-            Control_Plane[컨트롤 플레인 문제]
-            Node_Issues[노드 문제]
-            Networking[네트워킹 문제]
-            Auth_Issues[인증/인가 문제]
-        end
-        
-        subgraph Workload_Issues ["워크로드 문제"]
-            Pod_Issues[파드 문제]
-            Service_Issues[서비스 문제]
-            Deployment_Issues[배포 문제]
-            Resource_Issues[리소스 문제]
-        end
-        
-        subgraph Common_Problems ["일반적인 문제"]
-            ImagePull[ImagePullBackOff]
-            CrashLoop[CrashLoopBackOff]
-            NodeNotReady[노드 NotReady]
-            Connection[서비스 연결 문제]
-        end
-    end
-    
-    subgraph Debugging_Tools ["디버깅 도구"]
-        subgraph K8s_Tools ["Kubernetes 도구"]
-            Kubectl[kubectl]
-            K8s_Debug[kubectl debug]
-            K8s_Events[kubectl events]
-            K8s_Logs[kubectl logs]
-        end
-        
-        subgraph AWS_Tools ["AWS 도구"]
-            AWS_CLI[AWS CLI]
-            CloudWatch[CloudWatch]
-            CloudTrail[CloudTrail]
-            X_Ray[X-Ray]
-        end
-        
-        subgraph Network_Tools ["네트워크 도구"]
-            Netshoot[Netshoot]
-            TCPDump[tcpdump]
-            Dig[dig/nslookup]
-            Curl[curl/wget]
-        end
-    end
-    
-    Control_Plane --> Kubectl
-    Control_Plane --> AWS_CLI
-    Control_Plane --> CloudWatch
-    
-    Node_Issues --> K8s_Debug
-    Node_Issues --> AWS_CLI
-    
-    Networking --> Netshoot
-    Networking --> TCPDump
-    
-    Pod_Issues --> K8s_Logs
-    Pod_Issues --> K8s_Debug
-    
-    Service_Issues --> K8s_Events
-    Service_Issues --> Dig
-    Service_Issues --> Curl
-    
-    ImagePull --> K8s_Events
-    ImagePull --> K8s_Logs
-    
-    CrashLoop --> K8s_Logs
-    CrashLoop --> K8s_Debug
-    
-    NodeNotReady --> AWS_CLI
-    NodeNotReady --> K8s_Events
-    
-    Connection --> Netshoot
-    Connection --> TCPDump
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class AWS_CLI,CloudWatch,CloudTrail,X_Ray awsService;
-    class Kubectl,K8s_Debug,K8s_Events,K8s_Logs,Control_Plane,Node_Issues,Pod_Issues,Service_Issues,Deployment_Issues k8sComponent;
-    class Netshoot,TCPDump,Dig,Curl userApp;
-    class ImagePull,CrashLoop,NodeNotReady,Connection,Networking,Auth_Issues,Resource_Issues default;
-```
+![클러스터 문제, 워크로드 문제, 일반적인 문제라는 세 가지 문제 유형이 kubectl 도구, AWS 도구, 네트워크 도구라는 디버깅 도구군과 각각 어떻게 연결되는지 보여주며, kubectl 도구가 세 유형 모두에서 쓰이는 중심 도구임을 강조한다.](../.gitbook/assets/ko-eks-06-eks-monitoring-logging-5.png)
 
 ### 클러스터 문제 해결
 

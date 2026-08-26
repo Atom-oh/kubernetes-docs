@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-11-eks-advanced-debugging-3-title ko-eks-11-eks-advanced-debugging-3-desc">
+<title id="ko-eks-11-eks-advanced-debugging-3-title">4계층 감지 파이프라인</title>
+<desc id="ko-eks-11-eks-advanced-debugging-3-desc">메트릭·로그·트레이스·이벤트 등 데이터 소스가 수집 계층을 거쳐 분석 계층에서 이상을 판정하고 SNS·Slack·PagerDuty·EventBridge로 알림이 전달되는 4단계 장애 감지 파이프라인.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="240" y1="308.0" x2="272" y2="308.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="464" y1="308.0" x2="496" y2="308.0" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<line x1="688" y1="308.0" x2="720" y2="308.0" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="48" y="128" width="192" height="360" rx="8" fill="#ffffff"/>
+<rect x="48" y="128" width="192" height="360" rx="8" fill="#ffffff" stroke="rgba(35,47,62,0.16)" stroke-width="1"/>
+<text x="64" y="156" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">01 · SOURCES</text>
+<text x="64" y="180" fill="#232F3E" font-size="16" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">데이터 소스</text>
+<line x1="64" y1="196" x2="224" y2="196" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<circle cx="70" cy="224" r="3" fill="#545B64"/>
+<text x="82" y="228" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">메트릭</text>
+<circle cx="70" cy="280" r="3" fill="#545B64"/>
+<text x="82" y="284" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">로그</text>
+<circle cx="70" cy="336" r="3" fill="#545B64"/>
+<text x="82" y="340" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">트레이스</text>
+<circle cx="70" cy="392" r="3" fill="#545B64"/>
+<text x="82" y="396" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">이벤트</text>
+<rect x="272" y="128" width="192" height="360" rx="8" fill="#ffffff"/>
+<rect x="272" y="128" width="192" height="360" rx="8" fill="#ffffff" stroke="rgba(35,47,62,0.16)" stroke-width="1"/>
+<text x="288" y="156" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">02 · COLLECTION</text>
+<text x="288" y="180" fill="#232F3E" font-size="16" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">수집</text>
+<line x1="288" y1="196" x2="448" y2="196" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<circle cx="294" cy="224" r="3" fill="#545B64"/>
+<text x="306" y="228" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">CloudWatch Agent</text>
+<circle cx="294" cy="280" r="3" fill="#545B64"/>
+<text x="306" y="284" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">Fluent Bit</text>
+<circle cx="294" cy="336" r="3" fill="#545B64"/>
+<text x="306" y="340" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">ADOT Collector</text>
+<circle cx="294" cy="392" r="3" fill="#545B64"/>
+<text x="306" y="396" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">Prometheus</text>
+<rect x="496" y="128" width="192" height="360" rx="8" fill="#ffffff"/>
+<rect x="496" y="128" width="192" height="360" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="512" y="156" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">03 · ANALYSIS</text>
+<text x="512" y="180" fill="#232F3E" font-size="16" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">분석</text>
+<line x1="512" y1="196" x2="672" y2="196" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<circle cx="518" cy="224" r="3" fill="#EC7211"/>
+<text x="530" y="228" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">CW Logs Insights</text>
+<circle cx="518" cy="280" r="3" fill="#EC7211"/>
+<text x="530" y="284" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">메트릭 알림</text>
+<circle cx="518" cy="336" r="3" fill="#EC7211"/>
+<text x="530" y="340" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">Anomaly Detection</text>
+<circle cx="518" cy="392" r="3" fill="#EC7211"/>
+<text x="530" y="396" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">Composite Alarms</text>
+<rect x="720" y="128" width="192" height="360" rx="8" fill="#ffffff"/>
+<rect x="720" y="128" width="192" height="360" rx="8" fill="#ffffff" stroke="rgba(35,47,62,0.16)" stroke-width="1"/>
+<text x="736" y="156" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">04 · ALERTING</text>
+<text x="736" y="180" fill="#232F3E" font-size="16" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">알림</text>
+<line x1="736" y1="196" x2="896" y2="196" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<circle cx="742" cy="224" r="3" fill="#545B64"/>
+<text x="754" y="228" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">SNS</text>
+<circle cx="742" cy="280" r="3" fill="#545B64"/>
+<text x="754" y="284" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">Slack</text>
+<circle cx="742" cy="336" r="3" fill="#545B64"/>
+<text x="754" y="340" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">PagerDuty</text>
+<circle cx="742" cy="392" r="3" fill="#545B64"/>
+<text x="754" y="396" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace">EventBridge</text>
+<line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="180" y="528" width="26" height="24" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="218" y="544" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">분석 계층 (이상 판정이 이뤄지는 핵심 단계)</text>
+</svg>

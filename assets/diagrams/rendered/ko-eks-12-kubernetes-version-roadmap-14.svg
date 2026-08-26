@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 384" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-12-kubernetes-version-roadmap-14-title ko-eks-12-kubernetes-version-roadmap-14-desc">
+<title id="ko-eks-12-kubernetes-version-roadmap-14-title">주요 기능 성숙도 타임라인</title>
+<desc id="ko-eks-12-kubernetes-version-roadmap-14-desc">Sidecar Containers, In-Place Pod Resize, DRA Core APIs 등 주요 기능이 Alpha에서 Beta, GA로 졸업해 가는 시점을 버전별 시간 축 위에 비교해서 보여준다.</desc>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style><defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="210.0" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2022-12</text>
+<text x="309.5" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2023-06</text>
+<text x="409.1" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2023-12</text>
+<text x="508.6" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2024-06</text>
+<text x="608.2" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2024-12</text>
+<text x="707.7" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2025-06</text>
+<text x="807.3" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2025-12</text>
+<text x="906.8" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2026-06</text>
+<line x1="210" y1="48" x2="940.0" y2="48" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="16" y="90.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Sidecar Containers</text>
+<rect x="342.7" y="74" width="66.4" height="20" rx="4" fill="rgba(84,91,100,0.14)" stroke="#545B64" stroke-width="1"/>
+<rect x="409.1" y="74" width="265.5" height="20" rx="4" fill="rgba(9,114,211,0.14)" stroke="#0972D3" stroke-width="1"/>
+<rect x="674.5" y="74" width="66.4" height="20" rx="4" fill="rgba(255,153,0,0.16)" stroke="#EC7211" stroke-width="1"/>
+<text x="16" y="134.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">In-Place Pod Resize</text>
+<rect x="276.4" y="118" width="398.2" height="20" rx="4" fill="rgba(84,91,100,0.14)" stroke="#545B64" stroke-width="1"/>
+<rect x="674.5" y="118" width="132.7" height="20" rx="4" fill="rgba(9,114,211,0.14)" stroke="#0972D3" stroke-width="1"/>
+<rect x="807.3" y="118" width="66.4" height="20" rx="4" fill="rgba(255,153,0,0.16)" stroke="#EC7211" stroke-width="1"/>
+<text x="16" y="178.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">DRA Core APIs</text>
+<rect x="210.0" y="162" width="331.8" height="20" rx="4" fill="rgba(84,91,100,0.14)" stroke="#545B64" stroke-width="1"/>
+<rect x="541.8" y="162" width="199.1" height="20" rx="4" fill="rgba(9,114,211,0.14)" stroke="#0972D3" stroke-width="1"/>
+<rect x="740.9" y="162" width="66.4" height="20" rx="4" fill="rgba(255,153,0,0.16)" stroke="#EC7211" stroke-width="1"/>
+<text x="16" y="222.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">ValidatingAdmissionPolicy</text>
+<rect x="210.0" y="206" width="132.7" height="20" rx="4" fill="rgba(84,91,100,0.14)" stroke="#545B64" stroke-width="1"/>
+<rect x="342.7" y="206" width="132.7" height="20" rx="4" fill="rgba(9,114,211,0.14)" stroke="#0972D3" stroke-width="1"/>
+<rect x="475.5" y="206" width="66.4" height="20" rx="4" fill="rgba(255,153,0,0.16)" stroke="#EC7211" stroke-width="1"/>
+<text x="16" y="266.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">MutatingAdmissionPolicy</text>
+<rect x="674.5" y="250" width="66.4" height="20" rx="4" fill="rgba(84,91,100,0.14)" stroke="#545B64" stroke-width="1"/>
+<rect x="740.9" y="250" width="132.7" height="20" rx="4" fill="rgba(9,114,211,0.14)" stroke="#0972D3" stroke-width="1"/>
+<rect x="873.6" y="250" width="66.4" height="20" rx="4" fill="rgba(255,153,0,0.16)" stroke="#EC7211" stroke-width="1"/>
+<text x="16" y="310.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Gang Scheduling</text>
+<rect x="807.3" y="294" width="66.4" height="20" rx="4" fill="rgba(84,91,100,0.14)" stroke="#545B64" stroke-width="1"/>
+<rect x="873.6" y="294" width="66.4" height="20" rx="4" fill="rgba(255,153,0,0.16)" stroke="#EC7211" stroke-width="1"/>
+<line x1="16" y1="352" x2="944" y2="352" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="16" y="368" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="130" y="360" width="20" height="10" rx="2" fill="rgba(84,91,100,0.14)" stroke="#545B64" stroke-width="1"/>
+<text x="156" y="368" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Alpha</text>
+<rect x="220" y="360" width="20" height="10" rx="2" fill="rgba(9,114,211,0.14)" stroke="#0972D3" stroke-width="1"/>
+<text x="246" y="368" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Beta</text>
+<rect x="310" y="360" width="20" height="10" rx="2" fill="rgba(255,153,0,0.16)" stroke="#EC7211" stroke-width="1"/>
+<text x="336" y="368" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">GA</text>
+
+</svg>

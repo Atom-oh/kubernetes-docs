@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-title t-desc"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+      <title id="t-title">업그레이드 자동화</title>
+      <desc id="t-desc">업그레이드 자동화가 eksctl, AWS CLI 및 스크립트, GitOps, 자동화 모범 사례 네 갈래로 나뉘는 트리 다이어그램.</desc>
+      <rect width="100%" height="100%" fill="#FFFFFF"/>
+<path d="M 480 84 L 480 114 L 132.0 114 L 132.0 168" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 480 84 L 480 114 L 364.0 114 L 364.0 168" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 480 84 L 480 114 L 596.0 114 L 596.0 168" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 480 84 L 480 114 L 828.0 114 L 828.0 168" fill="none" stroke="#545B64" stroke-width="1"/>
+      <rect x="380.0" y="40" width="200" height="44" rx="6" fill="#FFFFFF"/>
+      <rect x="380.0" y="40" width="200" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="388.0" y="51" fill="#EC7211" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">ROOT</text>
+      <text x="480.0" y="62" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">업그레이드 자동화</text>
+      <rect x="28.0" y="168" width="208" height="78" rx="6" fill="#FFFFFF"/>
+      <rect x="28.0" y="168" width="208" height="78" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="36.0" y="179" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 1</text>
+      <text x="132.0" y="190" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eksctl을 사용한 자동화</text>
+      <text x="132.0" y="206" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">클러스터 업그레이드</text>
+      <text x="132.0" y="217" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">노드 그룹 업그레이드</text>
+      <rect x="260.0" y="168" width="208" height="78" rx="6" fill="#FFFFFF"/>
+      <rect x="260.0" y="168" width="208" height="78" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="268.0" y="179" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 1</text>
+      <text x="364.0" y="190" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS CLI 및 스크립트를 사용한</text>
+      <text x="364.0" y="203" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">자동화</text>
+      <text x="364.0" y="219" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">변수 설정 · 클러스터/애드온</text>
+      <text x="364.0" y="230" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">/노드그룹 스크립트</text>
+      <rect x="492.0" y="168" width="208" height="78" rx="6" fill="#FFFFFF"/>
+      <rect x="492.0" y="168" width="208" height="78" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="500.0" y="179" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 1</text>
+      <text x="596.0" y="190" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">GitOps를 사용한 자동화</text>
+      <text x="596.0" y="206" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">Git 저장소 구성 저장</text>
+      <text x="596.0" y="217" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">CI/CD 파이프라인</text>
+      <rect x="724.0" y="168" width="208" height="78" rx="6" fill="#FFFFFF"/>
+      <rect x="724.0" y="168" width="208" height="78" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="732.0" y="179" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 1</text>
+      <text x="828.0" y="190" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">자동화 모범 사례</text>
+      <text x="828.0" y="206" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">점진적 접근 · 롤백 계획</text>
+      <text x="828.0" y="217" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">검증 · 알림 · 문서화</text>
+      <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="518" fill="#545B64" font-size="8.5" font-family='"Geist Mono",ui-monospace,monospace'>eksctl · AWS CLI/스크립트 · GitOps 세 가지 자동화 경로와 공통 모범 사례</text>
+    </svg>

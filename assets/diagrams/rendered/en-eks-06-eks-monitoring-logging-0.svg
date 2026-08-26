@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ml-arch-title ml-arch-desc">
+      <title id="ml-arch-title">EKS monitoring and logging architecture</title>
+      <desc id="ml-arch-desc">Control-plane logs, pod logs, and node metrics from an EKS cluster flow through Fluent Bit and Prometheus into CloudWatch, OpenSearch, and Grafana/Alertmanager for storage, search, and alerting.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ================= ZONES ================= -->
+      <rect x="120" y="64" width="208" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="124" y="68" width="128" height="12" rx="2" fill="#ffffff"/>
+      <text x="188" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">EKS CLUSTER</text>
+
+      <rect x="376" y="64" width="208" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="380" y="68" width="176" height="12" rx="2" fill="#ffffff"/>
+      <text x="468" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">COLLECTION &amp; MONITORING</text>
+
+      <rect x="632" y="64" width="208" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="636" y="68" width="120" height="12" rx="2" fill="#ffffff"/>
+      <text x="696" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">AWS SERVICES</text>
+
+      <!-- ================= ARROWS ================= -->
+      <!-- E1 CP Logs -> CloudWatch Logs (top corridor) -->
+      <path d="M224,96 V56 Q224,48 232,48 H728 Q736,48 736,56 V96" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- E2 Pods/Containers -> Fluent Bit -->
+      <path d="M312,204 H344 Q352,204 352,196 V132 Q352,124 360,124 H392" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- E3 Node Exporter & kubelet -> Prometheus -->
+      <path d="M312,284 H344 Q352,284 352,276 V212 Q352,204 360,204 H392" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- E4 Fluent Bit -> CloudWatch Logs (straight, fanned upper attach) -->
+      <path d="M568,116 H648" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- E5 Fluent Bit -> OpenSearch (fanned lower attach) -->
+      <path d="M568,132 H600 Q608,132 608,140 V276 Q608,284 616,284 H648" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- E6 Prometheus -> Grafana & Alertmanager (straight vertical) -->
+      <path d="M480,232 V256" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+      <!-- E7 Prometheus -> CloudWatch Metrics (straight, hop over E5) -->
+      <path d="M568,204 H600 A8,8 0 0,1 616,204 H648" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+      <!-- Arrow labels -->
+      <rect x="458" y="28" width="64" height="12" rx="2" fill="#ffffff"/>
+      <text x="490" y="37" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CTRL LOGS</text>
+
+      <rect x="326" y="150" width="52" height="12" rx="2" fill="#ffffff"/>
+      <text x="352" y="159" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">STDOUT</text>
+
+      <rect x="326" y="230" width="52" height="12" rx="2" fill="#ffffff"/>
+      <text x="352" y="239" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCRAPE</text>
+
+      <!-- ================= NODES ================= -->
+      <!-- Col1 r1: Control Plane Logs -->
+      <rect x="136" y="96" width="176" height="56" rx="6" fill="#ffffff"/>
+      <rect x="136" y="96" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="144" y="102" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="159" y="111" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">K8S</text>
+      <text x="224" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Control Plane Logs</text>
+      <text x="224" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">api / audit / scheduler</text>
+
+      <!-- Col1 r2: Pods/Containers -->
+      <rect x="136" y="176" width="176" height="56" rx="6" fill="#ffffff"/>
+      <rect x="136" y="176" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="144" y="182" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="159" y="191" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">K8S</text>
+      <text x="224" y="208" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pods / Containers</text>
+      <text x="224" y="224" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">stdout / stderr</text>
+
+      <!-- Col1 r3: Node Exporter & kubelet -->
+      <rect x="136" y="256" width="176" height="56" rx="6" fill="#ffffff"/>
+      <rect x="136" y="256" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="144" y="262" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="159" y="271" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">K8S</text>
+      <text x="224" y="288" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node Exporter &amp; kubelet</text>
+      <text x="224" y="304" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">node / cadvisor metrics</text>
+
+      <!-- Col2 r1 subA: Fluent Bit -->
+      <rect x="392" y="96" width="176" height="56" rx="6" fill="#ffffff"/>
+      <rect x="392" y="96" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="400" y="102" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="415" y="111" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OSS</text>
+      <text x="480" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Fluent Bit / Fluentd</text>
+      <text x="480" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">log collector daemonset</text>
+
+      <!-- Col2 r2 subB: Prometheus (FOCAL) -->
+      <rect x="392" y="176" width="176" height="56" rx="6" fill="#ffffff"/>
+      <rect x="392" y="176" width="176" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <rect x="400" y="182" width="30" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+      <text x="415" y="191" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OSS</text>
+      <text x="480" y="208" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus</text>
+      <text x="480" y="224" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">time-series metrics store</text>
+
+      <!-- Col2 r3: Grafana & Alertmanager -->
+      <rect x="392" y="256" width="176" height="56" rx="6" fill="#ffffff"/>
+      <rect x="392" y="256" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="400" y="262" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="415" y="271" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OSS</text>
+      <text x="480" y="284" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana &amp; Alertmanager</text>
+      <text x="480" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">dashboards + notifications</text>
+
+      <!-- Col3 r1: CloudWatch Logs (FOCAL) -->
+      <rect x="648" y="96" width="176" height="56" rx="6" fill="#ffffff"/>
+      <rect x="648" y="96" width="176" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <rect x="656" y="102" width="30" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+      <text x="671" y="111" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="736" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudWatch Logs</text>
+      <text x="736" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">log groups / Logs Insights</text>
+
+      <!-- Col3 r2: CloudWatch Metrics -->
+      <rect x="648" y="176" width="176" height="56" rx="6" fill="#ffffff"/>
+      <rect x="648" y="176" width="176" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="656" y="182" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="671" y="191" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="736" y="208" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudWatch Metrics</text>
+      <text x="736" y="224" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Container Insights</text>
+
+      <!-- Col3 r3: Amazon OpenSearch -->
+      <rect x="648" y="256" width="176" height="56" rx="6" fill="#ffffff"/>
+      <rect x="648" y="256" width="176" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="656" y="262" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="671" y="271" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="736" y="284" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Amazon OpenSearch</text>
+      <text x="736" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">search + dashboards</text>
+
+      <!-- ================= LEGEND ================= -->
+      <line x1="30" y1="352" x2="930" y2="352" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="30" y="368" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+      <circle cx="200" cy="364" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="212" y="368" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Focal collector / sink</text>
+      <circle cx="420" cy="364" r="5" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="432" y="368" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Cluster / OSS component</text>
+      <circle cx="660" cy="364" r="5" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="672" y="368" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Managed AWS service</text>
+    </svg>

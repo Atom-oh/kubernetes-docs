@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-title t-desc"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+      <title id="t-title">노드 그룹 업그레이드</title>
+      <desc id="t-desc">노드 그룹 업그레이드가 전략, 관리형, 자체 관리형, Fargate, 모니터링 검증 다섯 갈래로 나뉘고 전략이 세 가지 방식으로 더 세분화되는 트리 다이어그램.</desc>
+      <rect width="100%" height="100%" fill="#FFFFFF"/>
+<path d="M 480 78 L 480 102 L 100.0 102 L 100.0 150" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 480 78 L 480 102 L 290.0 102 L 290.0 150" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 480 78 L 480.0 150" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 480 78 L 480 102 L 670.0 102 L 670.0 150" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 480 78 L 480 102 L 860.0 102 L 860.0 150" fill="none" stroke="#545B64" stroke-width="1"/>
+      <rect x="380.0" y="34" width="200" height="44" rx="6" fill="#FFFFFF"/>
+      <rect x="380.0" y="34" width="200" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="388.0" y="45" fill="#EC7211" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">ROOT</text>
+      <text x="480.0" y="56" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">노드 그룹 업그레이드</text>
+      <rect x="14.0" y="150" width="172" height="74" rx="6" fill="#FFFFFF"/>
+      <rect x="14.0" y="150" width="172" height="74" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="22.0" y="161" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 1</text>
+      <text x="100.0" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">노드 그룹 업그레이드 전략</text>
+      <rect x="204.0" y="150" width="172" height="74" rx="6" fill="#FFFFFF"/>
+      <rect x="204.0" y="150" width="172" height="74" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="212.0" y="161" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 1</text>
+      <text x="290.0" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">관리형 노드 그룹</text>
+      <text x="290.0" y="185" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">업그레이드</text>
+      <text x="290.0" y="201" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">버전 확인 · Console/CLI/</text>
+      <text x="290.0" y="212" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">eksctl · 구성</text>
+      <rect x="394.0" y="150" width="172" height="74" rx="6" fill="#FFFFFF"/>
+      <rect x="394.0" y="150" width="172" height="74" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="402.0" y="161" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 1</text>
+      <text x="480.0" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">자체 관리형 노드 그룹</text>
+      <text x="480.0" y="185" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">업그레이드</text>
+      <text x="480.0" y="201" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">블루/그린 · 롤링</text>
+      <text x="480.0" y="212" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">인플레이스</text>
+      <rect x="584.0" y="150" width="172" height="74" rx="6" fill="#FFFFFF"/>
+      <rect x="584.0" y="150" width="172" height="74" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="592.0" y="161" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 1</text>
+      <text x="670.0" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Fargate 노드 업그레이드</text>
+      <text x="670.0" y="188" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">재예약 시 자동 최신화</text>
+      <rect x="774.0" y="150" width="172" height="74" rx="6" fill="#FFFFFF"/>
+      <rect x="774.0" y="150" width="172" height="74" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="782.0" y="161" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 1</text>
+      <text x="860.0" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">노드 업그레이드 모니터링</text>
+      <text x="860.0" y="185" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">및 검증</text>
+      <text x="860.0" y="201" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">버전 · 상태 · 파드 배포</text>
+      <path d="M 100.0 224 L 100.0 252 L 292.0 252 L 292.0 320" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 100.0 224 L 100.0 252 L 480.0 252 L 480.0 320" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 100.0 224 L 100.0 252 L 668.0 252 L 668.0 320" fill="none" stroke="#545B64" stroke-width="1"/>
+      <rect x="208.0" y="320" width="168" height="66" rx="6" fill="#FFFFFF"/>
+      <rect x="208.0" y="320" width="168" height="66" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+      <text x="216.0" y="331" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 2</text>
+      <text x="292.0" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">관리형 노드 그룹</text>
+      <text x="292.0" y="358" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">롤링 업그레이드</text>
+      <text x="292.0" y="369" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">자동 드레이닝</text>
+      <text x="292.0" y="380" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">버전 추적</text>
+      <rect x="396.0" y="320" width="168" height="66" rx="6" fill="#FFFFFF"/>
+      <rect x="396.0" y="320" width="168" height="66" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+      <text x="404.0" y="331" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 2</text>
+      <text x="480.0" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">자체 관리형 노드 그룹</text>
+      <text x="480.0" y="358" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">블루/그린 배포</text>
+      <text x="480.0" y="369" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">롤링 업그레이드</text>
+      <text x="480.0" y="380" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">인플레이스 업그레이드</text>
+      <rect x="584.0" y="320" width="168" height="66" rx="6" fill="#FFFFFF"/>
+      <rect x="584.0" y="320" width="168" height="66" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+      <text x="592.0" y="331" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 2</text>
+      <text x="668.0" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Fargate</text>
+      <text x="668.0" y="358" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">AWS 완전 관리</text>
+      <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="518" fill="#545B64" font-size="8.5" font-family='"Geist Mono",ui-monospace,monospace'>노드 그룹 업그레이드 전략은 관리형 · 자체 관리형 · Fargate 세 방식으로 세분화</text>
+    </svg>

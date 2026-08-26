@@ -101,30 +101,7 @@ echo "아카이브: $OUTPUT_DIR.tar.gz"
 
 ### 신속한 문제 식별을 위한 의사결정 트리
 
-```mermaid
-flowchart TD
-    Start[장애 감지] --> Q1{서비스 접근 가능?}
-    Q1 -->|No| Q2{kubectl 작동?}
-    Q1 -->|Yes| Q3{응답 지연?}
-
-    Q2 -->|No| A1[컨트롤 플레인 문제<br/>AWS 콘솔 확인]
-    Q2 -->|Yes| Q4{노드 Ready?}
-
-    Q3 -->|Yes| Q5{특정 파드만?}
-    Q3 -->|No| Q6{간헐적 오류?}
-
-    Q4 -->|No| A2[노드 문제<br/>EC2 상태 확인]
-    Q4 -->|Yes| Q7{파드 Running?}
-
-    Q5 -->|Yes| A3[워크로드 문제<br/>파드 로그 확인]
-    Q5 -->|No| A4[클러스터 전반 문제<br/>리소스 확인]
-
-    Q6 -->|Yes| A5[네트워크/DNS 문제<br/>연결성 확인]
-    Q6 -->|No| A6[정상 상태<br/>모니터링 유지]
-
-    Q7 -->|No| A7[스케줄링 문제<br/>이벤트 확인]
-    Q7 -->|Yes| A8[앱/설정 문제<br/>describe 확인]
-```
+![서비스 접근 가능 여부에서 시작해 컨트롤 플레인, 노드, 워크로드 상태를 순서대로 확인하며 장애 원인을 여덟 갈래 진단 범주로 좁혀가는 초기 트리아지 의사결정 트리.](../.gitbook/assets/ko-eks-11-eks-advanced-debugging-0.png)
 
 ---
 
@@ -402,27 +379,7 @@ aws eks update-addon \
 
 ### NotReady 노드 의사결정 트리
 
-```mermaid
-flowchart TD
-    Start[노드 NotReady] --> Q1{EC2 상태?}
-    Q1 -->|Running| Q2{kubelet 실행 중?}
-    Q1 -->|Stopped/Terminated| A1[EC2 인스턴스 문제<br/>ASG/인스턴스 확인]
-
-    Q2 -->|No| A2[kubelet 시작<br/>systemctl start kubelet]
-    Q2 -->|Yes| Q3{네트워크 연결?}
-
-    Q3 -->|No| A3[네트워크 문제<br/>보안그룹/라우팅 확인]
-    Q3 -->|Yes| Q4{디스크 압력?}
-
-    Q4 -->|Yes| A4[디스크 정리<br/>crictl rmi --prune]
-    Q4 -->|No| Q5{메모리 압력?}
-
-    Q5 -->|Yes| A5[메모리 부족<br/>파드 eviction 또는 스케일업]
-    Q5 -->|No| Q6{컨테이너 런타임?}
-
-    Q6 -->|문제 있음| A6[containerd 재시작<br/>systemctl restart containerd]
-    Q6 -->|정상| A7[kubelet 로그 상세 분석<br/>journalctl -u kubelet]
-```
+![EC2 상태부터 kubelet, 네트워크, 디스크/메모리 압력, 컨테이너 런타임까지 단계적으로 점검해 노드가 NotReady가 된 원인을 좁혀가는 체크리스트형 의사결정 트리.](../.gitbook/assets/ko-eks-11-eks-advanced-debugging-1.png)
 
 ### SSM을 통한 kubelet/containerd 디버깅
 
@@ -622,21 +579,7 @@ data:
 
 ### 파드 상태 흐름도
 
-```mermaid
-flowchart LR
-    Pending --> |이미지 풀| ContainerCreating
-    ContainerCreating --> |성공| Running
-    ContainerCreating --> |실패| Failed
-    Running --> |완료| Succeeded
-    Running --> |크래시| Failed
-    Failed --> |재시작 정책| Pending
-
-    subgraph "주요 실패 원인"
-        P1[Pending: 리소스 부족, 스케줄링 실패]
-        C1[ContainerCreating: 이미지 풀 실패, 볼륨 마운트 실패]
-        F1[Failed: OOMKilled, CrashLoopBackOff]
-    end
-```
+![파드가 Pending에서 이미지 풀과 실행을 거쳐 Succeeded로 끝나거나 Failed를 통해 재시작 정책에 따라 다시 Pending으로 돌아가는 생명주기와, 각 단계에서 흔히 발생하는 실패 원인을 보여주는 상태 다이어그램.](../.gitbook/assets/ko-eks-11-eks-advanced-debugging-2.png)
 
 ### 기본 진단 명령어
 
@@ -1512,38 +1455,7 @@ spec:
 
 ### 4계층 감지 파이프라인
 
-```mermaid
-flowchart LR
-    subgraph Sources[데이터 소스]
-        M[메트릭]
-        L[로그]
-        T[트레이스]
-        E[이벤트]
-    end
-
-    subgraph Collection[수집]
-        CW[CloudWatch Agent]
-        FB[Fluent Bit]
-        ADOT[ADOT Collector]
-        PM[Prometheus]
-    end
-
-    subgraph Analysis[분석]
-        CLI[CloudWatch Logs Insights]
-        MA[메트릭 알림]
-        AA[Anomaly Detection]
-        CA[Composite Alarms]
-    end
-
-    subgraph Alerting[알림]
-        SNS[SNS]
-        SL[Slack]
-        PD[PagerDuty]
-        EB[EventBridge]
-    end
-
-    Sources --> Collection --> Analysis --> Alerting
-```
+![메트릭·로그·트레이스·이벤트 등 데이터 소스가 수집 계층을 거쳐 분석 계층에서 이상을 판정하고 SNS·Slack·PagerDuty·EventBridge로 알림이 전달되는 4단계 장애 감지 파이프라인.](../.gitbook/assets/ko-eks-11-eks-advanced-debugging-3.png)
 
 ### 레퍼런스 아키텍처 1: AWS 네이티브
 

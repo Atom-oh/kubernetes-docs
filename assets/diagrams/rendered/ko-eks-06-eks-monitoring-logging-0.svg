@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="eksmon-title eksmon-desc">
+    <title id="eksmon-title">EKS 모니터링 및 로깅 아키텍처</title>
+    <desc id="eksmon-desc">EKS 클러스터의 컨트롤 플레인 로그와 워커 노드가 Prometheus 기반 모니터링 스택과 Fluent Bit 기반 로깅 스택을 거쳐 CloudWatch·OpenSearch로 전달되고, 다시 Grafana·OpenSearch Dashboards·알림 채널로 시각화·통보되는 흐름을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones (bg, drawn before arrows/nodes) -->
+    <rect x="24" y="112" width="200" height="312" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="76" y="116" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="124" y="125" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">EKS 클러스터</text>
+
+    <rect x="232" y="112" width="200" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="284" y="116" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="332" y="125" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">수집 스택</text>
+
+    <!-- Arrows (behind nodes) -->
+    <path d="M 208,356 H 232 Q 240,356 240,348 V 176 Q 240,168 248,168" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 208,380 H 220 Q 228,380 228,388 V 420 Q 228,428 236,428 H 248" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 208,168 Q 216,168 216,176 V 272 Q 216,280 224,280 H 412 Q 420,280 420,288 V 368 Q 420,376 428,376 H 456" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+    <path d="M 416,416 H 428 Q 436,416 436,408 Q 436,400 444,400 H 456" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+    <path d="M 416,440 H 428 Q 436,440 436,448 V 476 Q 436,484 444,484 H 456" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+    <line x1="540" y1="416" x2="540" y2="456" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 416,150 Q 424,150 424,142 V 136 Q 424,128 432,128 H 456" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <path d="M 416,168 H 428 Q 436,168 436,176 V 216 Q 436,224 444,224 H 456" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+    <path d="M 416,186 H 440 Q 448,186 448,194 V 312 Q 448,320 456,320" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <line x1="624" y1="128" x2="664" y2="128" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="624" y1="484" x2="664" y2="484" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="176" y="300" width="46" height="12" rx="2" fill="#ffffff"/>
+    <text x="199" y="309" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">METRIC</text>
+    <rect x="176" y="398" width="34" height="12" rx="2" fill="#ffffff"/>
+    <text x="193" y="407" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">LOG</text>
+
+    <!-- Node: CP로그 -->
+    <rect x="40" y="140" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="40" y="140" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="48" y="148" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="64" y="157" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+    <text x="124" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">컨트롤 플레인 로그</text>
+    <text x="124" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">control-plane</text>
+
+    <!-- Node: 워커노드 -->
+    <rect x="40" y="340" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="40" y="340" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="48" y="348" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="64" y="357" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+    <text x="124" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">워커 노드</text>
+    <text x="124" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Pods · kubelet · Node Exporter</text>
+
+    <!-- Node: Prometheus (focal) -->
+    <rect x="248" y="140" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="248" y="140" width="168" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="256" y="148" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="272" y="157" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">MON</text>
+    <text x="332" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Prometheus</text>
+    <text x="332" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">metrics scrape</text>
+
+    <!-- Node: Fluent -->
+    <rect x="248" y="400" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="248" y="400" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="256" y="408" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="272" y="417" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">LOG</text>
+    <text x="332" y="432" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Fluent Bit/Fluentd</text>
+    <text x="332" y="448" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">DaemonSet agent</text>
+
+    <!-- Node: Alertmanager -->
+    <rect x="456" y="100" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="456" y="100" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="464" y="108" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="480" y="117" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">MON</text>
+    <text x="540" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Alertmanager</text>
+    <text x="540" y="148" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">alert routing</text>
+
+    <!-- Node: CMW -->
+    <rect x="456" y="196" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="456" y="196" width="168" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="464" y="204" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+    <text x="480" y="213" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+    <text x="540" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">CloudWatch Metrics</text>
+    <text x="540" y="244" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">managed store</text>
+
+    <!-- Node: Grafana -->
+    <rect x="456" y="292" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="456" y="292" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="464" y="300" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="478" y="309" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">VIZ</text>
+    <text x="540" y="324" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Grafana</text>
+    <text x="540" y="340" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">dashboards</text>
+
+    <!-- Node: CWL -->
+    <rect x="456" y="360" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="456" y="360" width="168" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="464" y="368" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+    <text x="480" y="377" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+    <text x="540" y="392" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">CloudWatch Logs</text>
+    <text x="540" y="408" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">managed store</text>
+
+    <!-- Node: OpenSearch -->
+    <rect x="456" y="456" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="456" y="456" width="168" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="464" y="464" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+    <text x="480" y="473" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+    <text x="540" y="488" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Amazon OpenSearch</text>
+    <text x="540" y="504" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">managed store</text>
+
+    <!-- Node: 알림채널 -->
+    <rect x="664" y="100" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="664" y="100" width="168" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <rect x="672" y="108" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+    <text x="690" y="117" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CHAN</text>
+    <text x="748" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">알림 채널</text>
+    <text x="748" y="148" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Slack · Email · PagerDuty</text>
+
+    <!-- Node: OpenSearch Dashboards -->
+    <rect x="664" y="456" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="664" y="456" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="672" y="464" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="686" y="473" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">VIZ</text>
+    <text x="748" y="488" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">OpenSearch Dashboards</text>
+    <text x="748" y="504" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">log visualization</text>
+
+    <!-- Legend -->
+    <line x1="24" y1="540" x2="936" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="24" y="568" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="44" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">핵심 수집기</text>
+
+    <rect x="164" y="568" width="14" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="184" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">AWS 관리형 서비스</text>
+
+    <rect x="344" y="568" width="14" height="10" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="364" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">출력 채널</text>
+
+    <line x1="484" y1="573" x2="512" y2="573" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+    <text x="520" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">AWS 전송</text>
+
+    <line x1="636" y1="573" x2="664" y2="573" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="672" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">내부 흐름</text>
+  </svg>

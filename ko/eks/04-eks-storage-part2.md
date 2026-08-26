@@ -545,32 +545,7 @@ xfs_growfs /data
 
 볼륨 클로닝은 스냅샷과 달리 소스 볼륨에서 직접 새 볼륨을 생성합니다. 클로닝 과정에서 데이터는 백그라운드에서 복사되며, 새 볼륨은 즉시 사용할 수 있습니다.
 
-```mermaid
-flowchart LR
-    subgraph Source["소스"]
-        SourcePVC[소스 PVC]
-        SourcePV[소스 PV]
-        SourceEBS[소스 EBS 볼륨]
-    end
-
-    subgraph Clone["클론"]
-        ClonePVC[클론 PVC]
-        ClonePV[클론 PV]
-        CloneEBS[클론 EBS 볼륨]
-    end
-
-    SourcePVC --> SourcePV
-    SourcePV --> SourceEBS
-
-    SourcePVC -->|dataSource 참조| ClonePVC
-    ClonePVC --> ClonePV
-    ClonePV --> CloneEBS
-
-    SourceEBS -->|데이터 복사| CloneEBS
-
-    style Source fill:#e6f7ff,stroke:#0099cc
-    style Clone fill:#e6ffe6,stroke:#009900
-```
+![소스 PVC를 dataSource로 참조하면 EBS 볼륨 데이터가 백그라운드에서 클론 PVC의 새 EBS 볼륨으로 직접 복사되는 볼륨 클로닝 과정을 보여준다.](../.gitbook/assets/ko-eks-04-eks-storage-part2-0.png)
 
 ### dataSource 필드 사용
 
@@ -676,28 +651,7 @@ EBS 다중 연결은 Kubernetes의 `ReadWriteMany` 액세스 모드와 다릅니
 * Filesystem 모드의 동시 쓰기는 파일 시스템 손상을 초래할 수 있습니다
 * 애플리케이션 수준에서 동시 액세스 조정이 필요합니다 (클러스터 파일 시스템 또는 분산 잠금)
 
-```mermaid
-flowchart TD
-    subgraph MultiAttach["다중 연결 EBS"]
-        EBS[io2 Block Express 볼륨]
-
-        subgraph AZ["동일 가용 영역"]
-            Node1[노드 1]
-            Node2[노드 2]
-            Node3[노드 3]
-        end
-    end
-
-    EBS <--> |Block 디바이스| Node1
-    EBS <--> |Block 디바이스| Node2
-    EBS <--> |Block 디바이스| Node3
-
-    Note["주의: 파일시스템 동시 쓰기 불가
-클러스터 파일시스템 필요 (GFS2, OCFS2)"]
-
-    style MultiAttach fill:#fff3e6,stroke:#ff9900
-    style Note fill:#ffe6e6,stroke:#cc0000
-```
+![동일 가용 영역 내 세 개의 노드가 하나의 io2 Block Express EBS 볼륨에 Block 디바이스로 동시 연결되지만 파일시스템 동시 쓰기는 지원되지 않아 클러스터 파일시스템이 필요함을 보여준다.](../.gitbook/assets/ko-eks-04-eks-storage-part2-1.png)
 
 ### 제한사항
 
@@ -792,31 +746,7 @@ Mountpoint for Amazon S3 CSI 드라이버는 S3 버킷을 Kubernetes 파드에 �
 
 Mountpoint for S3는 특정 워크로드 패턴에 최적화되어 있습니다:
 
-```mermaid
-flowchart TD
-    subgraph Performance["성능 특성"]
-        subgraph Optimized["최적화된 작업"]
-            SeqRead["순차 읽기
-✅ 높은 처리량"]
-            LargeFiles["대용량 파일
-✅ 효율적"]
-            Streaming["스트리밍 읽기
-✅ 최적화됨"]
-        end
-
-        subgraph Limited["제한된 작업"]
-            RandomWrite["랜덤 쓰기
-❌ 지원 안 됨"]
-            SmallFiles["작은 파일 많음
-⚠️ 오버헤드"]
-            Append["파일 추가 쓰기
-❌ 지원 안 됨"]
-        end
-    end
-
-    style Optimized fill:#e6ffe6,stroke:#009900
-    style Limited fill:#ffe6e6,stroke:#cc0000
-```
+![Mountpoint for S3가 순차 읽기·대용량 파일·스트리밍 읽기에서는 높은 성능을 내지만 랜덤 쓰기·다수의 소용량 파일·파일 추가 쓰기에서는 제한적임을 대비해 보여준다.](../.gitbook/assets/ko-eks-04-eks-storage-part2-2.png)
 
 | 작업       | 성능  | 설명                     |
 | -------- | --- | ---------------------- |

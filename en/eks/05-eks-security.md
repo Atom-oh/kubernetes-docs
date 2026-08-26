@@ -34,27 +34,7 @@ Amazon EKS combines the security features of AWS and Kubernetes to provide a mul
 
 ### EKS Security Architecture
 
-```mermaid
-flowchart TD
-    subgraph AWS["AWS Responsibility"]
-        CP[EKS Control Plane] --> |Encrypted Communication| ETCD[etcd]
-        CP --> |Managed| KMS[AWS KMS]
-    end
-
-    subgraph Customer["Customer Responsibility"]
-        WN[Worker Nodes] --> |Run| Pods[Pods/Containers]
-        Pods --> |Use| SA[Service Accounts]
-        WN --> |Apply| SG[Security Groups]
-        Pods --> |Apply| NP[Network Policies]
-        Pods --> |Use| Secrets[Kubernetes Secrets]
-    end
-
-    CP <--> |Authentication/Authorization| IAM[AWS IAM]
-    CP <--> |Encrypted Communication| WN
-
-    style AWS fill:#FFCC99,stroke:#FF9900,stroke-width:2px
-    style Customer fill:#CCFFCC,stroke:#009900,stroke-width:2px
-```
+![Architecture diagram showing AWS manages the encrypted control plane, etcd, KMS, and IAM authentication, while the customer secures worker nodes, pods, service accounts, security groups, network policies, and secrets.](../.gitbook/assets/en-eks-05-eks-security-0.png)
 
 ## Latest Security Trends (2023)
 
@@ -64,38 +44,7 @@ The latest trends and recommendations in the Kubernetes and EKS security domain 
 
 Moving away from traditional perimeter-based security models, this approach does not trust any access by default and continuously verifies it.
 
-```mermaid
-flowchart LR
-    subgraph ZTA["Zero Trust Principles"]
-        P1["Encrypt All Communications"]
-        P2["Principle of Least Privilege"]
-        P3["Continuous Verification"]
-        P4["Fine-grained Access Control"]
-        P5["Inspect All Traffic"]
-    end
-
-    subgraph Implementation["EKS Implementation Methods"]
-        I1["Service Mesh (Istio)"]
-        I2["IAM Roles for Service Accounts"]
-        I3["Network Policies"]
-        I4["OPA/Gatekeeper"]
-        I5["AWS Security Hub"]
-    end
-
-    P1 --> I1
-    P2 --> I2
-    P3 --> I5
-    P4 --> I4
-    P5 --> I3
-
-    classDef principle fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef implementation fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class P1,P2,P3,P4,P5 principle;
-    class I1,I2,I3,I4,I5 implementation;
-    class ZTA,Implementation default;
-```
+![Architecture diagram mapping five Zero Trust principles to the EKS implementation methods that satisfy each one, from encrypted communication via service mesh to traffic inspection via network policies.](../.gitbook/assets/en-eks-05-eks-security-1.png)
 
 Implementing Zero Trust in EKS:
 - **Service Mesh**: mTLS communication between services using Istio or AWS App Mesh
@@ -145,63 +94,7 @@ Amazon EKS provides the following authentication mechanisms:
 2. **OIDC Provider Integration**: Integrates with external OIDC providers (e.g., Active Directory, Okta, Auth0) to manage user authentication.
 3. **IAM Roles for Service Accounts**: Links AWS IAM roles to Kubernetes service accounts so pods can securely access AWS services.
 
-```mermaid
-flowchart TD
-    subgraph Authentication_Methods ["EKS Authentication Mechanisms"]
-        IAM_Auth[AWS IAM Authenticator]
-        OIDC[OIDC Provider Integration]
-        IRSA["IAM Roles for Service Accounts
-                IRSA"]
-    end
-
-    subgraph Users_and_Services ["Users and Services"]
-        DevOps[DevOps Team]
-        Developers[Developers]
-        CI_CD[CI/CD Pipeline]
-        Pods[Kubernetes Pods]
-    end
-
-    subgraph AWS_Resources ["AWS Resources"]
-        S3[Amazon S3]
-        DynamoDB[Amazon DynamoDB]
-        SQS[Amazon SQS]
-        SNS[Amazon SNS]
-    end
-
-    subgraph K8s_Resources ["Kubernetes Resources"]
-        API_Server[API Server]
-        ServiceAccounts[Service Accounts]
-        RBAC[RBAC Permissions]
-    end
-
-    DevOps --> IAM_Auth
-    Developers --> IAM_Auth
-    Developers --> OIDC
-    CI_CD --> OIDC
-    Pods --> IRSA
-
-    IAM_Auth --> API_Server
-    OIDC --> API_Server
-    IRSA --> ServiceAccounts
-
-    ServiceAccounts --> RBAC
-    RBAC --> API_Server
-
-    IRSA --> AWS_Resources
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class S3,DynamoDB,SQS,SNS,IAM_Auth awsService;
-    class API_Server,ServiceAccounts,RBAC k8sComponent;
-    class DevOps,Developers,CI_CD,Pods userApp;
-    class OIDC,IRSA default;
-```
+![Architecture diagram showing how DevOps, developers, CI/CD, and pods authenticate through IAM Authenticator, OIDC, or IRSA into the Kubernetes API server, RBAC, and service accounts, with IRSA also granting pods direct access to AWS resources.](../.gitbook/assets/en-eks-05-eks-security-2.png)
 
 ### IAM Roles and Policy Configuration
 
@@ -327,24 +220,7 @@ The trust relationship works as follows:
 
 ### STS AssumeRoleWithWebIdentity Flow
 
-```mermaid
-sequenceDiagram
-    participant Pod
-    participant K8s as Kubernetes API
-    participant OIDC as EKS OIDC Provider
-    participant STS as AWS STS
-    participant AWS as AWS Service
-
-    Pod->>K8s: Request projected token
-    K8s->>Pod: JWT token (signed by EKS)
-    Pod->>STS: AssumeRoleWithWebIdentity(token, role ARN)
-    STS->>OIDC: Fetch JWKS (/.well-known/jwks.json)
-    OIDC->>STS: Public keys
-    STS->>STS: Validate token signature & claims
-    STS->>Pod: Temporary credentials (AccessKey, SecretKey, SessionToken)
-    Pod->>AWS: API call with temporary credentials
-    AWS->>Pod: Response
-```
+![Sequence diagram showing a pod exchanging its projected Kubernetes JWT with AWS STS, which validates the token against the EKS OIDC provider's public keys before returning temporary credentials the pod uses to call an AWS service.](../.gitbook/assets/en-eks-05-eks-security-3.png)
 
 ### Token Exchange Mechanism
 
@@ -446,31 +322,7 @@ EKS Pod Identity is a newer authentication mechanism that simplifies how pods ac
 
 The EKS Pod Identity Agent runs as a DaemonSet on your nodes and handles credential distribution:
 
-```mermaid
-flowchart TD
-    subgraph Node["EKS Node"]
-        PIA[Pod Identity Agent]
-        Pod1[Application Pod 1]
-        Pod2[Application Pod 2]
-    end
-
-    subgraph AWS["AWS Services"]
-        PIAS[Pod Identity Service]
-        STS[AWS STS]
-        IAM[IAM Role]
-    end
-
-    Pod1 -->|1. Credential request| PIA
-    PIA -->|2. GetCallerIdentity| PIAS
-    PIAS -->|3. Validate pod identity| STS
-    STS -->|4. AssumeRole| IAM
-    IAM -->|5. Temporary credentials| PIAS
-    PIAS -->|6. Credentials| PIA
-    PIA -->|7. Inject credentials| Pod1
-
-    style PIA fill:#FF9900,stroke:#333
-    style PIAS fill:#FF9900,stroke:#333
-```
+![Architecture diagram showing the seven-step credential exchange where a pod requests credentials from the node's Pod Identity Agent, which validates identity through the EKS Pod Identity Service and STS before an IAM role's temporary credentials are relayed back and injected into the pod.](../.gitbook/assets/en-eks-05-eks-security-4.png)
 
 ### Pod Identity Association Setup
 
@@ -597,53 +449,7 @@ kubectl annotate serviceaccount my-app-sa \
 
 ### Pod Identity Architecture Diagram
 
-```mermaid
-flowchart TD
-    subgraph Cluster["EKS Cluster"]
-        subgraph NS1["Namespace: app-1"]
-            SA1[ServiceAccount: app-sa]
-            Pod1[Application Pod]
-        end
-
-        subgraph NS2["Namespace: app-2"]
-            SA2[ServiceAccount: app-sa]
-            Pod2[Application Pod]
-        end
-
-        PIA[Pod Identity Agent DaemonSet]
-    end
-
-    subgraph AWS["AWS"]
-        PIA_SVC[EKS Pod Identity Service]
-
-        subgraph IAM["IAM"]
-            Role1[IAM Role: App1Role]
-            Role2[IAM Role: App2Role]
-        end
-
-        subgraph Services["AWS Services"]
-            S3[Amazon S3]
-            DDB[DynamoDB]
-        end
-    end
-
-    SA1 -.->|Association| Role1
-    SA2 -.->|Association| Role2
-
-    Pod1 --> PIA
-    Pod2 --> PIA
-    PIA --> PIA_SVC
-    PIA_SVC --> Role1
-    PIA_SVC --> Role2
-
-    Pod1 -->|Access| S3
-    Pod2 -->|Access| DDB
-
-    style PIA fill:#FF9900,stroke:#333
-    style PIA_SVC fill:#FF9900,stroke:#333
-    style Role1 fill:#3B48CC,stroke:#333,color:white
-    style Role2 fill:#3B48CC,stroke:#333,color:white
-```
+![Architecture diagram showing two namespaces each associating a service account with its own IAM role, while pods in both namespaces request credentials from a shared Pod Identity Agent and Pod Identity Service before accessing AWS services.](../.gitbook/assets/en-eks-05-eks-security-5.png)
 
 ## Cluster Endpoint Access Control
 
@@ -714,12 +520,7 @@ Operating a private-only EKS cluster requires network connectivity solutions:
 
 **Pattern 1: VPN Access**
 
-```mermaid
-flowchart LR
-    Admin[Admin Workstation] --> VPN[AWS Client VPN]
-    VPN --> VPC[VPC]
-    VPC --> EKS[EKS API Server]
-```
+![Architecture diagram showing an admin workstation reaching the EKS API server through an AWS Client VPN tunnel into the cluster's VPC, without exposing the API server directly to the internet.](../.gitbook/assets/en-eks-05-eks-security-6.png)
 
 ```bash
 # Create Client VPN endpoint
@@ -733,22 +534,7 @@ aws ec2 create-client-vpn-endpoint \
 
 **Pattern 2: Transit Gateway**
 
-```mermaid
-flowchart LR
-    subgraph OnPrem["On-Premises"]
-        Admin[Admin Workstation]
-    end
-
-    subgraph AWS["AWS"]
-        TGW[Transit Gateway]
-        VPC[EKS VPC]
-        EKS[EKS API Server]
-    end
-
-    Admin --> |Direct Connect/VPN| TGW
-    TGW --> VPC
-    VPC --> EKS
-```
+![Architecture diagram showing an on-premises admin workstation reaching the EKS API server through Direct Connect or VPN into a Transit Gateway that routes into the EKS VPC.](../.gitbook/assets/en-eks-05-eks-security-7.png)
 
 **Pattern 3: Bastion Host with SSM**
 
@@ -883,94 +669,7 @@ aws eks update-cluster-config \
 
 You can use AWS security groups to control network traffic to nodes and pods in your EKS cluster.
 
-```mermaid
-flowchart TD
-    subgraph VPC ["Amazon VPC"]
-        subgraph Public_Subnets ["Public Subnets"]
-            ALB["Application
-                Load Balancer"]
-            NAT[NAT Gateway]
-            Bastion[Bastion Host]
-        end
-
-        subgraph Private_Subnets ["Private Subnets"]
-            subgraph EKS_Cluster ["EKS Cluster"]
-                CP[EKS Control Plane]
-
-                subgraph Worker_Nodes ["Worker Nodes"]
-                    Node1[Node 1]
-                    Node2[Node 2]
-                    Node3[Node 3]
-                end
-
-                subgraph Network_Policies ["Network Policies"]
-                    Default_Deny[Default Deny Policy]
-                    App_Allow[App Allow Policy]
-                end
-            end
-        end
-
-        subgraph Security_Groups ["Security Groups"]
-            CP_SG["Control Plane
-                Security Group"]
-            Node_SG["Node
-                Security Group"]
-            ALB_SG["ALB
-                Security Group"]
-            Bastion_SG["Bastion
-                Security Group"]
-        end
-
-        subgraph VPC_Endpoints ["VPC Endpoints"]
-            ECR_API["ECR API
-                Endpoint"]
-            ECR_DKR["ECR DKR
-                Endpoint"]
-            S3_EP[S3 Endpoint]
-            STS_EP[STS Endpoint]
-        end
-    end
-
-    Internet((Internet)) --> ALB
-    Internet --> Bastion
-
-    ALB --> Node1
-    ALB --> Node2
-    ALB --> Node3
-
-    Bastion --> Node1
-    Bastion --> Node2
-    Bastion --> Node3
-
-    CP --> Node1
-    CP --> Node2
-    CP --> Node3
-
-    Node1 --> ECR_API
-    Node1 --> ECR_DKR
-    Node1 --> S3_EP
-    Node1 --> STS_EP
-
-    CP_SG --> CP
-    Node_SG --> Worker_Nodes
-    ALB_SG --> ALB
-    Bastion_SG --> Bastion
-
-    Network_Policies --> Node1
-    Network_Policies --> Node2
-    Network_Policies --> Node3
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CP,ALB,NAT,Bastion,CP_SG,Node_SG,ALB_SG,Bastion_SG,ECR_API,ECR_DKR,S3_EP,STS_EP awsService;
-    class Node1,Node2,Node3,Default_Deny,App_Allow k8sComponent;
-```
+![Architecture diagram showing internet traffic reaching worker nodes through a public-subnet load balancer and bastion host, while the private-subnet EKS control plane manages worker nodes governed by network policies, and security groups plus VPC endpoints restrict and privatize traffic at the network layer.](../.gitbook/assets/en-eks-05-eks-security-8.png)
 
 #### Cluster Security Group
 
@@ -1052,76 +751,7 @@ Pod Security Standards, introduced in Kubernetes 1.23, provide a built-in mechan
 - **Baseline**: Prevent known privilege escalation
 - **Restricted**: Apply strong security restrictions
 
-```mermaid
-flowchart TD
-    subgraph Pod_Security ["Pod Security Layers"]
-        subgraph PSS ["Pod Security Standards"]
-            Privileged["Privileged
-                No Restrictions"]
-            Baseline["Baseline
-                Prevent Privilege Escalation"]
-            Restricted["Restricted
-                Strong Restrictions"]
-        end
-
-        subgraph Security_Context ["Security Context"]
-            RunAsUser["Non-root User
-                runAsUser"]
-            ReadOnlyFS["Read-only Filesystem
-                readOnlyRootFilesystem"]
-            NoPrivEsc["Prevent Privilege Escalation
-                allowPrivilegeEscalation"]
-            DropCaps["Drop Capabilities
-                capabilities.drop"]
-        end
-
-        subgraph Policy_Engines ["Policy Engines"]
-            OPA[OPA Gatekeeper]
-            Kyverno[Kyverno]
-            AdmissionControllers[Admission Controllers]
-        end
-    end
-
-    subgraph Enforcement ["Enforcement Methods"]
-        NS_Labels[Namespace Labels]
-        Webhook[Webhook]
-        Audit[Audit]
-    end
-
-    subgraph Pod_Types ["Pod Type Security"]
-        App_Pod[Application Pods]
-        System_Pod[System Pods]
-        Privileged_Pod[Privileged Pods]
-    end
-
-    Privileged --> Privileged_Pod
-    Baseline --> App_Pod
-    Restricted --> App_Pod
-
-    Security_Context --> App_Pod
-    Security_Context --> System_Pod
-
-    OPA --> Webhook
-    Kyverno --> Webhook
-    AdmissionControllers --> Webhook
-
-    NS_Labels --> PSS
-    Webhook --> Policy_Engines
-    Audit --> PSS
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class Privileged,Baseline,Restricted,RunAsUser,ReadOnlyFS,NoPrivEsc,DropCaps k8sComponent;
-    class OPA,Kyverno,AdmissionControllers k8sComponent;
-    class NS_Labels,Webhook,Audit default;
-    class App_Pod,System_Pod,Privileged_Pod userApp;
-```
+![Layer stack diagram showing the three Pod Security Standards levels from Privileged down to Restricted, above the security-context settings and policy-engine admission controls that enforce them.](../.gitbook/assets/en-eks-05-eks-security-9.png)
 
 Example of applying PSS to a namespace:
 
@@ -1245,33 +875,7 @@ SELinux provides mandatory access control that prevents:
 
 dm-verity provides cryptographic verification of the root filesystem:
 
-```mermaid
-flowchart TD
-    subgraph Boot["Boot Process"]
-        BL[Bootloader]
-        Kernel[Linux Kernel]
-        Verity[dm-verity]
-    end
-
-    subgraph Storage["Storage"]
-        RootFS[Root Filesystem]
-        HashTree[Hash Tree]
-        RootHash[Root Hash]
-    end
-
-    BL --> Kernel
-    Kernel --> Verity
-    Verity --> RootFS
-    Verity --> HashTree
-    HashTree --> RootHash
-
-    Verity -->|Verify| Decision{Hash Match?}
-    Decision -->|Yes| Boot_OK[Continue Boot]
-    Decision -->|No| Boot_Fail[Fail Boot]
-
-    style Verity fill:#FF9900,stroke:#333
-    style Decision fill:#326CE5,stroke:#333,color:white
-```
+![Flowchart showing the Bottlerocket boot chain from bootloader to kernel to dm-verity, which builds a hash tree over the root filesystem and compares it against the trusted root hash, continuing boot only on a match and failing boot otherwise.](../.gitbook/assets/en-eks-05-eks-security-10.png)
 
 Key benefits:
 - **Tamper Detection**: Any modification to system files is detected
@@ -1387,34 +991,7 @@ The effective permissions are the intersection of identity-based policies and pe
 Effective Permissions = Identity Policy ∩ Permission Boundary
 ```
 
-```mermaid
-flowchart TD
-    subgraph Request["API Request"]
-        Action[Requested Action]
-    end
-
-    subgraph Evaluation["Permission Evaluation"]
-        Identity[Identity-Based Policy]
-        Boundary[Permission Boundary]
-        Intersection{Intersection}
-    end
-
-    subgraph Result["Result"]
-        Allow[Allow]
-        Deny[Deny]
-    end
-
-    Action --> Identity
-    Action --> Boundary
-    Identity --> Intersection
-    Boundary --> Intersection
-    Intersection -->|Both Allow| Allow
-    Intersection -->|Either Denies| Deny
-
-    style Intersection fill:#FF9900,stroke:#333
-    style Allow fill:#00C7B7,stroke:#333
-    style Deny fill:#CC0000,stroke:#333,color:white
-```
+![Flowchart showing a requested action evaluated against both the identity-based policy and the permission boundary, where the effective permission is the intersection of the two: allowed only if both allow, denied if either denies.](../.gitbook/assets/en-eks-05-eks-security-11.png)
 
 Example scenario:
 - Identity policy allows: `s3:*`, `ec2:*`, `rds:*`
@@ -1693,88 +1270,7 @@ Amazon EKS added seven new IAM condition keys that let you enforce policy-based,
 
 EKS encrypts Kubernetes secrets stored in etcd by default. You can use AWS KMS for an additional layer of encryption:
 
-```mermaid
-flowchart TD
-    subgraph Encryption_Options ["EKS Encryption Options"]
-        subgraph ETCD_Encryption ["etcd Encryption"]
-            Default[Default Encryption]
-            KMS_Encryption[AWS KMS Encryption]
-        end
-
-        subgraph Secret_Management ["Secrets Management Solutions"]
-            K8s_Secrets[Kubernetes Secrets]
-            AWS_SM[AWS Secrets Manager]
-            AWS_PS[AWS Parameter Store]
-            Vault[HashiCorp Vault]
-            SOPS[Mozilla SOPS]
-        end
-
-        subgraph Integration_Tools ["Integration Tools"]
-            ESO["External Secrets
-                Operator"]
-            ASCP["AWS Secrets and
-                Configuration Provider"]
-            CSI_Driver["Secrets Store
-                CSI Driver"]
-        end
-    end
-
-    subgraph Usage_Patterns ["Usage Patterns"]
-        subgraph Storage ["Storage"]
-            Encrypted_Storage[Encrypted Storage]
-            Version_Control[Version Control]
-            Access_Control[Access Control]
-        end
-
-        subgraph Retrieval ["Retrieval"]
-            Pod_Mount[Pod Mount]
-            Env_Vars[Environment Variables]
-            Init_Container[Init Container]
-        end
-    end
-
-    KMS_Encryption --> Default
-
-    AWS_SM --> ESO
-    AWS_PS --> ESO
-    AWS_SM --> ASCP
-    AWS_PS --> ASCP
-    Vault --> CSI_Driver
-
-    ESO --> K8s_Secrets
-    ASCP --> K8s_Secrets
-    CSI_Driver --> K8s_Secrets
-
-    K8s_Secrets --> Encrypted_Storage
-    AWS_SM --> Encrypted_Storage
-    AWS_PS --> Encrypted_Storage
-    Vault --> Encrypted_Storage
-    SOPS --> Encrypted_Storage
-
-    AWS_SM --> Version_Control
-    Vault --> Version_Control
-
-    AWS_SM --> Access_Control
-    AWS_PS --> Access_Control
-    Vault --> Access_Control
-
-    K8s_Secrets --> Pod_Mount
-    K8s_Secrets --> Env_Vars
-    K8s_Secrets --> Init_Container
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class KMS_Encryption,AWS_SM,AWS_PS,ASCP awsService;
-    class K8s_Secrets,ESO,CSI_Driver k8sComponent;
-    class Vault,SOPS userApp;
-    class Default,Encrypted_Storage,Version_Control,Access_Control,Pod_Mount,Env_Vars,Init_Container default;
-```
+![Architecture diagram showing external secret stores feeding Kubernetes Secrets through integration tools such as the External Secrets Operator, then flowing into encrypted storage and pod retrieval, alongside independent etcd envelope encryption.](../.gitbook/assets/en-eks-05-eks-security-12.png)
 
 ```bash
 eksctl create cluster --name my-cluster --region us-west-2 --encryption-provider-config-key arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
@@ -1853,78 +1349,7 @@ sops --decrypt secrets.enc.yaml
 
 You can enable EKS control plane audit logs to record all API calls made in the cluster:
 
-```mermaid
-flowchart TD
-    subgraph Compliance_Audit ["Compliance and Auditing"]
-        subgraph Logging ["Logging and Monitoring"]
-            CP_Logs[Control Plane Logs]
-            Audit_Logs[Audit Logs]
-            CloudTrail[AWS CloudTrail]
-            CloudWatch[Amazon CloudWatch]
-            FluentBit[Fluent Bit]
-        end
-
-        subgraph Compliance_Tools ["Compliance Tools"]
-            Config[AWS Config]
-            SecurityHub[AWS Security Hub]
-            Inspector[Amazon Inspector]
-            CIS_Benchmark["CIS Kubernetes
-                Benchmark"]
-        end
-
-        subgraph Compliance_Standards ["Compliance Standards"]
-            PCI_DSS[PCI DSS]
-            HIPAA[HIPAA]
-            GDPR[GDPR]
-            SOC2[SOC 2]
-            ISO27001[ISO 27001]
-        end
-    end
-
-    subgraph Audit_Flow ["Audit Workflow"]
-        Log_Collection[Log Collection]
-        Log_Storage[Log Storage]
-        Log_Analysis[Log Analysis]
-        Alerting[Alerting]
-        Reporting[Reporting]
-    end
-
-    CP_Logs --> Log_Collection
-    Audit_Logs --> Log_Collection
-    CloudTrail --> Log_Collection
-    FluentBit --> Log_Collection
-
-    Log_Collection --> CloudWatch
-    CloudWatch --> Log_Storage
-
-    Log_Storage --> Log_Analysis
-    Log_Analysis --> SecurityHub
-
-    SecurityHub --> Alerting
-    SecurityHub --> Reporting
-
-    Config --> CIS_Benchmark
-    Inspector --> CIS_Benchmark
-
-    CIS_Benchmark --> PCI_DSS
-    CIS_Benchmark --> HIPAA
-    CIS_Benchmark --> GDPR
-    CIS_Benchmark --> SOC2
-    CIS_Benchmark --> ISO27001
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CloudTrail,CloudWatch,Config,SecurityHub,Inspector awsService;
-    class CP_Logs,Audit_Logs k8sComponent;
-    class FluentBit,CIS_Benchmark userApp;
-    class PCI_DSS,HIPAA,GDPR,SOC2,ISO27001,Log_Collection,Log_Storage,Log_Analysis,Alerting,Reporting default;
-```
+![Architecture diagram showing two parallel pipelines: control-plane and audit logs flowing through CloudWatch into a log pipeline, Security Hub, and alerting, alongside AWS Config and Inspector findings mapped through a CIS benchmark to compliance standards such as PCI DSS and HIPAA.](../.gitbook/assets/en-eks-05-eks-security-13.png)
 
 ```bash
 aws eks update-cluster-config \
@@ -1952,72 +1377,7 @@ You can use AWS Security Hub to centrally manage and monitor the security postur
 
 You can enable Amazon GuardDuty EKS Protection to detect potential security threats in your EKS cluster:
 
-```mermaid
-flowchart TD
-    subgraph Security_Monitoring ["Security Monitoring and Detection"]
-        subgraph AWS_Services ["AWS Security Services"]
-            GuardDuty[Amazon GuardDuty]
-            SecurityHub[AWS Security Hub]
-            Detective[Amazon Detective]
-            CloudWatch[Amazon CloudWatch]
-        end
-
-        subgraph K8s_Tools ["Kubernetes Security Tools"]
-            Falco[Falco]
-            KubeAudit[kube-audit]
-            TriageParty[Triage Party]
-            Starboard[Starboard]
-        end
-
-        subgraph Detection_Types ["Detection Types"]
-            Runtime[Runtime Security]
-            Network[Network Security]
-            Config[Configuration Security]
-            Identity[Identity and Access Security]
-        end
-    end
-
-    subgraph Threat_Detection ["Threat Detection Workflow"]
-        Collection[Data Collection]
-        Analysis[Data Analysis]
-        Detection[Threat Detection]
-        Response[Response]
-        Remediation[Remediation]
-    end
-
-    GuardDuty --> Runtime
-    GuardDuty --> Network
-    GuardDuty --> Identity
-
-    SecurityHub --> Config
-    SecurityHub --> Identity
-
-    Falco --> Runtime
-    KubeAudit --> Config
-
-    CloudWatch --> Collection
-    GuardDuty --> Collection
-    Falco --> Collection
-
-    Collection --> Analysis
-    Analysis --> Detection
-    Detection --> Response
-    Response --> Remediation
-
-    Detection --> SecurityHub
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class GuardDuty,SecurityHub,Detective,CloudWatch awsService;
-    class Falco,KubeAudit,TriageParty,Starboard k8sComponent;
-    class Runtime,Network,Config,Identity,Collection,Analysis,Detection,Response,Remediation default;
-```
+![Architecture diagram showing AWS security services and Kubernetes security tools feeding signal collection, which is analyzed and correlated to drive response and remediation, while findings also report into AWS Security Hub, which in turn configures what signal categories are collected.](../.gitbook/assets/en-eks-05-eks-security-14.png)
 
 ```bash
 aws guardduty update-detector \
@@ -2104,51 +1464,7 @@ Additional security requirements to consider when using EKS in the financial ser
 
 ### EKS Security Architecture Example for Financial Services
 
-```mermaid
-flowchart TD
-    subgraph VPC["Financial Services VPC"]
-        subgraph PrivateSubnets["Private Subnets"]
-            EKS[EKS Cluster]
-            EKS --> AppPods[Application Pods]
-            AppPods --> SecPods[Security Sidecars]
-        end
-
-        subgraph SecurityTools["Security Tools"]
-            WAF[AWS WAF]
-            GuardDuty[GuardDuty]
-            SecurityHub[Security Hub]
-            Config[AWS Config]
-            CloudTrail[CloudTrail]
-        end
-
-        subgraph DataServices["Data Services"]
-            RDS["(Amazon RDS
-                Encrypted)"]
-            S3["(S3 Bucket
-                Encrypted)"]
-            DynamoDB["(DynamoDB
-                Encrypted)"]
-        end
-    end
-
-    Internet((Internet)) --> WAF
-    WAF --> ALB["Application
-                Load Balancer"]
-    ALB --> AppPods
-
-    AppPods --> RDS
-    AppPods --> S3
-    AppPods --> DynamoDB
-
-    SecurityTools --> |Monitoring| EKS
-
-    KMS[AWS KMS] --> |Encryption Key Management| DataServices
-
-    style VPC fill:#f9f9f9,stroke:#333,stroke-width:1px
-    style PrivateSubnets fill:#e6f7ff,stroke:#0099cc,stroke-width:1px
-    style SecurityTools fill:#ffe6e6,stroke:#cc0000,stroke-width:1px
-    style DataServices fill:#e6ffe6,stroke:#009900,stroke-width:1px
-```
+![Architecture diagram showing internet traffic filtered by AWS WAF and a load balancer into application pods running on a private-subnet EKS cluster alongside security sidecars, with security tooling monitoring the cluster and KMS-encrypted data services holding RDS, S3, and DynamoDB.](../.gitbook/assets/en-eks-05-eks-security-15.png)
 
 ## Conclusion
 

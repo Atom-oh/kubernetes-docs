@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cost-title cost-desc">
+    <title id="cost-title">Storage cost optimization map</title>
+    <desc id="cost-desc">Diagram showing four AWS storage types — EBS, EFS, FSx for Lustre, S3 — each driving matching optimization actions (volume tuning, EFS settings, FSx settings, lifecycle management), all four rolling up into a single cost-monitoring view built on Cost Explorer, Kubernetes cost allocation, and anomaly detection.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="8" y="64" width="240" height="408" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="28" y="68" width="132" height="12" rx="2" fill="#ffffff"/>
+    <text x="94" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">STORAGE TYPES</text>
+
+    <rect x="360" y="64" width="280" height="408" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="380" y="68" width="152" height="12" rx="2" fill="#ffffff"/>
+    <text x="456" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">OPTIMIZATION ACTIONS</text>
+
+    <rect x="712" y="64" width="224" height="408" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="732" y="68" width="132" height="12" rx="2" fill="#ffffff"/>
+    <text x="798" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">COST MONITORING</text>
+
+    <!-- Arrows: storage type -> optimization action (drawn before boxes) -->
+    <!-- Rows: EBS=128, EFS=224, FSx=320, S3=416. G1=row1(96-160) G3=row2(192-256) G4=row3(288-352) G2=row4(384-448) -->
+    <line x1="232" y1="128" x2="376" y2="128" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- EBS -> G2 (Lifecycle Mgmt, row4) elbow, entering at y=404 (offset -12 from S3's center-416 entry) -->
+    <path d="M232,128 H296 Q304,128 304,136 V396 Q304,404 312,404 H376" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="232" y1="224" x2="376" y2="224" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="232" y1="320" x2="376" y2="320" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- S3 -> G2 straight, entering at y=416 (center) -->
+    <line x1="232" y1="416" x2="376" y2="416" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Arrows: optimization action -> Cost Monitoring (fan into single tall node, left edge x=728, entries at 232/268/300/336) -->
+    <path d="M624,128 H668 Q676,128 676,136 V224 Q676,232 684,232 H728" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <path d="M624,224 H668 Q676,224 676,232 V260 Q676,268 684,268 H728" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <path d="M624,320 H668 Q676,320 676,312 V308 Q676,300 684,300 H728" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <path d="M624,416 H668 Q676,416 676,408 V344 Q676,336 684,336 H728" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Nodes: Storage Types (col1) -->
+    <rect x="24" y="96" width="208" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="128" y="122" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Amazon EBS</text>
+    <text x="128" y="138" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">gp3 / io2 / st1 / sc1</text>
+
+    <rect x="24" y="192" width="208" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="128" y="218" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Amazon EFS</text>
+    <text x="128" y="234" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">bursting / provisioned</text>
+
+    <rect x="24" y="288" width="208" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="128" y="314" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">FSx for Lustre</text>
+    <text x="128" y="330" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">scratch / persistent</text>
+
+    <rect x="24" y="384" width="208" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="128" y="410" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Amazon S3</text>
+    <text x="128" y="426" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Glacier tiers</text>
+
+    <!-- Nodes: Optimization Actions (col2) -->
+    <rect x="376" y="96" width="248" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="500" y="122" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Volume Optimization</text>
+    <text x="500" y="138" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">type / size / gp3 migration</text>
+
+    <rect x="376" y="192" width="248" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="500" y="218" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EFS Optimization</text>
+    <text x="500" y="234" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">throughput / IA / access pts</text>
+
+    <rect x="376" y="288" width="248" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="500" y="314" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">FSx Optimization</text>
+    <text x="500" y="330" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">deployment / compression</text>
+
+    <rect x="376" y="384" width="248" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="500" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Lifecycle Management</text>
+    <text x="500" y="420" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tiering / snapshots / reclaim</text>
+    <text x="500" y="434" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">policy</text>
+
+    <!-- Node: Cost Monitoring (col3, focal, single tall node) -->
+    <rect x="728" y="196" width="192" height="176" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="824" y="272" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cost Monitoring</text>
+    <text x="824" y="292" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Cost Explorer</text>
+    <text x="824" y="306" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">K8s cost allocation</text>
+    <text x="824" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">anomaly detection</text>
+
+    <!-- Legend -->
+    <line x1="32" y1="512" x2="928" y2="512" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="32" y="528" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="120" y="521" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="140" y="529" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">SINGLE ROLL-UP VIEW ACROSS ALL ACTIONS</text>
+  </svg>

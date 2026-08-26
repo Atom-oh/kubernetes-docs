@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 588" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-12-kubernetes-version-roadmap-15-title ko-eks-12-kubernetes-version-roadmap-15-desc">
+<title id="ko-eks-12-kubernetes-version-roadmap-15-title">인트리 볼륨 플러그인 → CSI 마이그레이션 타임라인</title>
+<desc id="ko-eks-12-kubernetes-version-roadmap-15-desc">AWS EBS, GCE PD, CephFS/RBD, Azure File/Disk, vSphere 등 인트리 볼륨 플러그인이 CSI로 마이그레이션되어 Deprecated, Removed 단계로 이어지는 일정을 스토리지 드라이버별로 보여준다.</desc>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style><defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="196" y1="48" x2="196" y2="48" stroke="none"/>
+<text x="200.0" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2022-12</text>
+<text x="292.5" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2023-04</text>
+<text x="385.0" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2023-08</text>
+<text x="477.5" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2023-12</text>
+<text x="570.0" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2024-04</text>
+<text x="662.5" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2024-08</text>
+<text x="755.0" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2024-12</text>
+<text x="847.5" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2025-04</text>
+<text x="940.0" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2025-08</text>
+<line x1="200" y1="48" x2="940.0" y2="48" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="8" y="64" width="924" height="88" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="16" y="76" fill="#545B64" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.12em">AWS EBS</text>
+<rect x="200.0" y="88" width="92.5" height="24" rx="4" fill="rgba(255,153,0,0.14)" stroke="#EC7211" stroke-width="1"/>
+<text x="20" y="105" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">CSI Migration GA</text>
+<rect x="292.5" y="128" width="92.5" height="24" rx="4" fill="rgba(84,91,100,0.22)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="145" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">In-tree Removed</text>
+<rect x="8" y="164" width="924" height="88" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="16" y="176" fill="#545B64" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.12em">GCE PD</text>
+<rect x="200.0" y="188" width="92.5" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="205" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">CSI Migration GA</text>
+<rect x="385.0" y="228" width="185.0" height="24" rx="4" fill="rgba(84,91,100,0.22)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="245" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">In-tree Removed</text>
+<rect x="8" y="264" width="924" height="88" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="16" y="276" fill="#545B64" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.12em">CephFS/RBD</text>
+<rect x="570.0" y="288" width="92.5" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="305" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Deprecated</text>
+<rect x="662.5" y="328" width="92.5" height="24" rx="4" fill="rgba(84,91,100,0.22)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="345" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Removed (1.31)</text>
+<rect x="8" y="364" width="924" height="88" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="16" y="376" fill="#545B64" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.12em">Azure File/Disk</text>
+<rect x="570.0" y="388" width="185.0" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="405" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Deprecated</text>
+<rect x="755.0" y="428" width="92.5" height="24" rx="4" fill="rgba(84,91,100,0.22)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="445" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Removed (1.32)</text>
+<rect x="8" y="464" width="924" height="88" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="16" y="476" fill="#545B64" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.12em">vSphere</text>
+<rect x="570.0" y="488" width="92.5" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="505" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">CSI Migration GA</text>
+<rect x="662.5" y="528" width="277.5" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="545" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">In-tree Deprecated</text>
+
+</svg>

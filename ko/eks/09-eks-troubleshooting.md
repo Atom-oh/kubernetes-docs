@@ -19,43 +19,7 @@ Amazon EKS 클러스터를 운영하다 보면 다양한 문제가 발생할 수
 
 ## 문제 해결 기본 사항
 
-```mermaid
-flowchart TD
-    TroubleshootingBasics[문제 해결 기본 사항] --> Approach[문제 해결 접근 방식]
-    TroubleshootingBasics --> Tools[필수 도구 및 명령어]
-    TroubleshootingBasics --> LogCollection[로그 수집 및 분석]
-    TroubleshootingBasics --> DiagnosticInfo[진단 정보 수집]
-    
-    Approach --> IdentifyProblem[1. 문제 식별]
-    Approach --> CollectInfo[2. 정보 수집]
-    Approach --> Analyze[3. 분석]
-    Approach --> Resolve[4. 해결]
-    Approach --> Verify[5. 검증]
-    Approach --> Document[6. 문서화]
-    
-    Tools --> AWSCLI[AWS CLI]
-    Tools --> Kubectl[kubectl]
-    Tools --> Eksctl[eksctl]
-    Tools --> CloudWatch[AWS CloudWatch]
-    
-    LogCollection --> ControlPlane[EKS 컨트롤 플레인 로그]
-    LogCollection --> NodeLogs[노드 로그]
-    LogCollection --> PodLogs[파드 로그]
-    
-    DiagnosticInfo --> ClusterInfo[클러스터 진단 정보]
-    DiagnosticInfo --> SystemResources[시스템 리소스 정보]
-    DiagnosticInfo --> NetworkDiagnostics[네트워크 진단]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class AWSCLI,CloudWatch,ControlPlane awsService;
-    class Kubectl,Eksctl,NodeLogs,PodLogs k8sComponent;
-    class TroubleshootingBasics,Approach,Tools,LogCollection,DiagnosticInfo,IdentifyProblem,CollectInfo,Analyze,Resolve,Verify,Document,ClusterInfo,SystemResources,NetworkDiagnostics default;
-```
+![EKS 문제 해결의 접근 방식, 필수 도구, 로그 수집, 진단 정보 수집이라는 네 가지 기본 축을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-0.png)
 
 ### 문제 해결 접근 방식
 
@@ -254,49 +218,7 @@ kubectl exec -it netshoot -- traceroute <target-ip>
 
 ## 클러스터 생성 및 관리 문제
 
-```mermaid
-flowchart TD
-    ClusterIssues[클러스터 생성 및 관리 문제] --> CreationFailure[클러스터 생성 실패]
-    ClusterIssues --> EndpointAccess[클러스터 엔드포인트 접근 문제]
-    ClusterIssues --> DeletionIssues[클러스터 삭제 문제]
-    
-    CreationFailure --> CommonCauses1[일반적인 원인]
-    CreationFailure --> TroubleshootingSteps1[문제 해결 단계]
-    CreationFailure --> Solutions1[일반적인 해결 방법]
-    
-    CommonCauses1 --> IAMPermissions[IAM 권한 부족]
-    CommonCauses1 --> QuotaExceeded[서비스 할당량 초과]
-    CommonCauses1 --> NetworkConfig[네트워크 구성 문제]
-    CommonCauses1 --> ResourceConflict[리소스 이름 충돌]
-    CommonCauses1 --> ServiceAvailability[AWS 서비스 가용성 문제]
-    
-    EndpointAccess --> CommonCauses2[일반적인 원인]
-    EndpointAccess --> TroubleshootingSteps2[문제 해결 단계]
-    EndpointAccess --> Solutions2[일반적인 해결 방법]
-    
-    CommonCauses2 --> NetworkRestriction[네트워크 접근 제한]
-    CommonCauses2 --> AuthIssues[인증 문제]
-    CommonCauses2 --> KubeconfigError[kubeconfig 구성 오류]
-    CommonCauses2 --> APIServerAvailability[API 서버 가용성 문제]
-    
-    DeletionIssues --> CommonCauses3[일반적인 원인]
-    DeletionIssues --> TroubleshootingSteps3[문제 해결 단계]
-    DeletionIssues --> Solutions3[일반적인 해결 방법]
-    
-    CommonCauses3 --> ResourceDependency[리소스 의존성]
-    CommonCauses3 --> IAMPermissionLack[IAM 권한 부족]
-    CommonCauses3 --> ResourceDeletionFailure[리소스 삭제 실패]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class IAMPermissions,QuotaExceeded,ServiceAvailability,APIServerAvailability,ResourceDependency,IAMPermissionLack awsService;
-    class KubeconfigError,NetworkConfig k8sComponent;
-    class ClusterIssues,CreationFailure,EndpointAccess,DeletionIssues,CommonCauses1,TroubleshootingSteps1,Solutions1,NetworkRestriction,AuthIssues,CommonCauses2,TroubleshootingSteps2,Solutions2,CommonCauses3,TroubleshootingSteps3,Solutions3,ResourceConflict,ResourceDeletionFailure default;
-```
+![클러스터 생성 실패, 엔드포인트 접근 문제, 삭제 문제 세 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-1.png)
 
 ### 클러스터 생성 실패
 
@@ -602,54 +524,7 @@ aws ec2 describe-security-groups --filters "Name=tag:kubernetes.io/cluster/<clus
 
 EKS 클러스터에서 네트워킹 문제는 가장 흔하게 발생하는 문제 중 하나입니다. 이 섹션에서는 일반적인 네트워킹 문제와 그 해결 방법을 다룹니다.
 
-```mermaid
-flowchart TD
-    NetworkingIssues[네트워킹 문제] --> PodCommunication[파드 간 통신 문제]
-    NetworkingIssues --> ServiceAccess[서비스 접근 문제]
-    NetworkingIssues --> LoadBalancer[로드 밸런서 문제]
-    NetworkingIssues --> DNSIssues[DNS 문제]
-    NetworkingIssues --> VPCCNIIssues[VPC CNI 문제]
-    
-    PodCommunication --> PodCommonCauses[일반적인 원인]
-    PodCommunication --> PodTroubleshootingSteps[문제 해결 단계]
-    PodCommunication --> PodSolutions[일반적인 해결 방법]
-    
-    PodCommonCauses --> NetworkPolicy[네트워크 정책]
-    PodCommonCauses --> SecurityGroupRules[보안 그룹 규칙]
-    PodCommonCauses --> CNIPluginIssues[CNI 플러그인 문제]
-    PodCommonCauses --> PodCIDRConflict[파드 CIDR 충돌]
-    PodCommonCauses --> MTUMismatch[MTU 불일치]
-    
-    ServiceAccess --> ServiceCommonCauses[일반적인 원인]
-    ServiceAccess --> ServiceTroubleshootingSteps[문제 해결 단계]
-    ServiceAccess --> ServiceSolutions[일반적인 해결 방법]
-    
-    ServiceCommonCauses --> SelectorMismatch[서비스 선택자 불일치]
-    ServiceCommonCauses --> EndpointIssues[엔드포인트 문제]
-    ServiceCommonCauses --> PodStatusIssues[파드 상태 문제]
-    ServiceCommonCauses --> PortMismatch[서비스 포트 불일치]
-    ServiceCommonCauses --> KubeProxyIssues[kube-proxy 문제]
-    
-    LoadBalancer --> LBCommonCauses[일반적인 원인]
-    LoadBalancer --> LBTroubleshootingSteps[문제 해결 단계]
-    LoadBalancer --> LBSolutions[일반적인 해결 방법]
-    
-    LBCommonCauses --> SubnetTagMissing[서브넷 태그 누락]
-    LBCommonCauses --> SGRuleRestriction[보안 그룹 규칙 제한]
-    LBCommonCauses --> HealthCheckFailure[상태 확인 실패]
-    LBCommonCauses --> ServiceAnnotationIssues[서비스 주석 문제]
-    LBCommonCauses --> QuotaExceeded[할당량 초과]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class SecurityGroupRules,SubnetTagMissing,SGRuleRestriction,HealthCheckFailure,QuotaExceeded awsService;
-    class NetworkPolicy,CNIPluginIssues,PodCIDRConflict,SelectorMismatch,EndpointIssues,PodStatusIssues,PortMismatch,KubeProxyIssues,ServiceAnnotationIssues k8sComponent;
-    class NetworkingIssues,PodCommunication,ServiceAccess,LoadBalancer,DNSIssues,VPCCNIIssues,PodCommonCauses,PodTroubleshootingSteps,PodSolutions,MTUMismatch,ServiceCommonCauses,ServiceTroubleshootingSteps,ServiceSolutions,LBCommonCauses,LBTroubleshootingSteps,LBSolutions default;
-```
+![파드 간 통신, 서비스 접근, 로드 밸런서, DNS, VPC CNI 다섯 갈래의 네트워킹 문제와 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-2.png)
 
 ### 파드 간 통신 문제
 
@@ -1234,52 +1109,7 @@ aws iam attach-role-policy \
 
 ## 노드 및 파드 문제
 
-```mermaid
-flowchart TD
-    NodePodIssues[노드 및 파드 문제] --> NodeStatus[노드 상태 문제]
-    NodePodIssues --> PodIssues[파드 문제]
-    NodePodIssues --> AutoscalingIssues[자동 스케일링 문제]
-    
-    NodeStatus --> NodeCommonCauses[일반적인 원인]
-    NodeStatus --> NodeTroubleshootingSteps[문제 해결 단계]
-    NodeStatus --> NodeSolutions[일반적인 해결 방법]
-    
-    NodeCommonCauses --> ResourceShortage[리소스 부족]
-    NodeCommonCauses --> KubeletIssues[kubelet 문제]
-    NodeCommonCauses --> NetworkConnectivity[네트워크 연결 문제]
-    NodeCommonCauses --> AuthenticationIssues[인증 문제]
-    NodeCommonCauses --> SystemIssues[시스템 문제]
-    
-    PodIssues --> PodCommonCauses[일반적인 원인]
-    PodIssues --> PodTroubleshootingSteps[문제 해결 단계]
-    PodIssues --> PodSolutions[일반적인 해결 방법]
-    
-    PodCommonCauses --> ResourceConstraints[리소스 제약]
-    PodCommonCauses --> ImageIssues[이미지 문제]
-    PodCommonCauses --> ConfigErrors[구성 오류]
-    PodCommonCauses --> PermissionIssues[권한 문제]
-    PodCommonCauses --> NodeIssues[노드 문제]
-    
-    AutoscalingIssues --> AutoscalingCommonCauses[일반적인 원인]
-    AutoscalingIssues --> AutoscalingTroubleshootingSteps[문제 해결 단계]
-    AutoscalingIssues --> AutoscalingSolutions[일반적인 해결 방법]
-    
-    AutoscalingCommonCauses --> MetricIssues[메트릭 문제]
-    AutoscalingCommonCauses --> HPAConfigErrors[HPA 구성 오류]
-    AutoscalingCommonCauses --> ResourceLimitations[리소스 제약]
-    AutoscalingCommonCauses --> NodeGroupConfigErrors[노드 그룹 구성 오류]
-    AutoscalingCommonCauses --> CooldownPeriod[쿨다운 기간]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class ResourceShortage,NodeGroupConfigErrors awsService;
-    class KubeletIssues,AuthenticationIssues,ResourceConstraints,ImageIssues,ConfigErrors,PermissionIssues,NodeIssues,MetricIssues,HPAConfigErrors,ResourceLimitations,CooldownPeriod k8sComponent;
-    class NodePodIssues,NodeStatus,PodIssues,AutoscalingIssues,NodeCommonCauses,NodeTroubleshootingSteps,NodeSolutions,NetworkConnectivity,SystemIssues,PodCommonCauses,PodTroubleshootingSteps,PodSolutions,AutoscalingCommonCauses,AutoscalingTroubleshootingSteps,AutoscalingSolutions default;
-```
+![노드 상태 문제, 파드 문제, 자동 스케일링 문제 세 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-3.png)
 
 ### 노드 상태 문제
 
@@ -1620,41 +1450,7 @@ EOF
 ```
 ## IAM 및 인증 문제
 
-```mermaid
-flowchart TD
-    IAMAuthIssues[IAM 및 인증 문제] --> IAMAuth[IAM 인증 문제]
-    IAMAuthIssues --> RBACIssues[RBAC 문제]
-    
-    IAMAuth --> IAMCommonCauses[일반적인 원인]
-    IAMAuth --> IAMTroubleshootingSteps[문제 해결 단계]
-    IAMAuth --> IAMSolutions[일반적인 해결 방법]
-    
-    IAMCommonCauses --> AwsAuthConfigMap[aws-auth ConfigMap 오류]
-    IAMCommonCauses --> IAMRolePermissions[IAM 역할 권한 부족]
-    IAMCommonCauses --> OIDCProviderIssues[OIDC 공급자 문제]
-    IAMCommonCauses --> AWSCLICredentials[AWS CLI 자격 증명 문제]
-    IAMCommonCauses --> KubeconfigIssues[kubeconfig 문제]
-    
-    RBACIssues --> RBACCommonCauses[일반적인 원인]
-    RBACIssues --> RBACTroubleshootingSteps[문제 해결 단계]
-    RBACIssues --> RBACSolutions[일반적인 해결 방법]
-    
-    RBACCommonCauses --> InsufficientPermissions[권한 부족]
-    RBACCommonCauses --> RoleBindingIssues[역할 바인딩 문제]
-    RBACCommonCauses --> NamespaceScopeIssues[네임스페이스 범위 문제]
-    RBACCommonCauses --> ServiceAccountConfigIssues[서비스 계정 구성 오류]
-    RBACCommonCauses --> ClusterRoleIssues[클러스터 역할 문제]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class IAMRolePermissions,OIDCProviderIssues,AWSCLICredentials awsService;
-    class AwsAuthConfigMap,KubeconfigIssues,InsufficientPermissions,RoleBindingIssues,NamespaceScopeIssues,ServiceAccountConfigIssues,ClusterRoleIssues k8sComponent;
-    class IAMAuthIssues,IAMAuth,RBACIssues,IAMCommonCauses,IAMTroubleshootingSteps,IAMSolutions,RBACCommonCauses,RBACTroubleshootingSteps,RBACSolutions default;
-```
+![IAM 인증 문제와 RBAC 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-4.png)
 
 ### IAM 인증 문제
 
@@ -1873,43 +1669,7 @@ kubectl create serviceaccount <serviceaccount-name> -n <namespace>
 ```
 ## 스토리지 문제
 
-```mermaid
-flowchart TD
-    StorageIssues[스토리지 문제] --> EBSIssues[EBS 볼륨 문제]
-    StorageIssues --> EFSIssues[EFS 문제]
-    
-    EBSIssues --> EBSCommonCauses[일반적인 원인]
-    EBSIssues --> EBSTroubleshootingSteps[문제 해결 단계]
-    EBSIssues --> EBSSolutions[일반적인 해결 방법]
-    
-    EBSCommonCauses --> VolumeLimitExceeded[볼륨 한도 초과]
-    EBSCommonCauses --> PermissionIssues[권한 문제]
-    EBSCommonCauses --> AZMismatch[가용 영역 불일치]
-    EBSCommonCauses --> StorageClassIssues[스토리지 클래스 문제]
-    EBSCommonCauses --> CSIDriverIssues[CSI 드라이버 문제]
-    
-    EFSIssues --> EFSCommonCauses[일반적인 원인]
-    EFSIssues --> EFSTroubleshootingSteps[문제 해결 단계]
-    EFSIssues --> EFSSolutions[일반적인 해결 방법]
-    
-    EFSCommonCauses --> MountTargetIssues[마운트 대상 문제]
-    EFSCommonCauses --> SecurityGroupIssues[보안 그룹 문제]
-    EFSCommonCauses --> EFSPermissionIssues[권한 문제]
-    EFSCommonCauses --> EFSCSIDriverIssues[CSI 드라이버 문제]
-    EFSCommonCauses --> NetworkIssues[네트워크 문제]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class VolumeLimitExceeded,PermissionIssues,AZMismatch,MountTargetIssues,SecurityGroupIssues,EFSPermissionIssues awsService;
-    class StorageClassIssues,CSIDriverIssues,EFSCSIDriverIssues k8sComponent;
-    class EBSIssues,EFSIssues dataStore;
-    class StorageIssues,EBSCommonCauses,EBSTroubleshootingSteps,EBSSolutions,EFSCommonCauses,EFSTroubleshootingSteps,EFSSolutions,NetworkIssues default;
-```
+![EBS 볼륨 문제와 EFS 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-5.png)
 
 ### EBS 볼륨 문제
 
@@ -2208,43 +1968,7 @@ EOF
 ```
 ## 로깅 및 모니터링 문제
 
-```mermaid
-flowchart TD
-    LoggingMonitoringIssues[로깅 및 모니터링 문제] --> CloudWatchIssues[CloudWatch 로그 문제]
-    LoggingMonitoringIssues --> MonitoringIssues[모니터링 문제]
-    
-    CloudWatchIssues --> CWCommonCauses[일반적인 원인]
-    CloudWatchIssues --> CWTroubleshootingSteps[문제 해결 단계]
-    CloudWatchIssues --> CWSolutions[일반적인 해결 방법]
-    
-    CWCommonCauses --> LogGroupPermissions[로그 그룹 권한 문제]
-    CWCommonCauses --> FluentBitConfig[Fluent Bit 또는 Fluentd 구성 오류]
-    CWCommonCauses --> LogVolumeLimit[로그 볼륨 제한]
-    CWCommonCauses --> ContainerLogPath[컨테이너 로그 경로 문제]
-    CWCommonCauses --> IAMRolePermissionIssues[IAM 역할 권한 문제]
-    
-    MonitoringIssues --> MonitoringCommonCauses[일반적인 원인]
-    MonitoringIssues --> MonitoringTroubleshootingSteps[문제 해결 단계]
-    MonitoringIssues --> MonitoringSolutions[일반적인 해결 방법]
-    
-    MonitoringCommonCauses --> MetricsServerIssues[메트릭 서버 문제]
-    MonitoringCommonCauses --> PrometheusConfigIssues[Prometheus 구성 오류]
-    MonitoringCommonCauses --> ContainerInsightsIssues[CloudWatch Container Insights 문제]
-    MonitoringCommonCauses --> ResourceConstraints[리소스 제약]
-    MonitoringCommonCauses --> MonitoringNetworkIssues[네트워크 문제]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheusComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class LogGroupPermissions,LogVolumeLimit,IAMRolePermissionIssues,ContainerInsightsIssues awsService;
-    class FluentBitConfig,ContainerLogPath,MetricsServerIssues,ResourceConstraints k8sComponent;
-    class PrometheusConfigIssues prometheusComponent;
-    class LoggingMonitoringIssues,CloudWatchIssues,MonitoringIssues,CWCommonCauses,CWTroubleshootingSteps,CWSolutions,MonitoringCommonCauses,MonitoringTroubleshootingSteps,MonitoringSolutions,MonitoringNetworkIssues default;
-```
+![CloudWatch 로그 문제와 모니터링 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-6.png)
 
 ### CloudWatch 로그 문제
 
@@ -2470,52 +2194,7 @@ kubectl patch deployment -n grafana grafana -p '{"spec":{"template":{"spec":{"co
 ```
 ## 성능 문제
 
-```mermaid
-flowchart TD
-    PerformanceIssues[성능 문제] --> NodePerformance[노드 성능 문제]
-    PerformanceIssues --> PodPerformance[파드 성능 문제]
-    PerformanceIssues --> NetworkPerformance[네트워크 성능 문제]
-    
-    NodePerformance --> NodePerfCommonCauses[일반적인 원인]
-    NodePerformance --> NodePerfTroubleshootingSteps[문제 해결 단계]
-    NodePerformance --> NodePerfSolutions[일반적인 해결 방법]
-    
-    NodePerfCommonCauses --> ResourceShortage[리소스 부족]
-    NodePerfCommonCauses --> NodeOverprovisioning[노드 오버프로비저닝]
-    NodePerfCommonCauses --> InstanceTypeConstraints[인스턴스 유형 제약]
-    NodePerfCommonCauses --> KernelIssues[커널 또는 운영 체제 문제]
-    NodePerfCommonCauses --> NetworkBottleneck[네트워크 병목 현상]
-    
-    PodPerformance --> PodPerfCommonCauses[일반적인 원인]
-    PodPerformance --> PodPerfTroubleshootingSteps[문제 해결 단계]
-    PodPerformance --> PodPerfSolutions[일반적인 해결 방법]
-    
-    PodPerfCommonCauses --> ResourceConstraints[리소스 제약]
-    PodPerfCommonCauses --> ResourceContention[리소스 경합]
-    PodPerfCommonCauses --> NetworkLatency[네트워크 지연 시간]
-    PodPerfCommonCauses --> DiskIOConstraints[디스크 I/O 제약]
-    PodPerfCommonCauses --> AppCodeIssues[애플리케이션 코드 문제]
-    
-    NetworkPerformance --> NetPerfCommonCauses[일반적인 원인]
-    NetworkPerformance --> NetPerfTroubleshootingSteps[문제 해결 단계]
-    NetworkPerformance --> NetPerfSolutions[일반적인 해결 방법]
-    
-    NetPerfCommonCauses --> CNIConfigIssues[CNI 구성 문제]
-    NetPerfCommonCauses --> NetworkPolicyRestrictions[네트워크 정책 제한]
-    NetPerfCommonCauses --> MTUMismatch[MTU 불일치]
-    NetPerfCommonCauses --> BandwidthConstraints[대역폭 제약]
-    NetPerfCommonCauses --> DNSResolutionLatency[DNS 해결 지연]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class ResourceShortage,InstanceTypeConstraints,BandwidthConstraints awsService;
-    class NodeOverprovisioning,KernelIssues,ResourceConstraints,ResourceContention,NetworkLatency,DiskIOConstraints,CNIConfigIssues,NetworkPolicyRestrictions,MTUMismatch,DNSResolutionLatency k8sComponent;
-    class PerformanceIssues,NodePerformance,PodPerformance,NetworkPerformance,NodePerfCommonCauses,NodePerfTroubleshootingSteps,NodePerfSolutions,NetworkBottleneck,PodPerfCommonCauses,PodPerfTroubleshootingSteps,PodPerfSolutions,AppCodeIssues,NetPerfCommonCauses,NetPerfTroubleshootingSteps,NetPerfSolutions default;
-```
+![노드 성능, 파드 성능, 네트워크 성능 세 갈래의 성능 문제와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-7.png)
 
 ### 노드 성능 문제
 
@@ -2883,52 +2562,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/
 ```
 ## 업그레이드 문제
 
-```mermaid
-flowchart TD
-    UpgradeIssues[업그레이드 문제] --> ClusterUpgrade[클러스터 업그레이드 문제]
-    UpgradeIssues --> NodeGroupUpgrade[노드 그룹 업그레이드 문제]
-    UpgradeIssues --> AddonUpgrade[애드온 업그레이드 문제]
-    
-    ClusterUpgrade --> ClusterUpgradeCommonCauses[일반적인 원인]
-    ClusterUpgrade --> ClusterUpgradeTroubleshootingSteps[문제 해결 단계]
-    ClusterUpgrade --> ClusterUpgradeSolutions[일반적인 해결 방법]
-    
-    ClusterUpgradeCommonCauses --> VersionCompatibility[버전 호환성 문제]
-    ClusterUpgradeCommonCauses --> APIDeprecation[API 사용 중단]
-    ClusterUpgradeCommonCauses --> AddonCompatibility[애드온 호환성 문제]
-    ClusterUpgradeCommonCauses --> ResourceConstraints[리소스 제약]
-    ClusterUpgradeCommonCauses --> NetworkIssues[네트워크 문제]
-    
-    NodeGroupUpgrade --> NodeGroupUpgradeCommonCauses[일반적인 원인]
-    NodeGroupUpgrade --> NodeGroupUpgradeTroubleshootingSteps[문제 해결 단계]
-    NodeGroupUpgrade --> NodeGroupUpgradeSolutions[일반적인 해결 방법]
-    
-    NodeGroupUpgradeCommonCauses --> PDBIssues[파드 중단 예산 문제]
-    NodeGroupUpgradeCommonCauses --> DrainFailure[드레이닝 실패]
-    NodeGroupUpgradeCommonCauses --> AMICompatibility[AMI 호환성 문제]
-    NodeGroupUpgradeCommonCauses --> ResourceLimitations[리소스 제약]
-    NodeGroupUpgradeCommonCauses --> InstanceLaunchFailure[인스턴스 시작 실패]
-    
-    AddonUpgrade --> AddonUpgradeCommonCauses[일반적인 원인]
-    AddonUpgrade --> AddonUpgradeTroubleshootingSteps[문제 해결 단계]
-    AddonUpgrade --> AddonUpgradeSolutions[일반적인 해결 방법]
-    
-    AddonUpgradeCommonCauses --> ConfigConflicts[구성 충돌]
-    AddonUpgradeCommonCauses --> CompatibilityIssues[호환성 문제]
-    AddonUpgradeCommonCauses --> AddonResourceConstraints[리소스 제약]
-    AddonUpgradeCommonCauses --> PermissionIssues[권한 문제]
-    AddonUpgradeCommonCauses --> AddonNetworkIssues[네트워크 문제]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class AMICompatibility,InstanceLaunchFailure awsService;
-    class VersionCompatibility,APIDeprecation,AddonCompatibility,PDBIssues,DrainFailure,ConfigConflicts,CompatibilityIssues,PermissionIssues k8sComponent;
-    class UpgradeIssues,ClusterUpgrade,NodeGroupUpgrade,AddonUpgrade,ClusterUpgradeCommonCauses,ClusterUpgradeTroubleshootingSteps,ClusterUpgradeSolutions,ResourceConstraints,NetworkIssues,NodeGroupUpgradeCommonCauses,NodeGroupUpgradeTroubleshootingSteps,NodeGroupUpgradeSolutions,ResourceLimitations,AddonUpgradeCommonCauses,AddonUpgradeTroubleshootingSteps,AddonUpgradeSolutions,AddonResourceConstraints,AddonNetworkIssues default;
-```
+![클러스터, 노드 그룹, 애드온 업그레이드 세 갈래의 문제와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-8.png)
 
 ### 클러스터 업그레이드 문제
 
@@ -3283,46 +2917,7 @@ kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master
 
 ## 일반적인 오류 메시지 및 해결 방법
 
-```mermaid
-flowchart TD
-    CommonErrors[일반적인 오류 메시지 및 해결 방법] --> ClusterErrors[클러스터 생성 및 관리 오류]
-    CommonErrors --> NodePodErrors[노드 및 파드 오류]
-    CommonErrors --> NetworkingErrors[네트워킹 오류]
-    CommonErrors --> IAMAuthErrors[IAM 및 인증 오류]
-    CommonErrors --> StorageErrors[스토리지 오류]
-    
-    ClusterErrors --> UnsupportedAZ[UnsupportedAvailabilityZoneException]
-    ClusterErrors --> ResourceLimit[ResourceLimitExceeded]
-    ClusterErrors --> InvalidRole[InvalidParameterException: Error in role params]
-    ClusterErrors --> ClusterUnreachable[ClusterUnreachable]
-    
-    NodePodErrors --> FailedScheduling[FailedScheduling: Insufficient memory]
-    NodePodErrors --> CrashLoopBackOff[CrashLoopBackOff]
-    NodePodErrors --> ImagePullBackOff[ImagePullBackOff]
-    NodePodErrors --> Evicted[Evicted]
-    
-    NetworkingErrors --> FailedEndpoints[FailedCreateServiceEndpoints]
-    NetworkingErrors --> ENILimit[EniLimitExceeded]
-    NetworkingErrors --> FailedLB[FailedLoadBalancerCreation]
-    
-    IAMAuthErrors --> Unauthorized[error: You must be logged in to the server (Unauthorized)]
-    IAMAuthErrors --> CredentialsRequired[error: The server has asked for the client to provide credentials]
-    IAMAuthErrors --> PermissionDenied[error: permission denied]
-    
-    StorageErrors --> MultiAttach[FailedAttachVolume: Multi-Attach error for volume]
-    StorageErrors --> FailedMount[FailedMount: timeout expired waiting for volumes]
-    StorageErrors --> NotBound[PersistentVolumeClaim is not bound]
-    
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class UnsupportedAZ,ResourceLimit,InvalidRole,ClusterUnreachable,ENILimit,FailedLB awsService;
-    class FailedScheduling,CrashLoopBackOff,ImagePullBackOff,Evicted,FailedEndpoints,Unauthorized,CredentialsRequired,PermissionDenied,MultiAttach,FailedMount,NotBound k8sComponent;
-    class CommonErrors,ClusterErrors,NodePodErrors,NetworkingErrors,IAMAuthErrors,StorageErrors default;
-```
+![클러스터, 노드/파드, 네트워킹, IAM/인증, 스토리지 다섯 영역별 대표 오류 메시지를 정리한 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-9.png)
 
 ### 클러스터 생성 및 관리 오류
 

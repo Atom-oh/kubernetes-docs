@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="clone-title clone-desc">
+  <title id="clone-title">EBS 볼륨 클로닝 데이터 흐름</title>
+  <desc id="clone-desc">소스 PVC에서 클론 PVC로 이어지는 데이터 복사 경로를 보여주는 EBS 볼륨 클로닝 아키텍처 다이어그램</desc>
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <!-- Header -->
+  <text x="40" y="44" class="mono" font-size="8" fill="#7D8998" letter-spacing="0.18em">EBS CSI · VOLUME CLONE</text>
+  <text x="40" y="74" font-size="28" font-weight="700" fill="#232F3E">볼륨 클로닝 데이터 흐름</text>
+  <text x="40" y="98" font-size="14" fill="#545B64" font-style="italic">소스 PVC를 dataSource로 참조하면 EBS 볼륨 데이터가 백그라운드에서 클론 볼륨으로 직접 복사됩니다.</text>
+
+  <!-- Zones -->
+  <rect x="60" y="150" width="360" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="76" y="154" width="52" height="12" rx="2" fill="#ffffff"/>
+  <text x="102" y="163" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">소스</text>
+
+  <rect x="540" y="150" width="360" height="360" rx="8" fill="rgba(255,153,0,0.04)" stroke="rgba(236,114,17,0.35)" stroke-width="0.8"/>
+  <rect x="556" y="154" width="52" height="12" rx="2" fill="#ffffff"/>
+  <text x="582" y="163" fill="rgba(236,114,17,0.70)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">클론</text>
+
+  <!-- Arrows (drawn before boxes) -->
+  <!-- Source PVC -> Source PV (vertical) -->
+  <line x1="240" y1="252" x2="240" y2="298" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Source PV -> Source EBS (vertical) -->
+  <line x1="240" y1="392" x2="240" y2="438" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Clone PVC -> Clone PV (vertical) -->
+  <line x1="720" y1="252" x2="720" y2="298" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Clone PV -> Clone EBS (vertical) -->
+  <line x1="720" y1="392" x2="720" y2="438" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Source PVC to Clone PVC via dataSource reference (horizontal, accent) -->
+  <path d="M 320,224 H 640" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <rect x="436" y="196" width="88" height="14" rx="2" fill="#ffffff"/>
+  <text x="480" y="206" class="mono" font-size="8" fill="#EC7211" text-anchor="middle" letter-spacing="0.06em">DATASOURCE</text>
+
+  <!-- Source EBS to Clone EBS: background copy (horizontal) -->
+  <path d="M 320,464 H 640" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="440" y="436" width="80" height="14" rx="2" fill="#ffffff"/>
+  <text x="480" y="446" class="mono" font-size="8" fill="#545B64" text-anchor="middle" letter-spacing="0.06em">데이터 복사</text>
+
+  <!-- === Source column nodes === -->
+  <!-- Source PVC -->
+  <rect x="180" y="196" width="120" height="56" rx="6" fill="#ffffff"/>
+  <rect x="180" y="196" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="188" y="202" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="205" y="211" class="mono" font-size="7" fill="rgba(35,47,62,0.8)" text-anchor="middle" letter-spacing="0.06em">PVC</text>
+  <text x="240" y="230" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">소스 PVC</text>
+
+  <!-- Source PV -->
+  <rect x="180" y="298" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="188" y="304" width="26" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.5)" stroke-width="0.8"/>
+  <text x="201" y="313" class="mono" font-size="7" fill="#545B64" text-anchor="middle" letter-spacing="0.06em">PV</text>
+  <text x="240" y="332" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">소스 PV</text>
+
+  <!-- Source EBS -->
+  <rect x="180" y="438" width="120" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="188" y="444" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="205" y="453" class="mono" font-size="7" fill="rgba(35,47,62,0.8)" text-anchor="middle" letter-spacing="0.06em">EBS</text>
+  <text x="240" y="472" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">소스 EBS 볼륨</text>
+
+  <!-- === Clone column nodes === -->
+  <!-- Clone PVC (focal) -->
+  <rect x="660" y="196" width="120" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <rect x="668" y="202" width="34" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.5)" stroke-width="0.8"/>
+  <text x="685" y="211" class="mono" font-size="7" fill="#EC7211" text-anchor="middle" letter-spacing="0.06em">PVC</text>
+  <text x="720" y="230" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">클론 PVC</text>
+
+  <!-- Clone PV -->
+  <rect x="660" y="298" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="668" y="304" width="26" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.5)" stroke-width="0.8"/>
+  <text x="681" y="313" class="mono" font-size="7" fill="#545B64" text-anchor="middle" letter-spacing="0.06em">PV</text>
+  <text x="720" y="332" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">클론 PV</text>
+
+  <!-- Clone EBS -->
+  <rect x="660" y="438" width="120" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="668" y="444" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="685" y="453" class="mono" font-size="7" fill="rgba(35,47,62,0.8)" text-anchor="middle" letter-spacing="0.06em">EBS</text>
+  <text x="720" y="472" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">클론 EBS 볼륨</text>
+
+  <!-- Legend -->
+  <line x1="60" y1="540" x2="900" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="60" y="558" class="mono" font-size="8" fill="#545B64" letter-spacing="0.14em">LEGEND</text>
+  <line x1="160" y1="554" x2="196" y2="554" stroke="#EC7211" stroke-width="1.4"/>
+  <text x="204" y="558" font-size="11" fill="#545B64">PVC 참조 (dataSource)</text>
+  <line x1="420" y1="554" x2="456" y2="554" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4"/>
+  <text x="464" y="558" font-size="11" fill="#545B64">백그라운드 데이터 복사</text>
+</svg>

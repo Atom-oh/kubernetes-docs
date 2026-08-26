@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="k8s-maturity-model-title k8s-maturity-model-desc">
+<title id="k8s-maturity-model-title">Kubernetes Feature Maturity Model</title>
+<desc id="k8s-maturity-model-desc">Flowchart showing the three-stage Kubernetes feature graduation model, Alpha to Beta to GA, with the stability and production-readiness guarantees at each stage; GA is highlighted as the safe-for-production destination.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1D8102"/></marker>
+    <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#DD344C"/></marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="290" y1="310" x2="350" y2="310" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="290" y="282" width="60" height="14" rx="2" fill="#ffffff"/>
+<text x="320" y="292" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">GRADUATES</text>
+<line x1="610" y1="310" x2="670" y2="310" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="610" y="282" width="60" height="14" rx="2" fill="#ffffff"/>
+<text x="640" y="292" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">GRADUATES</text>
+<rect x="30" y="150" width="260" height="320" rx="8" fill="#ffffff"/>
+<rect x="30" y="150" width="260" height="320" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<circle cx="54" cy="180" r="5" fill="#DD344C"/>
+<text x="68" y="184" fill="#232F3E" font-size="16" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Alpha</text>
+<line x1="50" y1="202" x2="270" y2="202" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<circle cx="56" cy="226" r="2" fill="#545B64"/>
+<text x="66" y="230" fill="#232F3E" font-size="10.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Disabled by default</text>
+<circle cx="56" cy="254" r="2" fill="#545B64"/>
+<text x="66" y="258" fill="#232F3E" font-size="10.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">May be buggy, no guarantees</text>
+<circle cx="56" cy="282" r="2" fill="#545B64"/>
+<text x="66" y="286" fill="#232F3E" font-size="10.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">May be removed at any time</text>
+<circle cx="56" cy="310" r="2" fill="#545B64"/>
+<text x="66" y="314" fill="#232F3E" font-size="10.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Not for production</text>
+<rect x="350" y="150" width="260" height="320" rx="8" fill="#ffffff"/>
+<rect x="350" y="150" width="260" height="320" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<circle cx="374" cy="180" r="5" fill="#946200"/>
+<text x="388" y="184" fill="#232F3E" font-size="16" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Beta</text>
+<line x1="370" y1="202" x2="590" y2="202" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<circle cx="376" cy="226" r="2" fill="#545B64"/>
+<text x="386" y="230" fill="#232F3E" font-size="10.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Enabled by default (1.24+)</text>
+<circle cx="376" cy="254" r="2" fill="#545B64"/>
+<text x="386" y="258" fill="#232F3E" font-size="10.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Well-tested; details may change</text>
+<circle cx="376" cy="282" r="2" fill="#545B64"/>
+<text x="386" y="286" fill="#232F3E" font-size="10.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">OK for non-critical workloads</text>
+<rect x="670" y="150" width="260" height="320" rx="8" fill="#ffffff"/>
+<rect x="670" y="150" width="260" height="320" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<circle cx="694" cy="180" r="5" fill="#1D8102"/>
+<text x="708" y="184" fill="#EC7211" font-size="16" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">GA (Stable)</text>
+<line x1="690" y1="202" x2="910" y2="202" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<circle cx="696" cy="226" r="2" fill="#545B64"/>
+<text x="706" y="230" fill="#232F3E" font-size="10.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Always enabled</text>
+<circle cx="696" cy="254" r="2" fill="#545B64"/>
+<text x="706" y="258" fill="#232F3E" font-size="10.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Feature gate locked</text>
+<circle cx="696" cy="282" r="2" fill="#545B64"/>
+<text x="706" y="286" fill="#232F3E" font-size="10.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Backward compatible</text>
+<circle cx="696" cy="310" r="2" fill="#545B64"/>
+<text x="706" y="314" fill="#232F3E" font-size="10.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Safe for production</text>
+<circle cx="696" cy="338" r="2" fill="#545B64"/>
+<text x="706" y="342" fill="#232F3E" font-size="10.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Will not be removed</text>
+</svg>

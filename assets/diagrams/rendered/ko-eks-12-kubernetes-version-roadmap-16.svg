@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 664" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-12-kubernetes-version-roadmap-16-title ko-eks-12-kubernetes-version-roadmap-16-desc">
+<title id="ko-eks-12-kubernetes-version-roadmap-16-title">버전 업그레이드 의사결정 흐름</title>
+<desc id="ko-eks-12-kubernetes-version-roadmap-16-desc">Standard Support 종료까지 남은 기간에 따라 계획적 업그레이드, 즉시 업그레이드, 또는 Extended Support 비용 검토 경로로 분기해 최종적으로 프로덕션 업그레이드 또는 Extended 유지로 이어지는 의사결정 흐름을 보여준다.</desc>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style><defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M480.0 180 L480.0 196 Q480.0 204 472.0 204 L128.0 204 Q120.0 204 120.0 212 L120.0 260" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M480.0 180 L480.0 260" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M480.0 180 L480.0 196 Q480.0 204 488.0 204 L832.0 204 Q840.0 204 840.0 212 L840.0 260" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="85.0" y="184" width="170" height="12" rx="2" fill="#ffffff"/>
+<text x="170.0" y="193" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">6개월 이상 / 3~6개월</text>
+<rect x="435.0" y="184" width="90" height="12" rx="2" fill="#ffffff"/>
+<text x="480.0" y="193" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">3개월 미만</text>
+<rect x="755.0" y="184" width="90" height="12" rx="2" fill="#ffffff"/>
+<text x="800.0" y="193" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Extended 중</text>
+<path d="M480.0 80 L480.0 116" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M120.0 304 L120.0 360" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M480.0 304 L480.0 360" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M840.0 304 L840.0 360" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M120.0 404 L120.0 460" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M840.0 404 L840 460" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M480.0 404 L480.0 580" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M120.0 504 L120.0 548 Q120.0 556 128.0 556 L442.0 556 Q450.0 556 450.0 564 L450.0 580" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M780.0 492.0 L200 492.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="445.0" y="472.0" width="90" height="12" rx="2" fill="#ffffff"/>
+<text x="490.0" y="481.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">업그레이드</text>
+<path d="M840 524 L840.0 580" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="831.0" y="522" width="50" height="12" rx="2" fill="#ffffff"/>
+<text x="856" y="531" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">유지</text>
+<rect x="400" y="40" width="160" height="40" rx="20.0" fill="#ffffff"/>
+<rect x="400" y="40" width="160" height="40" rx="20.0" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="64.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">현재 버전 확인</text>
+<polygon points="480.0,116 540.0,148.0 480.0,180 420.0,148.0" fill="#ffffff"/>
+<polygon points="480.0,116 540.0,148.0 480.0,180 420.0,148.0" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="146.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Standard 종료</text>
+<text x="480.0" y="160.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">남은 기간?</text>
+<rect x="40" y="260" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="40" y="260" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="120.0" y="286.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">업그레이드 계획 수립</text>
+<rect x="400" y="260" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="400" y="260" width="160" height="44" rx="6" fill="rgba(244,67,54,0.08)" stroke="#F44336" stroke-width="1"/>
+<text x="480.0" y="286.0" fill="#F44336" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">즉시 업그레이드 필요</text>
+<rect x="760" y="260" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="760" y="260" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840.0" y="286.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Extended Support 중</text>
+<rect x="40" y="360" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="40" y="360" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="120.0" y="386.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">비프로덕션 테스트</text>
+<rect x="400" y="360" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="400" y="360" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="386.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">프로덕션 직접 업그레이드</text>
+<rect x="760" y="360" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="760" y="360" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840.0" y="386.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">월간 추가 비용 계산</text>
+<rect x="40" y="460" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="40" y="460" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="120.0" y="486.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">스테이징 &amp; 호환성 검증</text>
+<polygon points="840,460 900.0,492.0 840,524 780.0,492.0" fill="#ffffff"/>
+<polygon points="840,460 900.0,492.0 840,524 780.0,492.0" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840" y="490.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">비용 vs</text>
+<text x="840" y="504.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">리스크?</text>
+<rect x="400" y="580" width="180" height="44" rx="6" fill="#ffffff"/>
+<rect x="400" y="580" width="180" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="490.0" y="606.0" fill="#EC7211" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">프로덕션 업그레이드</text>
+<rect x="760" y="580" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="760" y="580" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840.0" y="606.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Extended 유지 (비용 수용)</text>
+
+</svg>

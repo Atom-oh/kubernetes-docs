@@ -19,43 +19,7 @@ When operating Amazon EKS clusters, various issues can arise. This document prov
 
 ## Troubleshooting Basics
 
-```mermaid
-flowchart TD
-    TroubleshootingBasics[Troubleshooting Basics] --> Approach[Troubleshooting Approach]
-    TroubleshootingBasics --> Tools[Essential Tools and Commands]
-    TroubleshootingBasics --> LogCollection[Log Collection and Analysis]
-    TroubleshootingBasics --> DiagnosticInfo[Diagnostic Information Collection]
-
-    Approach --> IdentifyProblem[1. Identify Problem]
-    Approach --> CollectInfo[2. Collect Information]
-    Approach --> Analyze[3. Analyze]
-    Approach --> Resolve[4. Resolve]
-    Approach --> Verify[5. Verify]
-    Approach --> Document[6. Document]
-
-    Tools --> AWSCLI[AWS CLI]
-    Tools --> Kubectl[kubectl]
-    Tools --> Eksctl[eksctl]
-    Tools --> CloudWatch[AWS CloudWatch]
-
-    LogCollection --> ControlPlane[EKS Control Plane Logs]
-    LogCollection --> NodeLogs[Node Logs]
-    LogCollection --> PodLogs[Pod Logs]
-
-    DiagnosticInfo --> ClusterInfo[Cluster Diagnostic Info]
-    DiagnosticInfo --> SystemResources[System Resource Info]
-    DiagnosticInfo --> NetworkDiagnostics[Network Diagnostics]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class AWSCLI,CloudWatch,ControlPlane awsService;
-    class Kubectl,Eksctl,NodeLogs,PodLogs k8sComponent;
-    class TroubleshootingBasics,Approach,Tools,LogCollection,DiagnosticInfo,IdentifyProblem,CollectInfo,Analyze,Resolve,Verify,Document,ClusterInfo,SystemResources,NetworkDiagnostics default;
-```
+![Tree diagram showing the EKS troubleshooting basics branching into the six-step diagnostic approach, essential CLI tools, log sources, and diagnostic-info collection.](../.gitbook/assets/en-eks-09-eks-troubleshooting-0.png)
 
 ### Troubleshooting Approach
 
@@ -254,49 +218,7 @@ kubectl exec -it netshoot -- traceroute <target-ip>
 
 ## Cluster Creation and Management Issues
 
-```mermaid
-flowchart TD
-    ClusterIssues[Cluster Creation and Management Issues] --> CreationFailure[Cluster Creation Failure]
-    ClusterIssues --> EndpointAccess[Cluster Endpoint Access Issues]
-    ClusterIssues --> DeletionIssues[Cluster Deletion Issues]
-
-    CreationFailure --> CommonCauses1[Common Causes]
-    CreationFailure --> TroubleshootingSteps1[Troubleshooting Steps]
-    CreationFailure --> Solutions1[Common Solutions]
-
-    CommonCauses1 --> IAMPermissions[Insufficient IAM Permissions]
-    CommonCauses1 --> QuotaExceeded[Service Quota Exceeded]
-    CommonCauses1 --> NetworkConfig[Network Configuration Issues]
-    CommonCauses1 --> ResourceConflict[Resource Name Conflict]
-    CommonCauses1 --> ServiceAvailability[AWS Service Availability Issues]
-
-    EndpointAccess --> CommonCauses2[Common Causes]
-    EndpointAccess --> TroubleshootingSteps2[Troubleshooting Steps]
-    EndpointAccess --> Solutions2[Common Solutions]
-
-    CommonCauses2 --> NetworkRestriction[Network Access Restriction]
-    CommonCauses2 --> AuthIssues[Authentication Issues]
-    CommonCauses2 --> KubeconfigError[kubeconfig Configuration Error]
-    CommonCauses2 --> APIServerAvailability[API Server Availability Issues]
-
-    DeletionIssues --> CommonCauses3[Common Causes]
-    DeletionIssues --> TroubleshootingSteps3[Troubleshooting Steps]
-    DeletionIssues --> Solutions3[Common Solutions]
-
-    CommonCauses3 --> ResourceDependency[Resource Dependencies]
-    CommonCauses3 --> IAMPermissionLack[Insufficient IAM Permissions]
-    CommonCauses3 --> ResourceDeletionFailure[Resource Deletion Failure]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class IAMPermissions,QuotaExceeded,ServiceAvailability,APIServerAvailability,ResourceDependency,IAMPermissionLack awsService;
-    class KubeconfigError,NetworkConfig k8sComponent;
-    class ClusterIssues,CreationFailure,EndpointAccess,DeletionIssues,CommonCauses1,TroubleshootingSteps1,Solutions1,NetworkRestriction,AuthIssues,CommonCauses2,TroubleshootingSteps2,Solutions2,CommonCauses3,TroubleshootingSteps3,Solutions3,ResourceConflict,ResourceDeletionFailure default;
-```
+![Tree diagram showing cluster creation, endpoint access, and deletion issues each branching into their most common root causes.](../.gitbook/assets/en-eks-09-eks-troubleshooting-1.png)
 
 ### Cluster Creation Failure
 
@@ -603,54 +525,7 @@ aws ec2 describe-security-groups --filters "Name=tag:kubernetes.io/cluster/<clus
 
 Networking issues are among the most common problems in EKS clusters. This section covers common networking issues and their solutions.
 
-```mermaid
-flowchart TD
-    NetworkingIssues[Networking Issues] --> PodCommunication[Pod-to-Pod Communication Issues]
-    NetworkingIssues --> ServiceAccess[Service Access Issues]
-    NetworkingIssues --> LoadBalancer[Load Balancer Issues]
-    NetworkingIssues --> DNSIssues[DNS Issues]
-    NetworkingIssues --> VPCCNIIssues[VPC CNI Issues]
-
-    PodCommunication --> PodCommonCauses[Common Causes]
-    PodCommunication --> PodTroubleshootingSteps[Troubleshooting Steps]
-    PodCommunication --> PodSolutions[Common Solutions]
-
-    PodCommonCauses --> NetworkPolicy[Network Policies]
-    PodCommonCauses --> SecurityGroupRules[Security Group Rules]
-    PodCommonCauses --> CNIPluginIssues[CNI Plugin Issues]
-    PodCommonCauses --> PodCIDRConflict[Pod CIDR Conflict]
-    PodCommonCauses --> MTUMismatch[MTU Mismatch]
-
-    ServiceAccess --> ServiceCommonCauses[Common Causes]
-    ServiceAccess --> ServiceTroubleshootingSteps[Troubleshooting Steps]
-    ServiceAccess --> ServiceSolutions[Common Solutions]
-
-    ServiceCommonCauses --> SelectorMismatch[Service Selector Mismatch]
-    ServiceCommonCauses --> EndpointIssues[Endpoint Issues]
-    ServiceCommonCauses --> PodStatusIssues[Pod Status Issues]
-    ServiceCommonCauses --> PortMismatch[Service Port Mismatch]
-    ServiceCommonCauses --> KubeProxyIssues[kube-proxy Issues]
-
-    LoadBalancer --> LBCommonCauses[Common Causes]
-    LoadBalancer --> LBTroubleshootingSteps[Troubleshooting Steps]
-    LoadBalancer --> LBSolutions[Common Solutions]
-
-    LBCommonCauses --> SubnetTagMissing[Missing Subnet Tags]
-    LBCommonCauses --> SGRuleRestriction[Security Group Rule Restrictions]
-    LBCommonCauses --> HealthCheckFailure[Health Check Failure]
-    LBCommonCauses --> ServiceAnnotationIssues[Service Annotation Issues]
-    LBCommonCauses --> QuotaExceeded[Quota Exceeded]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class SecurityGroupRules,SubnetTagMissing,SGRuleRestriction,HealthCheckFailure,QuotaExceeded awsService;
-    class NetworkPolicy,CNIPluginIssues,PodCIDRConflict,SelectorMismatch,EndpointIssues,PodStatusIssues,PortMismatch,KubeProxyIssues,ServiceAnnotationIssues k8sComponent;
-    class NetworkingIssues,PodCommunication,ServiceAccess,LoadBalancer,DNSIssues,VPCCNIIssues,PodCommonCauses,PodTroubleshootingSteps,PodSolutions,MTUMismatch,ServiceCommonCauses,ServiceTroubleshootingSteps,ServiceSolutions,LBCommonCauses,LBTroubleshootingSteps,LBSolutions default;
-```
+![Tree diagram showing pod-to-pod communication, service access, and load balancer issues each branching into their most common root causes, alongside DNS and VPC CNI issue categories.](../.gitbook/assets/en-eks-09-eks-troubleshooting-2.png)
 
 ### Pod-to-Pod Communication Issues
 
@@ -1237,43 +1112,7 @@ aws iam attach-role-policy \
 
 ## Node and Pod Issues
 
-```mermaid
-flowchart TD
-    NodePodIssues[Node and Pod Issues] --> NodeNotReady[Node NotReady Issues]
-    NodePodIssues --> PodNotRunning[Pod Not Running Issues]
-    NodePodIssues --> ResourceConstraints[Resource Constraint Issues]
-    NodePodIssues --> NodeGroupIssues[Node Group Issues]
-
-    NodeNotReady --> NodeCommonCauses[Common Causes]
-    NodeNotReady --> NodeTroubleshootingSteps[Troubleshooting Steps]
-    NodeNotReady --> NodeSolutions[Common Solutions]
-
-    NodeCommonCauses --> KubeletIssues[kubelet Issues]
-    NodeCommonCauses --> NodeNetworkIssues[Node Network Issues]
-    NodeCommonCauses --> NodeResourceExhaustion[Node Resource Exhaustion]
-    NodeCommonCauses --> NodeHealthCheckFailure[Node Health Check Failure]
-    NodeCommonCauses --> NodeDiskPressure[Node Disk Pressure]
-
-    PodNotRunning --> PodCommonCauses[Common Causes]
-    PodNotRunning --> PodTroubleshootingSteps[Troubleshooting Steps]
-    PodNotRunning --> PodSolutions[Common Solutions]
-
-    PodCommonCauses --> ImagePullFailure[Image Pull Failure]
-    PodCommonCauses --> ResourceRequestIssues[Resource Request Issues]
-    PodCommonCauses --> PodConfigError[Pod Configuration Error]
-    PodCommonCauses --> SchedulingFailure[Scheduling Failure]
-    PodCommonCauses --> VolumeMountFailure[Volume Mount Failure]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class NodeGroupIssues awsService;
-    class KubeletIssues,NodeNetworkIssues,NodeResourceExhaustion,NodeHealthCheckFailure,NodeDiskPressure,ImagePullFailure,ResourceRequestIssues,PodConfigError,SchedulingFailure,VolumeMountFailure k8sComponent;
-    class NodePodIssues,NodeNotReady,PodNotRunning,ResourceConstraints,NodeCommonCauses,NodeTroubleshootingSteps,NodeSolutions,PodCommonCauses,PodTroubleshootingSteps,PodSolutions default;
-```
+![Tree diagram showing Node NotReady and Pod Not Running issues each branching into their most common root causes, alongside resource-constraint and node-group issue categories.](../.gitbook/assets/en-eks-09-eks-troubleshooting-3.png)
 
 ### Node NotReady Issues
 
@@ -1577,48 +1416,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/
 
 ## IAM and Authentication Issues
 
-```mermaid
-flowchart TD
-    IAMAuthIssues[IAM and Authentication Issues] --> ClusterAccessDenied[Cluster Access Denied]
-    IAMAuthIssues --> IRSAIssues[IRSA Issues]
-    IAMAuthIssues --> NodeJoinFailure[Node Join Failure]
-
-    ClusterAccessDenied --> AccessCommonCauses[Common Causes]
-    ClusterAccessDenied --> AccessTroubleshootingSteps[Troubleshooting Steps]
-    ClusterAccessDenied --> AccessSolutions[Common Solutions]
-
-    AccessCommonCauses --> AWSAuthConfigMapMissing[aws-auth ConfigMap Missing]
-    AccessCommonCauses --> IAMRoleNotMapped[IAM Role Not Mapped]
-    AccessCommonCauses --> TokenExpiration[Token Expiration]
-    AccessCommonCauses --> KubeconfigMisconfiguration[kubeconfig Misconfiguration]
-
-    IRSAIssues --> IRSACommonCauses[Common Causes]
-    IRSAIssues --> IRSATroubleshootingSteps[Troubleshooting Steps]
-    IRSAIssues --> IRSASolutions[Common Solutions]
-
-    IRSACommonCauses --> OIDCProviderNotConfigured[OIDC Provider Not Configured]
-    IRSACommonCauses --> TrustPolicyMisconfiguration[Trust Policy Misconfiguration]
-    IRSACommonCauses --> ServiceAccountAnnotationMissing[Service Account Annotation Missing]
-    IRSACommonCauses --> IAMRolePermissionIssues[IAM Role Permission Issues]
-
-    NodeJoinFailure --> NodeJoinCommonCauses[Common Causes]
-    NodeJoinFailure --> NodeJoinTroubleshootingSteps[Troubleshooting Steps]
-    NodeJoinFailure --> NodeJoinSolutions[Common Solutions]
-
-    NodeJoinCommonCauses --> NodeRolePermissions[Node Role Permissions]
-    NodeJoinCommonCauses --> SecurityGroupRestrictions[Security Group Restrictions]
-    NodeJoinCommonCauses --> BootstrapFailure[Bootstrap Failure]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class AWSAuthConfigMapMissing,IAMRoleNotMapped,TokenExpiration,OIDCProviderNotConfigured,TrustPolicyMisconfiguration,IAMRolePermissionIssues,NodeRolePermissions,SecurityGroupRestrictions awsService;
-    class KubeconfigMisconfiguration,ServiceAccountAnnotationMissing,BootstrapFailure k8sComponent;
-    class IAMAuthIssues,ClusterAccessDenied,IRSAIssues,NodeJoinFailure,AccessCommonCauses,AccessTroubleshootingSteps,AccessSolutions,IRSACommonCauses,IRSATroubleshootingSteps,IRSASolutions,NodeJoinCommonCauses,NodeJoinTroubleshootingSteps,NodeJoinSolutions default;
-```
+![Tree diagram showing cluster access denial, IRSA, and node join failure issues each branching into their most common root causes.](../.gitbook/assets/en-eks-09-eks-troubleshooting-4.png)
 
 ### Cluster Access Denied
 

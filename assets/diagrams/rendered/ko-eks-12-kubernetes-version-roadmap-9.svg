@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-12-kubernetes-version-roadmap-9-title ko-eks-12-kubernetes-version-roadmap-9-desc">
+<title id="ko-eks-12-kubernetes-version-roadmap-9-title">Kubernetes 1.32 Enhancement 분포</title>
+<desc id="ko-eks-12-kubernetes-version-roadmap-9-desc">Kubernetes 1.32 릴리스의 전체 44개 Enhancement가 Stable(GA) 13개, Beta 12개, Alpha 19개로 나뉘어 성숙도 단계별로 분포한 것을 보여준다.</desc>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style><defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="100" y1="400.0" x2="900" y2="400.0" stroke="rgba(35,47,62,0.08)" stroke-width="0.8"/>
+<text x="92" y="403.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="end">0</text>
+<line x1="100" y1="315.0" x2="900" y2="315.0" stroke="rgba(35,47,62,0.08)" stroke-width="0.8"/>
+<text x="92" y="318.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="end">5</text>
+<line x1="100" y1="230.0" x2="900" y2="230.0" stroke="rgba(35,47,62,0.08)" stroke-width="0.8"/>
+<text x="92" y="233.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="end">10</text>
+<line x1="100" y1="145.0" x2="900" y2="145.0" stroke="rgba(35,47,62,0.08)" stroke-width="0.8"/>
+<text x="92" y="148.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="end">15</text>
+<line x1="100" y1="60.0" x2="900" y2="60.0" stroke="rgba(35,47,62,0.08)" stroke-width="0.8"/>
+<text x="92" y="63.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="end">20</text>
+<line x1="100" y1="60" x2="100" y2="400" stroke="rgba(35,47,62,0.25)" stroke-width="1"/>
+<line x1="100" y1="400" x2="900" y2="400" stroke="rgba(35,47,62,0.25)" stroke-width="1"/>
+<rect x="160.0" y="179.0" width="146.7" height="221.0" fill="#ffffff"/>
+<rect x="160.0" y="179.0" width="146.7" height="221.0" fill="rgba(255,153,0,0.14)" stroke="#EC7211" stroke-width="1"/>
+<text x="233.3" y="171.0" fill="#EC7211" font-size="10" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">13</text>
+<text x="233.3" y="422.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Stable (GA)</text>
+<rect x="426.7" y="196.0" width="146.7" height="204.0" fill="#ffffff"/>
+<rect x="426.7" y="196.0" width="146.7" height="204.0" fill="rgba(84,91,100,0.15)" stroke="#545B64" stroke-width="1"/>
+<text x="500.0" y="188.0" fill="#545B64" font-size="10" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">12</text>
+<text x="500.0" y="422.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Beta</text>
+<rect x="693.3" y="77.0" width="146.7" height="323.0" fill="#ffffff"/>
+<rect x="693.3" y="77.0" width="146.7" height="323.0" fill="rgba(84,91,100,0.15)" stroke="#545B64" stroke-width="1"/>
+<text x="766.7" y="69.0" fill="#545B64" font-size="10" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">19</text>
+<text x="766.7" y="422.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Alpha</text>
+<text x="100" y="30" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">TOTAL ENHANCEMENTS: 44</text>
+
+</svg>

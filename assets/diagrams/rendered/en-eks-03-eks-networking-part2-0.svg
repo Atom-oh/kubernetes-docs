@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">Kubernetes Service Types</title>
+<desc id="d">Four Kubernetes Service types — ClusterIP, NodePort, LoadBalancer, and ExternalName — each mapped to the access method it enables, from internal-only cluster access up to an external load balancer or DNS CNAME.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- header -->
+<text x="40" y="44" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">ARCHITECTURE · SERVICES</text>
+<text x="40" y="68" fill="#232F3E" font-size="20" font-weight="700">Kubernetes Service Types</text>
+
+<!-- zones -->
+<rect x="40" y="100" width="360" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="68" y="108" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="124" y="117" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">SERVICE TYPES</text>
+
+<rect x="560" y="100" width="360" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="588" y="108" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="648" y="117" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">ACCESS METHODS</text>
+
+<!-- arrows: 4 pairs, rows y-centers 176,300,424,548 both same y -> straight lines -->
+<!-- ClusterIP -> Internal -->
+<path d="M 380,176 H 560" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<!-- NodePort -> Node IP:Port -->
+<path d="M 380,300 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- LoadBalancer -> External LB -->
+<path d="M 380,424 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- ExternalName -> DNS CNAME -->
+<path d="M 380,548 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- left nodes -->
+<!-- ClusterIP (focal) -->
+<rect x="72" y="140" width="296" height="72" rx="6" fill="#ffffff"/>
+<rect x="72" y="140" width="296" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="220" y="170" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ClusterIP</text>
+<text x="220" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">default type</text>
+
+<rect x="72" y="264" width="296" height="72" rx="6" fill="#ffffff"/>
+<rect x="72" y="264" width="296" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220" y="294" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">NodePort</text>
+<text x="220" y="312" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">port on every node</text>
+
+<rect x="72" y="388" width="296" height="72" rx="6" fill="#ffffff"/>
+<rect x="72" y="388" width="296" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220" y="418" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">LoadBalancer</text>
+<text x="220" y="436" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">external LB provisioned</text>
+
+<rect x="72" y="512" width="296" height="72" rx="6" fill="#ffffff"/>
+<rect x="72" y="512" width="296" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220" y="542" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ExternalName</text>
+<text x="220" y="560" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">CNAME to external host</text>
+
+<!-- right nodes -->
+<rect x="592" y="140" width="296" height="72" rx="6" fill="#ffffff"/>
+<rect x="592" y="140" width="296" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="740" y="170" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Within cluster</text>
+<text x="740" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">pod-to-pod only</text>
+
+<rect x="592" y="264" width="296" height="72" rx="6" fill="#ffffff"/>
+<rect x="592" y="264" width="296" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="740" y="294" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Node IP : Port</text>
+<text x="740" y="312" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">30000-32767 range</text>
+
+<rect x="592" y="388" width="296" height="72" rx="6" fill="#ffffff"/>
+<rect x="592" y="388" width="296" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="740" y="418" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">External load balancer</text>
+<text x="740" y="436" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">CLB / NLB / ALB</text>
+
+<rect x="592" y="512" width="296" height="72" rx="6" fill="#ffffff"/>
+<rect x="592" y="512" width="296" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="740" y="542" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">DNS CNAME</text>
+<text x="740" y="560" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">no proxying</text>
+
+</svg>

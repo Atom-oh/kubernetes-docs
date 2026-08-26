@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-eks-05-eks-security-2-title en-eks-05-eks-security-2-desc">
+    <title id="en-eks-05-eks-security-2-title">EKS authentication mechanisms</title>
+    <desc id="en-eks-05-eks-security-2-desc">Architecture diagram showing how DevOps, developers, CI/CD, and pods authenticate through IAM Authenticator, OIDC, or IRSA into the Kubernetes API server, RBAC, and service accounts, with IRSA also granting pods direct access to AWS resources.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="32" y="64" width="216" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="44" y="68" width="102" height="12" rx="2" fill="#ffffff"/>
+<text x="95" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">USERS &amp; SERVICES</text>
+<rect x="280" y="64" width="216" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="292" y="68" width="90" height="12" rx="2" fill="#ffffff"/>
+<text x="337" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">AUTHENTICATION</text>
+<rect x="528" y="64" width="200" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="540" y="68" width="124" height="12" rx="2" fill="#ffffff"/>
+<text x="602" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">KUBERNETES RESOURCES</text>
+<rect x="760" y="64" width="160" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="772" y="68" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="792" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">AWS</text>
+<path d="M 216,120.0 H 240 Q 248,120.0 248,112.0 V 128.0 Q 248,120.0 256,120.0 H 304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 216,194.0 H 256 Q 264,194.0 264,186.0 V 136.0 Q 264,128.0 272,128.0 H 304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 216,206.0 H 272 Q 280,206.0 280,214.0 V 184.0 Q 280,192.0 288,192.0 H 304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 216,280.0 H 240 Q 248,280.0 248,272.0 V 208.0 Q 248,200.0 256,200.0 H 304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="216" y1="360.0" x2="304" y2="360.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="484" y1="120.0" x2="552" y2="120.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 484,208.0 H 512 Q 520,208.0 520,216.0 V 128.0 Q 520,136.0 528,136.0 H 552" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="484" y1="360.0" x2="552" y2="360.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="632.0" y1="176" x2="632.0" y2="144" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="632.0" y1="336" x2="632.0" y2="224" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 394.0,384 V 432 Q 394.0,440 402.0,440 H 836.0 Q 844.0,440 844.0,432 V 304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="242" y="108" width="37" height="12" rx="2" fill="#ffffff"/>
+<text x="260" y="117" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">AUTHN</text>
+<rect x="367" y="100.0" width="53" height="12" rx="2" fill="#ffffff"/>
+<text x="394" y="109.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">VALIDATE</text>
+<rect x="367" y="180.0" width="53" height="12" rx="2" fill="#ffffff"/>
+<text x="394" y="189.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">FEDERATE</text>
+<rect x="223" y="340.0" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="236" y="349.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">USE</text>
+<rect x="514" y="100.0" width="37" height="12" rx="2" fill="#ffffff"/>
+<text x="532" y="109.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">AUTHN</text>
+<rect x="488" y="340.0" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="504" y="349.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">LINK</text>
+<rect x="642" y="154" width="37" height="12" rx="2" fill="#ffffff"/>
+<text x="660" y="163" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">GRANT</text>
+<rect x="404" y="430" width="42" height="12" rx="2" fill="#ffffff"/>
+<text x="425" y="439" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">ACCESS</text>
+<rect x="56" y="96" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="56" y="96" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="136.0" y="124.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">DevOps Team</text>
+<rect x="56" y="176" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="56" y="176" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="136.0" y="204.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Developers</text>
+<rect x="56" y="256" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="56" y="256" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="136.0" y="284.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">CI/CD Pipeline</text>
+<rect x="56" y="336" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="56" y="336" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="136.0" y="364.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kubernetes Pods</text>
+<rect x="304" y="96" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="304" y="96" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="394.0" y="124.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS IAM Authenticator</text>
+<rect x="304" y="176" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="304" y="176" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="394.0" y="204.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">OIDC Provider Integration</text>
+<rect x="304" y="336" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="304" y="336" width="180" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="394.0" y="364.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">IRSA</text>
+<rect x="552" y="96" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="552" y="96" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="632.0" y="124.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API Server</text>
+<rect x="552" y="176" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="552" y="176" width="160" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="632.0" y="204.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">RBAC Permissions</text>
+<rect x="552" y="336" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="552" y="336" width="160" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="632.0" y="364.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service Accounts</text>
+<rect x="784" y="256" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="784" y="256" width="120" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="844.0" y="277.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS Resources</text>
+<text x="844.0" y="293.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">S3 · DDB · SQS · SNS</text>
+<line x1="30" y1="552" x2="930" y2="552" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<line x1="30" y1="560" x2="48" y2="560" stroke="#545B64" stroke-width="1.4"/>
+<text x="54" y="563" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.04em">AUTHN/AUTHZ FLOW</text>
+<line x1="175.6" y1="560" x2="193.6" y2="560" stroke="#EC7211" stroke-width="1.4"/>
+<text x="199.6" y="563" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.04em">IRSA (FOCAL)</text>
+  </svg>

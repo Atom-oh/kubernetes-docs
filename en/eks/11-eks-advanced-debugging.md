@@ -101,30 +101,7 @@ echo "Archive: $OUTPUT_DIR.tar.gz"
 
 ### Decision Tree for Rapid Problem Identification
 
-```mermaid
-flowchart TD
-    Start[Incident Detected] --> Q1{Service Accessible?}
-    Q1 -->|No| Q2{kubectl Working?}
-    Q1 -->|Yes| Q3{Response Delayed?}
-
-    Q2 -->|No| A1[Control Plane Issue<br/>Check AWS Console]
-    Q2 -->|Yes| Q4{Nodes Ready?}
-
-    Q3 -->|Yes| Q5{Specific Pods Only?}
-    Q3 -->|No| Q6{Intermittent Errors?}
-
-    Q4 -->|No| A2[Node Issue<br/>Check EC2 Status]
-    Q4 -->|Yes| Q7{Pods Running?}
-
-    Q5 -->|Yes| A3[Workload Issue<br/>Check Pod Logs]
-    Q5 -->|No| A4[Cluster-wide Issue<br/>Check Resources]
-
-    Q6 -->|Yes| A5[Network/DNS Issue<br/>Check Connectivity]
-    Q6 -->|No| A6[Normal State<br/>Continue Monitoring]
-
-    Q7 -->|No| A7[Scheduling Issue<br/>Check Events]
-    Q7 -->|Yes| A8[App/Config Issue<br/>Check describe]
-```
+![Decision-tree flowchart for the first five minutes of EKS incident triage, branching from an incident on service accessibility, kubectl connectivity, and node readiness to route the responder to a control-plane, node, scheduling, app/config, workload, cluster-wide, or network/DNS root cause.](../.gitbook/assets/en-eks-11-eks-advanced-debugging-0.png)
 
 ---
 
@@ -402,27 +379,7 @@ aws eks update-addon \
 
 ### NotReady Node Decision Tree
 
-```mermaid
-flowchart TD
-    Start[Node NotReady] --> Q1{EC2 Status?}
-    Q1 -->|Running| Q2{kubelet Running?}
-    Q1 -->|Stopped/Terminated| A1[EC2 Instance Issue<br/>Check ASG/Instance]
-
-    Q2 -->|No| A2[Start kubelet<br/>systemctl start kubelet]
-    Q2 -->|Yes| Q3{Network Connected?}
-
-    Q3 -->|No| A3[Network Issue<br/>Check Security Groups/Routing]
-    Q3 -->|Yes| Q4{Disk Pressure?}
-
-    Q4 -->|Yes| A4[Clean Disk<br/>crictl rmi --prune]
-    Q4 -->|No| Q5{Memory Pressure?}
-
-    Q5 -->|Yes| A5[Memory Shortage<br/>Pod eviction or Scale up]
-    Q5 -->|No| Q6{Container Runtime?}
-
-    Q6 -->|Issue| A6[Restart containerd<br/>systemctl restart containerd]
-    Q6 -->|Normal| A7[Detailed kubelet Log Analysis<br/>journalctl -u kubelet]
-```
+![Decision-tree flowchart for diagnosing a NotReady EKS node, walking down through EC2 instance status, kubelet health, network connectivity, and disk/memory pressure to containerd runtime health, with the matching remediation command at each branch.](../.gitbook/assets/en-eks-11-eks-advanced-debugging-1.png)
 
 ### kubelet/containerd Debugging via SSM
 
@@ -622,21 +579,7 @@ data:
 
 ### Pod State Flow Diagram
 
-```mermaid
-flowchart LR
-    Pending --> |Image Pull| ContainerCreating
-    ContainerCreating --> |Success| Running
-    ContainerCreating --> |Failure| Failed
-    Running --> |Completed| Succeeded
-    Running --> |Crash| Failed
-    Failed --> |Restart Policy| Pending
-
-    subgraph "Major Failure Causes"
-        P1[Pending: Resource shortage, Scheduling failure]
-        C1[ContainerCreating: Image pull failure, Volume mount failure]
-        F1[Failed: OOMKilled, CrashLoopBackOff]
-    end
-```
+![State machine showing a Kubernetes Pod's lifecycle -- Pending to ContainerCreating to Running to Succeeded on the happy path, with ContainerCreating and Running able to fail into Failed, and Failed pods returning to Pending under the restart policy -- annotated with the major failure causes at each state.](../.gitbook/assets/en-eks-11-eks-advanced-debugging-2.png)
 
 ### Basic Diagnostic Commands
 
@@ -1512,38 +1455,7 @@ spec:
 
 ### 4-Layer Detection Pipeline
 
-```mermaid
-flowchart LR
-    subgraph Sources[Data Sources]
-        M[Metrics]
-        L[Logs]
-        T[Traces]
-        E[Events]
-    end
-
-    subgraph Collection[Collection]
-        CW[CloudWatch Agent]
-        FB[Fluent Bit]
-        ADOT[ADOT Collector]
-        PM[Prometheus]
-    end
-
-    subgraph Analysis[Analysis]
-        CLI[CloudWatch Logs Insights]
-        MA[Metric Alarms]
-        AA[Anomaly Detection]
-        CA[Composite Alarms]
-    end
-
-    subgraph Alerting[Alerting]
-        SNS[SNS]
-        SL[Slack]
-        PD[PagerDuty]
-        EB[EventBridge]
-    end
-
-    Sources --> Collection --> Analysis --> Alerting
-```
+![Four-stage EKS observability pipeline showing metrics, logs, traces, and events flowing from data sources through collection tools (CloudWatch Agent, Fluent Bit, ADOT Collector, Prometheus) into an analysis layer (Logs Insights, metric alarms, anomaly detection, composite alarms) and out to alerting channels (SNS, Slack, PagerDuty, EventBridge).](../.gitbook/assets/en-eks-11-eks-advanced-debugging-3.png)
 
 ### Reference Architecture 1: AWS Native
 

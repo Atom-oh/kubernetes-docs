@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-eks-05-eks-security-14-title en-eks-05-eks-security-14-desc">
+    <title id="en-eks-05-eks-security-14-title">EKS security monitoring and detection workflow</title>
+    <desc id="en-eks-05-eks-security-14-desc">Architecture diagram showing AWS security services and Kubernetes security tools feeding signal collection, which is analyzed and correlated to drive response and remediation, while findings also report into AWS Security Hub, which in turn configures what signal categories are collected.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 220,132.0 H 262 Q 270,132.0 270,140.0 V 198.0 Q 270,206.0 278,206.0 H 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 220,312.0 H 262 Q 270,312.0 270,304.0 V 246.0 Q 270,238.0 278,238.0 H 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="500" y1="222.0" x2="560" y2="222.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 720,206.0 H 732 Q 740,206.0 740,198.0 V 140.0 Q 740,132.0 748,132.0 H 760" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 720,238.0 H 732 Q 740,238.0 740,246.0 V 304.0 Q 740,312.0 748,312.0 H 760" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 840.0,344 V 412 Q 840.0,420 832.0,420 H 418 Q 410,420 410,412 V 254" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="280" y="163" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="296" y="172" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">FEED</text>
+<rect x="228" y="269" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="244" y="278" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">FEED</text>
+<rect x="506" y="202.0" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="530" y="211.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">ANALYZE</text>
+<rect x="750" y="163" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="763" y="172" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">ACT</text>
+<rect x="688" y="269" width="42" height="12" rx="2" fill="#ffffff"/>
+<text x="709" y="278" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">REPORT</text>
+<rect x="376" y="400" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="414" y="409" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">CONFIGURE</text>
+<rect x="40" y="100" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="100" width="180" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="130.0" y="129.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS Security Services</text>
+<text x="130.0" y="145.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">GuardDuty · Detective · CloudWatch</text>
+<rect x="40" y="280" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="280" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="130.0" y="309.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kubernetes Security Tools</text>
+<text x="130.0" y="325.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Falco · kube-audit · Starboard</text>
+<rect x="320" y="190" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="320" y="190" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="410.0" y="219.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Signal Collection</text>
+<text x="410.0" y="235.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">runtime · network · config · identity</text>
+<rect x="560" y="190" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="560" y="190" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="640.0" y="219.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Detect</text>
+<text x="640.0" y="235.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">analyze + correlate</text>
+<rect x="760" y="100" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="760" y="100" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840.0" y="129.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Respond</text>
+<text x="840.0" y="145.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">response + remediation</text>
+<rect x="760" y="280" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="760" y="280" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840.0" y="316.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS Security Hub</text>
+<line x1="30" y1="552" x2="930" y2="552" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<line x1="30" y1="560" x2="48" y2="560" stroke="#EC7211" stroke-width="1.4"/>
+<text x="54" y="563" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.04em">DETECTION HUB</text>
+<line x1="158.8" y1="560" x2="176.8" y2="560" stroke="#545B64" stroke-width="1.4"/>
+<text x="182.8" y="563" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.04em">CONFIGURE (DASHED)</text>
+  </svg>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-12-kubernetes-version-roadmap-17-title ko-eks-12-kubernetes-version-roadmap-17-desc">
+<title id="ko-eks-12-kubernetes-version-roadmap-17-title">EKS 버전 업그레이드 4단계 프로세스</title>
+<desc id="ko-eks-12-kubernetes-version-roadmap-17-desc">EKS 버전 업그레이드가 사전 준비, 비프로덕션 테스트, 프로덕션 업그레이드, 검증 및 안정화의 4단계를 순서대로 거치며 각 단계의 세부 작업을 보여준다.</desc>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style><defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M250 170.0 L270 170.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M480 170.0 L500 170.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M710 170.0 L730 170.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="40" y="60" width="210" height="220" rx="8" fill="rgba(35,47,62,0.03)" stroke="#232F3E" stroke-width="1"/>
+<rect x="52" y="52" width="152" height="16" rx="2" fill="#ffffff"/>
+<text x="60" y="63" fill="#232F3E" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.10em">1단계: 사전 준비 (1~2주)</text>
+<text x="56" y="90" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 릴리스 노트 검토</text>
+<text x="56" y="108" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• Deprecated API 스캔</text>
+<text x="56" y="126" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 애드온 호환성 확인</text>
+<text x="56" y="144" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 업그레이드 런북 작성</text>
+<text x="56" y="162" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 롤백 계획 수립</text>
+<rect x="270" y="60" width="210" height="220" rx="8" fill="rgba(9,114,211,0.04)" stroke="#0972D3" stroke-width="1"/>
+<rect x="282" y="52" width="184" height="16" rx="2" fill="#ffffff"/>
+<text x="290" y="63" fill="#0972D3" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.10em">2단계: 비프로덕션 테스트 (1~2주)</text>
+<text x="286" y="90" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 개발 환경 업그레이드</text>
+<text x="286" y="108" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 기능/성능 테스트</text>
+<text x="286" y="126" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 카오스 테스트</text>
+<text x="286" y="144" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 스테이징 환경 업그레이드</text>
+<rect x="500" y="60" width="210" height="220" rx="8" fill="rgba(255,153,0,0.08)" stroke="#EC7211" stroke-width="1"/>
+<rect x="512" y="52" width="192" height="16" rx="2" fill="#ffffff"/>
+<text x="520" y="63" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.10em">3단계: 프로덕션 업그레이드 (1~2일)</text>
+<text x="516" y="90" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 컨트롤 플레인 업그레이드</text>
+<text x="516" y="108" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 매니지드 애드온 업데이트</text>
+<text x="516" y="126" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 노드 그룹 업그레이드</text>
+<text x="516" y="144" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 자체 관리 애드온 업데이트</text>
+<rect x="730" y="60" width="210" height="220" rx="8" fill="rgba(76,175,80,0.05)" stroke="#4CAF50" stroke-width="1"/>
+<rect x="742" y="52" width="160" height="16" rx="2" fill="#ffffff"/>
+<text x="750" y="63" fill="#4CAF50" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.10em">4단계: 검증 및 안정화 (1주)</text>
+<text x="746" y="90" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 워크로드 상태 확인</text>
+<text x="746" y="108" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 메트릭/알림 모니터링</text>
+<text x="746" y="126" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 사용자 피드백 수집</text>
+<text x="746" y="144" fill="#545B64" font-size="9.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 문서 업데이트</text>
+
+</svg>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-eks-09-eks-troubleshooting-4-title en-eks-09-eks-troubleshooting-4-desc">
+<title id="en-eks-09-eks-troubleshooting-4-title">IAM and authentication issues</title>
+<desc id="en-eks-09-eks-troubleshooting-4-desc">Tree diagram showing cluster access denial, IRSA, and node join failure issues each branching into their most common root causes.</desc>
+<defs>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 480.0 84 L 480.0 190.0" fill="none" stroke="#545B64" stroke-width="1"/>
+<path d="M 184.0 190.0 L 776.0 190.0" fill="none" stroke="#545B64" stroke-width="1"/>
+<path d="M 184.0 190.0 L 184.0 288.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 480.0 190.0 L 480.0 288.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 776.0 190.0 L 776.0 288.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 184.0 328.0 L 184.0 434.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 480.0 328.0 L 480.0 434.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 776.0 328.0 L 776.0 434.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="372.0" y="40" width="216" height="44" rx="6" fill="#ffffff"/>
+<rect x="372.0" y="40" width="216" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<rect x="380.0" y="46" width="32" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-width="0.8"/>
+<text x="396.0" y="55" fill="#EC7211" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ROOT</text>
+<text x="480.0" y="71" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">IAM &amp; Authentication Issues</text>
+<rect x="48" y="288.0" width="272" height="40" rx="6" fill="#ffffff"/>
+<rect x="48" y="288.0" width="272" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="56" y="294.0" width="44" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.55)" stroke-width="0.8"/>
+<text x="78.0" y="303.0" fill="rgba(35,47,62,0.55)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ACCESS</text>
+<text x="184.0" y="319.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Cluster Access Denied</text>
+<rect x="344" y="288.0" width="272" height="40" rx="6" fill="#ffffff"/>
+<rect x="344" y="288.0" width="272" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="352" y="294.0" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.55)" stroke-width="0.8"/>
+<text x="368.0" y="303.0" fill="rgba(35,47,62,0.55)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">IRSA</text>
+<text x="480.0" y="319.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">IRSA Issues</text>
+<rect x="640" y="288.0" width="272" height="40" rx="6" fill="#ffffff"/>
+<rect x="640" y="288.0" width="272" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="648" y="294.0" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.55)" stroke-width="0.8"/>
+<text x="664.0" y="303.0" fill="rgba(35,47,62,0.55)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">JOIN</text>
+<text x="776.0" y="319.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node Join Failure</text>
+<rect x="48" y="434.0" width="272" height="94" rx="6" fill="#ffffff"/>
+<rect x="48" y="434.0" width="272" height="94" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+<text x="60" y="452.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.1em">COMMON CAUSES</text>
+<line x1="60" y1="458.0" x2="308" y2="458.0" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="62" y="472.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="78" y="472.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">aws-auth ConfigMap Missing</text>
+<text x="62" y="487.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="78" y="487.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">IAM Role Not Mapped</text>
+<text x="62" y="502.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="78" y="502.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Token Expiration</text>
+<text x="62" y="517.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="78" y="517.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">kubeconfig Misconfiguration</text>
+<rect x="344" y="434.0" width="272" height="94" rx="6" fill="#ffffff"/>
+<rect x="344" y="434.0" width="272" height="94" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+<text x="356" y="452.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.1em">COMMON CAUSES</text>
+<line x1="356" y1="458.0" x2="604" y2="458.0" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="358" y="472.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="374" y="472.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">OIDC Provider Not Configured</text>
+<text x="358" y="487.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="374" y="487.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Trust Policy Misconfiguration</text>
+<text x="358" y="502.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="374" y="502.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Service Account Annotation Missing</text>
+<text x="358" y="517.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="374" y="517.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">IAM Role Permission Issues</text>
+<rect x="640" y="434.0" width="272" height="79" rx="6" fill="#ffffff"/>
+<rect x="640" y="434.0" width="272" height="79" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+<text x="652" y="452.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.1em">COMMON CAUSES</text>
+<line x1="652" y1="458.0" x2="900" y2="458.0" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="654" y="472.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="670" y="472.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Node Role Permissions</text>
+<text x="654" y="487.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="670" y="487.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Security Group Restrictions</text>
+<text x="654" y="502.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="670" y="502.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Bootstrap Failure</text>
+<line x1="48" y1="536" x2="912" y2="536" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="48" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="118" y="546" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="138" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Root topic</text>
+<rect x="238" y="546" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="258" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Issue category</text>
+<rect x="378" y="546" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+<text x="398" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Detail list</text>
+<text x="518" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-style="italic">Each category also has Troubleshooting Steps + Common Solutions (omitted).</text>
+</svg>
