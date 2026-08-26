@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d5-title d5-desc">
+<title id="d5-title">AWS 관리형 서비스가 게이트웨이를 통해 하이브리드 Pod에 연결되는 구조</title>
+<desc id="d5-desc">ALB, NLB, Amazon Managed Prometheus가 VPC 라우트 테이블과 게이트웨이 EC2를 거쳐 온프레미스의 세 Hybrid Pod에 IP 타겟으로 직접 연결되는 구조를 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="d5-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="d5-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zone: AWS Services -->
+<rect x="40" y="44" width="880" height="124" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="56" y="48" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="104" y="57" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AWS 서비스</text>
+
+<!-- Zone: VPC -->
+<rect x="372" y="184" width="220" height="204" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="388" y="188" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="412" y="197" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">VPC</text>
+
+<!-- Zone: OnPrem -->
+<rect x="40" y="416" width="880" height="124" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="56" y="420" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="104" y="429" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">온프레미스</text>
+
+<!-- Arrows -->
+<path d="M214,140 V168 Q214,176 222,176 H429 Q437,176 437,184 V216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d5-arrow)"/>
+<line x1="482" y1="140" x2="482" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#d5-arrow)"/>
+<path d="M746,140 V168 Q746,176 738,176 H535 Q527,176 527,184 V216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d5-arrow)"/>
+
+<line x1="482" y1="272" x2="482" y2="308" stroke="#EC7211" stroke-width="1.4" marker-end="url(#d5-arrow-accent)"/>
+
+<path d="M437,364 V398 Q437,406 429,406 H222 Q214,406 214,414 V448" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d5-arrow)"/>
+<line x1="482" y1="364" x2="482" y2="448" stroke="#545B64" stroke-width="1.2" marker-end="url(#d5-arrow)"/>
+<path d="M527,364 V398 Q527,406 535,406 H738 Q746,406 746,414 V448" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d5-arrow)"/>
+
+<!-- Labels -->
+<rect x="296" y="156" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="326" y="165" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">IP 타겟</text>
+
+<rect x="606" y="156" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="636" y="165" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">스크래핑</text>
+
+<rect x="490" y="192" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="518" y="201" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">IP 타겟</text>
+
+<rect x="490" y="420" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="518" y="429" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VXLAN</text>
+
+<!-- Node: ALB -->
+<rect x="124" y="76" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="124" y="76" width="180" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="214" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Application LB</text>
+<text x="214" y="120" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">IP 타겟 모드</text>
+
+<!-- Node: NLB -->
+<rect x="392" y="76" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="392" y="76" width="180" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="482" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Network LB</text>
+<text x="482" y="120" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">IP 타겟 모드</text>
+
+<!-- Node: AMP -->
+<rect x="656" y="76" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="656" y="76" width="180" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="746" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Managed Prometheus</text>
+<text x="746" y="120" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">원격 스크래핑</text>
+
+<!-- Node: Route Table -->
+<rect x="392" y="216" width="180" height="56" rx="8" fill="#ffffff"/>
+<rect x="392" y="216" width="180" height="56" rx="8" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="482" y="240" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">라우트 테이블</text>
+<text x="482" y="256" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.85.0.0/16 → GW ENI</text>
+
+<!-- Node: Gateway EC2 (focal) -->
+<rect x="392" y="308" width="180" height="56" rx="8" fill="#ffffff"/>
+<rect x="392" y="308" width="180" height="56" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="482" y="332" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">게이트웨이 EC2</text>
+<text x="482" y="348" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">VXLAN 종단점</text>
+
+<!-- Node: Hybrid Pod 1 -->
+<rect x="124" y="448" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="124" y="448" width="180" height="64" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="214" y="476" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Hybrid Pod 1</text>
+<text x="214" y="492" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">웹 앱</text>
+
+<!-- Node: Hybrid Pod 2 -->
+<rect x="392" y="448" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="392" y="448" width="180" height="64" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="482" y="476" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Hybrid Pod 2</text>
+<text x="482" y="492" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">API 서버</text>
+
+<!-- Node: Hybrid Pod 3 -->
+<rect x="656" y="448" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="656" y="448" width="180" height="64" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="746" y="476" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Hybrid Pod 3</text>
+<text x="746" y="492" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">메트릭 수출기</text>
+
+<!-- Legend -->
+<line x1="40" y1="560" x2="920" y2="560" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="48" y1="576" x2="72" y2="576" stroke="#545B64" stroke-width="1.2"/>
+<text x="80" y="579" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">IP 타겟 라우팅</text>
+<circle cx="260" cy="576" r="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="276" y="579" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">게이트웨이 (VXLAN 종단점)</text>
+</svg>
