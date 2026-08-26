@@ -39,17 +39,7 @@ The practical benefit is a stable, documented pipeline spec that isn't tied to A
 
 ## How a Pipeline Run Flows Through the System
 
-```mermaid
-graph LR
-    A[Python pipeline<br/>@dsl.pipeline / @dsl.component] --> B[KFP SDK Compiler<br/>produces IR YAML]
-    B --> C[KFP API Server<br/>stores pipeline, accepts Run]
-    C --> D[Backend translates<br/>IR YAML to Argo Workflow]
-    D --> E[Argo Workflow Controller<br/>schedules steps]
-    E --> F[Component Pods execute]
-    F --> G[Artifacts written to<br/>object store: S3 / MinIO]
-    F --> H[Execution + artifact metadata<br/>recorded in MLMD]
-    G --> H
-```
+![Diagram showing how a Kubeflow Pipelines Python DSL definition is compiled to IR YAML, submitted to the KFP API server, translated into an Argo Workflow, executed as component pods, and how those pods write artifacts to object storage (S3/MinIO) and record execution and artifact metadata in ML Metadata (MLMD).](../../.gitbook/assets/en-ai-ml-kubeflow-02-pipelines-0.png)
 
 The KFP SDK's job ends at producing IR YAML; everything from the API server onward is the backend's responsibility. This separation is exactly what makes the "backend-agnostic spec" claim concrete — the SDK doesn't know or care that Argo Workflows is doing the scheduling underneath.
 

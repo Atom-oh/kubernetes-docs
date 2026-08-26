@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">Champion/challenger alias routing in MLflow Model Registry</title>
+  <desc id="ddesc">The serving system resolves the champion alias of the fraud-detector registered model to serve production traffic, while separately evaluating the challenger alias. The champion alias points to version 2 and the challenger alias points to version 4, out of four registered versions.</desc>
+  <rect width="960" height="600" fill="var(--paper)"/>
+
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <!-- ===================== ZONE: Registered Model ===================== -->
+  <rect x="560" y="96" width="320" height="404" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="620" y="100" width="200" height="16" fill="#ffffff"/>
+  <text x="720" y="112" fill="rgba(35,47,62,0.40)" font-size="8" font-family="'Geist Mono', monospace"
+        text-anchor="middle" letter-spacing="0.14em">REGISTERED MODEL: FRAUD-DETECTOR</text>
+
+  <!-- ===================== ARROWS (drawn before boxes) ===================== -->
+
+  <!-- Serving -> Champion : RESOLVES (solid, accent) -->
+  <path d="M240,314 H328 Q336,314 336,306 V264 Q336,256 344,256 H432"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="266" y="272" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="302" y="281" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace"
+        text-anchor="middle" letter-spacing="0.06em">RESOLVES</text>
+
+  <!-- Serving -> Challenger : EVALUATES (dashed, muted) -->
+  <path d="M240,374 H328 Q336,374 336,382 V424 Q336,432 344,432 H432"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="264" y="392" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="302" y="401" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace"
+        text-anchor="middle" letter-spacing="0.06em">EVALUATES</text>
+
+  <!-- Champion -> V2 (dashed alias binding) -->
+  <line x1="460" y1="256" x2="620" y2="256" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- Challenger -> V4 (dashed alias binding) -->
+  <line x1="460" y1="432" x2="620" y2="432" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- ===================== VERSION BOXES ===================== -->
+
+  <!-- V1 -->
+  <rect x="620" y="136" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="620" y="136" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="720" y="172" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Version 1</text>
+
+  <!-- V2 (bound to champion) -->
+  <rect x="620" y="224" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="620" y="224" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="720" y="260" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Version 2</text>
+
+  <!-- V3 -->
+  <rect x="620" y="312" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="620" y="312" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="720" y="348" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Version 3</text>
+
+  <!-- V4 (bound to challenger) -->
+  <rect x="620" y="400" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="620" y="400" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="720" y="436" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Version 4</text>
+
+  <!-- ===================== ALIAS CIRCLES ===================== -->
+
+  <!-- Champion (focal) -->
+  <circle cx="432" cy="256" r="28" fill="rgba(255,153,0,0.10)"/>
+  <circle cx="432" cy="256" r="28" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="432" y="254" fill="#EC7211" font-size="11" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Champion</text>
+  <text x="432" y="266" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace"
+        text-anchor="middle" letter-spacing="0.04em">alias</text>
+  <text x="432" y="300" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace"
+        text-anchor="middle">@champion</text>
+
+  <!-- Challenger -->
+  <circle cx="432" cy="432" r="28" fill="#ffffff"/>
+  <circle cx="432" cy="432" r="28" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="432" y="430" fill="#232F3E" font-size="11" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Challenger</text>
+  <text x="432" y="442" fill="#232F3E" font-size="8" font-family="'Geist Mono', monospace"
+        text-anchor="middle" letter-spacing="0.04em">alias</text>
+  <text x="432" y="476" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace"
+        text-anchor="middle">@challenger</text>
+
+  <!-- ===================== SERVING SYSTEM ===================== -->
+  <rect x="40" y="294" width="200" height="100" rx="6" fill="#ffffff"/>
+  <rect x="40" y="294" width="200" height="100" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="48" y="304" width="44" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="70" y="313" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace"
+        text-anchor="middle" letter-spacing="0.08em">INFRA</text>
+  <text x="140" y="348" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Serving system</text>
+  <text x="140" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace"
+        text-anchor="middle">models:/fraud-detector@</text>
+
+  <!-- ===================== LEGEND ===================== -->
+  <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <circle cx="52" cy="560" r="4" fill="#EC7211"/>
+  <text x="64" y="564" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">SOLID = LIVE PRODUCTION TRAFFIC</text>
+  <line x1="300" y1="560" x2="316" y2="560" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="326" y="564" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">DASHED = ALIAS BINDING / EVALUATION</text>
+</svg>

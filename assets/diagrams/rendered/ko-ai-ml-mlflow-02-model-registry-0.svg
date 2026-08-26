@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="960" height="600" xmlns="http://www.w3.org/2000/svg"
+     role="img" aria-labelledby="modelregistry-title modelregistry-desc"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+  <title id="modelregistry-title">Champion / Challenger Alias Routing</title>
+  <desc id="modelregistry-desc">서빙 시스템이 fraud-detector 모델의 champion, challenger 별칭을 통해 각각 정식 트래픽과 그림자 평가 트래픽을 서로 다른 모델 버전으로 라우팅하는 구조를 보여준다.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="32" class="mono" font-size="8" letter-spacing="0.18em" fill="#7D8998">MLFLOW MODEL REGISTRY</text>
+  <text x="40" y="64" font-size="24" font-weight="700" fill="#232F3E">Champion / Challenger 별칭 라우팅</text>
+  <text x="40" y="90" font-style="italic" font-size="14" fill="#545B64">서빙 시스템은 버전 번호가 아니라 별칭을 참조해, 알리아스 재지정만으로 배포 대상을 바꾼다</text>
+
+  <!-- Registry zone (painted first, background) -->
+  <rect x="60" y="344" width="840" height="152" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.16)" stroke-width="1"/>
+  <text x="76" y="368" class="mono" font-size="8" letter-spacing="0.16em" fill="#7D8998">REGISTERED MODEL</text>
+  <text x="76" y="384" class="mono" font-size="11" font-weight="500" fill="#232F3E">fraud-detector</text>
+
+  <!-- ===== Connectors (drawn before boxes) ===== -->
+
+  <!-- Champion alias -> V2 (accent dashed thread, drawn first so the hop can pass over it) -->
+  <path d="M404,280 L404,392" fill="none" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,3"/>
+  <polygon points="399,392 409,392 404,400" fill="#EC7211"/>
+
+  <!-- Challenger alias -> V4 (muted dashed thread) -->
+  <path d="M708,328 L708,392" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4"/>
+  <polygon points="703,392 713,392 708,400" fill="#545B64"/>
+
+  <!-- S -> champion pill (solid accent, "production" path) -->
+  <path d="M220,200 L332,200 A8,8 0 0 1 340,208 L340,256 A8,8 0 0 0 348,264 L356,264"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="252" y="180" width="56" height="12" fill="#ffffff"/>
+  <text x="280" y="189" class="mono" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#EC7211">RESOLVE</text>
+
+  <!-- S -> challenger pill (dashed muted, "shadow eval" path) with a small arc hop over the champion alias line -->
+  <path d="M140,240 L140,304 A8,8 0 0 0 148,312 L390,312"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4"/>
+  <path d="M390,312 Q404,322 418,312" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4"/>
+  <path d="M418,312 L652,312 A8,8 0 0 1 660,320"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="186" y="292" width="72" height="12" fill="#ffffff"/>
+  <text x="222" y="301" class="mono" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#545B64">SHADOW EVAL</text>
+
+  <!-- ===== Version boxes ===== -->
+  <!-- V1 (store — not aliased) -->
+  <rect x="192" y="400" width="120" height="64" rx="6" fill="#ffffff"/>
+  <rect x="192" y="400" width="120" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="252" y="436" font-size="12" font-weight="600" text-anchor="middle" fill="#545B64">Version 1</text>
+
+  <!-- V2 (backend — champion) -->
+  <rect x="344" y="400" width="120" height="64" rx="6" fill="#ffffff"/>
+  <rect x="344" y="400" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="404" y="436" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Version 2</text>
+
+  <!-- V3 (store — not aliased) -->
+  <rect x="496" y="400" width="120" height="64" rx="6" fill="#ffffff"/>
+  <rect x="496" y="400" width="120" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="556" y="436" font-size="12" font-weight="600" text-anchor="middle" fill="#545B64">Version 3</text>
+
+  <!-- V4 (backend — challenger) -->
+  <rect x="648" y="400" width="120" height="64" rx="6" fill="#ffffff"/>
+  <rect x="648" y="400" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="708" y="436" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Version 4</text>
+
+  <!-- ===== Serving System (focal) ===== -->
+  <rect x="60" y="176" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="60" y="176" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="140" y="204" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">서빙 시스템</text>
+  <text x="140" y="220" class="mono" font-size="9" text-anchor="middle" fill="#545B64">traffic router</text>
+
+  <!-- ===== Champion alias pill (focal) ===== -->
+  <rect x="356" y="248" width="96" height="32" rx="16" fill="#ffffff"/>
+  <rect x="356" y="248" width="96" height="32" rx="16" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="404" y="268" class="mono" font-size="10" font-weight="600" text-anchor="middle" fill="#232F3E">champion</text>
+
+  <!-- ===== Challenger alias pill ===== -->
+  <rect x="660" y="296" width="96" height="32" rx="16" fill="#ffffff"/>
+  <rect x="660" y="296" width="96" height="32" rx="16" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.35)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="708" y="316" class="mono" font-size="10" font-weight="600" text-anchor="middle" fill="#545B64">challenger</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="516" x2="920" y2="516" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="500" class="mono" font-size="8" letter-spacing="0.14em" fill="#545B64">LEGEND</text>
+
+  <line x1="40" y1="540" x2="72" y2="540" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="80" y="544" class="mono" font-size="9" fill="#232F3E">champion → 정식 서빙 트래픽 (resolve)</text>
+
+  <line x1="420" y1="540" x2="452" y2="540" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4"/>
+  <text x="460" y="544" class="mono" font-size="9" fill="#232F3E">challenger → 그림자 평가 트래픽 (shadow eval)</text>
+
+</svg>

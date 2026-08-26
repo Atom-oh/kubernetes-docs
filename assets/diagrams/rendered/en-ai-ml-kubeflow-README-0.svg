@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="960" height="600" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg"
+     role="img" aria-labelledby="kubeflow-flow-title kubeflow-flow-desc">
+  <title id="kubeflow-flow-title">Kubeflow component flow</title>
+  <desc id="kubeflow-flow-desc">Diagram showing the Central Dashboard in Kubeflow routing to Notebooks, Pipelines, and Katib; Pipelines and Katib both feed the Kubeflow Trainer, which passes its trained model to KServe for serving.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- ============ ARROWS (drawn before boxes) ============ -->
+
+  <!-- Dashboard -> Notebooks -->
+  <path d="M435,144 V174 Q435,182 427,182 H288 Q280,182 280,190 V220"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Dashboard -> Pipelines (straight, same x) -->
+  <path d="M480,144 V220" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Dashboard -> Katib -->
+  <path d="M525,144 V174 Q525,182 533,182 H672 Q680,182 680,190 V220"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Pipelines -> Trainer (accent: happy path into training) -->
+  <path d="M480,284 V314 Q480,322 472,322 H458 Q450,322 450,330 V360"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="439" y="302" width="52" height="12" rx="2" fill="#ffffff"/>
+  <text x="465" y="311" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">TEMPLATES</text>
+
+  <!-- Katib -> Trainer -->
+  <path d="M680,284 V314 Q680,322 672,322 H518 Q510,322 510,330 V360"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="569" y="302" width="52" height="12" rx="2" fill="#ffffff"/>
+  <text x="595" y="311" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">TUNES VIA</text>
+
+  <!-- Trainer -> KServe (accent: trained model reaching serving) -->
+  <path d="M480,424 V480" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="490" y="446" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="534" y="455" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">TRAINED MODEL</text>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- Central Dashboard (focal) -->
+  <rect x="390" y="80" width="180" height="64" rx="6" fill="#ffffff"/>
+  <rect x="390" y="80" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <rect x="398" y="86" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.40)" stroke-width="0.8"/>
+  <text x="412" y="95" fill="rgba(236,114,17,0.85)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">HUB</text>
+  <text x="480" y="118" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Central Dashboard</text>
+
+  <!-- Notebooks -->
+  <rect x="200" y="220" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="200" y="220" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="208" y="226" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="222" y="235" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">IDE</text>
+  <text x="280" y="258" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Notebooks</text>
+
+  <!-- Pipelines -->
+  <rect x="400" y="220" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="400" y="220" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="408" y="226" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="422" y="235" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">FLOW</text>
+  <text x="480" y="258" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pipelines</text>
+
+  <!-- Katib -->
+  <rect x="600" y="220" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="600" y="220" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="608" y="226" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="622" y="235" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">TUNE</text>
+  <text x="680" y="258" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Katib</text>
+
+  <!-- Kubeflow Trainer (focal) -->
+  <rect x="390" y="360" width="180" height="64" rx="6" fill="#ffffff"/>
+  <rect x="390" y="360" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <rect x="398" y="366" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.40)" stroke-width="0.8"/>
+  <text x="412" y="375" fill="rgba(236,114,17,0.85)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">TRAIN</text>
+  <text x="480" y="398" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Kubeflow Trainer</text>
+
+  <!-- KServe -->
+  <rect x="400" y="480" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="400" y="480" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="408" y="486" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="422" y="495" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">SERVE</text>
+  <text x="480" y="518" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">KServe</text>
+
+</svg>

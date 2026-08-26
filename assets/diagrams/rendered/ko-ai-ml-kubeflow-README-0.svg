@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dTitle dDesc">
+  <title id="dTitle">Kubeflow 컴포넌트 아키텍처</title>
+  <desc id="dDesc">중앙 대시보드가 노트북, 파이프라인, Katib를 연결하며, 파이프라인과 Katib의 결과물이 Kubeflow Trainer로 모여 학습을 수행하고, 학습된 모델이 KServe로 전달되어 서빙된다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- header -->
+  <text x="40" y="28" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.14em">AI/ML PLATFORM</text>
+  <text x="40" y="52" fill="#232F3E" font-size="20" font-weight="700">Kubeflow 컴포넌트 아키텍처</text>
+
+  <!-- ============ connectors (drawn before boxes) ============ -->
+
+  <!-- Dashboard -> Notebooks (right+up elbow) -->
+  <path d="M 180,284 H 232 Q 240,284 240,276 V 120 Q 240,112 248,112 H 300"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Dashboard -> Pipelines (straight) -->
+  <line x1="180" y1="300" x2="300" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Dashboard -> Katib (right+down elbow) -->
+  <path d="M 180,316 H 232 Q 240,316 240,324 V 480 Q 240,488 248,488 H 300"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Pipelines -> Trainer (right+up small elbow) -->
+  <path d="M 440,300 H 492 Q 500,300 500,292 Q 500,284 508,284 H 560"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="448" y="280" width="36" height="12" rx="2" fill="#ffffff"/>
+  <text x="466" y="289" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">TRIAL 템플릿</text>
+
+  <!-- Katib -> Trainer (right+up elbow) -->
+  <path d="M 440,488 H 492 Q 500,488 500,480 V 324 Q 500,316 508,316 H 560"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="448" y="468" width="36" height="12" rx="2" fill="#ffffff"/>
+  <text x="466" y="477" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">튜닝 수행</text>
+
+  <!-- Trainer -> KServe (straight, accent = headline output) -->
+  <line x1="720" y1="300" x2="800" y2="300" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="742" y="280" width="36" height="12" rx="2" fill="#ffffff"/>
+  <text x="760" y="289" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">학습된 모델</text>
+
+  <!-- ============ nodes ============ -->
+
+  <!-- Dashboard (focal) -->
+  <rect x="40" y="268" width="140" height="64" rx="6" fill="#ffffff"/>
+  <rect x="40" y="268" width="140" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="48" y="276" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.5" stroke-width="0.8"/>
+  <text x="62" y="285" fill="#EC7211" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">UI</text>
+  <text x="110" y="304" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">중앙 대시보드</text>
+  <text x="110" y="320" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Central Dashboard</text>
+
+  <!-- Notebooks -->
+  <rect x="300" y="80" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="308" y="88" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="323" y="97" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">DEV</text>
+  <text x="370" y="116" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">노트북</text>
+  <text x="370" y="132" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Notebooks</text>
+
+  <!-- Pipelines -->
+  <rect x="300" y="268" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="308" y="276" width="26" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="321" y="285" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">ML</text>
+  <text x="370" y="304" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">파이프라인</text>
+  <text x="370" y="320" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Pipelines</text>
+
+  <!-- Katib -->
+  <rect x="300" y="456" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="308" y="464" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="325" y="473" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">TUNE</text>
+  <text x="370" y="492" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Katib</text>
+  <text x="370" y="508" fill="#545B64" font-size="9" class="mono" text-anchor="middle">hyperparameter tuning</text>
+
+  <!-- Trainer (focal) -->
+  <rect x="560" y="268" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="560" y="268" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="568" y="276" width="38" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.5" stroke-width="0.8"/>
+  <text x="587" y="285" fill="#EC7211" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">TRAIN</text>
+  <text x="640" y="304" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Kubeflow Trainer</text>
+  <text x="640" y="320" fill="#545B64" font-size="9" class="mono" text-anchor="middle">training job runner</text>
+
+  <!-- KServe -->
+  <rect x="800" y="268" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="808" y="276" width="38" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="827" y="285" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">SERVE</text>
+  <text x="870" y="304" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">KServe</text>
+  <text x="870" y="320" fill="#545B64" font-size="9" class="mono" text-anchor="middle">model serving</text>
+
+</svg>

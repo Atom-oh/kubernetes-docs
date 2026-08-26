@@ -49,36 +49,7 @@ Ray Tune이 실행하는 trial이 반드시 단일 프로세스 함수여야 하
 
 이 결합은 모델을 학습시키는 데 비용이 커서, trial 하나만으로도 합리적인 시간 안에 끝내려면 분산 학습이 필요한 상황에서 중요해집니다. 이 결합이 없다면 팀은 곤란한 선택에 놓입니다. 분산 학습 작업을 대상으로 하이퍼파라미터를 순차적으로 튜닝하거나, 탐색 단계에서는 분산 학습을 포기해야 합니다. 두 라이브러리가 동일한 Ray 원시 개념을 공유하기 때문에, Tune은 각기 별도의 분산 워커 집합을 가진 여러 Ray Train 실행을 동시에 여러 개 구동할 수 있으며, 이를 위해 어느 쪽 라이브러리도 서로를 위한 특수한 통합 코드를 필요로 하지 않습니다.
 
-```mermaid
-flowchart TB
-    Driver["Ray Tune Driver<br/>(탐색 알고리즘)"]
-
-    subgraph Trial1["Trial 1: Ray Train 실행"]
-        T1W1["Worker Actor 1"]
-        T1W2["Worker Actor 2"]
-        T1OS[("Object Store")]
-        T1W1 <--> T1OS
-        T1W2 <--> T1OS
-    end
-
-    subgraph Trial2["Trial 2: Ray Train 실행"]
-        T2W1["Worker Actor 1"]
-        T2W2["Worker Actor 2"]
-        T2OS[("Object Store")]
-        T2W1 <--> T2OS
-        T2W2 <--> T2OS
-    end
-
-    Driver -->|하이퍼파라미터 조합 A로 실행| Trial1
-    Driver -->|하이퍼파라미터 조합 B로 실행| Trial2
-    Trial1 -->|결과/체크포인트 보고| Driver
-    Trial2 -->|결과/체크포인트 보고| Driver
-    Driver -->|다음 라운드 trial 결정| Driver
-
-    style Driver fill:#4fc3f7
-    style Trial1 fill:#81c784
-    style Trial2 fill:#ffb74d
-```
+![Ray Tune Driver가 두 트라이얼에 서로 다른 하이퍼파라미터 조합 실행을 지시하고, 각 트라이얼 내부의 Worker Actor들이 Object Store를 공유하며 학습한 뒤 결과와 체크포인트를 Driver에 보고해 다음 라운드의 트라이얼을 결정하는 순환 구조를 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-ai-ml-ray-03-ray-train-tune-0.png)
 
 ## 리소스 할당과 클러스터 오토스케일러
 

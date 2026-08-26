@@ -53,40 +53,7 @@ Head node는 worker node가 하는 일 외에 몇 가지 추가 역할을 담당
 
 Worker node는 task와 actor를 실행하고, 클러스터 전체가 사용하는 리소스 풀에 자신의 CPU, GPU, 메모리를 더하는 역할을 합니다. 여기서 Ray 스케줄링 모델의 핵심적인 특징이 하나 따라옵니다: Ray는 개별 노드의 리소스를 따로 보는 것이 아니라, 클러스터 전체가 합쳐진 리소스 풀을 기준으로 task와 actor를 스케줄링합니다. CPU 2개를 요청하는 task는 클러스터 안에서 CPU 2개가 남아 있는 어떤 노드로든 배치될 수 있습니다 — 스케줄러가 특정 머신에 작업을 수동으로 배치하는 방식이 아닙니다.
 
-```mermaid
-flowchart TB
-    subgraph Head["Head Node"]
-        GCS["Global Control Store<br/>(클러스터 메타데이터)"]
-        Driver["Driver 프로세스<br/>(head에서 실행하는 경우)"]
-        Autoscaler["Autoscaler"]
-    end
-
-    subgraph W1["Worker Node 1"]
-        T1["Tasks"]
-        A1["Actors"]
-    end
-
-    subgraph W2["Worker Node 2"]
-        T2["Tasks"]
-        A2["Actors"]
-    end
-
-    subgraph W3["Worker Node N"]
-        T3["Tasks"]
-        A3["Actors"]
-    end
-
-    OS[("분산 Object Store<br/>(모든 노드가 공유)")]
-
-    Head --> W1
-    Head --> W2
-    Head --> W3
-
-    W1 --- OS
-    W2 --- OS
-    W3 --- OS
-    Head --- OS
-```
+![Ray 클러스터에서 Head Node(Global Control Store, Driver, Autoscaler)가 여러 Worker Node의 Task/Actor 실행을 관리하고, 모든 노드가 클러스터 전역에 걸쳐 공유되는 분산 Object Store에 접근하는 구조를 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-ai-ml-ray-01-architecture-0.png)
 
 모든 노드는 분산 object store에 함께 참여하므로, 한 worker node의 task가 만들어낸 객체를 다른 worker node에서 실행 중인 task나 actor가 읽을 수 있으며, 그 사이의 데이터 이동은 Ray가 처리합니다.
 

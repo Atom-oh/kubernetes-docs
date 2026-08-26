@@ -46,24 +46,7 @@ Central Dashboard의 스포너(spawner) UI에서는 사용자가 하나 이상�
 
 ## 노트북 조정(Reconciliation) 흐름
 
-```mermaid
-sequenceDiagram
-    actor User as 사용자
-    participant Dash as Central Dashboard
-    participant CRD as Notebook CR (Profile 네임스페이스 내)
-    participant Ctrl as Notebook 컨트롤러
-    participant K8s as StatefulSet / Pod
-    participant Istio as Istio 사이드카
-
-    User->>Dash: 이미지, CPU/메모리, GPU 개수, PVC 선택
-    Dash->>CRD: Notebook 커스텀 리소스 생성
-    Ctrl->>CRD: 생성/변경 이벤트 감시
-    Ctrl->>K8s: StatefulSet + Pod 스펙으로 조정
-    K8s->>K8s: 홈 디렉터리에 PVC 마운트
-    K8s->>K8s: (선택 시) nvidia.com/gpu 요청
-    K8s->>Istio: 네임스페이스 단위 라우팅을 위한 사이드카 주입
-    Istio->>User: Dashboard 프록시를 통해 노트북 UI 노출
-```
+![사용자가 Central Dashboard에서 이미지·리소스·PVC를 선택해 Notebook CR을 생성하면, Notebook 컨트롤러가 이를 감시해 StatefulSet/Pod로 조정하고 PVC 마운트와 GPU 요청을 처리한 뒤 Istio 사이드카를 주입해 Dashboard 프록시를 통해 노트북 UI를 사용자에게 노출하는 흐름을 보여준다.](../../.gitbook/assets/ko-ai-ml-kubeflow-03-notebooks-0.png)
 
 컨트롤러의 조정 루프는 Kubernetes 전반에서 사용되는 동일한 패턴을 따릅니다. 대시보드에서 사용자가 무언가를 조작할 때마다 Pod를 직접 생성하는 것이 아니라, `Notebook` 커스텀 리소스가 현재 선언하고 있는 상태를 향해 실제 `StatefulSet`을 지속적으로 조정합니다. 예를 들어 대시보드에서 노트북을 중지하면 명령형으로 Pod를 삭제하는 것이 아니라 커스텀 리소스의 원하는 replica 수를 0으로 갱신하는 방식으로 동작하며, 결국 노트북 Pod가 실행되어야 하는지에 대한 단일 진실 공급원(source of truth)은 대시보드 UI가 아니라 컨트롤러입니다.
 

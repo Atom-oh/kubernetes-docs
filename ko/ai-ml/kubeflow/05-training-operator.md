@@ -69,33 +69,7 @@ Kubeflow Trainer v2는 이를 프레임워크당 CRD 하나 대신, 두 가지 �
 
 EKS에서는 이것이 GPU 노드 풀을 어떻게 프로비저닝하고 스케일링하는지와 직접 맞닿습니다 — 예를 들어 GPU 워커 8개가 필요한 분산 작업은 오토스케일러가 하나씩 늘려주는 것이 아니라 8개의 GPU 가용 노드(또는 슬롯)가 동시에 준비되어 있어야 합니다. GPU 노드 풀 크기 산정과 스케일링(Karpenter NodePool, 인스턴스 타입 선택, GPU 빈패킹)에 대한 자세한 메커니즘은 이 사이트의 오토스케일링 및 GPU 스케줄링 문서에서 다루므로 여기서 다시 설명하지 않습니다. 이 문서에서 가져갈 핵심은, 갱 스케줄링 요구사항과 GPU 노드 풀의 탄력성을 함께 설계해야 한다는 점입니다 — 모든 워커를 한 번에 스케줄받지 못하는 학습 작업은 `TrainJob`/런타임 설정이 아무리 정확해도 멈춰버립니다.
 
-```mermaid
-flowchart TD
-    TJ[TrainJob<br/>스크립트, 인자, 워커 수]
-    RT[ClusterTrainingRuntime<br/>이미지, 실행 메커니즘]
-    C[Trainer 컨트롤러]
-    JS[JobSet / PodGroup<br/>갱 스케줄된 워커 Pod]
-    SVC[헤드리스 Service]
-    W1[워커 Pod 0<br/>RANK=0]
-    W2[워커 Pod 1<br/>RANK=1]
-    W3[워커 Pod N<br/>RANK=N]
-    ST[TrainJob.status<br/>진행 상황, 메트릭, 완료 여부]
-
-    TJ -->|참조| RT
-    TJ -->|감시| C
-    RT -->|감시| C
-    C -->|생성| JS
-    JS --> W1
-    JS --> W2
-    JS --> W3
-    W1 <-->|피어 탐색| SVC
-    W2 <-->|피어 탐색| SVC
-    W3 <-->|피어 탐색| SVC
-    W1 -->|진행/메트릭 전달| C
-    W2 -->|진행/메트릭 전달| C
-    W3 -->|진행/메트릭 전달| C
-    C -->|상태 반영| ST
-```
+![TrainJob과 ClusterTrainingRuntime을 감시하는 Trainer 컨트롤러가 JobSet/PodGroup을 생성해 워커 Pod들을 띄우고, 워커 Pod는 헤드리스 Service로 서로를 찾은 뒤 진행 상황과 메트릭을 컨트롤러에 전달해 TrainJob.status에 반영되는 조정 흐름을 보여준다.](../../.gitbook/assets/ko-ai-ml-kubeflow-05-training-operator-0.png)
 
 ## 참고: Katib와 TrainJob
 

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="kf-notebook-seq-title kf-notebook-seq-desc">
+      <title id="kf-notebook-seq-title">Kubeflow notebook server provisioning sequence</title>
+      <desc id="kf-notebook-seq-desc">A user configures a notebook in the Central Dashboard, which creates a Notebook custom resource that the Notebook Controller reconciles into a StatefulSet and Pod; the Pod mounts its PVC and requests a GPU, an Istio sidecar is injected for namespace-scoped routing, and the notebook UI is then exposed back to the user through the Dashboard proxy.</desc>
+      <defs>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+        </style>
+        <marker id="kfns-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+        </marker>
+        <marker id="kfns-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+        </marker>
+      </defs>
+
+      <rect width="960" height="600" fill="#ffffff"/>
+
+      <!-- ===================== Lifelines ===================== -->
+      <!-- x positions: User 100 · Dashboard 300 · Controller 500 · K8s 700 · Istio 900 -->
+      <line x1="100" y1="112" x2="100" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="300" y1="112" x2="300" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="500" y1="112" x2="500" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="700" y1="112" x2="700" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="900" y1="112" x2="900" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- ===================== Activation bars ===================== -->
+      <rect x="496" y="204" width="8" height="60" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+      <rect x="696" y="252" width="8" height="120" fill="rgba(35,47,62,0.06)" stroke="#EC7211" stroke-width="0.8"/>
+      <rect x="896" y="368" width="8" height="64" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+      <!-- ===================== Messages ===================== -->
+      <!-- 1. User -> Dashboard -->
+      <line x1="100" y1="152" x2="296" y2="152" stroke="#545B64" stroke-width="1" marker-end="url(#kfns-arrow)"/>
+      <rect x="140" y="130" width="216" height="12" rx="2" fill="#ffffff"/>
+      <text x="248" y="139" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">CHOOSE IMAGE, CPU/MEM, GPU, PVC</text>
+
+      <!-- 2. Dashboard -> Controller (CR write, watched) -->
+      <line x1="300" y1="204" x2="492" y2="204" stroke="#545B64" stroke-width="1" marker-end="url(#kfns-arrow)"/>
+      <rect x="330" y="182" width="228" height="12" rx="2" fill="#ffffff"/>
+      <text x="444" y="191" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">CREATES NOTEBOOK CR · CONTROLLER WATCHES</text>
+
+      <!-- 3. Controller -> K8s (reconcile) -->
+      <line x1="508" y1="252" x2="692" y2="252" stroke="#545B64" stroke-width="1" marker-end="url(#kfns-arrow)"/>
+      <rect x="536" y="230" width="192" height="12" rx="2" fill="#ffffff"/>
+      <text x="632" y="239" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">RECONCILES STATEFULSET + POD SPEC</text>
+
+      <!-- 4. K8s self-loop: mount PVC + request GPU -->
+      <path d="M 704 296 C 748 296, 748 332, 704 332" fill="none" stroke="#EC7211" stroke-width="1"/>
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211" transform="translate(704,326) rotate(200)"/>
+      <rect x="712" y="304" width="132" height="24" rx="2" fill="#ffffff"/>
+      <text x="716" y="313" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.03em">MOUNTS PVC AT</text>
+      <text x="716" y="323" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.03em">HOME · REQUESTS GPU</text>
+
+      <!-- 5. K8s -> Istio (inject sidecar) -->
+      <line x1="708" y1="368" x2="892" y2="368" stroke="#545B64" stroke-width="1" marker-end="url(#kfns-arrow)"/>
+      <rect x="726" y="346" width="216" height="12" rx="2" fill="#ffffff"/>
+      <text x="834" y="355" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">INJECTS SIDECAR FOR NAMESPACE ROUTING</text>
+
+      <!-- 6. Istio -> User (headline success return) -->
+      <line x1="896" y1="432" x2="104" y2="432" stroke="#EC7211" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#kfns-arrow-accent)"/>
+      <rect x="380" y="410" width="240" height="12" rx="2" fill="#ffffff"/>
+      <text x="500" y="419" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">EXPOSES NOTEBOOK UI VIA DASHBOARD PROXY</text>
+
+      <!-- ===================== Actor boxes (drawn after arrows, per z-order rule) ===================== -->
+      <!-- User -->
+      <rect x="36" y="64" width="128" height="48" rx="6" fill="rgba(84,91,100,0.10)"/>
+      <rect x="36" y="64" width="128" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+      <text x="100" y="86" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">User</text>
+      <text x="100" y="102" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ml practitioner</text>
+
+      <!-- Dashboard -->
+      <rect x="236" y="64" width="128" height="48" rx="6" fill="#ffffff"/>
+      <rect x="236" y="64" width="128" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="300" y="86" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Central Dashboard</text>
+      <text x="300" y="102" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">writes Notebook CR</text>
+
+      <!-- Controller -->
+      <rect x="436" y="64" width="128" height="48" rx="6" fill="#ffffff"/>
+      <rect x="436" y="64" width="128" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="500" y="86" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Notebook Controller</text>
+      <text x="500" y="102" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">watch + reconcile</text>
+
+      <!-- K8s (focal) -->
+      <rect x="636" y="64" width="128" height="48" rx="6" fill="rgba(255,153,0,0.10)"/>
+      <rect x="636" y="64" width="128" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="700" y="86" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">StatefulSet / Pod</text>
+      <text x="700" y="102" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">PVC + nvidia.com/gpu</text>
+
+      <!-- Istio -->
+      <rect x="836" y="64" width="128" height="48" rx="6" fill="#ffffff"/>
+      <rect x="836" y="64" width="128" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="900" y="86" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istio Sidecar</text>
+      <text x="900" y="102" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">namespace routing</text>
+
+      <!-- ===================== Legend ===================== -->
+      <line x1="40" y1="536" x2="920" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="40" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+      <line x1="160" y1="549" x2="192" y2="549" stroke="#545B64" stroke-width="1" marker-end="url(#kfns-arrow)"/>
+      <text x="200" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">CALL</text>
+
+      <line x1="300" y1="549" x2="332" y2="549" stroke="#EC7211" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#kfns-arrow-accent)"/>
+      <text x="340" y="552" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">RETURN (SUCCESS)</text>
+
+      <rect x="500" y="543" width="8" height="12" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+      <text x="516" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">ACTIVATION</text>
+    </svg>

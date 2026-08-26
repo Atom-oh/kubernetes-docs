@@ -61,21 +61,7 @@ Early stopping and algorithms like Hyperband solve a related problem — not was
 
 ## How an Experiment Runs, End to End
 
-```mermaid
-flowchart TD
-    A[Experiment CRD created] --> B[Katib controller]
-    B --> C[Suggestion service created<br/>for the chosen algorithm]
-    C --> D["Suggestion proposes<br/>hyperparameter set(s)"]
-    D --> E1[Trial 1<br/>training job]
-    D --> E2[Trial 2<br/>training job]
-    D --> E3[Trial N<br/>training job]
-    E1 --> F[Metrics collector sidecar<br/>reports objective metric]
-    E2 --> F
-    E3 --> F
-    F --> C
-    C -->|maxTrialCount reached<br/>or target objective hit| G[Experiment marked Succeeded]
-    G --> H[Best Trial + hyperparameters<br/>recorded on Experiment status]
-```
+![Flowchart of the Katib hyperparameter tuning loop: an Experiment CRD triggers the Katib controller to create a Suggestion service, which proposes hyperparameter sets for parallel Trial training jobs; a metrics-collector sidecar reports each Trial's objective metric back to the Suggestion service, which either proposes another round or, once maxTrialCount or the target objective is reached, marks the Experiment Succeeded and records the best Trial's hyperparameters on its status.](../../.gitbook/assets/en-ai-ml-kubeflow-04-katib-0.png)
 
 The loop works like this: the Katib controller reconciles the Experiment and starts a Suggestion service for the requested algorithm. The Suggestion service proposes one or more hyperparameter combinations, bounded by `parallelTrialCount`. The controller creates a Trial CRD, and its underlying training job, for each proposal. As Trials report results, those results feed back into the Suggestion service to inform the next round of proposals. The loop continues until `maxTrialCount` is reached or the objective's target value is satisfied. Throughout, the Experiment's status is continuously updated with the best-performing Trial observed so far. Once the Experiment completes, that best Trial's hyperparameters and metric value are what's recorded as the final result.
 

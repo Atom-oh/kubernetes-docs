@@ -15,15 +15,7 @@ MLflow는 머신러닝 라이프사이클 전체 — 실험 추적, 모델 패�
 | **Model Registry** | 특정 학습 실행에 종속되지 않는 안정적이고 버전화된 모델 식별자 제공 | [Part 2](02-model-registry.md) |
 | **EKS 배포** | 트래킹 서버, 백엔드 저장소, 아티팩트 저장소를 EKS에서 운영 | [Part 3](03-eks-deployment.md) |
 
-```mermaid
-graph LR
-    T[Tracking<br/>실험, Run, Trace] --> R[Model Registry<br/>Registered Model, Alias]
-    R -->|해석 대상| S[서빙<br/>이 시리즈 범위 밖]
-
-    style T fill:#4fc3f7
-    style R fill:#81c784
-    style S fill:#e0e0e0,stroke-dasharray: 5 5
-```
+![MLflow에서 Tracking(실험, Run, Trace)이 Model Registry(등록된 모델, Alias)로 이어지고, Model Registry가 해석 대상이 되어 이 시리즈 범위 밖인 서빙 단계로 연결되는 흐름을 보여준다.](../../.gitbook/assets/ko-ai-ml-mlflow-README-0.png)
 
 ## 왜 EKS에서 운영하는가
 

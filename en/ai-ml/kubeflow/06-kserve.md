@@ -61,21 +61,7 @@ In Raw Deployment mode, KServe manages a plain Kubernetes **Deployment**, **Serv
 
 The practical rule of thumb: if a model's GPU cost sitting idle between requests is a real budget concern and the workload can tolerate an occasional cold-start delay, Serverless mode's scale-to-zero is worth the added Knative dependency. If the workload needs consistently low latency on every request, or already has steady enough traffic that pods are rarely idle anyway, Raw Deployment mode's simplicity and warm-pod guarantee are usually the better fit.
 
-```mermaid
-flowchart TB
-    A[Client request] --> B[InferenceService]
-    B --> C{Predictor spec}
-    C --> D[Optional: Transformer<br/>pre/post-processing]
-    C --> E[Optional: Explainer]
-    D --> F{Deployment mode}
-    E --> F
-    C --> F
-    F -->|Serverless| G[Knative-managed pod<br/>scale-to-zero capable]
-    F -->|Raw Deployment| H[Plain Deployment/Service<br/>+ HPA, no scale-to-zero]
-    G --> I[Model server loads<br/>artifact, runs inference]
-    H --> I
-    I --> J[Response to client]
-```
+![Flowchart of a KServe InferenceService: a client request enters the InferenceService, optionally passes through a transformer and/or explainer, then a deployment-mode decision routes it to either a scale-to-zero Knative pod (serverless) or a plain Deployment with HPA (raw), after which the model server loads the artifact and returns a response.](../../.gitbook/assets/en-ai-ml-kubeflow-06-kserve-0.png)
 
 ## Autoscaling: Knative Concurrency/RPS vs. HPA
 

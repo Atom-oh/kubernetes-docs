@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+  <title id="t">MLflow Scope Pipeline</title>
+  <desc id="d">A left-to-right pipeline showing that MLflow's Tracking component feeds the Model Registry, which then resolves registered models out to a Serving stage that is outside the scope of this series.</desc>
+  <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#FFFFFF"/>
+
+  <!-- Header -->
+  <text x="40" y="52" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ML LIFECYCLE / MLFLOW</text>
+  <text x="40" y="84" fill="#232F3E" font-size="28" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Where this series stops</text>
+  <text x="40" y="110" fill="#545B64" font-size="14" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Tracking feeds the Model Registry; Serving is resolved from it but covered elsewhere.</text>
+
+  <!-- Arrow 1: Tracking -> Registry (plain, straight, same y) -->
+  <line x1="280" y1="320" x2="360" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Arrow 2: Registry -> Serving (accent, dashed since destination is optional/out of scope), labeled -->
+  <line x1="600" y1="320" x2="680" y2="320" stroke="#EC7211" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+  <rect x="600" y="290" width="80" height="12" rx="2" fill="#ffffff"/>
+  <text x="640" y="299" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RESOLVED BY</text>
+
+  <!-- Node 1: Tracking (backend treatment) -->
+  <rect x="40" y="260" width="240" height="120" rx="6" fill="#ffffff"/>
+  <rect x="40" y="260" width="240" height="120" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="48" y="272" width="60" height="16" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="78" y="284" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">STAGE 1</text>
+  <text x="160" y="322" fill="#232F3E" font-size="16" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Tracking</text>
+  <text x="160" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">experiments, runs, traces</text>
+
+  <!-- Node 2: Model Registry (focal) -->
+  <rect x="360" y="260" width="240" height="120" rx="6" fill="#ffffff"/>
+  <rect x="360" y="260" width="240" height="120" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="368" y="272" width="60" height="16" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="398" y="284" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">STAGE 2</text>
+  <text x="480" y="322" fill="#232F3E" font-size="16" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Model Registry</text>
+  <text x="480" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">registered models, aliases</text>
+
+  <!-- Node 3: Serving (optional / out of scope treatment) -->
+  <rect x="680" y="260" width="240" height="120" rx="6" fill="#ffffff"/>
+  <rect x="680" y="260" width="240" height="120" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <rect x="688" y="272" width="60" height="16" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="718" y="284" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">STAGE 3</text>
+  <text x="800" y="322" fill="#232F3E" font-size="16" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Serving</text>
+  <text x="800" y="344" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">out of scope for this series</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="452" x2="920" y2="452" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="472" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <rect x="120" y="464" width="12" height="12" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="140" y="473" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Focal component (this series' final stop)</text>
+  <rect x="400" y="464" width="12" height="12" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="420" y="473" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Out of scope for this series</text>
+</svg>

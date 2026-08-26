@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="rs-title rs-desc">
+<title id="rs-title">Ray Serve autoscaling cascade</title>
+<desc id="rs-desc">A client request flows through Ray Serve Ingress into a two-stage application pipeline of Preprocess and Model Inference actor deployments and back as a Response, while a bottom-up chain of the Ray Serve Autoscaler, the Ray/KubeRay Autoscaler, and Karpenter watches queue depth and pending Pods to scale replicas, worker Pods, and nodes in turn.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- outer frame -->
+<rect x="24" y="24" width="912" height="536" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="32" y="28" width="228" height="12" rx="2" fill="#ffffff"/>
+<text x="146" y="37" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">RAY SERVE AUTOSCALING CASCADE</text>
+
+<!-- application zone -->
+<rect x="380" y="32" width="400" height="104" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="525" y="36" width="110" height="12" rx="2" fill="#ffffff"/>
+<text x="580" y="45" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">APPLICATION</text>
+
+<!-- ================= connectors (drawn before boxes) ================= -->
+
+<!-- row 1: solid request path -->
+<line x1="152" y1="92" x2="224" y2="92" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<rect x="156" y="72" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="188" y="81" fill="#0972D3" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">HTTP/GRPC</text>
+
+<line x1="344" y1="92" x2="400" y2="92" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="540" y1="92" x2="600" y2="92" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="760" y1="92" x2="804" y2="92" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- vertical dashed autoscaling signals -->
+<line x1="470" y1="200" x2="470" y2="120" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="478" y="154" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="516" y="163" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">QUEUE DEPTH</text>
+
+<line x1="680" y1="200" x2="680" y2="120" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="688" y="154" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="720" y="163" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REQUESTS</text>
+
+<line x1="612" y1="328" x2="612" y2="264" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="620" y="290" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="664" y="299" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PENDING PODS</text>
+
+<line x1="612" y1="456" x2="612" y2="392" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="620" y="418" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="658" y="427" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROVISION</text>
+
+<!-- ================= nodes ================= -->
+
+<!-- Client -->
+<rect x="56" y="64" width="96" height="56" rx="6" fill="#ffffff"/>
+<rect x="56" y="64" width="96" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="104" y="96" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Client</text>
+
+<!-- Ray Serve Ingress -->
+<rect x="224" y="64" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="224" y="64" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="284" y="90" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Ray Serve</text>
+<text x="284" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Ingress</text>
+
+<!-- Preprocess -->
+<rect x="400" y="64" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="64" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="470" y="90" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Preprocess</text>
+<text x="470" y="106" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">actor replicas</text>
+
+<!-- Model Inference -->
+<rect x="600" y="64" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="600" y="64" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="680" y="90" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Model Inference</text>
+<text x="680" y="106" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">actor replicas</text>
+
+<!-- Response -->
+<rect x="804" y="64" width="96" height="56" rx="6" fill="#ffffff"/>
+<rect x="804" y="64" width="96" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="852" y="96" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Response</text>
+
+<!-- Ray Serve Autoscaler (focal) -->
+<rect x="432" y="200" width="360" height="64" rx="6" fill="#ffffff"/>
+<rect x="432" y="200" width="360" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="612" y="226" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Ray Serve Autoscaler</text>
+<text x="612" y="242" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">replica count / deployment</text>
+
+<!-- Ray / KubeRay Autoscaler -->
+<rect x="432" y="328" width="360" height="64" rx="6" fill="#ffffff"/>
+<rect x="432" y="328" width="360" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="612" y="354" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Ray / KubeRay Autoscaler</text>
+<text x="612" y="370" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">worker pod count</text>
+
+<!-- Karpenter -->
+<rect x="432" y="456" width="360" height="64" rx="6" fill="#ffffff"/>
+<rect x="432" y="456" width="360" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="612" y="482" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Karpenter</text>
+<text x="612" y="498" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">node count</text>
+
+<!-- legend -->
+<line x1="40" y1="568" x2="920" y2="568" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="48" y1="584" x2="80" y2="584" stroke="#0972D3" stroke-width="1.2"/>
+<text x="88" y="587" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">CLIENT CALL</text>
+<line x1="220" y1="584" x2="252" y2="584" stroke="#545B64" stroke-width="1.2"/>
+<text x="260" y="587" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">REQUEST PATH</text>
+<line x1="420" y1="584" x2="452" y2="584" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="460" y="587" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">AUTOSCALE SIGNAL</text>
+<rect x="660" y="578" width="16" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="684" y="587" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">CONTROL LOOP</text>
+
+</svg>

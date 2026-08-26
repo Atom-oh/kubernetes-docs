@@ -18,21 +18,7 @@ Kubeflow는 파이프라인 오케스트레이션, 노트북, 하이퍼파라미
 | **Kubeflow Trainer** | 여러 프레임워크에 걸친 분산 모델 학습 | `TrainJob`, `ClusterTrainingRuntime` | [Part 5](05-training-operator.md) |
 | **KServe** | 모델 서빙과 추론 | `InferenceService` | [Part 6](06-kserve.md) |
 
-```mermaid
-graph LR
-    D[Central Dashboard] --> N[Notebooks]
-    D --> P[Pipelines]
-    D --> K[Katib]
-    P -->|Trial 템플릿으로 사용| T[Kubeflow Trainer]
-    K -->|튜닝 수행| T
-    T -->|학습된 모델| S[KServe]
-
-    style D fill:#4fc3f7
-    style P fill:#81c784
-    style K fill:#ffb74d
-    style T fill:#ce93d8
-    style S fill:#e57373
-```
+![중앙 대시보드가 노트북, 파이프라인, Katib를 연결하며, 파이프라인과 Katib의 결과물이 Kubeflow Trainer로 모여 학습을 수행하고 학습된 모델이 KServe로 전달되어 서빙되는 흐름을 보여준다.](../../.gitbook/assets/ko-ai-ml-kubeflow-README-0.png)
 
 ## 왜 EKS에서 운영하는가
 

@@ -69,33 +69,7 @@ Regardless of which framework's runtime is in play, multi-worker distributed tra
 
 On EKS specifically, this interacts directly with however your GPU node pools are provisioned and scaled. A distributed job that needs, say, 8 GPU workers needs 8 GPU-capable nodes (or slots) available at once — not one at a time as they trickle in from an autoscaler. The mechanics of sizing and scaling GPU node pools (Karpenter NodePools, instance type selection, binpacking GPUs) are covered in this site's autoscaling and GPU scheduling material rather than re-derived here. The point to carry into this document is simply that gang-scheduling requirements and GPU node pool elasticity need to be designed together, since a training job that can't get all its workers scheduled at once will stall regardless of how correct its `TrainJob`/runtime configuration is.
 
-```mermaid
-flowchart TD
-    TJ[TrainJob<br/>script, args, worker count]
-    RT[ClusterTrainingRuntime<br/>image, launch mechanics]
-    C[Trainer Controller]
-    JS[JobSet / PodGroup<br/>gang-scheduled worker Pods]
-    SVC[Headless Service]
-    W1[Worker Pod 0<br/>RANK=0]
-    W2[Worker Pod 1<br/>RANK=1]
-    W3[Worker Pod N<br/>RANK=N]
-    ST[TrainJob.status<br/>progress, metrics, completion]
-
-    TJ -->|references| RT
-    TJ -->|watched by| C
-    RT -->|watched by| C
-    C -->|creates| JS
-    JS --> W1
-    JS --> W2
-    JS --> W3
-    W1 <-->|discover peers via| SVC
-    W2 <-->|discover peers via| SVC
-    W3 <-->|discover peers via| SVC
-    W1 -->|progress/metrics| C
-    W2 -->|progress/metrics| C
-    W3 -->|progress/metrics| C
-    C -->|reports status| ST
-```
+![The Kubeflow Trainer Controller watches both the TrainJob and its referenced ClusterTrainingRuntime, creates a JobSet that spawns gang-scheduled worker pods, which discover each other through a headless Service and report progress and metrics back to the controller, which in turn writes that into TrainJob status.](../../.gitbook/assets/en-ai-ml-kubeflow-05-training-operator-0.png)
 
 ## Cross-Reference: Katib and TrainJob
 

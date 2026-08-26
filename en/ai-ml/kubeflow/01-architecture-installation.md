@@ -53,52 +53,7 @@ A nuance worth flagging now: **Kubeflow Trainer v2** — built around new `Train
 
 Kubeflow's architecture centers on a shared Kubernetes API server that every component talks to as a set of controllers and CRDs, with an Istio-based multi-tenancy layer providing namespace isolation and a Central Dashboard providing a single UI entry point.
 
-```mermaid
-graph TB
-    subgraph "Ingress / Auth"
-        IG[Istio Ingress Gateway]
-        AUTH[AuthN/AuthZ<br/>Dex or Cognito OIDC]
-    end
-
-    subgraph "Central Dashboard"
-        DASH[Kubeflow Central Dashboard]
-    end
-
-    subgraph "Multi-Tenancy Layer"
-        PC[Profile Controller]
-        NS1[Kubeflow Profile<br/>Namespace: team-a]
-        NS2[Kubeflow Profile<br/>Namespace: team-b]
-    end
-
-    subgraph "Component Controllers / CRDs"
-        KFP[Kubeflow Pipelines<br/>Controller]
-        NB[Notebook<br/>Controller]
-        KATIB[Katib<br/>Controller]
-        TRAIN[Kubeflow Trainer /<br/>Training Operator]
-        KSERVE[KServe<br/>Controller]
-    end
-
-    K8S[Kubernetes API Server]
-
-    IG --> AUTH
-    AUTH --> DASH
-    DASH --> PC
-    PC --> NS1
-    PC --> NS2
-    DASH --> KFP
-    DASH --> NB
-    DASH --> KATIB
-    DASH --> TRAIN
-    DASH --> KSERVE
-    KFP --> K8S
-    NB --> K8S
-    KATIB --> K8S
-    TRAIN --> K8S
-    KSERVE --> K8S
-    NS1 -.scoped resources.- KFP
-    NS1 -.scoped resources.- NB
-    NS2 -.scoped resources.- KATIB
-```
+![The Istio ingress gateway routes requests through Dex/Cognito OIDC authentication to the Kubeflow Central Dashboard, which acts as the hub connecting the Profile Controller (managing per-team namespace profiles) and the component controllers for Pipelines, Notebooks, Katib, Kubeflow Trainer, and KServe, all of which reconcile custom resources against the Kubernetes API server under namespace-scoped access.](../../.gitbook/assets/en-ai-ml-kubeflow-01-architecture-installation-0.png)
 
 A few points worth calling out:
 

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">Ray Tune 하이퍼파라미터 탐색 아키텍처</title>
+  <desc id="ddesc">Ray Tune Driver가 두 개의 트라이얼에 서로 다른 하이퍼파라미터 조합을 실행시키고, 각 트라이얼은 Ray Train Worker Actor들이 Object Store를 공유하며 학습한 뒤 결과와 체크포인트를 Driver에 보고하여 다음 라운드의 트라이얼을 결정하는 순환 구조를 보여준다.</desc>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="8 0, 0 3, 8 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- header -->
+  <text x="30" y="24" class="mono" fill="#7D8998" font-size="8" letter-spacing="0.14em">HYPERPARAMETER SEARCH</text>
+  <text x="30" y="48" fill="#232F3E" font-size="20" font-weight="700">Ray Tune 하이퍼파라미터 탐색 아키텍처</text>
+
+  <!-- ============ ZONES (bg -> zones -> arrows -> nodes) ============ -->
+  <!-- Zone 1 -->
+  <rect x="40" y="204" width="420" height="256" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="52" y="208" width="220" height="12" rx="2" fill="#ffffff"/>
+  <text x="60" y="217" class="mono" fill="rgba(35,47,62,0.40)" font-size="7" letter-spacing="0.12em">TRIAL 1 · RAY TRAIN 실행</text>
+
+  <!-- Zone 2 -->
+  <rect x="500" y="204" width="420" height="256" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="512" y="208" width="220" height="12" rx="2" fill="#ffffff"/>
+  <text x="520" y="217" class="mono" fill="rgba(35,47,62,0.40)" font-size="7" letter-spacing="0.12em">TRIAL 2 · RAY TRAIN 실행</text>
+
+  <!-- ============ ARROWS (drawn before nodes) ============ -->
+
+  <!-- self-loop on Driver: 다음 라운드 trial 결정 -->
+  <path d="M 460,100 V 84 Q 460,76 468,76 H 492 Q 500,76 500,84 V 100"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="422" y="56" width="116" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="65" text-anchor="middle" class="mono" fill="#7D8998" font-size="8" letter-spacing="0.05em">다음 라운드 결정</text>
+
+  <!-- Driver -> Trial 1 (dispatch, primary) -->
+  <path d="M 408,180 V 204" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="360" y="182" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="408" y="191" text-anchor="middle" class="mono" fill="#545B64" font-size="8" letter-spacing="0.04em">조합 A 실행</text>
+
+  <!-- Trial 1 -> Driver (report) -->
+  <path d="M 448,204 V 180" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Driver -> Trial 2 (dispatch, primary) -->
+  <path d="M 508,180 V 204" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="460" y="182" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="508" y="191" text-anchor="middle" class="mono" fill="#545B64" font-size="8" letter-spacing="0.04em">조합 B 실행</text>
+
+  <!-- Trial 2 -> Driver (report) -->
+  <path d="M 548,204 V 180" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- shared "결과/체크포인트 보고" label for both report arrows -->
+  <rect x="410" y="130" width="140" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="139" text-anchor="middle" class="mono" fill="#7D8998" font-size="8" letter-spacing="0.04em">결과·체크포인트 보고</text>
+
+  <!-- Zone 1 internal: Worker <-> Object Store (bidirectional) -->
+  <path d="M 134,316 V 356" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+  <path d="M 350,316 V 356" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+
+  <!-- Zone 2 internal: Worker <-> Object Store (bidirectional) -->
+  <path d="M 594,316 V 356" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+  <path d="M 810,316 V 356" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- Driver (focal) -->
+  <rect x="380" y="100" width="200" height="80" rx="6" fill="#ffffff"/>
+  <rect x="380" y="100" width="200" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="134" text-anchor="middle" fill="#232F3E" font-size="12" font-weight="600">Ray Tune Driver</text>
+  <text x="480" y="152" text-anchor="middle" class="mono" fill="#545B64" font-size="9">탐색 알고리즘</text>
+
+  <!-- Trial 1 workers -->
+  <rect x="64" y="236" width="140" height="80" rx="6" fill="#ffffff"/>
+  <rect x="64" y="236" width="140" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="134" y="270" text-anchor="middle" fill="#232F3E" font-size="12" font-weight="600">Worker Actor 1</text>
+  <text x="134" y="288" text-anchor="middle" class="mono" fill="#545B64" font-size="9">ray train</text>
+
+  <rect x="280" y="236" width="140" height="80" rx="6" fill="#ffffff"/>
+  <rect x="280" y="236" width="140" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="350" y="270" text-anchor="middle" fill="#232F3E" font-size="12" font-weight="600">Worker Actor 2</text>
+  <text x="350" y="288" text-anchor="middle" class="mono" fill="#545B64" font-size="9">ray train</text>
+
+  <rect x="122" y="356" width="240" height="80" rx="6" fill="#ffffff"/>
+  <rect x="122" y="356" width="240" height="80" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="242" y="392" text-anchor="middle" fill="#232F3E" font-size="12" font-weight="600">Object Store</text>
+  <text x="242" y="410" text-anchor="middle" class="mono" fill="#545B64" font-size="9">shared memory</text>
+
+  <!-- Trial 2 workers -->
+  <rect x="524" y="236" width="140" height="80" rx="6" fill="#ffffff"/>
+  <rect x="524" y="236" width="140" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="594" y="270" text-anchor="middle" fill="#232F3E" font-size="12" font-weight="600">Worker Actor 1</text>
+  <text x="594" y="288" text-anchor="middle" class="mono" fill="#545B64" font-size="9">ray train</text>
+
+  <rect x="740" y="236" width="140" height="80" rx="6" fill="#ffffff"/>
+  <rect x="740" y="236" width="140" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="810" y="270" text-anchor="middle" fill="#232F3E" font-size="12" font-weight="600">Worker Actor 2</text>
+  <text x="810" y="288" text-anchor="middle" class="mono" fill="#545B64" font-size="9">ray train</text>
+
+  <rect x="582" y="356" width="240" height="80" rx="6" fill="#ffffff"/>
+  <rect x="582" y="356" width="240" height="80" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="702" y="392" text-anchor="middle" fill="#232F3E" font-size="12" font-weight="600">Object Store</text>
+  <text x="702" y="410" text-anchor="middle" class="mono" fill="#545B64" font-size="9">shared memory</text>
+
+  <!-- ============ LEGEND ============ -->
+  <line x1="30" y1="480" x2="930" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="500" class="mono" fill="#545B64" font-size="8" letter-spacing="0.14em">LEGEND</text>
+
+  <path d="M 110,497 H 142" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="150" y="500" class="mono" fill="#545B64" font-size="8">하이퍼파라미터 조합 실행 지시</text>
+
+  <path d="M 420,497 H 452" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="460" y="500" class="mono" fill="#545B64" font-size="8">다음 라운드 trial 결정(반복)</text>
+
+  <rect x="700" y="490" width="16" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="724" y="500" class="mono" fill="#545B64" font-size="8">Ray Tune Driver (중앙 제어)</text>
+</svg>

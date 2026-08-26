@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ttd-title ttd-desc" style="width:100%;height:auto;display:block;">
+<title id="ttd-title">Ray Tune driving parallel Ray Train trials</title>
+<desc id="ttd-desc">A Ray Tune driver launches multiple Ray Train trials in parallel, each with its own worker actors and object store, and each trial reports results and checkpoints back so the driver can decide the next round of trials.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-muted" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#7D8998"/></marker>
+<marker id="arrow-muted-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#7D8998"/></marker>
+</defs>
+
+<!-- paper -->
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- eyebrow / title -->
+<text x="40" y="36" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">HYPERPARAMETER SEARCH</text>
+
+<!-- zones (drawn before arrows/nodes) -->
+<rect x="40" y="164" width="420" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="48" y="168" width="168" height="12" rx="2" fill="#ffffff"/>
+<text x="132" y="177" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">TRIAL 1 · RAY TRAIN RUN</text>
+
+<rect x="500" y="164" width="420" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="508" y="168" width="168" height="12" rx="2" fill="#ffffff"/>
+<text x="592" y="177" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">TRIAL 2 · RAY TRAIN RUN</text>
+
+<!-- ===================== arrows (behind nodes) ===================== -->
+
+<!-- self loop on Driver: decides next round of trials -->
+<path d="M 560,56 V 44 Q 560,28 576,28 H 604 Q 620,28 620,44 V 56" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="546" y="10" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="610" y="19" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DECIDES NEXT ROUND</text>
+
+<!-- Driver -> Trial 1 (launch, set A), port x=420 -->
+<path d="M 420,112 V 138 Q 420,146 412,146 H 260 Q 252,146 252,154 V 164" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="300" y="120" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="356" y="129" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">LAUNCH · SET A</text>
+
+<!-- Trial 1 -> Driver (report), port x=460 -->
+<path d="M 356,164 V 154 Q 356,146 364,146 H 460 V 112" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="366" y="120" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="426" y="129" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RESULTS/CKPT</text>
+
+<!-- Driver -> Trial 2 (launch, set B), port x=540 -->
+<path d="M 540,112 V 138 Q 540,146 548,146 H 636 Q 644,146 644,154 V 164" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="588" y="120" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="644" y="129" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">LAUNCH · SET B</text>
+
+<!-- Trial 2 -> Driver (report), port x=500 -->
+<path d="M 720,164 V 154 Q 720,146 712,146 H 500 V 112" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="716" y="120" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="776" y="129" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RESULTS/CKPT</text>
+
+<!-- Trial 1 internal: worker1 <-> object store (bidirectional) -->
+<path d="M 130,260 V 302" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<!-- Trial 1 internal: worker2 <-> object store (bidirectional) -->
+<path d="M 370,260 V 302" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+
+<!-- Trial 2 internal: worker1 <-> object store -->
+<path d="M 590,260 V 302" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<!-- Trial 2 internal: worker2 <-> object store -->
+<path d="M 830,260 V 302" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+
+<!-- ===================== nodes ===================== -->
+
+<!-- Driver (focal) -->
+<rect x="380" y="56" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="380" y="56" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Ray Tune Driver</text>
+<text x="480" y="96" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">search algorithm</text>
+
+<!-- Trial 1: Worker Actor 1 -->
+<rect x="60" y="200" width="140" height="60" rx="6" fill="#ffffff"/>
+<rect x="60" y="200" width="140" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="130" y="234" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Worker Actor 1</text>
+
+<!-- Trial 1: Worker Actor 2 -->
+<rect x="300" y="200" width="140" height="60" rx="6" fill="#ffffff"/>
+<rect x="300" y="200" width="140" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="370" y="234" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Worker Actor 2</text>
+
+<!-- Trial 1: Object Store (cylinder) -->
+<path d="M 190,314 v 40 a 60,8 0 0 0 120,0 v -40" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<ellipse cx="250" cy="314" rx="60" ry="8" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="250" y="342" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Object Store</text>
+
+<!-- Trial 2: Worker Actor 1 -->
+<rect x="520" y="200" width="140" height="60" rx="6" fill="#ffffff"/>
+<rect x="520" y="200" width="140" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="590" y="234" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Worker Actor 1</text>
+
+<!-- Trial 2: Worker Actor 2 -->
+<rect x="760" y="200" width="140" height="60" rx="6" fill="#ffffff"/>
+<rect x="760" y="200" width="140" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="830" y="234" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Worker Actor 2</text>
+
+<!-- Trial 2: Object Store (cylinder) -->
+<path d="M 650,314 v 40 a 60,8 0 0 0 120,0 v -40" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<ellipse cx="710" cy="314" rx="60" ry="8" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="710" y="342" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Object Store</text>
+
+<!-- footer note -->
+<text x="480" y="500" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">EACH TRIAL RUNS ITS OWN RAY TRAIN JOB — WORKERS SHARE STATE VIA THE TRIAL'S OBJECT STORE</text>
+
+<!-- legend -->
+<line x1="40" y1="548" x2="920" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="564" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<path d="M 200,560 h 20" stroke="#EC7211" stroke-width="1.2" fill="none" marker-end="url(#arrow-accent)"/>
+<text x="228" y="564" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">trial launch / driver decision</text>
+<path d="M 460,560 h 20" stroke="#545B64" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+<text x="488" y="564" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">trial report</text>
+<path d="M 640,560 h 20" stroke="#545B64" stroke-width="1.2" fill="none" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<text x="668" y="564" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">shared object store access</text>
+
+</svg>

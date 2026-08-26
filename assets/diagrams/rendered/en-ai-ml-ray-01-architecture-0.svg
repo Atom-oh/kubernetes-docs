@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="rca-title rca-desc" style="width:100%;height:auto;display:block;">
+<title id="rca-title">Ray cluster architecture</title>
+<desc id="rca-desc">A Ray head node running the Global Control Store, driver, and autoscaler oversees a set of worker nodes running tasks and actors, and every node in the cluster reads and writes the same distributed object store.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<!-- paper -->
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- eyebrow -->
+<text x="40" y="36" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">RAY CLUSTER</text>
+
+<!-- zones (drawn before arrows/nodes) -->
+<rect x="160" y="56" width="640" height="152" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="428" y="60" width="104" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">HEAD NODE</text>
+
+<rect x="40" y="248" width="880" height="152" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="420" y="252" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="261" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WORKER NODES</text>
+
+<!-- ===================== arrows (behind nodes) ===================== -->
+
+<!-- Head zone -> Object Store, routed straight down through the clear gap between Worker Node 1 and Worker Node 2 (x=328 crosses no node box, only the pale zone wash) -->
+<path d="M 328,208 V 436" fill="none" stroke="#545B64" stroke-width="1.2"/>
+
+<!-- Worker Node 1 -> Object Store -->
+<path d="M 176,376 V 436" fill="none" stroke="#545B64" stroke-width="1.2"/>
+<!-- Worker Node 2 -> Object Store -->
+<path d="M 480,376 V 436" fill="none" stroke="#545B64" stroke-width="1.2"/>
+<!-- Worker Node N -> Object Store -->
+<path d="M 784,376 V 436" fill="none" stroke="#545B64" stroke-width="1.2"/>
+
+<!-- ===================== nodes ===================== -->
+
+<!-- Head: Global Control Store (focal) -->
+<rect x="184" y="92" width="176" height="96" rx="6" fill="#ffffff"/>
+<rect x="184" y="92" width="176" height="96" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="272" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Global Control Store</text>
+<text x="272" y="148" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cluster metadata</text>
+
+<!-- Head: Driver Process -->
+<rect x="392" y="92" width="176" height="96" rx="6" fill="#ffffff"/>
+<rect x="392" y="92" width="176" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Driver Process</text>
+<text x="480" y="148" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">if run on head</text>
+
+<!-- Head: Autoscaler -->
+<rect x="600" y="92" width="176" height="96" rx="6" fill="#ffffff"/>
+<rect x="600" y="92" width="176" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="688" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Autoscaler</text>
+
+<!-- Worker Node 1 -->
+<rect x="76" y="312" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="76" y="312" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="176" y="340" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Worker Node 1</text>
+<text x="176" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tasks · actors</text>
+
+<!-- Worker Node 2 -->
+<rect x="380" y="312" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="380" y="312" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="340" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Worker Node 2</text>
+<text x="480" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tasks · actors</text>
+
+<!-- Worker Node N -->
+<rect x="684" y="312" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="684" y="312" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="784" y="340" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Worker Node N</text>
+<text x="784" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tasks · actors</text>
+
+<!-- Distributed Object Store (cylinder, spans full width — shared by head and every worker) -->
+<path d="M 40,448 v 40 a 440,8 0 0 0 880,0 v -40" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<ellipse cx="480" cy="448" rx="440" ry="8" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="480" y="468" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Distributed Object Store</text>
+<text x="480" y="484" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">shared across all nodes</text>
+
+<!-- legend -->
+<line x1="40" y1="512" x2="920" y2="512" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="528" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="160" y="521" width="12" height="12" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="180" y="530" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">cluster-metadata authority</text>
+<rect x="420" y="521" width="12" height="12" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="440" y="530" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">shared object store access</text>
+
+</svg>

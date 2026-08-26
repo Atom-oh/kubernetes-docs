@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+    <title id="dtitle">Kubeflow 아키텍처 개요</title>
+    <desc id="ddesc">Istio Ingress Gateway와 AuthN/AuthZ를 거친 요청이 Kubeflow Central Dashboard로 들어오고, 대시보드가 프로필 컨트롤러 기반 멀티테넌시 계층과 컴포넌트 컨트롤러 계층을 각각 호출하며, 두 계층 모두 최종적으로 Kubernetes API Server에 도달하는 구조를 보여준다. team-a/team-b 네임스페이스는 컴포넌트 컨트롤러가 다루는 리소스의 범위를 점선으로 제한한다.</desc>
+
+    <defs>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      </style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#7D8998"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- ============ ZONES (painted before arrows/nodes) ============ -->
+    <!-- Zone 1: Ingress / Auth -->
+    <rect x="32" y="48" width="456" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="44" y="52" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="104" y="61" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">INGRESS / AUTH</text>
+
+    <!-- Zone 2: 멀티테넌시 계층 -->
+    <rect x="32" y="328" width="384" height="180" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="44" y="332" width="150" height="12" rx="2" fill="#ffffff"/>
+    <text x="119" y="341" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">멀티테넌시 계층</text>
+
+    <!-- ============ ARROWS (before nodes) ============ -->
+
+    <!-- IG -> AUTH : straight horizontal -->
+    <path d="M224,116 H272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- AUTH -> DASH : straight vertical -->
+    <path d="M368,144 V208" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="378" y="164" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="414" y="173" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">OIDC TOKEN</text>
+
+    <!-- DASH -> PC : elbow, exits DASH bottom fan pt1 (336,272), enters PC top (228,360) -->
+    <path d="M336,272 V308 Q336,316 328,316 H236 Q228,316 228,324 V360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- DASH -> CTRL : elbow, exits DASH bottom fan pt2 (400,272), enters CTRL top (660,384) -->
+    <path d="M400,272 V320 Q400,328 408,328 H652 Q660,328 660,336 V384" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- PC -> NS1 : elbow, exits PC bottom fan pt1 (196,408), enters NS1 top (132,452) -->
+    <path d="M196,408 V422 Q196,430 188,430 H140 Q132,430 132,438 V452" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- PC -> NS2 : elbow, exits PC bottom fan pt2 (256,408), enters NS2 top (324,452) -->
+    <path d="M256,408 V422 Q256,430 264,430 H316 Q324,430 324,438 V452" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- CTRL -> K8S : elbow, exits CTRL bottom (660,456), enters K8S top (568,540) -->
+    <path d="M660,456 V490 Q660,498 652,498 H576 Q568,498 568,506 V540" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- 멀티테넌시 계층(zone) -.-> CTRL : dashed, scoped-resource, exits zone2 right edge (416,424), enters CTRL left edge (520,424) -->
+    <path d="M416,424 H520" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-soft)"/>
+    <rect x="420" y="404" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="468" y="413" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">범위 지정 리소스</text>
+
+    <!-- ============ NODES ============ -->
+
+    <!-- IG -->
+    <rect x="56" y="88" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="56" y="88" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="64" y="94" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="78" y="103" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">GW</text>
+    <text x="140" y="120" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio Ingress Gateway</text>
+    <text x="140" y="134" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">north-south:443</text>
+
+    <!-- AUTH -->
+    <rect x="272" y="88" width="192" height="56" rx="6" fill="#ffffff"/>
+    <rect x="272" y="88" width="192" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="280" y="94" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="294" y="103" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">IAM</text>
+    <text x="368" y="120" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AuthN / AuthZ</text>
+    <text x="368" y="134" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Dex 또는 Cognito OIDC</text>
+
+    <!-- DASH (focal) -->
+    <rect x="268" y="208" width="200" height="64" rx="6" fill="#ffffff"/>
+    <rect x="268" y="208" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="276" y="214" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="290" y="223" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">UI</text>
+    <text x="368" y="242" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubeflow Central Dashboard</text>
+    <text x="368" y="256" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">single entry point</text>
+
+    <!-- PC -->
+    <rect x="140" y="360" width="176" height="48" rx="6" fill="#ffffff"/>
+    <rect x="140" y="360" width="176" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="228" y="386" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Profile Controller</text>
+
+    <!-- NS1 -->
+    <rect x="48" y="452" width="168" height="56" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="48" y="452" width="168" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="132" y="475" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubeflow Profile</text>
+    <text x="132" y="490" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ns: team-a</text>
+
+    <!-- NS2 -->
+    <rect x="240" y="452" width="168" height="56" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="240" y="452" width="168" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="324" y="475" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubeflow Profile</text>
+    <text x="324" y="490" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ns: team-b</text>
+
+    <!-- CTRL (collapsed: KFP / Notebook / Katib / Trainer / KServe controllers) -->
+    <rect x="520" y="384" width="280" height="72" rx="6" fill="#ffffff"/>
+    <rect x="520" y="384" width="280" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="528" y="390" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="542" y="399" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CRD</text>
+    <text x="660" y="412" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컴포넌트 컨트롤러</text>
+    <text x="660" y="428" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Pipelines · Notebook · Katib</text>
+    <text x="660" y="442" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Trainer · KServe</text>
+
+    <!-- K8S (focal) -->
+    <rect x="460" y="540" width="216" height="52" rx="6" fill="#ffffff"/>
+    <rect x="460" y="540" width="216" height="52" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="568" y="571" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubernetes API Server</text>
+
+  </svg>
