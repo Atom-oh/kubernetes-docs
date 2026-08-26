@@ -9,43 +9,7 @@ Kubernetes is a powerful platform for running AI/ML workloads. In this chapter, 
 
 AI/ML workloads have different characteristics compared to typical application workloads:
 
-```mermaid
-flowchart TD
-    subgraph AIML [AI/ML Workload Characteristics]
-        Resource[Resource Intensive]
-        Data[Data Intensive]
-        Distributed[Distributed Processing]
-        Diversity[Workload Diversity]
-        Processing[Batch and Real-time Processing]
-    end
-
-    subgraph ResourceDetails [Resource Requirements]
-        GPU[GPU Acceleration]
-        Memory[Large Memory]
-        CPU[High-Performance CPU]
-        Network[High-Speed Network]
-    end
-
-    subgraph WorkloadTypes [Workload Types]
-        Training[Model Training]
-        Inference[Model Inference]
-        DataPrep[Data Preprocessing]
-        HPO[Hyperparameter Optimization]
-    end
-
-    Resource --> ResourceDetails
-    Diversity --> WorkloadTypes
-
-    classDef aimlFeature fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef resourceDetail fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef workloadType fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Resource,Data,Distributed,Diversity,Processing aimlFeature;
-    class GPU,Memory,CPU,Network resourceDetail;
-    class Training,Inference,DataPrep,HPO workloadType;
-    class AIML,ResourceDetails,WorkloadTypes default;
-```
+![Diagram showing that AI/ML workloads are resource intensive and diverse; resource-intensive workloads require GPU acceleration, large memory, high-performance CPU, and high-speed networking, while diverse workloads span model training, inference, data preprocessing, and hyperparameter optimization.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-0.png)
 
 1. **Resource Intensive**: Requires significant computing resources including GPUs, high-performance CPUs, and large memory.
 2. **Data Intensive**: Requires fast access to large datasets.
@@ -104,74 +68,7 @@ Vector database integration for embeddings and semantic search:
 
 ## AI/ML Infrastructure Configuration in EKS
 
-```mermaid
-flowchart TD
-    subgraph AWS [AWS Cloud]
-        subgraph EKS [Amazon EKS]
-            subgraph NodeGroups [Node Groups]
-                subgraph Training [Training Node Group]
-                    P4d[p4d.24xlarge]
-                    P3[p3.16xlarge]
-                    G5[g5.48xlarge]
-                end
-
-                subgraph Inference [Inference Node Group]
-                    G4dn[g4dn.xlarge]
-                    Inf1[inf1.24xlarge]
-                    Trn1[trn1.32xlarge]
-                end
-
-                subgraph CPU [CPU Node Group]
-                    C6i[c6i.32xlarge]
-                    R6i[r6i.32xlarge]
-                end
-            end
-
-            subgraph Storage [Storage]
-                EBS[Amazon EBS]
-                EFS[Amazon EFS]
-                FSx[FSx for Lustre]
-                S3[Amazon S3]
-            end
-
-            subgraph Networking [Networking]
-                VPC[VPC CNI]
-                ENA[ENA/EFA]
-                PlacementGroup[Placement Group]
-            end
-        end
-
-        subgraph Services [AWS Services]
-            SageMaker[Amazon SageMaker]
-            ECR[Amazon ECR]
-            CloudWatch[CloudWatch]
-        end
-    end
-
-    Training --> Storage
-    Inference --> Storage
-    CPU --> Storage
-
-    Training --> Networking
-    Inference --> Networking
-    CPU --> Networking
-
-    EKS --> Services
-
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef trainingNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef inferenceNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef cpuNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class SageMaker,ECR,CloudWatch,EBS,EFS,FSx,S3 awsService;
-    class EKS,NodeGroups,Storage,Networking,VPC,ENA,PlacementGroup k8sComponent;
-    class P4d,P3,G5,Training trainingNode;
-    class G4dn,Inf1,Trn1,Inference inferenceNode;
-    class C6i,R6i,CPU cpuNode;
-    class AWS,Services default;
-```
+![Diagram showing an Amazon EKS cluster with training, inference, and CPU node groups that all depend on shared storage (EBS, EFS, FSx for Lustre, S3) and shared networking (VPC CNI, ENA/EFA, placement groups), with the cluster integrating with AWS services SageMaker, ECR, and CloudWatch.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-1.png)
 
 ### Node Type Selection
 
@@ -239,53 +136,7 @@ Networking configuration for distributed training:
 
 ## AI/ML Workload Deployment
 
-```mermaid
-flowchart TD
-    subgraph EKS [Amazon EKS]
-        subgraph Components [Key Components]
-            NVIDIA[NVIDIA GPU Operator]
-            Kubeflow[Kubeflow]
-            MPIOperator[MPI Operator]
-            KServe[KServe]
-        end
-
-        subgraph GPUOperator [NVIDIA GPU Operator]
-            Driver[NVIDIA Driver]
-            Toolkit[NVIDIA Container Toolkit]
-            DevicePlugin[NVIDIA Device Plugin]
-            DCGM[NVIDIA DCGM Exporter]
-        end
-
-        subgraph KubeflowComponents [Kubeflow Components]
-            Notebooks[Jupyter Notebooks]
-            Training[TF/PyTorch Training Jobs]
-            Serving[KFServing]
-            Pipelines[Pipelines]
-            Katib[Katib]
-        end
-
-        subgraph ModelServing [Model Serving Options]
-            KServeComponent[KServe]
-            TorchServe[TorchServe]
-            Triton[Triton Inference Server]
-        end
-    end
-
-    NVIDIA --> GPUOperator
-    Kubeflow --> KubeflowComponents
-    KServe --> ModelServing
-
-    classDef eksComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nvidiaComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef kubeflowComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef servingComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class EKS,Components eksComponent;
-    class NVIDIA,Driver,Toolkit,DevicePlugin,DCGM,GPUOperator nvidiaComponent;
-    class Kubeflow,Notebooks,Training,Serving,Pipelines,Katib,KubeflowComponents kubeflowComponent;
-    class KServe,KServeComponent,TorchServe,Triton,ModelServing servingComponent;
-```
+![Diagram showing the NVIDIA GPU Operator expanding into driver, container toolkit, device plugin, and DCGM exporter; Kubeflow expanding into notebooks, training jobs, pipelines, and Katib; the MPI Operator as a standalone component; and KServe expanding into a model serving stack of KServe, TorchServe, and Triton Inference Server.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-2.png)
 
 ### NVIDIA GPU Operator
 
@@ -329,61 +180,7 @@ Kubeflow provides the following components:
 
 Kubernetes resources for distributed training:
 
-```mermaid
-flowchart TD
-    subgraph DistributedTraining [Distributed Training Architecture]
-        subgraph MPIJob [MPI Job]
-            Launcher[Launcher Pod]
-            Worker1[Worker Pod 1]
-            Worker2[Worker Pod 2]
-            Worker3[Worker Pod 3]
-            Worker4[Worker Pod 4]
-        end
-
-        subgraph Communication [Communication Layer]
-            NCCL[NVIDIA NCCL]
-            MPI[MPI]
-            EFA[Elastic Fabric Adapter]
-        end
-
-        subgraph Storage [Shared Storage]
-            FSxLustre[FSx for Lustre]
-            S3[Amazon S3]
-            Checkpoints[Checkpoint Storage]
-        end
-    end
-
-    Launcher --> Worker1
-    Launcher --> Worker2
-    Launcher --> Worker3
-    Launcher --> Worker4
-
-    Worker1 <--> NCCL
-    Worker2 <--> NCCL
-    Worker3 <--> NCCL
-    Worker4 <--> NCCL
-
-    NCCL --> MPI
-    MPI --> EFA
-
-    Worker1 --> FSxLustre
-    Worker2 --> FSxLustre
-    Worker3 --> FSxLustre
-    Worker4 --> FSxLustre
-
-    FSxLustre --> S3
-    FSxLustre --> Checkpoints
-
-    classDef podComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef communicationComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Launcher,Worker1,Worker2,Worker3,Worker4,MPIJob podComponent;
-    class NCCL,MPI,EFA,Communication communicationComponent;
-    class FSxLustre,S3,Checkpoints,Storage storageComponent;
-    class DistributedTraining default;
-```
+![Diagram showing a launcher pod starting four worker pods that exchange gradients bidirectionally over NVIDIA NCCL, which runs over MPI and the Elastic Fabric Adapter; the worker pods also write to FSx for Lustre, which syncs to Amazon S3 and a checkpoint store.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-3.png)
 
 1. **MPI Operator**:
 
@@ -469,51 +266,7 @@ spec:
 
 Options for model serving:
 
-```mermaid
-flowchart TD
-    subgraph ModelServing [Model Serving Architecture]
-        subgraph InferenceServices [Inference Services]
-            KServe[KServe]
-            TorchServe[TorchServe]
-            Triton[Triton Inference Server]
-        end
-
-        subgraph ScalingOptions [Scaling Options]
-            HPA[HorizontalPodAutoscaler]
-            KEDA[KEDA]
-            VPA[VerticalPodAutoscaler]
-        end
-
-        subgraph NetworkingOptions [Networking Options]
-            Ingress[Ingress]
-            ALB[AWS ALB]
-            APIGateway[API Gateway]
-        end
-
-        subgraph ModelStorage [Model Storage]
-            S3[Amazon S3]
-            ECR[Amazon ECR]
-            EFS[Amazon EFS]
-        end
-    end
-
-    Client([Client]) --> NetworkingOptions
-    NetworkingOptions --> InferenceServices
-    InferenceServices --> ModelStorage
-    ScalingOptions --> InferenceServices
-
-    classDef serviceComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef scalingComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef networkingComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class KServe,TorchServe,Triton,InferenceServices serviceComponent;
-    class HPA,KEDA,VPA,ScalingOptions scalingComponent;
-    class Ingress,ALB,APIGateway,NetworkingOptions networkingComponent;
-    class S3,ECR,EFS,ModelStorage storageComponent;
-    class ModelServing,Client default;
-```
+![Diagram showing a client sending requests through networking (Ingress, ALB, API Gateway) to inference services (KServe, TorchServe, Triton), which read from model storage (S3, ECR, EFS) and are scaled by HPA, KEDA, and VPA.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-4.png)
 
 1. **KServe**:
 
@@ -644,53 +397,7 @@ spec:
 
 ## AI/ML Workload Optimization
 
-```mermaid
-flowchart TD
-    subgraph Optimization [AI/ML Workload Optimization]
-        subgraph GPUOptimization [GPU Optimization]
-            MemoryOvercommit[GPU Memory Overcommit]
-            GPUSharing[GPU Sharing]
-            MPS[NVIDIA MPS]
-        end
-
-        subgraph TrainingOptimization [Training Optimization]
-            NodeAffinity[Node Affinity]
-            TopologyAware[Topology-Aware Scheduling]
-            PlacementGroups[Placement Groups]
-        end
-
-        subgraph StorageOptimization [Storage Optimization]
-            LustreConfig[FSx for Lustre Configuration]
-            DataCaching[Data Caching]
-            S3Integration[S3 Integration]
-        end
-
-        subgraph CostOptimization [Cost Optimization]
-            SpotInstances[Spot Instances]
-            AutoScaling[Auto Scaling]
-            HybridNodes[Hybrid Nodes]
-        end
-    end
-
-    GPUOptimization --> Performance([Performance Improvement])
-    TrainingOptimization --> Performance
-    StorageOptimization --> Performance
-    CostOptimization --> CostReduction([Cost Reduction])
-
-    classDef gpuOptComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef trainingOptComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef storageOptComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef costOptComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef resultComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class MemoryOvercommit,GPUSharing,MPS,GPUOptimization gpuOptComponent;
-    class NodeAffinity,TopologyAware,PlacementGroups,TrainingOptimization trainingOptComponent;
-    class LustreConfig,DataCaching,S3Integration,StorageOptimization storageOptComponent;
-    class SpotInstances,AutoScaling,HybridNodes,CostOptimization costOptComponent;
-    class Performance,CostReduction resultComponent;
-    class Optimization default;
-```
+![Diagram showing GPU optimization, training optimization, and storage optimization all feeding into a performance improvement outcome, while cost optimization (spot instances, auto scaling, hybrid nodes) feeds into a cost reduction outcome.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-5.png)
 
 ### GPU Memory Optimization
 
@@ -865,70 +572,7 @@ spec:
 
 ## Monitoring and Logging
 
-```mermaid
-flowchart TD
-    subgraph Monitoring [Monitoring and Logging Architecture]
-        subgraph MetricsCollection [Metrics Collection]
-            DCGMExporter[NVIDIA DCGM Exporter]
-            NodeExporter[Node Exporter]
-            KubeStateMetrics[Kube State Metrics]
-        end
-
-        subgraph MonitoringStack [Monitoring Stack]
-            Prometheus[(Prometheus)]
-            AlertManager[Alert Manager]
-            Grafana[Grafana]
-        end
-
-        subgraph LoggingStack [Logging Stack]
-            Fluentd[Fluentd]
-            CloudWatch[CloudWatch Logs]
-            ElasticSearch[(ElasticSearch)]
-            Kibana[Kibana]
-        end
-
-        subgraph Dashboards [Dashboards]
-            GPUDashboard[GPU Dashboard]
-            TrainingDashboard[Training Dashboard]
-            InferenceDashboard[Inference Dashboard]
-            CostDashboard[Cost Dashboard]
-        end
-
-        subgraph Alerts [Alerts]
-            GPUAlerts[GPU Alerts]
-            PerformanceAlerts[Performance Alerts]
-            CostAlerts[Cost Alerts]
-        end
-    end
-
-    DCGMExporter --> Prometheus
-    NodeExporter --> Prometheus
-    KubeStateMetrics --> Prometheus
-
-    Prometheus --> AlertManager
-    Prometheus --> Grafana
-
-    Fluentd --> CloudWatch
-    Fluentd --> ElasticSearch
-    ElasticSearch --> Kibana
-
-    Grafana --> Dashboards
-    AlertManager --> Alerts
-
-    classDef metricsComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoringComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef loggingComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef dashboardComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef alertComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class DCGMExporter,NodeExporter,KubeStateMetrics,MetricsCollection metricsComponent;
-    class Prometheus,AlertManager,Grafana,MonitoringStack monitoringComponent;
-    class Fluentd,CloudWatch,ElasticSearch,Kibana,LoggingStack loggingComponent;
-    class GPUDashboard,TrainingDashboard,InferenceDashboard,CostDashboard,Dashboards dashboardComponent;
-    class GPUAlerts,PerformanceAlerts,CostAlerts,Alerts alertComponent;
-    class Monitoring default;
-```
+![Diagram showing GPU, node, and kube-state exporters feeding Prometheus, which drives Alert Manager into alerts and Grafana into dashboards; separately, Fluentd ships logs to CloudWatch Logs and to Elasticsearch, which feeds Kibana.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-6.png)
 
 ### Prometheus and Grafana
 

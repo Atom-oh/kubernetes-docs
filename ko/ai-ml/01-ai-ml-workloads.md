@@ -9,43 +9,7 @@ Kubernetes는 AI/ML 워크로드를 실행하기 위한 강력한 플랫폼입�
 
 AI/ML 워크로드는 일반적인 애플리케이션 워크로드와 다른 특성을 가지고 있습니다:
 
-```mermaid
-flowchart TD
-    subgraph AIML [AI/ML 워크로드 특성]
-        Resource[리소스 집약적]
-        Data[데이터 집약적]
-        Distributed[분산 처리]
-        Diversity[워크로드 다양성]
-        Processing[배치 및 실시간 처리]
-    end
-    
-    subgraph ResourceDetails [리소스 요구사항]
-        GPU[GPU 가속]
-        Memory[대용량 메모리]
-        CPU[고성능 CPU]
-        Network[고속 네트워크]
-    end
-    
-    subgraph WorkloadTypes [워크로드 유형]
-        Training[모델 훈련]
-        Inference[모델 추론]
-        DataPrep[데이터 전처리]
-        HPO[하이퍼파라미터 최적화]
-    end
-    
-    Resource --> ResourceDetails
-    Diversity --> WorkloadTypes
-    
-    classDef aimlFeature fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef resourceDetail fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef workloadType fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class Resource,Data,Distributed,Diversity,Processing aimlFeature;
-    class GPU,Memory,CPU,Network resourceDetail;
-    class Training,Inference,DataPrep,HPO workloadType;
-    class AIML,ResourceDetails,WorkloadTypes default;
-```
+![AI/ML 워크로드의 리소스 집약성이 GPU·메모리·CPU·네트워크 요구사항으로, 워크로드 다양성이 훈련·추론·전처리·HPO 유형으로 이어지는 특성 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-0.png)
 
 1. **리소스 집약적**: GPU, 고성능 CPU, 대용량 메모리 등 많은 컴퓨팅 리소스가 필요합니다.
 2. **데이터 집약적**: 대용량 데이터셋에 대한 빠른 액세스가 필요합니다.
@@ -104,74 +68,7 @@ AI/ML 라이프사이클 관리를 위한 DevOps 원칙 적용:
 
 ## EKS에서의 AI/ML 인프라 구성
 
-```mermaid
-flowchart TD
-    subgraph AWS [AWS 클라우드]
-        subgraph EKS [Amazon EKS]
-            subgraph NodeGroups [노드 그룹]
-                subgraph Training [훈련 노드 그룹]
-                    P4d[p4d.24xlarge]
-                    P3[p3.16xlarge]
-                    G5[g5.48xlarge]
-                end
-                
-                subgraph Inference [추론 노드 그룹]
-                    G4dn[g4dn.xlarge]
-                    Inf1[inf1.24xlarge]
-                    Trn1[trn1.32xlarge]
-                end
-                
-                subgraph CPU [CPU 노드 그룹]
-                    C6i[c6i.32xlarge]
-                    R6i[r6i.32xlarge]
-                end
-            end
-            
-            subgraph Storage [스토리지]
-                EBS[Amazon EBS]
-                EFS[Amazon EFS]
-                FSx[FSx for Lustre]
-                S3[Amazon S3]
-            end
-            
-            subgraph Networking [네트워킹]
-                VPC[VPC CNI]
-                ENA[ENA/EFA]
-                PlacementGroup[배치 그룹]
-            end
-        end
-        
-        subgraph Services [AWS 서비스]
-            SageMaker[Amazon SageMaker]
-            ECR[Amazon ECR]
-            CloudWatch[CloudWatch]
-        end
-    end
-    
-    Training --> Storage
-    Inference --> Storage
-    CPU --> Storage
-    
-    Training --> Networking
-    Inference --> Networking
-    CPU --> Networking
-    
-    EKS --> Services
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef trainingNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef inferenceNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef cpuNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class SageMaker,ECR,CloudWatch,EBS,EFS,FSx,S3 awsService;
-    class EKS,NodeGroups,Storage,Networking,VPC,ENA,PlacementGroup k8sComponent;
-    class P4d,P3,G5,Training trainingNode;
-    class G4dn,Inf1,Trn1,Inference inferenceNode;
-    class C6i,R6i,CPU cpuNode;
-    class AWS,Services default;
-```
+![Amazon EKS 안의 훈련·추론·CPU 노드 그룹이 공유 스토리지·네트워킹 계층을 사용하고, EKS가 SageMaker·ECR·CloudWatch 등 AWS 서비스와 연동되는 인프라 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-1.png)
 
 ### 노드 유형 선택
 
@@ -239,53 +136,7 @@ AI/ML 워크로드에는 고성능 스토리지가 필요합니다:
 
 ## AI/ML 워크로드 배포
 
-```mermaid
-flowchart TD
-    subgraph EKS [Amazon EKS]
-        subgraph Components [주요 구성 요소]
-            NVIDIA[NVIDIA GPU 운영자]
-            Kubeflow[Kubeflow]
-            MPIOperator[MPI Operator]
-            KServe[KServe]
-        end
-        
-        subgraph GPUOperator [NVIDIA GPU 운영자]
-            Driver[NVIDIA 드라이버]
-            Toolkit[NVIDIA Container Toolkit]
-            DevicePlugin[NVIDIA Device Plugin]
-            DCGM[NVIDIA DCGM Exporter]
-        end
-        
-        subgraph KubeflowComponents [Kubeflow 구성 요소]
-            Notebooks[Jupyter Notebooks]
-            Training[TF/PyTorch 훈련 작업]
-            Serving[KFServing]
-            Pipelines[Pipelines]
-            Katib[Katib]
-        end
-        
-        subgraph ModelServing [모델 서빙 옵션]
-            KServeComponent[KServe]
-            TorchServe[TorchServe]
-            Triton[Triton Inference Server]
-        end
-    end
-    
-    NVIDIA --> GPUOperator
-    Kubeflow --> KubeflowComponents
-    KServe --> ModelServing
-    
-    classDef eksComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nvidiaComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef kubeflowComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef servingComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class EKS,Components eksComponent;
-    class NVIDIA,Driver,Toolkit,DevicePlugin,DCGM,GPUOperator nvidiaComponent;
-    class Kubeflow,Notebooks,Training,Serving,Pipelines,Katib,KubeflowComponents kubeflowComponent;
-    class KServe,KServeComponent,TorchServe,Triton,ModelServing servingComponent;
-```
+![Amazon EKS 위에서 NVIDIA GPU 운영자가 노드 수준 GPU 스택을, Kubeflow가 노트북·훈련 작업을, KServe가 모델 서빙 옵션을 관리하는 소프트웨어 구성요소 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-2.png)
 
 ### NVIDIA GPU 운영자
 
@@ -329,61 +180,7 @@ Kubeflow는 다음과 같은 구성 요소를 제공합니다:
 
 분산 훈련을 위한 Kubernetes 리소스:
 
-```mermaid
-flowchart TD
-    subgraph DistributedTraining [분산 훈련 아키텍처]
-        subgraph MPIJob [MPI Job]
-            Launcher[Launcher 파드]
-            Worker1[Worker 파드 1]
-            Worker2[Worker 파드 2]
-            Worker3[Worker 파드 3]
-            Worker4[Worker 파드 4]
-        end
-        
-        subgraph Communication [통신 계층]
-            NCCL[NVIDIA NCCL]
-            MPI[MPI]
-            EFA[Elastic Fabric Adapter]
-        end
-        
-        subgraph Storage [공유 스토리지]
-            FSxLustre[FSx for Lustre]
-            S3[Amazon S3]
-            Checkpoints[체크포인트 저장소]
-        end
-    end
-    
-    Launcher --> Worker1
-    Launcher --> Worker2
-    Launcher --> Worker3
-    Launcher --> Worker4
-    
-    Worker1 <--> NCCL
-    Worker2 <--> NCCL
-    Worker3 <--> NCCL
-    Worker4 <--> NCCL
-    
-    NCCL --> MPI
-    MPI --> EFA
-    
-    Worker1 --> FSxLustre
-    Worker2 --> FSxLustre
-    Worker3 --> FSxLustre
-    Worker4 --> FSxLustre
-    
-    FSxLustre --> S3
-    FSxLustre --> Checkpoints
-    
-    classDef podComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef communicationComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class Launcher,Worker1,Worker2,Worker3,Worker4,MPIJob podComponent;
-    class NCCL,MPI,EFA,Communication communicationComponent;
-    class FSxLustre,S3,Checkpoints,Storage storageComponent;
-    class DistributedTraining default;
-```
+![MPI Job의 Launcher 파드가 Worker 파드를 기동하고, Worker들이 NCCL·MPI·EFA로 통신하며, 체크포인트를 FSx for Lustre를 거쳐 S3와 체크포인트 저장소에 저장하는 분산 훈련 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-3.png)
 
 1. **MPI Operator**:
 
@@ -469,51 +266,7 @@ spec:
 
 모델 서빙을 위한 옵션:
 
-```mermaid
-flowchart TD
-    subgraph ModelServing [모델 서빙 아키텍처]
-        subgraph InferenceServices [추론 서비스]
-            KServe[KServe]
-            TorchServe[TorchServe]
-            Triton[Triton Inference Server]
-        end
-        
-        subgraph ScalingOptions [스케일링 옵션]
-            HPA[HorizontalPodAutoscaler]
-            KEDA[KEDA]
-            VPA[VerticalPodAutoscaler]
-        end
-        
-        subgraph NetworkingOptions [네트워킹 옵션]
-            Ingress[Ingress]
-            ALB[AWS ALB]
-            APIGateway[API Gateway]
-        end
-        
-        subgraph ModelStorage [모델 저장소]
-            S3[Amazon S3]
-            ECR[Amazon ECR]
-            EFS[Amazon EFS]
-        end
-    end
-    
-    Client([클라이언트]) --> NetworkingOptions
-    NetworkingOptions --> InferenceServices
-    InferenceServices --> ModelStorage
-    ScalingOptions --> InferenceServices
-    
-    classDef serviceComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef scalingComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef networkingComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class KServe,TorchServe,Triton,InferenceServices serviceComponent;
-    class HPA,KEDA,VPA,ScalingOptions scalingComponent;
-    class Ingress,ALB,APIGateway,NetworkingOptions networkingComponent;
-    class S3,ECR,EFS,ModelStorage storageComponent;
-    class ModelServing,Client default;
-```
+![클라이언트 요청이 네트워킹 계층을 거쳐 추론 서비스로 전달되고, 추론 서비스가 모델 저장소를 읽으며 스케일링이 추론 서비스를 자동 확장하는 모델 서빙 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-4.png)
 
 1. **KServe**:
 
@@ -644,53 +397,7 @@ spec:
 
 ## AI/ML 워크로드 최적화
 
-```mermaid
-flowchart TD
-    subgraph Optimization [AI/ML 워크로드 최적화]
-        subgraph GPUOptimization [GPU 최적화]
-            MemoryOvercommit[GPU 메모리 오버커밋]
-            GPUSharing[GPU 공유]
-            MPS[NVIDIA MPS]
-        end
-        
-        subgraph TrainingOptimization [훈련 최적화]
-            NodeAffinity[노드 어피니티]
-            TopologyAware[토폴로지 인식 스케줄링]
-            PlacementGroups[배치 그룹]
-        end
-        
-        subgraph StorageOptimization [스토리지 최적화]
-            LustreConfig[FSx for Lustre 구성]
-            DataCaching[데이터 캐싱]
-            S3Integration[S3 통합]
-        end
-        
-        subgraph CostOptimization [비용 최적화]
-            SpotInstances[Spot 인스턴스]
-            AutoScaling[자동 스케일링]
-            HybridNodes[하이브리드 노드]
-        end
-    end
-    
-    GPUOptimization --> Performance([성능 향상])
-    TrainingOptimization --> Performance
-    StorageOptimization --> Performance
-    CostOptimization --> CostReduction([비용 절감])
-    
-    classDef gpuOptComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef trainingOptComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef storageOptComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef costOptComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef resultComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class MemoryOvercommit,GPUSharing,MPS,GPUOptimization gpuOptComponent;
-    class NodeAffinity,TopologyAware,PlacementGroups,TrainingOptimization trainingOptComponent;
-    class LustreConfig,DataCaching,S3Integration,StorageOptimization storageOptComponent;
-    class SpotInstances,AutoScaling,HybridNodes,CostOptimization costOptComponent;
-    class Performance,CostReduction resultComponent;
-    class Optimization default;
-```
+![GPU·훈련·스토리지 최적화가 성능 향상으로 이어지고 비용 최적화가 비용 절감으로 이어지는 AI/ML 워크로드 최적화 네 영역과 그 결과를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-5.png)
 
 ### GPU 메모리 최적화
 
@@ -865,70 +572,7 @@ spec:
 
 ## 모니터링 및 로깅
 
-```mermaid
-flowchart TD
-    subgraph Monitoring [모니터링 및 로깅 아키텍처]
-        subgraph MetricsCollection [메트릭 수집]
-            DCGMExporter[NVIDIA DCGM Exporter]
-            NodeExporter[Node Exporter]
-            KubeStateMetrics[Kube State Metrics]
-        end
-        
-        subgraph MonitoringStack [모니터링 스택]
-            Prometheus[(Prometheus)]
-            AlertManager[Alert Manager]
-            Grafana[Grafana]
-        end
-        
-        subgraph LoggingStack [로깅 스택]
-            Fluentd[Fluentd]
-            CloudWatch[CloudWatch Logs]
-            ElasticSearch[(ElasticSearch)]
-            Kibana[Kibana]
-        end
-        
-        subgraph Dashboards [대시보드]
-            GPUDashboard[GPU 대시보드]
-            TrainingDashboard[훈련 대시보드]
-            InferenceDashboard[추론 대시보드]
-            CostDashboard[비용 대시보드]
-        end
-        
-        subgraph Alerts [알림]
-            GPUAlerts[GPU 알림]
-            PerformanceAlerts[성능 알림]
-            CostAlerts[비용 알림]
-        end
-    end
-    
-    DCGMExporter --> Prometheus
-    NodeExporter --> Prometheus
-    KubeStateMetrics --> Prometheus
-    
-    Prometheus --> AlertManager
-    Prometheus --> Grafana
-    
-    Fluentd --> CloudWatch
-    Fluentd --> ElasticSearch
-    ElasticSearch --> Kibana
-    
-    Grafana --> Dashboards
-    AlertManager --> Alerts
-    
-    classDef metricsComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoringComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef loggingComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef dashboardComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef alertComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class DCGMExporter,NodeExporter,KubeStateMetrics,MetricsCollection metricsComponent;
-    class Prometheus,AlertManager,Grafana,MonitoringStack monitoringComponent;
-    class Fluentd,CloudWatch,ElasticSearch,Kibana,LoggingStack loggingComponent;
-    class GPUDashboard,TrainingDashboard,InferenceDashboard,CostDashboard,Dashboards dashboardComponent;
-    class GPUAlerts,PerformanceAlerts,CostAlerts,Alerts alertComponent;
-    class Monitoring default;
-```
+![DCGM·Node·Kube State 익스포터가 수집한 메트릭이 Prometheus에 모여 Grafana 대시보드와 Alert Manager 알림으로 나뉘고, Fluentd가 수집한 로그가 CloudWatch·ElasticSearch로 전달되는 관측 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-6.png)
 
 ### Prometheus 및 Grafana
 
