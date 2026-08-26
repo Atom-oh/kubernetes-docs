@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="lattice-accounts-title lattice-accounts-desc">
+    <title id="lattice-accounts-title">Cross-account VPC Lattice service network</title>
+    <desc id="lattice-accounts-desc">VPCs from two separate AWS accounts associate into one shared service network, which registers three services that each route to a different compute target — an EC2 instance, an EKS pod, and a Lambda function.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="lt1-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="80" width="200" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="88" y="84" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="140" y="93" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">ACCOUNT A</text>
+
+    <rect x="40" y="352" width="200" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="88" y="356" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="140" y="365" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">ACCOUNT B</text>
+
+    <!-- Arrows: VPC -> Service Network -->
+    <path d="M 220,148 H 292 Q 300,148 300,156 V 166 Q 300,174 308,174 H 410"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#lt1-arrow)"/>
+    <path d="M 220,212 H 312 Q 320,212 320,204 V 196 Q 320,188 328,188 H 410"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#lt1-arrow)"/>
+    <path d="M 220,416 H 332 Q 340,416 340,408 V 210 Q 340,202 348,202 H 410"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#lt1-arrow)"/>
+
+    <!-- Arrows: Service Network -> Services -->
+    <path d="M 445,216 V 236 Q 445,244 437,244 H 208 Q 200,244 200,252 V 256"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#lt1-arrow)"/>
+    <line x1="480" y1="216" x2="480" y2="256" stroke="#545B64" stroke-width="1.2" marker-end="url(#lt1-arrow)"/>
+    <path d="M 515,216 V 236 Q 515,244 523,244 H 772 Q 780,244 780,252 V 256"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#lt1-arrow)"/>
+
+    <!-- Arrows: Services -> Targets -->
+    <line x1="200" y1="312" x2="200" y2="420" stroke="#545B64" stroke-width="1" marker-end="url(#lt1-arrow)"/>
+    <line x1="480" y1="312" x2="480" y2="420" stroke="#545B64" stroke-width="1" marker-end="url(#lt1-arrow)"/>
+    <line x1="780" y1="312" x2="780" y2="420" stroke="#545B64" stroke-width="1" marker-end="url(#lt1-arrow)"/>
+
+    <!-- Arrow labels (side-placed, clear of the strokes) -->
+    <rect x="234" y="192" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="266" y="201" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">VPC ASSOC.</text>
+
+    <rect x="488" y="230" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="518" y="239" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">REGISTER</text>
+
+    <rect x="488" y="358" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="518" y="367" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">TARGET GRP</text>
+
+    <!-- Node: VPC 1 -->
+    <rect x="60" y="120" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="60" y="120" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="140" y="150" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VPC 1</text>
+    <text x="140" y="166" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cluster A1</text>
+
+    <!-- Node: VPC 2 -->
+    <rect x="60" y="184" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="60" y="184" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="140" y="214" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VPC 2</text>
+    <text x="140" y="230" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cluster A2</text>
+
+    <!-- Node: VPC 3 -->
+    <rect x="60" y="388" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="60" y="388" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="140" y="418" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VPC 3</text>
+    <text x="140" y="434" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cluster B1</text>
+
+    <!-- Node: Service Network (focal) -->
+    <rect x="410" y="160" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="410" y="160" width="140" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="418" y="166" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="432" y="175" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NET</text>
+    <text x="480" y="192" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service Network</text>
+    <text x="480" y="208" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">shared mesh</text>
+
+    <!-- Node: Service 1 -->
+    <rect x="100" y="256" width="200" height="56" rx="6" fill="#ffffff"/>
+    <rect x="100" y="256" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="108" y="262" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="122" y="271" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+    <text x="200" y="286" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service 1</text>
+    <text x="200" y="302" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ target group</text>
+
+    <!-- Node: Service 2 -->
+    <rect x="380" y="256" width="200" height="56" rx="6" fill="#ffffff"/>
+    <rect x="380" y="256" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="388" y="262" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="402" y="271" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+    <text x="480" y="286" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service 2</text>
+    <text x="480" y="302" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ target group</text>
+
+    <!-- Node: Service 3 -->
+    <rect x="680" y="256" width="200" height="56" rx="6" fill="#ffffff"/>
+    <rect x="680" y="256" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="688" y="262" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="702" y="271" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+    <text x="780" y="286" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service 3</text>
+    <text x="780" y="302" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ target group</text>
+
+    <!-- Targets -->
+    <rect x="120" y="420" width="160" height="52" rx="6" fill="#ffffff"/>
+    <rect x="120" y="420" width="160" height="52" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="200" y="442" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EC2 Instance</text>
+    <text x="200" y="458" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">target</text>
+
+    <rect x="400" y="420" width="160" height="52" rx="6" fill="#ffffff"/>
+    <rect x="400" y="420" width="160" height="52" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="480" y="442" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EKS Pod</text>
+    <text x="480" y="458" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">target</text>
+
+    <rect x="700" y="420" width="160" height="52" rx="6" fill="#ffffff"/>
+    <rect x="700" y="420" width="160" height="52" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="780" y="442" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Lambda Function</text>
+    <text x="780" y="458" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">target</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="532" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Service network (focal)</text>
+
+    <rect x="260" y="532" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="280" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Service + target group</text>
+
+    <rect x="480" y="532" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="500" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Compute target</text>
+
+    <rect x="660" y="532" width="14" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="680" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">VPC</text>
+
+    <rect x="760" y="532" width="14" height="10" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="780" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Account boundary</text>
+  </svg>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="traffic-seq-title traffic-seq-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="traffic-seq-title">Calico Policy 평가 트래픽 흐름 시퀀스</title>
+  <desc id="traffic-seq-desc">Source Pod가 보낸 패킷을 Calico Felix가 iptables로 Policy를 평가해 허용 시 VPC를 거쳐 목적지에 도달시키고, 거부 시 iptables가 패킷을 드롭해 Pod로 되돌리는 과정을 보여준다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Lifelines -->
+  <line x1="100" y1="88" x2="100" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="290" y1="88" x2="290" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="480" y1="88" x2="480" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="670" y1="88" x2="670" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="860" y1="88" x2="860" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- ALT fragment frame (drawn before messages so messages sit above the wash) -->
+  <rect x="70" y="210" width="830" height="170" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+  <rect x="70" y="210" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+  <text x="90" y="222" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ALT</text>
+  <text x="120" y="230" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">[Policy 허용]</text>
+  <line x1="78" y1="310" x2="892" y2="310" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="120" y="326" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">[Policy 거부]</text>
+
+  <!-- Messages -->
+  <!-- Pod -> Felix -->
+  <line x1="100" y1="140" x2="482" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="238" y="120" width="108" height="12" rx="2" fill="#ffffff"/>
+  <text x="292" y="129" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">아웃바운드 패킷</text>
+
+  <!-- Felix -> IPT -->
+  <line x1="290" y1="180" x2="672" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="435" y="160" width="90" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="169" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POLICY 평가</text>
+
+  <!-- IPT -> VPC (headline success, coral) -->
+  <line x1="480" y1="262" x2="672" y2="262" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="530" y="242" width="92" height="12" rx="2" fill="#ffffff"/>
+  <text x="576" y="251" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">패킷 전달</text>
+
+  <!-- VPC -> Dest -->
+  <line x1="670" y1="290" x2="862" y2="290" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="720" y="270" width="92" height="12" rx="2" fill="#ffffff"/>
+  <text x="766" y="279" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">목적지 전달</text>
+
+  <!-- IPT --> Pod (dashed return, filled marker) -->
+  <line x1="480" y1="354" x2="102" y2="354" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="238" y="334" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="282" y="343" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">패킷 드롭</text>
+
+  <!-- Actor boxes (painted after lines so lines sit behind) -->
+  <rect x="40" y="40" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="100" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Source Pod</text>
+
+  <rect x="230" y="40" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="290" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Calico Felix</text>
+
+  <rect x="420" y="40" width="120" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="480" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">iptables</text>
+
+  <rect x="610" y="40" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="670" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VPC ENI</text>
+
+  <rect x="800" y="40" width="120" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+  <text x="860" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Destination</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="548" x2="920" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="564" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <line x1="220" y1="560" x2="244" y2="560" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <text x="252" y="564" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">허용 경로 (headline)</text>
+  <line x1="460" y1="560" x2="484" y2="560" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <text x="492" y="564" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">거부 시 반환(드롭)</text>
+</svg>

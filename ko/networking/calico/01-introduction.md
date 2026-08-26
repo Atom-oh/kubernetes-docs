@@ -122,25 +122,7 @@ Calico는 컨테이너, 가상 머신, 네이티브 호스트 기반 워크로�
 
 > **Calico**는 클라우드 네이티브 애플리케이션을 위한 **확장 가능한 네트워킹**과 **네트워크 보안** 솔루션으로, 표준 Linux 네트워킹 도구를 활용하여 고성능의 유연한 네트워크 패브릭을 제공합니다.
 
-```mermaid
-graph LR
-    subgraph "Calico 핵심 기능"
-        NET[네트워킹<br/>Pod 연결성]
-        SEC[보안<br/>Network Policy]
-        OBS[관측성<br/>Flow Logs]
-        IPAM[IPAM<br/>IP 주소 관리]
-    end
-
-    NET --> USE[프로덕션<br/>워크로드]
-    SEC --> USE
-    OBS --> USE
-    IPAM --> USE
-
-    style NET fill:#4fc3f7
-    style SEC fill:#81c784
-    style OBS fill:#ffb74d
-    style IPAM fill:#ce93d8
-```
+![네트워킹, 보안, 관측성, IPAM이라는 Calico의 네 가지 핵심 기능이 모두 프로덕션 워크로드를 지원한다는 것을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-calico-01-introduction-0.png)
 
 ## Project Calico의 역사
 
@@ -162,29 +144,7 @@ graph LR
 
 ### 프로젝트 거버넌스
 
-```mermaid
-graph TB
-    subgraph "Calico 에코시스템"
-        OSS[Project Calico<br/>오픈소스]
-        ENT[Calico Enterprise<br/>온프레미스]
-        CLOUD[Calico Cloud<br/>SaaS]
-    end
-
-    subgraph "관리 주체"
-        TIGERA[Tigera Inc.]
-        CNCF[CNCF<br/>Incubating]
-        COMM[커뮤니티]
-    end
-
-    TIGERA --> ENT
-    TIGERA --> CLOUD
-    CNCF --> OSS
-    COMM --> OSS
-
-    style OSS fill:#4fc3f7
-    style ENT fill:#81c784
-    style CLOUD fill:#ffb74d
-```
+![Tigera, CNCF, 커뮤니티라는 세 관리 주체가 각각 Calico Enterprise, Project Calico 오픈소스, Calico Cloud를 어떻게 지원하는지 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-calico-01-introduction-1.png)
 
 ## 5가지 핵심 기능 상세
 
@@ -217,21 +177,7 @@ Kubernetes 표준 NetworkPolicy를 완전히 지원하며, Calico 확장 정책�
 
 **정책 계층:**
 
-```mermaid
-graph TB
-    subgraph "Calico Policy 계층"
-        GNP[GlobalNetworkPolicy<br/>클러스터 전체]
-        NP[NetworkPolicy<br/>네임스페이스 범위]
-        HP[HostEndpoint Policy<br/>노드 보안]
-    end
-
-    GNP --> NP
-    NP --> HP
-
-    style GNP fill:#ef5350
-    style NP fill:#42a5f5
-    style HP fill:#66bb6a
-```
+![GlobalNetworkPolicy, NetworkPolicy, HostEndpoint Policy가 클러스터 전체에서 네임스페이스, 노드 단위로 점차 범위가 좁아지는 3단계 정책 계층을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-calico-01-introduction-2.png)
 
 **지원 기능:**
 - Ingress/Egress 규칙
@@ -260,28 +206,7 @@ Typha 컴포넌트를 통해 수천 노드 클러스터를 지원합니다.
 - 100,000+ Pod 지원
 - 수백만 개의 Network Policy 규칙
 
-```mermaid
-graph TB
-    subgraph "Without Typha (소규모)"
-        DS1[Datastore] --> F1[Felix 1]
-        DS1 --> F2[Felix 2]
-        DS1 --> F3[Felix ...]
-        DS1 --> FN[Felix N]
-    end
-
-    subgraph "With Typha (대규모)"
-        DS2[Datastore] --> T1[Typha 1]
-        DS2 --> T2[Typha 2]
-        DS2 --> T3[Typha 3]
-        T1 --> FA[Felix A-M]
-        T2 --> FB[Felix N-Z]
-        T3 --> FC[Felix ...]
-    end
-
-    style T1 fill:#ffb74d
-    style T2 fill:#ffb74d
-    style T3 fill:#ffb74d
-```
+![Typha 없이는 Datastore가 모든 Felix 에이전트에 직접 연결돼야 하지만, Typha를 3대 두면 Datastore는 Typha에만 연결되고 Typha가 각 Felix 그룹으로 연결을 분산시켜 대규모 클러스터를 지원한다는 것을 비교하는 다이어그램.](../../.gitbook/assets/ko-networking-calico-01-introduction-3.png)
 
 ### 5. 멀티 환경 지원
 
@@ -297,47 +222,11 @@ graph TB
 
 ### 전통적인 VM 네트워킹의 한계
 
-```mermaid
-graph LR
-    subgraph "전통적인 VM 네트워킹"
-        VM1[VM 1] --> VLAN1[VLAN]
-        VM2[VM 2] --> VLAN1
-        VLAN1 --> FW[방화벽]
-        FW --> ROUTER[라우터]
-    end
-
-    subgraph "문제점"
-        P1[VLAN 수 제한<br/>4096개]
-        P2[정적 구성<br/>느린 변경]
-        P3[중앙 집중<br/>병목 현상]
-    end
-
-    style P1 fill:#ef5350
-    style P2 fill:#ef5350
-    style P3 fill:#ef5350
-```
+![VM들이 VLAN을 거쳐 방화벽과 라우터로 나가는 전통적인 네트워킹 경로와, VLAN 개수 제한·정적 구성·중앙 집중이라는 세 가지 구조적 문제점을 함께 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-calico-01-introduction-4.png)
 
 ### Calico의 클라우드 네이티브 접근
 
-```mermaid
-graph LR
-    subgraph "Calico 네트워킹"
-        P1[Pod 1] --> FELIX1[Felix]
-        P2[Pod 2] --> FELIX1
-        FELIX1 --> BGP1[BGP]
-        BGP1 --> NET[네트워크]
-    end
-
-    subgraph "장점"
-        A1[무제한 확장<br/>IP 기반]
-        A2[동적 구성<br/>자동 적용]
-        A3[분산 처리<br/>노드별 정책]
-    end
-
-    style A1 fill:#81c784
-    style A2 fill:#81c784
-    style A3 fill:#81c784
-```
+![Pod들이 각 노드의 Felix를 거쳐 BGP로 네트워크에 연결되는 분산 구조와, 무제한 확장·동적 구성·분산 처리라는 세 가지 장점을 함께 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-calico-01-introduction-5.png)
 
 ### 주요 차이점
 

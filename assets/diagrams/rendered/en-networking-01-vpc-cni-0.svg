@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="960" height="600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">Amazon VPC CNI Architecture</title>
+  <desc id="ddesc">On each EC2 worker node, the IPAMD daemon manages IP allocation and hands addresses to the CNI binary, which assigns them to Pods; the node's primary and secondary ENIs each draw those IP addresses from the Amazon VPC.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- ================= HEADER ================= -->
+  <text x="32" y="28" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">NETWORKING · VPC CNI</text>
+  <text x="32" y="50" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">VPC CNI Architecture</text>
+
+  <!-- ================= ZONE: EC2 WORKER NODE ================= -->
+  <rect x="32" y="80" width="440" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="44" y="84" width="150" height="12" rx="2" fill="#ffffff"/>
+  <text x="119" y="93" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">EC2 WORKER NODE</text>
+
+  <!-- ================= ARROWS (drawn before boxes) ================= -->
+
+  <!-- E1: IPAMD -> CNI Binary (straight vertical, shared x=140) -->
+  <line x1="140" y1="168" x2="140" y2="204" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="98" y="176" width="84" height="12" rx="2" fill="#ffffff"/>
+  <text x="140" y="185" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">IP ALLOC MGMT</text>
+
+  <!-- E2,E3,E4: CNI Binary -> Pod 1/2/3 (fanned bottom edge, elbow down-right-down, staggered turn heights + hop bridges at the 2 unavoidable crossings) -->
+  <!-- attach points on CNI bottom edge (x=56..224,y=260): 98,140,182 -->
+  <path d="M 98,260 V 356 Q 98,364 106,364 H 116 Q 124,364 124,372 V 444"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <path d="M 140,260 V 372 Q 140,380 148,380 H 174 a 8,8 0 0,1 16,0 H 292 Q 300,380 300,388 V 444"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <path d="M 182,260 V 388 Q 182,396 190,396 H 292 a 8,8 0 0,1 16,0 H 468 Q 476,396 476,404 V 444"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="106" y="290" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="138" y="299" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ASSIGN IP</text>
+  <rect x="148" y="316" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="180" y="325" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ASSIGN IP</text>
+  <rect x="190" y="338" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="222" y="347" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ASSIGN IP</text>
+
+  <!-- E5: Primary ENI -> Amazon VPC (elbow right-down-right) -->
+  <path d="M 448,140 H 592 Q 600,140 600,148 V 200 Q 600,208 608,208 H 752"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="452" y="122" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="496" y="131" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PRIMARY NET</text>
+
+  <!-- E6: Secondary ENI 1 -> Amazon VPC (straight — endpoints share y=220) -->
+  <line x1="448" y1="220" x2="752" y2="220" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="564" y="202" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="600" y="211" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ADDL IPS</text>
+
+  <!-- E7: Secondary ENI 2 -> Amazon VPC (elbow right-up-right) -->
+  <path d="M 448,300 H 592 Q 600,300 600,292 V 244 Q 600,236 608,236 H 752"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="452" y="280" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="488" y="289" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ADDL IPS</text>
+
+  <!-- ================= NODES ================= -->
+
+  <!-- IPAMD -->
+  <rect x="56" y="112" width="168" height="56" rx="6" fill="#ffffff"/>
+  <rect x="56" y="112" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="64" y="118" width="46" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="87" y="127" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DAEMON</text>
+  <text x="140" y="146" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">IPAMD</text>
+  <text x="140" y="160" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">L-IPAM daemon</text>
+
+  <!-- CNI Binary (focal) -->
+  <rect x="56" y="204" width="168" height="56" rx="6" fill="#ffffff"/>
+  <rect x="56" y="204" width="168" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="64" y="210" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="80" y="219" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CNI</text>
+  <text x="140" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">CNI Binary</text>
+  <text x="140" y="250" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kubelet plugin</text>
+
+  <!-- Primary ENI -->
+  <rect x="280" y="112" width="168" height="56" rx="6" fill="#ffffff"/>
+  <rect x="280" y="112" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="288" y="118" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="304" y="127" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ENI</text>
+  <text x="364" y="146" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Primary ENI</text>
+  <text x="364" y="160" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">eth0</text>
+
+  <!-- Secondary ENI 1 -->
+  <rect x="280" y="192" width="168" height="56" rx="6" fill="#ffffff"/>
+  <rect x="280" y="192" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="288" y="198" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="304" y="207" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ENI</text>
+  <text x="364" y="226" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Secondary ENI 1</text>
+  <text x="364" y="240" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">eth1</text>
+
+  <!-- Secondary ENI 2 -->
+  <rect x="280" y="272" width="168" height="56" rx="6" fill="#ffffff"/>
+  <rect x="280" y="272" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="288" y="278" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="304" y="287" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ENI</text>
+  <text x="364" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Secondary ENI 2</text>
+  <text x="364" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">eth2</text>
+
+  <!-- Amazon VPC (external) -->
+  <rect x="752" y="192" width="176" height="64" rx="6" fill="#ffffff"/>
+  <rect x="752" y="192" width="176" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="760" y="198" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="776" y="207" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">VPC</text>
+  <text x="840" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Amazon VPC</text>
+  <text x="840" y="242" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">subnet IP pool</text>
+
+  <!-- Pod 1 -->
+  <rect x="56" y="444" width="136" height="56" rx="6" fill="#ffffff"/>
+  <rect x="56" y="444" width="136" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="64" y="450" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="80" y="459" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+  <text x="124" y="478" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 1</text>
+
+  <!-- Pod 2 -->
+  <rect x="232" y="444" width="136" height="56" rx="6" fill="#ffffff"/>
+  <rect x="232" y="444" width="136" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="240" y="450" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="256" y="459" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+  <text x="300" y="478" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 2</text>
+
+  <!-- Pod 3 -->
+  <rect x="408" y="444" width="136" height="56" rx="6" fill="#ffffff"/>
+  <rect x="408" y="444" width="136" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="416" y="450" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="432" y="459" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+  <text x="476" y="478" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 3</text>
+
+  <!-- ================= LEGEND ================= -->
+  <line x1="32" y1="540" x2="928" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="32" y="556" width="14" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="54" y="566" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">IP allocation control point</text>
+  <rect x="292" y="556" width="14" height="14" rx="3" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="314" y="566" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Node / ENI / Pod component</text>
+  <rect x="576" y="556" width="14" height="14" rx="3" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="598" y="566" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">External AWS network</text>
+</svg>

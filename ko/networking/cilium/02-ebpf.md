@@ -207,70 +207,7 @@ eBPF는 단순한 기술이 아닌 완전한 기술 스택으로, 커널 내부�
 
 ### eBPF 아키텍처 상세 다이어그램
 
-```mermaid
-flowchart TD
-    subgraph "사용자 공간 (User Space)"
-        App[애플리케이션]
-        LibBPF[libbpf 라이브러리]
-        BCC[BCC 프레임워크]
-        BPFtrace[bpftrace 도구]
-        App --> LibBPF & BCC & BPFtrace
-        
-        subgraph "개발 도구"
-            Clang[Clang 컴파일러]
-            LLVM[LLVM 백엔드]
-            BTF_Info[BTF 정보]
-            Clang --> LLVM
-            LLVM --> BTF_Info
-        end
-    end
-    
-    subgraph "커널 공간 (Kernel Space)"
-        subgraph "eBPF 런타임"
-            Verifier["eBPF 검증기
-            (안전성 보장)"]
-            JIT["JIT 컴파일러\n(성능 최적화)"]
-            VM["eBPF 가상 머신\n(프로그램 실행)"]
-            
-            Verifier -->|검증 통과| JIT
-            JIT -->|최적화된 코드| VM
-        end
-        
-        subgraph "eBPF 맵 시스템"
-            Maps["eBPF 맵\n(데이터 저장소)"]
-            MapTypes["맵 유형\n- 해시맵\n- 배열\n- LRU\n- 링버퍼\n- 스택트레이스\n- 소켓맵\n- 기타"]
-            Maps --- MapTypes
-        end
-        
-        subgraph "훅 포인트 (Hook Points)"
-            XDP["XDP\n(네트워크 드라이버 레벨)"]
-            TC["Traffic Control\n(네트워크 스택)"]
-            Kprobes["Kprobes/Uprobes\n(동적 추적)"]
-            Tracepoints["Tracepoints\n(정적 추적점)"]
-            Perf["Perf Events\n(성능 이벤트)"]
-            LSM["LSM\n(보안 모듈)"]
-            Sockets["Socket 필터\n(소켓 레벨)"]
-            Cgroups["Cgroups\n(리소스 제어)"]
-        end
-        
-        VM --> XDP & TC & Kprobes & Tracepoints & Perf & LSM & Sockets & Cgroups
-        VM <-->|데이터 교환| Maps
-    end
-    
-    LibBPF & BCC & BPFtrace -->|프로그램 로드| Verifier
-    App <-->|데이터 교환| Maps
-    
-    classDef userspace fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef kernelspace fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef ebpfcomp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef hookpoint fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef mapcomp fill:#28A745,stroke:#333,stroke-width:1px,color:white;
-    
-    class App,LibBPF,BCC,BPFtrace,Clang,LLVM,BTF_Info userspace;
-    class Verifier,JIT,VM ebpfcomp;
-    class Maps,MapTypes mapcomp;
-    class XDP,TC,Kprobes,Tracepoints,Perf,LSM,Sockets,Cgroups hookpoint;
-```
+![사용자 공간의 로더가 eBPF 프로그램을 커널의 검증기에 전달하면, 검증기·JIT 컴파일러를 거쳐 eBPF 가상 머신이 이를 실행하고, 이 가상 머신이 다양한 커널 훅 포인트에 연결되며 eBPF 맵을 통해 사용자 공간과 데이터를 주고받는 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-02-ebpf-0.png)
 
 ### eBPF 아키텍처 구성 요소 상세 설명
 
@@ -762,66 +699,7 @@ Cilium은 eBPF를 활용하여 컨테이너 네트워킹, 로드 밸런싱, 네�
 
 Cilium은 다음과 같은 구성 요소로 이루어져 있으며, 각 구성 요소에서 eBPF가 중요한 역할을 합니다:
 
-```mermaid
-flowchart TD
-    subgraph "Kubernetes 클러스터"
-        API[Kubernetes API Server]
-        
-        subgraph "Cilium 컴포넌트"
-            Agent[Cilium Agent]
-            Operator[Cilium Operator]
-            CLI[Cilium CLI]
-            Hubble[Hubble\n관찰성 플랫폼]
-        end
-        
-        subgraph "노드 1"
-            Agent1[Cilium Agent]
-            eBPF1[eBPF 프로그램]
-            Maps1[eBPF 맵]
-            Pod1A[Pod A]
-            Pod1B[Pod B]
-            
-            Agent1 -->|로드| eBPF1
-            Agent1 -->|관리| Maps1
-            eBPF1 <-->|데이터 접근| Maps1
-            Pod1A <-->|패킷 처리| eBPF1
-            Pod1B <-->|패킷 처리| eBPF1
-        end
-        
-        subgraph "노드 2"
-            Agent2[Cilium Agent]
-            eBPF2[eBPF 프로그램]
-            Maps2[eBPF 맵]
-            Pod2A[Pod C]
-            Pod2B[Pod D]
-            
-            Agent2 -->|로드| eBPF2
-            Agent2 -->|관리| Maps2
-            eBPF2 <-->|데이터 접근| Maps2
-            Pod2A <-->|패킷 처리| eBPF2
-            Pod2B <-->|패킷 처리| eBPF2
-        end
-        
-        API <-->|상태 동기화| Agent
-        API <-->|CRD 관리| Operator
-        Agent <-->|클러스터 상태| Operator
-        CLI -->|관리| Agent
-        Agent <-->|메트릭 수집| Hubble
-        
-        Agent <-->|상태 동기화| Agent1
-        Agent <-->|상태 동기화| Agent2
-    end
-    
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef cilium fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ebpf fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef pod fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    
-    class API k8s;
-    class Agent,Operator,CLI,Hubble,Agent1,Agent2 cilium;
-    class eBPF1,eBPF2,Maps1,Maps2 ebpf;
-    class Pod1A,Pod1B,Pod2A,Pod2B pod;
-```
+![쿠버네티스 API 서버와 연동하는 Cilium Agent가 클러스터 컨트롤 플레인(Operator·CLI·Hubble)과 노드 위의 eBPF 프로그램·맵을 모두 매개하여, 파드 트래픽을 커널 수준에서 로드밸런싱·정책 적용하는 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-02-ebpf-1.png)
 
 #### 주요 구성 요소:
 

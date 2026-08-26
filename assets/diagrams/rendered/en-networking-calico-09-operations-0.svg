@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 980 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="calico-ops-lifecycle-title calico-ops-lifecycle-desc">
+  <title id="calico-ops-lifecycle-title">Calico operations lifecycle</title>
+  <desc id="calico-ops-lifecycle-desc">A lifecycle flowchart showing Calico installation leading into configuration, which drives monitoring, troubleshooting, upgrades, and backup — with troubleshooting and upgrades both feeding fixes back into configuration.</desc>
+
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- ============ ARROWS (drawn before boxes) ============ -->
+
+  <!-- INSTALL -> CONFIG (straight) -->
+  <path d="M480,88 L480,140" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- CONFIG -> MONITOR (straight) -->
+  <path d="M480,204 L480,252" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- CONFIG -> BACKUP (elbow, outer right lane) -->
+  <path d="M580,172 L932,172 Q940,172 940,180 L940,500 Q940,508 932,508 L580,508"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- MONITOR -> TROUBLE (elbow) -->
+  <path d="M430,316 L430,332 Q430,340 422,340 L228,340 Q220,340 220,348 L220,364"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- MONITOR -> UPGRADE (elbow) -->
+  <path d="M530,316 L530,332 Q530,340 538,340 L732,340 Q740,340 740,348 L740,364"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- TROUBLE -> CONFIG (feedback, elbow, outer left lane) -->
+  <path d="M140,396 L48,396 Q40,396 40,388 L40,180 Q40,172 48,172 L380,172"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow-accent)"/>
+
+  <!-- UPGRADE -> CONFIG (feedback, elbow) -->
+  <path d="M820,396 L892,396 Q900,396 900,388 L900,198 Q900,190 892,190 L580,190"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow-accent)"/>
+
+  <!-- Arrow labels -->
+  <rect x="446" y="102" width="68" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="111" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">DEPLOYED</text>
+
+  <rect x="6" y="270" width="68" height="12" rx="2" fill="#ffffff"/>
+  <text x="40" y="279" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">FIX APPLIED</text>
+
+  <rect x="866" y="278" width="68" height="12" rx="2" fill="#ffffff"/>
+  <text x="900" y="287" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">RETUNED</text>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- INSTALL (oval, start) -->
+  <ellipse cx="480" cy="60" rx="100" ry="28" fill="#ffffff"/>
+  <ellipse cx="480" cy="60" rx="100" ry="28" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="57" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Installation</text>
+  <text x="480" y="72" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">deploy calico</text>
+
+  <!-- CONFIG (rect, focal hub) -->
+  <rect x="380" y="140" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="380" y="140" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="167" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Configuration</text>
+  <text x="480" y="183" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">tune settings</text>
+
+  <!-- MONITOR (rect) -->
+  <rect x="390" y="252" width="180" height="64" rx="6" fill="#ffffff"/>
+  <rect x="390" y="252" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="280" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Monitoring</text>
+  <text x="480" y="296" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">metrics &amp; logs</text>
+
+  <!-- TROUBLE (rect) -->
+  <rect x="140" y="364" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="140" y="364" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="220" y="392" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Troubleshooting</text>
+  <text x="220" y="408" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">debug issues</text>
+
+  <!-- UPGRADE (rect) -->
+  <rect x="660" y="364" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="660" y="364" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="740" y="392" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Upgrades</text>
+  <text x="740" y="408" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">version updates</text>
+
+  <!-- BACKUP (oval, terminal) -->
+  <ellipse cx="480" cy="508" rx="100" ry="28" fill="#ffffff"/>
+  <ellipse cx="480" cy="508" rx="100" ry="28" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="505" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backup &amp; DR</text>
+  <text x="480" y="520" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">data protection</text>
+
+  <!-- ============ LEGEND ============ -->
+  <line x1="40" y1="568" x2="940" y2="568" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="588" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+  <ellipse cx="196" cy="584" rx="14" ry="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="220" y="588" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="start">Start / end</text>
+
+  <rect x="380" y="576" width="28" height="16" rx="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="418" y="588" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="start">Operational step</text>
+
+  <rect x="596" y="576" width="28" height="16" rx="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="634" y="588" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="start">Shared hub</text>
+
+  <line x1="796" y1="584" x2="824" y2="584" stroke="#EC7211" stroke-width="1" marker-end="url(#arrow-accent)"/>
+  <text x="832" y="588" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="start">Feedback</text>
+
+</svg>

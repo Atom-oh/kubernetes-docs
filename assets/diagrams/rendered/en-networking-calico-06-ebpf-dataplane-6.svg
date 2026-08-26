@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ebpf6-title ebpf6-desc">
+    <title id="ebpf6-title">XDP processing location mapped to performance tier</title>
+    <desc id="ebpf6-desc">Diagram showing that XDP programs offloaded onto the NIC are fastest, programs run natively in the driver are fast, and programs run in the generic network stack are the slowest but work on any NIC.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone -->
+    <rect x="100" y="96" width="280" height="344" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="152" y="100" width="176" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PROCESSING LOCATION</text>
+
+    <!-- Arrows -->
+    <line x1="340" y1="152" x2="620" y2="152" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <line x1="340" y1="268" x2="620" y2="268" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="340" y1="384" x2="620" y2="384" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Left nodes -->
+    <rect x="140" y="120" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="156" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Network Card</text>
+
+    <rect x="140" y="236" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="272" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Driver</text>
+
+    <rect x="140" y="352" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Generic / SKB</text>
+    <text x="240" y="396" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">network stack</text>
+
+    <!-- Right nodes -->
+    <rect x="620" y="120" width="240" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="740" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">XDP Offload</text>
+    <text x="740" y="164" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">fastest · needs SmartNIC</text>
+
+    <rect x="620" y="236" width="240" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="740" y="264" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">XDP Native</text>
+    <text x="740" y="280" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">fast · needs driver support</text>
+
+    <rect x="620" y="352" width="240" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="740" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">XDP Generic</text>
+    <text x="740" y="396" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">slowest · works on any NIC</text>
+
+    <!-- Legend -->
+    <line x1="100" y1="472" x2="860" y2="472" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="100" y="488" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <rect x="100" y="504" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="120" y="512" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Fastest tier (focal)</text>
+    <rect x="320" y="504" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="340" y="512" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Lower tier</text>
+  </svg>

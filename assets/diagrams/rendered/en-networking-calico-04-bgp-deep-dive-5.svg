@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="hier-rr-title hier-rr-desc">
+    <title id="hier-rr-title">Hierarchical Route Reflectors (Large Clusters)</title>
+    <desc id="hier-rr-desc">A two-tier route-reflector hierarchy: two global route reflectors peer with each other and with every rack-level route reflector, and each rack's nodes peer only with their rack's route reflector, keeping session counts flat as the cluster grows.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- zones -->
+    <rect x="250" y="96" width="460" height="122" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="262" y="100" width="160" height="12" rx="2" fill="#ffffff"/>
+    <text x="342" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">TIER 1 — GLOBAL RRS</text>
+
+    <rect x="340" y="264" width="280" height="244" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="440" y="268" width="160" height="12" rx="2" fill="#ffffff"/>
+    <text x="520" y="277" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">TIER 2 — RACK RRS &amp; NODES</text>
+
+    <!-- connectors -->
+    <line x1="410" y1="170" x2="550" y2="170" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <path d="M340,202 V241 Q340,249 348,249 H372 Q380,249 380,257 V296"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M620,202 V224 Q620,232 612,232 H428 Q420,232 420,240 V296"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="360" x2="480" y2="428" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- GRR1 -->
+    <rect x="270" y="138" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="270" y="138" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="340" y="174" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Global RR 1</text>
+
+    <!-- GRR2 -->
+    <rect x="550" y="138" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="550" y="138" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="620" y="174" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Global RR 2</text>
+
+    <!-- RackRRs aggregate (focal hub) -->
+    <rect x="340" y="296" width="280" height="64" rx="6" fill="#ffffff"/>
+    <rect x="340" y="296" width="280" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="324" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Rack RRs — Rack 1, 2, 3</text>
+    <text x="480" y="340" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">one per rack, peers with both global RRs</text>
+
+    <!-- RackNodes aggregate -->
+    <rect x="380" y="428" width="200" height="64" rx="6" fill="#ffffff"/>
+    <rect x="380" y="428" width="200" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="480" y="456" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Rack Nodes</text>
+    <text x="480" y="472" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">×2 per rack, peer with local rack RR only</text>
+
+    <!-- legend -->
+    <line x1="30" y1="536" x2="930" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="220" y1="554" x2="248" y2="554" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="258" y="557" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Global-RR peering (Tier 1↔Tier 1, Tier 1↔Tier 2)</text>
+    <line x1="600" y1="554" x2="628" y2="554" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="638" y="557" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Rack-local peering</text>
+
+  </svg>

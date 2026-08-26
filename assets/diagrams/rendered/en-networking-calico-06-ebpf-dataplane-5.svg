@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ebpf5-title ebpf5-desc">
+    <title id="ebpf5-title">Per-packet DNAT compared with eBPF connect-time load balancing</title>
+    <desc id="ebpf5-desc">Diagram contrasting kube-proxy's per-packet approach, where every SYN, data, and FIN packet is DNAT'd to Pod A, with eBPF connect-time load balancing, where a single connect() syscall picks Pod B once and every packet in that connection is sent to it directly.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone 1 -->
+    <rect x="40" y="56" width="880" height="192" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="380" y="60" width="200" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PER-PACKET LB (KUBE-PROXY)</text>
+
+    <line x1="260" y1="108" x2="560" y2="108" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="260" y1="160" x2="560" y2="160" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="260" y1="212" x2="560" y2="212" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="380" y="140" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="410" y="149" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DNAT</text>
+
+    <rect x="120" y="88" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="190" y="112" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SYN</text>
+    <rect x="120" y="140" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="190" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">DATA</text>
+    <rect x="120" y="192" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="190" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">FIN</text>
+
+    <rect x="560" y="92" width="160" height="136" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="640" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+    <text x="640" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">3 lookups / conn.</text>
+
+    <!-- Zone 2 -->
+    <rect x="40" y="264" width="880" height="252" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="380" y="268" width="200" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="277" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CONNECT-TIME LB (EBPF)</text>
+
+    <line x1="260" y1="320" x2="320" y2="320" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="262" y="300" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="290" y="309" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PICK B</text>
+
+    <line x1="260" y1="376" x2="560" y2="376" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="260" y1="428" x2="560" y2="428" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="260" y1="480" x2="560" y2="480" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="390" y="408" width="50" height="12" rx="2" fill="#ffffff"/>
+    <text x="415" y="417" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DIRECT</text>
+
+    <rect x="120" y="300" width="140" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="190" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">connect()</text>
+    <text x="190" y="330" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">syscall</text>
+
+    <rect x="320" y="300" width="180" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="410" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Destination</text>
+    <text x="410" y="330" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Pod B IP</text>
+
+    <rect x="120" y="356" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="190" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SYN</text>
+    <rect x="120" y="408" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="190" y="432" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">DATA</text>
+    <rect x="120" y="460" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="190" y="484" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">FIN</text>
+
+    <rect x="560" y="360" width="160" height="136" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="640" y="432" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+    <text x="640" y="448" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">1 lookup / conn.</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="536" x2="920" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <rect x="40" y="568" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="60" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Per-packet NAT lookup</text>
+    <rect x="260" y="568" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="280" y="576" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Resolved once at connect() (focal)</text>
+  </svg>

@@ -207,70 +207,7 @@ eBPF is not just a simple technology but a complete technology stack consisting 
 
 ### Detailed eBPF Architecture Diagram
 
-```mermaid
-flowchart TD
-    subgraph "User Space"
-        App[Application]
-        LibBPF[libbpf Library]
-        BCC[BCC Framework]
-        BPFtrace[bpftrace Tool]
-        App --> LibBPF & BCC & BPFtrace
-
-        subgraph "Development Tools"
-            Clang[Clang Compiler]
-            LLVM[LLVM Backend]
-            BTF_Info[BTF Information]
-            Clang --> LLVM
-            LLVM --> BTF_Info
-        end
-    end
-
-    subgraph "Kernel Space"
-        subgraph "eBPF Runtime"
-            Verifier["eBPF Verifier
-            (Safety Guarantee)"]
-            JIT["JIT Compiler\n(Performance Optimization)"]
-            VM["eBPF Virtual Machine\n(Program Execution)"]
-
-            Verifier -->|Verification Passed| JIT
-            JIT -->|Optimized Code| VM
-        end
-
-        subgraph "eBPF Map System"
-            Maps["eBPF Maps\n(Data Store)"]
-            MapTypes["Map Types\n- HashMap\n- Array\n- LRU\n- Ring Buffer\n- Stack Trace\n- Socket Map\n- Others"]
-            Maps --- MapTypes
-        end
-
-        subgraph "Hook Points"
-            XDP["XDP\n(Network Driver Level)"]
-            TC["Traffic Control\n(Network Stack)"]
-            Kprobes["Kprobes/Uprobes\n(Dynamic Tracing)"]
-            Tracepoints["Tracepoints\n(Static Trace Points)"]
-            Perf["Perf Events\n(Performance Events)"]
-            LSM["LSM\n(Security Module)"]
-            Sockets["Socket Filter\n(Socket Level)"]
-            Cgroups["Cgroups\n(Resource Control)"]
-        end
-
-        VM --> XDP & TC & Kprobes & Tracepoints & Perf & LSM & Sockets & Cgroups
-        VM <-->|Data Exchange| Maps
-    end
-
-    LibBPF & BCC & BPFtrace -->|Program Load| Verifier
-    App <-->|Data Exchange| Maps
-
-    classDef userspace fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef kernelspace fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef ebpfcomp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef hookpoint fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef mapcomp fill:#28A745,stroke:#333,stroke-width:1px,color:white;
-
-    class App,LibBPF,BCC,BPFtrace,Clang,LLVM,BTF_Info userspace;
-    class Verifier,JIT,VM ebpfcomp;
-    class Maps,MapTypes mapcomp;
-    class XDP,TC,Kprobes,Tracepoints,Perf,LSM,Sockets,Cgroups hookpoint;
-```
+![Diagram showing how a user-space application and compiler toolchain load a program through loader libraries, past the kernel's eBPF verifier and JIT compiler, into a virtual machine that attaches to kernel hook points and exchanges data with eBPF maps.](../../.gitbook/assets/en-networking-cilium-02-ebpf-0.png)
 
 ### Detailed Description of eBPF Architecture Components
 
@@ -762,66 +699,7 @@ Cilium is an open-source project that utilizes eBPF to implement container netwo
 
 Cilium consists of the following components, with eBPF playing an important role in each:
 
-```mermaid
-flowchart TD
-    subgraph "Kubernetes Cluster"
-        API[Kubernetes API Server]
-
-        subgraph "Cilium Components"
-            Agent[Cilium Agent]
-            Operator[Cilium Operator]
-            CLI[Cilium CLI]
-            Hubble[Hubble\nObservability Platform]
-        end
-
-        subgraph "Node 1"
-            Agent1[Cilium Agent]
-            eBPF1[eBPF Programs]
-            Maps1[eBPF Maps]
-            Pod1A[Pod A]
-            Pod1B[Pod B]
-
-            Agent1 -->|Load| eBPF1
-            Agent1 -->|Manage| Maps1
-            eBPF1 <-->|Data Access| Maps1
-            Pod1A <-->|Packet Processing| eBPF1
-            Pod1B <-->|Packet Processing| eBPF1
-        end
-
-        subgraph "Node 2"
-            Agent2[Cilium Agent]
-            eBPF2[eBPF Programs]
-            Maps2[eBPF Maps]
-            Pod2A[Pod C]
-            Pod2B[Pod D]
-
-            Agent2 -->|Load| eBPF2
-            Agent2 -->|Manage| Maps2
-            eBPF2 <-->|Data Access| Maps2
-            Pod2A <-->|Packet Processing| eBPF2
-            Pod2B <-->|Packet Processing| eBPF2
-        end
-
-        API <-->|State Sync| Agent
-        API <-->|CRD Management| Operator
-        Agent <-->|Cluster State| Operator
-        CLI -->|Management| Agent
-        Agent <-->|Metrics Collection| Hubble
-
-        Agent <-->|State Sync| Agent1
-        Agent <-->|State Sync| Agent2
-    end
-
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef cilium fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ebpf fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef pod fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    class API k8s;
-    class Agent,Operator,CLI,Hubble,Agent1,Agent2 cilium;
-    class eBPF1,eBPF2,Maps1,Maps2 ebpf;
-    class Pod1A,Pod1B,Pod2A,Pod2B pod;
-```
+![Diagram showing the Cilium Agent as the control-plane hub coordinating with the Kubernetes API server, the Cilium Operator, the Cilium CLI, and Hubble, while a per-node agent on each worker node loads eBPF programs and manages eBPF maps that handle packet processing for pods.](../../.gitbook/assets/en-networking-cilium-02-ebpf-1.png)
 
 #### Key Components:
 

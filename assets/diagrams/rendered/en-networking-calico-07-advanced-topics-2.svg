@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="calico-ipam-flow-title calico-ipam-flow-desc">
+    <title id="calico-ipam-flow-title">IPAM allocation decision flow</title>
+    <desc id="calico-ipam-flow-desc">On pod creation, Calico tries the node's own affine block first, then an unclaimed block, then borrows from another node's block, and only fails when no free IP exists anywhere.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- main chain connectors -->
+    <line x1="180" y1="92"  x2="180" y2="124" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="270" y1="180" x2="500" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="180" y1="236" x2="180" y2="252" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="270" y1="308" x2="300" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="460" y1="308" x2="500" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="180" y1="364" x2="180" y2="380" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="270" y1="436" x2="500" y2="436" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="180" y1="492" x2="180" y2="512" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- results -> SUCCESS -->
+    <path d="M 580,208 V 244 Q 580,252 588,252 H 772 Q 780,252 780,260 V 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="660" y1="308" x2="700" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 580,408 V 372 Q 580,364 588,364 H 772 Q 780,364 780,356 V 336" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- edge labels -->
+    <rect x="367" y="160" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="385" y="169" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+    <rect x="188" y="238" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="202" y="247" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+    <rect x="273" y="288" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="285" y="297" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+    <rect x="188" y="366" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="202" y="375" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+    <rect x="367" y="416" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="385" y="425" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+    <rect x="188" y="494" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="202" y="503" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+    <!-- START (oval) -->
+    <rect x="100" y="36" width="160" height="56" rx="28" fill="#ffffff"/>
+    <rect x="100" y="36" width="160" height="56" rx="28" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="180" y="68" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod Creation</text>
+    <text x="180" y="82" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Request</text>
+
+    <!-- CHECK diamond -->
+    <polygon points="180,124 270,180 180,236 90,180" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="180" y="176" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Node has affine</text>
+    <text x="180" y="190" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">block, free IPs?</text>
+
+    <!-- ALLOC1 -->
+    <rect x="500" y="152" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="500" y="152" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="580" y="176" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Allocate from</text>
+    <text x="580" y="192" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">affine block</text>
+
+    <!-- CHECK2 diamond -->
+    <polygon points="180,252 270,308 180,364 90,308" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="180" y="312" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Free blocks</text>
+    <text x="180" y="326" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">in pool?</text>
+
+    <!-- CLAIM -->
+    <rect x="300" y="280" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="300" y="280" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="380" y="304" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Claim new block</text>
+    <text x="380" y="320" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">for node</text>
+
+    <!-- ALLOC2 -->
+    <rect x="500" y="280" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="500" y="280" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="580" y="304" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Allocate from</text>
+    <text x="580" y="320" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">new block</text>
+
+    <!-- CHECK3 diamond -->
+    <polygon points="180,380 270,436 180,492 90,436" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="180" y="432" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Free IPs on</text>
+    <text x="180" y="446" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">other nodes?</text>
+
+    <!-- BORROW -->
+    <rect x="500" y="408" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="500" y="408" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="580" y="432" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Borrow IP from</text>
+    <text x="580" y="448" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">non-affine block</text>
+
+    <!-- FAIL (oval) -->
+    <rect x="100" y="512" width="160" height="56" rx="28" fill="#ffffff"/>
+    <rect x="100" y="512" width="160" height="56" rx="28" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="180" y="536" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Allocation Failed</text>
+    <text x="180" y="552" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">IP exhaustion</text>
+
+    <!-- SUCCESS (oval, focal) -->
+    <rect x="700" y="280" width="160" height="56" rx="28" fill="#ffffff"/>
+    <rect x="700" y="280" width="160" height="56" rx="28" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="780" y="313" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">IP Assigned</text>
+  </svg>

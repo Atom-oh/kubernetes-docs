@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="albc-arch-title albc-arch-desc">
+    <title id="albc-arch-title">AWS Load Balancer Controller 아키텍처</title>
+    <desc id="albc-arch-desc">EKS 클러스터의 Ingress·Service·TargetGroupBinding 리소스가 AWS Load Balancer Controller를 트리거하여 ALB·NLB를 생성하고, 이들이 타겟 그룹을 통해 Pod로 트래픽을 전달하는 구조를 보여준다.</desc>
+
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones (drawn before arrows and nodes) -->
+    <!-- Zone: EKS 리소스 -->
+    <rect x="24" y="64" width="176" height="304" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="52" y="68" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="112" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">EKS 리소스</text>
+
+    <!-- Zone: 로드밸런서 -->
+    <rect x="408" y="104" width="176" height="208" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="440" y="108" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="496" y="117" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">로드밸런서</text>
+
+    <!-- Zone: 타겟 그룹 -->
+    <rect x="616" y="104" width="176" height="208" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="656" y="108" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="704" y="117" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">타겟 그룹</text>
+
+    <!-- ============ ARROWS (behind nodes) ============ -->
+
+    <!-- ING -> CTRL : Triggers (fan attach on CTRL left edge, y=200); label beside vertical segment -->
+    <path d="M168,128 H196 Q204,128 204,136 V192 Q204,200 212,200 H240"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="212" y="150" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="236" y="159" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">TRIGGER</text>
+
+    <!-- SVC -> CTRL : Triggers (fan attach on CTRL left edge, y=232); label on horizontal run -->
+    <path d="M168,224 H224 Q232,224 232,228 V228 Q232,232 232,232 H240"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="176" y="204" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="196" y="213" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">TRIGGER</text>
+
+    <!-- TGB -> TG1 : long bypass route beneath everything, dashed (secondary path) -->
+    <path d="M112,352 V424 Q112,432 120,432 H688 Q696,432 696,424 V200"
+          fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- CTRL -> ALB : Creates/Manages (straight — fan point matches ALB center y) -->
+    <path d="M368,168 H424" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="372" y="148" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="396" y="157" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">MANAGE</text>
+
+    <!-- CTRL -> NLB : Creates/Manages (straight — fan point matches NLB center y) -->
+    <path d="M368,264 H424" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="372" y="244" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="396" y="253" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">MANAGE</text>
+
+    <!-- ALB -> TG1 : straight (same y-center) -->
+    <path d="M568,168 H632" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- NLB -> TG2 : straight (same y-center) -->
+    <path d="M568,264 H632" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- TG1 -> POD (fan attach on POD left edge, y=192) -->
+    <path d="M776,168 H792 Q800,168 800,176 V184 Q800,192 808,192 H824"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- TG2 -> POD (fan attach on POD left edge, y=240) -->
+    <path d="M776,264 H792 Q800,264 800,256 V248 Q800,240 808,240 H824"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ============ NODES ============ -->
+
+    <!-- ING -->
+    <rect x="40" y="96" width="128" height="64" rx="6" fill="#ffffff"/>
+    <rect x="40" y="96" width="128" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="104" y="130" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Ingress</text>
+    <text x="104" y="146" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Resources</text>
+
+    <!-- SVC -->
+    <rect x="40" y="192" width="128" height="64" rx="6" fill="#ffffff"/>
+    <rect x="40" y="192" width="128" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="104" y="226" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service</text>
+    <text x="104" y="242" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Resources</text>
+
+    <!-- TGB -->
+    <rect x="40" y="288" width="128" height="64" rx="6" fill="#ffffff"/>
+    <rect x="40" y="288" width="128" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="104" y="318" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TargetGroup-</text>
+    <text x="104" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Binding</text>
+
+    <!-- CTRL (focal) -->
+    <rect x="240" y="168" width="128" height="96" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="240" y="168" width="128" height="96" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="304" y="210" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">LB Controller</text>
+    <text x="304" y="226" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">watches K8s API</text>
+
+    <!-- ALB -->
+    <rect x="424" y="136" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="424" y="136" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="496" y="166" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ALB</text>
+    <text x="496" y="182" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">HTTP/HTTPS L7</text>
+
+    <!-- NLB -->
+    <rect x="424" y="232" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="424" y="232" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="496" y="262" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">NLB</text>
+    <text x="496" y="278" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">TCP/UDP L4</text>
+
+    <!-- TG1 -->
+    <rect x="632" y="136" width="144" height="64" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="632" y="136" width="144" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="704" y="166" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Target Group 1</text>
+    <text x="704" y="182" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">registered pods</text>
+
+    <!-- TG2 -->
+    <rect x="632" y="232" width="144" height="64" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="632" y="232" width="144" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="704" y="262" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Target Group 2</text>
+    <text x="704" y="278" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">registered pods</text>
+
+    <!-- POD -->
+    <rect x="824" y="168" width="120" height="96" rx="6" fill="#ffffff"/>
+    <rect x="824" y="168" width="120" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="884" y="210" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pods</text>
+    <text x="884" y="226" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">workload</text>
+
+    <!-- ============ LEGEND ============ -->
+    <line x1="30" y1="512" x2="930" y2="512" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="530" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <circle cx="180" cy="527" r="4" fill="none" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="192" y="530" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">컨트롤러 (핵심)</text>
+
+    <line x1="340" y1="527" x2="368" y2="527" stroke="#545B64" stroke-width="1.2"/>
+    <text x="376" y="530" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">리소스/트래픽 흐름</text>
+
+    <line x1="560" y1="527" x2="588" y2="527" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="596" y="530" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">TargetGroupBinding 직접 연결</text>
+
+  </svg>

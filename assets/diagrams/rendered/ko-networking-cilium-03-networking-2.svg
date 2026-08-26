@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cov-title cov-desc">
+      <title id="cov-title">Cilium 오버레이 네트워크 아키텍처</title>
+      <desc id="cov-desc">호스트 A와 호스트 B 각각에서 컨테이너의 패킷이 eBPF를 거쳐 VTEP으로 캡슐화된 뒤, 물리적 네트워크를 통해 상대 호스트의 VTEP과 eBPF를 지나 대상 컨테이너로 전달되는 Cilium 오버레이 경로.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent-end" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+        <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- Zones -->
+      <rect x="80" y="60" width="280" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="188" y="64" width="64" height="12" rx="2" fill="#ffffff"/>
+      <text x="220" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">호스트 A</text>
+
+      <rect x="600" y="60" width="280" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="708" y="64" width="64" height="12" rx="2" fill="#ffffff"/>
+      <text x="740" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">호스트 B</text>
+
+      <!-- Arrows (behind nodes) -->
+      <!-- Host A: container -> eBPF -> VTEP (straight, same x) -->
+      <line x1="220" y1="148" x2="220" y2="172" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="220" y1="228" x2="220" y2="252" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <!-- Host B: container -> eBPF -> VTEP -->
+      <line x1="740" y1="148" x2="740" y2="172" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="740" y1="228" x2="740" y2="252" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <!-- VTEP <-> Physical network (bidirectional, focal path) -->
+      <line x1="336" y1="280" x2="384" y2="280" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent-end)" marker-start="url(#arrow-accent-start)"/>
+      <line x1="576" y1="280" x2="624" y2="280" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent-end)" marker-start="url(#arrow-accent-start)"/>
+
+      <!-- Host A nodes -->
+      <rect x="120" y="92" width="200" height="56" rx="6" fill="#ffffff"/>
+      <rect x="120" y="92" width="200" height="56" rx="6" fill="none" stroke="#232F3E" stroke-width="1"/>
+      <text x="220" y="116" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨테이너 A</text>
+      <text x="220" y="132" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.0.1</text>
+
+      <rect x="120" y="172" width="200" height="56" rx="6" fill="#ffffff"/>
+      <rect x="120" y="172" width="200" height="56" rx="6" fill="var(--accent-tint)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="220" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF</text>
+      <text x="220" y="212" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">POLICY + ENCAP</text>
+
+      <rect x="120" y="252" width="200" height="56" rx="6" fill="#ffffff"/>
+      <rect x="120" y="252" width="200" height="56" rx="6" fill="none" stroke="#232F3E" stroke-width="1"/>
+      <text x="220" y="276" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VTEP</text>
+      <text x="220" y="292" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">192.168.1.1</text>
+
+      <!-- Physical network (external, center) -->
+      <rect x="400" y="252" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="400" y="252" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="480" y="276" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">물리적 네트워크</text>
+      <text x="480" y="292" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">UNDERLAY IP</text>
+
+      <!-- Host B nodes -->
+      <rect x="640" y="92" width="200" height="56" rx="6" fill="#ffffff"/>
+      <rect x="640" y="92" width="200" height="56" rx="6" fill="none" stroke="#232F3E" stroke-width="1"/>
+      <text x="740" y="116" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨테이너 B</text>
+      <text x="740" y="132" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.0.2</text>
+
+      <rect x="640" y="172" width="200" height="56" rx="6" fill="#ffffff"/>
+      <rect x="640" y="172" width="200" height="56" rx="6" fill="var(--accent-tint)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="740" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF</text>
+      <text x="740" y="212" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">DECAP + POLICY</text>
+
+      <rect x="640" y="252" width="200" height="56" rx="6" fill="#ffffff"/>
+      <rect x="640" y="252" width="200" height="56" rx="6" fill="none" stroke="#232F3E" stroke-width="1"/>
+      <text x="740" y="276" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VTEP</text>
+      <text x="740" y="292" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">192.168.1.2</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="460" x2="920" y2="460" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="40" y="476" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+      <circle cx="200" cy="472" r="4.5" fill="var(--accent-tint)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="212" y="476" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">eBPF 처리 · VXLAN 캡슐화/캡슐 해제</text>
+      <line x1="560" y1="472" x2="592" y2="472" stroke="#EC7211" stroke-width="1.4"/>
+      <text x="600" y="476" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">양방향 VTEP 터널</text>
+    </svg>

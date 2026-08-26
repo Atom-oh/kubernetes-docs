@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="multi-dc-bgp-title multi-dc-bgp-desc">
+    <title id="multi-dc-bgp-title">Multi-Datacenter BGP Design</title>
+    <desc id="multi-dc-bgp-desc">Each datacenter runs its own AS with its own route reflectors peering internally with its nodes, and each datacenter's route reflectors peer over eBGP with a shared WAN edge, connecting the two datacenters.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- zones -->
+    <rect x="300" y="72" width="360" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="392" y="76" width="176" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="85" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">WAN EDGE · AS 65000</text>
+
+    <rect x="100" y="254" width="240" height="254" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="170" y="258" width="150" height="12" rx="2" fill="#ffffff"/>
+    <text x="245" y="267" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">DC1 · AS 64512</text>
+
+    <rect x="660" y="254" width="240" height="254" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="790" y="258" width="90" height="12" rx="2" fill="#ffffff"/>
+    <text x="835" y="267" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">DC2 · AS 64513</text>
+
+    <!-- connectors -->
+    <line x1="200" y1="352" x2="200" y2="428" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="800" y1="352" x2="800" y2="428" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <path d="M150,288 V198 Q150,190 158,190 H362 Q370,190 370,182 V172"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <path d="M230,288 V278 Q230,270 238,270 H512 Q520,270 520,262 V172"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <path d="M770,288 V238 Q770,230 762,230 H598 Q590,230 590,222 V172"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+
+    <!-- WAN1 -->
+    <rect x="330" y="108" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="330" y="108" width="140" height="64" rx="6" fill="#ffffff" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="400" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">WAN Router 1</text>
+    <text x="400" y="152" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.255.0.1</text>
+
+    <!-- WAN2 -->
+    <rect x="490" y="108" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="490" y="108" width="140" height="64" rx="6" fill="#ffffff" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="560" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">WAN Router 2</text>
+    <text x="560" y="152" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.255.0.2</text>
+
+    <!-- DC1 RRs (focal — shows dual WAN uplink pattern) -->
+    <rect x="130" y="288" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="130" y="288" width="140" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="200" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">DC1 Route Reflectors</text>
+    <text x="200" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">RR1 + RR2</text>
+
+    <!-- DC1 Nodes -->
+    <rect x="130" y="428" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="130" y="428" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="200" y="456" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">DC1 Nodes</text>
+
+    <!-- DC2 RRs -->
+    <rect x="730" y="288" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="730" y="288" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="800" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">DC2 Route Reflectors</text>
+    <text x="800" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">RR1 + RR2</text>
+
+    <!-- DC2 Nodes -->
+    <rect x="730" y="428" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="730" y="428" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="800" y="456" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">DC2 Nodes</text>
+
+    <!-- editorial aside -->
+    <text x="480" y="536" fill="#545B64" font-size="14" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">DC1's dual WAN uplink shown; DC2's route reflectors peer with both WAN routers the same way.</text>
+
+    <!-- legend -->
+    <line x1="30" y1="558" x2="930" y2="558" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="574" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="220" y1="572" x2="248" y2="572" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="258" y="575" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Intra-DC RR peering</text>
+    <line x1="450" y1="572" x2="478" y2="572" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="488" y="575" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Inter-DC eBGP over WAN edge</text>
+
+  </svg>

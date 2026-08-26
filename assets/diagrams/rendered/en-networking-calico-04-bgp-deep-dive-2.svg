@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="full-mesh-bgp-title full-mesh-bgp-desc">
+    <title id="full-mesh-bgp-title">Full-Mesh BGP Peering (5 Nodes)</title>
+    <desc id="full-mesh-bgp-desc">In the default full-mesh configuration every Calico node peers with every other node, shown from Node 1's perspective connecting to the four others; the same holds symmetrically for all five nodes, producing 10 total BGP sessions.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- zone -->
+    <rect x="140" y="86" width="680" height="412" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="152" y="90" width="200" height="12" rx="2" fill="#ffffff"/>
+    <text x="252" y="99" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">FULL-MESH BGP (5 NODES)</text>
+
+    <!-- connectors: hub N1 <-> N2/N3/N4/N5, all straight (shared axis) -->
+    <line x1="480" y1="162" x2="480" y2="258" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <line x1="480" y1="322" x2="480" y2="418" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <line x1="300" y1="290" x2="410" y2="290" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <line x1="550" y1="290" x2="660" y2="290" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+
+    <!-- nodes: all uniform, symmetric peers -->
+    <rect x="410" y="258" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="410" y="258" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="286" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 1</text>
+    <text x="480" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">AS 64512</text>
+
+    <rect x="410" y="98" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="410" y="98" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="126" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 2</text>
+    <text x="480" y="140" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">AS 64512</text>
+
+    <rect x="410" y="418" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="410" y="418" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="446" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 3</text>
+    <text x="480" y="460" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">AS 64512</text>
+
+    <rect x="160" y="258" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="160" y="258" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="230" y="286" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 4</text>
+    <text x="230" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">AS 64512</text>
+
+    <rect x="660" y="258" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="660" y="258" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="730" y="286" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 5</text>
+    <text x="730" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">AS 64512</text>
+
+    <!-- editorial aside -->
+    <text x="480" y="536" fill="#545B64" font-size="14" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Every node also peers directly with every other node — not shown for clarity.</text>
+
+    <!-- focal badge: session count -->
+    <rect x="392" y="552" width="176" height="28" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="570" fill="#232F3E" font-size="12" font-weight="600" font-family="'Geist Mono',monospace" text-anchor="middle">10 SESSIONS = N(N-1)/2</text>
+
+  </svg>

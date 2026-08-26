@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dual-rr-az-title dual-rr-az-desc">
+    <title id="dual-rr-az-title">Dual Route Reflectors Across Availability Zones</title>
+    <desc id="dual-rr-az-desc">Each availability zone hosts one route reflector, and every node in both zones peers with both route reflectors, so the loss of one zone's route reflector does not isolate any node.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- zones -->
+    <rect x="60" y="100" width="380" height="340" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="72" y="104" width="152" height="12" rx="2" fill="#ffffff"/>
+    <text x="148" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">AVAILABILITY ZONE 1</text>
+
+    <rect x="520" y="100" width="380" height="340" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="732" y="104" width="152" height="12" rx="2" fill="#ffffff"/>
+    <text x="808" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">AVAILABILITY ZONE 2</text>
+
+    <!-- connectors: intra-zone (straight) -->
+    <line x1="320" y1="180" x2="640" y2="180" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <line x1="250" y1="212" x2="250" y2="348" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="710" y1="212" x2="710" y2="348" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- cross-zone redundancy links (elbow) -->
+    <path d="M310,348 V272 Q310,264 318,264 H722 Q730,264 730,256 V212"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M650,348 V304 Q650,296 642,296 H318 a8,8 0 0,0 -16,0 H238 Q230,296 230,288 V212"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- RR1 -->
+    <rect x="180" y="148" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="180" y="148" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="250" y="184" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Route Reflector 1</text>
+
+    <!-- RR2 -->
+    <rect x="640" y="148" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="640" y="148" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="710" y="184" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Route Reflector 2</text>
+
+    <!-- Nodes AZ1 (focal aggregate) -->
+    <rect x="150" y="348" width="200" height="64" rx="6" fill="#ffffff"/>
+    <rect x="150" y="348" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="250" y="376" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Nodes 1–3</text>
+    <text x="250" y="392" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">dual-homed to both RRs</text>
+
+    <!-- Nodes AZ2 (focal aggregate) -->
+    <rect x="610" y="348" width="200" height="64" rx="6" fill="#ffffff"/>
+    <rect x="610" y="348" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="710" y="376" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Nodes 4–6</text>
+    <text x="710" y="392" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">dual-homed to both RRs</text>
+
+    <!-- legend -->
+    <line x1="30" y1="472" x2="930" y2="472" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="492" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="220" y1="490" x2="248" y2="490" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="258" y="493" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">RR-to-RR peering</text>
+    <line x1="450" y1="490" x2="478" y2="490" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="488" y="493" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Node-to-RR peering, including cross-zone redundancy</text>
+
+  </svg>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ipip-flow-title ipip-flow-desc">
+    <title id="ipip-flow-title">IPIP 모드 패킷 캡슐화 경로</title>
+    <desc id="ipip-flow-desc">Pod A에서 나온 패킷이 Node 1의 tunl0에서 캡슐화되어 네트워크를 건너 Node 2의 tunl0에서 디캡슐화된 뒤 Pod B로 전달되는 경로를 보여준다.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones (drawn before arrows and nodes) -->
+    <rect x="32" y="248" width="428" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="162" y="252" width="168" height="12" rx="2" fill="#ffffff"/>
+    <text x="246" y="261" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NODE 1 · 10.0.1.10</text>
+
+    <rect x="500" y="248" width="428" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="630" y="252" width="168" height="12" rx="2" fill="#ffffff"/>
+    <text x="714" y="261" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NODE 2 · 10.0.1.11</text>
+
+    <!-- Arrows (before boxes) -->
+    <!-- POD1 -> TUNL1 -->
+    <line x1="132" y1="312" x2="204" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="138" y="284" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="168" y="293" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ORIGINAL</text>
+
+    <!-- TUNL1 -> ETH1 -->
+    <line x1="288" y1="312" x2="360" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="294" y="284" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="324" y="293" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ENCAP</text>
+
+    <!-- ETH1 -> ETH2 (headline, crosses network) -->
+    <line x1="444" y1="312" x2="516" y2="312" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="450" y="284" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="293" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROTO 4</text>
+
+    <!-- ETH2 -> TUNL2 -->
+    <line x1="600" y1="312" x2="672" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="606" y="284" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="636" y="293" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DECAP</text>
+
+    <!-- TUNL2 -> POD2 -->
+    <line x1="756" y1="312" x2="828" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="762" y="284" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="792" y="293" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ORIGINAL</text>
+
+    <!-- Node boxes: POD1 -->
+    <rect x="48" y="280" width="84" height="64" rx="6" fill="#ffffff"/>
+    <rect x="48" y="280" width="84" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="90" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod A</text>
+    <text x="90" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.244.1.5</text>
+
+    <!-- TUNL1 (focal) -->
+    <rect x="204" y="280" width="84" height="64" rx="6" fill="#ffffff"/>
+    <rect x="204" y="280" width="84" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="246" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">tunl0</text>
+    <text x="246" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">IPIP 인터페이스</text>
+
+    <!-- ETH1 -->
+    <rect x="360" y="280" width="84" height="64" rx="6" fill="#ffffff"/>
+    <rect x="360" y="280" width="84" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="402" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">eth0</text>
+    <text x="402" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.1.10</text>
+
+    <!-- ETH2 -->
+    <rect x="516" y="280" width="84" height="64" rx="6" fill="#ffffff"/>
+    <rect x="516" y="280" width="84" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="558" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">eth0</text>
+    <text x="558" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.1.11</text>
+
+    <!-- TUNL2 (focal) -->
+    <rect x="672" y="280" width="84" height="64" rx="6" fill="#ffffff"/>
+    <rect x="672" y="280" width="84" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="714" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">tunl0</text>
+    <text x="714" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">IPIP 인터페이스</text>
+
+    <!-- POD2 -->
+    <rect x="828" y="280" width="84" height="64" rx="6" fill="#ffffff"/>
+    <rect x="828" y="280" width="84" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="870" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod B</text>
+    <text x="870" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.244.2.8</text>
+
+    <!-- Legend -->
+    <line x1="32" y1="512" x2="928" y2="512" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="32" y="528" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <circle cx="212" cy="524" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="226" y="528" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">tunl0 — IPIP 캡슐화/디캡슐화 지점</text>
+    <line x1="480" y1="524" x2="504" y2="524" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="514" y="528" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Protocol 4 (오버헤드 20 bytes)</text>
+  </svg>

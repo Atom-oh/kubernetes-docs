@@ -6,44 +6,7 @@
 
 This chapter covers Calico integration with Amazon EKS, including architecture patterns, installation methods, and EKS-specific optimizations. Learn how to leverage Calico's network policy capabilities alongside AWS VPC CNI for optimal EKS networking.
 
-```mermaid
-graph TB
-    subgraph "EKS with Calico"
-        subgraph "Control Plane (AWS Managed)"
-            API[EKS API Server]
-            ETCD[etcd]
-        end
-
-        subgraph "Data Plane (Customer Managed)"
-            subgraph "Node 1"
-                VPC1[VPC CNI<br/>Pod Networking]
-                CAL1[Calico<br/>Network Policy]
-                POD1[Pods]
-            end
-
-            subgraph "Node 2"
-                VPC2[VPC CNI]
-                CAL2[Calico]
-                POD2[Pods]
-            end
-        end
-    end
-
-    API --> VPC1
-    API --> VPC2
-    API --> CAL1
-    API --> CAL2
-    VPC1 --> POD1
-    VPC2 --> POD2
-    CAL1 -.->|Policy| POD1
-    CAL2 -.->|Policy| POD2
-
-    style API fill:#ff9800
-    style VPC1 fill:#4fc3f7
-    style VPC2 fill:#4fc3f7
-    style CAL1 fill:#81c784
-    style CAL2 fill:#81c784
-```
+![The EKS API server reaches into two worker nodes, where the VPC CNI handles pod networking and Calico enforces network policy on the same pods.](../../.gitbook/assets/en-networking-calico-08-eks-integration-0.png)
 
 ## VPC CNI + Calico Architecture
 
@@ -53,67 +16,11 @@ Amazon EKS uses AWS VPC CNI by default for pod networking. Calico can be added f
 
 ### Architecture Deep Dive
 
-```mermaid
-graph TB
-    subgraph "EKS Node"
-        subgraph "Pod Network Stack"
-            POD[Pod<br/>10.0.1.15]
-            VETH[veth pair]
-        end
-
-        subgraph "VPC CNI"
-            IPAMD[aws-node<br/>IPAMD]
-            ENI[Secondary ENI<br/>10.0.1.0/24]
-        end
-
-        subgraph "Calico"
-            FELIX[Felix Agent]
-            IPTABLES[iptables/eBPF<br/>Policy Rules]
-        end
-
-        ETH0[eth0<br/>Primary ENI]
-    end
-
-    subgraph "AWS VPC"
-        SUBNET[VPC Subnet<br/>10.0.0.0/16]
-        IGW[Internet Gateway]
-    end
-
-    POD --> VETH
-    VETH --> ENI
-    IPAMD --> ENI
-    FELIX --> IPTABLES
-    IPTABLES --> VETH
-    ENI --> ETH0
-    ETH0 --> SUBNET
-    SUBNET --> IGW
-
-    style IPAMD fill:#ff9800
-    style FELIX fill:#81c784
-    style ENI fill:#4fc3f7
-```
+![A pod's traffic crosses a veth pair onto a VPC CNI-managed secondary ENI while Calico's Felix agent programs iptables/eBPF rules on that same path, before the primary ENI carries traffic to the VPC subnet and internet gateway.](../../.gitbook/assets/en-networking-calico-08-eks-integration-1.png)
 
 ### Traffic Flow with VPC CNI + Calico
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A
-    participant CalA as Calico (Node A)
-    participant VPCNIA as VPC CNI (Node A)
-    participant VPC as AWS VPC
-    participant VPCNIB as VPC CNI (Node B)
-    participant CalB as Calico (Node B)
-    participant PodB as Pod B
-
-    PodA->>CalA: Egress traffic
-    CalA->>CalA: Evaluate egress policy
-    CalA->>VPCNIA: Allow (if policy permits)
-    VPCNIA->>VPC: Route via ENI
-    VPC->>VPCNIB: Deliver to Node B ENI
-    VPCNIB->>CalB: Incoming traffic
-    CalB->>CalB: Evaluate ingress policy
-    CalB->>PodB: Allow (if policy permits)
-```
+![Pod A's egress traffic is evaluated by Calico on its node before the VPC CNI routes it across the AWS VPC to the destination node, where Calico evaluates ingress policy before delivering the packet to Pod B.](../../.gitbook/assets/en-networking-calico-08-eks-integration-2.png)
 
 ## Installation Methods Comparison
 
@@ -550,37 +457,7 @@ spec:
 
 ### Comparison
 
-```mermaid
-graph TB
-    subgraph "AWS Security Groups"
-        SG[Security Group<br/>Instance Level]
-        ENI_SG[ENI Security Group<br/>Network Interface]
-    end
-
-    subgraph "Calico Network Policy"
-        GNP[GlobalNetworkPolicy<br/>Cluster-wide]
-        NP[NetworkPolicy<br/>Namespace-scoped]
-        HEP[HostEndpointPolicy<br/>Node Level]
-    end
-
-    subgraph "Pod Traffic Flow"
-        POD1[Pod A]
-        POD2[Pod B]
-    end
-
-    SG -->|L3-L4 only| ENI_SG
-    ENI_SG --> POD1
-
-    GNP --> NP
-    NP --> POD1
-    HEP --> POD1
-
-    POD1 <--> POD2
-
-    style SG fill:#ff9800
-    style GNP fill:#81c784
-    style NP fill:#81c784
-```
+![AWS security groups enforce coarse instance and ENI-level L3-L4 rules, while Calico's GlobalNetworkPolicy, namespace NetworkPolicy, and HostEndpointPolicy all converge on the same pod, which also exchanges traffic directly with its peer pod.](../../.gitbook/assets/en-networking-calico-08-eks-integration-3.png)
 
 | Aspect          | Security Groups | Calico Policy         |
 | --------------- | --------------- | --------------------- |

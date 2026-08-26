@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="gwapi-benefits-title gwapi-benefits-desc">
+  <title id="gwapi-benefits-title">Gateway API benefits chain</title>
+  <desc id="gwapi-benefits-desc">Four Gateway API design benefits build on one another in sequence: multi-protocol expressiveness enables role-based permission separation, which enables portability through standardized resources, which enables CRD-based extensibility.</desc>
+  <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Zone: Gateway API Features -->
+  <rect x="40" y="248" width="880" height="108" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="252" width="182" height="12" rx="2" fill="#ffffff"/>
+  <text x="64" y="261" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">GATEWAY API FEATURES</text>
+
+  <!-- Arrows drawn before boxes -->
+  <line x1="240" y1="312" x2="280" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="460" y1="312" x2="500" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="680" y1="312" x2="720" y2="312" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- Node 1: Expressiveness -->
+  <rect x="60" y="280" width="180" height="64" rx="6" fill="#ffffff"/>
+  <rect x="60" y="280" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="150" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Expressiveness</text>
+  <text x="150" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">multi-protocol routing</text>
+
+  <!-- Node 2: Role-Based -->
+  <rect x="280" y="280" width="180" height="64" rx="6" fill="#ffffff"/>
+  <rect x="280" y="280" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="370" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Role-Based</text>
+  <text x="370" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">permission separation</text>
+
+  <!-- Node 3: Portability -->
+  <rect x="500" y="280" width="180" height="64" rx="6" fill="#ffffff"/>
+  <rect x="500" y="280" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="590" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Portability</text>
+  <text x="590" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">standardized resources</text>
+
+  <!-- Node 4: Extensibility (focal) -->
+  <rect x="720" y="280" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="720" y="280" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="810" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Extensibility</text>
+  <text x="810" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">CRD-based extension</text>
+</svg>

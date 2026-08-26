@@ -19,75 +19,13 @@ Gateway API is the next-generation ingress API for Kubernetes, designed to overc
 
 ### Benefits of Gateway API
 
-```mermaid
-graph TB
-    subgraph "Gateway API Features"
-        EXP[Expressiveness<br/>Multiple Protocol Support]
-        ROLE[Role-Based<br/>Permission Separation]
-        PORT[Portability<br/>Standardized Resources]
-        EXT[Extensibility<br/>CRD-Based Extension]
-    end
-
-    EXP --> ROLE
-    ROLE --> PORT
-    PORT --> EXT
-
-    style EXP fill:#4fc3f7
-    style ROLE fill:#81c784
-    style PORT fill:#ffb74d
-    style EXT fill:#ce93d8
-```
+![Four Gateway API design benefits build on one another in sequence: multi-protocol expressiveness enables role-based permission separation, which enables portability through standardized resources, which enables CRD-based extensibility.](../.gitbook/assets/en-networking-04-gateway-api-0.png)
 
 ## Resource Model
 
 Gateway API uses a layered resource model.
 
-```mermaid
-graph TB
-    subgraph "Infrastructure Provider"
-        GC[GatewayClass<br/>Infrastructure Template]
-    end
-
-    subgraph "Cluster Operator"
-        GW[Gateway<br/>Load Balancer Instance]
-    end
-
-    subgraph "Application Developer"
-        HR[HTTPRoute]
-        GR[GRPCRoute]
-        TR[TCPRoute]
-        TLR[TLSRoute]
-        UR[UDPRoute]
-    end
-
-    subgraph "Backend"
-        SVC1[Service A]
-        SVC2[Service B]
-        SVC3[Service C]
-    end
-
-    GC --> GW
-    GW --> HR
-    GW --> GR
-    GW --> TR
-    GW --> TLR
-    GW --> UR
-
-    HR --> SVC1
-    HR --> SVC2
-    GR --> SVC2
-    TR --> SVC3
-    TLR --> SVC3
-    UR --> SVC3
-
-    style GC fill:#e1f5fe
-    style GW fill:#b3e5fc
-    style HR fill:#c8e6c9
-    style GR fill:#c8e6c9
-    style TR fill:#c8e6c9
-    style TLR fill:#c8e6c9
-    style UR fill:#c8e6c9
-```
+![A GatewayClass provisioned by an infrastructure provider backs a Gateway load-balancer instance owned by a cluster operator, which application developers attach HTTPRoute, GRPCRoute, and TCP/TLS/UDP routes to, all forwarding traffic to backend services.](../.gitbook/assets/en-networking-04-gateway-api-1.png)
 
 ### Role Separation
 

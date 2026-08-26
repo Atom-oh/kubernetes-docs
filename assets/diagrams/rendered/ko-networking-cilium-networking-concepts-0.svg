@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-cilium-networking-concepts-0-title ko-networking-cilium-networking-concepts-0-desc">
+<title id="ko-networking-cilium-networking-concepts-0-title">OSI 7계층과 TCP/IP 4계층 매핑</title>
+<desc id="ko-networking-cilium-networking-concepts-0-desc">OSI 7계층 모델의 각 계층이 TCP/IP 4계층 모델로 어떻게 그룹핑되어 매핑되는지, 그리고 각 계층에서 사용하는 대표 프로토콜을 보여주는 다이어그램.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="32" y="52" width="236" height="184" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="44" y="46" width="61.5" height="12" rx="2" fill="#ffffff"/>
+<text x="74.75" y="55" fill="rgba(35,47,62,0.45)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.14em">OSI 응용군</text>
+<rect x="32" y="386" width="236" height="126" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="44" y="380" width="61.5" height="12" rx="2" fill="#ffffff"/>
+<text x="74.75" y="389" fill="rgba(35,47,62,0.45)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.14em">OSI 링크군</text>
+<path d="M 268,144.0 H 692 Q 700,144.0 700,152.0 V 148.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="260" y1="282.0" x2="700" y2="282.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="260" y1="344.0" x2="700" y2="344.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 268,449.0 H 692 Q 700,449.0 700,441.0 V 444.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="40" y="60" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="60" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="150.0" y="88.0" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">7계층 · 응용</text>
+<text x="150.0" y="104.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">HTTP, FTP, SMTP, DNS</text>
+<rect x="40" y="122" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="122" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="150.0" y="150.0" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">6계층 · 표현</text>
+<text x="150.0" y="166.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">SSL/TLS, JPEG, ASCII</text>
+<rect x="40" y="184" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="184" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="150.0" y="212.0" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">5계층 · 세션</text>
+<text x="150.0" y="228.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">NetBIOS, RPC</text>
+<rect x="40" y="258" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="258" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="150.0" y="286.0" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">4계층 · 전송</text>
+<text x="150.0" y="302.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">TCP, UDP</text>
+<rect x="40" y="320" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="320" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="150.0" y="348.0" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">3계층 · 네트워크</text>
+<text x="150.0" y="364.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">IP, ICMP, IGMP</text>
+<rect x="40" y="394" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="394" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="150.0" y="422.0" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">2계층 · 데이터 링크</text>
+<text x="150.0" y="438.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">Ethernet, PPP, ARP</text>
+<rect x="40" y="456" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="456" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="150.0" y="484.0" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">1계층 · 물리</text>
+<text x="150.0" y="500.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">RS-232, Ethernet</text>
+<rect x="700" y="124" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="700" y="124" width="220" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="810.0" y="152.0" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">4. 응용 계층</text>
+<text x="810.0" y="168.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">매핑: 7·6·5계층</text>
+<rect x="700" y="258" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="700" y="258" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="810.0" y="286.0" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">3. 전송 계층</text>
+<text x="810.0" y="302.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">매핑: 4계층</text>
+<rect x="700" y="320" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="700" y="320" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="810.0" y="348.0" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">2. 인터넷 계층</text>
+<text x="810.0" y="364.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">매핑: 3계층</text>
+<rect x="700" y="420" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="700" y="420" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="810.0" y="448.0" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">1. 네트워크 액세스</text>
+<text x="810.0" y="464.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">매핑: 2·1계층</text>
+<line x1="30" y1="544" x2="930" y2="544" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="560" fill="#545B64" font-size="8" font-family="var(--font-mono)" letter-spacing="0.14em">LEGEND</text>
+<circle cx="180" cy="556" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="192" y="560" fill="#545B64" font-size="9" font-family="var(--font-sans)">TCP/IP 4계층 실무 표준 매핑</text>
+
+</svg>

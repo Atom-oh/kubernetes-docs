@@ -86,32 +86,7 @@ Calico is an open-source networking and network security solution designed for c
 
 ### Project History: From Project Calico to Tigera
 
-```mermaid
-timeline
-    title Calico Evolution Timeline
-    2014 : Project Calico founded
-         : Initial focus on OpenStack
-    2016 : Kubernetes CNI support
-         : First production deployments
-    2017 : Tigera founded
-         : Commercial enterprise version
-    2018 : Calico 3.0 release
-         : Kubernetes-native datastore
-    2019 : eBPF data plane preview
-         : Windows container support
-    2020 : Calico Enterprise GA
-         : Advanced observability features
-    2021 : Calico Cloud launch
-         : Managed Calico service
-    2022 : eBPF data plane GA
-         : Improved performance
-    2023 : Calico 3.26+
-         : Enhanced policy features
-    2024 : Calico 3.28
-         : nftables backend support
-    2025 : Calico 3.29
-         : Full eBPF feature parity
-```
+![Timeline showing Calico's evolution from an OpenStack networking project in 2014, through Kubernetes CNI adoption and Tigera's founding, to a Kubernetes-native datastore in 2018 and full eBPF data-plane feature parity in 2025.](../../.gitbook/assets/en-networking-calico-01-introduction-0.png)
 
 | Year | Milestone | Significance |
 |------|-----------|--------------|
@@ -134,27 +109,7 @@ Calico provides five core capabilities that make it a leading choice for Kuberne
 
 Calico offers multiple networking modes optimized for different environments:
 
-```mermaid
-flowchart LR
-    subgraph Networking["Networking Options"]
-        A[IPIP Mode]
-        B[VXLAN Mode]
-        C[Direct Routing]
-        D[eBPF Data Plane]
-    end
-
-    subgraph Performance["Performance Characteristics"]
-        E[Good - Encapsulated]
-        F[Good - Standard Overlay]
-        G[Best - Native Speed]
-        H[Best - Kernel Bypass]
-    end
-
-    A --> E
-    B --> F
-    C --> G
-    D --> H
-```
+![Architecture diagram mapping Calico's four networking modes to their performance characteristics, from encapsulated IPIP and VXLAN overlays through native-speed direct routing to the eBPF data plane, which reaches kernel-bypass performance.](../../.gitbook/assets/en-networking-calico-01-introduction-1.png)
 
 **Key Performance Features:**
 - Native Linux networking stack integration
@@ -282,23 +237,7 @@ Calico runs consistently across diverse environments:
 
 ### Traditional Kubernetes Networking Challenges
 
-```mermaid
-flowchart TD
-    subgraph Traditional["Traditional Approach"]
-        A[kube-proxy] --> B[iptables rules]
-        B --> C[Linear rule matching]
-        C --> D[Performance degradation at scale]
-    end
-
-    subgraph Calico["Calico Approach"]
-        E[Felix] --> F[Optimized iptables/eBPF]
-        F --> G[IP sets for efficient matching]
-        G --> H[Consistent performance at scale]
-    end
-
-    style D fill:#ff6b6b,stroke:#333,color:white
-    style H fill:#51cf66,stroke:#333,color:white
-```
+![Architecture diagram contrasting kube-proxy's linear iptables rule chains, which degrade in performance as a cluster grows, with Calico's Felix agent using optimized iptables or eBPF and IP sets to hold consistent performance at scale.](../../.gitbook/assets/en-networking-calico-01-introduction-2.png)
 
 ### Comparison Table
 
@@ -386,31 +325,7 @@ spec:
 
 Calico Federation enables policy and routing across multiple clusters:
 
-```mermaid
-flowchart TD
-    subgraph Cluster1["Cluster 1 (On-Prem)"]
-        A[Calico]
-        B[Workloads]
-    end
-
-    subgraph Cluster2["Cluster 2 (AWS)"]
-        C[Calico]
-        D[Workloads]
-    end
-
-    subgraph Cluster3["Cluster 3 (GCP)"]
-        E[Calico]
-        F[Workloads]
-    end
-
-    A <-->|Federation| C
-    C <-->|Federation| E
-    A <-->|BGP/VPN| E
-
-    style A fill:#FA8320,stroke:#333,color:white
-    style C fill:#FA8320,stroke:#333,color:white
-    style E fill:#FA8320,stroke:#333,color:white
-```
+![Architecture diagram showing three Kubernetes clusters, on-premises, AWS, and GCP, each running Calico alongside its workloads, linked pairwise by Calico Federation for policy and routing, with a direct BGP/VPN path connecting the on-premises and GCP clusters.](../../.gitbook/assets/en-networking-calico-01-introduction-3.png)
 
 **Benefits:**
 - Unified policy management across clusters

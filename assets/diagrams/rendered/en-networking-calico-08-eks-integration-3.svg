@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d3-title d3-desc">
+<title id="d3-title">AWS security groups versus Calico network policy layers</title>
+<desc id="d3-desc">AWS security groups enforce coarse instance and ENI level L3-L4 rules, while Calico's GlobalNetworkPolicy, namespace NetworkPolicy, and HostEndpointPolicy all converge on the same pod, which also exchanges traffic directly with its peer.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- ============ ZONES ============ -->
+<rect x="40" y="76" width="320" height="184" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="104" y="80" width="192" height="12" rx="2" fill="#ffffff"/>
+<text x="200" y="89" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">AWS SECURITY GROUPS</text>
+
+<rect x="600" y="76" width="320" height="184" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="704" y="80" width="152" height="12" rx="2" fill="#ffffff"/>
+<text x="780" y="89" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">CALICO NETWORK POLICY</text>
+
+<rect x="300" y="368" width="420" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="500" y="372" width="152" height="12" rx="2" fill="#ffffff"/>
+<text x="576" y="381" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">POD TRAFFIC FLOW</text>
+
+<!-- ============ ARROWS ============ -->
+<!-- SG -> ENI_SG -->
+<line x1="200" y1="164" x2="200" y2="196" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="165" y="170" width="70" height="12" rx="2" fill="#ffffff"/>
+<text x="200" y="179" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">L3-L4 ONLY</text>
+
+<!-- ENI_SG -> POD1 -->
+<path d="M200,252 V304 Q200,312 208,312 H366 Q374,312 374,320 V400" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- GNP -> NP -->
+<path d="M780,160 V198 Q780,206 772,206 H692 Q684,206 684,214 V252" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- NP -> POD1 -->
+<path d="M684,252 V320 Q684,328 676,328 H416 Q408,328 408,336 V400" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- HEP -> POD1 -->
+<path d="M844,252 V336 Q844,344 836,344 H450 Q442,344 442,352 V400" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- POD1 <-> POD2 (bidirectional) -->
+<line x1="476" y1="428" x2="540" y2="428" stroke="#EC7211" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow-accent)"/>
+
+<!-- ============ NODES ============ -->
+<!-- SG -->
+<rect x="104" y="108" width="192" height="56" rx="6" fill="#ffffff"/>
+<rect x="104" y="108" width="192" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="200" y="132" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Security Group</text>
+<text x="200" y="148" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">instance level</text>
+
+<!-- ENI_SG -->
+<rect x="104" y="196" width="192" height="56" rx="6" fill="#ffffff"/>
+<rect x="104" y="196" width="192" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="200" y="220" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ENI Security Group</text>
+<text x="200" y="236" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">network interface</text>
+
+<!-- GNP -->
+<rect x="704" y="104" width="152" height="56" rx="6" fill="#ffffff"/>
+<rect x="704" y="104" width="152" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780" y="128" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">GlobalNetworkPolicy</text>
+<text x="780" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">cluster-wide</text>
+
+<!-- NP -->
+<rect x="616" y="196" width="136" height="56" rx="6" fill="#ffffff"/>
+<rect x="616" y="196" width="136" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="684" y="220" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">NetworkPolicy</text>
+<text x="684" y="236" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">namespace-scoped</text>
+
+<!-- HEP -->
+<rect x="776" y="196" width="136" height="56" rx="6" fill="#ffffff"/>
+<rect x="776" y="196" width="136" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="844" y="220" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">HostEndpointPolicy</text>
+<text x="844" y="236" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">node level</text>
+
+<!-- POD1 (focal) -->
+<rect x="340" y="400" width="136" height="56" rx="6" fill="#ffffff"/>
+<rect x="340" y="400" width="136" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="408" y="432" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod A</text>
+
+<!-- POD2 -->
+<rect x="540" y="400" width="136" height="56" rx="6" fill="#ffffff"/>
+<rect x="540" y="400" width="136" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="608" y="432" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod B</text>
+
+<!-- ============ LEGEND ============ -->
+<line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="512" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+<line x1="40" y1="548" x2="72" y2="548" stroke="#545B64" stroke-width="1.2"/>
+<text x="80" y="552" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">policy evaluation reaches pod</text>
+
+<line x1="320" y1="548" x2="352" y2="548" stroke="#EC7211" stroke-width="1.2"/>
+<text x="360" y="552" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">pod-to-pod traffic</text>
+
+<rect x="540" y="542" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="562" y="552" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">pod under policy evaluation</text>
+
+</svg>

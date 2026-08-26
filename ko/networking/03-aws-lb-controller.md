@@ -15,71 +15,13 @@ AWS Load Balancer Controller는 Kubernetes 클러스터에서 AWS Elastic Load B
 - **AWS WAF 통합**: 웹 애플리케이션 방화벽 적용
 - **AWS Shield**: DDoS 보호
 
-```mermaid
-graph TB
-    subgraph "AWS Cloud"
-        subgraph "AWS Load Balancer Controller"
-            CTRL[Controller<br/>Watches K8s Resources]
-        end
-
-        subgraph "Load Balancers"
-            ALB[Application Load Balancer<br/>HTTP/HTTPS L7]
-            NLB[Network Load Balancer<br/>TCP/UDP L4]
-        end
-
-        subgraph "EKS Cluster"
-            ING[Ingress Resources]
-            SVC[Service Resources]
-            TGB[TargetGroupBinding]
-            POD[Pods]
-        end
-
-        subgraph "Target Groups"
-            TG1[Target Group 1]
-            TG2[Target Group 2]
-        end
-    end
-
-    CTRL -->|Creates/Manages| ALB
-    CTRL -->|Creates/Manages| NLB
-    ING -->|Triggers| CTRL
-    SVC -->|Triggers| CTRL
-    ALB --> TG1
-    NLB --> TG2
-    TG1 --> POD
-    TG2 --> POD
-    TGB --> TG1
-
-    style CTRL fill:#ff9800
-    style ALB fill:#2196f3
-    style NLB fill:#9c27b0
-```
+![EKS 클러스터의 Ingress·Service·TargetGroupBinding 리소스가 AWS Load Balancer Controller를 트리거하여 ALB·NLB를 생성하고, 이들이 타겟 그룹을 통해 Pod로 트래픽을 전달하는 구조를 보여준다.](../.gitbook/assets/ko-networking-03-aws-lb-controller-0.png)
 
 ## 아키텍처
 
 ### 컨트롤러 동작 방식
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant K8sAPI as Kubernetes API
-    participant CTRL as LB Controller
-    participant AWS as AWS API
-    participant ALB as ALB/NLB
-
-    User->>K8sAPI: Ingress/Service 생성
-    K8sAPI->>CTRL: Watch 이벤트
-    CTRL->>CTRL: 리소스 분석
-    CTRL->>AWS: Load Balancer 생성 요청
-    AWS->>ALB: ALB/NLB 프로비저닝
-    AWS-->>CTRL: ARN 반환
-    CTRL->>AWS: Target Group 생성
-    CTRL->>AWS: Listener 규칙 설정
-    CTRL->>K8sAPI: Status 업데이트
-    K8sAPI-->>User: Load Balancer DNS 제공
-
-    Note over CTRL,AWS: Pod 변경 시 Target 자동 등록/해제
-```
+![사용자가 Ingress/Service를 생성하면 LB Controller가 Kubernetes API 변경을 감지해 AWS API로 ALB/NLB와 Target Group을 생성하고, 그 결과를 다시 Kubernetes API를 통해 사용자에게 DNS로 돌려주는 과정을 시간 순으로 보여준다.](../.gitbook/assets/ko-networking-03-aws-lb-controller-1.png)
 
 ### 컴포넌트 구성
 

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ebpf8-title ebpf8-desc">
+    <title id="ebpf8-title">Calico eBPF의 ClusterIP 서비스 처리 흐름</title>
+    <desc id="ebpf8-desc">Client Pod가 보낸 ClusterIP 패킷을 eBPF 프로그램이 NAT Map에서 백엔드를 조회하고 해시로 선택해 DNAT한 뒤 Backend Pod로 전달하고, 응답이 오면 역방향 NAT을 적용해 클라이언트에게 그대로 돌려주는 kube-proxy 없는 서비스 처리 경로를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Lifelines -->
+    <line x1="120" y1="88" x2="120" y2="504" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="360" y1="88" x2="360" y2="504" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="600" y1="88" x2="600" y2="504" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="840" y1="88" x2="840" y2="504" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- Messages -->
+    <line x1="120" y1="120" x2="360" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="175" y="100" width="130" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="109" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">PACKET TO CLUSTERIP</text>
+
+    <line x1="360" y1="160" x2="600" y2="160" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="420" y="140" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="149" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">LOOKUP SERVICE</text>
+
+    <line x1="600" y1="200" x2="360" y2="200" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="410" y="180" width="140" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="189" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">RETURN BACKENDS</text>
+
+    <!-- Self-messages on eBPF (BPF) -->
+    <path d="M 360,240 H 392 Q 400,240 400,248 V 256 Q 400,264 392,264 H 360"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="416" y="248" width="180" height="12" rx="2" fill="#ffffff"/>
+    <text x="416" y="257" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">SELECT BACKEND (HASH)</text>
+
+    <path d="M 360,280 H 392 Q 400,280 400,288 V 296 Q 400,304 392,304 H 360"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="416" y="288" width="164" height="12" rx="2" fill="#ffffff"/>
+    <text x="416" y="297" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">DNAT TO BACKEND IP</text>
+
+    <line x1="360" y1="336" x2="840" y2="336" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="540" y="316" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="600" y="325" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">FORWARD PACKET</text>
+
+    <line x1="840" y1="376" x2="360" y2="376" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="555" y="356" width="90" height="12" rx="2" fill="#ffffff"/>
+    <text x="600" y="365" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">RESPONSE</text>
+
+    <path d="M 360,416 H 392 Q 400,416 400,424 V 432 Q 400,440 392,440 H 360"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="416" y="424" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="416" y="433" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">REVERSE NAT</text>
+
+    <!-- Headline: BPF -> Pod, final return -->
+    <line x1="360" y1="472" x2="120" y2="472" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="170" y="452" width="140" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="461" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">RETURN TO CLIENT</text>
+
+    <!-- Actors -->
+    <rect x="50" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="50" y="40" width="140" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="120" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif" text-anchor="middle">Client Pod</text>
+
+    <rect x="290" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="290" y="40" width="140" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="360" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif" text-anchor="middle">eBPF Program</text>
+
+    <rect x="530" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="530" y="40" width="140" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="600" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif" text-anchor="middle">NAT Map</text>
+
+    <rect x="770" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="770" y="40" width="140" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="840" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif" text-anchor="middle">Backend Pod</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="528" x2="920" y2="528" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="544" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <line x1="40" y1="561" x2="68" y2="561" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="76" y="564" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif">kube-proxy 없이 완성되는 왕복 경로</text>
+    <line x1="380" y1="561" x2="408" y2="561" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <text x="416" y="564" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif">조회 응답 / 반환</text>
+  </svg>

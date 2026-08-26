@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-README-0-title en-networking-README-0-desc">
+<title id="en-networking-README-0-title">Kubernetes Networking Layers</title>
+<desc id="en-networking-README-0-desc">Four stacked layers show how Kubernetes networking is built up from pod-to-pod connectivity through service discovery, ingress routing, and network policy enforcement.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- direction indicator, left margin -->
+<text x="56" y="80" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">FLOW</text>
+<line x1="56" y1="88" x2="56" y2="376" stroke="#7D8998" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- connectors between layers -->
+<line x1="500" y1="144" x2="500" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="500" y1="224" x2="500" y2="248" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="500" y1="304" x2="500" y2="328" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Layer 1: Pod Networking -->
+<rect x="120" y="88" width="760" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="132" y="96" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+<text x="144" y="105" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">L1</text>
+<text x="300" y="120" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Pod Networking</text>
+<text x="864" y="120" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">pod-to-pod communication</text>
+
+<!-- Layer 2: Service Networking (focal) -->
+<rect x="120" y="168" width="760" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<rect x="132" y="176" width="24" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.6)" stroke-width="0.8"/>
+<text x="144" y="185" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">L2</text>
+<text x="300" y="200" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Service Networking</text>
+<text x="864" y="200" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">service discovery &amp; load balancing</text>
+
+<!-- Layer 3: Ingress Networking -->
+<rect x="120" y="248" width="760" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="132" y="256" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+<text x="144" y="265" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">L3</text>
+<text x="300" y="280" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Ingress Networking</text>
+<text x="864" y="280" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">external traffic routing</text>
+
+<!-- Layer 4: Network Policy -->
+<rect x="120" y="328" width="760" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="132" y="336" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+<text x="144" y="345" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">L4</text>
+<text x="300" y="360" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Network Policy</text>
+<text x="864" y="360" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">network security</text>
+
+<!-- legend -->
+<line x1="120" y1="440" x2="880" y2="440" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="120" y="456" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<circle cx="300" cy="453" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="312" y="456" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Layer every workload passes through</text>
+</svg>

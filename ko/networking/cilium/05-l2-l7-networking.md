@@ -40,70 +40,7 @@ OSI 모델은 네트워크 통신을 7개의 추상화 계층으로 분류한 �
 
 ### OSI 모델 계층 다이어그램
 
-```mermaid
-flowchart TD
-    subgraph "OSI 모델 계층"
-        L7[7. 응용 계층\nApplication]
-        L6[6. 표현 계층\nPresentation]
-        L5[5. 세션 계층\nSession]
-        L4[4. 전송 계층\nTransport]
-        L3[3. 네트워크 계층\nNetwork]
-        L2[2. 데이터 링크 계층\nData Link]
-        L1[1. 물리 계층\nPhysical]
-        
-        L7 --> L6 --> L5 --> L4 --> L3 --> L2 --> L1
-    end
-    
-    subgraph "Cilium 기능"
-        CL7[L7 정책\nHTTP, gRPC, Kafka]
-        CL4[L4 정책\n포트, 프로토콜]
-        CL3[L3 정책\nIP, CIDR]
-        
-        CL7 --> CL4 --> CL3
-    end
-    
-    subgraph "데이터 단위"
-        D7[데이터]
-        D6[데이터]
-        D5[데이터]
-        D4[세그먼트]
-        D3[패킷]
-        D2[프레임]
-        D1[비트]
-    end
-    
-    subgraph "주소 지정"
-        A7[URL, URI]
-        A4[포트]
-        A3[IP 주소]
-        A2[MAC 주소]
-    end
-    
-    L7 --- D7 --- A7
-    L6 --- D6
-    L5 --- D5
-    L4 --- D4 --- A4
-    L3 --- D3 --- A3
-    L2 --- D2 --- A2
-    L1 --- D1
-    
-    L7 -.- CL7
-    L4 -.- CL4
-    L3 -.- CL3
-    
-    classDef l7 fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef l4 fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef l3 fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef l2 fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef l1 fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-    
-    class L7,D7,A7,CL7 l7;
-    class L4,D4,A4,CL4 l4;
-    class L3,D3,A3,CL3 l3;
-    class L2,D2,A2 l2;
-    class L1,D1 l1;
-    class L6,D6,L5,D5 l1;
-```
+![OSI 모델의 L1부터 L7까지 각 계층의 데이터 단위와 주소 체계를 보여주고, Cilium이 L2(ARP/MAC 필터링), L3(CIDR 정책), L4(포트 필터링), L7(HTTP/gRPC/Kafka 필터링) 계층에서 각각 어떤 네트워킹 기능을 제공하는지 매핑한 레이어 스택 다이어그램.](../../.gitbook/assets/ko-networking-cilium-05-l2-l7-networking-0.png)
 
 ### OSI 모델 계층:
 

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1000 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-cilium-networking-concepts-11-title ko-networking-cilium-networking-concepts-11-desc">
+<title id="ko-networking-cilium-networking-concepts-11-title">쿠버네티스 서비스 DNS 해석 과정</title>
+<desc id="ko-networking-cilium-networking-concepts-11-desc">포드가 CoreDNS에 서비스 이름을 조회하면 CoreDNS가 서비스의 ClusterIP를 확인하고 백엔드 포드 중 하나를 선택해 최종 ClusterIP를 응답하는 쿠버네티스 서비스 디스커버리 과정을 보여주는 다이어그램.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="160" y1="112" x2="160" y2="460" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="500" y1="112" x2="500" y2="460" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="840" y1="112" x2="840" y2="460" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="160" y1="180" x2="500" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="277.5" y="160" width="105.0" height="12" rx="2" fill="#ffffff"/>
+<text x="330.0" y="169" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">1. service-b 조회</text>
+<line x1="500" y1="260" x2="840" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="617.5" y="240" width="105.0" height="12" rx="2" fill="#ffffff"/>
+<text x="670.0" y="249" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">2. service-b 확인</text>
+<line x1="840" y1="340" x2="500" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="626.8" y="320" width="86.4" height="12" rx="2" fill="#ffffff"/>
+<text x="670.0" y="329" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">3. 백엔드 포드 선택</text>
+<line x1="500" y1="420" x2="160" y2="420" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="280.6" y="400" width="98.8" height="12" rx="2" fill="#ffffff"/>
+<text x="330.0" y="409" fill="#EC7211" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">4. 10.0.0.1 수신</text>
+<rect x="60" y="52" width="200" height="40" rx="6" fill="#ffffff"/>
+<rect x="60" y="52" width="200" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="160" y="76" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">포드 A</text>
+<rect x="400" y="52" width="200" height="40" rx="6" fill="#ffffff"/>
+<rect x="400" y="52" width="200" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="500" y="76" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">CoreDNS</text>
+<rect x="740" y="52" width="200" height="52" rx="6" fill="#ffffff"/>
+<rect x="740" y="52" width="200" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840" y="72" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">서비스 B</text>
+<text x="840" y="88" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">ClusterIP: 10.0.0.1</text>
+
+</svg>

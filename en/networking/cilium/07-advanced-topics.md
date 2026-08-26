@@ -55,57 +55,7 @@ Understanding how to optimize Cilium's performance and resolve common issues is 
 
 ### Performance Tuning Architecture
 
-```mermaid
-flowchart TD
-    subgraph "Cilium Performance Tuning Areas"
-        direction TB
-
-        subgraph "Kernel Parameters"
-            TCP[TCP Parameters]
-            Conntrack[Connection Tracking]
-            ARP[ARP Cache]
-            Memory[Memory Management]
-        end
-
-        subgraph "eBPF Maps"
-            CTMap[Connection Tracking Map]
-            NATMap[NAT Map]
-            PolicyMap[Policy Map]
-            EndpointMap[Endpoint Map]
-        end
-
-        subgraph "Resource Allocation"
-            CPULimit[CPU Limits]
-            MemLimit[Memory Limits]
-            PodPriority[Pod Priority]
-            NodeAffinity[Node Affinity]
-        end
-
-        subgraph "Networking Mode"
-            DirectRouting[Direct Routing]
-            Overlay[Overlay]
-            KubeProxy[kube-proxy Replacement]
-            XDP[XDP Acceleration]
-        end
-    end
-
-    Performance[Performance Optimization] --> TCP & Conntrack & ARP & Memory
-    Performance --> CTMap & NATMap & PolicyMap & EndpointMap
-    Performance --> CPULimit & MemLimit & PodPriority & NodeAffinity
-    Performance --> DirectRouting & Overlay & KubeProxy & XDP
-
-    classDef kernel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef ebpf fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef resource fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef network fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef perf fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-
-    class TCP,Conntrack,ARP,Memory kernel;
-    class CTMap,NATMap,PolicyMap,EndpointMap ebpf;
-    class CPULimit,MemLimit,PodPriority,NodeAffinity resource;
-    class DirectRouting,Overlay,KubeProxy,XDP network;
-    class Performance perf;
-```
+![Tree diagram showing Cilium performance optimization branching into four tuning areas — kernel parameters, eBPF maps, resource allocation, and networking mode — each expanded into its four concrete tunables.](../../.gitbook/assets/en-networking-cilium-07-advanced-topics-0.png)
 
 ### Performance Tuning Areas:
 

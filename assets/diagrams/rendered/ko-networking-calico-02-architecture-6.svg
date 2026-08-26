@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-calico-02-architecture-6-title ko-networking-calico-02-architecture-6-desc">
+<title id="ko-networking-calico-02-architecture-6-title">Route Reflector 토폴로지</title>
+<desc id="ko-networking-calico-02-architecture-6-desc">50노드 이상의 대규모 클러스터에서 각 노드가 전체 메시 대신 Route Reflector 두 대에만 iBGP로 연결되는 구조를 보여준다.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="40" width="880" height="380" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="52" y="44" width="220" height="12" rx="2" fill="#ffffff"/>
+<text x="162.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">ROUTE REFLECTOR TOPOLOGY (50노드 이상)</text><path d="M 391.0,132.0 L 658,132" fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+<path d="M 136.0,320 V 250.0 Q 136.0,242.0 144.0,242.0 H 260 Q 268,242.0 268,234.0 V 164" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 308.0,320 L 308,164" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 480.0,320 V 250.0 Q 480.0,242.0 472.0,242.0 H 356 Q 348,242.0 348,234.0 V 164" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 652.0,320 V 250.0 Q 652.0,242.0 660.0,242.0 H 703 Q 711,242.0 711,234.0 V 164" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 824.0,320 V 250.0 Q 824.0,242.0 816.0,242.0 H 773 Q 765,242.0 765,234.0 V 164" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/><rect x="228" y="100" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="228" y="100" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="308.0" y="128.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Route Reflector 1</text>
+<text x="308.0" y="143.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">Cluster ID 244.0.0.1</text><rect x="658" y="100" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="658" y="100" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="738.0" y="128.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Route Reflector 2</text>
+<text x="738.0" y="143.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">Cluster ID 244.0.0.2</text><rect x="66" y="320" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="66" y="320" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="136.0" y="356.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 1</text><rect x="238" y="320" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="238" y="320" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="308.0" y="356.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 2</text><rect x="410" y="320" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="410" y="320" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="356.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node N...</text><rect x="582" y="320" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="582" y="320" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="652.0" y="356.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 3</text><rect x="754" y="320" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="754" y="320" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="824.0" y="356.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 4</text><line x1="30" y1="412" x2="930" y2="412" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="30" y1="424" x2="46" y2="424" stroke="#545B64" stroke-width="1.4"/>
+<text x="52" y="427" fill="#545B64" font-size="8" font-family="'Geist Mono',ui-monospace,monospace">iBGP (RR ↔ 클라이언트, RR ↔ RR)</text></svg>

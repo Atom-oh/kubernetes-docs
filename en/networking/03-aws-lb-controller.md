@@ -15,71 +15,13 @@ AWS Load Balancer Controller is a controller that manages AWS Elastic Load Balan
 - **AWS WAF Integration**: Web Application Firewall enforcement
 - **AWS Shield**: DDoS protection
 
-```mermaid
-graph TB
-    subgraph "AWS Cloud"
-        subgraph "AWS Load Balancer Controller"
-            CTRL[Controller<br/>Watches K8s Resources]
-        end
-
-        subgraph "Load Balancers"
-            ALB[Application Load Balancer<br/>HTTP/HTTPS L7]
-            NLB[Network Load Balancer<br/>TCP/UDP L4]
-        end
-
-        subgraph "EKS Cluster"
-            ING[Ingress Resources]
-            SVC[Service Resources]
-            TGB[TargetGroupBinding]
-            POD[Pods]
-        end
-
-        subgraph "Target Groups"
-            TG1[Target Group 1]
-            TG2[Target Group 2]
-        end
-    end
-
-    CTRL -->|Creates/Manages| ALB
-    CTRL -->|Creates/Manages| NLB
-    ING -->|Triggers| CTRL
-    SVC -->|Triggers| CTRL
-    ALB --> TG1
-    NLB --> TG2
-    TG1 --> POD
-    TG2 --> POD
-    TGB --> TG1
-
-    style CTRL fill:#ff9800
-    style ALB fill:#2196f3
-    style NLB fill:#9c27b0
-```
+![Diagram showing Ingress, Service, and TargetGroupBinding resources triggering the AWS Load Balancer Controller, which creates an Application Load Balancer and a Network Load Balancer, each with its own AWS Target Group, all registering the same backend Pods.](../.gitbook/assets/en-networking-03-aws-lb-controller-0.png)
 
 ## Architecture
 
 ### How the Controller Works
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant K8sAPI as Kubernetes API
-    participant CTRL as LB Controller
-    participant AWS as AWS API
-    participant ALB as ALB/NLB
-
-    User->>K8sAPI: Create Ingress/Service
-    K8sAPI->>CTRL: Watch event
-    CTRL->>CTRL: Analyze resource
-    CTRL->>AWS: Request Load Balancer creation
-    AWS->>ALB: Provision ALB/NLB
-    AWS-->>CTRL: Return ARN
-    CTRL->>AWS: Create Target Group
-    CTRL->>AWS: Configure Listener rules
-    CTRL->>K8sAPI: Update Status
-    K8sAPI-->>User: Provide Load Balancer DNS
-
-    Note over CTRL,AWS: Auto register/deregister targets on Pod changes
-```
+![Sequence diagram showing a user creating an Ingress or Service, the Kubernetes API notifying the LB Controller, the controller calling the AWS API to provision an ALB or NLB plus its target group and listener rules, then writing status back to Kubernetes so the user receives the load balancer's DNS name, with a note that the controller keeps registering and deregistering targets as Pods change.](../.gitbook/assets/en-networking-03-aws-lb-controller-1.png)
 
 ### Component Structure
 

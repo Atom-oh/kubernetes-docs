@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-cilium-networking-concepts-8-title ko-networking-cilium-networking-concepts-8-desc">
+<title id="ko-networking-cilium-networking-concepts-8-title">PAT(포트 주소 변환) 동작 구조</title>
+<desc id="ko-networking-cilium-networking-concepts-8-desc">서로 다른 내부 호스트가 포트 번호로 구분되어 하나의 공용 IP(198.51.100.1)를 공유해 인터넷의 서버와 통신하는 PAT 동작을 보여주는 다이어그램.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="10" y="60" width="260" height="400" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="22" y="54" width="61.5" height="12" rx="2" fill="#ffffff"/>
+<text x="52.75" y="63" fill="rgba(35,47,62,0.45)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.14em">내부 네트워크</text>
+<rect x="350" y="160" width="260" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="362" y="154" width="94.0" height="12" rx="2" fill="#ffffff"/>
+<text x="409.0" y="163" fill="rgba(35,47,62,0.45)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.14em">NAT 라우터(PAT)</text>
+<rect x="686" y="160" width="264" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="698" y="154" width="35.5" height="12" rx="2" fill="#ffffff"/>
+<text x="715.75" y="163" fill="rgba(35,47,62,0.45)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.14em">인터넷</text>
+<path d="M 240,148.0 H 312 Q 320,148.0 320,156.0 V 232 Q 320,240 328,240 H 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 240,368.0 H 312 Q 320,368.0 320,360.0 V 284 Q 320,276 328,276 H 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="580" y1="240" x2="716" y2="240" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="580" y1="276" x2="716" y2="276" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="526.5" y="220" width="43.0" height="12" rx="2" fill="#ffffff"/>
+<text x="548" y="229" fill="#EC7211" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">:5000</text>
+<rect x="526.5" y="256" width="43.0" height="12" rx="2" fill="#ffffff"/>
+<text x="548" y="265" fill="#EC7211" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">:5001</text>
+<rect x="40" y="100" width="200" height="96" rx="6" fill="#ffffff"/>
+<rect x="40" y="100" width="200" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="152.0" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">호스트 A</text>
+<text x="140.0" y="168.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">10.0.0.2:1234</text>
+<rect x="40" y="320" width="200" height="96" rx="6" fill="#ffffff"/>
+<rect x="40" y="320" width="200" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="372.0" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">호스트 B</text>
+<text x="140.0" y="388.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">10.0.0.3:1234</text>
+<rect x="380" y="210" width="200" height="96" rx="6" fill="#ffffff"/>
+<rect x="380" y="210" width="200" height="96" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="262.0" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">198.51.100.1</text>
+<text x="480.0" y="278.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">포트 기반 변환</text>
+<rect x="716" y="210" width="200" height="96" rx="6" fill="#ffffff"/>
+<rect x="716" y="210" width="200" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="816.0" y="262.0" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">서버</text>
+<text x="816.0" y="278.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">203.0.113.5:80</text>
+<text x="480" y="500" fill="#232F3E" font-size="14" font-style="italic" font-family="var(--font-sans)" text-anchor="middle">여러 내부 호스트가 포트 번호로 구분되어 하나의 공용 IP를 공유한다</text>
+
+</svg>

@@ -13,26 +13,7 @@ Calico는 Kubernetes, 가상 머신, 베어메탈 워크로드를 위한 업계 
 
 ### Calico를 선택해야 하는 이유
 
-```mermaid
-graph TB
-    subgraph "Calico 핵심 가치"
-        PERF[고성능<br/>BGP/eBPF 기반]
-        SEC[강력한 보안<br/>L3-L7 Network Policy]
-        SCALE[대규모 확장성<br/>수천 노드 지원]
-        FLEX[유연성<br/>멀티 환경 지원]
-    end
-
-    PERF --> USE[엔터프라이즈<br/>프로덕션 환경]
-    SEC --> USE
-    SCALE --> USE
-    FLEX --> USE
-
-    style PERF fill:#4fc3f7
-    style SEC fill:#81c784
-    style SCALE fill:#ffb74d
-    style FLEX fill:#ce93d8
-    style USE fill:#f48fb1
-```
+![고성능, 강력한 보안, 대규모 확장성, 유연성이라는 Calico의 4가지 핵심 가치가 모두 엔터프라이즈 프로덕션 환경이라는 하나의 결과로 모이는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-README-0.png)
 
 **핵심 장점:**
 
@@ -83,47 +64,7 @@ graph TB
 
 ## 아키텍처 개요
 
-```mermaid
-graph TB
-    subgraph "Control Plane"
-        API[Kubernetes API Server]
-        DS[Calico Datastore<br/>etcd 또는 Kubernetes API]
-        OP[Tigera Operator<br/>설치 및 업그레이드 관리]
-    end
-
-    subgraph "Data Plane - 각 노드"
-        Felix[Felix<br/>정책 적용 에이전트]
-        BIRD[BIRD<br/>BGP 라우팅 데몬]
-        Confd[confd<br/>설정 동기화]
-        CNI[Calico CNI<br/>Pod 네트워크 설정]
-    end
-
-    subgraph "선택적 컴포넌트"
-        Typha[Typha<br/>대규모 클러스터 스케일링]
-        KC[kube-controllers<br/>K8s 리소스 동기화]
-    end
-
-    subgraph "외부 통합"
-        ToR[ToR Switch / Router]
-        ExtNet[외부 네트워크]
-    end
-
-    API --> DS
-    OP --> DS
-    DS --> Typha
-    Typha --> Felix
-    Felix --> BIRD
-    Confd --> BIRD
-    API --> KC
-    KC --> DS
-    BIRD <-->|BGP| ToR
-    ToR --> ExtNet
-
-    style Felix fill:#4fc3f7,stroke:#0277bd
-    style BIRD fill:#81c784,stroke:#388e3c
-    style Typha fill:#ffb74d,stroke:#f57c00
-    style OP fill:#ce93d8,stroke:#7b1fa2
-```
+![Control Plane의 API Server·Tigera Operator·kube-controllers가 Calico Datastore에 기록하고, 각 노드의 Typha·Felix·BIRD가 이를 받아 정책을 적용하며 BIRD가 BGP로 외부 ToR 스위치·네트워크와 통신하는 Calico 아키텍처 구조.](../../.gitbook/assets/ko-networking-calico-README-1.png)
 
 ### 컴포넌트 역할 요약
 
@@ -149,23 +90,7 @@ Calico는 다양한 환경에 맞는 여러 네트워킹 모드를 지원합니�
 | **Direct** | 없음 | 0 bytes | 1500 | BGP 가능 환경, 온프레미스 |
 | **CrossSubnet** | 조건부 | 가변 | 가변 | 하이브리드 환경 |
 
-```mermaid
-flowchart LR
-    subgraph "네트워킹 모드 선택"
-        START[시작] --> Q1{BGP 사용 가능?}
-        Q1 -->|Yes| DIRECT[Direct 모드<br/>최고 성능]
-        Q1 -->|No| Q2{클라우드 환경?}
-        Q2 -->|Azure| VXLAN[VXLAN 모드<br/>광범위 호환]
-        Q2 -->|AWS/GCP| Q3{같은 서브넷?}
-        Q3 -->|Yes| CROSS[CrossSubnet 모드<br/>하이브리드]
-        Q3 -->|No| IPIP[IPIP 모드<br/>효율적 캡슐화]
-    end
-
-    style DIRECT fill:#81c784
-    style VXLAN fill:#64b5f6
-    style CROSS fill:#ffb74d
-    style IPIP fill:#ce93d8
-```
+![BGP 사용 가능 여부, 클라우드 환경, 서브넷 일치 여부를 순서대로 물어 Direct·VXLAN·CrossSubnet·IPIP 중 적합한 Calico 네트워킹 모드를 안내하며, BGP가 가능한 Direct 모드가 최고 성능의 권장 경로임을 보여주는 의사결정 트리.](../../.gitbook/assets/ko-networking-calico-README-2.png)
 
 ## EKS 통합 빠른 시작
 
@@ -367,22 +292,7 @@ calicoctl get globalnetworkpolicy
 - Hubble 기반 고급 관측성이 필수인 경우
 - 최신 eBPF 기능을 적극 활용하려는 경우
 
-```mermaid
-flowchart TD
-    START[CNI 선택] --> Q1{Windows 워크로드?}
-    Q1 -->|Yes| CALICO[Calico 선택]
-    Q1 -->|No| Q2{L7 정책 필요?}
-    Q2 -->|Yes, 오픈소스| CILIUM[Cilium 선택]
-    Q2 -->|Yes, Enterprise OK| CALICO
-    Q2 -->|No| Q3{BGP 필수?}
-    Q3 -->|고급 BGP| CALICO
-    Q3 -->|기본 BGP| Q4{관측성 우선?}
-    Q4 -->|Hubble 필수| CILIUM
-    Q4 -->|기본 충분| CALICO
-
-    style CALICO fill:#4fc3f7
-    style CILIUM fill:#81c784
-```
+![Windows 워크로드, L7 정책 필요 여부, BGP 필수 여부, 관측성 우선순위를 차례로 물어 CNI를 선택하는 트리로, 대부분의 경로가 Calico로 모이고 오픈소스 L7 정책이나 Hubble 관측성이 꼭 필요할 때만 Cilium으로 향함을 보여준다.](../../.gitbook/assets/ko-networking-calico-README-3.png)
 
 ## 참고 자료
 

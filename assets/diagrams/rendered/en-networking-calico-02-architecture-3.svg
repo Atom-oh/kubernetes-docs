@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-calico-02-architecture-3-title en-networking-calico-02-architecture-3-desc">
+      <title id="en-networking-calico-02-architecture-3-title">BIRD in the Calico architecture</title>
+      <desc id="en-networking-calico-02-architecture-3-desc">Diagram showing BIRD instances on each node forming a full iBGP mesh to exchange pod routes, then peering over eBGP with the top-of-rack switch and core router to advertise those routes externally.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+
+      </defs>
+      <rect width="960" height="320" fill="#ffffff"/>
+<rect x="40" y="60" width="340" height="240" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="52" y="64" width="190" height="12" rx="2" fill="#ffffff"/>
+<text x="147.0" y="73" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">KUBERNETES CLUSTER (X3 NODES)</text>
+<rect x="560" y="60" width="360" height="240" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="572" y="64" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="628.0" y="73" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">EXTERNAL NETWORK</text>
+<path d="M 150,160 C 150,120 270,120 270,160" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="166.0" y="100" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="210" y="109" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">IBGP MESH x3</text>
+<path d="M 340,192 H 462.0 Q 470.0,192 470.0,184 V 192 Q 470.0,184 478.0,184 H 600" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="452.0" y="164" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="470" y="173" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">EBGP</text>
+<line x1="740" y1="184" x2="780" y2="184" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="80" y="160" width="260" height="64" rx="6" fill="#ffffff"/>
+<rect x="80" y="160" width="260" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="210.0" y="188.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">BIRD</text>
+<text x="210.0" y="204.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">advertises per-node pod CIDR</text>
+<rect x="600" y="160" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="600" y="160" width="140" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="670.0" y="188.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ToR Switch</text>
+<rect x="780" y="160" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="780" y="160" width="140" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="850.0" y="188.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Core Router</text>
+    </svg>

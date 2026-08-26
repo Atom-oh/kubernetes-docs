@@ -28,37 +28,7 @@ Amazon VPC CNI(Container Network Interface)는 Amazon EKS의 기본 네트워킹
 
 VPC CNI는 두 가지 주요 구성 요소로 이루어져 있습니다:
 
-```mermaid
-flowchart TD
-    subgraph Node["EC2 Worker Node"]
-        A[IPAMD / L-IPAM Daemon]
-        B[CNI Binary]
-        C[Primary ENI]
-        D[Secondary ENI 1]
-        E[Secondary ENI 2]
-    end
-
-    F[Amazon VPC]
-    G[Pod 1]
-    H[Pod 2]
-    I[Pod 3]
-
-    A -->|IP 할당 관리| B
-    B -->|IP 할당| G
-    B -->|IP 할당| H
-    B -->|IP 할당| I
-    C -->|기본 네트워크| F
-    D -->|추가 IP| F
-    E -->|추가 IP| F
-
-    classDef node fill:#FF9900,stroke:#333,stroke-width:1px,color:white
-    classDef vpc fill:#232F3E,stroke:#333,stroke-width:1px,color:white
-    classDef pod fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-
-    class A,B,C,D,E node
-    class F vpc
-    class G,H,I pod
-```
+![EC2 워커 노드 내부의 IPAMD가 CNI Binary에 IP 할당을 지시해 세 개의 Pod에 IP를 전달하고, Primary ENI와 두 개의 Secondary ENI가 각각 Amazon VPC로부터 기본 네트워크와 추가 IP를 공급받는 VPC CNI 아키텍처를 보여준다.](../.gitbook/assets/ko-networking-01-vpc-cni-0.png)
 
 1. **IPAMD (L-IPAM Daemon)**: 각 노드에서 실행되는 데몬으로, ENI와 IP 주소를 사전 할당하고 관리
 2. **CNI Binary**: kubelet이 호출하는 CNI 플러그인으로, IPAMD에서 IP를 할당받아 Pod 네트워크 네임스페이스를 설정

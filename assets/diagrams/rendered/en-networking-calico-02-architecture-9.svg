@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-calico-02-architecture-9-title en-networking-calico-02-architecture-9-desc">
+      <title id="en-networking-calico-02-architecture-9-title">Kubernetes API datastore</title>
+      <desc id="en-networking-calico-02-architecture-9-desc">Diagram showing Felix, Typha, and kube-controllers all reading and writing Calico state through the Kubernetes API server, which itself persists to etcd - no separate Calico etcd cluster required.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+
+      </defs>
+      <rect width="960" height="300" fill="#ffffff"/>
+<rect x="20" y="40" width="300" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="32" y="44" width="118" height="12" rx="2" fill="#ffffff"/>
+<text x="91.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">CALICO COMPONENTS</text>
+<rect x="560" y="40" width="380" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="572" y="44" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="610.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">KUBERNETES</text>
+<line x1="100" y1="100" x2="100" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<path d="M 160,160 H 372.0 Q 380.0,160 380.0,152 V 141 Q 380.0,133 388.0,133 H 600" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<path d="M 160,240 H 372.0 Q 380.0,240 380.0,232 V 155 Q 380.0,147 388.0,147 H 600" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<line x1="740" y1="140" x2="780" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="40" y="60" width="120" height="40" rx="6" fill="#ffffff"/>
+<rect x="40" y="60" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100.0" y="84.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Felix</text>
+<rect x="40" y="140" width="120" height="40" rx="6" fill="#ffffff"/>
+<rect x="40" y="140" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Typha</text>
+<rect x="40" y="220" width="120" height="40" rx="6" fill="#ffffff"/>
+<rect x="40" y="220" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100.0" y="244.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-controllers</text>
+<rect x="600" y="120" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="600" y="120" width="140" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="670.0" y="144.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API Server</text>
+<rect x="780" y="120" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="780" y="120" width="140" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="850.0" y="144.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">etcd</text>
+    </svg>

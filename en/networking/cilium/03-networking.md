@@ -64,48 +64,7 @@ Container networking models define how containers communicate with each other. E
 
 ### Cilium Networking Modes
 
-```mermaid
-flowchart TD
-    subgraph "Cilium Networking Modes"
-        direction LR
-
-        subgraph "Overlay Mode"
-            VXLAN[VXLAN]
-            Geneve[Geneve]
-        end
-
-        subgraph "Native Routing Mode"
-            Direct[Direct Routing]
-            BGP[BGP]
-        end
-
-        subgraph "Cloud Integration Mode"
-            AWS_ENI[AWS ENI]
-            Azure_IPAM[Azure IPAM]
-            GKE[GKE]
-        end
-    end
-
-    VXLAN -->|"Encapsulation (UDP 8472)"| Encap[Encapsulation Overhead\nSlight Performance Impact]
-    Geneve -->|"Encapsulation (UDP 6081)"| Encap
-
-    Direct -->|"Direct Routing\n(No Encapsulation)"| NoEncap[No Encapsulation\nBest Performance]
-    BGP -->|"BGP Routing\n(No Encapsulation)"| NoEncap
-
-    AWS_ENI -->|"AWS VPC Integration"| Cloud[Cloud Native\nPerformance Optimized]
-    Azure_IPAM -->|"Azure VNET Integration"| Cloud
-    GKE -->|"Google Cloud VPC Integration"| Cloud
-
-    classDef overlay fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef native fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef cloud fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef perf fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-
-    class VXLAN,Geneve overlay;
-    class Direct,BGP native;
-    class AWS_ENI,Azure_IPAM,GKE cloud;
-    class Encap,NoEncap,Cloud perf;
-```
+![Diagram grouping Cilium's networking modes into overlay, native routing, and cloud integration, showing that skipping encapsulation with native routing yields the best performance while overlay modes trade some performance for portability.](../../.gitbook/assets/en-networking-cilium-03-networking-0.png)
 
 ## VXLAN Technology Deep Dive
 
@@ -156,18 +115,7 @@ data:
 
 This configuration instructs Cilium to set up inter-pod communication within the cluster using VXLAN tunneling. Each node acts as a VTEP and encapsulates pod traffic into VXLAN packets for transmission to other nodes.
 
-```mermaid
-flowchart TD
-    subgraph "VXLAN Packet Structure"
-        direction TB
-        A["Outer Ethernet Header"] --> B["Outer IP Header (usually UDP)"]
-        B --> C["VXLAN Header (contains VNI)"]
-        C --> D["Original Ethernet Frame"]
-    end
-
-    classDef header fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    class A,B,C,D header;
-```
+![Layer stack showing a VXLAN-encapsulated packet from the outer Ethernet header down through the outer IP header and the VXLAN header carrying the VNI, to the original inner Ethernet frame it wraps.](../../.gitbook/assets/en-networking-cilium-03-networking-1.png)
 
 ### How VXLAN Works:
 
@@ -191,36 +139,7 @@ Cilium uses VXLAN by default to implement overlay networking, but also supports 
 
 ### Cilium Overlay Network Architecture:
 
-```mermaid
-flowchart TD
-    subgraph "Host A"
-        direction TB
-        A1["Container A
-        10.0.0.1"] --> B1["eBPF"]
-        B1 --> C1["VTEP
-        192.168.1.1"]
-    end
-
-    subgraph "Host B"
-        direction TB
-        A2["Container B
-        10.0.0.2"] --> B2["eBPF"]
-        B2 --> C2["VTEP
-        192.168.1.2"]
-    end
-
-    C1 <--> D["Physical Network"] <--> C2
-
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ebpf fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef vtep fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef network fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class A1,A2 container;
-    class B1,B2 ebpf;
-    class C1,C2 vtep;
-    class D network;
-```
+![Architecture diagram showing a container on Host A reaching a container on Host B through each host's eBPF datapath and VTEP, which exchange VXLAN-encapsulated traffic over the shared physical network.](../../.gitbook/assets/en-networking-cilium-03-networking-2.png)
 
 ### How Cilium Overlay Networking Works:
 

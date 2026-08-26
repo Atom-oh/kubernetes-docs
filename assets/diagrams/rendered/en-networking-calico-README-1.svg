@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="flow-title flow-desc">
+<title id="flow-title">Calico Networking Mode Selection</title>
+<desc id="flow-desc">Decision flowchart for choosing a Calico networking mode: BGP availability and L2 adjacency determine whether traffic uses Direct routing, VXLAN, or IPIP cross-subnet encapsulation, all converging on configuring an IPPool.</desc>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<text x="48" y="32" fill="var(--soft)" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">FLOWCHART</text>
+<text x="48" y="56" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Networking Mode Selection Guide</text>
+
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<!-- ===== Arrows (before nodes) ===== -->
+
+<!-- A -> B : straight -->
+<line x1="280" y1="128" x2="280" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- B -> D "No" (right) -->
+<line x1="340" y1="196" x2="600" y2="196" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- B -> C "Yes" (down, spine) -->
+<line x1="280" y1="240" x2="280" y2="272" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- C -> E "Yes" (right, accent: direct routing is the performance path) -->
+<line x1="340" y1="316" x2="600" y2="316" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<!-- C -> F "No" (down, spine) -->
+<line x1="280" y1="360" x2="280" y2="392" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- F -> G "Yes" (right) -->
+<line x1="340" y1="436" x2="600" y2="436" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- F -> E "No" (up-right elbow into E, fanned attach point above F->G's) -->
+<path d="M320,408 H420 Q428,408 428,400 V336 Q428,328 436,328 H600"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- D -> H: right-side channel, bridges over E's channel (x800) and G's straight drop (x680) -->
+<path d="M760,196 H808 Q816,196 816,204 V468 Q816,476 808,476 A8,8 0 0 0 792,476 H688 A8,8 0 0 0 672,476 H648 Q640,476 640,484 V500"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- E -> H: right-side channel, bridged by D above -->
+<path d="M760,316 H792 Q800,316 800,324 V484 Q800,492 792,492 H728 Q720,492 720,500"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- G -> H: adjacent, straight drop -->
+<line x1="680" y1="464" x2="680" y2="500" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- ===== Arrow labels ===== -->
+<rect x="440" y="186" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="452" y="195" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NO</text>
+
+<rect x="264" y="248" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="280" y="257" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">YES</text>
+
+<rect x="440" y="306" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="456" y="315" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">YES</text>
+
+<rect x="264" y="368" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="280" y="377" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NO</text>
+
+<rect x="440" y="426" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="456" y="435" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">YES</text>
+
+<rect x="524" y="358" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="536" y="367" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NO</text>
+
+<!-- ===== Nodes ===== -->
+
+<!-- A: start oval -->
+<rect x="200" y="80" width="160" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="280" y="108" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Choose Mode</text>
+
+<!-- B: diamond BGP Available? -->
+<polygon points="280,152 340,196 280,240 220,196" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="192" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">BGP</text>
+<text x="280" y="206" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Available?</text>
+
+<!-- D: VXLAN Mode -->
+<rect x="600" y="168" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="680" y="200" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VXLAN Mode</text>
+<text x="680" y="216" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">no BGP peer</text>
+
+<!-- C: diamond L2 Adjacency? -->
+<polygon points="280,272 340,316 280,360 220,316" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="312" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">L2</text>
+<text x="280" y="326" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Adjacency?</text>
+
+<!-- E: Direct Mode (focal — performance path) -->
+<rect x="600" y="288" width="160" height="56" rx="6" fill="var(--accent-tint)" stroke="#EC7211" stroke-width="1"/>
+<text x="680" y="312" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Direct Mode</text>
+<text x="680" y="328" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">native routing</text>
+
+<!-- F: diamond Cross-Subnet? -->
+<polygon points="280,392 340,436 280,480 220,436" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="432" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cross-</text>
+<text x="280" y="446" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Subnet?</text>
+
+<!-- G: IPIP CrossSubnet -->
+<rect x="600" y="408" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="680" y="432" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">IPIP CrossSubnet</text>
+<text x="680" y="448" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">encapsulated</text>
+
+<!-- H: Configure IPPool (end) -->
+<rect x="600" y="500" width="160" height="56" rx="28" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="680" y="524" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Configure IPPool</text>
+<text x="680" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">apply chosen mode</text>
+
+<!-- ===== Legend ===== -->
+<line x1="48" y1="588" x2="912" y2="588" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="48" y="604" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND · SHAPE CARRIES TYPE</text>
+
+<rect x="48" y="616" width="24" height="12" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="80" y="626" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Start / end (oval)</text>
+
+<polygon points="272,622 284,616 296,622 284,628" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="308" y="626" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Decision (diamond)</text>
+
+<rect x="480" y="616" width="24" height="12" rx="2" fill="var(--accent-tint)" stroke="#EC7211" stroke-width="1"/>
+<text x="512" y="626" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Focal outcome</text>
+
+<line x1="664" y1="622" x2="692" y2="622" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="700" y="626" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Happy path</text>
+</svg>

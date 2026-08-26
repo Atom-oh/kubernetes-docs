@@ -38,60 +38,7 @@ Cilium leverages eBPF to provide powerful security features for containerized en
 
 ### Cilium Security Architecture
 
-```mermaid
-flowchart TD
-    subgraph "Cilium Security Layers"
-        direction TB
-
-        subgraph "Network Security"
-            L3L4[L3/L4 Policy]
-            Encrypt[Encryption]
-            Segment[Microsegmentation]
-        end
-
-        subgraph "Application Security"
-            L7[L7 Policy]
-            API[API-aware Filtering]
-            Identity[Identity-based Policy]
-        end
-
-        subgraph "Threat Detection"
-            Hubble[Hubble Observability]
-            Intrusion[Intrusion Detection]
-            Anomaly[Anomaly Detection]
-        end
-
-        subgraph "Runtime Security"
-            Process[Process Monitoring]
-            Syscall[System Call Filtering]
-            Container[Container Security]
-        end
-    end
-
-    Traffic[Traffic] --> L3L4
-    L3L4 --> Encrypt
-    Encrypt --> Segment
-    Segment --> L7
-    L7 --> API
-    API --> Identity
-
-    L3L4 & L7 & API --> Hubble
-    Hubble --> Intrusion & Anomaly
-
-    Identity --> Process & Syscall & Container
-
-    classDef network fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef threat fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef runtime fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef traffic fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-
-    class L3L4,Encrypt,Segment network;
-    class L7,API,Identity app;
-    class Hubble,Intrusion,Anomaly threat;
-    class Process,Syscall,Container runtime;
-    class Traffic traffic;
-```
+![Traffic flows down through Cilium's four defense-in-depth security layers — Network Security, Application Security, Threat Detection, and Runtime Security — with Hubble's eBPF-native observability in the Threat Detection layer highlighted as the visibility foundation underlying the others.](../../.gitbook/assets/en-networking-cilium-06-security-visibility-0.png)
 
 ### Network Security Features:
 

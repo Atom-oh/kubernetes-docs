@@ -64,48 +64,7 @@ sudo tcpdump -i any udp port 8472 -vv
 
 ### Cilium 네트워킹 모드
 
-```mermaid
-flowchart TD
-    subgraph "Cilium 네트워킹 모드"
-        direction LR
-        
-        subgraph "오버레이 모드"
-            VXLAN[VXLAN]
-            Geneve[Geneve]
-        end
-        
-        subgraph "네이티브 라우팅 모드"
-            Direct[직접 라우팅]
-            BGP[BGP]
-        end
-        
-        subgraph "클라우드 통합 모드"
-            AWS_ENI[AWS ENI]
-            Azure_IPAM[Azure IPAM]
-            GKE[GKE]
-        end
-    end
-    
-    VXLAN -->|"캡슐화 (UDP 8472)"| Encap[캡슐화 오버헤드\n성능 영향 약간]
-    Geneve -->|"캡슐화 (UDP 6081)"| Encap
-    
-    Direct -->|"직접 라우팅\n(캡슐화 없음)"| NoEncap[캡슐화 없음\n최고 성능]
-    BGP -->|"BGP 라우팅\n(캡슐화 없음)"| NoEncap
-    
-    AWS_ENI -->|"AWS VPC 통합"| Cloud[클라우드 네이티브\n성능 최적화]
-    Azure_IPAM -->|"Azure VNET 통합"| Cloud
-    GKE -->|"Google Cloud VPC 통합"| Cloud
-    
-    classDef overlay fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef native fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef cloud fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef perf fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    
-    class VXLAN,Geneve overlay;
-    class Direct,BGP native;
-    class AWS_ENI,Azure_IPAM,GKE cloud;
-    class Encap,NoEncap,Cloud perf;
-```
+![Cilium이 지원하는 오버레이, 네이티브 라우팅, 클라우드 통합의 세 네트워킹 모드가 각각 캡슐화 오버헤드, 캡슐화 없는 최고 성능, 클라우드 네이티브 최적화라는 서로 다른 성능 결과로 이어짐을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-03-networking-0.png)
 
 ## VXLAN 기술 심층 분석
 
@@ -155,18 +114,7 @@ data:
 
 이 구성은 Cilium이 VXLAN 터널링을 사용하여 클러스터 내 포드 간 통신을 설정하도록 지시합니다. 각 노드는 VTEP 역할을 하며 포드 트래픽을 VXLAN 패킷으로 캡슐화하여 다른 노드로 전송합니다.
 
-```mermaid
-flowchart TD
-    subgraph "VXLAN 패킷 구조"
-        direction TB
-        A["외부 이더넷 헤더"] --> B["외부 IP 헤더 (보통 UDP)"]
-        B --> C["VXLAN 헤더 (VNI 포함)"]
-        C --> D["원래 이더넷 프레임"]
-    end
-    
-    classDef header fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    class A,B,C,D header;
-```
+![VXLAN 캡슐화 패킷이 외부 이더넷 헤더, 외부 IP 헤더, VNI를 담은 VXLAN 헤더, 원래 이더넷 프레임 순으로 4개 층을 겹겹이 감싸는 구조를 보여주는 레이어 스택.](../../.gitbook/assets/ko-networking-cilium-03-networking-1.png)
 
 ### VXLAN 작동 방식:
 
@@ -190,36 +138,7 @@ Cilium은 기본적으로 VXLAN을 사용하여 오버레이 네트워킹을 구
 
 ### Cilium 오버레이 네트워크 아키텍처:
 
-```mermaid
-flowchart TD
-    subgraph "호스트 A"
-        direction TB
-        A1["컨테이너 A
-        10.0.0.1"] --> B1["eBPF"]
-        B1 --> C1["VTEP
-        192.168.1.1"]
-    end
-    
-    subgraph "호스트 B"
-        direction TB
-        A2["컨테이너 B
-        10.0.0.2"] --> B2["eBPF"]
-        B2 --> C2["VTEP
-        192.168.1.2"]
-    end
-    
-    C1 <--> D["물리적 네트워크"] <--> C2
-    
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ebpf fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef vtep fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef network fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class A1,A2 container;
-    class B1,B2 ebpf;
-    class C1,C2 vtep;
-    class D network;
-```
+![호스트 A와 호스트 B 각각에서 컨테이너의 패킷이 eBPF를 거쳐 VTEP으로 캡슐화된 뒤, 물리적 네트워크를 통해 상대 호스트의 VTEP과 eBPF를 지나 대상 컨테이너로 전달되는 Cilium 오버레이 경로.](../../.gitbook/assets/ko-networking-cilium-03-networking-2.png)
 
 ### Cilium 오버레이 네트워킹 작동 방식:
 

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 408" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-cilium-networking-concepts-10-title en-networking-cilium-networking-concepts-10-desc">
+<title id="en-networking-cilium-networking-concepts-10-title">DNS Resolution Process</title>
+<desc id="en-networking-cilium-networking-concepts-10-desc">Sequence diagram showing a client's iterative DNS query walking from the root DNS server to the .com TLD server to the example.com authoritative server, which returns the final IP address.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="148.0" y1="96" x2="148.0" y2="368" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="369.33333333333337" y1="96" x2="369.33333333333337" y2="368" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="590.6666666666667" y1="96" x2="590.6666666666667" y2="368" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="812.0" y1="96" x2="812.0" y2="368" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="148.0" y1="136" x2="369.33333333333337" y2="136" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="169.66666666666669" y="116" width="178" height="12" rx="2" fill="#ffffff"/>
+<text x="258.6666666666667" y="125" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">1. Query www.example.com</text>
+<line x1="369.33333333333337" y1="192" x2="590.6666666666667" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="394.50000000000006" y="172" width="171" height="12" rx="2" fill="#ffffff"/>
+<text x="480.00000000000006" y="181" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">2. Refer to .com server</text>
+<line x1="590.6666666666667" y1="248" x2="812.0" y2="248" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="591.3333333333334" y="228" width="220" height="12" rx="2" fill="#ffffff"/>
+<text x="701.3333333333334" y="237" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">3. Refer to example.com server</text>
+<line x1="812.0" y1="304" x2="148.0" y2="304" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="370.0" y="284" width="220" height="12" rx="2" fill="#ffffff"/>
+<text x="480.0" y="293" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">4. www.example.com = 192.0.2.1</text>
+<rect x="60.0" y="48" width="176" height="48" rx="6" fill="#ffffff"/>
+<rect x="60.0" y="48" width="176" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="148.0" y="76.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Client</text>
+<rect x="281.33333333333337" y="48" width="176" height="48" rx="6" fill="#ffffff"/>
+<rect x="281.33333333333337" y="48" width="176" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="369.33333333333337" y="76.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Root DNS Server</text>
+<rect x="502.66666666666674" y="48" width="176" height="48" rx="6" fill="#ffffff"/>
+<rect x="502.66666666666674" y="48" width="176" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="590.6666666666667" y="76.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">.com DNS Server</text>
+<rect x="724.0" y="48" width="176" height="48" rx="6" fill="#ffffff"/>
+<rect x="724.0" y="48" width="176" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="812.0" y="76.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">example.com DNS Server</text>
+</svg>

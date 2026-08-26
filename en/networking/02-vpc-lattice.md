@@ -83,91 +83,13 @@ VPC Lattice consists of the following main components:
 5. **Rule**: Defines how a listener routes traffic
 6. **VPC Association**: Connects a VPC to a service network
 
-```mermaid
-flowchart TD
-    Client[Client] -->|Request| ServiceNetwork[VPC Lattice Service Network]
-    ServiceNetwork -->|Routing Rules| Service1[Service 1]
-    ServiceNetwork -->|Routing Rules| Service2[Service 2]
-    ServiceNetwork -->|Routing Rules| Service3[Service 3]
-
-    Service1 -->|Target Group| Target11[Pod 1.1]
-    Service1 -->|Target Group| Target12[Pod 1.2]
-
-    Service2 -->|Target Group| Target21[Pod 2.1]
-
-    Service3 -->|Target Group| Target31[Pod 3.1]
-    Service3 -->|Target Group| Target32[Pod 3.2]
-
-    subgraph VPC1[VPC 1]
-        Target11
-        Target12
-    end
-
-    subgraph VPC2[VPC 2]
-        Target21
-    end
-
-    subgraph VPC3[VPC 3]
-        Target31
-        Target32
-    end
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class Client userApp;
-    class ServiceNetwork,Service1,Service2,Service3 awsService;
-    class Target11,Target12,Target21,Target31,Target32 k8sComponent;
-```
+![A client request enters a VPC Lattice service network, which applies routing rules to reach one of three services, each forwarding traffic to target-group pods running in separate VPCs.](../.gitbook/assets/en-networking-02-vpc-lattice-0.png)
 
 ### Service Network Architecture
 
 The service network is a core component of VPC Lattice that connects services across multiple VPCs and accounts.
 
-```mermaid
-flowchart LR
-    subgraph AccountA["Account A"]
-        A[VPC 1]
-        B[VPC 2]
-    end
-
-    subgraph AccountB["Account B"]
-        C[VPC 3]
-    end
-
-    A -->|VPC Association| SN[Service Network]
-    B -->|VPC Association| SN
-    C -->|VPC Association| SN
-
-    SN -->|Service Registration| S1[Service 1]
-    SN -->|Service Registration| S2[Service 2]
-    SN -->|Service Registration| S3[Service 3]
-
-    S1 -->|Target Group| TG1[Target Group 1]
-    S2 -->|Target Group| TG2[Target Group 2]
-    S3 -->|Target Group| TG3[Target Group 3]
-
-    TG1 -->|Target| T1[EC2 Instance]
-    TG2 -->|Target| T2[EKS Pod]
-    TG3 -->|Target| T3[Lambda Function]
-
-    %% Style definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class A,B,C default;
-    class SN,S1,S2,S3,TG1,TG2,TG3,T1,T3 awsService;
-    class T2 k8sComponent;
-```
+![VPCs from two separate AWS accounts associate into one shared service network, which registers three services that each route to a different compute target — an EC2 instance, an EKS pod, and a Lambda function.](../.gitbook/assets/en-networking-02-vpc-lattice-1.png)
 
 ### Traffic Flow
 
@@ -179,23 +101,7 @@ How traffic flows in VPC Lattice:
 4. Target group forwards the request to registered targets (EC2, EKS pods, Lambda, etc.)
 5. Target processes the response and returns it to the client
 
-```mermaid
-sequenceDiagram
-    participant Client as Client
-    participant VPCLattice as VPC Lattice
-    participant Service as Service
-    participant TargetGroup as Target Group
-    participant Target as Target (EKS Pod)
-
-    Client->>VPCLattice: Request (service-name.vpc-lattice-svcs.region.on.aws)
-    VPCLattice->>Service: Process request and apply listener rules
-    Service->>TargetGroup: Route to appropriate target group
-    TargetGroup->>Target: Forward request to target
-    Target->>TargetGroup: Return response
-    TargetGroup->>Service: Forward response
-    Service->>VPCLattice: Process response
-    VPCLattice->>Client: Return response
-```
+![Sequence showing a client request passing through VPC Lattice, a service's listener rules, and a target group before reaching an EKS pod, then the response tracing the same path back to the client.](../.gitbook/assets/en-networking-02-vpc-lattice-2.png)
 
 ### Service Discovery
 
@@ -228,44 +134,7 @@ The integration of Amazon EKS and VPC Lattice consists of the following componen
 4. **VPC Lattice Service**: VPC Lattice services mapped to Kubernetes services
 5. **VPC Lattice Target Group**: Target groups mapped to Kubernetes pods
 
-```mermaid
-flowchart LR
-    subgraph EKS["EKS Cluster"]
-        A[Gateway API Controller]
-        B[Gateway API Resources]
-        C[Kubernetes Service]
-        D[Kubernetes Pod]
-
-        A -->|Transform| B
-        B -->|Reference| C
-        C -->|Select| D
-    end
-
-    subgraph Client["Client in Another VPC"]
-        H[Application]
-    end
-
-    G[VPC Lattice<br/>Service Network]
-    E[VPC Lattice Service]
-    F[VPC Lattice Target Group]
-
-    A -->|Create/Manage| E
-    E -->|Routing| F
-    F -->|Register| D
-    G -->|Contains| E
-    H -->|Request| E
-
-    %% Style definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class A,B,C,D k8sComponent;
-    class G,E,F awsService;
-    class H userApp;
-```
+![The Gateway API Controller in an EKS cluster transforms Gateway API resources into a VPC Lattice service that a client application in another VPC can reach directly, while the same service's target group registers the backing Kubernetes pod.](../.gitbook/assets/en-networking-02-vpc-lattice-3.png)
 
 ### Benefits of Integration
 

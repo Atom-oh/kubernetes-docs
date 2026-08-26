@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-calico-02-architecture-1-title en-networking-calico-02-architecture-1-desc">
+      <title id="en-networking-calico-02-architecture-1-title">Felix responsibilities</title>
+      <desc id="en-networking-calico-02-architecture-1-desc">Diagram showing Felix's Datastore Watcher fanning out to its route, ACL, interface, and IPAM managers, which in turn program the node's routing table, iptables rules, IP sets, and network interfaces.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+
+      </defs>
+      <rect width="960" height="400" fill="#ffffff"/>
+<rect x="20" y="40" width="400" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="32" y="44" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="73.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">FELIX AGENT</text>
+<rect x="560" y="40" width="380" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="572" y="44" width="136" height="12" rx="2" fill="#ffffff"/>
+<text x="640.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">SYSTEM CONFIGURATION</text>
+<path d="M 220,84 H 262.0 Q 270.0,84 270.0,92 V 88 Q 270.0,96 278.0,96 H 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 220,96 H 262.0 Q 270.0,96 270.0,104 V 160 Q 270.0,168 278.0,168 H 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 220,108 H 262.0 Q 270.0,108 270.0,116 V 232 Q 270.0,240 278.0,240 H 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 220,120 H 262.0 Q 270.0,120 270.0,128 V 304 Q 270.0,312 278.0,312 H 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 420,96 H 502.0 Q 510.0,96 510.0,104 V 232 Q 510.0,240 518.0,240 H 600" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 420,160 H 502.0 Q 510.0,160 510.0,152 V 104 Q 510.0,96 518.0,96 H 600" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="420" y1="176" x2="600" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 420,240 H 502.0 Q 510.0,240 510.0,248 V 304 Q 510.0,312 518.0,312 H 600" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="60" y="76" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="60" y="76" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="140.0" y="104.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Datastore Watcher</text>
+<rect x="320" y="76" width="100" height="40" rx="6" fill="#ffffff"/>
+<rect x="320" y="76" width="100" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="370.0" y="100.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Route Manager</text>
+<rect x="320" y="148" width="100" height="40" rx="6" fill="#ffffff"/>
+<rect x="320" y="148" width="100" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="370.0" y="172.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ACL Manager</text>
+<rect x="320" y="220" width="100" height="40" rx="6" fill="#ffffff"/>
+<rect x="320" y="220" width="100" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="370.0" y="244.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Interface Manager</text>
+<rect x="320" y="292" width="100" height="40" rx="6" fill="#ffffff"/>
+<rect x="320" y="292" width="100" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="370.0" y="316.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">IPAM Manager</text>
+<rect x="600" y="76" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="600" y="76" width="140" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="670.0" y="100.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Routing Table</text>
+<rect x="600" y="148" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="600" y="148" width="140" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="670.0" y="172.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">iptables Rules</text>
+<rect x="600" y="220" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="600" y="220" width="140" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="670.0" y="244.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">IP Sets</text>
+<rect x="600" y="292" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="600" y="292" width="140" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="670.0" y="316.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Network Interfaces</text>
+    </svg>

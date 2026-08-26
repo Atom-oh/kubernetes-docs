@@ -36,54 +36,7 @@ IPAM is a system responsible for allocating, tracking, and managing IP addresses
 
 ### Cilium IPAM Architecture
 
-```mermaid
-flowchart TD
-    subgraph "Cilium IPAM Modes"
-        direction TB
-
-        subgraph "Cluster Scope IPAM"
-            ClusterPool[Cluster Pool]
-            MultiPool[Multi-Pool]
-        end
-
-        subgraph "Node Scope IPAM"
-            HostScope[Kubernetes Host Scope]
-        end
-
-        subgraph "Cloud Provider IPAM"
-            AWS_ENI[AWS ENI]
-            Azure_IPAM[Azure IPAM]
-            GKE_IPAM[GKE IPAM]
-        end
-
-        subgraph "Custom IPAM"
-            CRD_IPAM[CRD-based IPAM]
-        end
-    end
-
-    ClusterPool -->|"Allocate from single pool"| Central[Centralized Allocation]
-    MultiPool -->|"Allocate from multiple pools"| Central
-
-    HostScope -->|"Per-node allocation"| Distributed[Distributed Allocation]
-
-    AWS_ENI -->|"AWS VPC IP allocation"| Cloud[Cloud Native Allocation]
-    Azure_IPAM -->|"Azure VNET IP allocation"| Cloud
-    GKE_IPAM -->|"GCP VPC IP allocation"| Cloud
-
-    CRD_IPAM -->|"Custom allocation"| Custom[Custom Allocation]
-
-    classDef cluster fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef node fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef cloud fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef custom fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef alloc fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-
-    class ClusterPool,MultiPool cluster;
-    class HostScope node;
-    class AWS_ENI,Azure_IPAM,GKE_IPAM cloud;
-    class CRD_IPAM custom;
-    class Central,Distributed,Cloud,Custom alloc;
-```
+![Diagram showing five Cilium IPAM modes (Cluster Pool/Multi-Pool, Kubernetes Host Scope, AWS ENI, Azure/GKE IPAM, and CRD-based IPAM) each mapping to one of four allocation models (Centralized, Distributed, Cloud Native, and Custom Allocation), with the AWS ENI path to Cloud Native Allocation highlighted as the mode most relevant to AWS EKS environments.](../../.gitbook/assets/en-networking-cilium-04-ipam-policy-0.png)
 
 ### Cilium IPAM Modes:
 

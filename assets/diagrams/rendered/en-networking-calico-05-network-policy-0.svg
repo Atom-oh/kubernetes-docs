@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 660" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="netpol-effect-title netpol-effect-desc">
+    <title id="netpol-effect-title">NetworkPolicy traffic effect</title>
+    <desc id="netpol-effect-desc">Comparison showing that without a NetworkPolicy every pod can reach every other pod freely, while a NetworkPolicy narrows that mesh down to one explicitly allowed path and blocks the rest.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- panel divider -->
+    <line x1="480" y1="20" x2="480" y2="560" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+
+    <!-- panel eyebrows -->
+    <text x="250" y="40" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.14em">WITHOUT NETWORKPOLICY</text>
+    <text x="250" y="60" fill="#7D8998" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif"
+          text-anchor="middle">Every pod reaches every pod</text>
+
+    <text x="730" y="40" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.14em">WITH NETWORKPOLICY</text>
+    <text x="730" y="60" fill="#7D8998" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif"
+          text-anchor="middle">Only the allowed path remains</text>
+
+    <!-- ===================== LEFT PANEL: unrestricted mesh ===================== -->
+    <!-- A1<->C1 arc (bypasses B1) -->
+    <path d="M 100 202 L 100 138 A 8 8 0 0 1 108 130 L 392 130 A 8 8 0 0 1 400 138 L 400 202"
+          fill="none" stroke="#545B64" stroke-width="1.2"
+          marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <!-- A1<->B1 -->
+    <line x1="148" y1="230" x2="202" y2="230" stroke="#545B64" stroke-width="1.2"
+          marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <!-- B1<->C1 -->
+    <line x1="298" y1="230" x2="352" y2="230" stroke="#545B64" stroke-width="1.2"
+          marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+
+    <!-- Left pods -->
+    <g>
+      <rect x="52" y="202" width="96" height="56" rx="6" fill="#ffffff"/>
+      <rect x="52" y="202" width="96" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="60" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="74" y="217" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD</text>
+      <text x="100" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+    </g>
+    <g>
+      <rect x="202" y="202" width="96" height="56" rx="6" fill="#ffffff"/>
+      <rect x="202" y="202" width="96" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="210" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="224" y="217" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD</text>
+      <text x="250" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+    </g>
+    <g>
+      <rect x="352" y="202" width="96" height="56" rx="6" fill="#ffffff"/>
+      <rect x="352" y="202" width="96" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="360" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="374" y="217" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD</text>
+      <text x="400" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod C</text>
+    </g>
+
+    <!-- ===================== RIGHT PANEL: policy-restricted ===================== -->
+    <!-- A2 -X-> C2 arc (blocked, bypasses B2) -->
+    <path d="M 580 202 L 580 138 A 8 8 0 0 1 588 130 L 872 130 A 8 8 0 0 1 880 138 L 880 202"
+          fill="none" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="5,4" fill-opacity="0"/>
+    <rect x="720" y="122" width="20" height="16" rx="2" fill="#ffffff"/>
+    <text x="730" y="134" fill="#232F3E" font-size="12" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">&#10005;</text>
+    <rect x="754" y="118" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="784" y="127" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BLOCKED</text>
+
+    <!-- A2 -> B2 allowed (focal, accent) -->
+    <line x1="628" y1="222" x2="682" y2="222" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="632" y="204" width="46" height="12" rx="2" fill="#ffffff"/>
+    <text x="655" y="213" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ALLOWED</text>
+
+    <!-- B2 -X-> A2 blocked -->
+    <line x1="682" y1="238" x2="628" y2="238" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="5,4"/>
+    <rect x="645" y="230" width="20" height="16" rx="2" fill="#ffffff"/>
+    <text x="655" y="242" fill="#232F3E" font-size="12" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">&#10005;</text>
+
+    <!-- Right pods -->
+    <g>
+      <rect x="532" y="202" width="96" height="56" rx="6" fill="#ffffff"/>
+      <rect x="532" y="202" width="96" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="540" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="554" y="217" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD</text>
+      <text x="580" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+    </g>
+    <g>
+      <rect x="682" y="202" width="96" height="56" rx="6" fill="#ffffff"/>
+      <rect x="682" y="202" width="96" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="690" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="704" y="217" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD</text>
+      <text x="730" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+    </g>
+    <g>
+      <rect x="832" y="202" width="96" height="56" rx="6" fill="#ffffff"/>
+      <rect x="832" y="202" width="96" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="840" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="854" y="217" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD</text>
+      <text x="880" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod C</text>
+    </g>
+
+    <!-- legend -->
+    <line x1="30" y1="590" x2="930" y2="590" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="610" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <line x1="140" y1="606" x2="176" y2="606" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="188" y="610" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Allowed traffic</text>
+
+    <line x1="340" y1="606" x2="376" y2="606" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="5,4"/>
+    <rect x="350" y="598" width="16" height="14" rx="2" fill="#ffffff"/>
+    <text x="358" y="609" fill="#232F3E" font-size="10" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">&#10005;</text>
+    <text x="388" y="610" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Blocked by policy</text>
+
+    <line x1="580" y1="606" x2="616" y2="606" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <text x="628" y="610" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Unrestricted (no policy)</text>
+  </svg>

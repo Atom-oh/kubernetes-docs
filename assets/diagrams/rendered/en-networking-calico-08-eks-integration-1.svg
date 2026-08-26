@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d1-title d1-desc">
+<title id="d1-title">VPC CNI and Calico dataplane on an EKS node</title>
+<desc id="d1-desc">A pod's traffic crosses a veth pair, is routed onto a secondary ENI managed by the VPC CNI's IPAMD while Calico's Felix agent programs iptables/eBPF rules on that same path, before the primary ENI carries traffic out to the VPC subnet and internet gateway.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- ============ ZONES ============ -->
+<rect x="40" y="68" width="880" height="316" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="424" y="72" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="81" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">EKS NODE</text>
+
+<rect x="40" y="440" width="880" height="96" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="424" y="444" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="453" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">AWS VPC</text>
+
+<!-- ============ ARROWS ============ -->
+<!-- POD -> VETH (straight, same y-band but let's do simple horizontal-ish elbow) -->
+<path d="M176,148 H236" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- VETH -> ENI (down-right elbow) -->
+<path d="M312,176 V196 Q312,204 320,204 H492 Q500,204 500,212 V248" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- IPAMD -> ENI (up-left elbow into ENI's right edge) -->
+<path d="M628,304 V300 Q628,292 620,292 H556" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- FELIX -> IPTABLES (down, straight, same x) -->
+<path d="M780,276 V304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- IPTABLES -> VETH (long left elbow, dashed policy path over open canvas, entering VETH's bottom edge) -->
+<path d="M724,332 H420 Q412,332 412,324 V204 Q412,196 404,196 H284 Q276,196 276,188 V176" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="500" y="312" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="523" y="321" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">FILTER</text>
+
+<!-- ENI -> ETH0 (right elbow) -->
+<path d="M556,276 H612" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- ETH0 -> SUBNET (down, into AWS VPC zone) -->
+<path d="M736,332 V440" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- SUBNET -> IGW (right) -->
+<path d="M628,488 H700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- ============ NODES ============ -->
+<!-- POD -->
+<rect x="64" y="120" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="64" y="120" width="112" height="56" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="120" y="144" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod</text>
+<text x="120" y="160" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.0.1.15</text>
+
+<!-- VETH -->
+<rect x="236" y="120" width="76" height="56" rx="6" fill="#ffffff"/>
+<rect x="236" y="120" width="76" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="274" y="152" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">veth</text>
+
+<!-- ENI (focal) -->
+<rect x="444" y="248" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="444" y="248" width="112" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="500" y="272" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Secondary ENI</text>
+<text x="500" y="288" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.0.1.0/24</text>
+
+<!-- IPAMD -->
+<rect x="572" y="304" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="572" y="304" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="628" y="328" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">aws-node</text>
+<text x="628" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">IPAMD</text>
+
+<!-- ETH0 -->
+<rect x="612" y="248" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="612" y="248" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="668" y="272" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">eth0</text>
+<text x="668" y="288" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">primary ENI</text>
+
+<!-- FELIX -->
+<rect x="724" y="220" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="724" y="220" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780" y="244" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Felix Agent</text>
+<text x="780" y="260" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">calico</text>
+
+<!-- IPTABLES -->
+<rect x="724" y="304" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="724" y="304" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780" y="328" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">iptables / eBPF</text>
+<text x="780" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">policy rules</text>
+
+<!-- SUBNET -->
+<rect x="516" y="460" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="516" y="460" width="112" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="572" y="484" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">VPC Subnet</text>
+<text x="572" y="500" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.0.0.0/16</text>
+
+<!-- IGW -->
+<rect x="700" y="460" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="700" y="460" width="112" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="756" y="492" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Internet Gateway</text>
+
+<!-- ============ LEGEND ============ -->
+<line x1="40" y1="562" x2="920" y2="562" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="550" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+<line x1="40" y1="586" x2="72" y2="586" stroke="#EC7211" stroke-width="1.2"/>
+<text x="80" y="590" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">IP address path (VPC CNI)</text>
+
+<line x1="320" y1="586" x2="352" y2="586" stroke="#545B64" stroke-width="1.2"/>
+<text x="360" y="590" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">packet path</text>
+
+<line x1="540" y1="586" x2="572" y2="586" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="580" y="590" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">policy enforcement (Calico)</text>
+
+</svg>

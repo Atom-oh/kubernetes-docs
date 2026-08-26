@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 640" role="img" aria-labelledby="vpccni-calico-title vpccni-calico-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="vpccni-calico-title">VPC CNI + Calico 하이브리드 아키텍처</title>
+  <desc id="vpccni-calico-desc">EKS 클러스터의 Worker Node에서 Pod, VPC CNI, Calico가 각각 EC2 ENI로 트래픽을 전달하고, ENI가 AWS VPC로 라우팅하는 구조를 보여준다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Zones (bg -> zones -> arrows -> nodes) -->
+  <rect x="40" y="40" width="880" height="376" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="44" width="176" height="12" rx="2" fill="#ffffff"/>
+  <text x="144" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AMAZON EKS 클러스터</text>
+
+  <rect x="64" y="156" width="560" height="216" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+  <rect x="80" y="160" width="108" height="12" rx="2" fill="#ffffff"/>
+  <text x="134" y="169" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WORKER NODE</text>
+
+  <!-- Arrows (drawn before nodes) -->
+  <!-- Pod -> ENI -->
+  <path d="M160,256 V266 Q160,274 168,274 H320 Q328,274 328,282 V292" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- VPC CNI -> ENI (aligned x, straight) -->
+  <line x1="328" y1="256" x2="328" y2="292" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Calico -> ENI -->
+  <path d="M496,256 V266 Q496,274 488,274 H336 Q328,274 328,282 V292" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- ENI -> AWS VPC -->
+  <line x1="328" y1="356" x2="328" y2="472" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- Nodes -->
+  <!-- Control Plane (external, unconnected context) -->
+  <rect x="696" y="76" width="184" height="64" rx="6" fill="#ffffff"/>
+  <rect x="696" y="76" width="184" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="0.8" stroke-dasharray="4,4"/>
+  <text x="788" y="102" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Control Plane</text>
+  <text x="788" y="118" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">API Server · etcd (AWS 관리)</text>
+
+  <!-- Pod -->
+  <rect x="88" y="192" width="144" height="64" rx="6" fill="#ffffff"/>
+  <rect x="88" y="192" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="160" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod</text>
+  <text x="160" y="236" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">App + pause container</text>
+
+  <!-- VPC CNI -->
+  <rect x="256" y="192" width="144" height="64" rx="6" fill="#ffffff"/>
+  <rect x="256" y="192" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="328" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VPC CNI</text>
+  <text x="328" y="236" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">aws-node(IPAMD) · CNI plugin</text>
+
+  <!-- Calico (focal) -->
+  <rect x="424" y="192" width="144" height="64" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="424" y="192" width="144" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="496" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Calico</text>
+  <text x="496" y="236" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Felix · iptables/eBPF</text>
+
+  <!-- EC2 ENI (focal hub) -->
+  <rect x="256" y="292" width="144" height="64" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="256" y="292" width="144" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="328" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EC2 ENI</text>
+  <text x="328" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Secondary IP</text>
+
+  <!-- AWS VPC -->
+  <rect x="256" y="472" width="144" height="64" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="256" y="472" width="144" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+  <text x="328" y="500" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS VPC</text>
+  <text x="328" y="516" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Subnet CIDR</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="568" x2="920" y2="568" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="584" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="220" cy="580" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="232" y="584" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Policy 적용 경로 (Calico → ENI)</text>
+  <circle cx="580" cy="580" r="5" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="0.8" stroke-dasharray="2,2"/>
+  <text x="592" y="584" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">AWS 관리 영역 (연결 없음)</text>
+</svg>

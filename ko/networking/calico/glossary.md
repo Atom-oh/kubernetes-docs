@@ -156,17 +156,7 @@ spec:
 ### Tier
 정책 평가 계층입니다. 여러 Tier를 정의하여 정책을 계층화할 수 있으며, 낮은 order의 Tier가 먼저 평가됩니다.
 
-```mermaid
-graph TB
-    Traffic[트래픽] --> T1[Security Tier<br/>order: 100]
-    T1 -->|Pass| T2[Platform Tier<br/>order: 200]
-    T2 -->|Pass| T3[Application Tier<br/>order: 300]
-    T3 --> Pod[Pod]
-
-    T1 -->|Deny| Drop1[Drop]
-    T2 -->|Deny| Drop2[Drop]
-    T3 -->|Deny| Drop3[Drop]
-```
+![트래픽이 Security, Platform, Application Tier를 순서대로 통과하며 각 단계에서 Pass 시 다음 Tier로 넘어가고 Deny 시 Drop으로 이어지는 Calico 정책 평가 흐름을 보여준다.](../../.gitbook/assets/ko-networking-calico-glossary-0.png)
 
 ### HostEndpoint
 호스트(노드) 네트워크 인터페이스를 보호하기 위한 Calico 리소스입니다. Pod가 아닌 호스트 레벨의 트래픽에 정책을 적용합니다.

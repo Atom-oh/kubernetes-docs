@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 800" role="img" aria-labelledby="sec-layers-title sec-layers-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="sec-layers-title">Security Group 대 Calico Policy 계층형 보안 모델</title>
+  <desc id="sec-layers-desc">인터넷에서 들어온 트래픽이 AWS 레벨의 Network ACL과 Security Group, Kubernetes 레벨의 Calico NetworkPolicy와 GlobalNetworkPolicy, Application 레벨의 mTLS와 Authorization을 차례로 거쳐 애플리케이션에 도달하는 계층형 보안 체계를 보여준다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Zones -->
+  <rect x="64" y="132" width="832" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="80" y="136" width="176" height="12" rx="2" fill="#ffffff"/>
+  <text x="168" y="145" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LAYER 1: AWS 레벨</text>
+
+  <rect x="64" y="304" width="832" height="140" rx="8" fill="rgba(255,153,0,0.03)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="80" y="308" width="208" height="12" rx="2" fill="#ffffff"/>
+  <text x="184" y="317" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LAYER 2: KUBERNETES 레벨</text>
+
+  <rect x="64" y="476" width="832" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="80" y="480" width="220" height="12" rx="2" fill="#ffffff"/>
+  <text x="190" y="489" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LAYER 3: APPLICATION 레벨</text>
+
+  <!-- Arrows -->
+  <path d="M480,104 V128 Q480,136 472,136 H318 Q310,136 310,144 V168" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="420" y1="200" x2="560" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M670,232 V278 Q670,286 662,286 H318 Q310,286 310,294 V340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="420" y1="372" x2="560" y2="372" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M670,404 V450 Q670,458 662,458 H318 Q310,458 310,466 V512" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="420" y1="544" x2="560" y2="544" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M670,576 V606 Q670,614 662,614 H488 Q480,614 480,622 V652" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Nodes -->
+  <!-- Internet (input) -->
+  <rect x="390" y="40" width="180" height="64" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="480" y="76" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">인터넷</text>
+
+  <!-- NACL -->
+  <rect x="200" y="168" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="310" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Network ACL</text>
+  <text x="310" y="212" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">서브넷 레벨</text>
+
+  <!-- SG -->
+  <rect x="560" y="168" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="670" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Security Group</text>
+  <text x="670" y="212" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ENI 레벨</text>
+
+  <!-- CNP (focal) -->
+  <rect x="200" y="340" width="220" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="310" y="364" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Calico NetworkPolicy</text>
+  <text x="310" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Pod 레벨</text>
+
+  <!-- GNP (focal) -->
+  <rect x="560" y="340" width="220" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="670" y="364" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">GlobalNetworkPolicy</text>
+  <text x="670" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">클러스터 레벨</text>
+
+  <!-- TLS -->
+  <rect x="200" y="512" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="310" y="536" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">mTLS</text>
+  <text x="310" y="552" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">서비스 간</text>
+
+  <!-- AUTHZ -->
+  <rect x="560" y="512" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="670" y="536" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Authorization</text>
+  <text x="670" y="552" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">애플리케이션</text>
+
+  <!-- App (terminal) -->
+  <rect x="390" y="652" width="180" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+  <text x="480" y="688" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Application</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="748" x2="920" y2="748" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="764" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="220" cy="760" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="232" y="764" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Calico가 추가하는 계층</text>
+  <circle cx="500" cy="760" r="5" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="512" y="764" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">트래픽 진입점 / 도착지</text>
+</svg>

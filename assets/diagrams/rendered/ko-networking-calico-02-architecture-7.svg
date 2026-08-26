@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-calico-02-architecture-7-title ko-networking-calico-02-architecture-7-desc">
+<title id="ko-networking-calico-02-architecture-7-title">외부 네트워크 연동</title>
+<desc id="ko-networking-calico-02-architecture-7-desc">각 워커 노드가 ToR 스위치, Spine 스위치를 거쳐 데이터센터의 Core 라우터까지 eBGP로 계층적으로 연결되는 구조를 보여준다.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="40" width="880" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="52" y="44" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="108.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">KUBERNETES 워커 노드</text>
+<rect x="140" y="240" width="720" height="340" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="152" y="244" width="130" height="12" rx="2" fill="#ffffff"/>
+<text x="217.0" y="253" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">DATA CENTER NETWORK</text><path d="M 180,143 V 200.0 Q 180,208.0 188,208.0 H 259 Q 267,208.0 267,216.0 V 276" fill="none" stroke="#0972D3" stroke-width="1.2" marker-start="url(#arrow-link-start)" marker-end="url(#arrow-link)"/>
+<path d="M 420,143 V 200.0 Q 420,208.0 412,208.0 H 341 Q 333,208.0 333,216.0 V 276" fill="none" stroke="#0972D3" stroke-width="1.2" marker-start="url(#arrow-link-start)" marker-end="url(#arrow-link)"/>
+<path d="M 660.0,143.0 L 660,276" fill="none" stroke="#0972D3" stroke-width="1.2" marker-start="url(#arrow-link-start)" marker-end="url(#arrow-link)"/>
+<path d="M 300,343 V 360.0 Q 300,368.0 308,368.0 H 435 Q 443,368.0 443,376.0 V 396" fill="none" stroke="#0972D3" stroke-width="1.2" marker-start="url(#arrow-link-start)" marker-end="url(#arrow-link)"/>
+<path d="M 660,343 V 360.0 Q 660,368.0 652,368.0 H 525 Q 517,368.0 517,376.0 V 396" fill="none" stroke="#0972D3" stroke-width="1.2" marker-start="url(#arrow-link-start)" marker-end="url(#arrow-link)"/>
+<path d="M 480.0,463.0 L 480,496" fill="none" stroke="#0972D3" stroke-width="1.2" marker-start="url(#arrow-link-start)" marker-end="url(#arrow-link)"/><rect x="70" y="76" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="70" y="76" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="180.0" y="104.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 1</text>
+<text x="180.0" y="119.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">10.0.1.10 · Pods 10.244.1.0/24</text><rect x="310" y="76" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="310" y="76" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420.0" y="104.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 2</text>
+<text x="420.0" y="119.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">10.0.1.11 · Pods 10.244.2.0/24</text><rect x="550" y="76" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="550" y="76" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="104.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 3</text>
+<text x="660.0" y="119.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">10.0.2.10 · Pods 10.244.3.0/24</text><rect x="200" y="276" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="200" y="276" width="200" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="300.0" y="304.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ToR Switch 1</text>
+<text x="300.0" y="319.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">192.168.1.1 · AS 64513</text><rect x="560" y="276" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="560" y="276" width="200" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="660.0" y="304.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ToR Switch 2</text>
+<text x="660.0" y="319.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">192.168.2.1 · AS 64513</text><rect x="370" y="396" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="370" y="396" width="220" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="424.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Spine Switch</text>
+<text x="480.0" y="439.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">AS 64514</text><rect x="370" y="496" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="370" y="496" width="220" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="480.0" y="524.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Core Router</text>
+<text x="480.0" y="539.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">AS 64515</text><line x1="30" y1="572" x2="930" y2="572" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="30" y1="584" x2="46" y2="584" stroke="#0972D3" stroke-width="1.4"/>
+<text x="52" y="587" fill="#545B64" font-size="8" font-family="'Geist Mono',ui-monospace,monospace">eBGP 피어링</text></svg>

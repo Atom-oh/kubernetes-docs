@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cilium-perf-tree-title cilium-perf-tree-desc">
+      <title id="cilium-perf-tree-title">Cilium 성능 튜닝 영역 구조도</title>
+      <desc id="cilium-perf-tree-desc">성능 최적화라는 중심 목표가 커널 매개변수, eBPF 맵, 리소스 할당, 네트워킹 모드라는 네 개의 튜닝 영역으로 나뉘고, 각 영역이 구체적인 조정 항목 목록을 갖는 구조를 보여준다.</desc>
+      <defs>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+        </style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+        </marker>
+      </defs>
+
+      <rect width="960" height="600" fill="#ffffff"/>
+
+      <!-- ===== connectors (drawn before boxes) ===== -->
+      <!-- trunk: root bottom -> bus -->
+      <line x1="480" y1="204" x2="480" y2="244" stroke="#545B64" stroke-width="1"/>
+      <!-- bus: horizontal spine across the four category centers -->
+      <line x1="144" y1="244" x2="816" y2="244" stroke="#545B64" stroke-width="1"/>
+      <!-- drops: bus -> each category top edge -->
+      <line x1="144" y1="244" x2="144" y2="276" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="368" y1="244" x2="368" y2="276" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="592" y1="244" x2="592" y2="276" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="816" y1="244" x2="816" y2="276" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- ===== root node (focal) ===== -->
+      <rect x="380" y="156" width="200" height="48" rx="6" fill="#ffffff"/>
+      <rect x="380" y="156" width="200" height="48" rx="6" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="480" y="184" fill="#232F3E" font-size="12" font-weight="600"
+            font-family="'Amazon Ember','Noto Sans CJK KR','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">성능 최적화</text>
+
+      <!-- ===== category card 1: 커널 매개변수 ===== -->
+      <rect x="44" y="276" width="200" height="164" rx="6" fill="#ffffff"/>
+      <rect x="44" y="276" width="200" height="164" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="60" y="302" fill="#232F3E" font-size="12" font-weight="600"
+            font-family="'Amazon Ember','Noto Sans CJK KR','Helvetica Neue',Helvetica,Arial,sans-serif">커널 매개변수</text>
+      <line x1="60" y1="312" x2="228" y2="312" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="64" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– TCP 매개변수</text>
+      <text x="64" y="360" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– 연결 추적</text>
+      <text x="64" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– ARP 캐시</text>
+      <text x="64" y="416" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– 메모리 관리</text>
+
+      <!-- ===== category card 2: eBPF 맵 ===== -->
+      <rect x="268" y="276" width="200" height="164" rx="6" fill="#ffffff"/>
+      <rect x="268" y="276" width="200" height="164" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="284" y="302" fill="#232F3E" font-size="12" font-weight="600"
+            font-family="'Amazon Ember','Noto Sans CJK KR','Helvetica Neue',Helvetica,Arial,sans-serif">eBPF 맵</text>
+      <line x1="284" y1="312" x2="452" y2="312" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="288" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– 연결 추적 맵</text>
+      <text x="288" y="360" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– NAT 맵</text>
+      <text x="288" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– 정책 맵</text>
+      <text x="288" y="416" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– 엔드포인트 맵</text>
+
+      <!-- ===== category card 3: 리소스 할당 ===== -->
+      <rect x="492" y="276" width="200" height="164" rx="6" fill="#ffffff"/>
+      <rect x="492" y="276" width="200" height="164" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="508" y="302" fill="#232F3E" font-size="12" font-weight="600"
+            font-family="'Amazon Ember','Noto Sans CJK KR','Helvetica Neue',Helvetica,Arial,sans-serif">리소스 할당</text>
+      <line x1="508" y1="312" x2="676" y2="312" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="512" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– CPU 제한</text>
+      <text x="512" y="360" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– 메모리 제한</text>
+      <text x="512" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– Pod 우선순위</text>
+      <text x="512" y="416" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– 노드 어피니티</text>
+
+      <!-- ===== category card 4: 네트워킹 모드 ===== -->
+      <rect x="716" y="276" width="200" height="164" rx="6" fill="#ffffff"/>
+      <rect x="716" y="276" width="200" height="164" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="732" y="302" fill="#232F3E" font-size="12" font-weight="600"
+            font-family="'Amazon Ember','Noto Sans CJK KR','Helvetica Neue',Helvetica,Arial,sans-serif">네트워킹 모드</text>
+      <line x1="732" y1="312" x2="900" y2="312" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="736" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– 직접 라우팅</text>
+      <text x="736" y="360" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– 오버레이</text>
+      <text x="736" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– kube-proxy 대체</text>
+      <text x="736" y="416" fill="#545B64" font-size="9" font-family="'Geist Mono','Noto Sans Mono CJK KR',monospace">– XDP 가속화</text>
+    </svg>

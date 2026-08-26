@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="spine-leaf-title spine-leaf-desc">
+    <title id="spine-leaf-title">Spine-Leaf BGP Integration</title>
+    <desc id="spine-leaf-desc">In a spine-leaf fabric each leaf switch peers with both spine switches for redundancy, and the Kubernetes nodes in each rack peer only with their rack's leaf switch, so BGP routes flow from nodes up through the leaf and spine layers.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- zones -->
+    <rect x="110" y="80" width="720" height="118" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="122" y="84" width="140" height="12" rx="2" fill="#ffffff"/>
+    <text x="192" y="93" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">SPINE LAYER</text>
+
+    <rect x="110" y="246" width="720" height="272" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="230" y="250" width="130" height="12" rx="2" fill="#ffffff"/>
+    <text x="295" y="259" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">LEAF LAYER</text>
+
+    <!-- connectors: spine <-> leaf -->
+    <line x1="200" y1="182" x2="200" y2="278" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <line x1="760" y1="182" x2="760" y2="278" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <path d="M230,182 V222 Q230,230 238,230 H442 Q450,230 450,238 V278"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <path d="M730,182 V202 Q730,210 722,210 H518 Q510,210 510,218 V278"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+
+    <!-- connectors: leaf -> rack nodes -->
+    <line x1="200" y1="342" x2="200" y2="438" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="342" x2="480" y2="438" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="760" y1="342" x2="760" y2="438" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Spine 1 -->
+    <rect x="130" y="118" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="130" y="118" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="200" y="146" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Spine 1</text>
+    <text x="200" y="162" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">AS 65000 · 10.0.0.1</text>
+
+    <!-- Spine 2 -->
+    <rect x="690" y="118" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="690" y="118" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="760" y="146" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Spine 2</text>
+    <text x="760" y="162" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">AS 65000 · 10.0.0.2</text>
+
+    <!-- Leaf 1 -->
+    <rect x="130" y="278" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="130" y="278" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="200" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Leaf 1</text>
+    <text x="200" y="322" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Rack 1 · AS 65001</text>
+
+    <!-- Leaf 2 (focal — shows the dual-spine uplink pattern) -->
+    <rect x="410" y="278" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="410" y="278" width="140" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Leaf 2</text>
+    <text x="480" y="322" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Rack 2 · AS 65002</text>
+
+    <!-- Leaf 3 -->
+    <rect x="690" y="278" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="690" y="278" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="760" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Leaf 3</text>
+    <text x="760" y="322" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Rack 3 · AS 65003</text>
+
+    <!-- Rack nodes -->
+    <rect x="130" y="438" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="130" y="438" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="200" y="466" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">K8s Nodes 1–2</text>
+    <text x="200" y="482" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">AS 64512</text>
+
+    <rect x="410" y="438" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="410" y="438" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="480" y="466" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">K8s Nodes 3–4</text>
+    <text x="480" y="482" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">AS 64512</text>
+
+    <rect x="690" y="438" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="690" y="438" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="760" y="466" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">K8s Nodes 5–6</text>
+    <text x="760" y="482" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">AS 64512</text>
+
+    <!-- editorial aside: Leaf 1 and Leaf 3 also dual-home to the opposite spine, as Leaf 2 shows -->
+    <text x="480" y="536" fill="#545B64" font-size="14" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Every leaf peers with both spines (Leaf 2's dual uplink shown; Leaf 1 and Leaf 3 mirror it).</text>
+
+    <!-- legend -->
+    <line x1="30" y1="558" x2="930" y2="558" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="574" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="220" y1="572" x2="248" y2="572" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="258" y="575" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">eBGP peering (spine↔leaf, leaf↔node)</text>
+
+  </svg>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d2-title d2-desc">
+<title id="d2-title">Pod-to-pod traffic flow through Calico and VPC CNI</title>
+<desc id="d2-desc">Pod A's egress traffic is evaluated by Calico's policy engine on its node before the VPC CNI routes it over an ENI across the AWS VPC to the destination node, where Calico evaluates ingress policy before delivering the packet to Pod B.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- ============ LIFELINES ============ -->
+<line x1="100" y1="80" x2="100" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="310" y1="80" x2="310" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="480" y1="80" x2="480" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="650" y1="80" x2="650" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="860" y1="80" x2="860" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- ============ ACTIVATION BARS ============ -->
+<rect x="306" y="140" width="8" height="120" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="646" y="280" width="8" height="108" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+<!-- ============ MESSAGES ============ -->
+<!-- 1: PodA -> NodeA -->
+<line x1="100" y1="140" x2="310" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="140" y="120" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="200" y="129" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">EGRESS TRAFFIC</text>
+
+<!-- 2: NodeA self-loop -->
+<path d="M314,180 H348 Q354,180 354,186 V198 Q354,204 348,204 H314" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="360" y="186" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="416" y="195" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">EVALUATE POLICY</text>
+
+<!-- 3: NodeA -> VPC -->
+<line x1="314" y1="240" x2="480" y2="240" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="352" y="220" width="90" height="12" rx="2" fill="#ffffff"/>
+<text x="397" y="229" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">ROUTE VIA ENI</text>
+
+<!-- 4: VPC -> NodeB -->
+<line x1="480" y1="280" x2="646" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="512" y="260" width="102" height="12" rx="2" fill="#ffffff"/>
+<text x="563" y="269" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">DELIVER TO ENI</text>
+
+<!-- 5: NodeB self-loop -->
+<path d="M654,320 H688 Q694,320 694,326 V338 Q694,344 688,344 H654" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="700" y="326" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="756" y="335" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">EVALUATE POLICY</text>
+
+<!-- 6: NodeB -> PodB (headline success) -->
+<line x1="654" y1="380" x2="860" y2="380" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="716" y="360" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="757" y="369" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">ALLOW</text>
+
+<!-- ============ ACTORS ============ -->
+<rect x="40" y="40" width="120" height="40" rx="6" fill="#ffffff"/>
+<rect x="40" y="40" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100" y="64" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod A</text>
+
+<rect x="250" y="40" width="120" height="40" rx="6" fill="#ffffff"/>
+<rect x="250" y="40" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="310" y="64" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Node A</text>
+
+<rect x="420" y="40" width="120" height="40" rx="6" fill="#ffffff"/>
+<rect x="420" y="40" width="120" height="40" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="480" y="64" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">AWS VPC</text>
+
+<rect x="590" y="40" width="120" height="40" rx="6" fill="#ffffff"/>
+<rect x="590" y="40" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="650" y="64" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Node B</text>
+
+<rect x="800" y="40" width="120" height="40" rx="6" fill="#ffffff"/>
+<rect x="800" y="40" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="860" y="64" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod B</text>
+
+<!-- ============ LEGEND ============ -->
+<line x1="40" y1="560" x2="920" y2="560" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="548" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+<line x1="40" y1="584" x2="72" y2="584" stroke="#545B64" stroke-width="1.2"/>
+<text x="80" y="588" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">call / hop</text>
+
+<line x1="220" y1="584" x2="252" y2="584" stroke="#EC7211" stroke-width="1.2"/>
+<text x="260" y="588" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">policy allow (headline)</text>
+
+<rect x="500" y="580" width="8" height="8" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<text x="516" y="588" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">Calico/VPC CNI active</text>
+
+</svg>

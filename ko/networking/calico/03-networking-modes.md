@@ -10,34 +10,7 @@ Calico는 다양한 네트워킹 환경에 맞는 여러 모드를 제공합니�
 
 ![Calico 네트워킹 모드 비교](../../.gitbook/assets/calico_networking_modes.png)
 
-```mermaid
-graph TB
-    subgraph "Calico 네트워킹 모드"
-        IPIP[IPIP 모드<br/>IP-in-IP 캡슐화]
-        VXLAN[VXLAN 모드<br/>UDP 캡슐화]
-        DIRECT[Direct 모드<br/>캡슐화 없음]
-        CROSS[CrossSubnet<br/>조건부 캡슐화]
-    end
-
-    subgraph "선택 기준"
-        NET[네트워크 환경]
-        PERF[성능 요구사항]
-        COMPAT[호환성]
-    end
-
-    NET --> IPIP
-    NET --> VXLAN
-    NET --> DIRECT
-    PERF --> DIRECT
-    PERF --> IPIP
-    COMPAT --> VXLAN
-    COMPAT --> CROSS
-
-    style IPIP fill:#ce93d8
-    style VXLAN fill:#64b5f6
-    style DIRECT fill:#81c784
-    style CROSS fill:#ffb74d
-```
+![네트워크 환경, 성능 요구사항, 호환성이라는 세 가지 선택 기준이 모드 선택 지점을 거쳐 IPIP, VXLAN, Direct, CrossSubnet 네 가지 네트워킹 모드로 이어지는 관계를 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-0.png)
 
 ### 모드별 특성 비교표
 
@@ -59,29 +32,7 @@ graph TB
 
 IPIP 모드는 원본 IP 패킷을 새로운 IP 헤더로 캡슐화합니다. Linux 커널의 `tunl0` 인터페이스를 사용합니다.
 
-```mermaid
-graph LR
-    subgraph "Node 1 (10.0.1.10)"
-        POD1[Pod A<br/>10.244.1.5]
-        TUNL1[tunl0<br/>IPIP 인터페이스]
-        ETH1[eth0<br/>10.0.1.10]
-    end
-
-    subgraph "Node 2 (10.0.1.11)"
-        ETH2[eth0<br/>10.0.1.11]
-        TUNL2[tunl0<br/>IPIP 인터페이스]
-        POD2[Pod B<br/>10.244.2.8]
-    end
-
-    POD1 -->|Original Packet| TUNL1
-    TUNL1 -->|Encapsulated| ETH1
-    ETH1 -->|IPIP Protocol 4| ETH2
-    ETH2 -->|Decapsulate| TUNL2
-    TUNL2 -->|Original Packet| POD2
-
-    style TUNL1 fill:#ce93d8
-    style TUNL2 fill:#ce93d8
-```
+![Pod A에서 나온 패킷이 Node 1의 tunl0에서 캡슐화되어 네트워크를 건너 Node 2의 tunl0에서 디캡슐화된 뒤 Pod B로 전달되는 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-1.png)
 
 ### IPIP 패킷 구조
 
@@ -146,33 +97,7 @@ spec:
 
 ### IPIP 패킷 흐름 상세
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A<br/>10.244.1.5
-    participant Felix1 as Felix<br/>(Node 1)
-    participant Tunl1 as tunl0<br/>(Node 1)
-    participant Net as Network
-    participant Tunl2 as tunl0<br/>(Node 2)
-    participant Felix2 as Felix<br/>(Node 2)
-    participant PodB as Pod B<br/>10.244.2.8
-
-    PodA->>Felix1: Packet (Dst: 10.244.2.8)
-    Felix1->>Felix1: Route lookup → via tunl0
-    Felix1->>Tunl1: Forward to tunnel
-
-    Note over Tunl1: IPIP 캡슐화
-    Tunl1->>Tunl1: Add outer IP header<br/>Src: 10.0.1.10<br/>Dst: 10.0.1.11
-
-    Tunl1->>Net: Protocol 4 packet
-    Net->>Tunl2: Deliver to Node 2
-
-    Note over Tunl2: IPIP 디캡슐화
-    Tunl2->>Tunl2: Remove outer IP header
-
-    Tunl2->>Felix2: Original packet
-    Felix2->>Felix2: Policy check
-    Felix2->>PodB: Deliver to Pod B
-```
+![Pod A가 보낸 패킷을 Node 1이 캡슐화해 네트워크로 전달하고, Node 2가 이를 디캡슐화해 Pod B로 전달하기까지 시간 순서를 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-2.png)
 
 ## VXLAN 모드
 
@@ -180,29 +105,7 @@ sequenceDiagram
 
 VXLAN (Virtual Extensible LAN)은 Layer 2 프레임을 UDP 패킷으로 캡슐화합니다. 기본 포트는 UDP 4789입니다.
 
-```mermaid
-graph LR
-    subgraph "Node 1 (10.0.1.10)"
-        POD1[Pod A<br/>10.244.1.5]
-        VXLAN1[vxlan.calico<br/>VTEP]
-        ETH1[eth0<br/>10.0.1.10]
-    end
-
-    subgraph "Node 2 (10.0.1.11)"
-        ETH2[eth0<br/>10.0.1.11]
-        VXLAN2[vxlan.calico<br/>VTEP]
-        POD2[Pod B<br/>10.244.2.8]
-    end
-
-    POD1 -->|Original Packet| VXLAN1
-    VXLAN1 -->|UDP Encap| ETH1
-    ETH1 -->|UDP:4789| ETH2
-    ETH2 -->|UDP Decap| VXLAN2
-    VXLAN2 -->|Original Packet| POD2
-
-    style VXLAN1 fill:#64b5f6
-    style VXLAN2 fill:#64b5f6
-```
+![Pod A에서 나온 패킷이 Node 1의 vxlan.calico VTEP에서 UDP로 캡슐화되어 네트워크를 건너 Node 2의 VTEP에서 디캡슐화된 뒤 Pod B로 전달되는 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-3.png)
 
 ### VXLAN 패킷 구조
 
@@ -311,33 +214,7 @@ spec:
 
 Direct 모드는 캡슐화 없이 순수 IP 라우팅을 사용합니다. BGP로 Pod CIDR을 광고하여 외부 라우터가 패킷을 올바른 노드로 전달합니다.
 
-```mermaid
-graph LR
-    subgraph "Node 1 (10.0.1.10)"
-        POD1[Pod A<br/>10.244.1.5]
-        RT1[Routing Table]
-        ETH1[eth0<br/>10.0.1.10]
-    end
-
-    subgraph "Network Infrastructure"
-        ROUTER[Router/Switch<br/>BGP Peer]
-    end
-
-    subgraph "Node 2 (10.0.1.11)"
-        ETH2[eth0<br/>10.0.1.11]
-        RT2[Routing Table]
-        POD2[Pod B<br/>10.244.2.8]
-    end
-
-    POD1 --> RT1
-    RT1 -->|Native IP| ETH1
-    ETH1 -->|BGP Route| ROUTER
-    ROUTER -->|BGP Route| ETH2
-    ETH2 --> RT2
-    RT2 --> POD2
-
-    style ROUTER fill:#ff9800
-```
+![Pod A의 패킷이 캡슐화 없이 라우팅 테이블과 BGP로 광고된 경로를 통해 라우터를 거쳐 Pod B로 직접 전달되는 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-4.png)
 
 ### Direct 모드 패킷 구조
 
@@ -421,29 +298,7 @@ default via 10.0.1.1 dev eth0
 
 CrossSubnet은 IPIP 또는 VXLAN의 "스마트" 모드입니다. 같은 서브넷의 노드 간에는 Direct 라우팅을, 다른 서브넷 간에는 캡슐화를 사용합니다.
 
-```mermaid
-graph TB
-    subgraph "Subnet A (10.0.1.0/24)"
-        N1[Node 1<br/>10.0.1.10]
-        N2[Node 2<br/>10.0.1.11]
-    end
-
-    subgraph "Subnet B (10.0.2.0/24)"
-        N3[Node 3<br/>10.0.2.10]
-        N4[Node 4<br/>10.0.2.11]
-    end
-
-    N1 <-->|Direct<br/>No Encap| N2
-    N3 <-->|Direct<br/>No Encap| N4
-
-    N1 <-->|IPIP/VXLAN<br/>Encapsulated| N3
-    N2 <-->|IPIP/VXLAN<br/>Encapsulated| N4
-
-    style N1 fill:#81c784
-    style N2 fill:#81c784
-    style N3 fill:#64b5f6
-    style N4 fill:#64b5f6
-```
+![같은 서브넷의 노드 간에는 캡슐화 없이 직접 통신하고, 다른 서브넷의 노드 간에는 IPIP 또는 VXLAN으로 캡슐화하여 통신하는 CrossSubnet 모드의 동작을 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-5.png)
 
 ### CrossSubnet 설정
 
@@ -475,19 +330,7 @@ spec:
 
 ### CrossSubnet 서브넷 판단 로직
 
-```mermaid
-flowchart TD
-    START[패킷 전송] --> CHECK{소스/목적지<br/>같은 서브넷?}
-
-    CHECK -->|Yes| DIRECT[Direct 전송<br/>캡슐화 없음]
-    CHECK -->|No| ENCAP[캡슐화<br/>IPIP/VXLAN]
-
-    DIRECT --> DELIVER[패킷 전달]
-    ENCAP --> DELIVER
-
-    style DIRECT fill:#81c784
-    style ENCAP fill:#ce93d8
-```
+![패킷 전송 시 출발지와 목적지가 같은 서브넷이면 캡슐화 없이 직접 전송하고, 다른 서브넷이면 IPIP 또는 VXLAN으로 캡슐화한 뒤 두 경로 모두 패킷 전달로 합쳐지는 판단 흐름을 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-6.png)
 
 ## 성능 벤치마크
 

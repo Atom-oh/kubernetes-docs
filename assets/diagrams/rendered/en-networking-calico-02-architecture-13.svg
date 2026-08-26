@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 550" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-calico-02-architecture-13-title en-networking-calico-02-architecture-13-desc">
+      <title id="en-networking-calico-02-architecture-13-title">Cross-node egress packet flow</title>
+      <desc id="en-networking-calico-02-architecture-13-desc">Diagram showing a packet leaving one node's pod through its veth and iptables check, IPIP-encapsulated across the physical network switch, and decapsulated and delivered into a pod on a second node.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+
+      </defs>
+      <rect width="960" height="550" fill="#ffffff"/>
+<rect x="160" y="40" width="660" height="150" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="172" y="44" width="124" height="12" rx="2" fill="#ffffff"/>
+<text x="234.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">NODE 1 - 10.0.1.10</text>
+<rect x="160" y="230" width="660" height="110" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="172" y="234" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="228.0" y="243" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">PHYSICAL NETWORK</text>
+<rect x="160" y="380" width="660" height="150" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="172" y="384" width="124" height="12" rx="2" fill="#ffffff"/>
+<text x="234.0" y="393" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">NODE 2 - 10.0.1.11</text>
+<line x1="300" y1="112" x2="348" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="304.0" y="92" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="324.0" y="101" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">SEND</text>
+<line x1="468" y1="112" x2="516" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="472.0" y="92" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="492.0" y="101" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">POLICY</text>
+<line x1="636" y1="112" x2="684" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="640.0" y="92" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="660.0" y="101" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">ENCAP</text>
+<line x1="300" y1="432" x2="348" y2="432" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="304.0" y="412" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="324.0" y="421" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">RECEIVE</text>
+<line x1="468" y1="432" x2="516" y2="432" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="472.0" y="412" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="492.0" y="421" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">DECAP</text>
+<line x1="636" y1="432" x2="684" y2="432" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="640.0" y="412" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="660.0" y="421" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">DELIVER</text>
+<path d="M 744,136 V 190.0 Q 744,198.0 736,198.0 H 508 Q 500,198.0 500,206.0 V 260" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="752" y="184.0" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="802.0" y="193" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">10.0.1.10&gt;.11</text>
+<path d="M 500,308 V 350.0 Q 500,358.0 492,358.0 H 248 Q 240,358.0 240,366.0 V 408" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="508" y="344.0" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="540.0" y="353" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">FORWARD</text>
+<rect x="180" y="88" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="180" y="88" width="120" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="240.0" y="108.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod A</text>
+<text x="240.0" y="124.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">192.168.1.10</text>
+<rect x="348" y="88" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="348" y="88" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="408.0" y="108.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Host NetNS</text>
+<text x="408.0" y="124.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">veth + iptables/eBPF</text>
+<rect x="516" y="88" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="516" y="88" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="576.0" y="108.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">tunl0</text>
+<text x="576.0" y="124.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">IPIP tunnel</text>
+<rect x="684" y="88" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="684" y="88" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="744.0" y="116.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">eth0</text>
+<rect x="420" y="260" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="420" y="260" width="160" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="500.0" y="288.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Network Switch</text>
+<rect x="180" y="408" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="180" y="408" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="240.0" y="436.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">eth0</text>
+<rect x="348" y="408" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="348" y="408" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="408.0" y="428.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">tunl0</text>
+<text x="408.0" y="444.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">IPIP tunnel</text>
+<rect x="516" y="408" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="516" y="408" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="576.0" y="428.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Host NetNS</text>
+<text x="576.0" y="444.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">veth + iptables/eBPF</text>
+<rect x="684" y="408" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="684" y="408" width="120" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="744.0" y="428.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod B</text>
+<text x="744.0" y="444.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">192.168.2.10</text>
+    </svg>

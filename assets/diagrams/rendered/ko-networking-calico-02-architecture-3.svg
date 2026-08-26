@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-calico-02-architecture-3-title ko-networking-calico-02-architecture-3-desc">
+<title id="ko-networking-calico-02-architecture-3-title">Felix iptables 체인 구조</title>
+<desc id="ko-networking-calico-02-architecture-3-desc">Filter 테이블의 INPUT/FORWARD 체인과 NAT 테이블의 POSTROUTING 체인이 각각 cali- 접두 체인을 거쳐 워크로드 정책과 NAT 아웃고잉 규칙으로 분기하는 구조를 보여준다.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="40" width="880" height="344" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="52" y="44" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="96.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">FILTER TABLE</text>
+<rect x="40" y="420" width="880" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="52" y="424" width="70" height="12" rx="2" fill="#ffffff"/>
+<text x="87.0" y="433" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">NAT TABLE</text><path d="M 220,120 L 320,120" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 500,110 H 532.0 Q 540.0,110 540.0,102 V 84.0 Q 540.0,76.0 548.0,76.0 H 580" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 500,129 H 532.0 Q 540.0,129 540.0,137 V 156.0 Q 540.0,164.0 548.0,164.0 H 580" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 220,252 L 320,252" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 500,252 L 580,252" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 760,480 L 820,480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/><rect x="80" y="92" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="80" y="92" width="140" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="150.0" y="124.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">INPUT</text><rect x="320" y="92" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="320" y="92" width="180" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="410.0" y="124.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">cali-INPUT</text><rect x="580" y="48" width="260" height="56" rx="6" fill="#ffffff"/>
+<rect x="580" y="48" width="260" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="710.0" y="80.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">cali-from-host-endpoint</text><rect x="580" y="136" width="260" height="56" rx="6" fill="#ffffff"/>
+<rect x="580" y="136" width="260" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="710.0" y="168.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">cali-from-wl-dispatch</text><rect x="80" y="224" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="80" y="224" width="140" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="150.0" y="256.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">FORWARD</text><rect x="320" y="224" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="320" y="224" width="180" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="410.0" y="256.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">cali-FORWARD</text><rect x="580" y="224" width="260" height="56" rx="6" fill="#ffffff"/>
+<rect x="580" y="224" width="260" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="710.0" y="248.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">워크로드 엔드포인트 체인</text>
+<text x="710.0" y="263.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">→ cali-policy-xxx/yyy</text><rect x="80" y="308" width="260" height="56" rx="6" fill="#ffffff"/>
+<rect x="80" y="308" width="260" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="210.0" y="332.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OUTPUT → cali-OUTPUT</text>
+<text x="210.0" y="347.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">단순 통과 체인</text><rect x="160" y="452" width="260" height="56" rx="6" fill="#ffffff"/>
+<rect x="160" y="452" width="260" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="290.0" y="484.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">PREROUTING → cali-PREROUTING</text><rect x="500" y="452" width="260" height="56" rx="6" fill="#ffffff"/>
+<rect x="500" y="452" width="260" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="630.0" y="484.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">POSTROUTING → cali-POSTROUTING</text><rect x="820" y="452" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="820" y="452" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="900.0" y="484.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">cali-nat-outgoing</text><line x1="30" y1="592" x2="930" y2="592" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="30" y1="604" x2="46" y2="604" stroke="#545B64" stroke-width="1.4"/>
+<text x="52" y="607" fill="#545B64" font-size="8" font-family="'Geist Mono',ui-monospace,monospace">체인 점프(jump)</text></svg>

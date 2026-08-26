@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="pta-title pta-desc">
+      <title id="pta-title">Cilium performance tuning areas</title>
+      <desc id="pta-desc">Tree diagram showing Cilium performance optimization branching into four tuning areas — kernel parameters, eBPF maps, resource allocation, and networking mode — each expanded into its four concrete tunables.</desc>
+      <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+        </marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ===== Connectors (drawn before nodes) ===== -->
+      <!-- Trunk: root down to bus -->
+      <line x1="480" y1="112" x2="480" y2="152" stroke="#545B64" stroke-width="1"/>
+      <!-- Bus: single horizontal run, no overlap with the drops below -->
+      <line x1="132" y1="152" x2="828" y2="152" stroke="#545B64" stroke-width="1"/>
+      <!-- Drops into each category (arrowhead marks the edge terminus) -->
+      <line x1="132" y1="152" x2="132" y2="196" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="364" y1="152" x2="364" y2="196" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="596" y1="152" x2="596" y2="196" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="828" y1="152" x2="828" y2="196" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- ===== Root node: Performance Optimization (focal) ===== -->
+      <rect x="372" y="56" width="216" height="56" rx="6" fill="#ffffff"/>
+      <rect x="372" y="56" width="216" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <rect x="384" y="64" width="34" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+      <text x="401" y="73" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ROOT</text>
+      <text x="480" y="94" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Performance Optimization</text>
+
+      <!-- ===== Category: Kernel Parameters ===== -->
+      <rect x="32" y="200" width="200" height="136" rx="6" fill="#ffffff"/>
+      <rect x="32" y="200" width="200" height="136" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="44" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="58" y="217" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CAT</text>
+      <text x="132" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kernel Parameters</text>
+      <line x1="48" y1="246" x2="216" y2="246" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="52" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">TCP parameters</text>
+      <text x="52" y="282" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Connection tracking</text>
+      <text x="52" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">ARP cache</text>
+      <text x="52" y="318" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Memory management</text>
+
+      <!-- ===== Category: eBPF Maps ===== -->
+      <rect x="264" y="200" width="200" height="136" rx="6" fill="#ffffff"/>
+      <rect x="264" y="200" width="200" height="136" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="276" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="290" y="217" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CAT</text>
+      <text x="364" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">eBPF Maps</text>
+      <line x1="280" y1="246" x2="448" y2="246" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="284" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Connection tracking map</text>
+      <text x="284" y="282" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">NAT map</text>
+      <text x="284" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Policy map</text>
+      <text x="284" y="318" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Endpoint map</text>
+
+      <!-- ===== Category: Resource Allocation ===== -->
+      <rect x="496" y="200" width="200" height="136" rx="6" fill="#ffffff"/>
+      <rect x="496" y="200" width="200" height="136" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="508" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="522" y="217" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CAT</text>
+      <text x="596" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Resource Allocation</text>
+      <line x1="512" y1="246" x2="680" y2="246" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="516" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CPU limits</text>
+      <text x="516" y="282" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Memory limits</text>
+      <text x="516" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Pod priority</text>
+      <text x="516" y="318" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Node affinity</text>
+
+      <!-- ===== Category: Networking Mode ===== -->
+      <rect x="728" y="200" width="200" height="136" rx="6" fill="#ffffff"/>
+      <rect x="728" y="200" width="200" height="136" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="740" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="754" y="217" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CAT</text>
+      <text x="828" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Networking Mode</text>
+      <line x1="744" y1="246" x2="912" y2="246" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="748" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Direct routing</text>
+      <text x="748" y="282" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Overlay</text>
+      <text x="748" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">kube-proxy replacement</text>
+      <text x="748" y="318" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">XDP acceleration</text>
+
+      <!-- ===== Legend strip ===== -->
+      <line x1="32" y1="384" x2="928" y2="384" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="32" y="400" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+      <rect x="32" y="416" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="52" y="425" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Root · optimization goal</text>
+
+      <rect x="260" y="416" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="280" y="425" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Tuning area · 4 tunables each</text>
+
+      <text x="500" y="425" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-style="italic">Every listed tunable is a direct optimization lever, grouped by where it applies.</text>
+    </svg>

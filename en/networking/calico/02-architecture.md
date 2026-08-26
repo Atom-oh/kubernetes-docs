@@ -10,90 +10,7 @@ This section provides an in-depth exploration of Calico's architecture. Understa
 
 ![Calico Architecture](../../.gitbook/assets/calico_architecture.png)
 
-```mermaid
-flowchart TD
-    subgraph KubernetesAPI["Kubernetes Control Plane"]
-        K8sAPI[Kubernetes API Server]
-        ETCD[(etcd)]
-    end
-
-    subgraph CalicoControl["Calico Control Plane"]
-        APIServer[Calico API Server]
-        KubeControllers[kube-controllers]
-        Typha1[Typha Pod 1]
-        Typha2[Typha Pod 2]
-        Typha3[Typha Pod 3]
-    end
-
-    subgraph Node1["Worker Node 1"]
-        Felix1[Felix]
-        BIRD1[BIRD]
-        confd1[confd]
-        IPTables1[iptables/eBPF]
-        Routes1[Routing Table]
-    end
-
-    subgraph Node2["Worker Node 2"]
-        Felix2[Felix]
-        BIRD2[BIRD]
-        confd2[confd]
-        IPTables2[iptables/eBPF]
-        Routes2[Routing Table]
-    end
-
-    subgraph Node3["Worker Node 3"]
-        Felix3[Felix]
-        BIRD3[BIRD]
-        confd3[confd]
-        IPTables3[iptables/eBPF]
-        Routes3[Routing Table]
-    end
-
-    %% Control plane connections
-    K8sAPI <--> ETCD
-    K8sAPI <--> APIServer
-    K8sAPI --> KubeControllers
-    KubeControllers --> K8sAPI
-
-    %% Typha connections
-    K8sAPI --> Typha1
-    K8sAPI --> Typha2
-    K8sAPI --> Typha3
-
-    %% Node 1 connections
-    Typha1 --> Felix1
-    Felix1 --> IPTables1
-    Felix1 --> Routes1
-    Felix1 --> confd1
-    confd1 --> BIRD1
-
-    %% Node 2 connections
-    Typha2 --> Felix2
-    Felix2 --> IPTables2
-    Felix2 --> Routes2
-    Felix2 --> confd2
-    confd2 --> BIRD2
-
-    %% Node 3 connections
-    Typha3 --> Felix3
-    Felix3 --> IPTables3
-    Felix3 --> Routes3
-    Felix3 --> confd3
-    confd3 --> BIRD3
-
-    %% BGP mesh
-    BIRD1 <-.->|BGP| BIRD2
-    BIRD2 <-.->|BGP| BIRD3
-    BIRD1 <-.->|BGP| BIRD3
-
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef calico fill:#FA8320,stroke:#333,stroke-width:1px,color:white
-    classDef node fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class K8sAPI,ETCD k8s
-    class APIServer,KubeControllers,Typha1,Typha2,Typha3 calico
-    class Felix1,Felix2,Felix3,BIRD1,BIRD2,BIRD3,confd1,confd2,confd3,IPTables1,IPTables2,IPTables3,Routes1,Routes2,Routes3 node
-```
+![Architecture diagram showing Kubernetes control plane, Calico control plane (API server, kube-controllers, Typha), and a representative worker node where Felix programs the local data plane and confd/BIRD distribute routes over a BGP mesh between nodes.](../../.gitbook/assets/en-networking-calico-02-architecture-0.png)
 
 ## Felix: The Calico Agent
 
@@ -101,35 +18,7 @@ Felix is the primary Calico agent that runs on every node in the cluster. It is 
 
 ### Felix Responsibilities
 
-```mermaid
-flowchart LR
-    subgraph Felix["Felix Agent"]
-        A[Datastore Watcher]
-        B[Route Manager]
-        C[ACL Manager]
-        D[Interface Manager]
-        E[IPAM Manager]
-    end
-
-    subgraph Outputs["System Configuration"]
-        F[iptables Rules]
-        G[IP Sets]
-        H[Routing Table]
-        I[Network Interfaces]
-    end
-
-    A --> B
-    A --> C
-    A --> D
-    A --> E
-
-    B --> H
-    C --> F
-    C --> G
-    D --> I
-
-    style Felix fill:#FA8320,stroke:#333,color:white
-```
+![Diagram showing Felix's Datastore Watcher fanning out to its route, ACL, interface, and IPAM managers, which in turn program the node's routing table, iptables rules, IP sets, and network interfaces.](../../.gitbook/assets/en-networking-calico-02-architecture-1.png)
 
 ### Core Functions
 
@@ -239,28 +128,7 @@ Felix organizes iptables rules into chains for efficient processing:
 
 ### Felix Data Flow
 
-```mermaid
-sequenceDiagram
-    participant DS as Datastore (via Typha)
-    participant F as Felix
-    participant IPT as iptables/eBPF
-    participant RT as Routing Table
-    participant IF as Network Interface
-
-    DS->>F: Policy Update
-    F->>F: Calculate required rules
-    F->>IPT: Program iptables rules
-    F->>IPT: Update IP sets
-
-    DS->>F: Workload Endpoint Update
-    F->>IF: Configure veth interface
-    F->>RT: Add/update routes
-    F->>IPT: Program endpoint rules
-
-    DS->>F: IPPool Update
-    F->>RT: Update IPIP/VXLAN routes
-    F->>IF: Configure tunnel interface
-```
+![Sequence diagram showing Felix receiving policy, endpoint, and IP pool updates from the datastore and translating each into iptables rules, route table entries, or network interface configuration.](../../.gitbook/assets/en-networking-calico-02-architecture-2.png)
 
 ## BIRD: BGP Routing Daemon
 
@@ -268,46 +136,7 @@ BIRD (BIRD Internet Routing Daemon) is the BGP daemon used by Calico for distrib
 
 ### BIRD in Calico Architecture
 
-```mermaid
-flowchart TD
-    subgraph Cluster["Kubernetes Cluster"]
-        subgraph Node1["Node 1"]
-            BIRD1[BIRD]
-            RT1[Routes: 192.168.1.0/26]
-        end
-
-        subgraph Node2["Node 2"]
-            BIRD2[BIRD]
-            RT2[Routes: 192.168.2.0/26]
-        end
-
-        subgraph Node3["Node 3"]
-            BIRD3[BIRD]
-            RT3[Routes: 192.168.3.0/26]
-        end
-    end
-
-    subgraph External["External Network"]
-        TOR[ToR Switch]
-        Router[Core Router]
-    end
-
-    BIRD1 <-->|iBGP| BIRD2
-    BIRD2 <-->|iBGP| BIRD3
-    BIRD1 <-->|iBGP| BIRD3
-
-    BIRD1 <-->|eBGP| TOR
-    BIRD2 <-->|eBGP| TOR
-    BIRD3 <-->|eBGP| TOR
-
-    TOR <--> Router
-
-    classDef bird fill:#FA8320,stroke:#333,color:white
-    classDef external fill:#326CE5,stroke:#333,color:white
-
-    class BIRD1,BIRD2,BIRD3 bird
-    class TOR,Router external
-```
+![Diagram showing BIRD instances on each node forming a full iBGP mesh to exchange pod routes, then peering over eBGP with the top-of-rack switch and core router to advertise those routes externally.](../../.gitbook/assets/en-networking-calico-02-architecture-3.png)
 
 ### BGP Session Types
 
@@ -386,25 +215,7 @@ spec:
 
 ### Route Propagation Process
 
-```mermaid
-sequenceDiagram
-    participant Pod as New Pod
-    participant Felix as Felix
-    participant BIRD as BIRD (Local)
-    participant Peer as BIRD (Peer Nodes)
-
-    Pod->>Felix: Pod Created
-    Felix->>Felix: Allocate IP from block
-    Felix->>Felix: Program local route
-    Felix->>BIRD: Route available
-
-    BIRD->>BIRD: Add to RIB
-    BIRD->>Peer: BGP UPDATE message
-    Peer->>Peer: Process UPDATE
-    Peer->>Peer: Install in RIB
-    Peer->>Felix: Route update
-    Felix->>Felix: Program route
-```
+![Sequence diagram showing a new pod's route being allocated by Felix, added to BIRD's local routing table, and propagated to peer nodes over a BGP UPDATE so they install it and route Felix accordingly.](../../.gitbook/assets/en-networking-calico-02-architecture-4.png)
 
 ### BIRD Status Commands
 
@@ -436,42 +247,7 @@ confd is a lightweight configuration management tool that watches the Calico dat
 
 ### confd Workflow
 
-```mermaid
-flowchart LR
-    subgraph Datastore["Calico Datastore"]
-        BGPConfig[BGPConfiguration]
-        BGPPeers[BGPPeer]
-        Nodes[Node Resources]
-    end
-
-    subgraph confd["confd Process"]
-        Watcher[Datastore Watcher]
-        Templates[Config Templates]
-        Generator[Config Generator]
-    end
-
-    subgraph BIRD["BIRD Daemon"]
-        Config[bird.cfg]
-        Daemon[BIRD Process]
-    end
-
-    BGPConfig --> Watcher
-    BGPPeers --> Watcher
-    Nodes --> Watcher
-
-    Watcher --> Generator
-    Templates --> Generator
-    Generator --> Config
-    Config --> Daemon
-
-    classDef store fill:#326CE5,stroke:#333,color:white
-    classDef process fill:#FA8320,stroke:#333,color:white
-    classDef bird fill:#00C7B7,stroke:#333,color:white
-
-    class BGPConfig,BGPPeers,Nodes store
-    class Watcher,Templates,Generator process
-    class Config,Daemon bird
-```
+![Diagram showing confd's watcher reacting to BGP configuration, peer, and node resources in the Calico datastore, rendering a bird.cfg file from templates, and handing it to the running BIRD process.](../../.gitbook/assets/en-networking-calico-02-architecture-5.png)
 
 ### confd Template Processing
 
@@ -513,35 +289,7 @@ Typha is a fan-out proxy that sits between the Kubernetes API server and Felix a
 
 ### Why Typha?
 
-```mermaid
-flowchart TD
-    subgraph Without["Without Typha (Small Cluster)"]
-        API1[Kubernetes API]
-        F1[Felix 1]
-        F2[Felix 2]
-        F3[Felix 3]
-
-        API1 -->|Watch| F1
-        API1 -->|Watch| F2
-        API1 -->|Watch| F3
-    end
-
-    subgraph With["With Typha (Large Cluster)"]
-        API2[Kubernetes API]
-        T1[Typha 1]
-        T2[Typha 2]
-        FF1[Felix 1-100]
-        FF2[Felix 101-200]
-
-        API2 -->|Watch| T1
-        API2 -->|Watch| T2
-        T1 -->|Fan-out| FF1
-        T2 -->|Fan-out| FF2
-    end
-
-    style Without fill:#ffcccc,stroke:#333
-    style With fill:#ccffcc,stroke:#333
-```
+![Comparison diagram showing every Felix watching the Kubernetes API directly in a small cluster versus Typha pods fanning out cached updates to hundreds of Felix agents in a large cluster.](../../.gitbook/assets/en-networking-calico-02-architecture-6.png)
 
 ### Typha Scaling Calculation
 
@@ -649,58 +397,7 @@ spec:
 
 ### Typha Fan-out Architecture
 
-```mermaid
-flowchart TD
-    subgraph APIServer["Kubernetes API Server"]
-        Watch1[Watch Stream 1]
-        Watch2[Watch Stream 2]
-    end
-
-    subgraph Typha["Typha Layer"]
-        T1[Typha Pod 1]
-        T2[Typha Pod 2]
-        Cache1[(Local Cache)]
-        Cache2[(Local Cache)]
-    end
-
-    subgraph Nodes["Worker Nodes"]
-        subgraph Group1["Node Group 1"]
-            F1[Felix]
-            F2[Felix]
-            F3[Felix]
-            Fn1[Felix...]
-        end
-        subgraph Group2["Node Group 2"]
-            F4[Felix]
-            F5[Felix]
-            F6[Felix]
-            Fn2[Felix...]
-        end
-    end
-
-    Watch1 --> T1
-    Watch2 --> T2
-    T1 --> Cache1
-    T2 --> Cache2
-
-    Cache1 --> F1
-    Cache1 --> F2
-    Cache1 --> F3
-    Cache1 --> Fn1
-
-    Cache2 --> F4
-    Cache2 --> F5
-    Cache2 --> F6
-    Cache2 --> Fn2
-
-    classDef api fill:#326CE5,stroke:#333,color:white
-    classDef typha fill:#FA8320,stroke:#333,color:white
-    classDef felix fill:#00C7B7,stroke:#333,color:white
-
-    class Watch1,Watch2 api
-    class T1,T2,Cache1,Cache2 typha
-    class F1,F2,F3,F4,F5,F6,Fn1,Fn2 felix
-```
+![Architecture diagram showing two API server watch streams feeding two Typha pods, each caching updates locally and fanning them out to roughly one hundred Felix agents in its node group.](../../.gitbook/assets/en-networking-calico-02-architecture-7.png)
 
 ## kube-controllers: Kubernetes Integration
 
@@ -718,25 +415,7 @@ The calico-kube-controllers pod runs a set of controllers that sync Kubernetes r
 
 ### Controller Reconciliation Loop
 
-```mermaid
-sequenceDiagram
-    participant K8s as Kubernetes API
-    participant KC as kube-controllers
-    participant DS as Calico Datastore
-
-    loop Every reconciliation interval
-        KC->>K8s: List Kubernetes resources
-        KC->>DS: List Calico resources
-        KC->>KC: Compare and calculate diff
-
-        alt Resources out of sync
-            KC->>DS: Create/Update/Delete resources
-            KC->>KC: Log reconciliation action
-        else Resources in sync
-            KC->>KC: No action needed
-        end
-    end
-```
+![Sequence diagram showing kube-controllers repeatedly listing Kubernetes and Calico resources, diffing them, and either writing changes to the Calico datastore or taking no action when the two are already in sync.](../../.gitbook/assets/en-networking-calico-02-architecture-8.png)
 
 ### kube-controllers Configuration
 
@@ -782,30 +461,7 @@ Calico supports two datastore backends for storing its configuration and state.
 
 ### Kubernetes API Datastore (Recommended)
 
-```mermaid
-flowchart LR
-    subgraph Components["Calico Components"]
-        Felix[Felix]
-        Typha[Typha]
-        KC[kube-controllers]
-    end
-
-    subgraph K8s["Kubernetes"]
-        API[API Server]
-        ETCD[(etcd)]
-    end
-
-    Felix <--> Typha
-    Typha <--> API
-    KC <--> API
-    API <--> ETCD
-
-    classDef calico fill:#FA8320,stroke:#333,color:white
-    classDef k8s fill:#326CE5,stroke:#333,color:white
-
-    class Felix,Typha,KC calico
-    class API,ETCD k8s
-```
+![Diagram showing Felix, Typha, and kube-controllers all reading and writing Calico state through the Kubernetes API server, which itself persists to etcd - no separate Calico etcd cluster required.](../../.gitbook/assets/en-networking-calico-02-architecture-9.png)
 
 **Advantages:**
 
@@ -816,30 +472,7 @@ flowchart LR
 
 ### etcd Datastore (Legacy)
 
-```mermaid
-flowchart LR
-    subgraph Components["Calico Components"]
-        Felix[Felix]
-        Typha[Typha]
-        KC[kube-controllers]
-    end
-
-    subgraph Datastores["Datastores"]
-        K8sAPI[K8s API Server]
-        CalicoETCD[(Calico etcd)]
-    end
-
-    Felix <--> Typha
-    Typha <--> CalicoETCD
-    KC <--> K8sAPI
-    KC <--> CalicoETCD
-
-    classDef calico fill:#FA8320,stroke:#333,color:white
-    classDef store fill:#326CE5,stroke:#333,color:white
-
-    class Felix,Typha,KC calico
-    class K8sAPI,CalicoETCD store
-```
+![Diagram showing Felix and Typha reading and writing directly to a dedicated Calico etcd cluster while kube-controllers bridges that cluster with the Kubernetes API server - the legacy, decoupled datastore option.](../../.gitbook/assets/en-networking-calico-02-architecture-10.png)
 
 **Advantages:**
 
@@ -860,105 +493,17 @@ flowchart LR
 
 ## Component Interaction Sequence
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant K8sAPI as Kubernetes API
-    participant KC as kube-controllers
-    participant Typha
-    participant Felix
-    participant BIRD
-    participant DataPlane as iptables/eBPF
-
-    User->>K8sAPI: Create NetworkPolicy
-    K8sAPI->>KC: Policy event
-    KC->>K8sAPI: Create CalicoNetworkPolicy
-
-    K8sAPI->>Typha: Policy update
-    Typha->>Felix: Distribute policy
-    Felix->>Felix: Calculate rules
-    Felix->>DataPlane: Program rules
-
-    User->>K8sAPI: Create Pod
-    K8sAPI->>KC: Pod event
-    KC->>K8sAPI: Create WorkloadEndpoint
-
-    K8sAPI->>Typha: Endpoint update
-    Typha->>Felix: Distribute endpoint
-    Felix->>DataPlane: Program endpoint rules
-    Felix->>BIRD: Update routes
-    BIRD->>BIRD: Distribute via BGP
-```
+![Sequence diagram tracing a NetworkPolicy and a Pod creation from the Kubernetes API through kube-controllers and Typha to Felix, which programs the local data plane and updates BGP routes.](../../.gitbook/assets/en-networking-calico-02-architecture-11.png)
 
 ## Packet Flow Analysis
 
 ### Ingress Packet Flow (Pod-to-Pod, Same Node)
 
-```mermaid
-flowchart TD
-    subgraph SameNode["Single Node"]
-        PodA[Pod A - 192.168.1.10]
-        VethA[veth: caliXXXXXX]
-        IPT[iptables/eBPF]
-        VethB[veth: caliYYYYYY]
-        PodB[Pod B - 192.168.1.11]
-    end
-
-    PodA -->|1. Send packet| VethA
-    VethA -->|2. Enter host namespace| IPT
-    IPT -->|3. Policy check + forward| VethB
-    VethB -->|4. Deliver| PodB
-
-    classDef pod fill:#326CE5,stroke:#333,color:white
-    classDef infra fill:#FA8320,stroke:#333,color:white
-
-    class PodA,PodB pod
-    class VethA,VethB,IPT infra
-```
+![Diagram showing a packet crossing from one pod to another on the same node through their veth interfaces and the host's iptables/eBPF policy check.](../../.gitbook/assets/en-networking-calico-02-architecture-12.png)
 
 ### Egress Packet Flow (Pod-to-Pod, Different Nodes with IPIP)
 
-```mermaid
-flowchart TD
-    subgraph Node1["Node 1 - 10.0.1.10"]
-        PodA[Pod A - 192.168.1.10]
-        VethA[veth: caliXXXXXX]
-        IPT1[iptables/eBPF]
-        Tunl1[tunl0 - IPIP]
-        Eth1[eth0]
-    end
-
-    subgraph Network["Physical Network"]
-        Switch[Network Switch]
-    end
-
-    subgraph Node2["Node 2 - 10.0.1.11"]
-        Eth2[eth0]
-        Tunl2[tunl0 - IPIP]
-        IPT2[iptables/eBPF]
-        VethB[veth: caliYYYYYY]
-        PodB[Pod B - 192.168.2.10]
-    end
-
-    PodA -->|1. Original packet| VethA
-    VethA -->|2. Route lookup| IPT1
-    IPT1 -->|3. Policy check| Tunl1
-    Tunl1 -->|4. IPIP encap| Eth1
-    Eth1 -->|5. Outer: 10.0.1.10->10.0.1.11| Switch
-    Switch -->|6. Forward| Eth2
-    Eth2 -->|7. Receive| Tunl2
-    Tunl2 -->|8. IPIP decap| IPT2
-    IPT2 -->|9. Policy check| VethB
-    VethB -->|10. Deliver| PodB
-
-    classDef pod fill:#326CE5,stroke:#333,color:white
-    classDef infra fill:#FA8320,stroke:#333,color:white
-    classDef network fill:#00C7B7,stroke:#333,color:white
-
-    class PodA,PodB pod
-    class VethA,VethB,IPT1,IPT2,Tunl1,Tunl2,Eth1,Eth2 infra
-    class Switch network
-```
+![Diagram showing a packet leaving one node's pod through its veth and iptables check, IPIP-encapsulated across the physical network switch, and decapsulated and delivered into a pod on a second node.](../../.gitbook/assets/en-networking-calico-02-architecture-13.png)
 
 ### Packet Structure Comparison
 

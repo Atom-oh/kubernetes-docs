@@ -74,43 +74,7 @@ Calico v3.29 delivers significant improvements across networking, security, and 
 
 Calico's architecture consists of several key components working together to provide networking and network security.
 
-```mermaid
-flowchart TD
-    subgraph CP["Control Plane"]
-        A[kube-controllers]
-        B[Typha]
-        C[Calico API Server]
-    end
-
-    subgraph DP["Data Plane - Per Node"]
-        D[Felix]
-        E[BIRD]
-        F[confd]
-        G[iptables/eBPF]
-    end
-
-    subgraph DS["Datastore"]
-        H[Kubernetes API]
-        I[etcd - optional]
-    end
-
-    A -->|Watches| H
-    B -->|Fan-out| D
-    C -->|Aggregates| H
-    D -->|Programs| G
-    D -->|Configures| F
-    F -->|Templates| E
-    E -->|BGP Routes| E
-    H -->|Config| B
-
-    classDef controlPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef dataPlane fill:#FA8320,stroke:#333,stroke-width:1px,color:white
-    classDef datastore fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class A,B,C controlPlane
-    class D,E,F,G dataPlane
-    class H,I datastore
-```
+![Diagram of Calico's architecture: control plane components (kube-controllers, Calico API Server, Typha) reconcile with the Kubernetes API datastore, while Typha fans out state to the per-node Felix agent, which configures confd, iptables/eBPF, and the BIRD BGP daemon that peers with BIRD on other nodes.](../../.gitbook/assets/en-networking-calico-README-0.png)
 
 ### Key Components
 
@@ -144,19 +108,7 @@ Calico supports multiple networking modes to fit different infrastructure requir
 
 ### Mode Selection Guide
 
-```mermaid
-flowchart TD
-    A[Choose Networking Mode] --> B{BGP Available?}
-    B -->|Yes| C{L2 Adjacency?}
-    B -->|No| D[VXLAN Mode]
-    C -->|Yes| E[Direct Mode]
-    C -->|No| F{Cross-Subnet?}
-    F -->|Yes| G[IPIP CrossSubnet]
-    F -->|No| E
-    D --> H[Configure IPPool]
-    E --> H
-    G --> H
-```
+![Decision flowchart for choosing a Calico networking mode: BGP availability and L2 adjacency determine whether traffic uses Direct routing, VXLAN, or IPIP cross-subnet encapsulation, all converging on configuring an IPPool.](../../.gitbook/assets/en-networking-calico-README-1.png)
 
 ## Amazon EKS Integration
 

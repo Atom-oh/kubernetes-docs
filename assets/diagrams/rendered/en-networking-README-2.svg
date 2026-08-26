@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-README-2-title en-networking-README-2-desc">
+<title id="en-networking-README-2-title">Kubernetes Service Types</title>
+<desc id="en-networking-README-2-desc">Client, external, and in-cluster traffic each reach pods through a different Service type: ClusterIP for internal-only calls, NodePort and LoadBalancer for external entry, and ExternalName for DNS mapping to an outside system.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- connectors (drawn before nodes) -->
+<path d="M170,204 H172 Q180,204 180,212 V316" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M440,204 H388 Q380,204 380,212 V316" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M500,204 H572 Q580,204 580,212 V316" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M830,204 H788 Q780,204 780,212 V316" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- sources -->
+<rect x="100" y="140" width="140" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="170" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client</text>
+<text x="170" y="184" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">in-cluster</text>
+
+<rect x="380" y="140" width="180" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="470" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">External Traffic</text>
+<text x="470" y="184" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">internet</text>
+
+<rect x="760" y="140" width="140" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="830" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Application</text>
+<text x="830" y="184" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">in-cluster</text>
+
+<!-- zone -->
+<rect x="80" y="280" width="800" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="92" y="288" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="140" y="297" fill="rgba(35,47,62,0.4)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">SERVICE TYPES</text>
+
+<!-- ClusterIP -->
+<rect x="100" y="316" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="180" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ClusterIP</text>
+<text x="180" y="358" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">internal only</text>
+
+<!-- NodePort -->
+<rect x="300" y="316" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="380" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">NodePort</text>
+<text x="380" y="358" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">30000-32767</text>
+
+<!-- LoadBalancer (focal) -->
+<rect x="500" y="316" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="580" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">LoadBalancer</text>
+<text x="580" y="358" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cloud LB integration</text>
+
+<!-- ExternalName -->
+<rect x="700" y="316" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ExternalName</text>
+<text x="780" y="358" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">DNS CNAME</text>
+
+<text x="480" y="452" fill="#7D8998" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" font-style="italic">LoadBalancer is the usual production entry point for internet traffic on EKS.</text>
+</svg>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 580" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-calico-02-architecture-8-title en-networking-calico-02-architecture-8-desc">
+      <title id="en-networking-calico-02-architecture-8-title">Controller reconciliation loop</title>
+      <desc id="en-networking-calico-02-architecture-8-desc">Sequence diagram showing kube-controllers repeatedly listing Kubernetes and Calico resources, diffing them, and either writing changes to the Calico datastore or taking no action when the two are already in sync.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+
+      </defs>
+      <rect width="960" height="580" fill="#ffffff"/>
+<rect x="60" y="90" width="840" height="410" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<rect x="60" y="90" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="80" y="102" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">LOOP</text>
+<text x="72" y="118" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.04em">[every reconciliation interval]</text>
+<rect x="468" y="260" width="354" height="200" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<rect x="468" y="260" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="488" y="272" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">ALT</text>
+<text x="480" y="288" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.04em">[resources out of sync]</text>
+<line x1="480" y1="388" x2="810" y2="388" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="480" y="410" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.04em">[else: resources in sync]</text>
+<line x1="150" y1="80" x2="150" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="480" y1="80" x2="480" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="810" y1="80" x2="810" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="480" y1="148" x2="150" y2="148" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="234.0" y="128" width="162" height="12" rx="2" fill="#ffffff"/>
+<text x="315.0" y="137" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">List Kubernetes resources</text>
+<line x1="480" y1="180" x2="810" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="576.0" y="160" width="138" height="12" rx="2" fill="#ffffff"/>
+<text x="645.0" y="169" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">List Calico resources</text>
+<path d="M 480,208 H 544 V 228 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="488" y="212.0" width="168" height="12" rx="2" fill="#ffffff"/>
+<text x="572.0" y="221.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Compare and calculate diff</text>
+<line x1="480" y1="320" x2="810" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="549.0" y="300" width="192" height="12" rx="2" fill="#ffffff"/>
+<text x="645.0" y="309" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Create/Update/Delete resources</text>
+<path d="M 480,348 H 544 V 368 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="488" y="352.0" width="162" height="12" rx="2" fill="#ffffff"/>
+<text x="569.0" y="361.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Log reconciliation action</text>
+<path d="M 480,424 H 544 V 444 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="488" y="428.0" width="108" height="12" rx="2" fill="#ffffff"/>
+<text x="542.0" y="437.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">No action needed</text>
+<rect x="80" y="40" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="150.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kubernetes API</text>
+<rect x="400" y="40" width="160" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-controllers</text>
+<rect x="740" y="40" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="810.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Calico Datastore</text>
+    </svg>

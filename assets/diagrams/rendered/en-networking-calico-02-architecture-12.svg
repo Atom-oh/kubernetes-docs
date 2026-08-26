@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-calico-02-architecture-12-title en-networking-calico-02-architecture-12-desc">
+      <title id="en-networking-calico-02-architecture-12-title">Same-node ingress packet flow</title>
+      <desc id="en-networking-calico-02-architecture-12-desc">Diagram showing a packet crossing from one pod to another on the same node through their veth interfaces and the host's iptables/eBPF policy check.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+
+      </defs>
+      <rect width="960" height="220" fill="#ffffff"/>
+<rect x="20" y="40" width="920" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="32" y="44" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="73.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">SINGLE NODE</text>
+<line x1="164" y1="112" x2="236" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="180.0" y="92" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="200.0" y="101" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">SEND</text>
+<line x1="360" y1="112" x2="432" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="364.0" y="92" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="396.0" y="101" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">ENTER NS</text>
+<line x1="556" y1="112" x2="628" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="566.0" y="92" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="592.0" y="101" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">POLICY</text>
+<line x1="752" y1="112" x2="824" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="760.0" y="92" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="788.0" y="101" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">DELIVER</text>
+<rect x="40" y="88" width="124" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="88" width="124" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="102.0" y="108.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod A</text>
+<text x="102.0" y="124.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">192.168.1.10</text>
+<rect x="236" y="88" width="124" height="48" rx="6" fill="#ffffff"/>
+<rect x="236" y="88" width="124" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="298.0" y="108.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">veth</text>
+<text x="298.0" y="124.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">caliXXXXXX</text>
+<rect x="432" y="88" width="124" height="48" rx="6" fill="#ffffff"/>
+<rect x="432" y="88" width="124" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="494.0" y="116.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">iptables/eBPF</text>
+<rect x="628" y="88" width="124" height="48" rx="6" fill="#ffffff"/>
+<rect x="628" y="88" width="124" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="690.0" y="108.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">veth</text>
+<text x="690.0" y="124.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">caliYYYYYY</text>
+<rect x="824" y="88" width="124" height="48" rx="6" fill="#ffffff"/>
+<rect x="824" y="88" width="124" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="886.0" y="108.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod B</text>
+<text x="886.0" y="124.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">192.168.1.11</text>
+    </svg>
