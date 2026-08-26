@@ -15,24 +15,7 @@ Historically, Kafka relied on a separate ZooKeeper ensemble to manage cluster me
 
 Strimzi wraps all of these components as Kubernetes resources. You declare the desired state through CRDs like `Kafka` and `KafkaNodePool`, and the Strimzi Operator reconciles that state by creating and managing broker/controller Pods, PVCs, Services, and Secrets.
 
-```mermaid
-graph TB
-    U[Operator/User] -->|Apply Kafka / KafkaNodePool CR| API[Kubernetes API Server]
-    API --> OP[Strimzi Operator]
-
-    OP -->|Creates/reconciles| P1[Broker Pod 1]
-    OP -->|Creates/reconciles| P2[Broker Pod 2]
-    OP -->|Creates/reconciles| P3[Controller Pod]
-
-    P1 --> V1[EBS gp3 PVC]
-    P2 --> V2[EBS gp3 PVC]
-    P3 --> V3[EBS gp3 PVC]
-
-    style OP fill:#4fc3f7
-    style P1 fill:#81c784
-    style P2 fill:#81c784
-    style P3 fill:#ffb74d
-```
+![A user applies a Kafka/KafkaNodePool custom resource to the Kubernetes API server, which the Strimzi operator watches and reconciles into broker and controller pods, each backed by its own EBS gp3 persistent volume claim.](../../.gitbook/assets/en-data-on-eks-kafka-README-0.png)
 
 ## Deep Dive Table of Contents
 

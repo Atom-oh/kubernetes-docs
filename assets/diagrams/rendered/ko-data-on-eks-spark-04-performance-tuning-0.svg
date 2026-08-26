@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+<title id="dtitle">Spark 동적 Executor 할당과 Karpenter 자동 스케일링 루프</title>
+<desc id="ddesc">대기 중인 Spark 태스크가 Executor 파드 요청을 유발하고, Karpenter가 새 노드를 프로비저닝해 파드를 스케줄한 뒤, 태스크가 끝나면 DRA가 유휴 Executor를 해제하고 Karpenter가 빈 노드를 회수하여 다시 대기 상태로 돌아오는 8단계 순환 과정을 보여준다.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#7D8998"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- Header -->
+<text x="68" y="32" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">AUTOSCALING LOOP</text>
+<text x="68" y="58" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Spark DRA &amp; Karpenter 노드 자동 스케일링 루프</text>
+<text x="68" y="78" fill="#545B64" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">태스크 대기부터 유휴 노드 회수까지, 8단계로 반복되는 스케일 아웃·인 순환</text>
+
+<!-- ============ ARROWS (drawn before boxes) ============ -->
+
+<!-- A -> B (row1, straight horizontal, y=170) -->
+<path d="M 208 170 L 296 170" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- B -> C -->
+<path d="M 436 170 L 524 170" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- C -> D -->
+<path d="M 664 170 L 752 170" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- D -> E (straight vertical, x=822) -->
+<path d="M 822 202 L 822 398" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- E -> F (row2, right to left) -->
+<path d="M 752 430 L 664 430" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- F -> G -->
+<path d="M 524 430 L 436 430" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- G -> H -->
+<path d="M 296 430 L 208 430" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- H -> A (dashed, straight vertical, x=138, upward loop-back) -->
+<path d="M 138 398 L 138 202" fill="none" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-soft)"/>
+
+<!-- ============ ARROW LABELS ============ -->
+
+<!-- A->B label: "DRA 백로그 감지" centered at x=252,y=170 -->
+<rect x="212" y="150" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="252" y="159" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">DRA 백로그 감지</text>
+
+<!-- C->D label: "스케줄 불가" centered at x=708,y=170 -->
+<rect x="668" y="150" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="708" y="159" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">스케줄 불가</text>
+
+<!-- E->F label: "태스크 소진·유휴" centered at x=708,y=430 -->
+<rect x="668" y="450" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="708" y="459" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0em">소진·유휴</text>
+
+<!-- G->H label: "쿨다운 경과" centered at x=252,y=430 -->
+<rect x="212" y="450" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="252" y="459" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">쿨다운 경과</text>
+
+<!-- ============ NODES ============ -->
+<!-- Node template: mask rect, styled rect, tag box, tag text, 2-line name -->
+
+<!-- A: col1 row1 (68,138)-(208,202) -->
+<rect x="68" y="138" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="68" y="138" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="76" y="144" width="52" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="102" y="153" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SPARK</text>
+<text x="138" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">대기 중</text>
+<text x="138" y="188" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Spark 태스크</text>
+
+<!-- B: col2 row1 (296,138)-(436,202) -->
+<rect x="296" y="138" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="296" y="138" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="304" y="144" width="52" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="330" y="153" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SPARK</text>
+<text x="366" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Executor 파드</text>
+<text x="366" y="188" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">추가 요청</text>
+
+<!-- C: col3 row1 (524,138)-(664,202) -->
+<rect x="524" y="138" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)"/>
+<rect x="524" y="138" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="532" y="144" width="52" height="12" rx="2" fill="transparent" stroke="#545B64" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="558" y="153" fill="#545B64" fill-opacity="0.9" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">K8S</text>
+<text x="594" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">신규 파드</text>
+<text x="594" y="188" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pending</text>
+
+<!-- D: col4 row1 (752,138)-(892,202) FOCAL -->
+<rect x="752" y="138" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="752" y="138" width="140" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<rect x="760" y="144" width="64" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.6" stroke-width="0.8"/>
+<text x="792" y="153" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">KARPENTER</text>
+<text x="822" y="172" fill="#232F3E" font-size="12" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">신규 노드</text>
+<text x="822" y="188" fill="#232F3E" font-size="12" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프로비저닝</text>
+
+<!-- E: col4 row2 (752,398)-(892,462) -->
+<rect x="752" y="398" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)"/>
+<rect x="752" y="398" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="760" y="404" width="52" height="12" rx="2" fill="transparent" stroke="#545B64" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="786" y="413" fill="#545B64" fill-opacity="0.9" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">K8S</text>
+<text x="822" y="432" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">파드 스케줄</text>
+<text x="822" y="448" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">완료 &amp; 실행</text>
+
+<!-- F: col3 row2 (524,398)-(664,462) -->
+<rect x="524" y="398" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="524" y="398" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="532" y="404" width="40" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="552" y="413" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">DRA</text>
+<text x="594" y="432" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">유휴 Executor</text>
+<text x="594" y="448" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">파드 해제</text>
+
+<!-- G: col2 row2 (296,398)-(436,462) -->
+<rect x="296" y="398" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)"/>
+<rect x="296" y="398" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="304" y="404" width="52" height="12" rx="2" fill="transparent" stroke="#545B64" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="330" y="413" fill="#545B64" fill-opacity="0.9" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">K8S</text>
+<text x="366" y="432" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">노드</text>
+<text x="366" y="448" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">비어버림</text>
+
+<!-- H: col1 row2 (68,398)-(208,462) -->
+<rect x="68" y="398" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="68" y="398" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="76" y="404" width="64" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="108" y="413" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">KARPENTER</text>
+<text x="138" y="432" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">노드</text>
+<text x="138" y="448" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">회수</text>
+
+<!-- ============ LEGEND ============ -->
+<line x1="68" y1="536" x2="892" y2="536" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="68" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+<line x1="180" y1="552" x2="220" y2="552" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<text x="228" y="556" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">스케일 아웃 흐름</text>
+
+<line x1="424" y1="552" x2="464" y2="552" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-soft)"/>
+<text x="472" y="556" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">쿨다운 후 스케일 인 (재시작)</text>
+
+</svg>

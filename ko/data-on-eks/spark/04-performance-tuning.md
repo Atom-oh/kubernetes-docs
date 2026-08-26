@@ -179,17 +179,7 @@ DRA와 Karpenter를 함께 쓰기 시작하면, 이 둘이 서로 다른 신호�
 * **Spark의 DRA**는 자신이 파악하고 있는 대기 중인 **태스크** 물량을 보고 Executor **파드**를 몇 개나 요청/해제할지 결정합니다 — 이는 Spark 내부 판단으로, 밑단의 노드 상태는 전혀 모릅니다.
 * **Karpenter**는 스케줄되지 못한 **파드**(또는 비어버린 노드)를 감시하며 EC2 용량을 늘릴지 줄일지 결정합니다 — 이는 노드 단위 판단으로, Spark의 태스크 백로그는 전혀 모르고 DRA가 이미 만들어 놓은 파드만 봅니다.
 
-```mermaid
-flowchart LR
-    A[대기 중인 Spark 태스크] -->|DRA가 백로그 감지| B[Spark가 Executor<br/>파드 추가 요청]
-    B --> C[신규 Executor 파드<br/>Pending 상태]
-    C -->|스케줄 불가| D[Karpenter가<br/>신규 EC2 노드 프로비저닝]
-    D --> E[Executor 파드<br/>스케줄 완료 & 실행]
-    E -->|태스크 소진, Executor 유휴| F[DRA가 유휴<br/>Executor 파드 해제]
-    F --> G[노드가 비어버림]
-    G -->|consolidateAfter 경과| H[Karpenter가<br/>노드 회수]
-    H -.-> A
-```
+![대기 중인 Spark 태스크가 Executor 추가 요청을 유발하면 Karpenter가 새 노드를 프로비저닝해 파드를 스케줄·실행하고, 태스크가 끝나면 DRA가 유휴 Executor를 해제하고 Karpenter가 빈 노드를 회수하여 다시 대기 상태로 돌아오는 자동 스케일링 순환을 보여준다.](../../.gitbook/assets/ko-data-on-eks-spark-04-performance-tuning-0.png)
 
 이 관계를 알고 있어야 하는 실질적인 이유는, 한쪽 루프만 튜닝하면 두 루프의 동작이 서로 어긋난다는 점입니다. DRA의 `spark.kubernetes.allocation.batch.size`가 Karpenter의 `NodePool`이 맞춰줄 수 있는 속도보다 빠르게 Executor를 요청하면, 새 Executor 파드는 예상보다 오래 `Pending` 상태로 남습니다. 반대로 Karpenter의 `consolidateAfter`([NodePool 설정](../../autoscaling/02-karpenter.md#nodepool) 참고)를 너무 짧게 잡고 DRA의 `spark.dynamicAllocation.executorIdleTimeout`은 상대적으로 길게 두면, DRA가 아직 해제하지 않은 Executor가 남아 있는 노드를 Karpenter가 통합(consolidate)하려다 3절의 PodDisruptionBudget/Decommission 경로와 충돌할 수 있습니다. 기본 원칙으로는 Karpenter의 통합 지연 시간을 DRA의 Executor 유휴 타임아웃보다 다소 길게 잡아, DRA가 노드를 먼저 비워둔 뒤에 Karpenter가 회수를 시도하도록 순서를 맞추는 것이 안전합니다.
 

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="chart" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dra-karpenter-title dra-karpenter-desc">
+  <title id="dra-karpenter-title">The DRA + Karpenter feedback loop</title>
+  <desc id="dra-karpenter-desc">A racetrack-shaped cycle diagram showing how Spark Dynamic Resource Allocation and Karpenter cooperate to scale Spark executor pods and EC2 nodes up, then back down, forming a repeating loop.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#7D8998"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="32" class="mono" fill="#7D8998" font-size="8" letter-spacing="0.18em">SPARK ON EKS &#8226; ELASTICITY</text>
+  <text x="40" y="56" font-size="20" font-weight="700" fill="#232F3E">The DRA + Karpenter feedback loop</text>
+  <text x="40" y="76" font-size="12" fill="#545B64" font-style="italic">Executor demand drives node supply, then idle time drains both back down.</text>
+
+  <!-- ===== Arrows (drawn before boxes) ===== -->
+
+  <!-- Row 1: A -> B -> C -> D (left to right) -->
+  <path d="M 200 160 H 280" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <path d="M 440 160 H 520" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <path d="M 680 160 H 752" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- D -> E: same x, straight vertical -->
+  <path d="M 840 192 V 368" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Row 2: E -> F -> G -> H (right to left) -->
+  <path d="M 760 400 H 688" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <path d="M 520 400 H 440" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <path d="M 280 400 H 208" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- H -> A: dashed loop restart, same x, straight vertical upward -->
+  <path d="M 120 368 V 200" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-soft)"/>
+
+  <!-- ===== Arrow label masks + text ===== -->
+
+  <!-- A-B: DRA BACKLOG -->
+  <rect x="204" y="140" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="240" y="149" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">DRA BACKLOG</text>
+
+  <!-- C-D: UNSCHEDULABLE -->
+  <rect x="682" y="140" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="720" y="149" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">UNSCHEDULABLE</text>
+
+  <!-- E-F: EXECUTORS IDLE -->
+  <rect x="680" y="380" width="80" height="12" rx="2" fill="#ffffff"/>
+  <text x="720" y="389" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">EXECUTORS IDLE</text>
+
+  <!-- G-H: CONSOLIDATE -->
+  <rect x="204" y="380" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="240" y="389" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">CONSOLIDATE</text>
+
+  <!-- ===== Nodes ===== -->
+
+  <!-- A: Pending Spark tasks -->
+  <rect x="40" y="128" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="40" y="128" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="120" y="164" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Pending Spark tasks</text>
+
+  <!-- B: Spark requests more executor pods -->
+  <rect x="280" y="128" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="280" y="128" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="360" y="156" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Spark requests</text>
+  <text x="360" y="172" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">more executor pods</text>
+
+  <!-- C: New executor pods, pending scheduling -->
+  <rect x="520" y="128" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="520" y="128" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="600" y="156" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">New executor pods</text>
+  <text x="600" y="172" text-anchor="middle" font-size="9" class="mono" fill="#545B64">pending scheduling</text>
+
+  <!-- D: Karpenter provisions new EC2 node (FOCAL) -->
+  <rect x="760" y="128" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="760" y="128" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="840" y="156" text-anchor="middle" font-size="12" font-weight="600" fill="#EC7211">Karpenter provisions</text>
+  <text x="840" y="172" text-anchor="middle" font-size="12" font-weight="600" fill="#EC7211">new EC2 node</text>
+
+  <!-- E: Executor pods scheduled and running -->
+  <rect x="760" y="368" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="760" y="368" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="840" y="396" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Executor pods</text>
+  <text x="840" y="412" text-anchor="middle" font-size="9" class="mono" fill="#545B64">scheduled &amp; running</text>
+
+  <!-- F: DRA releases idle executor pods -->
+  <rect x="520" y="368" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="520" y="368" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="600" y="396" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">DRA releases</text>
+  <text x="600" y="412" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">idle executor pods</text>
+
+  <!-- G: Node becomes empty -->
+  <rect x="280" y="368" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="280" y="368" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="360" y="404" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Node becomes empty</text>
+
+  <!-- H: Karpenter deprovisions the node (FOCAL) -->
+  <rect x="40" y="368" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="40" y="368" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="120" y="396" text-anchor="middle" font-size="12" font-weight="600" fill="#EC7211">Karpenter deprovisions</text>
+  <text x="120" y="412" text-anchor="middle" font-size="12" font-weight="600" fill="#EC7211">the node</text>
+
+  <!-- ===== Legend ===== -->
+  <line x1="40" y1="472" x2="920" y2="472" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="492" class="mono" font-size="8" letter-spacing="0.14em" fill="#545B64">LEGEND</text>
+
+  <rect x="180" y="484" width="18" height="18" rx="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="206" y="496" font-size="11" fill="#232F3E">Karpenter node action</text>
+
+  <line x1="420" y1="493" x2="452" y2="493" stroke="#7D8998" stroke-width="1" stroke-dasharray="5,4"/>
+  <text x="462" y="497" font-size="11" fill="#232F3E">Loop restarts on next backlog</text>
+</svg>

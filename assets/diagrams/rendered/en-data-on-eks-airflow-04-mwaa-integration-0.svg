@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mwaa-eks-title mwaa-eks-desc">
+  <title id="mwaa-eks-title">MWAA to EKS pod execution flow</title>
+  <desc id="mwaa-eks-desc">A DAG running on the AWS-managed MWAA scheduler uses the KubernetesPodOperator with in_cluster=False and a synced kube_config.yaml to reach across into a separate EKS cluster and create a pod there, authorized by an eksctl iamidentitymapping that grants the MWAA execution role access to the EKS cluster's RBAC.</desc>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- ================= ZONES (bg -> zones -> arrows -> nodes) ================= -->
+  <!-- AWS-managed MWAA zone -->
+  <rect x="40" y="144" width="440" height="256" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="52" y="148" width="300" height="14" rx="2" fill="#ffffff"/>
+  <text x="56" y="158" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.14em">AWS-MANAGED MWAA ENVIRONMENT</text>
+
+  <!-- EKS zone -->
+  <rect x="560" y="144" width="360" height="256" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="572" y="148" width="264" height="14" rx="2" fill="#ffffff"/>
+  <text x="576" y="158" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.14em">YOUR EKS CLUSTER — SEPARATE INFRA</text>
+
+  <!-- ================= ARROWS ================= -->
+
+  <!-- S3 -> AWS zone : synced into -->
+  <path d="M190,104 V144" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="140" y="114" width="100" height="14" fill="#ffffff"/>
+  <text x="190" y="124" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">SYNCED INTO</text>
+
+  <!-- SCH -> DAG : runs -->
+  <path d="M166,240 H252 Q260,240 260,248 V264" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="264" y="242" width="34" height="14" fill="#ffffff"/>
+  <text x="281" y="252" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">RUNS</text>
+
+  <!-- IAM -> EKS zone : grants access -->
+  <path d="M740,104 V144" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="662" y="112" width="156" height="26" fill="#ffffff"/>
+  <text x="740" y="122" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">GRANTS ROLE ACCESS</text>
+  <text x="740" y="133" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">TO EKS RBAC</text>
+
+  <!-- DAG -> POD : creates pod via kube_config.yaml (primary / accent) -->
+  <path d="M444,320 H524 Q532,320 532,312 V280 Q532,272 540,272 H620" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="486" y="288" width="92" height="26" fill="#ffffff"/>
+  <text x="532" y="298" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">CREATES POD VIA</text>
+  <text x="532" y="309" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">KUBE_CONFIG.YAML</text>
+
+  <!-- ================= NODES ================= -->
+
+  <!-- S3 bucket (store) -->
+  <rect x="80" y="48" width="220" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="190" y="70" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">S3 bucket</text>
+  <text x="190" y="86" fill="#545B64" font-size="9" class="mono" text-anchor="middle">DAGs + kube_config.yaml</text>
+
+  <!-- IAM identity mapping (external config) -->
+  <rect x="620" y="48" width="240" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="740" y="66" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">eksctl iamidentitymapping</text>
+  <text x="740" y="80" fill="#545B64" font-size="9" class="mono" text-anchor="middle">MWAA execution role → RBAC</text>
+  <text x="740" y="92" fill="#545B64" font-size="9" class="mono" text-anchor="middle">(cluster auth config)</text>
+
+  <!-- MWAA scheduler/workers -->
+  <rect x="76" y="176" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="166" y="204" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">MWAA scheduler</text>
+  <text x="166" y="220" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">/ workers</text>
+
+  <!-- DAG (focal) -->
+  <rect x="76" y="264" width="368" height="112" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="260" y="288" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">DAG: KubernetesPodOperator</text>
+  <text x="260" y="308" fill="#545B64" font-size="9" class="mono" text-anchor="middle">in_cluster=False</text>
+  <text x="260" y="324" fill="#545B64" font-size="9" class="mono" text-anchor="middle">config_file=kube_config.yaml</text>
+  <text x="260" y="344" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">POINTS OUT-OF-CLUSTER, AT A SEPARATE EKS CLUSTER</text>
+
+  <!-- Pod created by operator -->
+  <rect x="620" y="240" width="240" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="740" y="268" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod created by</text>
+  <text x="740" y="284" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">the operator</text>
+
+</svg>

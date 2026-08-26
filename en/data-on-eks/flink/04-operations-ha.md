@@ -144,14 +144,7 @@ The Flink Kubernetes Operator's built-in autoscaler (Part 2) and Karpenter form 
 * **The Flink autoscaler** watches per-vertex metrics (backpressure, busy time, lag) and decides how much **parallelism** each operator in the job graph needs — a job-internal decision with no knowledge of the underlying nodes.
 * **Karpenter** watches for TaskManager pods that can't be scheduled (or nodes that have gone empty) and decides whether to provision or deprovision EC2 capacity — a node-level decision with no knowledge of *why* those pods exist, only that they do.
 
-```mermaid
-flowchart TB
-    A[Per-vertex metrics:<br/>backpressure, busy time, lag] -->|Autoscaler evaluates| B[Autoscaler changes<br/>vertex parallelism]
-    B -->|parallelism increases| C[More TaskManager<br/>pods requested]
-    C -->|unschedulable| D[Karpenter provisions<br/>new EC2 node]
-    B -->|parallelism decreases| E[TaskManager pods<br/>removed]
-    E -->|node goes empty| F[Karpenter consolidates<br/>and terminates node]
-```
+![Flowchart showing per-vertex Flink metrics feeding an autoscaler that changes vertex parallelism, which either triggers Karpenter to provision a new EC2 node when more TaskManager pods become unschedulable, or triggers Karpenter to consolidate and terminate a node once TaskManager pods are removed and it goes empty.](../../.gitbook/assets/en-data-on-eks-flink-04-operations-ha-0.png)
 
 The job-level decision (parallelism) always happens first; the node-level decision (EC2 capacity) only reacts to its consequences — pending or empty pods. Tuning one loop without the other produces the same kind of mismatch the Spark performance-tuning document warns about: if the Flink autoscaler scales parallelism up faster than Karpenter's [`NodePool`](../../autoscaling/02-karpenter.md#nodepool) can provision matching nodes, new TaskManager pods sit `Pending` longer than expected, stalling the very scale-up the autoscaler triggered. Keeping Karpenter's consolidation delay comfortably longer than the autoscaler's own stabilization window avoids the opposite problem — Karpenter reclaiming a node the autoscaler is about to need again.
 

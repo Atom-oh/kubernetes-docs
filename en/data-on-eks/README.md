@@ -19,25 +19,7 @@ Tools in the data platform space generally fall into four categories, each solvi
 | **Orchestration** | Define dependencies and schedules across data jobs and manage their execution | Apache Airflow | Available — [Airflow on EKS](airflow/README.md) |
 | **Stream Processing** | Perform real-time aggregation, transformation, and stateful computation on streaming data | Apache Flink | Available — [Flink on EKS](flink/README.md) |
 
-```mermaid
-graph LR
-    subgraph "Data on EKS"
-        K[Kafka<br/>Streaming]
-        S[Spark<br/>Batch & Analytics]
-        A[Airflow<br/>Orchestration]
-        F[Flink<br/>Stream Processing]
-    end
-
-    K -->|Feeds events| F
-    K -->|Lands raw data| S
-    A -->|Schedules jobs| S
-    A -->|Schedules jobs| K
-
-    style K fill:#4fc3f7
-    style S fill:#81c784
-    style A fill:#ffb74d
-    style F fill:#ce93d8
-```
+![Airflow orchestrates scheduled jobs on both Kafka and Spark, while Kafka streams events into Flink for stream processing and lands raw data into Spark for batch analytics.](../.gitbook/assets/en-data-on-eks-README-0.png)
 
 ## Why Run These on EKS
 

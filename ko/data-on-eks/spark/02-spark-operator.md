@@ -172,16 +172,7 @@ spec:
 
 ## 동작 방식
 
-```mermaid
-graph LR
-    A[kubectl apply<br/>SparkApplication CR] --> B[Operator Controller가<br/>CR 감시]
-    B --> C[Mutating Admission Webhook이<br/>driver/executor pod 커스터마이징 주입]
-    C --> D[Operator가<br/>Driver Pod 생성]
-    D --> E[Driver가<br/>Executor Pod 요청]
-    E --> F[Spark 작업 실행]
-    F --> G[Operator가 진행 상황을<br/>CR .status에 기록]
-    G --> B
-```
+![kubectl apply로 생성된 SparkApplication CR을 Operator Controller가 감시하며 Webhook 주입, Driver/Executor Pod 생성, Spark 작업 실행을 거쳐 진행 상황이 CR .status에 기록되고 다시 Controller의 감시 루프로 돌아오는 흐름을 보여주는 다이어그램.](../../.gitbook/assets/ko-data-on-eks-spark-02-spark-operator-0.png)
 
 Operator의 컨트롤 루프는 드라이버 Pod까지만 직접 관여합니다. 드라이버 자신은 순수 `spark-submit`과 마찬가지로 Kubernetes API에 직접 요청해 자신의 executor를 생성합니다. Operator가 더해주는 가치는 그 주변 계층입니다 — 제출, 웹훅 기반 pod 커스터마이징, 재시작 처리, 상태 보고.
 

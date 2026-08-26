@@ -13,22 +13,7 @@ Flink 클러스터는 두 가지 Pod 역할로 구성됩니다. **JobManager**�
 
 **Flink Kubernetes Operator**는 이 네이티브 배포 모델 한 단계 위에서 동작합니다. `flink run-application`으로 잡을 명령형으로 제출하는 대신, `FlinkDeployment`(Application/Session 모드 클러스터)와 `FlinkSessionJob`(실행 중인 Session 클러스터에 제출되는 잡) 커스텀 리소스로 원하는 클러스터 상태를 선언하면, Operator가 JobManager/TaskManager Pod를 그 상태에 맞춰 지속적으로 조정합니다. 여기에는 변경 사항을 어떻게 안전하게 적용할지(stateless 재시작, savepoint, last-state 업그레이드)와, 내장 오토스케일러를 통해 잡 그래프의 개별 vertex를 어떻게 재조정할지도 포함됩니다.
 
-```mermaid
-graph TB
-    U[운영자] -->|FlinkDeployment / FlinkSessionJob CR 적용| API[Kubernetes API Server]
-    API --> OP[Flink Kubernetes Operator]
-
-    OP -->|생성/조정| JM[JobManager Pod]
-    JM -->|Kubernetes ResourceManager:<br/>Pod 요청/반납| API
-
-    JM <-->|서브태스크 스케줄링 /<br/>체크포인트 트리거| TM1[TaskManager Pod 1]
-    JM <-->|서브태스크 스케줄링 /<br/>체크포인트 트리거| TM2[TaskManager Pod 2]
-
-    style OP fill:#4fc3f7
-    style JM fill:#ffb74d
-    style TM1 fill:#81c784
-    style TM2 fill:#81c784
-```
+![운영자가 FlinkDeployment/FlinkSessionJob CR을 적용하면 Kubernetes API Server를 거쳐 Flink Kubernetes Operator가 JobManager Pod를 생성·조정하고, JobManager는 API Server의 ResourceManager를 통해 TaskManager Pod를 요청·반납하며 두 TaskManager Pod와 서브태스크 스케줄링 및 체크포인트를 상호 교환하는 흐름을 보여준다.](../../.gitbook/assets/ko-data-on-eks-flink-README-0.png)
 
 ## 딥다이브 목차
 

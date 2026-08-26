@@ -13,22 +13,7 @@ A Flink cluster is built around two pod roles. The **JobManager** is the control
 
 The **Flink Kubernetes Operator** sits one layer above this native deployment model. Rather than an operator submitting jobs imperatively via `flink run-application`, you declare the desired cluster state through `FlinkDeployment` (Application/Session mode clusters) and `FlinkSessionJob` (jobs submitted onto a running Session cluster) custom resources, and the Operator continuously reconciles the JobManager/TaskManager pods to match — including how to safely apply changes (stateless restart, savepoint, or last-state upgrade) and how to rescale individual job vertices via its built-in autoscaler.
 
-```mermaid
-graph TB
-    U[Operator/User] -->|Apply FlinkDeployment / FlinkSessionJob CR| API[Kubernetes API Server]
-    API --> OP[Flink Kubernetes Operator]
-
-    OP -->|Creates/reconciles| JM[JobManager Pod]
-    JM -->|Kubernetes ResourceManager:<br/>requests/releases pods| API
-
-    JM <-->|schedules subtasks /<br/>triggers checkpoints| TM1[TaskManager Pod 1]
-    JM <-->|schedules subtasks /<br/>triggers checkpoints| TM2[TaskManager Pod 2]
-
-    style OP fill:#4fc3f7
-    style JM fill:#ffb74d
-    style TM1 fill:#81c784
-    style TM2 fill:#81c784
-```
+![An operator applies a FlinkDeployment or FlinkSessionJob custom resource to the Kubernetes API server; the Flink Kubernetes Operator watches the API and reconciles by creating a JobManager pod, which acts as Flink's ResourceManager to request/release TaskManager pods via the API server and schedules subtasks and checkpoints on two TaskManager pods.](../../.gitbook/assets/en-data-on-eks-flink-README-0.png)
 
 ## Deep Dive Table of Contents
 

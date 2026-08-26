@@ -41,20 +41,7 @@ spark-submit \
 
 The `k8s://<endpoint>` master URL points `spark-submit` at the Kubernetes API server. Once submitted, the flow looks like this:
 
-```mermaid
-sequenceDiagram
-    participant User as User (spark-submit)
-    participant API as Kubernetes API Server
-    participant Driver as Driver Pod
-    participant Exec as Executor Pods
-
-    User->>API: Create Driver Pod (k8s://<endpoint>)
-    API->>Driver: Schedule and start Driver Pod
-    Driver->>API: Request Executor Pods
-    API->>Exec: Schedule and start Executor Pods
-    Exec->>Driver: Register, report status, send task results
-    Driver->>Exec: Assign tasks
-```
+![Sequence diagram showing spark-submit asking the Kubernetes API server to create a Driver Pod, the Driver Pod requesting Executor Pods through the API server, the executors registering back with the driver, and the driver finally assigning tasks to the executors.](../../.gitbook/assets/en-data-on-eks-spark-01-spark-fundamentals-0.png)
 
 1. `spark-submit` talks to the Kubernetes API server and creates a **driver pod** directly — no intermediate scheduling process is involved.
 2. Once running, the driver pod itself calls back into the Kubernetes API to create the **executor pods** it needs, based on `spark.executor.instances` (or Dynamic Resource Allocation, covered below).

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dg-title dg-desc">
+  <title id="dg-title">Data on EKS core services pipeline</title>
+  <desc id="dg-desc">Airflow orchestrates jobs on both Kafka and Spark, Kafka streams events into Flink for stream processing and lands raw data into Spark for batch analytics.</desc>
+
+  <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="48" class="mono" fill="var(--soft)" font-size="8" letter-spacing="0.18em">DATA ON EKS</text>
+  <text x="40" y="76" class="sans" fill="#232F3E" font-size="24" font-weight="700">Streaming, Batch &amp; Orchestration</text>
+  <text x="40" y="100" class="sans" fill="#545B64" font-size="13">How the four core services hand work off to one another</text>
+  <line x1="40" y1="116" x2="920" y2="116" stroke="var(--rule)" stroke-width="0.8"/>
+
+  <!-- ===== Arrows (drawn before boxes) ===== -->
+
+  <!-- Airflow -> Kafka : SCHEDULES JOBS -->
+  <path d="M440,244 V300 Q440,308 432,308 H208 Q200,308 200,316 V352"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="272" y="286" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="316" y="295" class="mono" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">SCHEDULES</text>
+
+  <!-- Airflow -> Spark : SCHEDULES JOBS (straight vertical, x=480) -->
+  <path d="M480,244 V472" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="486" y="336" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="530" y="345" class="mono" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">SCHEDULES</text>
+
+  <!-- Kafka -> Flink : FEEDS EVENTS (horizontal, hop over the vertical Airflow->Spark line) -->
+  <path d="M288,392 H472 a8,8 0 0,1 16,0 H672"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="340" y="372" width="80" height="12" rx="2" fill="#ffffff"/>
+  <text x="380" y="381" class="mono" fill="#EC7211" font-size="8" text-anchor="middle" letter-spacing="0.06em">EVENTS</text>
+
+  <!-- Kafka -> Spark : LANDS RAW DATA -->
+  <path d="M200,432 V488 Q200,496 208,496 H392"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="216" y="466" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="260" y="475" class="mono" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">RAW DATA</text>
+
+  <!-- ===== Nodes ===== -->
+
+  <!-- Airflow (focal / orchestrator) -->
+  <rect x="400" y="172" width="160" height="72" rx="6" fill="#ffffff"/>
+  <rect x="400" y="172" width="160" height="72" rx="6" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+  <rect x="408" y="180" width="34" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="425" y="189" class="mono" fill="#EC7211" font-size="7" text-anchor="middle" letter-spacing="0.08em">ORCH</text>
+  <text x="480" y="216" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Airflow</text>
+  <text x="480" y="232" class="mono" fill="#545B64" font-size="9" text-anchor="middle">Orchestration</text>
+
+  <!-- Kafka -->
+  <rect x="120" y="360" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="128" y="368" width="34" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="145" y="377" class="mono" fill="#545B64" font-size="7" text-anchor="middle" letter-spacing="0.08em">MSG</text>
+  <text x="200" y="404" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Kafka</text>
+  <text x="200" y="420" class="mono" fill="#545B64" font-size="9" text-anchor="middle">Streaming</text>
+
+  <!-- Flink -->
+  <rect x="680" y="360" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="688" y="368" width="34" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="705" y="377" class="mono" fill="#545B64" font-size="7" text-anchor="middle" letter-spacing="0.08em">PROC</text>
+  <text x="760" y="404" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Flink</text>
+  <text x="760" y="420" class="mono" fill="#545B64" font-size="9" text-anchor="middle">Stream Processing</text>
+
+  <!-- Spark -->
+  <rect x="400" y="480" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="408" y="488" width="34" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="425" y="497" class="mono" fill="#545B64" font-size="7" text-anchor="middle" letter-spacing="0.08em">BATCH</text>
+  <text x="480" y="524" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Spark</text>
+  <text x="480" y="540" class="mono" fill="#545B64" font-size="9" text-anchor="middle">Batch &amp; Analytics</text>
+
+</svg>

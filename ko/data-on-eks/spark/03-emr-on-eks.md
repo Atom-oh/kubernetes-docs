@@ -78,19 +78,7 @@ aws emr-containers start-job-run \
   }'
 ```
 
-```mermaid
-sequenceDiagram
-    participant User as 사용자 / SDK / Step Functions
-    participant EMR as EMR 컨트롤 플레인
-    participant VC as 가상 클러스터 (EKS 네임스페이스)
-    participant Pods as 드라이버 / Executor Pod
-
-    User->>EMR: StartJobRun (virtual-cluster-id, execution-role-arn, release-label)
-    EMR->>VC: 가상 클러스터에 매핑된 네임스페이스를 대상으로 지정
-    VC->>Pods: 작업 실행 역할(IRSA 방식 바인딩)로 드라이버 Pod 생성
-    Pods->>Pods: 드라이버가 Executor Pod를 요청
-    Pods->>EMR: 상태, 로그(CloudWatch), 메트릭을 보고
-```
+![사용자가 StartJobRun을 호출하면 EMR 컨트롤 플레인이 가상 클러스터에 매핑된 EKS 네임스페이스로 요청을 라우팅하고, 해당 네임스페이스가 작업 실행 역할(IRSA)로 드라이버 Pod를 생성하며, 드라이버가 Executor Pod를 요청한 뒤 상태·로그·메트릭이 다시 EMR로 비동기 보고되는 시퀀스를 보여준다.](../../.gitbook/assets/ko-data-on-eks-spark-03-emr-on-eks-0.png)
 
 결과적으로 실행되는 Pod는 평범한 EKS Pod입니다 — `kubectl get pods -n emr-spark`로 다른 워크로드처럼 그대로 조회할 수 있지만, 그 스펙을 직접 작성하는 일은 없습니다. 전달한 `release-label`(예: `emr-7.6.0-latest`)이 드라이버/Executor Pod에 사용할 Spark 버전과 컨테이너 이미지를 함께 결정하므로, 직접 빌드하고 푸시할 Dockerfile이 필요 없습니다.
 

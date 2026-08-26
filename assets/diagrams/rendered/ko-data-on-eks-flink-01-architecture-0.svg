@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">Flink on Kubernetes: JobManager and TaskManager pods</title>
+<desc id="d">쿠버네티스 클러스터 안에서 Flink JobManager 파드가 Job Graph, Checkpoint Coordinator, Kubernetes ResourceManager, REST API로 구성되고, ResourceManager가 두 개의 TaskManager 파드를 요청/해제하며, Job Graph가 각 파드의 Task Slot에 서브태스크를 배포하고 Checkpoint Coordinator가 각 파드의 첫 슬롯에 스냅샷을 트리거하는 구조를 보여준다.</desc>
+
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#FFFFFF"/>
+
+<!-- ============ ZONES (painted before arrows/nodes) ============ -->
+<!-- Outer: Kubernetes Cluster -->
+<rect x="24" y="48" width="912" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.14)" stroke-width="0.8"/>
+<rect x="40" y="52" width="164" height="14" rx="2" fill="#FFFFFF"/>
+<text x="46" y="62" fill="rgba(35,47,62,0.45)" font-size="8" class="mono" letter-spacing="0.14em">KUBERNETES CLUSTER</text>
+
+<!-- JobManager Pod zone -->
+<rect x="40" y="80" width="880" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="52" y="86" width="120" height="14" rx="2" fill="#FFFFFF"/>
+<text x="58" y="96" fill="rgba(35,47,62,0.45)" font-size="8" class="mono" letter-spacing="0.14em">JOBMANAGER POD</text>
+
+<!-- TaskManager Pods zone -->
+<rect x="40" y="240" width="880" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<line x1="480" y1="252" x2="480" y2="340" stroke="rgba(35,47,62,0.14)" stroke-width="0.8" stroke-dasharray="4,4"/>
+<rect x="52" y="246" width="56" height="14" rx="2" fill="#FFFFFF"/>
+<text x="58" y="256" fill="rgba(35,47,62,0.45)" font-size="8" class="mono" letter-spacing="0.14em">POD 1</text>
+<rect x="492" y="246" width="56" height="14" rx="2" fill="#FFFFFF"/>
+<text x="498" y="256" fill="rgba(35,47,62,0.45)" font-size="8" class="mono" letter-spacing="0.14em">POD 2</text>
+
+<!-- ============ ARROWS (before nodes) ============ -->
+<!-- JG -> S1 (deploys subtasks) -->
+<path d="M100,184 V188 Q100,196 108,196 H112 Q120,196 120,204 V272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- RM -> Pod 1 (requests/releases pods) [ACCENT, with hop over CP->S1] -->
+<path d="M556,184 V196 Q556,204 548,204 H258 Q250,204 250,212 V240" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<!-- JG -> S2 -->
+<path d="M136,184 V204 Q136,212 144,212 H340 Q348,212 348,220 V272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- RM -> Pod 2 (requests/releases pods) [ACCENT] -->
+<path d="M620,184 V212 Q620,220 628,220 H702 Q710,220 710,228 V240" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<!-- CP -> S1 (triggers snapshot) [dashed, with hop over RM->Pod1] -->
+<path d="M340,184 V196 a8,8 0 0,0 0,16 V220 Q340,228 332,228 H184 Q176,228 176,236 V272" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<!-- JG -> S3 [hop over RM->Pod1 vertical] -->
+<path d="M176,184 V228 Q176,236 184,236 H242 a8,8 0 0,1 16,0 H572 Q580,236 580,244 V272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- CP -> S3 (triggers snapshot) [dashed] -->
+<path d="M404,184 V236 Q404,244 412,244 H628 Q636,244 636,252 V272" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<!-- JG -> S4 -->
+<path d="M212,184 V244 Q212,252 220,252 H800 Q808,252 808,260 V272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- ============ NODES ============ -->
+<!-- Job Graph and Scheduler -->
+<rect x="60" y="112" width="192" height="72" rx="6" fill="#ffffff"/>
+<rect x="60" y="112" width="192" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="156" y="146" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Job Graph &amp; Scheduler</text>
+<text x="156" y="164" fill="#545B64" font-size="9" class="mono" text-anchor="middle">deploys subtasks</text>
+
+<!-- Checkpoint Coordinator -->
+<rect x="276" y="112" width="192" height="72" rx="6" fill="#ffffff"/>
+<rect x="276" y="112" width="192" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="372" y="146" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Checkpoint Coordinator</text>
+<text x="372" y="164" fill="#545B64" font-size="9" class="mono" text-anchor="middle">triggers snapshot</text>
+
+<!-- Kubernetes ResourceManager (FOCAL) -->
+<rect x="492" y="112" width="192" height="72" rx="6" fill="#ffffff"/>
+<rect x="492" y="112" width="192" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="588" y="146" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">K8s ResourceManager</text>
+<text x="588" y="164" fill="#9a5412" font-size="9" class="mono" text-anchor="middle">requests / releases pods</text>
+
+<!-- REST API and Web UI -->
+<rect x="708" y="112" width="192" height="72" rx="6" fill="#ffffff"/>
+<rect x="708" y="112" width="192" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="804" y="146" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">REST API &amp; Web UI</text>
+<text x="804" y="164" fill="#545B64" font-size="9" class="mono" text-anchor="middle">status / job submit</text>
+
+<!-- Task Slots -->
+<rect x="60" y="272" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="60" y="272" width="176" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="148" y="308" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Task Slot 1</text>
+
+<rect x="260" y="272" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="260" y="272" width="176" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="348" y="308" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Task Slot 2</text>
+
+<rect x="520" y="272" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="520" y="272" width="176" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="608" y="308" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Task Slot 1</text>
+
+<rect x="720" y="272" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="720" y="272" width="176" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="808" y="308" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Task Slot 2</text>
+
+<!-- ============ LEGEND ============ -->
+<line x1="40" y1="392" x2="920" y2="392" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="408" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+
+<line x1="130" y1="404" x2="162" y2="404" stroke="#EC7211" stroke-width="1.4"/>
+<text x="170" y="408" fill="#232F3E" font-size="10">쿠버네티스 파드 생성/삭제 (ResourceManager)</text>
+
+<line x1="500" y1="404" x2="532" y2="404" stroke="#545B64" stroke-width="1.2"/>
+<text x="540" y="408" fill="#232F3E" font-size="10">서브태스크 배포 / 상태 관리</text>
+
+<line x1="740" y1="404" x2="772" y2="404" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="780" y="408" fill="#232F3E" font-size="10">체크포인트 스냅샷</text>
+
+</svg>

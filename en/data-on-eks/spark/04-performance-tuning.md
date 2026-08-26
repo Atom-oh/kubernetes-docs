@@ -179,17 +179,7 @@ Once DRA and Karpenter are both in play, it helps to be explicit that they are *
 * **Spark's DRA** watches its own backlog of pending *tasks* and decides how many executor *pods* to request or release — a Spark-internal decision that has no direct knowledge of the underlying nodes.
 * **Karpenter** watches for pending *pods* that can't be scheduled (or nodes that have gone empty) and decides whether to provision or deprovision EC2 capacity — a node-level decision that has no knowledge of Spark's task backlog, only of the pods DRA already created.
 
-```mermaid
-flowchart LR
-    A[Pending Spark tasks] -->|DRA sees backlog| B[Spark requests<br/>more executor pods]
-    B --> C[New executor pods<br/>Pending scheduling]
-    C -->|unschedulable| D[Karpenter provisions<br/>new EC2 node]
-    D --> E[Executor pods<br/>Scheduled & Running]
-    E -->|tasks drain, executors idle| F[DRA releases<br/>idle executor pods]
-    F --> G[Node becomes empty]
-    G -->|consolidateAfter elapses| H[Karpenter deprovisions<br/>the node]
-    H -.-> A
-```
+![A racetrack-shaped cycle diagram showing how Spark Dynamic Resource Allocation and Karpenter cooperate: pending tasks trigger DRA to request more executor pods, which go unschedulable until Karpenter provisions a new EC2 node, and once executors finish and idle, DRA releases them, the node empties, and Karpenter deprovisions it, restarting the loop.](../../.gitbook/assets/en-data-on-eks-spark-04-performance-tuning-0.png)
 
 The practical consequence is that tuning one loop without the other produces mismatched behavior. If DRA's `spark.kubernetes.allocation.batch.size` requests executors faster than Karpenter's `NodePool` can provision matching nodes, new executor pods sit `Pending` for longer than expected. If Karpenter's `consolidateAfter` (see the [NodePool configuration](../../autoscaling/02-karpenter.md#nodepool) reference) is set very aggressively while DRA's `spark.dynamicAllocation.executorIdleTimeout` is comparatively long, Karpenter may try to consolidate a node that still has an executor DRA hasn't decided to release yet, colliding with the PodDisruptionBudget/decommissioning path from section 3. As a starting point, keep Karpenter's consolidation delay somewhat longer than DRA's executor idle timeout, so DRA has already vacated a node before Karpenter tries to reclaim it.
 

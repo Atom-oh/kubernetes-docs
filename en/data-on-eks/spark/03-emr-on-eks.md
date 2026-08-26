@@ -78,19 +78,7 @@ aws emr-containers start-job-run \
   }'
 ```
 
-```mermaid
-sequenceDiagram
-    participant User as User / SDK / Step Functions
-    participant EMR as EMR Control Plane
-    participant VC as Virtual Cluster (EKS Namespace)
-    participant Pods as Driver / Executor Pods
-
-    User->>EMR: StartJobRun (virtual-cluster-id, execution-role-arn, release-label)
-    EMR->>VC: Target namespace bound to virtual cluster
-    VC->>Pods: Create driver pod using job execution role (IRSA-style binding)
-    Pods->>Pods: Driver requests executor pods
-    Pods->>EMR: Status, logs (CloudWatch), and metrics reported back
-```
+![Sequence diagram showing a client starting an EMR job run, EMR's control plane binding the request to a virtual cluster mapped to an EKS namespace, that namespace creating a driver pod under the job's IAM execution role, the driver requesting executor pods, and status/logs/metrics reporting back to EMR.](../../.gitbook/assets/en-data-on-eks-spark-03-emr-on-eks-0.png)
 
 The pods that eventually run are ordinary EKS pods — they show up under `kubectl get pods -n emr-spark` like anything else — but you never author their spec directly. The `release-label` you pass (`emr-7.6.0-latest`, for example) selects both the Spark version and the container image EMR uses for the driver/executor pods, so there's no Dockerfile to build and push yourself.
 

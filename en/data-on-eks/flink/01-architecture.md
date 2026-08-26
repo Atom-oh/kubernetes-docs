@@ -32,33 +32,7 @@ To follow along with the examples in this document, you will need the following 
 
 ### JobManager <-> TaskManager Flow on Kubernetes
 
-```mermaid
-flowchart TB
-    subgraph K8s[Kubernetes Cluster]
-        subgraph JM[JobManager Pod]
-            JG[Job Graph and Scheduler]
-            CP[Checkpoint Coordinator]
-            RM[Kubernetes ResourceManager]
-            UI[REST API and Web UI]
-        end
-        subgraph TM1[TaskManager Pod 1]
-            S1[Task Slot 1]
-            S2[Task Slot 2]
-        end
-        subgraph TM2[TaskManager Pod 2]
-            S3[Task Slot 1]
-            S4[Task Slot 2]
-        end
-    end
-    RM -- "requests / releases pods" --> TM1
-    RM -- "requests / releases pods" --> TM2
-    JG -- "deploys subtasks" --> S1
-    JG -- "deploys subtasks" --> S2
-    JG -- "deploys subtasks" --> S3
-    JG -- "deploys subtasks" --> S4
-    CP -- "triggers snapshot" --> S1
-    CP -- "triggers snapshot" --> S3
-```
+![Diagram of the Flink JobManager pod (Job Graph and Scheduler, Checkpoint Coordinator, Kubernetes ResourceManager, REST API and Web UI) coordinating two TaskManager pods, showing the ResourceManager requesting and releasing pods, the Job Graph and Scheduler deploying subtasks into each pod's task slots, and the Checkpoint Coordinator triggering snapshots on one slot per pod.](../../.gitbook/assets/en-data-on-eks-flink-01-architecture-0.png)
 
 The JobManager decomposes a submitted application into a job graph, splits each operator into parallel subtasks, and assigns those subtasks to task slots across the available TaskManager pods. When native Kubernetes deployment is used, the JobManager's own Kubernetes ResourceManager dynamically requests new TaskManager pods when more slots are needed and releases them when a job's parallelism shrinks or the job finishes.
 

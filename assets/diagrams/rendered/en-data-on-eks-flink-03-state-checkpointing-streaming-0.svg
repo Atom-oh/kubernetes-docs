@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">Flink stateful checkpointing pipeline</title>
+  <desc id="ddesc">A Flink job consuming from a Kafka source keeps operator state in RocksDB inside its TaskManagers, periodically checkpoints that state to S3, and routes processed records through a sink to either a Kafka output topic (exactly-once via two-phase commit) or S3/Iceberg tables.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#FFFFFF"/>
+
+  <!-- header -->
+  <text x="40" y="22" fill="#545B64" font-size="8" class="mono" letter-spacing="0.18em">FLINK STREAMING</text>
+  <text x="40" y="46" fill="#232F3E" font-size="20" font-weight="700" class="sans">Stateful Checkpointing Pipeline</text>
+
+  <!-- ===================== ZONES (bg -> zones -> arrows -> nodes) ===================== -->
+  <rect x="416" y="140" width="200" height="168" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="452" y="148" width="128" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="516" y="157" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">TASKMANAGERS</text>
+
+  <!-- ===================== ARROWS (drawn before nodes) ===================== -->
+
+  <!-- A -> B : straight, same y -->
+  <path d="M184,236 H232" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- B -> C : straight, same y, label LOCAL STATE -->
+  <path d="M368,236 H440" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="372" y="212" width="64" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="404" y="221" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">STATE OPS</text>
+
+  <!-- B -> D : dashed elbow, destination above source -->
+  <path d="M300,204 H312 Q320,204 320,196 V124" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="330" y="150" width="84" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="372" y="159" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">CHECKPOINT</text>
+
+  <!-- B -> E : straight vertical, same x -->
+  <path d="M300,268 V352" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- E -> F : elbow, right+up -->
+  <path d="M360,384 H432 Q440,384 440,376 V336 Q440,328 448,328 H520" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="396" y="298" width="96" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="444" y="307" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">EXACTLY_ONCE</text>
+
+  <!-- E -> G : elbow, right+down -->
+  <path d="M360,384 H432 Q440,384 440,392 V460 Q440,468 448,468 H520" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="396" y="416" width="88" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="440" y="425" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">ICEBERG SINK</text>
+
+  <!-- ===================== NODES ===================== -->
+
+  <!-- D: S3 Checkpoint Storage (store) -->
+  <rect x="232" y="60" width="176" height="64" rx="6" fill="#FFFFFF"/>
+  <rect x="232" y="60" width="176" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="240" y="68" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+  <text x="254" y="77" fill="rgba(84,91,100,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">S3</text>
+  <text x="320" y="94" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">S3 Checkpoint Storage</text>
+  <text x="320" y="110" fill="#545B64" font-size="9" class="mono" text-anchor="middle">s3://checkpoints</text>
+
+  <!-- A: MSK / Kafka Source Topic (input) -->
+  <rect x="40" y="204" width="144" height="64" rx="6" fill="#FFFFFF"/>
+  <rect x="40" y="204" width="144" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <rect x="48" y="212" width="30" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.50)" stroke-width="0.8"/>
+  <text x="63" y="221" fill="#545B64" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">SRC</text>
+  <text x="112" y="238" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">MSK / Kafka Source</text>
+  <text x="112" y="254" fill="#545B64" font-size="9" class="mono" text-anchor="middle">topic:source</text>
+
+  <!-- B: Flink Job (focal) -->
+  <rect x="232" y="204" width="136" height="64" rx="6" fill="#FFFFFF"/>
+  <rect x="232" y="204" width="136" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="240" y="212" width="30" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="255" y="221" fill="#EC7211" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">JOB</text>
+  <text x="300" y="242" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">Flink Job</text>
+  <text x="300" y="258" fill="#545B64" font-size="9" class="mono" text-anchor="middle">taskmanagers:n</text>
+
+  <!-- C: RocksDB State Backend (store, inside zone) -->
+  <rect x="440" y="204" width="152" height="64" rx="6" fill="#FFFFFF"/>
+  <rect x="440" y="204" width="152" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="448" y="212" width="34" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+  <text x="465" y="221" fill="rgba(84,91,100,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">STATE</text>
+  <text x="516" y="238" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">RocksDB Backend</text>
+  <text x="516" y="254" fill="#545B64" font-size="9" class="mono" text-anchor="middle">local-disk:rocksdb</text>
+
+  <!-- E: Sink (backend/router) -->
+  <rect x="240" y="352" width="120" height="64" rx="6" fill="#FFFFFF"/>
+  <rect x="240" y="352" width="120" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+  <rect x="248" y="360" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="263" y="369" fill="#232F3E" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">SNK</text>
+  <text x="300" y="390" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">Sink</text>
+  <text x="300" y="406" fill="#545B64" font-size="9" class="mono" text-anchor="middle">router</text>
+
+  <!-- F: Kafka Output Topic (external) -->
+  <rect x="520" y="296" width="200" height="64" rx="6" fill="#FFFFFF"/>
+  <rect x="520" y="296" width="200" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="528" y="304" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+  <text x="545" y="313" fill="#232F3E" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">SINK</text>
+  <text x="620" y="332" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">Kafka Output Topic</text>
+  <text x="620" y="348" fill="#545B64" font-size="9" class="mono" text-anchor="middle">2pc:exactly-once</text>
+
+  <!-- G: S3 / Iceberg Tables (store) -->
+  <rect x="520" y="436" width="200" height="64" rx="6" fill="#FFFFFF"/>
+  <rect x="520" y="436" width="200" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="528" y="444" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+  <text x="542" y="453" fill="rgba(84,91,100,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">S3</text>
+  <text x="620" y="472" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">S3 / Iceberg Tables</text>
+  <text x="620" y="488" fill="#545B64" font-size="9" class="mono" text-anchor="middle">iceberg:dynamic-sink</text>
+
+  <!-- ===================== LEGEND ===================== -->
+  <line x1="40" y1="536" x2="920" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="554" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+
+  <line x1="140" y1="550" x2="172" y2="550" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="180" y="554" fill="#545B64" font-size="9" class="mono">record flow</text>
+
+  <line x1="292" y1="550" x2="324" y2="550" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="332" y="554" fill="#545B64" font-size="9" class="mono">periodic checkpoint</text>
+
+  <rect x="500" y="542" width="16" height="16" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="524" y="554" fill="#545B64" font-size="9" class="mono">compute (focal)</text>
+
+  <rect x="660" y="542" width="16" height="16" rx="3" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="684" y="554" fill="#545B64" font-size="9" class="mono">execution boundary</text>
+</svg>

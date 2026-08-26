@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="airflow-db-access-title airflow-db-access-desc">
+    <title id="airflow-db-access-title">Airflow components reading and writing the shared metadata database</title>
+    <desc id="airflow-db-access-desc">Diagram showing the Airflow dag-processor, scheduler, api-server and triggerer all reading and writing PostgreSQL as the shared metadata store, the scheduler additionally queuing tasks to an optional Redis broker for Celery workers or creating pods directly for the Kubernetes executor.</desc>
+    <defs>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      </style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ===== Zones (painted before arrows/nodes) ===== -->
+    <rect x="128" y="96" width="704" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="144" y="100" width="220" height="12" rx="2" fill="#ffffff"/>
+    <text x="152" y="109" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" letter-spacing="0.14em">AIRFLOW CONTROL PLANE</text>
+
+    <rect x="8" y="360" width="192" height="204" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="16" y="364" width="176" height="12" rx="2" fill="#ffffff"/>
+    <text x="24" y="373" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" letter-spacing="0.14em">CELERY EXECUTOR (OPTIONAL)</text>
+
+    <rect x="760" y="360" width="192" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="768" y="364" width="150" height="12" rx="2" fill="#ffffff"/>
+    <text x="776" y="373" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" letter-spacing="0.14em">KUBERNETES EXECUTOR</text>
+
+    <!-- ===== Arrows (drawn before boxes) ===== -->
+
+    <!-- USER -> API : straight vertical -->
+    <path d="M568,80 V128" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- DP -> PG : straight vertical -->
+    <path d="M216,192 V272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="224" y="242" width="70" height="12" rx="2" fill="#ffffff"/>
+    <text x="259" y="251" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">WRITE DAG</text>
+
+    <!-- SCH -> PG : straight vertical -->
+    <path d="M392,192 V272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="400" y="242" width="66" height="12" rx="2" fill="#ffffff"/>
+    <text x="433" y="251" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">READ DAG</text>
+
+    <!-- API -> PG : straight vertical, accent (core state interface) -->
+    <path d="M568,192 V272" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="576" y="242" width="70" height="12" rx="2" fill="#ffffff"/>
+    <text x="611" y="251" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">R/W STATE</text>
+
+    <!-- TRG -> PG : straight vertical -->
+    <path d="M744,192 V272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="752" y="242" width="82" height="12" rx="2" fill="#ffffff"/>
+    <text x="793" y="251" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">R/W TRIGGER</text>
+
+    <!-- SCH -> REDIS : dashed elbow, hops over DP->PG at x=216 -->
+    <path d="M356,192 V208 Q356,216 348,216 H224 a8,8 0 0,0 -16,0 H112 Q104,216 104,224 V392"
+          fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="112" y="274" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="132" y="283" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">QUEUE</text>
+
+    <!-- SCH -> KPOD : dashed elbow, hops over API->PG (568) and TRG->PG (744) -->
+    <path d="M428,192 V208 Q428,216 436,216 H560 a8,8 0 0,1 16,0 H736 a8,8 0 0,1 16,0 H848 Q856,216 856,224 V392"
+          fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="816" y="274" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="836" y="283" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">CREATE</text>
+
+    <!-- REDIS -> W1 : straight vertical -->
+    <path d="M104,456 V484" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ===== Nodes ===== -->
+
+    <!-- USER / UI (input) -->
+    <rect x="508" y="16" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="508" y="16" width="120" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="568" y="52" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">User / UI</text>
+
+    <!-- dag-processor -->
+    <rect x="144" y="128" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="144" y="128" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="216" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">dag-processor</text>
+
+    <!-- scheduler -->
+    <rect x="320" y="128" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="320" y="128" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="392" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">scheduler</text>
+
+    <!-- api-server (focal) -->
+    <rect x="496" y="128" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="496" y="128" width="144" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="568" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">api-server</text>
+
+    <!-- triggerer -->
+    <rect x="672" y="128" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="672" y="128" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="744" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">triggerer</text>
+
+    <!-- PostgreSQL (focal store) -->
+    <rect x="176" y="272" width="608" height="64" rx="6" fill="#ffffff"/>
+    <rect x="176" y="272" width="608" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">PostgreSQL</text>
+    <text x="480" y="316" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">state + metadata</text>
+
+    <!-- Redis (optional) -->
+    <rect x="24" y="392" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="24" y="392" width="160" height="64" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="104" y="420" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Redis</text>
+    <text x="104" y="436" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">CeleryExecutor only</text>
+
+    <!-- Celery worker pod -->
+    <rect x="24" y="484" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="24" y="484" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="104" y="520" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Celery worker pod</text>
+
+    <!-- Kubernetes executor pod -->
+    <rect x="776" y="392" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="776" y="392" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="856" y="428" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">K8s executor pod</text>
+
+    <!-- ===== Legend ===== -->
+    <line x1="24" y1="572" x2="936" y2="572" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+
+    <line x1="24" y1="588" x2="44" y2="588" stroke="#545B64" stroke-width="1.2"/>
+    <text x="52" y="591" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.06em">CONTROL-PLANE I/O</text>
+
+    <line x1="296" y1="588" x2="316" y2="588" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="324" y="591" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.06em">EXECUTOR PATH (OPTIONAL)</text>
+
+    <line x1="640" y1="588" x2="660" y2="588" stroke="#EC7211" stroke-width="1.4"/>
+    <text x="668" y="591" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.06em">CORE STATE INTERFACE</text>
+  </svg>

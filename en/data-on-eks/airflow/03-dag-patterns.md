@@ -130,21 +130,7 @@ Airflow 2 assumed every component read DAG files from the same local disk path, 
 
 A `git-sync` sidecar still works with the official Helm chart from Part 2 — nothing in Airflow 3 removes that support — but for any DAG run where reproducibility matters (rerunning a backfill months later and getting the exact code that originally ran), `GitDagBundle` is the pattern that actually gives you that guarantee, which is why it's positioned as `git-sync`'s modern replacement rather than just an alternative.
 
-```mermaid
-flowchart TB
-    DAGCODE[DAG code: extract_orders task]
-    KPO["KubernetesPodOperator.execute()"]
-    SA["ServiceAccount: orders-extractor-sa\n(IRSA role annotation)"]
-    NODE[Tainted node pool - dedicated NodeGroup/NodePool]
-    POD[Pod: created from pod_template_file]
-
-    DAGCODE --> KPO
-    KPO -- "builds Pod from pod_template_file\n+ constructor overrides" --> POD
-    POD -- "runs as" --> SA
-    POD -- "scheduled onto" --> NODE
-    POD -- "completion status" --> KPO
-    KPO -- "reports task success/failure" --> AF[Airflow scheduler/metadata DB]
-```
+![Diagram of the extract_orders task lifecycle: the DAG code invokes the KubernetesPodOperator, which builds and launches a pod from a pod template; the pod runs under a dedicated IRSA-annotated service account and is scheduled onto a tainted node pool, then reports completion status back to the operator, which reports task success or failure to the Airflow scheduler and metadata database.](../../.gitbook/assets/en-data-on-eks-airflow-03-dag-patterns-0.png)
 
 ## Authoring Patterns
 

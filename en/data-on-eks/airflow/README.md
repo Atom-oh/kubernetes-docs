@@ -11,23 +11,7 @@ Apache Airflow is the de facto standard orchestrator for data pipelines — ETL/
 
 Airflow 2 ran a single **webserver** process for the UI/API and a **scheduler** process that both scheduled tasks *and* parsed DAG files — under load, expensive DAG parsing could starve the scheduler's actual scheduling loop. Airflow 3 fixes this by splitting the control plane into four independently scalable services, each with one job: the **`api-server`** (a FastAPI-based service serving the UI, REST API v2, and auth), the **`scheduler`** (evaluates dependencies and queues task instances — nothing else), the **`dag-processor`** (a now-mandatory service whose sole job is parsing DAG files and writing the result to the metadata database's `serialized_dag` table), and the **`triggerer`** (runs deferrable operators that wait on external events). **PostgreSQL** is always required as the metadata database; **Redis** is only required if a `CeleryExecutor` worker pool is in use.
 
-```mermaid
-graph TB
-    DP[dag-processor] -->|writes serialized_dag| PG[(PostgreSQL)]
-    SCH[scheduler] -->|reads serialized_dag| PG
-    API[api-server] -->|reads/writes state| PG
-    TRG[triggerer] -->|reads/writes trigger state| PG
-    SCH -->|queues task via broker| REDIS[(Redis - CeleryExecutor only)]
-    REDIS --> W1[Celery worker pod]
-    SCH -->|creates pod per task| KPOD[KubernetesExecutor task pod]
-    USER[User/UI] --> API
-
-    style DP fill:#4fc3f7
-    style SCH fill:#81c784
-    style API fill:#81c784
-    style TRG fill:#81c784
-    style REDIS fill:#ffb74d
-```
+![Diagram showing the Airflow dag-processor, scheduler, api-server, and triggerer all reading and writing a shared PostgreSQL metadata database, with the scheduler additionally queuing tasks to an optional Redis broker for Celery workers or creating pods directly for the Kubernetes executor.](../../.gitbook/assets/en-data-on-eks-airflow-README-0.png)
 
 ## Deep Dive Table of Contents
 

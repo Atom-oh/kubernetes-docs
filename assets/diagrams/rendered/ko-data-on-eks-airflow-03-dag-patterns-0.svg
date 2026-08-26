@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dagpat-title dagpat-desc" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">
+  <title id="dagpat-title">KubernetesPodOperator Pod 실행 흐름</title>
+  <desc id="dagpat-desc">Airflow DAG의 extract_orders 태스크가 KubernetesPodOperator를 통해 Pod를 생성하면, 그 Pod는 IRSA가 연결된 ServiceAccount로 실행되고 taint가 걸린 전용 노드 풀에 스케줄링되며, 완료 상태가 다시 오퍼레이터로 전달되어 Airflow 스케줄러에 성공/실패로 보고되는 흐름을 보여준다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      .name { font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; font-weight:600; fill:#232F3E; }
+      .sub  { font-family:'Geist Mono',ui-monospace,monospace; font-size:9px; fill:#545B64; }
+      .tag  { font-family:'Geist Mono',ui-monospace,monospace; font-size:7px; letter-spacing:0.08em; }
+      .lbl  { font-family:'Geist Mono',ui-monospace,monospace; font-size:8px; letter-spacing:0.04em; fill:#7D8998; }
+      .eyebrow { font-family:'Geist Mono',ui-monospace,monospace; font-size:8px; letter-spacing:0.18em; fill:#7D8998; text-transform:uppercase; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <text class="eyebrow" x="480" y="26" text-anchor="middle">KUBERNETESPODOPERATOR · POD LIFECYCLE</text>
+
+  <!-- ===================== CONNECTORS (drawn first, under nodes/labels) ===================== -->
+
+  <!-- 1. DAGCODE -> KPO (straight) -->
+  <path d="M480,100 L480,135" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- 2. KPO -> POD (straight, accent-ish since leads to focal) label to the side -->
+  <path d="M480,185 L480,225" fill="none" stroke="#EC7211" stroke-width="1" marker-end="url(#arrow-accent)"/>
+  <rect x="495" y="197" width="120" height="16" rx="2" fill="#ffffff"/>
+  <text class="lbl" x="500" y="208" fill="#EC7211">POD 생성</text>
+
+  <!-- 3. POD -> SA : bottom-left of POD, elbow down-left-down -->
+  <path d="M420,289 L420,332 A8,8 0 0 1 412,340 L258,340 A8,8 0 0 0 250,348 L250,395"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="277" y="320" width="86" height="12" rx="2" fill="#ffffff"/>
+  <text class="lbl" x="320" y="329" text-anchor="middle">실행 주체</text>
+
+  <!-- 4. POD -> NODE : bottom-right of POD, elbow down-right-down -->
+  <path d="M540,289 L540,332 A8,8 0 0 0 548,340 L702,340 A8,8 0 0 1 710,348 L710,395"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="582" y="320" width="86" height="12" rx="2" fill="#ffffff"/>
+  <text class="lbl" x="625" y="329" text-anchor="middle">스케줄링 위치</text>
+
+  <!-- 5. POD -> KPO (feedback): right edge of POD, far-right column, back into KPO right edge -->
+  <path d="M590,257 L864,257 A8,8 0 0 0 872,249 L872,158 A8,8 0 0 0 864,150 L630,150"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="700" y="241" width="120" height="12" rx="2" fill="#ffffff"/>
+  <text class="lbl" x="760" y="250" text-anchor="middle">완료 상태 전달</text>
+
+  <!-- 6. KPO -> AF (feedback out the left side, down, into AF left edge) -->
+  <path d="M330,170 L76,170 A8,8 0 0 0 68,178 L68,553 A8,8 0 0 0 76,561 L310,561"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="78" y="192" width="150" height="16" rx="2" fill="#ffffff"/>
+  <text class="lbl" x="153" y="203" text-anchor="middle">성공 / 실패 보고</text>
+
+  <!-- ===================== NODES ===================== -->
+
+  <!-- DAGCODE -->
+  <g>
+    <rect x="330" y="50" width="300" height="50" rx="6" fill="#ffffff"/>
+    <rect x="330" y="50" width="300" height="50" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="338" y="58" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+    <text class="tag" x="355" y="67" text-anchor="middle" fill="rgba(35,47,62,0.8)">DAG</text>
+    <text class="name" x="480" y="78" text-anchor="middle">DAG 코드</text>
+    <text class="sub" x="480" y="92" text-anchor="middle">extract_orders 태스크</text>
+  </g>
+
+  <!-- KPO -->
+  <g>
+    <rect x="330" y="135" width="300" height="50" rx="6" fill="#ffffff"/>
+    <rect x="330" y="135" width="300" height="50" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="338" y="143" width="58" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+    <text class="tag" x="367" y="152" text-anchor="middle" fill="rgba(35,47,62,0.8)">OPERATOR</text>
+    <text class="name" x="480" y="163" text-anchor="middle">KubernetesPodOperator</text>
+    <text class="sub" x="480" y="177" text-anchor="middle">.execute()</text>
+  </g>
+
+  <!-- POD (focal) -->
+  <g>
+    <rect x="370" y="225" width="220" height="64" rx="6" fill="#ffffff"/>
+    <rect x="370" y="225" width="220" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="378" y="233" width="34" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.6)" stroke-width="0.8"/>
+    <text class="tag" x="395" y="242" text-anchor="middle" fill="#EC7211">POD</text>
+    <text class="name" x="480" y="262" text-anchor="middle" fill="#232F3E">Pod</text>
+    <text class="sub" x="480" y="277" text-anchor="middle">pod_template_file로부터 생성</text>
+  </g>
+
+  <!-- SA -->
+  <g>
+    <rect x="140" y="395" width="220" height="60" rx="6" fill="#ffffff"/>
+    <rect x="140" y="395" width="220" height="60" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="148" y="403" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+    <text class="tag" x="162" y="412" text-anchor="middle" fill="rgba(35,47,62,0.8)">IAM</text>
+    <text class="name" x="250" y="428" text-anchor="middle">ServiceAccount</text>
+    <text class="sub" x="250" y="443" text-anchor="middle">orders-extractor-sa (IRSA)</text>
+  </g>
+
+  <!-- NODE -->
+  <g>
+    <rect x="600" y="395" width="220" height="60" rx="6" fill="#ffffff"/>
+    <rect x="600" y="395" width="220" height="60" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="608" y="403" width="38" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+    <text class="tag" x="627" y="412" text-anchor="middle" fill="rgba(35,47,62,0.8)">NODE</text>
+    <text class="name" x="710" y="428" text-anchor="middle">전용 노드 풀</text>
+    <text class="sub" x="710" y="443" text-anchor="middle">taint / 별도 NodeGroup</text>
+  </g>
+
+  <!-- AF -->
+  <g>
+    <rect x="310" y="525" width="340" height="56" rx="6" fill="#ffffff"/>
+    <rect x="310" y="525" width="340" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.3)" stroke-width="1"/>
+    <rect x="318" y="533" width="46" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+    <text class="tag" x="341" y="542" text-anchor="middle" fill="rgba(35,47,62,0.8)">SCHED</text>
+    <text class="name" x="480" y="554" text-anchor="middle">Airflow Scheduler</text>
+    <text class="sub" x="480" y="568" text-anchor="middle">메타데이터 DB</text>
+  </g>
+
+</svg>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-data-on-eks-flink-03-state-checkpointing-streaming-0-title ko-data-on-eks-flink-03-state-checkpointing-streaming-0-desc">
+    <title id="ko-data-on-eks-flink-03-state-checkpointing-streaming-0-title">Flink 상태 저장과 체크포인트 흐름</title>
+    <desc id="ko-data-on-eks-flink-03-state-checkpointing-streaming-0-desc">Kafka 소스 토픽에서 유입된 데이터를 Flink Job의 TaskManager가 RocksDB 상태 백엔드로 처리하면서 주기적으로 S3에 체크포인트를 남기고, 싱크 단계에서 KafkaSink(EXACTLY_ONCE 2PC)와 Dynamic Iceberg Sink 두 갈래로 결과를 내보내는 흐름을 보여주는 다이어그램.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs>
+    <defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="180" y1="284" x2="228" y2="284" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="488" y1="284" x2="524" y2="284" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="358" y1="408" x2="358" y2="456" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="366" y="426.0" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="398.0" y="435" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">주기적 체크포인트</text>
+<path d="M 620,260 H 652 Q 660,260 660,252 V 152 Q 660,144 668,144 H 800" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="664.0" y="124" width="124" height="12" rx="2" fill="#ffffff"/>
+<text x="726" y="133" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">EXACTLY_ONCE · 2PC</text>
+<path d="M 620,308 H 652 Q 660,308 660,316 V 424 Q 660,432 668,432 H 800" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="661.0" y="440" width="130" height="12" rx="2" fill="#ffffff"/>
+<text x="726" y="449" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">DYNAMIC ICEBERG SINK</text>
+<rect x="40" y="252" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="252" width="140" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="110.0" y="282.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">MSK / Kafka</text>
+<text x="110.0" y="298.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">소스 토픽</text>
+<rect x="228" y="160" width="260" height="248" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="248" y="184" fill="#232F3E" font-size="13" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="start">Flink Job</text>
+<rect x="248" y="196" width="220" height="88" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="264" y="200" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="320.0" y="209" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">TASKMANAGERS</text>
+<rect x="264" y="220" width="188" height="48" rx="6" fill="#ffffff"/>
+<rect x="264" y="220" width="188" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="358.0" y="242.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">RocksDB</text>
+<text x="358.0" y="258.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">상태 백엔드</text>
+<rect x="268" y="456" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="268" y="456" width="180" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="358.0" y="486.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">S3 체크포인트</text>
+<text x="358.0" y="502.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">스토리지</text>
+<polygon points="588,236 652,284 588,332 524,284" fill="#ffffff"/>
+<polygon points="588,236 652,284 588,332 524,284" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="588" y="288" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">싱크</text>
+<rect x="800" y="112" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="800" y="112" width="140" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="870.0" y="148.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kafka 출력 토픽</text>
+<rect x="800" y="400" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="800" y="400" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="870.0" y="430.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">S3 / Iceberg</text>
+<text x="870.0" y="446.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">테이블</text>
+<line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="568" width="24" height="14" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="72" y="579" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">상태 저장 컴퓨트 (Flink Job)</text>
+<line x1="272" y1="575" x2="300" y2="575" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<text x="308" y="579" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">주기적 체크포인트</text>
+<polygon points="460,568 472,575 460,582 448,575" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="484" y="579" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">싱크 분기 (디시전)</text>
+<rect x="640" y="568" width="24" height="14" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="672" y="579" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">외부 시스템 (Kafka)</text>
+  </svg>

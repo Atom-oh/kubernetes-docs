@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fko-title fko-desc">
+  <title id="fko-title">Flink Kubernetes Operator reconciliation and autoscaling loop</title>
+  <desc id="fko-desc">The Flink Kubernetes Operator watches FlinkDeployment and FlinkSessionJob custom resources and manages a JobManager pod and TaskManager pods. Those pods emit per-vertex metrics that an Autoscaler reads; when a threshold is crossed the Autoscaler signals the Operator, which triggers a last-state rescale of the JobManager.</desc>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="fko-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="fko-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="fko-arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#7D8998"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- ============ CONNECTORS (drawn before boxes) ============ -->
+
+  <!-- e1: CR1 -> O  watched by -->
+  <path d="M180,96 V120 Q180,128 188,128 H412 Q420,128 420,136 V160"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#fko-arrow)"/>
+  <!-- e2: CR2 -> O  watched by -->
+  <path d="M780,96 V120 Q780,128 772,128 H548 Q540,128 540,136 V160"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#fko-arrow)"/>
+
+  <!-- e3: O -> JM  manages -->
+  <path d="M400,224 V228 Q400,236 392,236 H168 Q160,236 160,244 V280"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#fko-arrow)"/>
+  <!-- e4: O -> TM  manages -->
+  <path d="M560,224 V228 Q560,236 568,236 H772 Q780,236 780,244 V280"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#fko-arrow)"/>
+  <!-- e5: O -> JM  triggers last-state rescale (accent, headline flow) -->
+  <path d="M440,224 V256 Q440,264 432,264 H228 Q220,264 220,272 V280"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#fko-arrow-accent)"/>
+
+  <!-- e6: JM -> TM  (plain, unlabeled) -->
+  <line x1="280" y1="308" x2="680" y2="308" stroke="#545B64" stroke-width="1" marker-end="url(#fko-arrow)"/>
+
+  <!-- e7: JM -> M  emitted by (dashed) -->
+  <path d="M160,336 V356 Q160,364 168,364 H422 Q430,364 430,372 V392"
+        fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#fko-arrow-soft)"/>
+  <!-- e8: TM -> M  emitted by (dashed) -->
+  <path d="M700,336 V356 Q700,364 692,364 H538 Q530,364 530,372 V392"
+        fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#fko-arrow-soft)"/>
+
+  <!-- e9: AS -> M  reads -->
+  <path d="M750,496 V484 Q750,476 742,476 H548 Q540,476 540,468 V456"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#fko-arrow)"/>
+
+  <!-- e10: AS -> O  threshold crossed -->
+  <path d="M880,524 H912 Q920,524 920,516 V193 Q920,185 912,185 H580"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#fko-arrow)"/>
+
+  <!-- ============ ARROW LABELS (masked, gapped) ============ -->
+
+  <rect x="265" y="108" width="70" height="12" rx="2" fill="#ffffff"/>
+  <text x="300" y="117" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">WATCHED BY</text>
+
+  <rect x="625" y="108" width="70" height="12" rx="2" fill="#ffffff"/>
+  <text x="660" y="117" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">WATCHED BY</text>
+
+  <rect x="248" y="216" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="280" y="225" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">MANAGES</text>
+
+  <rect x="638" y="216" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="670" y="225" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">MANAGES</text>
+
+  <rect x="298" y="244" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="330" y="253" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">RESCALE</text>
+
+  <rect x="263" y="344" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="295" y="353" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">EMITTED BY</text>
+
+  <rect x="583" y="344" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="615" y="353" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">EMITTED BY</text>
+
+  <rect x="613" y="456" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="645" y="465" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">READS</text>
+
+  <rect x="640" y="165" width="80" height="12" rx="2" fill="#ffffff"/>
+  <text x="680" y="174" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">THRESHOLD</text>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- CR1: FlinkDeployment CR (input) -->
+  <rect x="80" y="40" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="80" y="40" width="200" height="56" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="0.8"/>
+  <rect x="88" y="48" width="26" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="101" y="57" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">CR</text>
+  <text x="180" y="76" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">FlinkDeployment CR</text>
+
+  <!-- CR2: FlinkSessionJob CR (input) -->
+  <rect x="680" y="40" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="680" y="40" width="200" height="56" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="0.8"/>
+  <rect x="688" y="48" width="26" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="701" y="57" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">CR</text>
+  <text x="780" y="76" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">FlinkSessionJob CR</text>
+
+  <!-- O: Flink Kubernetes Operator (focal) -->
+  <rect x="380" y="160" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="380" y="160" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="388" y="168" width="66" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.55)" stroke-width="0.8"/>
+  <text x="421" y="177" fill="#EC7211" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">CONTROLLER</text>
+  <text x="480" y="200" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Flink Kubernetes</text>
+  <text x="480" y="214" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Operator</text>
+
+  <!-- JM: JobManager Pod (backend) -->
+  <rect x="80" y="280" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="80" y="280" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="88" y="288" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="105" y="297" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">POD</text>
+  <text x="180" y="313" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">JobManager Pod</text>
+
+  <!-- TM: TaskManager Pods (backend) -->
+  <rect x="680" y="280" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="680" y="280" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="688" y="288" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="705" y="297" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">POD</text>
+  <text x="780" y="313" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">TaskManager Pods</text>
+
+  <!-- M: Per-vertex metrics (store) -->
+  <rect x="380" y="392" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="380" y="392" width="200" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="388" y="400" width="54" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="415" y="409" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">METRICS</text>
+  <text x="480" y="432" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Per-vertex metrics</text>
+  <text x="480" y="446" fill="#545B64" font-size="9" class="mono" text-anchor="middle">busy time &#183; backlog &#183; rate</text>
+
+  <!-- AS: Autoscaler (backend) -->
+  <rect x="680" y="496" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="680" y="496" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="688" y="504" width="66" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="721" y="513" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">CONTROLLER</text>
+  <text x="780" y="529" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Autoscaler</text>
+
+  <!-- ============ LEGEND ============ -->
+  <line x1="80" y1="572" x2="880" y2="572" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <line x1="80" y1="586" x2="104" y2="586" stroke="#545B64" stroke-width="1"/>
+  <text x="112" y="589" fill="#545B64" font-size="8" class="mono" letter-spacing="0.06em">CONTROL / DATA FLOW</text>
+  <line x1="330" y1="586" x2="354" y2="586" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="362" y="589" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.06em">METRICS EMISSION</text>
+  <line x1="580" y1="586" x2="604" y2="586" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="612" y="589" fill="#EC7211" font-size="8" class="mono" letter-spacing="0.06em">RESCALE TRIGGER</text>
+</svg>
