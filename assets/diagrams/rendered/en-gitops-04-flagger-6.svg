@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="image-pipeline-title image-pipeline-desc">
+<title id="image-pipeline-title">Image-to-Canary Delivery Pipeline</title>
+<desc id="image-pipeline-desc">A new image built and pushed to ECR is picked up by Flux's image automation controllers, which commit an updated manifest that Kustomize applies, and Flagger's metrics analysis then promotes the resulting canary to primary or leaves it in place.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- ===== Arrows (before nodes) ===== -->
+<path d="M160,168 H192" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M312,168 H344" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M464,168 H496" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M616,168 H648" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<path d="M708,196 V280 Q708,288 700,288 H108 Q100,288 100,296 V380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="340" y="268" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="400" y="277" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">GIT COMMIT</text>
+
+<path d="M160,408 H192" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M312,408 H344" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M464,408 H496" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M616,408 H648" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M768,408 H800" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<path d="M860,436 V472 Q860,480 852,480 H412 Q404,480 404,472 V436" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="568" y="460" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="632" y="469" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">PROMOTE ON PASS</text>
+
+<!-- ===== Row A nodes ===== -->
+<rect x="40" y="140" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="40" y="140" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="48" y="146" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="62" y="155" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">CI</text>
+<text x="100" y="174" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Build &amp; Push</text>
+<text x="100" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">web-app image</text>
+
+<rect x="192" y="140" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="192" y="140" width="120" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="200" y="146" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="217" y="155" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">ECR</text>
+<text x="252" y="174" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">web-app</text>
+<text x="252" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">:v2.0.0</text>
+
+<rect x="344" y="140" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="344" y="140" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="352" y="146" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="372" y="155" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">FLUX</text>
+<text x="404" y="174" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Image Repository</text>
+<text x="404" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">scan ECR</text>
+
+<rect x="496" y="140" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="496" y="140" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="504" y="146" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="524" y="155" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">FLUX</text>
+<text x="556" y="174" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Image Policy</text>
+<text x="556" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">semver filter</text>
+
+<rect x="648" y="140" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="648" y="140" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="656" y="146" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="676" y="155" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">FLUX</text>
+<text x="708" y="174" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Image Update</text>
+<text x="708" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">automation</text>
+
+<!-- ===== Row B nodes ===== -->
+<rect x="40" y="380" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="40" y="380" width="120" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="48" y="386" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="65" y="395" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">GIT</text>
+<text x="100" y="414" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">deployment.yaml</text>
+<text x="100" y="428" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">image: v2.0.0</text>
+
+<rect x="192" y="380" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="192" y="380" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="200" y="386" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="220" y="395" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">FLUX</text>
+<text x="252" y="414" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kustomize</text>
+<text x="252" y="428" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">controller</text>
+
+<rect x="344" y="380" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="344" y="380" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="352" y="386" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="369" y="395" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">K8S</text>
+<text x="404" y="414" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Primary</text>
+<text x="404" y="428" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">deployment</text>
+
+<rect x="496" y="380" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="496" y="380" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="504" y="386" width="46" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="527" y="395" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">FLAGGER</text>
+<text x="556" y="414" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Canary</text>
+<text x="556" y="428" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">controller</text>
+
+<rect x="648" y="380" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="648" y="380" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="656" y="386" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="673" y="395" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">K8S</text>
+<text x="708" y="414" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Canary</text>
+<text x="708" y="428" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">deployment</text>
+
+<rect x="800" y="380" width="120" height="56" rx="6" fill="rgba(255,153,0,0.10)"/>
+<rect x="800" y="380" width="120" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<rect x="808" y="386" width="46" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-width="0.8"/>
+<text x="831" y="395" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">FLAGGER</text>
+<text x="860" y="414" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Metrics</text>
+<text x="860" y="428" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">analysis</text>
+</svg>

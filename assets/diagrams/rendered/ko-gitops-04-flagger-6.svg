@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t6-title t6-desc">
+<title id="t6-title">FluxCD와 Flagger 연동 아키텍처</title>
+<desc id="t6-desc">Git 저장소의 HelmRelease가 FluxCD의 Source·Helm 컨트롤러를 거쳐 쿠버네티스 Deployment에 적용되고, Canary CRD를 감시하는 Flagger가 Primary/Canary 서비스와 서비스 메시를 제어하며 점진적 배포를 수행하는 구조를 보여준다.</desc>
+<defs>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zones -->
+<rect x="32" y="240" width="200" height="132" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="48" y="244" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="78" y="253" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">GIT</text>
+
+<rect x="272" y="240" width="200" height="132" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="288" y="244" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="326" y="253" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">FLUXCD</text>
+
+<rect x="512" y="80" width="200" height="292" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="528" y="84" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="572" y="93" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">K8S CLUSTER</text>
+
+<rect x="752" y="80" width="176" height="292" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="768" y="84" width="144" height="12" rx="2" fill="#ffffff"/>
+<text x="840" y="93" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">PROGRESSIVE DELIVERY</text>
+
+<!-- Nodes -->
+<rect x="48" y="284" width="168" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="132" y="310" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">HelmRelease</text>
+<text x="132" y="326" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ canary values</text>
+
+<rect x="288" y="256" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="372" y="288" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Source Controller</text>
+
+<rect x="288" y="336" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="372" y="368" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Helm Controller</text>
+
+<rect x="528" y="116" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="612" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Deployment</text>
+
+<rect x="528" y="196" width="168" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="612" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Canary CRD</text>
+
+<rect x="528" y="288" width="168" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="612" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Flagger</text>
+
+<rect x="768" y="116" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Primary Service</text>
+
+<rect x="768" y="196" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Canary Service</text>
+
+<rect x="768" y="288" width="144" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="840" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Service Mesh</text>
+
+<!-- Arrows -->
+<path d="M 216,316 H 252 Q 260,316 260,308 V 292 Q 260,284 268,284 H 288"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="372" y1="312" x2="372" y2="336" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<path d="M 456,364 H 500 Q 508,364 508,356 V 152 Q 508,144 516,144 H 528"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<line x1="612" y1="252" x2="612" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<path d="M 696,296 H 720 Q 728,296 728,288 V 152 Q 728,144 736,144 H 768"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="696" y1="316" x2="768" y2="316" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<path d="M 696,336 H 744 Q 752,336 752,328 V 232 Q 752,224 760,224 H 768"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Legend -->
+<line x1="32" y1="516" x2="928" y2="516" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="32" y="532" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="52" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">배포 컨트롤러 (focal)</text>
+<line x1="240" y1="538" x2="268" y2="538" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="276" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">제어/배포 흐름</text>
+</svg>

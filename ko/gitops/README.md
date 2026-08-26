@@ -26,23 +26,7 @@ GitOps 개념은 2017년 Weaveworks에서 처음 소개되었습니다. Kubernet
 
 CNCF OpenGitOps 프로젝트에서 정의한 GitOps 원칙:
 
-```mermaid
-mindmap
-  root((GitOps 원칙))
-    선언적(Declarative)
-      시스템 상태를 코드로 정의
-      원하는 상태 명시
-    버전 관리(Versioned)
-      모든 변경 추적
-      감사 로그 자동 생성
-      롤백 가능
-    자동 적용(Automated)
-      승인된 변경 자동 배포
-      수동 개입 최소화
-    지속적 조정(Continuously Reconciled)
-      실제 상태 모니터링
-      원하는 상태로 자동 복구
-```
+![GitOps의 네 가지 핵심 원칙(선언적, 버전 관리, 자동 적용, 지속적 조정)이 하나의 개념에서 갈라지는 트리 구조를 보여준다.](../.gitbook/assets/ko-gitops-README-0.png)
 
 ## GitOps의 핵심 원칙
 
@@ -91,22 +75,7 @@ spec:
 
 승인된 변경 사항은 자동으로 시스템에 적용됩니다:
 
-```mermaid
-sequenceDiagram
-    participant Dev as 개발자
-    participant Git as Git 저장소
-    participant CI as CI 시스템
-    participant GitOps as GitOps 도구
-    participant K8s as Kubernetes
-
-    Dev->>Git: 코드 커밋
-    Git->>CI: Webhook 트리거
-    CI->>CI: 빌드 & 테스트
-    CI->>Git: 매니페스트 업데이트
-    Git->>GitOps: 변경 감지
-    GitOps->>K8s: 자동 배포
-    GitOps->>Git: 상태 업데이트
-```
+![개발자의 코드 커밋이 CI 시스템의 빌드·테스트를 거쳐 Git에 반영되고, GitOps 도구가 이를 감지해 Kubernetes에 자동 배포하는 순서를 보여준다.](../.gitbook/assets/ko-gitops-README-1.png)
 
 ### 4. 지속적 조정 (Continuous Reconciliation)
 
@@ -122,23 +91,7 @@ GitOps 구현에는 두 가지 주요 배포 모델이 있습니다:
 
 ### Push 모델
 
-```mermaid
-flowchart LR
-    subgraph External ["외부 시스템"]
-        CI[CI/CD 파이프라인]
-    end
-
-    subgraph Cluster ["Kubernetes 클러스터"]
-        API[API Server]
-        Apps[애플리케이션]
-    end
-
-    CI -->|kubectl apply| API
-    API --> Apps
-
-    style CI fill:#f9f,stroke:#333
-    style API fill:#326CE5,stroke:#333,color:#fff
-```
+![외부 CI/CD 파이프라인이 Kubernetes API Server에 직접 kubectl apply를 실행해 애플리케이션을 배포하는 push 기반 GitOps 구조를 보여준다.](../.gitbook/assets/ko-gitops-README-2.png)
 
 **특징:**
 - CI/CD 시스템이 클러스터에 직접 배포
@@ -156,26 +109,7 @@ flowchart LR
 
 ### Pull 모델 (GitOps 권장)
 
-```mermaid
-flowchart LR
-    subgraph External ["외부 시스템"]
-        Git[Git 저장소]
-    end
-
-    subgraph Cluster ["Kubernetes 클러스터"]
-        Agent[GitOps Agent]
-        API[API Server]
-        Apps[애플리케이션]
-    end
-
-    Agent -->|poll/watch| Git
-    Agent -->|apply| API
-    API --> Apps
-
-    style Git fill:#f5f5f5,stroke:#333
-    style Agent fill:#EB6E85,stroke:#333,color:#fff
-    style API fill:#326CE5,stroke:#333,color:#fff
-```
+![클러스터 내부의 GitOps Agent가 외부 Git 저장소를 스스로 감시하다가 변경을 발견하면 API Server에 적용해 애플리케이션을 배포하는 pull 기반 GitOps 구조를 보여준다.](../.gitbook/assets/ko-gitops-README-3.png)
 
 **특징:**
 - 클러스터 내부의 에이전트가 Git을 모니터링
@@ -244,29 +178,7 @@ CNCF Graduated 프로젝트로, Kubernetes를 위한 GitOps 도구 세트입니�
 
 ### 선택 가이드
 
-```mermaid
-flowchart TD
-    Start[GitOps 도구 선택] --> Q1{웹 UI가<br/>필요한가?}
-
-    Q1 -->|예| Q2{멀티 클러스터<br/>관리 필요?}
-    Q1 -->|아니오| Q3{모듈형 아키텍처<br/>선호?}
-
-    Q2 -->|예| ArgoCD[ArgoCD 추천]
-    Q2 -->|아니오| Q4{프로그레시브<br/>딜리버리 필요?}
-
-    Q3 -->|예| FluxCD[FluxCD 추천]
-    Q3 -->|아니오| Q5{CI/CD 통합<br/>필요?}
-
-    Q4 -->|예| ArgoCD
-    Q4 -->|아니오| Both[ArgoCD 또는 FluxCD]
-
-    Q5 -->|예| JenkinsX[Jenkins X 고려]
-    Q5 -->|아니오| FluxCD
-
-    style ArgoCD fill:#EB6E85,stroke:#333,color:#fff
-    style FluxCD fill:#5468FF,stroke:#333,color:#fff
-    style JenkinsX fill:#D33833,stroke:#333,color:#fff
-```
+![웹 UI, 멀티 클러스터 관리, 모듈형 아키텍처, 프로그레시브 딜리버리, CI/CD 통합 필요 여부에 따라 ArgoCD, FluxCD, Jenkins X 중 하나를 추천하는 GitOps 도구 선택 의사결정 흐름도이다.](../.gitbook/assets/ko-gitops-README-4.png)
 
 ### ArgoCD 선택 시나리오
 
@@ -290,34 +202,7 @@ flowchart TD
 
 Amazon EKS에서 GitOps를 구현할 때 고려해야 할 사항:
 
-```mermaid
-flowchart TB
-    subgraph AWS ["AWS 환경"]
-        subgraph EKS ["Amazon EKS"]
-            GitOps[GitOps Controller]
-            Apps[애플리케이션]
-        end
-
-        ECR[Amazon ECR]
-        SM[Secrets Manager]
-        IAM[IAM Roles]
-        ALB[Application Load Balancer]
-    end
-
-    subgraph External ["외부"]
-        Git[Git Repository]
-    end
-
-    Git --> GitOps
-    GitOps --> Apps
-    ECR --> Apps
-    SM --> Apps
-    IAM -->|IRSA| GitOps
-    ALB --> Apps
-
-    style EKS fill:#FF9900,stroke:#333
-    style GitOps fill:#EB6E85,stroke:#333,color:#fff
-```
+![외부 Git 저장소가 Amazon EKS 안의 GitOps Controller에 변경을 전달하고, IAM 역할(IRSA), Amazon ECR, Secrets Manager, Application Load Balancer가 각각 인증, 컨테이너 이미지, 시크릿, 트래픽 유입을 애플리케이션에 공급하는 AWS 기반 GitOps 아키텍처를 보여준다.](../.gitbook/assets/ko-gitops-README-5.png)
 
 ### IRSA (IAM Roles for Service Accounts)
 

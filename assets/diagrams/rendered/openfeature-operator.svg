@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="openfeature-operator-title openfeature-operator-desc">
+<title id="openfeature-operator-title">OpenFeature Operator 아키텍처</title>
+<desc id="openfeature-operator-desc">FeatureFlag/FeatureFlagSource 사용자 정의 리소스를 OpenFeature Operator의 Controller와 Reconciler, Mutating Webhook이 감시하여 ConfigMap과 Pod의 flagd 사이드카에 반영하는 구조.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="30" y="60" width="260" height="480" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="38" y="64" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="94.0" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CUSTOM RESOURCES</text>
+<rect x="330" y="60" width="280" height="480" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="338" y="64" width="136" height="12" rx="2" fill="#ffffff"/>
+<text x="406.0" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">OPENFEATURE OPERATOR</text>
+<rect x="650" y="60" width="280" height="480" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="658" y="64" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="708.0" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KUBERNETES 리소스</text>
+<rect x="60" y="140" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="140" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="160.0" y="170.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">FeatureFlag</text>
+<rect x="60" y="320" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="320" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="160.0" y="350.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">FeatureFlagSource</text>
+<rect x="360" y="130" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="130" width="220" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="470.0" y="160.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Controller Manager</text>
+<rect x="360" y="240" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="240" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="470.0" y="270.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Reconciler</text>
+<rect x="360" y="400" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="400" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="470.0" y="430.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Mutating Webhook</text>
+<rect x="680" y="130" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="130" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790.0" y="160.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ConfigMap</text>
+<rect x="680" y="400" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="400" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790.0" y="430.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Deployment</text>
+<rect x="680" y="280" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="280" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790.0" y="310.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod + flagd 사이드카</text>
+<path d="M 260,168 H 302.0 Q 310.0,168 310.0,160 V 157 Q 310.0,149 318.0,149 H 360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 260,348 H 302.0 Q 310.0,348 310.0,340 V 175 Q 310.0,167 318.0,167 H 360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="470" y1="186" x2="470" y2="240" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 580,268 H 622.0 Q 630.0,268 630.0,260 V 166 Q 630.0,158 638.0,158 H 680" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 680,428 H 638.0 Q 630.0,428 630.0,420 V 424 Q 630.0,416 622.0,416 H 580" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 580,440 H 622.0 Q 630.0,440 630.0,432 V 316 Q 630.0,308 638.0,308 H 680" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="642" y="344.0" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="674.0" y="353" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD 생성 시</text>
+</svg>

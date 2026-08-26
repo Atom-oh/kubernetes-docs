@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="tree-title tree-desc">
+      <title id="tree-title">GitOps 원칙</title>
+      <desc id="tree-desc">GitOps의 네 가지 원칙(선언적, 버전 관리, 자동 적용, 지속적 조정)이 하나의 루트 개념에서 갈라지는 트리 구조를 보여준다.</desc>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- Connectors: root drop, horizontal bus, child drops -->
+      <!-- root drop -->
+      <line x1="480" y1="108" x2="480" y2="152" stroke="#545B64" stroke-width="1"/>
+      <!-- horizontal bus -->
+      <line x1="120" y1="152" x2="840" y2="152" stroke="#545B64" stroke-width="1"/>
+      <!-- child drops -->
+      <line x1="120" y1="152" x2="120" y2="196" stroke="#545B64" stroke-width="1"/>
+      <line x1="360" y1="152" x2="360" y2="196" stroke="#545B64" stroke-width="1"/>
+      <line x1="600" y1="152" x2="600" y2="196" stroke="#545B64" stroke-width="1"/>
+      <line x1="840" y1="152" x2="840" y2="196" stroke="#545B64" stroke-width="1"/>
+
+      <!-- Root node (focal) -->
+      <rect x="380" y="52" width="200" height="56" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="480" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Arial,sans-serif" text-anchor="middle">GitOps 원칙</text>
+      <text x="480" y="98" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">4 core tenets</text>
+
+      <!-- Branch: 선언적 -->
+      <rect x="40" y="196" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="120" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Arial,sans-serif" text-anchor="middle">선언적 (Declarative)</text>
+      <text x="120" y="238" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">시스템 상태를 코드로 정의</text>
+      <text x="120" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">원하는 상태 명시</text>
+
+      <!-- Branch: 버전 관리 -->
+      <rect x="280" y="196" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="360" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Arial,sans-serif" text-anchor="middle">버전 관리 (Versioned)</text>
+      <text x="360" y="233" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">모든 변경 추적</text>
+      <text x="360" y="247" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">감사 로그 자동 생성</text>
+      <text x="360" y="261" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">롤백 가능</text>
+
+      <!-- Branch: 자동 적용 -->
+      <rect x="520" y="196" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="600" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Arial,sans-serif" text-anchor="middle">자동 적용 (Automated)</text>
+      <text x="600" y="238" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">승인된 변경 자동 배포</text>
+      <text x="600" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">수동 개입 최소화</text>
+
+      <!-- Branch: 지속적 조정 -->
+      <rect x="760" y="196" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="840" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Arial,sans-serif" text-anchor="middle">지속적 조정</text>
+      <text x="840" y="234" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Arial,sans-serif" text-anchor="middle">(Continuously Reconciled)</text>
+      <text x="840" y="250" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">실제 상태 모니터링</text>
+      <text x="840" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">원하는 상태로 자동 복구</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="40" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+      <rect x="40" y="572" width="16" height="16" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="66" y="584" fill="#545B64" font-size="8.5" font-family="'Amazon Ember',sans-serif">핵심 개념 (root)</text>
+      <rect x="220" y="572" width="16" height="16" rx="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="246" y="584" fill="#545B64" font-size="8.5" font-family="'Amazon Ember',sans-serif">원칙 (branch)</text>
+    </svg>

@@ -70,50 +70,7 @@ Both Flagger and Argo Rollouts solve the progressive delivery problem for Kubern
 
 Flagger is designed as the progressive delivery component of the Flux GitOps toolkit:
 
-```mermaid
-graph TB
-    subgraph "Flux GitOps Toolkit"
-        SC["Source Controller<br/>(Git, Helm, OCI)"]
-        KC["Kustomize Controller"]
-        HC["Helm Controller"]
-        NC["Notification Controller"]
-        IAC["Image Automation<br/>Controller"]
-        FL["Flagger<br/>(Progressive Delivery)"]
-    end
-
-    subgraph "External Systems"
-        GIT[("Git Repository")]
-        PROM["Prometheus"]
-        MESH["Service Mesh /<br/>Ingress Controller"]
-    end
-
-    subgraph "Kubernetes Cluster"
-        DEP["Deployments"]
-        SVC["Services"]
-        VS["VirtualServices /<br/>HTTPRoutes"]
-    end
-
-    GIT --> SC
-    SC --> KC
-    SC --> HC
-    KC --> DEP
-    HC --> DEP
-    IAC --> GIT
-
-    FL -->|"Watches"| DEP
-    FL -->|"Queries"| PROM
-    FL -->|"Manages"| SVC
-    FL -->|"Manages"| VS
-    NC -->|"Alerts"| FL
-
-    classDef flux fill:#5468FF,stroke:#333,color:white
-    classDef ext fill:#FF9900,stroke:#333,color:white
-    classDef k8s fill:#326CE5,stroke:#333,color:white
-
-    class SC,KC,HC,NC,IAC,FL flux
-    class GIT,PROM,MESH ext
-    class DEP,SVC,VS k8s
-```
+![Flux's source, kustomize, helm, notification and image-automation controllers reconcile Kubernetes deployments from a Git repository, while Flagger watches those deployments, queries Prometheus, and manages the Services and routes used for progressive delivery.](../.gitbook/assets/en-gitops-04-flagger-0.png)
 
 ---
 
@@ -123,20 +80,7 @@ graph TB
 
 Flagger implements a control loop that progressively advances a new version of an application by analyzing metrics, running conformance tests, and managing traffic routing. The core reconciliation loop is:
 
-```mermaid
-stateDiagram-v2
-    [*] --> Initialized: Canary created
-    Initialized --> Progressing: Deployment change detected
-    Progressing --> WaitingPromotion: All steps passed
-    Progressing --> Progressing: Advance step<br/>(increase weight)
-    Progressing --> Failed: Metrics check failed<br/>or threshold exceeded
-    WaitingPromotion --> Promoting: Auto or manual gate
-    WaitingPromotion --> Failed: Timeout exceeded
-    Promoting --> Finalising: Traffic shifted to primary
-    Finalising --> Succeeded: Primary updated, canary scaled down
-    Failed --> Initialized: Rollback complete
-    Succeeded --> Initialized: Waiting for next change
-```
+![A canary progresses from initialized through step-wise traffic increases to waiting for promotion, promoting, and finalising into a successful rollout, or diverts to a failed state and rolls back to initialized if metrics or a timeout fail along the way.](../.gitbook/assets/en-gitops-04-flagger-1.png)
 
 ### Detailed Control Loop Steps
 
@@ -178,25 +122,7 @@ Flagger's metrics analysis engine queries Prometheus to evaluate whether a canar
 
 Both metrics are derived from the service mesh or ingress controller's Prometheus metrics (e.g., `istio_requests_total`, `istio_request_duration_milliseconds_bucket`).
 
-```mermaid
-sequenceDiagram
-    participant F as Flagger
-    participant P as Prometheus
-    participant M as Mesh/Ingress
-    participant C as Canary Pod
-
-    F->>M: Set canary weight (e.g., 10%)
-    M->>C: Route 10% traffic to canary
-    Note over C: Handle requests
-    C->>M: Return responses
-    M->>P: Report metrics<br/>(latency, status codes)
-    F->>P: Query: request-success-rate?
-    P-->>F: 99.5% (threshold: 99%)
-    F->>P: Query: request-duration P99?
-    P-->>F: 250ms (threshold: 500ms)
-    F->>F: All checks passed
-    F->>M: Advance: set weight to 20%
-```
+![Flagger shifts a slice of traffic to the canary pod through the mesh, then queries Prometheus for success rate and latency against thresholds before advancing the traffic weight.](../.gitbook/assets/en-gitops-04-flagger-2.png)
 
 ---
 
@@ -477,34 +403,7 @@ Step 5: Canary 50%, Primary 50%  ->  Analyze metrics
 Step 6: Promote -> Canary spec copied to Primary, all traffic to Primary
 ```
 
-```mermaid
-graph LR
-    subgraph "Traffic Shifting Progress"
-        S1["Step 1<br/>10%"] --> S2["Step 2<br/>20%"]
-        S2 --> S3["Step 3<br/>30%"]
-        S3 --> S4["Step 4<br/>40%"]
-        S4 --> S5["Step 5<br/>50%"]
-        S5 --> PROMOTE["Promote<br/>100%"]
-    end
-
-    subgraph "At Each Step"
-        METRIC1["Check: request-success-rate<br/>>= 99%"]
-        METRIC2["Check: request-duration P99<br/><= 500ms"]
-        WH["Run: webhooks<br/>(load test, conformance)"]
-    end
-
-    S3 -.->|"Analyze"| METRIC1
-    S3 -.->|"Analyze"| METRIC2
-    S3 -.->|"Execute"| WH
-
-    classDef step fill:#28a745,stroke:#333,color:white
-    classDef check fill:#ffc107,stroke:#333,color:black
-    classDef promote fill:#5468FF,stroke:#333,color:white
-
-    class S1,S2,S3,S4,S5 step
-    class METRIC1,METRIC2,WH check
-    class PROMOTE promote
-```
+![Canary traffic weight climbs in five steps from 10% to 50% before promotion to 100%, and at each step Flagger analyzes the request success rate and P99 duration and runs any configured webhooks.](../.gitbook/assets/en-gitops-04-flagger-3.png)
 
 You can also define non-linear traffic stepping with `stepWeights` (an array):
 
@@ -719,32 +618,7 @@ In Blue-Green mode:
 - After all iterations pass, traffic is switched 100% from primary to canary in a single step
 - If any iteration fails, the canary is scaled down with no impact on production traffic
 
-```mermaid
-sequenceDiagram
-    participant U as Users
-    participant P as Primary (Blue)
-    participant C as Canary (Green)
-    participant F as Flagger
-    participant LT as Load Tester
-
-    Note over P: Serving 100% traffic
-    F->>C: Deploy new version (Green)
-    F->>LT: Run pre-rollout tests
-    LT->>C: Synthetic traffic
-    LT-->>F: Tests passed
-
-    loop Analysis Iterations
-        F->>LT: Generate test traffic
-        LT->>C: Synthetic requests
-        F->>F: Check metrics (success rate, latency)
-        Note over F: Iteration passed
-    end
-
-    F->>U: Switch: 100% traffic to Green
-    F->>P: Update Primary with Green spec
-    F->>C: Scale down canary
-    Note over P: Now serving new version
-```
+![Flagger deploys a green canary, drives synthetic load through it in repeated analysis iterations, then switches all user traffic to green, updates the primary spec, and scales the old canary down.](../.gitbook/assets/en-gitops-04-flagger-4.png)
 
 ### Mirror Traffic
 
@@ -1316,30 +1190,7 @@ webhooks:
 
 The most powerful pattern is combining Flux HelmRelease for application deployment with Flagger Canary for progressive delivery. Flux manages the desired state from Git, and Flagger manages how changes are rolled out.
 
-```mermaid
-sequenceDiagram
-    participant D as Developer
-    participant G as Git Repository
-    participant FC as Flux Controllers
-    participant FL as Flagger
-    participant K as Kubernetes
-
-    D->>G: Push new image tag
-    G->>FC: Source Controller detects change
-    FC->>K: Helm Controller updates HelmRelease
-    K->>FL: Deployment spec changed
-    FL->>FL: Initialize canary
-    FL->>K: Create canary pods
-    FL->>FL: Run analysis (metrics + webhooks)
-
-    alt Metrics Pass
-        FL->>K: Promote canary to primary
-        FL->>D: Notify: deployment succeeded
-    else Metrics Fail
-        FL->>K: Rollback to primary
-        FL->>D: Notify: deployment failed
-    end
-```
+![A developer's image push flows through Flux's controllers into a HelmRelease change that Flagger picks up, runs a canary analysis against, and then either promotes to primary or rolls back, notifying the developer either way.](../.gitbook/assets/en-gitops-04-flagger-5.png)
 
 **Repository structure for Flux + Flagger:**
 
@@ -1501,63 +1352,7 @@ images:
 
 The fully automated pipeline uses Flux Image Automation to detect new container images, commit the updated tag to Git, and let Flagger handle the progressive rollout:
 
-```mermaid
-flowchart LR
-    subgraph CI["CI Pipeline"]
-        BUILD["Build & Push<br/>Image"]
-    end
-
-    subgraph ECR["Amazon ECR"]
-        IMG["web-app:v2.0.0"]
-    end
-
-    subgraph GIT["Git Repository"]
-        MANIFEST["deployment.yaml<br/>image: web-app:v2.0.0"]
-    end
-
-    subgraph FLUX["Flux Controllers"]
-        IR["Image Repository<br/>(scan ECR)"]
-        IP["Image Policy<br/>(semver filter)"]
-        IU["Image Update<br/>Automation"]
-        KC["Kustomize<br/>Controller"]
-    end
-
-    subgraph FLAGGER["Flagger"]
-        CANARY["Canary<br/>Controller"]
-        ANALYSIS["Metrics<br/>Analysis"]
-    end
-
-    subgraph K8S["Kubernetes"]
-        PRIMARY["Primary<br/>Deployment"]
-        CANARY_DEP["Canary<br/>Deployment"]
-    end
-
-    BUILD --> IMG
-    IMG --> IR
-    IR --> IP
-    IP --> IU
-    IU -->|"git commit"| MANIFEST
-    MANIFEST --> KC
-    KC --> PRIMARY
-    PRIMARY --> CANARY
-    CANARY --> CANARY_DEP
-    CANARY_DEP --> ANALYSIS
-    ANALYSIS -->|"Promote"| PRIMARY
-
-    classDef ci fill:#dc3545,stroke:#333,color:white
-    classDef ecr fill:#FF9900,stroke:#333,color:white
-    classDef git fill:#f05033,stroke:#333,color:white
-    classDef flux fill:#5468FF,stroke:#333,color:white
-    classDef flagger fill:#28a745,stroke:#333,color:white
-    classDef k8s fill:#326CE5,stroke:#333,color:white
-
-    class BUILD ci
-    class IMG ecr
-    class MANIFEST git
-    class IR,IP,IU,KC flux
-    class CANARY,ANALYSIS flagger
-    class PRIMARY,CANARY_DEP k8s
-```
+![A new image built and pushed to ECR is picked up by Flux's image automation controllers, which commit an updated manifest that Kustomize applies, and Flagger's metrics analysis then promotes the resulting canary to primary or leaves it in place.](../.gitbook/assets/en-gitops-04-flagger-6.png)
 
 **Flux Image Automation resources:**
 
@@ -2015,42 +1810,7 @@ webhooks:
 
 For organizations running multiple EKS clusters, Flagger can be deployed in a hub-and-spoke pattern:
 
-```mermaid
-graph TB
-    subgraph HUB["Management Cluster"]
-        FLUX_HUB["Flux Controllers"]
-        GIT[("Git Repository")]
-    end
-
-    subgraph SPOKE1["Production Cluster - us-east-1"]
-        FL1["Flagger"]
-        ISTIO1["Istio"]
-        APP1["web-app"]
-    end
-
-    subgraph SPOKE2["Production Cluster - us-west-2"]
-        FL2["Flagger"]
-        ISTIO2["Istio"]
-        APP2["web-app"]
-    end
-
-    subgraph SPOKE3["Production Cluster - eu-west-1"]
-        FL3["Flagger"]
-        ISTIO3["Istio"]
-        APP3["web-app"]
-    end
-
-    GIT --> FLUX_HUB
-    FLUX_HUB -->|"Kustomization"| SPOKE1
-    FLUX_HUB -->|"Kustomization"| SPOKE2
-    FLUX_HUB -->|"Kustomization"| SPOKE3
-
-    classDef hub fill:#FF9900,stroke:#333,color:white
-    classDef spoke fill:#326CE5,stroke:#333,color:white
-
-    class FLUX_HUB,GIT hub
-    class FL1,FL2,FL3,ISTIO1,ISTIO2,ISTIO3,APP1,APP2,APP3 spoke
-```
+![A single management cluster's Flux controllers read one Git repository and apply the same Kustomization to three production clusters in different regions, each running its own Flagger, Istio, and web-app canary.](../.gitbook/assets/en-gitops-04-flagger-7.png)
 
 **Key considerations for multi-cluster Flagger:**
 

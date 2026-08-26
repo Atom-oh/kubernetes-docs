@@ -60,27 +60,7 @@ Feature flags serve several distinct purposes in software delivery:
 
 Progressive delivery extends continuous delivery by adding fine-grained control over which users see new functionality and when. Feature flags are a critical building block in this model:
 
-```mermaid
-flowchart LR
-    subgraph DEPLOY["Deployment Phase"]
-        CI["CI Pipeline"] --> IMG["Container Image"]
-        IMG --> K8S["Kubernetes Deploy"]
-    end
-
-    subgraph RELEASE["Release Phase (Feature Flags)"]
-        FLAG["Feature Flag<br/>Evaluation"] --> INTERNAL["Internal Users<br/>0.1%"]
-        INTERNAL --> BETA["Beta Users<br/>5%"]
-        BETA --> CANARY["Canary<br/>25%"]
-        CANARY --> GA["General Availability<br/>100%"]
-    end
-
-    K8S --> FLAG
-
-    classDef deploy fill:#326CE5,stroke:#333,color:white
-    classDef release fill:#28a745,stroke:#333,color:white
-    class CI,IMG,K8S deploy
-    class FLAG,INTERNAL,BETA,CANARY,GA release
-```
+![Flowchart showing a container image deployed once through Kubernetes, then a feature flag evaluation gradually widening its release from internal users to beta, canary, and full general availability.](../.gitbook/assets/en-gitops-05-feature-flags-0.png)
 
 With feature flags, you deploy the code to all pods simultaneously but control who sees the new behavior at the application level. This is fundamentally different from traffic-splitting approaches (like canary deployments), which control which pod version a request hits. The two techniques complement each other, as described in the [Canary Release and Feature Flag Combination](#canary-release-and-feature-flag-combination) section.
 
@@ -120,55 +100,7 @@ Key benefits of OpenFeature:
 
 The OpenFeature SDK follows a layered architecture that separates the evaluation API from the flag management backend:
 
-```mermaid
-flowchart TB
-    subgraph APP["Application Code"]
-        CLIENT["OpenFeature Client"]
-    end
-
-    subgraph SDK["OpenFeature SDK"]
-        API["Evaluation API"]
-        HOOKS["Hook Pipeline"]
-        CTX["Evaluation Context"]
-    end
-
-    subgraph PROVIDER["Provider Layer"]
-        P_FLAGD["flagd Provider"]
-        P_LD["LaunchDarkly Provider"]
-        P_FS["Flagsmith Provider"]
-        P_ENV["Environment Provider"]
-    end
-
-    subgraph BACKEND["Flag Management Backend"]
-        FLAGD["flagd"]
-        LD_SVC["LaunchDarkly Service"]
-        FS_SVC["Flagsmith Service"]
-        ENV_VAR["Environment Variables"]
-    end
-
-    CLIENT --> API
-    API --> HOOKS
-    HOOKS --> CTX
-    CTX --> P_FLAGD
-    CTX --> P_LD
-    CTX --> P_FS
-    CTX --> P_ENV
-
-    P_FLAGD --> FLAGD
-    P_LD --> LD_SVC
-    P_FS --> FS_SVC
-    P_ENV --> ENV_VAR
-
-    classDef app fill:#4A90D9,stroke:#333,color:white
-    classDef sdk fill:#F5A623,stroke:#333,color:white
-    classDef provider fill:#7B68EE,stroke:#333,color:white
-    classDef backend fill:#28a745,stroke:#333,color:white
-
-    class CLIENT app
-    class API,HOOKS,CTX sdk
-    class P_FLAGD,P_LD,P_FS,P_ENV provider
-    class FLAGD,LD_SVC,FS_SVC,ENV_VAR backend
-```
+![Architecture diagram showing application code calling the OpenFeature SDK, which routes flag evaluation through a swappable provider to one of four flag backends: flagd, LaunchDarkly, Flagsmith, or environment variables.](../.gitbook/assets/en-gitops-05-feature-flags-1.png)
 
 ### Core Components
 
@@ -214,25 +146,7 @@ openfeature.SetProvider(launchdarkly.NewProvider())  // Option B: LaunchDarkly
 
 A complete flag evaluation follows this sequence:
 
-```mermaid
-sequenceDiagram
-    participant App as Application
-    participant Client as OF Client
-    participant Hook as Hook Pipeline
-    participant Provider as Provider
-    participant Backend as Flag Backend
-
-    App->>Client: getBooleanValue("new-ui", false, ctx)
-    Client->>Hook: before(ctx)
-    Hook-->>Client: enriched context
-    Client->>Provider: resolveBooleanValue("new-ui", false, ctx)
-    Provider->>Backend: resolve flag
-    Backend-->>Provider: {value: true, variant: "on", reason: "TARGETING_MATCH"}
-    Provider-->>Client: ResolutionDetails
-    Client->>Hook: after(details)
-    Hook-->>Client: (metrics recorded)
-    Client-->>App: true
-```
+![Sequence diagram showing an application's boolean flag check flowing through the OpenFeature client and hook pipeline to a provider and flag backend, which returns a targeting match that becomes the resolved boolean.](../.gitbook/assets/en-gitops-05-feature-flags-2.png)
 
 ---
 
@@ -253,51 +167,7 @@ Key characteristics:
 
 ### flagd Architecture
 
-```mermaid
-flowchart TB
-    subgraph SOURCES["Flag Configuration Sources"]
-        CRD["FeatureFlag CRD"]
-        CM["ConfigMap"]
-        FILE["File (volume mount)"]
-        HTTP_SRC["HTTP endpoint"]
-    end
-
-    subgraph FLAGD["flagd Process"]
-        SYNC["Sync Engine"]
-        STORE["Flag State Store"]
-        EVAL["Evaluation Engine"]
-        GRPC["gRPC Server<br/>:8013"]
-        REST["HTTP Server<br/>:8016"]
-        METRICS_EP["Metrics<br/>:8014"]
-    end
-
-    subgraph APPS["Application Pods"]
-        APP1["App + OF SDK"]
-        APP2["App + OF SDK"]
-    end
-
-    CRD --> SYNC
-    CM --> SYNC
-    FILE --> SYNC
-    HTTP_SRC --> SYNC
-
-    SYNC --> STORE
-    STORE --> EVAL
-    EVAL --> GRPC
-    EVAL --> REST
-    EVAL --> METRICS_EP
-
-    APP1 -->|"gRPC"| GRPC
-    APP2 -->|"HTTP"| REST
-
-    classDef source fill:#F5A623,stroke:#333,color:white
-    classDef flagd fill:#326CE5,stroke:#333,color:white
-    classDef app fill:#28a745,stroke:#333,color:white
-
-    class CRD,CM,FILE,HTTP_SRC source
-    class SYNC,STORE,EVAL,GRPC,REST,METRICS_EP flagd
-    class APP1,APP2 app
-```
+![Architecture diagram showing flagd loading flag configuration from CRDs, ConfigMaps, files, or HTTP into a sync engine and flag state store, then evaluating rules and serving results to application pods over gRPC and HTTP.](../.gitbook/assets/en-gitops-05-feature-flags-3.png)
 
 ### Helm Installation
 
@@ -441,45 +311,11 @@ flagd can run in two modes on Kubernetes. The choice depends on your latency req
 
 **Sidecar Mode** (injected by the OpenFeature Operator):
 
-```mermaid
-flowchart LR
-    subgraph POD["Application Pod"]
-        APP["App Container"] -->|"localhost:8013"| FLAGD["flagd Sidecar"]
-    end
-    FLAGD -->|"Watch"| CRD["FeatureFlag CRD"]
-
-    classDef app fill:#28a745,stroke:#333,color:white
-    classDef flagd fill:#326CE5,stroke:#333,color:white
-    classDef crd fill:#F5A623,stroke:#333,color:white
-
-    class APP app
-    class FLAGD flagd
-    class CRD crd
-```
+![Architecture diagram showing an application container calling a flagd sidecar over localhost inside the same pod, while the sidecar watches a FeatureFlag custom resource for updates.](../.gitbook/assets/en-gitops-05-feature-flags-4.png)
 
 **Standalone Mode** (centralized deployment):
 
-```mermaid
-flowchart LR
-    subgraph FLAGD_NS["flagd-system namespace"]
-        FLAGD["flagd Deployment<br/>(2+ replicas)"]
-        SVC["flagd Service"]
-    end
-
-    subgraph APP_NS["application namespace"]
-        APP1["App Pod 1"] -->|"gRPC"| SVC
-        APP2["App Pod 2"] -->|"gRPC"| SVC
-        APP3["App Pod 3"] -->|"gRPC"| SVC
-    end
-
-    FLAGD --> SVC
-    FLAGD -->|"Watch"| CRD["FeatureFlag CRD"]
-
-    classDef app fill:#28a745,stroke:#333,color:white
-    classDef flagd fill:#326CE5,stroke:#333,color:white
-    class APP1,APP2,APP3 app
-    class FLAGD,SVC flagd
-```
+![Architecture diagram showing three application pods calling a shared flagd Service over gRPC, backed by a multi-replica flagd Deployment in its own namespace that watches a FeatureFlag custom resource.](../.gitbook/assets/en-gitops-05-feature-flags-5.png)
 
 | Aspect | Sidecar | Standalone |
 |--------|---------|------------|
@@ -599,23 +435,7 @@ After the operator processes this Deployment, the resulting pod will contain two
 
 The operator watches `FeatureFlag` CRs for changes and generates or updates the corresponding ConfigMaps that flagd reads. This synchronization flow works as follows:
 
-```mermaid
-sequenceDiagram
-    participant Git as Git Repository
-    participant ArgoCD as ArgoCD / Flux
-    participant K8s as Kubernetes API
-    participant Op as OF Operator
-    participant CM as ConfigMap
-    participant flagd as flagd Sidecar
-
-    Git->>ArgoCD: FeatureFlag CR updated
-    ArgoCD->>K8s: Apply FeatureFlag CR
-    K8s->>Op: Watch event: FeatureFlag changed
-    Op->>CM: Generate/update ConfigMap
-    CM->>flagd: Volume mount update detected
-    flagd->>flagd: Reload flag configuration
-    Note over flagd: New flag values active<br/>within seconds
-```
+![Sequence diagram showing a FeatureFlag change committed to Git flow through ArgoCD or Flux into the Kubernetes API, where the OpenFeature Operator regenerates a ConfigMap that flagd detects and reloads within seconds.](../.gitbook/assets/en-gitops-05-feature-flags-6.png)
 
 When you update a `FeatureFlag` CR, the operator detects the change through the Kubernetes watch API, regenerates the ConfigMap containing the flag specification, and flagd picks up the change through its file watcher -- all without pod restarts.
 
@@ -987,34 +807,7 @@ Feature flags and canary releases are complementary strategies. Canary releases 
 
 ### Architecture: Flagger + Feature Flags
 
-```mermaid
-flowchart TB
-    subgraph TRAFFIC["Traffic Layer (Flagger/Istio)"]
-        INGRESS["Ingress Gateway"]
-        VS["VirtualService"]
-        PRIMARY["Primary (v1)<br/>90% traffic"]
-        CANARY["Canary (v2)<br/>10% traffic"]
-    end
-
-    subgraph FLAGS["Feature Layer (OpenFeature)"]
-        FLAGD_P["flagd"]
-        FF_NEW["new-feature: off<br/>(v1 pods)"]
-        FF_ON["new-feature: on<br/>(v2 pods evaluate)"]
-    end
-
-    INGRESS --> VS
-    VS -->|"90%"| PRIMARY
-    VS -->|"10%"| CANARY
-    PRIMARY --> FF_NEW
-    CANARY --> FF_ON
-    FF_ON --> FLAGD_P
-
-    classDef traffic fill:#326CE5,stroke:#333,color:white
-    classDef flags fill:#28a745,stroke:#333,color:white
-
-    class INGRESS,VS,PRIMARY,CANARY traffic
-    class FLAGD_P,FF_NEW,FF_ON flags
-```
+![Architecture diagram showing an Istio VirtualService splitting 90% of traffic to a primary v1 deployment where a flag stays off, and 10% to a canary v2 deployment where pods evaluate the same flag against flagd.](../.gitbook/assets/en-gitops-05-feature-flags-7.png)
 
 ### Flagger + Feature Flag Workflow
 
@@ -1297,30 +1090,7 @@ spec:
 
 The pull request workflow for feature flag changes provides safety and traceability:
 
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant Git as GitHub/GitLab
-    participant CI as CI Pipeline
-    participant Review as Peer Review
-    participant GitOps as ArgoCD/Flux
-    participant K8s as Kubernetes
-
-    Dev->>Git: Create branch<br/>update feature-flags/product-flags.yaml
-    Git->>CI: Trigger validation
-    CI->>CI: Lint YAML
-    CI->>CI: Validate FeatureFlag schema
-    CI->>CI: Dry-run targeting rules
-    CI-->>Git: Status check: passed
-    Dev->>Git: Open Pull Request
-    Git->>Review: Request review
-    Review-->>Git: Approved
-    Dev->>Git: Merge to main
-    Git->>GitOps: Webhook / poll detects change
-    GitOps->>K8s: Apply updated FeatureFlag CR
-    K8s->>K8s: Operator syncs ConfigMap
-    Note over K8s: Flags active in seconds<br/>No pod restart required
-```
+![Sequence diagram showing a developer editing a flag file on a branch, CI validating and a peer approving the pull request, then GitOps applying the merged FeatureFlag resource so Kubernetes syncs it without a pod restart.](../.gitbook/assets/en-gitops-05-feature-flags-8.png)
 
 **CI validation example** (GitHub Actions):
 
@@ -1551,19 +1321,7 @@ spec:
 
 Every feature flag should have a defined lifecycle. Flags that persist beyond their intended purpose become technical debt that increases code complexity, test surface, and cognitive load.
 
-```mermaid
-flowchart LR
-    CREATE["Create Flag<br/>(PR + Review)"] --> DEV["Development<br/>(flag off)"]
-    DEV --> ROLLOUT["Gradual Rollout<br/>(5% → 25% → 100%)"]
-    ROLLOUT --> STABLE["Stable<br/>(flag on, 100%)"]
-    STABLE --> CLEANUP["Cleanup<br/>(remove flag + code paths)"]
-
-    classDef active fill:#28a745,stroke:#333,color:white
-    classDef cleanup fill:#dc3545,stroke:#333,color:white
-
-    class CREATE,DEV,ROLLOUT,STABLE active
-    class CLEANUP cleanup
-```
+![Flowchart showing a feature flag's life from creation through a flag-off development period, a gradual percentage rollout, a stable fully-on state, to eventual cleanup that removes the flag and its dead code paths.](../.gitbook/assets/en-gitops-05-feature-flags-9.png)
 
 Recommended lifecycle rules:
 

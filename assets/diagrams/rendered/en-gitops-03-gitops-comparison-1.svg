@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fluxcd2-ttl fluxcd2-desc">
+<title id="fluxcd2-ttl">FluxCD's internal controller architecture</title>
+<desc id="fluxcd2-desc">Architecture diagram showing FluxCD's Source Controller fetching from Git, Helm, and OCI sources and driving the Kustomize and Helm controllers to apply resources into the Kubernetes cluster, while the Notification Controller watches all three and the Image Automation Controller writes updated image tags back to Git.</desc>
+
+<rect width="960" height="600" fill="var(--paper)"/>
+
+<defs><style>
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+:root{
+  --paper:#ffffff; --paper-2:#F2F3F3; --ink:#232F3E; --muted:#545B64; --soft:#7D8998;
+  --rule:rgba(35,47,62,0.12); --rule-solid:#D5DBDB;
+  --accent:#EC7211; --accent-tint:rgba(255,153,0,0.10); --link:#0972D3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#161E2D; --paper-2:#232F3E; --ink:#ffffff; --muted:#B6BEC9; --soft:#8D99A8;
+    --rule:rgba(255,255,255,0.12); --rule-solid:rgba(255,255,255,0.25);
+    --accent:#FF9900; --accent-tint:rgba(255,153,0,0.14); --link:#539FE5;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#161E2D; --paper-2:#232F3E; --ink:#ffffff; --muted:#B6BEC9; --soft:#8D99A8;
+  --rule:rgba(255,255,255,0.12); --rule-solid:rgba(255,255,255,0.25);
+  --accent:#FF9900; --accent-tint:rgba(255,153,0,0.14); --link:#539FE5;
+}
+text{ font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif; }
+.mono{ font-family:'Geist Mono','Amazon Ember Mono',ui-monospace,monospace; }
+</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="var(--muted)"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="var(--accent)"/>
+  </marker>
+  <marker id="arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="var(--soft)"/>
+  </marker>
+</defs>
+
+<!-- Header -->
+<text x="24" y="24" class="mono" font-size="8" letter-spacing="0.18em" fill="var(--soft)">GITOPS &#183; FLUXCD</text>
+<text x="24" y="46" font-size="20" font-weight="700" fill="var(--ink)">FluxCD controller architecture</text>
+
+<!-- ================= ZONE (bg -> zone -> arrows -> nodes) ================= -->
+<rect x="200" y="108" width="380" height="348" rx="8" fill="var(--ink)" fill-opacity="0.02" stroke="var(--rule)" stroke-width="0.8"/>
+<rect x="340" y="112" width="60" height="12" rx="2" fill="var(--paper)"/>
+<text x="370" y="121" class="mono" font-size="7" letter-spacing="0.14em" text-anchor="middle" fill="var(--soft)">FLUXCD</text>
+
+<!-- ================= ARROWS (behind nodes) ================= -->
+
+<!-- Git Repository -> Source Controller -->
+<path d="M140,88 H188 Q196,88 196,96 V152 Q196,160 204,160 H220"
+      fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="146" y="120" width="40" height="12" rx="2" fill="var(--paper)"/>
+<text x="166" y="129" class="mono" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="var(--soft)">FETCH</text>
+
+<!-- Helm Repository -> Source Controller -->
+<path d="M140,204 H188 Q196,204 196,196 V188 Q196,180 204,180 H220"
+      fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- OCI Registry -> Source Controller -->
+<path d="M140,308 H188 Q196,308 196,300 V208 Q196,200 204,200 H220"
+      fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Source Controller -> Kustomize Controller (straight, same y) -->
+<line x1="360" y1="168" x2="420" y2="168" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Source Controller -> Helm Controller -->
+<path d="M360,192 H372 Q380,192 380,200 V288 Q380,296 388,296 H420"
+      fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="384" y="236" width="52" height="12" rx="2" fill="var(--paper)"/>
+<text x="410" y="245" class="mono" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="var(--soft)">RELEASE</text>
+
+<!-- Kustomize Controller -> Kubernetes Cluster -->
+<path d="M560,180 H612 Q620,180 620,188 V224 Q620,232 628,232 H680"
+      fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="586" y="196" width="44" height="12" rx="2" fill="var(--paper)"/>
+<text x="608" y="205" class="mono" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="var(--soft)">APPLY</text>
+
+<!-- Helm Controller -> Kubernetes Cluster -->
+<path d="M560,308 H612 Q620,308 620,300 V264 Q620,256 628,256 H680"
+      fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Notification Controller -> Source Controller (same x, straight, dashed/async) -->
+<line x1="280" y1="276" x2="280" y2="212" stroke="var(--soft)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-soft)"/>
+
+<!-- Notification Controller -> Kustomize Controller (dashed/async) -->
+<path d="M360,296 H392 Q400,296 400,288 V200 Q400,192 408,192 H420"
+      fill="none" stroke="var(--soft)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-soft)"/>
+
+<!-- Notification Controller -> Helm Controller (straight, same y, dashed/async) -->
+<line x1="360" y1="320" x2="420" y2="320" stroke="var(--soft)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-soft)"/>
+
+<!-- Image Automation Controller -> Git Repository (dashed, write-back) -->
+<path d="M220,404 H176 Q168,404 168,396 V120 Q168,112 160,112 H140"
+      fill="none" stroke="var(--soft)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-soft)"/>
+<rect x="176" y="244" width="76" height="12" rx="2" fill="var(--paper)"/>
+<text x="214" y="253" class="mono" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="var(--soft)">IMAGE UPDATE</text>
+
+<!-- ================= NODES ================= -->
+
+<!-- Git Repository (external) -->
+<rect x="20" y="68" width="120" height="64" rx="6" fill="var(--paper)"/>
+<rect x="20" y="68" width="120" height="64" rx="6" fill="var(--ink)" fill-opacity="0.03" stroke="var(--ink)" stroke-opacity="0.30" stroke-width="1"/>
+<text x="80" y="96" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">Git Repository</text>
+<text x="80" y="112" class="mono" font-size="9" text-anchor="middle" fill="var(--muted)">source repo</text>
+
+<!-- Helm Repository (external) -->
+<rect x="20" y="172" width="120" height="64" rx="6" fill="var(--paper)"/>
+<rect x="20" y="172" width="120" height="64" rx="6" fill="var(--ink)" fill-opacity="0.03" stroke="var(--ink)" stroke-opacity="0.30" stroke-width="1"/>
+<text x="80" y="200" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">Helm Repository</text>
+<text x="80" y="216" class="mono" font-size="9" text-anchor="middle" fill="var(--muted)">chart repo</text>
+
+<!-- OCI Registry (external) -->
+<rect x="20" y="276" width="120" height="64" rx="6" fill="var(--paper)"/>
+<rect x="20" y="276" width="120" height="64" rx="6" fill="var(--ink)" fill-opacity="0.03" stroke="var(--ink)" stroke-opacity="0.30" stroke-width="1"/>
+<text x="80" y="304" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">OCI Registry</text>
+<text x="80" y="320" class="mono" font-size="9" text-anchor="middle" fill="var(--muted)">artifacts</text>
+
+<!-- Source Controller (FOCAL) -->
+<rect x="220" y="148" width="140" height="64" rx="6" fill="var(--paper)"/>
+<rect x="220" y="148" width="140" height="64" rx="6" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+<text x="290" y="176" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">Source Controller</text>
+<text x="290" y="192" class="mono" font-size="9" text-anchor="middle" fill="var(--muted)">fetch &#183; verify</text>
+
+<!-- Kustomize Controller -->
+<rect x="420" y="148" width="140" height="64" rx="6" fill="var(--paper)"/>
+<rect x="420" y="148" width="140" height="64" rx="6" fill="var(--paper)" stroke="var(--ink)" stroke-width="1"/>
+<text x="490" y="176" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">Kustomize Ctrl</text>
+<text x="490" y="192" class="mono" font-size="9" text-anchor="middle" fill="var(--muted)">build &#183; apply</text>
+
+<!-- Notification Controller (optional/support treatment) -->
+<rect x="220" y="276" width="140" height="64" rx="6" fill="var(--paper)"/>
+<rect x="220" y="276" width="140" height="64" rx="6" fill="var(--ink)" fill-opacity="0.02" stroke="var(--ink)" stroke-opacity="0.20" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="290" y="304" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">Notification Ctrl</text>
+<text x="290" y="320" class="mono" font-size="9" text-anchor="middle" fill="var(--muted)">events &#183; alerts</text>
+
+<!-- Helm Controller -->
+<rect x="420" y="276" width="140" height="64" rx="6" fill="var(--paper)"/>
+<rect x="420" y="276" width="140" height="64" rx="6" fill="var(--paper)" stroke="var(--ink)" stroke-width="1"/>
+<text x="490" y="304" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">Helm Controller</text>
+<text x="490" y="320" class="mono" font-size="9" text-anchor="middle" fill="var(--muted)">template &#183; release</text>
+
+<!-- Image Automation Controller (optional/support treatment) -->
+<rect x="220" y="372" width="140" height="64" rx="6" fill="var(--paper)"/>
+<rect x="220" y="372" width="140" height="64" rx="6" fill="var(--ink)" fill-opacity="0.02" stroke="var(--ink)" stroke-opacity="0.20" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="290" y="400" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">Image Automation</text>
+<text x="290" y="416" class="mono" font-size="9" text-anchor="middle" fill="var(--muted)">scan &#183; write back</text>
+
+<!-- Kubernetes Cluster (external) -->
+<rect x="680" y="212" width="140" height="64" rx="6" fill="var(--paper)"/>
+<rect x="680" y="212" width="140" height="64" rx="6" fill="var(--ink)" fill-opacity="0.03" stroke="var(--ink)" stroke-opacity="0.30" stroke-width="1"/>
+<text x="750" y="240" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">Kubernetes Cluster</text>
+<text x="750" y="256" class="mono" font-size="9" text-anchor="middle" fill="var(--muted)">deploy target</text>
+
+<!-- Legend -->
+<line x1="24" y1="500" x2="936" y2="500" stroke="var(--rule)" stroke-width="0.8"/>
+<circle cx="30" cy="516" r="4" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+<text x="40" y="520" class="mono" font-size="8" fill="var(--muted)">RECONCILIATION HUB</text>
+<circle cx="220" cy="516" r="4" fill="var(--ink)" fill-opacity="0.03" stroke="var(--ink)" stroke-opacity="0.30" stroke-width="1"/>
+<text x="230" y="520" class="mono" font-size="8" fill="var(--muted)">EXTERNAL SYSTEM</text>
+<line x1="400" y1="516" x2="420" y2="516" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="428" y="520" class="mono" font-size="8" fill="var(--muted)">RECONCILE PATH</text>
+<line x1="600" y1="516" x2="620" y2="516" stroke="var(--soft)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-soft)"/>
+<text x="628" y="520" class="mono" font-size="8" fill="var(--muted)">EVENTS / ASYNC</text>
+
+</svg>
