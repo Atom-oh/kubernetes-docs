@@ -427,19 +427,7 @@ spec:
 
 스케일 다운 시의 전체 흐름:
 
-```mermaid
-graph LR
-    A[트래픽 감소] --> B[HPA 스케일 다운]
-    B --> C{Pod 삭제 순서}
-    C -->|"deletion-cost=0"| D[클라우드 Pod 먼저 삭제]
-    C -->|"deletion-cost=1000"| E[온프레미스 Pod 유지]
-    D --> F[클라우드 노드 비어짐]
-    F --> G[Karpenter 빈 노드 제거]
-
-    style D fill:#fee,stroke:#c00
-    style E fill:#efe,stroke:#0a0
-    style G fill:#e8f4fd,stroke:#1976d2
-```
+![트래픽이 줄어 HPA가 스케일 다운될 때 deletion-cost 값에 따라 클라우드 Pod가 먼저 삭제되고 온프레미스 Pod는 유지되며, 비게 된 클라우드 노드는 Karpenter가 제거하는 흐름을 보여주는 순서도입니다.](../.gitbook/assets/ko-eks-hybrid-nodes-06-workload-placement-0.png)
 
 ---
 

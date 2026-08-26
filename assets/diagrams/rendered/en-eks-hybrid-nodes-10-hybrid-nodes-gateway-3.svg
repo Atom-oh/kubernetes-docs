@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="hng-cloud2hybrid-title hng-cloud2hybrid-desc">
+    <title id="hng-cloud2hybrid-title">Packet path from a cloud pod to a hybrid pod</title>
+    <desc id="hng-cloud2hybrid-desc">Sequence diagram showing a packet from a cloud pod matching the VPC route table to the gateway leader, getting VXLAN-encapsulated onto hybrid_vxlan0, crossing Direct Connect or VPN, and being decapsulated and delivered to the destination pod on the hybrid node.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Lifelines. Centers: 96, 296, 496, 696, 896 -->
+    <line x1="96" y1="128" x2="96" y2="480" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="296" y1="128" x2="296" y2="480" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="496" y1="128" x2="496" y2="480" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="696" y1="128" x2="696" y2="480" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="896" y1="128" x2="896" y2="480" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- Activation bars -->
+    <rect x="292" y="176" width="8" height="56" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+    <rect x="492" y="232" width="8" height="160" fill="rgba(255,153,0,0.08)" stroke="#EC7211" stroke-width="0.8"/>
+
+    <!-- M1: Cloud Pod -> VPC Route Table -->
+    <line x1="96" y1="176" x2="292" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="140" y="160" width="108" height="12" rx="2" fill="#ffffff"/>
+    <text x="194" y="169" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DST 10.100.0.42</text>
+
+    <!-- Note: route match -->
+    <rect x="196" y="188" width="196" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.15)" stroke-width="0.8"/>
+    <text x="294" y="198" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">Match: 10.100.0.0/24 →</text>
+    <text x="294" y="208" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ENI (gateway leader)</text>
+
+    <!-- M2: VPC RT -> Gateway (EC2) -->
+    <line x1="300" y1="232" x2="492" y2="232" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="348" y="216" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="396" y="225" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">FORWARD TO ENI</text>
+
+    <!-- Note: VXLAN encap -->
+    <rect x="400" y="248" width="200" height="36" rx="4" fill="rgba(255,153,0,0.05)" stroke="rgba(236,113,17,0.30)" stroke-width="0.8"/>
+    <text x="500" y="260" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">VXLAN encap: VNI=2</text>
+    <text x="500" y="270" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">dst=hybrid node IP</text>
+    <text x="500" y="280" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">outer UDP 8472</text>
+
+    <!-- M3: Gateway -> Network (encapsulated) -->
+    <line x1="500" y1="308" x2="692" y2="308" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="548" y="292" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="596" y="301" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ENCAPSULATED</text>
+
+    <!-- M4: Network -> Hybrid Node -->
+    <line x1="696" y1="336" x2="896" y2="336" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="744" y="320" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="796" y="329" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ARRIVES AT NODE</text>
+
+    <!-- Note: decap + deliver -->
+    <rect x="748" y="356" width="176" height="36" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.15)" stroke-width="0.8"/>
+    <text x="836" y="368" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">VXLAN decap; deliver to</text>
+    <text x="836" y="378" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">pod 10.100.0.42</text>
+
+    <!-- Actor boxes -->
+    <!-- Cloud Pod -->
+    <rect x="24" y="72" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="24" y="72" width="144" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="32" y="80" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+    <text x="46" y="89" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">VPC</text>
+    <text x="96" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cloud Pod</text>
+    <text x="96" y="119" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.64.15</text>
+
+    <!-- VPC Route Table -->
+    <rect x="224" y="72" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="224" y="72" width="144" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="232" y="80" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="246" y="89" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">RT</text>
+    <text x="296" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VPC Route Table</text>
+    <text x="296" y="119" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">longest-prefix match</text>
+
+    <!-- Gateway (EC2) — focal -->
+    <rect x="416" y="72" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="416" y="72" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="424" y="80" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,113,17,0.50)" stroke-width="0.8"/>
+    <text x="440" y="89" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">GW</text>
+    <text x="496" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gateway (EC2)</text>
+    <text x="496" y="119" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ENI + hybrid_vxlan0</text>
+
+    <!-- Network -->
+    <rect x="616" y="72" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="616" y="72" width="160" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <rect x="624" y="80" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+    <text x="638" y="89" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NET</text>
+    <text x="696" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Direct Connect / VPN</text>
+    <text x="696" y="119" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">transit link</text>
+
+    <!-- Hybrid Node -->
+    <rect x="824" y="72" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="824" y="72" width="144" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="832" y="80" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+    <text x="846" y="89" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DC</text>
+    <text x="896" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Hybrid Node</text>
+    <text x="896" y="119" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cilium_vxlan</text>
+
+    <!-- Legend -->
+    <line x1="24" y1="432" x2="944" y2="432" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="448" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <line x1="24" y1="464" x2="52" y2="464" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="60" y="466" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Encapsulated hop</text>
+
+    <line x1="220" y1="464" x2="248" y2="464" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="256" y="466" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Native forward</text>
+
+    <rect x="392" y="458" width="4" height="18" fill="rgba(255,153,0,0.08)" stroke="#EC7211" stroke-width="0.8"/>
+    <text x="404" y="466" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Gateway activation</text>
+  </svg>

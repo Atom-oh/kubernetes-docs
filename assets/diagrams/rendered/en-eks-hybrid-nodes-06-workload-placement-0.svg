@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="wp-scaledown-title wp-scaledown-desc">
+    <title id="wp-scaledown-title">Scale-down pod deletion order with deletion-cost</title>
+    <desc id="wp-scaledown-desc">Flowchart showing that when traffic drops and HPA scales down, the pod-deletion-cost annotation decides which pods die first: cloud pods with a low deletion cost are removed, while on-prem pods with a high deletion cost are retained, and the emptied cloud nodes are then reclaimed by Karpenter.</desc>
+    <defs>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      </style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ===== Arrows (drawn before boxes) ===== -->
+    <!-- A -> B -->
+    <path d="M 480 76 L 480 100" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- B -> C -->
+    <path d="M 480 156 L 480 180" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- C -> D (deletion-cost=0), elbow left then down -->
+    <path d="M 380 224 L 268 224 A 8 8 0 0 0 260 232 L 260 292"
+          fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- C -> E (deletion-cost=1000), elbow right then down -->
+    <path d="M 580 224 L 692 224 A 8 8 0 0 1 700 232 L 700 292"
+          fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- D -> F -->
+    <path d="M 260 356 L 260 380" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- F -> G -->
+    <path d="M 260 436 L 260 460" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow-accent)"/>
+
+    <!-- Edge labels: mask + text, 6-10px gap above stroke -->
+    <!-- deletion-cost=0 label sits above the horizontal segment at y=224 -->
+    <rect x="264" y="200" width="112" height="16" rx="2" fill="#ffffff"/>
+    <text x="320" y="212" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">DELETION-COST=0</text>
+    <!-- deletion-cost=1000 label sits above the horizontal segment at y=224 -->
+    <rect x="588" y="200" width="132" height="16" rx="2" fill="#ffffff"/>
+    <text x="654" y="212" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">DELETION-COST=1000</text>
+
+    <!-- ===== Nodes ===== -->
+
+    <!-- A: Traffic Decrease (start oval) -->
+    <rect x="388" y="20" width="184" height="56" rx="28" fill="#ffffff"/>
+    <rect x="388" y="20" width="184" height="56" rx="28" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="52" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Traffic Decrease</text>
+
+    <!-- B: HPA Scale Down (step) -->
+    <rect x="380" y="100" width="200" height="56" rx="8" fill="#ffffff"/>
+    <rect x="380" y="100" width="200" height="56" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">HPA Scale Down</text>
+
+    <!-- C: Pod Deletion Order (decision diamond, focal) -->
+    <path d="M 480 180 L 580 224 L 480 268 L 380 224 Z" fill="#ffffff"/>
+    <path d="M 480 180 L 580 224 L 480 268 L 380 224 Z" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod Deletion</text>
+    <text x="480" y="234" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Order</text>
+
+    <!-- D: Cloud Pods Deleted First -->
+    <rect x="148" y="292" width="224" height="64" rx="8" fill="#ffffff"/>
+    <rect x="148" y="292" width="224" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="260" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cloud Pods Deleted</text>
+    <text x="260" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">First</text>
+
+    <!-- E: On-Prem Pods Retained (terminal) -->
+    <rect x="588" y="292" width="224" height="64" rx="8" fill="#ffffff"/>
+    <rect x="588" y="292" width="224" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">On-Prem Pods</text>
+    <text x="700" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Retained</text>
+
+    <!-- F: Cloud Nodes Empty -->
+    <rect x="148" y="380" width="224" height="56" rx="8" fill="#ffffff"/>
+    <rect x="148" y="380" width="224" height="56" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="260" y="412" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cloud Nodes Empty</text>
+
+    <!-- G: Karpenter Removes Empty Nodes (focal, terminal outcome) -->
+    <rect x="148" y="460" width="224" height="56" rx="8" fill="#ffffff"/>
+    <rect x="148" y="460" width="224" height="56" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="260" y="484" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Karpenter Removes</text>
+    <text x="260" y="500" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Empty Nodes</text>
+
+    <!-- ===== Legend ===== -->
+    <line x1="30" y1="524" x2="930" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <path d="M 190 460 L 250 460" fill="none" stroke="#232F3E" stroke-width="0"/>
+    <rect x="184" y="533" width="16" height="12" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="208" y="542" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.06em">STEP</text>
+
+    <path d="M 292 533 L 300 539 L 292 545 L 284 539 Z" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="312" y="542" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.06em">DECISION</text>
+
+    <rect x="416" y="533" width="16" height="12" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="440" y="542" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.06em">FOCAL / DECISION &amp; OUTCOME</text>
+  </svg>

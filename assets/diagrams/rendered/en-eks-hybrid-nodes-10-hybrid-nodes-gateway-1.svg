@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="hng-lifecycle-title hng-lifecycle-desc">
+    <title id="hng-lifecycle-title">Gateway reaction to a hybrid node joining and leaving</title>
+    <desc id="hng-lifecycle-desc">Sequence diagram showing the leader gateway watching Kubernetes node events, then programming or removing FDB, ARP, and local route entries and reflecting the change into the VPC route table, symmetrically for a hybrid node joining and leaving the cluster.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Lifelines. Centers: 128, 368, 608, 848 -->
+    <line x1="128" y1="128" x2="128" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="368" y1="128" x2="368" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="608" y1="128" x2="608" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="848" y1="128" x2="848" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- Activation bars -->
+    <rect x="364" y="180" width="8" height="288" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+    <rect x="604" y="204" width="8" height="240" fill="rgba(255,153,0,0.08)" stroke="#EC7211" stroke-width="0.8"/>
+
+    <!-- Section eyebrows -->
+    <text x="128" y="164" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">NODE JOINS</text>
+    <text x="128" y="352" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">NODE LEAVES</text>
+    <line x1="56" y1="340" x2="900" y2="340" stroke="rgba(35,47,62,0.10)" stroke-width="0.8" stroke-dasharray="2,4"/>
+
+    <!-- === JOIN PHASE === -->
+    <!-- M1: HN -> K8s (NodeReady) -->
+    <line x1="128" y1="180" x2="364" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="184" y="164" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="244" y="173" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NODE JOINS (READY)</text>
+
+    <!-- M2: K8s -> GW (watch: new node) -->
+    <line x1="372" y1="204" x2="604" y2="204" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="424" y="188" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="488" y="197" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WATCH: NEW HYBRID NODE</text>
+
+    <!-- M3: GW self (program FDB+ARP+route) -->
+    <path d="M 612 232 L 648 232 L 648 264 L 612 264" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="656" y="240" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="720" y="249" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROGRAM FDB+ARP+RT</text>
+
+    <!-- M4: GW -> VPC (CreateRoute) -->
+    <line x1="612" y1="288" x2="844" y2="288" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="656" y="272" width="144" height="12" rx="2" fill="#ffffff"/>
+    <text x="728" y="281" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EC2:CREATEROUTE</text>
+
+    <!-- Note: route created -->
+    <rect x="712" y="300" width="200" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.15)" stroke-width="0.8"/>
+    <text x="812" y="310" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">10.100.0.0/24 →</text>
+    <text x="812" y="320" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">eni-abc123</text>
+
+    <!-- === LEAVE PHASE === -->
+    <!-- M5: HN -> K8s (leaves) -->
+    <line x1="128" y1="368" x2="364" y2="368" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="184" y="352" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="244" y="361" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NODE LEAVES CLUSTER</text>
+
+    <!-- M6: K8s -> GW (watch: node removed) -->
+    <line x1="372" y1="392" x2="604" y2="392" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="424" y="376" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="488" y="385" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WATCH: NODE REMOVED</text>
+
+    <!-- M7: GW self (remove FDB+ARP+route) -->
+    <path d="M 612 420 L 648 420 L 648 452 L 612 452" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="656" y="428" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="720" y="437" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REMOVE FDB+ARP+RT</text>
+
+    <!-- M8: GW -> VPC (DeleteRoute) -->
+    <line x1="612" y1="472" x2="844" y2="472" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="656" y="456" width="144" height="12" rx="2" fill="#ffffff"/>
+    <text x="728" y="465" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EC2:DELETEROUTE</text>
+
+    <!-- Actor boxes -->
+    <!-- Hybrid Node -->
+    <rect x="56" y="72" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="56" y="72" width="144" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="64" y="80" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+    <text x="78" y="89" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DC</text>
+    <text x="128" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Hybrid Node</text>
+    <text x="128" y="119" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">on-premises</text>
+
+    <!-- Kubernetes API -->
+    <rect x="296" y="72" width="144" height="56" rx="6" fill="#ffffff"/>
+    <rect x="296" y="72" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="304" y="80" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="318" y="89" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">API</text>
+    <text x="368" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubernetes API</text>
+    <text x="368" y="119" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">node watch</text>
+
+    <!-- Gateway (Leader) — focal -->
+    <rect x="528" y="72" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="528" y="72" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="536" y="80" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,113,17,0.50)" stroke-width="0.8"/>
+    <text x="552" y="89" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">LDR</text>
+    <text x="608" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gateway (Leader)</text>
+    <text x="608" y="119" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">route programmer</text>
+
+    <!-- VPC Route Table -->
+    <rect x="768" y="72" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="768" y="72" width="160" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="776" y="80" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="790" y="89" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">RT</text>
+    <text x="848" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VPC Route Table</text>
+    <text x="848" y="119" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">EC2 API</text>
+
+    <!-- Legend -->
+    <line x1="56" y1="500" x2="900" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="56" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <line x1="56" y1="532" x2="84" y2="532" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="92" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Programs / creates (join)</text>
+
+    <line x1="308" y1="532" x2="336" y2="532" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="344" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Removes / deletes (leave)</text>
+
+    <rect x="592" y="526" width="4" height="18" fill="rgba(255,153,0,0.08)" stroke="#EC7211" stroke-width="0.8"/>
+    <text x="604" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Leader activation</text>
+  </svg>

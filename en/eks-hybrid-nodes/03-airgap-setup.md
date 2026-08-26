@@ -22,27 +22,7 @@ An air-gapped environment is a network that is completely isolated from the publ
 
 ### Types of Air-Gapped Environments
 
-```mermaid
-graph TD
-    subgraph type1["Fully Air-Gapped"]
-        A1[No Internet Connectivity] --> A2[Physical Media Delivery]
-        A2 --> A3[USB / DVD / Removable HDD]
-    end
-
-    subgraph type2["Partially Air-Gapped - Proxy"]
-        B1[Internal Network<br/>Restricted Access] -->|Allow-listed| B2[Proxy Server]
-        B2 -->|Selective| B3[Internet]
-    end
-
-    subgraph type3["Private Connectivity - VPN/DX + VPC Endpoint"]
-        C1[On-Premises<br/>Network] -->|VPN / Direct Connect| C2[AWS VPC]
-        C2 --> C3[VPC Endpoints<br/>S3, ECR, etc.]
-    end
-
-    style type1 fill:#fee,stroke:#c00
-    style type2 fill:#ffe,stroke:#cc0
-    style type3 fill:#efe,stroke:#0a0
-```
+![Three connectivity models for air-gapped EKS Hybrid Nodes: fully air-gapped delivery by physical media, partially air-gapped access through an allow-listed proxy, and private connectivity over VPN/Direct Connect into a VPC that exposes AWS services through VPC endpoints, with VPC endpoints highlighted as the AWS-native path.](../.gitbook/assets/en-eks-hybrid-nodes-03-airgap-setup-0.png)
 
 ---
 
@@ -50,27 +30,7 @@ graph TD
 
 The air-gap architecture configured in this document is as follows:
 
-```mermaid
-graph TD
-    subgraph prep["Preparation - Internet-Connected Host"]
-        P1[hybrid-assets.eks.amazonaws.com] -->|Download manifest.yaml| P2[ekshybrid-download.sh]
-        P2 -->|Binaries + Checksums| P3[Upload to Private S3 Bucket]
-        P2 -->|Container Image List| P4[Pull from ECR via VPC Endpoint]
-    end
-
-    subgraph runtime["Runtime - Air-Gapped Environment"]
-        R1[On-Premises Node] -->|Binary Downloads| R2[PHZ: hybrid-assets.eks.amazonaws.com]
-        R2 --> R3[S3 Interface VPC Endpoint]
-        R3 --> R4[Private S3 Bucket]
-        R1 -->|Container Image Pulls| R5[ECR API/DKR VPC Endpoint]
-        R5 --> R6[ECR]
-    end
-
-    prep -.->|"Artifacts pre-staged"| runtime
-
-    style prep fill:#e8f4fd,stroke:#1976d2
-    style runtime fill:#fce4ec,stroke:#c62828
-```
+![Pipeline showing an internet-connected host pre-staging binaries and container images into a private S3 bucket and ECR via ekshybrid-download.sh, feeding an air-gapped on-premises node that pulls those same artifacts at runtime through private DNS and VPC endpoints.](../.gitbook/assets/en-eks-hybrid-nodes-03-airgap-setup-1.png)
 
 ### Artifact Storage Responsibilities
 

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="hng-interactions-title hng-interactions-desc">
+    <title id="hng-interactions-title">Gateway pod control-plane and data-plane interactions</title>
+    <desc id="hng-interactions-desc">Architecture diagram showing the gateway pod as the hub that holds a leader-election lease, watches node resources, and updates CiliumVTEPConfig and the VPC route table, which drive a data plane where the hybrid_vxlan0 interface tunnels to a Cilium agent and an EC2 ENI forwards VPC-routed traffic into that tunnel.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+      </marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="8 0, 0 3, 8 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="56" width="424" height="380" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="164" y="60" width="176" height="12" rx="2" fill="#ffffff"/>
+    <text x="252" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CONTROL PLANE</text>
+
+    <rect x="496" y="56" width="424" height="380" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="620" y="60" width="176" height="12" rx="2" fill="#ffffff"/>
+    <text x="708" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">DATA PLANE</text>
+
+    <!-- ===== Arrows (behind nodes) ===== -->
+
+    <!-- GW_Pod -> Lease (fan attach x=215 on bottom edge) -->
+    <path d="M 215,144 V 200 Q 215,208 207,208 H 165 Q 157,208 157,216 V 224"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- GW_Pod -> Nodes (fan attach x=250, straight vertical) -->
+    <line x1="250" y1="144" x2="250" y2="224" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- GW_Pod -> VTEP (fan attach x=285) -->
+    <path d="M 285,144 V 192 Q 285,200 293,200 H 397 Q 405,200 405,208 V 224"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- GW_Pod -> GW_VXLAN (manage; cross-zone; accent; fan attach y=107 on right edge) -->
+    <path d="M 320,107 H 460 Q 468,107 468,115 V 108 Q 468,116 476,116 H 536"
+          fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+    <!-- GW_Pod -> VPC_RT (EC2 API; cross-zone; link-blue; fan attach y=125 on right edge) -->
+    <path d="M 320,125 H 452 Q 460,125 460,133 V 320 Q 460,328 468,328 H 536"
+          fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+
+    <!-- VTEP -> Cilium (read by; cross-zone) -->
+    <path d="M 405,280 V 296 Q 405,304 413,304 H 700 Q 708,304 708,296 V 152"
+          fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- GW_VXLAN <-> Cilium (VXLAN tunnel; horizontal) -->
+    <line x1="676" y1="120" x2="736" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+
+    <!-- VPC_RT -> EC2_ENI (routes traffic to; horizontal) -->
+    <line x1="676" y1="328" x2="736" y2="328" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- EC2_ENI -> GW_VXLAN (forwards to; dashed) -->
+    <path d="M 736,344 H 700 Q 692,344 692,336 V 168 Q 692,160 684,160 H 676"
+          fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- ===== Arrow labels ===== -->
+    <rect x="164" y="196" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="188" y="205" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ELECTION</text>
+
+    <rect x="226" y="176" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="250" y="185" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WATCH</text>
+
+    <rect x="330" y="176" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="360" y="185" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">UPDATE VTEP</text>
+
+    <rect x="376" y="94" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="404" y="103" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MANAGE</text>
+
+    <rect x="440" y="105" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="468" y="114" fill="#0972D3" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EC2 API</text>
+
+    <rect x="588" y="280" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="616" y="289" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">READ BY</text>
+
+    <rect x="676" y="104" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="706" y="113" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VXLAN TUN</text>
+
+    <rect x="676" y="312" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="706" y="321" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ROUTES TO</text>
+
+    <rect x="710" y="256" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="740" y="265" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">FORWARDS</text>
+
+    <!-- ===== Nodes ===== -->
+
+    <!-- GW_Pod — focal hub -->
+    <rect x="180" y="88" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="180" y="88" width="140" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="188" y="96" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,113,17,0.50)" stroke-width="0.8"/>
+    <text x="204" y="105" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HUB</text>
+    <text x="250" y="120" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gateway Pod</text>
+    <text x="250" y="135" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">leader controller</text>
+
+    <!-- Lease Resource -->
+    <rect x="50" y="224" width="110" height="56" rx="6" fill="#ffffff"/>
+    <rect x="50" y="224" width="110" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="58" y="232" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="72" y="241" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+    <text x="105" y="256" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Lease</text>
+    <text x="105" y="271" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">leader election</text>
+
+    <!-- Nodes (Node Resources) -->
+    <rect x="190" y="224" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="190" y="224" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="198" y="232" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="212" y="241" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+    <text x="250" y="256" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node Resources</text>
+    <text x="250" y="271" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">watched objects</text>
+
+    <!-- CiliumVTEPConfig -->
+    <rect x="350" y="224" width="110" height="56" rx="6" fill="#ffffff"/>
+    <rect x="350" y="224" width="110" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="358" y="232" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="372" y="241" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CRD</text>
+    <text x="405" y="256" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VTEPConfig</text>
+    <text x="405" y="271" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">vtepIPs</text>
+
+    <!-- hybrid_vxlan0 -->
+    <rect x="536" y="88" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="536" y="88" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="544" y="96" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="556" y="105" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">IF</text>
+    <text x="606" y="124" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">hybrid_vxlan0</text>
+    <text x="606" y="140" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tunnel endpoint</text>
+
+    <!-- Cilium Agent -->
+    <rect x="736" y="88" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="736" y="88" width="140" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="744" y="96" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+    <text x="758" y="105" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DC</text>
+    <text x="806" y="124" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cilium Agent</text>
+    <text x="806" y="140" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">hybrid node</text>
+
+    <!-- VPC Route Table -->
+    <rect x="536" y="300" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="536" y="300" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="544" y="308" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="558" y="317" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">RT</text>
+    <text x="606" y="332" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VPC Route Table</text>
+    <text x="606" y="347" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">pod CIDR routes</text>
+
+    <!-- Gateway EC2 ENI -->
+    <rect x="736" y="300" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="736" y="300" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="744" y="308" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="758" y="317" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ENI</text>
+    <text x="806" y="332" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gateway ENI</text>
+    <text x="806" y="347" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">EC2 network iface</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="472" x2="920" y2="472" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="488" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="504" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="512" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Gateway pod / focal</text>
+
+    <line x1="220" y1="510" x2="248" y2="510" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="256" y="512" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Primary control action</text>
+
+    <line x1="424" y1="510" x2="452" y2="510" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+    <text x="460" y="512" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">EC2 API call</text>
+
+    <line x1="568" y1="510" x2="596" y2="510" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="604" y="512" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Reads / forwards</text>
+
+    <line x1="736" y1="510" x2="764" y2="510" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <text x="772" y="512" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Data-plane transit</text>
+  </svg>

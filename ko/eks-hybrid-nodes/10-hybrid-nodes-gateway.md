@@ -53,45 +53,7 @@ EKS Hybrid Nodes Gateway는 **2026년 4월 21일 정식 출시(GA)** 된 오픈�
 
 ### 전체 아키텍처 개요
 
-```mermaid
-graph TB
-    subgraph AWS_Cloud["AWS Cloud"]
-        subgraph VPC["VPC (10.0.0.0/16)"]
-            subgraph EKS_CP["EKS Control Plane"]
-                API[API Server]
-            end
-            subgraph Subnet_A["서브넷 A"]
-                GW_EC2["게이트웨이 EC2 인스턴스"]
-                GW_Pod["Gateway Pod<br/>(리더)"]
-                VPC_Node["VPC 노드<br/>(VPC CNI)"]
-                VPC_Pod["VPC Pod<br/>10.0.x.x"]
-            end
-            subgraph Subnet_B["서브넷 B"]
-                GW_EC2_B["게이트웨이 EC2<br/>(스탠바이)"]
-                GW_Pod_B["Gateway Pod<br/>(팔로워)"]
-            end
-            RT["VPC 라우트 테이블<br/>10.85.0.0/16 → GW_EC2 ENI"]
-        end
-    end
-
-    subgraph OnPrem["온프레미스 데이터센터"]
-        subgraph HybridNode1["Hybrid Node 1"]
-            Cilium1["Cilium Agent"]
-            HPod1["Hybrid Pod<br/>10.85.1.x"]
-        end
-        subgraph HybridNode2["Hybrid Node 2"]
-            Cilium2["Cilium Agent"]
-            HPod2["Hybrid Pod<br/>10.85.2.x"]
-        end
-    end
-
-    GW_Pod <-->|"VXLAN 터널<br/>VNI 2, UDP 8472"| Cilium1
-    GW_Pod <-->|"VXLAN 터널<br/>VNI 2, UDP 8472"| Cilium2
-    GW_Pod --> RT
-    VPC_Pod <-->|"VPC 라우팅"| GW_EC2
-    API <-->|"ENI"| VPC
-    GW_EC2 <-->|"Direct Connect /<br/>VPN"| OnPrem
-```
+![VPC 안의 리더/스탠바이 게이트웨이가 VXLAN 터널로 온프레미스 하이브리드 노드와 연결되고, VPC 라우트 테이블과 VPC Pod로도 라우팅되는 EKS 하이브리드 노드 게이트웨이 토폴로지를 보여준다.](../.gitbook/assets/ko-ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png)
 
 ### 핵심 구성 요소 상세
 
@@ -231,22 +193,7 @@ kubectl get lease -n eks-hybrid-nodes-gateway
 - 리더 장애 시 즉시 인계 준비
 - Lease 갱신 모니터링
 
-```mermaid
-sequenceDiagram
-    participant Leader as 리더 Pod
-    participant Lease as Kubernetes Lease
-    participant Follower as 팔로워 Pod
-    participant VPC_RT as VPC 라우트 테이블
-
-    Leader->>Lease: Lease 갱신 (15초 간격)
-    Note over Leader: 정상 운영 중
-
-    Leader->>Leader: 장애 발생!
-    Lease-->>Follower: Lease 만료 감지 (40초 후)
-    Follower->>Lease: Lease 획득
-    Follower->>VPC_RT: 라우트 테이블 업데이트<br/>(새 ENI로 변경)
-    Note over Follower: 새로운 리더로 승격
-```
+![리더 Pod가 15초마다 Lease를 갱신하다 장애가 발생하면, 40초 뒤 Lease 만료를 감지한 팔로워 Pod가 Lease를 획득하고 VPC 라우트 테이블을 갱신해 새로운 리더로 승격하는 시퀀스를 보여준다.](../.gitbook/assets/ko-ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png)
 
 Lease 관련 주요 파라미터:
 
@@ -986,28 +933,7 @@ kubectl exec -n eks-hybrid-nodes-gateway $GW_POD -- ip route show dev hybrid_vxl
 
 ### 패턴 1: VPC Pod에서 Hybrid Pod로
 
-```mermaid
-sequenceDiagram
-    participant VPC_Pod as VPC Pod<br/>(10.0.1.50)
-    participant VPC_Node as VPC 노드<br/>(VPC CNI)
-    participant VPC_RT as VPC 라우트 테이블
-    participant GW_EC2 as 게이트웨이 EC2<br/>(10.0.1.100)
-    participant GW_VXLAN as hybrid_vxlan0
-    participant DC_FW as Direct Connect /<br/>VPN
-    participant Hybrid_Cilium as Cilium Agent<br/>(Hybrid Node)
-    participant Hybrid_Pod as Hybrid Pod<br/>(10.85.1.50)
-
-    VPC_Pod->>VPC_Node: 패킷 전송<br/>dst: 10.85.1.50
-    VPC_Node->>VPC_RT: 라우트 조회
-    Note over VPC_RT: 10.85.0.0/16 →<br/>eni-게이트웨이
-    VPC_RT->>GW_EC2: 패킷 전달
-    GW_EC2->>GW_VXLAN: 라우트 매칭<br/>10.85.1.0/24 via hybrid_vxlan0
-    Note over GW_VXLAN: VXLAN 캡슐화<br/>VNI 2, UDP 8472
-    GW_VXLAN->>DC_FW: 캡슐화된 패킷
-    DC_FW->>Hybrid_Cilium: VXLAN 패킷 수신
-    Note over Hybrid_Cilium: VXLAN 디캡슐화
-    Hybrid_Cilium->>Hybrid_Pod: 원본 패킷 전달
-```
+![VPC Pod가 보낸 패킷이 VPC 노드, VPC 라우트 테이블을 거쳐 게이트웨이 EC2에서 VXLAN으로 캡슐화되고 Direct Connect/VPN을 지나 하이브리드 노드의 Cilium Agent에서 디캡슐화되어 Hybrid Pod에 전달되는 패킷 경로를 보여준다.](../.gitbook/assets/ko-ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png)
 
 **상세 흐름:**
 
@@ -1022,26 +948,7 @@ sequenceDiagram
 
 ### 패턴 2: Hybrid Pod에서 VPC Pod로
 
-```mermaid
-sequenceDiagram
-    participant Hybrid_Pod as Hybrid Pod<br/>(10.85.1.50)
-    participant Hybrid_Cilium as Cilium Agent<br/>(Hybrid Node)
-    participant DC_FW as Direct Connect /<br/>VPN
-    participant GW_VXLAN as hybrid_vxlan0
-    participant GW_EC2 as 게이트웨이 EC2<br/>(10.0.1.100)
-    participant VPC_RT as VPC 라우팅
-    participant VPC_Pod as VPC Pod<br/>(10.0.1.50)
-
-    Hybrid_Pod->>Hybrid_Cilium: 패킷 전송<br/>dst: 10.0.1.50
-    Note over Hybrid_Cilium: CiliumVTEPConfig 참조<br/>10.0.0.0/16 → VTEP
-    Hybrid_Cilium->>Hybrid_Cilium: VXLAN 캡슐화<br/>VNI 2, UDP 8472
-    Hybrid_Cilium->>DC_FW: 캡슐화된 패킷
-    DC_FW->>GW_VXLAN: VXLAN 패킷 수신
-    Note over GW_VXLAN: VXLAN 디캡슐화
-    GW_VXLAN->>GW_EC2: 원본 패킷
-    GW_EC2->>VPC_RT: VPC 로컬 라우팅
-    VPC_RT->>VPC_Pod: 패킷 전달
-```
+![Hybrid Pod가 보낸 패킷이 Cilium Agent에서 VXLAN으로 캡슐화되어 Direct Connect/VPN을 지나 게이트웨이 EC2에서 디캡슐화되고, VPC 라우팅을 거쳐 VPC Pod에 전달되는 패킷 경로를 보여준다.](../.gitbook/assets/ko-ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png)
 
 **상세 흐름:**
 
@@ -1055,18 +962,7 @@ sequenceDiagram
 
 이 패턴은 Hybrid Node에서 실행되는 Admission Webhook이나 Conversion Webhook으로의 통신에 중요합니다.
 
-```mermaid
-graph LR
-    A["EKS API Server"] -->|"1. API 요청<br/>(리소스 생성)"| B["ENI"]
-    B -->|"2. Webhook 호출<br/>dst: Pod IP"| C["VPC 라우트 테이블"]
-    C -->|"3. 10.85.0.0/16<br/>→ GW ENI"| D["게이트웨이 EC2"]
-    D -->|"4. VXLAN 터널"| E["Hybrid Node<br/>(Cilium)"]
-    E -->|"5. 디캡슐화"| F["Webhook Pod<br/>(10.85.1.80)"]
-    F -->|"6. 응답"| E
-    E -->|"7. VXLAN 터널"| D
-    D -->|"8. VPC 라우팅"| B
-    B -->|"9. 응답 전달"| A
-```
+![EKS API 서버가 하이브리드 노드에서 실행되는 웹훅 Pod를 호출할 때 ENI, VPC 라우트 테이블, 게이트웨이 EC2, VXLAN 터널을 거쳐 요청이 전달되고 동일한 경로로 응답이 그대로 되돌아오는 왕복 구조를 보여준다.](../.gitbook/assets/ko-ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png)
 
 > **중요**: 게이트웨이가 없는 환경에서는 라우팅 불가능한 Pod 네트워크를 사용할 경우 웹훅을 Hybrid Node에서 실행할 수 없습니다. 게이트웨이를 사용하면 이 제약이 해소됩니다.
 
@@ -1074,33 +970,7 @@ graph LR
 
 ALB, NLB, Amazon Managed Prometheus 등 AWS 서비스가 Hybrid Pod에 직접 접근하는 패턴입니다.
 
-```mermaid
-graph TB
-    subgraph AWS_Services["AWS 서비스"]
-        ALB["Application<br/>Load Balancer"]
-        NLB["Network<br/>Load Balancer"]
-        AMP["Amazon Managed<br/>Prometheus"]
-    end
-
-    subgraph VPC["VPC"]
-        RT["라우트 테이블<br/>10.85.0.0/16 → GW ENI"]
-        GW["게이트웨이 EC2"]
-    end
-
-    subgraph OnPrem["온프레미스"]
-        HP1["Hybrid Pod 1<br/>(웹 앱)"]
-        HP2["Hybrid Pod 2<br/>(API 서버)"]
-        HP3["Hybrid Pod 3<br/>(메트릭 수출기)"]
-    end
-
-    ALB -->|"IP 타겟<br/>10.85.1.50"| RT
-    NLB -->|"IP 타겟<br/>10.85.2.50"| RT
-    AMP -->|"스크래핑<br/>10.85.3.50:9090"| RT
-    RT --> GW
-    GW -->|"VXLAN"| HP1
-    GW -->|"VXLAN"| HP2
-    GW -->|"VXLAN"| HP3
-```
+![ALB, NLB, Amazon Managed Prometheus가 VPC 라우트 테이블과 게이트웨이 EC2를 거쳐 온프레미스의 세 Hybrid Pod에 IP 타겟으로 직접 연결되는 구조를 보여준다.](../.gitbook/assets/ko-ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png)
 
 **지원되는 AWS 서비스 통합:**
 
@@ -1118,34 +988,7 @@ graph TB
 
 ### HA 아키텍처
 
-```mermaid
-graph TB
-    subgraph AZ_A["가용 영역 A"]
-        EC2_A["EC2 인스턴스 A<br/>(10.0.1.100)"]
-        GW_A["Gateway Pod A<br/>(리더)"]
-        EC2_A --> GW_A
-    end
-
-    subgraph AZ_B["가용 영역 B"]
-        EC2_B["EC2 인스턴스 B<br/>(10.0.2.200)"]
-        GW_B["Gateway Pod B<br/>(팔로워)"]
-        EC2_B --> GW_B
-    end
-
-    LEASE["Kubernetes Lease<br/>eks-hybrid-nodes-gateway"]
-    GW_A <-->|"Lease 갱신<br/>(15초)"| LEASE
-    GW_B -.->|"Lease 감시"| LEASE
-
-    RT["VPC 라우트 테이블<br/>10.85.0.0/16 → eni-A"]
-    GW_A -->|"라우트 관리"| RT
-
-    subgraph OnPrem["온프레미스"]
-        HN["Hybrid Nodes"]
-    end
-
-    GW_A <-->|"VXLAN 터널<br/>(활성)"| HN
-    GW_B -.->|"VXLAN 터널<br/>(대기)"| HN
-```
+![가용 영역 A의 리더 게이트웨이가 Lease를 갱신하며 VPC 라우트 테이블과 온프레미스 하이브리드 노드로 향하는 활성 VXLAN 터널을 유지하고, 가용 영역 B의 스탠바이 게이트웨이는 Lease를 감시하며 대기 상태의 터널만 유지하는 멀티 AZ 고가용성 구조를 보여준다.](../.gitbook/assets/ko-ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png)
 
 ### Lease 기반 리더 선출 상세
 
