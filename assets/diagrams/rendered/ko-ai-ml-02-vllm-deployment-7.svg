@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-ai-ml-02-vllm-deployment-7-title ko-ai-ml-02-vllm-deployment-7-desc">
+<title id="ko-ai-ml-02-vllm-deployment-7-title">vLLM 클라이언트 통합</title>
+<desc id="ko-ai-ml-02-vllm-deployment-7-desc">Python·JavaScript·Curl 클라이언트가 Nginx·API Gateway·Envoy 같은 API 게이트웨이를 거쳐 인증·속도 제한·CORS 보안 계층을 통과한 뒤 로드 밸런서를 거쳐 vLLM 서비스에 도달하는 요청 경로를 보여주는 다이어그램</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="100" width="260" height="256" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="56" y="104" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="79.0" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">클라이언트</text>
+<rect x="340" y="100" width="260" height="256" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="356" y="104" width="70" height="12" rx="2" fill="#ffffff"/>
+<text x="391.0" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">API 게이트웨이</text>
+<rect x="680" y="100" width="260" height="256" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="696" y="104" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="719.0" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">보안 계층</text>
+<line x1="280" y1="168" x2="360" y2="168" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<line x1="280" y1="240" x2="360" y2="240" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<line x1="280" y1="312" x2="360" y2="312" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<line x1="580" y1="168" x2="700" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="580" y1="240" x2="700" y2="240" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="580" y1="312" x2="700" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 810,356 V 380 Q 810,388 802,388 H 488 Q 480,388 480,396 V 420" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="60" y="140" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="140" width="220" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="170.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Python 클라이언트</text>
+<text x="170.0" y="180.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">requests</text>
+<rect x="60" y="212" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="212" width="220" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="170.0" y="236.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">JavaScript 클라이언트</text>
+<text x="170.0" y="252.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">fetch</text>
+<rect x="60" y="284" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="284" width="220" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="170.0" y="308.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Curl 클라이언트</text>
+<text x="170.0" y="324.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">curl -X POST</text>
+<rect x="360" y="140" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="140" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="470.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Nginx</text>
+<text x="470.0" y="180.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">reverse proxy</text>
+<rect x="360" y="212" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="212" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="470.0" y="236.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API Gateway</text>
+<text x="470.0" y="252.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">REST</text>
+<rect x="360" y="284" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="284" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="470.0" y="308.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy Proxy</text>
+<text x="470.0" y="324.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sidecar</text>
+<rect x="700" y="140" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="700" y="140" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="810.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">인증</text>
+<text x="810.0" y="180.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">API Key / OAuth</text>
+<rect x="700" y="212" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="700" y="212" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="810.0" y="236.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">속도 제한</text>
+<text x="810.0" y="252.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Rate Limit</text>
+<rect x="700" y="284" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="700" y="284" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="810.0" y="308.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">CORS</text>
+<text x="810.0" y="324.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Cross-Origin</text>
+<rect x="380" y="420" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="380" y="420" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="444.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Load Balancer</text>
+<text x="480.0" y="460.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">→ vLLM 서비스</text>
+<line x1="30" y1="532" x2="930" y2="532" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="30" y="548" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="130" y="542" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="150" y="550" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Load Balancer (수렴 지점)</text>
+<rect x="306" y="542" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="326" y="550" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">게이트웨이 · 보안</text>
+<rect x="416" y="542" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="436" y="550" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">클라이언트</text>
+</svg>
