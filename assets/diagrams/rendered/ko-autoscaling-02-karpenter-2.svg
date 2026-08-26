@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="karp-consol-title karp-consol-desc">
+    <title id="karp-consol-title">Karpenter 노드 통합 흐름</title>
+    <desc id="karp-consol-desc">사용률이 낮은 기존 노드 세 개를 분석·평가한 뒤 하나의 새 노드로 파드를 마이그레이션하고, 비워진 기존 노드를 드레이닝·종료해 노드 수를 통합하는 과정을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone: existing nodes -->
+    <rect x="40" y="96" width="880" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="428" y="100" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">기존 노드</text>
+
+    <!-- Arrows -->
+    <!-- fan-in: N1,N2,N3 -> P1 (top edge attach points 180/240/300) -->
+    <path d="M 200,196 V 224 Q 200,232 192,232 H 188 Q 180,232 180,240 V 264" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 480,196 V 224 Q 480,232 472,232 H 248 Q 240,232 240,240 V 264" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 760,196 V 224 Q 760,232 752,232 H 308 Q 300,232 300,240 V 264" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <line x1="240" y1="312" x2="240" y2="344" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="240" y1="392" x2="240" y2="424" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- P3 -> P4 (up+right elbow) -->
+    <path d="M 340,448 H 500 Q 508,448 508,440 V 376 Q 508,368 516,368 H 620" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- P3 -> N4 (up+right elbow, second attach on right edge) -->
+    <path d="M 340,432 H 472 Q 480,432 480,424 V 296 Q 480,288 488,288 H 620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <line x1="720" y1="344" x2="720" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="720" y1="392" x2="720" y2="424" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="720" y1="472" x2="720" y2="504" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- P6 -> zone (dashed return) -->
+    <path d="M 820,528 H 892 Q 900,528 900,520 V 236" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="500" y="428" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="548" y="437" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">마이그레이션 필요</text>
+
+    <rect x="484" y="252" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="532" y="261" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">직접 프로비저닝</text>
+
+    <rect x="860" y="376" width="76" height="12" rx="2" fill="#ffffff"/>
+    <text x="898" y="385" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">기존 노드 정리</text>
+
+    <!-- Nodes: existing (N1,N2,N3) -->
+    <rect x="100" y="140" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="200" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 1</text>
+    <text x="200" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">사용률 50%</text>
+
+    <rect x="380" y="140" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="480" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 2</text>
+    <text x="480" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">사용률 30%</text>
+
+    <rect x="660" y="140" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="760" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 3</text>
+    <text x="760" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">사용률 20%</text>
+
+    <!-- Column A: analysis pipeline -->
+    <rect x="140" y="264" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">노드 사용률 분석</text>
+
+    <rect x="140" y="344" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">통합 가능성 평가</text>
+
+    <!-- focal -->
+    <rect x="140" y="424" width="200" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="240" y="452" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">새 노드 프로비저닝</text>
+
+    <!-- Column B: new node + cleanup -->
+    <rect x="620" y="264" width="200" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="720" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">New Node</text>
+    <text x="720" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">사용률 100%</text>
+
+    <rect x="620" y="344" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="720" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">파드 마이그레이션</text>
+
+    <rect x="620" y="424" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="720" y="452" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">기존 노드 드레이닝</text>
+
+    <rect x="620" y="504" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="720" y="532" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">기존 노드 종료</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="568" x2="920" y2="568" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="584" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="152" y="576" width="16" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="176" y="584" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">기존/신규 노드</text>
+    <rect x="332" y="576" width="16" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="356" y="584" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">처리 단계</text>
+    <line x1="480" y1="581" x2="504" y2="581" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="512" y="584" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">정리(반환)</text>
+  </svg>

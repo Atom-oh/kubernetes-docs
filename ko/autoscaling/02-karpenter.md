@@ -48,86 +48,13 @@ Karpenter는 Kubernetes 클러스터의 노드 프로비저닝을 자동화하�
 
 Karpenter는 Kubernetes 컨트롤러로 작동하며, 스케줄링할 수 없는 파드를 감지하고 적절한 노드를 프로비저닝합니다.
 
-```mermaid
-flowchart TD
-    %% 노드 정의
-    A[Karpenter Controller]
-    B[Karpenter Webhook]
-    C[Provisioner CRD]
-    D[NodeTemplate CRD]
-    E[Unschedulable Pods]
-    F[Kubernetes API]
-    
-    G[Instance API]
-    H[Compute Instances]
-    
-    %% 서브그래프 정의
-    subgraph K8S["Kubernetes Cluster"]
-        A
-        B
-        C
-        D
-        E
-        F
-    end
-    
-    subgraph CLOUD["Cloud Provider"]
-        G
-        H
-    end
-    
-    %% 연결 정의
-    A -->|Watches| E
-    A -->|Uses| C
-    A -->|Uses| D
-    A -->|Calls| F
-    F -->|Creates| H
-    A -->|Calls| G
-    G -->|Provisions| H
-    B -->|Validates| C
-    B -->|Validates| D
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class A,B,C,D,E,F k8sComponent
-    class G,H awsService
-```
+![Karpenter 컨트롤러가 쿠버네티스 클러스터 내부의 프로비저너·노드 템플릿·미스케줄 파드를 감시하고, Kubernetes API와 클라우드 제공자의 인스턴스 API를 호출해 컴퓨트 인스턴스를 직접 프로비저닝하는 구조를 보여준다.](../.gitbook/assets/ko-autoscaling-02-karpenter-0.png)
 
 ### Karpenter 워크플로우
 
 다음 다이어그램은 Karpenter가 EKS 클러스터에서 작동하는 방식을 보여줍니다:
 
-```mermaid
-sequenceDiagram
-    participant P as Pod
-    participant K as Karpenter Controller
-    participant KA as Kubernetes API
-    participant EC2 as AWS EC2 API
-    participant N as New Node
-
-    P->>KA: Pod 생성 (스케줄링 불가)
-    KA->>K: Pod 이벤트 알림
-    K->>K: Pod 요구 사항 분석
-    K->>K: 프로비저너 및 노드 템플릿 평가
-    K->>EC2: 인스턴스 유형 및 가격 조회
-    EC2->>K: 인스턴스 정보 반환
-    K->>EC2: 노드 프로비저닝 요청
-    EC2->>N: 인스턴스 생성
-    N->>KA: 노드 등록
-    KA->>K: 노드 이벤트 알림
-    K->>KA: 노드 레이블 및 테인트 설정
-    KA->>P: Pod 스케줄링
-```
+![스케줄링되지 못한 파드가 Karpenter 컨트롤러를 거쳐 AWS EC2 API로 인스턴스를 조회·요청하고, 새 노드가 등록되어 파드가 최종 스케줄링되기까지의 시간 순서를 보여준다.](../.gitbook/assets/ko-autoscaling-02-karpenter-1.png)
 
 ### 주요 구성 요소
 
@@ -542,54 +469,7 @@ userData: |
 
 다음 다이어그램은 Karpenter의 노드 통합(consolidation) 프로세스를 보여줍니다. 이 기능은 클러스터 효율성을 최적화하고 비용을 절감하는 데 중요합니다:
 
-```mermaid
-flowchart LR
-    %% 노드 정의
-    N1["Node 1
-                50% 사용"]
-    N2["Node 2
-                30% 사용"]
-    N3["Node 3
-                20% 사용"]
-    N4["New Node
-                100% 사용"]
-    
-    %% 프로세스 정의
-    P1[노드 사용률 분석]
-    P2[통합 가능성 평가]
-    P3[새 노드 프로비저닝]
-    P4[파드 마이그레이션]
-    P5[기존 노드 드레이닝]
-    P6[기존 노드 종료]
-    
-    %% 연결 정의
-    N1 & N2 & N3 --> P1
-    P1 --> P2
-    P2 --> P3
-    P3 --> N4
-    P3 --> P4
-    P4 --> N4
-    P4 --> P5
-    P5 --> N1 & N2 & N3
-    P5 --> P6
-    P6 --> N1 & N2 & N3
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class N1,N2,N3,N4 k8sComponent
-    class P1,P2,P3,P4,P5,P6 process
-```
+![사용률이 낮은 기존 노드 세 개를 분석·평가한 뒤 하나의 새 노드로 파드를 마이그레이션하고, 비워진 기존 노드를 드레이닝·종료해 노드 수를 통합하는 과정을 보여준다.](../.gitbook/assets/ko-autoscaling-02-karpenter-2.png)
 
 ## 인터럽션 처리
 
@@ -812,63 +692,7 @@ spec:
 
 Karpenter는 Amazon EKS와 원활하게 통합되어 클러스터 오토스케일링을 제공합니다.
 
-```mermaid
-flowchart TD
-    %% 노드 정의
-    KC[Karpenter Controller]
-    KW[Karpenter Webhook]
-    IRSA[IAM Role for Service Account]
-    EKS[EKS Control Plane]
-    EC2[EC2 API]
-    ASG[Auto Scaling Groups]
-    MNG[Managed Node Groups]
-    SG[Security Groups]
-    VPC[VPC/Subnets]
-    NI[EC2 Instances]
-    
-    %% 서브그래프 정의
-    subgraph EKSCluster["Amazon EKS Cluster"]
-        EKS
-        KC
-        KW
-        IRSA
-    end
-    
-    subgraph AWSServices["AWS Services"]
-        EC2
-        ASG
-        MNG
-        SG
-        VPC
-        NI
-    end
-    
-    %% 연결 정의
-    KC -->|Uses| IRSA
-    IRSA -->|Assumes| EC2
-    KC -->|Watches| EKS
-    KC -->|Creates| NI
-    KC -->|Bypasses| ASG
-    KC -->|Bypasses| MNG
-    KC -->|Uses| SG
-    KC -->|Uses| VPC
-    EKS -->|Manages| NI
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class KC,KW,EKS k8sComponent
-    class EC2,ASG,MNG,SG,VPC,NI,IRSA awsService
-```
+![Karpenter 컨트롤러가 IRSA를 통해 EC2 API 권한을 얻어 Auto Scaling Group과 관리형 노드 그룹을 거치지 않고 EC2 인스턴스를 직접 생성하며, 보안 그룹과 VPC 설정을 그대로 활용하는 구조를 보여준다.](../.gitbook/assets/ko-autoscaling-02-karpenter-3.png)
 
 ### EKS 클러스터 준비
 
@@ -1089,54 +913,7 @@ Karpenter는 Amazon ARC(Application Recovery Controller)의 Zonal Shift를 지�
 
 Karpenter를 사용하여 EKS 클러스터의 비용을 최적화할 수 있습니다:
 
-```mermaid
-flowchart TD
-    %% 노드 정의
-    CA[Cluster Autoscaler]
-    KA[Karpenter]
-    
-    %% 비용 최적화 전략
-    CA1[노드 그룹 기반 스케일링]
-    CA2[동일한 인스턴스 유형]
-    CA3[느린 스케일링 속도]
-    CA4[제한된 빈 패킹]
-    
-    KA1[워크로드 기반 스케일링]
-    KA2[다양한 인스턴스 유형]
-    KA3[빠른 스케일링 속도]
-    KA4[효율적인 빈 패킹]
-    KA5[노드 통합]
-    KA6[스팟 인스턴스 활용]
-    
-    %% 결과
-    CAR[비용 절감: 중간]
-    KAR[비용 절감: 높음]
-    
-    %% 연결 정의
-    CA --> CA1 & CA2 & CA3 & CA4
-    CA1 & CA2 & CA3 & CA4 --> CAR
-    
-    KA --> KA1 & KA2 & KA3 & KA4 & KA5 & KA6
-    KA1 & KA2 & KA3 & KA4 & KA5 & KA6 --> KAR
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef strategy fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#E91E63,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class CA,KA k8sComponent
-    class CA1,CA2,CA3,CA4,KA1,KA2,KA3,KA4,KA5,KA6 strategy
-    class CAR,KAR result
-```
+![노드 그룹 기반으로 느리게 확장하는 Cluster Autoscaler와, 워크로드 기반으로 다양한 인스턴스 유형·노드 통합·스팟 활용까지 지원해 더 높은 비용 절감을 이끄는 Karpenter의 특징을 나란히 비교한다.](../.gitbook/assets/ko-autoscaling-02-karpenter-4.png)
 
 #### 1. 스팟 인스턴스 사용
 
@@ -1213,67 +990,7 @@ spec:
 
 ## 모범 사례
 
-```mermaid
-flowchart TD
-    %% 주요 영역
-    P[성능 최적화]
-    C[비용 최적화]
-    A[가용성 향상]
-    S[보안 강화]
-    
-    %% 성능 최적화 전략
-    P1[적절한 인스턴스 유형 선택]
-    P2[다양한 인스턴스 유형 허용]
-    P3[적절한 TTL 설정]
-    P4[노드 통합 활성화]
-    
-    %% 비용 최적화 전략
-    C1[스팟 인스턴스 활용]
-    C2[적절한 인스턴스 크기 선택]
-    C3[제로 스케일링 활용]
-    C4[노드 만료 설정]
-    
-    %% 가용성 향상 전략
-    A1[다중 가용 영역 사용]
-    A2[온디맨드/스팟 인스턴스 혼합]
-    A3[적절한 PDB 설정]
-    A4[인터럽션 처리 최적화]
-    
-    %% 보안 강화 전략
-    S1[IAM 역할 최소 권한]
-    S2[보안 그룹 제한]
-    S3[암호화된 EBS 볼륨]
-    S4[IMDSv2 필수 설정]
-    
-    %% 연결 정의
-    P --> P1 & P2 & P3 & P4
-    C --> C1 & C2 & C3 & C4
-    A --> A1 & A2 & A3 & A4
-    S --> S1 & S2 & S3 & S4
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef category fill:#9C27B0,stroke:#333,stroke-width:1px,color:white;
-    classDef performance fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
-    classDef cost fill:#FF9800,stroke:#333,stroke-width:1px,color:white;
-    classDef availability fill:#2196F3,stroke:#333,stroke-width:1px,color:white;
-    classDef security fill:#F44336,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class P,C,A,S category
-    class P1,P2,P3,P4 performance
-    class C1,C2,C3,C4 cost
-    class A1,A2,A3,A4 availability
-    class S1,S2,S3,S4 security
-```
+![Karpenter 운영 모범 사례를 성능, 비용, 가용성, 보안 네 가지 축으로 나누어 각 축마다 실천할 네 가지 구체적인 설정 항목을 나란히 정리한다.](../.gitbook/assets/ko-autoscaling-02-karpenter-5.png)
 
 ### 성능 최적화
 

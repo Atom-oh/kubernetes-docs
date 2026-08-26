@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="karp-aws-title karp-aws-desc">
+    <title id="karp-aws-title">Karpenter와 AWS 서비스 연동</title>
+    <desc id="karp-aws-desc">Karpenter 컨트롤러가 IRSA를 통해 EC2 API 권한을 얻어 Auto Scaling Group과 관리형 노드 그룹을 거치지 않고 EC2 인스턴스를 직접 생성하며, 보안 그룹과 VPC 설정을 그대로 활용하는 구조를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="96" width="400" height="364" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="152" y="100" width="176" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AMAZON EKS CLUSTER</text>
+
+    <rect x="480" y="96" width="440" height="364" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="640" y="100" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="700" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AWS SERVICES</text>
+
+    <!-- Arrows -->
+    <!-- KC -> EKS : Watches (straight, shared center x240) -->
+    <line x1="240" y1="208" x2="240" y2="188" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- KC -> IRSA : Uses -->
+    <path d="M 240,328 V 332 Q 240,340 248,340 H 320 Q 328,340 328,348 V 352" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- IRSA -> EC2 : Assumes (link, routes right of KC, lands on EC2 API's center y) -->
+    <path d="M 400,376 H 448 Q 456,376 456,368 V 172 Q 456,164 464,164 H 512" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+    <!-- KC -> ASG : Bypasses (dashed, via the aisle between col1 and col2 so it clears EC2 API's box) -->
+    <path d="M 340,228 H 684 Q 692,228 692,220 V 172 Q 692,164 700,164 H 712" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <!-- KC -> MNG : Bypasses (dashed, corridor left of col1, clear of every col1 box) -->
+    <path d="M 340,248 H 420 Q 428,248 428,256 V 276 Q 428,284 436,284 H 512" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <!-- KC -> SG : Uses (detours through the row2/row3 gap, then up the aisle, so it never crosses MNG's box) -->
+    <path d="M 340,268 V 320 Q 340,328 348,328 H 684 Q 692,328 692,320 V 292 Q 692,284 700,284 H 712" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- KC -> VPC : Uses (corridor left of col1, clear of every col1 box) -->
+    <path d="M 340,288 H 420 Q 428,288 428,296 V 396 Q 428,404 436,404 H 512" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- KC -> NI : Creates (accent, detours through the row2/row3 gap, then down the aisle, clear of VPC's box) -->
+    <path d="M 340,308 V 336 Q 340,344 348,344 H 684 Q 692,344 692,352 V 396 Q 692,404 700,404 H 712" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- EKS -> NI : Manages (routes above zones, down the right margin) -->
+    <path d="M 240,140 V 72 Q 240,64 248,64 H 888 Q 896,64 896,72 V 396 Q 896,404 888,404 H 872" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Labels -->
+    <rect x="204" y="192" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="201" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">WATCHES</text>
+
+    <rect x="464" y="200" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="494" y="209" fill="#0972D3" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ASSUMES</text>
+
+    <rect x="356" y="204" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="392" y="213" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">BYPASSES</text>
+
+    <rect x="440" y="360" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="470" y="369" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">CREATES</text>
+
+    <rect x="800" y="72" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="830" y="81" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">MANAGES</text>
+
+    <!-- Zone1 nodes -->
+    <rect x="100" y="140" width="280" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="240" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EKS Control Plane</text>
+
+    <!-- focal -->
+    <rect x="140" y="208" width="200" height="120" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="240" y="264" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Karpenter Controller</text>
+    <text x="240" y="280" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">직접 프로비저닝</text>
+
+    <rect x="96" y="352" width="144" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="168" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Karpenter Webhook</text>
+
+    <rect x="256" y="352" width="144" height="48" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="328" y="374" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">IRSA</text>
+    <text x="328" y="390" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">IAM Role for SA</text>
+
+    <!-- Zone2 nodes -->
+    <rect x="512" y="140" width="160" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="592" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EC2 API</text>
+
+    <rect x="712" y="140" width="160" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="792" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Auto Scaling Groups</text>
+
+    <rect x="512" y="260" width="160" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="592" y="288" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Managed Node Groups</text>
+
+    <rect x="712" y="260" width="160" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="792" y="288" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Security Groups</text>
+
+    <rect x="512" y="380" width="160" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="592" y="408" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VPC / Subnets</text>
+
+    <rect x="712" y="380" width="160" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="792" y="408" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EC2 Instances</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="140" y1="513" x2="164" y2="513" stroke="#EC7211" stroke-width="1.4"/>
+    <text x="172" y="516" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">직접 생성(creates)</text>
+    <line x1="336" y1="513" x2="360" y2="513" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="368" y="516" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">우회(bypass)</text>
+    <line x1="500" y1="513" x2="524" y2="513" stroke="#0972D3" stroke-width="1.2"/>
+    <text x="532" y="516" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">AWS API 호출</text>
+    <rect x="700" y="507" width="16" height="10" rx="2" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="724" y="516" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">IAM/보안 경계</text>
+  </svg>

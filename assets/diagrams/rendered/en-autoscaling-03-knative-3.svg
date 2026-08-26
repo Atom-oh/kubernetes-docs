@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">Scale-to-zero and cold-start sequence in Knative</title>
+<desc id="d">After 60 seconds without traffic the Autoscaler scales a revision's pod to zero and it terminates; the next client request goes to the Activator, which requests a scale-up from the Autoscaler, buffers the request while a new pod starts, then forwards the buffered request once the pod reports ready and returns the response to the client, after which later requests go directly to the pod.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- Lifelines -->
+<line x1="120" y1="96" x2="120" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="360" y1="96" x2="360" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="600" y1="96" x2="600" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="840" y1="96" x2="840" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- Note: no traffic for 60s -->
+<rect x="756" y="112" width="168" height="24" rx="4" fill="rgba(35,47,62,0.05)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="840" y="128" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">NO TRAFFIC FOR 60S</text>
+
+<!-- Autoscaler -> Pod: Scale to 0 -->
+<line x1="600" y1="156" x2="840" y2="156" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="686" y="136" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="720" y="145" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">SCALE TO 0</text>
+
+<!-- Note: pods terminated -->
+<rect x="756" y="172" width="168" height="24" rx="4" fill="rgba(35,47,62,0.05)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="840" y="188" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">PODS TERMINATED</text>
+
+<!-- Client -> Activator: HTTP Request -->
+<line x1="120" y1="228" x2="360" y2="228" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="200" y="208" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="240" y="217" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">HTTP REQUEST</text>
+
+<!-- Note: revision at 0 replicas -->
+<rect x="276" y="240" width="168" height="24" rx="4" fill="rgba(35,47,62,0.05)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="360" y="256" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">REVISION AT 0 REPLICAS</text>
+
+<!-- Activator -> Autoscaler: Request scale-up -->
+<line x1="360" y1="288" x2="600" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="416" y="268" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="277" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">REQUEST SCALE-UP</text>
+
+<!-- Autoscaler -> Pod: Scale to 1 -->
+<line x1="600" y1="320" x2="840" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="686" y="300" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="720" y="309" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">SCALE TO 1</text>
+
+<!-- Note: pod starting -->
+<rect x="756" y="336" width="168" height="24" rx="4" fill="rgba(35,47,62,0.05)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="840" y="352" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">POD STARTING…</text>
+
+<!-- Pod --> Activator: Ready (dashed return, filled marker) -->
+<line x1="840" y1="392" x2="360" y2="392" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="580" y="372" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="600" y="381" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">READY</text>
+
+<!-- Activator -> Pod: Forward buffered request -->
+<line x1="360" y1="424" x2="840" y2="424" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="536" y="404" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="600" y="413" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.01em">FORWARD BUFFERED</text>
+
+<!-- Pod --> Client: HTTP Response (headline success, accent, dashed return, filled marker) -->
+<line x1="840" y1="456" x2="120" y2="456" stroke="#EC7211" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+<rect x="440" y="436" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="445" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">HTTP RESPONSE</text>
+
+<!-- Note: subsequent requests go directly -->
+<rect x="636" y="472" width="288" height="24" rx="4" fill="rgba(35,47,62,0.05)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="780" y="488" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">SUBSEQUENT REQUESTS GO DIRECTLY</text>
+
+<!-- Actor boxes (drawn after lifelines/messages so labels stay crisp) -->
+<rect x="56" y="60" width="128" height="36" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="120" y="82" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client</text>
+
+<rect x="296" y="60" width="128" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="360" y="82" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Activator</text>
+
+<rect x="536" y="60" width="128" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="600" y="82" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Autoscaler</text>
+
+<rect x="776" y="60" width="128" height="36" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="840" y="82" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Queue Proxy + App</text>
+
+<!-- Legend -->
+<line x1="40" y1="520" x2="920" y2="520" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="536" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="552" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="60" y="560" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Focal — running pod</text>
+<line x1="248" y1="556" x2="276" y2="556" stroke="#EC7211" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+<text x="284" y="560" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Headline success response</text>
+<line x1="536" y1="556" x2="564" y2="556" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<text x="572" y="560" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Return</text>
+</svg>

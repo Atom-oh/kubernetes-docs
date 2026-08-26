@@ -43,55 +43,7 @@ KEDA(Kubernetes Event-driven Autoscaling)는 Kubernetes 애플리케이션을 �
 
 KEDA는 Kubernetes 오퍼레이터 패턴을 기반으로 하며, 외부 메트릭 소스를 모니터링하고 Kubernetes HPA를 자동으로 관리합니다.
 
-```mermaid
-flowchart LR
-    %% 노드 정의
-    A[KEDA Operator]
-    B[KEDA Metrics Server]
-    C[Horizontal Pod Autoscaler]
-    D[ScaledObject / ScaledJob]
-    E[Deployment / Job]
-    
-    F[Message Queues]
-    G[Databases]
-    H[Streaming Platforms]
-    I[Custom Metrics]
-    
-    %% 서브그래프 정의
-    subgraph K8S["Kubernetes Cluster"]
-        A
-        B
-        C
-        D
-        E
-    end
-    
-    subgraph EXT["External Event Sources"]
-        F
-        G
-        H
-        I
-    end
-    
-    %% 연결 정의
-    A -->|Watches| D
-    A -->|Creates/Updates| C
-    B -->|Provides Metrics| C
-    D -->|References| E
-    B -->|Polls| F
-    B -->|Polls| G
-    B -->|Polls| H
-    B -->|Polls| I
-    C -->|Scales| E
-    
-    %% 스타일 적용
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    
-    %% 클래스 적용
-    class A,B,C,D,E k8sComponent
-    class F,G,H,I awsService
-```
+![KEDA는 쿠버네티스 클러스터 내부의 오퍼레이터, 메트릭 서버, HPA, ScaledObject/ScaledJob, 워크로드가 협력하여 메시지 큐·데이터베이스·스트리밍 플랫폼·커스텀 메트릭 같은 외부 이벤트 소스를 주기적으로 폴링하고, 그 결과에 따라 HPA를 통해 Deployment/Job을 스케일링하는 구조를 보여준다.](../.gitbook/assets/ko-autoscaling-01-keda-0.png)
 
 
 ### 주요 구성 요소

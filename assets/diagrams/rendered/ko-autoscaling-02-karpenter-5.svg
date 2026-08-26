@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="karp-bp-title karp-bp-desc">
+    <title id="karp-bp-title">Karpenter 모범 사례 네 가지 축</title>
+    <desc id="karp-bp-desc">Karpenter 운영 모범 사례를 성능, 비용, 가용성, 보안 네 가지 축으로 나누어 각 축마다 실천할 네 가지 구체적인 설정 항목을 나란히 정리한다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Arrows: header -> list, straight -->
+    <line x1="144" y1="188" x2="144" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="368" y1="188" x2="368" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="592" y1="188" x2="592" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="816" y1="188" x2="816" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Column 1: 성능 -->
+    <rect x="44" y="140" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="144" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">성능 최적화</text>
+    <rect x="44" y="216" width="200" height="216" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="60" y="244" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 적절한 인스턴스</text>
+    <text x="60" y="260" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">  유형 선택</text>
+    <text x="60" y="284" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 다양한 인스턴스</text>
+    <text x="60" y="300" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">  유형 허용</text>
+    <text x="60" y="324" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 적절한 TTL 설정</text>
+    <text x="60" y="348" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 노드 통합 활성화</text>
+
+    <!-- Column 2: 비용 -->
+    <rect x="268" y="140" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="368" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">비용 최적화</text>
+    <rect x="268" y="216" width="200" height="216" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="284" y="244" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 스팟 인스턴스 활용</text>
+    <text x="284" y="268" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 적절한 인스턴스</text>
+    <text x="284" y="284" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">  크기 선택</text>
+    <text x="284" y="308" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 제로 스케일링 활용</text>
+    <text x="284" y="332" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 노드 만료 설정</text>
+
+    <!-- Column 3: 가용성 -->
+    <rect x="492" y="140" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="592" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">가용성 향상</text>
+    <rect x="492" y="216" width="200" height="216" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="508" y="244" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 다중 가용 영역 사용</text>
+    <text x="508" y="268" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 온디맨드·스팟 혼합</text>
+    <text x="508" y="292" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 적절한 PDB 설정</text>
+    <text x="508" y="316" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 인터럽션 처리 최적화</text>
+
+    <!-- Column 4: 보안 -->
+    <rect x="716" y="140" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="816" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">보안 강화</text>
+    <rect x="716" y="216" width="200" height="216" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="732" y="244" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· IAM 역할 최소 권한</text>
+    <text x="732" y="268" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 보안 그룹 제한</text>
+    <text x="732" y="292" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 암호화된 EBS 볼륨</text>
+    <text x="732" y="316" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· IMDSv2 필수 설정</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="496" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="140" y="488" width="16" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="164" y="496" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">모범 사례 축</text>
+    <rect x="320" y="488" width="16" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="344" y="496" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">세부 실천 항목</text>
+  </svg>

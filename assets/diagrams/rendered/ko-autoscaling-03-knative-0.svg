@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-autoscaling-03-knative-0-title ko-autoscaling-03-knative-0-desc">
+    <title id="ko-autoscaling-03-knative-0-title">Knative Serving 컨트롤 플레인과 요청 경로</title>
+    <desc id="ko-autoscaling-03-knative-0-desc">클라이언트 요청이 Gateway를 거쳐 파드로 직접 전달되거나 Scale-to-Zero 상태에서는 Activator를 거쳐 전달되고, Queue Proxy가 보고한 동시성 메트릭을 바탕으로 Autoscaler가 스케일을 결정해 Controller/Webhook을 통해 Knative 리소스를 관리하는 구조를 보여주는 아키텍처 다이어그램.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="176" width="560" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="56" y="180" width="210" height="12" rx="2" fill="#ffffff"/>
+<text x="161.0" y="189" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">KNATIVE SERVING CONTROL PLANE</text>
+<rect x="624" y="176" width="296" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="640" y="180" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="696.0" y="189" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">DATA PLANE</text>
+<line x1="160" y1="84" x2="300" y2="84" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="440" y1="84" x2="680" y2="84" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="516.0" y="64" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="560" y="73" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SCALE-TO-ZERO</text>
+<path d="M 350,112 H 672 Q 680,112 680,120 V 216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="474.0" y="120" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="500" y="129" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">TRAFFIC</text>
+<path d="M 720,112 H 728 Q 720,112 720,120 V 216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="736" y="154.0" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="777.0" y="163" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">ACTIVATE+FWD</text>
+<path d="M 490,216 V 212 Q 490,204 482,204 H 306 Q 298,204 298,196 V 216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="354.0" y="184" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="394" y="193" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SCALE DECIDE</text>
+<path d="M 700,272 V 292 Q 700,300 692,300 H 468 Q 460,300 460,308 V 272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="538.0" y="308" width="84" height="12" rx="2" fill="#ffffff"/>
+<text x="580" y="317" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">CONCURRENCY</text>
+<path d="M 298,272 H 292 Q 300,272 300,280 V 340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="316" y="300.0" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="339.0" y="309" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MANAGE</text>
+<path d="M 134,272 V 276 Q 134,284 142,284 H 432 Q 440,284 440,276 V 340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="456" y="310.0" width="58" height="12" rx="2" fill="#ffffff"/>
+<text x="485.0" y="319" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">VALIDATE</text>
+<rect x="40" y="56" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="40" y="56" width="120" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="100.0" y="78.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라이언트</text>
+<text x="100.0" y="92.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">요청</text>
+<rect x="300" y="56" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="300" y="56" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="370.0" y="82.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gateway</text>
+<text x="370.0" y="98.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Kourier / Istio</text>
+<rect x="680" y="56" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="56" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="750.0" y="88.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Activator</text>
+<rect x="64" y="216" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="64" y="216" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="134.0" y="248.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Webhook</text>
+<rect x="228" y="216" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="228" y="216" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="298.0" y="248.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Controller</text>
+<rect x="420" y="216" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="420" y="216" width="140" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="490.0" y="242.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Autoscaler</text>
+<text x="490.0" y="258.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">KPA / HPA</text>
+<rect x="636" y="216" width="128" height="56" rx="6" fill="#ffffff"/>
+<rect x="636" y="216" width="128" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="700.0" y="238.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod (Rev</text>
+<text x="700.0" y="252.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">v1)</text>
+<text x="700.0" y="264.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Queue Proxy</text>
+<rect x="772" y="216" width="128" height="56" rx="6" fill="#ffffff"/>
+<rect x="772" y="216" width="128" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="836.0" y="238.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod (Rev</text>
+<text x="836.0" y="252.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">v2)</text>
+<text x="836.0" y="264.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Queue Proxy</text>
+<rect x="200" y="340" width="560" height="88" rx="6" fill="#ffffff"/>
+<rect x="200" y="340" width="560" height="88" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="480.0" y="378.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Knative</text>
+<text x="480.0" y="392.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">리소스</text>
+<text x="480.0" y="404.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Service -&gt; Configuration</text>
+<text x="480.0" y="415.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">-&gt; Revision / Route</text>
+  </svg>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-autoscaling-03-knative-4-title ko-autoscaling-03-knative-4-desc">
+    <title id="ko-autoscaling-03-knative-4-title">Knative Autoscaler와 KEDA 스케일링 경로 비교</title>
+    <desc id="ko-autoscaling-03-knative-4-desc">Knative는 Queue Proxy가 보고한 동시성 메트릭으로 자체 Autoscaler(KPA)가 파드 수를 조절하고, KEDA는 외부 메트릭 소스를 기반으로 Kubernetes HPA를 생성/관리해 파드 수를 조절하는 두 스케일링 경로를 나란히 비교한다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="24" y="40" width="912" height="132" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="40" y="44" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="110.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">KNATIVE SERVING</text>
+<rect x="24" y="220" width="912" height="132" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="40" y="224" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="64.0" y="233" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">KEDA</text>
+<line x1="180" y1="108" x2="280" y2="108" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="420" y1="108" x2="520" y2="108" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="660" y1="108" x2="760" y2="108" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="180" y1="288" x2="280" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="420" y1="288" x2="520" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="660" y1="288" x2="760" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="206.0" y="88" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="230.0" y="97" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">METRIC</text>
+<rect x="444.0" y="88" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="470.0" y="97" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">REPORT</text>
+<rect x="684.0" y="88" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="710.0" y="97" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">DECIDE</text>
+<rect x="210.0" y="268" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="230.0" y="277" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">POLL</text>
+<rect x="442.0" y="268" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="470.0" y="277" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MANAGE</text>
+<rect x="684.0" y="268" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="710.0" y="277" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">DECIDE</text>
+<rect x="40" y="80" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="40" y="80" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="110.0" y="112.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">HTTP 요청</text>
+<rect x="280" y="80" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="280" y="80" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="350.0" y="102.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Queue</text>
+<text x="350.0" y="116.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Proxy</text>
+<rect x="520" y="80" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="520" y="80" width="140" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="590.0" y="102.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Knative</text>
+<text x="590.0" y="116.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Autoscaler</text>
+<text x="590.0" y="128.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">KPA</text>
+<rect x="760" y="80" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="760" y="80" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="830.0" y="112.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 수 조절</text>
+<rect x="40" y="260" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="40" y="260" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="110.0" y="282.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">외부 메트릭</text>
+<text x="110.0" y="296.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">소스</text>
+<text x="110.0" y="308.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">SQS/Kafka/Prom</text>
+<rect x="280" y="260" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="280" y="260" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="350.0" y="282.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">KEDA</text>
+<text x="350.0" y="296.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Operator</text>
+<rect x="520" y="260" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="520" y="260" width="140" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="590.0" y="282.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubernetes</text>
+<text x="590.0" y="296.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">HPA</text>
+<rect x="760" y="260" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="760" y="260" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="830.0" y="292.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 수 조절</text>
+  </svg>

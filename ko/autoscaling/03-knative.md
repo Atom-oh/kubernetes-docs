@@ -84,71 +84,7 @@ Knative는 개발자가 컨테이너 기반 애플리케이션을 서버리스 �
 
 Knative Serving은 서버리스 워크로드의 배포, 스케일링, 네트워킹을 관리하는 핵심 컴포넌트입니다.
 
-```mermaid
-flowchart TD
-    %% 외부 트래픽
-    CLIENT[클라이언트 요청]
-    
-    subgraph INGRESS["Ingress Layer (Kourier/Istio)"]
-        GW[Gateway]
-    end
-    
-    subgraph KNATIVE_SERVING["Knative Serving 컨트롤 플레인"]
-        CONTROLLER[Controller]
-        WEBHOOK[Webhook]
-        AUTOSCALER[Autoscaler<br/>KPA / HPA]
-        ACTIVATOR[Activator]
-    end
-    
-    subgraph DATA_PLANE["데이터 플레인"]
-        subgraph POD1["Pod (Revision v1)"]
-            APP1[User Container]
-            QP1[Queue Proxy<br/>Sidecar]
-        end
-        subgraph POD2["Pod (Revision v2)"]
-            APP2[User Container]
-            QP2[Queue Proxy<br/>Sidecar]
-        end
-    end
-    
-    subgraph RESOURCES["Knative 리소스"]
-        SVC[Service]
-        CONFIG[Configuration]
-        REV[Revision]
-        ROUTE[Route]
-    end
-
-    %% 트래픽 흐름
-    CLIENT --> GW
-    GW -->|트래픽이 있을 때| QP1
-    GW -->|Scale-to-Zero 시| ACTIVATOR
-    ACTIVATOR -->|파드 활성화 후 전달| QP1
-    QP1 --> APP1
-    QP2 --> APP2
-    
-    %% 컨트롤 플레인 흐름
-    SVC --> CONFIG
-    SVC --> ROUTE
-    CONFIG --> REV
-    CONTROLLER -->|관리| SVC
-    WEBHOOK -->|검증| SVC
-    QP1 -->|동시성 메트릭 보고| AUTOSCALER
-    QP2 -->|동시성 메트릭 보고| AUTOSCALER
-    AUTOSCALER -->|스케일 결정| CONTROLLER
-    
-    %% 스타일
-    classDef knative fill:#0865AD,stroke:#333,stroke-width:1px,color:white
-    classDef ingress fill:#FF6F00,stroke:#333,stroke-width:1px,color:white
-    classDef pod fill:#2E7D32,stroke:#333,stroke-width:1px,color:white
-    classDef resource fill:#6A1B9A,stroke:#333,stroke-width:1px,color:white
-    classDef client fill:#455A64,stroke:#333,stroke-width:1px,color:white
-    
-    class CONTROLLER,WEBHOOK,AUTOSCALER,ACTIVATOR knative
-    class GW ingress
-    class APP1,QP1,APP2,QP2 pod
-    class SVC,CONFIG,REV,ROUTE resource
-    class CLIENT client
-```
+![클라이언트 요청이 Gateway를 거쳐 파드로 직접 전달되거나 Scale-to-Zero 상태에서는 Activator를 거쳐 전달되고, Queue Proxy가 보고한 동시성 메트릭을 바탕으로 Autoscaler가 스케일을 결정해 Controller/Webhook을 통해 Knative 리소스를 관리하는 구조를 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-autoscaling-03-knative-0.png)
 
 #### 핵심 컴포넌트 설명
 
@@ -183,75 +119,7 @@ flowchart TD
 
 Knative Eventing은 느슨하게 결합된 이벤트 드리븐 아키텍처를 제공합니다.
 
-```mermaid
-flowchart LR
-    subgraph SOURCES["이벤트 소스"]
-        AS[ApiServerSource]
-        KS[KafkaSource]
-        SQS[SQSSource]
-        SB[SinkBinding]
-        CS[Custom Source]
-    end
-    
-    subgraph BROKER_PATTERN["Broker/Trigger 패턴"]
-        BROKER[Broker]
-        T1[Trigger<br/>필터: type=order.created]
-        T2[Trigger<br/>필터: type=payment.processed]
-        T3[Trigger<br/>필터: type=*]
-    end
-    
-    subgraph CHANNEL_PATTERN["Channel/Subscription 패턴"]
-        CH[Channel<br/>InMemory / Kafka]
-        SUB1[Subscription 1]
-        SUB2[Subscription 2]
-    end
-    
-    subgraph CONSUMERS["이벤트 소비자"]
-        SVC1[Order Service<br/>Knative Service]
-        SVC2[Payment Service<br/>Knative Service]
-        SVC3[Audit Service<br/>Knative Service]
-        SVC4[Analytics Service]
-        SVC5[Notification Service]
-    end
-    
-    subgraph DLS["장애 처리"]
-        DLQ[Dead Letter Sink]
-    end
-    
-    %% Broker 패턴 흐름
-    AS --> BROKER
-    KS --> BROKER
-    SQS --> BROKER
-    BROKER --> T1
-    BROKER --> T2
-    BROKER --> T3
-    T1 --> SVC1
-    T2 --> SVC2
-    T3 --> SVC3
-    T1 -.->|실패 시| DLQ
-    T2 -.->|실패 시| DLQ
-    
-    %% Channel 패턴 흐름
-    SB --> CH
-    CS --> CH
-    CH --> SUB1
-    CH --> SUB2
-    SUB1 --> SVC4
-    SUB2 --> SVC5
-    
-    %% 스타일
-    classDef source fill:#E65100,stroke:#333,stroke-width:1px,color:white
-    classDef broker fill:#0865AD,stroke:#333,stroke-width:1px,color:white
-    classDef channel fill:#1565C0,stroke:#333,stroke-width:1px,color:white
-    classDef consumer fill:#2E7D32,stroke:#333,stroke-width:1px,color:white
-    classDef dlq fill:#B71C1C,stroke:#333,stroke-width:1px,color:white
-    
-    class AS,KS,SQS,SB,CS source
-    class BROKER,T1,T2,T3 broker
-    class CH,SUB1,SUB2 channel
-    class SVC1,SVC2,SVC3,SVC4,SVC5 consumer
-    class DLQ dlq
-```
+![이벤트 소스가 Broker로 들어와 Trigger 필터에 따라 Order/Payment/Audit 서비스로 라우팅되고 실패 시 Dead Letter Sink로 전달되는 Broker/Trigger 패턴과, Channel을 통해 Analytics/Notification 서비스로 이벤트를 전달하는 Channel/Subscription 패턴을 나란히 비교하는 아키텍처 다이어그램.](../.gitbook/assets/ko-autoscaling-03-knative-1.png)
 
 #### Broker/Trigger 패턴
 
@@ -544,34 +412,7 @@ spec:
 
 Knative Serving의 네 가지 핵심 리소스는 다음과 같이 연결됩니다:
 
-```mermaid
-flowchart TD
-    SVC["Service<br/>(최상위 리소스)"]
-    CONFIG["Configuration<br/>(원하는 상태 정의)"]
-    ROUTE["Route<br/>(트래픽 라우팅)"]
-    REV1["Revision v1<br/>(불변 스냅샷)"]
-    REV2["Revision v2<br/>(불변 스냅샷)"]
-    REV3["Revision v3<br/>(최신)"]
-    
-    SVC --> CONFIG
-    SVC --> ROUTE
-    CONFIG -->|생성| REV1
-    CONFIG -->|생성| REV2
-    CONFIG -->|생성| REV3
-    ROUTE -->|100%| REV3
-    ROUTE -.->|0% (유지)| REV2
-    ROUTE -.->|0% (유지)| REV1
-    
-    classDef svc fill:#0865AD,stroke:#333,stroke-width:1px,color:white
-    classDef config fill:#6A1B9A,stroke:#333,stroke-width:1px,color:white
-    classDef route fill:#E65100,stroke:#333,stroke-width:1px,color:white
-    classDef rev fill:#2E7D32,stroke:#333,stroke-width:1px,color:white
-    
-    class SVC svc
-    class CONFIG config
-    class ROUTE route
-    class REV1,REV2,REV3 rev
-```
+![Knative Service가 Configuration과 Route를 소유하고, Configuration이 Revision을 생성하며, Route가 최신 Revision에는 트래픽 100%를 이전 Revision에는 0%를 배분해 유지하는 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-autoscaling-03-knative-2.png)
 
 * **Service**: 전체 서버리스 워크로드를 정의하는 최상위 리소스. Configuration과 Route를 자동으로 관리
 * **Configuration**: 배포할 컨테이너의 원하는 상태를 정의. 변경 시 새 Revision 자동 생성
@@ -741,35 +582,7 @@ kubectl patch ksvc my-api --type merge -p '
 
 Scale-to-Zero는 Knative의 핵심 기능으로, 트래픽이 없을 때 파드를 0으로 축소하여 리소스를 절약합니다.
 
-```mermaid
-sequenceDiagram
-    participant Client as 클라이언트
-    participant GW as Gateway<br/>(Kourier)
-    participant ACT as Activator
-    participant AS as Autoscaler
-    participant POD as Pod<br/>(Queue Proxy + App)
-    
-    Note over POD: 트래픽 없음 - 유휴 상태
-    
-    AS->>AS: stable-window (60s) 동안<br/>메트릭 0 감지
-    AS->>POD: Scale to 0 (파드 종료)
-    Note over POD: Scale-to-Zero 완료
-    AS->>GW: Activator를 목적지로 설정
-    
-    Note over Client: 새 요청 발생
-    Client->>GW: HTTP 요청
-    GW->>ACT: 요청 전달 (파드 없음)
-    ACT->>ACT: 요청 버퍼링
-    ACT->>AS: 스케일업 요청
-    AS->>POD: Scale to 1 (파드 생성)
-    Note over POD: 컨테이너 시작 + Ready
-    ACT->>POD: 버퍼링된 요청 전달
-    POD->>Client: 응답 반환
-    
-    Note over POD: 이후 요청은 직접 전달
-    Client->>GW: 다음 요청
-    GW->>POD: 직접 전달 (Activator 우회)
-```
+![트래픽이 없으면 Autoscaler가 파드를 0으로 줄이고 Activator가 목적지가 되며, 새 요청이 오면 Activator가 요청을 버퍼링한 채 Autoscaler에 스케일업을 요청해 파드를 다시 만들고 응답한 뒤에는 이후 요청이 Gateway에서 파드로 직접 전달되는 Knative 콜드 스타트 시퀀스를 보여준다.](../.gitbook/assets/ko-autoscaling-03-knative-3.png)
 
 **동작 단계:**
 
@@ -1447,28 +1260,7 @@ spec:
 
 ### 스케일링 모델 차이
 
-```mermaid
-flowchart LR
-    subgraph KNATIVE["Knative Serving"]
-        direction TB
-        KN_REQ[HTTP 요청] --> KN_QP[Queue Proxy]
-        KN_QP -->|동시성 메트릭| KN_AS[Knative Autoscaler<br/>KPA]
-        KN_AS -->|스케일 결정| KN_DEPLOY[Pod 수 조절]
-    end
-    
-    subgraph KEDA_FLOW["KEDA"]
-        direction TB
-        KEDA_SRC[외부 메트릭 소스<br/>SQS, Kafka, Prometheus 등] --> KEDA_OP[KEDA Operator]
-        KEDA_OP -->|HPA 생성/관리| KEDA_HPA[Kubernetes HPA]
-        KEDA_HPA -->|스케일 결정| KEDA_DEPLOY[Pod 수 조절]
-    end
-    
-    classDef knative fill:#0865AD,stroke:#333,stroke-width:1px,color:white
-    classDef keda fill:#FF6F00,stroke:#333,stroke-width:1px,color:white
-    
-    class KN_REQ,KN_QP,KN_AS,KN_DEPLOY knative
-    class KEDA_SRC,KEDA_OP,KEDA_HPA,KEDA_DEPLOY keda
-```
+![Knative는 Queue Proxy가 보고한 동시성 메트릭으로 자체 Autoscaler(KPA)가 파드 수를 조절하고, KEDA는 외부 메트릭 소스를 기반으로 Kubernetes HPA를 생성/관리해 파드 수를 조절하는 두 스케일링 경로를 나란히 비교하는 다이어그램.](../.gitbook/assets/ko-autoscaling-03-knative-4.png)
 
 | 비교 항목        | Knative                              | KEDA                            |
 | ------------ | ------------------------------------ | ------------------------------- |

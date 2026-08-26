@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="karpbp-title karpbp-desc">
+    <title id="karpbp-title">Karpenter best practices, by category</title><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <desc id="karpbp-desc">Four parallel lists of Karpenter best practices grouped by category: performance optimization, cost optimization, availability improvement, and security hardening.</desc>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Column 1: Performance -->
+    <rect x="40" y="100" width="200" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <circle cx="60" cy="128" r="4" fill="#545B64"/>
+    <text x="72" y="132" fill="#232F3E" font-size="13" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Performance</text>
+    <text x="60" y="152" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.10em">OPTIMIZATION</text>
+    <line x1="60" y1="164" x2="220" y2="164" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <circle cx="64" cy="188" r="2" fill="#545B64"/>
+    <text x="72" y="192" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Select appropriate</text>
+    <text x="72" y="206" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">instance types</text>
+    <circle cx="64" cy="232" r="2" fill="#545B64"/>
+    <text x="72" y="236" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Allow diverse</text>
+    <text x="72" y="250" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">instance types</text>
+    <circle cx="64" cy="276" r="2" fill="#545B64"/>
+    <text x="72" y="280" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Set appropriate TTL</text>
+    <circle cx="64" cy="304" r="2" fill="#545B64"/>
+    <text x="72" y="308" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Enable node</text>
+    <text x="72" y="322" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">consolidation</text>
+
+    <!-- Column 2: Cost -->
+    <rect x="260" y="100" width="200" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <circle cx="280" cy="128" r="4" fill="#545B64"/>
+    <text x="292" y="132" fill="#232F3E" font-size="13" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Cost</text>
+    <text x="280" y="152" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.10em">OPTIMIZATION</text>
+    <line x1="280" y1="164" x2="440" y2="164" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <circle cx="284" cy="188" r="2" fill="#545B64"/>
+    <text x="292" y="192" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Utilize Spot</text>
+    <text x="292" y="206" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">instances</text>
+    <circle cx="284" cy="232" r="2" fill="#545B64"/>
+    <text x="292" y="236" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Select appropriate</text>
+    <text x="292" y="250" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">instance sizes</text>
+    <circle cx="284" cy="276" r="2" fill="#545B64"/>
+    <text x="292" y="280" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Utilize zero scaling</text>
+    <circle cx="284" cy="304" r="2" fill="#545B64"/>
+    <text x="292" y="308" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Set node expiration</text>
+
+    <!-- Column 3: Availability -->
+    <rect x="480" y="100" width="200" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <circle cx="500" cy="128" r="4" fill="#545B64"/>
+    <text x="512" y="132" fill="#232F3E" font-size="13" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Availability</text>
+    <text x="500" y="152" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.10em">IMPROVEMENT</text>
+    <line x1="500" y1="164" x2="660" y2="164" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <circle cx="504" cy="188" r="2" fill="#545B64"/>
+    <text x="512" y="192" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Use multiple</text>
+    <text x="512" y="206" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">availability zones</text>
+    <circle cx="504" cy="232" r="2" fill="#545B64"/>
+    <text x="512" y="236" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Mix on-demand /</text>
+    <text x="512" y="250" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Spot instances</text>
+    <circle cx="504" cy="276" r="2" fill="#545B64"/>
+    <text x="512" y="280" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Set appropriate PDBs</text>
+    <circle cx="504" cy="304" r="2" fill="#545B64"/>
+    <text x="512" y="308" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Optimize interruption</text>
+    <text x="512" y="322" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">handling</text>
+
+    <!-- Column 4: Security (focal) -->
+    <rect x="700" y="100" width="200" height="440" rx="8" fill="rgba(255,153,0,0.05)" stroke="#EC7211" stroke-width="1"/>
+    <circle cx="720" cy="128" r="4" fill="#EC7211"/>
+    <text x="732" y="132" fill="#232F3E" font-size="13" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Security</text>
+    <text x="720" y="152" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.10em">HARDENING</text>
+    <line x1="720" y1="164" x2="880" y2="164" stroke="rgba(236,114,17,0.30)" stroke-width="0.8"/>
+    <circle cx="724" cy="188" r="2" fill="#EC7211"/>
+    <text x="732" y="192" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">IAM role least</text>
+    <text x="732" y="206" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">privilege</text>
+    <circle cx="724" cy="232" r="2" fill="#EC7211"/>
+    <text x="732" y="236" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Security group</text>
+    <text x="732" y="250" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">restrictions</text>
+    <circle cx="724" cy="276" r="2" fill="#EC7211"/>
+    <text x="732" y="280" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Encrypted EBS volumes</text>
+    <circle cx="724" cy="304" r="2" fill="#EC7211"/>
+    <text x="732" y="308" fill="#232F3E" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Require IMDSv2</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="564" x2="920" y2="564" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="584" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="140" y="574" width="14" height="10" rx="2" fill="rgba(255,153,0,0.05)" stroke="#EC7211" stroke-width="1"/>
+    <text x="162" y="584" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CRITICAL BASELINE CATEGORY</text>
+  </svg>

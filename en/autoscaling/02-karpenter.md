@@ -48,86 +48,13 @@ Karpenter is an open-source cluster autoscaler that automates node provisioning 
 
 Karpenter operates as a Kubernetes controller, detecting unschedulable pods and provisioning appropriate nodes.
 
-```mermaid
-flowchart TD
-    %% Node definitions
-    A[Karpenter Controller]
-    B[Karpenter Webhook]
-    C[Provisioner CRD]
-    D[NodeTemplate CRD]
-    E[Unschedulable Pods]
-    F[Kubernetes API]
-
-    G[Instance API]
-    H[Compute Instances]
-
-    %% Subgraph definitions
-    subgraph K8S["Kubernetes Cluster"]
-        A
-        B
-        C
-        D
-        E
-        F
-    end
-
-    subgraph CLOUD["Cloud Provider"]
-        G
-        H
-    end
-
-    %% Connection definitions
-    A -->|Watches| E
-    A -->|Uses| C
-    A -->|Uses| D
-    A -->|Calls| F
-    F -->|Creates| H
-    A -->|Calls| G
-    G -->|Provisions| H
-    B -->|Validates| C
-    B -->|Validates| D
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class A,B,C,D,E,F k8sComponent
-    class G,H awsService
-```
+![Architecture diagram showing the Karpenter controller in a Kubernetes cluster watching unschedulable pods and provisioner and node template resources, then calling the Kubernetes and cloud provider instance APIs to create compute instances.](../.gitbook/assets/en-autoscaling-02-karpenter-0.png)
 
 ### Karpenter Workflow
 
 The following diagram shows how Karpenter works in an EKS cluster:
 
-```mermaid
-sequenceDiagram
-    participant P as Pod
-    participant K as Karpenter Controller
-    participant KA as Kubernetes API
-    participant EC2 as AWS EC2 API
-    participant N as New Node
-
-    P->>KA: Pod creation (unschedulable)
-    KA->>K: Pod event notification
-    K->>K: Analyze pod requirements
-    K->>K: Evaluate provisioner and node template
-    K->>EC2: Query instance types and prices
-    EC2->>K: Return instance information
-    K->>EC2: Request node provisioning
-    EC2->>N: Create instance
-    N->>KA: Node registration
-    KA->>K: Node event notification
-    K->>KA: Set node labels and taints
-    KA->>P: Schedule pod
-```
+![Sequence diagram showing an unschedulable pod triggering the Karpenter controller, which queries the cloud EC2 API for instance options, provisions a new node, and the Kubernetes API then schedules the pod onto that node.](../.gitbook/assets/en-autoscaling-02-karpenter-1.png)
 
 ### Key Components
 
@@ -550,54 +477,7 @@ userData: |
 
 The following diagram shows Karpenter's node consolidation process. This feature is important for optimizing cluster efficiency and reducing costs:
 
-```mermaid
-flowchart LR
-    %% Node definitions
-    N1["Node 1
-                50% utilization"]
-    N2["Node 2
-                30% utilization"]
-    N3["Node 3
-                20% utilization"]
-    N4["New Node
-                100% utilization"]
-
-    %% Process definitions
-    P1[Analyze node utilization]
-    P2[Evaluate consolidation possibility]
-    P3[Provision new node]
-    P4[Migrate pods]
-    P5[Drain existing nodes]
-    P6[Terminate existing nodes]
-
-    %% Connection definitions
-    N1 & N2 & N3 --> P1
-    P1 --> P2
-    P2 --> P3
-    P3 --> N4
-    P3 --> P4
-    P4 --> N4
-    P4 --> P5
-    P5 --> N1 & N2 & N3
-    P5 --> P6
-    P6 --> N1 & N2 & N3
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class N1,N2,N3,N4 k8sComponent
-    class P1,P2,P3,P4,P5,P6 process
-```
+![Flowchart showing Karpenter analyzing underutilized nodes, provisioning one consolidated node, migrating pods onto it, then draining and terminating the old nodes it replaced.](../.gitbook/assets/en-autoscaling-02-karpenter-2.png)
 
 ## Interruption Handling
 
@@ -820,63 +700,7 @@ spec:
 
 Karpenter integrates seamlessly with Amazon EKS to provide cluster autoscaling.
 
-```mermaid
-flowchart TD
-    %% Node definitions
-    KC[Karpenter Controller]
-    KW[Karpenter Webhook]
-    IRSA[IAM Role for Service Account]
-    EKS[EKS Control Plane]
-    EC2[EC2 API]
-    ASG[Auto Scaling Groups]
-    MNG[Managed Node Groups]
-    SG[Security Groups]
-    VPC[VPC/Subnets]
-    NI[EC2 Instances]
-
-    %% Subgraph definitions
-    subgraph EKSCluster["Amazon EKS Cluster"]
-        EKS
-        KC
-        KW
-        IRSA
-    end
-
-    subgraph AWSServices["AWS Services"]
-        EC2
-        ASG
-        MNG
-        SG
-        VPC
-        NI
-    end
-
-    %% Connection definitions
-    KC -->|Uses| IRSA
-    IRSA -->|Assumes| EC2
-    KC -->|Watches| EKS
-    KC -->|Creates| NI
-    KC -->|Bypasses| ASG
-    KC -->|Bypasses| MNG
-    KC -->|Uses| SG
-    KC -->|Uses| VPC
-    EKS -->|Manages| NI
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class KC,KW,EKS k8sComponent
-    class EC2,ASG,MNG,SG,VPC,NI,IRSA awsService
-```
+![Architecture diagram showing the Karpenter controller in an Amazon EKS cluster assuming an IAM role to call the EC2 API directly, bypassing Auto Scaling Groups and Managed Node Groups to create EC2 instances.](../.gitbook/assets/en-autoscaling-02-karpenter-3.png)
 
 ### EKS Cluster Preparation
 
@@ -1101,54 +925,7 @@ When a failure is detected, Karpenter also automatically suspends voluntary disr
 
 You can use Karpenter to optimize costs for EKS clusters:
 
-```mermaid
-flowchart TD
-    %% Node definitions
-    CA[Cluster Autoscaler]
-    KA[Karpenter]
-
-    %% Cost optimization strategies
-    CA1[Node group-based scaling]
-    CA2[Same instance types]
-    CA3[Slow scaling speed]
-    CA4[Limited bin packing]
-
-    KA1[Workload-based scaling]
-    KA2[Diverse instance types]
-    KA3[Fast scaling speed]
-    KA4[Efficient bin packing]
-    KA5[Node consolidation]
-    KA6[Spot instance utilization]
-
-    %% Results
-    CAR[Cost savings: Medium]
-    KAR[Cost savings: High]
-
-    %% Connection definitions
-    CA --> CA1 & CA2 & CA3 & CA4
-    CA1 & CA2 & CA3 & CA4 --> CAR
-
-    KA --> KA1 & KA2 & KA3 & KA4 & KA5 & KA6
-    KA1 & KA2 & KA3 & KA4 & KA5 & KA6 --> KAR
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef strategy fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#E91E63,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CA,KA k8sComponent
-    class CA1,CA2,CA3,CA4,KA1,KA2,KA3,KA4,KA5,KA6 strategy
-    class CAR,KAR result
-```
+![Comparison tree showing Cluster Autoscaler's node-group-based approach yielding medium cost savings, against Karpenter's workload-based approach with faster scaling, consolidation, and Spot use yielding high cost savings.](../.gitbook/assets/en-autoscaling-02-karpenter-4.png)
 
 #### 1. Using Spot Instances
 
@@ -1225,67 +1002,7 @@ spec:
 
 ## Best Practices
 
-```mermaid
-flowchart TD
-    %% Key areas
-    P[Performance Optimization]
-    C[Cost Optimization]
-    A[Availability Improvement]
-    S[Security Hardening]
-
-    %% Performance optimization strategies
-    P1[Select appropriate instance types]
-    P2[Allow diverse instance types]
-    P3[Set appropriate TTL]
-    P4[Enable node consolidation]
-
-    %% Cost optimization strategies
-    C1[Utilize Spot instances]
-    C2[Select appropriate instance sizes]
-    C3[Utilize zero scaling]
-    C4[Set node expiration]
-
-    %% Availability improvement strategies
-    A1[Use multiple availability zones]
-    A2[Mix on-demand/Spot instances]
-    A3[Set appropriate PDBs]
-    A4[Optimize interruption handling]
-
-    %% Security hardening strategies
-    S1[IAM role least privilege]
-    S2[Security group restrictions]
-    S3[Encrypted EBS volumes]
-    S4[Require IMDSv2]
-
-    %% Connection definitions
-    P --> P1 & P2 & P3 & P4
-    C --> C1 & C2 & C3 & C4
-    A --> A1 & A2 & A3 & A4
-    S --> S1 & S2 & S3 & S4
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef victoriaMetrics fill:#4285F4,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef category fill:#9C27B0,stroke:#333,stroke-width:1px,color:white;
-    classDef performance fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
-    classDef cost fill:#FF9800,stroke:#333,stroke-width:1px,color:white;
-    classDef availability fill:#2196F3,stroke:#333,stroke-width:1px,color:white;
-    classDef security fill:#F44336,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class P,C,A,S category
-    class P1,P2,P3,P4 performance
-    class C1,C2,C3,C4 cost
-    class A1,A2,A3,A4 availability
-    class S1,S2,S3,S4 security
-```
+![Four parallel lists of Karpenter best practices grouped by category: performance optimization, cost optimization, availability improvement, and security hardening.](../.gitbook/assets/en-autoscaling-02-karpenter-5.png)
 
 ### Performance Optimization
 
