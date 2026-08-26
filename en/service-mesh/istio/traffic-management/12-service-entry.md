@@ -20,32 +20,7 @@ ServiceEntry registers external services in the Istio service mesh, allowing the
 
 By default, Istio mesh does not control traffic to external services. Using ServiceEntry:
 
-```mermaid
-flowchart TB
-    subgraph Without["Without ServiceEntry"]
-        A1[Mesh Internal<br/>Service] -->|Unknown Traffic| E1[External API]
-        A1 -.->|No Monitoring| E1
-        A1 -.->|Cannot Apply Policies| E1
-        A1 -.->|No Circuit Breaker| E1
-    end
-
-    subgraph With["With ServiceEntry"]
-        A2[Mesh Internal<br/>Service] -->|Registered Traffic| E2[External API<br/>ServiceEntry]
-        A2 -->|Monitoring Enabled| E2
-        A2 -->|Policy Applied| E2
-        A2 -->|Circuit Breaker| E2
-    end
-
-    %% Style definitions
-    classDef internal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef unknown fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class A1,A2 internal;
-    class E2 external;
-    class E1 unknown;
-```
+![Side-by-side comparison showing that without a ServiceEntry, mesh traffic to an external API is unmanaged with no monitoring, policy enforcement, or circuit breaker, while with a ServiceEntry the same traffic is managed and gains all three capabilities.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-12-service-entry-0.png)
 
 ### Key Benefits
 
@@ -61,32 +36,7 @@ flowchart TB
 
 ServiceEntry adds external services to the Istio service registry.
 
-```mermaid
-flowchart LR
-    subgraph Mesh["Service Mesh"]
-        App[Application]
-        SE[ServiceEntry<br/>Registration]
-    end
-
-    subgraph External["External Services"]
-        API[External API<br/>api.example.com]
-        DB[External DB<br/>db.example.com]
-    end
-
-    App -->|1. Request| SE
-    SE -->|2. Traffic Control<br/>Monitoring<br/>Security| API
-    SE -->|2. Traffic Control<br/>Monitoring<br/>Security| DB
-
-    %% Style definitions
-    classDef meshService fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef serviceEntry fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App meshService;
-    class SE serviceEntry;
-    class API,DB external;
-```
+![An application inside the service mesh sends a request through a ServiceEntry registration, which applies traffic control, monitoring, and security before fanning out to an external API and an external database.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-12-service-entry-1.png)
 
 ### Basic Structure
 

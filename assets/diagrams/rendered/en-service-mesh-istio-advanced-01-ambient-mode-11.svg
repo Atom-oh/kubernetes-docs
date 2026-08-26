@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-advanced-01-ambient-mode-11-title en-service-mesh-istio-advanced-01-ambient-mode-11-desc">
+<title id="en-service-mesh-istio-advanced-01-ambient-mode-11-title">Istio's evolution toward ambient mode</title>
+<desc id="en-service-mesh-istio-advanced-01-ambient-mode-11-desc">Timeline showing Istio's progression from sidecar-only mode in 2018 (1.0), through an ambient mode beta in 2022 (1.15), to ambient mode reaching general availability in 2024 (1.28).</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="80" y1="300" x2="880" y2="300" stroke="rgba(35,47,62,0.25)" stroke-width="1"/>
+<line x1="168" y1="300" x2="472" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="488" y1="300" x2="792" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<circle cx="160" cy="300" r="4" fill="#232F3E"/>
+<line x1="160" y1="296" x2="160" y2="260" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+<rect x="90" y="224" width="140" height="34" rx="4" fill="#ffffff" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="160" y="240" fill="#232F3E" font-size="12" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio 1.0</text>
+<text x="160" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">Sidecar mode</text>
+<text x="160" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.08em">2018</text>
+<circle cx="480" cy="300" r="4" fill="#232F3E"/>
+<line x1="480" y1="296" x2="480" y2="260" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+<rect x="410" y="224" width="140" height="34" rx="4" fill="#ffffff" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="480" y="240" fill="#232F3E" font-size="12" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio 1.15</text>
+<text x="480" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">Ambient beta</text>
+<text x="480" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.08em">2022</text>
+<circle cx="800" cy="300" r="6" fill="#EC7211"/>
+<line x1="800" y1="294" x2="800" y2="260" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+<rect x="730" y="224" width="140" height="34" rx="4" fill="#ffffff" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="800" y="240" fill="#EC7211" font-size="12" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio 1.28</text>
+<text x="800" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">Ambient stable (GA)</text>
+<text x="800" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.08em">2024</text>
+<rect x="258" y="280" width="123" height="12" rx="2" fill="#ffffff"/>
+<text x="320" y="289" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">resource optimization</text>
+<rect x="600" y="280" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="640" y="289" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">stabilization</text>
+<line x1="30" y1="386" x2="930" y2="386" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="30" y="400" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.16em">LEGEND</text>
+<rect x="30" y="414" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="50" y="422" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">release milestone</text>
+<rect x="176" y="414" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="196" y="422" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">GA milestone</text>
+</svg>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-comparison-01-service-mesh-comparison-2-title en-service-mesh-istio-comparison-01-service-mesh-comparison-2-desc">
+<title id="en-service-mesh-istio-comparison-01-service-mesh-comparison-2-title">Istio Control Plane and Data Plane</title>
+<desc id="en-service-mesh-istio-comparison-01-service-mesh-comparison-2-desc">Diagram of Istio&#x27;s architecture: Istiod acts as the unified control plane, reading CRD configuration and pushing it via the xDS API to Envoy sidecars, which encrypt traffic between pods with mTLS.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 280,124 H 380" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="305.4" y="104" width="49.2" height="12" rx="2" fill="#ffffff"/>
+<text x="330" y="113" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">XDS API</text>
+<rect x="60" y="96" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="96" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="170.0" y="122.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Configuration</text>
+<text x="170.0" y="136.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">VS · DR · GW · PA · AP</text>
+<rect x="380" y="96" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="380" y="96" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480.0" y="122.5" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istiod</text>
+<text x="480.0" y="136.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Unified Control Plane</text>
+<rect x="100" y="280" width="260" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="108" y="274" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="131.0" y="283" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">POD 1</text>
+<rect x="560" y="280" width="260" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="568" y="274" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="591.0" y="283" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">POD 2</text>
+<path d="M 447,152 V 222 Q 447,230 439,230 H 300 Q 292,230 292,238 V 328" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="348.2" y="210" width="43.6" height="12" rx="2" fill="#ffffff"/>
+<text x="370" y="219" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">CONFIG</text>
+<path d="M 513,152 V 237 Q 513,245 521,245 H 620 Q 628,245 628,253 V 328" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 224,352 H 248" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 672,352 H 692" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 336,352 H 584" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="443.8" y="332" width="32.4" height="12" rx="2" fill="#ffffff"/>
+<text x="460" y="341" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">MTLS</text>
+<rect x="124" y="328" width="100" height="48" rx="6" fill="#ffffff"/>
+<rect x="124" y="328" width="100" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="174.0" y="354.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Application</text>
+<rect x="248" y="328" width="88" height="48" rx="6" fill="#ffffff"/>
+<rect x="248" y="328" width="88" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="292.0" y="354.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy</text>
+<rect x="692" y="328" width="100" height="48" rx="6" fill="#ffffff"/>
+<rect x="692" y="328" width="100" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="742.0" y="354.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Application</text>
+<rect x="584" y="328" width="88" height="48" rx="6" fill="#ffffff"/>
+<rect x="584" y="328" width="88" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="628.0" y="354.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy</text>
+</svg>

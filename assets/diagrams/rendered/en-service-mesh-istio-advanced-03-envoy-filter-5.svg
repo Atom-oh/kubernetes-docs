@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="xffperapp-title xffperapp-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="xffperapp-title">Gateway XFF extraction feeding selective per-app AuthorizationPolicy</title>
+    <desc id="xffperapp-desc">Architecture diagram showing two clients reaching an AWS ALB and Istio Gateway, where the Gateway's EnvoyFilter extracts the real client IP from X-Forwarded-For once for all apps, after which unrestricted apps accept any IP while IP-restricted apps allow only the company NAT range.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="40" width="880" height="104" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="48" y="44" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="84" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">INTERNET</text>
+
+    <rect x="40" y="176" width="880" height="88" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="48" y="180" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="68" y="189" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AWS</text>
+
+    <rect x="40" y="296" width="880" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="48" y="300" width="140" height="12" rx="2" fill="#ffffff"/>
+    <text x="118" y="309" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KUBERNETES CLUSTER</text>
+
+    <!-- Arrows: Client1 -> ALB, Client2 -> ALB -->
+    <path d="M240,132 V160 Q240,168 248,168 H442 Q450,168 450,176 V204" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="252" y="140" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="280" y="149" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">XFF: ...3.4</text>
+
+    <path d="M720,132 V160 Q720,168 712,168 H518 Q510,168 510,176 V204" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="612" y="140" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="652" y="149" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">XFF: ...113.10</text>
+
+    <!-- ALB -> EnvoyGW straight -->
+    <path d="M480,260 V332" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="440" y="284" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="293" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">+ALB HOP</text>
+
+    <!-- EnvoyGW -> AppsUnrestricted / AppsRestricted -->
+    <path d="M460,388 V412 Q460,420 452,420 H268 Q260,420 260,428 V452" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="304" y="400" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="348" y="409" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">ANY IP OK</text>
+
+    <path d="M500,388 V412 Q500,420 508,420 H692 Q700,420 700,428 V452" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="588" y="400" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="632" y="409" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">NAT ONLY</text>
+
+    <!-- Nodes -->
+    <g>
+      <rect x="160" y="76" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="1"/>
+      <text x="240" y="100" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">General User</text>
+      <text x="240" y="116" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">1.2.3.4</text>
+    </g>
+    <g>
+      <rect x="568" y="76" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="1"/>
+      <text x="648" y="100" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Company User</text>
+      <text x="648" y="116" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">203.0.113.10</text>
+    </g>
+    <g>
+      <rect x="400" y="204" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="480" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Application</text>
+      <text x="480" y="244" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Load Balancer</text>
+    </g>
+    <g>
+      <rect x="400" y="332" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="480" y="352" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio Gateway</text>
+      <text x="480" y="368" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">xff_num_trusted_hops: 1</text>
+    </g>
+    <g>
+      <rect x="160" y="452" width="200" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+      <text x="260" y="480" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Apps A – C</text>
+      <text x="260" y="496" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">no AuthorizationPolicy</text>
+      <text x="260" y="508" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">all clients allowed</text>
+    </g>
+    <g>
+      <rect x="600" y="452" width="200" height="72" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,4"/>
+      <text x="700" y="480" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Apps F – G</text>
+      <text x="700" y="496" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">AuthorizationPolicy</text>
+      <text x="700" y="508" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">203.0.113.0/24 only</text>
+    </g>
+
+    <!-- legend -->
+    <line x1="30" y1="552" x2="930" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="570" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="140" y="562" width="12" height="12" rx="2" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="160" y="572" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">IP-restricted app (AuthorizationPolicy)</text>
+    <line x1="460" y1="568" x2="490" y2="568" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <text x="498" y="572" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Gateway extracts real client IP once, for every app</text>
+  </svg>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mc-geo-title mc-geo-desc">
+<title id="mc-geo-title">Regional mesh distribution</title>
+<desc id="mc-geo-desc">A unified Istio mesh pushes config sync to three regional EKS clusters in the US, Europe, and Asia, which also mesh directly with each other over cross-region mTLS.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- zones -->
+<rect x="60" y="360" width="200" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="72" y="364" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="112" y="373" fill="rgba(35,47,62,0.45)" font-family="'Geist Mono',monospace" font-size="7" text-anchor="middle" letter-spacing="0.12em">US REGION</text>
+
+<rect x="380" y="360" width="200" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="392" y="364" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="440" y="373" fill="rgba(35,47,62,0.45)" font-family="'Geist Mono',monospace" font-size="7" text-anchor="middle" letter-spacing="0.12em">EUROPE REGION</text>
+
+<rect x="700" y="360" width="200" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="712" y="364" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="752" y="373" fill="rgba(35,47,62,0.45)" font-family="'Geist Mono',monospace" font-size="7" text-anchor="middle" letter-spacing="0.12em">ASIA REGION</text>
+
+<!-- arrows: config sync (dashed, mesh -> each cluster), fanned attach on mesh bottom edge -->
+<path d="M 420,152 V 336 Q 420,344 412,344 H 168 Q 160,344 160,352 V 396"
+      fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<line x1="480" y1="152" x2="480" y2="396" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<path d="M 540,152 V 336 Q 540,344 548,344 H 792 Q 800,344 800,352 V 396"
+      fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+<!-- cross-region mTLS mesh (bidirectional, solid) -->
+<line x1="220" y1="420" x2="420" y2="420" stroke="#232F3E" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="288" y="426" width="66" height="12" rx="2" fill="#ffffff"/>
+<text x="321" y="435" fill="#7D8998" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.05em">MTLS</text>
+
+<line x1="540" y1="420" x2="740" y2="420" stroke="#232F3E" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="608" y="426" width="66" height="12" rx="2" fill="#ffffff"/>
+<text x="641" y="435" fill="#7D8998" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.05em">MTLS</text>
+
+<!-- direct US<->Asia mTLS routed below both zones -->
+<path d="M 160,452 V 510 H 800 V 452" fill="none" stroke="#232F3E" stroke-width="1.2"
+      marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="450" y="490" width="66" height="12" rx="2" fill="#ffffff"/>
+<text x="483" y="499" fill="#7D8998" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.05em">MTLS</text>
+
+<!-- Mesh (focal) -->
+<rect x="380" y="112" width="200" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480" y="132" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" text-anchor="middle">Istio mesh</text>
+<text x="480" y="146" fill="#545B64" font-family="'Geist Mono',monospace" font-size="9" text-anchor="middle">unified management</text>
+
+<!-- clusters -->
+<rect x="100" y="396" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="160" y="418" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" text-anchor="middle">EKS cluster</text>
+<text x="160" y="434" fill="#545B64" font-family="'Geist Mono',monospace" font-size="9" text-anchor="middle">us-east-1</text>
+
+<rect x="420" y="396" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="418" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" text-anchor="middle">EKS cluster</text>
+<text x="480" y="434" fill="#545B64" font-family="'Geist Mono',monospace" font-size="9" text-anchor="middle">eu-west-1</text>
+
+<rect x="740" y="396" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="800" y="418" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" text-anchor="middle">EKS cluster</text>
+<text x="800" y="434" fill="#545B64" font-family="'Geist Mono',monospace" font-size="9" text-anchor="middle">ap-northeast-2</text>
+
+<!-- legend -->
+<line x1="30" y1="536" x2="930" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="130" y="544" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="150" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">CONTROL PLANE</text>
+<line x1="360" y1="549" x2="384" y2="549" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="392" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">CONFIG SYNC</text>
+<line x1="560" y1="549" x2="584" y2="549" stroke="#232F3E" stroke-width="1.2"/>
+<text x="592" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">CROSS-REGION MTLS</text>
+</svg>

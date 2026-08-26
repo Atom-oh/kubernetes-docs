@@ -40,33 +40,7 @@ Ambient Mode solutions:
 
 ### Core Concepts
 
-```mermaid
-flowchart TB
-    subgraph SidecarMode["Sidecar Mode (Traditional)"]
-        App1[Application<br/>Container]
-        Sidecar1[Envoy<br/>Sidecar]
-        App1 <--> Sidecar1
-    end
-
-    subgraph AmbientMode["Ambient Mode (New)"]
-        App2[Application<br/>Container Only]
-        Node[Node-level<br/>ztunnel<br/>L4 Proxy]
-        Waypoint[Waypoint<br/>Proxy<br/>L7 Features]
-
-        App2 -->|Transparent| Node
-        Node -->|When L7 needed| Waypoint
-    end
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef sidecar fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef ambient fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class App1,App2 app;
-    class Sidecar1 sidecar;
-    class Node,Waypoint ambient;
-```
+![Diagram contrasting the sidecar model, where each pod pairs an application with its own Envoy proxy, against ambient mode, where application pods talk transparently to a shared node-level ztunnel that only escalates to an optional waypoint proxy when L7 features are needed.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-0.png)
 
 ### Advantages of Ambient Mode
 
@@ -81,38 +55,7 @@ flowchart TB
 
 #### Sidecar Mode
 
-```mermaid
-flowchart TB
-    subgraph Pod1["Pod"]
-        App1[App<br/>Container]
-        Envoy1[Envoy<br/>Sidecar]
-    end
-
-    subgraph Pod2["Pod"]
-        App2[App<br/>Container]
-        Envoy2[Envoy<br/>Sidecar]
-    end
-
-    subgraph Pod3["Pod"]
-        App3[App<br/>Container]
-        Envoy3[Envoy<br/>Sidecar]
-    end
-
-    App1 <--> Envoy1
-    App2 <--> Envoy2
-    App3 <--> Envoy3
-
-    Envoy1 <-->|mTLS| Envoy2
-    Envoy2 <-->|mTLS| Envoy3
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class App1,App2,App3 app;
-    class Envoy1,Envoy2,Envoy3 envoy;
-```
+![Architecture diagram showing three pods, each pairing an application container with its own Envoy sidecar proxy, with mutual TLS negotiated directly between every pair of sidecars.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-1.png)
 
 **Characteristics**:
 - Envoy proxy injected into each pod
@@ -122,42 +65,7 @@ flowchart TB
 
 #### Ambient Mode
 
-```mermaid
-flowchart TB
-    subgraph Node["Kubernetes Node"]
-        subgraph Pods["Application Pods"]
-            App1[App<br/>Pod 1]
-            App2[App<br/>Pod 2]
-            App3[App<br/>Pod 3]
-        end
-
-        Ztunnel[ztunnel<br/>L4 Proxy<br/>mTLS, Telemetry]
-    end
-
-    subgraph WaypointLayer["Waypoint Proxy (Optional)"]
-        Waypoint[Waypoint<br/>L7 Proxy<br/>Advanced Routing]
-    end
-
-    App1 -->|Transparent| Ztunnel
-    App2 -->|Transparent| Ztunnel
-    App3 -->|Transparent| Ztunnel
-
-    Ztunnel -->|L4 only| Service[Service]
-    Ztunnel -.->|L7 needed| Waypoint
-    Waypoint --> Service
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef waypoint fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App1,App2,App3 app;
-    class Ztunnel ztunnel;
-    class Waypoint waypoint;
-    class Service service;
-```
+![Architecture diagram showing many application pods sending traffic transparently to one node-level ztunnel, which serves the target service directly for L4 traffic and hands off to an optional waypoint proxy only when L7 routing is needed.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-2.png)
 
 **Characteristics**:
 - One ztunnel per node
@@ -229,39 +137,7 @@ ztunnel is the core component of Ambient Mode, a **lightweight L4 proxy running 
 
 #### ztunnel Role
 
-```mermaid
-flowchart TB
-    App[Application Pod]
-    Ztunnel[ztunnel<br/>DaemonSet]
-
-    subgraph ZtunnelFeatures["ztunnel Features"]
-        MTLS[mTLS<br/>Encryption]
-        L4Telemetry[L4 Telemetry<br/>Metrics Collection]
-        Identity[Identity<br/>Service Account]
-        L4LB[L4 Load Balancing]
-    end
-
-    Target[Target Service]
-
-    App -->|TCP connection| Ztunnel
-    Ztunnel -->|Apply mTLS| MTLS
-    MTLS -->|Collect metrics| L4Telemetry
-    L4Telemetry -->|Verify identity| Identity
-    Identity -->|Load balancing| L4LB
-    L4LB -->|Transmit| Target
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef feature fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef target fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App app;
-    class Ztunnel ztunnel;
-    class MTLS,L4Telemetry,Identity,L4LB feature;
-    class Target target;
-```
+![Flowchart showing a single TCP connection moving through ztunnel's built-in pipeline of mTLS encryption, telemetry collection, identity verification, and load balancing before reaching the target service.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-3.png)
 
 **ztunnel Characteristics**:
 - Written in Rust (performance optimized)
@@ -322,43 +198,7 @@ Waypoint is an **optional proxy used when L7 features are needed**. As shown in 
 
 #### Waypoint Deployment Units
 
-```mermaid
-flowchart TD
-    subgraph Namespace["Namespace: production"]
-        subgraph SA1["ServiceAccount: frontend"]
-            Pod1[Frontend Pod 1]
-            Pod2[Frontend Pod 2]
-        end
-
-        subgraph SA2["ServiceAccount: backend"]
-            Pod3[Backend Pod 1]
-            Pod4[Backend Pod 2]
-        end
-
-        WP1[Waypoint<br/>for frontend]
-        WP2[Waypoint<br/>for backend]
-    end
-
-    Ztunnel[ztunnel]
-
-    Ztunnel -->|L7 routing| WP1
-    Ztunnel -->|L7 routing| WP2
-
-    WP1 --> Pod1
-    WP1 --> Pod2
-    WP2 --> Pod3
-    WP2 --> Pod4
-
-    %% Style definitions
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef waypoint fill:#3B48CC,stroke:#333,stroke-width:2px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Pod1,Pod2,Pod3,Pod4 pod;
-    class WP1,WP2 waypoint;
-    class Ztunnel ztunnel;
-```
+![Architecture diagram showing one shared ztunnel routing L7 traffic to two separate waypoint proxies, one scoped to the frontend service account and one to the backend service account within the production namespace.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-4.png)
 
 **Deployment Options**:
 - **ServiceAccount-based**: Only pods with specific SA use the corresponding Waypoint
@@ -367,37 +207,7 @@ flowchart TD
 
 #### Waypoint Role
 
-```mermaid
-flowchart TB
-    Ztunnel[ztunnel]
-
-    subgraph WaypointFeatures["Waypoint Features"]
-        L7Routing[L7 Routing<br/>Path, Header]
-        Retry[Retry/Timeout]
-        CircuitBreaker[Circuit Breaker]
-        FaultInjection[Fault Injection]
-        HeaderManip[Header Manipulation]
-    end
-
-    Target[Target Service]
-
-    Ztunnel -->|When L7 needed| L7Routing
-    L7Routing --> Retry
-    Retry --> CircuitBreaker
-    CircuitBreaker --> FaultInjection
-    FaultInjection --> HeaderManip
-    HeaderManip --> Target
-
-    %% Style definitions
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef feature fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef target fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Ztunnel ztunnel;
-    class L7Routing,Retry,CircuitBreaker,FaultInjection,HeaderManip feature;
-    class Target target;
-```
+![Flowchart showing traffic handed off from ztunnel to the waypoint proxy, which applies L7 routing, retry and circuit-breaking policy, fault injection, and header manipulation in sequence before delivering the request to the target service.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-5.png)
 
 **Waypoint Characteristics**:
 - Deployed per Service Account or per Namespace
@@ -425,36 +235,7 @@ spec:
 
 The following is a comprehensive diagram showing how traffic flows in Ambient Mode **without Sidecars**:
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant ClientApp as Client App<br/>(No Sidecar)
-    participant ClientZtunnel as Client Node<br/>ztunnel
-    participant Waypoint as Waypoint Proxy<br/>(L7 Optional)
-    participant ServerZtunnel as Server Node<br/>ztunnel
-    participant ServerApp as Server App<br/>(No Sidecar)
-
-    Note over ClientApp,ServerApp: L4 Only Path (Basic Scenario)
-    ClientApp->>ClientZtunnel: 1. TCP request
-    Note over ClientZtunnel: mTLS encrypt<br/>L4 metrics
-    ClientZtunnel->>ServerZtunnel: 2. mTLS connection
-    Note over ServerZtunnel: mTLS decrypt<br/>L4 metrics
-    ServerZtunnel->>ServerApp: 3. Plain TCP
-    ServerApp->>ServerZtunnel: 4. Response
-    ServerZtunnel->>ClientZtunnel: 5. mTLS response
-    ClientZtunnel->>ClientApp: 6. Plain response
-
-    Note over ClientApp,ServerApp: L7 Path (Advanced Routing)
-    ClientApp->>ClientZtunnel: 1. HTTP request
-    ClientZtunnel->>Waypoint: 2. HBONE tunnel
-    Note over Waypoint: L7 routing<br/>Header matching<br/>Circuit breaker<br/>Retry logic
-    Waypoint->>ServerZtunnel: 3. mTLS to target
-    ServerZtunnel->>ServerApp: 4. Plain HTTP
-    ServerApp->>ServerZtunnel: 5. Response
-    ServerZtunnel->>Waypoint: 6. mTLS response
-    Waypoint->>ClientZtunnel: 7. HBONE tunnel
-    ClientZtunnel->>ClientApp: 8. Response
-```
+![Sequence diagram tracing a request from an unsidecarred client app through client and server ztunnels for the plain L4 path, and, in an optional branch, through a waypoint proxy for L7 routing before reaching the server app.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-6.png)
 
 **Traffic Flow Analysis**:
 
@@ -483,29 +264,7 @@ sequenceDiagram
 - **Efficient**: Minimal overhead
 - **Firewall friendly**: Uses standard HTTP/2 ports
 
-```mermaid
-flowchart LR
-    App[Application<br/>Plain TCP]
-    ZtunnelSrc[Source<br/>ztunnel]
-    Network[Network<br/>HBONE/HTTP2<br/>mTLS]
-    ZtunnelDst[Destination<br/>ztunnel]
-    Target[Target App<br/>Plain TCP]
-
-    App -->|Plain| ZtunnelSrc
-    ZtunnelSrc -->|HBONE Tunnel| Network
-    Network -->|HBONE Tunnel| ZtunnelDst
-    ZtunnelDst -->|Plain| Target
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef network fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App,Target app;
-    class ZtunnelSrc,ZtunnelDst ztunnel;
-    class Network network;
-```
+![Flowchart showing plain TCP traffic from an application getting encapsulated into an HTTP/2, mTLS-secured HBONE tunnel by the source ztunnel, carried across the network, and decapsulated back to plain TCP by the destination ztunnel before reaching the target app.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-7.png)
 
 ## Installation and Configuration
 
@@ -626,27 +385,7 @@ spec:
 
 #### Step-by-step Migration
 
-```mermaid
-flowchart LR
-    Start[Sidecar Mode<br/>In Production]
-    Install[Install Ambient<br/>Components]
-    Label[Add Namespace<br/>Label]
-    Remove[Remove<br/>Sidecar]
-    Waypoint[Deploy<br/>Waypoint]
-    End[Complete<br/>Ambient Mode]
-
-    Start --> Install
-    Install --> Label
-    Label --> Remove
-    Remove --> Waypoint
-    Waypoint --> End
-
-    %% Style definitions
-    classDef step fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Start,Install,Label,Remove,Waypoint,End step;
-```
+![Flowchart of a five-step migration path from sidecar mode in production, through installing ambient components, labeling the namespace, removing sidecars, and deploying waypoint proxies, to a completed zero-downtime ambient mode.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-8.png)
 
 #### Step 1: Install Ambient Components
 
@@ -741,35 +480,7 @@ The graph above shows official Istio performance test results, demonstrating tha
 
 ### Resource Usage Visualization
 
-```mermaid
-graph TD
-    subgraph Comparison["100 Pods Cluster"]
-        subgraph Sidecar["Sidecar Mode"]
-            SM[Total Memory: 5GB<br/>Total CPU: 10 vCPU<br/>Per pod: 50MB + 0.1 CPU]
-        end
-
-        subgraph Ambient["Ambient Mode"]
-            AM[Total Memory: 700MB<br/>Total CPU: 1.5 vCPU<br/>10 ztunnels + 1 waypoint]
-        end
-
-        subgraph Savings["Savings"]
-            Save[Memory: 86% savings<br/>CPU: 85% savings<br/>Cost: ~80% savings]
-        end
-    end
-
-    Sidecar -.->|Comparison| Ambient
-    Ambient -.->|Result| Savings
-
-    %% Style definitions
-    classDef sidecar fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef ambient fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef savings fill:#3B48CC,stroke:#333,stroke-width:2px,color:white;
-
-    %% Apply classes
-    class SM sidecar;
-    class AM ambient;
-    class Save savings;
-```
+![Comparison diagram showing sidecar mode's five gigabytes of memory and ten vCPU across a hundred pods reduced to about 700 megabytes and 1.5 vCPU under ambient mode, an 85 to 86 percent resource saving.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-9.png)
 
 ### Resource Savings Calculation
 
@@ -793,36 +504,7 @@ cpu_saved = sidecar_cpu - ambient_cpu          # 8.5 vCPU (~85%)
 
 ### When Should You Choose Ambient Mode?
 
-```mermaid
-flowchart TD
-    Start{Service Mesh<br/>Consideration}
-
-    ResourceConstrained{Resource<br/>constraints?}
-    L7Required{Complex L7<br/>features needed?}
-    SimpleMesh{Simple security<br/>+ telemetry?}
-
-    Sidecar[Sidecar Mode<br/>Recommended]
-    AmbientL4[Ambient Mode<br/>ztunnel only]
-    AmbientL7[Ambient Mode<br/>+ Waypoint]
-
-    Start --> ResourceConstrained
-    ResourceConstrained -->|Yes| SimpleMesh
-    ResourceConstrained -->|No| L7Required
-
-    SimpleMesh -->|Yes| AmbientL4
-    SimpleMesh -->|No| AmbientL7
-
-    L7Required -->|All services| Sidecar
-    L7Required -->|Some services only| AmbientL7
-
-    %% Style definitions
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-    classDef solution fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    %% Apply classes
-    class ResourceConstrained,L7Required,SimpleMesh decision;
-    class Sidecar,AmbientL4,AmbientL7 solution;
-```
+![Decision-tree flowchart routing from resource constraints through telemetry and L7 needs to one of three outcomes: L4-only ambient mode, ambient mode with selective waypoint proxies, or full sidecar mode.](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-10.png)
 
 **Recommended scenarios for Ambient Mode**:
 - Hundreds or more microservices
@@ -949,27 +631,7 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 ### Comparison Resources
 
-```mermaid
-graph LR
-    subgraph Evolution["Istio Evolution"]
-        V1[Istio 1.0<br/>2018<br/>Sidecar Mode]
-        V2[Istio 1.15<br/>2022<br/>Ambient Beta]
-        V3[Istio 1.28<br/>2024<br/>Ambient Stable]
-    end
-
-    V1 -->|Resource optimization| V2
-    V2 -->|Stabilization| V3
-
-    %% Style definitions
-    classDef old fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef beta fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef stable fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    %% Apply classes
-    class V1 old;
-    class V2 beta;
-    class V3 stable;
-```
+![Timeline showing Istio's progression from sidecar-only mode in 2018 (1.0), through an ambient mode beta in 2022 (1.15), to ambient mode reaching general availability in 2024 (1.28).](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-11.png)
 
 **Production Usage Status** (as of 2024):
 - Solo.io: Migrated entire internal clusters to Ambient Mode

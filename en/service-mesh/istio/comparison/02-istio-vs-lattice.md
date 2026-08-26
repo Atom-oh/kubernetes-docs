@@ -63,54 +63,7 @@ This document provides a comprehensive comparison between Kubernetes Service Mes
 
 ### Istio Architecture
 
-```mermaid
-flowchart TB
-    subgraph "Kubernetes Cluster"
-        subgraph "Control Plane (istio-system)"
-            Istiod[Istiod<br/>Unified Control Plane]
-        end
-
-        subgraph "Namespace: production"
-            subgraph "Pod: frontend"
-                FrontendApp[Frontend App]
-                FrontendProxy[Envoy Sidecar<br/>50-150MB]
-            end
-
-            subgraph "Pod: backend"
-                BackendApp[Backend App]
-                BackendProxy[Envoy Sidecar<br/>50-150MB]
-            end
-        end
-
-        subgraph "Observability"
-            Prometheus[Prometheus]
-            Jaeger[Jaeger]
-            Kiali[Kiali]
-        end
-    end
-
-    FrontendApp --> FrontendProxy
-    FrontendProxy -->|mTLS| BackendProxy
-    BackendProxy --> BackendApp
-
-    Istiod -->|xDS Config| FrontendProxy
-    Istiod -->|xDS Config| BackendProxy
-
-    FrontendProxy -.->|Metrics| Prometheus
-    BackendProxy -.->|Metrics| Prometheus
-    FrontendProxy -.->|Traces| Jaeger
-    BackendProxy -.->|Traces| Jaeger
-
-    Kiali -.->|Query| Prometheus
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef observability fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-
-    class Istiod k8sComponent;
-    class FrontendApp,BackendApp,FrontendProxy,BackendProxy userApp;
-    class Prometheus,Jaeger,Kiali observability;
-```
+![Architecture diagram showing Istiod pushing xDS configuration to Envoy sidecars attached to each application pod, with sidecars exchanging mTLS traffic and exporting metrics and traces to Prometheus, Jaeger, and Kiali.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-0.png)
 
 **Features**:
 
@@ -121,56 +74,7 @@ flowchart TB
 
 ### VPC Lattice Architecture
 
-```mermaid
-flowchart TB
-    subgraph AWS["AWS Account"]
-        subgraph VPC1["VPC 1"]
-            subgraph EKS["EKS Cluster"]
-                Frontend[Frontend Pod<br/>No Sidecar]
-            end
-        end
-
-        subgraph VPC2["VPC 2"]
-            ECS[ECS Task<br/>Backend Service]
-            Lambda[Lambda Function<br/>Payment Service]
-        end
-
-        subgraph VPC3["VPC 3"]
-            EC2[EC2 Instance<br/>Legacy Service]
-        end
-
-        subgraph VPCLattice["VPC Lattice (AWS Managed)"]
-            ServiceNetwork[Service Network]
-            ServiceA[Service A]
-            ServiceB[Service B]
-            TargetGroup1[Target Group<br/>ECS]
-            TargetGroup2[Target Group<br/>Lambda]
-            TargetGroup3[Target Group<br/>EC2]
-        end
-    end
-
-    Frontend -->|PrivateLink| ServiceNetwork
-    ServiceNetwork --> ServiceA
-    ServiceNetwork --> ServiceB
-    ServiceA --> TargetGroup1
-    ServiceA --> TargetGroup2
-    ServiceB --> TargetGroup3
-    TargetGroup1 --> ECS
-    TargetGroup2 --> Lambda
-    TargetGroup3 --> EC2
-
-    VPC1 -.->|VPC Association| ServiceNetwork
-    VPC2 -.->|VPC Association| ServiceNetwork
-    VPC3 -.->|VPC Association| ServiceNetwork
-
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef vpc fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class Frontend,ECS,Lambda,EC2 userApp;
-    class ServiceNetwork,ServiceA,ServiceB,TargetGroup1,TargetGroup2,TargetGroup3 awsService;
-    class VPC1,VPC2,VPC3 vpc;
-```
+![Architecture diagram showing compute across an EKS pod, an ECS task, a Lambda function, and an EC2 instance all associating with a single AWS-managed VPC Lattice service network, which routes through services and target groups without any sidecar proxy.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-1.png)
 
 **Features**:
 
@@ -824,37 +728,7 @@ Istio provides powerful features, but operating it in production environments pr
 
 #### Key Operational Challenges
 
-```mermaid
-flowchart TB
-    subgraph "Istio Operational Complexity"
-        direction TB
-        Challenge1[Sidecar Management<br/>Proxy injection in all pods]
-        Challenge2[Upgrade Complexity<br/>Manual Canary process]
-        Challenge3[Resource Overhead<br/>2x CPU/Memory increase]
-        Challenge4[Troubleshooting<br/>Complex debugging]
-        Challenge5[Config Validation<br/>CRD interdependencies]
-        Challenge6[Certificate Management<br/>CA and renewal]
-    end
-
-    subgraph "Impact"
-        Impact1[Increased Operational Cost<br/>Expert staff required]
-        Impact2[Increased Failure Risk<br/>Complex architecture]
-        Impact3[Increased Deploy Time<br/>Pod restart required]
-    end
-
-    Challenge1 --> Impact1
-    Challenge2 --> Impact2
-    Challenge3 --> Impact1
-    Challenge4 --> Impact2
-    Challenge5 --> Impact2
-    Challenge6 --> Impact3
-
-    classDef challenge fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef impact fill:#FFA500,stroke:#333,stroke-width:2px,color:white;
-
-    class Challenge1,Challenge2,Challenge3,Challenge4,Challenge5,Challenge6 challenge;
-    class Impact1,Impact2,Impact3 impact;
-```
+![Diagram mapping six recurring Istio operational challenges to three downstream impacts, showing increased failure risk as the most common consequence.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-2.png)
 
 ### Installation and Initial Setup
 
@@ -1093,36 +967,7 @@ Istio upgrades are among the most risky and complex operations in production env
 
 ### Istio Multi-Cloud
 
-```mermaid
-flowchart TB
-    subgraph AWS["AWS"]
-        EKS1[EKS Cluster 1]
-        Istiod1[Istiod]
-    end
-
-    subgraph GCP["Google Cloud"]
-        GKE[GKE Cluster]
-        Istiod2[Istiod]
-    end
-
-    subgraph Azure["Azure"]
-        AKS[AKS Cluster]
-        Istiod3[Istiod]
-    end
-
-    Istiod1 <-.->|Service Discovery| Istiod2
-    Istiod2 <-.->|Service Discovery| Istiod3
-    EKS1 <-->|mTLS| GKE
-    GKE <-->|mTLS| AKS
-
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef gcp fill:#4285F4,stroke:#333,stroke-width:2px,color:white;
-    classDef azure fill:#0078D4,stroke:#333,stroke-width:2px,color:white;
-
-    class AWS,EKS1,Istiod1 aws;
-    class GCP,GKE,Istiod2 gcp;
-    class Azure,AKS,Istiod3 azure;
-```
+![Diagram showing per-cloud Istiod control planes in AWS, Google Cloud, and Azure federating service discovery with each other, while their EKS, GKE, and AKS clusters exchange mTLS traffic directly across cloud boundaries.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-3.png)
 
 **Advantages**:
 
@@ -1145,47 +990,7 @@ flowchart TB
 
 ### Using Istio + VPC Lattice Together
 
-```mermaid
-flowchart TB
-    subgraph "VPC 1 - EKS Cluster"
-        subgraph "Istio Mesh"
-            Frontend[Frontend]
-            Backend[Backend]
-            FrontendProxy[Envoy]
-            BackendProxy[Envoy]
-        end
-    end
-
-    subgraph "VPC 2 - ECS"
-        Payment[Payment Service<br/>ECS Task]
-    end
-
-    subgraph "VPC 3 - Lambda"
-        Notification[Notification<br/>Lambda]
-    end
-
-    subgraph "VPC Lattice"
-        ServiceNetwork[Service Network]
-        PaymentService[Payment Service]
-        NotificationService[Notification Service]
-    end
-
-    Frontend --> FrontendProxy
-    FrontendProxy -->|Istio mTLS| BackendProxy
-    BackendProxy --> Backend
-
-    Backend -->|Egress Gateway| ServiceNetwork
-    ServiceNetwork --> PaymentService
-    ServiceNetwork --> NotificationService
-    PaymentService --> Payment
-    NotificationService --> Notification
-
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef lattice fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class Frontend,Backend,FrontendProxy,BackendProxy istio;
-    class ServiceNetwork,PaymentService,NotificationService,Payment,Notification lattice;
-```
+![Architecture diagram showing an Istio mesh handling frontend-to-backend traffic inside an EKS cluster, then exiting through an egress gateway into a VPC Lattice service network that reaches an ECS payment service and a Lambda notification service in separate VPCs.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-4.png)
 
 **Use Cases**:
 
@@ -1196,29 +1001,7 @@ flowchart TB
 
 ### Decision Tree
 
-```mermaid
-flowchart TD
-    Start[Service Networking Solution Selection]
-    Start --> Q1{Platform?}
-
-    Q1 -->|AWS Only| Q2{Workload Type?}
-    Q1 -->|Multi-cloud| Istio[Istio]
-
-    Q2 -->|K8s Only| Q3{Feature Requirements?}
-    Q2 -->|EKS+ECS+Lambda| Lattice[VPC Lattice]
-
-    Q3 -->|Advanced Features| Q4{Operational Resources?}
-    Q3 -->|Basic Features| LatticeSimple[VPC Lattice]
-
-    Q4 -->|Sufficient| IstioAdvanced[Istio]
-    Q4 -->|Limited| LatticePractical[VPC Lattice]
-
-    classDef recommended fill:#00C7B7,stroke:#333,stroke-width:3px,color:white;
-    classDef decision fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Istio,Lattice,LatticeSimple,IstioAdvanced,LatticePractical recommended;
-    class Start,Q1,Q2,Q3,Q4 decision;
-```
+![Flowchart walking from platform choice through workload type, feature requirements, and operational resources to a recommendation of either Istio or VPC Lattice, with VPC Lattice reached by three different simpler paths.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-5.png)
 
 ### Quick Recommendation Table
 

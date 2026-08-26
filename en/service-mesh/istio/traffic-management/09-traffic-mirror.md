@@ -12,33 +12,7 @@ Traffic Mirroring (or Shadow Traffic) is a technique that replicates production 
 
 ## Traffic Mirroring Overview
 
-```mermaid
-flowchart LR
-    Client[Client]
-
-    subgraph Production["Production"]
-        V1[Version 1<br/>Actual Response]
-    end
-
-    subgraph Shadow["Shadow (Mirror)"]
-        V2[Version 2<br/>Response Ignored]
-    end
-
-    Client -->|Request| V1
-    V1 -->|Response| Client
-    Client -.->|Replicate| V2
-    V2 -.->|Ignored| Client
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef production fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef shadow fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class V1 production;
-    class V2 shadow;
-```
+![A client sends a request that Version 1 answers on the live path, while the same request is replicated to Version 2 in a shadow copy whose response is discarded and never reaches the client.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-09-traffic-mirror-0.png)
 
 ## Basic Configuration
 

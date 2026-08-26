@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1320 660" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-comparison-01-service-mesh-comparison-18-title en-service-mesh-istio-comparison-01-service-mesh-comparison-18-desc">
+<title id="en-service-mesh-istio-comparison-01-service-mesh-comparison-18-title">Service Mesh Selection Decision Tree</title>
+<desc id="en-service-mesh-istio-comparison-01-service-mesh-comparison-18-desc">Decision tree for choosing a service mesh: it branches on team experience, resource constraints, platform (Kubernetes-only vs. hybrid with VMs) and feature needs to arrive at Linkerd, Istio, Kong Mesh or Consul.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 600,84 V 120" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 520,156 H 308 Q 300,156 300,164 V 252" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="379.8" y="136" width="60.4" height="12" rx="2" fill="#ffffff"/>
+<text x="410" y="145" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">NEW TO SM</text>
+<path d="M 680,156 H 892 Q 900,156 900,164 V 252" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="754.2" y="136" width="71.6" height="12" rx="2" fill="#ffffff"/>
+<text x="790" y="145" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">EXPERIENCED</text>
+<path d="M 220,288 H 188 Q 180,288 180,296 V 404" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="186" y="268" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="200" y="277" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">YES</text>
+<path d="M 300,324 V 356 Q 300,364 308,364 H 412 Q 420,364 420,372 V 404" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="346" y="344" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="360" y="353" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">NO</text>
+<path d="M 900,324 V 356 Q 900,364 892,364 H 788 Q 780,364 780,372 V 404" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="812.6" y="344" width="54.8" height="12" rx="2" fill="#ffffff"/>
+<text x="840" y="353" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">K8S ONLY</text>
+<path d="M 980,288 H 1052 Q 1060,288 1060,296 V 404" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="992.6" y="268" width="54.8" height="12" rx="2" fill="#ffffff"/>
+<text x="1020" y="277" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">K8S + VM</text>
+<path d="M 700,440 H 695 Q 690,440 690,445 V 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="604.8" y="494" width="77.2" height="12" rx="2" fill="#ffffff"/>
+<text x="643.4" y="503" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">MAX FEATURES</text>
+<path d="M 780,476 V 508 Q 780,516 788,516 H 862 Q 870,516 870,524 V 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="797.6" y="496" width="54.8" height="12" rx="2" fill="#ffffff"/>
+<text x="825" y="505" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">BALANCED</text>
+<path d="M 1060,476 V 511 Q 1060,516 1055,516 H 1055 Q 1050,516 1050,521 V 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="1041" y="496" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="1055" y="505" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">YES</text>
+<path d="M 1140,440 H 1202 Q 1210,440 1210,448 V 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="1161" y="420" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="1175" y="429" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">NO</text>
+<rect x="520" y="40" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="520" y="40" width="160" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="600.0" y="64.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service Mesh Selection</text>
+<polygon points="600.0,120 680,156.0 600.0,192 520,156.0" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="600.0" y="153.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Team</text>
+<text x="600.0" y="167.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Experience?</text>
+<polygon points="300.0,252 380,288.0 300.0,324 220,288.0" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300.0" y="285.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Resource</text>
+<text x="300.0" y="299.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Constraints?</text>
+<polygon points="900.0,252 980,288.0 900.0,324 820,288.0" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="900.0" y="292.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Platform?</text>
+<polygon points="780.0,404 860,440.0 780.0,476 700,440.0" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780.0" y="437.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Feature</text>
+<text x="780.0" y="451.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Requirements?</text>
+<polygon points="1060.0,404 1140,440.0 1060.0,476 980,440.0" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="1060.0" y="437.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VM-</text>
+<text x="1060.0" y="451.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">centric?</text>
+<rect x="100" y="404" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="100" y="404" width="160" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="180.0" y="428.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Linkerd</text>
+<rect x="340" y="404" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="340" y="404" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420.0" y="428.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kong Mesh / Consul</text>
+<rect x="620" y="560" width="140" height="44" rx="6" fill="#ffffff"/>
+<rect x="620" y="560" width="140" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="690.0" y="584.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio</text>
+<rect x="800" y="560" width="140" height="44" rx="6" fill="#ffffff"/>
+<rect x="800" y="560" width="140" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="870.0" y="584.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kong Mesh</text>
+<rect x="980" y="560" width="140" height="44" rx="6" fill="#ffffff"/>
+<rect x="980" y="560" width="140" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="1050.0" y="584.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Consul</text>
+<rect x="1140" y="560" width="140" height="44" rx="6" fill="#ffffff"/>
+<rect x="1140" y="560" width="140" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="1210.0" y="584.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kong Mesh</text>
+</svg>

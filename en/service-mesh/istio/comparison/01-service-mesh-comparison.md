@@ -24,205 +24,17 @@ A Service Mesh is an infrastructure layer that manages communication between mic
 
 #### Basic Concepts of Service Mesh
 
-```mermaid
-flowchart TB
-    subgraph "Without Service Mesh"
-        direction LR
-        AppA1[Service A] -->|Direct Call| AppB1[Service B]
-        AppB1 -->|Direct Call| AppC1[Service C]
-
-        Note1[Problems:<br/>- Retry logic implemented in each service<br/>- Manual encryption setup between services<br/>- Inconsistent metrics collection<br/>- Difficult traffic control]
-    end
-
-    subgraph "With Service Mesh"
-        direction LR
-        subgraph PodA["Pod A"]
-            AppA2[Service A]
-            ProxyA[Sidecar<br/>Proxy]
-        end
-        subgraph PodB["Pod B"]
-            AppB2[Service B]
-            ProxyB[Sidecar<br/>Proxy]
-        end
-        subgraph PodC["Pod C"]
-            AppC2[Service C]
-            ProxyC[Sidecar<br/>Proxy]
-        end
-
-        ControlPlane[Control Plane<br/>Policy Management]
-
-        AppA2 --> ProxyA
-        ProxyA <-->|mTLS<br/>Auto Encryption| ProxyB
-        AppB2 --> ProxyB
-        ProxyB <-->|mTLS| ProxyC
-        AppC2 --> ProxyC
-
-        ControlPlane -.->|Config Distribution| ProxyA
-        ControlPlane -.->|Config Distribution| ProxyB
-        ControlPlane -.->|Config Distribution| ProxyC
-
-        Note2[Benefits:<br/>- Automatic retry and timeout<br/>- Automatic mTLS encryption<br/>- Unified metrics and tracing<br/>- Fine-grained traffic control]
-    end
-
-    classDef problem fill:#FFB74D,stroke:#333,stroke-width:2px,color:black;
-    classDef solution fill:#66BB6A,stroke:#333,stroke-width:2px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef control fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-
-    class Note1 problem;
-    class Note2 solution;
-    class AppA1,AppB1,AppC1,AppA2,AppB2,AppC2 app;
-    class ProxyA,ProxyB,ProxyC proxy;
-    class ControlPlane control;
-```
+![Diagram contrasting direct service-to-service calls, where each service reimplements retries and encryption, with a service-mesh pattern where sidecar proxies handle mTLS and a control plane distributes policy.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-0.png)
 
 #### Architecture Pattern Comparison
 
-```mermaid
-flowchart LR
-    subgraph "Istio - Sidecar Pattern"
-        direction TB
-        I_CP[Istiod<br/>Unified Control Plane<br/>1 Process]
-
-        subgraph I_Pod1["Pod"]
-            I_App1[App]
-            I_Envoy1[Envoy<br/>Sidecar]
-        end
-
-        I_CP -->|xDS API| I_Envoy1
-        I_App1 -->|localhost| I_Envoy1
-
-        I_Note[Features:<br/>- Most feature-rich<br/>- Fine-grained L7 control<br/>- High resource usage<br/>- Complex operations]
-    end
-
-    subgraph "Linkerd - Micro-proxy Pattern"
-        direction TB
-        L_CP1[Destination<br/>Service Discovery]
-        L_CP2[Identity<br/>Certificate Management]
-        L_CP3[Proxy Injector<br/>Injection Management]
-
-        subgraph L_Pod1["Pod"]
-            L_App1[App]
-            L_Proxy1[Linkerd2<br/>Rust Proxy]
-        end
-
-        L_CP1 --> L_Proxy1
-        L_CP2 --> L_Proxy1
-        L_CP3 -.-> L_Proxy1
-        L_App1 -->|localhost| L_Proxy1
-
-        L_Note[Features:<br/>- Most lightweight<br/>- Easy operations<br/>- Limited features<br/>- No VM support]
-    end
-
-    subgraph "Consul - Universal Pattern"
-        direction TB
-        C_Server[Consul Servers<br/>Distributed Cluster<br/>Service Catalog]
-
-        subgraph C_Pod1["Pod"]
-            C_App1[App]
-            C_Client1[Consul<br/>Client]
-            C_Envoy1[Envoy<br/>Proxy]
-        end
-
-        subgraph C_VM["VM"]
-            C_App2[Legacy<br/>App]
-            C_Client2[Consul<br/>Client]
-            C_Envoy2[Envoy<br/>Proxy]
-        end
-
-        C_Client1 --> C_Server
-        C_Client2 --> C_Server
-        C_Server -->|Service Discovery| C_Envoy1
-        C_Server -->|Service Discovery| C_Envoy2
-        C_App1 --> C_Envoy1
-        C_App2 --> C_Envoy2
-
-        C_Note[Features:<br/>- VM-first support<br/>- Strong Service Discovery<br/>- Requires Consul infrastructure<br/>- Learning curve]
-    end
-
-    subgraph "Kong Mesh - Multi-zone Pattern"
-        direction TB
-        K_Global[Global CP<br/>Policy Sync]
-        K_Zone1[Zone CP 1<br/>Local Management]
-        K_Zone2[Zone CP 2<br/>Local Management]
-
-        subgraph K_Pod1["K8s Pod"]
-            K_App1[App]
-            K_DP1[Kuma DP<br/>Envoy]
-        end
-
-        subgraph K_VM["VM"]
-            K_App2[App]
-            K_DP2[Kuma DP<br/>Envoy]
-        end
-
-        K_Global --> K_Zone1
-        K_Global --> K_Zone2
-        K_Zone1 --> K_DP1
-        K_Zone2 --> K_DP2
-        K_App1 --> K_DP1
-        K_App2 --> K_DP2
-
-        K_Note[Features:<br/>- Multi-cloud<br/>- K8s + VM equal support<br/>- Enterprise is paid<br/>- Small community]
-    end
-
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef linkerd fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef consul fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef kong fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef note fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class I_CP,I_Envoy1 istio;
-    class L_CP1,L_CP2,L_CP3,L_Proxy1 linkerd;
-    class C_Server,C_Client1,C_Client2,C_Envoy1,C_Envoy2 consul;
-    class K_Global,K_Zone1,K_Zone2,K_DP1,K_DP2 kong;
-    class I_Note,L_Note,C_Note,K_Note note;
-```
+![Side-by-side comparison of how Istio, Linkerd, Consul and Kong Mesh structure their control plane and data plane, from a single unified control plane to a multi-zone global/local split.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-1.png)
 
 ### Detailed Architecture
 
 #### Istio
 
-```mermaid
-flowchart TB
-    subgraph "Control Plane"
-        Istiod[Istiod<br/>Unified Control Plane]
-    end
-
-    subgraph "Data Plane"
-        subgraph "Pod 1"
-            App1[Application]
-            Envoy1[Envoy Proxy]
-        end
-        subgraph "Pod 2"
-            App2[Application]
-            Envoy2[Envoy Proxy]
-        end
-    end
-
-    subgraph "Configuration"
-        VS[VirtualService]
-        DR[DestinationRule]
-        GW[Gateway]
-        PA[PeerAuthentication]
-        AP[AuthorizationPolicy]
-    end
-
-    Configuration -.->|xDS API| Istiod
-    Istiod -->|Configuration| Envoy1
-    Istiod -->|Configuration| Envoy2
-    Envoy1 <-->|mTLS| Envoy2
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef config fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Istiod k8sComponent;
-    class App1,App2 userApp;
-    class Envoy1,Envoy2 userApp;
-    class VS,DR,GW,PA,AP config;
-```
+![Diagram of Istio's architecture: Istiod acts as the unified control plane, reading CRD configuration and pushing it via the xDS API to Envoy sidecars, which encrypt traffic between pods with mTLS.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-2.png)
 
 **Features**:
 
@@ -240,39 +52,7 @@ flowchart TB
 
 ### Linkerd
 
-```mermaid
-flowchart TB
-    subgraph "Control Plane"
-        Destination[Destination<br/>Service Discovery]
-        Identity[Identity<br/>Certificate Authority]
-        ProxyInjector[Proxy Injector<br/>Webhook]
-    end
-
-    subgraph "Data Plane"
-        subgraph "Pod 1"
-            App1[Application]
-            LP1[Linkerd2-proxy<br/>Rust]
-        end
-        subgraph "Pod 2"
-            App2[Application]
-            LP2[Linkerd2-proxy<br/>Rust]
-        end
-    end
-
-    ProxyInjector -.->|Inject| LP1
-    ProxyInjector -.->|Inject| LP2
-    Identity -->|Certificates| LP1
-    Identity -->|Certificates| LP2
-    Destination -->|Endpoints| LP1
-    Destination -->|Endpoints| LP2
-    LP1 <-->|mTLS| LP2
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class Destination,Identity,ProxyInjector k8sComponent;
-    class App1,App2,LP1,LP2 userApp;
-```
+![Diagram of Linkerd's architecture: a lightweight control plane issues certificates, service endpoints and proxy injection, and Rust micro-proxies handle mTLS between pods.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-3.png)
 
 **Features**:
 
@@ -290,46 +70,7 @@ flowchart TB
 
 ### Kong Mesh
 
-```mermaid
-flowchart TB
-    subgraph "Global Control Plane (Optional)"
-        KongGlobal[Kong Mesh<br/>Global Control Plane]
-    end
-
-    subgraph "Zone Control Plane"
-        KongZone[Kong Mesh<br/>Zone Control Plane]
-    end
-
-    subgraph "Data Plane"
-        subgraph "Pod 1"
-            App1[Application]
-            Envoy1[Envoy/Kuma DP]
-        end
-        subgraph "Pod 2"
-            App2[Application]
-            Envoy2[Envoy/Kuma DP]
-        end
-        subgraph "VM"
-            AppVM[Legacy App]
-            EnvoyVM[Kuma DP]
-        end
-    end
-
-    KongGlobal -->|Sync Policies| KongZone
-    KongZone -->|Configuration| Envoy1
-    KongZone -->|Configuration| Envoy2
-    KongZone -->|Configuration| EnvoyVM
-    Envoy1 <-->|mTLS| Envoy2
-    Envoy1 <-->|mTLS| EnvoyVM
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef vm fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class KongGlobal,KongZone k8sComponent;
-    class App1,App2,Envoy1,Envoy2 userApp;
-    class AppVM,EnvoyVM vm;
-```
+![Diagram of Kong Mesh's architecture: an optional global control plane syncs policy to a zone control plane, which configures Kuma DP proxies across Kubernetes pods and VMs that mesh together over mTLS.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-4.png)
 
 **Features**:
 
@@ -351,97 +92,7 @@ Kong Mesh is a Universal Service Mesh based on Kuma that integrates multiple clu
 
 **Multi-Zone Deployment Architecture**
 
-```mermaid
-flowchart TB
-    subgraph Global["Global Control Plane (Central Management)"]
-        direction TB
-        GCP[Kong Mesh Global<br/>Policy Store]
-        GDB[(PostgreSQL<br/>Global State)]
-    end
-
-    subgraph Zone1["Zone 1 - AWS EKS"]
-        direction TB
-        ZCP1[Zone Control Plane 1]
-        ZDB1[(Local State)]
-
-        subgraph K8s1["Kubernetes Workloads"]
-            direction LR
-            subgraph Pod1["Pod A"]
-                App1[Frontend]
-                DP1[Kuma DP<br/>Envoy]
-            end
-            subgraph Pod2["Pod B"]
-                App2[Backend]
-                DP2[Kuma DP<br/>Envoy]
-            end
-        end
-    end
-
-    subgraph Zone2["Zone 2 - GCP GKE"]
-        direction TB
-        ZCP2[Zone Control Plane 2]
-        ZDB2[(Local State)]
-
-        subgraph K8s2["Kubernetes Workloads"]
-            direction LR
-            subgraph Pod3["Pod C"]
-                App3[API Service]
-                DP3[Kuma DP<br/>Envoy]
-            end
-        end
-    end
-
-    subgraph Zone3["Zone 3 - On-Premises"]
-        direction TB
-        ZCP3[Zone Control Plane 3]
-        ZDB3[(Local State)]
-
-        subgraph VM["Virtual Machines"]
-            direction LR
-            VM1[Legacy App]
-            DPV[Kuma DP<br/>Envoy]
-        end
-    end
-
-    %% Global to Zone connections
-    GCP <-->|Policy Sync<br/>HTTP/gRPC| ZCP1
-    GCP <-->|Policy Sync<br/>HTTP/gRPC| ZCP2
-    GCP <-->|Policy Sync<br/>HTTP/gRPC| ZCP3
-    GCP --> GDB
-
-    %% Zone internal connections
-    ZCP1 --> ZDB1
-    ZCP1 -->|xDS Config| DP1
-    ZCP1 -->|xDS Config| DP2
-
-    ZCP2 --> ZDB2
-    ZCP2 -->|xDS Config| DP3
-
-    ZCP3 --> ZDB3
-    ZCP3 -->|xDS Config| DPV
-
-    %% App connections
-    App1 --> DP1
-    App2 --> DP2
-    App3 --> DP3
-    VM1 --> DPV
-
-    %% Cross-Zone traffic
-    DP1 <-.->|Cross-Zone mTLS| DP3
-    DP2 <-.->|Cross-Zone mTLS| DPV
-
-    classDef global fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef zone fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef dataplane fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef vm fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef db fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    class GCP global;
-    class ZCP1,ZCP2,ZCP3 zone;
-    class DP1,DP2,DP3,App1,App2,App3 dataplane;
-    class DPV,VM1 vm;
-    class GDB,ZDB1,ZDB2,ZDB3 db;
-```
+![Diagram of a Kong Mesh multi-zone deployment where a global control plane synchronizes policy to zone control planes across AWS, GCP and on-premises, and workloads communicate cross-zone over mTLS.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-5.png)
 
 **Key Features**:
 
@@ -452,81 +103,11 @@ flowchart TB
 
 **Service Connection and Traffic Flow**
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as Application<br/>(Zone 1)
-    participant DP1 as Kuma DP 1<br/>(Zone 1)
-    participant ZCP1 as Zone CP 1
-    participant GCP as Global CP
-    participant ZCP2 as Zone CP 2
-    participant DP2 as Kuma DP 2<br/>(Zone 2)
-    participant Target as Target Service<br/>(Zone 2)
-
-    Note over App,Target: Initial Setup Phase
-
-    GCP->>ZCP1: Policy Sync<br/>(TrafficRoute, mTLS)
-    GCP->>ZCP2: Policy Sync<br/>(TrafficRoute, mTLS)
-
-    ZCP1->>DP1: xDS Configuration<br/>(Service Endpoints, Policies)
-    ZCP2->>DP2: xDS Configuration<br/>(Service Endpoints, Policies)
-
-    Note over App,Target: Service-to-Service Communication
-
-    App->>DP1: HTTP Request (localhost)
-    DP1->>DP1: Service Discovery<br/>(Check Zone 2 Endpoints)
-    DP1->>DP2: mTLS Encrypted Request<br/>(Cross-Zone)
-    DP2->>Target: Plaintext Request (localhost)
-    Target->>DP2: Response
-    DP2->>DP1: mTLS Encrypted Response
-    DP1->>App: Plaintext Response
-
-    Note over App,Target: Metrics and Tracing
-
-    DP1->>ZCP1: Send Metrics
-    DP2->>ZCP2: Send Metrics
-    ZCP1->>GCP: Global Metrics Aggregation
-    ZCP2->>GCP: Global Metrics Aggregation
-```
+![Sequence diagram of a Kong Mesh cross-zone request: the control plane pushes policy to both zones' Kuma DP proxies, then an application's request is routed through mTLS-encrypted cross-zone proxy hops to the target service and back, with metrics reported afterward.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-6.png)
 
 **Policy Propagation Mechanism**
 
-```mermaid
-flowchart TD
-    Start[Policy Create/Modify]
-    Start --> Apply[kubectl apply -f policy.yaml]
-
-    Apply --> Global{Apply to Global CP?}
-
-    Global -->|Yes| GlobalStore[Global Control Plane<br/>Store Policy]
-    Global -->|No| ZoneStore[Zone Control Plane<br/>Store Local Policy]
-
-    GlobalStore --> Sync[Policy Sync]
-    Sync --> Zone1[Zone CP 1 Receive]
-    Sync --> Zone2[Zone CP 2 Receive]
-    Sync --> Zone3[Zone CP 3 Receive]
-
-    ZoneStore --> Zone1Apply[Apply Policy to<br/>that Zone CP only]
-
-    Zone1 --> DP1[Data Plane 1<br/>xDS Update]
-    Zone2 --> DP2[Data Plane 2<br/>xDS Update]
-    Zone3 --> DP3[Data Plane 3<br/>xDS Update]
-    Zone1Apply --> DP1
-
-    DP1 --> Enforce1[Apply Envoy Config<br/>Real-time Traffic Control]
-    DP2 --> Enforce2[Apply Envoy Config<br/>Real-time Traffic Control]
-    DP3 --> Enforce3[Apply Envoy Config<br/>Real-time Traffic Control]
-
-    classDef input fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef global fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef zone fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef dataplane fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    class Start,Apply input;
-    class GlobalStore,Sync global;
-    class Zone1,Zone2,Zone3,ZoneStore,Zone1Apply zone;
-    class DP1,DP2,DP3,Enforce1,Enforce2,Enforce3 dataplane;
-```
+![Flowchart showing how a kubectl-applied policy either goes to the Global Control Plane and syncs to every zone, or is stored locally in a single Zone Control Plane, before either path updates the zone's data-plane proxies.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-7.png)
 
 **Policy Propagation Scope by Type**:
 
@@ -540,119 +121,11 @@ flowchart TD
 
 **Data Plane Lifecycle**
 
-```mermaid
-flowchart TB
-    subgraph Init["Initialization Phase"]
-        direction TB
-        Start[Kuma DP Start]
-        Start --> Token[Acquire Data Plane Token]
-        Token --> Register[Register with Zone CP]
-    end
-
-    subgraph Config["Configuration Reception"]
-        direction TB
-        Register --> Connect[Establish gRPC Stream<br/>with Zone CP]
-        Connect --> Receive[Receive xDS Configuration:<br/>- Listeners<br/>- Routes<br/>- Clusters<br/>- Endpoints]
-    end
-
-    subgraph Runtime["Runtime Operation"]
-        direction TB
-        Receive --> Proxy[Configure Envoy Proxy]
-        Proxy --> Traffic[Traffic Proxy<br/>- mTLS Encrypt/Decrypt<br/>- Load Balancing<br/>- Health Check]
-        Traffic --> Metrics[Metrics Collection<br/>- Request Count<br/>- Latency<br/>- Error Rate]
-    end
-
-    subgraph Update["Dynamic Update"]
-        direction TB
-        Metrics --> Watch[Detect Zone CP Changes]
-        Watch --> UpdateConfig[Receive Config Update]
-        UpdateConfig --> HotReload[Hot Reload<br/>Zero-downtime Apply]
-        HotReload --> Traffic
-    end
-
-    subgraph Shutdown["Shutdown Phase"]
-        direction TB
-        Signal[SIGTERM Received]
-        Signal --> Drain[Connection Draining<br/>Process Existing Connections]
-        Drain --> Deregister[Deregister from Zone CP]
-        Deregister --> Stop[Process Exit]
-    end
-
-    Metrics -.-> Signal
-
-    classDef init fill:#66BB6A,stroke:#333,stroke-width:2px,color:white;
-    classDef config fill:#42A5F5,stroke:#333,stroke-width:2px,color:white;
-    classDef runtime fill:#FFA726,stroke:#333,stroke-width:2px,color:white;
-    classDef update fill:#AB47BC,stroke:#333,stroke-width:2px,color:white;
-    classDef shutdown fill:#EF5350,stroke:#333,stroke-width:2px,color:white;
-
-    class Start,Token,Register init;
-    class Connect,Receive config;
-    class Proxy,Traffic,Metrics runtime;
-    class Watch,UpdateConfig,HotReload update;
-    class Signal,Drain,Deregister,Stop shutdown;
-```
+![Flowchart of a Kuma data plane proxy's lifecycle: it initializes and registers with the Zone Control Plane, receives xDS configuration, runs traffic proxying with hot-reloadable updates, and drains connections on shutdown.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-8.png)
 
 **Cross-Zone Service Discovery**
 
-```mermaid
-flowchart LR
-    subgraph Zone1["Zone 1 - AWS"]
-        direction TB
-        Service1[Service: api<br/>Tag: version=v1]
-        ZCP1[Zone CP 1]
-        Service1 -.->|Register| ZCP1
-    end
-
-    subgraph Zone2["Zone 2 - GCP"]
-        direction TB
-        Service2[Service: api<br/>Tag: version=v2]
-        ZCP2[Zone CP 2]
-        Service2 -.->|Register| ZCP2
-    end
-
-    subgraph Zone3["Zone 3 - On-Prem"]
-        direction TB
-        Service3[Service: database<br/>Tag: tier=primary]
-        ZCP3[Zone CP 3]
-        Service3 -.->|Register| ZCP3
-    end
-
-    subgraph Global["Global Control Plane"]
-        direction TB
-        ServiceRegistry[Unified Service Registry<br/>api: [Zone1, Zone2]<br/>database: [Zone3]]
-    end
-
-    ZCP1 -->|Send Service Info| ServiceRegistry
-    ZCP2 -->|Send Service Info| ServiceRegistry
-    ZCP3 -->|Send Service Info| ServiceRegistry
-
-    ServiceRegistry -->|Distribute Unified Service Map| ZCP1
-    ServiceRegistry -->|Distribute Unified Service Map| ZCP2
-    ServiceRegistry -->|Distribute Unified Service Map| ZCP3
-
-    subgraph Client["Client (Zone 1)"]
-        direction TB
-        App[Application]
-        DP[Kuma DP]
-        App --> DP
-    end
-
-    DP -.->|1. Request api service| ZCP1
-    ZCP1 -.->|2. Return Endpoints<br/>Zone1: 10.0.1.10<br/>Zone2: 10.1.1.10| DP
-    DP -.->|3. Local-first Routing<br/>Zone1: 80%<br/>Zone2: 20%| Service1
-    DP -.->|4. Cross-Zone Routing| Service2
-
-    classDef zone fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef global fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef client fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class ZCP1,ZCP2,ZCP3 zone;
-    class Service1,Service2,Service3 service;
-    class ServiceRegistry global;
-    class App,DP client;
-```
+![Diagram of Kong Mesh cross-zone service discovery: services in each zone register with their Zone Control Plane, which report up to a global registry that clients query for local-first, cross-zone-capable routing.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-9.png)
 
 **Service Discovery Features**:
 
@@ -775,48 +248,7 @@ spec:
 
 ### Consul Connect
 
-```mermaid
-flowchart TB
-    subgraph "Consul Servers"
-        ConsulServer[Consul Server Cluster<br/>Service Catalog + KV Store]
-    end
-
-    subgraph "Kubernetes Cluster"
-        subgraph "Pod 1"
-            App1[Application]
-            ConsulClient1[Consul Client]
-            EnvoyProxy1[Envoy Sidecar]
-        end
-        subgraph "Pod 2"
-            App2[Application]
-            ConsulClient2[Consul Client]
-            EnvoyProxy2[Envoy Sidecar]
-        end
-    end
-
-    subgraph "VM Infrastructure"
-        AppVM[Legacy Application]
-        ConsulClientVM[Consul Client]
-        EnvoyVM[Envoy Proxy]
-    end
-
-    ConsulClient1 -->|Service Registration| ConsulServer
-    ConsulClient2 -->|Service Registration| ConsulServer
-    ConsulClientVM -->|Service Registration| ConsulServer
-    ConsulServer -->|Service Discovery| EnvoyProxy1
-    ConsulServer -->|Service Discovery| EnvoyProxy2
-    ConsulServer -->|Service Discovery| EnvoyVM
-    EnvoyProxy1 <-->|mTLS| EnvoyProxy2
-    EnvoyProxy1 <-->|mTLS| EnvoyVM
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef vm fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class ConsulServer,ConsulClient1,ConsulClient2 k8sComponent;
-    class App1,App2,EnvoyProxy1,EnvoyProxy2 userApp;
-    class AppVM,ConsulClientVM,EnvoyVM vm;
-```
+![Diagram of Consul Connect's architecture: a Consul server cluster acts as the service catalog for both Kubernetes pods and legacy VMs, whose Envoy sidecars discover each other through it and mesh together over mTLS.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-10.png)
 
 **Features**:
 
@@ -836,41 +268,7 @@ flowchart TB
 
 ### Latency Overhead
 
-```mermaid
-flowchart LR
-    subgraph "Baseline"
-        B[Direct K8s Service<br/>0.1ms]
-    end
-
-    subgraph "Linkerd"
-        L[Linkerd2-proxy<br/>+0.5-1ms]
-    end
-
-    subgraph "Istio"
-        I[Envoy Proxy<br/>+1-3ms]
-    end
-
-    subgraph "Kong Mesh"
-        K[Kuma DP<br/>+1-2.5ms]
-    end
-
-    subgraph "Consul"
-        C[Envoy/Built-in<br/>+1-3ms]
-    end
-
-    B -.->|Lightweight Proxy| L
-    B -.->|Feature-rich| I
-    B -.->|Medium| K
-    B -.->|Medium| C
-
-    classDef baseline fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef fast fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef medium fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class B baseline;
-    class L fast;
-    class I,K,C medium;
-```
+![Comparison diagram showing added P99 latency for each service mesh's data-plane proxy relative to a direct, mesh-free Kubernetes service call, with Linkerd lowest and Istio/Consul highest.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-11.png)
 
 **Benchmark Results** (P99 Latency increase, 1000 RPS):
 
@@ -905,22 +303,7 @@ flowchart LR
 
 **Maximum RPS (Requests Per Second)**:
 
-```mermaid
-flowchart LR
-    subgraph Throughput[Throughput Comparison]
-        direction TB
-        L[Linkerd<br/>~95-98% of baseline]
-        K[Kong Mesh<br/>~90-95% of baseline]
-        I[Istio<br/>~85-92% of baseline]
-        C[Consul<br/>~85-92% of baseline]
-    end
-
-    classDef high fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef medium fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class L high;
-    class I,K,C medium;
-```
+![Comparison of maximum sustained requests-per-second for each service mesh's data plane as a percentage of an unmeshed baseline, with Linkerd retaining the most throughput and Istio/Consul the least.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-12.png)
 
 **Conclusion**:
 
@@ -1370,121 +753,19 @@ ui_config {
 
 **Istio Multi-Primary**:
 
-```mermaid
-flowchart TB
-    subgraph Cluster1["Cluster 1 (us-west)"]
-        Istiod1[Istiod]
-        App1[Service A v1]
-        App2[Service B]
-    end
-
-    subgraph Cluster2["Cluster 2 (us-east)"]
-        Istiod2[Istiod]
-        App3[Service A v2]
-        App4[Service C]
-    end
-
-    Istiod1 <-.->|Service Discovery| Istiod2
-    App1 <-->|Cross-cluster mTLS| App3
-    App2 <-->|Cross-cluster mTLS| App4
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class Istiod1,Istiod2 k8sComponent;
-    class App1,App2,App3,App4 userApp;
-```
+![Diagram of Istio's multi-primary multi-cluster model: each cluster runs its own Istiod, the two discover each other's services, and workloads across clusters communicate directly over cross-cluster mTLS.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-13.png)
 
 **Linkerd Multi-cluster**:
 
-```mermaid
-flowchart TB
-    subgraph Cluster1["Source Cluster"]
-        LinkerdCtl1[Linkerd Control Plane]
-        Gateway1[Gateway]
-        App1[Service A]
-    end
-
-    subgraph Cluster2["Target Cluster"]
-        LinkerdCtl2[Linkerd Control Plane]
-        Gateway2[Gateway]
-        App2[Service A Mirror]
-    end
-
-    App1 -->|Route through| Gateway1
-    Gateway1 <-->|mTLS| Gateway2
-    Gateway2 --> App2
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class LinkerdCtl1,LinkerdCtl2,Gateway1,Gateway2 k8sComponent;
-    class App1,App2 userApp;
-```
+![Diagram of Linkerd's multi-cluster model: a service routes through a gateway in its source cluster, which mesh-connects over mTLS to a gateway in the target cluster that forwards to a mirrored service.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-14.png)
 
 **Kong Mesh Multi-zone**:
 
-```mermaid
-flowchart TB
-    subgraph Global["Global Control Plane"]
-        KongGlobal[Kong Mesh Global]
-    end
-
-    subgraph Zone1["Zone 1 (AWS)"]
-        KongZone1[Zone CP]
-        App1[Services]
-    end
-
-    subgraph Zone2["Zone 2 (Azure)"]
-        KongZone2[Zone CP]
-        App2[Services]
-    end
-
-    subgraph Zone3["Zone 3 (On-prem)"]
-        KongZone3[Zone CP]
-        App3[Services]
-    end
-
-    KongGlobal -->|Sync Policies| KongZone1
-    KongGlobal -->|Sync Policies| KongZone2
-    KongGlobal -->|Sync Policies| KongZone3
-    App1 <-->|Cross-zone| App2
-    App1 <-->|Cross-zone| App3
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class KongGlobal,KongZone1,KongZone2,KongZone3 k8sComponent;
-    class App1,App2,App3 userApp;
-```
+![Diagram of Kong Mesh's multi-zone topology: a global control plane synchronizes policy to zone control planes across AWS, Azure and on-premises, while services in different zones talk to each other cross-zone.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-15.png)
 
 **Consul Multi-datacenter**:
 
-```mermaid
-flowchart TB
-    subgraph DC1["Datacenter 1"]
-        ConsulServer1[Consul Servers]
-        Gateway1[Mesh Gateway]
-        App1[Services]
-    end
-
-    subgraph DC2["Datacenter 2"]
-        ConsulServer2[Consul Servers]
-        Gateway2[Mesh Gateway]
-        App2[Services]
-    end
-
-    ConsulServer1 <-.->|WAN Gossip| ConsulServer2
-    Gateway1 <-->|Mesh Gateway| Gateway2
-    App1 -.->|Service Discovery| ConsulServer1
-    App2 -.->|Service Discovery| ConsulServer2
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class ConsulServer1,ConsulServer2,Gateway1,Gateway2 k8sComponent;
-    class App1,App2 userApp;
-```
+![Diagram of Consul Connect's multi-datacenter model: Consul server clusters in each datacenter gossip over WAN, mesh gateways carry cross-datacenter service traffic, and local services discover through their own Consul servers.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-16.png)
 
 ### Multi-Cluster Feature Comparison
 
@@ -1619,27 +900,7 @@ kubectl logs <pod> -c consul-connect-envoy-sidecar
 
 ### Learning Curve
 
-```mermaid
-flowchart LR
-    subgraph "Learning Difficulty"
-        direction TB
-        Easy[Easy<br/>Linkerd]
-        Medium[Medium<br/>Kong Mesh<br/>Consul]
-        Hard[Difficult<br/>Istio]
-    end
-
-    Easy -->|Basic features only| Use1[Quick Start]
-    Medium -->|Balanced features| Use2[Medium Scale]
-    Hard -->|All features| Use3[Large Enterprise]
-
-    classDef easy fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef medium fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef hard fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Easy easy;
-    class Medium medium;
-    class Hard hard;
-```
+![Diagram matching each service mesh's learning difficulty to the scale of use case it suits: Linkerd for a quick start, Kong Mesh or Consul for medium scale, and Istio for large enterprise deployments.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-17.png)
 
 ## Cost Analysis
 
@@ -1864,35 +1125,7 @@ istioctl install --set profile=demo \
 
 ### Decision Tree
 
-```mermaid
-flowchart TD
-    Start[Service Mesh Selection]
-    Start --> Q1{Team Experience?}
-
-    Q1 -->|New to Service Mesh| Simple[Simple Solution]
-    Q1 -->|Experienced| Advanced[Advanced Features]
-
-    Simple --> Q2{Resource Constraints?}
-    Q2 -->|Yes, Efficiency Important| Linkerd[Linkerd]
-    Q2 -->|No, Features Needed| KongSimple[Kong Mesh<br/>or Consul]
-
-    Advanced --> Q3{Platform?}
-    Q3 -->|K8s Only| Q4{Feature Requirements?}
-    Q3 -->|K8s + VM| Hybrid[Kong/Consul]
-
-    Q4 -->|Maximum Features| Istio[Istio]
-    Q4 -->|Balanced| KongAdv[Kong Mesh]
-
-    Hybrid --> Q5{VM-centric?}
-    Q5 -->|Yes| Consul[Consul]
-    Q5 -->|No, K8s-centric| Kong[Kong Mesh]
-
-    classDef recommended fill:#00C7B7,stroke:#333,stroke-width:3px,color:white;
-    classDef decision fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Linkerd,Istio,Consul,Kong recommended;
-    class Start,Q1,Q2,Q3,Q4,Q5 decision;
-```
+![Decision tree for choosing a service mesh: it branches on team experience, resource constraints, platform (Kubernetes-only vs. hybrid with VMs) and feature needs to arrive at Linkerd, Istio, Kong Mesh or Consul.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-18.png)
 
 ### Quick Recommendation Guide
 

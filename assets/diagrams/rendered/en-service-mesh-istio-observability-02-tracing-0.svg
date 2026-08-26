@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" role="img" aria-labelledby="tracing-seq-title tracing-seq-desc">
+  <title id="tracing-seq-title">W3C trace context propagation sequence</title>
+  <desc id="tracing-seq-desc">Sequence diagram of a W3C trace-context propagated request: a client call flows through Envoy sidecar and app containers of Service A and Service B, with each Envoy sidecar and app exporting spans asynchronously to the Jaeger Collector.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      text { font-family: 'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif; }
+      .mono { font-family: 'Geist Mono','Amazon Ember Mono',ui-monospace,monospace; }
+    </style>
+    <marker id="arrow-filled" markerWidth="8" markerHeight="8" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#0972D3"/>
+    </marker>
+    <marker id="arrow-open" markerWidth="8" markerHeight="8" refX="6.5" refY="3" orient="auto">
+      <polyline points="0 0, 7 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="600" fill="#FFFFFF"/>
+
+  <!-- Group brackets -->
+  <g class="mono" font-size="8" letter-spacing="0.12em" fill="#7D8998">
+    <line x1="45" y1="30" x2="45" y2="30" stroke="none"/>
+    <line x1="10" y1="34" x2="80" y2="34" stroke="#D5DBDB" stroke-width="1"/>
+    <text x="45" y="20" text-anchor="middle">FRONTEND</text>
+
+    <line x1="180" y1="34" x2="420" y2="34" stroke="#D5DBDB" stroke-width="1"/>
+    <text x="300" y="20" text-anchor="middle">SERVICE A</text>
+
+    <line x1="520" y1="34" x2="760" y2="34" stroke="#D5DBDB" stroke-width="1"/>
+    <text x="640" y="20" text-anchor="middle">SERVICE B</text>
+
+    <line x1="850" y1="34" x2="940" y2="34" stroke="#D5DBDB" stroke-width="1"/>
+    <text x="895" y="20" text-anchor="middle">TRACING BACKEND</text>
+  </g>
+
+  <!-- Lifelines -->
+  <g stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3">
+    <line x1="45"  y1="70" x2="45"  y2="520"/>
+    <line x1="215" y1="70" x2="215" y2="520"/>
+    <line x1="385" y1="70" x2="385" y2="520"/>
+    <line x1="555" y1="70" x2="555" y2="520"/>
+    <line x1="725" y1="70" x2="725" y2="520"/>
+    <line x1="895" y1="70" x2="895" y2="520"/>
+  </g>
+
+  <!-- Actor boxes -->
+  <g>
+    <rect x="10"  y="40" width="70"  height="30" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <text x="45"  y="59" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Client</text>
+
+    <rect x="160" y="40" width="110" height="30" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <text x="215" y="59" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Envoy Proxy</text>
+
+    <rect x="350" y="40" width="70"  height="30" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <text x="385" y="59" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">App A</text>
+
+    <rect x="500" y="40" width="110" height="30" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <text x="555" y="59" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Envoy Proxy</text>
+
+    <rect x="690" y="40" width="70"  height="30" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <text x="725" y="59" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">App B</text>
+
+    <rect x="840" y="40" width="110" height="30" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="895" y="59" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Jaeger Collector</text>
+  </g>
+
+  <!-- Msg 1: Client -> EnvoyA -->
+  <text x="130" y="96" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#545B64">HTTP Request</text>
+  <line x1="45" y1="104" x2="215" y2="104" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-filled)"/>
+
+  <!-- Note over EnvoyA -->
+  <rect x="165" y="118" width="100" height="30" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+  <text x="215" y="130" text-anchor="middle" class="mono" font-size="7.5" fill="#545B64">Generate Trace ID</text>
+  <text x="215" y="141" text-anchor="middle" class="mono" font-size="7.5" fill="#545B64">+ Span ID</text>
+
+  <!-- Msg 2: EnvoyA -> AppA -->
+  <text x="300" y="168" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#545B64">Forward w/ traceparent header</text>
+  <line x1="215" y1="176" x2="385" y2="176" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-filled)"/>
+
+  <!-- Note over AppA -->
+  <rect x="335" y="192" width="100" height="30" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+  <text x="385" y="204" text-anchor="middle" class="mono" font-size="7.5" fill="#545B64">Extract context</text>
+  <text x="385" y="215" text-anchor="middle" class="mono" font-size="7.5" fill="#545B64">Create child span</text>
+
+  <!-- Msg 3: AppA -> EnvoyB (headline: carries context across service boundary) -->
+  <text x="470" y="242" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#545B64">HTTP Request w/ traceparent</text>
+  <line x1="385" y1="250" x2="555" y2="250" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-filled)"/>
+
+  <!-- Note over EnvoyB -->
+  <rect x="505" y="266" width="100" height="30" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+  <text x="555" y="278" text-anchor="middle" class="mono" font-size="7.5" fill="#545B64">Extract parent context</text>
+  <text x="555" y="289" text-anchor="middle" class="mono" font-size="7.5" fill="#545B64">Create new span</text>
+
+  <!-- Msg 4: EnvoyB -> AppB -->
+  <text x="640" y="316" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#545B64">Forward w/ updated traceparent</text>
+  <line x1="555" y1="324" x2="725" y2="324" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-filled)"/>
+
+  <!-- Msg 5: EnvoyA --> Jaeger -->
+  <text x="555" y="352" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#545B64">Export Span</text>
+  <line x1="215" y1="360" x2="895" y2="360" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-open)"/>
+
+  <!-- Msg 6: EnvoyB --> Jaeger -->
+  <text x="725" y="384" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#545B64">Export Span</text>
+  <line x1="555" y1="392" x2="895" y2="392" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-open)"/>
+
+  <!-- Msg 7: AppA --> Jaeger -->
+  <text x="640" y="416" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#545B64">Export Span (optional)</text>
+  <line x1="385" y1="424" x2="895" y2="424" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-open)"/>
+
+  <!-- Msg 8: AppB --> Jaeger -->
+  <text x="810" y="448" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#545B64">Export Span (optional)</text>
+  <line x1="725" y1="456" x2="895" y2="456" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-open)"/>
+
+  <!-- Terminal cap on Jaeger lifeline -->
+  <circle cx="895" cy="520" r="3" fill="#EC7211"/>
+
+  <!-- Legend -->
+  <g class="mono" font-size="7.5" fill="#545B64">
+    <line x1="45" y1="544" x2="75" y2="544" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-filled)"/>
+    <text x="82" y="547">sync HTTP call</text>
+
+    <line x1="45" y1="564" x2="75" y2="564" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-open)"/>
+    <text x="82" y="567">async span export</text>
+
+    <rect x="235" y="537" width="12" height="12" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="253" y="547">tracing backend (focal)</text>
+  </g>
+</svg>

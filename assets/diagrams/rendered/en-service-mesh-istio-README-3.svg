@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mesh-cni-title mesh-cni-desc">
+    <title id="mesh-cni-title">Service mesh vs. CNI feature comparison</title>
+    <desc id="mesh-cni-desc">Three-way comparison of Istio's L7 proxy-based traffic control, Cilium's eBPF kernel-level networking, and the usage scenarios where each — or both together — is the right choice.</desc><defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style></defs>
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone 1: Service Mesh (Istio) — focal -->
+    <rect x="40" y="100" width="272" height="320" rx="8" fill="rgba(255,153,0,0.05)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="96" y="108" width="160" height="14" rx="2" fill="#ffffff"/>
+    <text x="176" y="118" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">SERVICE MESH (ISTIO)</text>
+
+    <rect x="64" y="140" width="224" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="176" y="166" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">L7 Proxy-Based</text>
+    <text x="176" y="182" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Envoy sidecar</text>
+
+    <rect x="64" y="220" width="224" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="176" y="246" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Application-Level</text>
+    <text x="176" y="262" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">traffic control</text>
+
+    <rect x="64" y="300" width="224" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="176" y="326" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Rich L7 Features</text>
+    <text x="176" y="342" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">retry · timeout · etc.</text>
+
+    <!-- Zone 2: CNI (Cilium) -->
+    <rect x="344" y="100" width="272" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="416" y="108" width="128" height="14" rx="2" fill="#ffffff"/>
+    <text x="480" y="118" fill="rgba(35,47,62,0.40)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">CNI (CILIUM)</text>
+
+    <rect x="368" y="140" width="224" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="166" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">eBPF-Based</text>
+    <text x="480" y="182" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kernel level</text>
+
+    <rect x="368" y="220" width="224" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="246" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Network-Level</text>
+    <text x="480" y="262" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">policy enforcement</text>
+
+    <rect x="368" y="300" width="224" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="326" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">High Performance</text>
+    <text x="480" y="342" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">low overhead</text>
+
+    <!-- Zone 3: Usage Scenarios -->
+    <rect x="648" y="100" width="272" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="712" y="108" width="144" height="14" rx="2" fill="#ffffff"/>
+    <text x="784" y="118" fill="rgba(35,47,62,0.40)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">USAGE SCENARIOS</text>
+
+    <rect x="672" y="140" width="224" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="784" y="166" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Mesh</text>
+    <text x="784" y="182" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">complex L7 logic</text>
+
+    <rect x="672" y="220" width="224" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="784" y="246" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Cilium</text>
+    <text x="784" y="262" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">network policy · perf</text>
+
+    <rect x="672" y="300" width="224" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="784" y="326" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Both Together</text>
+    <text x="784" y="342" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">large-scale enterprise</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="464" x2="920" y2="464" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="480" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <rect x="140" y="472" width="24" height="12" rx="2" fill="rgba(255,153,0,0.05)" stroke="#EC7211" stroke-width="1"/>
+    <text x="172" y="482" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Focal zone (Istio)</text>
+    <rect x="340" y="472" width="24" height="12" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="372" y="482" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Comparison zone</text>
+    <rect x="540" y="472" width="24" height="12" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="572" y="482" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Feature / scenario</text>
+  </svg>

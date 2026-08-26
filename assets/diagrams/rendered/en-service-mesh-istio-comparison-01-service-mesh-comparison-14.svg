@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-comparison-01-service-mesh-comparison-14-title en-service-mesh-istio-comparison-01-service-mesh-comparison-14-desc">
+<title id="en-service-mesh-istio-comparison-01-service-mesh-comparison-14-title">Linkerd Multi-Cluster via Gateway</title>
+<desc id="en-service-mesh-istio-comparison-01-service-mesh-comparison-14-desc">Diagram of Linkerd&#x27;s multi-cluster model: a service routes through a gateway in its source cluster, which mesh-connects over mTLS to a gateway in the target cluster that forwards to a mirrored service.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="80" y="140" width="340" height="260" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="88" y="134" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="138.0" y="143" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">SOURCE CLUSTER</text>
+<rect x="110" y="180" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="110" y="180" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="200.0" y="206.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Linkerd Control Plane</text>
+<rect x="110" y="260" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="110" y="260" width="180" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="200.0" y="286.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gateway</text>
+<rect x="110" y="340" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="110" y="340" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="200.0" y="366.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service A</text>
+<rect x="540" y="140" width="340" height="260" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="548" y="134" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="598.0" y="143" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">TARGET CLUSTER</text>
+<rect x="570" y="180" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="570" y="180" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="206.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Linkerd Control Plane</text>
+<rect x="570" y="260" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="570" y="260" width="180" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="660.0" y="286.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gateway</text>
+<rect x="570" y="340" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="570" y="340" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="366.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service A Mirror</text>
+<path d="M 200,340 V 308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="208" y="318" width="82.8" height="12" rx="2" fill="#ffffff"/>
+<text x="249.4" y="327" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">ROUTE THROUGH</text>
+<path d="M 290,284 H 570" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="413.8" y="264" width="32.4" height="12" rx="2" fill="#ffffff"/>
+<text x="430" y="273" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">MTLS</text>
+<path d="M 660,308 V 340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+</svg>

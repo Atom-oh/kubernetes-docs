@@ -19,44 +19,7 @@ Istio's advanced routing features allow fine-grained control over traffic based 
 
 VirtualService routing rules consist of **Match conditions** and **Route destinations**.
 
-```mermaid
-flowchart LR
-    Request[Incoming Request]
-
-    subgraph VirtualService["VirtualService Routing"]
-        Match1[Match Condition 1<br/>URI = /api/v1]
-        Match2[Match Condition 2<br/>Header = Mobile]
-        Match3[Match Condition 3<br/>Default]
-
-        Route1[Route 1<br/>→ api-v1]
-        Route2[Route 2<br/>→ mobile-app]
-        Route3[Route 3<br/>→ web-app]
-    end
-
-    Request --> Match1
-    Request --> Match2
-    Request --> Match3
-
-    Match1 -->|Match| Route1
-    Match2 -->|Match| Route2
-    Match3 -->|Match| Route3
-
-    Route1 --> Service1[API v1<br/>Service]
-    Route2 --> Service2[Mobile App<br/>Service]
-    Route3 --> Service3[Web App<br/>Service]
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef match fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef route fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Match1,Match2,Match3 match;
-    class Route1,Route2,Route3 route;
-    class Service1,Service2,Service3 service;
-```
+![Diagram showing how an incoming request is evaluated against ordered match conditions in an Istio VirtualService and routed to the corresponding destination service, with a default fallback rule applied when no earlier condition matches.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-02-routing-0.png)
 
 ### Basic Structure
 

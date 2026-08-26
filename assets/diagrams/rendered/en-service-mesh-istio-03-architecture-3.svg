@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-03-architecture-3-title en-service-mesh-istio-03-architecture-3-desc">
+<title id="en-service-mesh-istio-03-architecture-3-title">Envoy Filter Chain</title>
+<desc id="en-service-mesh-istio-03-architecture-3-desc">Flowchart showing an HTTP request passing sequentially through Envoy's JWT authentication, rate limiting, RBAC validation, stats collection, and router filters before becoming the HTTP response.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+  
+</defs>
+<rect x="130" y="220" width="620" height="144" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="146" y="224" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="190.0" y="233" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">FILTER CHAIN</text>
+<line x1="130" y1="292.0" x2="150" y2="292.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="250" y1="292.0" x2="270" y2="292.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="370" y1="292.0" x2="390" y2="292.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="490" y1="292.0" x2="510" y2="292.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="610" y1="292.0" x2="630" y2="292.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="730" y1="292.0" x2="750" y2="292.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="30" y="260" width="100" height="64" rx="6" fill="#ffffff"/>
+<rect x="30" y="260" width="100" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="80.0" y="294.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">HTTP Request</text>
+<rect x="150" y="260" width="100" height="64" rx="6" fill="#ffffff"/>
+<rect x="150" y="260" width="100" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="158" y="266" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="172" y="275" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">F1</text>
+<text x="200.0" y="294.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">JWT Auth</text>
+<rect x="270" y="260" width="100" height="64" rx="6" fill="#ffffff"/>
+<rect x="270" y="260" width="100" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="278" y="266" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="292" y="275" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">F2</text>
+<text x="320.0" y="294.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Rate Limiting</text>
+<rect x="390" y="260" width="100" height="64" rx="6" fill="#ffffff"/>
+<rect x="390" y="260" width="100" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="398" y="266" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="412" y="275" fill="#EC7211" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">F3</text>
+<text x="440.0" y="294.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">RBAC Validation</text>
+<rect x="510" y="260" width="100" height="64" rx="6" fill="#ffffff"/>
+<rect x="510" y="260" width="100" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="518" y="266" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="532" y="275" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">F4</text>
+<text x="560.0" y="294.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Stats Collection</text>
+<rect x="630" y="260" width="100" height="64" rx="6" fill="#ffffff"/>
+<rect x="630" y="260" width="100" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="638" y="266" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="652" y="275" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">F5</text>
+<text x="680.0" y="294.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Router</text>
+<rect x="750" y="260" width="100" height="64" rx="6" fill="#ffffff"/>
+<rect x="750" y="260" width="100" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="800.0" y="294.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">HTTP Response</text>
+</svg>

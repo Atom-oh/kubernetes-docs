@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="960" height="600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="istio-lattice-together-title istio-lattice-together-desc">
+<title id="istio-lattice-together-title">Istio Plus VPC Lattice</title>
+<desc id="istio-lattice-together-desc">Diagram showing Istio managing mTLS and config inside one EKS cluster in AWS Account 1, while a shared VPC Lattice service network routes traffic from that cluster across account boundaries to a sidecar-free service and a Lambda function in AWS Account 2.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<text x="32" y="36" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ARCHITECTURE</text>
+<text x="32" y="60" fill="#232F3E" font-size="20" font-weight="700">Using Istio + VPC Lattice Together</text>
+
+<!-- Zones -->
+<rect x="40" y="90" width="360" height="460" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="48" y="94" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="118" y="103" fill="rgba(35,47,62,0.42)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">AWS ACCOUNT 1</text>
+
+<rect x="60" y="126" width="320" height="390" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="68" y="130" width="188" height="12" rx="2" fill="#ffffff"/>
+<text x="162" y="139" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EKS CLUSTER 1 (ISTIO)</text>
+
+<rect x="550" y="90" width="380" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="558" y="94" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="628" y="103" fill="rgba(35,47,62,0.42)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">AWS ACCOUNT 2</text>
+
+<rect x="574" y="126" width="180" height="140" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="582" y="130" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="642" y="139" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EKS CLUSTER 2</text>
+
+<!-- ============ ARROWS ============ -->
+
+<!-- Istiod1 -> App1 dashed Config -->
+<path d="M 197,216 V 255 Q 197,263 189,263 H 148 Q 140,263 140,271 V 310"
+      fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="139" y="243" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="169" y="252" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CONFIG</text>
+
+<!-- Istiod1 -> App2 dashed Config -->
+<path d="M 243,216 V 255 Q 243,263 251,263 H 304 Q 312,263 312,271 V 310"
+      fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="248" y="243" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="278" y="252" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CONFIG</text>
+
+<!-- App1 <-> App2 bidirectional mTLS -->
+<path d="M 204,342 H 248" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)" marker-start="url(#arrow-start)"/>
+<rect x="208" y="322" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="226" y="331" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">mTLS</text>
+
+<!-- App1 -> VPC Lattice (routed below App2) -->
+<path d="M 176,374 V 402 Q 176,410 184,410 H 472 Q 480,410 480,402 V 374"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="283" y="390" width="90" height="12" rx="2" fill="#ffffff"/>
+<text x="328" y="399" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.03em">VPC LATTICE</text>
+
+<!-- VPC Lattice -> App3 (Routing) -->
+<path d="M 540,330 H 557 Q 565,330 565,322 V 200 Q 565,192 573,192 H 590"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="495" y="255" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="525" y="264" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ROUTING</text>
+
+<!-- VPC Lattice -> Lambda (Routing) -->
+<path d="M 540,354 V 372 Q 540,380 548,380 H 842 Q 850,380 850,372 V 224"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="665" y="360" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="695" y="369" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ROUTING</text>
+
+<!-- ============ NODES ============ -->
+
+<!-- Istiod1 (focal) -->
+<rect x="150" y="160" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="150" y="160" width="140" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="220" y="192" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">istiod</text>
+
+<!-- App1 -->
+<rect x="76" y="310" width="128" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140" y="340" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Service A</text>
+<text x="140" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ envoy</text>
+
+<!-- App2 -->
+<rect x="248" y="310" width="128" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="312" y="340" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Service B</text>
+<text x="312" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ envoy</text>
+
+<!-- VPC Lattice (focal, standalone hub) -->
+<rect x="420" y="310" width="120" height="64" rx="6" fill="#ffffff"/>
+<rect x="420" y="310" width="120" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480" y="340" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">VPC Lattice</text>
+<text x="480" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">service network</text>
+
+<!-- App3 -->
+<rect x="590" y="160" width="148" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="664" y="190" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Service C</text>
+<text x="664" y="206" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">no sidecar</text>
+
+<!-- Lambda -->
+<rect x="780" y="160" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="780" y="160" width="140" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="850" y="190" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Lambda</text>
+<text x="850" y="206" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">function</text>
+
+</svg>

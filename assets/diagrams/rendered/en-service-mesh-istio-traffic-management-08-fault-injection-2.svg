@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fi-overview-title fi-overview-desc">
+    <title id="fi-overview-title">Fault Injection Overview</title>
+    <desc id="fi-overview-desc">Flowchart showing a client's request split into a delay path that reaches the service slowly and an abort path that returns an immediate error, both defined inside a fault injection zone.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Fault Injection zone -->
+    <rect x="320" y="140" width="280" height="344" rx="8" fill="rgba(255,153,0,0.05)" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="336" y="160" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">FAULT INJECTION</text>
+
+    <!-- Arrows drawn first -->
+    <!-- Client -> Delay -->
+    <path d="M 220 280 L 284 280 L 284 212 L 360 212" stroke="#545B64" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+    <!-- Client -> Abort -->
+    <path d="M 220 304 L 300 304 L 300 412 L 360 412" stroke="#545B64" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+    <!-- Delay -> Service (dashed, slow response) -->
+    <line x1="560" y1="212" x2="740" y2="212" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <!-- Abort -> Client (error), routed below the zone -->
+    <path d="M 400 444 L 400 520 L 140 520 L 140 324" stroke="#EC7211" stroke-width="1.2" fill="none" marker-end="url(#arrow-accent)"/>
+
+    <!-- Labels -->
+    <rect x="602" y="192" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="650" y="201" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SLOW RESPONSE</text>
+
+    <rect x="238" y="500" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="264" y="509" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ERROR</text>
+
+    <!-- Nodes -->
+    <rect x="60" y="260" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="140" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Client</text>
+
+    <rect x="360" y="180" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="460" y="208" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Delay</text>
+    <text x="460" y="224" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">3 seconds</text>
+
+    <rect x="360" y="380" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="460" y="408" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Abort</text>
+    <text x="460" y="424" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">HTTP 503</text>
+
+    <rect x="740" y="180" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="820" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Service</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="548" x2="920" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="564" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <line x1="40" y1="580" x2="68" y2="580" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4"/>
+    <text x="76" y="583" fill="#545B64" font-size="8.5" font-family="var(--font-sans)">Slow / async path</text>
+
+    <line x1="220" y1="580" x2="248" y2="580" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="256" y="583" fill="#545B64" font-size="8.5" font-family="var(--font-sans)">Error returned</text>
+  </svg>

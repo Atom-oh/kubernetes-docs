@@ -19,46 +19,7 @@ NLB is a Layer 4 (TCP/UDP) load balancer, suitable when high performance and low
 
 #### NLB Architecture
 
-```mermaid
-flowchart TB
-    Client[Client]
-
-    subgraph AWS["AWS Cloud"]
-        NLB[Network Load Balancer<br/>Layer 4]
-
-        subgraph EKS["EKS Cluster"]
-            subgraph IstioGW["Istio Ingress Gateway"]
-                IGW1[Gateway Pod 1<br/>Envoy Proxy]
-                IGW2[Gateway Pod 2<br/>Envoy Proxy]
-            end
-
-            subgraph Apps["Applications"]
-                App1[Service A<br/>Pod]
-                App2[Service B<br/>Pod]
-            end
-        end
-    end
-
-    Client -->|HTTPS Request| NLB
-    NLB -->|TCP 443| IGW1
-    NLB -->|TCP 443| IGW2
-    IGW1 -->|HTTP/HTTPS| App1
-    IGW1 -->|HTTP/HTTPS| App2
-    IGW2 -->|HTTP/HTTPS| App1
-    IGW2 -->|HTTP/HTTPS| App2
-
-    %% Style definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Client default;
-    class NLB awsService;
-    class IGW1,IGW2 k8sComponent;
-    class App1,App2 userApp;
-```
+![Diagram showing how client HTTPS traffic reaches an AWS Network Load Balancer, which passes TCP connections through unterminated to two Istio Ingress Gateway Envoy pods inside an EKS cluster, which in turn route HTTP/HTTPS internally to two backend application pods.](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-0.png)
 
 #### NLB Configuration
 
@@ -192,46 +153,7 @@ ALB is a Layer 7 (HTTP/HTTPS) load balancer, suitable when advanced routing feat
 
 #### ALB Architecture
 
-```mermaid
-flowchart TB
-    Client[Client]
-
-    subgraph AWS["AWS Cloud"]
-        ALB[Application Load Balancer<br/>Layer 7]
-
-        subgraph EKS["EKS Cluster"]
-            subgraph IstioGW["Istio Ingress Gateway"]
-                IGW1[Gateway Pod 1]
-                IGW2[Gateway Pod 2]
-            end
-
-            subgraph Apps["Applications"]
-                App1[Service A]
-                App2[Service B]
-            end
-        end
-    end
-
-    Client -->|HTTPS| ALB
-    ALB -->|HTTP/2| IGW1
-    ALB -->|HTTP/2| IGW2
-    IGW1 -->|Internal routing| App1
-    IGW1 -->|Internal routing| App2
-    IGW2 -->|Internal routing| App1
-    IGW2 -->|Internal routing| App2
-
-    %% Style definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Client default;
-    class ALB awsService;
-    class IGW1,IGW2 k8sComponent;
-    class App1,App2 userApp;
-```
+![Diagram showing how client HTTPS traffic reaches an AWS Application Load Balancer, which terminates and forwards HTTP/2 to two Istio Ingress Gateway pods inside an EKS cluster, which route requests internally to two backend application pods.](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-1.png)
 
 #### ALB Configuration
 
@@ -357,48 +279,7 @@ VPC Lattice is AWS's managed application networking service.
 
 #### Architecture Comparison
 
-```mermaid
-flowchart TB
-    subgraph Istio["Istio Architecture"]
-        direction TB
-        ICP[istiod<br/>Control Plane]
-
-        subgraph IPods["Pods"]
-            IA1[App<br/>+ Envoy]
-            IA2[App<br/>+ Envoy]
-        end
-
-        ICP -.->|Config| IA1
-        ICP -.->|Config| IA2
-        IA1 <-->|mTLS| IA2
-    end
-
-    subgraph VPCLattice["VPC Lattice Architecture"]
-        direction TB
-        LSN[Service Network<br/>Managed Service]
-
-        subgraph LPods["Pods"]
-            LA1[App<br/>No sidecar]
-            LA2[App<br/>No sidecar]
-        end
-
-        LA1 -->|HTTP| LSN
-        LA2 -->|HTTP| LSN
-        LSN -->|Routing| LA1
-        LSN -->|Routing| LA2
-    end
-
-    %% Style definitions
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class ICP controlPlane;
-    class IA1,IA2 k8sComponent;
-    class LSN controlPlane;
-    class LA1,LA2 userApp;
-```
+![Side-by-side comparison showing Istio's control plane pushing config to Envoy sidecars that mesh directly over mTLS, versus AWS VPC Lattice's managed service network routing plain HTTP between sidecar-free application pods.](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-2.png)
 
 #### Feature Comparison
 
@@ -515,44 +396,7 @@ spec:
 
 The two solutions are not mutually exclusive and can be used together:
 
-```mermaid
-flowchart TB
-    subgraph Account1["AWS Account 1"]
-        subgraph EKS1["EKS Cluster 1 (Istio)"]
-            Istiod1[istiod]
-            App1[Service A<br/>+ Envoy]
-            App2[Service B<br/>+ Envoy]
-
-            Istiod1 -.->|Config| App1
-            Istiod1 -.->|Config| App2
-        end
-    end
-
-    subgraph Account2["AWS Account 2"]
-        subgraph EKS2["EKS Cluster 2"]
-            App3[Service C<br/>No sidecar]
-        end
-
-        Lambda[Lambda<br/>Function]
-    end
-
-    VPCLattice[VPC Lattice<br/>Service Network]
-
-    App1 <-->|Internal mTLS| App2
-    App1 -->|VPC Lattice| VPCLattice
-    VPCLattice -->|Routing| App3
-    VPCLattice -->|Routing| Lambda
-
-    %% Style definitions
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Istiod1,VPCLattice controlPlane;
-    class App1,App2 k8sComponent;
-    class App3,Lambda userApp;
-```
+![Diagram showing Istio managing mTLS and config inside one EKS cluster in AWS Account 1, while a shared VPC Lattice service network routes traffic from that cluster across account boundaries to a sidecar-free service and a Lambda function in AWS Account 2.](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-3.png)
 
 **Use Cases:**
 

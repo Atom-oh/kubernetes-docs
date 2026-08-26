@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-03-architecture-5-title en-service-mesh-istio-03-architecture-5-desc">
+<title id="en-service-mesh-istio-03-architecture-5-title">istio-init: Setting Up iptables Redirection</title>
+<desc id="en-service-mesh-istio-03-architecture-5-desc">Sequence diagram showing the istio-init container configuring iptables to redirect a pod's traffic to Envoy before the application and Envoy proxy start, so that a later outbound request is transparently intercepted and redirected to Envoy's listener.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+  
+</defs>
+<line x1="100" y1="88" x2="100" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="300" y1="88" x2="300" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="500" y1="88" x2="500" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="700" y1="88" x2="700" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="880" y1="88" x2="880" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="296" y="136" width="8" height="88" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="876" y="312" width="8" height="164" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<line x1="100" y1="136" x2="300" y2="136" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="168.0" y="116" width="64.0" height="12" rx="2" fill="#ffffff"/>
+<text x="200.0" y="125" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">START INIT</text>
+<line x1="300" y1="180" x2="500" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="370.7" y="160" width="58.6" height="12" rx="2" fill="#ffffff"/>
+<text x="400.0" y="169" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">SET RULES</text>
+<rect x="340.0" y="194" width="200" height="28" rx="4" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.25)" stroke-width="0.8"/>
+<text x="440.0" y="205.0" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-style="italic" text-anchor="middle">Redirect all traffic</text>
+<text x="440.0" y="218.0" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-style="italic" text-anchor="middle">to Envoy</text>
+<line x1="300" y1="224" x2="100" y2="224" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="178.8" y="204" width="42.400000000000006" height="12" rx="2" fill="#ffffff"/>
+<text x="200.0" y="213" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">EXIT 0</text>
+<line x1="100" y1="268" x2="700" y2="268" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="370.7" y="246" width="58.6" height="12" rx="2" fill="#ffffff"/>
+<text x="400.0" y="255" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">START APP</text>
+<line x1="100" y1="312" x2="880" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="455.3" y="294" width="69.4" height="12" rx="2" fill="#ffffff"/>
+<text x="490.0" y="303" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">START ENVOY</text>
+<line x1="700" y1="356" x2="500" y2="356" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="568.0" y="336" width="64.0" height="12" rx="2" fill="#ffffff"/>
+<text x="600.0" y="345" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">CURL :9080</text>
+<line x1="500" y1="404" x2="880" y2="404" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="647.2" y="384" width="85.60000000000001" height="12" rx="2" fill="#ffffff"/>
+<text x="690.0" y="393" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">REDIRECT 15001</text>
+<path d="M 832,424 L 876,424 L 876,452 L 832,452" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="880" y1="476" x2="500" y2="476" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="658.0" y="456" width="64.0" height="12" rx="2" fill="#ffffff"/>
+<text x="690.0" y="465" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">ACTUAL REQ</text>
+<rect x="390.0" y="504" width="220" height="28" rx="4" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.25)" stroke-width="0.8"/>
+<text x="500" y="515.0" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-style="italic" text-anchor="middle">Envoy UID bypasses</text>
+<text x="500" y="528.0" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-style="italic" text-anchor="middle">iptables</text>
+<rect x="25.0" y="40" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kubernetes</text>
+<rect x="225.0" y="40" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">istio-init</text>
+<rect x="425.0" y="40" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="500" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">iptables</text>
+<rect x="625.0" y="40" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="700" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Application</text>
+<rect x="805.0" y="40" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="880" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy Proxy</text>
+</svg>

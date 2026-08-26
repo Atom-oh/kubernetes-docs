@@ -17,42 +17,7 @@ Outlier Detection is a form of the Circuit Breaker pattern that automatically de
 
 Outlier Detection automatically removes instances in the following situations:
 
-```mermaid
-flowchart TB
-    Request[Client Request]
-
-    subgraph LoadBalancer["Load Balancer"]
-        LB[Envoy Proxy<br/>Outlier Detection]
-    end
-
-    subgraph HealthyPods["Healthy Pods"]
-        P1[Pod 1<br/>Response Time: 50ms<br/>Error Rate: 0%]
-        P2[Pod 2<br/>Response Time: 60ms<br/>Error Rate: 1%]
-    end
-
-    subgraph UnhealthyPods["Unhealthy Pods"]
-        P3[Pod 3<br/>Response Time: 5000ms<br/>Error Rate: 80%]
-    end
-
-    Request --> LB
-    LB -->|Send Traffic| P1
-    LB -->|Send Traffic| P2
-    LB -.->|Ejected| P3
-
-    P3 -.->|Recovery Attempt After 30s| LB
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef healthy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class LB lb;
-    class P1,P2 healthy;
-    class P3 unhealthy;
-```
+![An Envoy proxy load balancer sends traffic to two healthy pods, stops sending traffic to a slow, error-prone pod by ejecting it, and periodically retries the ejected pod to check whether it has recovered.](../../../.gitbook/assets/en-service-mesh-istio-resilience-01-outlier-detection-0.png)
 
 ### Key Features
 
@@ -64,40 +29,7 @@ flowchart TB
 
 ### Outlier Detection Process
 
-```mermaid
-flowchart LR
-    Start[Request Start]
-    Check{Check for<br/>Errors}
-    Count[Increment<br/>Error Count]
-    Threshold{Threshold<br/>Exceeded?}
-    Eject[Eject<br/>Instance]
-    Normal[Normal<br/>Processing]
-    Wait[Wait Period]
-    Retry[Recovery<br/>Attempt]
-
-    Start --> Check
-    Check -->|Error| Count
-    Check -->|Success| Normal
-    Count --> Threshold
-    Threshold -->|Yes| Eject
-    Threshold -->|No| Normal
-    Eject --> Wait
-    Wait --> Retry
-    Retry --> Start
-
-    %% Style definitions
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef process fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef eject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Start start;
-    class Check,Threshold decision;
-    class Count,Wait,Retry process;
-    class Eject eject;
-    class Normal process;
-```
+![Each request is checked for an error; errors increment a counter, and once the counter crosses a threshold the instance is ejected, waits out an ejection period, and is retried, looping back into the same request-checking cycle.](../../../.gitbook/assets/en-service-mesh-istio-resilience-01-outlier-detection-1.png)
 
 ### Detection Methods
 
@@ -308,34 +240,7 @@ Register external APIs or legacy systems as ServiceEntry and apply Outlier Detec
 
 ### External API Protection Architecture
 
-```mermaid
-flowchart LR
-    subgraph "Kubernetes Cluster"
-        App[Application Pod]
-        Envoy[Envoy Proxy<br/>Outlier Detection]
-    end
-
-    subgraph "External Services"
-        API1[External API<br/>Instance 1<br/>Healthy]
-        API2[External API<br/>Instance 2<br/>Errors]
-        API3[External API<br/>Instance 3<br/>Healthy]
-    end
-
-    App --> Envoy
-    Envoy -->|Send Traffic| API1
-    Envoy -.->|Ejected| API2
-    Envoy -->|Send Traffic| API3
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class App,Envoy k8sComponent;
-    class API1,API3 external;
-    class API2 unhealthy;
-```
+![An application pod's Envoy sidecar applies outlier detection to three external API instances registered as a ServiceEntry, continuing to send traffic to the two healthy instances while ejecting the one returning errors.](../../../.gitbook/assets/en-service-mesh-istio-resilience-01-outlier-detection-2.png)
 
 ### Example 1: Single External API (DNS Based)
 

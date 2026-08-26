@@ -22,36 +22,7 @@ This document explains how to set up independent Argo Rollouts Canary deployment
 
 **Problem Scenario**:
 
-```mermaid
-flowchart TD
-    subgraph Before["Before Full Zone Outage"]
-        direction LR
-        ZoneA1[Zone A<br/>3 Pods]
-        ZoneB1[Zone B<br/>3 Pods]
-        ZoneC1[Zone C<br/>3 Pods]
-
-        PDB1[PodDisruptionBudget: 33%<br/>Minimum 6 Pods required]
-    end
-
-    subgraph After["After Zone C Full Outage"]
-        direction LR
-        ZoneA2[Zone A<br/>3 Pods<br/>Normal]
-        ZoneB2[Zone B<br/>3 Pods<br/>Normal]
-        ZoneC2[Zone C<br/>0 Pods<br/>Full outage]
-
-        PDB2[PodDisruptionBudget: 33%<br/>Actual: 6/9 -> 6/6 = 100%<br/>Balance broken]
-    end
-
-    Before -->|Spot Instance<br/>Interruption| After
-
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef failed fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef warning fill:#FFA500,stroke:#333,stroke-width:2px,color:white;
-
-    class ZoneA1,ZoneB1,ZoneC1,ZoneA2,ZoneB2 normal;
-    class ZoneC2 failed;
-    class PDB2 warning;
-```
+![Before a Spot Instance interruption, three zones each run 3 pods and the PodDisruptionBudget requires 6 of 9 pods; after Zone C is fully lost, only Zone A and B remain and the same 6-pod minimum now equals 100% of remaining capacity, breaking the budget's safety margin.](../../../.gitbook/assets/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-0.png)
 
 **Why Zone-specific Rollouts are Needed?**
 
@@ -151,64 +122,7 @@ spec:
 
 ### Overall Structure
 
-```mermaid
-flowchart TB
-    subgraph Clients["Clients"]
-        ClientA[Client A<br/>Zone: us-east-1a]
-        ClientB[Client B<br/>Zone: us-east-1b]
-        ClientC[Client C<br/>Zone: us-east-1c]
-    end
-
-    subgraph Istio["Istio Control Plane"]
-        VS[VirtualService: test<br/>Single VirtualService]
-        DR[DestinationRule: test<br/>locality-aware routing]
-    end
-
-    subgraph ZoneA["Zone A (us-east-1a)"]
-        RolloutA[Rollout: test-a<br/>subset: stable-a/canary-a]
-        StableA[Stable Pods<br/>label: zone=a]
-        CanaryA[Canary Pods<br/>label: zone=a]
-    end
-
-    subgraph ZoneB["Zone B (us-east-1b)"]
-        RolloutB[Rollout: test-b<br/>subset: stable-b/canary-b]
-        StableB[Stable Pods<br/>label: zone=b]
-        CanaryB[Canary Pods<br/>label: zone=b]
-    end
-
-    subgraph ZoneC["Zone C (us-east-1c)"]
-        RolloutC[Rollout: test-c<br/>subset: stable-c/canary-c]
-        StableC[Stable Pods<br/>label: zone=c]
-        CanaryC[Canary Pods<br/>label: zone=c]
-    end
-
-    ClientA -->|test.default| VS
-    ClientB -->|test.default| VS
-    ClientC -->|test.default| VS
-
-    VS -->|90% stable-a| StableA
-    VS -->|10% canary-a| CanaryA
-    VS -->|90% stable-b| StableB
-    VS -->|10% canary-b| CanaryB
-    VS -->|90% stable-c| StableC
-    VS -->|10% canary-c| CanaryC
-
-    DR -.->|localityLbSetting| VS
-
-    RolloutA -.->|manages weights| VS
-    RolloutB -.->|manages weights| VS
-    RolloutC -.->|manages weights| VS
-
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef rollout fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class VS,DR istio;
-    class RolloutA,RolloutB,RolloutC rollout;
-    class StableA,CanaryA,StableB,CanaryB,StableC,CanaryC pod;
-    class ClientA,ClientB,ClientC client;
-```
+![Clients call a single VirtualService, which locality-aware routing (via a DestinationRule) splits into per-zone stable/canary weights, while each zone's own Argo Rollout independently manages only its own zone's route weights on that shared VirtualService.](../../../.gitbook/assets/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.png)
 
 ### Key Components
 
@@ -736,101 +650,15 @@ spec:
 
 ### Normal State (Zone-local Traffic)
 
-```mermaid
-sequenceDiagram
-    autonumber
-    box Zone A (us-east-1a)
-    participant ClientA as Client A
-    participant EnvoyA as Envoy Sidecar
-    participant PodA as Pod A<br/>(zone=a)
-    end
-
-    box Zone B (us-east-1b)
-    participant PodB as Pod B<br/>(zone=b)
-    end
-
-    Note over ClientA,PodB: Normal state: Zone-local traffic only
-
-    ClientA->>EnvoyA: GET /api
-    Note over EnvoyA: Locality-aware routing<br/>distribute: 100% local
-
-    EnvoyA->>PodA: Request (zone-local)
-    Note over EnvoyA,PodA: Processed within same zone
-
-    PodA->>EnvoyA: Response
-    EnvoyA->>ClientA: Response
-
-    Note over PodB: Zone B Pod is<br/>not used
-```
+![In the default state, a client's request is handled entirely within its own zone by the local Envoy sidecar and pod, while the pod in a neighboring zone sits idle and is not called.](../../../.gitbook/assets/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-2.png)
 
 ### Failover Scenario
 
-```mermaid
-sequenceDiagram
-    autonumber
-    box Zone A (us-east-1a)
-    participant ClientA as Client A
-    participant EnvoyA as Envoy Sidecar
-    participant PodA as Pod A<br/>(zone=a)<br/>Unhealthy
-    end
-
-    box Zone B (us-east-1b)
-    participant PodB as Pod B<br/>(zone=b)
-    end
-
-    Note over ClientA,PodB: Failover: Zone A -> Zone B
-
-    ClientA->>EnvoyA: GET /api
-    EnvoyA->>PodA: Attempt 1
-    PodA--xEnvoyA: Error (timeout/5xx)
-
-    EnvoyA->>PodA: Attempt 2
-    PodA--xEnvoyA: Error (timeout/5xx)
-
-    EnvoyA->>PodA: Attempt 3
-    PodA--xEnvoyA: Error (timeout/5xx)
-
-    Note over EnvoyA: Outlier Detection<br/>consecutiveErrors: 3<br/>-> Exclude Zone A
-
-    Note over EnvoyA: Apply failover rule<br/>from: us-east-1a<br/>to: us-east-1b
-
-    EnvoyA->>PodB: Request (failover to Zone B)
-    Note over EnvoyA,PodB: Cross-zone traffic
-
-    PodB->>EnvoyA: Response
-    EnvoyA->>ClientA: Response
-
-    Note over PodA: Zone A is<br/>excluded for<br/>baseEjectionTime(30s)
-```
+![After three consecutive errors from the local Zone A pod, Envoy's outlier detection ejects that pod for 30 seconds and reroutes the request cross-zone to a healthy Zone B pod, which serves the response instead.](../../../.gitbook/assets/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.png)
 
 ### Traffic Flow During Canary Deployment
 
-```mermaid
-sequenceDiagram
-    autonumber
-    box Zone A
-    participant Client as Client
-    participant VS as VirtualService
-    participant Stable as Stable Pod<br/>90%
-    participant Canary as Canary Pod<br/>10%
-    end
-
-    Note over Client,Canary: Canary deployment in progress<br/>setWeight: 10
-
-    Client->>VS: GET /api
-
-    alt 90% of traffic
-        VS->>Stable: subset: stable-a<br/>weight: 90
-        Stable->>VS: Response (v1)
-    else 10% of traffic
-        VS->>Canary: subset: canary-a<br/>weight: 10
-        Canary->>VS: Response (v2)
-    end
-
-    VS->>Client: Response
-
-    Note over VS: Argo Rollouts<br/>gradually changes weight<br/>10 -> 20 -> 50 -> 80 -> 100
-```
+![The VirtualService splits each client request by weight, sending most traffic to the stable pod and a small fraction to the canary pod, while Argo Rollouts gradually raises the canary weight from 10% toward 100%.](../../../.gitbook/assets/en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-4.png)
 
 ## Troubleshooting
 

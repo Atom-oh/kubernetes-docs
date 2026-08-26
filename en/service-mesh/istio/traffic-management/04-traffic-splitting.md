@@ -18,38 +18,7 @@ Traffic Splitting is one of Istio's most powerful features, enabling Canary depl
 
 Traffic Splitting uses the `weight` field in VirtualService to distribute traffic between multiple service versions by ratio.
 
-```mermaid
-flowchart TB
-    User[User Request<br/>100%]
-
-    subgraph VirtualService["VirtualService"]
-        Split[Traffic Splitting]
-    end
-
-    subgraph Services["Service Versions"]
-        V1[Version 1<br/>90%]
-        V2[Version 2<br/>10%]
-    end
-
-    User -->|100%| Split
-    Split -->|90%| V1
-    Split -->|10%| V2
-
-    V1 -->|Stable| Result1[90 Users]
-    V2 -->|New Feature| Result2[10 Users]
-
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef split fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class User user;
-    class Split split;
-    class V1,V2 service;
-    class Result1,Result2 result;
-```
+![A VirtualService splits incoming user requests by weight, sending 90 percent to Version 1 and 10 percent to Version 2.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-0.png)
 
 ### Basic Structure
 
@@ -79,86 +48,11 @@ Canary deployment is a strategy that safely validates a new version by deploying
 
 ### Argo Rollouts + Istio Architecture
 
-```mermaid
-flowchart TB
-    subgraph ArgoRollouts["Argo Rollouts Controller"]
-        Rollout[Rollout Resource<br/>Deployment Strategy Definition]
-        Analysis[AnalysisTemplate<br/>Metric Analysis]
-    end
-
-    subgraph Istio["Istio Service Mesh"]
-        VS[VirtualService<br/>Traffic Splitting]
-        DR[DestinationRule<br/>Subset Definition]
-    end
-
-    subgraph K8s["Kubernetes"]
-        Stable[Stable Pods<br/>v1]
-        Canary[Canary Pods<br/>v2]
-    end
-
-    subgraph Monitoring["Monitoring"]
-        Prometheus[Prometheus<br/>Metric Collection]
-        Grafana[Grafana<br/>Visualization]
-    end
-
-    Rollout -->|Create/Update| VS
-    Rollout -->|Create| DR
-    Rollout -->|Manage| Stable
-    Rollout -->|Manage| Canary
-
-    VS -->|90% Traffic| Stable
-    VS -->|10% Traffic| Canary
-
-    Analysis -->|Metric Query| Prometheus
-    Analysis -->|Approve/Reject| Rollout
-
-    Stable -.->|Send Metrics| Prometheus
-    Canary -.->|Send Metrics| Prometheus
-    Prometheus -.->|Visualize| Grafana
-
-    %% Style definitions
-    classDef argo fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef k8s fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef monitor fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Rollout,Analysis argo;
-    class VS,DR istio;
-    class Stable,Canary k8s;
-    class Prometheus,Grafana monitor;
-```
+![Argo Rollouts manages the VirtualService, DestinationRule, and pod versions while AnalysisTemplate queries Prometheus metrics to approve or reject the canary rollout.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-1.png)
 
 ### Canary Deployment Flow
 
-```mermaid
-flowchart LR
-    Start[Start<br/>v1: 100%]
-    Step1[Stage 1<br/>v1: 90%, v2: 10%]
-    Step2[Stage 2<br/>v1: 75%, v2: 25%]
-    Step3[Stage 3<br/>v1: 50%, v2: 50%]
-    Step4[Stage 4<br/>v1: 25%, v2: 75%]
-    End[Complete<br/>v2: 100%]
-
-    Start -->|Metrics OK| Step1
-    Step1 -->|Metrics OK| Step2
-    Step2 -->|Metrics OK| Step3
-    Step3 -->|Metrics OK| Step4
-    Step4 -->|Metrics OK| End
-
-    Step1 -.->|Error Rate > 5%| Rollback[Automatic Rollback<br/>v1: 100%]
-    Step2 -.->|Latency > 500ms| Rollback
-    Step3 -.->|Metrics Failed| Rollback
-    Step4 -.->|Metrics Failed| Rollback
-
-    %% Style definitions
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef rollback fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Start,Step1,Step2,Step3,Step4,End normal;
-    class Rollback rollback;
-```
+![A canary rollout advances traffic to the new version in stages from 10 to 75 percent, and any stage that fails its error-rate, latency, or metrics check automatically rolls back to 100 percent of the stable version.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-2.png)
 
 ### Step 1: Install Argo Rollouts
 
@@ -1078,87 +972,11 @@ Blue/Green deployment maintains two identical production environments and switch
 
 ### Argo Rollouts Blue/Green Architecture
 
-```mermaid
-flowchart TB
-    subgraph ArgoRollouts["Argo Rollouts Controller"]
-        Rollout[Rollout Resource<br/>Blue/Green Strategy]
-        PreAnalysis[PrePromotion<br/>Analysis]
-        PostAnalysis[PostPromotion<br/>Analysis]
-    end
-
-    subgraph Services["Kubernetes Services"]
-        ActiveSvc[Active Service<br/>Production Traffic]
-        PreviewSvc[Preview Service<br/>Test Traffic]
-    end
-
-    subgraph Pods["Pod Environment"]
-        Blue[Blue Pods<br/>Current Version]
-        Green[Green Pods<br/>New Version]
-    end
-
-    subgraph Gateway["Istio Gateway"]
-        Ingress[Ingress Gateway<br/>External Traffic]
-    end
-
-    Rollout -->|Manage| ActiveSvc
-    Rollout -->|Manage| PreviewSvc
-    Rollout -->|Deploy| Blue
-    Rollout -->|Deploy| Green
-
-    PreAnalysis -->|Test| PreviewSvc
-    PostAnalysis -->|Verify| ActiveSvc
-
-    ActiveSvc -->|100% Traffic| Blue
-    PreviewSvc -->|Test Traffic| Green
-
-    Ingress --> ActiveSvc
-    Ingress -.->|Test Only| PreviewSvc
-
-    %% Style definitions
-    classDef argo fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef gateway fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Rollout,PreAnalysis,PostAnalysis argo;
-    class ActiveSvc,PreviewSvc service;
-    class Blue,Green pod;
-    class Ingress gateway;
-```
+![Argo Rollouts deploys Green pods alongside Blue, tests them through the Preview Service, and instantly switches all production traffic from Blue to Green on the Active Service once verification passes.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-3.png)
 
 ### Blue/Green Deployment Flow
 
-```mermaid
-flowchart LR
-    Start[Start<br/>Blue Active]
-    Deploy[Deploy Green]
-    PreTest[Pre-test<br/>Preview Service]
-    Manual[Manual Approval<br/>or Auto]
-    Switch[Traffic Switch<br/>Blue -> Green]
-    PostTest[Post Verification]
-    ScaleDown[Scale Down Blue<br/>After 30s]
-    End[Complete<br/>Green Active]
-
-    Start --> Deploy
-    Deploy --> PreTest
-    PreTest -->|Success| Manual
-    PreTest -.->|Fail| Rollback[Rollback<br/>Delete Green]
-    Manual -->|Approve| Switch
-    Manual -.->|Reject| Rollback
-    Switch --> PostTest
-    PostTest -->|Success| ScaleDown
-    PostTest -.->|Fail| QuickRollback[Immediate Rollback<br/>Switch to Blue]
-    ScaleDown --> End
-
-    %% Style definitions
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef rollback fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Start,Deploy,PreTest,Manual,Switch,PostTest,ScaleDown,End normal;
-    class Rollback,QuickRollback rollback;
-```
+![A blue/green deployment deploys the green version, pre-tests it on the preview service, requires approval before switching production traffic, and rolls back to blue automatically if any pre-test, approval, or post-verification step fails.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-4.png)
 
 ### Step 1: Define Services
 
@@ -1478,55 +1296,7 @@ kubectl argo rollouts undo reviews --to-revision=3
 
 A/B testing runs two versions simultaneously and classifies users based on specific criteria to measure effectiveness.
 
-```mermaid
-flowchart TB
-    Users[All Users]
-
-    subgraph Segmentation["User Segmentation"]
-        GroupA[Group A<br/>50%]
-        GroupB[Group B<br/>50%]
-    end
-
-    subgraph Versions["Versions"]
-        VersionA[Version A<br/>Existing UI]
-        VersionB[Version B<br/>New UI]
-    end
-
-    subgraph Metrics["Metric Collection"]
-        MetricA[Conversion Rate<br/>Click Rate<br/>Time on Site]
-        MetricB[Conversion Rate<br/>Click Rate<br/>Time on Site]
-    end
-
-    Users --> GroupA
-    Users --> GroupB
-
-    GroupA --> VersionA
-    GroupB --> VersionB
-
-    VersionA --> MetricA
-    VersionB --> MetricB
-
-    MetricA --> Analysis[A/B Test<br/>Analysis]
-    MetricB --> Analysis
-
-    Analysis --> Decision{Which version<br/>is better?}
-    Decision -->|A is better| KeepA[Keep A]
-    Decision -->|B is better| AdoptB[Adopt B]
-
-    %% Style definitions
-    classDef users fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef group fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef version fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef metric fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef analysis fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class applications
-    class Users users;
-    class GroupA,GroupB group;
-    class VersionA,VersionB version;
-    class MetricA,MetricB metric;
-    class Analysis,Decision,KeepA,AdoptB analysis;
-```
+![Users are split evenly between Version A and Version B, their engagement metrics feed a shared analysis, and the winning version is decided and kept or adopted.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-5.png)
 
 ### Cookie-based A/B Testing
 

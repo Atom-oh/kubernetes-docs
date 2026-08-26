@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-comparison-01-service-mesh-comparison-12-title en-service-mesh-istio-comparison-01-service-mesh-comparison-12-desc">
+<title id="en-service-mesh-istio-comparison-01-service-mesh-comparison-12-title">Maximum Throughput vs. Baseline</title>
+<desc id="en-service-mesh-istio-comparison-01-service-mesh-comparison-12-desc">Comparison of maximum sustained requests-per-second for each service mesh&#x27;s data plane as a percentage of an unmeshed baseline, with Linkerd retaining the most throughput and Istio/Consul the least.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="200" width="880" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="48" y="194" width="202" height="12" rx="2" fill="#ffffff"/>
+<text x="149.0" y="203" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">THROUGHPUT COMPARISON (MAX RPS)</text>
+<rect x="80" y="250" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="80" y="250" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="170.0" y="280.5" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Linkerd</text>
+<text x="170.0" y="294.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">~95–98% of baseline</text>
+<rect x="290" y="250" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="290" y="250" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="380.0" y="280.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kong Mesh</text>
+<text x="380.0" y="294.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">~90–95% of baseline</text>
+<rect x="500" y="250" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="500" y="250" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="590.0" y="280.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio</text>
+<text x="590.0" y="294.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">~85–92% of baseline</text>
+<rect x="710" y="250" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="710" y="250" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="800.0" y="280.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Consul</text>
+<text x="800.0" y="294.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">~85–92% of baseline</text>
+</svg>

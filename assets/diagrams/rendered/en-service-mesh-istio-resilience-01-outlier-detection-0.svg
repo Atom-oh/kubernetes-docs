@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t0 d0">
+  <title id="t0">Outlier Detection Overview</title>
+  <desc id="d0">An Envoy proxy load balancer sends traffic to two healthy pods, stops sending traffic to a slow, error-prone pod by ejecting it, and periodically retries the ejected pod to check whether it has recovered.</desc>
+  <rect width="960" height="600" fill="var(--paper)"/>
+
+  <!-- Header -->
+  <text x="40" y="36" class="mono" fill="var(--soft)" font-size="8" letter-spacing="0.14em">ISTIO · RESILIENCE</text>
+  <text x="40" y="60" font-size="20" font-weight="700" fill="var(--ink)">Outlier Detection Overview</text>
+
+  <!-- Zones (bg -> zones -> arrows -> nodes) -->
+  <rect x="256" y="236" width="208" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="292" y="240" width="136" height="12" rx="2" fill="var(--paper)"/>
+  <text x="360" y="249" fill="rgba(35,47,62,0.40)" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.14em">LOAD BALANCER</text>
+
+  <rect x="592" y="80" width="264" height="168" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="656" y="84" width="136" height="12" rx="2" fill="var(--paper)"/>
+  <text x="724" y="93" fill="rgba(35,47,62,0.40)" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.14em">HEALTHY PODS</text>
+
+  <rect x="592" y="392" width="264" height="104" rx="8" fill="rgba(221,52,76,0.03)" stroke="rgba(221,52,76,0.16)" stroke-width="0.8"/>
+  <rect x="656" y="396" width="152" height="12" rx="2" fill="var(--paper)"/>
+  <text x="732" y="405" fill="rgba(221,52,76,0.55)" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.14em">UNHEALTHY PODS</text>
+
+  <!-- Arrow markers -->
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-danger" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#DD344C"/>
+    </marker>
+  </defs>
+
+  <!-- Arrows (drawn before nodes) -->
+  <!-- Client -> Envoy : straight, aligned centers y=300 -->
+  <line x1="200" y1="300" x2="284" y2="300" stroke="var(--ink)" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Envoy -> Pod1 (right+up) attach y=276 -->
+  <path d="M436,276 H502 Q510,276 510,268 V148 Q510,140 518,140 H616" fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Envoy -> Pod2 (right+up) attach y=300 -->
+  <path d="M436,300 H502 Q510,300 510,292 V212 Q510,204 518,204 H616" fill="none" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Envoy -> Pod3 dashed eject, attach y=316 -->
+  <path d="M436,316 H502 Q510,316 510,324 V424 Q510,432 518,432 H616" fill="none" stroke="var(--danger)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-danger)"/>
+  <!-- Pod3 -> Envoy dashed recovery, attach y=328 -->
+  <path d="M616,456 H518 Q510,456 510,448 V336 Q510,328 502,328 H436" fill="none" stroke="var(--soft)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- Arrow labels (mask then text, 8px gap above each horizontal segment, positioned off-node in open canvas) -->
+  <rect x="448" y="256" width="46" height="12" rx="2" fill="var(--paper)"/>
+  <text x="471" y="265" class="mono" fill="var(--soft)" font-size="8" text-anchor="middle" letter-spacing="0.06em">TRAFFIC</text>
+
+  <rect x="448" y="280" width="46" height="12" rx="2" fill="var(--paper)"/>
+  <text x="471" y="289" class="mono" fill="var(--soft)" font-size="8" text-anchor="middle" letter-spacing="0.06em">TRAFFIC</text>
+
+  <rect x="450" y="296" width="42" height="12" rx="2" fill="var(--paper)"/>
+  <text x="471" y="305" class="mono" fill="var(--danger)" font-size="8" text-anchor="middle" letter-spacing="0.06em">EJECT</text>
+
+  <rect x="524" y="436" width="70" height="12" rx="2" fill="var(--paper)"/>
+  <text x="559" y="445" class="mono" fill="var(--soft)" font-size="8" text-anchor="middle" letter-spacing="0.06em">RETRY 30S</text>
+
+  <!-- Nodes -->
+  <!-- Client Request -->
+  <rect x="40" y="268" width="160" height="64" rx="6" fill="var(--paper)"/>
+  <rect x="40" y="268" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="var(--soft)" stroke-width="1"/>
+  <text x="120" y="296" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Client Request</text>
+  <text x="120" y="314" class="mono" font-size="9" fill="var(--muted)" text-anchor="middle">ingress</text>
+
+  <!-- Envoy Proxy (focal) -->
+  <rect x="284" y="268" width="152" height="64" rx="6" fill="var(--paper)"/>
+  <rect x="284" y="268" width="152" height="64" rx="6" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+  <text x="360" y="296" font-size="12" font-weight="700" fill="var(--ink)" text-anchor="middle">Envoy Proxy</text>
+  <text x="360" y="314" class="mono" font-size="9" fill="var(--accent)" text-anchor="middle">outlier detection</text>
+
+  <!-- Pod 1 healthy -->
+  <rect x="616" y="112" width="208" height="56" rx="6" fill="var(--paper)"/>
+  <rect x="616" y="112" width="208" height="56" rx="6" fill="var(--paper)" stroke="var(--ink)" stroke-width="1"/>
+  <text x="720" y="136" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Pod 1</text>
+  <text x="720" y="153" class="mono" font-size="9" fill="var(--muted)" text-anchor="middle">50ms · 0% errors</text>
+
+  <!-- Pod 2 healthy -->
+  <rect x="616" y="176" width="208" height="56" rx="6" fill="var(--paper)"/>
+  <rect x="616" y="176" width="208" height="56" rx="6" fill="var(--paper)" stroke="var(--ink)" stroke-width="1"/>
+  <text x="720" y="200" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Pod 2</text>
+  <text x="720" y="217" class="mono" font-size="9" fill="var(--muted)" text-anchor="middle">60ms · 1% errors</text>
+
+  <!-- Pod 3 unhealthy -->
+  <rect x="616" y="424" width="208" height="56" rx="6" fill="var(--paper)"/>
+  <rect x="616" y="424" width="208" height="56" rx="6" fill="rgba(221,52,76,0.05)" stroke="var(--danger)" stroke-width="1" stroke-dasharray="4,4"/>
+  <text x="720" y="448" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Pod 3</text>
+  <text x="720" y="465" class="mono" font-size="9" fill="var(--danger)" text-anchor="middle">5000ms · 80% errors</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="536" x2="920" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="556" class="mono" fill="var(--soft)" font-size="8" letter-spacing="0.14em">LEGEND</text>
+  <line x1="140" y1="552" x2="168" y2="552" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="176" y="556" class="mono" fill="var(--muted)" font-size="8">Active traffic</text>
+  <line x1="360" y1="552" x2="388" y2="552" stroke="var(--danger)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-danger)"/>
+  <text x="396" y="556" class="mono" fill="var(--muted)" font-size="8">Ejected</text>
+  <line x1="540" y1="552" x2="568" y2="552" stroke="var(--soft)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="576" y="556" class="mono" fill="var(--muted)" font-size="8">Recovery attempt</text>
+</svg>

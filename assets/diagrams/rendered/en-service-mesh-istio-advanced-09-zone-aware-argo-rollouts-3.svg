@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="failover-seq-title failover-seq-desc">
+<title id="failover-seq-title">Outlier detection triggers cross-zone failover</title>
+<desc id="failover-seq-desc">After three consecutive errors from the local Zone A pod, Envoy's outlier detection ejects that pod for 30 seconds and reroutes the request cross-zone to a healthy Zone B pod, which serves the response instead.</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="cross" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+    <path d="M1,1 L9,9 M9,1 L1,9" stroke="#DD344C" stroke-width="1.4"/>
+  </marker>
+</defs>
+
+<!-- Zone boxes -->
+<rect x="24" y="40" width="600" height="24" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="324" y="56" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">ZONE A · us-east-1a</text>
+<rect x="648" y="40" width="288" height="24" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="792" y="56" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">ZONE B · us-east-1b</text>
+
+<!-- Lifelines -->
+<line x1="112" y1="100" x2="112" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="384" y1="100" x2="384" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="576" y1="100" x2="576" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="792" y1="100" x2="792" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- 1. Client A -> Envoy: GET /api -->
+<path d="M 112,116 H 384" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="212" y="96" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="248" y="105" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">GET /api</text>
+
+<!-- 2. Envoy -> Pod A: Attempt 1 -->
+<path d="M 384,144 H 576" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="444" y="124" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="133" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ATTEMPT 1</text>
+<!-- 2r. Pod A to Envoy: Error (rejected call) -->
+<path d="M 576,164 H 384" fill="none" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#cross)"/>
+<rect x="440" y="168" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="177" fill="#DD344C" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ERR timeout</text>
+
+<!-- 3. Envoy -> Pod A: Attempt 2 -->
+<path d="M 384,196 H 576" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="444" y="200" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="209" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ATTEMPT 2</text>
+<!-- 3r. error -->
+<path d="M 576,224 H 384" fill="none" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#cross)"/>
+<rect x="440" y="228" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="237" fill="#DD344C" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ERR timeout</text>
+
+<!-- 4. Envoy -> Pod A: Attempt 3 -->
+<path d="M 384,256 H 576" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="444" y="260" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="269" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ATTEMPT 3</text>
+<!-- 4r. error (final -> triggers ejection) -->
+<path d="M 576,284 H 384" fill="none" stroke="#DD344C" stroke-width="1.2" marker-end="url(#cross)"/>
+<rect x="440" y="288" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="297" fill="#DD344C" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ERR timeout</text>
+
+<!-- note: outlier detection -->
+<rect x="304" y="308" width="160" height="28" rx="4" fill="rgba(221,52,76,0.06)" stroke="rgba(221,52,76,0.30)" stroke-width="0.8"/>
+<text x="384" y="320" fill="#DD344C" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">3 consecutive errors</text>
+<text x="384" y="331" fill="#DD344C" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">-&gt; eject zone A pod</text>
+
+<!-- note: apply failover rule -->
+<rect x="304" y="344" width="160" height="28" rx="4" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.15)" stroke-width="0.8"/>
+<text x="384" y="356" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">failover rule</text>
+<text x="384" y="367" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">us-east-1a -&gt; 1b</text>
+
+<!-- 5. Envoy -> Pod B: Request (failover), headline accent -->
+<path d="M 384,396 H 792" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="548" y="376" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="588" y="385" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">FAILOVER REQ</text>
+
+<rect x="524" y="408" width="136" height="16" rx="4" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.15)" stroke-width="0.8"/>
+<text x="592" y="419" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">cross-zone traffic</text>
+
+<!-- 6. Pod B -> Envoy: Response -->
+<path d="M 792,452 H 384" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="548" y="432" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="582" y="441" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">response</text>
+
+<!-- 7. Envoy -> Client A: Response -->
+<path d="M 384,480 H 112" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="212" y="460" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="246" y="469" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">response</text>
+
+<!-- note: Pod A excluded -->
+<rect x="516" y="492" width="120" height="28" rx="4" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.30)" stroke-width="0.8" stroke-dasharray="4,3"/>
+<text x="576" y="504" fill="#DD344C" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">zone A excluded</text>
+<text x="576" y="515" fill="#DD344C" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">baseEjectionTime 30s</text>
+
+<!-- Activation bars -->
+<rect x="108" y="116" width="8" height="364" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="380" y="116" width="8" height="364" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="572" y="144" width="8" height="140" fill="rgba(221,52,76,0.08)" stroke="#DD344C" stroke-width="0.8"/>
+<rect x="788" y="396" width="8" height="56" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+<!-- Actor labels -->
+<rect x="52" y="76" width="120" height="24" rx="4" fill="#ffffff" stroke="#7D8998" stroke-width="1"/>
+<text x="112" y="92" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client A</text>
+
+<rect x="324" y="76" width="120" height="24" rx="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="384" y="92" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Sidecar</text>
+
+<rect x="516" y="76" width="120" height="24" rx="4" fill="#ffffff" stroke="#DD344C" stroke-width="1.2"/>
+<text x="576" y="92" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A · unhealthy</text>
+
+<rect x="732" y="76" width="120" height="24" rx="4" fill="#ffffff" stroke="#EC7211" stroke-width="1.2"/>
+<text x="792" y="92" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B (zone=b)</text>
+
+<!-- legend -->
+<line x1="24" y1="536" x2="936" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="30" y1="548" x2="50" y2="548" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="58" y="551" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">FAILED CALL</text>
+<line x1="200" y1="548" x2="220" y2="548" stroke="#EC7211" stroke-width="1.4"/>
+<text x="228" y="551" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">FAILOVER CALL</text>
+</svg>

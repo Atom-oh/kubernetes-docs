@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mc-dr-title mc-dr-desc">
+<title id="mc-dr-title">Active-standby failover</title>
+<desc id="mc-dr-desc">Route 53 normally sends all user traffic to the active cluster's production workloads while the standby cluster receives real-time config replication, and flips to send all traffic to standby once a disaster triggers failover.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-danger" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#DD344C"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- zones -->
+<rect x="100" y="300" width="300" height="150" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="112" y="304" width="150" height="12" rx="2" fill="#ffffff"/>
+<text x="187" y="313" fill="rgba(35,47,62,0.45)" font-family="'Geist Mono',monospace" font-size="7" text-anchor="middle" letter-spacing="0.08em">ACTIVE · PRIMARY REGION</text>
+
+<rect x="560" y="300" width="300" height="150" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="572" y="304" width="150" height="12" rx="2" fill="#ffffff"/>
+<text x="647" y="313" fill="rgba(35,47,62,0.45)" font-family="'Geist Mono',monospace" font-size="7" text-anchor="middle" letter-spacing="0.08em">STANDBY · DR REGION</text>
+
+<!-- arrows -->
+<line x1="152" y1="100" x2="380" y2="100" stroke="#232F3E" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="241" y="82" width="50" height="12" rx="2" fill="#ffffff"/>
+<text x="266" y="91" fill="#7D8998" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.04em">NORMAL</text>
+
+<path d="M 770,60 V 70 Q 770,78 762,78 H 520" fill="none" stroke="#DD344C" stroke-width="1.2" marker-end="url(#arrow-danger)"/>
+<rect x="610" y="58" width="70" height="12" rx="2" fill="#ffffff"/>
+<text x="645" y="67" fill="#DD344C" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.03em">FAILOVER</text>
+
+<path d="M 420,122 V 336 Q 420,344 412,344 H 258 Q 250,344 250,352 V 356"
+      fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="430" y="214" width="70" height="12" rx="2" fill="#ffffff"/>
+<text x="465" y="223" fill="#EC7211" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.02em">100%→0%</text>
+
+<path d="M 540,122 V 336 Q 540,344 548,344 H 702 Q 710,344 710,352 V 356"
+      fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="550" y="214" width="70" height="12" rx="2" fill="#ffffff"/>
+<text x="585" y="223" fill="#7D8998" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.02em">0%→100%</text>
+
+<line x1="320" y1="384" x2="640" y2="384" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="425" y="362" width="110" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="371" fill="#7D8998" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.02em">CONFIG REPLICATION</text>
+
+<!-- nodes -->
+<rect x="40" y="78" width="112" height="44" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="96" y="104" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" text-anchor="middle">Users</text>
+
+<rect x="700" y="20" width="140" height="40" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,4"/>
+<text x="770" y="44" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="11" font-weight="600" text-anchor="middle">Disaster occurs</text>
+
+<rect x="380" y="78" width="200" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480" y="98" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" text-anchor="middle">Global DNS</text>
+<text x="480" y="112" fill="#545B64" font-family="'Geist Mono',monospace" font-size="9" text-anchor="middle">Route 53</text>
+
+<rect x="180" y="356" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="250" y="378" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" text-anchor="middle">Production</text>
+<text x="250" y="394" fill="#545B64" font-family="'Geist Mono',monospace" font-size="9" text-anchor="middle">workloads</text>
+
+<rect x="640" y="356" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="710" y="378" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" text-anchor="middle">Standby</text>
+<text x="710" y="394" fill="#545B64" font-family="'Geist Mono',monospace" font-size="9" text-anchor="middle">workloads</text>
+
+<!-- legend -->
+<line x1="30" y1="490" x2="930" y2="490" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="506" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+<line x1="130" y1="503" x2="154" y2="503" stroke="#EC7211" stroke-width="1.4"/>
+<text x="162" y="506" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">TRAFFIC BEFORE → AFTER</text>
+<line x1="420" y1="503" x2="444" y2="503" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="452" y="506" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">IDLE / REPLICATION</text>
+<line x1="660" y1="503" x2="684" y2="503" stroke="#DD344C" stroke-width="1.2"/>
+<text x="692" y="506" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">FAILOVER TRIGGER</text>
+</svg>

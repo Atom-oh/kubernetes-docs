@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d1-title d1-desc">
+<title id="d1-title">Load balancing overview</title>
+<desc id="d1-desc">A client request reaches Istio's load balancing algorithm, which picks one of three pods with different current loads using round robin, least request, or random selection.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zone: Pods -->
+<rect x="140" y="360" width="680" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="160" y="364" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="180" y="373" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PODS</text>
+
+<!-- Arrows first -->
+<line x1="480" y1="172" x2="480" y2="196" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- fan attach points on Algorithm bottom edge (x 380..580, len 200): 220,300 -> attach 200*1/4+380=430, *2/4=480, *3/4=530 -->
+<path d="M 430,260 V 300 Q 430,308 422,308 H 300 Q 292,308 292,316 V 360"
+      fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="322" y="284" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="366" y="293" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ROUND ROBIN</text>
+
+<line x1="480" y1="260" x2="480" y2="360" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="490" y="300" width="94" height="12" rx="2" fill="#ffffff"/>
+<text x="537" y="309" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">LEAST REQUEST</text>
+
+<path d="M 530,260 V 300 Q 530,308 538,308 H 660 Q 668,308 668,316 V 360"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="626" y="284" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="656" y="293" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">RANDOM</text>
+
+<!-- Client -->
+<rect x="396" y="108" width="168" height="64" rx="6" fill="#ffffff"/>
+<rect x="396" y="108" width="168" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="480" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Client Request</text>
+<text x="480" y="152" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">DestinationRule target</text>
+
+<!-- Algorithm (focal) -->
+<rect x="380" y="196" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="380" y="196" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Load Balancer</text>
+<text x="480" y="240" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">picks the algorithm</text>
+
+<!-- Pods -->
+<rect x="180" y="392" width="176" height="80" rx="6" fill="#ffffff"/>
+<rect x="180" y="392" width="176" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="268" y="424" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 1</text>
+<text x="268" y="444" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">load: 30%</text>
+
+<rect x="392" y="392" width="176" height="80" rx="6" fill="#ffffff"/>
+<rect x="392" y="392" width="176" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="424" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 2</text>
+<text x="480" y="444" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">load: 50%</text>
+
+<rect x="604" y="392" width="176" height="80" rx="6" fill="#ffffff"/>
+<rect x="604" y="392" width="176" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="692" y="424" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 3</text>
+<text x="692" y="444" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">load: 20%</text>
+
+<text x="480" y="530" fill="#545B64" font-size="14" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">The chosen algorithm decides which pod handles each request.</text>
+</svg>

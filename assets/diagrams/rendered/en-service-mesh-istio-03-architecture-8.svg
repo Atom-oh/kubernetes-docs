@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-03-architecture-8-title en-service-mesh-istio-03-architecture-8-desc">
+<title id="en-service-mesh-istio-03-architecture-8-title">Envoy's DNS Processing</title>
+<desc id="en-service-mesh-istio-03-architecture-8-desc">Flowchart showing Envoy intercepting an application's TCP connection, inspecting the Host header, resolving the route, selecting a cluster, and querying endpoints through Istiod's xDS server rather than calling CoreDNS.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+  
+</defs>
+<rect x="160" y="180" width="700" height="144" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="176" y="184" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="217.0" y="193" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">ENVOY PROXY</text>
+<rect x="694.0" y="380" width="200" height="144" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="710.0" y="384" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="736.0" y="393" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">ISTIOD</text>
+<line x1="120" y1="252.0" x2="180" y2="252.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="123.4" y="232.0" width="53.2" height="12" rx="2" fill="#ffffff"/>
+<text x="150.0" y="241.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">TCP CONN</text>
+<line x1="272" y1="252.0" x2="322" y2="252.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="281.2" y="232.0" width="31.6" height="12" rx="2" fill="#ffffff"/>
+<text x="297.0" y="241.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">HOST</text>
+<line x1="414" y1="252.0" x2="464" y2="252.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="415.1" y="232.0" width="47.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="439.0" y="241.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">RESOLVE</text>
+<line x1="556" y1="252.0" x2="606" y2="252.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="559.8" y="232.0" width="42.400000000000006" height="12" rx="2" fill="#ffffff"/>
+<text x="581.0" y="241.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">SELECT</text>
+<line x1="698" y1="252.0" x2="748" y2="252.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="704.5" y="232.0" width="37.0" height="12" rx="2" fill="#ffffff"/>
+<text x="723.0" y="241.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">QUERY</text>
+<line x1="794.0" y1="292" x2="794.0" y2="420" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+<rect x="808.0" y="346.0" width="64.0" height="12" rx="2" fill="#ffffff"/>
+<text x="808.0" y="355.0" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.05em">6. EDS API</text>
+<rect x="20" y="220" width="100" height="64" rx="6" fill="#ffffff"/>
+<rect x="20" y="220" width="100" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="28" y="226" width="28" height="12" rx="2" fill="transparent" stroke="#7D8998" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="42" y="235" fill="#7D8998" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+<text x="70.0" y="248.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Application</text>
+<text x="70.0" y="270.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">curl reviews:9080</text>
+<rect x="180" y="220" width="92" height="64" rx="6" fill="#ffffff"/>
+<rect x="180" y="220" width="92" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="188" y="226" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="202" y="235" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENV</text>
+<text x="226.0" y="248.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Listener</text>
+<text x="226.0" y="270.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">15001</text>
+<rect x="322" y="220" width="92" height="64" rx="6" fill="#ffffff"/>
+<rect x="322" y="220" width="92" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="330" y="226" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="344" y="235" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENV</text>
+<text x="368.0" y="254.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">DNS Filter</text>
+<rect x="464" y="220" width="92" height="64" rx="6" fill="#ffffff"/>
+<rect x="464" y="220" width="92" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="472" y="226" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="486" y="235" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENV</text>
+<text x="510.0" y="254.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Route Match</text>
+<rect x="606" y="220" width="92" height="64" rx="6" fill="#ffffff"/>
+<rect x="606" y="220" width="92" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="614" y="226" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="628" y="235" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENV</text>
+<text x="652.0" y="248.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Cluster</text>
+<text x="652.0" y="270.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">outbound:9080</text>
+<rect x="748" y="220" width="92" height="64" rx="6" fill="#ffffff"/>
+<rect x="748" y="220" width="92" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="756" y="226" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="770" y="235" fill="#EC7211" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">EDS</text>
+<text x="794.0" y="247.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Endpoint</text>
+<text x="794.0" y="261.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Discovery</text>
+<rect x="714.0" y="420" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="714.0" y="420" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="722.0" y="426" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="736.0" y="435" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">IST</text>
+<text x="794.0" y="454.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">xDS Server</text>
+</svg>

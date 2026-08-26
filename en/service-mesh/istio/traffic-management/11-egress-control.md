@@ -12,31 +12,7 @@ Egress control is a feature that manages outbound traffic from the mesh and enha
 
 ## Egress Overview
 
-```mermaid
-flowchart LR
-    Pod[Pod]
-
-    subgraph Mesh["Service Mesh"]
-        Sidecar[Envoy<br/>Sidecar]
-        EgressGW[Egress<br/>Gateway]
-    end
-
-    External[External Service<br/>api.external.com]
-
-    Pod --> Sidecar
-    Sidecar --> EgressGW
-    EgressGW --> External
-
-    %% Style definitions
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef mesh fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Pod pod;
-    class Sidecar,EgressGW mesh;
-    class External external;
-```
+![A pod inside the Istio service mesh sends outbound traffic through its Envoy sidecar proxy to the egress gateway, the single controlled exit point, which forwards the request on to an external service outside the mesh.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-11-egress-control-0.png)
 
 ## ServiceEntry Configuration
 

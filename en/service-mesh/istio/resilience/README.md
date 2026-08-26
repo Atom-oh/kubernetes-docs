@@ -22,46 +22,7 @@ Resilience is a critical characteristic in distributed systems. Istio can automa
 
 ### Core Resilience Patterns
 
-```mermaid
-flowchart TB
-    Request[Client Request]
-
-    subgraph Resilience["Istio Resilience Patterns"]
-        Outlier[Outlier Detection<br/>Exclude Unhealthy Instances]
-        RateLimit[Rate Limiting<br/>Request Rate Control]
-        ZoneAware[Zone Aware Routing<br/>Locality-Preferred Routing]
-    end
-
-    subgraph Healthy["Healthy Instances"]
-        Pod1[Pod 1<br/>Zone A]
-        Pod2[Pod 2<br/>Zone B]
-    end
-
-    subgraph Unhealthy["Unhealthy Instances"]
-        Pod3[Pod 3<br/>Error Occurring]
-    end
-
-    Request --> Outlier
-    Outlier --> RateLimit
-    RateLimit --> ZoneAware
-
-    ZoneAware -->|Preferred| Pod1
-    ZoneAware -->|Failover| Pod2
-
-    Outlier -.->|Excluded| Pod3
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef resilience fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef healthy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Outlier,RateLimit,ZoneAware resilience;
-    class Pod1,Pod2 healthy;
-    class Pod3 unhealthy;
-```
+![A client request flows through Outlier Detection, Rate Limiting, and Zone Aware Routing, which route traffic to healthy pods while an unhealthy pod is excluded.](../../../.gitbook/assets/en-service-mesh-istio-resilience-README-0.png)
 
 ### 1. Outlier Detection
 
@@ -172,23 +133,7 @@ spec:
 ```
 
 **How It Works**:
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Client
-    participant Envoy as Envoy Proxy
-    participant Service as Service
-
-    Client->>Envoy: Requests 1-100 (normal)
-    Envoy->>Service: Forward
-    Service->>Envoy: Response
-    Envoy->>Client: Response
-
-    Client->>Envoy: Request 101 (limit exceeded)
-    Envoy-->>Client: 503 Circuit Breaker Open
-
-    Note over Envoy,Service: Connection limit reached<br/>New connections blocked
-```
+![A sequence diagram showing Envoy proxy forwarding normal client requests to a service, then rejecting a request past the connection limit with a 503 circuit-breaker-open response instead of forwarding it.](../../../.gitbook/assets/en-service-mesh-istio-resilience-README-1.png)
 
 **Key Features**:
 - TCP connection limits
@@ -237,24 +182,7 @@ retries:
 ```
 
 **How It Works**:
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Client
-    participant Envoy as Envoy Proxy
-    participant Pod1 as Pod 1 (failure)
-    participant Pod2 as Pod 2 (success)
-
-    Client->>Envoy: Request
-    Envoy->>Pod1: Attempt 1
-    Pod1-->>Envoy: 503 Service Unavailable
-
-    Note over Envoy: Retry condition met<br/>Retry to different Pod
-
-    Envoy->>Pod2: Attempt 2
-    Pod2->>Envoy: 200 OK
-    Envoy->>Client: 200 OK
-```
+![A sequence diagram showing Envoy proxy's first attempt to Pod 1 fail with a 503, then Envoy retrying the same request against Pod 2, which succeeds and returns 200 OK to the client.](../../../.gitbook/assets/en-service-mesh-istio-resilience-README-2.png)
 
 ### 6. Timeout
 
@@ -469,58 +397,7 @@ spec:
 
 ## Resilience Architecture
 
-```mermaid
-flowchart TB
-    Client[Client]
-
-    subgraph Gateway["Ingress Gateway"]
-        GW[Gateway<br/>Rate Limiting]
-    end
-
-    subgraph ServiceA["Service A"]
-        A1[Pod A1<br/>Zone A<br/>Healthy]
-        A2[Pod A2<br/>Zone B<br/>Healthy]
-        A3[Pod A3<br/>Zone A<br/>Unhealthy]
-    end
-
-    subgraph ServiceB["Service B"]
-        B1[Pod B1<br/>Zone A]
-        B2[Pod B2<br/>Zone B]
-    end
-
-    subgraph Policies["Resilience Policies"]
-        OD[Outlier Detection<br/>A3 Excluded]
-        RL[Rate Limiting<br/>100 req/s]
-        ZA[Zone Aware<br/>A -> B Same Zone]
-    end
-
-    Client -->|Request| GW
-    GW -->|Rate Limit Passed| OD
-    OD -->|Healthy Pods Only| A1
-    OD -->|Healthy Pods Only| A2
-    OD -.->|Excluded| A3
-
-    A1 -->|Zone A -> Zone A Preferred| B1
-    A2 -->|Zone B -> Zone B Preferred| B2
-
-    ZA -.->|Affects| B1
-    ZA -.->|Affects| B2
-    RL -.->|Applied| GW
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class GW gateway;
-    class A1,A2,B1,B2 service;
-    class A3 unhealthy;
-    class OD,RL,ZA policy;
-```
+![An architecture diagram showing a client request passing through an ingress gateway and rate limiting into Outlier Detection, which routes traffic to healthy pods in Service A while excluding an unhealthy one, then on to zone-matched pods in Service B under a Zone Aware Routing policy.](../../../.gitbook/assets/en-service-mesh-istio-resilience-README-3.png)
 
 ## Resilience Metrics
 

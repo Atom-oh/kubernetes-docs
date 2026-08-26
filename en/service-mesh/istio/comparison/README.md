@@ -68,36 +68,7 @@ A test-result-driven decision guide for choosing between Istio's sidecar mode an
 
 ### Service Mesh Selection Criteria
 
-```mermaid
-flowchart TD
-    Start[Need Service Mesh?]
-    Start -->|Yes| Q1{Platform?}
-    Start -->|No| NoMesh[Use basic K8s Service]
-
-    Q1 -->|Kubernetes Only| Q2{Can accept complexity?}
-    Q1 -->|Multi-Platform| ConsulKong[Consider Consul/Kong Mesh]
-
-    Q2 -->|Yes, need rich features| Istio[Select Istio]
-    Q2 -->|No, simplicity first| Linkerd[Select Linkerd]
-
-    Q3{AWS-centric?}
-    Q3 -->|Yes| Q4{Serverless/Simplicity?}
-    Q3 -->|No| Q5{Multi-cloud?}
-
-    Q4 -->|Yes| Lattice[VPC Lattice]
-    Q4 -->|No| IstioEKS[Istio on EKS]
-
-    Q5 -->|Yes| IstioMulti[Istio Multi-cluster]
-    Q5 -->|No| Regional[Regional Solution]
-
-    classDef meshSolution fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef decision fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef awsSolution fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class Istio,Linkerd,ConsulKong,IstioEKS,IstioMulti meshSolution;
-    class Start,Q1,Q2,Q3,Q4,Q5 decision;
-    class Lattice awsSolution;
-```
+![Flowchart of two decision paths for choosing a service mesh: a Kubernetes-platform-first path that ends in Istio, Linkerd, or Consul/Kong Mesh, and an AWS-centric path that ends in VPC Lattice, Istio on EKS, Istio Multi-cluster, or a regional solution.](../../../.gitbook/assets/en-service-mesh-istio-comparison-README-0.png)
 
 ### Use Case Recommendations
 

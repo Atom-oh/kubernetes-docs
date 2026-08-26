@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="keda-seq-title keda-seq-desc">
+      <title id="keda-seq-title">KEDA metrics-based autoscaling sequence</title>
+      <desc id="keda-seq-desc">A request passes through the Envoy sidecar, which exposes Istio metrics to Prometheus; KEDA polls Prometheus, compares the result to a threshold, and when it decides to scale out it updates the HPA target so Kubernetes creates new Pods, then waits out a cooldown period before evaluating again.</desc>
+      <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+        </marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+        </marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- Lifelines -->
+      <line x1="80" y1="60" x2="80" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="280" y1="60" x2="280" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="480" y1="60" x2="480" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="680" y1="60" x2="680" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="880" y1="60" x2="880" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- Messages (drawn before actor boxes) -->
+
+      <!-- m1: App -> Envoy -->
+      <line x1="84" y1="100" x2="276" y2="100" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="140" y="80" width="76" height="12" rx="2" fill="#ffffff"/>
+      <text x="178" y="89" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">HTTP REQUEST</text>
+
+      <!-- m2: Envoy self-loop -->
+      <path d="M 280 140 C 320 140 320 160 280 160" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="326" y="144" width="112" height="12" rx="2" fill="#ffffff"/>
+      <text x="382" y="153" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">GENERATE METRICS</text>
+
+      <!-- m3: Envoy -> Prom -->
+      <line x1="284" y1="200" x2="476" y2="200" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="342" y="180" width="72" height="12" rx="2" fill="#ffffff"/>
+      <text x="378" y="189" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EXPOSE :15090</text>
+
+      <!-- m4: Prometheus self-loop -->
+      <path d="M 480 240 C 520 240 520 260 480 260" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="526" y="244" width="104" height="12" rx="2" fill="#ffffff"/>
+      <text x="578" y="253" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">COLLECT &amp; STORE</text>
+
+      <!-- Note: polling interval -->
+      <rect x="576" y="272" width="208" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+      <text x="680" y="286" fill="#545B64" font-size="11" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Every pollingInterval (30s)</text>
+
+      <!-- m5: KEDA -> Prom (query) -->
+      <line x1="676" y1="316" x2="484" y2="316" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="544" y="296" width="72" height="12" rx="2" fill="#ffffff"/>
+      <text x="580" y="305" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROMQL QUERY</text>
+
+      <!-- m6: Prom -> KEDA (return, dashed) -->
+      <line x1="484" y1="356" x2="676" y2="356" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+      <rect x="546" y="336" width="68" height="12" rx="2" fill="#ffffff"/>
+      <text x="580" y="345" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RPS: 1,500</text>
+
+      <!-- m7: KEDA self-loop (scale decision, focal) -->
+      <path d="M 680 388 C 720 388 720 408 680 408" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <rect x="726" y="392" width="88" height="12" rx="2" fill="#ffffff"/>
+      <text x="770" y="401" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCALE OUT</text>
+
+      <!-- m8: KEDA -> K8s (accent) -->
+      <line x1="684" y1="440" x2="876" y2="440" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <rect x="726" y="420" width="88" height="12" rx="2" fill="#ffffff"/>
+      <text x="770" y="429" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">UPDATE: 10→15</text>
+
+      <!-- m9: K8s self-loop -->
+      <path d="M 880 472 C 920 472 920 492 880 492" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="712" y="476" width="96" height="12" rx="2" fill="#ffffff"/>
+      <text x="760" y="485" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">UPDATE PODS</text>
+
+      <!-- m10: K8s -> App (crosses lifelines by design; standard sequence grammar) -->
+      <line x1="876" y1="524" x2="84" y2="524" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="442" y="504" width="76" height="12" rx="2" fill="#ffffff"/>
+      <text x="480" y="513" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">5 NEW PODS</text>
+
+      <!-- Note: cooldown -->
+      <rect x="80" y="536" width="800" height="20" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+      <text x="480" y="550" fill="#545B64" font-size="11" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Waits cooldownPeriod (5m) before the next evaluation</text>
+
+      <!-- Actor boxes (top, drawn after messages so they sit above) -->
+      <g font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+        <rect x="16" y="20" width="128" height="40" rx="6" fill="#ffffff"/>
+        <rect x="16" y="20" width="128" height="40" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+        <text x="80" y="36" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Application</text>
+        <text x="80" y="50" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod</text>
+
+        <rect x="216" y="20" width="128" height="40" rx="6" fill="#ffffff"/>
+        <rect x="216" y="20" width="128" height="40" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+        <text x="280" y="36" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Envoy</text>
+        <text x="280" y="50" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Sidecar</text>
+
+        <rect x="416" y="20" width="128" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+        <text x="480" y="44" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Prometheus</text>
+
+        <rect x="616" y="20" width="128" height="40" rx="6" fill="rgba(255,153,0,0.10)"/>
+        <rect x="616" y="20" width="128" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+        <text x="680" y="36" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">KEDA</text>
+        <text x="680" y="50" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Operator</text>
+
+        <rect x="816" y="20" width="128" height="40" rx="6" fill="#ffffff"/>
+        <rect x="816" y="20" width="128" height="40" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+        <text x="880" y="36" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Kubernetes</text>
+        <text x="880" y="50" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">HPA / API</text>
+      </g>
+
+      <!-- Legend -->
+      <line x1="30" y1="568" x2="930" y2="568" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="30" y="586" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+      <line x1="140" y1="583" x2="172" y2="583" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <text x="180" y="587" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">CALL</text>
+      <line x1="280" y1="583" x2="312" y2="583" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+      <text x="320" y="587" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">RETURN</text>
+      <line x1="440" y1="583" x2="472" y2="583" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <text x="480" y="587" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">SCALE DECISION</text>
+    </svg>

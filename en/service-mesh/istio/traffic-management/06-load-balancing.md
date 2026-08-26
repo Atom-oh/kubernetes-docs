@@ -21,35 +21,7 @@ Istio provides various load balancing algorithms through Envoy to efficiently di
 
 Load balancing distributes traffic across multiple instances to improve overall system throughput and stability.
 
-```mermaid
-flowchart TB
-    subgraph Without["Without Load Balancing"]
-        C1[All Requests] -->|Overload| S1[Service 1<br/>100% Load]
-        S2[Service 2<br/>0% Load]
-        S3[Service 3<br/>0% Load]
-    end
-
-    subgraph With["With Load Balancing"]
-        C2[Distributed Requests] --> LB[Load Balancer]
-        LB -->|33%| S4[Service 1<br/>33% Load]
-        LB -->|33%| S5[Service 2<br/>33% Load]
-        LB -->|34%| S6[Service 3<br/>34% Load]
-    end
-
-    %% Style definitions
-    classDef overload fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef idle fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef balanced fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class applications
-    class C1,C2 client;
-    class S1 overload;
-    class S2,S3 idle;
-    class LB lb;
-    class S4,S5,S6 balanced;
-```
+![Without load balancing, all requests hit one service until it is fully loaded while two others sit idle; with a load balancer in front, the same requests are split evenly so every service carries a similar share of the load.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-0.png)
 
 ### Key Benefits
 
@@ -63,35 +35,7 @@ flowchart TB
 
 ## Load Balancing Overview
 
-```mermaid
-flowchart TB
-    Client[Client Request]
-
-    subgraph LB["Load Balancer"]
-        Algorithm[Load Balancing<br/>Algorithm]
-    end
-
-    subgraph Pods["Pods"]
-        Pod1[Pod 1<br/>Load: 30%]
-        Pod2[Pod 2<br/>Load: 50%]
-        Pod3[Pod 3<br/>Load: 20%]
-    end
-
-    Client --> Algorithm
-    Algorithm -->|Round Robin| Pod1
-    Algorithm -->|Least Request| Pod3
-    Algorithm -->|Random| Pod2
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class Algorithm lb;
-    class Pod1,Pod2,Pod3 pod;
-```
+![A client request reaches Istio's load balancing algorithm, which picks one of three pods with different current loads using round robin, least request, or random selection.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-1.png)
 
 ## Load Balancing Algorithms
 
@@ -111,31 +55,7 @@ Istio provides the following load balancing algorithms.
 
 Distributes requests sequentially to each endpoint.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant LB as Load Balancer<br/>(ROUND_ROBIN)
-    participant Pod1 as Pod 1
-    participant Pod2 as Pod 2
-    participant Pod3 as Pod 3
-
-    Client->>LB: Request 1
-    LB->>Pod1: Route
-    Pod1-->>Client: Response
-
-    Client->>LB: Request 2
-    LB->>Pod2: Route
-    Pod2-->>Client: Response
-
-    Client->>LB: Request 3
-    LB->>Pod3: Route
-    Pod3-->>Client: Response
-
-    Client->>LB: Request 4
-    LB->>Pod1: Route (cycle)
-    Pod1-->>Client: Response
-```
+![Four sequential client requests are routed by the load balancer to pod 1, pod 2, pod 3, and then back to pod 1, cycling through the endpoints in order under the ROUND_ROBIN algorithm.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-2.png)
 
 **Configuration Example:**
 
@@ -168,35 +88,7 @@ spec:
 
 Routes to the endpoint with the fewest active requests.
 
-```mermaid
-flowchart LR
-    Client[Client<br/>New Request]
-    LB[Load Balancer<br/>LEAST_REQUEST]
-
-    subgraph Pods[Pod Status]
-        Pod1[Pod 1<br/>Active Requests: 5]
-        Pod2[Pod 2<br/>Active Requests: 2 ✅]
-        Pod3[Pod 3<br/>Active Requests: 8]
-    end
-
-    Client --> LB
-    LB -.->|Check| Pod1
-    LB -.->|Check| Pod2
-    LB -.->|Check| Pod3
-    LB -->|Route to<br/>Least Loaded| Pod2
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef selected fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-
-    %% Class applications
-    class Client client;
-    class LB lb;
-    class Pod1,Pod3 pod;
-    class Pod2 selected;
-```
+![Before routing a new request, the load balancer checks the active request count on every pod and sends the request to the one with the fewest active requests.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-3.png)
 
 **Configuration Example:**
 
@@ -328,43 +220,7 @@ Consistent Hash routes to the same endpoint based on specific attributes to ensu
 
 ### Consistent Hash Operation Principle
 
-```mermaid
-flowchart TD
-    subgraph Requests[Requests]
-        R1[User A<br/>Cookie: abc123]
-        R2[User B<br/>Cookie: def456]
-        R3[User A<br/>Cookie: abc123]
-    end
-
-    subgraph Hash[Hash Calculation]
-        H1[Hash abc123<br/>-> 0x1A2B]
-        H2[Hash def456<br/>-> 0x7C8D]
-        H3[Hash abc123<br/>-> 0x1A2B]
-    end
-
-    subgraph Ring[Consistent Hash Ring]
-        P1[Pod 1<br/>0x0000-0x4FFF]
-        P2[Pod 2<br/>0x5000-0x9FFF]
-        P3[Pod 3<br/>0xA000-0xFFFF]
-    end
-
-    R1 -->|1| H1
-    H1 -->|2| P1
-    R2 -->|1| H2
-    H2 -->|2| P2
-    R3 -->|1| H3
-    H3 -->|2| P1
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef hash fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class R1,R2,R3 request;
-    class H1,H2,H3 hash;
-    class P1,P2,P3 pod;
-```
+![Each request's key is hashed to a fixed value that always maps to the same pod on the ring, so the same cookie from User A lands on Pod 1 both times while a different cookie from User B lands on Pod 2.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-4.png)
 
 ### 1. HTTP Header-based
 
@@ -515,29 +371,7 @@ spec:
 
 #### 1. Imbalance Risk
 
-```mermaid
-flowchart LR
-    subgraph Problem[Problem Situation]
-        Users[1000 Users]
-        P1[Pod 1<br/>800 users ⚠️]
-        P2[Pod 2<br/>150 users]
-        P3[Pod 3<br/>50 users]
-    end
-
-    Users -->|80%| P1
-    Users -->|15%| P2
-    Users -->|5%| P3
-
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef overload fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Users user;
-    class P1 overload;
-    class P2,P3 normal;
-```
+![When too many users hash to the same range, one pod can end up carrying most of the traffic while the others stay nearly empty — a risk specific to consistent-hash load balancing.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-5.png)
 
 **Cause**: Traffic concentration on specific hash values
 
@@ -926,45 +760,7 @@ spec:
 
 ### Decision Tree
 
-```mermaid
-flowchart TD
-    Start[Load Balancing Needed]
-
-    Q1{Session<br/>Persistence<br/>Required?}
-    Q2{Very High<br/>Traffic?}
-    Q3{Variable<br/>Response Times?}
-    Q4{Geographic<br/>Distribution?}
-    Q5{TCP<br/>Proxy?}
-
-    R1[CONSISTENT_HASH<br/>httpCookie or<br/>httpHeaderName]
-    R2[RANDOM]
-    R3[LEAST_REQUEST]
-    R4[LEAST_REQUEST +<br/>Locality Setting]
-    R5[PASSTHROUGH]
-    R6[ROUND_ROBIN<br/>Default]
-
-    Start --> Q1
-    Q1 -->|Yes| R1
-    Q1 -->|No| Q2
-    Q2 -->|Yes| R2
-    Q2 -->|No| Q3
-    Q3 -->|Yes| Q4
-    Q3 -->|No| Q4
-    Q4 -->|Yes| R4
-    Q4 -->|No| Q5
-    Q5 -->|Yes| R5
-    Q5 -->|No| R6
-
-    %% Style definitions
-    classDef question fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class applications
-    class Start start;
-    class Q1,Q2,Q3,Q4,Q5 question;
-    class R1,R2,R3,R4,R5,R6 result;
-```
+![Choosing a load-balancing algorithm by asking, in order, whether session persistence, very high traffic, or geographic distribution is required, and whether the workload is a TCP proxy, falling through to ROUND_ROBIN by default.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-06-load-balancing-6.png)
 
 ### Recommended Algorithms by Service Type
 

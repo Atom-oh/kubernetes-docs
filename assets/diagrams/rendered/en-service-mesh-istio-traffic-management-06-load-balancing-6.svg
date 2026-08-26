@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d6-title d6-desc">
+<title id="d6-title">Load balancing algorithm selection decision tree</title>
+<desc id="d6-desc">Choosing a load-balancing algorithm by asking, in order, whether session persistence, very high traffic, or geographic distribution is required, and whether the workload is a TCP proxy, falling through to ROUND_ROBIN by default.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<text x="220" y="28" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">LOAD BALANCING NEEDED</text>
+<line x1="220" y1="36" x2="220" y2="52" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Edges first -->
+<!-- Q1 -> R1 (Yes) -->
+<line x1="300" y1="100" x2="700" y2="100" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="485" y="80" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="500" y="89" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">YES</text>
+
+<!-- Q1 -> Q2 (No, default path) -->
+<line x1="220" y1="148" x2="220" y2="172" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="230" y="154" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="243" y="163" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">NO</text>
+
+<!-- Q2 -> R2 (Yes) -->
+<line x1="300" y1="220" x2="700" y2="220" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="485" y="200" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="500" y="209" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">YES</text>
+
+<!-- Q2 -> Q4 (No, default path) -->
+<line x1="220" y1="268" x2="220" y2="292" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="230" y="274" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="243" y="283" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">NO</text>
+
+<!-- Q4 -> R4 (Yes) -->
+<line x1="300" y1="340" x2="700" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="485" y="320" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="500" y="329" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">YES</text>
+
+<!-- Q4 -> Q5 (No, default path) -->
+<line x1="220" y1="388" x2="220" y2="412" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="230" y="394" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="243" y="403" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">NO</text>
+
+<!-- Q5 -> R5 (Yes) -->
+<line x1="300" y1="460" x2="700" y2="460" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="485" y="440" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="500" y="449" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">YES</text>
+
+<!-- Q5 -> R6 (No, default result) -->
+<line x1="220" y1="508" x2="220" y2="524" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="230" y="510" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="243" y="519" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">NO</text>
+
+<!-- Diamonds (shape carries meaning, not color) -->
+<polygon points="220,52 300,100 220,148 140,100" fill="#ffffff"/>
+<polygon points="220,52 300,100 220,148 140,100" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220" y="94" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Session</text>
+<text x="220" y="108" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">persistence?</text>
+
+<polygon points="220,172 300,220 220,268 140,220" fill="#ffffff"/>
+<polygon points="220,172 300,220 220,268 140,220" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220" y="214" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Very high</text>
+<text x="220" y="228" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">traffic?</text>
+
+<polygon points="220,292 300,340 220,388 140,340" fill="#ffffff"/>
+<polygon points="220,292 300,340 220,388 140,340" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220" y="334" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Geographic</text>
+<text x="220" y="348" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">distribution?</text>
+
+<polygon points="220,412 300,460 220,508 140,460" fill="#ffffff"/>
+<polygon points="220,412 300,460 220,508 140,460" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220" y="454" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">TCP</text>
+<text x="220" y="468" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">proxy?</text>
+
+<!-- Result rectangles -->
+<rect x="700" y="68" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="68" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790" y="96" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">CONSISTENT_HASH</text>
+<text x="790" y="112" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cookie or header</text>
+
+<rect x="700" y="188" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="188" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">RANDOM</text>
+
+<rect x="700" y="308" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="308" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">LEAST_REQUEST</text>
+<text x="790" y="352" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ locality setting</text>
+
+<rect x="700" y="428" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="428" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790" y="464" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">PASSTHROUGH</text>
+
+<!-- Default fallback result (focal) -->
+<rect x="130" y="524" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="130" y="524" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="220" y="552" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ROUND_ROBIN</text>
+<text x="220" y="568" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">default</text>
+</svg>

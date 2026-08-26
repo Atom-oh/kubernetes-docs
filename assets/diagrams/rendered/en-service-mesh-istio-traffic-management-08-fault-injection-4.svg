@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="progressive-title progressive-desc">
+    <title id="progressive-title">Progressive Chaos Engineering</title>
+    <desc id="progressive-desc">Flowchart showing four escalating fault-injection stages, each proceeding to the next once monitoring is clean, and each rolling back to a shared fix-and-improve step whenever an issue is found.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Progression arrows (top row) -->
+    <line x1="260" y1="172" x2="300" y2="172" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="460" y1="172" x2="500" y2="172" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="660" y1="172" x2="700" y2="172" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Dashed rollback arrows into Fix and Improve -->
+    <line x1="180" y1="204" x2="180" y2="380" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <line x1="380" y1="204" x2="380" y2="380" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <line x1="580" y1="204" x2="580" y2="380" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <line x1="780" y1="204" x2="780" y2="380" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+
+    <!-- Stage nodes -->
+    <rect x="100" y="140" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="180" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Stage 1</text>
+    <text x="180" y="184" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">1-5% Faults</text>
+
+    <rect x="300" y="140" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="380" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Stage 2</text>
+    <text x="380" y="184" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">5-10% Faults</text>
+
+    <rect x="500" y="140" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="580" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Stage 3</text>
+    <text x="580" y="184" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10-20% Faults</text>
+
+    <rect x="700" y="140" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="780" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Stage 4</text>
+    <text x="780" y="184" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">20-50% Faults</text>
+
+    <!-- Fix and Improve bar -->
+    <rect x="100" y="380" width="760" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="412" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Fix and Improve</text>
+    <text x="480" y="428" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">rollback path when an issue is found at any stage</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <line x1="40" y1="533" x2="68" y2="533" stroke="#545B64" stroke-width="1.2"/>
+    <text x="76" y="536" fill="#545B64" font-size="8.5" font-family="var(--font-sans)">Monitoring OK, proceed</text>
+
+    <line x1="240" y1="533" x2="268" y2="533" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4"/>
+    <text x="276" y="536" fill="#545B64" font-size="8.5" font-family="var(--font-sans)">Issue found, roll back</text>
+
+    <rect x="460" y="527" width="24" height="14" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="492" y="538" fill="#545B64" font-size="8.5" font-family="var(--font-sans)">Fully validated stage</text>
+  </svg>

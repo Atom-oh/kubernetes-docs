@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="960" height="600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="alb-arch-title alb-arch-desc">
+<title id="alb-arch-title">ALB Architecture</title>
+<desc id="alb-arch-desc">Diagram showing how client HTTPS traffic reaches an AWS Application Load Balancer, which terminates and forwards HTTP/2 to two Istio Ingress Gateway pods inside an EKS cluster, which route requests internally to two backend application pods.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- Header -->
+<text x="32" y="36" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ARCHITECTURE</text>
+<text x="32" y="60" fill="#232F3E" font-size="20" font-weight="700">Application Load Balancer (ALB) Integration</text>
+
+<!-- Zones -->
+<rect x="200" y="100" width="720" height="460" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="208" y="104" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="246" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AWS CLOUD</text>
+
+<rect x="228" y="252" width="664" height="284" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="236" y="256" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="280" y="265" fill="rgba(35,47,62,0.42)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">EKS CLUSTER</text>
+
+<!-- Sub-group eyebrow labels -->
+<text x="350" y="292" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">ISTIO INGRESS GATEWAY</text>
+<text x="630" y="292" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">ISTIO INGRESS GATEWAY</text>
+<text x="350" y="432" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">APPLICATIONS</text>
+<text x="630" y="432" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">APPLICATIONS</text>
+
+<!-- ============ ARROWS ============ -->
+
+<!-- Client -> ALB -->
+<path d="M 160,324 H 282 Q 290,324 290,316 V 176 Q 290,168 298,168 H 420"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="196" y="304" width="50" height="12" rx="2" fill="#ffffff"/>
+<text x="221" y="313" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">HTTPS</text>
+
+<!-- ALB -> IGW1 -->
+<path d="M 487,196 V 240 Q 487,248 479,248 H 358 Q 350,248 350,256 V 300"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="394" y="228" width="50" height="12" rx="2" fill="#ffffff"/>
+<text x="419" y="237" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">HTTP/2</text>
+
+<!-- ALB -> IGW2 -->
+<path d="M 553,196 V 240 Q 553,248 561,248 H 622 Q 630,248 630,256 V 300"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="567" y="228" width="50" height="12" rx="2" fill="#ffffff"/>
+<text x="592" y="237" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">HTTP/2</text>
+
+<!-- IGW1 -> App1 (straight) -->
+<path d="M 350,364 V 440" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="352" y="396" width="92" height="12" rx="2" fill="#ffffff"/>
+<text x="398" y="405" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">INTERNAL ROUTING</text>
+
+<!-- IGW2 -> App2 (straight) -->
+<path d="M 630,364 V 440" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="632" y="396" width="92" height="12" rx="2" fill="#ffffff"/>
+<text x="678" y="405" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">INTERNAL ROUTING</text>
+
+<!-- IGW1 -> App2 (cross, via gap) -->
+<path d="M 420,332 H 462 Q 470,332 470,340 V 452 Q 470,460 478,460 H 560"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="384" y="372" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="425" y="381" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">INTERNAL ROUTING</text>
+
+<!-- IGW2 -> App1 (cross, via gap) -->
+<path d="M 560,332 H 518 Q 510,332 510,340 V 476 Q 510,484 502,484 H 420"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="514" y="412" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="555" y="421" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">INTERNAL ROUTING</text>
+
+<!-- ============ NODES ============ -->
+
+<!-- Client -->
+<rect x="40" y="296" width="120" height="56" rx="6" fill="#ffffff"/>
+<rect x="40" y="296" width="120" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="100" y="329" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Client</text>
+
+<!-- ALB (focal) -->
+<rect x="420" y="140" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="420" y="140" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<rect x="428" y="148" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-width="0.8" opacity="0.6"/>
+<text x="442" y="157" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">LB</text>
+<text x="520" y="172" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Application Load Balancer</text>
+<text x="520" y="186" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">LAYER 7 · HTTP/HTTPS</text>
+
+<!-- IGW1 -->
+<rect x="280" y="300" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="350" y="330" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Gateway Pod 1</text>
+<text x="350" y="346" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ingressgateway</text>
+
+<!-- IGW2 -->
+<rect x="560" y="300" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="630" y="330" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Gateway Pod 2</text>
+<text x="630" y="346" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ingressgateway</text>
+
+<!-- App1 -->
+<rect x="280" y="440" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="280" y="440" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="350" y="470" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Service A</text>
+<text x="350" y="486" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">pod</text>
+
+<!-- App2 -->
+<rect x="560" y="440" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="560" y="440" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="630" y="470" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Service B</text>
+<text x="630" y="486" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">pod</text>
+
+</svg>

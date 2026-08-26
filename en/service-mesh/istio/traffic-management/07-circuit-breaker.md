@@ -21,30 +21,7 @@ Circuit Breaker automatically isolates failing services to prevent cascading fai
 
 In microservice architecture, it prevents failures from one service from propagating to other services.
 
-```mermaid
-flowchart TB
-    subgraph Without["Without Circuit Breaker"]
-        A1[Service A] -->|Slow Response| B1[Service B<br/>Failure]
-        A1 -->|Resource Exhaustion| A1
-        A1 -->|Accumulated Timeouts| C1[Service C<br/>Failure]
-        C1 -->|Cascading Failure| D1[Service D<br/>Failure]
-    end
-
-    subgraph With["With Circuit Breaker"]
-        A2[Service A] -->|Fast Fail| B2[Service B<br/>Circuit Open]
-        A2 -->|Normal Operation| C2[Service C<br/>Normal]
-        C2 -->|Normal Operation| D2[Service D<br/>Normal]
-    end
-
-    %% Style definitions
-    classDef failure fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class A1,B1,C1,D1 failure;
-    class A2,C2,D2 normal;
-    class B2 failure;
-```
+![Flowchart contrasting a microservice chain without a circuit breaker, where Service A's slow response and timeouts cascade into failures at Service B, C, and D, against the same chain with a circuit breaker, where Service B fast-fails and enters an open circuit while Service C and D continue operating normally.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-0.png)
 
 ### Key Benefits
 
@@ -57,29 +34,7 @@ flowchart TB
 
 ## Circuit Breaker Overview
 
-```mermaid
-stateDiagram-v2
-    [*] --> Closed
-    Closed --> Open: Consecutive error threshold exceeded
-    Open --> HalfOpen: Wait time elapsed
-    HalfOpen --> Closed: Request successful
-    HalfOpen --> Open: Request failed
-
-    note right of Closed
-        Normal state
-        All requests pass through
-    end note
-
-    note right of Open
-        Blocked state
-        Requests fail immediately
-    end note
-
-    note right of HalfOpen
-        Test state
-        Limited requests allowed
-    end note
-```
+![State machine showing the circuit breaker cycling from Closed (all requests pass) to Open (requests fail fast) once the consecutive-error threshold is exceeded, then to HalfOpen (limited test requests) after the wait time elapses, returning to Closed on success or back to Open on failure.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-1.png)
 
 ## Connection Pool Settings
 
@@ -615,62 +570,11 @@ istioctl proxy-config cluster <pod-name> -o json | \
 
 #### Circuit Breaker's Role and Limitations
 
-```mermaid
-flowchart TB
-    subgraph WhatItDoes["What Circuit Breaker Does"]
-        CB1[Isolate Failing Services]
-        CB2[Prevent Cascading Failures]
-        CB3[Protect System Resources]
-        CB4[Attempt Auto Recovery]
-    end
-
-    subgraph WhatItDoesNot["What Circuit Breaker Does NOT Do"]
-        CB5[Prevent Duplicate Requests]
-        CB6[Guarantee Data Consistency]
-        CB7[Transaction Management]
-        CB8[Idempotency Guarantee]
-    end
-
-    %% Style definitions
-    classDef good fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef bad fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class CB1,CB2,CB3,CB4 good;
-    class CB5,CB6,CB7,CB8 bad;
-```
+![Grouped list contrasting what a circuit breaker does — isolate failing services, prevent cascading failures, protect system resources, and attempt auto recovery — against what it does not do: prevent duplicate requests, guarantee data consistency, manage transactions, or guarantee idempotency.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-2.png)
 
 #### Problem Scenario: Retry + Circuit Breaker
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant Proxy as Istio Proxy<br/>(VirtualService Retry)
-    participant Service as Payment Service
-    participant DB as Database
-
-    Note over Proxy: Retry: attempts=3<br/>Circuit Breaker: consecutiveErrors=5
-
-    Client->>Proxy: POST /payment (Payment Request)
-
-    Proxy->>Service: Attempt 1
-    Service->>DB: INSERT payment (Success)
-    Service--xProxy: Timeout (Response Lost)
-    Note over Proxy: Retry 1/3
-
-    Proxy->>Service: Attempt 2 (Same Request)
-    Service->>DB: INSERT payment (Duplicate!)
-    Service--xProxy: Timeout (Response Lost)
-    Note over Proxy: Retry 2/3
-
-    Proxy->>Service: Attempt 3 (Same Request)
-    Service->>DB: INSERT payment (Duplicate!)
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-
-    Note over DB: Payment duplicated 3 times!<br/>Circuit Breaker activates after 5 errors
-```
+![Sequence diagram showing a client's payment request retried after a timeout, each retry re-inserting the payment into the database, until the third attempt finally returns 200 OK — leaving three duplicate payment inserts even though the circuit breaker's five-consecutive-error threshold was never reached.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-3.png)
 
 **Problem**: Before Circuit Breaker activates (after 5 consecutive errors), **3 duplicate payments** have already occurred.
 

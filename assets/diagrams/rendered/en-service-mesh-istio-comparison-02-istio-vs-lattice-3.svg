@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="multicloud-title multicloud-desc">
+<title id="multicloud-title">Istio multi-cloud mesh</title>
+<desc id="multicloud-desc">Diagram showing per-cloud Istiod control planes in AWS, Google Cloud, and Azure federating service discovery with each other, while their EKS, GKE, and AKS clusters exchange mTLS traffic directly across cloud boundaries.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zones -->
+<rect x="40" y="80" width="280" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="140" y="84" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="180" y="93" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">AWS</text>
+
+<rect x="340" y="80" width="280" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="416" y="84" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="93" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">GOOGLE CLOUD</text>
+
+<rect x="640" y="80" width="280" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="744" y="84" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="780" y="93" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">AZURE</text>
+
+<!-- Connectors (bidirectional, straight — all endpoints share y) -->
+<line x1="280" y1="144" x2="380" y2="144" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-rev)"/>
+<line x1="580" y1="144" x2="680" y2="144" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-rev)"/>
+<line x1="280" y1="244" x2="380" y2="244" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+<line x1="580" y1="244" x2="680" y2="244" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+
+<!-- Arrow labels -->
+<rect x="304" y="124" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="330" y="133" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MTLS</text>
+<rect x="604" y="124" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="630" y="133" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MTLS</text>
+<rect x="292" y="224" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="330" y="233" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SVC DISCOVERY</text>
+<rect x="592" y="224" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="630" y="233" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SVC DISCOVERY</text>
+
+<!-- Clusters -->
+<rect x="80" y="120" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="88" y="128" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="103" y="137" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+<text x="180" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EKS Cluster</text>
+
+<rect x="380" y="120" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="380" y="120" width="200" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="388" y="128" width="30" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+<text x="403" y="137" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+<text x="480" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">GKE Cluster</text>
+
+<rect x="680" y="120" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="688" y="128" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="703" y="137" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+<text x="780" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AKS Cluster</text>
+
+<!-- Istiods -->
+<rect x="80" y="220" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="88" y="228" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="100" y="237" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CP</text>
+<text x="180" y="248" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istiod</text>
+
+<rect x="380" y="220" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="388" y="228" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="400" y="237" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CP</text>
+<text x="480" y="248" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istiod</text>
+
+<rect x="680" y="220" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="688" y="228" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="700" y="237" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CP</text>
+<text x="780" y="248" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istiod</text>
+
+<!-- Legend -->
+<line x1="40" y1="332" x2="920" y2="332" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="348" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="360" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="60" y="368" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Bridging cluster (focal)</text>
+<line x1="260" y1="366" x2="288" y2="366" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-rev)"/>
+<text x="296" y="368" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Cross-cloud mTLS</text>
+<line x1="480" y1="366" x2="508" y2="366" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+<text x="516" y="368" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Federated service discovery</text>
+</svg>

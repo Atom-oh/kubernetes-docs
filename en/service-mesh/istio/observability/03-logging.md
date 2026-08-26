@@ -22,60 +22,7 @@ Istio's logging capabilities allow you to record and analyze all activities in t
 
 ### Istio Log Layers
 
-```mermaid
-flowchart TD
-    subgraph "Application Pod"
-        App[Application Container]
-        Envoy[Envoy Proxy]
-        App --> Envoy
-    end
-
-    subgraph "Istio Control Plane"
-        Istiod[istiod]
-        TelemetryAPI[Telemetry API]
-    end
-
-    subgraph "Log Collection"
-        Promtail[Promtail Agent]
-        FluentBit[Fluent Bit]
-        OTELCol[OpenTelemetry Collector]
-    end
-
-    subgraph "Log Storage & Query"
-        Loki[Grafana Loki]
-        ES[Elasticsearch]
-    end
-
-    subgraph "Visualization"
-        Grafana[Grafana]
-    end
-
-    Envoy -->|Access Logs| Promtail
-    Envoy -->|Access Logs| FluentBit
-    Envoy -->|OTLP Logs| OTELCol
-
-    Istiod -->|Configure| Envoy
-    TelemetryAPI -.->|Apply Config| Istiod
-
-    Promtail --> Loki
-    FluentBit --> ES
-    OTELCol --> Loki
-
-    Loki --> Grafana
-    ES --> Grafana
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef istioComponent fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef logCollector fill:#00D9FF,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef visualization fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    class App k8sComponent;
-    class Envoy,Istiod,TelemetryAPI istioComponent;
-    class Promtail,FluentBit,OTELCol logCollector;
-    class Loki,ES storage;
-    class Grafana visualization;
-```
+![Architecture diagram showing how the Envoy sidecar proxy emits access logs that flow through log collectors and an OpenTelemetry collector into Loki and Elasticsearch, from which Grafana renders dashboards, while istiod configures Envoy under control from the Telemetry API.](../../../.gitbook/assets/en-service-mesh-istio-observability-03-logging-0.png)
 
 ### Log Types
 

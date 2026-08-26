@@ -24,86 +24,13 @@ Multi-cluster Service Mesh is powerful but increases complexity and cost. Carefu
 
 ### Decision Flow
 
-```mermaid
-flowchart TD
-    Start[Multi-cluster<br/>Consideration]
-
-    Q1{Already have<br/>multiple clusters?}
-    Q2{Regional<br/>separation needed?}
-    Q3{DR/HA<br/>required?}
-    Q4{Strong L7<br/>features needed?}
-    Q5{Can handle<br/>operational complexity?}
-
-    SingleCluster[Single-cluster<br/>Istio<br/>Simplest]
-    VPCLattice[AWS VPC Lattice<br/>AWS Managed]
-    MultiClusterIstio[Multi-cluster<br/>Istio<br/>Full Control]
-    Hybrid[Hybrid:<br/>Istio + Lattice<br/>Best of Both]
-
-    Start --> Q1
-    Q1 -->|No| SingleCluster
-    Q1 -->|Yes| Q2
-    Q2 -->|No| SingleCluster
-    Q2 -->|Yes| Q3
-    Q3 -->|No| VPCLattice
-    Q3 -->|Yes| Q4
-    Q4 -->|No| VPCLattice
-    Q4 -->|Yes| Q5
-    Q5 -->|No| VPCLattice
-    Q5 -->|Yes| Hybrid
-
-    Hybrid -.->|Option| MultiClusterIstio
-
-    %% Style definitions
-    classDef question fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-    classDef simple fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef managed fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef advanced fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef hybrid fill:#3B48CC,stroke:#333,stroke-width:2px,color:white;
-
-    %% Apply classes
-    class Q1,Q2,Q3,Q4,Q5 question;
-    class SingleCluster simple;
-    class VPCLattice managed;
-    class MultiClusterIstio advanced;
-    class Hybrid hybrid;
-```
+![A five-question decision cascade that routes a team from wanting multi-cluster toward single-cluster Istio, AWS VPC Lattice, or a hybrid Istio-plus-Lattice approach based on existing clusters, regional separation, DR needs, L7 requirements, and operational capacity.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-0.png)
 
 ### When Multi-cluster is Needed
 
 #### 1. Geographic Distribution and Latency Optimization
 
-```mermaid
-flowchart LR
-    subgraph US[US Region]
-        C1[EKS Cluster<br/>us-east-1]
-    end
-
-    subgraph EU[Europe Region]
-        C2[EKS Cluster<br/>eu-west-1]
-    end
-
-    subgraph APAC[Asia Region]
-        C3[EKS Cluster<br/>ap-northeast-2]
-    end
-
-    Mesh[Istio Mesh<br/>Unified Management]
-
-    Mesh -.->|Config sync| C1
-    Mesh -.->|Config sync| C2
-    Mesh -.->|Config sync| C3
-
-    C1 <-->|Cross-region<br/>mTLS| C2
-    C2 <-->|Cross-region<br/>mTLS| C3
-    C1 <-->|Cross-region<br/>mTLS| C3
-
-    %% Style definitions
-    classDef cluster fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef mesh fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    %% Apply classes
-    class C1,C2,C3 cluster;
-    class Mesh mesh;
-```
+![A unified Istio mesh pushes config sync to three regional EKS clusters in the US, Europe, and Asia, which also mesh directly with each other over cross-region mTLS.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-1.png)
 
 **When needed**:
 
@@ -113,42 +40,7 @@ flowchart LR
 
 #### 2. Disaster Recovery (DR)
 
-```mermaid
-flowchart TB
-    subgraph Active[Active Cluster<br/>Primary Region]
-        Prod1[Production<br/>Workloads]
-    end
-
-    subgraph Standby[Standby Cluster<br/>DR Region]
-        Prod2[Standby<br/>Workloads]
-    end
-
-    DNS[Global DNS<br/>Route53]
-    Users[Users]
-
-    Users -->|Normal| DNS
-    DNS -->|100% traffic| Active
-    DNS -.->|0% traffic| Standby
-
-    Active -.->|Real-time<br/>config replication| Standby
-
-    Failover[Disaster Occurs]
-    Failover -->|Failover| DNS
-    DNS -->|0% traffic| Active
-    DNS -->|100% traffic| Standby
-
-    %% Style definitions
-    classDef active fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef standby fill:#3B48CC,stroke:#333,stroke-width:2px,color:white;
-    classDef dns fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef failover fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-
-    %% Apply classes
-    class Prod1 active;
-    class Prod2 standby;
-    class DNS dns;
-    class Failover failover;
-```
+![Route 53 normally sends all user traffic to the active cluster's production workloads while the standby cluster receives real-time config replication, and flips to send all traffic to standby once a disaster triggers failover.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-2.png)
 
 **When needed**:
 
@@ -176,32 +68,7 @@ flowchart TB
 
 #### 1. Single Region, Small Scale Services
 
-```mermaid
-flowchart TD
-    subgraph SingleCluster[Single EKS Cluster]
-        NS1[Namespace: prod]
-        NS2[Namespace: staging]
-        NS3[Namespace: dev]
-
-        Istio[Istio Control Plane]
-
-        Istio -.->|Manages| NS1
-        Istio -.->|Manages| NS2
-        Istio -.->|Manages| NS3
-    end
-
-    Note[Multi-cluster not needed<br/>- Namespace separation sufficient<br/>- NetworkPolicy for isolation<br/>- Simple management]
-
-    %% Style definitions
-    classDef namespace fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef istio fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef note fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class NS1,NS2,NS3 namespace;
-    class Istio istio;
-    class Note note;
-```
+![A single EKS cluster's Istio control plane manages three namespaces (prod, staging, dev), an approach sufficient for single-region, small-scale services that don't need multi-cluster.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-3.png)
 
 **Use instead**:
 
@@ -376,36 +243,7 @@ Answer these questions before adoption:
 
 #### Pattern 1: Istio Multi-cluster Only
 
-```mermaid
-flowchart TB
-    subgraph Cluster1[Cluster 1<br/>us-east-1]
-        Istiod1[Istiod]
-        EWG1[East-West<br/>Gateway]
-        App1[App Services]
-    end
-
-    subgraph Cluster2[Cluster 2<br/>us-west-2]
-        Istiod2[Istiod]
-        EWG2[East-West<br/>Gateway]
-        App2[App Services]
-    end
-
-    Istiod1 <-.->|Service<br/>Discovery| Istiod2
-    EWG1 <-->|mTLS<br/>Cross-region| EWG2
-
-    App1 -->|Envoy| EWG1
-    EWG2 -->|Envoy| App2
-
-    %% Style definitions
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Istiod1,Istiod2 istio;
-    class EWG1,EWG2 gateway;
-    class App1,App2 app;
-```
+![Two clusters each run their own Istiod control plane and east-west gateway; the gateways carry cross-region mTLS traffic between the clusters' app services while the two Istiod instances sync service discovery.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-4.png)
 
 **Pros**:
 
@@ -421,35 +259,7 @@ flowchart TB
 
 #### Pattern 2: VPC Lattice Only
 
-```mermaid
-flowchart TB
-    subgraph VPC1[VPC 1<br/>us-east-1]
-        App1[App Services]
-    end
-
-    subgraph VPC2[VPC 2<br/>us-west-2]
-        App2[App Services]
-    end
-
-    subgraph Lattice[AWS VPC Lattice]
-        SN[Service Network]
-        SVC1[Service 1]
-        SVC2[Service 2]
-    end
-
-    App1 -->|Register| SVC1
-    App2 -->|Register| SVC2
-    SVC1 <-->|Routing| SN
-    SVC2 <-->|Routing| SN
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lattice fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    %% Apply classes
-    class App1,App2 app;
-    class SN,SVC1,SVC2 lattice;
-```
+![App services in two separate VPCs each register as a VPC Lattice service, and both services route through a shared Lattice service network instead of an Istio mesh.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-5.png)
 
 **Pros**:
 
@@ -465,47 +275,7 @@ flowchart TB
 
 #### Pattern 3: Hybrid (Recommended)
 
-```mermaid
-flowchart TB
-    subgraph Cluster1[Cluster 1<br/>us-east-1]
-        subgraph IstioMesh1[Istio Mesh]
-            Istiod1[Istiod]
-            App1A[Service A]
-            App1B[Service B]
-        end
-    end
-
-    subgraph Cluster2[Cluster 2<br/>us-west-2]
-        subgraph IstioMesh2[Istio Mesh]
-            Istiod2[Istiod]
-            App2A[Service A]
-            App2B[Service B]
-        end
-    end
-
-    subgraph Lattice[AWS VPC Lattice]
-        SN[Service Network<br/>Cross-cluster]
-    end
-
-    IstioMesh1 -->|Intra-cluster:<br/>Full Istio features| App1A
-    App1A <-->|Intra-cluster:<br/>mTLS, Retry| App1B
-
-    IstioMesh2 -->|Intra-cluster:<br/>Full Istio features| App2A
-    App2A <-->|Intra-cluster:<br/>mTLS, Retry| App2B
-
-    App1B <-->|Cross-cluster:<br/>VPC Lattice| SN
-    SN <-->|Cross-cluster:<br/>VPC Lattice| App2B
-
-    %% Style definitions
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lattice fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    %% Apply classes
-    class Istiod1,Istiod2 istio;
-    class App1A,App1B,App2A,App2B app;
-    class SN lattice;
-```
+![Inside each cluster, an Istio mesh gives Service A and Service B full mTLS and retry between themselves, while Service B in each cluster reaches the other cluster only through a shared VPC Lattice service network.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-6.png)
 
 **Pros**:
 
@@ -538,33 +308,7 @@ With Multi-cluster Service Mesh you can:
 
 ### Primary-Remote
 
-```mermaid
-flowchart TB
-    subgraph PrimaryCluster["Primary Cluster<br/>us-east-1"]
-        Istiod[Istiod<br/>Control Plane]
-        ServiceA[Service A]
-    end
-
-    subgraph RemoteCluster["Remote Cluster<br/>us-west-2"]
-        ServiceB[Service B]
-        ServiceC[Service C]
-    end
-
-    Istiod -.->|Push config| ServiceB
-    Istiod -.->|Push config| ServiceC
-    ServiceA <-->|mTLS| ServiceB
-    ServiceB <-->|mTLS| ServiceC
-
-    %% Style definitions
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef remote fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Istiod primary;
-    class ServiceB,ServiceC remote;
-    class ServiceA service;
-```
+![One primary cluster's Istiod pushes config to two services in a remote cluster, while Service A on the primary and the two remote services communicate over mTLS, giving the topology a single control plane but a single point of failure.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-7.png)
 
 **Characteristics**:
 
@@ -575,29 +319,7 @@ flowchart TB
 
 ### Multi-Primary
 
-```mermaid
-flowchart TB
-    subgraph Cluster1["Cluster 1<br/>us-east-1"]
-        Istiod1[Istiod<br/>Control Plane]
-        ServiceA1[Service A]
-    end
-
-    subgraph Cluster2["Cluster 2<br/>us-west-2"]
-        Istiod2[Istiod<br/>Control Plane]
-        ServiceA2[Service A]
-    end
-
-    Istiod1 <-.->|Sync| Istiod2
-    ServiceA1 <-->|Load Balancing| ServiceA2
-
-    %% Style definitions
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Istiod1,Istiod2 primary;
-    class ServiceA1,ServiceA2 service;
-```
+![Two clusters each run their own full Istiod control plane, which stay in sync with each other while Service A in both clusters load-balances traffic between them, trading single-control-plane simplicity for regional autonomy and no single point of failure.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-8.png)
 
 **Characteristics**:
 
@@ -874,26 +596,7 @@ spec:
 
 ### Traffic Flow
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App1 as Cluster 1<br/>Service A
-    participant Envoy1 as Envoy<br/>(Cluster 1)
-    participant Lattice as VPC Lattice
-    participant App2 as Cluster 2<br/>Service B
-
-    Note over App1,App2: Cross-cluster call
-
-    App1->>Envoy1: 1\. HTTP request
-    Note over Envoy1: Istio collects<br/>metrics locally
-    Envoy1->>Lattice: 2\. Route to VPC Lattice DNS
-    Note over Lattice: AWS managed<br/>service discovery
-    Lattice->>App2: 3\. Forward to Cluster 2 service
-    Note over App2: Istio collects<br/>metrics in Cluster 2
-    App2->>Lattice: 4\. Response
-    Lattice->>Envoy1: 5\. Forward response
-    Envoy1->>App1: 6\. Response
-```
+![Cluster 1's Service A calls its local Envoy, which routes through VPC Lattice DNS to Cluster 2's Service B; the response returns the same way, with Istio collecting metrics independently inside each cluster.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-9.png)
 
 ### Pros and Considerations
 
@@ -916,55 +619,7 @@ sequenceDiagram
 
 #### Architecture
 
-```mermaid
-flowchart TB
-    subgraph US[US Region<br/>us-east-1]
-        subgraph Cluster1[EKS Cluster 1]
-            Istiod1[Istiod]
-            Frontend1[Frontend<br/>Service]
-            Cart1[Cart<br/>Service]
-            Order1[Order<br/>Service]
-        end
-    end
-
-    subgraph EU[Europe Region<br/>eu-west-1]
-        subgraph Cluster2[EKS Cluster 2]
-            Istiod2[Istiod]
-            Frontend2[Frontend<br/>Service]
-            Cart2[Cart<br/>Service]
-            Order2[Order<br/>Service]
-        end
-    end
-
-    subgraph Payment[Payment Service<br/>ap-northeast-2]
-        subgraph Cluster3[EKS Cluster 3]
-            Istiod3[Istiod]
-            Payment3[Payment<br/>Service]
-        end
-    end
-
-    Lattice[VPC Lattice<br/>Service Network]
-
-    Frontend1 <-->|Istio<br/>internal call| Cart1
-    Cart1 <-->|Istio| Order1
-
-    Frontend2 <-->|Istio<br/>internal call| Cart2
-    Cart2 <-->|Istio| Order2
-
-    Order1 -->|VPC Lattice| Lattice
-    Order2 -->|VPC Lattice| Lattice
-    Lattice -->|Routing| Payment3
-
-    %% Style definitions
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lattice fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    %% Apply classes
-    class Istiod1,Istiod2,Istiod3 istio;
-    class Frontend1,Cart1,Order1,Frontend2,Cart2,Order2,Payment3 app;
-    class Lattice lattice;
-```
+![US and Europe clusters each use Istio internally to connect Frontend, Cart, and Order services, while both clusters' Order service reaches a Payment service in a third region only through a shared VPC Lattice service network.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-10.png)
 
 **Decision**:
 

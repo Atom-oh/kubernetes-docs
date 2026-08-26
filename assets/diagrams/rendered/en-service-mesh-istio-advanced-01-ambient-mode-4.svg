@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-advanced-01-ambient-mode-4-title en-service-mesh-istio-advanced-01-ambient-mode-4-desc">
+<title id="en-service-mesh-istio-advanced-01-ambient-mode-4-title">Waypoint deployment units</title>
+<desc id="en-service-mesh-istio-advanced-01-ambient-mode-4-desc">Architecture diagram showing one shared ztunnel routing L7 traffic to two separate waypoint proxies, one scoped to the frontend service account and one to the backend service account within the production namespace.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="280" y="100" width="620" height="340" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="523" y="104" width="134" height="12" rx="2" fill="#ffffff"/>
+<text x="590" y="113" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">NAMESPACE: PRODUCTION</text>
+<rect x="60" y="168" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="60" y="168" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="140.0" y="196.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ztunnel</text>
+<text x="140.0" y="214.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">shared, per node</text>
+<path d="M 220,176 H 262.0 Q 270.0,176 270.0,184 V 184 Q 270.0,192 278.0,192 H 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 220,208 H 262.0 Q 270.0,208 270.0,216 V 364 Q 270.0,372 278.0,372 H 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="500" y1="192" x2="620" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="500" y1="372" x2="620" y2="372" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="236" y="186" width="21" height="12" rx="2" fill="#ffffff"/>
+<text x="246" y="195" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">L7</text>
+<rect x="320" y="160" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="320" y="160" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="410.0" y="188.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Waypoint</text>
+<text x="410.0" y="206.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">for frontend SA</text>
+<rect x="320" y="340" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="320" y="340" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="410.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Waypoint</text>
+<text x="410.0" y="386.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">for backend SA</text>
+<rect x="620" y="160" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="620" y="160" width="220" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="730.0" y="188.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Frontend Pods</text>
+<text x="730.0" y="206.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">ServiceAccount: frontend</text>
+<rect x="620" y="340" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="620" y="340" width="220" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="730.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backend Pods</text>
+<text x="730.0" y="386.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">ServiceAccount: backend</text>
+<line x1="30" y1="542" x2="930" y2="542" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="30" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.16em">LEGEND</text>
+<rect x="30" y="570" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="50" y="578" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Waypoint (per SA)</text>
+<rect x="176" y="570" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="196" y="578" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">workload pods</text>
+<line x1="298" y1="575" x2="324" y2="575" stroke="#545B64" stroke-width="1.3"/>
+<text x="332" y="578" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">L7 routing</text>
+</svg>

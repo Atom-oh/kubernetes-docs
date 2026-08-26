@@ -149,26 +149,7 @@ Controlling the X-Forwarded-For (XFF) header and hop count is crucial for tracki
 
 ### X-Forwarded-For Overview
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Client<br/>IP: 203.0.113.5
-    participant LB as Load Balancer<br/>IP: 10.0.1.100
-    participant Gateway as Istio Gateway<br/>IP: 10.0.2.50
-    participant Envoy as Envoy Sidecar<br/>IP: 10.244.1.10
-    participant App as Application
-
-    Client->>LB: HTTP Request
-    Note over LB: X-Forwarded-For: 203.0.113.5
-
-    LB->>Gateway: X-Forwarded-For: 203.0.113.5
-    Note over Gateway: X-Forwarded-For: 203.0.113.5, 10.0.1.100
-
-    Gateway->>Envoy: X-Forwarded-For: 203.0.113.5, 10.0.1.100
-    Note over Envoy: XFF processing determined<br/>by use_remote_address setting
-
-    Envoy->>App: X-Forwarded-For header passed
-```
+![Sequence diagram showing a client request passing through a load balancer, an Istio Gateway, and an Envoy sidecar, with each hop appending its own address to the X-Forwarded-For header before the application receives the final request.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-0.png)
 
 ### XFF Configuration Options
 
@@ -265,29 +246,7 @@ xff_num_trusted_hops: 3 -> Trust last 3
 
 #### Scenario 1: AWS ALB + Istio Gateway
 
-```mermaid
-flowchart LR
-    Client[Client<br/>203.0.113.5]
-    ALB[AWS ALB<br/>10.0.1.100]
-    Gateway[Istio Gateway<br/>10.0.2.50]
-    App[Application]
-
-    Client -->|"XFF: (none)"| ALB
-    ALB -->|"XFF: 203.0.113.5"| Gateway
-    Gateway -->|"XFF: 203.0.113.5, 10.0.1.100"| App
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class ALB aws;
-    class Gateway istio;
-    class App app;
-```
+![Flowchart showing a client request passing through a single AWS ALB before reaching the Istio Gateway and application, with the X-Forwarded-For header gaining one hop at the ALB.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-1.png)
 
 **Configuration**:
 
@@ -326,31 +285,7 @@ spec:
 
 #### Scenario 2: Client -> CloudFront -> ALB -> Gateway
 
-```mermaid
-flowchart LR
-    Client[Client<br/>203.0.113.5]
-    CF[CloudFront<br/>172.64.0.1]
-    ALB[AWS ALB<br/>10.0.1.100]
-    Gateway[Istio Gateway<br/>10.0.2.50]
-    App[Application]
-
-    Client -->|"XFF: (none)"| CF
-    CF -->|"XFF: 203.0.113.5"| ALB
-    ALB -->|"XFF: 203.0.113.5, 172.64.0.1"| Gateway
-    Gateway -->|"XFF: 203.0.113.5, 172.64.0.1, 10.0.1.100"| App
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class CF,ALB aws;
-    class Gateway istio;
-    class App app;
-```
+![Flowchart showing a client request passing through CloudFront and an AWS ALB before reaching the Istio Gateway and application, with the X-Forwarded-For header gaining one hop at each proxy.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-2.png)
 
 **Configuration**:
 
@@ -393,33 +328,7 @@ xff_num_trusted_hops: 2 -> Trust last 2 (CloudFront, ALB)
 
 #### Scenario 3: Client -> CloudFront -> NLB -> ALB -> Gateway
 
-```mermaid
-flowchart LR
-    Client[Client<br/>203.0.113.5]
-    CF[CloudFront<br/>172.64.0.1]
-    NLB[AWS NLB<br/>10.0.1.50]
-    ALB[AWS ALB<br/>10.0.1.100]
-    Gateway[Istio Gateway<br/>10.0.2.50]
-    App[Application]
-
-    Client -->|"XFF: (none)"| CF
-    CF -->|"XFF: 203.0.113.5"| NLB
-    NLB -->|"XFF: 203.0.113.5<br/>(L4, no modification)"| ALB
-    ALB -->|"XFF: 203.0.113.5, 172.64.0.1"| Gateway
-    Gateway -->|"XFF: 203.0.113.5, 172.64.0.1, 10.0.1.100"| App
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class CF,NLB,ALB aws;
-    class Gateway istio;
-    class App app;
-```
+![Flowchart showing a client request passing through CloudFront, an AWS NLB, and an AWS ALB before reaching the Istio Gateway and application, highlighting that the L4 NLB passes the header through unchanged while CloudFront and the ALB each add a hop.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-3.png)
 
 **Configuration**:
 
@@ -465,29 +374,7 @@ xff_num_trusted_hops: 2 -> Trust last 2 (CloudFront, ALB)
 
 #### Scenario 4: Client -> ALB -> Gateway (Direct Connection)
 
-```mermaid
-flowchart LR
-    Client[Client<br/>203.0.113.5]
-    ALB[AWS ALB<br/>10.0.1.100]
-    Gateway[Istio Gateway<br/>10.0.2.50]
-    App[Application]
-
-    Client -->|"XFF: (none)"| ALB
-    ALB -->|"XFF: 203.0.113.5"| Gateway
-    Gateway -->|"XFF: 203.0.113.5, 10.0.1.100"| App
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class ALB aws;
-    class Gateway istio;
-    class App app;
-```
+![Flowchart showing a client request passing through a single AWS ALB with no CDN in front of it before reaching the Istio Gateway and application, with the X-Forwarded-For header gaining exactly one hop at the ALB.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-4.png)
 
 **Configuration**:
 
@@ -790,64 +677,7 @@ spec:
 
 #### Architecture Overview
 
-```mermaid
-flowchart TB
-    subgraph Internet[Internet]
-        Client1[General User<br/>1.2.3.4]
-        Client2[Company User<br/>203.0.113.10]
-    end
-
-    subgraph AWS[AWS]
-        ALB[Application<br/>Load Balancer]
-    end
-
-    subgraph K8S[Kubernetes Cluster]
-        subgraph Gateway[Istio Gateway]
-            EnvoyGW[Envoy<br/>XFF Processing<br/>xff_num_trusted_hops: 1]
-        end
-
-        subgraph NoRestriction[Unrestricted Apps]
-            AppA[App A]
-            AppB[App B]
-            AppC[App C]
-        end
-
-        subgraph Restricted[IP Restricted Apps]
-            AppF[App F<br/>AuthorizationPolicy]
-            AppG[App G<br/>AuthorizationPolicy]
-        end
-    end
-
-    Client1 -->|XFF: 1.2.3.4| ALB
-    Client2 -->|XFF: 203.0.113.10| ALB
-
-    ALB -->|XFF: 1.2.3.4, ALB_IP| EnvoyGW
-    ALB -->|XFF: 203.0.113.10, ALB_IP| EnvoyGW
-
-    EnvoyGW -->|Original IP: 1.2.3.4<br/>Allowed| AppA
-    EnvoyGW -->|Original IP: 1.2.3.4<br/>Allowed| AppB
-    EnvoyGW -->|Original IP: 1.2.3.4<br/>Allowed| AppC
-
-    EnvoyGW -->|Original IP: 1.2.3.4<br/>Denied| AppF
-    EnvoyGW -->|Original IP: 203.0.113.10<br/>Allowed| AppF
-
-    EnvoyGW -->|Original IP: 1.2.3.4<br/>Denied| AppG
-    EnvoyGW -->|Original IP: 203.0.113.10<br/>Allowed| AppG
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#466BB0,stroke:#333,stroke-width:2px,color:white;
-    classDef appNormal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef appRestricted fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-
-    %% Apply classes
-    class Client1,Client2 client;
-    class ALB aws;
-    class EnvoyGW gateway;
-    class AppA,AppB,AppC appNormal;
-    class AppF,AppG appRestricted;
-```
+![Architecture diagram showing two clients reaching an AWS ALB and Istio Gateway, where the Gateway's EnvoyFilter extracts the real client IP from X-Forwarded-For once for all apps, after which unrestricted apps accept any IP while IP-restricted apps allow only the company NAT range.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-5.png)
 
 #### Core Principle
 
@@ -945,31 +775,7 @@ spec:
 
 #### Operation Flow
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Client<br/>1.2.3.4
-    participant ALB as ALB
-    participant Gateway as Istio Gateway<br/>(XFF Extraction)
-    participant AppA as App A<br/>(No Restriction)
-    participant AppF as App F<br/>(IP Restricted)
-
-    Note over Gateway: XFF processing<br/>configured with EnvoyFilter
-
-    Client->>ALB: HTTP Request
-    Note over ALB: XFF: 1.2.3.4
-
-    ALB->>Gateway: XFF: 1.2.3.4, ALB_IP
-    Note over Gateway: xff_num_trusted_hops: 1<br/>-> Original IP: 1.2.3.4
-
-    Gateway->>AppA: Original IP: 1.2.3.4
-    Note over AppA: No AuthorizationPolicy<br/>-> All IPs allowed
-    AppA->>Gateway: 200 OK
-
-    Gateway->>AppF: Original IP: 1.2.3.4
-    Note over AppF: AuthorizationPolicy exists<br/>remoteIpBlocks: 203.0.113.0/24<br/>-> 1.2.3.4 denied
-    AppF->>Gateway: 403 Forbidden
-```
+![Sequence diagram of a single client request traveling through an ALB and Istio Gateway, where the Gateway extracts the real client IP once and forwards it to two apps — one with no AuthorizationPolicy that returns 200 OK, and one with an IP-restriction policy that returns 403 Forbidden for the same client.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-6.png)
 
 #### Why Gateway Configuration is Needed?
 
@@ -1287,26 +1093,7 @@ You can return static responses directly without going through backend services 
 
 ### Static Response Overview
 
-```mermaid
-flowchart LR
-    Client[Client]
-    Envoy[Envoy Proxy]
-    Backend[Backend Service]
-
-    Client -->|HTTP Request| Envoy
-    Envoy -->|When condition matches<br/>Static response| Client
-    Envoy -.->|When condition doesn't match<br/>Proxy| Backend
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef backend fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class Envoy envoy;
-    class Backend backend;
-```
+![Flowchart showing a client request reaching the Envoy proxy, which returns a static response directly to the client when a match condition is met, and only proxies through to the backend service otherwise.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-7.png)
 
 ### Use Cases
 

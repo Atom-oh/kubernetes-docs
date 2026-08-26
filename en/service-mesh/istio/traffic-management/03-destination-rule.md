@@ -23,41 +23,7 @@ DestinationRule is a core Istio resource that defines how to handle traffic afte
 
 DestinationRule defines **traffic policies after routing**. If VirtualService determines "where" to send traffic, DestinationRule determines "how" to handle it.
 
-```mermaid
-flowchart LR
-    Client[Client Request]
-
-    subgraph VS[VirtualService]
-        Route[Routing Decision<br/>Where?]
-    end
-
-    subgraph DR[DestinationRule]
-        Policy[Traffic Policy<br/>How?]
-    end
-
-    subgraph Services[Services]
-        V1[Version 1]
-        V2[Version 2]
-    end
-
-    Client --> Route
-    Route -->|90%| Policy
-    Route -->|10%| Policy
-    Policy --> V1
-    Policy --> V2
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef routing fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class Route routing;
-    class Policy policy;
-    class V1,V2 service;
-```
+![Diagram showing a client request routed by VirtualService's routing decision, which splits 90/10 into DestinationRule's traffic policy, applying load balancing across two service versions.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-0.png)
 
 ### Key Roles of DestinationRule
 
@@ -75,47 +41,7 @@ These two resources work together to provide complete traffic management.
 
 ### Role Comparison
 
-```mermaid
-flowchart TD
-    Request[HTTP Request<br/>Host: reviews]
-
-    subgraph VS[VirtualService Role]
-        Match{Condition Matching}
-        Route[Routing Decision]
-    end
-
-    subgraph DR[DestinationRule Role]
-        Subset[Subset Selection]
-        Policy[Policy Application]
-    end
-
-    subgraph Pods[Pods]
-        P1[reviews-v1-pod1]
-        P2[reviews-v1-pod2]
-        P3[reviews-v2-pod1]
-    end
-
-    Request --> Match
-    Match -->|headers, path, etc.| Route
-    Route -->|subset: v1<br/>weight: 90%| Subset
-    Route -->|subset: v2<br/>weight: 10%| Subset
-    Subset --> Policy
-    Policy -->|load balancing| P1
-    Policy -->|load balancing| P2
-    Policy -->|load balancing| P3
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef vs fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dr fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Match,Route vs;
-    class Subset,Policy dr;
-    class P1,P2,P3 pod;
-```
+![Diagram showing an HTTP request condition-matched and routed by VirtualService to a named subset, then DestinationRule selecting that subset and load-balancing across its three matching pods.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-1.png)
 
 ### Separation of Responsibilities
 
@@ -172,37 +98,7 @@ A Subset defines a **logical group** of a service. It's typically distinguished 
 
 ### The Essence of Subsets
 
-```mermaid
-flowchart TB
-    Service[Kubernetes Service<br/>reviews]
-
-    subgraph DR[DestinationRule Subset Definition]
-        S1[Subset: v1<br/>labels: version=v1]
-        S2[Subset: v2<br/>labels: version=v2]
-    end
-
-    subgraph Pods[Actual Pods]
-        P1[reviews-v1-abc<br/>version=v1]
-        P2[reviews-v1-def<br/>version=v1]
-        P3[reviews-v2-xyz<br/>version=v2]
-    end
-
-    Service --> S1
-    Service --> S2
-    S1 -.->|Label Matching| P1
-    S1 -.->|Label Matching| P2
-    S2 -.->|Label Matching| P3
-
-    %% Style definitions
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef subset fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Service service;
-    class S1,S2 subset;
-    class P1,P2,P3 pod;
-```
+![Diagram showing a Kubernetes Service pointing to two DestinationRule subsets, v1 and v2, each resolving by label matching to the actual pods carrying that version label.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-2.png)
 
 ### Subset Use Cases
 
@@ -421,36 +317,7 @@ The `trafficPolicy` in DestinationRule provides various traffic control features
 
 ### Traffic Policy Hierarchy
 
-```mermaid
-flowchart TD
-    DR[DestinationRule]
-
-    subgraph Global[Global Traffic Policy]
-        GP[Applied to all subsets]
-    end
-
-    subgraph Subset1[Subset: v1]
-        SP1[v1-specific policy<br/>Overrides global policy]
-    end
-
-    subgraph Subset2[Subset: v2]
-        SP2[Inherits global policy]
-    end
-
-    DR --> Global
-    Global --> Subset1
-    Global --> Subset2
-
-    %% Style definitions
-    classDef dr fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef global fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef subset fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class DR dr;
-    class GP global;
-    class SP1,SP2 subset;
-```
+![Tree diagram showing DestinationRule setting a global traffic policy that subset v1 explicitly overrides while subset v2 simply inherits unchanged.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-3.png)
 
 ### Traffic Policy Components
 

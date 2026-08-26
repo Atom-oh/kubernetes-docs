@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-03-architecture-0-title en-service-mesh-istio-03-architecture-0-desc">
+<title id="en-service-mesh-istio-03-architecture-0-title">Istiod Internal Structure</title>
+<desc id="en-service-mesh-istio-03-architecture-0-desc">Architecture diagram showing Istiod's single process consolidating Pilot, Citadel, and Galley functions, validating configuration from the Kubernetes API and pushing xDS configuration and X.509 certificates to Envoy sidecar proxies.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+  
+</defs>
+<rect x="140" y="108" width="680" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="156" y="112" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="182.0" y="121" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">ISTIOD</text>
+<line x1="480" y1="96" x2="480" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="494" y="112" width="69.4" height="12" rx="2" fill="#ffffff"/>
+<text x="494" y="121" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.05em">PUSH CONFIG</text>
+<path d="M 480,196 V 220 Q 480,228 472,228 H 278 Q 270,228 270,236 V 260" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 480,196 V 220 Q 480,228 488,228 H 682 Q 690,228 690,236 V 260" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 270,316 V 340 Q 270,348 278,348 H 440 Q 448,348 448,356 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="343.2" y="328" width="31.6" height="12" rx="2" fill="#ffffff"/>
+<text x="359" y="337" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">PUSH</text>
+<path d="M 690,316 V 340 Q 690,348 682,348 H 520 Q 512,348 512,356 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="585.2" y="328" width="31.6" height="12" rx="2" fill="#ffffff"/>
+<text x="601" y="337" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">PUSH</text>
+<path d="M 480,436 V 464 Q 480,472 472,472 H 455 Q 447,472 447,480 V 508" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="456.1" y="452" width="47.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="461" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">xDS API</text>
+<path d="M 690,316 V 464 Q 690,472 682,472 H 521 Q 513,472 513,480 V 508" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="626.1" y="452" width="47.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="650" y="461" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">SDS API</text>
+<rect x="380" y="40" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="380" y="40" width="200" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="388" y="46" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="402" y="55" fill="rgba(35,47,62,0.30)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+<text x="480.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kubernetes API</text>
+<text x="480.0" y="86.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">API Server + CRDs</text>
+<rect x="380" y="140" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="380" y="140" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="388" y="146" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="402" y="155" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">VAL</text>
+<text x="480.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Galley Functions</text>
+<text x="480.0" y="186.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Config Validation</text>
+<rect x="180" y="260" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="180" y="260" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="188" y="266" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="202" y="275" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">PIL</text>
+<text x="270.0" y="284.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pilot Functions</text>
+<text x="270.0" y="306.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Service Discovery</text>
+<rect x="600" y="260" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="600" y="260" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="608" y="266" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="622" y="275" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">CIT</text>
+<text x="690.0" y="284.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Citadel Functions</text>
+<text x="690.0" y="306.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Certificate Authority</text>
+<rect x="380" y="380" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="380" y="380" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="388" y="386" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="402" y="395" fill="#EC7211" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">XDS</text>
+<text x="480.0" y="404.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">xDS Server</text>
+<text x="480.0" y="426.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Config distribution</text>
+<rect x="380" y="508" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="380" y="508" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="388" y="514" width="28" height="12" rx="2" fill="transparent" stroke="#545B64" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="402" y="523" fill="#545B64" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENV</text>
+<text x="480.0" y="532.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy Proxies</text>
+<text x="480.0" y="554.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">sidecars ×N</text>
+</svg>

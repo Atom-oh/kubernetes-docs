@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-03-architecture-12-title en-service-mesh-istio-03-architecture-12-desc">
+<title id="en-service-mesh-istio-03-architecture-12-title">The Problem: Envoy Receives All Service Information</title>
+<desc id="en-service-mesh-istio-03-architecture-12-desc">Architecture diagram showing that by default every Envoy sidecar in a 1000-service mesh receives configuration for all services, even though the application in its pod only talks to two of them.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+  
+</defs>
+<rect x="60" y="120" width="380" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="76" y="124" width="184" height="12" rx="2" fill="#ffffff"/>
+<text x="168.0" y="133" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">SERVICE MESH · 1000 SERVICES</text>
+<rect x="560" y="120" width="340" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="576" y="124" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="614.0" y="133" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">SINGLE POD</text>
+<rect x="100" y="180" width="150" height="48" rx="6" fill="#ffffff"/>
+<rect x="100" y="180" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="175.0" y="206.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service 1</text>
+<rect x="270" y="180" width="150" height="48" rx="6" fill="#ffffff"/>
+<rect x="270" y="180" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="345.0" y="206.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service 2</text>
+<rect x="100" y="252" width="150" height="48" rx="6" fill="#ffffff"/>
+<rect x="100" y="252" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="175.0" y="278.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service 3</text>
+<rect x="270" y="252" width="150" height="48" rx="6" fill="#ffffff"/>
+<rect x="270" y="252" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="345.0" y="278.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service 1000</text>
+<rect x="600" y="170" width="260" height="64" rx="6" fill="#ffffff"/>
+<rect x="600" y="170" width="260" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="730.0" y="198.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Application</text>
+<text x="730.0" y="220.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">uses: Service 1, 2 only</text>
+<rect x="600" y="260" width="260" height="64" rx="6" fill="#ffffff"/>
+<rect x="600" y="260" width="260" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="608" y="266" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="622" y="275" fill="#EC7211" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENV</text>
+<text x="730.0" y="288.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy Proxy</text>
+<text x="730.0" y="310.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">receives: all 1000</text>
+<line x1="440" y1="292.0" x2="600" y2="292.0" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="479.9" y="272.0" width="80.2" height="12" rx="2" fill="#ffffff"/>
+<text x="520.0" y="281.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">PUSH ALL INFO</text>
+</svg>

@@ -12,33 +12,7 @@ Session Affinity (or Sticky Session) is a technique that routes requests from th
 
 ## Session Affinity Overview
 
-```mermaid
-flowchart TB
-    User[User A]
-
-    subgraph LB["Load Balancer"]
-        Hash[Consistent Hash<br/>Based on User ID]
-    end
-
-    subgraph Pods["Pods"]
-        Pod1[Pod 1<br/>Session A]
-        Pod2[Pod 2]
-        Pod3[Pod 3]
-    end
-
-    User -->|user_id=123| Hash
-    Hash -->|Always Same| Pod1
-
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class User user;
-    class Hash lb;
-    class Pod1,Pod2,Pod3 pod;
-```
+![Diagram showing consistent-hash session affinity: a client request carrying a user ID is hashed by the load balancer and always routed to the same pod, while the other pod replicas remain unused for that session.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-10-session-affinity-0.png)
 
 ## Consistent Hash Based
 

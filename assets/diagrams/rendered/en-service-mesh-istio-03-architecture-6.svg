@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-03-architecture-6-title en-service-mesh-istio-03-architecture-6-desc">
+<title id="en-service-mesh-istio-03-architecture-6-title">Traffic Flow After iptables Applied</title>
+<desc id="en-service-mesh-istio-03-architecture-6-desc">Architecture diagram showing an application's outbound request redirected by iptables OUTPUT chain rules into Envoy's outbound listener and forwarded to an external service using the proxy's own UID to bypass further interception, and a mirrored inbound path through the PREROUTING chain into Envoy's inbound listener after mTLS verification back to the application.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+  
+</defs>
+<rect x="20" y="100" width="600" height="336" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="104" width="142" height="12" rx="2" fill="#ffffff"/>
+<text x="107.0" y="113" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">POD NETWORK NAMESPACE</text>
+<line x1="180" y1="168.0" x2="250" y2="168.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="191.1" y="148.0" width="47.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="215.0" y="157.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">1. CURL</text>
+<line x1="390" y1="168.0" x2="460" y2="168.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="390.3" y="148.0" width="69.4" height="12" rx="2" fill="#ffffff"/>
+<text x="425.0" y="157.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">2. REDIRECT</text>
+<path d="M 514.0,196 V 212 Q 514.0,220 522.0,220 H 538.0 Q 546.0,220 546.0,212 V 196" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="556.0" y="202" width="64.0" height="12" rx="2" fill="#ffffff"/>
+<text x="556.0" y="211" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.05em">3. ROUTING</text>
+<line x1="600" y1="168.0" x2="760" y2="168.0" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="639.9" y="148.0" width="80.2" height="12" rx="2" fill="#ffffff"/>
+<text x="680.0" y="157.0" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">4. BYPASS IPT</text>
+<line x1="760" y1="368.0" x2="600" y2="368.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="645.3" y="348.0" width="69.4" height="12" rx="2" fill="#ffffff"/>
+<text x="680.0" y="357.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">5. INCOMING</text>
+<line x1="460" y1="368.0" x2="390" y2="368.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="390.3" y="348.0" width="69.4" height="12" rx="2" fill="#ffffff"/>
+<text x="425.0" y="357.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">6. REDIRECT</text>
+<path d="M 304.0,396 V 408 Q 304.0,416 312.0,416 H 328.0 Q 336.0,416 336.0,408 V 396" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="346.0" y="400" width="80.2" height="12" rx="2" fill="#ffffff"/>
+<text x="346.0" y="409" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.05em">7. mTLS CHECK</text>
+<path d="M 250,368.0 H 118.0 Q 110.0,368.0 110.0,360.0 V 196" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="126.0" y="282.0" width="74.80000000000001" height="12" rx="2" fill="#ffffff"/>
+<text x="126.0" y="291.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.05em">8. LOCALHOST</text>
+<rect x="40" y="140" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="40" y="140" width="140" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="48" y="146" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="62" y="155" fill="#EC7211" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+<text x="110.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Application</text>
+<text x="110.0" y="186.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">localhost:8080</text>
+<rect x="250" y="140" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="250" y="140" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="258" y="146" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="272" y="155" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">NAT</text>
+<text x="320.0" y="170.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">OUTPUT Chain</text>
+<rect x="460" y="140" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="460" y="140" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="468" y="146" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="482" y="155" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENV</text>
+<text x="530.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Listener 15001</text>
+<text x="530.0" y="186.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">outbound</text>
+<rect x="250" y="340" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="250" y="340" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="258" y="346" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="272" y="355" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENV</text>
+<text x="320.0" y="364.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Listener 15006</text>
+<text x="320.0" y="386.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">inbound</text>
+<rect x="460" y="340" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="460" y="340" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="468" y="346" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="482" y="355" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">NAT</text>
+<text x="530.0" y="370.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">PREROUTING Chain</text>
+<rect x="760" y="140" width="160" height="256" rx="6" fill="#ffffff"/>
+<rect x="760" y="140" width="160" height="256" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="768" y="146" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="782" y="155" fill="rgba(35,47,62,0.30)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+<text x="840.0" y="264.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">External Service</text>
+<text x="840.0" y="286.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">reviews:9080</text>
+</svg>

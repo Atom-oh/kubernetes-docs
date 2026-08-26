@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d0-title d0-desc">
+<title id="d0-title">Without vs with load balancing</title>
+<desc id="d0-desc">Without load balancing, all requests hit one service until it is fully loaded while two others sit idle; with a load balancer in front, the same requests are split evenly so every service carries a similar share of the load.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-danger" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#DD344C"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zone: Without -->
+<rect x="40" y="60" width="400" height="480" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="60" y="64" width="180" height="12" rx="2" fill="#ffffff"/>
+<text x="150" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WITHOUT LOAD BALANCING</text>
+
+<!-- Zone: With -->
+<rect x="520" y="60" width="400" height="480" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="540" y="64" width="150" height="12" rx="2" fill="#ffffff"/>
+<text x="615" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WITH LOAD BALANCING</text>
+
+<!-- ===== Left: Without ===== -->
+<path d="M 158,172 V 180 Q 158,188 166,188 H 232 Q 240,188 240,196"
+      fill="none" stroke="#DD344C" stroke-width="1.2" marker-end="url(#arrow-danger)"/>
+<rect x="169" y="172" width="60" height="10" rx="2" fill="#ffffff"/>
+<text x="199" y="180" fill="#DD344C" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OVERLOAD</text>
+
+<!-- Client node -->
+<rect x="76" y="108" width="164" height="64" rx="6" fill="#ffffff"/>
+<rect x="76" y="108" width="164" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="158" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">All Requests</text>
+<text x="158" y="152" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">single target</text>
+
+<!-- Service 1 - overloaded -->
+<rect x="76" y="196" width="328" height="72" rx="6" fill="#ffffff"/>
+<rect x="76" y="196" width="328" height="72" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1.2"/>
+<text x="240" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service 1</text>
+<text x="240" y="248" fill="#DD344C" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">100% load</text>
+
+<!-- Service 2 idle -->
+<rect x="76" y="292" width="328" height="64" rx="6" fill="#ffffff"/>
+<rect x="76" y="292" width="328" height="64" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="240" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service 2</text>
+<text x="240" y="336" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">0% load — idle</text>
+
+<!-- Service 3 idle -->
+<rect x="76" y="376" width="328" height="64" rx="6" fill="#ffffff"/>
+<rect x="76" y="376" width="328" height="64" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="240" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service 3</text>
+<text x="240" y="420" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">0% load — idle</text>
+
+<text x="240" y="472" fill="#545B64" font-size="14" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">One overloaded instance, two sitting idle.</text>
+
+<!-- ===== Right: With ===== -->
+<line x1="700" y1="172" x2="700" y2="196" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- fan attach points on LB bottom edge: 648, 700, 752 -->
+<path d="M 648,260 V 268 Q 648,276 640,276 H 600 Q 592,276 592,284 V 292"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="602" y="260" width="34" height="10" rx="2" fill="#ffffff"/>
+<text x="619" y="268" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">33%</text>
+
+<line x1="700" y1="260" x2="700" y2="292" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="710" y="270" width="34" height="12" rx="2" fill="#ffffff"/>
+<text x="727" y="279" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">33%</text>
+
+<path d="M 752,260 V 268 Q 752,276 760,276 H 800 Q 808,276 808,284 V 292"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="774" y="260" width="34" height="10" rx="2" fill="#ffffff"/>
+<text x="791" y="268" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">34%</text>
+
+<!-- Client node -->
+<rect x="556" y="108" width="288" height="64" rx="6" fill="#ffffff"/>
+<rect x="556" y="108" width="288" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="700" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Distributed Requests</text>
+<text x="700" y="152" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">split across targets</text>
+
+<!-- LB focal -->
+<rect x="596" y="196" width="208" height="64" rx="6" fill="#ffffff"/>
+<rect x="596" y="196" width="208" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="700" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Load Balancer</text>
+<text x="700" y="240" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">splits traffic evenly</text>
+
+<!-- Service 4/5/6 -->
+<rect x="536" y="292" width="112" height="64" rx="6" fill="#ffffff"/>
+<rect x="536" y="292" width="112" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="592" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service 1</text>
+<text x="592" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">33% load</text>
+
+<rect x="644" y="292" width="112" height="64" rx="6" fill="#ffffff"/>
+<rect x="644" y="292" width="112" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="700" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service 2</text>
+<text x="700" y="336" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">33% load</text>
+
+<rect x="752" y="292" width="112" height="64" rx="6" fill="#ffffff"/>
+<rect x="752" y="292" width="112" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="808" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service 3</text>
+<text x="808" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">34% load</text>
+
+<text x="700" y="472" fill="#545B64" font-size="14" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Every instance carries a near-equal share.</text>
+
+<!-- Legend -->
+<line x1="40" y1="552" x2="920" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="140" y="561" width="10" height="10" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1.2"/>
+<text x="156" y="569" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">overloaded</text>
+<rect x="280" y="561" width="10" height="10" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="296" y="569" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">balanced / focal</text>
+<rect x="460" y="561" width="10" height="10" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="476" y="569" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">idle</text>
+</svg>

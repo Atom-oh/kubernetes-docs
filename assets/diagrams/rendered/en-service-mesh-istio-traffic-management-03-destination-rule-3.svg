@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dr3-title dr3-desc">
+<title id="dr3-title">Traffic policy inheritance from DestinationRule to its subsets</title>
+<desc id="dr3-desc">DestinationRule sets a global traffic policy; subset v1 overrides it with its own policy while subset v2 simply inherits the global policy unchanged.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+  <marker id="dr3-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- ===== Zones ===== -->
+<rect x="320" y="180" width="320" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="496" y="184" width="136" height="12" rx="2" fill="#ffffff"/>
+<text x="564" y="193" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">GLOBAL TRAFFIC POLICY</text>
+
+<rect x="160" y="380" width="280" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="320" y="384" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="370" y="393" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">SUBSET: V1</text>
+
+<rect x="520" y="380" width="280" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="540" y="384" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="590" y="393" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">SUBSET: V2</text>
+
+<!-- ===== Arrows ===== -->
+<!-- DR -> GP (straight vertical) -->
+<path d="M480,124 V220" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#dr3-arrow)"/>
+
+<!-- GP -> SP1 (fanned elbow, left) -->
+<path d="M440,284 V300 Q440,308 432,308 H308 Q300,308 300,316 V420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#dr3-arrow)"/>
+<!-- GP -> SP2 (fanned elbow, right) -->
+<path d="M520,284 V300 Q520,308 528,308 H652 Q660,308 660,316 V420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#dr3-arrow)"/>
+
+<!-- ===== Nodes ===== -->
+<!-- DestinationRule (backend) -->
+<rect x="400" y="60" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="96" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">DestinationRule</text>
+
+<!-- Global Policy (focal) -->
+<rect x="360" y="220" width="240" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480" y="248" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Applied to</text>
+<text x="480" y="264" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">all subsets</text>
+
+<!-- SP1 override (solid, backend) -->
+<rect x="200" y="420" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300" y="448" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">v1-specific policy</text>
+<text x="300" y="464" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">overrides global</text>
+
+<!-- SP2 inherits (dashed, optional style) -->
+<rect x="560" y="420" width="200" height="64" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="660" y="448" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Inherits global</text>
+<text x="660" y="464" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">no override set</text>
+
+<!-- ===== Legend ===== -->
+<line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="40" y="552" width="32" height="16" rx="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="80" y="564" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">EXPLICIT OVERRIDE</text>
+<rect x="272" y="552" width="32" height="16" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="312" y="564" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">INHERITED, NOT SET</text>
+
+</svg>

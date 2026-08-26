@@ -17,38 +17,7 @@ Zone Aware Routing is a feature that optimizes traffic by recognizing Kubernetes
 
 Zone Aware Routing provides the following benefits:
 
-```mermaid
-flowchart TB
-    subgraph AZ1["Availability Zone A"]
-        Client1[Client Pod<br/>Zone A]
-        Service1[Service Pod 1<br/>Zone A]
-        Service2[Service Pod 2<br/>Zone A]
-    end
-
-    subgraph AZ2["Availability Zone B"]
-        Service3[Service Pod 3<br/>Zone B]
-        Service4[Service Pod 4<br/>Zone B]
-    end
-
-    subgraph AZ3["Availability Zone C"]
-        Service5[Service Pod 5<br/>Zone C]
-    end
-
-    Client1 -->|80%<br/>Same AZ Priority<br/>Free| Service1
-    Client1 -->|80%<br/>Same AZ Priority<br/>Free| Service2
-    Client1 -.->|10%<br/>Failover<br/>Cross-AZ Cost| Service3
-    Client1 -.->|10%<br/>Failover<br/>Cross-AZ Cost| Service5
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef sameZone fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef otherZone fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client1 client;
-    class Service1,Service2 sameZone;
-    class Service3,Service4,Service5 otherZone;
-```
+![A client pod in Availability Zone A sends 80% of its traffic to two service pods in its own zone and fails over 10% each to service pods in Availability Zone B and Availability Zone C.](../../../.gitbook/assets/en-service-mesh-istio-resilience-03-zone-aware-routing-0.png)
 
 ### Benefits
 
@@ -62,31 +31,7 @@ flowchart TB
 
 ### Locality Load Balancing Algorithm
 
-```mermaid
-flowchart TB
-    Request[Request Arrives]
-    CheckLocal{Healthy Pods<br/>in Same Zone?}
-    LocalRoute[Route to<br/>Same Zone<br/>80-100%]
-    CheckNearby{Healthy Pods<br/>in Adjacent Zone?}
-    NearbyRoute[Route to<br/>Adjacent Zone<br/>10-20%]
-    RemoteRoute[Route to<br/>Other Region]
-
-    Request --> CheckLocal
-    CheckLocal -->|Yes| LocalRoute
-    CheckLocal -->|No| CheckNearby
-    CheckNearby -->|Yes| NearbyRoute
-    CheckNearby -->|No| RemoteRoute
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef route fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class CheckLocal,CheckNearby decision;
-    class LocalRoute,NearbyRoute,RemoteRoute route;
-```
+![A request is routed by first checking for healthy pods in the same zone; if none, it checks the adjacent zone; and if none there either, it falls back to another region.](../../../.gitbook/assets/en-service-mesh-istio-resilience-03-zone-aware-routing-1.png)
 
 ### Locality Hierarchy
 
@@ -112,36 +57,7 @@ us-west-2/us-west-2a/*
 
 #### How It Works
 
-```mermaid
-flowchart TB
-    subgraph Node1["Node 1<br/>topology.kubernetes.io/zone=us-east-1a"]
-        Pod1[Pod A<br/>No Zone Label]
-        Pod2[Pod B<br/>No Zone Label]
-    end
-
-    subgraph Node2["Node 2<br/>topology.kubernetes.io/zone=us-east-1b"]
-        Pod3[Pod C<br/>No Zone Label]
-    end
-
-    subgraph Istiod["Istiod (Control Plane)"]
-        Discovery[Service Discovery]
-        EDS[EDS Generation]
-    end
-
-    Discovery -->|"1. Query Node Labels<br/>Pod → Node Mapping"| Node1
-    Discovery -->|"1. Query Node Labels<br/>Pod → Node Mapping"| Node2
-    Discovery -->|"2. Determine Pod Locality<br/>Pod A → us-east-1a<br/>Pod C → us-east-1b"| EDS
-    EDS -->|"3. xDS Push<br/>(Including Locality Info)"| Envoy[Envoy Proxy]
-
-    %% Style definitions
-    classDef node fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef control fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class Node1,Node2 node;
-    class Pod1,Pod2,Pod3 pod;
-    class Discovery,EDS,Envoy control;
-```
+![Istiod's service discovery reads the topology.kubernetes.io/zone label on each Node to determine Pod locality without needing zone labels on the pods themselves, then generates EDS and pushes that locality information to the Envoy proxy.](../../../.gitbook/assets/en-service-mesh-istio-resilience-03-zone-aware-routing-2.png)
 
 #### Step-by-Step Process
 

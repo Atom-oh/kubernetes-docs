@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cb-scope-title cb-scope-desc"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+    <title id="cb-scope-title">What Circuit Breaker does and does not do</title>
+    <desc id="cb-scope-desc">Grouped list contrasting what a circuit breaker does — isolate failing services, prevent cascading failures, protect resources, and attempt auto recovery — against what it does not do: prevent duplicate requests, guarantee data consistency, manage transactions, or guarantee idempotency.</desc>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="24" y="64" width="424" height="440" rx="8" fill="none" stroke="var(--rule)" stroke-width="1"/>
+    <rect x="508" y="64" width="424" height="440" rx="8" fill="none" stroke="var(--rule)" stroke-width="1"/>
+    <rect x="24" y="64" width="180" height="20" rx="2" fill="#ffffff"/>
+    <text x="40" y="78" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">WHAT IT DOES</text>
+    <rect x="508" y="64" width="220" height="20" rx="2" fill="#ffffff"/>
+    <text x="524" y="78" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">WHAT IT DOES NOT DO</text>
+
+    <!-- Left column: does (CB1 focal, CB2-4 plain) -->
+    <rect x="56" y="112" width="360" height="64" rx="6" fill="#ffffff"/>
+    <rect x="56" y="112" width="360" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="236" y="150" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Isolate failing services</text>
+
+    <rect x="56" y="192" width="360" height="64" rx="6" fill="#ffffff"/>
+    <rect x="56" y="192" width="360" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="236" y="230" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prevent cascading failures</text>
+
+    <rect x="56" y="272" width="360" height="64" rx="6" fill="#ffffff"/>
+    <rect x="56" y="272" width="360" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="236" y="310" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Protect system resources</text>
+
+    <rect x="56" y="352" width="360" height="64" rx="6" fill="#ffffff"/>
+    <rect x="56" y="352" width="360" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="236" y="390" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Attempt auto recovery</text>
+
+    <!-- Right column: does not (all "security"/danger treatment) -->
+    <rect x="540" y="112" width="360" height="64" rx="6" fill="#ffffff"/>
+    <rect x="540" y="112" width="360" height="64" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="720" y="150" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prevent duplicate requests</text>
+
+    <rect x="540" y="192" width="360" height="64" rx="6" fill="#ffffff"/>
+    <rect x="540" y="192" width="360" height="64" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="720" y="230" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Guarantee data consistency</text>
+
+    <rect x="540" y="272" width="360" height="64" rx="6" fill="#ffffff"/>
+    <rect x="540" y="272" width="360" height="64" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="720" y="310" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Manage transactions</text>
+
+    <rect x="540" y="352" width="360" height="64" rx="6" fill="#ffffff"/>
+    <rect x="540" y="352" width="360" height="64" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="720" y="390" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Guarantee idempotency</text>
+
+    <!-- Legend -->
+    <line x1="24" y1="524" x2="932" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="544" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <rect x="120" y="532" width="16" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="144" y="541" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CORE PURPOSE</text>
+
+    <rect x="292" y="532" width="16" height="12" rx="3" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="316" y="541" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">IN SCOPE</text>
+
+    <rect x="424" y="532" width="16" height="12" rx="3" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="448" y="541" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">OUT OF SCOPE</text>
+  </svg>
