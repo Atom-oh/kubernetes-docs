@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">Resolving a Docker Hub rate limit</title>
+  <desc id="ddesc">A decision flowchart: when a Docker Hub rate limit is hit, the reader is routed by their environment to ECR Pull-through Cache (AWS/EKS), Harbor Proxy Cache (self-hosted), or a containerd mirror / registry distribution (other) — each path resolving the rate limit; if no limit was hit yet, using authenticated pulls prevents one.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- ============ CONNECTORS (drawn first, behind nodes) ============ -->
+
+  <!-- Start -> Check (Yes) : accent, direct vertical -->
+  <path d="M480,134 L480,206" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <!-- Start -> Auth (No) -->
+  <path d="M570,90 L672,90 Q680,90 680,98 L680,122 Q680,130 688,130 L710,130" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Check -> ECR (AWS/EKS) : accent -->
+  <path d="M435,272 L435,322 Q435,330 427,330 L298,330 Q290,330 290,338 L290,390" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <!-- Check -> Harbor (Self-hosted) : direct vertical -->
+  <path d="M480,294 L480,390" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- Check -> Mirror (Other) -->
+  <path d="M525,272 L525,322 Q525,330 533,330 L662,330 Q670,330 670,338 L670,390" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- ECR -> Result : accent -->
+  <path d="M290,466 L290,480 Q290,488 298,488 L400,488 Q408,488 408,496 L408,528" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <!-- Harbor -> Result : direct vertical -->
+  <path d="M480,466 L480,528" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- Mirror -> Result -->
+  <path d="M670,466 L670,492 Q670,500 662,500 L544,500 Q536,500 536,508 L536,528" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- Auth -> Result -->
+  <path d="M800,162 L800,512 Q800,520 792,520 L568,520 Q560,520 560,528" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- ============ ARROW LABELS (masked, offset from stroke) ============ -->
+
+  <!-- YES : beside the vertical Start->Check segment -->
+  <rect x="486" y="162" width="30" height="12" rx="2" fill="#ffffff"/>
+  <text x="501" y="171" class="mono" fill="#EC7211" font-size="8" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+  <!-- NO : above the Start->Auth horizontal segment -->
+  <rect x="603" y="70" width="24" height="12" rx="2" fill="#ffffff"/>
+  <text x="615" y="79" class="mono" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+  <!-- AWS/EKS : above Check->ECR horizontal segment -->
+  <rect x="330" y="310" width="60" height="12" rx="2" fill="#ffffff"/>
+  <text x="360" y="319" class="mono" fill="#EC7211" font-size="8" text-anchor="middle" letter-spacing="0.06em">AWS/EKS</text>
+
+  <!-- SELF-HOSTED : beside Check->Harbor vertical segment -->
+  <rect x="486" y="332" width="80" height="12" rx="2" fill="#ffffff"/>
+  <text x="526" y="341" class="mono" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">SELF-HOSTED</text>
+
+  <!-- OTHER : above Check->Mirror horizontal segment -->
+  <rect x="570" y="310" width="52" height="12" rx="2" fill="#ffffff"/>
+  <text x="596" y="319" class="mono" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">OTHER</text>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- Start diamond -->
+  <polygon points="480,46 570,90 480,134 390,90" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+  <text x="480" y="86" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Rate Limit</text>
+  <text x="480" y="100" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Hit?</text>
+
+  <!-- Check diamond -->
+  <polygon points="480,206 570,250 480,294 390,250" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+  <text x="480" y="246" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Your</text>
+  <text x="480" y="260" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Environment</text>
+
+  <!-- Auth rect -->
+  <rect x="710" y="98" width="180" height="64" rx="6" fill="#ffffff"/>
+  <rect x="710" y="98" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="718" y="106" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="738" y="115" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">AUTH</text>
+  <text x="800" y="136" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Use Authenticated Pulls</text>
+  <text x="800" y="150" fill="#545B64" font-size="9" class="mono" text-anchor="middle">prevents rate limits</text>
+
+  <!-- ECR rect (focal) -->
+  <rect x="215" y="390" width="150" height="76" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="215" y="390" width="150" height="76" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="223" y="398" width="30" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.55)" stroke-width="0.8"/>
+  <text x="238" y="407" fill="#EC7211" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">ECR</text>
+  <text x="290" y="432" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ECR Pull-through</text>
+  <text x="290" y="446" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Cache</text>
+  <text x="290" y="460" fill="#545B64" font-size="9" class="mono" text-anchor="middle">AWS / EKS</text>
+
+  <!-- Harbor rect -->
+  <rect x="405" y="390" width="150" height="76" rx="6" fill="#ffffff"/>
+  <rect x="405" y="390" width="150" height="76" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="413" y="398" width="46" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="436" y="407" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">PROXY</text>
+  <text x="480" y="432" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Harbor Proxy</text>
+  <text x="480" y="446" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Cache</text>
+  <text x="480" y="460" fill="#545B64" font-size="9" class="mono" text-anchor="middle">self-hosted</text>
+
+  <!-- Mirror rect -->
+  <rect x="595" y="390" width="150" height="76" rx="6" fill="#ffffff"/>
+  <rect x="595" y="390" width="150" height="76" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="603" y="398" width="52" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="629" y="407" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">MIRROR</text>
+  <text x="670" y="432" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">containerd Mirror /</text>
+  <text x="670" y="446" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Registry Distribution</text>
+  <text x="670" y="460" fill="#545B64" font-size="9" class="mono" text-anchor="middle">other</text>
+
+  <!-- Result end node (focal) -->
+  <rect x="360" y="528" width="240" height="64" rx="32" fill="rgba(255,153,0,0.10)"/>
+  <rect x="360" y="528" width="240" height="64" rx="32" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="564" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Rate Limit Resolved</text>
+</svg>

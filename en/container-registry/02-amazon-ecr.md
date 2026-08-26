@@ -10,29 +10,7 @@ Amazon Elastic Container Registry (ECR) is a fully managed container registry se
 
 ECR operates as a regional service with two distinct offerings:
 
-```mermaid
-flowchart TB
-    subgraph ECR["Amazon ECR"]
-        subgraph Private["ECR Private"]
-            direction LR
-            P1["Private repositories"]
-            P2["IAM-based access control"]
-            P3["Regional scope"]
-            P4["Cross-region replication"]
-        end
-        subgraph Public["ECR Public"]
-            direction LR
-            Pub1["Public repositories"]
-            Pub2["Anonymous read access"]
-            Pub3["Global (us-east-1 hosted)"]
-            Pub4["Public gallery discovery"]
-        end
-    end
-
-    style ECR fill:#FF9900,stroke:#cc7a00,color:#fff
-    style Private fill:#232F3E,stroke:#1a2332,color:#fff
-    style Public fill:#232F3E,stroke:#1a2332,color:#fff
-```
+![Architecture diagram contrasting Amazon ECR Private, a regionally scoped registry with IAM-based access control and cross-region replication, against Amazon ECR Public, a globally hosted registry offering anonymous read access and gallery discovery.](../.gitbook/assets/en-container-registry-02-amazon-ecr-0.png)
 
 **ECR Private**: For internal container images with IAM-based access control. Images are stored regionally and can be replicated across regions.
 
@@ -410,22 +388,7 @@ Lifecycle policies evaluate rules in **priority order** (lowest number first). K
 3. Once an image matches a rule, subsequent rules do not evaluate that image
 4. Rules with the same priority are evaluated in an undefined order (avoid this)
 
-```mermaid
-flowchart TD
-    Image["Image Evaluated"] --> R1{"Rule Priority 1<br/>SemVer tags?"}
-    R1 -->|Match| Apply1["Apply Rule 1"]
-    R1 -->|No Match| R2{"Rule Priority 2<br/>Dev/staging tags?"}
-    R2 -->|Match| Apply2["Apply Rule 2"]
-    R2 -->|No Match| R10{"Rule Priority 10<br/>Untagged?"}
-    R10 -->|Match| Apply10["Apply Rule 10"]
-    R10 -->|No Match| Keep["Image Retained"]
-
-    Apply1 --> Check{"Exceeds retention<br/>threshold?"}
-    Apply2 --> Check
-    Apply10 --> Check
-    Check -->|Yes| Expire["Image Expired"]
-    Check -->|No| Keep
-```
+![Flowchart showing how an ECR lifecycle policy evaluates an image against ranked rules (SemVer tags, dev/staging tags, untagged), applies the first matching rule, then expires the image only if it exceeds that rule's retention threshold, otherwise retaining it.](../.gitbook/assets/en-container-registry-02-amazon-ecr-1.png)
 
 ### Selection Criteria
 
@@ -976,14 +939,7 @@ aws ec2 create-vpc-endpoint \
 
 ECR Pull-Through Cache reduces latency, avoids external rate limits, and removes dependencies on external registry availability.
 
-```mermaid
-flowchart LR
-    Pod["kubelet pull<br/>request"] --> ECR{"ECR Endpoint"}
-    ECR -->|Cache Hit| Serve["Serve cached<br/>image instantly"]
-    ECR -->|Cache Miss| Upstream["Pull from<br/>upstream registry"]
-    Upstream --> Cache["Cache in ECR<br/>repository"]
-    Cache --> Serve
-```
+![Flowchart showing a kubelet image pull request checking the ECR endpoint: a cache hit serves the image instantly, while a cache miss pulls the image from the upstream registry, caches it in the ECR repository, and then serves it.](../.gitbook/assets/en-container-registry-02-amazon-ecr-2.png)
 
 #### Supported Upstream Registries
 

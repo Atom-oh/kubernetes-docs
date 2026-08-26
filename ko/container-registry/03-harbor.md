@@ -8,37 +8,7 @@ Harbor는 CNCF Graduated 프로젝트로, 오픈소스 컨테이너 레지스트
 
 ### 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph Harbor["Harbor"]
-        Portal["Portal<br/>(Web UI)"]
-        Core["Core<br/>API · AuthN/Z · Projects"]
-        Registry["Registry<br/>(Docker Registry)"]
-        JobService["Job Service<br/>Replication · GC · Scan"]
-
-        Core --> Registry
-        Core --> JobService
-        Portal --> Core
-
-        subgraph Data["Data Layer"]
-            PG["PostgreSQL<br/>(Metadata)"]
-            Redis["Redis<br/>(Cache)"]
-        end
-
-        subgraph Security["Security"]
-            Trivy["Trivy<br/>(Scanning)"]
-            Notary["Notary<br/>(Signing)"]
-        end
-
-        Core --> PG
-        Core --> Redis
-        JobService --> Trivy
-    end
-
-    style Harbor fill:#60B932,stroke:#3d7a1f,color:#fff
-    style Core fill:#4a9028,stroke:#3d7a1f,color:#fff
-    style Registry fill:#4a9028,stroke:#3d7a1f,color:#fff
-```
+![Portal이 Core에 연결되고 Core가 Registry, Job Service, PostgreSQL, Redis로 뻗어나가며, Job Service가 Trivy·Notary 보안 계층과 연결되는 Harbor 내부 구조를 보여준다.](../.gitbook/assets/ko-container-registry-03-harbor-0.png)
 
 ### 주요 컴포넌트
 
@@ -320,18 +290,7 @@ docker login harbor.example.com \
 
 ## 이미지 복제
 
-```mermaid
-flowchart LR
-    subgraph Pull["Pull Replication (미러링)"]
-        direction LR
-        ExtReg["External Registry<br/>Docker Hub / ECR"] -->|Pull| HarborLocal["Harbor (Local)"]
-    end
-
-    subgraph Push["Push Replication (배포/DR)"]
-        direction LR
-        HarborSrc["Harbor (Source)"] -->|Push| RemoteReg["Remote Registry<br/>ECR / Harbor DR"]
-    end
-```
+![외부 레지스트리에서 로컬 Harbor로 이미지를 가져오는 Pull 복제와, 소스 Harbor에서 원격 레지스트리로 내보내는 Push 복제의 방향 차이를 위아래 두 패널로 비교해 보여준다.](../.gitbook/assets/ko-container-registry-03-harbor-1.png)
 
 ### 복제 모드
 
@@ -724,14 +683,7 @@ spec:
 
 ### Proxy Cache
 
-```mermaid
-flowchart LR
-    Client["Docker/containerd"] --> Harbor{"Harbor<br/>Proxy Cache"}
-    Harbor -->|Cache Hit| Return["캐시된 이미지 반환"]
-    Harbor -->|Cache Miss| Upstream["Upstream Registry<br/>(Docker Hub 등)"]
-    Upstream --> Store["Harbor에 캐시 저장"]
-    Store --> Return
-```
+![Docker/containerd 요청이 Harbor 프록시 캐시를 거쳐 캐시 적중 시 즉시 반환되고, 캐시 미스 시 업스트림 레지스트리에서 가져와 캐시에 저장한 뒤 반환되는 흐름을 보여준다.](../.gitbook/assets/ko-container-registry-03-harbor-2.png)
 
 Harbor를 외부 레지스트리의 프록시 캐시로 사용:
 

@@ -14,15 +14,7 @@ A container registry provides:
 - **Distribution**: Efficient image layer caching and distribution to container runtimes
 - **Lifecycle Management**: Automated cleanup and retention policies for storage optimization
 
-```mermaid
-flowchart LR
-    A["CI/CD Pipeline<br/>Build · Test · Push"] --> B["Container Registry<br/>Store · Version · Scan"]
-    B --> C["Kubernetes Cluster<br/>Pull · Run · Scale"]
-
-    style A fill:#2496ED,stroke:#1a6fb5,color:#fff
-    style B fill:#326CE5,stroke:#1e4fa3,color:#fff
-    style C fill:#326CE5,stroke:#1e4fa3,color:#fff
-```
+![Flowchart showing a container image moving from the CI/CD pipeline (build, test, push) through a container registry (store, version, scan) into a Kubernetes cluster (pull, run, scale).](../.gitbook/assets/en-container-registry-README-0.png)
 
 ## Registry Comparison
 
@@ -156,19 +148,7 @@ This section covers container registry concepts and implementation in depth:
 
 ## Quick Start Decision Tree
 
-```mermaid
-flowchart TD
-    Q1{"Air-gap/disconnected<br/>support needed?"}
-    Q2{"Running on<br/>AWS/EKS?"}
-    Q3{"Production with<br/>compliance needs?"}
-
-    Q1 -->|Yes| Harbor["Harbor"]
-    Q1 -->|No| Q2
-    Q2 -->|Yes| ECR["Amazon ECR"]
-    Q2 -->|No| Q3
-    Q3 -->|Yes| HarborBiz["Harbor or<br/>Docker Hub Business"]
-    Q3 -->|No| DH["Docker Hub<br/>Free/Pro"]
-```
+![Decision tree for choosing a container registry: air-gapped environments route to Harbor; connected AWS/EKS workloads route to Amazon ECR; other production workloads with compliance needs route to Harbor or Docker Hub Business; everything else uses Docker Hub Free/Pro.](../.gitbook/assets/en-container-registry-README-1.png)
 
 ## Summary
 

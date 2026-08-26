@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="lifecycle-title lifecycle-desc">
+<title id="lifecycle-title">Lifecycle Policy 평가 흐름</title>
+<desc id="lifecycle-desc">이미지가 Push되면 Lifecycle Policy가 등록된 규칙을 순서대로 평가해 매칭되는 규칙을 적용하고, 보존 기준을 초과한 이미지만 삭제하고 나머지는 보존하는 흐름을 보여준다.</desc>
+<defs>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- ===== Arrows (behind nodes) ===== -->
+<!-- Push -> Eval -->
+<line x1="480" y1="72" x2="480" y2="96" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Eval -> Diamond1 (top vertex) -->
+<line x1="480" y1="144" x2="480" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Diamond1 bottom -> Applied -->
+<line x1="480" y1="272" x2="480" y2="296" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Applied -> Diamond2 top -->
+<line x1="480" y1="344" x2="480" y2="368" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Diamond2 right -> Delete (accent, consequential outcome) -->
+<line x1="592" y1="420" x2="680" y2="420" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+<!-- Diamond1 left vertex -> Keep top (elbow: H then V-down, r=8) -->
+<path d="M368,220 H216 Q208,220 208,228 V296"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Diamond2 left vertex -> Keep bottom (elbow: H then V-up, r=8) -->
+<path d="M368,420 H216 Q208,420 208,412 V344"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- ===== Arrow labels (mask + 6-10px gap) ===== -->
+<!-- Diamond1 Yes (vertical, label to the side) -->
+<rect x="490" y="246" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="505" y="256" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">YES</text>
+
+<!-- Diamond1 No (horizontal segment y=220, midpoint x=288) -->
+<rect x="270" y="200" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="288" y="210" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">NO</text>
+
+<!-- Diamond2 Yes (horizontal, midpoint x=636,y=420) -->
+<rect x="618" y="400" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="636" y="410" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">YES</text>
+
+<!-- Diamond2 No (horizontal segment y=420, midpoint x=288) -->
+<rect x="270" y="400" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="288" y="410" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">NO</text>
+
+<!-- ===== Nodes ===== -->
+<!-- Push (start oval) -->
+<rect x="400" y="24" width="160" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="480" y="52" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">이미지 Push</text>
+
+<!-- Eval (rect step) -->
+<rect x="400" y="96" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Lifecycle Policy 평가</text>
+
+<!-- Diamond1: rule match (collapsed R1..Rn ladder) -->
+<polygon points="480,168 592,220 480,272 368,220" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="216" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">태그 패턴 순차</text>
+<text x="480" y="230" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">매칭? (규칙 1→N)</text>
+
+<!-- Applied (rect: collapsed A1..An) -->
+<rect x="400" y="296" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">매칭 규칙 적용</text>
+<text x="480" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tag pattern / untagged</text>
+
+<!-- Diamond2: retention exceeded -->
+<polygon points="480,368 592,420 480,472 368,420" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="416" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">보존 기준</text>
+<text x="480" y="430" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">초과?</text>
+
+<!-- Delete (end oval, focal / consequential) -->
+<rect x="680" y="396" width="160" height="48" rx="24" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="760" y="424" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">삭제</text>
+
+<!-- Keep (end oval, merge point for both "no match" and "not exceeded" branches) -->
+<rect x="120" y="296" width="160" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="200" y="324" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">보존</text>
+
+<!-- ===== Legend ===== -->
+<line x1="40" y1="508" x2="920" y2="508" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="524" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">LEGEND · 도형이 유형을 나타냄</text>
+
+<rect x="40" y="540" width="24" height="14" rx="7" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="72" y="551" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">시작/종료 (원)</text>
+
+<rect x="220" y="540" width="24" height="14" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="252" y="551" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">단계 (사각형)</text>
+
+<polygon points="404,547 416,540 428,547 416,554" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="440" y="551" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">판단 (다이아몬드)</text>
+
+<line x1="596" y1="547" x2="624" y2="547" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="632" y="551" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">삭제로 이어지는 경로</text>
+</svg>
