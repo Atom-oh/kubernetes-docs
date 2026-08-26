@@ -9,76 +9,7 @@
 
 LLM 추론 생태계는 빠르게 발전하고 있으며, 여러 프레임워크가 프로덕션 배포의 다양한 측면을 다루고 있습니다. 다음 다이어그램은 이러한 프레임워크 간의 관계를 보여줍니다:
 
-```mermaid
-flowchart TD
-    subgraph Ecosystem [LLM 추론 프레임워크 생태계]
-        subgraph NVIDIAStack [NVIDIA 스택]
-            NIM[NVIDIA NIM]
-            Dynamo[NVIDIA Dynamo]
-            TensorRTLLM[TensorRT-LLM]
-            Triton[Triton Inference Server]
-        end
-
-        subgraph OpenSource [오픈소스 프레임워크]
-            vLLM[vLLM]
-            SGLang[SGLang]
-            TGI[HuggingFace TGI]
-            AIBrix[AIBrix]
-            RayServe[Ray Serve]
-        end
-
-        subgraph DevTools [개발/게이트웨이 도구]
-            Ollama[Ollama]
-            LiteLLM[LiteLLM]
-            LlamaCpp[llama.cpp]
-        end
-
-        subgraph AWSNative [AWS 네이티브]
-            Neuron[AWS Neuron SDK]
-            Inferentia[Inferentia2]
-            SageMaker[SageMaker]
-        end
-
-        subgraph Orchestration [오케스트레이션 레이어]
-            KubeRay[KubeRay Operator]
-            Karpenter[Karpenter]
-            KEDA[KEDA]
-        end
-    end
-
-    NIM --> TensorRTLLM
-    Dynamo --> vLLM
-    Dynamo --> SGLang
-    Dynamo --> TensorRTLLM
-    RayServe --> vLLM
-    AIBrix --> vLLM
-    AIBrix --> SGLang
-
-    Neuron --> Inferentia
-    LiteLLM --> vLLM
-    LiteLLM --> SGLang
-    LiteLLM --> NIM
-    Ollama --> LlamaCpp
-
-    KubeRay --> RayServe
-    Karpenter --> NVIDIAStack
-    Karpenter --> OpenSource
-    Karpenter --> AWSNative
-
-    classDef nvidiaNode fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef ossNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef orchNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef devToolNode fill:#9B59B6,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class NIM,Dynamo,TensorRTLLM,Triton,NVIDIAStack nvidiaNode;
-    class vLLM,SGLang,TGI,AIBrix,RayServe,OpenSource ossNode;
-    class Neuron,Inferentia,SageMaker,AWSNative awsNode;
-    class KubeRay,Karpenter,KEDA,Orchestration orchNode;
-    class Ollama,LiteLLM,LlamaCpp,DevTools devToolNode;
-    class Ecosystem default;
-```
+![NVIDIA Dynamo가 vLLM, SGLang, TensorRT-LLM 서빙 프레임워크를 오케스트레이션하고, LiteLLM 게이트웨이가 여러 백엔드로 요청을 라우팅하며, Karpenter가 GPU 노드를 프로비저닝하는 관계를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-04-inference-frameworks-0.png)
 
 ### 프레임워크 선택 가이드
 
@@ -101,80 +32,7 @@ NVIDIA NIM(NVIDIA Inference Microservices)은 최적화된 추론 엔진, 내장
 
 ### NIM 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph NIMDeployment [EKS에서의 NVIDIA NIM 배포]
-        subgraph Ingress [인그레스 레이어]
-            ALB[Application Load Balancer]
-            NginxIngress[Nginx Ingress Controller]
-        end
-
-        subgraph NIMPods [NIM 파드]
-            subgraph Pod1 [NIM 파드 1]
-                NIMContainer1[NIM 컨테이너]
-                TensorRTEngine1[TensorRT-LLM 엔진]
-                ModelCache1[모델 캐시]
-            end
-            subgraph Pod2 [NIM 파드 2]
-                NIMContainer2[NIM 컨테이너]
-                TensorRTEngine2[TensorRT-LLM 엔진]
-                ModelCache2[모델 캐시]
-            end
-        end
-
-        subgraph GPUNodes [GPU 노드 풀]
-            Node1[p4d.24xlarge - 8x A100]
-            Node2[g5.48xlarge - 8x A10G]
-        end
-
-        subgraph Monitoring [모니터링 스택]
-            Prometheus[(Prometheus)]
-            Grafana[Grafana 대시보드]
-            NIMMetrics[NIM 메트릭 익스포터]
-        end
-
-        subgraph Storage [모델 스토리지]
-            NGC[NGC Catalog]
-            S3[Amazon S3]
-            FSx[FSx for Lustre]
-        end
-    end
-
-    ALB --> NginxIngress
-    NginxIngress --> Pod1
-    NginxIngress --> Pod2
-
-    Pod1 --> Node1
-    Pod2 --> Node2
-
-    NIMContainer1 --> TensorRTEngine1
-    NIMContainer2 --> TensorRTEngine2
-
-    TensorRTEngine1 --> ModelCache1
-    TensorRTEngine2 --> ModelCache2
-
-    ModelCache1 --> FSx
-    ModelCache2 --> FSx
-    FSx --> S3
-    NGC --> FSx
-
-    NIMMetrics --> Prometheus
-    Prometheus --> Grafana
-
-    classDef ingressNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef nimNode fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef monitorNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef storageNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class ALB,NginxIngress,Ingress ingressNode;
-    class NIMContainer1,NIMContainer2,TensorRTEngine1,TensorRTEngine2,ModelCache1,ModelCache2,Pod1,Pod2,NIMPods nimNode;
-    class Node1,Node2,GPUNodes gpuNode;
-    class Prometheus,Grafana,NIMMetrics,Monitoring monitorNode;
-    class NGC,S3,FSx,Storage storageNode;
-    class NIMDeployment default;
-```
+![ALB와 Nginx 인그레스가 요청을 NIM 파드로 전달하고, 파드는 GPU 노드 풀에서 실행되며 FSx 기반 모델 스토리지와 Prometheus·Grafana 모니터링 스택과 연결되는 EKS 배포 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-04-inference-frameworks-1.png)
 
 ### 사전 요구 사항
 
@@ -528,83 +386,7 @@ NVIDIA Dynamo는 Prefill(프롬프트 처리) 단계와 Decode(토큰 생성) �
 
 ### Dynamo 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph DynamoCluster [NVIDIA Dynamo 배포]
-        subgraph Router [Dynamo 라우터]
-            RouterPod[라우터 파드]
-            KVRouter[KV 인식 라우터]
-            LoadBalancer[요청 로드 밸런서]
-        end
-
-        subgraph PrefillPool [Prefill 워커]
-            Prefill1[Prefill 워커 1]
-            Prefill2[Prefill 워커 2]
-            PrefillGPU1[8x A100 - 높은 메모리 대역폭]
-            PrefillGPU2[8x A100 - 높은 메모리 대역폭]
-        end
-
-        subgraph DecodePool [Decode 워커]
-            Decode1[Decode 워커 1]
-            Decode2[Decode 워커 2]
-            Decode3[Decode 워커 3]
-            DecodeGPU1[4x A10G - 비용 최적화]
-            DecodeGPU2[4x A10G - 비용 최적화]
-            DecodeGPU3[4x A10G - 비용 최적화]
-        end
-
-        subgraph KVCache [분산 KV 캐시]
-            KVStore[(KV 캐시 저장소)]
-            KVTransfer[KV 전송 서비스]
-        end
-
-        subgraph Backends [추론 백엔드]
-            vLLMBackend[vLLM]
-            SGLangBackend[SGLang]
-            TRTLLMBackend[TensorRT-LLM]
-        end
-    end
-
-    Client[클라이언트 요청] --> RouterPod
-    RouterPod --> KVRouter
-    KVRouter --> LoadBalancer
-
-    LoadBalancer -->|Prefill 요청| Prefill1
-    LoadBalancer -->|Prefill 요청| Prefill2
-
-    Prefill1 --> PrefillGPU1
-    Prefill2 --> PrefillGPU2
-
-    Prefill1 -->|KV 캐시| KVStore
-    Prefill2 -->|KV 캐시| KVStore
-
-    KVStore --> KVTransfer
-    KVTransfer --> Decode1
-    KVTransfer --> Decode2
-    KVTransfer --> Decode3
-
-    Decode1 --> DecodeGPU1
-    Decode2 --> DecodeGPU2
-    Decode3 --> DecodeGPU3
-
-    Prefill1 --> vLLMBackend
-    Decode1 --> SGLangBackend
-    Decode2 --> TRTLLMBackend
-
-    classDef routerNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prefillNode fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef decodeNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef kvNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef backendNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class RouterPod,KVRouter,LoadBalancer,Router routerNode;
-    class Prefill1,Prefill2,PrefillGPU1,PrefillGPU2,PrefillPool prefillNode;
-    class Decode1,Decode2,Decode3,DecodeGPU1,DecodeGPU2,DecodeGPU3,DecodePool decodeNode;
-    class KVStore,KVTransfer,KVCache kvNode;
-    class vLLMBackend,SGLangBackend,TRTLLMBackend,Backends backendNode;
-    class DynamoCluster,Client default;
-```
+![클라이언트 요청이 KV 인식 라우터를 통해 Prefill 워커로 전달되고, 분산 KV 캐시를 거쳐 Decode 워커로 이어지며, 각 워커가 vLLM·SGLang·TensorRT-LLM 백엔드에서 실행되는 Dynamo의 prefill/decode 분리 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-04-inference-frameworks-2.png)
 
 ### 핵심 개념
 
@@ -1197,44 +979,7 @@ SGLang(Structured Generation Language)은 UC Berkeley에서 개발한 고성능 
 
 ### SGLang의 핵심 기술
 
-```mermaid
-flowchart TD
-    subgraph SGLangArch [SGLang 아키텍처]
-        subgraph Frontend [프론트엔드]
-            SGLangDSL[SGLang DSL]
-            OpenAICompat[OpenAI 호환 API]
-            NativeAPI[네이티브 API]
-        end
-
-        subgraph Runtime [런타임 엔진]
-            RadixAttention[RadixAttention]
-            CompressedFSM[압축 FSM 기반 구조화 출력]
-            ChunkedPrefill[Chunked Prefill]
-            FlashInfer[FlashInfer 커널]
-        end
-
-        subgraph Optimization [최적화]
-            KVCacheReuse[KV 캐시 재사용]
-            OverlapSchedule[스케줄 오버래핑]
-            DataParallel[데이터 병렬 처리]
-        end
-    end
-
-    SGLangDSL --> Runtime
-    OpenAICompat --> Runtime
-    RadixAttention --> KVCacheReuse
-    CompressedFSM --> OverlapSchedule
-
-    classDef featureNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef runtimeNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef optNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class SGLangDSL,OpenAICompat,NativeAPI,Frontend featureNode;
-    class RadixAttention,CompressedFSM,ChunkedPrefill,FlashInfer,Runtime runtimeNode;
-    class KVCacheReuse,OverlapSchedule,DataParallel,Optimization optNode;
-    class SGLangArch default;
-```
+![SGLang의 프론트엔드 API가 RadixAttention 기반 런타임 엔진으로 요청을 보내고, 이 엔진이 KV 캐시 재사용과 스케줄 오버래핑 같은 최적화 기법을 구동하는 3계층 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-04-inference-frameworks-3.png)
 
 1. **RadixAttention**: Radix 트리 기반의 KV 캐시 재사용으로, 프리픽스 캐싱을 넘어 부분적으로 겹치는 프롬프트 간에도 캐시를 효율적으로 공유합니다.
 2. **압축 FSM 기반 구조화 출력**: JSON Schema, 정규표현식 등 구조화된 출력 생성 시 유한 상태 기계를 압축하여 vLLM 대비 최대 10배 빠른 구조화 디코딩을 제공합니다.

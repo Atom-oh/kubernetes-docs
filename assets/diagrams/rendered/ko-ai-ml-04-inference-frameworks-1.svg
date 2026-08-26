@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="nim-title nim-desc">
+    <title id="nim-title">EKS에서의 NVIDIA NIM 배포</title>
+    <desc id="nim-desc">ALB와 Nginx 인그레스가 요청을 NIM 파드로 전달하고, 파드는 GPU 노드 풀에서 실행되며 FSx 기반 모델 스토리지와 Prometheus·Grafana 모니터링 스택과 연결되는 EKS 배포 구조를 보여주는 다이어그램.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone: NIM pods -->
+    <rect x="360" y="184" width="240" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="428" y="188" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="197" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">NIM 파드 (x2)</text>
+
+    <!-- Arrows (behind boxes) -->
+    <!-- ALB -> NIM Pods -->
+    <path d="M 200,132 H 468 Q 476,132 476,140 V 220" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- NIM Pods -> GPU node pool -->
+    <path d="M 480,304 V 344" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- NIM Pods -> FSx (model cache to storage) -->
+    <path d="M 480,304 V 336 Q 480,344 472,344 H 796 Q 804,344 804,352 V 384" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- FSx -> S3 -->
+    <line x1="836" y1="416" x2="836" y2="440" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- NGC -> FSx -->
+    <path d="M 700,400 H 764" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <!-- NIM metrics -> Prometheus -->
+    <path d="M 360,232 H 220 Q 212,232 212,240 V 400" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <!-- Prometheus -> Grafana -->
+    <line x1="212" y1="432" x2="212" y2="440" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="452" y="140" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="149" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">HTTPS:8000</text>
+
+    <rect x="452" y="312" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="321" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SCHEDULE</text>
+
+    <rect x="780" y="344" width="44" height="12" rx="2" fill="#ffffff"/>
+    <text x="802" y="353" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">CACHE</text>
+
+    <rect x="818" y="420" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="836" y="429" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SYNC</text>
+
+    <rect x="188" y="376" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="212" y="385" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">EXPORT</text>
+
+    <!-- Node: Ingress -->
+    <rect x="40" y="100" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="40" y="100" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="120" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">ALB · Nginx Ingress</text>
+    <text x="120" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">인그레스 레이어</text>
+
+    <!-- Node: NIM pod (focal) -->
+    <rect x="392" y="220" width="176" height="84" rx="6" fill="#ffffff"/>
+    <rect x="392" y="220" width="176" height="84" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="480" y="248" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">NIM 컨테이너</text>
+    <text x="480" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">TensorRT-LLM 엔진</text>
+    <text x="480" y="280" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">모델 캐시</text>
+
+    <!-- Node: GPU node pool -->
+    <rect x="360" y="344" width="240" height="64" rx="6" fill="#ffffff"/>
+    <rect x="360" y="344" width="240" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="480" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">GPU 노드 풀</text>
+    <text x="480" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">p4d.24xlarge · g5.48xlarge</text>
+
+    <!-- Node: NGC Catalog -->
+    <rect x="620" y="368" width="80" height="64" rx="6" fill="#ffffff"/>
+    <rect x="620" y="368" width="80" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="660" y="396" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">NGC</text>
+    <text x="660" y="412" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Catalog</text>
+
+    <!-- Node: FSx for Lustre -->
+    <rect x="764" y="368" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="764" y="368" width="144" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="836" y="396" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">FSx for Lustre</text>
+    <text x="836" y="412" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">모델 스토리지</text>
+
+    <!-- Node: S3 -->
+    <rect x="764" y="440" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="764" y="440" width="144" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="836" y="468" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Amazon S3</text>
+    <text x="836" y="484" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">모델 아카이브</text>
+
+    <!-- Node: Prometheus -->
+    <rect x="140" y="400" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="140" y="400" width="144" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="212" y="428" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Prometheus</text>
+    <text x="212" y="444" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">NIM 메트릭 익스포터</text>
+
+    <!-- Node: Grafana -->
+    <rect x="140" y="472" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="140" y="472" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="212" y="500" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Grafana</text>
+    <text x="212" y="516" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">대시보드</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="552" x2="920" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="580" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="588" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">NIM 파드 (focal)</text>
+
+    <rect x="220" y="580" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="588" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">인그레스 / UI</text>
+
+    <rect x="380" y="580" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="400" y="588" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">스토리지 / 모니터링</text>
+
+    <line x1="580" y1="586" x2="608" y2="586" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <text x="616" y="588" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">비동기 / 메트릭</text>
+  </svg>
