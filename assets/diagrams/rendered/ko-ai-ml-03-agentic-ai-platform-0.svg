@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="d0-title d0-desc">
+    <title id="d0-title">Agentic AI 특성과 워크플로우 루프</title>
+    <desc id="d0-desc">자율적 계획 수립, 도구 기반 실행, 반복적 개선, 상태 및 메모리 관리라는 네 가지 Agentic AI 특성이 목표 설정부터 계획, 실행, 평가를 거쳐 완료 또는 재계획으로 이어지는 워크플로우 루프의 각 단계를 뒷받침하는 구조를 보여준다.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone: Agentic AI characteristics -->
+    <rect x="40" y="64" width="200" height="356" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="88" y="72" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="140" y="81" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">AGENTIC AI 특성</text>
+
+    <!-- ===== Arrows (behind boxes) ===== -->
+    <!-- Chain: Goal -> Plan -> Execute -> Evaluate -->
+    <line x1="560" y1="64" x2="560" y2="96" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="560" y1="144" x2="560" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="560" y1="224" x2="560" y2="256" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Evaluate -> Result (complete), accent as primary happy path -->
+    <line x1="630" y1="300" x2="752" y2="300" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- Evaluate -> Plan (loop back, improve) -->
+    <path d="M 490,300 H 452 Q 444,300 444,292 V 200 Q 444,192 452,192 H 480"
+          fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- Planning -> Plan (straight) -->
+    <line x1="224" y1="120" x2="480" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Iteration -> Evaluate (straight) -->
+    <line x1="224" y1="300" x2="490" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Execution -> Execute (short elbow, fan point upper) -->
+    <path d="M 224,200 H 468 Q 476,200 476,192 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Memory -> Execute (elbow with hop over Iteration's line, fan point lower) -->
+    <path d="M 224,380 H 342 Q 350,380 350,372 V 308 A 8,8 0 0 1 350,292 V 216 Q 350,208 358,208 H 480"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="392" y="272" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="428" y="281" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">개선 필요</text>
+
+    <rect x="664" y="284" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="690" y="293" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">완료</text>
+
+    <!-- ===== Left-zone nodes: characteristics (input-type treatment) ===== -->
+    <!-- Planning -->
+    <rect x="56" y="96" width="168" height="48" rx="6" fill="#ffffff"/>
+    <rect x="56" y="96" width="168" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="140" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">자율적 계획 수립</text>
+
+    <!-- Execution -->
+    <rect x="56" y="176" width="168" height="48" rx="6" fill="#ffffff"/>
+    <rect x="56" y="176" width="168" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="140" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">도구 기반 실행</text>
+
+    <!-- Iteration -->
+    <rect x="56" y="276" width="168" height="48" rx="6" fill="#ffffff"/>
+    <rect x="56" y="276" width="168" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="140" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">반복적 개선</text>
+
+    <!-- Memory -->
+    <rect x="56" y="356" width="168" height="48" rx="6" fill="#ffffff"/>
+    <rect x="56" y="356" width="168" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="140" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">상태 및 메모리 관리</text>
+
+    <!-- ===== Right column: workflow ===== -->
+    <!-- Goal -->
+    <rect x="480" y="16" width="160" height="48" rx="6" fill="#ffffff"/>
+    <rect x="480" y="16" width="160" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="560" y="44" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">목표 설정</text>
+
+    <!-- Plan -->
+    <rect x="480" y="96" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="560" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">계획 수립</text>
+
+    <!-- Execute -->
+    <rect x="480" y="176" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="560" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">실행</text>
+
+    <!-- Evaluate (diamond, focal) -->
+    <polygon points="560,256 630,300 560,344 490,300" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="560" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">평가</text>
+
+    <!-- Result -->
+    <rect x="752" y="276" width="160" height="48" rx="6" fill="#ffffff"/>
+    <rect x="752" y="276" width="160" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="832" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">결과 반환</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="460" x2="920" y2="460" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="476" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="492" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="60" y="500" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Agentic AI 특성</text>
+
+    <rect x="220" y="492" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="500" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">워크플로우 단계</text>
+
+    <rect x="392" y="492" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="412" y="500" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">평가 분기</text>
+
+    <line x1="540" y1="497" x2="568" y2="497" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="576" y="500" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">재계획 루프</text>
+  </svg>

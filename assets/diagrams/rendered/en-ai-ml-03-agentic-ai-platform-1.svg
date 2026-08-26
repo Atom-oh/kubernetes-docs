@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t1 d1">
+<title id="t1">Key technical challenges mapped to solutions</title>
+<desc id="d1">Four technical challenges in running agentic AI at scale -- GPU resource management, multi-LLM integration, workflow orchestration, and real-time cost optimization -- each paired with the tools and techniques that address it.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+
+<text x="40" y="36" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">AGENTIC AI AT SCALE</text>
+<text x="40" y="60" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Four technical challenges and their solutions</text>
+
+<!-- zone: challenges -->
+<rect x="32" y="96" width="336" height="464" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="60" y="100" width="180" height="12" rx="2" fill="#ffffff"/>
+<text x="150" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">CHALLENGES</text>
+
+<!-- zone: solutions -->
+<rect x="592" y="96" width="336" height="464" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="620" y="100" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="690" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">SOLUTIONS</text>
+
+<!-- 4 rows, arrows first -->
+<!-- row 1 y=140 -->
+<line x1="368" y1="168" x2="592" y2="168" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="404" y="146" width="152" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="155" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">FRAGMENT/SHARE/SCHED</text>
+
+<!-- row 2 y=260 -->
+<line x1="368" y1="288" x2="592" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="414" y="266" width="132" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="275" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">ROUTE/FALLBACK/LB</text>
+
+<!-- row 3 y=380 -->
+<line x1="368" y1="408" x2="592" y2="408" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="400" y="386" width="160" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="395" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">STATE/BRANCH/ERRORS</text>
+
+<!-- row 4 y=500 -->
+<line x1="368" y1="528" x2="592" y2="528" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="416" y="506" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="515" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">CACHE/BATCH/TIER</text>
+
+<!-- challenge nodes -->
+<g>
+  <rect x="48" y="140" width="320" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="208" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">1. GPU Resource Management</text>
+  <text x="208" y="182" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">fragmentation · sharing · scheduling</text>
+</g>
+<g>
+  <rect x="48" y="260" width="320" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="208" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">2. Multi-LLM Integration</text>
+  <text x="208" y="302" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">routing · fallback · load balancing</text>
+</g>
+<g>
+  <rect x="48" y="380" width="320" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="208" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">3. Workflow Orchestration</text>
+  <text x="208" y="422" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">state · branching · error handling</text>
+</g>
+<g>
+  <rect x="48" y="500" width="320" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="208" y="524" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">4. Real-time Cost Optimization</text>
+  <text x="208" y="542" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">caching · batching · tiering</text>
+</g>
+
+<!-- solution nodes -->
+<g>
+  <rect x="608" y="140" width="304" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="760" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">MIG · Time-Slicing · Karpenter</text>
+</g>
+<g>
+  <rect x="608" y="260" width="304" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="760" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">LiteLLM · Inference Gateway</text>
+</g>
+<g>
+  <rect x="608" y="380" width="304" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="760" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">LangGraph · Kagent</text>
+</g>
+<g>
+  <rect x="608" y="500" width="304" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="760" y="524" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Langfuse · Prompt Cache</text>
+</g>
+</svg>
