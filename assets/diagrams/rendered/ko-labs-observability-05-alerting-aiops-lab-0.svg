@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="aiops-arch-ttl aiops-arch-desc">
+  <title id="aiops-arch-ttl">AIOps 경보 파이프라인 아키텍처</title>
+  <desc id="aiops-arch-desc">Prometheus AlertManager와 CloudWatch Alarms가 이상을 탐지하면 Grafana OnCall과 SNS Topic으로 라우팅되고, SNS가 AIOps Agent(Lambda+Bedrock)를 호출해 CloudWatch Investigations로 근본 원인을 분석한 뒤 Slack·Email·PagerDuty 채널로 결과가 전달되는 흐름을 보여준다.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="30" y="34" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">ALERTING &amp; AIOPS</text>
+  <text x="30" y="58" fill="#232F3E" font-size="20" font-weight="700">경보 파이프라인 아키텍처</text>
+
+  <!-- Zones -->
+  <!-- Detection zone -->
+  <rect x="30" y="96" width="200" height="152" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="50" y="100" width="80" height="12" rx="2" fill="#ffffff"/>
+  <text x="90" y="109" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">이상 탐지</text>
+
+  <!-- Routing zone -->
+  <rect x="270" y="96" width="200" height="152" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="290" y="100" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="334" y="109" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">알림 라우팅</text>
+
+  <!-- Analysis zone -->
+  <rect x="510" y="96" width="200" height="152" rx="8" fill="rgba(255,153,0,0.05)" stroke="rgba(236,114,17,0.35)" stroke-width="0.8"/>
+  <rect x="530" y="100" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="566" y="109" fill="#EC7211" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">AI 분석</text>
+
+  <!-- Response zone -->
+  <rect x="750" y="96" width="180" height="152" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="770" y="100" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="798" y="109" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">대응</text>
+
+  <!-- === ARROWS (drawn before nodes) === -->
+  <!-- Prom -> OnCall horizontal (shared y=168) -->
+  <path d="M 230,168 H 270" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Prom -> SNS: right then down then right -->
+  <path d="M 230,180 H 242 Q 250,180 250,188 V 208 Q 250,216 258,216 H 270" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- CW -> SNS horizontal (shared y=232, fanned 8px below Prom->SNS entry) -->
+  <path d="M 230,232 H 270" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- OnCall -> Response channels: exits top edge, travels the empty header-margin corridor (y=124), enters Response top edge. Dashed = routing hop, not primary. -->
+  <path d="M 380,148 V 132 Q 380,124 388,124 H 832 Q 840,124 840,132 V 184"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- SNS -> AIOps Agent: shared y=214, straight (fanned 20px above AIOps<->SNS midline) -->
+  <path d="M 470,214 H 530" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- AIOps Agent -> SNS return: shared y=234, straight dashed, fanned 20px below the call -->
+  <path d="M 530,234 H 470" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- SNS -> Response channels: exits bottom edge, travels open canvas below all zones, enters Response bottom edge. Primary delivery path. -->
+  <path d="M 380,244 V 256 Q 380,264 388,264 H 852 Q 860,264 860,256 V 240"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- === NODES === -->
+  <!-- Prometheus AlertManager -->
+  <rect x="50" y="150" width="140" height="44" rx="6" fill="#ffffff"/>
+  <rect x="50" y="150" width="140" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="120" y="169" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Prometheus</text>
+  <text x="120" y="184" fill="#545B64" font-size="9" class="mono" text-anchor="middle">AlertManager</text>
+
+  <!-- CloudWatch Alarms -->
+  <rect x="50" y="204" width="140" height="40" rx="6" fill="#ffffff"/>
+  <rect x="50" y="204" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="120" y="222" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">CloudWatch</text>
+  <text x="120" y="237" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Alarms</text>
+
+  <!-- Grafana OnCall -->
+  <rect x="290" y="148" width="180" height="40" rx="6" fill="#ffffff"/>
+  <rect x="290" y="148" width="180" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="380" y="172" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Grafana OnCall</text>
+
+  <!-- SNS Topic -->
+  <rect x="290" y="204" width="180" height="40" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="290" y="204" width="180" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="380" y="228" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">SNS Topic</text>
+
+  <!-- AIOps Agent (focal) -->
+  <rect x="530" y="200" width="160" height="44" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="530" y="200" width="160" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="610" y="219" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">AIOps Agent</text>
+  <text x="610" y="234" fill="#EC7211" font-size="9" class="mono" text-anchor="middle">Lambda + Bedrock</text>
+
+  <!-- CloudWatch Investigations -->
+  <rect x="530" y="148" width="160" height="40" rx="6" fill="#ffffff"/>
+  <rect x="530" y="148" width="160" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="610" y="169" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">CloudWatch</text>
+  <text x="610" y="183" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Investigations</text>
+  <path d="M 610,200 V 188" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Response channels (collapsed) -->
+  <rect x="770" y="184" width="140" height="56" rx="6" fill="rgba(35,47,62,0.02)"/>
+  <rect x="770" y="184" width="140" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="#7D8998" stroke-width="1"/>
+  <text x="840" y="202" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">대응 채널</text>
+  <text x="840" y="217" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Slack · Email</text>
+  <text x="840" y="230" fill="#545B64" font-size="9" class="mono" text-anchor="middle">PagerDuty</text>
+
+  <!-- Arrow labels -->
+  <rect x="472" y="104" width="36" height="12" rx="2" fill="#ffffff"/>
+  <text x="490" y="113" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">ROUTE</text>
+
+  <rect x="692" y="244" width="44" height="12" rx="2" fill="#ffffff"/>
+  <text x="714" y="253" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">NOTIFY</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="278" x2="930" y2="278" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="294" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+  <path d="M 130,290 H 162" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="170" y="294" fill="#545B64" font-size="9" class="mono">direct call</text>
+  <path d="M 320,290 H 352" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="360" y="294" fill="#545B64" font-size="9" class="mono">routing (transit)</text>
+  <path d="M 560,290 H 592" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <text x="600" y="294" fill="#545B64" font-size="9" class="mono">AI 분석 경로</text>
+</svg>

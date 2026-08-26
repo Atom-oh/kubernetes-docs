@@ -22,39 +22,7 @@
 
 ![AIOps Architecture](../../.gitbook/assets/aiops-architecture.png)
 
-```mermaid
-flowchart TB
-    subgraph Detection["Alert Detection"]
-        AM["Alertmanager"]
-        CWA["CloudWatch Alarms"]
-        GO["Grafana OnCall"]
-    end
-
-    subgraph Analysis["AI Analysis"]
-        CWI["CloudWatch Investigations"]
-        AIOPS["AIOps Agent (Lambda)"]
-        Bedrock["Bedrock Claude"]
-    end
-
-    subgraph Notification["Notification"]
-        SNS["SNS Topic"]
-        Email["Email"]
-        Slack["Slack"]
-        PD["PagerDuty"]
-    end
-
-    AM -->|webhook| GO
-    AM -->|webhook| AIOPS
-    CWA -->|trigger| SNS
-    CWA -->|anomaly| CWI
-
-    CWI -->|hypothesis| AIOPS
-    AIOPS -->|query| Bedrock
-    AIOPS -->|analysis| SNS
-
-    SNS --> Email & Slack & PD
-    GO -->|escalation| SNS
-```
+![Alertmanager and CloudWatch Alarms trigger Grafana OnCall and an AIOps Lambda agent; CloudWatch Investigations feeds the agent a hypothesis, the agent queries Bedrock Claude, and results route through SNS to email, Slack, and PagerDuty.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-0.png)
 
 ***
 
@@ -461,17 +429,7 @@ aws sns subscribe \
 
 CloudWatch Investigations uses AI to automatically analyze anomalies and provide hypotheses.
 
-```mermaid
-stateDiagram-v2
-    [*] --> AnomalyDetected: CloudWatch detects anomaly
-    AnomalyDetected --> InvestigationStarted: Auto-create investigation
-    InvestigationStarted --> DataCollection: Collect related signals
-    DataCollection --> CorrelationAnalysis: Correlate metrics/logs/traces
-    CorrelationAnalysis --> HypothesisGeneration: AI generates hypotheses
-    HypothesisGeneration --> RootCauseProposal: Propose root cause
-    RootCauseProposal --> RecommendedActions: Suggest remediation
-    RecommendedActions --> [*]: Investigation complete
-```
+![A linear state machine showing how CloudWatch anomaly detection leads through automatic investigation creation, data collection, correlation, AI hypothesis generation, root-cause proposal, and recommended actions to a completed investigation.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-1.png)
 
 **Step 5.2: Create Investigation trigger**
 
@@ -523,35 +481,7 @@ aws cloudwatch put-insight-rule \
 
 **Step 6.1: AIOps Agent architecture**
 
-```mermaid
-sequenceDiagram
-    participant AM as Alertmanager
-    participant APIGW as API Gateway
-    participant Lambda as Lambda Function
-    participant CW as CloudWatch
-    participant Loki as Loki
-    participant Tempo as Tempo
-    participant Bedrock as Bedrock Claude
-    participant SNS as SNS
-
-    AM->>APIGW: Alert webhook
-    APIGW->>Lambda: Invoke
-    activate Lambda
-
-    par Collect Telemetry
-        Lambda->>CW: Query metrics
-        Lambda->>Loki: Query logs
-        Lambda->>Tempo: Query traces
-    end
-
-    Lambda->>Lambda: Prepare context
-    Lambda->>Bedrock: Analyze with Claude
-    Bedrock-->>Lambda: Analysis result
-
-    Lambda->>SNS: Send analysis report
-    deactivate Lambda
-    SNS->>SNS: Notify teams
-```
+![Alertmanager triggers an API Gateway webhook that invokes a Lambda function, which queries CloudWatch, Loki, and Tempo concurrently, asks Bedrock Claude to analyze the combined context, and publishes the resulting report to SNS.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-2.png)
 
 **Step 6.2: Create Lambda function**
 
@@ -918,29 +848,7 @@ Check your email for the AIOps analysis report.
 
 **Step 9.1: Multi-agent architecture for complex incidents**
 
-```mermaid
-flowchart TB
-    Alert[Alert Received]
-
-    subgraph Coordinator["Coordinator Agent"]
-        Triage[Triage Alert]
-        Assign[Assign Specialists]
-        Synthesize[Synthesize Results]
-    end
-
-    subgraph Specialists["Specialist Agents"]
-        Metrics["Metrics Analyst<br/>(Prometheus Expert)"]
-        Logs["Log Analyst<br/>(Loki Expert)"]
-        Traces["Trace Analyst<br/>(Tempo Expert)"]
-        Infra["Infra Analyst<br/>(K8s/AWS Expert)"]
-    end
-
-    Alert --> Triage
-    Triage --> Assign
-    Assign --> Metrics & Logs & Traces & Infra
-    Metrics & Logs & Traces & Infra --> Synthesize
-    Synthesize --> Report[Final Report]
-```
+![A coordinator agent triages an incoming alert, assigns four specialist agents (metrics, logs, traces, infrastructure) to analyze it in parallel, then synthesizes their findings into a final report.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-3.png)
 
 This advanced pattern uses multiple specialized AI agents that collaborate on complex incidents. Implementation requires:
 

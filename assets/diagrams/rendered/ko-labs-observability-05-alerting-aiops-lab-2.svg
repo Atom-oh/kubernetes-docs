@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="aiops-seq-ttl aiops-seq-desc">
+  <title id="aiops-seq-ttl">AIOps 에이전트 조사 시퀀스</title>
+  <desc id="aiops-seq-desc">AlertManager의 웹훅으로 트리거된 AIOps Lambda가 로그·지표·트레이스 원격 측정 데이터를 순서대로 수집한 뒤 Bedrock Claude에 분석을 요청하고, 그 결과를 SNS를 통해 이메일로 통지하는 시간순 상호작용을 보여준다.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+    </marker>
+  </defs>
+  <rect width="960" height="900" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="30" y="34" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">SEQUENCE</text>
+  <text x="30" y="58" fill="#232F3E" font-size="20" font-weight="700">AIOps 에이전트 조사 흐름</text>
+
+  <!-- Actors: x centers -->
+  <!-- AM=120, Lambda=340, Telemetry=560, Bedrock=760, SNS=910 -->
+  <g>
+    <rect x="60" y="86" width="120" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="120" y="110" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">AlertManager</text>
+
+    <rect x="280" y="86" width="120" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="340" y="106" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Lambda</text>
+    <text x="340" y="120" fill="#EC7211" font-size="9" class="mono" text-anchor="middle">AIOps Agent</text>
+
+    <rect x="500" y="86" width="120" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="560" y="106" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Telemetry</text>
+    <text x="560" y="120" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Logs · AMP · X-Ray</text>
+
+    <rect x="700" y="86" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="760" y="106" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Bedrock</text>
+    <text x="760" y="120" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Claude</text>
+
+    <rect x="850" y="86" width="80" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="890" y="110" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">SNS</text>
+  </g>
+
+  <!-- Lifelines -->
+  <line x1="120" y1="126" x2="120" y2="840" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="340" y1="126" x2="340" y2="840" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="560" y1="126" x2="560" y2="840" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="760" y1="126" x2="760" y2="840" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="890" y1="126" x2="890" y2="840" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- Activation bar: Lambda spans most of the diagram (holds control throughout) -->
+  <rect x="336" y="156" width="8" height="628" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+  <!-- 1. AM -> Lambda: webhook -->
+  <path d="M 120,156 H 336" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <rect x="176" y="140" width="128" height="12" rx="2" fill="#ffffff"/>
+  <text x="240" y="149" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.03em">WEBHOOK (VIA API GW)</text>
+
+  <!-- 2. Lambda self-message: extract fields -->
+  <path d="M 344,184 H 380 Q 388,184 388,192 V 196 Q 388,204 380,204 H 344"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <text x="396" y="198" fill="#7D8998" font-size="8" class="mono">EXTRACT: SERVICE, METRIC,</text>
+  <text x="396" y="210" fill="#7D8998" font-size="8" class="mono">TIME RANGE</text>
+
+  <!-- 3. Lambda -> Telemetry: Logs Insights query -->
+  <path d="M 344,240 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="404" y="224" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="452" y="233" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">LOGS QUERY</text>
+
+  <!-- 4. Telemetry --> Lambda: log results (dashed return) -->
+  <path d="M 560,268 H 344" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="404" y="252" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="452" y="261" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">LOG RESULTS</text>
+
+  <!-- 5. Lambda -> Telemetry: PromQL query -->
+  <path d="M 344,304 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="404" y="288" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="452" y="297" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">PROMQL QUERY</text>
+
+  <!-- 6. Telemetry --> Lambda: metric results -->
+  <path d="M 560,332 H 344" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="392" y="316" width="120" height="12" rx="2" fill="#ffffff"/>
+  <text x="452" y="325" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">METRIC RESULTS</text>
+
+  <!-- 7. Lambda -> Telemetry: GetTraceSummaries -->
+  <path d="M 344,368 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="384" y="352" width="140" height="12" rx="2" fill="#ffffff"/>
+  <text x="454" y="361" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">GETTRACESUMMARIES</text>
+
+  <!-- 8. Telemetry --> Lambda: trace results -->
+  <path d="M 560,396 H 344" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="392" y="380" width="120" height="12" rx="2" fill="#ffffff"/>
+  <text x="452" y="389" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">TRACE RESULTS</text>
+
+  <!-- 9. Lambda -> Bedrock: Claude invoke -->
+  <path d="M 344,436 H 760" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <rect x="480" y="420" width="144" height="12" rx="2" fill="#ffffff"/>
+  <text x="552" y="429" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">CLAUDE INVOKE (ALERT+M+L+T)</text>
+
+  <!-- Note over Bedrock -->
+  <rect x="700" y="458" width="120" height="32" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+  <text x="760" y="472" fill="#545B64" font-size="8" class="mono" text-anchor="middle">SYSTEM PROMPT:</text>
+  <text x="760" y="484" fill="#545B64" font-size="8" class="mono" text-anchor="middle">SRE EXPERT</text>
+
+  <!-- 10. Bedrock --> Lambda: analysis result -->
+  <path d="M 760,512 H 344" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="480" y="496" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="536" y="505" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">ANALYSIS RESULT</text>
+
+  <!-- 11. Lambda -> SNS: publish -->
+  <path d="M 344,548 H 890" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <rect x="576" y="532" width="140" height="12" rx="2" fill="#ffffff"/>
+  <text x="646" y="541" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">PUBLISH ANALYSIS</text>
+
+  <!-- 12. SNS self-message: email notification (async, open marker) -->
+  <path d="M 890,576 H 926 Q 934,576 934,584 V 588 Q 934,596 926,596 H 890"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-open)"/>
+  <text x="798" y="592" fill="#7D8998" font-size="8" class="mono" text-anchor="end" letter-spacing="0.02em">EMAIL NOTIFICATION</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="812" x2="930" y2="812" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="828" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+  <path d="M 130,824 H 162" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <text x="170" y="828" fill="#545B64" font-size="9" class="mono">headline call</text>
+  <path d="M 320,824 H 352" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <text x="360" y="828" fill="#545B64" font-size="9" class="mono">return</text>
+  <path d="M 470,824 H 502" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-open)"/>
+  <text x="510" y="828" fill="#545B64" font-size="9" class="mono">async notify</text>
+</svg>

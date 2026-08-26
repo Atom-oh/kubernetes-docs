@@ -23,32 +23,7 @@
 
 ## Drill-Down Analysis Workflow
 
-```mermaid
-sequenceDiagram
-    participant Op as Operator
-    participant G as Grafana
-    participant P as Prometheus
-    participant T as Tempo
-    participant L as Loki
-
-    Op->>G: Notice error spike in dashboard
-    G->>P: Query error rate metrics
-    P-->>G: Return metrics with exemplars
-
-    Op->>G: Click exemplar point
-    G->>T: Query trace by traceID
-    T-->>G: Return full trace
-
-    Op->>G: Identify slow span
-    G->>T: Get span details
-
-    Op->>G: Click "Logs for this trace"
-    G->>L: Query logs with traceID filter
-    L-->>G: Return correlated logs
-
-    Op->>Op: Identify root cause from logs
-    Note over Op,L: Complete drill-down:<br/>Metric → Trace → Logs
-```
+![Sequence diagram of an operator drilling down in Grafana from an error-rate metric spike, through a Tempo trace reached via an exemplar, to correlated Loki logs, ending with the root cause identified.](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-0.png)
 
 ---
 
@@ -243,15 +218,7 @@ curl -X POST "http://$API_URL:8080/api/v1/orders" \
 
 Exemplars link metric data points to specific traces, enabling drill-down from anomalous metrics to the actual requests.
 
-```mermaid
-flowchart LR
-    M[Metric Point<br/>latency=1.2s]
-    E[Exemplar<br/>traceId=abc123]
-    T[Trace<br/>Full request path]
-
-    M -->|contains| E
-    E -->|links to| T
-```
+![Flowchart showing a metric data point containing an exemplar that links onward to the full distributed trace for that request.](../../.gitbook/assets/en-labs-observability-06-distributed-tracing-lab-1.png)
 
 **Step 5.2: View Exemplars in Grafana**
 

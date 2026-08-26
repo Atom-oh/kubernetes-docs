@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="state-title state-desc">
+  <title id="state-title">Canary rollout state machine</title>
+  <desc id="state-desc">State machine showing a canary deployment ramping v2 traffic through 20 percent and 40 percent stages with a two-minute analysis gate after each, then automatically ramping to 100 percent once both gates pass, with a rollback to v1 triggered from either gate on a success rate below 95 percent.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="st1-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="st1-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#FFFFFF"/>
+
+  <!-- ============ TRANSITIONS (drawn first) ============ -->
+
+  <!-- Start -> 20% Canary -->
+  <line x1="54" y1="214" x2="118" y2="214" stroke="#545B64" stroke-width="1.2" marker-end="url(#st1-arrow)"/>
+  <rect x="61" y="198" width="50" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="86" y="207" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0.02em" fill="#545B64">DEPLOY V2</text>
+
+  <!-- 20% Canary -> Analysis Gate 1 -->
+  <line x1="214" y1="214" x2="270" y2="214" stroke="#545B64" stroke-width="1.2" marker-end="url(#st1-arrow)"/>
+  <rect x="218" y="198" width="48" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="242" y="207" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0em" fill="#545B64">WAIT 2M</text>
+
+  <!-- Analysis Gate 1 -> 40% Canary (pass) -->
+  <line x1="382" y1="214" x2="430" y2="214" stroke="#545B64" stroke-width="1.2" marker-end="url(#st1-arrow)"/>
+  <rect x="382" y="198" width="48" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="406" y="207" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0.04em" fill="#545B64">&#8805;95%</text>
+
+  <!-- 40% Canary -> Analysis Gate 2 -->
+  <line x1="526" y1="214" x2="582" y2="214" stroke="#545B64" stroke-width="1.2" marker-end="url(#st1-arrow)"/>
+  <rect x="530" y="198" width="48" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="554" y="207" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0em" fill="#545B64">WAIT 2M</text>
+
+  <!-- Analysis Gate 2 -> Ramp to 100% (pass) -->
+  <line x1="694" y1="214" x2="742" y2="214" stroke="#545B64" stroke-width="1.2" marker-end="url(#st1-arrow)"/>
+  <rect x="694" y="198" width="40" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="714" y="207" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0em" fill="#545B64">PASSED</text>
+
+  <!-- Ramp to 100% -> End (success, headline) -->
+  <line x1="866" y1="214" x2="910" y2="214" stroke="#EC7211" stroke-width="1.4" marker-end="url(#st1-arrow-accent)"/>
+  <rect x="868" y="198" width="44" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="890" y="207" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0em" fill="#EC7211">COMPLETE</text>
+
+  <!-- Analysis Gate 1 -> Rollback (fail) -->
+  <path d="M 326 238 L 326 292 Q 326 300 334 300 L 419 300 Q 427 300 427 308 L 427 350"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#st1-arrow)"/>
+  <rect x="336" y="286" width="40" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="356" y="295" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0.04em" fill="#545B64">&lt;95%</text>
+
+  <!-- Analysis Gate 2 -> Rollback (fail) -->
+  <path d="M 638 238 L 638 292 Q 638 300 630 300 L 545 300 Q 537 300 537 308 L 537 350"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#st1-arrow)"/>
+  <rect x="558" y="286" width="52" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="584" y="295" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0.04em" fill="#545B64">FAILED</text>
+
+  <!-- Rollback -> End (rolled back) -->
+  <line x1="557" y1="374" x2="914" y2="374" stroke="#545B64" stroke-width="1.2" marker-end="url(#st1-arrow)"/>
+  <rect x="656" y="358" width="118" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="715" y="367" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0.04em" fill="#545B64">ROLLED BACK TO V1</text>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- Start dot -->
+  <circle cx="48" cy="214" r="6" fill="#232F3E"/>
+
+  <!-- 20% Canary -->
+  <rect x="118" y="190" width="96" height="48" rx="8" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+  <text x="166" y="209" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',sans-serif" font-size="12" font-weight="600" fill="#232F3E">20% Canary</text>
+  <text x="166" y="222" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" fill="#7D8998">TRAFFIC TO V2</text>
+
+  <!-- Analysis Gate 1 -->
+  <rect x="270" y="190" width="112" height="48" rx="8" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+  <text x="326" y="209" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',sans-serif" font-size="12" font-weight="600" fill="#232F3E">Analysis Gate</text>
+  <text x="326" y="222" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" fill="#7D8998">2 MIN WINDOW</text>
+
+  <!-- 40% Canary -->
+  <rect x="430" y="190" width="96" height="48" rx="8" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+  <text x="478" y="209" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',sans-serif" font-size="12" font-weight="600" fill="#232F3E">40% Canary</text>
+  <text x="478" y="222" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" fill="#7D8998">TRAFFIC TO V2</text>
+
+  <!-- Analysis Gate 2 -->
+  <rect x="582" y="190" width="112" height="48" rx="8" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+  <text x="638" y="209" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',sans-serif" font-size="12" font-weight="600" fill="#232F3E">Analysis Gate</text>
+  <text x="638" y="222" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" fill="#7D8998">2 MIN WINDOW</text>
+
+  <!-- Ramp to 100% (focal / happy completion) -->
+  <rect x="742" y="186" width="124" height="56" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="804" y="209" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',sans-serif" font-size="12" font-weight="600" fill="#232F3E">Ramp to 100%</text>
+  <text x="804" y="222" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" fill="#7D8998">60% &#8594; 80% &#8594; 100%</text>
+  <text x="804" y="233" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" fill="#7D8998">2 MIN PAUSE EACH</text>
+
+  <!-- End (success) -->
+  <circle cx="922" cy="214" r="8" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+  <circle cx="922" cy="214" r="5" fill="#232F3E"/>
+  <text x="922" y="248" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" fill="#545B64">V2 PROMOTED</text>
+
+  <!-- Rollback -->
+  <rect x="407" y="350" width="150" height="48" rx="8" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+  <text x="482" y="369" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',sans-serif" font-size="12" font-weight="600" fill="#232F3E">Rollback</text>
+  <text x="482" y="382" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" fill="#7D8998">REVERT TO V1</text>
+
+  <!-- End (rolled back) -->
+  <circle cx="922" cy="374" r="8" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+  <circle cx="922" cy="374" r="5" fill="#232F3E"/>
+  <text x="922" y="408" text-anchor="middle" font-family="'Geist Mono',monospace" font-size="8" fill="#545B64">ROLLED BACK</text>
+
+</svg>

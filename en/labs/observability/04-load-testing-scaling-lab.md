@@ -22,36 +22,7 @@
 
 ## Load Testing and Scaling Timeline
 
-```mermaid
-sequenceDiagram
-    participant k6 as k6 Load Test
-    participant API as API Gateway
-    participant KEDA as KEDA Controller
-    participant Karpenter as Karpenter
-    participant Grafana as Grafana
-
-    Note over k6,Grafana: Phase 1: Ramp-up (0-5 min)
-    k6->>API: 10 → 100 VUs
-    API-->>KEDA: Metrics increase
-    KEDA->>KEDA: Scale Pods 2 → 8
-
-    Note over k6,Grafana: Phase 2: Sustained Load (5-15 min)
-    k6->>API: 100 VUs sustained
-    KEDA->>KEDA: Maintain Pod count
-    Grafana->>Grafana: Stable metrics
-
-    Note over k6,Grafana: Phase 3: Spike (15-20 min)
-    k6->>API: 100 → 500 VUs
-    API-->>KEDA: Metrics spike
-    KEDA->>KEDA: Scale Pods 8 → 30
-    KEDA-->>Karpenter: Node capacity needed
-    Karpenter->>Karpenter: Provision new nodes
-
-    Note over k6,Grafana: Phase 4: Cool-down (20-30 min)
-    k6->>API: 500 → 0 VUs
-    KEDA->>KEDA: Scale Pods 30 → 2
-    Karpenter->>Karpenter: Consolidate/terminate nodes
-```
+![Sequence diagram showing a k6 load test ramping virtual users against an API Gateway across four phases, with KEDA scaling pod counts in response to metrics and Karpenter provisioning or consolidating nodes when pod capacity demands it.](../../.gitbook/assets/en-labs-observability-04-load-testing-scaling-lab-0.png)
 
 ---
 

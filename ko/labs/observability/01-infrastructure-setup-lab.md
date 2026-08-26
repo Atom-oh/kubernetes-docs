@@ -12,40 +12,7 @@
 
 ![Infrastructure Architecture](../../.gitbook/assets/architecture-overview.png)
 
-```mermaid
-flowchart TB
-    subgraph VPC1["VPC - Managed Cluster"]
-        subgraph MC["EKS Managed Cluster"]
-            MCNodes["Node Group (3x m5.large)"]
-            ArgoCD["ArgoCD"]
-            ObsStack["Observability Stack"]
-        end
-    end
-    subgraph VPC2["VPC - Service Cluster"]
-        subgraph SC["EKS Service Cluster"]
-            SCNodes["Node Group (3x m5.large)"]
-            Karpenter["Karpenter"]
-            MSA["MSA Apps"]
-        end
-    end
-    subgraph AWS["AWS Managed Services"]
-        Aurora["Aurora PostgreSQL"]
-        SQS["SQS Queue"]
-        SNS["SNS Topic"]
-        MWAA["MWAA (Airflow)"]
-        AMP["AMP"]
-        AMG["AMG"]
-        OS["OpenSearch"]
-    end
-    MC --> SC
-    SC --> Aurora
-    SC --> SQS
-    SC --> SNS
-    SC --> MWAA
-    MC --> AMP
-    MC --> AMG
-    MC --> OS
-```
+![관리형 클러스터의 ArgoCD가 GitOps로 서비스 클러스터(Karpenter, MSA Apps)에 배포하고, 관리형 클러스터의 관측성 스택과 서비스 클러스터의 앱이 각각 AWS 관리형 관측성 서비스(AMP·AMG·OpenSearch)와 데이터·메시징 서비스(Aurora·SQS·SNS·MWAA)를 사용하는 실습 인프라 구조를 보여준다.](../../.gitbook/assets/ko-labs-observability-01-infrastructure-setup-lab-0.png)
 
 ***
 

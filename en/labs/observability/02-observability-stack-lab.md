@@ -23,50 +23,7 @@
 
 ## Architecture Overview
 
-```mermaid
-flowchart TB
-    subgraph Sources["Data Sources"]
-        App["Applications"]
-        K8s["Kubernetes"]
-        Infra["Infrastructure"]
-    end
-
-    subgraph Collector["OTel Collector Pipeline"]
-        Recv["Receivers<br/>OTLP, Prometheus, Fluent"]
-        Proc["Processors<br/>Batch, Memory Limit, Attributes"]
-        Exp["Exporters<br/>Multi-backend"]
-    end
-
-    subgraph Backends["Observability Backends"]
-        subgraph Metrics["Metrics"]
-            Prom["Prometheus"]
-            VM["VictoriaMetrics"]
-            Mimir["Mimir"]
-            AMP["AWS AMP"]
-        end
-        subgraph Logs["Logs"]
-            Loki["Loki"]
-            CH["ClickHouse"]
-            OS["OpenSearch"]
-            CWL["CloudWatch Logs"]
-        end
-        subgraph Traces["Traces"]
-            Tempo["Tempo"]
-            XRay["X-Ray"]
-        end
-    end
-
-    subgraph Visualization["Visualization"]
-        Grafana["Grafana"]
-        AMG["AWS AMG"]
-    end
-
-    Sources --> Recv
-    Recv --> Proc
-    Proc --> Exp
-    Exp --> Metrics & Logs & Traces
-    Metrics & Logs & Traces --> Visualization
-```
+![Diagram showing applications, Kubernetes, and infrastructure data sources flowing through an OpenTelemetry Collector pipeline of receivers, processors, and exporters, which fans out to separate metrics, logs, and traces backends, all unified for visualization in Grafana.](../../.gitbook/assets/en-labs-observability-02-observability-stack-lab-0.png)
 
 ---
 

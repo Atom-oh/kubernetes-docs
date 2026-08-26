@@ -13,30 +13,7 @@
 
 ## 부하 테스트 및 스케일링 타임라인
 
-```mermaid
-sequenceDiagram
-    participant k6 as k6 Load Test
-    participant APIGW as API Gateway
-    participant KEDA as KEDA
-    participant Karpenter as Karpenter
-    participant Grafana as Grafana
-    Note over k6: Phase 1: Ramp-up (1→50 VUs)
-    k6->>APIGW: Increasing traffic
-    APIGW->>Grafana: Metrics: request rate ↑
-    Note over k6: Phase 2: Sustained (50 VUs, 5min)
-    KEDA->>KEDA: SQS depth > threshold
-    KEDA->>KEDA: Scale notification-service pods (2→5)
-    Karpenter->>Karpenter: Pending pods detected
-    Karpenter->>Karpenter: Provision new nodes
-    Note over k6: Phase 3: Spike (200 VUs)
-    k6->>APIGW: Spike traffic
-    KEDA->>KEDA: Aggressive scale-out
-    Karpenter->>Karpenter: Additional nodes
-    Note over k6: Phase 4: Cool-down
-    k6->>APIGW: Traffic decreasing
-    KEDA->>KEDA: Scale-in pods
-    Karpenter->>Karpenter: Consolidate/remove empty nodes
-```
+![k6 부하 테스트가 램프업, 지속, 스파이크, 쿨다운 4단계를 거치며 API Gateway 트래픽이 변할 때 KEDA가 파드를 스케일하고 Karpenter가 노드를 프로비저닝·정리하는 오토스케일링 시퀀스를 보여준다.](../../.gitbook/assets/ko-labs-observability-04-load-testing-scaling-lab-0.png)
 
 ---
 

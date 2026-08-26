@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="diagram" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="seq0-title seq0-desc">
+  <title id="seq0-title">메트릭-트레이스-로그 상관 분석 시퀀스</title>
+  <desc id="seq0-desc">운영자가 Grafana 대시보드에서 메트릭의 지연 급증을 발견한 뒤, Exemplar를 눌러 Tempo의 분산 트레이스로, 다시 트레이스에서 Loki의 로그로 이동하며 근본 원인을 좁혀가는 순서를 보여준다.</desc>
+  <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" fill="#FFFFFF"/>
+
+  <!-- Header -->
+  <text x="40" y="28" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">SEQUENCE</text>
+  <text x="40" y="52" fill="#232F3E" font-size="16" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">메트릭 → 트레이스 → 로그 상관 분석</text>
+
+  <!-- Lifelines -->
+  <line x1="80"  y1="100" x2="80"  y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="280" y1="100" x2="280" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="480" y1="100" x2="480" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="680" y1="100" x2="680" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="880" y1="100" x2="880" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- Actor boxes -->
+  <g>
+    <rect x="20" y="64" width="120" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="80" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">운영자</text>
+    <text x="80" y="94" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">operator</text>
+  </g>
+  <g>
+    <rect x="220" y="64" width="120" height="36" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="280" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana</text>
+    <text x="280" y="94" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">dashboard</text>
+  </g>
+  <g>
+    <rect x="420" y="64" width="120" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus</text>
+    <text x="480" y="94" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">metrics</text>
+  </g>
+  <g>
+    <rect x="620" y="64" width="120" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="680" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Tempo</text>
+    <text x="680" y="94" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">traces</text>
+  </g>
+  <g>
+    <rect x="820" y="64" width="120" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="880" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Loki</text>
+    <text x="880" y="94" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">logs</text>
+  </g>
+
+  <!-- 1: User -> Grafana -->
+  <line x1="80" y1="140" x2="272" y2="140" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="100" y="112" width="152" height="12" rx="2" fill="#ffffff"/>
+  <text x="176" y="121" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">latency spike 발견</text>
+
+  <!-- 2: Grafana -> Prometheus -->
+  <line x1="280" y1="180" x2="472" y2="180" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="322" y="152" width="108" height="12" rx="2" fill="#ffffff"/>
+  <text x="376" y="161" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">p99 그래프 확인</text>
+
+  <!-- 3: User -> Grafana -->
+  <line x1="80" y1="220" x2="272" y2="220" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="118" y="192" width="116" height="12" rx="2" fill="#ffffff"/>
+  <text x="176" y="201" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">Exemplar 점 클릭</text>
+
+  <!-- 4: Grafana -> Tempo (headline call, accent) -->
+  <line x1="280" y1="260" x2="672" y2="260" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="424" y="232" width="104" height="12" rx="2" fill="#ffffff"/>
+  <text x="476" y="241" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">TraceID 조회</text>
+
+  <!-- 5: Tempo --> Grafana (return, dashed accent) -->
+  <line x1="680" y1="300" x2="288" y2="300" stroke="#EC7211" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+  <rect x="424" y="272" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="281" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">Span 타임라인 표시</text>
+
+  <!-- 6: User -> Grafana -->
+  <line x1="80" y1="340" x2="272" y2="340" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="98" y="312" width="156" height="12" rx="2" fill="#ffffff"/>
+  <text x="176" y="321" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">느린 Span 식별 (DB 800ms)</text>
+
+  <!-- 7: User -> Grafana -->
+  <line x1="80" y1="380" x2="272" y2="380" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="120" y="352" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="176" y="361" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">Span → Logs 클릭</text>
+
+  <!-- 8: Grafana -> Loki -->
+  <line x1="280" y1="420" x2="872" y2="420" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="500" y="392" width="152" height="12" rx="2" fill="#ffffff"/>
+  <text x="576" y="401" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">TraceID+시간범위 조회</text>
+
+  <!-- 9: Loki --> Grafana (return dashed) -->
+  <line x1="880" y1="460" x2="288" y2="460" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="500" y="432" width="152" height="12" rx="2" fill="#ffffff"/>
+  <text x="576" y="441" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">에러/슬로우 쿼리 로그</text>
+
+  <!-- 10: self message on User lifeline -->
+  <path d="M 80 502 L 104 502 Q 112 502 112 510 L 112 514 Q 112 522 104 522 L 88 522"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="118" y="502" width="140" height="12" rx="2" fill="#ffffff"/>
+  <text x="188" y="511" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">근본원인 식별 (missing index)</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="548" x2="930" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="564" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <line x1="130" y1="561" x2="160" y2="561" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <text x="168" y="564" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace">CALL</text>
+  <line x1="240" y1="561" x2="270" y2="561" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <text x="278" y="564" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace">RETURN</text>
+  <line x1="360" y1="561" x2="390" y2="561" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <text x="398" y="564" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace">TRACE LOOKUP</text>
+</svg>

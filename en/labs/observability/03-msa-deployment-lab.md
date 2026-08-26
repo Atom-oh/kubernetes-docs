@@ -24,39 +24,7 @@
 
 ### Service Call Flow
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant APIGW as API Gateway<br/>(Go)
-    participant Order as Order Service<br/>(Python)
-    participant Payment as Payment Service<br/>(Java)
-    participant Aurora as Aurora PostgreSQL
-    participant SQS as SQS Queue
-    participant Notif as Notification<br/>(Node.js)
-
-    Client->>APIGW: POST /orders
-    activate APIGW
-    APIGW->>APIGW: Validate JWT
-    APIGW->>Order: CreateOrder()
-    activate Order
-    Order->>Aurora: INSERT order
-    Order->>Payment: ProcessPayment()
-    activate Payment
-    Payment->>Aurora: INSERT payment
-    Payment-->>Order: PaymentResult
-    deactivate Payment
-    Order->>SQS: PublishOrderEvent
-    Order-->>APIGW: OrderResponse
-    deactivate Order
-    APIGW-->>Client: 201 Created
-    deactivate APIGW
-
-    Note over SQS,Notif: Async Processing
-    SQS-->>Notif: ConsumeEvent
-    activate Notif
-    Notif->>Notif: SendEmail/SMS
-    deactivate Notif
-```
+![Sequence diagram of an order placement request flowing synchronously from the client through the API Gateway, Order Service, and Payment Service (each writing to Aurora PostgreSQL), with the Order Service then publishing an event that a Notification service consumes asynchronously via SQS to send email or SMS.](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-0.png)
 
 ***
 
@@ -1018,24 +986,7 @@ EOF
 
 ### Canary State Diagram
 
-```mermaid
-stateDiagram-v2
-    [*] --> SetWeight20: Deploy v2
-    SetWeight20 --> Pause2m: 20% traffic to v2
-    Pause2m --> Analysis1: Wait 2 minutes
-    Analysis1 --> SetWeight40: Success rate >= 95%
-    Analysis1 --> Rollback: Success rate < 95%
-    SetWeight40 --> Pause2m_2: 40% traffic to v2
-    Pause2m_2 --> Analysis2: Wait 2 minutes
-    Analysis2 --> SetWeight60: Analysis passed
-    Analysis2 --> Rollback: Analysis failed
-    SetWeight60 --> Pause2m_3: 60% traffic to v2
-    Pause2m_3 --> SetWeight80: Wait 2 minutes
-    SetWeight80 --> Pause2m_4: 80% traffic to v2
-    Pause2m_4 --> SetWeight100: Wait 2 minutes
-    SetWeight100 --> [*]: Promotion complete
-    Rollback --> [*]: Rolled back to v1
-```
+![State machine showing a canary deployment ramping v2 traffic through 20% and 40% stages, each gated by a 2-minute analysis window, then automatically ramping to 100% once both gates pass, with a rollback to v1 triggered from either gate if the success rate drops below 95%.](../../.gitbook/assets/en-labs-observability-03-msa-deployment-lab-1.png)
 
 **Step 6.3: Trigger canary deployment (update image)**
 

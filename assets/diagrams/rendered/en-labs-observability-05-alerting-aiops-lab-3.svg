@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="multiagent-title multiagent-desc">
+    <title id="multiagent-title">Coordinator and specialist agent fan-out/fan-in</title>
+    <desc id="multiagent-desc">A coordinator agent triages an incoming alert, assigns four specialist agents (metrics, logs, traces, infrastructure) to analyze it in parallel, then synthesizes their findings into a final report.</desc>
+    <defs>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      </style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zone: Coordinator Agent -->
+    <rect x="368" y="88" width="224" height="156" rx="8" fill="rgba(255,153,0,0.05)" stroke="rgba(236,114,17,0.30)" stroke-width="0.8"/>
+    <rect x="392" y="92" width="140" height="12" rx="2" fill="#ffffff"/>
+    <text x="462" y="101" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">COORDINATOR AGENT</text>
+
+    <!-- Zone: Specialist Agents -->
+    <rect x="140" y="272" width="680" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="164" y="276" width="140" height="12" rx="2" fill="#ffffff"/>
+    <text x="234" y="285" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">SPECIALIST AGENTS</text>
+
+    <!-- ===== ARROWS ===== -->
+
+    <!-- Alert -> Triage -->
+    <path d="M 480,64 V 112" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Triage -> Assign -->
+    <path d="M 480,148 V 184" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Assign -> 4 specialists, fanned from Assign's bottom edge (x=427,462,498,533) -->
+    <path d="M 427,220 V 228 Q 427,236 419,236 H 248 Q 240,236 240,244 V 308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 462,220 V 244 Q 462,252 454,252 H 428 Q 420,252 420,260 V 308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 533,220 V 252 Q 533,260 541,260 H 772 Q 780,260 780,268 V 308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 498,220 V 260 Q 498,268 506,268 H 592 Q 600,268 600,276 V 308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="222" y="188" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="248" y="197" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ASSIGN</text>
+
+    <!-- 4 specialists -> Synthesize, fanned into Synthesize's top edge (x=427,462,498,533) -->
+    <path d="M 240,360 V 368 Q 240,376 248,376 H 419 Q 427,376 427,384 V 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 420,360 V 384 Q 420,392 428,392 H 454 Q 462,392 462,400 V 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 780,360 V 392 Q 780,400 772,400 H 541 Q 533,400 533,408 V 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 600,360 V 400 Q 600,408 592,408 H 506 Q 498,408 498,416 V 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Synthesize -> Report -->
+    <path d="M 480,456 V 500" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+    <!-- ===== NODES ===== -->
+
+    <!-- Alert Received -->
+    <rect x="392" y="32" width="176" height="32" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="480" y="53" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Alert Received</text>
+
+    <!-- Triage Alert -->
+    <rect x="392" y="112" width="176" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="134" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Triage Alert</text>
+
+    <!-- Assign Specialists -->
+    <rect x="392" y="184" width="176" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="206" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Assign Specialists</text>
+
+    <!-- 4 specialist nodes -->
+    <rect x="164" y="308" width="152" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="328" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Metrics Analyst</text>
+    <text x="240" y="342" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">prometheus</text>
+
+    <rect x="344" y="308" width="152" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="420" y="328" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Log Analyst</text>
+    <text x="420" y="342" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">loki</text>
+
+    <rect x="524" y="308" width="152" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="600" y="328" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Trace Analyst</text>
+    <text x="600" y="342" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tempo</text>
+
+    <rect x="704" y="308" width="152" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="780" y="328" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Infra Analyst</text>
+    <text x="780" y="342" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">k8s / aws</text>
+
+    <!-- Synthesize Results -->
+    <rect x="392" y="420" width="176" height="36" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="442" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Synthesize Results</text>
+
+    <!-- Final Report -->
+    <rect x="392" y="500" width="176" height="32" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="480" y="521" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Final Report</text>
+
+    <!-- ===== LEGEND ===== -->
+    <line x1="32" y1="556" x2="928" y2="556" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="32" y="572" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <rect x="220" y="564" width="14" height="14" rx="3" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="240" y="574" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">INPUT / OUTPUT</text>
+
+    <rect x="400" y="564" width="14" height="14" rx="3" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="420" y="574" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">AGENT STEP</text>
+
+    <rect x="580" y="564" width="14" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="600" y="574" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">SYNTHESIS (FOCAL)</text>
+  </svg>

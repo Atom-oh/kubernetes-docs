@@ -12,36 +12,7 @@
 
 ![MSA Service Map](../../.gitbook/assets/msa-service-map.png)
 
-```mermaid
-flowchart TB
-    subgraph SC["Service Cluster"]
-        subgraph MSA["MSA Application"]
-            APIGW["API Gateway<br/>(Go/Gin)"]
-            Order["Order Service<br/>(Python/FastAPI)"]
-            Payment["Payment Service<br/>(Java/Spring Boot)"]
-            Notif["Notification Service<br/>(Node.js/Express)"]
-            Batch["Analytics Batch<br/>(Python/Pandas)"]
-        end
-        Karpenter["Karpenter"]
-        KEDA["KEDA"]
-        OTelAgent["OTel Agent"]
-    end
-    subgraph AWS["AWS Services"]
-        Aurora["Aurora PostgreSQL"]
-        SQS["SQS Queue"]
-        SNS["SNS Topic"]
-        MWAA["MWAA"]
-    end
-    APIGW --> Order
-    APIGW --> Payment
-    Order --> Aurora
-    Payment --> Aurora
-    Order -->|publish| SQS
-    SQS -->|consume| Notif
-    Payment -->|publish| SNS
-    MWAA -->|trigger| Batch
-    Batch --> Aurora
-```
+![API 게이트웨이가 주문·결제 서비스로 요청을 분배하고, 각 서비스가 Aurora PostgreSQL에 기록하며 SQS·SNS로 비동기 이벤트를 발행·구독하고, MWAA가 트리거하는 분석 배치가 다시 Aurora에 기록하는 MSA 배포 아키텍처를 보여준다.](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-0.png)
 
 ***
 
@@ -943,21 +914,7 @@ spec:
 
 ### Canary 배포 상태 다이어그램
 
-```mermaid
-stateDiagram-v2
-    [*] --> SetWeight20: Deploy v2
-    SetWeight20 --> Pause30s: 20% traffic
-    Pause30s --> Analysis1: wait 30s
-    Analysis1 --> SetWeight40: success-rate >= 0.95 AND p99 < 2s
-    Analysis1 --> Rollback: AnalysisRun FAIL
-    SetWeight40 --> SetWeight60: 40% traffic
-    SetWeight60 --> SetWeight80: 60% traffic
-    SetWeight80 --> Analysis2: 80% traffic
-    Analysis2 --> Promote100: PASS
-    Analysis2 --> Rollback: FAIL
-    Promote100 --> [*]: 100% v2
-    Rollback --> [*]: 100% v1
-```
+![캐너리 배포에서 v2 트래픽 비중을 20%부터 100%까지 단계적으로 올리며 두 지점(Analysis1, Analysis2)에서 성공률·지연시간 기준을 통과해야 다음 단계로 진행하고, 실패 시 즉시 v1으로 롤백하는 Argo Rollouts 상태 머신을 보여준다.](../../.gitbook/assets/ko-labs-observability-03-msa-deployment-lab-1.png)
 
 **Step 3.7.1: Rollout 리소스**
 
