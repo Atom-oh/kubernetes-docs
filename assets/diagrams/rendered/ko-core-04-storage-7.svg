@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-core-04-storage-7-title ko-core-04-storage-7-desc">
+    <title id="ko-core-04-storage-7-title">Volume Cloning 과정</title>
+    <desc id="ko-core-04-storage-7-desc">소스 PVC를 dataSource로 참조해 클론 PVC를 만드는 Volume Cloning 과정과, 개발 환경 복제·테스트 데이터 준비·빠른 백업 같은 활용 사례를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#0972D3"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="60" y="60" width="420" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="76" y="64" width="135" height="12" rx="2" fill="#ffffff"/>
+<text x="143.5" y="73" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">VOLUME CLONING 과정</text>
+<rect x="520" y="140" width="380" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="536" y="144" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="564.0" y="153" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">사용 사례</text>
+<line x1="260" y1="140" x2="300" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 125,164 V 232 Q 125,240 133,240 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 170,164 V 324 Q 170,332 178,332 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 215,164 V 416 Q 215,424 223,424 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="266.0" y="120" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="280" y="129" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">참조</text>
+<rect x="89" y="194" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="103.0" y="203" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">복제</text>
+<rect x="134" y="242" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="148.0" y="251" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">복제</text>
+<rect x="179" y="290" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="193.0" y="299" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">복제</text>
+<rect x="80" y="116" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="80" y="116" width="180" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="88" y="122" width="26" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="101.0" y="131" fill="#EC7211" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PVC</text>
+<text x="170.0" y="136.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">소스 PVC</text>
+<text x="170.0" y="154.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Noto Sans Mono CJK KR', monospace" text-anchor="middle">data-pvc</text>
+<rect x="300" y="116" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="300" y="116" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="308" y="122" width="26" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="321.0" y="131" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PVC</text>
+<text x="390.0" y="136.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">클론 PVC</text>
+<text x="390.0" y="154.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Noto Sans Mono CJK KR', monospace" text-anchor="middle">data-pvc-clone</text>
+<rect x="560" y="216" width="300" height="48" rx="6" fill="#ffffff"/>
+<rect x="560" y="216" width="300" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="710.0" y="242.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">개발 환경 복제</text>
+<rect x="560" y="308" width="300" height="48" rx="6" fill="#ffffff"/>
+<rect x="560" y="308" width="300" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="710.0" y="334.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">테스트 데이터 준비</text>
+<rect x="560" y="400" width="300" height="48" rx="6" fill="#ffffff"/>
+<rect x="560" y="400" width="300" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="710.0" y="426.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">빠른 백업</text>
+<line x1="40" y1="484" x2="920" y2="484" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="498" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">LEGEND</text>
+<rect x="40" y="516" width="16" height="11" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="64" y="525" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Noto Sans KR', sans-serif">소스 PVC</text>
+<rect x="135.6" y="516" width="16" height="11" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="159.6" y="525" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Noto Sans KR', sans-serif">클론 PVC</text>
+<rect x="231.2" y="516" width="16" height="11" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="255.2" y="525" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Noto Sans KR', sans-serif">활용 사례</text>
+  </svg>

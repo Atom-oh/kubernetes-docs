@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-core-01-cluster-architecture-3-title en-core-01-cluster-architecture-3-desc">
+<title id="en-core-01-cluster-architecture-3-title">Control plane to node communication</title>
+<desc id="en-core-01-cluster-architecture-3-desc">Architecture diagram showing bidirectional HTTPS communication between the kube-apiserver and each node's kubelet and kube-proxy.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="parrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="parrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="parrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="parrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+
+<path d="M 453.3333333333333,152 V 192 Q 453.3333333333333,200 445.3333333333333,200 H 318.0 Q 310.0,200 310.0,208 V 288" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#parrow-accent)"/>
+<path d="M 310.0,287 l -3,-6 l 6,0 z" fill="#EC7211"/>
+<path d="M 506.6666666666667,152 V 192 Q 506.6666666666667,200 514.6666666666667,200 H 642.0 Q 650.0,200 650.0,208 V 288" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#parrow-accent)"/>
+<path d="M 650.0,287 l -3,-6 l 6,0 z" fill="#EC7211"/>
+<rect x="263.0" y="180" width="94" height="12" rx="2" fill="#FFFFFF"/>
+<text x="310.0" y="189" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">HTTPS :10250</text>
+<rect x="606.5" y="180" width="87" height="12" rx="2" fill="#FFFFFF"/>
+<text x="650.0" y="189" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">HTTPS :6443</text>
+<rect x="400" y="88" width="160" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="400" y="88" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="116.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-apiserver</text>
+<text x="480.0" y="142.5" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">control plane frontend</text>
+<rect x="220" y="288" width="180" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="220" y="288" width="180" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="310.0" y="324.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kubelet</text>
+<rect x="560" y="288" width="180" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="560" y="288" width="180" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="650.0" y="324.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-proxy</text>
+</svg>

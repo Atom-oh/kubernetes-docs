@@ -79,54 +79,7 @@ Kubernetes 볼륨은 포드 내의 컨테이너가 데이터를 저장하고 공
 
 ### Kubernetes 스토리지 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph "Kubernetes 스토리지 아키텍처"
-        subgraph "애플리케이션 계층"
-            Pod1[Pod]
-            Pod2[Pod]
-            Pod3[Pod]
-            
-            Pod1 --> PVC1[PersistentVolumeClaim]
-            Pod2 --> PVC2[PersistentVolumeClaim]
-            Pod3 --> PVC3[PersistentVolumeClaim]
-        end
-        
-        subgraph "스토리지 추상화 계층"
-            PVC1 --> PV1[PersistentVolume]
-            PVC2 --> PV2[PersistentVolume]
-            PVC3 --> PV3[PersistentVolume]
-            
-            SC[StorageClass] --> PV1
-            SC --> PV2
-            SC --> PV3
-        end
-        
-        subgraph "물리적 스토리지 계층"
-            PV1 --> CSI[CSI 드라이버]
-            PV2 --> CSI
-            PV3 --> CSI
-            
-            CSI --> Cloud[클라우드 스토리지\nEBS, EFS, Azure Disk 등]
-            CSI --> Local[로컬 스토리지]
-            CSI --> NFS[NFS 서버]
-        end
-    end
-    
-    classDef pod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pvc fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pv fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef sc fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef driver fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-    classDef storage fill:#28a745,stroke:#333,stroke-width:1px,color:white;
-    
-    class Pod1,Pod2,Pod3 pod;
-    class PVC1,PVC2,PVC3 pvc;
-    class PV1,PV2,PV3 pv;
-    class SC sc;
-    class CSI driver;
-    class Cloud,Local,NFS storage;
-```
+![파드가 PersistentVolumeClaim과 StorageClass를 거쳐 PersistentVolume에 바인딩되고 CSI 드라이버가 클라우드·로컬·NFS 스토리지에 연결하는 3계층 구조를 보여준다.](../.gitbook/assets/ko-core-04-storage-0.png)
 
 ### 볼륨의 필요성
 
@@ -332,27 +285,7 @@ spec:
 
 퍼시스턴트 볼륨(PV)은 관리자가 프로비저닝하거나 스토리지 클래스를 사용하여 동적으로 프로비저닝된 클러스터의 스토리지입니다. PV는 포드와 독립적인 수명 주기를 가지며, 포드가 삭제되어도 PV는 유지됩니다.
 
-```mermaid
-graph TD
-    Admin[클러스터 관리자] -->|생성| PV[퍼시스턴트 볼륨]
-    User[사용자] -->|생성| PVC[퍼시스턴트 볼륨 클레임]
-    PVC -->|바인딩| PV
-    Pod[파드] -->|사용| PVC
-    PV -->|연결| Storage[(물리적 스토리지)]
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class Admin,User user;
-    class PV,PVC k8sComponent;
-    class Pod userApp;
-    class Storage storage;
-```
+![클러스터 관리자가 만든 PersistentVolume에 사용자가 만든 PersistentVolumeClaim이 바인딩되고 파드가 물리적 스토리지를 사용하는 정적 프로비저닝 과정을 보여준다.](../.gitbook/assets/ko-core-04-storage-1.png)
 
 ### PV 생성
 
@@ -459,29 +392,7 @@ spec:
 
 스토리지 클래스는 관리자가 제공하는 스토리지의 "클래스"를 설명합니다. 스토리지 클래스는 PV를 동적으로 프로비저닝하는 데 사용됩니다.
 
-```mermaid
-graph TD
-    Admin[클러스터 관리자] -->|생성| SC[스토리지 클래스]
-    User[사용자] -->|생성| PVC[퍼시스턴트 볼륨 클레임]
-    PVC -->|참조| SC
-    SC -->|동적 프로비저닝| PV[퍼시스턴트 볼륨]
-    PVC -->|바인딩| PV
-    Pod[파드] -->|사용| PVC
-    PV -->|연결| Storage[(물리적 스토리지)]
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class Admin,User user;
-    class SC,PV,PVC k8sComponent;
-    class Pod userApp;
-    class Storage storage;
-```
+![사용자가 만든 PVC가 StorageClass를 참조해 PersistentVolume을 동적으로 생성·바인딩하고 파드가 이를 사용하는 동적 프로비저닝 과정을 보여준다.](../.gitbook/assets/ko-core-04-storage-2.png)
 
 ### 스토리지 클래스 생성
 
@@ -596,29 +507,7 @@ spec:
 
 Kubernetes는 볼륨 스냅샷을 지원하여 PV의 특정 시점 복사본을 생성할 수 있습니다. 이는 백업 및 복원 시나리오에 유용합니다.
 
-```mermaid
-graph TD
-    Admin[클러스터 관리자] -->|생성| VSC[볼륨 스냅샷 클래스]
-    User[사용자] -->|생성| VS[볼륨 스냅샷]
-    VS -->|참조| VSC
-    VS -->|스냅샷 생성| PVC1[기존 PVC]
-    User -->|생성| PVC2[새 PVC]
-    PVC2 -->|데이터 소스로 사용| VS
-    PVC2 -->|바인딩| PV2[새 PV]
-    PV2 -->|스냅샷에서 복원| Storage[(물리적 스토리지)]
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class Admin,User user;
-    class VSC,VS,PVC1,PVC2,PV2 k8sComponent;
-    class Storage storage;
-```
+![기존 PVC에서 만든 볼륨 스냅샷이 스냅샷 클래스를 참조하고 새 PVC가 이를 데이터 소스로 사용해 새 PV를 생성·복원하는 과정을 보여준다.](../.gitbook/assets/ko-core-04-storage-3.png)
 
 ### 볼륨 스냅샷 클래스
 
@@ -668,27 +557,7 @@ spec:
 
 Kubernetes는 PVC의 크기를 확장하는 기능을 지원합니다. 이를 위해서는 스토리지 클래스에서 `allowVolumeExpansion: true`를 설정해야 합니다.
 
-```mermaid
-graph TD
-    User[사용자] -->|PVC 크기 증가 요청| PVC[퍼시스턴트 볼륨 클레임]
-    PVC -->|확장 요청| SC[스토리지 클래스]
-    SC -->|allowVolumeExpansion: true 확인| PV[퍼시스턴트 볼륨]
-    PV -->|볼륨 크기 확장| Storage[(물리적 스토리지)]
-    PV -->|파일 시스템 확장| Pod[파드]
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class User user;
-    class SC,PVC,PV k8sComponent;
-    class Pod userApp;
-    class Storage storage;
-```
+![사용자의 PVC 크기 증가 요청이 StorageClass의 확장 허용 설정을 거쳐 PersistentVolume과 실제 볼륨, 파드의 파일시스템까지 확장되는 절차를 보여준다.](../.gitbook/assets/ko-core-04-storage-4.png)
 
 ### PVC 확장
 
@@ -710,40 +579,7 @@ spec:
 
 Projected Volumes는 여러 볼륨 소스를 하나의 디렉토리에 마운트할 수 있는 기능입니다. secrets, configMaps, downwardAPI, serviceAccountToken을 단일 볼륨으로 결합할 수 있습니다.
 
-```mermaid
-graph TD
-    subgraph "Projected Volume 구성"
-        PV["Projected Volume"]
-        PV -->|소스| Secret["secrets"]
-        PV -->|소스| ConfigMap["configMaps"]
-        PV -->|소스| DownwardAPI["downwardAPI"]
-        PV -->|소스| SAToken["serviceAccountToken"]
-
-        MountPath["/etc/credentials"]
-        Secret -->|마운트| MountPath
-        ConfigMap -->|마운트| MountPath
-        DownwardAPI -->|마운트| MountPath
-        SAToken -->|마운트| MountPath
-    end
-
-    subgraph "결과 디렉토리 구조"
-        Dir["/etc/credentials/"]
-        Dir --> F1["db-password (from secret)"]
-        Dir --> F2["app-config (from configMap)"]
-        Dir --> F3["labels (from downwardAPI)"]
-        Dir --> F4["token (from serviceAccountToken)"]
-    end
-
-    %% 스타일 정의
-    classDef pvComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef sourceComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dirComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class PV pvComponent;
-    class Secret,ConfigMap,DownwardAPI,SAToken,MountPath sourceComponent;
-    class Dir,F1,F2,F3,F4 dirComponent;
-```
+![하나의 Projected Volume이 secret·configMap·downwardAPI·serviceAccountToken 네 소스를 한 경로로 모아 마운트하고, 결과 디렉토리에서 각각 이름이 다른 파일로 나타남을 보여준다.](../.gitbook/assets/ko-core-04-storage-5.png)
 
 ### Projected Volume 예제
 
@@ -882,38 +718,7 @@ spec:
 
 Block Volume Mode는 파일시스템 대신 원시 블록 디바이스로 볼륨을 마운트할 수 있는 기능입니다. 이는 데이터베이스와 같이 파일시스템 오버헤드 없이 직접 블록 접근이 필요한 애플리케이션에 유용합니다.
 
-```mermaid
-graph TD
-    subgraph "Filesystem Mode (기본)"
-        FS_PV["PersistentVolume"]
-        FS_Mount["파일시스템 마운트<br>/mnt/data"]
-        FS_Pod["Pod"]
-
-        FS_PV -->|ext4/xfs 포맷| FS_Mount
-        FS_Mount -->|디렉토리 접근| FS_Pod
-    end
-
-    subgraph "Block Mode"
-        Block_PV["PersistentVolume"]
-        Block_Device["/dev/xvda"]
-        Block_Pod["Pod"]
-
-        Block_PV -->|원시 블록| Block_Device
-        Block_Device -->|디바이스 접근| Block_Pod
-    end
-
-    %% 스타일 정의
-    classDef pvComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef fsComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef blockComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef podComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class FS_PV,Block_PV pvComponent;
-    class FS_Mount fsComponent;
-    class Block_Device blockComponent;
-    class FS_Pod,Block_Pod podComponent;
-```
+![같은 PersistentVolume이 Filesystem Mode에서는 포맷된 디렉토리로, Block Mode에서는 원시 블록 디바이스로 파드에 노출되는 두 방식을 나란히 비교한다.](../.gitbook/assets/ko-core-04-storage-6.png)
 
 ### Block Volume 설정
 
@@ -981,32 +786,7 @@ spec:
 
 Volume Cloning은 기존 PVC의 데이터를 새 PVC로 복제하는 기능입니다. 스냅샷을 거치지 않고 직접 PVC-to-PVC 클론을 생성할 수 있습니다.
 
-```mermaid
-graph TD
-    subgraph "Volume Cloning 과정"
-        Source["소스 PVC<br>(data-pvc)"]
-        Clone["클론 PVC<br>(data-pvc-clone)"]
-        Source -->|dataSource 참조| Clone
-    end
-
-    subgraph "사용 사례"
-        Dev["개발 환경 복제"]
-        Test["테스트 데이터 준비"]
-        Backup["빠른 백업"]
-    end
-
-    Source -->|복제| Dev
-    Source -->|복제| Test
-    Source -->|복제| Backup
-
-    %% 스타일 정의
-    classDef pvcComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef useCaseComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Source,Clone pvcComponent;
-    class Dev,Test,Backup useCaseComponent;
-```
+![소스 PVC를 참조해 클론 PVC를 만드는 Volume Cloning 과정과 개발 환경 복제·테스트 데이터 준비·빠른 백업 등 활용 사례를 보여준다.](../.gitbook/assets/ko-core-04-storage-7.png)
 
 ### Volume Cloning 예제
 
@@ -1070,38 +850,7 @@ kubectl get csidrivers ebs.csi.aws.com -o yaml
 
 Storage ResourceQuota는 네임스페이스 단위로 스토리지 리소스 사용을 제한합니다. PVC 수와 총 스토리지 용량을 제어할 수 있습니다.
 
-```mermaid
-graph TD
-    subgraph "ResourceQuota 적용"
-        NS["Namespace: dev-team"]
-        RQ["ResourceQuota"]
-
-        RQ -->|제한| PVCCount["PVC 수: 10개"]
-        RQ -->|제한| StorageTotal["총 용량: 500Gi"]
-        RQ -->|제한| SCSpecific["gp3 클래스: 200Gi"]
-    end
-
-    subgraph "현재 사용량"
-        Used["현재: 5 PVC, 150Gi"]
-        Remaining["남은: 5 PVC, 350Gi"]
-    end
-
-    NS --> RQ
-    RQ --> Used
-    Used --> Remaining
-
-    %% 스타일 정의
-    classDef nsComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef rqComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef limitComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef usageComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class NS nsComponent;
-    class RQ rqComponent;
-    class PVCCount,StorageTotal,SCSpecific limitComponent;
-    class Used,Remaining usageComponent;
-```
+![dev-team 네임스페이스의 ResourceQuota가 PVC 개수, 총 용량, gp3 클래스별 용량을 제한하고 현재·남은 사용량을 함께 추적함을 보여준다.](../.gitbook/assets/ko-core-04-storage-8.png)
 
 ### Storage ResourceQuota 예제
 
@@ -1203,39 +952,7 @@ spec:
 
 Amazon EKS에서는 다양한 스토리지 옵션을 사용할 수 있습니다. 각 옵션은 서로 다른 사용 사례와 성능 특성을 가지고 있으므로, 애플리케이션의 요구 사항에 맞는 적절한 스토리지를 선택하는 것이 중요합니다.
 
-```mermaid
-graph TD
-    EKS["Amazon EKS"] --> EBS["Amazon EBS"]
-    EKS --> EFS["Amazon EFS"]
-    EKS --> FSx["Amazon FSx for Lustre"]
-    
-    EBS --> EBS_CSI["EBS CSI 드라이버"]
-    EFS --> EFS_CSI["EFS CSI 드라이버"]
-    FSx --> FSx_CSI["FSx CSI 드라이버"]
-    
-    EBS_CSI --> EBS_SC["EBS 스토리지 클래스"]
-    EFS_CSI --> EFS_SC["EFS 스토리지 클래스"]
-    FSx_CSI --> FSx_SC["FSx 스토리지 클래스"]
-    
-    EBS_SC --> EBS_PV["EBS 퍼시스턴트 볼륨"]
-    EFS_SC --> EFS_PV["EFS 퍼시스턴트 볼륨"]
-    FSx_SC --> FSx_PV["FSx 퍼시스턴트 볼륨"]
-    
-    EBS_PV --> Pod1["파드 (RWO)"]
-    EFS_PV --> Pod2["파드 (RWX)"]
-    FSx_PV --> Pod3["파드 (RWX, 고성능)"]
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    
-    %% 클래스 적용
-    class EKS,EBS_CSI,EFS_CSI,FSx_CSI,EBS_SC,EFS_SC,FSx_SC,EBS_PV,EFS_PV,FSx_PV k8sComponent
-    class Pod1,Pod2,Pod3 userApp
-    class EBS,EFS,FSx awsService
-```
+![Amazon EKS에서 EBS·EFS·FSx for Lustre 세 관리형 스토리지가 각각 전용 CSI 드라이버·StorageClass·PersistentVolume을 거쳐 서로 다른 접근 모드의 파드로 이어지는 병렬 구조를 보여준다.](../.gitbook/assets/ko-core-04-storage-9.png)
 
 ### Amazon EBS
 

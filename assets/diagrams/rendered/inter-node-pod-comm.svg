@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-core-01-cluster-architecture-4-title ko-core-01-cluster-architecture-4-desc">
+    <title id="ko-core-01-cluster-architecture-4-title">노드 간 파드 통신</title>
+    <desc id="ko-core-01-cluster-architecture-4-desc">서로 다른 노드에 배치된 파드들이 CNI 네트워크 플러그인을 통해 NAT 없이 서로 통신하는 구조를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-start-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 140,112 V 160 Q 140,168 148,168 H 392 Q 400,168 400,176 V 210" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<path d="M 820,112 V 160 Q 820,168 812,168 H 568 Q 560,168 560,176 V 210" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<path d="M 140,360 V 312 Q 140,304 148,304 H 392 Q 400,304 400,296 V 274" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<path d="M 820,360 V 312 Q 820,304 812,304 H 568 Q 560,304 560,296 V 274" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<rect x="60" y="60" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="60" y="60" width="160" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="88.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 1</text>
+<rect x="740" y="60" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="740" y="60" width="160" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="820.0" y="88.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 2</text>
+<rect x="60" y="360" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="60" y="360" width="160" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="388.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 3</text>
+<rect x="740" y="360" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="740" y="360" width="160" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="820.0" y="388.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 4</text>
+<rect x="400" y="210" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="400" y="210" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480.0" y="244.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">CNI 네트워크</text>
+
+  </svg>

@@ -95,47 +95,7 @@ A Pod consists of the following components:
 3. **Network**: IP address and ports assigned to the Pod
 4. **Container Spec**: Container image, environment variables, resource requirements, etc.
 
-```mermaid
-graph TD
-    subgraph "Pod Structure"
-        Pod[Pod] --> PodIP[Pod IP Address]
-        Pod --> NS[Network Namespace]
-
-        subgraph "Containers"
-            C1[Application Container]
-            C2[Sidecar Container]
-            C3[Init Container]
-        end
-
-        subgraph "Storage"
-            V1[emptyDir Volume]
-            V2[configMap Volume]
-            V3[secret Volume]
-            V4[persistentVolumeClaim]
-        end
-
-        Pod --> C1
-        Pod --> C2
-        Pod --> C3
-        Pod --> V1
-        Pod --> V2
-        Pod --> V3
-        Pod --> V4
-
-        C1 --> Port1[Port 8080]
-        C2 --> Port2[Port 9090]
-    end
-
-    classDef pod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef volume fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef network fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-
-    class Pod,PodIP,NS pod;
-    class C1,C2,C3,Port1,Port2 container;
-    class V1,V2,V3,V4 volume;
-    class PodIP,NS network;
-```
+![A Kubernetes Pod boundary showing an application container, sidecar container, and init container sharing one Pod IP address and network namespace, alongside four types of mountable storage volumes (emptyDir, configMap, secret, persistentVolumeClaim).](../.gitbook/assets/en-core-02-pods-and-workloads-0.png)
 
 ### Pod Example
 

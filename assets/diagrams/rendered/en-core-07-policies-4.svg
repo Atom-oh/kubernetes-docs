@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+<title id="dtitle">ResourceQuota Types and Admission</title>
+<desc id="ddesc">Diagram showing the four kinds of ResourceQuota applied to a namespace, how pod resource usage accumulates against that quota, and how a new pod request is admitted or denied based on whether it fits within the remaining quota.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+<rect x="40" y="68" width="880" height="196" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="412" y="72" width="136" height="12" rx="2" fill="#FFFFFF"/>
+<text x="480" y="81" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">RESOURCE QUOTA TYPES</text>
+
+<rect x="40" y="296" width="400" height="108" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="181" y="300" width="118" height="12" rx="2" fill="#FFFFFF"/>
+<text x="240" y="309" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">APPLICATION SCOPE</text>
+
+<rect x="500" y="296" width="420" height="108" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="660" y="300" width="100" height="12" rx="2" fill="#FFFFFF"/>
+<text x="710" y="309" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">RESOURCE USAGE</text>
+
+<path d="M 72.0,156 V 168 Q 72.0,176 80.0,176 H 292 Q 300.0,176 300.0,184 V 196" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 104.0,156 V 168 Q 104.0,176 112.0,176 H 472 Q 480.0,176 480.0,184 V 196" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 136.0,156 V 168 Q 136.0,176 144.0,176 H 652 Q 660.0,176 660.0,184 V 196" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 168.0,156 V 168 Q 168.0,176 176.0,176 H 832 Q 840.0,176 840.0,184 V 196" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 120.0,156 V 272 Q 120.0,280 128.0,280 H 152 Q 160.0,280 160.0,288 V 328" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="130" y="256" width="68" height="12" rx="2" fill="#FFFFFF"/>
+<text x="164" y="265" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">APPLIED TO</text>
+<line x1="240" y1="360.0" x2="320" y2="360.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="252" y="332" width="56" height="12" rx="2" fill="#FFFFFF"/>
+<text x="280" y="341" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">CONTAINS</text>
+<line x1="480" y1="360.0" x2="520" y2="360.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="487" y="332" width="26" height="12" rx="2" fill="#FFFFFF"/>
+<text x="500" y="341" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">USE</text>
+<line x1="680" y1="360.0" x2="720" y2="360.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="681" y="332" width="38" height="12" rx="2" fill="#FFFFFF"/>
+<text x="700" y="341" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">LIMIT</text>
+<path d="M 800.0,392 V 422 Q 800.0,430 792.0,430 H 768 Q 760.0,430 760.0,438 V 468" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="816" y="424" width="62" height="12" rx="2" fill="#FFFFFF"/>
+<text x="847" y="433" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">VALIDATES</text>
+<line x1="660" y1="500.0" x2="620" y2="500.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="627" y="472" width="26" height="12" rx="2" fill="#FFFFFF"/>
+<text x="640" y="481" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<line x1="860" y1="500.0" x2="800" y2="500.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="818" y="472" width="24" height="12" rx="2" fill="#FFFFFF"/>
+<text x="830" y="481" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<rect x="40" y="100" width="160" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="40" y="100" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="120" y="130" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ResourceQuota</text>
+<rect x="220" y="196" width="160" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="220" y="196" width="160" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="300" y="222" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Compute Quota</text>
+<text x="300" y="238" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">CPU / Memory</text>
+<rect x="400" y="196" width="160" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="400" y="196" width="160" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="222" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Storage Quota</text>
+<text x="480" y="238" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">PVC</text>
+<rect x="580" y="196" width="160" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="580" y="196" width="160" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="660" y="222" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Object Quota</text>
+<text x="660" y="238" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Pod / Svc / etc.</text>
+<rect x="760" y="196" width="160" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="760" y="196" width="160" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="840" y="222" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Priority Quota</text>
+<text x="840" y="238" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">PriorityClass</text>
+<rect x="80" y="328" width="160" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="80" y="328" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="160" y="362" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Namespace</text>
+<rect x="320" y="328" width="160" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="320" y="328" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="400" y="362" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pods (1-3)</text>
+<rect x="520" y="328" width="160" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="520" y="328" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="600" y="358" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Usage / Limit</text>
+<text x="600" y="374" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">namespace total</text>
+<rect x="720" y="328" width="160" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="720" y="328" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="800" y="358" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">New Pod</text>
+<text x="800" y="374" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">creation request</text>
+<rect x="660" y="468" width="200" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="660" y="468" width="200" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="760" y="498" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">usage+req</text>
+<text x="760" y="514" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">&lt;= quota?</text>
+<rect x="520" y="468" width="100" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="520" y="468" width="100" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="570" y="502" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Allow</text>
+<rect x="800" y="468" width="100" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="800" y="468" width="100" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="850" y="502" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Deny</text>
+</svg>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-core-08-scheduling-preemption-eviction-9-title en-core-08-scheduling-preemption-eviction-9-desc">
+    <title id="en-core-08-scheduling-preemption-eviction-9-title">Descheduler operation</title>
+    <desc id="en-core-08-scheduling-preemption-eviction-9-desc">Diagram showing the descheduler applying one of seven rebalancing strategies while running a four-step loop: analyzing cluster state, identifying pods to evict, evicting them, and letting the scheduler reschedule them onto more suitable nodes.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 480,126 V 160 Q 480,168 472,168 H 228 Q 220,168 220,176 V 220" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 480,126 V 160 Q 480,168 488,168 H 367 Q 375,168 375,176 V 340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="178" y="188" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="194" y="197" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">runs</text>
+<rect x="385" y="248" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="401" y="257" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">then</text>
+<line x1="440" y1="364.0" x2="456" y2="364.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="626" y1="364.0" x2="642" y2="364.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="762" y1="364.0" x2="778" y2="364.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="380" y="70" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="380" y="70" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480.0" y="102.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Descheduler</text>
+<rect x="60" y="220" width="320" height="48" rx="6" fill="#ffffff"/>
+<rect x="60" y="220" width="320" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220.0" y="241.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">RemoveDuplicates · LowNodeUtilization</text>
+<text x="220.0" y="257.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">+ 5 more affinity/spread strategies</text>
+<rect x="310" y="340" width="130" height="48" rx="6" fill="#ffffff"/>
+<rect x="310" y="340" width="130" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="375.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Analyze State</text>
+<rect x="456" y="340" width="170" height="48" rx="6" fill="#ffffff"/>
+<rect x="456" y="340" width="170" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="541.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Identify Pods to Evict</text>
+<rect x="642" y="340" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="642" y="340" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="702.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Evict Pods</text>
+<rect x="778" y="340" width="150" height="48" rx="6" fill="#ffffff"/>
+<rect x="778" y="340" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="853.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Scheduler Reschedules</text>
+  </svg>

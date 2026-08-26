@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-core-08-scheduling-preemption-eviction-1-title en-core-08-scheduling-preemption-eviction-1-desc">
+    <title id="en-core-08-scheduling-preemption-eviction-1-title">Scheduler operation pipeline</title>
+    <desc id="en-core-08-scheduling-preemption-eviction-1-desc">Pipeline diagram showing a pod creation event moving through the scheduling queue, the kube-scheduler, filter plugins, score plugins, best-node selection, and binding until the pod lands on a node.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="180.0" y1="164.0" x2="280.0" y2="164.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="430.0" y1="164.0" x2="530.0" y2="164.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="680.0" y1="164.0" x2="780.0" y2="164.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="855.0" y1="196" x2="855.0" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="780.0" y1="372.0" x2="680.0" y2="372.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="530.0" y1="372.0" x2="430.0" y2="372.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="280.0" y1="372.0" x2="180.0" y2="372.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="201" y="144.0" width="59" height="12" rx="2" fill="#ffffff"/>
+<text x="230" y="153.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">1 CREATED</text>
+<rect x="451" y="144.0" width="59" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="153.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">2 DEQUEUE</text>
+<rect x="703" y="144.0" width="53" height="12" rx="2" fill="#ffffff"/>
+<text x="730" y="153.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">3 FILTER</text>
+<rect x="865" y="262" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="897" y="271" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">4 FILTERED</text>
+<rect x="703" y="352.0" width="53" height="12" rx="2" fill="#ffffff"/>
+<text x="730" y="361.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">6 SCORES</text>
+<rect x="459" y="352.0" width="42" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="361.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">7 BIND</text>
+<rect x="203" y="352.0" width="53" height="12" rx="2" fill="#ffffff"/>
+<text x="230" y="361.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">8 PLACED</text>
+<rect x="30.0" y="132" width="150" height="64" rx="6" fill="#ffffff"/>
+<rect x="30.0" y="132" width="150" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="105.0" y="161.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API Server</text>
+<text x="105.0" y="177.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">watches pods</text>
+<rect x="280.0" y="132" width="150" height="64" rx="6" fill="#ffffff"/>
+<rect x="280.0" y="132" width="150" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="355.0" y="161.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Scheduling Queue</text>
+<text x="355.0" y="177.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">unscheduled pods</text>
+<rect x="530.0" y="132" width="150" height="64" rx="6" fill="#ffffff"/>
+<rect x="530.0" y="132" width="150" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="605.0" y="161.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-scheduler</text>
+<text x="605.0" y="177.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">control plane</text>
+<rect x="780.0" y="132" width="150" height="64" rx="6" fill="#ffffff"/>
+<rect x="780.0" y="132" width="150" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="855.0" y="161.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Filter Plugins</text>
+<text x="855.0" y="177.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">NodeResourcesFit +4</text>
+<rect x="30.0" y="340" width="150" height="64" rx="6" fill="#ffffff"/>
+<rect x="30.0" y="340" width="150" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="105.0" y="369.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node</text>
+<text x="105.0" y="385.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">pod runs here</text>
+<rect x="280.0" y="340" width="150" height="64" rx="6" fill="#ffffff"/>
+<rect x="280.0" y="340" width="150" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="355.0" y="369.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Binding Request</text>
+<text x="355.0" y="385.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">to API server</text>
+<rect x="530.0" y="340" width="150" height="64" rx="6" fill="#ffffff"/>
+<rect x="530.0" y="340" width="150" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="605.0" y="369.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Best Node Selection</text>
+<text x="605.0" y="385.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">highest score</text>
+<rect x="780.0" y="340" width="150" height="64" rx="6" fill="#ffffff"/>
+<rect x="780.0" y="340" width="150" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="855.0" y="369.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Score Plugins</text>
+<text x="855.0" y="385.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">ImageLocality +4</text>
+  </svg>

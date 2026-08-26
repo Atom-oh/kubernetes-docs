@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-core-04-storage-9-title ko-core-04-storage-9-desc">
+    <title id="ko-core-04-storage-9-title">EKS의 EBS · EFS · FSx for Lustre 스토리지 경로</title>
+    <desc id="ko-core-04-storage-9-desc">Amazon EKS에서 EBS·EFS·FSx for Lustre 세 관리형 스토리지가 각각 전용 CSI 드라이버와 StorageClass, PersistentVolume을 거쳐 서로 다른 접근 모드의 파드에 연결되는 병렬 구조를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#0972D3"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="104" width="280" height="308" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="56" y="108" width="149" height="12" rx="2" fill="#ffffff"/>
+<text x="130.5" y="117" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">Amazon EBS 경로 (RWO)</text>
+<rect x="340" y="104" width="280" height="308" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="356" y="108" width="149" height="12" rx="2" fill="#ffffff"/>
+<text x="430.5" y="117" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">Amazon EFS 경로 (RWX)</text>
+<rect x="640" y="104" width="280" height="308" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="656" y="108" width="261" height="12" rx="2" fill="#ffffff"/>
+<text x="786.5" y="117" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">Amazon FSx for Lustre 경로 (RWX, 고성능)</text>
+<path d="M 430,88 V 104.0 Q 430,112.0 422,112.0 H 188 Q 180,112.0 180,120.0 V 136" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="88" x2="480" y2="136" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 530,88 V 104.0 Q 530,112.0 538,112.0 H 772 Q 780,112.0 780,120.0 V 136" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="180" y1="176" x2="180" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="180" y1="232" x2="180" y2="248" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="180" y1="288" x2="180" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="180" y1="344" x2="180" y2="360" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="176" x2="480" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="232" x2="480" y2="248" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="288" x2="480" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="344" x2="480" y2="360" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="780" y1="176" x2="780" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="780" y1="232" x2="780" y2="248" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="780" y1="288" x2="780" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="780" y1="344" x2="780" y2="360" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="380" y="40" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="380" y="40" width="200" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="388" y="46" width="26" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="401.0" y="55" fill="#EC7211" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EKS</text>
+<text x="480.0" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Amazon EKS</text>
+<rect x="60" y="136" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="60" y="136" width="240" height="40" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="68" y="142" width="26" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="81.0" y="151" fill="rgba(35,47,62,0.30)" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EBS</text>
+<text x="180.0" y="158.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Amazon EBS</text>
+<rect x="60" y="192" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="60" y="192" width="240" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="180.0" y="214.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EBS CSI 드라이버</text>
+<rect x="60" y="248" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="60" y="248" width="240" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="180.0" y="270.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EBS 스토리지 클래스</text>
+<rect x="60" y="304" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="60" y="304" width="240" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="180.0" y="326.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EBS 퍼시스턴트 볼륨</text>
+<rect x="60" y="360" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="60" y="360" width="240" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="180.0" y="382.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">파드 (RWO)</text>
+<rect x="360" y="136" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="360" y="136" width="240" height="40" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="368" y="142" width="26" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="381.0" y="151" fill="rgba(35,47,62,0.30)" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EFS</text>
+<text x="480.0" y="158.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Amazon EFS</text>
+<rect x="360" y="192" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="360" y="192" width="240" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="214.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EFS CSI 드라이버</text>
+<rect x="360" y="248" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="360" y="248" width="240" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="270.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EFS 스토리지 클래스</text>
+<rect x="360" y="304" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="360" y="304" width="240" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="480.0" y="326.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EFS 퍼시스턴트 볼륨</text>
+<rect x="360" y="360" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="360" y="360" width="240" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="382.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">파드 (RWX)</text>
+<rect x="660" y="136" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="660" y="136" width="240" height="40" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="668" y="142" width="26" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="681.0" y="151" fill="rgba(35,47,62,0.30)" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">FSx</text>
+<text x="780.0" y="158.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Amazon FSx for Lustre</text>
+<rect x="660" y="192" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="660" y="192" width="240" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780.0" y="214.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">FSx CSI 드라이버</text>
+<rect x="660" y="248" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="660" y="248" width="240" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780.0" y="270.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">FSx 스토리지 클래스</text>
+<rect x="660" y="304" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="660" y="304" width="240" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="780.0" y="326.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">FSx 퍼시스턴트 볼륨</text>
+<rect x="660" y="360" width="240" height="40" rx="6" fill="#ffffff"/>
+<rect x="660" y="360" width="240" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780.0" y="382.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">파드 (RWX, 고성능)</text>
+<line x1="40" y1="444" x2="920" y2="444" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="458" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">LEGEND</text>
+<rect x="40" y="476" width="16" height="11" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="64" y="485" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Noto Sans KR', sans-serif">Amazon EKS</text>
+<rect x="162.0" y="476" width="16" height="11" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="186.0" y="485" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Noto Sans KR', sans-serif">관리형 스토리지 서비스</text>
+<rect x="297.2" y="476" width="16" height="11" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="321.2" y="485" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Noto Sans KR', sans-serif">CSI 드라이버 · StorageClass · Pod</text>
+<rect x="544.5999999999999" y="476" width="16" height="11" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="568.5999999999999" y="485" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Noto Sans KR', sans-serif">PersistentVolume</text>
+  </svg>

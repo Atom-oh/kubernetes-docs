@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-core-01-cluster-architecture-11-title en-core-01-cluster-architecture-11-desc">
+<title id="en-core-01-cluster-architecture-11-title">EKS cluster architecture on AWS</title>
+<desc id="en-core-01-cluster-architecture-11-desc">Architecture diagram showing AWS Cloud hosting a managed EKS control plane, customer-operated worker nodes, and the supporting AWS services and VPC networking that the cluster depends on.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="parrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="parrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="parrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="parrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+
+<path d="M 432.0,104 V 132 Q 432.0,140 424.0,140 H 152.0 Q 144.0,140 144.0,148 V 208" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#parrow-accent)"/>
+<path d="M 464.0,104 V 132 Q 464.0,140 456.0,140 H 376.0 Q 368.0,140 368.0,148 V 208" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#parrow)"/>
+<path d="M 496.0,104 V 132 Q 496.0,140 504.0,140 H 584.0 Q 592.0,140 592.0,148 V 208" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#parrow)"/>
+<path d="M 528.0,104 V 132 Q 528.0,140 536.0,140 H 808.0 Q 816.0,140 816.0,148 V 208" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#parrow)"/>
+<rect x="400" y="48" width="160" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="400" y="48" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="80.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS Cloud</text>
+<rect x="40.0" y="208" width="208" height="108" rx="6" fill="#FFFFFF"/>
+<rect x="40.0" y="208" width="208" height="108" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="144.0" y="245.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EKS Control Plane</text>
+<text x="144.0" y="260.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">(AWS managed)</text>
+<text x="144.0" y="275.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">kube-apiserver · etcd</text>
+<text x="144.0" y="287.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">scheduler · controller-mgr</text>
+<rect x="264.0" y="208" width="208" height="108" rx="6" fill="#FFFFFF"/>
+<rect x="264.0" y="208" width="208" height="108" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="368.0" y="252.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Worker Nodes</text>
+<text x="368.0" y="278.5" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Node Group 1 · Node Group 2</text>
+<text x="368.0" y="290.5" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Fargate Profile</text>
+<rect x="488.0" y="208" width="208" height="108" rx="6" fill="#FFFFFF"/>
+<rect x="488.0" y="208" width="208" height="108" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="592.0" y="252.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS Services</text>
+<text x="592.0" y="278.5" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">IAM · ECR · ELB/ALB/NLB</text>
+<text x="592.0" y="290.5" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">EBS/EFS/FSx · CloudWatch</text>
+<rect x="712.0" y="208" width="208" height="108" rx="6" fill="#FFFFFF"/>
+<rect x="712.0" y="208" width="208" height="108" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="816.0" y="252.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VPC &amp; Networking</text>
+<text x="816.0" y="278.5" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">VPC · Subnets · Sec. Groups</text>
+<text x="816.0" y="290.5" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Route Tables · VPC CNI</text>
+</svg>

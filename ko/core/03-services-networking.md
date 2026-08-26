@@ -86,58 +86,7 @@ Kubernetes는 다양한 유형의 서비스를 제공하여 애플리케이션�
 
 ### 서비스 아키텍처
 
-```mermaid
-graph TD
-    subgraph "Kubernetes 클러스터"
-        subgraph "서비스 유형"
-            LB[LoadBalancer]
-            NP[NodePort]
-            CIP[ClusterIP]
-            EXT[ExternalName]
-            
-            LB --> NP
-            NP --> CIP
-        end
-        
-        subgraph "서비스 디스커버리"
-            DNS[CoreDNS]
-            EP[Endpoints]
-            
-            CIP --> DNS
-            CIP --> EP
-        end
-        
-        subgraph "백엔드 포드"
-            Pod1[Pod 1]
-            Pod2[Pod 2]
-            Pod3[Pod 3]
-            
-            EP --> Pod1
-            EP --> Pod2
-            EP --> Pod3
-        end
-    end
-    
-    ExtClient[외부 클라이언트] --> LB
-    ExtClient --> NP
-    IntClient[클러스터 내부 클라이언트] --> CIP
-    IntClient --> DNS
-    EXT --> ExtService[외부 서비스]
-    
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef discovery fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class ExtClient,IntClient client;
-    class LB,NP,CIP,EXT service;
-    class DNS,EP discovery;
-    class Pod1,Pod2,Pod3 pod;
-    class ExtService external;
-```
+![외부 클라이언트와 클러스터 내부 클라이언트가 LoadBalancer, NodePort, ClusterIP 서비스를 거쳐 CoreDNS와 Endpoints를 통해 백엔드 포드에 도달하는 경로를 보여준다.](../.gitbook/assets/ko-core-03-services-networking-0.png)
 
 ### 서비스 유형 비교
 
@@ -308,31 +257,7 @@ spec:
 
 인그레스는 클러스터 외부에서 클러스터 내부 서비스로의 HTTP 및 HTTPS 경로를 노출하는 API 객체입니다. 인그레스는 로드 밸런싱, SSL 종료, 이름 기반 가상 호스팅을 제공합니다.
 
-```mermaid
-graph LR
-    Client[외부 클라이언트] --> LB[로드 밸런서]
-    LB --> IC[인그레스 컨트롤러]
-    IC --> Ingress[인그레스 리소스]
-    Ingress --> S1[서비스 A]
-    Ingress --> S2[서비스 B]
-    S1 --> P1[Pod A-1]
-    S1 --> P2[Pod A-2]
-    S2 --> P3[Pod B-1]
-    S2 --> P4[Pod B-2]
-    
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class Client client;
-    class LB awsService;
-    class IC,Ingress,S1,S2 k8sComponent;
-    class P1,P2,P3,P4 userApp;
-```
+![외부 클라이언트 요청이 로드 밸런서와 인그레스 컨트롤러를 지나 인그레스 리소스의 라우팅 규칙에 따라 서비스 A 또는 서비스 B로, 그리고 각 서비스의 백엔드 포드로 분기되는 경로를 보여준다.](../.gitbook/assets/ko-core-03-services-networking-1.png)
 
 ### 인그레스 컨트롤러
 
@@ -652,42 +577,7 @@ spec:
 
 네트워크 정책은 포드 간의 통신을 제어하는 방법을 제공합니다. 네트워크 정책을 사용하려면 네트워크 플러그인이 네트워크 정책을 지원해야 합니다(예: Calico, Cilium, Weave Net).
 
-```mermaid
-graph TD
-    subgraph "네임스페이스 A"
-        FE[Frontend Pod]
-        API[API Pod]
-        DB[Database Pod]
-        
-        NP1[Network Policy 1]
-        NP2[Network Policy 2]
-        
-        FE -- 허용 --> API
-        API -- 허용 --> DB
-        FE -. 차단 .-> DB
-    end
-    
-    subgraph "네임스페이스 B"
-        MON[Monitoring Pod]
-        
-        NP3[Network Policy 3]
-        
-        MON -- 허용 --> API
-        MON -. 차단 .-> DB
-    end
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class FE,API userApp;
-    class DB dataStore;
-    class MON k8sComponent;
-    class NP1,NP2,NP3 policy;
-```
+![네임스페이스 A의 Frontend·API·Database 포드와 네임스페이스 B의 Monitoring 포드 사이에서 네트워크 정책이 어떤 경로는 허용하고 어떤 경로는 차단하는지 보여준다.](../.gitbook/assets/ko-core-03-services-networking-2.png)
 
 ### 기본 네트워크 정책
 
@@ -807,49 +697,7 @@ spec:
 
 서비스 메시는 마이크로서비스 간의 통신을 관리하는 인프라 계층입니다. 서비스 메시는 서비스 디스커버리, 로드 밸런싱, 암호화, 인증, 권한 부여, 관찰 가능성 등의 기능을 제공합니다.
 
-```mermaid
-graph TD
-    subgraph "컨트롤 플레인"
-        IC[Istio Control Plane]
-    end
-    
-    subgraph "서비스 A"
-        A[서비스 A]
-        SA[사이드카 프록시 A]
-        A <--> SA
-    end
-    
-    subgraph "서비스 B"
-        B[서비스 B]
-        SB[사이드카 프록시 B]
-        B <--> SB
-    end
-    
-    subgraph "서비스 C"
-        C[서비스 C]
-        SC[사이드카 프록시 C]
-        C <--> SC
-    end
-    
-    IC <-.-> SA
-    IC <-.-> SB
-    IC <-.-> SC
-    
-    SA <--> SB
-    SB <--> SC
-    SA <--> SC
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class IC k8sComponent;
-    class A,B,C userApp;
-    class SA,SB,SC proxy;
-```
+![Istio 컨트롤 플레인이 세 서비스에 주입된 사이드카 프록시들에 설정을 배포하고, 각 서비스와 사이드카가 짝을 이루며 사이드카끼리 서로 통신하는 서비스 메시 구조를 보여준다.](../.gitbook/assets/ko-core-03-services-networking-3.png)
 
 ### Istio
 
@@ -942,26 +790,7 @@ spec:
 
 ## Cilium
 
-```mermaid
-graph TD
-    K8S[Kubernetes] --> CNI[Container Network Interface]
-    CNI --> Cilium[Cilium]
-    Cilium --> EBPF[eBPF]
-    EBPF --> Kernel[Linux Kernel]
-    Cilium --> Hubble[Hubble]
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef cni fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef plugin fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef kernel fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class K8S k8sComponent;
-    class CNI cni;
-    class Cilium,Hubble plugin;
-    class EBPF,Kernel kernel;
-```
+![Kubernetes가 CNI 표준을 통해 Cilium을 호출하고, Cilium이 eBPF로 커널 데이터 경로를 구현하며 Hubble로 네트워크 흐름을 관찰 가능하게 만드는 계층 구조를 보여준다.](../.gitbook/assets/ko-core-03-services-networking-4.png)
 
 [Cilium 세부](../networking/cilium/README.md)
 ### Cilium 소개

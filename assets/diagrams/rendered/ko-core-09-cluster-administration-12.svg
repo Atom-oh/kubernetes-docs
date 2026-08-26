@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">문제 해결 방법론</title>
+<desc id="d">클러스터 문제 해결이 문제 식별, 정보 수집, 원인 분석, 해결책 적용, 검증, 문서화 순서로 진행되며 정보 수집 단계는 로그·이벤트·리소스 상태 확인이라는 세 가지 구체적 활동으로 나뉜다는 것을 보여주는 순서도</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="175" y1="104" x2="185" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="325" y1="104" x2="335" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="475" y1="104" x2="485" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="625" y1="104" x2="635" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="775" y1="104" x2="785" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="255" y1="128" x2="255" y2="170" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 105,170 H 405" fill="none" stroke="#545B64" stroke-width="1"/>
+<line x1="105" y1="170" x2="105" y2="220" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="255" y1="170" x2="255" y2="220" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="405" y1="170" x2="405" y2="220" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="35" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="35" y="80" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="105.0" y="106.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">문제 식별</text>
+<rect x="185" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="185" y="80" width="140" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="255.0" y="106.0" fill="#EC7211" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">정보 수집</text>
+<rect x="335" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="335" y="80" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="405.0" y="106.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">원인 분석</text>
+<rect x="485" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="485" y="80" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="555.0" y="106.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">해결책 적용</text>
+<rect x="635" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="635" y="80" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="705.0" y="106.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">검증</text>
+<rect x="785" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="785" y="80" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="855.0" y="106.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">문서화</text>
+<rect x="35" y="220" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="35" y="220" width="140" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="105.0" y="246.0" fill="#232F3E" font-size="9" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">로그 확인</text>
+<rect x="185" y="220" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="185" y="220" width="140" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="255.0" y="246.0" fill="#232F3E" font-size="9" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">이벤트 확인</text>
+<rect x="335" y="220" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="335" y="220" width="140" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="405.0" y="246.0" fill="#232F3E" font-size="9" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">리소스 상태 확인</text>
+</svg>

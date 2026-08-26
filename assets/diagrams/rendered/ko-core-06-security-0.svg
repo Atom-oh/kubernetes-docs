@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t0 d0">
+  <title id="t0">Kubernetes 보안 아키텍처</title>
+  <desc id="d0">인프라 계층에서 시작해 API 서버 보안을 거쳐 인증, 권한 부여, 어드미션 컨트롤, 감사 로깅으로 이어지는 클러스터 보안 파이프라인과, 여기서 파생되는 데이터 암호화 및 워크로드 보안 통제를 보여주는 다이어그램.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="32" fill="#7D8998" font-size="8" letter-spacing="0.18em" class="mono">SECURITY LAYERS</text>
+  <text x="40" y="58" fill="#232F3E" font-size="24" font-weight="700">Kubernetes 보안 아키텍처</text>
+  <text x="40" y="78" fill="#545B64" font-size="12">인프라 · 클러스터 · 워크로드 3계층의 심층 방어(Defense in Depth)</text>
+
+  <!-- Arrows (drawn before boxes) -->
+  <!-- backbone verticals -->
+  <line x1="220" y1="144" x2="220" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="220" y1="232" x2="220" y2="264" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <line x1="220" y1="320" x2="220" y2="352" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="220" y1="408" x2="220" y2="440" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="220" y1="496" x2="220" y2="528" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- API -> Encrypt (same row, straight horizontal) -->
+  <line x1="320" y1="204" x2="660" y2="204" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Authz -> Workload elbow -->
+  <path d="M320,380 H472 Q480,380 480,388 V404 Q480,412 488,412 H660"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Admission -> Workload elbow -->
+  <path d="M320,468 H512 Q520,468 520,476 V494 Q520,502 528,502 H660"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Nodes -->
+  <!-- Infra -->
+  <rect x="120" y="88" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="120" y="88" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="220" y="112" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">인프라 계층</text>
+  <text x="220" y="130" fill="#545B64" font-size="9" text-anchor="middle" class="mono">호스트 · 네트워크 · 컨테이너 런타임</text>
+
+  <!-- API (focal) -->
+  <rect x="120" y="176" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="120" y="176" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="220" y="200" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">API 서버 보안</text>
+  <text x="220" y="218" fill="#545B64" font-size="9" text-anchor="middle" class="mono">kube-apiserver</text>
+
+  <!-- Auth -->
+  <rect x="120" y="264" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="120" y="264" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="220" y="288" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">인증 (Authentication)</text>
+  <text x="220" y="306" fill="#545B64" font-size="9" text-anchor="middle" class="mono">신원 확인</text>
+
+  <!-- Authz -->
+  <rect x="120" y="352" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="120" y="352" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="220" y="376" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">권한 부여 (Authorization)</text>
+  <text x="220" y="394" fill="#545B64" font-size="9" text-anchor="middle" class="mono">RBAC · ABAC · Node · Webhook</text>
+
+  <!-- Admission -->
+  <rect x="120" y="440" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="120" y="440" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="220" y="464" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">어드미션 컨트롤</text>
+  <text x="220" y="482" fill="#545B64" font-size="9" text-anchor="middle" class="mono">Pod 보안 표준 · 보안 컨텍스트</text>
+
+  <!-- Audit -->
+  <rect x="120" y="528" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="120" y="528" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="220" y="552" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">감사 로깅</text>
+  <text x="220" y="570" fill="#545B64" font-size="9" text-anchor="middle" class="mono">이벤트 기록</text>
+
+  <!-- Encrypt -->
+  <rect x="660" y="176" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="660" y="176" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="760" y="200" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">데이터 암호화</text>
+  <text x="760" y="218" fill="#545B64" font-size="9" text-anchor="middle" class="mono">etcd · 시크릿 관리</text>
+
+  <!-- Workload -->
+  <rect x="660" y="352" width="200" height="200" rx="6" fill="#ffffff"/>
+  <rect x="660" y="352" width="200" height="200" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="760" y="392" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">워크로드 보안 통제</text>
+  <text x="760" y="424" fill="#545B64" font-size="9" text-anchor="middle" class="mono">RBAC</text>
+  <text x="760" y="440" fill="#545B64" font-size="9" text-anchor="middle" class="mono">Pod 보안 표준</text>
+  <text x="760" y="456" fill="#545B64" font-size="9" text-anchor="middle" class="mono">보안 컨텍스트</text>
+  <text x="760" y="472" fill="#545B64" font-size="9" text-anchor="middle" class="mono">네트워크 정책 · 이미지 보안</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="588" x2="920" y2="588" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+</svg>

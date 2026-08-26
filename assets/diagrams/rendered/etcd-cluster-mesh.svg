@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-core-01-cluster-architecture-7-title ko-core-01-cluster-architecture-7-desc">
+    <title id="ko-core-01-cluster-architecture-7-title">etcd 클러스터 구성 (3노드)</title>
+    <desc id="ko-core-01-cluster-architecture-7-desc">3개의 etcd 노드가 서로 완전 연결(mesh)되어 Raft 합의로 데이터 일관성을 유지하는 etcd 클러스터 구성을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-start-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="280" y1="88" x2="600" y2="88" stroke="#545B64" stroke-width="1.6" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<path d="M 680,116 V 200 Q 680,208 672,208 H 508 Q 500,208 500,216 V 300" fill="none" stroke="#545B64" stroke-width="1.6" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<path d="M 340,328 H 260 Q 252,328 252,320 V 216 Q 252,208 244,208 H 200 Q 192,208 192,200 V 116" fill="none" stroke="#545B64" stroke-width="1.6" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<rect x="80" y="60" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="80" y="60" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="180.0" y="90.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">etcd Node 1</text>
+<rect x="600" y="60" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="600" y="60" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="700.0" y="90.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">etcd Node 2</text>
+<rect x="340" y="300" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="340" y="300" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="440.0" y="330.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">etcd Node 3</text>
+
+  </svg>

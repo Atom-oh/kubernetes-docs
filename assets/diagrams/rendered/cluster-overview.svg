@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 700" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-core-01-cluster-architecture-0-title ko-core-01-cluster-architecture-0-desc">
+    <title id="ko-core-01-cluster-architecture-0-title">쿠버네티스 클러스터 아키텍처</title>
+    <desc id="ko-core-01-cluster-architecture-0-desc">컨트롤 플레인의 kube-apiserver를 중심으로 etcd, 스케줄러, 컨트롤러 매니저가 연결되고 각 워커 노드의 kubelet, kube-proxy, 컨테이너 런타임이 파드를 실행하는 구조를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-start-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="480" y1="126" x2="480" y2="158" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<line x1="270" y1="190" x2="410" y2="190" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<line x1="550" y1="190" x2="690" y2="190" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<line x1="480" y1="222" x2="480" y2="250" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<path d="M 457,222 V 226 Q 457,234 449,234 H 228 Q 220,234 220,242 V 384" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<path d="M 503,222 V 226 Q 503,234 511,234 H 732 Q 740,234 740,242 V 384" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start-arrow)"/>
+<line x1="220" y1="436" x2="220" y2="474" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 220,526 V 530 Q 220,538 228,538 H 445 Q 453,538 453,546 V 564" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 740,436 V 440 Q 740,448 732,448 H 515 Q 507,448 507,456 V 564" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="40" y="40" width="880" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="56" y="44" width="107" height="12" rx="2" fill="#ffffff"/>
+<text x="109.5" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">CONTROL PLANE</text>
+<rect x="40" y="344" width="880" height="292" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="56" y="348" width="205" height="12" rx="2" fill="#ffffff"/>
+<text x="158.5" y="357" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">WORKER NODE (x2 REPLICATED)</text>
+<rect x="130" y="162" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="130" y="162" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="200.0" y="186.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">etcd</text>
+<text x="200.0" y="204.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">store</text>
+<rect x="385" y="74" width="190" height="52" rx="6" fill="#ffffff"/>
+<rect x="385" y="74" width="190" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="102.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-controller-manager</text>
+<rect x="385" y="250" width="190" height="52" rx="6" fill="#ffffff"/>
+<rect x="385" y="250" width="190" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="278.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">cloud-controller-manager</text>
+<rect x="690" y="162" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="690" y="162" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="760.0" y="192.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-scheduler</text>
+<rect x="410" y="158" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="410" y="158" width="140" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480.0" y="186.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-apiserver</text>
+<text x="480.0" y="204.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">hub</text>
+<rect x="150" y="384" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="150" y="384" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220.0" y="412.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kubelet</text>
+<rect x="670" y="384" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="670" y="384" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="740.0" y="412.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-proxy</text>
+<rect x="150" y="474" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="150" y="474" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220.0" y="502.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">container runtime</text>
+<rect x="400" y="564" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="564" width="160" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="480.0" y="588.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod</text>
+<text x="480.0" y="606.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">x N replicas</text>
+<line x1="40" y1="660" x2="920" y2="660" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<circle cx="44" cy="676" r="3.5" fill="#EC7211"/>
+<text x="54" y="679" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.04em">kube-apiserver 허브</text>
+<circle cx="188" cy="676" r="3.5" fill="#545B64"/>
+<text x="198" y="679" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.04em">제어/데이터 경로</text>
+  </svg>

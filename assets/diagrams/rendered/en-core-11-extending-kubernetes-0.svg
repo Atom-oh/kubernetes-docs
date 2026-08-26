@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-core-11-extending-kubernetes-0-title en-core-11-extending-kubernetes-0-desc">
+<title id="en-core-11-extending-kubernetes-0-title">Kubernetes extension points</title>
+<desc id="en-core-11-extending-kubernetes-0-desc">Architecture diagram showing the API server as the hub for custom resources, admission controllers, API server extensions, operators, the cloud controller manager, and scheduler extensions, with node-level extension points (CSI, CNI, device plugins) attached to each cluster node.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="32" y="200" width="280" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="129.2" y="204" width="85.60000000000001" height="12" rx="2" fill="#ffffff"/>
+<text x="172.0" y="213" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">API EXTENSIONS</text>
+<rect x="336" y="200" width="280" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="408.9" y="204" width="134.2" height="12" rx="2" fill="#ffffff"/>
+<text x="476.0" y="213" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">CONTROLLER &amp; SCHEDULING</text>
+<rect x="640" y="200" width="280" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="734.5" y="204" width="91.0" height="12" rx="2" fill="#ffffff"/>
+<text x="780.0" y="213" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">NODE EXTENSIONS</text>
+<path d="M 480.0,72 L 480.0,104" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 408,152 V 184 Q 408,192 400,192 H 180.0 Q 172.0,192 172.0,200 V 236" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 436,152 V 224 Q 436,232 428,232 H 180.0 Q 172.0,232 172.0,240 V 308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 464,152 V 256 Q 464,264 456,264 H 180.0 Q 172.0,264 172.0,272 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 496,152 V 224 Q 496,232 488,232 H 484.0 Q 476.0,232 476.0,240 V 308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 524,152 V 256 Q 524,264 516,264 H 484.0 Q 476.0,264 476.0,272 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 552,152 V 184 Q 552,192 560,192 H 772.0 Q 780.0,192 780.0,200 V 236" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 292,260.0 L 356,260.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="296.6" y="240.0" width="54.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="324.0" y="249.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">REGISTERS</text>
+<path d="M 728,284 V 288 Q 728,296 720,296 H 696.0 Q 688.0,296 688.0,304 V 308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 780,284 V 288 Q 780,296 772,296 H 788.0 Q 780.0,296 780.0,304 V 308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 832,284 V 288 Q 832,296 840,296 H 864.0 Q 872.0,296 872.0,304 V 308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="380" y="24" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="380" y="24" width="200" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="480.0" y="52.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">User / Client</text>
+<rect x="380" y="104" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="380" y="104" width="200" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="130.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API Server</text>
+<text x="480.0" y="146.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">kube-apiserver</text>
+<rect x="52" y="236" width="240" height="48" rx="6" fill="#ffffff"/>
+<rect x="52" y="236" width="240" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="172.0" y="264.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Custom Resources</text>
+<rect x="52" y="308" width="240" height="48" rx="6" fill="#ffffff"/>
+<rect x="52" y="308" width="240" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="172.0" y="336.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Admission Controllers</text>
+<rect x="52" y="380" width="240" height="48" rx="6" fill="#ffffff"/>
+<rect x="52" y="380" width="240" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="172.0" y="408.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API Server Extensions</text>
+<rect x="356" y="236" width="240" height="48" rx="6" fill="#ffffff"/>
+<rect x="356" y="236" width="240" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="476.0" y="264.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Operators</text>
+<rect x="356" y="308" width="240" height="48" rx="6" fill="#ffffff"/>
+<rect x="356" y="308" width="240" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="476.0" y="336.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Cloud Controller Mgr</text>
+<rect x="356" y="380" width="240" height="48" rx="6" fill="#ffffff"/>
+<rect x="356" y="380" width="240" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="476.0" y="408.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Scheduler Extensions</text>
+<rect x="680" y="236" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="680" y="236" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780.0" y="264.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node</text>
+<rect x="648" y="308" width="80" height="40" rx="6" fill="#ffffff"/>
+<rect x="648" y="308" width="80" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="688.0" y="332.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">CSI</text>
+<rect x="740" y="308" width="80" height="40" rx="6" fill="#ffffff"/>
+<rect x="740" y="308" width="80" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780.0" y="332.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">CNI</text>
+<rect x="832" y="308" width="80" height="40" rx="6" fill="#ffffff"/>
+<rect x="832" y="308" width="80" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="872.0" y="332.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Device Plugins</text>
+<line x1="32" y1="500" x2="928" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="32" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="32" y="532" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="52" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Focal / API server</text>
+<rect x="220" y="532" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="240" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Extension point</text>
+<rect x="420" y="532" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="440" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Client</text>
+</svg>

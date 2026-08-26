@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="960" height="600" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">파드(Pod) 내부 구조</title>
+  <desc id="ddesc">쿠버네티스 파드는 하나의 IP와 네트워크 네임스페이스를 공유하며, 그 안에 애플리케이션·사이드카·초기화 컨테이너와 emptyDir·configMap·secret·PVC 같은 볼륨을 함께 담는 최소 배포 단위임을 보여주는 다이어그램.</desc>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- ============ Header ============ -->
+  <text x="40" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">KUBERNETES · POD</text>
+  <text x="40" y="72" fill="#232F3E" font-size="24" font-weight="700">파드(Pod) 내부 구조</text>
+  <text x="40" y="94" fill="#545B64" font-size="12">하나의 파드는 네트워크 · 컨테이너 · 스토리지 리소스를 하나의 배포 단위로 캡슐화합니다</text>
+
+  <!-- ============ Zones (drawn before arrows/nodes) ============ -->
+  <!-- Zone 1: Network -->
+  <rect x="320" y="110" width="600" height="132" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="336" y="114" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="368" y="123" fill="rgba(35,47,62,0.45)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">네트워크</text>
+
+  <!-- Zone 2: Containers -->
+  <rect x="320" y="262" width="600" height="184" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="336" y="266" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="368" y="275" fill="rgba(35,47,62,0.45)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">컨테이너</text>
+
+  <!-- Zone 3: Storage -->
+  <rect x="320" y="466" width="600" height="104" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="336" y="470" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="368" y="479" fill="rgba(35,47,62,0.45)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">스토리지</text>
+
+  <!-- ============ Arrows (Pod -> each zone), drawn before nodes ============ -->
+  <!-- Pod -> Network zone -->
+  <path d="M240,316 H254 Q260,316 260,310 V182 Q260,176 266,176 H320"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Pod -> Containers zone -->
+  <path d="M240,340 H264 Q270,340 270,346 V348 Q270,354 276,354 H320"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Pod -> Storage zone -->
+  <path d="M240,364 H274 Q280,364 280,370 V512 Q280,518 286,518 H320"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ============ Pod hub (focal) ============ -->
+  <rect x="40" y="292" width="200" height="96" rx="6" fill="#ffffff"/>
+  <rect x="40" y="292" width="200" height="96" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="56" y="304" width="32" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="72" y="313" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+  <text x="140" y="336" fill="#232F3E" font-size="16" font-weight="700" text-anchor="middle">Pod</text>
+  <text x="140" y="356" fill="#545B64" font-size="12" text-anchor="middle">최소 배포 단위</text>
+  <text x="140" y="374" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">1 NETNS · 1 IP</text>
+
+  <!-- ============ Network zone members ============ -->
+  <!-- PodIP -->
+  <rect x="336" y="138" width="568" height="40" rx="6" fill="#ffffff"/>
+  <rect x="336" y="138" width="568" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="620" y="155" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod IP 주소</text>
+  <text x="620" y="171" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">모든 컨테이너가 공유</text>
+
+  <!-- NS -->
+  <rect x="336" y="190" width="568" height="40" rx="6" fill="#ffffff"/>
+  <rect x="336" y="190" width="568" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="620" y="207" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">네트워크 네임스페이스</text>
+  <text x="620" y="223" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">eth0 · lo 공유, localhost 통신</text>
+
+  <!-- ============ Container zone members ============ -->
+  <!-- C1 app container -->
+  <rect x="336" y="290" width="568" height="40" rx="6" fill="#ffffff"/>
+  <rect x="336" y="290" width="568" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="620" y="307" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">애플리케이션 컨테이너</text>
+  <text x="620" y="323" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">PORT 8080</text>
+
+  <!-- C2 sidecar -->
+  <rect x="336" y="342" width="568" height="40" rx="6" fill="#ffffff"/>
+  <rect x="336" y="342" width="568" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="620" y="359" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">사이드카 컨테이너</text>
+  <text x="620" y="375" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">PORT 9090</text>
+
+  <!-- C3 init container (optional/ephemeral treatment) -->
+  <rect x="336" y="394" width="568" height="40" rx="6" fill="rgba(35,47,62,0.02)"/>
+  <rect x="336" y="394" width="568" height="40" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="620" y="411" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">초기화 컨테이너</text>
+  <text x="620" y="427" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">앱 컨테이너 실행 전 1회 실행 후 종료</text>
+
+  <!-- ============ Storage zone member (compound: 4 volume kinds) ============ -->
+  <rect x="336" y="494" width="568" height="64" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="336" y="494" width="568" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="620" y="512" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">볼륨</text>
+
+  <!-- 4 volume-kind chips -->
+  <rect x="356" y="522" width="104" height="24" rx="4" fill="#ffffff" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+  <text x="408" y="538" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">emptyDir</text>
+
+  <rect x="472" y="522" width="116" height="24" rx="4" fill="#ffffff" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+  <text x="530" y="538" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">configMap</text>
+
+  <rect x="600" y="522" width="88" height="24" rx="4" fill="#ffffff" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+  <text x="644" y="538" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">secret</text>
+
+  <rect x="700" y="522" width="180" height="24" rx="4" fill="#ffffff" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+  <text x="790" y="538" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">persistentVolumeClaim</text>
+
+</svg>

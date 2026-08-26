@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-core-09-cluster-administration-0-title en-core-09-cluster-administration-0-desc">
+<title id="en-core-09-cluster-administration-0-title">Control Plane Component Management</title>
+<desc id="en-core-09-cluster-administration-0-desc">Tree diagram showing the Kubernetes control plane fanning out to its five components, each paired with the operational concern it owns.</desc>
+
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+<rect width="960" height="560" fill="#ffffff"/>
+<rect x="370.0" y="40" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="370.0" y="40" width="220" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="68.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Control Plane</text>
+<path d="M 406.6666666666667,88 V 124.0 Q 406.6666666666667,132.0 398.6666666666667,132.0 H 120.0 Q 112.0,132.0 112.0,140.0 V 176" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 443.3333333333333,88 V 124.0 Q 443.3333333333333,132.0 435.3333333333333,132.0 H 304.0 Q 296.0,132.0 296.0,140.0 V 176" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480.0" y1="88" x2="480.0" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 516.6666666666666,88 V 124.0 Q 516.6666666666666,132.0 524.6666666666666,132.0 H 656.0 Q 664.0,132.0 664.0,140.0 V 176" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 553.3333333333334,88 V 124.0 Q 553.3333333333334,132.0 561.3333333333334,132.0 H 840.0 Q 848.0,132.0 848.0,140.0 V 176" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="32.0" y="176" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="32.0" y="176" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="112.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">API Server</text>
+<line x1="112.0" y1="232" x2="112.0" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="32.0" y="320" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="32.0" y="320" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="112.0" y="349.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Authentication</text>
+<text x="112.0" y="363.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">and Authorization</text>
+<rect x="216.0" y="176" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="216.0" y="176" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="296.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">etcd</text>
+<line x1="296.0" y1="232" x2="296.0" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="216.0" y="320" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="216.0" y="320" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="296.0" y="356.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Data Backup</text>
+<rect x="400.0" y="176" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="400.0" y="176" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Scheduler</text>
+<line x1="480.0" y1="232" x2="480.0" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="400.0" y="320" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="400.0" y="320" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="349.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Scheduling</text>
+<text x="480.0" y="363.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Policies</text>
+<rect x="584.0" y="176" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="584.0" y="176" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="664.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Controller Manager</text>
+<line x1="664.0" y1="232" x2="664.0" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="584.0" y="320" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="584.0" y="320" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="664.0" y="349.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Controller State</text>
+<text x="664.0" y="363.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Monitoring</text>
+<rect x="768.0" y="176" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="768.0" y="176" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="848.0" y="201.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cloud Controller</text>
+<text x="848.0" y="215.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Manager</text>
+<line x1="848.0" y1="232" x2="848.0" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="768.0" y="320" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="768.0" y="320" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="848.0" y="349.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cloud Resource</text>
+<text x="848.0" y="363.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Management</text>
+</svg>

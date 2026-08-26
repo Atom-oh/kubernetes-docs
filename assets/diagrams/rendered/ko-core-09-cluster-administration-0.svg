@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">컨트롤 플레인 구성요소 관리</title>
+<desc id="d">컨트롤 플레인이 API 서버, etcd, 스케줄러, 컨트롤러 관리자, 클라우드 컨트롤러 관리자로 구성되며 각 구성요소가 담당하는 운영 작업을 보여주는 트리 다이어그램</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="480" y1="88" x2="480" y2="140" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 100,140 H 860" fill="none" stroke="#545B64" stroke-width="1"/>
+<line x1="100" y1="140" x2="100" y2="180" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="290" y1="140" x2="290" y2="180" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="480" y1="140" x2="480" y2="180" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="670" y1="140" x2="670" y2="180" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="860" y1="140" x2="860" y2="180" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="100" y1="228" x2="100" y2="300" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="290" y1="228" x2="290" y2="300" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="480" y1="228" x2="480" y2="300" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="670" y1="228" x2="670" y2="300" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="860" y1="228" x2="860" y2="300" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="400" y="40" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="400" y="40" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="408" y="46" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-width="0.8" opacity="0.4"/>
+<text x="422" y="55" fill="#EC7211" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.08em">CP</text>
+<text x="480.0" y="66.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨트롤 플레인</text>
+<rect x="16" y="180" width="168" height="48" rx="6" fill="#ffffff"/>
+<rect x="16" y="180" width="168" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100.0" y="206.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">API 서버</text>
+<rect x="206" y="180" width="168" height="48" rx="6" fill="#ffffff"/>
+<rect x="206" y="180" width="168" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="290.0" y="206.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">etcd</text>
+<rect x="396" y="180" width="168" height="48" rx="6" fill="#ffffff"/>
+<rect x="396" y="180" width="168" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="206.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">스케줄러</text>
+<rect x="586" y="180" width="168" height="48" rx="6" fill="#ffffff"/>
+<rect x="586" y="180" width="168" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="670.0" y="206.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨트롤러 관리자</text>
+<rect x="776" y="180" width="168" height="48" rx="6" fill="#ffffff"/>
+<rect x="776" y="180" width="168" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="860.0" y="206.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라우드 컨트롤러 관리자</text>
+<rect x="16" y="300" width="168" height="56" rx="6" fill="#ffffff"/>
+<rect x="16" y="300" width="168" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="100.0" y="330.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">인증 및 권한 부여</text>
+<rect x="206" y="300" width="168" height="56" rx="6" fill="#ffffff"/>
+<rect x="206" y="300" width="168" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="290.0" y="330.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">데이터 백업</text>
+<rect x="396" y="300" width="168" height="56" rx="6" fill="#ffffff"/>
+<rect x="396" y="300" width="168" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="480.0" y="330.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">스케줄링 정책</text>
+<rect x="586" y="300" width="168" height="56" rx="6" fill="#ffffff"/>
+<rect x="586" y="300" width="168" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="670.0" y="330.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨트롤러 상태 모니터링</text>
+<rect x="776" y="300" width="168" height="56" rx="6" fill="#ffffff"/>
+<rect x="776" y="300" width="168" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="860.0" y="330.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라우드 리소스 관리</text>
+<text x="24" y="64" fill="#545B64" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.14em">ROOT</text>
+<text x="24" y="208" fill="#545B64" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.14em">구성요소</text>
+<text x="24" y="332" fill="#545B64" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.14em">운영 작업</text>
+</svg>

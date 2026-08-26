@@ -65,26 +65,7 @@ A Kubernetes cluster consists of control plane components and node components. M
 
 ### Control Plane Component Management
 
-```mermaid
-graph TD
-    A[Control Plane] --> B[API Server]
-    A --> C[etcd]
-    A --> D[Scheduler]
-    A --> E[Controller Manager]
-    A --> F[Cloud Controller Manager]
-
-    B --> G[Authentication and Authorization]
-    C --> H[Data Backup]
-    D --> I[Scheduling Policies]
-    E --> J[Controller State Monitoring]
-    F --> K[Cloud Resource Management]
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef operation fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class A,B,C,D,E,F k8sComponent;
-    class G,H,I,J,K operation;
-```
+![Tree diagram showing the Kubernetes control plane fanning out to its five components, each paired with the operational concern it owns.](../.gitbook/assets/en-core-09-cluster-administration-0.png)
 
 #### API Server Management
 
@@ -155,30 +136,7 @@ kubectl get pods -n kube-system
 kubectl top nodes
 ```
 
-```mermaid
-flowchart TD
-    Admin[Cluster Administrator] --> Setup[Cluster Setup and Configuration]
-    Admin --> Operations[Operations Management]
-    Admin --> Security[Security Management]
-    Admin --> Upgrade[Upgrades and Patches]
-    Admin --> Backup[Backup and Recovery]
-
-    Setup --> |Tools| SetupTools[kubeadm, kops, eksctl]
-    Operations --> |Tools| OpsTools[kubectl, Prometheus, Grafana]
-    Security --> |Tools| SecTools[RBAC, NetworkPolicy, PodSecurityPolicy]
-    Upgrade --> |Tools| UpgradeTools[kubeadm upgrade, EKS update]
-    Backup --> |Tools| BackupTools[etcd snapshot, Velero]
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Admin userApp;
-    class Setup,Operations,Security,Upgrade,Backup k8sComponent;
-    class SetupTools,OpsTools,SecTools,UpgradeTools,BackupTools default;
-```
+![Tree diagram showing a cluster administrator's five areas of responsibility, each mapped to the tools used to carry it out.](../.gitbook/assets/en-core-09-cluster-administration-1.png)
 
 ### Cluster Administration Tools
 
@@ -209,38 +167,7 @@ Control plane components manage the overall state of the cluster:
 
 The following diagram shows Kubernetes control plane components and their interactions:
 
-```mermaid
-flowchart TD
-    API[kube-apiserver] <--> ETCD[(etcd)]
-    API <--> SCH[kube-scheduler]
-    API <--> CM[kube-controller-manager]
-    API <--> CCM[cloud-controller-manager]
-    API <--> Kubelet[kubelet]
-
-    subgraph "Control Plane"
-        API
-        ETCD
-        SCH
-        CM
-        CCM
-    end
-
-    subgraph "Worker Node"
-        Kubelet
-        Proxy[kube-proxy]
-        CRI[Container Runtime]
-    end
-
-    Kubelet --> CRI
-    Kubelet --> Proxy
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class API,SCH,CM,CCM,Kubelet,Proxy,CRI k8sComponent;
-    class ETCD dataStore;
-```
+![Architecture diagram showing the kube-apiserver exchanging bidirectional calls with etcd, the scheduler, the controller managers, and a worker node's kubelet, which in turn drives kube-proxy and the container runtime.](../.gitbook/assets/en-core-09-cluster-administration-2.png)
 
 #### Control Plane Component Monitoring
 
@@ -459,36 +386,7 @@ Basic requirements of the Kubernetes network model:
 
 The following diagram shows Kubernetes networking components and communication flows:
 
-```mermaid
-flowchart LR
-    Client[Client] --> Ingress[Ingress]
-    Ingress --> SVC[Service]
-    SVC --> Pod1[Pod 1]
-    SVC --> Pod2[Pod 2]
-
-    subgraph "Cluster Internal"
-        Ingress
-        SVC
-        subgraph "Node 1"
-            Pod1
-        end
-        subgraph "Node 2"
-            Pod2
-        end
-    end
-
-    Pod1 <--> Pod2
-    Pod1 --> ExtSvc[External Service]
-    Pod2 --> ExtSvc
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Ingress,SVC k8sComponent;
-    class Pod1,Pod2 userApp;
-    class Client,ExtSvc default;
-```
+![Architecture diagram showing client traffic entering through Ingress to a Service that load-balances across two pods on separate nodes, which communicate with each other and reach an external service.](../.gitbook/assets/en-core-09-cluster-administration-3.png)
 
 ### CNI (Container Network Interface) Plugins
 
@@ -615,45 +513,7 @@ Kubernetes authentication and authorization management are core elements of clus
 
 The following diagram shows the Kubernetes authentication and authorization flow:
 
-```mermaid
-flowchart TD
-    User[User/Service Account] --> Auth[Authentication]
-    Auth --> Authz[Authorization]
-    Authz --> Admit[Admission Control]
-    Admit --> API[API Server]
-
-    subgraph "Authentication Methods"
-        Cert[X.509 Certificates]
-        Token[Service Account Tokens]
-        OIDC[OpenID Connect]
-        Webhook[Webhook Token Auth]
-    end
-
-    subgraph "Authorization Modes"
-        RBAC[RBAC]
-        ABAC[ABAC]
-        Node[Node]
-        WebhookAuthz[Webhook]
-    end
-
-    Auth --> Cert
-    Auth --> Token
-    Auth --> OIDC
-    Auth --> Webhook
-
-    Authz --> RBAC
-    Authz --> ABAC
-    Authz --> Node
-    Authz --> WebhookAuthz
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Auth,Authz,Admit,API k8sComponent;
-    class User userApp;
-    class Cert,Token,OIDC,Webhook,RBAC,ABAC,Node,WebhookAuthz default;
-```
+![Architecture diagram showing a request moving through authentication, authorization, and admission control before reaching the API server, with the concrete authentication methods and authorization modes each stage supports.](../.gitbook/assets/en-core-09-cluster-administration-4.png)
 
 ### Authentication
 
@@ -852,30 +712,7 @@ Kubernetes cluster upgrades are necessary to apply new features, performance imp
 
 The following diagram shows the Kubernetes cluster upgrade process:
 
-```mermaid
-flowchart TD
-    Start[Upgrade Planning] --> Plan[Check Version Compatibility]
-    Plan --> Backup[etcd Backup]
-    Backup --> CP1[Upgrade First Control Plane Node]
-    CP1 --> CPTest[Test Control Plane Functions]
-    CPTest --> CP2[Upgrade Additional Control Plane Nodes]
-    CP2 --> Worker[Upgrade Worker Nodes]
-    Worker --> Validate[Cluster Validation]
-    Validate --> End[Upgrade Complete]
-
-    Validate -- Problem Occurs --> Rollback[Rollback]
-    Rollback --> RestoreBackup[Restore from Backup]
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class CP1,CP2,Worker,Validate k8sComponent;
-    class Backup,RestoreBackup dataStore;
-    class Rollback alerting;
-    class Start,Plan,CPTest,End default;
-```
+![Flowchart showing the sequential control-plane and worker-node upgrade steps ending in cluster validation, with a rollback-to-backup path if validation finds a problem.](../.gitbook/assets/en-core-09-cluster-administration-5.png)
 
 ### Upgrade Planning
 
@@ -963,35 +800,7 @@ Kubernetes cluster backup and recovery is an important part of disaster recovery
 
 The following diagram shows the Kubernetes cluster backup and recovery process:
 
-```mermaid
-flowchart TD
-    subgraph "Backup Process"
-        Schedule[Set Backup Schedule] --> ETCDBackup[Create etcd Snapshot]
-        Schedule --> ResourceBackup[Backup Resource YAMLs]
-        ETCDBackup --> Store[Backup Storage]
-        ResourceBackup --> Store
-    end
-
-    subgraph "Recovery Process"
-        Disaster[Disaster Occurs] --> RestoreETCD[Restore etcd]
-        RestoreETCD --> RestartServices[Restart Kubernetes Services]
-        RestartServices --> ValidateCluster[Validate Cluster]
-        ValidateCluster --> RestoreResources[Restore Resources]
-    end
-
-    Store -.-> RestoreETCD
-    Store -.-> RestoreResources
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class ETCDBackup,ResourceBackup,RestoreETCD,RestartServices,ValidateCluster,RestoreResources k8sComponent;
-    class Store dataStore;
-    class Disaster alerting;
-    class Schedule default;
-```
+![Architecture diagram showing scheduled etcd snapshots and resource-YAML backups both landing in backup storage, which later feeds an etcd restore and a resource restore during disaster recovery.](../.gitbook/assets/en-core-09-cluster-administration-6.png)
 
 ### etcd Backup
 
@@ -1110,41 +919,7 @@ Effective monitoring and logging is a core element of cluster administration.
 
 The following diagram shows the Kubernetes cluster monitoring and logging architecture:
 
-```mermaid
-flowchart LR
-    subgraph "Monitoring Stack"
-        Prom[Prometheus] --> Alert[Alertmanager]
-        Prom --> Grafana[Grafana]
-        KSM[kube-state-metrics] --> Prom
-        NE[Node Exporter] --> Prom
-        Alert --> Notify[Notification Channels]
-    end
-
-    subgraph "Logging Stack"
-        Fluentd[Fluentd/Fluent Bit] --> ES[(Elasticsearch)]
-        ES --> Kibana[Kibana]
-        Fluentd --> Loki[(Loki)]
-        Loki --> Grafana
-    end
-
-    subgraph "Kubernetes Cluster"
-        API[API Server] --> KSM
-        Node[Node] --> NE
-        Pod[Pod] --> Fluentd
-    end
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheusComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class API,Node,Pod k8sComponent;
-    class ES,Loki dataStore;
-    class Prom,Alert,KSM,NE prometheusComponent;
-    class Grafana,Kibana grafana;
-    class Fluentd,Notify default;
-```
+![Architecture diagram showing cluster metrics flowing through Prometheus, Alertmanager, and Grafana while pod logs flow through Fluentd into Elasticsearch/Kibana and Loki, with Loki also feeding Grafana.](../.gitbook/assets/en-core-09-cluster-administration-7.png)
 
 ### Monitoring Tools
 
@@ -1353,39 +1128,7 @@ Amazon EKS is a managed Kubernetes service that automates many aspects of cluste
 
 The following diagram shows the Amazon EKS cluster architecture and management components:
 
-```mermaid
-flowchart TD
-    User[User] --> |Manage| AWS[AWS Management Console/CLI/API]
-    AWS --> |Manage| EKS[Amazon EKS]
-
-    subgraph "AWS Cloud"
-        EKS --> CP[EKS Control Plane]
-        EKS --> NG[EKS Node Groups]
-        EKS --> Fargate[EKS Fargate]
-
-        CP --> |Uses| AWSIAM[AWS IAM]
-        CP --> |Uses| AWSVPC[AWS VPC]
-        CP --> |Logging| CW[CloudWatch]
-
-        NG --> |Uses| EC2[EC2 Instances]
-        Fargate --> |Uses| FargateProfile[Fargate Profiles]
-    end
-
-    subgraph "Add-ons"
-        EKS --> CNI[Amazon VPC CNI]
-        EKS --> CoreDNS[CoreDNS]
-        EKS --> KubeProxy[kube-proxy]
-    end
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class CP,NG,Fargate,CNI,CoreDNS,KubeProxy k8sComponent;
-    class AWS,EKS,AWSIAM,AWSVPC,CW,EC2,FargateProfile awsService;
-    class User userApp;
-```
+![Architecture diagram showing a user managing Amazon EKS through the AWS console, CLI, or API, with EKS running a control plane plus managed node groups and Fargate, backed by the VPC CNI, CoreDNS, and kube-proxy add-ons.](../.gitbook/assets/en-core-09-cluster-administration-8.png)
 
 ### EKS Cluster Configuration
 
@@ -1558,24 +1301,7 @@ Kubernetes cluster networking manages pod-to-pod communication, service discover
 
 ### Network Architecture
 
-```mermaid
-graph TD
-    A[Cluster Networking] --> B[Pod Network]
-    A --> C[Service Network]
-    A --> D[Ingress]
-    A --> E[Network Policies]
-
-    B --> F[CNI Plugin]
-    C --> G[ClusterIP, NodePort, LoadBalancer]
-    D --> H[Ingress Controller]
-    E --> I[Network Security]
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef networkComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class A,B,C,D,E k8sComponent;
-    class F,G,H,I networkComponent;
-```
+![Tree diagram showing the four building blocks of Kubernetes cluster networking, each paired with the mechanism that implements it.](../.gitbook/assets/en-core-09-cluster-administration-9.png)
 
 ### CNI Plugin Management
 
@@ -1750,24 +1476,7 @@ Kubernetes cluster upgrades are necessary to apply new features, security patche
 
 ### Upgrade Planning
 
-```mermaid
-graph TD
-    A[Upgrade Planning] --> B[Check Version Compatibility]
-    A --> C[Create Backup]
-    A --> D[Choose Upgrade Strategy]
-    A --> E[Plan Downtime]
-
-    B --> F[Review API Changes]
-    C --> G[etcd Backup]
-    D --> H[In-place vs Blue/Green]
-    E --> I[User Communication]
-
-    classDef planning fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class A,B,C,D,E planning;
-    class F,G,H,I action;
-```
+![Tree diagram showing the four planning tasks for a Kubernetes cluster upgrade, each paired with its concrete follow-up action.](../.gitbook/assets/en-core-09-cluster-administration-10.png)
 
 ### Upgrade Strategy Comparison
 
@@ -1923,29 +1632,7 @@ Effective cluster management requires a comprehensive monitoring and logging sys
 
 ### Monitoring Architecture
 
-```mermaid
-graph TD
-    A[Kubernetes Monitoring] --> B[Metric Collection]
-    A --> C[Log Collection]
-    A --> D[Alerting]
-    A --> E[Visualization]
-
-    B --> F[Prometheus]
-    C --> G[Fluentd/Fluent Bit]
-    D --> H[Alertmanager]
-    E --> I[Grafana]
-
-    F --> J[kube-state-metrics]
-    F --> K[node-exporter]
-    G --> L[Elasticsearch]
-    L --> M[Kibana]
-
-    classDef monitoring fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef component fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class A,B,C,D,E monitoring;
-    class F,G,H,I,J,K,L,M component;
-```
+![Architecture diagram showing Kubernetes monitoring split into metric collection, log collection, and alerting, all feeding a shared Grafana visualization layer.](../.gitbook/assets/en-core-09-cluster-administration-11.png)
 
 ### Prometheus and Grafana Installation
 
@@ -2055,24 +1742,7 @@ Kubernetes cluster troubleshooting is an important skill for system administrato
 
 ### Troubleshooting Methodology
 
-```mermaid
-graph TD
-    A[Problem Identification] --> B[Information Gathering]
-    B --> C[Root Cause Analysis]
-    C --> D[Apply Solution]
-    D --> E[Verification]
-    E --> F[Documentation]
-
-    B --> G[Check Logs]
-    B --> H[Check Events]
-    B --> I[Check Resource Status]
-
-    classDef process fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class A,B,C,D,E,F process;
-    class G,H,I action;
-```
+![Flowchart showing the six-step troubleshooting sequence from problem identification through documentation, with the information-gathering step branching into log, event, and resource checks.](../.gitbook/assets/en-core-09-cluster-administration-12.png)
 
 ### Common Problems and Solutions
 
@@ -2147,33 +1817,7 @@ Amazon EKS (Elastic Kubernetes Service) is a managed Kubernetes service on AWS w
 
 ### EKS Cluster Architecture
 
-```mermaid
-graph TD
-    A[Amazon EKS Cluster] --> B[Control Plane]
-    A --> C[Data Plane]
-    A --> D[Networking]
-    A --> E[Security]
-
-    B --> F[AWS Managed Components]
-    C --> G[Managed Node Groups]
-    C --> H[Self-Managed Nodes]
-    C --> I[Fargate]
-    D --> J[VPC CNI]
-    E --> K[IAM Authentication]
-
-    F --> L[API Server, etcd, Scheduler]
-    G --> M[EC2 Auto Scaling Groups]
-    J --> N[AWS VPC]
-    K --> O[IAM Roles and Policies]
-
-    classDef awsManaged fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userManaged fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef network fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class A,B,F,L awsManaged;
-    class C,G,H,I,E,K,O userManaged;
-    class D,J,N network;
-```
+![Architecture diagram showing an Amazon EKS cluster split into an AWS-managed control plane and user-managed data plane, networking, and security, each with its supporting AWS component.](../.gitbook/assets/en-core-09-cluster-administration-13.png)
 
 ### EKS Cluster Creation
 

@@ -95,47 +95,7 @@ kubectl -n workloads-demo get deployments,pods
 3. **네트워크**: 파드에 할당된 IP 주소와 포트
 4. **컨테이너 스펙**: 컨테이너 이미지, 환경 변수, 리소스 요구사항 등
 
-```mermaid
-graph TD
-    subgraph "파드 구조"
-        Pod[Pod] --> PodIP[Pod IP 주소]
-        Pod --> NS[네트워크 네임스페이스]
-        
-        subgraph "컨테이너"
-            C1[애플리케이션 컨테이너]
-            C2[사이드카 컨테이너]
-            C3[초기화 컨테이너]
-        end
-        
-        subgraph "스토리지"
-            V1[emptyDir 볼륨]
-            V2[configMap 볼륨]
-            V3[secret 볼륨]
-            V4[persistentVolumeClaim]
-        end
-        
-        Pod --> C1
-        Pod --> C2
-        Pod --> C3
-        Pod --> V1
-        Pod --> V2
-        Pod --> V3
-        Pod --> V4
-        
-        C1 --> Port1[포트 8080]
-        C2 --> Port2[포트 9090]
-    end
-    
-    classDef pod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef volume fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef network fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    
-    class Pod,PodIP,NS pod;
-    class C1,C2,C3,Port1,Port2 container;
-    class V1,V2,V3,V4 volume;
-    class PodIP,NS network;
-```
+![쿠버네티스 파드는 하나의 IP와 네트워크 네임스페이스를 공유하며, 애플리케이션·사이드카·초기화 컨테이너와 emptyDir·configMap·secret·PVC 볼륨을 하나의 배포 단위로 함께 담는 구조를 보여준다.](../.gitbook/assets/ko-core-02-pods-and-workloads-0.png)
 
 ### 파드 예제
 

@@ -62,53 +62,7 @@ kubectl -n config-demo logs config-test-pod
 
 ## Configuration Management at a Glance
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Configuration Management"
-        subgraph "Configuration Sources"
-            Admin[Cluster Administrator]
-            GitOps[GitOps Pipeline]
-            ExtSys[External System]
-
-            Admin -->|Creates| CM[ConfigMap]
-            Admin -->|Creates| Secret[Secret]
-            GitOps -->|Automates| CM
-            GitOps -->|Automates| Secret
-            ExtSys -->|Integrates| CM
-            ExtSys -->|Integrates| Secret
-        end
-
-        subgraph "Configuration Consumption"
-            CM -->|Environment Variables| EnvPod[Pod]
-            Secret -->|Environment Variables| EnvPod
-
-            CM -->|Volume Mount| VolPod[Pod]
-            Secret -->|Volume Mount| VolPod
-
-            Secret -->|Image Pull Secret| ImgPod[Pod]
-
-            subgraph "Advanced Features"
-                CM -->|Auto Reload| Sidecar[Sidecar]
-                Secret -->|Encryption| KSOPS[KSOPS]
-                Secret -->|Dynamic Injection| Vault[Vault Injector]
-            end
-        end
-    end
-
-    %% Style definitions
-    classDef admin fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef config fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef advanced fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef integration fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Admin,GitOps,ExtSys admin;
-    class CM,Secret config;
-    class EnvPod,VolPod,ImgPod pod;
-    class Sidecar,KSOPS,Vault advanced;
-    class GitOps,ExtSys integration;
-```
+![Cluster administrators, GitOps pipelines, and external systems all provision ConfigMaps and Secrets, which Pods consume as environment variables, volume mounts, and image-pull credentials, with Secret additionally feeding sidecar auto-reload, KSOPS encryption, and Vault dynamic injection.](../.gitbook/assets/en-core-05-configuration-secrets-0.png)
 
 ## Table of Contents
 
@@ -204,48 +158,7 @@ spec:
         name: my-config
 ```
 
-```mermaid
-flowchart TD
-    CM[ConfigMap] -->|Environment Variables| Pod1[Pod]
-    CM -->|Volume Mount| Pod2[Pod]
-    CM -->|Command Line Arguments| Pod3[Pod]
-
-    subgraph "ConfigMap Data"
-        CMData1["key1: value1"]
-        CMData2["key2: value2"]
-        CMData3["config.properties: file contents"]
-    end
-
-    subgraph "Environment Variable Usage"
-        Env1["env.key1 = value1"]
-        Env2["env.key2 = value2"]
-    end
-
-    subgraph "Volume Mount Usage"
-        Vol1["/etc/config/key1"]
-        Vol2["/etc/config/key2"]
-        Vol3["/etc/config/config.properties"]
-    end
-
-    CM --- CMData1
-    CM --- CMData2
-    CM --- CMData3
-
-    Pod1 --- Env1
-    Pod1 --- Env2
-
-    Pod2 --- Vol1
-    Pod2 --- Vol2
-    Pod2 --- Vol3
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class CM k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
-```
+![A ConfigMap's key-value data is consumed by Pods three ways -- as environment variables, as a mounted volume, or as command-line arguments -- with the environment-variable and volume paths shown resolving into concrete values inside the container.](../.gitbook/assets/en-core-05-configuration-secrets-1.png)
 
 ### ConfigMap Creation
 
@@ -392,42 +305,7 @@ kubectl apply -f updated-configmap.yaml
 
 Secrets are API objects that store sensitive information such as passwords, OAuth tokens, and SSH keys. Secrets are similar to ConfigMaps but provide additional security features for storing sensitive data.
 
-```mermaid
-graph LR
-    Secret[Secret] -->|Environment Variables| Pod1[Pod]
-    Secret -->|Volume Mount| Pod2[Pod]
-    Secret -->|Image Pull Secret| Pod3[Pod]
-
-    subgraph "Secret Types"
-        ST1["Opaque (Default)"]
-        ST2["kubernetes.io/tls"]
-        ST3["kubernetes.io/dockerconfigjson"]
-        ST4["kubernetes.io/basic-auth"]
-    end
-
-    subgraph "Storage Method"
-        Store1["base64 encoding"]
-        Store2["etcd encryption (optional)"]
-    end
-
-    Secret --- ST1
-    Secret --- ST2
-    Secret --- ST3
-    Secret --- ST4
-
-    Secret --- Store1
-    Secret --- Store2
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Secret k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
-    class Store1,Store2 dataStore;
-```
+![A Kubernetes Secret's supported types (Opaque, TLS, docker-registry, basic-auth) and its base64/etcd-encryption storage method, alongside the three ways a Pod can consume it: as environment variables, a mounted volume, or an image-pull secret.](../.gitbook/assets/en-core-05-configuration-secrets-2.png)
 
 ### Secret Types
 
@@ -590,34 +468,7 @@ resources:
 
 Environment variables are a simple way to pass configuration information to containers. Kubernetes provides several ways to set environment variables.
 
-```mermaid
-graph TD
-    Pod[Pod] -->|Contains| Container[Container]
-
-    subgraph "Environment Variable Sources"
-        Direct["Direct Setting"]
-        CM["ConfigMap"]
-        Secret["Secret"]
-        DownAPI["Downward API"]
-    end
-
-    Direct -->|env| Container
-    CM -->|valueFrom.configMapKeyRef| Container
-    CM -->|envFrom.configMapRef| Container
-    Secret -->|valueFrom.secretKeyRef| Container
-    Secret -->|envFrom.secretRef| Container
-    DownAPI -->|valueFrom.fieldRef| Container
-    DownAPI -->|valueFrom.resourceFieldRef| Container
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Pod,Container userApp;
-    class CM,Secret,DownAPI k8sComponent;
-    class Direct k8sComponent;
-```
+![The four sources Kubernetes can populate a Container's environment variables from -- a direct static value, a ConfigMap key or full envFrom reference, a Secret key or full envFrom reference, and the Downward API's field or resource references.](../.gitbook/assets/en-core-05-configuration-secrets-3.png)
 
 ### Direct Setting
 
@@ -726,41 +577,7 @@ spec:
 
 Mounting configuration files to containers through volumes provides a more flexible configuration management method than environment variables.
 
-```mermaid
-graph TD
-    Pod[Pod] -->|Contains| Container[Container]
-    Pod -->|Defines| Volumes[Volumes]
-    Container -->|Mounts| VolumeMounts[Volume Mounts]
-    VolumeMounts -->|References| Volumes
-
-    subgraph "Volume Sources"
-        CM["ConfigMap"]
-        Secret["Secret"]
-    end
-
-    Volumes -->|configMap| CM
-    Volumes -->|secret| Secret
-
-    subgraph "Mount Options"
-        MO1["Full Volume Mount"]
-        MO2["Mount Specific Keys Only"]
-        MO3["Read-only Mount"]
-        MO4["SubPath Mount"]
-    end
-
-    VolumeMounts --- MO1
-    VolumeMounts --- MO2
-    VolumeMounts --- MO3
-    VolumeMounts --- MO4
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Pod,Container userApp;
-    class Volumes,VolumeMounts,CM,Secret k8sComponent;
-```
+![A Pod defines Volumes backed by a ConfigMap or Secret; its Container mounts them via Volume Mounts that reference those Volumes; and four mount options are available -- full mount, specific-keys-only, read-only, and subPath mounting.](../.gitbook/assets/en-core-05-configuration-secrets-4.png)
 
 ### ConfigMap Volume
 
@@ -953,64 +770,7 @@ Document configuration options and their effects. This helps team members unders
 
 In Amazon EKS, you can use AWS's various services in addition to Kubernetes' basic configuration management features to manage configuration and secrets. This section covers various ways to manage configuration in EKS and integration with AWS services.
 
-```mermaid
-graph TD
-    EKS[Amazon EKS] -->|Uses| K8s[Kubernetes Configuration]
-    EKS -->|Integrates| AWS[AWS Services]
-
-    subgraph "Kubernetes Configuration"
-        CM["ConfigMap"]
-        Secret["Secret"]
-    end
-
-    subgraph "AWS Services"
-        SM["AWS Secrets Manager"]
-        PS["AWS Parameter Store"]
-        AC["AWS AppConfig"]
-        KMS["AWS KMS"]
-        IAM["AWS IAM"]
-    end
-
-    subgraph "Integration Tools"
-        ESO["External Secrets Operator"]
-        ASCP["AWS Secrets and Configuration Provider"]
-        IRSA["IAM Roles for Service Accounts"]
-        ACK["AWS Controllers for Kubernetes"]
-    end
-
-    K8s --- CM
-    K8s --- Secret
-
-    AWS --- SM
-    AWS --- PS
-    AWS --- AC
-    AWS --- KMS
-    AWS --- IAM
-
-    SM -->|Integrates| ESO
-    PS -->|Integrates| ASCP
-    IAM -->|Integrates| IRSA
-    AWS -->|Integrates| ACK
-
-    ESO -->|Creates| Secret
-    ASCP -->|Mounts| Secret
-    IRSA -->|Grants Permissions| Pod[Pod]
-    ACK -->|Manages| AWS
-
-    KMS -->|Encrypts| Secret
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef integrationTool fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class EKS,K8s,CM,Secret k8sComponent;
-    class Pod userApp;
-    class AWS,SM,PS,AC,KMS,IAM awsService;
-    class ESO,ASCP,IRSA,ACK integrationTool;
-```
+![Amazon EKS uses native ConfigMaps and Secrets while also integrating AWS Secrets Manager, Parameter Store, AppConfig, KMS, and IAM, bridged into the cluster by tools like External Secrets Operator, ASCP, IRSA, and ACK that create or mount Secrets and grant Pods scoped AWS access.](../.gitbook/assets/en-core-05-configuration-secrets-5.png)
 
 ### AWS Secrets Manager Integration
 

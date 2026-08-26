@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">모니터링 및 로깅 아키텍처</title>
+<desc id="d">클러스터의 메트릭이 Prometheus를 거쳐 Alertmanager와 Grafana로, 로그가 Fluentd를 거쳐 Elasticsearch·Kibana와 Loki를 통해 다시 Grafana로 모이는 통합 모니터링·로깅 스택 구조를 보여주는 아키텍처 다이어그램</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="30" y="70" fill="#545B64" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.14em">모니터링 스택</text>
+<text x="30" y="200" fill="#545B64" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.14em">데이터 소스 · 시각화</text>
+<text x="30" y="330" fill="#545B64" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.14em">로깅 스택</text>
+<path d="M 170,226 H 292 Q 300,226 300,218 V 128" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 170,242 H 292 Q 300,242 300,250 V 340" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="370" y1="104" x2="430" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="570" y1="104" x2="630" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="770" y1="104" x2="815" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 500,128 V 162 Q 500,170 508,170 H 892 Q 900,170 900,178 V 210" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="460" y1="234" x2="830" y2="234" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="370" y1="364" x2="430" y2="364" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="570" y1="364" x2="630" y2="364" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 370,348 H 392 Q 400,348 400,340 V 258" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="30" y="210" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="30" y="210" width="140" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="100.0" y="236.0" fill="#232F3E" font-size="9" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubernetes 클러스터</text>
+<rect x="230" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="230" y="80" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300.0" y="100.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">메트릭 수집기</text>
+<text x="300.0" y="120.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">kube-state-metrics</text>
+<rect x="430" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="430" y="80" width="140" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="500.0" y="106.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus</text>
+<rect x="630" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="630" y="80" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="700.0" y="106.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Alertmanager</text>
+<rect x="815" y="80" width="130" height="48" rx="6" fill="#ffffff"/>
+<rect x="815" y="80" width="130" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="880.0" y="106.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">알림 채널</text>
+<rect x="830" y="210" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="830" y="210" width="120" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="890.0" y="236.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana</text>
+<rect x="340" y="210" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="340" y="210" width="120" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="400.0" y="236.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Loki</text>
+<rect x="230" y="340" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="230" y="340" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300.0" y="366.0" fill="#232F3E" font-size="9" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Fluentd/Fluent Bit</text>
+<rect x="430" y="340" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="430" y="340" width="140" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="500.0" y="366.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Elasticsearch</text>
+<rect x="630" y="340" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="630" y="340" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="700.0" y="366.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kibana</text>
+</svg>

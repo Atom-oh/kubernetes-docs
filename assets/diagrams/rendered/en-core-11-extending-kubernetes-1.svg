@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-core-11-extending-kubernetes-1-title en-core-11-extending-kubernetes-1-desc">
+<title id="en-core-11-extending-kubernetes-1-title">How custom resources work</title>
+<desc id="en-core-11-extending-kubernetes-1-desc">Architecture diagram showing a user creating a CustomResourceDefinition and a custom resource instance, where the CRD defines and registers the schema, and the API server validates and stores the resulting instance in etcd.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="32" y="140" width="896" height="380" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="418.3" y="144" width="123.4" height="12" rx="2" fill="#ffffff"/>
+<text x="480.0" y="153" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">KUBERNETES API SERVER</text>
+<path d="M 448,72 V 124 Q 448,132 440,132 H 204.0 Q 196.0,132 196.0,140 V 192" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 512,72 V 124 Q 512,132 520,132 H 512.0 Q 520.0,132 520.0,140 V 192" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="420.6" y="107" width="54.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="448" y="118" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">1. CREATE</text>
+<rect x="484.6" y="107" width="54.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="512" y="118" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">2. CREATE</text>
+<path d="M 296,216.0 L 420,216.0" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="335.8" y="196.0" width="44.4" height="12" rx="2" fill="#ffffff"/>
+<text x="358.0" y="205.0" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">DEFINES</text>
+<path d="M 196.0,240 L 196.0,288" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="206.0" y="258.0" width="54.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="233.4" y="267.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">REGISTERS</text>
+<path d="M 488,240 V 288 Q 488,296 480,296 H 468.0 Q 460.0,296 460.0,304 V 352" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 552,240 V 288 Q 552,296 560,296 H 652.0 Q 660.0,296 660.0,304 V 352" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="460.6" y="276" width="54.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="488" y="285" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">VALIDATES</text>
+<rect x="532.4" y="276" width="39.2" height="12" rx="2" fill="#ffffff"/>
+<text x="552" y="285" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">STORES</text>
+<rect x="380" y="24" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="380" y="24" width="200" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="480.0" y="52.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">User</text>
+<rect x="96" y="192" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="96" y="192" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="196.0" y="218.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">CustomResourceDefinition</text>
+<text x="196.0" y="234.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">CRD</text>
+<rect x="420" y="192" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="420" y="192" width="200" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="520.0" y="218.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Custom Resource</text>
+<text x="520.0" y="234.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">instance</text>
+<rect x="96" y="288" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="96" y="288" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="196.0" y="316.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API Registration</text>
+<rect x="380" y="352" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="380" y="352" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="460.0" y="380.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Validation</text>
+<rect x="580" y="352" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="580" y="352" width="160" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="660.0" y="380.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">etcd Storage</text>
+<line x1="32" y1="544" x2="928" y2="544" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="32" y="560" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="32" y="576" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="52" y="584" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Focal / CR instance</text>
+<rect x="240" y="576" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="260" y="584" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Store</text>
+<rect x="360" y="576" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="380" y="584" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Client</text>
+</svg>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-core-11-extending-kubernetes-2-title en-core-11-extending-kubernetes-2-desc">
+<title id="en-core-11-extending-kubernetes-2-title">How the operator pattern works</title>
+<desc id="en-core-11-extending-kubernetes-2-desc">Architecture diagram showing a controller that watches a custom resource stored in etcd, checks and updates its status, determines an action, and executes that action against Kubernetes resources.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="32" y="140" width="380" height="260" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="160.3" y="144" width="123.4" height="12" rx="2" fill="#ffffff"/>
+<text x="222.0" y="153" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">KUBERNETES API SERVER</text>
+<rect x="508" y="140" width="380" height="260" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="671.4" y="144" width="53.2" height="12" rx="2" fill="#ffffff"/>
+<text x="698.0" y="153" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">OPERATOR</text>
+<path d="M 480.0,72 V 120 Q 480.0,128 472.0,128 H 230.0 Q 222.0,128 222.0,136 V 180" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="452.6" y="107" width="54.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="480.0" y="118" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">1. CREATE</text>
+<path d="M 222.0,276 L 222.0,300" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="202.4" y="302.0" width="39.2" height="12" rx="2" fill="#ffffff"/>
+<text x="222.0" y="313.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">STORES</text>
+<path d="M 548,196 L 372,196" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="435.2" y="176" width="49.6" height="12" rx="2" fill="#ffffff"/>
+<text x="460.0" y="185" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">2. WATCH</text>
+<path d="M 548,228 L 372,228" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="417.0" y="208" width="86.0" height="12" rx="2" fill="#ffffff"/>
+<text x="460.0" y="217" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">3. CHECK STATUS</text>
+<path d="M 548,260 L 372,260" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="414.4" y="240" width="91.2" height="12" rx="2" fill="#ffffff"/>
+<text x="460.0" y="249" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">6. UPDATE STATUS</text>
+<path d="M 698.0,276 V 352 Q 698.0,360 690.0,360 H 648.0 Q 640.0,360 640.0,368 V 440" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="644.6" y="311" width="106.8" height="12" rx="2" fill="#ffffff"/>
+<text x="698.0" y="322" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">4. DETERMINE ACTION</text>
+<path d="M 720,468.0 L 784,468.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="729.8" y="448.0" width="44.4" height="12" rx="2" fill="#ffffff"/>
+<text x="752.0" y="457.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">5. EXEC</text>
+<rect x="380" y="24" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="380" y="24" width="200" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="480.0" y="52.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">User</text>
+<rect x="72" y="180" width="300" height="96" rx="6" fill="#ffffff"/>
+<rect x="72" y="180" width="300" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="222.0" y="232.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Custom Resource</text>
+<rect x="72" y="300" width="300" height="56" rx="6" fill="#ffffff"/>
+<rect x="72" y="300" width="300" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="222.0" y="332.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">etcd Storage</text>
+<rect x="548" y="180" width="300" height="96" rx="6" fill="#ffffff"/>
+<rect x="548" y="180" width="300" height="96" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="698.0" y="230.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Controller</text>
+<text x="698.0" y="246.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">reconcile loop</text>
+<rect x="560" y="440" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="560" y="440" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="640.0" y="472.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Action</text>
+<rect x="784" y="440" width="156" height="56" rx="6" fill="#ffffff"/>
+<rect x="784" y="440" width="156" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="862.0" y="472.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">K8s Resources</text>
+<line x1="32" y1="532" x2="928" y2="532" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="32" y="548" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="32" y="564" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="52" y="572" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Focal / controller</text>
+<rect x="240" y="564" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="260" y="572" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Store</text>
+<rect x="360" y="564" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="380" y="572" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Client</text>
+</svg>

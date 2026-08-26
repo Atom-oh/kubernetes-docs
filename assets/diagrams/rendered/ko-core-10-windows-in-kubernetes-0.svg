@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="win-container-types-title win-container-types-desc">
+<title id="win-container-types-title">Windows 컨테이너 격리 모델 비교</title>
+<desc id="win-container-types-desc">Windows Server 컨테이너는 커널을 공유하는 컨테이너 런타임을 통해 물리 호스트에 연결되고, Hyper-V 격리 컨테이너는 각 앱이 경량 VM으로 분리되어 하이퍼바이저를 거쳐 같은 물리 호스트에 연결되는 구조를 비교한다.</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="8 0, 0 3, 8 6" fill="#545B64"/>
+  </marker>
+</defs>
+<text x="40" y="32" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">ARCHITECTURE</text>
+<text x="40" y="58" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Windows 컨테이너 격리 모델 비교</text>
+<rect x="32" y="92" width="428" height="372" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="44" y="96" width="133.8" height="12" rx="2" fill="#ffffff"/>
+<text x="110.9" y="105" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">WINDOWS SERVER 컨테이너</text>
+<rect x="500" y="92" width="428" height="372" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="512" y="96" width="109.0" height="12" rx="2" fill="#ffffff"/>
+<text x="566.5" y="105" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">HYPER-V 격리 컨테이너</text>
+<path d="M104,188 V206 Q104,214 112,214 H188 Q196,214 196,222 V240" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M240,188 V240" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M376,188 V206 Q376,214 368,214 H292 Q284,214 284,222 V240" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M240,288 V380 Q240,388 248,388 H412 Q420,388 420,396 V488" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M616,188 V206 Q616,214 624,214 H688 Q696,214 696,222 V240" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M832,188 V206 Q832,214 824,214 H760 Q752,214 752,222 V240" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M724,288 V380 Q724,388 716,388 H548 Q540,388 540,396 V488" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="394.0" y="440" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="420" y="449" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SHARED</text>
+<rect x="514.0" y="440" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="540" y="449" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">PER-VM</text>
+<rect x="48" y="140" width="112" height="48" rx="6" fill="#ffffff"/>
+<rect x="48" y="140" width="112" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="104.0" y="168.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Windows 앱 1</text>
+<rect x="184" y="140" width="112" height="48" rx="6" fill="#ffffff"/>
+<rect x="184" y="140" width="112" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="240.0" y="168.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Windows 앱 2</text>
+<rect x="320" y="140" width="112" height="48" rx="6" fill="#ffffff"/>
+<rect x="320" y="140" width="112" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="376.0" y="168.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Windows 앱 3</text>
+<rect x="152" y="240" width="176" height="48" rx="6" fill="#ffffff"/>
+<rect x="152" y="240" width="176" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="240.0" y="262.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨테이너 런타임</text>
+<text x="240.0" y="278.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">커널 공유</text>
+<rect x="536" y="140" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="536" y="140" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="616.0" y="162.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Windows 앱 1</text>
+<text x="616.0" y="178.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">경량 VM</text>
+<rect x="752" y="140" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="752" y="140" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="832.0" y="162.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Windows 앱 2</text>
+<text x="832.0" y="178.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">경량 VM</text>
+<rect x="636" y="240" width="176" height="48" rx="6" fill="#ffffff"/>
+<rect x="636" y="240" width="176" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="724.0" y="268.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Hyper-V 하이퍼바이저</text>
+<rect x="340" y="488" width="280" height="56" rx="6" fill="#ffffff"/>
+<rect x="340" y="488" width="280" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="514.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">공유 물리 호스트</text>
+<text x="480.0" y="530.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Windows Server OS + HW</text>
+</svg>

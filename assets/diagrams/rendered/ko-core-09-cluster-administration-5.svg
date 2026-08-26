@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">클러스터 업그레이드 프로세스</title>
+<desc id="d">클러스터 업그레이드가 계획, 백업, 컨트롤 플레인 업그레이드와 테스트, 워커 노드 업그레이드, 검증을 거쳐 완료되며, 검증에서 문제가 발생하면 백업에서 복원하는 롤백 경로로 이어지는 순서도</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="178" y1="104" x2="212" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="368" y1="104" x2="402" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="558" y1="104" x2="592" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="748" y1="104" x2="782" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="860" y1="128" x2="860" y2="220" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="592" y1="244" x2="558" y2="244" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="402" y1="244" x2="368" y2="244" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="212" y1="244" x2="178" y2="244" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="480" y1="268" x2="480" y2="340" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="460.0" y="312" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="321" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">문제 발생</text>
+<line x1="550" y1="364" x2="610" y2="364" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="22" y="80" width="156" height="48" rx="6" fill="#ffffff"/>
+<rect x="22" y="80" width="156" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100.0" y="106.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">업그레이드 계획</text>
+<rect x="212" y="80" width="156" height="48" rx="6" fill="#ffffff"/>
+<rect x="212" y="80" width="156" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="290.0" y="106.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">버전 호환성 확인</text>
+<rect x="402" y="80" width="156" height="48" rx="6" fill="#ffffff"/>
+<rect x="402" y="80" width="156" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="106.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">etcd 백업</text>
+<rect x="592" y="80" width="156" height="48" rx="6" fill="#ffffff"/>
+<rect x="592" y="80" width="156" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="670.0" y="106.0" fill="#232F3E" font-size="9" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">1차 CP 노드 업그레이드</text>
+<rect x="782" y="80" width="156" height="48" rx="6" fill="#ffffff"/>
+<rect x="782" y="80" width="156" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="860.0" y="106.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CP 기능 테스트</text>
+<rect x="22" y="220" width="156" height="48" rx="6" fill="#ffffff"/>
+<rect x="22" y="220" width="156" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="30" y="226" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-width="0.8" opacity="0.4"/>
+<text x="44" y="235" fill="#EC7211" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.08em">END</text>
+<text x="100.0" y="246.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">업그레이드 완료</text>
+<rect x="212" y="220" width="156" height="48" rx="6" fill="#ffffff"/>
+<rect x="212" y="220" width="156" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="290.0" y="246.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클러스터 검증</text>
+<rect x="402" y="220" width="156" height="48" rx="6" fill="#ffffff"/>
+<rect x="402" y="220" width="156" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="246.0" fill="#232F3E" font-size="9" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">워커 노드 업그레이드</text>
+<rect x="592" y="220" width="156" height="48" rx="6" fill="#ffffff"/>
+<rect x="592" y="220" width="156" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="670.0" y="246.0" fill="#232F3E" font-size="9" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">추가 CP 노드 업그레이드</text>
+<rect x="410" y="340" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="410" y="340" width="140" height="48" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,4"/>
+<text x="480.0" y="366.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">롤백</text>
+<rect x="610" y="340" width="150" height="48" rx="6" fill="#ffffff"/>
+<rect x="610" y="340" width="150" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="685.0" y="366.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">백업에서 복원</text>
+</svg>

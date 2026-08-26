@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-core-01-cluster-architecture-9-title ko-core-01-cluster-architecture-9-desc">
+    <title id="ko-core-01-cluster-architecture-9-title">스토리지 아키텍처 흐름</title>
+    <desc id="ko-core-01-cluster-architecture-9-desc">파드가 볼륨 마운트, PVC, PV를 거쳐 실제 CSI 스토리지 드라이버에 도달하는 쿠버네티스 스토리지 추상화 흐름을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-start-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="220" y1="248" x2="280" y2="248" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="440" y1="248" x2="500" y2="248" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="660" y1="248" x2="720" y2="248" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 800,276 V 300 Q 800,308 792,308 H 628 Q 620,308 620,316 V 340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="60" y="220" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="220" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="250.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">파드</text>
+<rect x="280" y="220" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="280" y="220" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="360.0" y="250.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">볼륨 마운트</text>
+<rect x="500" y="220" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="500" y="220" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="580.0" y="250.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">PVC</text>
+<rect x="720" y="220" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="720" y="220" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="800.0" y="250.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">PV</text>
+<rect x="500" y="340" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="500" y="340" width="220" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="610.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">실제 스토리지</text>
+<text x="610.0" y="386.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">CSI 드라이버</text>
+
+  </svg>
