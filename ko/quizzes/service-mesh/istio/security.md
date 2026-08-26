@@ -297,22 +297,7 @@ spec:
 
 **JWT 검증 프로세스:**
 
-```mermaid
-flowchart LR
-    Request[클라이언트 요청] --> Header{Authorization<br/>헤더 존재?}
-    Header -->|없음| NoToken[토큰 없음<br/>검증 건너뜀]
-    Header -->|있음| Extract[JWT 추출]
-    Extract --> Decode[토큰 디코딩]
-    Decode --> ValidateIss{issuer 검증}
-    ValidateIss -->|실패| Reject[❌ 거부<br/>401 Unauthorized]
-    ValidateIss -->|성공| ValidateAud{audiences 검증}
-    ValidateAud -->|실패| Reject
-    ValidateAud -->|성공| ValidateSig{서명 검증<br/>JWKS}
-    ValidateSig -->|실패| Reject
-    ValidateSig -->|성공| ValidateExp{만료 시간 검증}
-    ValidateExp -->|만료됨| Reject
-    ValidateExp -->|유효함| Allow[✅ 허용]
-```
+![클라이언트 요청의 Authorization 헤더에서 JWT를 추출해 issuer/audience, 서명(JWKS), 만료 시간을 순서대로 검증하고, 어느 단계든 실패하면 401로 거부하며 모두 통과해야만 요청을 허용하는 검증 흐름도](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-security-0.png)
 
 **OIDC 제공자와 통합:**
 
@@ -458,41 +443,7 @@ spec:
 
 **인증서 라이프사이클:**
 
-```mermaid
-sequenceDiagram
-    autonumber
-    box rgba(0, 199, 183, 0.1) Pod
-    participant Envoy as Envoy Sidecar
-    end
-    box rgba(255, 153, 0, 0.1) Control Plane
-    participant Istiod as Istiod (CA)
-    end
-
-    Note over Envoy,Istiod: ⏰ T=0시간: 초기 인증서 발급
-    Istiod->>+Envoy: ✅ 새 인증서 발급
-    Note right of Envoy: 유효기간: 24시간<br/>형식: X.509<br/>SPIFFE ID 포함
-
-    rect rgba(144, 238, 144, 0.1)
-        Note over Envoy: ✓ T=0~16시간: 인증서 사용 중
-    end
-
-    Note over Envoy,Istiod: ⏰ T=16시간: 자동 갱신 시작 (만료 8시간 전)
-    Envoy->>Istiod: 🔄 새 인증서 요청 (CSR)
-    activate Istiod
-    Note right of Istiod: SPIFFE ID 검증<br/>새 인증서 생성
-    Istiod->>Envoy: ✅ 새 인증서 발급
-    deactivate Istiod
-
-    Envoy->>Envoy: 🔄 인증서 교체 (Hot Reload)
-    Note right of Envoy: 무중단으로<br/>새 인증서 적용
-
-    rect rgba(144, 238, 144, 0.1)
-        Note over Envoy: ✓ T=16~24시간: 새 인증서로 사용 중
-    end
-
-    Note over Envoy,Istiod: ⏰ T=24시간: 이전 인증서 만료 (영향 없음)
-    deactivate Envoy
-```
+![Istiod가 Envoy 사이드카에 24시간 수명의 X.509 인증서를 발급하고, 만료 8시간 전 Envoy가 CSR로 갱신을 요청해 Istiod가 새 인증서를 발급하면 Envoy가 무중단으로(Hot Reload) 교체하는 mTLS 인증서 자동 순환 시퀀스](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-security-1.png)
 
 **인증서 확인:**
 

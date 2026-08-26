@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fc-title fc-desc">
+      <title id="fc-title">JWT 검증 흐름</title>
+      <desc id="fc-desc">클라이언트 요청의 Authorization 헤더에서 JWT를 추출해 issuer, audience, 서명, 만료 시간을 순서대로 검증하고 실패 시 401로 거부하며 모두 통과하면 요청을 허용하는 흐름도.</desc>
+      <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ============ ARROWS (behind nodes) ============ -->
+      <!-- 1. Request -> Header -->
+      <line x1="460" y1="56" x2="460" y2="80" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- 2. Header "있음" -> ExtractDecode -->
+      <line x1="460" y1="144" x2="460" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- 3. Header "없음" -> NoToken -->
+      <line x1="536" y1="112" x2="700" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- 4. ExtractDecode -> ValidateIssAud -->
+      <line x1="460" y1="208" x2="460" y2="232" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- 5. ValidateIssAud "성공" -> ValidateSig -->
+      <line x1="460" y1="296" x2="460" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- 6. ValidateIssAud "실패" -> Reject (right+down elbow) -->
+      <path d="M536,264 H610 Q618,264 618,272 V324 Q618,332 626,332 H700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- 7. ValidateSig "성공" -> ValidateExp -->
+      <line x1="460" y1="384" x2="460" y2="408" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- 8. ValidateSig "실패" -> Reject (straight, shared y) -->
+      <line x1="536" y1="352" x2="700" y2="352" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- 9. ValidateExp "만료됨" -> Reject (right+up elbow) -->
+      <path d="M536,440 H610 Q618,440 618,432 V380 Q618,372 626,372 H700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- 10. ValidateExp "유효함" -> Allow (headline / accent) -->
+      <line x1="460" y1="472" x2="460" y2="496" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+      <!-- ============ ARROW LABELS (mask + 6-10px gap) ============ -->
+      <!-- L2 "있음" (vertical, side label) -->
+      <rect x="468" y="149" width="32" height="14" rx="2" fill="#ffffff"/>
+      <text x="484" y="159" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">있음</text>
+      <!-- L3 "없음" (horizontal) -->
+      <rect x="602" y="92" width="32" height="12" rx="2" fill="#ffffff"/>
+      <text x="618" y="101" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">없음</text>
+      <!-- L5 "성공" (vertical, side label) -->
+      <rect x="468" y="301" width="32" height="14" rx="2" fill="#ffffff"/>
+      <text x="484" y="311" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">성공</text>
+      <!-- L6 "실패" (on elbow, source-side horizontal segment) -->
+      <rect x="556" y="244" width="34" height="12" rx="2" fill="#ffffff"/>
+      <text x="573" y="253" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">실패</text>
+      <!-- L7 "성공" (vertical, side label) -->
+      <rect x="468" y="389" width="32" height="14" rx="2" fill="#ffffff"/>
+      <text x="484" y="399" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">성공</text>
+      <!-- L8 "실패" (horizontal) -->
+      <rect x="600" y="332" width="36" height="12" rx="2" fill="#ffffff"/>
+      <text x="618" y="341" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">실패</text>
+      <!-- L9 "만료됨" (on elbow, source-side horizontal segment) -->
+      <rect x="556" y="420" width="40" height="12" rx="2" fill="#ffffff"/>
+      <text x="576" y="429" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">만료됨</text>
+      <!-- L10 "유효함" (vertical, side label, accent) -->
+      <rect x="468" y="477" width="40" height="14" rx="2" fill="#ffffff"/>
+      <text x="488" y="487" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">유효함</text>
+
+      <!-- ============ NODES ============ -->
+      <!-- Request (oval, start) -->
+      <rect x="360" y="16" width="200" height="40" rx="20" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="460" y="40" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">클라이언트 요청</text>
+
+      <!-- Header (diamond) -->
+      <polygon points="460,80 536,112 460,144 384,112" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="460" y="108" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Authorization</text>
+      <text x="460" y="122" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">헤더 존재?</text>
+
+      <!-- NoToken (oval, end / side sink) -->
+      <rect x="700" y="92" width="160" height="40" rx="20" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="780" y="108" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">토큰 없음</text>
+      <text x="780" y="122" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">검증 건너뜀</text>
+
+      <!-- ExtractDecode (rect / step) -->
+      <rect x="360" y="168" width="200" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="460" y="192" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">JWT 추출 및 디코딩</text>
+
+      <!-- ValidateIssAud (diamond) -->
+      <polygon points="460,232 536,264 460,296 384,264" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="460" y="260" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">iss / aud</text>
+      <text x="460" y="274" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">검증</text>
+
+      <!-- ValidateSig (diamond) -->
+      <polygon points="460,320 536,352 460,384 384,352" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="460" y="348" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">서명 검증</text>
+      <text x="460" y="362" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">(JWKS)</text>
+
+      <!-- ValidateExp (diamond) -->
+      <polygon points="460,408 536,440 460,472 384,440" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="460" y="444" fill="#232F3E" font-size="9.5" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">만료 시간 검증</text>
+
+      <!-- Reject (oval, side sink) -->
+      <rect x="700" y="320" width="160" height="64" rx="20" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="780" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">거부</text>
+      <text x="780" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">401 Unauthorized</text>
+
+      <!-- Allow (oval, end, focal / accent) -->
+      <rect x="360" y="496" width="200" height="40" rx="20" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="460" y="520" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">허용</text>
+
+      <!-- ============ LEGEND ============ -->
+      <line x1="30" y1="558" x2="930" y2="558" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="30" y="574" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND · SHAPE CARRIES TYPE</text>
+
+      <rect x="30" y="586" width="24" height="12" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="62" y="596" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">시작 / 종료</text>
+
+      <rect x="196" y="586" width="24" height="12" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="228" y="596" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">단계</text>
+
+      <polygon points="336,592 348,586 360,592 348,598" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="372" y="596" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">검증 결정</text>
+
+      <line x1="500" y1="592" x2="528" y2="592" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <text x="536" y="596" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">최종 허용 경로</text>
+    </svg>

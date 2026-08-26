@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d2-title d2-desc">
+      <title id="d2-title">Locality-aware traffic distribution across availability zones</title>
+      <desc id="d2-desc">A client pod sends 80% of its traffic to same-zone service pods at no cross-zone cost, and fails over only 10% of traffic each to service pods in two other availability zones, which carries a cross-AZ data-transfer cost.</desc>
+      <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#7D8998"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ================= ZONES (bg -> zones -> arrows -> nodes) ================= -->
+      <rect x="40" y="64" width="280" height="276" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="48" y="68" width="132" height="12" rx="2" fill="#ffffff"/>
+      <text x="114" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">AVAILABILITY ZONE A</text>
+
+      <rect x="360" y="64" width="280" height="276" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="368" y="68" width="132" height="12" rx="2" fill="#ffffff"/>
+      <text x="434" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">AVAILABILITY ZONE B</text>
+
+      <rect x="680" y="64" width="240" height="276" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="708" y="68" width="132" height="12" rx="2" fill="#ffffff"/>
+      <text x="774" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">AVAILABILITY ZONE C</text>
+
+      <!-- ================= ARROWS ================= -->
+
+      <!-- Client1 -> Service1 (same-zone, solid) -->
+      <path d="M140,168 V198 Q140,206 132,206 H118 Q110,206 110,214 V244" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Client1 -> Service2 (same-zone, solid) -->
+      <path d="M220,168 V198 Q220,206 228,206 H242 Q250,206 250,214 V244" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Client1 -> Service3 (cross-zone failover, dashed) -->
+      <path d="M260,140 H307 Q315,140 315,148 V168 Q315,176 323,176 H370" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-soft)"/>
+
+      <!-- Client1 -> Service5 (cross-zone failover, dashed) -->
+      <path d="M180,168 V312 Q180,320 188,320 H792 Q800,320 800,312 V252" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-soft)"/>
+
+      <!-- ================= ARROW LABELS ================= -->
+      <rect x="148" y="176" width="28" height="12" rx="2" fill="#ffffff"/>
+      <text x="162" y="185" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">80%</text>
+
+      <rect x="184" y="176" width="28" height="12" rx="2" fill="#ffffff"/>
+      <text x="198" y="185" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">80%</text>
+
+      <rect x="270" y="120" width="28" height="12" rx="2" fill="#ffffff"/>
+      <text x="284" y="129" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">10%</text>
+
+      <rect x="188" y="220" width="28" height="12" rx="2" fill="#ffffff"/>
+      <text x="202" y="229" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">10%</text>
+
+      <!-- ================= NODES ================= -->
+
+      <!-- Client1 (focal) -->
+      <rect x="100" y="112" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="100" y="112" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="180" y="136" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client Pod</text>
+      <text x="180" y="152" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ZONE A</text>
+
+      <!-- Service1 -->
+      <rect x="50" y="244" width="120" height="56" rx="6" fill="#ffffff"/>
+      <rect x="50" y="244" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="110" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service Pod 1</text>
+      <text x="110" y="284" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ZONE A</text>
+
+      <!-- Service2 -->
+      <rect x="190" y="244" width="120" height="56" rx="6" fill="#ffffff"/>
+      <rect x="190" y="244" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="250" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service Pod 2</text>
+      <text x="250" y="284" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ZONE A</text>
+
+      <!-- Service3 -->
+      <rect x="370" y="148" width="120" height="56" rx="6" fill="#ffffff"/>
+      <rect x="370" y="148" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="430" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service Pod 3</text>
+      <text x="430" y="188" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ZONE B</text>
+
+      <!-- Service4 (present in zone, not routed to) -->
+      <rect x="370" y="244" width="120" height="56" rx="6" fill="#ffffff"/>
+      <rect x="370" y="244" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="430" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service Pod 4</text>
+      <text x="430" y="284" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ZONE B</text>
+
+      <!-- Service5 -->
+      <rect x="720" y="196" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="720" y="196" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="800" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service Pod 5</text>
+      <text x="800" y="236" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ZONE C</text>
+
+      <!-- ================= LEGEND ================= -->
+      <line x1="40" y1="392" x2="920" y2="392" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <line x1="40" y1="420" x2="76" y2="420" stroke="#545B64" stroke-width="1.2"/>
+      <text x="88" y="424" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.06em">SAME-ZONE &#183; NO CROSS-AZ COST</text>
+      <line x1="360" y1="420" x2="396" y2="420" stroke="#7D8998" stroke-width="1" stroke-dasharray="5,4"/>
+      <text x="408" y="424" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.06em">CROSS-ZONE FAILOVER &#183; DATA-TRANSFER COST</text>
+
+      <!-- editorial note: the diagram deliberately runs top-half only; zones + legend read left-to-right without a tall canvas -->
+      <text x="480" y="472" fill="rgba(35,47,62,0.28)" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic" text-anchor="middle">80% of traffic stays in-zone; only failover traffic crosses a zone boundary and incurs cost.</text>
+
+    </svg>

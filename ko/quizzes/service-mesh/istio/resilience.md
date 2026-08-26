@@ -27,40 +27,7 @@ Outlier Detection은 **인스턴스를 삭제하지 않고** 트래픽 풀에서
 
 **Outlier Detection의 작동 원리:**
 
-```mermaid
-flowchart LR
-    Start[요청 시작]
-    Check{에러 확인}
-    Count[에러 카운트 증가]
-    Threshold{임계값 초과?}
-    Eject[인스턴스 제외]
-    Normal[정상 처리]
-    Wait[대기 시간]
-    Retry[복구 시도]
-
-    Start --> Check
-    Check -->|에러| Count
-    Check -->|성공| Normal
-    Count --> Threshold
-    Threshold -->|Yes| Eject
-    Threshold -->|No| Normal
-    Eject --> Wait
-    Wait --> Retry
-    Retry --> Start
-
-    %% 스타일 정의
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef process fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef eject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Start start;
-    class Check,Threshold decision;
-    class Count,Wait,Retry process;
-    class Eject eject;
-    class Normal process;
-```
+![요청 처리 중 에러가 누적되어 임계값을 넘으면 해당 인스턴스를 일시적으로 제외하고, 대기 후 복구를 시도하는 아웃라이어 감지 루프를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-resilience-0.png)
 
 **주요 기능:**
 
@@ -149,34 +116,7 @@ spec:
 
 **Token Bucket 알고리즘:**
 
-```mermaid
-flowchart TB
-    Bucket[Token Bucket<br/>최대: 100 tokens]
-    Refill[Refill<br/>10 tokens/sec]
-    Request[요청 도착]
-    Check{토큰<br/>있음?}
-    Allow[요청 허용<br/>토큰 1개 소비]
-    Reject[요청 거부<br/>429 반환]
-
-    Refill -.->|매초 10개 추가| Bucket
-    Request --> Check
-    Bucket --> Check
-    Check -->|Yes| Allow
-    Check -->|No| Reject
-    Allow -.->|토큰 감소| Bucket
-
-    %% 스타일 정의
-    classDef bucket fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef reject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Bucket,Refill bucket;
-    class Request,Allow process;
-    class Check decision;
-    class Reject reject;
-```
+![초당 일정량 토큰이 채워지는 버킷에서 요청마다 토큰을 소비하고, 토큰이 없으면 429로 거부하는 토큰 버킷 알고리즘의 동작을 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-resilience-1.png)
 
 **참고 자료:**
 
@@ -207,38 +147,7 @@ Zone Aware Routing은 **트래픽을 단일 AZ에 집중하는 것이 아니라*
 
 **Zone Aware Routing의 올바른 동작:**
 
-```mermaid
-flowchart TB
-    subgraph AZ1["Availability Zone A"]
-        Client1[클라이언트 Pod<br/>Zone A]
-        Service1[Service Pod 1<br/>Zone A]
-        Service2[Service Pod 2<br/>Zone A]
-    end
-
-    subgraph AZ2["Availability Zone B"]
-        Service3[Service Pod 3<br/>Zone B]
-        Service4[Service Pod 4<br/>Zone B]
-    end
-
-    subgraph AZ3["Availability Zone C"]
-        Service5[Service Pod 5<br/>Zone C]
-    end
-
-    Client1 -->|80%<br/>같은 AZ 우선<br/>무료| Service1
-    Client1 -->|80%<br/>같은 AZ 우선<br/>무료| Service2
-    Client1 -.->|10%<br/>장애조치<br/>크로스 AZ 비용| Service3
-    Client1 -.->|10%<br/>장애조치<br/>크로스 AZ 비용| Service5
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef sameZone fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef otherZone fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client1 client;
-    class Service1,Service2 sameZone;
-    class Service3,Service4,Service5 otherZone;
-```
+![클라이언트 파드가 같은 가용영역의 서비스 파드로 트래픽의 80%를 무료로 우선 라우팅하고, 나머지 20%만 크로스 AZ 비용을 지불하며 다른 가용영역으로 장애조치하는 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-resilience-2.png)
 
 **Zone Aware Routing의 실제 이점:**
 
@@ -1028,38 +937,7 @@ us-east-1/us-east-1c/*
 
 **3. 트래픽 흐름 다이어그램**
 
-```mermaid
-flowchart TB
-    subgraph AZ1["us-east-1a"]
-        Client1[Client Pod<br/>Zone A]
-        Service1[Order Service<br/>Pod 1]
-        Service2[Order Service<br/>Pod 2]
-    end
-
-    subgraph AZ2["us-east-1b"]
-        Service3[Order Service<br/>Pod 3]
-        Service4[Order Service<br/>Pod 4]
-    end
-
-    subgraph AZ3["us-east-1c"]
-        Service5[Order Service<br/>Pod 5]
-    end
-
-    Client1 -->|70%<br/>무료| Service1
-    Client1 -->|70%<br/>무료| Service2
-    Client1 -.->|15%<br/>$0.01/GB| Service3
-    Client1 -.->|15%<br/>$0.01/GB| Service5
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef sameZone fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef otherZone fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client1 client;
-    class Service1,Service2 sameZone;
-    class Service3,Service4,Service5 otherZone;
-```
+![us-east-1a의 클라이언트 파드가 같은 가용영역의 Order Service 파드로 트래픽의 70%를 무료로 라우팅하고, 나머지 30%는 GB당 0.01달러의 비용을 내며 다른 가용영역의 Order Service 파드로 넘어가는 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-resilience-3.png)
 
 **4. 비용 절감 계산**
 

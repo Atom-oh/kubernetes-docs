@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ztunnel-title ztunnel-desc">
+    <title id="ztunnel-title">Istio 앰비언트 메시의 ztunnel/waypoint 구조</title>
+    <desc id="ztunnel-desc">두 노드의 파드가 각 노드의 ztunnel L4 프록시로 트래픽을 보내고, 두 ztunnel은 mTLS로 직접 통신하며, L7 처리가 필요할 때만 선택적으로 waypoint 프록시를 거치는 구조를 보여준다.</desc>
+    <defs>
+      <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#FFFFFF"/>
+
+    <!-- Zones -->
+    <rect x="40" y="40" width="360" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="52" y="44" width="60" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="82" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">NODE 1</text>
+
+    <rect x="560" y="40" width="360" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="572" y="44" width="60" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="602" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">NODE 2</text>
+
+    <rect x="340" y="348" width="280" height="96" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="352" y="352" width="112" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="408" y="361" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">WAYPOINT PROXY</text>
+
+    <!-- Arrows: pods -> ztunnel1 -->
+    <path d="M128,116 V138 Q128,146 136,146 H192 Q200,146 200,154 V176" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M296,116 V138 Q296,146 288,146 H264 Q256,146 256,154 V176" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Arrows: pods -> ztunnel2 -->
+    <path d="M648,116 V138 Q648,146 656,146 H704 Q712,146 712,154 V176" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M816,116 V138 Q816,146 808,146 H776 Q768,146 768,154 V176" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ztunnel1 <-> ztunnel2 mTLS -->
+    <line x1="308" y1="200" x2="660" y2="200" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+    <rect x="454" y="180" width="60" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="484" y="189" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MTLS</text>
+
+    <!-- ztunnel1 -> waypoint (optional, dashed) -->
+    <path d="M228,224 V294 Q228,302 236,302 H440 Q448,302 448,310 V380" fill="none" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="290" y="282" width="96" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="338" y="291" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">L7 필요시</text>
+
+    <!-- ztunnel2 -> waypoint (optional, dashed) -->
+    <path d="M740,224 V294 Q740,302 732,302 H520 Q512,302 512,310 V380" fill="none" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="578" y="282" width="96" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="626" y="291" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">L7 필요시</text>
+
+    <!-- Node: Pod A -->
+    <rect x="64" y="76" width="128" height="40" rx="6" fill="#ffffff"/>
+    <rect x="64" y="76" width="128" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="128" y="100" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+
+    <!-- Node: Pod B -->
+    <rect x="232" y="76" width="128" height="40" rx="6" fill="#ffffff"/>
+    <rect x="232" y="76" width="128" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="296" y="100" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+
+    <!-- Node: ztunnel1 (focal) -->
+    <rect x="148" y="176" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="148" y="176" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="228" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ztunnel</text>
+    <text x="228" y="210" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">L4 proxy</text>
+
+    <!-- Node: Pod C -->
+    <rect x="584" y="76" width="128" height="40" rx="6" fill="#ffffff"/>
+    <rect x="584" y="76" width="128" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="648" y="100" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod C</text>
+
+    <!-- Node: Pod D -->
+    <rect x="752" y="76" width="128" height="40" rx="6" fill="#ffffff"/>
+    <rect x="752" y="76" width="128" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="816" y="100" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod D</text>
+
+    <!-- Node: ztunnel2 (focal) -->
+    <rect x="660" y="176" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="660" y="176" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="740" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ztunnel</text>
+    <text x="740" y="210" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">L4 proxy</text>
+
+    <!-- Node: waypoint (optional) -->
+    <rect x="380" y="380" width="200" height="48" rx="6" fill="rgba(35,47,62,0.02)"/>
+    <rect x="380" y="380" width="200" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="480" y="400" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">waypoint</text>
+    <text x="480" y="414" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">L7 proxy · 선택적</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="560" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <rect x="140" y="550" width="14" height="14" rx="3" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="162" y="561" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">POD</text>
+
+    <rect x="300" y="550" width="14" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="322" y="561" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">ZTUNNEL (L4)</text>
+
+    <rect x="520" y="550" width="14" height="14" rx="3" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,2"/>
+    <text x="542" y="561" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">WAYPOINT (OPTIONAL)</text>
+
+    <line x1="760" y1="557" x2="784" y2="557" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="792" y="561" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">MTLS</text>
+  </svg>

@@ -141,28 +141,7 @@ Istio Envoy automatically generates trace IDs, but **the application must propag
 
 **How Distributed Tracing Works:**
 
-```mermaid
-flowchart LR
-    User[User] --> Gateway[Ingress Gateway]
-    Gateway -->|x-request-id: abc123<br/>x-b3-traceid: xyz| ServiceA[Service A]
-    ServiceA -->|Header propagation required| ServiceB[Service B]
-    ServiceB -->|Header propagation required| ServiceC[Service C]
-
-    Gateway -.->|Send Span| Jaeger[Jaeger]
-    ServiceA -.->|Send Span| Jaeger
-    ServiceB -.->|Send Span| Jaeger
-    ServiceC -.->|Send Span| Jaeger
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef jaeger fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    class User user;
-    class Gateway gateway;
-    class ServiceA,ServiceB,ServiceC service;
-    class Jaeger jaeger;
-```
+![Diagram showing the ingress gateway minting distributed-tracing headers on an incoming request, each downstream service (A, B, C) required to forward those headers unchanged to the next hop, and every hop also sending its span to Jaeger.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-0.png)
 
 **HTTP Headers to Propagate:**
 
@@ -1840,41 +1819,7 @@ Tabs:
 
 **5. Troubleshooting Workflow**
 
-```mermaid
-flowchart TD
-    Start[Problem Occurs] --> Kiali[Kiali Dashboard]
-    Kiali --> Graph[Go to Graph View]
-    Graph --> Issue{Problem Type?}
-
-    Issue -->|No Traffic| Config[Check Istio Config]
-    Issue -->|Errors| Logs[Check Logs]
-    Issue -->|Slow Response| Traces[Check Traces]
-    Issue -->|Security Denied| Security[Check Security]
-
-    Config --> Validate[Validate Configuration]
-    Logs --> Debug[Analyze Logs]
-    Traces --> Jaeger[Jaeger Integration]
-    Security --> Policy[Check Policies]
-
-    Validate --> Fix[Fix Configuration]
-    Debug --> Fix
-    Jaeger --> Fix
-    Policy --> Fix
-
-    Fix --> Test[Test]
-    Test --> Verify{Resolved?}
-    Verify -->|Yes| Done[Complete]
-    Verify -->|No| Start
-
-    classDef problem fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef kiali fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Start,Issue problem;
-    class Kiali,Graph,Config,Logs,Traces,Security kiali;
-    class Validate,Debug,Jaeger,Policy,Fix,Test action;
-```
+![Decision-ladder diagram showing a Kiali-driven troubleshooting loop: open the Kiali graph view, classify the problem into one of four categories (no traffic, errors, slow response, security denied), diagnose and fix it, then verify — looping back to the start if unresolved or finishing if resolved.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-1.png)
 
 **Reference:**
 

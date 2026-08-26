@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d0-title d0-desc">
+      <title id="d0-title">Outlier detection eject-and-recover cycle</title>
+      <desc id="d0-desc">A request fails an error check, its error count is incremented, and once the failure threshold is exceeded the upstream instance is ejected from the load-balancing pool; after a wait period a recovery attempt reintroduces the instance, while requests that pass or stay under threshold flow to normal processing.</desc>
+      <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ================= ARROWS (behind nodes) ================= -->
+
+      <!-- Start -> Check -->
+      <line x1="480" y1="76" x2="480" y2="96" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Check -Error-> Count (vertical) -->
+      <line x1="480" y1="168" x2="480" y2="188" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Check -Success-> Normal (elbow: right, up 8px, right into fanned attach point y=124) -->
+      <path d="M550,132 H617 Q625,132 625,124 H700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Count -> Threshold -->
+      <line x1="480" y1="244" x2="480" y2="264" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Threshold -Yes-> Eject (vertical, leads to the focal node) -->
+      <line x1="480" y1="336" x2="480" y2="356" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Threshold -No-> Normal (elbow: right, up, right into fanned attach point y=144) -->
+      <path d="M550,300 H617 Q625,300 625,292 V152 Q625,144 633,144 H700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Eject -> Wait -->
+      <line x1="480" y1="412" x2="480" y2="432" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Wait -> Retry -->
+      <line x1="480" y1="488" x2="480" y2="508" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Retry -> Start (dashed return loop, right-side routing) -->
+      <path d="M560,536 H892 Q900,536 900,528 V60 Q900,52 892,52 H560"
+            fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+
+      <!-- ================= ARROW LABELS ================= -->
+      <!-- ERROR: beside the Check->Count vertical segment (x=480, y168-188) -->
+      <rect x="488" y="172" width="42" height="12" rx="2" fill="#ffffff"/>
+      <text x="509" y="181" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">ERROR</text>
+
+      <!-- SUCCESS: above the Check->Normal horizontal segment (y=132, x550-617) -->
+      <rect x="558" y="112" width="52" height="12" rx="2" fill="#ffffff"/>
+      <text x="584" y="121" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SUCCESS</text>
+
+      <!-- YES: beside the Threshold->Eject vertical segment (x=480, y336-356) -->
+      <rect x="488" y="340" width="30" height="12" rx="2" fill="#ffffff"/>
+      <text x="503" y="349" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+      <!-- NO: above the Threshold->Normal horizontal segment (y=300, x550-617) -->
+      <rect x="570" y="280" width="26" height="12" rx="2" fill="#ffffff"/>
+      <text x="583" y="289" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+      <!-- ================= NODES ================= -->
+
+      <!-- Start (oval) -->
+      <ellipse cx="480" cy="52" rx="80" ry="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="480" y="56" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Request Start</text>
+
+      <!-- Check (diamond) -->
+      <polygon points="480,96 550,132 480,168 410,132" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="480" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Error</text>
+      <text x="480" y="142" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Check</text>
+
+      <!-- Count -->
+      <rect x="400" y="188" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="400" y="188" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="480" y="212" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Increment</text>
+      <text x="480" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Error Count</text>
+
+      <!-- Threshold (diamond) -->
+      <polygon points="480,264 550,300 480,336 410,300" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="480" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Threshold</text>
+      <text x="480" y="310" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Exceeded?</text>
+
+      <!-- Eject (focal) -->
+      <rect x="400" y="356" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="400" y="356" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="480" y="390" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Eject Instance</text>
+
+      <!-- Wait -->
+      <rect x="400" y="432" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="400" y="432" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="480" y="464" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Wait Time</text>
+
+      <!-- Retry -->
+      <rect x="400" y="508" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="400" y="508" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="480" y="540" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Recovery Attempt</text>
+
+      <!-- Normal -->
+      <rect x="700" y="104" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="700" y="104" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="780" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Normal Processing</text>
+
+    </svg>

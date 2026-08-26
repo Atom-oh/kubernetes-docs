@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ratelimit-title ratelimit-desc">
+  <title id="ratelimit-title">Envoy proxy rate limiting against a Redis store</title>
+  <desc id="ratelimit-desc">Diagram showing a client request passing through the Envoy proxy, which checks a Redis-backed rate-limit store before forwarding an allowed request to the backend service or rejecting it with a 429 response.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-reject" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#DD344C"/></marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Arrows -->
+  <line x1="152" y1="152" x2="192" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Envoy -> Redis (rate limit check), transits clear of both boxes -->
+  <path d="M 280,120 V 112 Q 280,104 288,104 H 596 Q 604,104 604,96 V 92"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="320" y="84" width="120" height="12" rx="2" fill="#ffffff"/>
+  <text x="380" y="93" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RATE LIMIT CHECK</text>
+
+  <!-- Envoy -> Backend (allowed) -->
+  <line x1="336" y1="152" x2="616" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="440" y="132" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="476" y="141" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ALLOWED</text>
+
+  <!-- Envoy -> Reject (rejected) -->
+  <path d="M 264,184 V 236 Q 264,244 272,244 H 596"
+        fill="none" stroke="#DD344C" stroke-width="1.2" marker-end="url(#arrow-reject)"/>
+  <rect x="320" y="224" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="358" y="233" fill="#DD344C" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REJECTED</text>
+
+  <!-- Node: Client -->
+  <rect x="40" y="120" width="112" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="96" y="156" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client</text>
+
+  <!-- Node: Envoy (focal) -->
+  <rect x="192" y="120" width="144" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="264" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Proxy</text>
+  <text x="264" y="164" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">local rate limit filter</text>
+
+  <!-- Node: Redis -->
+  <rect x="524" y="28" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="604" y="56" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Redis</text>
+  <text x="604" y="72" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">rate limit store</text>
+
+  <!-- Node: Backend -->
+  <rect x="616" y="120" width="152" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="692" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backend Service</text>
+
+  <!-- Node: Reject -->
+  <rect x="596" y="228" width="176" height="64" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,4"/>
+  <text x="684" y="256" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">429 Too Many</text>
+  <text x="684" y="272" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">requests</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="328" x2="930" y2="328" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="344" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="180" cy="340" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="192" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">PROXY / DECISION POINT</text>
+  <circle cx="460" cy="340" r="5" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1"/>
+  <text x="472" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">REJECTED OUTCOME</text>
+  <circle cx="680" cy="340" r="5" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="692" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">SERVICE</text>
+</svg>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ewgw-title ewgw-desc">
+  <title id="ewgw-title">Primary-remote multi-cluster mesh with east-west gateways</title>
+  <desc id="ewgw-desc">Diagram showing a primary Istiod in one region distributing configuration and service discovery to a remote cluster's Istiod, while workload pods in each cluster reach each other only through mutually authenticated east-west gateways.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Zones -->
+  <rect x="40" y="40" width="280" height="416" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="88" y="44" width="184" height="12" rx="2" fill="#ffffff"/>
+  <text x="180" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">CLUSTER 1 · US-EAST-1 · PRIMARY</text>
+
+  <rect x="640" y="40" width="280" height="416" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="688" y="44" width="184" height="12" rx="2" fill="#ffffff"/>
+  <text x="780" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">CLUSTER 2 · US-WEST-2 · REMOTE</text>
+
+  <!-- Arrows -->
+  <!-- Istiod1 -> Istiod2 (config distribution) -->
+  <line x1="240" y1="88" x2="728" y2="88" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="428" y="68" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="484" y="77" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CONFIG DISTRIB.</text>
+
+  <!-- Istiod1 -> Service A -->
+  <line x1="160" y1="120" x2="160" y2="188" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Istiod1 -> Service B (crosses to other cluster, discovery), transits clear of Istiod2 -->
+  <path d="M 240,104 V 132 Q 240,140 248,140 H 796 Q 804,140 804,148 V 188"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="352" y="148" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="400" y="157" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DISCOVERY</text>
+
+  <!-- Pod A -> EWG1 -->
+  <line x1="160" y1="272" x2="160" y2="316" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+  <!-- EWG1 <-> EWG2 (cross-cluster mTLS) -->
+  <path d="M 240,348 H 680" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+  <rect x="424" y="328" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="337" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CROSS-CLUSTER MTLS</text>
+  <!-- EWG2 <-> Pod B -->
+  <line x1="800" y1="316" x2="800" y2="272" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+
+  <!-- Node: Istiod1 (focal, primary) -->
+  <rect x="88" y="56" width="152" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="164" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istiod</text>
+  <text x="164" y="100" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">primary control plane</text>
+
+  <!-- Node: Service A -->
+  <rect x="88" y="188" width="152" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="164" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service A</text>
+
+  <!-- Node: Pod A -->
+  <rect x="88" y="236" width="152" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="164" y="258" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+
+  <!-- Node: EWG1 -->
+  <rect x="88" y="316" width="152" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="164" y="338" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">East-West Gateway</text>
+  <text x="164" y="352" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ingress · egress</text>
+
+  <!-- Node: Istiod2 -->
+  <rect x="728" y="56" width="152" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="804" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istiod</text>
+  <text x="804" y="100" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">remote control plane</text>
+
+  <!-- Node: Service B -->
+  <rect x="728" y="188" width="152" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="804" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service B</text>
+
+  <!-- Node: Pod B -->
+  <rect x="728" y="236" width="152" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="804" y="258" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+
+  <!-- Node: EWG2 -->
+  <rect x="728" y="316" width="152" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="804" y="338" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">East-West Gateway</text>
+  <text x="804" y="352" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ingress · egress</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="552" x2="930" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="180" cy="564" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="192" y="568" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">MTLS DATA PATH</text>
+  <line x1="380" y1="564" x2="408" y2="564" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="416" y="568" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CROSS-CLUSTER DISCOVERY</text>
+  <circle cx="680" cy="564" r="5" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="692" y="568" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">SERVICE / GATEWAY</text>
+</svg>
