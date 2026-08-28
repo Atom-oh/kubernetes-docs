@@ -17,7 +17,7 @@ const DISABLE_SEARCH = process.env.VP_DISABLE_SEARCH === '1'
 const DISABLE_MERMAID = process.env.VP_DISABLE_MERMAID === '1'
 
 const config = defineConfig({
-  title: 'Kubernetes & Amazon EKS Training',
+  title: 'Cloud Native Operations',
   description:
     'Hands-on Kubernetes and Amazon EKS training — core concepts, networking, service mesh, observability, quizzes, and labs.',
   base: '/kubernetes-docs/',

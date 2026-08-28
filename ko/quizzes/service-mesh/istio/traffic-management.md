@@ -989,23 +989,9 @@ Traffic Mirroring을 사용하여 새 버전을 안전하게 테스트하는 방
 
 **1. 작동 원리**
 
-```mermaid
-flowchart LR
-    User[사용자] --> Envoy[Envoy Proxy]
-    Envoy -->|주 요청| V1[Version 1<br/>프로덕션]
-    Envoy -.->|미러 요청<br/>응답 무시| V2[Version 2<br/>테스트]
+![사용자 요청이 Envoy Proxy에서 복제되어 주 요청은 프로덕션 Version 1으로, 미러 요청은 테스트 Version 2로 전달되고 v2의 응답은 폐기되는 트래픽 미러링 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-traffic-management-0.png)
 
-    V1 -->|응답| User
-    V2 -.->|응답 폐기| Envoy
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef version fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class User user;
-    class Envoy envoy;
-    class V1,V2 version;
-```
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-quizzes-service-mesh-istio-traffic-management-0.html)
 
 **핵심 특징:**
 

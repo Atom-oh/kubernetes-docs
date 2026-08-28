@@ -1,6 +1,6 @@
-# Kubernetes 및 EKS 교육 컨텐츠 퀴즈
+# Cloud Native Operations 교육 컨텐츠 퀴즈
 
-이 디렉토리는 Kubernetes 및 Amazon EKS 교육 컨텐츠에 대한 퀴즈를 포함하고 있습니다. 각 퀴즈는 해당 주제에 대한 이해도를 테스트하고 핵심 개념을 강화하는 데 도움이 됩니다.
+이 디렉토리는 Cloud Native Operations 교육 컨텐츠에 대한 퀴즈를 포함하고 있습니다. 각 퀴즈는 해당 주제에 대한 이해도를 테스트하고 핵심 개념을 강화하는 데 도움이 됩니다.
 
 ## 퀴즈 구성
 

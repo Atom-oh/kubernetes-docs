@@ -974,23 +974,9 @@ Traffic mirroring is a technique that duplicates production traffic and sends it
 
 **1. How It Works**
 
-```mermaid
-flowchart LR
-    User[User] --> Envoy[Envoy Proxy]
-    Envoy -->|Primary Request| V1[Version 1<br/>Production]
-    Envoy -.->|Mirror Request<br/>Response Ignored| V2[Version 2<br/>Test]
+![A user request is duplicated by the Envoy proxy: the primary request goes to production Version 1 while the mirror request goes to test Version 2, whose response is discarded.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-traffic-management-0.png)
 
-    V1 -->|Response| User
-    V2 -.->|Response Discarded| Envoy
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef version fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class User user;
-    class Envoy envoy;
-    class V1,V2 version;
-```
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-traffic-management-0.html)
 
 **Key Characteristics:**
 

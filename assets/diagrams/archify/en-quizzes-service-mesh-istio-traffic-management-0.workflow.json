@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Traffic Mirroring",
+    "quality_profile": "showcase",
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "user",
+      "label": "User"
+    },
+    {
+      "id": "prod",
+      "label": "Production Path"
+    },
+    {
+      "id": "mirror",
+      "label": "Mirror Path (shadow test)"
+    }
+  ],
+  "mainPath": [
+    "user",
+    "envoy",
+    "v1"
+  ],
+  "nodes": [
+    {
+      "id": "user",
+      "lane": "user",
+      "col": 0,
+      "type": "external",
+      "label": "User",
+      "sublabel": "live request"
+    },
+    {
+      "id": "envoy",
+      "lane": "prod",
+      "col": 1,
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "duplicates traffic"
+    },
+    {
+      "id": "v1",
+      "lane": "prod",
+      "col": 3,
+      "type": "frontend",
+      "label": "Version 1",
+      "sublabel": "production"
+    },
+    {
+      "id": "v2",
+      "lane": "mirror",
+      "col": 2,
+      "type": "backend",
+      "label": "Version 2",
+      "sublabel": "test"
+    },
+    {
+      "id": "discard",
+      "lane": "mirror",
+      "col": 3,
+      "type": "external",
+      "label": "Discarded",
+      "sublabel": "response dropped"
+    }
+  ],
+  "edges": [
+    {
+      "id": "user-envoy",
+      "from": "user",
+      "to": "envoy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "primary",
+      "from": "envoy",
+      "to": "v1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mirror-req",
+      "from": "envoy",
+      "to": "v2",
+      "label": "mirror request",
+      "variant": "dashed",
+      "role": "async",
+      "labelAt": [
+        237,
+        407
+      ]
+    },
+    {
+      "id": "v1-response",
+      "from": "v1",
+      "to": "user",
+      "label": "response",
+      "role": "return"
+    },
+    {
+      "id": "v2-discard",
+      "from": "v2",
+      "to": "discard",
+      "variant": "dashed",
+      "role": "async"
+    }
+  ]
+}

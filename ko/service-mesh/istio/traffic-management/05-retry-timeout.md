@@ -17,40 +17,9 @@ Retry와 Timeout은 마이크로서비스의 복원력을 높이는 핵심 메�
 
 ### Timeout과 Retry의 필요성
 
-```mermaid
-flowchart LR
-    Client[클라이언트]
-    
-    subgraph Without["Timeout/Retry 없음"]
-        Service1[서비스<br/>응답 없음]
-        Result1[무한 대기<br/>리소스 낭비]
-    end
-    
-    subgraph With["Timeout/Retry 있음"]
-        Service2[서비스<br/>응답 없음]
-        Timeout[Timeout<br/>1초 후 중단]
-        Retry[Retry<br/>다른 인스턴스]
-        Success[성공]
-    end
-    
-    Client -.->|설정 없음| Service1
-    Service1 --> Result1
-    
-    Client -->|Istio 설정| Service2
-    Service2 --> Timeout
-    Timeout --> Retry
-    Retry --> Success
-    
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef bad fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef good fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class Client client;
-    class Service1,Result1 bad;
-    class Service2,Timeout,Retry,Success good;
-```
+![Timeout/Retry가 없으면 응답 없는 서비스에 무한 대기하며 리소스를 낭비하지만, Istio Timeout/Retry를 설정하면 1초 후 중단하고 다른 인스턴스로 재시도해 성공하는 비교 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-05-retry-timeout-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-05-retry-timeout-0.html)
 
 ## Timeout 설정
 
@@ -408,27 +377,9 @@ spec:
 
 #### 문제 상황
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant Proxy as Istio Proxy
-    participant Service
-    participant DB as Database
+![POST 주문 생성이 실제로는 성공했지만 응답 손실로 Istio Proxy가 자동 retry를 수행해 중복 주문이 생성되고, 클라이언트는 200 OK만 보게 되는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-05-retry-timeout-1.png)
 
-    Client->>Proxy: POST /orders (주문 생성)
-    Proxy->>Service: POST /orders
-    Service->>DB: INSERT order (성공)
-    DB-->>Service: 200 OK
-    Service--xProxy: Network Timeout (응답 손실)
-    Note over Proxy: Retry 시도 (자동)
-    Proxy->>Service: POST /orders (동일 요청)
-    Service->>DB: INSERT order (중복!)
-    DB-->>Service: 200 OK
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-    Note over DB: ❌ 중복 주문 생성!
-```
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-05-retry-timeout-1.html)
 
 #### 왜 위험한가?
 

@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Timeout과 Retry가 필요한 이유",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    {
+      "id": "client",
+      "label": "클라이언트"
+    },
+    {
+      "id": "without",
+      "label": "Timeout/Retry 없음",
+      "variant": "exception"
+    },
+    {
+      "id": "with",
+      "label": "Istio Timeout/Retry 있음"
+    }
+  ],
+  "mainPath": [
+    "client",
+    "svc2",
+    "timeout",
+    "retry",
+    "success"
+  ],
+  "nodes": [
+    {
+      "id": "client",
+      "lane": "client",
+      "col": 0,
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "요청 전송"
+    },
+    {
+      "id": "svc1",
+      "lane": "without",
+      "col": 2,
+      "type": "backend",
+      "label": "서비스",
+      "sublabel": "응답 없음"
+    },
+    {
+      "id": "result1",
+      "lane": "without",
+      "col": 3,
+      "type": "external",
+      "label": "무한 대기",
+      "sublabel": "리소스 낭비"
+    },
+    {
+      "id": "svc2",
+      "lane": "with",
+      "col": 2,
+      "type": "backend",
+      "label": "서비스",
+      "sublabel": "응답 없음"
+    },
+    {
+      "id": "timeout",
+      "lane": "with",
+      "col": 3,
+      "type": "security",
+      "label": "Timeout",
+      "sublabel": "1초 후 중단"
+    },
+    {
+      "id": "retry",
+      "lane": "with",
+      "col": 5,
+      "type": "backend",
+      "label": "Retry",
+      "sublabel": "다른 인스턴스"
+    },
+    {
+      "id": "success",
+      "lane": "client",
+      "col": 5,
+      "type": "frontend",
+      "label": "성공",
+      "sublabel": "응답 수신"
+    }
+  ],
+  "edges": [
+    {
+      "id": "no-config",
+      "from": "client",
+      "to": "svc1",
+      "label": "설정 없음",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "id": "hang",
+      "from": "svc1",
+      "to": "result1",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "id": "istio-config",
+      "from": "client",
+      "to": "svc2",
+      "label": "Istio 설정",
+      "variant": "emphasis",
+      "labelSegment": 1
+    },
+    {
+      "id": "svc2-timeout",
+      "from": "svc2",
+      "to": "timeout"
+    },
+    {
+      "id": "timeout-retry",
+      "from": "timeout",
+      "to": "retry"
+    },
+    {
+      "id": "retry-success",
+      "from": "retry",
+      "to": "success",
+      "variant": "emphasis"
+    }
+  ]
+}

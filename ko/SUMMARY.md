@@ -148,9 +148,9 @@
   * [Part 3: 상태 관리, 체크포인팅, 스트리밍 패턴](data-on-eks/flink/03-state-checkpointing-streaming.md)
   * [Part 4: 운영, 고가용성, 그리고 매니지드 Flink](data-on-eks/flink/04-operations-ha.md)
 
-## Networking
+## Network Operations
 
-* [Networking 개요](networking/README.md)
+* [Network Operations 개요](networking/README.md)
 * [VPC CNI](networking/01-vpc-cni.md)
 * [Cilium 딥다이브](networking/cilium/README.md)
   * [Part 1: 소개](networking/cilium/01-introduction.md)

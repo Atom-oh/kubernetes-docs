@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Cilium Identity 할당과 정책 평가",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    {
+      "id": "assign",
+      "label": "Identity 할당"
+    },
+    {
+      "id": "eval",
+      "label": "정책 평가"
+    }
+  ],
+  "mainPath": [
+    "pod",
+    "labels",
+    "identity",
+    "policymap",
+    "decision"
+  ],
+  "nodes": [
+    {
+      "id": "pod",
+      "lane": "assign",
+      "col": 0,
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "워크로드"
+    },
+    {
+      "id": "labels",
+      "lane": "assign",
+      "col": 1,
+      "type": "backend",
+      "label": "Labels",
+      "sublabel": "ns, app, SA"
+    },
+    {
+      "id": "identity",
+      "lane": "assign",
+      "col": 3,
+      "type": "security",
+      "label": "Identity",
+      "sublabel": "예: 12345"
+    },
+    {
+      "id": "policymap",
+      "lane": "eval",
+      "col": 4,
+      "type": "database",
+      "label": "Policy Map",
+      "sublabel": "eBPF map"
+    },
+    {
+      "id": "decision",
+      "lane": "eval",
+      "col": 5,
+      "type": "security",
+      "label": "Allow / Deny",
+      "sublabel": "ID 쌍 기준"
+    }
+  ],
+  "edges": [
+    {
+      "id": "pod-labels",
+      "from": "pod",
+      "to": "labels"
+    },
+    {
+      "id": "labels-identity",
+      "from": "labels",
+      "to": "identity",
+      "label": "레이블 집합 hash",
+      "variant": "emphasis"
+    },
+    {
+      "id": "identity-policymap",
+      "from": "identity",
+      "to": "policymap",
+      "label": "조회 키"
+    },
+    {
+      "id": "policymap-decision",
+      "from": "policymap",
+      "to": "decision",
+      "variant": "emphasis"
+    }
+  ]
+}

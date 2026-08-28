@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Cilium Identity Assignment and Policy Evaluation",
+    "quality_profile": "showcase",
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "assign",
+      "label": "Identity Assignment"
+    },
+    {
+      "id": "eval",
+      "label": "Policy Evaluation"
+    }
+  ],
+  "mainPath": [
+    "pod",
+    "labels",
+    "identity",
+    "policymap",
+    "decision"
+  ],
+  "nodes": [
+    {
+      "id": "pod",
+      "lane": "assign",
+      "col": 0,
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "workload"
+    },
+    {
+      "id": "labels",
+      "lane": "assign",
+      "col": 1,
+      "type": "backend",
+      "label": "Labels",
+      "sublabel": "ns, app, SA"
+    },
+    {
+      "id": "identity",
+      "lane": "assign",
+      "col": 3,
+      "type": "security",
+      "label": "Identity",
+      "sublabel": "e.g. 12345"
+    },
+    {
+      "id": "policymap",
+      "lane": "eval",
+      "col": 4,
+      "type": "database",
+      "label": "Policy Map",
+      "sublabel": "eBPF map"
+    },
+    {
+      "id": "decision",
+      "lane": "eval",
+      "col": 5,
+      "type": "security",
+      "label": "Allow / Deny",
+      "sublabel": "per ID pair"
+    }
+  ],
+  "edges": [
+    {
+      "id": "pod-labels",
+      "from": "pod",
+      "to": "labels"
+    },
+    {
+      "id": "labels-identity",
+      "from": "labels",
+      "to": "identity",
+      "label": "hash of label set",
+      "variant": "emphasis"
+    },
+    {
+      "id": "identity-policymap",
+      "from": "identity",
+      "to": "policymap",
+      "label": "lookup key"
+    },
+    {
+      "id": "policymap-decision",
+      "from": "policymap",
+      "to": "decision",
+      "variant": "emphasis"
+    }
+  ]
+}

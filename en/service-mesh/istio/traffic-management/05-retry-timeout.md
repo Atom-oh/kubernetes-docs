@@ -17,40 +17,9 @@ Retry and Timeout are core mechanisms for improving microservice resilience. Wit
 
 ### Why Timeout and Retry?
 
-```mermaid
-flowchart LR
-    Client[Client]
+![Without timeout/retry the client waits forever on an unresponsive service and wastes resources; with Istio timeout/retry it stops after 1s, retries another instance, and succeeds.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-05-retry-timeout-0.png)
 
-    subgraph Without["Without Timeout/Retry"]
-        Service1[Service<br/>No Response]
-        Result1[Infinite Wait<br/>Resource Waste]
-    end
-
-    subgraph With["With Timeout/Retry"]
-        Service2[Service<br/>No Response]
-        Timeout[Timeout<br/>Stop after 1s]
-        Retry[Retry<br/>Other Instance]
-        Success[Success]
-    end
-
-    Client -.->|No config| Service1
-    Service1 --> Result1
-
-    Client -->|Istio config| Service2
-    Service2 --> Timeout
-    Timeout --> Retry
-    Retry --> Success
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef bad fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef good fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class Service1,Result1 bad;
-    class Service2,Timeout,Retry,Success good;
-```
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-05-retry-timeout-0.html)
 
 ## Timeout Configuration
 
@@ -409,27 +378,9 @@ spec:
 
 #### Problem Scenario
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant Proxy as Istio Proxy
-    participant Service
-    participant DB as Database
+![A POST order actually succeeds, but the lost response makes the Istio proxy retry automatically, creating a duplicate order while everyone sees 200 OK.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-05-retry-timeout-1.png)
 
-    Client->>Proxy: POST /orders (Create Order)
-    Proxy->>Service: POST /orders
-    Service->>DB: INSERT order (Success)
-    DB-->>Service: 200 OK
-    Service--xProxy: Network Timeout (Response Lost)
-    Note over Proxy: Retry Attempt (Auto)
-    Proxy->>Service: POST /orders (Same Request)
-    Service->>DB: INSERT order (Duplicate!)
-    DB-->>Service: 200 OK
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-    Note over DB: Duplicate Order Created!
-```
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-05-retry-timeout-1.html)
 
 #### Why Is This Dangerous?
 

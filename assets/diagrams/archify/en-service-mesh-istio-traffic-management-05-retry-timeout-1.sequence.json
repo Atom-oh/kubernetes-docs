@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Duplicate Order from Retrying a POST",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "viewBox": [
+      820,
+      760
+    ],
+    "column_fit": "spread"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "order request"
+    },
+    {
+      "id": "proxy",
+      "type": "backend",
+      "label": "Istio Proxy",
+      "sublabel": "Envoy sidecar"
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "order handler"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Database",
+      "sublabel": "orders table"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 355,
+      "label": "First attempt succeeds"
+    },
+    {
+      "from": 375,
+      "to": 520,
+      "label": "Automatic retry duplicates it"
+    },
+    {
+      "from": 540,
+      "to": 660,
+      "label": "Everyone sees 200 OK"
+    }
+  ],
+  "messages": [
+    {
+      "id": "post-orders",
+      "from": "client",
+      "to": "proxy",
+      "y": 195,
+      "label": "POST /orders (create order)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "forward",
+      "from": "proxy",
+      "to": "service",
+      "y": 240,
+      "label": "POST /orders"
+    },
+    {
+      "id": "insert1",
+      "from": "service",
+      "to": "db",
+      "y": 285,
+      "label": "INSERT order (success)"
+    },
+    {
+      "id": "ok1",
+      "from": "db",
+      "to": "service",
+      "y": 325,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "lost",
+      "from": "service",
+      "to": "proxy",
+      "y": 400,
+      "label": "network timeout — response lost",
+      "variant": "dashed",
+      "note": "Proxy retries automatically"
+    },
+    {
+      "id": "retry-post",
+      "from": "proxy",
+      "to": "service",
+      "y": 450,
+      "label": "POST /orders (same request)",
+      "variant": "security"
+    },
+    {
+      "id": "insert2",
+      "from": "service",
+      "to": "db",
+      "y": 495,
+      "label": "INSERT order (duplicate!)",
+      "variant": "security",
+      "note": "Duplicate order created"
+    },
+    {
+      "id": "ok2",
+      "from": "db",
+      "to": "service",
+      "y": 560,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "ok3",
+      "from": "service",
+      "to": "proxy",
+      "y": 600,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "ok4",
+      "from": "proxy",
+      "to": "client",
+      "y": 640,
+      "label": "200 OK",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "proxy",
+      "from": 190,
+      "to": 648,
+      "type": "backend"
+    },
+    {
+      "participant": "service",
+      "from": 235,
+      "to": 608,
+      "type": "backend"
+    },
+    {
+      "participant": "db",
+      "from": 280,
+      "to": 568,
+      "type": "database"
+    }
+  ]
+}

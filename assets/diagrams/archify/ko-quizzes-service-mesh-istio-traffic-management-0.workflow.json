@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Traffic Mirroring 동작 원리",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    {
+      "id": "user",
+      "label": "사용자"
+    },
+    {
+      "id": "prod",
+      "label": "프로덕션 경로"
+    },
+    {
+      "id": "mirror",
+      "label": "미러 경로 (섀도우 테스트)"
+    }
+  ],
+  "mainPath": [
+    "user",
+    "envoy",
+    "v1"
+  ],
+  "nodes": [
+    {
+      "id": "user",
+      "lane": "user",
+      "col": 0,
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "실제 요청"
+    },
+    {
+      "id": "envoy",
+      "lane": "prod",
+      "col": 1,
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "트래픽 복제"
+    },
+    {
+      "id": "v1",
+      "lane": "prod",
+      "col": 3,
+      "type": "frontend",
+      "label": "Version 1",
+      "sublabel": "프로덕션"
+    },
+    {
+      "id": "v2",
+      "lane": "mirror",
+      "col": 2,
+      "type": "backend",
+      "label": "Version 2",
+      "sublabel": "테스트"
+    },
+    {
+      "id": "discard",
+      "lane": "mirror",
+      "col": 3,
+      "type": "external",
+      "label": "응답 폐기",
+      "sublabel": "사용자 미도달"
+    }
+  ],
+  "edges": [
+    {
+      "id": "user-envoy",
+      "from": "user",
+      "to": "envoy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "primary",
+      "from": "envoy",
+      "to": "v1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mirror-req",
+      "from": "envoy",
+      "to": "v2",
+      "label": "미러 요청",
+      "variant": "dashed",
+      "role": "async",
+      "labelAt": [
+        237,
+        407
+      ]
+    },
+    {
+      "id": "v1-response",
+      "from": "v1",
+      "to": "user",
+      "label": "응답",
+      "role": "return"
+    },
+    {
+      "id": "v2-discard",
+      "from": "v2",
+      "to": "discard",
+      "variant": "dashed",
+      "role": "async"
+    }
+  ]
+}

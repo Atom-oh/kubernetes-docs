@@ -15,23 +15,9 @@ Cilium 보안에서는 다음 세 계층을 분리해야 합니다.
 
 ## 보안 아키텍처
 
-```mermaid
-flowchart LR
-    Workload[워크로드 트래픽]
-    Identity[Cilium Identity]
-    Policy[eBPF L3/L4·L7 정책]
-    SPIRE[SPIFFE/SPIRE]
-    Auth[Out-of-band 상호 인증]
-    Encrypt{Payload 암호화 선택}
-    WG[WireGuard 또는 IPsec]
-    Native[native ztunnel mTLS preview]
+![워크로드 트래픽이 Cilium Identity와 eBPF 정책으로 인가되고, SPIFFE/SPIRE 기반 out-of-band 상호 인증과 WireGuard/IPsec 또는 native ztunnel mTLS payload 암호화가 각각 분리된 계층으로 동작하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-03-security-0.png)
 
-    Workload --> Identity --> Policy
-    Identity --> SPIRE --> Auth --> Policy
-    Policy --> Encrypt
-    Encrypt --> WG
-    Encrypt --> Native
-```
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-03-security-0.html)
 
 ## 상호 인증과 데이터 암호화
 
@@ -39,22 +25,9 @@ flowchart LR
 
 Cilium mutual authentication은 연결 허용 전에 두 endpoint의 identity를 검증하지만, 기존 구현의 인증 handshake는 애플리케이션 데이터 경로와 분리되어 있습니다. 즉 `authentication.mode: required`만으로 기존 데이터 연결의 payload가 TLS 암호화된다고 가정하면 안 됩니다. 데이터 기밀성이 필요하면 [WireGuard 또는 IPsec](https://docs.cilium.io/en/stable/security/network/encryption/)을 함께 구성합니다.
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A
-    participant CiliumA as Cilium Agent A
-    participant SPIRE as SPIRE Agent
-    participant CiliumB as Cilium Agent B
-    participant PodB as Pod B
+![Pod A의 연결 요청이 Cilium Agent와 SPIRE의 SVID 인증, out-of-band 인증 handshake를 거쳐 정책 허용 후 데이터 연결로 이어지는 순서를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-03-security-1.png)
 
-    PodA->>CiliumA: 연결 요청
-    CiliumA->>SPIRE: SVID 기반 인증 요청
-    SPIRE-->>CiliumA: identity 증명
-    CiliumA->>CiliumB: out-of-band 인증 handshake
-    CiliumB-->>CiliumA: 인증 결과
-    CiliumA->>PodB: 정책 허용 후 데이터 연결
-    Note over PodA,PodB: Payload 암호화는 WireGuard/IPsec 또는 native mTLS를 별도로 선택
-```
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-03-security-1.html)
 
 ### ztunnel 기반 네이티브 mTLS (2026년 업데이트)
 
@@ -473,26 +446,9 @@ Errors: 0
 
 #### WireGuard 아키텍처
 
-```mermaid
-graph TB
-    subgraph "Node A"
-        PodA[Pod A]
-        CiliumA[Cilium Agent]
-        WGA[WireGuard Interface<br/>cilium_wg0]
-    end
+![Node A와 Node B의 cilium_wg0 WireGuard 인터페이스가 ChaCha20-Poly1305 암호화 터널로 파드 간 트래픽을 전달하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-03-security-2.png)
 
-    subgraph "Node B"
-        PodB[Pod B]
-        CiliumB[Cilium Agent]
-        WGB[WireGuard Interface<br/>cilium_wg0]
-    end
-
-    PodA --> CiliumA
-    CiliumA --> WGA
-    WGA <-->|"Encrypted Tunnel<br/>(ChaCha20Poly1305)"| WGB
-    WGB --> CiliumB
-    CiliumB --> PodB
-```
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-03-security-2.html)
 
 ### IPsec 암호화
 
@@ -534,19 +490,9 @@ encryption:
 
 Cilium은 IP 대신 ID를 기반으로 보안 정책을 적용합니다:
 
-```mermaid
-graph LR
-    subgraph "Identity Assignment"
-        Pod[Pod] --> Labels[Labels]
-        Labels --> Hash[Hash Function]
-        Hash --> Identity[Numeric Identity<br/>e.g., 12345]
-    end
+![Pod 레이블 집합이 hash를 거쳐 숫자 Identity로 변환되고, 이 Identity로 eBPF Policy Map을 조회해 Allow/Deny가 결정되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-03-security-3.png)
 
-    subgraph "Policy Evaluation"
-        Identity --> PolicyMap[Policy Map]
-        PolicyMap --> Decision[Allow/Deny]
-    end
-```
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-03-security-3.html)
 
 ### Identity 구성 요소
 
@@ -609,20 +555,9 @@ spec:
 
 ### IP vs Identity 비교
 
-```mermaid
-graph TB
-    subgraph "IP-based Security (Traditional)"
-        IPPolicy[IP-based Policy]
-        IP1[10.0.1.5 -> 10.0.2.10: Allow]
-        IP2[Problem: Pod IP 변경 시<br/>정책 업데이트 필요]
-    end
+![IP 기반 보안은 Pod IP가 바뀔 때마다 정책 업데이트가 필요하지만, Identity 기반 보안은 IP 변경에 영향받지 않는다는 차이를 비교한다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-03-security-4.png)
 
-    subgraph "Identity-based Security (Cilium)"
-        IDPolicy[Identity-based Policy]
-        ID1[frontend -> backend: Allow]
-        ID2[Benefit: IP 변경에<br/>영향 없음]
-    end
-```
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-03-security-4.html)
 
 ## 외부 PKI 통합
 

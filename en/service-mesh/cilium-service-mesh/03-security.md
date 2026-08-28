@@ -15,23 +15,9 @@ These capabilities can be combined, but they are not automatically equivalent to
 
 ## Security Architecture
 
-```mermaid
-flowchart LR
-    Workload[Workload traffic]
-    Identity[Cilium Identity]
-    Policy[eBPF L3/L4 and L7 policy]
-    SPIRE[SPIFFE/SPIRE]
-    Auth[Out-of-band mutual authentication]
-    Encrypt{Payload encryption choice}
-    WG[WireGuard or IPsec]
-    Native[Native ztunnel mTLS preview]
+![Workload traffic is authorized by Cilium Identity and eBPF policy, while SPIFFE/SPIRE-based out-of-band mutual authentication and WireGuard/IPsec or native ztunnel mTLS payload encryption operate as separate layers.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-0.png)
 
-    Workload --> Identity --> Policy
-    Identity --> SPIRE --> Auth --> Policy
-    Policy --> Encrypt
-    Encrypt --> WG
-    Encrypt --> Native
-```
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-0.html)
 
 ## Mutual Authentication and Data Encryption
 
@@ -39,22 +25,9 @@ flowchart LR
 
 Cilium mutual authentication verifies both endpoint identities before a connection is allowed, but the established authentication handshake is separate from the application data path. Do not assume that `authentication.mode: required` alone TLS-encrypts the payload of the existing data connection. Configure [WireGuard or IPsec](https://docs.cilium.io/en/stable/security/network/encryption/) when data confidentiality is required.
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A
-    participant CiliumA as Cilium Agent A
-    participant SPIRE as SPIRE Agent
-    participant CiliumB as Cilium Agent B
-    participant PodB as Pod B
+![Pod A's connection request goes through the Cilium agent, SPIRE SVID authentication, and the out-of-band auth handshake before the policy-allowed data connection.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-1.png)
 
-    PodA->>CiliumA: Connection request
-    CiliumA->>SPIRE: Request SVID-based authentication
-    SPIRE-->>CiliumA: Identity proof
-    CiliumA->>CiliumB: Out-of-band authentication handshake
-    CiliumB-->>CiliumA: Authentication result
-    CiliumA->>PodB: Data connection after policy allows it
-    Note over PodA,PodB: Select WireGuard/IPsec or native mTLS separately for payload encryption
-```
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-1.html)
 
 ### Native mTLS via ztunnel (2026 Update)
 
@@ -473,26 +446,9 @@ Errors: 0
 
 #### WireGuard Architecture
 
-```mermaid
-graph TB
-    subgraph "Node A"
-        PodA[Pod A]
-        CiliumA[Cilium Agent]
-        WGA[WireGuard Interface<br/>cilium_wg0]
-    end
+![The cilium_wg0 WireGuard interfaces on Node A and Node B carry pod-to-pod traffic through a ChaCha20-Poly1305 encrypted tunnel.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-2.png)
 
-    subgraph "Node B"
-        PodB[Pod B]
-        CiliumB[Cilium Agent]
-        WGB[WireGuard Interface<br/>cilium_wg0]
-    end
-
-    PodA --> CiliumA
-    CiliumA --> WGA
-    WGA <-->|"Encrypted Tunnel<br/>(ChaCha20Poly1305)"| WGB
-    WGB --> CiliumB
-    CiliumB --> PodB
-```
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-2.html)
 
 ### IPsec Encryption
 
@@ -534,19 +490,9 @@ encryption:
 
 Cilium applies security policies based on identity instead of IP:
 
-```mermaid
-graph LR
-    subgraph "Identity Assignment"
-        Pod[Pod] --> Labels[Labels]
-        Labels --> Hash[Hash Function]
-        Hash --> Identity[Numeric Identity<br/>e.g., 12345]
-    end
+![A pod's label set is hashed into a numeric identity, which is used to look up the eBPF policy map and produce an allow/deny decision.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-3.png)
 
-    subgraph "Policy Evaluation"
-        Identity --> PolicyMap[Policy Map]
-        PolicyMap --> Decision[Allow/Deny]
-    end
-```
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-3.html)
 
 ### Identity Components
 
@@ -609,20 +555,9 @@ spec:
 
 ### IP vs Identity Comparison
 
-```mermaid
-graph TB
-    subgraph "IP-based Security (Traditional)"
-        IPPolicy[IP-based Policy]
-        IP1[10.0.1.5 -> 10.0.2.10: Allow]
-        IP2[Problem: Policy update needed<br/>when Pod IP changes]
-    end
+![IP-based security requires a policy update whenever a Pod IP changes, while identity-based security is unaffected by IP churn.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-4.png)
 
-    subgraph "Identity-based Security (Cilium)"
-        IDPolicy[Identity-based Policy]
-        ID1[frontend -> backend: Allow]
-        ID2[Benefit: Unaffected by<br/>IP changes]
-    end
-```
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-4.html)
 
 ## External PKI Integration
 
