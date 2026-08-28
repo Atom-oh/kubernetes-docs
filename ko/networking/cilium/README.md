@@ -6,7 +6,7 @@
 
 > **지원 버전**: Cilium 1.17, 1.18
 > **Kubernetes 호환성**: 1.32 이상
-> **마지막 업데이트**: 2026년 8월 10일
+> **마지막 업데이트**: 2026년 8월 24일
 
 ### 2026년 7월 업데이트: 패치 릴리스 및 NetworkPolicy 보안 이슈
 
@@ -28,6 +28,10 @@
 - **성능**: `cilium-cni` 바이너리가 약 77MB에서 16MB로 축소, 통합 로드밸런서 상태 관리와 대규모 클러스터용 BPF 정책 맵 인코딩 최적화
 
 레거시 Mutual Authentication, Envoy Go 확장, Kafka 인지 정책, `cilium.io/v2alpha1` `CiliumNodeConfig` API, libnetwork 통합, 커스텀 CNI 설정을 사용 중이라면 업그레이드 시 조치가 필요합니다 — [업그레이드 가이드](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes)를 참고하세요. 다음 사이클의 첫 프리릴리스인 1.21.0-pre.0은 8월 3일에 공개되었습니다.
+
+### 2026년 8월 업데이트: 1.20.1 / 1.19.7 / 1.18.13 패치 릴리스
+
+2026년 8월 18일 유지 관리 중인 세 라인의 패치 릴리스가 함께 공개되었습니다. 1.20 라인의 첫 패치인 [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1)은 Cluster Mesh 문서 전면 개편과 1.20.0 이후의 버그 수정 백포트를 담았고, [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7)은 호스트 방화벽의 VRRP·IGMP 프로토콜 지원 백포트, [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13)은 Envoy 리소스(리스너, 네트워크 정책 등)의 증분(incremental) 동기화로 CPU 부하와 정책 업데이트 지연을 줄이는 변경을 포함합니다. 사용 중인 라인의 최신 패치로 업데이트하는 것을 권장합니다.
 
 ## Cilium 1.18의 주요 개선사항
 

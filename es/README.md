@@ -106,6 +106,25 @@ Este contenido de formación proporciona cuestionarios para cada tema junto con 
 5. [Deployment y optimización de vLLM](./ai-ml/02-vllm-deployment.md) | [Cuestionario](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 6. [Agentic AI Platform en EKS](./ai-ml/03-agentic-ai-platform.md) | [Cuestionario](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
 7. [Buenas prácticas de AI/ML](./ai-ml/07-ai-ml-best-practices.md) | [Cuestionario](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+8. **Análisis profundo de Ray en EKS**
+   - [Introducción a Ray en EKS](./ai-ml/ray/README.md)
+   - [Parte 1: Arquitectura de Ray](./ai-ml/ray/01-architecture.md) | [Cuestionario](./quizzes/ai-ml/ray/01-architecture-quiz.md)
+   - [Parte 2: El operador KubeRay](./ai-ml/ray/02-kuberay-operator.md) | [Cuestionario](./quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
+   - [Parte 3: Ray Train y Ray Tune](./ai-ml/ray/03-ray-train-tune.md) | [Cuestionario](./quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
+   - [Parte 4: Ray Serve](./ai-ml/ray/04-ray-serve.md) | [Cuestionario](./quizzes/ai-ml/ray/04-ray-serve-quiz.md)
+9. **Análisis profundo de Kubeflow en EKS**
+   - [Introducción a Kubeflow en EKS](./ai-ml/kubeflow/README.md)
+   - [Parte 1: Arquitectura e instalación de Kubeflow en EKS](./ai-ml/kubeflow/01-architecture-installation.md) | [Cuestionario](./quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+   - [Parte 2: Pipelines de Kubeflow](./ai-ml/kubeflow/02-pipelines.md) | [Cuestionario](./quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
+   - [Parte 3: Cuadernos de Kubeflow](./ai-ml/kubeflow/03-notebooks.md) | [Cuestionario](./quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
+   - [Parte 4: Katib — Ajuste de hiperparámetros y AutoML](./ai-ml/kubeflow/04-katib.md) | [Cuestionario](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+   - [Parte 5: Kubeflow Trainer y entrenamiento distribuido](./ai-ml/kubeflow/05-training-operator.md) | [Cuestionario](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
+   - [Parte 6: KServe — Servicio de modelos en Kubernetes](./ai-ml/kubeflow/06-kserve.md) | [Cuestionario](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+10. **Análisis profundo de MLflow en EKS**
+    - [Introducción a MLflow en EKS](./ai-ml/mlflow/README.md)
+    - [Parte 1: Seguimiento de MLflow](./ai-ml/mlflow/01-tracking.md) | [Cuestionario](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+    - [Parte 2: Registro de modelos de MLflow](./ai-ml/mlflow/02-model-registry.md) | [Cuestionario](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+    - [Parte 3: Implementación de MLflow en EKS](./ai-ml/mlflow/03-eks-deployment.md) | [Cuestionario](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 
 ### Data on EKS
 1. [Descripción general de Data on EKS](./data-on-eks/README.md)

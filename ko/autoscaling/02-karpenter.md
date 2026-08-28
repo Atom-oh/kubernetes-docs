@@ -1,7 +1,7 @@
 # Karpenter
 
 > **지원 버전**: Karpenter 1.6 ~ 1.14, Kubernetes 1.29+ (v1.14 기준)  
-> **마지막 업데이트**: 2026년 7월 27일
+> **마지막 업데이트**: 2026년 8월 24일
 
 ## 목차
 - [소개](#소개)
@@ -334,6 +334,10 @@ Karpenter v1.13에 추가된 NodeReadinessController는 노드가 초기화되�
 이어서 2026년 7월 17일에는 유지 관리 중인 모든 마이너 라인(v1.3.8 ~ v1.11.3)에 대해 업스트림 `sigs.k8s.io/karpenter` 버전을 갱신하는 패치 릴리스가 일괄 공개되었습니다. 구버전 라인을 사용 중이라면 해당 라인의 최신 패치로 업데이트하는 것을 권장합니다 ([릴리스 목록](https://github.com/aws/karpenter-provider-aws/releases)).
 
 또한 2026년 7월 22일에는 Karpenter(및 EKS Auto Mode) 노드 풀에서 Elastic Fabric Adapter(EFA) 네트워크 디바이스 구성과 EC2 배치 그룹(placement group)을 지원한다는 발표가 있었습니다. EFA 지원 인스턴스의 네트워크 인터페이스를 EFA 전용(VPC IP 주소를 소비하지 않음) 또는 표준 ENI로 설정할 수 있고, cluster/spread/partition 배치 전략을 노드 풀 구성에서 직접 지정할 수 있습니다 — 분산 학습·추론 워크로드에 유용합니다. [발표](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/)를 참고하세요.
+
+### 2026년 8월 업데이트: v1.14.1 패치 릴리스
+
+2026년 8월 21일 v1.14 라인의 첫 패치인 [v1.14.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1)이 공개되었습니다. 업스트림 `sigs.k8s.io/karpenter` 버전 갱신과 v1.14.0 이후 수정 사항의 체리픽을 담은 유지 보수 릴리스입니다.
 
 ## 노드 클래스
 

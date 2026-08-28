@@ -1,16 +1,16 @@
 # Requisitos previos
 
-< [Tabla de contenidos](./) | [Siguiente: Configuración de red](02-network-configuration.md) >
+< [Tabla de contenidos](./README.md) | [Siguiente: Configuración de red](02-network-configuration.md) >
 
 > **Versiones compatibles**: EKS 1.31+, nodeadm 0.1+ **Última actualización**: February 23, 2026
 
-Este documento cubre los requisitos del sistema para nodos on-premises, servidores GPU e infraestructura de red necesarios para desplegar EKS Hybrid Nodes.
+Este documento cubre los requisitos del sistema para nodos on-premises, servidores GPU e infraestructura de red necesarios para implementar EKS Hybrid Nodes.
 
-## Resumen de requisitos previos de red
+## Descripción general de los requisitos de red
 
-El siguiente diagrama muestra los requisitos previos de red para conectar nodos on-premises a un cluster EKS, incluida la configuración de VPC, Transit Gateway/Virtual Private Gateway y los requisitos de CIDR.
+El siguiente diagrama muestra los requisitos de red para conectar nodos on-premises a un clúster de EKS, incluida la configuración de VPC, Transit Gateway/Virtual Private Gateway y los requisitos de CIDR.
 
-![Requisitos previos de red de EKS Hybrid Nodes](../.gitbook/assets/hybrid-prereq-diagram.png)
+![EKS Hybrid Nodes Network Prerequisites](../.gitbook/assets/hybrid-prereq-diagram.png)
 
 ## Requisitos de nodos on-premises
 
@@ -21,14 +21,14 @@ El siguiente diagrama muestra los requisitos previos de red para conectar nodos 
 | Ubuntu LTS        | 20.04, 22.04, 24.04                      | x86\_64, arm64 |
 | RHEL              | 8, 9                                     | x86\_64, arm64 |
 | Amazon Linux      | 2023                                     | x86\_64, arm64 |
-| Bottlerocket      | v1.37.0 y superior (solo variantes VMware) | solo x86\_64   |
+| Bottlerocket      | v1.37.0 y posteriores (solo variantes de VMware) | solo x86\_64   |
 
-> **Nota sobre Bottlerocket**: Solo las variantes VMware de Bottlerocket son compatibles con EKS Hybrid Nodes, y se requiere Kubernetes v1.28 o superior. Bottlerocket incluye automáticamente todas las dependencias necesarias, por lo que no se requiere la CLI `nodeadm`. La arquitectura ARM no es compatible con Bottlerocket.
+> **Nota sobre Bottlerocket**: Solo las variantes de VMware de Bottlerocket son compatibles con EKS Hybrid Nodes, y se requiere Kubernetes v1.28 o posterior. Bottlerocket incluye automáticamente todas las dependencias necesarias, por lo que no se requiere la CLI de `nodeadm`. La arquitectura ARM no es compatible con Bottlerocket.
 
 > **Notas sobre la arquitectura ARM**:
 >
 > * Los nodos ARM requieren **ARMv8.2 o posterior con extensión Crypto** (para kube-proxy v1.31+)
-> * **Raspberry Pi (anterior a Pi 5) no es compatible** — solo admite ARMv8.0, que no incluye la extensión Crypto
+> * **Raspberry Pi (anteriores a Pi 5) no es compatible** — solo admite ARMv8.0, que carece de la extensión Crypto
 > * Pi 5 (ARMv8.2) y posteriores son compatibles
 
 ### Runtime de contenedores
@@ -43,24 +43,24 @@ docker --version
 # Required version: 20.10.10 or higher
 ```
 
-> **Notas de containerd específicas del OS**:
+> **Notas de containerd específicas del sistema operativo**:
 >
 > * **Ubuntu 24.04**: Requiere containerd v1.7.19 o posterior, o cambios en la configuración del perfil de AppArmor
 > * **RHEL**: `--containerd-source distro` **no es válido**. Debe usar `--containerd-source docker`
-> * **Ubuntu 20.04 / RHEL 8**: El kernel predeterminado es inferior a 5.10, que es requerido para Cilium v1.18.x
+> * **Ubuntu 20.04 / RHEL 8**: El kernel predeterminado es anterior a 5.10, que es necesario para Cilium v1.18.x
 
 ### Especificaciones mínimas de hardware
 
 | Recurso | Mínimo (oficial de AWS) | Recomendado     |
-| ------- | ----------------------- | --------------- |
-| CPU     | 1 vCPU                  | 4 núcleos o más |
-| RAM     | 1 GiB                   | 8 GB o más      |
-| Disco   | SSD de 50 GB            | SSD NVMe de 100 GB |
-| Red     | 100 Mbps                | 10 Gbps o más   |
+| -------- | ----------------------- | --------------- |
+| CPU      | 1 vCPU                  | 4 núcleos o más |
+| RAM      | 1 GiB                   | 8 GB o más      |
+| Disco    | SSD de 50 GB            | SSD NVMe de 100 GB |
+| Red      | 100 Mbps                | 10 Gbps o más   |
 
 > **Nota**: El mínimo oficial de AWS es 1 vCPU / 1 GiB, pero se recomiendan 2 núcleos / 4 GB o más para ejecutar cargas de trabajo reales.
 
-### Comprobación de configuración del sistema
+### Comprobación de la configuración del sistema
 
 ```bash
 # Verify swap is disabled
@@ -90,35 +90,35 @@ EOF
 sudo sysctl --system
 ```
 
-## Creación de imágenes de nodo con plantillas de AWS Packer
+## Creación de imágenes de nodos con plantillas de AWS Packer
 
-AWS proporciona plantillas de Packer de ejemplo para crear imágenes de nodo para EKS Hybrid Nodes. Estas plantillas admiten formatos de salida OVA (vSphere), Qcow2 y Raw.
+AWS proporciona plantillas de Packer de ejemplo para crear imágenes de nodos para EKS Hybrid Nodes. Estas plantillas admiten formatos de salida OVA (vSphere), Qcow2 y Raw.
 
 ### Requisitos previos de Packer
 
-| Herramienta          | Versión mínima |
-| -------------------- | -------------- |
-| Packer               | v1.11.0+       |
-| Plugin VMware vSphere | v1.4.0+        |
-| Plugin QEMU          | Más reciente   |
+| Herramienta              | Versión mínima |
+| ------------------------ | -------------- |
+| Packer                   | v1.11.0+       |
+| VMware vSphere Plugin    | v1.4.0+        |
+| QEMU Plugin              | Más reciente   |
 
 ### Variables de entorno
 
-| Variable              | Descripción                                  | Predeterminado |
-| --------------------- | -------------------------------------------- | -------------- |
-| `PKR_SSH_PASSWORD`    | Contraseña SSH                               | -              |
-| `ISO_URL`             | URL de la imagen ISO del OS                  | -              |
-| `ISO_CHECKSUM`        | Suma de comprobación ISO                     | -              |
-| `CREDENTIAL_PROVIDER` | Proveedor de credenciales (`ssm` o `iam`)    | `ssm`          |
-| `K8S_VERSION`         | Versión de Kubernetes                        | -              |
-| `NODEADM_ARCH`        | Arquitectura (`amd64` o `arm64`)             | `amd64`        |
+| Variable              | Descripción                          | Predeterminado |
+| --------------------- | ------------------------------------ | -------------- |
+| `PKR_SSH_PASSWORD`    | Contraseña SSH                       | -       |
+| `ISO_URL`             | URL de la imagen ISO del SO          | -       |
+| `ISO_CHECKSUM`        | Suma de comprobación de ISO          | -       |
+| `CREDENTIAL_PROVIDER` | Proveedor de credenciales (`ssm` o `iam`) | `ssm`   |
+| `K8S_VERSION`         | Versión de Kubernetes                | -       |
+| `NODEADM_ARCH`        | Arquitectura (`amd64` o `arm64`)     | `amd64` |
 
 **Variables específicas de RHEL:**
 
-| Variable      | Descripción                               |
-| ------------- | ----------------------------------------- |
-| `RH_USERNAME` | Nombre de usuario de suscripción Red Hat  |
-| `RH_PASSWORD` | Contraseña de suscripción Red Hat         |
+| Variable      | Descripción                         |
+| ------------- | ----------------------------------- |
+| `RH_USERNAME` | Nombre de usuario de suscripción Red Hat |
+| `RH_PASSWORD` | Contraseña de suscripción Red Hat   |
 
 **Variables específicas de vSphere:**
 
@@ -147,9 +147,9 @@ packer build -only=general-build.qemu.al2023 template.pkr.hcl
 
 > **Nota**: Establecer la variable de entorno `CREDENTIAL_PROVIDER` en `iam` crea una imagen para IAM Roles Anywhere. El valor predeterminado es `ssm`.
 
-## Requisitos de servidores GPU (opcional)
+## Requisitos de servidores GPU (opcionales)
 
-### Driver NVIDIA
+### Controlador NVIDIA
 
 ```bash
 # Check NVIDIA driver version
@@ -161,16 +161,16 @@ nvcc --version
 # Recommended version: CUDA 12.x
 ```
 
-### Modelos GPU compatibles
+### Modelos de GPU compatibles
 
-| Modelo GPU  | VRAM     | Uso principal                       |
-| ----------- | -------- | ----------------------------------- |
-| NVIDIA H100 | 80 GB    | Entrenamiento/inferencia LLM a gran escala |
-| NVIDIA H200 | 141 GB   | Modelos muy grandes                 |
-| NVIDIA A100 | 40/80 GB | Propósito general AI/ML             |
-| NVIDIA L40S | 48 GB    | Optimizado para inferencia          |
+| Modelo de GPU | VRAM     | Uso principal                       |
+| ------------- | -------- | ----------------------------------- |
+| NVIDIA H100   | 80 GB    | Entrenamiento/inferencia de LLM a gran escala |
+| NVIDIA H200   | 141 GB   | Modelos muy grandes                 |
+| NVIDIA A100   | 40/80 GB | Uso general de AI/ML                |
+| NVIDIA L40S   | 48 GB    | Optimizada para inferencia          |
 
-### Instalación del driver GPU
+### Instalación del controlador GPU
 
 **Ubuntu 22.04 LTS (recomendado):**
 
@@ -226,12 +226,12 @@ sudo systemctl restart containerd
 
 ### Ancho de banda y latencia
 
-| Elemento    | Mínimo            | Recomendado        |
-| ----------- | ----------------- | ------------------ |
-| Ancho de banda | 100 Mbps        | 10 Gbps o más      |
-| Latencia    | 200 ms RTT o menos | 5 ms o menos       |
-| Pérdida de paquetes | 0.1% o menos | 0.01% o menos      |
-| MTU         | 1500              | 9000 (Jumbo Frame) |
+| Elemento        | Mínimo             | Recomendado        |
+| --------------- | ------------------ | ------------------ |
+| Ancho de banda  | 100 Mbps           | 10 Gbps o más      |
+| Latencia        | 200 ms RTT o menos | 5 ms o menos       |
+| Pérdida de paquetes | 0.1% o menos       | 0.01% o menos      |
+| MTU             | 1500               | 9000 (Jumbo Frame) |
 
 ### Configuración de Jumbo Frame
 
@@ -252,11 +252,11 @@ nmcli connection show "System eth0" | grep mtu
 
 ## Configuración del proveedor de credenciales IAM
 
-EKS Hybrid Nodes requiere uno de dos proveedores de credenciales para autenticar nodos on-premises con AWS.
+EKS Hybrid Nodes requiere uno de dos proveedores de credenciales para autenticar los nodos on-premises con AWS.
 
 ### Opción A: SSM Hybrid Activations
 
-SSM Hybrid Activations es la opción más sencilla, ya que no requiere infraestructura PKI.
+SSM Hybrid Activations es la opción más sencilla y no requiere infraestructura de PKI.
 
 ```bash
 # Create IAM role for hybrid nodes
@@ -290,7 +290,7 @@ aws ssm create-activation \
 
 ### Opción B: IAM Roles Anywhere
 
-IAM Roles Anywhere utiliza certificados X.509 de tu PKI existente, ideal para entornos air-gap.
+IAM Roles Anywhere utiliza certificados X.509 de su PKI existente, ideal para entornos air-gap.
 
 ```bash
 # 1. Create Trust Anchor with your CA certificate
@@ -317,7 +317,7 @@ sudo cp node.key /etc/iam/pki/server.key
 
 ### Configuración de IAM basada en CloudFormation
 
-En lugar de la CLI, puedes usar CloudFormation para configurar roles IAM y recursos relacionados.
+En lugar de la CLI, puede usar CloudFormation para configurar roles de IAM y recursos relacionados.
 
 **Plantilla de CloudFormation para SSM:**
 
@@ -365,26 +365,26 @@ aws cloudformation create-stack \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-### Detalles de políticas IAM
+### Detalles de las políticas de IAM
 
-Detalles de las políticas IAM requeridas para el rol de nodo híbrido.
+Detalles de las políticas de IAM necesarias para el rol de nodo híbrido.
 
 **Políticas administradas requeridas:**
 
-| Política                             | Propósito                                     |
-| ------------------------------------ | --------------------------------------------- |
-| `AmazonEC2ContainerRegistryPullOnly` | Extraer imágenes de contenedor desde ECR      |
-| `AmazonSSMManagedInstanceCore`       | Funcionalidad principal del agente SSM (al usar SSM) |
+| Política                               | Propósito                                      |
+| -------------------------------------- | ---------------------------------------------- |
+| `AmazonEC2ContainerRegistryPullOnly`   | Obtener imágenes de contenedores desde ECR     |
+| `AmazonSSMManagedInstanceCore`         | Funcionalidad principal del agente SSM (al usar SSM) |
 
 **Políticas opcionales:**
 
-| Política                            | Propósito                |
-| ----------------------------------- | ------------------------ |
-| `eks-auth:AssumeRoleForPodIdentity` | Compatibilidad con EKS Pod Identity |
+| Política                              | Propósito                         |
+| ------------------------------------- | --------------------------------- |
+| `eks-auth:AssumeRoleForPodIdentity`   | Compatibilidad con EKS Pod Identity |
 
-**Política condicional de baja de registro de SSM:**
+**Política condicional de anulación de registro de SSM:**
 
-En entornos multi-cluster, usa la etiqueta de condición `EKSClusterARN` para garantizar que los nodos solo puedan darse de baja de clusters específicos:
+En entornos multiclúster, use la etiqueta de condición `EKSClusterARN` para garantizar que los nodos solo puedan anularse del registro de clústeres específicos:
 
 ```json
 {
@@ -406,11 +406,11 @@ En entornos multi-cluster, usa la etiqueta de condición `EKSClusterARN` para ga
 
 ### Detalles de la política de confianza de IAM Roles Anywhere
 
-La configuración de la política de confianza es crítica cuando se usa IAM Roles Anywhere.
+La configuración de la política de confianza es fundamental al usar IAM Roles Anywhere.
 
-**Mapeo x509Subject/CN:**
+**Asignación de x509Subject/CN:**
 
-El CN (Common Name) del certificado debe coincidir con el nombre del nodo. Esto se usa para el seguimiento de auditoría y la identificación del nodo.
+El CN (Common Name) del certificado debe coincidir con el nombre del nodo. Se utiliza para el seguimiento de auditoría y la identificación de nodos.
 
 ```json
 {
@@ -441,27 +441,27 @@ El CN (Common Name) del certificado debe coincidir con el nombre del nodo. Esto 
 
 **Componentes clave:**
 
-| Componente              | Descripción                                      |
-| ----------------------- | ------------------------------------------------ |
-| `sts:SetSourceIdentity` | Establece la identidad de origen para seguimiento de auditoría |
-| `sts:RoleSessionName`   | Nombre de sesión vinculado al CN del certificado |
-| `x509Subject/CN`        | El CN del certificado debe coincidir con nodeName |
+| Componente               | Descripción                                  |
+| ------------------------ | -------------------------------------------- |
+| `sts:SetSourceIdentity`  | Establece la identidad de origen para el seguimiento de auditoría |
+| `sts:RoleSessionName`    | Nombre de sesión vinculado al CN del certificado |
+| `x509Subject/CN`         | El CN del certificado debe coincidir con nodeName |
 
 ### Comparación de duración de credenciales
 
-| Aspecto              | SSM                    | IAM Roles Anywhere                                     |
-| -------------------- | ---------------------- | ------------------------------------------------------ |
-| Duración predeterminada | 1 hora (fija)       | 1 hora (configurable)                                  |
-| Duración máxima      | 1 hora                 | 12 horas                                               |
-| Rotación             | Automática por AWS     | Automática, respeta `durationSeconds`                  |
-| `MaxSessionDuration` | N/A                    | El valor del rol IAM debe superar el `durationSeconds` del perfil |
-| Configuración        | No configurable        | Se establece mediante el parámetro `durationSeconds` del perfil |
+| Aspecto              | SSM              | IAM Roles Anywhere                                     |
+| -------------------- | ---------------- | ------------------------------------------------------ |
+| Duración predeterminada | 1 hora (fija)    | 1 hora (configurable)                                  |
+| Duración máxima      | 1 hora           | 12 horas                                               |
+| Rotación             | Automática por AWS | Automática, respeta `durationSeconds`                  |
+| `MaxSessionDuration` | N/A              | El valor del rol IAM debe superar `durationSeconds` del perfil |
+| Configuración        | No configurable  | Se establece mediante el parámetro `durationSeconds` del perfil |
 
-> **Nota**: Al usar IAM Roles Anywhere, el `MaxSessionDuration` del rol IAM debe ser mayor que el valor `durationSeconds` del perfil. De lo contrario, la obtención de credenciales fallará.
+> **Nota**: Al usar IAM Roles Anywhere, el `MaxSessionDuration` del rol IAM debe ser mayor que el valor `durationSeconds` del perfil. De lo contrario, fallará la obtención de credenciales.
 
-## Preparación de acceso al cluster
+## Preparación del acceso al clúster
 
-Los nodos híbridos requieren entradas de acceso adecuadas para unirse al cluster EKS.
+Los nodos híbridos requieren entradas de acceso adecuadas para unirse al clúster de EKS.
 
 ### Entrada de acceso HYBRID\_LINUX (recomendada)
 
@@ -479,9 +479,9 @@ Este comando establece automáticamente:
 * Nombre de usuario: <code v-pre>system:node:{{SessionName}}</code>
 * Grupos de Kubernetes: `system:bootstrappers`, `system:nodes`
 
-### Alternativa con ConfigMap aws-auth
+### Alternativa de ConfigMap aws-auth
 
-Cuando se usa el modo de autenticación `API_AND_CONFIG_MAP`, puedes usar el ConfigMap `aws-auth` como alternativa:
+Al usar el modo de autenticación `API_AND_CONFIG_MAP`, puede usar el ConfigMap `aws-auth` como alternativa:
 
 ```yaml
 apiVersion: v1
@@ -502,55 +502,55 @@ data:
 kubectl apply -f aws-auth-cm.yaml
 ```
 
-> **Nota**: El método ConfigMap `aws-auth` es un enfoque legacy. Para clusters nuevos, se recomienda usar la entrada de acceso `HYBRID_LINUX`.
+> **Nota**: El método ConfigMap `aws-auth` es un enfoque heredado. Para clústeres nuevos, se recomienda usar la entrada de acceso `HYBRID_LINUX`.
 
 ## Requisitos de configuración de VPC
 
-La VPC del cluster EKS debe estar configurada correctamente para admitir la conectividad de EKS Hybrid Nodes.
+La VPC del clúster de EKS debe configurarse correctamente para admitir la conectividad de Hybrid Nodes.
 
-### Configuración de route table
+### Configuración de la tabla de rutas
 
-Las route tables de VPC deben incluir rutas para CIDR on-premises:
+Las tablas de rutas de VPC deben incluir rutas para CIDR on-premises:
 
-| Destino                       | Target  | Propósito                    |
-| ----------------------------- | ------- | ---------------------------- |
-| 10.0.0.0/16 (VPC CIDR)        | local   | Tráfico interno de VPC       |
-| 10.80.0.0/16 (Remote Node CIDR) | TGW/VGW | Ruta a nodos on-premises     |
-| 10.85.0.0/16 (Remote Pod CIDR)  | TGW/VGW | Ruta a Pods on-premises      |
+| Destino                        | Objetivo | Propósito                         |
+| ------------------------------ | -------- | --------------------------------- |
+| 10.0.0.0/16 (CIDR de VPC)      | local    | Tráfico interno de VPC            |
+| 10.80.0.0/16 (CIDR de nodo remoto) | TGW/VGW  | Ruta hacia nodos on-premises      |
+| 10.85.0.0/16 (CIDR de Pod remoto)  | TGW/VGW  | Ruta hacia Pods on-premises       |
 
 ### Requisitos de Security Group
 
-EKS crea automáticamente reglas inbound cuando se especifican `RemoteNodeNetwork` / `RemotePodNetwork`. Las reglas outbound adicionales deben configurarse manualmente:
+EKS crea automáticamente reglas de entrada cuando se especifican `RemoteNodeNetwork` / `RemotePodNetwork`. Las reglas de salida adicionales deben configurarse manualmente:
 
-| Dirección         | Protocolo | Puerto        | Origen/Destino  | Propósito             |
-| ----------------- | --------- | ------------- | --------------- | --------------------- |
-| Inbound (auto)    | TCP       | 443           | Remote Node CIDR | Kubelet → API Server  |
-| Inbound (auto)    | TCP       | 443           | Remote Pod CIDR | Pod → API Server      |
-| Inbound (auto)    | TCP       | 10250         | Remote Node CIDR | API Server → Kubelet  |
-| Outbound (manual) | TCP       | 10250         | Remote Node CIDR | API Server → Kubelet  |
-| Outbound (manual) | TCP       | Webhook ports | Remote Pod CIDR | API Server → Webhooks |
+| Dirección         | Protocolo | Puerto        | Origen/destino    | Propósito               |
+| ----------------- | --------- | ------------- | ----------------- | ----------------------- |
+| Entrada (auto)    | TCP       | 443           | CIDR de nodo remoto | Kubelet → API Server    |
+| Entrada (auto)    | TCP       | 443           | CIDR de Pod remoto | Pod → API Server        |
+| Entrada (auto)    | TCP       | 10250         | CIDR de nodo remoto | API Server → Kubelet    |
+| Salida (manual)   | TCP       | 10250         | CIDR de nodo remoto | API Server → Kubelet    |
+| Salida (manual)   | TCP       | Puertos de Webhook | CIDR de Pod remoto | API Server → Webhooks |
 
-> **Nota**: Existe un límite de 60 reglas inbound por Security Group. Verifica el conteo de reglas al usar múltiples CIDR.
+> **Nota**: Existe un límite de 60 reglas de entrada por Security Group. Verifique el número de reglas al utilizar varios CIDR.
 
 ### Modos de acceso al endpoint de API Server
 
-| Modo        | Ruta de Kubelet              | Caso de uso                                  |
-| ----------- | ---------------------------- | -------------------------------------------- |
-| **Public**  | Internet → endpoint EKS API  | Configuración simple, internet requerido desde on-prem |
-| **Private** | VPN/DX → VPC ENI → API Server | Air-gap, máxima seguridad **(recomendado)** |
+| Modo        | Ruta de Kubelet                | Caso de uso                                  |
+| ----------- | ------------------------------ | -------------------------------------------- |
+| **Público** | Internet → endpoint de API de EKS | Configuración sencilla, se requiere Internet desde on-premises |
+| **Privado** | VPN/DX → VPC ENI → API Server  | Air-gap, máxima seguridad **(recomendado)**  |
 
-> **Advertencia**: **No uses el modo "Public and Private" con nodos híbridos.** En este modo, los nodos híbridos resuelven el endpoint EKS API solo a IP públicas, lo que hace que fallen las conexiones privadas VPN/Direct Connect. Esto provoca que **los nodos no puedan unirse al cluster**. Debes elegir Public o Private, no ambos.
+> **Advertencia**: **NO use el modo "Público y privado" con nodos híbridos.** En este modo, los nodos híbridos resuelven el endpoint de API de EKS solo a IP públicas, lo que hace que fallen las conexiones VPN/Direct Connect privadas. Esto provoca que **los nodos no puedan unirse al clúster**. Debe elegir Público o Privado, no ambos.
 
-> **Recomendación**: Usa acceso al endpoint **Private** para entornos híbridos de producción.
+> **Recomendación**: Use el acceso al endpoint **Privado** para entornos híbridos de producción.
 
-## Creación de un cluster EKS para EKS Hybrid Nodes
+## Creación de clústeres de EKS para Hybrid Nodes
 
-Al crear un cluster EKS con compatibilidad para EKS Hybrid Nodes, se aplican los siguientes requisitos:
+Al crear un clúster de EKS con compatibilidad con nodos híbridos, se aplican los siguientes requisitos:
 
 * **Modo de autenticación**: Debe usar `API` o `API_AND_CONFIG_MAP`
 * **Familia de direcciones IP**: Debe usar IPv4
-* **Conectividad de endpoint**: Debe usar solo Public O Private ("Public and Private" **no compatible** — causa fallos de unión de nodos híbridos)
-* **Redes remotas**: Especifica los CIDR `RemoteNodeNetwork` y `RemotePodNetwork`
+* **Conectividad del endpoint**: Debe usar solo Público O Privado ("Público y privado" **no compatible** — provoca errores al unir nodos híbridos)
+* **Redes remotas**: Especifique los CIDR de `RemoteNodeNetwork` y `RemotePodNetwork`
 
 ### Uso de eksctl
 
@@ -600,7 +600,7 @@ aws eks update-kubeconfig --name my-hybrid-cluster --region ap-northeast-2
 kubectl get svc
 ```
 
-## Add-ons compatibles para EKS Hybrid Nodes
+## Add-ons compatibles con Hybrid Nodes
 
 No todos los add-ons de EKS son compatibles con nodos híbridos. Amazon VPC CNI **no** es compatible.
 
@@ -628,4 +628,4 @@ No todos los add-ons de EKS son compatibles con nodos híbridos. Amazon VPC CNI 
 
 ***
 
-< [Tabla de contenidos](./) | [Siguiente: Configuración de red](02-network-configuration.md) >
+< [Tabla de contenidos](./README.md) | [Siguiente: Configuración de red](02-network-configuration.md) >

@@ -2,20 +2,20 @@
 
 > **Versiones compatibles**: Terraform >= 1.10, AWS Provider >= 5.40, EKS >= 1.29 **Última actualización**: February 19, 2026
 
-< [Tabla de contenido](./) | [Siguiente: Enrutamiento ponderado NLB y Blue/Green Clusters](02-infrastructure-advanced.md) >
+< [Tabla de contenidos](./README.md) | [Siguiente: Enrutamiento ponderado de NLB y clústeres Blue/Green](02-infrastructure-advanced.md) >
 
 ***
 
 ## Descripción general
 
-Esta guía presenta una arquitectura Terraform lista para producción para desplegar Amazon EKS Clusters con Auto Mode habilitado. El enfoque de 3 capas separa las responsabilidades de infraestructura por frecuencia de cambio, propiedad y blast radius, lo que permite que los equipos trabajen de forma independiente mientras mantienen la seguridad operativa.
+Esta guía presenta una arquitectura de Terraform lista para producción para implementar clústeres de Amazon EKS con Auto Mode habilitado. El enfoque de 3 capas separa las responsabilidades de infraestructura por frecuencia de cambio, propiedad y radio de impacto, lo que permite a los equipos trabajar de forma independiente mientras mantienen la seguridad operativa.
 
 **Principios clave de diseño:**
 
-* **Separación de responsabilidades**: Cada capa tiene una propiedad y patrones de cambio distintos
-* **Minimización del blast radius**: Los cambios en una capa no pueden afectar accidentalmente a las demás
-* **Aislamiento del estado**: Archivos de estado Terraform independientes por capa
-* **Preparado para GitOps**: Terraform gestiona la infraestructura de AWS; los recursos de Kubernetes son gestionados por ArgoCD
+* **Separación de responsabilidades**: cada capa tiene propiedad y patrones de cambio distintos
+* **Minimización del radio de impacto**: los cambios en una capa no pueden afectar accidentalmente a otras
+* **Aislamiento de estado**: archivos de estado de Terraform independientes por capa
+* **Preparado para GitOps**: Terraform administra la infraestructura de AWS; ArgoCD administra los recursos de Kubernetes
 
 ***
 
@@ -23,22 +23,22 @@ Esta guía presenta una arquitectura Terraform lista para producción para despl
 
 ### ¿Por qué separar las capas?
 
-Las configuraciones monolíticas tradicionales de Terraform crean varios desafíos operativos:
+Las configuraciones monolíticas tradicionales de Terraform generan varios desafíos operativos:
 
-1. **Tiempos largos de Plan/Apply**: Cada cambio requiere evaluar todos los recursos
-2. **Blast Radius**: Una sola configuración incorrecta puede afectar a toda la infraestructura
-3. **Conflictos entre equipos**: Varios equipos compiten por el mismo archivo de estado
-4. **Riesgo de cambio**: Los cambios de Network agrupados con cambios de aplicación aumentan el riesgo de despliegue
+1. **Tiempos prolongados de Plan/Apply**: cada cambio requiere evaluar todos los recursos
+2. **Radio de impacto**: una sola configuración incorrecta puede afectar a toda la infraestructura
+3. **Conflictos entre equipos**: varios equipos compiten por el mismo archivo de estado
+4. **Riesgo de cambios**: los cambios de red agrupados con cambios de aplicaciones aumentan el riesgo de implementación
 
-La arquitectura de 3 capas aborda estos desafíos organizando la infraestructura en niveles distintos según estabilidad y propiedad.
+La arquitectura de 3 capas aborda estos desafíos al organizar la infraestructura en niveles distintos según la estabilidad y la propiedad.
 
 ### Características de las capas
 
-| Capa | Nombre   | Frecuencia de cambio | Propietario principal | Blast Radius | Dependencias            |
-| ---- | -------- | -------------------- | --------------------- | ------------ | ----------------------- |
-| 01   | Network  | Trimestral           | Equipo de infraestructura | Alto      | Ninguna                 |
-| 02   | Cluster  | Mensual              | Equipo de plataforma  | Medio        | 01-network              |
-| 03   | Platform | Semanal              | Equipos Platform/App  | Bajo         | 01-network, 02-cluster  |
+| Capa | Nombre     | Frecuencia de cambio | Propietario principal       | Radio de impacto | Dependencias           |
+| ----- | -------- | ---------------- | ------------------- | ------------ | ---------------------- |
+| 01    | Red  | Trimestral        | Equipo de infraestructura | Alto         | Ninguna                   |
+| 02    | Clúster  | Mensual          | Equipo de plataforma       | Medio       | 01-network             |
+| 03    | Plataforma | Semanal           | Equipos de plataforma/aplicaciones  | Bajo          | 01-network, 02-cluster |
 
 ### Estructura de directorios
 
@@ -78,13 +78,13 @@ eks-terraform/
 
 ## 2. 00-shared: Configuración común
 
-La capa compartida contiene plantillas de configuración y variables comunes usadas en todas las capas. Esto garantiza consistencia y reduce la duplicación.
+La capa compartida contiene plantillas de configuración y variables comunes utilizadas en todas las capas. Esto garantiza la coherencia y reduce la duplicación.
 
-### Configuración del backend S3
+### Configuración del backend de S3
 
-Primero, crea el bucket S3 para la gestión del estado de Terraform:
+Primero, cree el bucket de S3 para la gestión del estado de Terraform:
 
-> **Nota**: A partir de Terraform 1.10, el backend S3 admite bloqueo de estado nativo mediante `use_lockfile = true`, aprovechando escrituras condicionales de S3. Esto elimina la necesidad de una tabla DynamoDB para el bloqueo de estado.
+> **Nota**: A partir de Terraform 1.10, el backend de S3 admite el bloqueo de estado nativo mediante `use_lockfile = true`, aprovechando las escrituras condicionales de S3. Esto elimina la necesidad de una tabla de DynamoDB para el bloqueo de estado.
 
 ```hcl
 # 00-shared/bootstrap/main.tf
@@ -234,20 +234,20 @@ locals {
 
 ## 3. 01-network: Configuración de VPC
 
-La capa de Network establece la infraestructura VPC fundamental. Esta capa cambia con poca frecuencia y requiere una planificación cuidadosa debido a su alto blast radius.
+La capa de red establece la infraestructura VPC fundamental. Esta capa cambia con poca frecuencia y requiere una planificación cuidadosa debido a su amplio radio de impacto.
 
 ### Consideraciones de diseño
 
 Para esta arquitectura, usamos un **diseño de zonas Blue/Green**:
 
-* **Blue Zone**: ap-northeast-2a (primaria)
-* **Green Zone**: ap-northeast-2c (secundaria)
+* **Zona Blue**: ap-northeast-2a (principal)
+* **Zona Green**: ap-northeast-2c (secundaria)
 
-Este enfoque de una sola zona por Cluster proporciona:
+Este enfoque de una sola zona por clúster ofrece:
 
-* Localidad de datos para workloads con estado
-* Optimización de costos (menor tráfico entre AZ)
-* Aislamiento claro del dominio de falla
+* Localidad de datos para cargas de trabajo con estado
+* Optimización de costos (tráfico entre AZ reducido)
+* Aislamiento claro de dominios de fallo
 
 ### Configuración principal
 
@@ -474,7 +474,7 @@ variable "vpc_cidr" {
 }
 ```
 
-### Outputs
+### Salidas
 
 ```hcl
 # 01-network/outputs.tf
@@ -576,19 +576,19 @@ terraform {
 
 ## 4. 02-cluster: EKS Auto Mode
 
-La capa de Cluster despliega EKS con Auto Mode habilitado. Auto Mode simplifica las operaciones del Cluster al automatizar la gestión de compute, networking y storage.
+La capa de clúster implementa EKS con Auto Mode habilitado. Auto Mode simplifica las operaciones del clúster al automatizar la administración de cómputo, redes y almacenamiento.
 
-### Entender EKS Auto Mode
+### Comprensión de EKS Auto Mode
 
 EKS Auto Mode proporciona:
 
-* **Compute Auto Mode**: Aprovisionamiento y escalado automático de nodos
-* **Network Auto Mode**: VPC CNI gestionado con administración automática de IP
-* **Storage Auto Mode**: Aprovisionamiento dinámico de storage classes
+* **Compute Auto Mode**: aprovisionamiento y escalado automáticos de nodos
+* **Network Auto Mode**: VPC CNI administrado con gestión automática de IP
+* **Storage Auto Mode**: aprovisionamiento dinámico de clases de almacenamiento
 
-Para obtener más detalles sobre EKS Auto Mode, consulta [Introducción a EKS Auto Mode](../eks-auto-mode/01-getting-started.md).
+Para obtener más información sobre EKS Auto Mode, consulte [Introducción a EKS Auto Mode](../eks-auto-mode/01-getting-started.md).
 
-### Data Sources
+### Fuentes de datos
 
 ```hcl
 # 02-cluster/data.tf
@@ -829,7 +829,7 @@ variable "log_retention_days" {
 }
 ```
 
-### Outputs
+### Salidas
 
 ```hcl
 # 02-cluster/outputs.tf
@@ -916,9 +916,9 @@ terraform {
 
 ## 5. 03-platform: Add-ons y Pod Identity
 
-La capa de Platform gestiona add-ons de EKS, asociaciones de Pod Identity y access entries para equipos de aplicaciones. Esta capa cambia con frecuencia a medida que los equipos se incorporan y evolucionan los requisitos de las aplicaciones.
+La capa de plataforma administra los add-ons de EKS, las asociaciones de Pod Identity y las entradas de acceso para los equipos de aplicaciones. Esta capa cambia con frecuencia a medida que se incorporan equipos y evolucionan los requisitos de las aplicaciones.
 
-### Data Sources
+### Fuentes de datos
 
 ```hcl
 # 03-platform/data.tf
@@ -1341,7 +1341,7 @@ variable "readonly_roles" {
 }
 ```
 
-### Outputs
+### Salidas
 
 ```hcl
 # 03-platform/outputs.tf
@@ -1392,9 +1392,9 @@ terraform {
 
 ## 6. Integración entre capas
 
-### Patrón de Remote State
+### Patrón de estado remoto
 
-El data source `terraform_remote_state` permite que las capas consuman outputs de otras capas sin acoplamiento estrecho.
+La fuente de datos `terraform_remote_state` permite que las capas consuman salidas de otras capas sin un acoplamiento estrecho.
 
 ```hcl
 # Pattern: Consuming outputs from another layer
@@ -1414,17 +1414,17 @@ locals {
 }
 ```
 
-### Flujo de Output/Data
+### Flujo de salidas/datos
 
 ![Flujo de integración de capas](../.gitbook/assets/terraform_layer_integration.png)
 
-### Mejores prácticas de gestión de estado
+### Prácticas recomendadas de gestión de estado
 
-1. **Usa una nomenclatura de buckets consistente**: `{project}-{env}-tfstate`
-2. **Organiza por capa y color**: `network/`, `cluster/blue/`, `platform/green/`
-3. **Habilita Versioning**: Recuperación ante corrupción del estado
-4. **Habilita Encryption**: Protege valores sensibles en el estado
-5. **Usa bloqueo nativo de S3** (Terraform 1.10+): Habilita `use_lockfile = true` en la configuración del backend para bloqueo de estado basado en escrituras condicionales de S3 sin DynamoDB
+1. **Use nombres de bucket coherentes**: `{project}-{env}-tfstate`
+2. **Organice por capa y color**: `network/`, `cluster/blue/`, `platform/green/`
+3. **Habilite el versionado**: recupérese de la corrupción de estado
+4. **Habilite el cifrado**: proteja los valores confidenciales en el estado
+5. **Use el bloqueo nativo de S3** (Terraform 1.10+): habilite `use_lockfile = true` en la configuración del backend para el bloqueo de estado basado en escrituras condicionales de S3 sin DynamoDB
 
 ### Organización de archivos de estado
 
@@ -1448,9 +1448,9 @@ s3://eks-platform-prod-tfstate/
 
 ## 7. Validación
 
-### Orden de despliegue
+### Orden de implementación
 
-Las capas deben desplegarse en orden debido a las dependencias:
+Las capas deben implementarse en orden debido a las dependencias:
 
 ```bash
 # Step 1: Bootstrap (run once)
@@ -1480,7 +1480,7 @@ terraform apply
 
 ### Comandos de verificación
 
-Después de desplegar el Cluster, verifica la configuración:
+Después de implementar el clúster, verifique la configuración:
 
 ```bash
 # Configure kubectl
@@ -1509,9 +1509,9 @@ aws eks describe-cluster --name eks-platform-prod-blue \
   --query "cluster.identity.oidc.issuer" --output text
 ```
 
-### Script de Smoke Test
+### Script de prueba de humo
 
-Crea un smoke test completo:
+Cree una prueba de humo completa:
 
 ```bash
 #!/bin/bash
@@ -1598,26 +1598,26 @@ cd ../03-platform && terraform plan -out=plan.out
 
 ## Principios clave de diseño
 
-### Terraform gestiona solo infraestructura de AWS
+### Terraform solo administra infraestructura de AWS
 
 Esta arquitectura sigue una separación clara:
 
-| Capa       | Terraform gestiona                | GitOps gestiona                 |
-| ---------- | --------------------------------- | ------------------------------- |
-| Network    | VPC, Subnets, NAT, Endpoints      | -                               |
-| Cluster    | EKS, KMS, CloudWatch              | -                               |
-| Platform   | Add-ons, IAM Roles, Access Entries | -                              |
-| Kubernetes | -                                 | NodePool, Deployments, Services |
+| Capa      | Terraform administra                  | GitOps administra                  |
+| ---------- | ---------------------------------- | ------------------------------- |
+| Red    | VPC, subredes, NAT, endpoints       | -                               |
+| Clúster    | EKS, KMS, CloudWatch               | -                               |
+| Plataforma   | Add-ons, roles IAM, entradas de acceso | -                               |
+| Kubernetes | -                                  | NodePool, Deployments, Services |
 
-Los recursos de Kubernetes (definiciones de NodePool, Deployments de aplicaciones) son gestionados por ArgoCD GitOps. Consulta [Configuración de GitOps Pipeline](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md) para más detalles.
+Los recursos de Kubernetes (definiciones de NodePool y Deployments de aplicaciones) son administrados por ArgoCD GitOps. Consulte [Configuración de la canalización de GitOps](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md) para obtener más información.
 
 ### Referencias cruzadas
 
 * [Introducción a EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
-* [Mejores prácticas de seguridad de EKS](../eks/05-eks-security.md)
-* [Enrutamiento ponderado NLB y Blue/Green Clusters](02-infrastructure-advanced.md)
-* [Configuración de GitOps Pipeline](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [Prácticas recomendadas de seguridad de EKS](../eks/05-eks-security.md)
+* [Enrutamiento ponderado de NLB y clústeres Blue/Green](02-infrastructure-advanced.md)
+* [Configuración de la canalización de GitOps](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
 
 ***
 
-< [Tabla de contenido](./) | [Siguiente: Enrutamiento ponderado NLB y Blue/Green Clusters](02-infrastructure-advanced.md) >
+< [Tabla de contenidos](./README.md) | [Siguiente: Enrutamiento ponderado de NLB y clústeres Blue/Green](02-infrastructure-advanced.md) >

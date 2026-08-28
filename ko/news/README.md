@@ -1,10 +1,18 @@
 # 소식
-> **마지막 업데이트**: 2026년 8월 17일
+> **마지막 업데이트**: 2026년 8월 24일
 
 Kubernetes, Amazon EKS, CNCF 생태계의 뉴스는 별도 다이제스트 문서로 쌓이지 않습니다. 매주 GitHub Actions가 관련 뉴스를 관련된 기존 문서에 직접 반영하고, 아래 갱신 로그에 어떤 문서가 왜 바뀌었는지만 남깁니다. 매칭되는 문서가 없는 뉴스는 원문 링크만 기록됩니다.
 
 ## 갱신 로그
 
+- 2026-W35: [gitops/argocd/README.md](../gitops/argocd/README.md) — Amazon EKS 관리형 Argo CD 기능의 `argocd-cm` ConfigMap 기반 사용자 지정 구성 지원 반영
+- 2026-W35: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.36.4/v1.35.8/v1.34.11 패치 릴리스 및 v1.37.0-rc.1 반영
+- 2026-W35: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.1/1.19.7/1.18.13 패치 릴리스 반영
+- 2026-W35: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter v1.14.1 패치 릴리스 반영
+- 2026-W35: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.0-rc.0 릴리스(1.31 RC 단계 진입) 반영
+- 2026-W35: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — 느린 SQL 쿼리를 OTel 스팬 파생 메트릭으로 정제하는 CNCF 블로그 가이드 반영
+- 2026-W35: 매칭 문서 없음 — Amazon EKS, 클러스터 인증 기관(CA) 로테이션 및 자동 수명 주기 관리 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-certificate-authority-ca-rotation-automated-lifecycle-management))
+- 2026-W35: 매칭 문서 없음 — Kubeflow, CNCF 졸업(graduated) 프로젝트 승격 ([원문](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/))
 - 2026-W34: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.0 정식 릴리스 및 v3.5.1/v3.4.7/v3.3.14 패치 릴리스 반영
 - 2026-W34: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.0-beta.1 릴리스(1.31 베타 단계 진입) 반영
 - 2026-W34: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — Linkerd edge-26.8.2(Gateway API 1.5.1 지원, 테스트 최대 k8s 1.36) 반영

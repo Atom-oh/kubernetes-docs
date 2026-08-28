@@ -1,80 +1,80 @@
 # Istio クイズ
 
-> **サポート対象バージョン**: Istio 1.28.0
+> **対応バージョン**: Istio 1.28.0
 > **EKS バージョン**: 1.34 (Kubernetes 1.28+)
 > **最終更新**: February 19, 2026
 
-このクイズでは、Istio Service Meshについての理解を確認します。
+このクイズでは、Istio service mesh に関する理解を確認します。
 
-## 問題 1: Service Meshの基本概念
+## 問題 1: Service Mesh の基本概念
 
 <details>
-<summary>Service Meshとは何ですか。また、主な機能は何ですか？</summary>
+<summary>service mesh とは何ですか？また、その主な機能は何ですか？</summary>
 
 **回答:**
-Service Meshは、サービス間通信を処理するインフラストラクチャレイヤーであり、アプリケーションコードを変更することなくサービス間の通信を制御および可観測化できます。
+service mesh は service-to-service communication を処理するインフラストラクチャレイヤーであり、application code を変更せずにサービス間の通信を制御および可観測化できます。
 
 **主な機能:**
-1. **トラフィック管理**: サービス間のトラフィックフローを制御
-   - ルーティング、ロードバランシング、Canary Deployment
+1. **Traffic Management**: サービス間のトラフィックフローを制御
+   - Routing、load balancing、canary deployment
    - Timeout、Retry、Circuit Breaker
-   - トラフィックミラーリングとシャドーテスト
+   - Traffic mirroring と shadow testing
 
-2. **セキュリティ**: サービス間通信の暗号化と認証
+2. **Security**: service-to-service communication の暗号化と認証
    - 自動 mTLS (mutual TLS)
-   - Authorization Policy (アクセス制御)
+   - Authorization Policy (access control)
    - Request Authentication (JWT)
 
-3. **可観測性**: サービス間通信の可視化
-   - メトリクス収集 (Prometheus)
-   - 分散トレーシング (Jaeger/Zipkin)
-   - ロギングと可視化 (Kiali、Grafana)
+3. **Observability**: service-to-service communication の可視化
+   - Metrics 収集 (Prometheus)
+   - Distributed tracing (Jaeger/Zipkin)
+   - Logging と可視化 (Kiali、Grafana)
 
-**Istioの特性:**
-- 既存の分散アプリケーションに透過的にレイヤー化
-- Sidecar Proxyパターン (Envoy) を使用
-- Ambient Mode (Sidecarを使用しないアーキテクチャ) をサポート
-- 宣言的設定によるポリシー管理
+**Istio の特性:**
+- 既存の分散 application に透過的にレイヤーとして追加
+- sidecar proxy パターン (Envoy) を使用
+- Ambient Mode (sidecar-less architecture) をサポート
+- 宣言型設定による Policy 管理
 </details>
 
 ## 問題 2: Istio アーキテクチャ
 
 <details>
-<summary>Istio 1.28.0の主なコンポーネントと役割は何ですか？</summary>
+<summary>Istio 1.28.0 の主なコンポーネントと役割は何ですか？</summary>
 
 **回答:**
 **Control Plane:**
-- **Istiod**: 単一バイナリで統合されたControl Plane
-  - **Service Discovery**: MeshのService Registryを維持
-  - **Configuration Management**: Istio設定を保存および配布
-  - **Certificate Management**: mTLS用の証明書を生成およびローテーション
+- **Istiod**: 単一バイナリに統合された Control Plane
+  - **Service Discovery**: mesh service registry を維持
+  - **Configuration Management**: Istio 設定を保存および配布
+  - **Certificate Management**: mTLS 用の証明書を生成およびローテーション
 
 **Data Plane:**
-- **Envoy Proxy**: Sidecarとしてデプロイされ、すべてのネットワーク通信を仲介
-  - トラフィックルーティングとロードバランシング
-  - mTLSの暗号化と認証
-  - メトリクス、ログ、トレースの収集
+- **Envoy Proxy**: sidecar としてデプロイされ、すべてのネットワーク通信を仲介
+  - Traffic routing と load balancing
+  - mTLS 暗号化と認証
+  - Metrics、logs、traces の収集
 
 **Ambient Mode (オプション):**
-- **ztunnel**: NodeレベルのProxy (L4)
-- **waypoint proxy**: オプションのL7 Proxy
+- **ztunnel**: Node レベルの proxy (L4)
+- **waypoint proxy**: オプションの L7 proxy
 
 **主な機能:**
-- 単一バイナリ (Istiod) による統合Control Plane
-- スケーラブルかつ高可用性のアーキテクチャ
-- KubernetesネイティブなCRDベースの設定
-- Ambient Modeにより85%以上のリソース削減が可能
+- 単一バイナリ (Istiod) の統合 Control Plane
+- スケーラブルで高可用性のアーキテクチャ
+- Kubernetes-native の CRD ベース設定
+- Ambient Mode により 85% 以上のリソース削減が可能
 </details>
 
-## 問題 3: トラフィック管理とArgo Rolloutsの統合
+## 問題 3: Traffic Management と Argo Rollouts の統合
 
 <details>
-<summary>IstioとArgo Rolloutsを使用して、自動化されたCanary Deploymentをどのように実装しますか？</summary>
+<summary>Istio と Argo Rollouts を使用して、自動化された canary deployment をどのように実装しますか？</summary>
 
 **回答:**
-Argo RolloutsはIstioと統合し、メトリクスベースの自動Canary Deploymentを提供します。
+Argo Rollouts は Istio と統合し、Metrics ベースの自動 canary deployment を提供します。
 
-**1. Rolloutリソースの定義:**
+**1. Rollout Resource の定義:**
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
@@ -133,25 +133,25 @@ spec:
 ```
 
 **主な機能:**
-- メトリクスベースの自動進行/ロールバック
+- Metrics ベースの自動進行/ロールバック
 - 段階的なトラフィック増加 (10% → 25% → 50% → 100%)
-- リアルタイムのPrometheusメトリクス分析
-- 障害発生時の即時自動ロールバック
+- リアルタイムの Prometheus Metrics 分析
+- 失敗時の即時自動ロールバック
 </details>
 
-## 問題 4: セキュリティ機能
+## 問題 4: Security 機能
 
 <details>
-<summary>Istio 1.28.0におけるmTLSとAuthorization Policyの機能は何ですか？</summary>
+<summary>Istio 1.28.0 の mTLS と Authorization Policy の機能は何ですか？</summary>
 
 **回答:**
-**mTLSの利点:**
-- サービス間通信の自動暗号化
-- 相互認証によるセキュリティ強化
-- アプリケーションコードの変更なしで適用
+**mTLS の利点:**
+- service-to-service communication の自動暗号化
+- 相互認証によるセキュリティの強化
+- application code の変更なしで適用
 - 証明書の自動発行と更新
 
-**1. PeerAuthentication - mTLSポリシー:**
+**1. PeerAuthentication - mTLS Policy:**
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -163,7 +163,7 @@ spec:
     mode: STRICT  # STRICT recommended for production
 ```
 
-**2. AuthorizationPolicy - きめ細かなアクセス制御:**
+**2. AuthorizationPolicy - きめ細かな Access Control:**
 ```yaml
 # Deny by default
 apiVersion: security.istio.io/v1beta1
@@ -193,7 +193,7 @@ spec:
         paths: ["/api/*"]
 ```
 
-**3. RequestAuthentication - JWT検証:**
+**3. RequestAuthentication - JWT Validation:**
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: RequestAuthentication
@@ -206,23 +206,23 @@ spec:
 ```
 
 **ベストプラクティス:**
-- デフォルト拒否ポリシーを使用
+- deny-by-default Policy を使用
 - 最小権限の原則を適用
-- Service Accountベースの認証
-- Namespaceの分離
+- Service Account ベースの認証
+- Namespace の分離
 </details>
 
-## 問題 5: GatewayとIngress
+## 問題 5: Gateway と Ingress
 
 <details>
-<summary>Istio Gatewayの役割は何ですか。また、TLSをどのように設定しますか？</summary>
+<summary>Istio Gateway の役割は何ですか？また、TLS をどのように設定しますか？</summary>
 
 **回答:**
-**Gatewayの役割:**
-- 外部トラフィックからクラスタ内部Serviceへのエントリポイント
-- Ingress/Egressトラフィックの制御
-- TLS終端と証明書管理
-- Load Balancerとの統合
+**Gateway の役割:**
+- cluster 内部サービスへの外部トラフィックのエントリポイント
+- Ingress/Egress トラフィックの制御
+- TLS termination と証明書管理
+- Load Balancer との統合
 
 **設定例:**
 ```yaml
@@ -282,7 +282,7 @@ spec:
       perTryTimeout: 2s
 ```
 
-**TLS証明書の作成:**
+**TLS 証明書の作成:**
 ```bash
 # Create TLS certificate as Kubernetes Secret
 kubectl create -n istio-system secret tls bookinfo-secret \
@@ -291,13 +291,13 @@ kubectl create -n istio-system secret tls bookinfo-secret \
 ```
 </details>
 
-## 問題 6: 可観測性ツール
+## 問題 6: Observability ツール
 
 <details>
-<summary>Istio 1.28.0はどのような可観測性ツールを提供し、それぞれの役割は何ですか？</summary>
+<summary>Istio 1.28.0 が提供する Observability ツールとその役割は何ですか？</summary>
 
 **回答:**
-**1. Prometheus - メトリクス収集:**
+**1. Prometheus - Metrics 収集:**
 ```promql
 # Golden Signals Monitoring
 # 1. Latency (P95)
@@ -316,7 +316,7 @@ sum(rate(istio_requests_total{response_code=~"5.."}[5m]))
 sum(rate(container_cpu_usage_seconds_total{pod=~".*istio-proxy.*"}[5m]))
 ```
 
-**2. Jaeger - 分散トレーシング:**
+**2. Jaeger - Distributed Tracing:**
 ```yaml
 # Enable Tracing
 apiVersion: install.istio.io/v1alpha1
@@ -328,17 +328,17 @@ spec:
         sampling: 100.0  # 100% sampling
 ```
 
-**3. Kiali - Service Meshの可視化:**
+**3. Kiali - Service Mesh の可視化:**
 - リアルタイムのトポロジー可視化
-- トラフィックフロー分析
-- 設定検証
-- パフォーマンスメトリクスの表示
+- トラフィックフローの分析
+- 設定の検証
+- Performance Metrics の表示
 
-**4. Grafana - ダッシュボード:**
+**4. Grafana - Dashboard:**
 - Istio Service Dashboard
 - Istio Workload Dashboard
 - Istio Performance Dashboard
-- カスタムダッシュボードの作成
+- カスタム Dashboard の作成
 
 **アクセス方法:**
 ```bash
@@ -352,26 +352,26 @@ istioctl dashboard jaeger
 ## 問題 7: Ambient Mode
 
 <details>
-<summary>Istio 1.28.0のAmbient Modeとは何ですか。また、Sidecar Modeとの違いは何ですか？</summary>
+<summary>Istio 1.28.0 の Ambient Mode とは何ですか？また、Sidecar Mode とどのように異なりますか？</summary>
 
 **回答:**
-**Ambient Modeの概念:**
-- Sidecarを使用しないService Meshアーキテクチャ
-- ztunnel (NodeレベルのL4 Proxy) + waypoint (オプションのL7 Proxy)
-- 85%以上のリソース削減
+**Ambient Mode の概念:**
+- sidecar-less service mesh アーキテクチャ
+- ztunnel (Node レベルの L4 proxy) + waypoint (オプションの L7 proxy)
+- 85% 以上のリソース削減
 
 **アーキテクチャの比較:**
 
 | 機能 | Sidecar Mode | Ambient Mode |
 |---------|-------------|--------------|
-| デプロイ | PodごとのEnvoy Injection | Nodeごとに1つのztunnel |
-| リソース使用量 | 高い (Podごとに50-100MB) | 低い (Nodeごとに50MB) |
-| デプロイの複雑さ | 高い (再デプロイが必要) | 低い (透過的なアプリケーション) |
-| L4機能 | サポート | ztunnel経由でサポート |
-| L7機能 | 完全サポート | waypointが必要 |
-| パフォーマンス | やや低速 | 高速 (L4のみ) |
+| デプロイメント | Pod ごとの Envoy injection | Node ごとに 1 つの ztunnel |
+| リソース使用量 | 高い (Pod ごとに 50-100MB) | 低い (Node ごとに 50MB) |
+| デプロイメントの複雑さ | 高い (再デプロイが必要) | 低い (透過的な適用) |
+| L4 機能 | サポート | ztunnel 経由でサポート |
+| L7 機能 | 完全サポート | waypoint が必要 |
+| Performance | やや遅い | 高速 (L4 のみ) |
 
-**Ambient Modeの有効化:**
+**Ambient Mode の有効化:**
 ```bash
 # Install Ambient Mode
 istioctl install --set profile=ambient -y
@@ -381,16 +381,16 @@ kubectl label namespace default istio.io/dataplane-mode=ambient
 ```
 
 **ユースケース:**
-- リソース制約のある環境
-- 大規模クラスタ (1000以上のPod)
-- L4機能のみが必要な場合
-- 段階的なIstio導入
+- リソースが制約された環境
+- 大規模 cluster (1000+ Pod)
+- L4 機能のみが必要な場合
+- 段階的な Istio 導入
 </details>
 
-## 問題 8: レジリエンスパターン
+## 問題 8: Resilience パターン
 
 <details>
-<summary>IstioにおけるOutlier Detection、Circuit Breaker、Rate Limitingの違いは何ですか？</summary>
+<summary>Istio における Outlier Detection、Circuit Breaker、Rate Limiting の違いは何ですか？</summary>
 
 **回答:**
 **1. Outlier Detection - 異常なインスタンスを除外:**
@@ -426,7 +426,7 @@ spec:
         maxRequestsPerConnection: 2
 ```
 
-**3. Rate Limiting - リクエストレート制御:**
+**3. Rate Limiting - Request レート制御:**
 ```yaml
 # Local Rate Limiting
 apiVersion: networking.istio.io/v1alpha3
@@ -449,11 +449,11 @@ spec:
 ```
 
 **違い:**
-- **Outlier Detection**: 事後対応型 (障害発生後に除外)
-- **Circuit Breaker**: 予防型 (接続数を制限)
-- **Rate Limiting**: リクエストレート制御 (トークンバケット)
+- **Outlier Detection**: リアクティブ (失敗後に除外)
+- **Circuit Breaker**: 予防的 (connection を制限)
+- **Rate Limiting**: Request レート制御 (token bucket)
 
-**組み合わせて使用:**
+**組み合わせての使用:**
 ```yaml
 trafficPolicy:
   connectionPool:     # Circuit Breaker
@@ -467,13 +467,13 @@ trafficPolicy:
 ## 問題 9: Locality Load Balancing (Zone Aware Routing)
 
 <details>
-<summary>IstioのLocality Load Balancing機能とは何ですか。また、AWS EKSでどのように使用しますか？</summary>
+<summary>Istio の Locality Load Balancing 機能とは何ですか？また、AWS EKS でどのように使用しますか？</summary>
 
 **回答:**
-**Locality Load Balancingの概念:**
-- 同一Availability Zone (AZ) 内のServiceへの優先ルーティング
+**Locality Load Balancing の概念:**
+- 同じ Availability Zone (AZ) 内のサービスへの優先 Routing
 - ネットワークレイテンシーの削減
-- クロスAZデータ転送コストの削減 (約85%)
+- cross-AZ data transfer コストの削減 (~85%)
 
 **設定:**
 ```yaml
@@ -500,21 +500,21 @@ spec:
           to: us-west-2
 ```
 
-**AWS EKSでの使用:**
+**AWS EKS での使用:**
 1. **コスト削減:**
-   - クロスAZトラフィック: $0.01/GB
-   - 同一AZトラフィック: 無料
-   - 80%の同一AZルーティングによる大幅なコスト削減
+   - cross-AZ traffic: $0.01/GB
+   - 同一 AZ traffic: 無料
+   - 80% の同一 AZ Routing による大幅なコスト削減
 
-2. **パフォーマンス改善:**
-   - AZ内レイテンシー: 約1ms
-   - クロスAZレイテンシー: 約2-3ms
+2. **Performance の改善:**
+   - intra-AZ latency: ~1ms
+   - cross-AZ latency: ~2-3ms
 
 3. **自動フェイルオーバー:**
-   - AZ障害時に他のAZへ自動フェイルオーバー
-   - Outlier Detectionと組み合わせて使用
+   - AZ 障害時に別の AZ へ自動フェイルオーバー
+   - Outlier Detection と組み合わせて使用
 
-**Podトポロジー設定:**
+**Pod topology の設定:**
 ```yaml
 # EKS nodes automatically set topology labels
 topology.kubernetes.io/region: us-east-1
@@ -522,10 +522,10 @@ topology.kubernetes.io/zone: us-east-1a
 ```
 </details>
 
-## 問題 10: Amazon EKSとの統合とベストプラクティス
+## 問題 10: Amazon EKS 統合とベストプラクティス
 
 <details>
-<summary>Istio 1.28.0をAmazon EKS 1.34と統合する際の考慮事項とベストプラクティスは何ですか？</summary>
+<summary>Istio 1.28.0 を Amazon EKS 1.34 と統合する際の考慮事項とベストプラクティスは何ですか？</summary>
 
 **回答:**
 **1. インストールと設定:**
@@ -539,7 +539,7 @@ export PATH=$PWD/bin:$PATH
 istioctl install --set profile=production -y
 ```
 
-**2. AWS Load Balancer統合:**
+**2. AWS Load Balancer 統合:**
 ```yaml
 apiVersion: v1
 kind: Service
@@ -586,7 +586,7 @@ spec:
             memory: 1024Mi
 ```
 
-**4. セキュリティ設定:**
+**4. Security 設定:**
 ```yaml
 # VPC Security Group settings
 # - Istiod: 15010, 15012, 8080
@@ -603,7 +603,7 @@ metadata:
     eks.amazonaws.com/role-arn: arn:aws:iam::account:role/istio-gateway
 ```
 
-**5. モニタリング統合:**
+**5. Monitoring 統合:**
 ```yaml
 # CloudWatch Container Insights
 apiVersion: v1
@@ -620,27 +620,27 @@ data:
 ```
 
 **6. ベストプラクティス:**
-- production profileを使用
+- production profile を使用
 - Control Plane HA (replica >= 3)
-- mTLS STRICTモード
-- PodDisruptionBudgetの設定
-- Locality Load Balancingを有効化
-- Prometheus + Grafanaによるモニタリング
-- 定期的なバージョンアップグレード (Canaryアプローチ)
+- mTLS STRICT mode
+- PodDisruptionBudget の設定
+- Locality Load Balancing を有効化
+- Prometheus + Grafana による monitoring
+- 定期的なバージョンアップグレード (Canary アプローチ)
 
 **7. コスト最適化:**
-- Ambient Modeを検討 (85%のリソース削減)
-- Locality Load Balancing (クロスAZコスト削減)
-- Sidecar Scopeの制限 (30-50%のメモリ削減)
+- Ambient Mode を検討 (85% のリソース削減)
+- Locality Load Balancing (cross-AZ コスト削減)
+- Sidecar Scope の制限 (30-50% のメモリ削減)
 </details>
 
 ## ボーナス問題: Progressive Delivery
 
 <details>
-<summary>Istio + Argo Rolloutsで完全に自動化されたProgressive Deliveryをどのように実装しますか？</summary>
+<summary>Istio + Argo Rollouts を使用して、完全に自動化された Progressive Delivery をどのように実装しますか？</summary>
 
 **回答:**
-Progressive Deliveryは、メトリクスに基づいてDeploymentを自動的に進行またはロールバックするアプローチです。
+Progressive Delivery は、Metrics に基づいて deployment を自動的に進行またはロールバックするアプローチです。
 
 **完全自動化の例:**
 ```yaml
@@ -710,23 +710,23 @@ spec:
 ```
 
 **主な利点:**
-- 完全自動化 (人の介入が不要)
+- 完全自動化 (人による介入は不要)
 - 即時ロールバック (障害検出から数秒以内)
-- 安全なDeployment (メトリクスベースの検証)
+- 安全な deployment (Metrics ベースの検証)
 - 一貫したプロセス (標準化)
 </details>
 
 ---
 
-**採点:**
-- 10-11問正解: 優秀 (Istioエキスパートレベル)
-- 8-9問正解: 良好 (本番運用が可能)
-- 6-7問正解: 平均 (追加学習を推奨)
-- 4-5問正解: 不十分 (基本概念の復習が必要)
-- 0-3問正解: 再学習が必要
+**スコア:**
+- 10-11 問正解: 優秀 (Istio エキスパートレベル)
+- 8-9 問正解: 良好 (production 運用が可能)
+- 6-7 問正解: 平均 (追加学習を推奨)
+- 4-5 問正解: 不十分 (基本概念の見直しが必要)
+- 0-3 問正解: 再学習が必要
 
 **学習リソース:**
-- [Istio公式ドキュメント](https://istio.io/latest/docs/)
-- [Argo Rolloutsドキュメント](https://argo-rollouts.readthedocs.io/)
+- [Istio 公式ドキュメント](https://istio.io/latest/docs/)
+- [Argo Rollouts ドキュメント](https://argo-rollouts.readthedocs.io/)
 - [EKS Workshop - Istio](https://www.eksworkshop.com/docs/security/servicemesh/)
-- [このガイドの詳細ドキュメント](../../service-mesh/istio/)
+- [このガイドの詳細ドキュメント](../../service-mesh/istio/README.md)

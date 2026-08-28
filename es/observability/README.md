@@ -1,22 +1,22 @@
-# Descripción general de Observability
+# Descripción general de Observabilidad
 
 > **Última actualización**: February 20, 2026
 
 ## Introducción
 
-En los sistemas distribuidos modernos, especialmente en las arquitecturas de microservicios basadas en Kubernetes, la capacidad de observar y comprender el estado interno de los sistemas a partir de salidas externas es esencial. Esto se denomina **Observability**.
+En los sistemas distribuidos modernos, especialmente en las arquitecturas de microservicios basadas en Kubernetes, la capacidad de observar y comprender el estado interno de los sistemas a partir de salidas externas es esencial. Esto se denomina **Observabilidad**.
 
-## Observability frente a Monitoring
+## Observabilidad frente a monitorización
 
-Observability y monitoring se utilizan a menudo de forma indistinta, pero existen diferencias fundamentales:
+Observabilidad y monitorización se usan con frecuencia de forma indistinta, pero existen diferencias fundamentales:
 
-| Aspecto | Monitoring | Observability |
+| Aspecto | Monitorización | Observabilidad |
 |--------|-----------|---------------|
 | **Enfoque** | Basado en métricas y umbrales predefinidos | Inferir el estado interno mediante las salidas del sistema |
 | **Tipo de pregunta** | «¿Qué salió mal?» (Qué) | «¿Por qué salió mal?» (Por qué) |
 | **Alcance de los datos** | Detección de problemas conocidos | Exploración de problemas desconocidos |
 | **Flexibilidad** | Dashboards predefinidos | Consultas y exploración dinámicas |
-| **Complejidad** | Adecuado para sistemas simples | Esencial para sistemas distribuidos complejos |
+| **Complejidad** | Adecuada para sistemas simples | Esencial para sistemas distribuidos complejos |
 
 ```mermaid
 flowchart LR
@@ -48,9 +48,9 @@ flowchart LR
     class O1,O2,O3 observability
 ```
 
-## Los tres pilares de Observability
+## Los tres pilares de la Observabilidad
 
-Observability consta de tres tipos de datos fundamentales:
+La Observabilidad consta de tres tipos principales de datos:
 
 ```mermaid
 flowchart TD
@@ -91,7 +91,7 @@ flowchart TD
 
 ### 1. Logs
 
-Los logs son registros de eventos individuales que ocurren en un sistema.
+Los Logs son registros de eventos individuales que ocurren en un sistema.
 
 **Características:**
 - Registros de eventos discretos e inmutables
@@ -107,7 +107,7 @@ Los logs son registros de eventos individuales que ocurren en un sistema.
 
 **Herramientas:** Loki, Elasticsearch, CloudWatch Logs, Fluent Bit
 
-### 2. Metrics
+### 2. Métricas
 
 Las métricas son mediciones numéricas a lo largo del tiempo.
 
@@ -118,33 +118,33 @@ Las métricas son mediciones numéricas a lo largo del tiempo.
 - Adecuadas para el análisis de tendencias
 
 **Tipos de métricas principales:**
-- **Counter**: Valores acumulativos crecientes (p. ej., recuento de solicitudes)
+- **Counter**: Valores acumulativos crecientes (p. ej., número de solicitudes)
 - **Gauge**: Valores del estado actual (p. ej., uso de CPU)
 - **Histogram**: Mediciones de distribución (p. ej., tiempo de respuesta)
 - **Summary**: Cálculos de cuantiles
 
 **Herramientas:** Prometheus, VictoriaMetrics, CloudWatch Metrics, Datadog
 
-### 3. Traces
+### 3. Trazas
 
-Los traces realizan el seguimiento de la ruta completa de las solicitudes a través de sistemas distribuidos.
+Las trazas rastrean la ruta completa de las solicitudes en sistemas distribuidos.
 
 **Características:**
-- Visualizan el flujo de solicitudes entre Services
+- Visualizan el flujo de solicitudes entre servicios
 - Miden la latencia en cada paso
 - Identifican cuellos de botella
 - Análisis de dependencias
 
 **Componentes:**
-- **Trace**: El recorrido completo de una sola solicitud
-- **Span**: Una sola unidad de trabajo
-- **SpanContext**: Contexto propagado entre Services
+- **Trace**: El recorrido completo de una única solicitud
+- **Span**: Una unidad de trabajo individual
+- **SpanContext**: Contexto propagado entre servicios
 
 **Herramientas:** Tempo, Jaeger, X-Ray, Zipkin, Datadog APM
 
 ## Correlación entre los tres pilares
 
-Los tres pilares no son independientes, sino que están interconectados y proporcionan potentes capacidades de análisis:
+Los tres pilares no son independientes, sino que están interconectados y proporcionan potentes capacidades analíticas:
 
 ```mermaid
 flowchart TD
@@ -188,9 +188,9 @@ flowchart TD
     class C1,C2,C3 correlation
 ```
 
-### Correlación de Trace a log
+### Correlación de Trace a Log
 
-Incluya el TraceID en los logs para realizar el seguimiento de todos los logs relacionados con una solicitud específica:
+Incluya el TraceID en los Logs para rastrear todos los Logs relacionados con una solicitud específica:
 
 ```json
 {
@@ -203,7 +203,7 @@ Incluya el TraceID en los logs para realizar el seguimiento de todos los logs re
 }
 ```
 
-### Correlación de métrica a Trace (Exemplars)
+### Correlación de métricas a Trace (Exemplars)
 
 Vincule el TraceID a las métricas para rastrear solicitudes cuando se produzcan anomalías:
 
@@ -214,7 +214,7 @@ http_request_duration_seconds_bucket{le="0.5"} 1000 # {traceID="abc123"}
 
 ## OpenTelemetry y estandarización
 
-OpenTelemetry (OTel) es el estándar del sector para la recopilación de datos de observabilidad:
+OpenTelemetry (OTel) es el estándar del sector para la recopilación de datos de Observabilidad:
 
 ```mermaid
 flowchart TD
@@ -262,17 +262,17 @@ flowchart TD
 ```
 
 **Beneficios de OpenTelemetry:**
-- Estándar independiente del proveedor
-- Compatibilidad con SDK para varios lenguajes
-- Capacidades de auto-instrumentación
+- Estándar independiente de proveedores
+- Compatibilidad con SDK para múltiples lenguajes
+- Capacidades de instrumentación automática
 - Compatibilidad con múltiples backends
 - Comunidad activa
 
-## Estrategia de Observability para entornos EKS
+## Estrategia de Observabilidad para entornos EKS
 
-Estrategias para implementar una observabilidad eficaz en Amazon EKS:
+Estrategias para implementar una Observabilidad eficaz en Amazon EKS:
 
-### 1. Observability por capas
+### 1. Observabilidad basada en capas
 
 ```mermaid
 flowchart TD
@@ -320,21 +320,21 @@ flowchart TD
 
 ### 2. Stack de herramientas recomendado
 
-| Función | Open Source | AWS nativo | Comercial |
+| Función | Código abierto | Nativo de AWS | Comercial |
 |----------|-------------|------------|------------|
 | Métricas | Prometheus, VictoriaMetrics | CloudWatch, AMP | Datadog, New Relic |
 | Logs | Loki, Elasticsearch | CloudWatch Logs | Splunk, Datadog |
-| Traces | Tempo, Jaeger | X-Ray | Datadog APM, Dynatrace |
+| Trazas | Tempo, Jaeger | X-Ray | Datadog APM, Dynatrace |
 | Visualización | Grafana | CloudWatch Dashboards | Datadog, Dynatrace |
 
 ### 3. Estrategias de optimización de costos
 
-- **Sampling**: Reduzca los costos mediante el muestreo de datos de trace
+- **Sampling**: Reduzca los costos mediante el muestreo de datos de trazas
 - **Políticas de retención**: Optimice los períodos de retención de datos
 - **Almacenamiento por niveles**: Mueva los datos más antiguos a almacenamiento más económico
 - **Agregación**: Almacene datos agregados en lugar de datos detallados
 
-## Modelo de madurez de Observability
+## Modelo de madurez de Observabilidad
 
 ```mermaid
 flowchart LR
@@ -360,35 +360,35 @@ flowchart LR
 
 | Nivel | Características | Herramientas de ejemplo |
 |-------|-----------------|---------------|
-| Nivel 1 | Recopilación básica de logs/métricas | kubectl logs, CloudWatch |
-| Nivel 2 | Observability centralizada | Loki, Prometheus, Grafana |
-| Nivel 3 | Correlación de los tres pilares | Tempo, Exemplars, TraceID |
+| Nivel 1 | Recopilación básica de Logs/métricas | kubectl logs, CloudWatch |
+| Nivel 2 | Observabilidad centralizada | Loki, Prometheus, Grafana |
+| Nivel 3 | Correlación de tres pilares | Tempo, Exemplars, TraceID |
 | Nivel 4 | AIOps, detección automática de anomalías | Datadog Watchdog, Dynatrace Davis |
 
 ## Guía de secciones
 
-Esta sección de observabilidad está organizada de la siguiente manera:
+Esta sección de Observabilidad está organizada de la siguiente manera:
 
-### [Logging](./logging/)
-Herramientas y estrategias para la recopilación, el almacenamiento y el análisis de logs:
-- Loki: Sistema ligero de agregación de logs
-- Fluent Bit: Recopilador de logs de alto rendimiento
+### [Logging](./logging/README.md)
+Herramientas y estrategias para la recopilación, el almacenamiento y el análisis de Logs:
+- Loki: Sistema ligero de agregación de Logs
+- Fluent Bit: Recopilador de Logs de alto rendimiento
 - CloudWatch Logs: Logging nativo de AWS
 
-### [Metrics](./metrics/)
+### [Metrics](./metrics/README.md)
 Recopilación y análisis de métricas de series temporales:
 - Prometheus: Sistema de métricas estándar del sector
 - VictoriaMetrics: Alternativa a Prometheus de alto rendimiento
 - CloudWatch Metrics: Métricas nativas de AWS
 
-### [Tracing](./tracing/)
+### [Tracing](./tracing/README.md)
 Tracing distribuido y análisis del flujo de solicitudes:
 - Tempo: Backend de tracing distribuido de Grafana
 - X-Ray: Tracing distribuido nativo de AWS
 - OpenTelemetry: Instrumentación estandarizada
 - Dynatrace: APM con tecnología de IA
 
-### [Grafana (Dashboards)](./grafana/)
+### [Grafana (Dashboards)](./grafana/README.md)
 Visualización y dashboards unificados:
 - Integración de fuentes de datos
 - Patrones de diseño de dashboards
@@ -396,10 +396,10 @@ Visualización y dashboards unificados:
 
 ## Primeros pasos
 
-Para comenzar a implementar observabilidad, se recomienda el siguiente orden:
+Para comenzar a implementar la Observabilidad, se recomienda el siguiente orden:
 
 1. **Configure la recopilación de métricas**: Despliegue Prometheus o VictoriaMetrics
-2. **Configure la recopilación de logs**: Despliegue Loki y Fluent Bit
+2. **Configure la recopilación de Logs**: Despliegue Loki y Fluent Bit
 3. **Configure el tracing**: Despliegue Tempo o X-Ray
 4. **Visualización**: Conecte todas las fuentes de datos en Grafana
 5. **Correlación**: Configure la vinculación basada en TraceID
@@ -408,5 +408,5 @@ Para comenzar a implementar observabilidad, se recomienda el siguiente orden:
 
 - [Documentación oficial de OpenTelemetry](https://opentelemetry.io/docs/)
 - [Stack LGTM de Grafana](https://grafana.com/oss/lgtm-stack/)
-- [Prácticas recomendadas de AWS Observability](https://aws-observability.github.io/observability-best-practices/)
-- [SRE Workbook - Monitoring](https://sre.google/workbook/monitoring/)
+- [Prácticas recomendadas de Observabilidad de AWS](https://aws-observability.github.io/observability-best-practices/)
+- [SRE Workbook - Monitorización](https://sre.google/workbook/monitoring/)

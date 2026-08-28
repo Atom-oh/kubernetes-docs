@@ -1,13 +1,13 @@
-# リトライとタイムアウト
+# Retry と Timeout
 
-リトライとタイムアウトは、マイクロサービスの耐障害性を向上させるための中核的な仕組みです。Istio では、アプリケーションコードを変更せずにこれらのポリシーを設定できます。
+Retry と Timeout は、マイクロサービスのレジリエンスを向上させるための中核的な仕組みです。Istio では、アプリケーションコードを変更せずにこれらのポリシーを設定できます。
 
 ## 目次
 
 1. [概要](#overview)
-2. [タイムアウト設定](#timeout-configuration)
-3. [リトライ設定](#retry-configuration)
-4. [リトライとタイムアウトの組み合わせ](#combining-retry-and-timeout)
+2. [Timeout の設定](#timeout-configuration)
+3. [Retry の設定](#retry-configuration)
+4. [Retry と Timeout の組み合わせ](#combining-retry-and-timeout)
 5. [実践例](#practical-examples)
 6. [重要な注意事項](#important-warnings)
 7. [ベストプラクティス](#best-practices)
@@ -15,7 +15,7 @@
 
 ## 概要
 
-### タイムアウトとリトライが必要な理由
+### Timeout と Retry が必要な理由
 
 ```mermaid
 flowchart LR
@@ -52,9 +52,9 @@ flowchart LR
     class Service2,Timeout,Retry,Success good;
 ```
 
-## タイムアウト設定
+## Timeout の設定
 
-### 基本的なタイムアウト
+### 基本的な Timeout
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -71,7 +71,7 @@ spec:
     timeout: 10s  # Timeout after 10 seconds
 ```
 
-### パス別タイムアウト
+### パス固有の Timeout
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -110,9 +110,11 @@ spec:
     timeout: 30s
 ```
 
-## リトライ設定
+## Retry の設定
 
-### 基本的なリトライ
+> **重要:** `retries` を省略しても、必ずしも Retry が無効になるわけではありません。Istio のクラスタ全体のデフォルトは `attempts: 2` と `retryOn: connect-failure,refused-stream,unavailable,cancelled` です。`attempts` は**元のリクエスト後に追加で行う Retry**の回数を数えるため、合計で 3 回配信される可能性があります。Proxy Retry を明示的に無効化するには、ルートで `attempts: 0` を設定してください。
+
+### 基本的な Retry
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -132,19 +134,21 @@ spec:
       retryOn: 5xx,reset,connect-failure,refused-stream  # Retry conditions
 ```
 
-### リトライ条件
+### Retry の条件
 
 | 条件 | 説明 |
 |-----------|-------------|
 | `5xx` | HTTP 5xx エラー |
 | `gateway-error` | 502、503、504 エラー |
-| `reset` | 接続のリセット |
-| `connect-failure` | 接続の失敗 |
+| `reset` | 接続リセット |
+| `connect-failure` | 接続失敗 |
 | `refused-stream` | HTTP/2 REFUSED_STREAM |
 | `retriable-4xx` | 409 Conflict |
 | `retriable-status-codes` | カスタムステータスコード |
 
-### 高度なリトライ設定
+### 高度な Retry 設定
+
+`payment-service` は非冪等な書き込み（課金の送信）を受け付けるため、すべてのメソッドに単一の Retry ポリシーを適用すると、メッシュが `reset` や `5xx` により POST を再実行できてしまいます。これは、このページで警告している曖昧な再実行のリスクそのものです。代わりにメソッドでルートを分割してください。読み取り専用のステータス確認には十分な Retry を設定し、書き込みパスではメッシュの Retry を完全に無効化します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -155,19 +159,32 @@ spec:
   hosts:
   - payment-service
   http:
-  - route:
+  - name: reads-retryable
+    match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment-service
     retries:
-      attempts: 5
-      perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: connect-failure,refused-stream
       retryRemoteLocalities: true  # Retry to other regions
+  - name: writes-no-mesh-retry
+    match:
+    - method:
+        regex: "^(POST|PUT|PATCH|DELETE)$"
+    route:
+    - destination:
+        host: payment-service
+    retries:
+      attempts: 0
 ```
 
-## リトライとタイムアウトの組み合わせ
+## Retry と Timeout の組み合わせ
 
-### 階層化されたタイムアウト
+### 階層化された Timeout
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -184,48 +201,50 @@ spec:
     timeout: 10s  # Total timeout
     retries:
       attempts: 3
-      perTryTimeout: 3s  # Per-retry timeout
+      perTryTimeout: 3s  # Timeout for each delivery, including the original
 ```
 
-**計算**: 最大待機時間 = min(合計タイムアウト、試行回数 × perTryTimeout) = min(10s、3 × 3s) = 9s
+**計算**: 理論上の配信時間の上限は `(1 + attempts) × perTryTimeout = 4 × 3s = 12s` ですが、ルートレベルの `timeout: 10s` が先に適用されます。Backoff と残りのルート Timeout により、実際に試行される Retry 回数は減少する可能性があります。
 
-### 冪等性を考慮した設定
+### HTTP メソッドで Retry ポリシーを分割
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: idempotent-retry
+  name: order-service
 spec:
   hosts:
   - order-service
   http:
-  # GET requests - safe to retry
-  - match:
+  # POST/PATCH: do not replay an ambiguous write in the mesh
+  - name: writes-no-mesh-retry
+    match:
     - method:
-        exact: GET
-    route:
-    - destination:
-        host: order-service
-    timeout: 5s
-    retries:
-      attempts: 3
-      perTryTimeout: 1s
-      retryOn: 5xx,reset
-
-  # POST requests - limited retry
-  - match:
-    - method:
-        exact: POST
+        regex: "^(POST|PATCH)$"
     route:
     - destination:
         host: order-service
     timeout: 10s
     retries:
-      attempts: 1  # Minimal retry if idempotency not guaranteed
-      perTryTimeout: 5s
-      retryOn: connect-failure,reset  # Network issues only
+      attempts: 0
+
+  # GET/HEAD: retry only connection establishment and REFUSED_STREAM failures
+  - name: reads-limited-retry
+    match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
+    - destination:
+        host: order-service
+    timeout: 5s
+    retries:
+      attempts: 2
+      perTryTimeout: 2s
+      retryOn: connect-failure,refused-stream
 ```
+
+POST/PATCH と、ドメインで書き込みとして定義されるすべての操作では、デフォルトでメッシュの Retry を無効にしてください。HTTP メソッドだけを理由に PUT や DELETE が安全だと判断してはいけません。アプリケーションの実際の契約で繰り返し実行が安全とされる場合にのみ Retry してください。
 
 ## 実践例
 
@@ -321,6 +340,8 @@ spec:
 
 ### 例 3: Circuit Breaker との組み合わせ
 
+`payment` は非冪等な書き込みを処理するため、この例では前出の `payment-service` の例と同様にメソッドでルートを分割します。読み取りには十分な Retry を設定し、書き込みではメッシュの Retry を無効にし、以下の Circuit Breaker は両方に適用されます。
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -330,14 +351,28 @@ spec:
   hosts:
   - payment
   http:
-  - route:
+  - name: reads-retryable
+    match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment
     timeout: 10s
     retries:
       attempts: 3
       perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
+      retryOn: connect-failure,refused-stream
+  - name: writes-no-mesh-retry
+    match:
+    - method:
+        regex: "^(POST|PUT|PATCH|DELETE)$"
+    route:
+    - destination:
+        host: payment
+    timeout: 10s
+    retries:
+      attempts: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -361,9 +396,9 @@ spec:
 
 ## 重要な注意事項
 
-### 非冪等リクエストに対するリトライのリスク
+### 非冪等リクエストに対する Retry のリスク
 
-**基本原則**: POST、PUT、DELETE などの状態を変更するリクエストに対する Istio Proxy レベルでの自動リトライは、**データ整合性の問題**を引き起こす可能性があります。
+**基本原則**: POST/PATCH と、ドメインで定義された非冪等な書き込みに対する自動 Istio Proxy Retry は、**データ整合性の問題**を引き起こす可能性があります。アプリケーションの実際の契約によって冪等性が保証される場合に限り、PUT/DELETE を例外として扱ってください。
 
 #### 問題のシナリオ
 
@@ -389,18 +424,18 @@ sequenceDiagram
     Note over DB: Duplicate Order Created!
 ```
 
-#### 危険な理由
+#### なぜ危険なのか
 
-1. **重複作成**: POST リクエストは実際には成功していたものの、ネットワークの問題でレスポンスが失われ、Proxy が **重複レコード**を作成するためにリトライします。
-2. **不正な状態変更**: **支払い、在庫の引き落とし**などのビジネスクリティカルな操作が複数回実行される可能性があります。
-3. **検証不能**: Istio Proxy には、リクエストが成功したかどうかを確認する手段がありません。
+1. **重複作成**: POST リクエストは実際には成功しているものの、ネットワークの問題でレスポンスが失われ、Proxy が Retry することで**重複レコード**が作成されます。
+2. **不正な状態変更**: **支払い、在庫の引き落とし**などのビジネス上重要な操作が複数回実行される可能性があります。
+3. **検証不能**: Istio Proxy には、リクエストが成功したかを確認する手段がありません。
 
-#### 安全なリトライ戦略
+#### 安全な Retry 戦略
 
-**推奨: アプリケーションレベルのリトライ**
+**推奨: メッシュの Retry を無効にし、アプリケーションレベルの重複排除を実施する**
 
 ```yaml
-# Istio: Only retry network issues
+# Istio: explicitly do not retry a non-idempotent write
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
@@ -417,10 +452,10 @@ spec:
         host: order-service
     timeout: 10s
     retries:
-      attempts: 1  # Disable retry
-      perTryTimeout: 5s
-      retryOn: connect-failure,refused-stream  # Connection failures only
+      attempts: 0  # No delivery after the original request
 ```
+
+`reset`、`503`、および Timeout は、サーバーがリクエストを拒否したことを証明するものではありません。サーバーはデータベーストランザクションをコミットした後にレスポンスだけを失う可能性があるため、Proxy は再実行が安全かどうかを判断できません。曖昧な結果になった後は、アプリケーションはやみくもに再送するのではなく、操作の状態を照会する必要があります。
 
 ```python
 # Application: Use Idempotency Key
@@ -475,19 +510,26 @@ def create_order():
     return jsonify(order), 201
 ```
 
-#### HTTP メソッドのリトライ安全性
+本番の書き込み API では、以下の保護策を組み合わせてください。
 
-| メソッド | 冪等 | Istio リトライの安全性 | 推奨設定 |
+- 同一トランザクション内のデータベース一意制約で裏付けられた `Idempotency-Key`
+- 更新に対する `ETag`/`If-Match` またはバージョンフィールドの compare-and-swap
+- Timeout/reset 後の transaction-ID または command-ID の状態照会
+- 支払いまたはイベント公開など、取り消せない下流への影響に対する transactional outbox
+
+#### HTTP メソッドの Retry 安全性
+
+| メソッド | 冪等性 | Istio Retry の安全性 | 推奨設定 |
 |--------|------------|-------------------|---------------------|
 | **GET** | はい | 安全 | `attempts: 3, retryOn: 5xx,reset` |
 | **HEAD** | はい | 安全 | `attempts: 3, retryOn: 5xx,reset` |
 | **OPTIONS** | はい | 安全 | `attempts: 3, retryOn: 5xx,reset` |
-| **PUT** | 条件付き | 注意 | Idempotency Key が必要 |
-| **DELETE** | 条件付き | 注意 | Idempotency Key が必要 |
-| **POST** | いいえ | 危険 | `attempts: 1, application retry` |
-| **PATCH** | いいえ | 危険 | `attempts: 1, application retry` |
+| **PUT** | 契約に依存 | 注意 | 実際の冪等性契約 + 条件付き更新 |
+| **DELETE** | 契約に依存 | 注意 | 実際の冪等性契約 + 結果照会 |
+| **POST** | 通常はいいえ | 危険 | `attempts: 0`、Idempotency Key |
+| **PATCH** | 通常はいいえ | 危険 | `attempts: 0`、version/ETag |
 
-#### 安全にリトライできるケース
+#### 安全に Retry できるケース
 
 ```yaml
 # Read-only requests - safe
@@ -538,7 +580,7 @@ spec:
 
 #### Circuit Breaker と併用する際の注意
 
-Circuit Breaker は**障害の分離**に有効ですが、非冪等リクエストの**重複実行を防ぐことはできません**。
+Circuit Breaker は**障害の分離**には有効ですが、非冪等リクエストの**重複実行を防ぐことはできません**。
 
 ```yaml
 # Bad example: POST + Circuit Breaker + Retry
@@ -606,11 +648,11 @@ spec:
 1. **GET/HEAD/OPTIONS**: Istio Proxy Retry を使用可能
 2. **POST/PATCH**: Istio Retry を無効にし、アプリケーションレベルの Retry + Idempotency Key を使用
 3. **PUT/DELETE**: 冪等性が保証される場合にのみ Istio Retry を使用
-4. **重要な操作（支払い／在庫／ポイント）**: アプリケーションレベルの検証 + Idempotency Key が必須
+4. **重要な操作（支払い/在庫/ポイント）**: アプリケーションレベルの検証 + Idempotency Key が必須
 
 ## ベストプラクティス
 
-### 1. タイムアウト設定ガイド
+### 1. Timeout 設定ガイド
 
 ```yaml
 # Good example: Appropriate timeout per layer
@@ -652,7 +694,7 @@ spec:
     timeout: 300s  # 5 minutes is too long
 ```
 
-### 2. リトライ戦略
+### 2. Retry 戦略
 
 ```yaml
 # Good example: Consider idempotency
@@ -676,22 +718,20 @@ spec:
       perTryTimeout: 2s
       retryOn: 5xx,reset,connect-failure
 
-  # POST - retry carefully
+  # POST/PATCH - explicitly disable mesh retry
   - match:
     - method:
-        exact: POST
+        regex: "^(POST|PATCH)$"
     route:
     - destination:
         host: api-service
     retries:
-      attempts: 1
-      perTryTimeout: 5s
-      retryOn: connect-failure  # Network issues only
+      attempts: 0
 ```
 
-### 3. 指数バックオフ
+### 3. Exponential Backoff
 
-Istio はデフォルトで 25ms の間隔でリトライしますが、カスタムバックオフが必要な場合は次のとおりです。
+Istio はデフォルトで 25ms の間隔で Retry しますが、ここではカスタム Backoff の設定方法を示します。これは読み取りパスにのみ適用されます。このページの前半で示したとおり、`payment` は書き込みに対して引き続きメッシュの Retry を無効にします。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -702,18 +742,21 @@ spec:
   hosts:
   - payment
   http:
-  - route:
+  - match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment
     retries:
       attempts: 5
       perTryTimeout: 2s
-      retryOn: 5xx,reset
+      retryOn: connect-failure,refused-stream
       # Istio automatically increases retry interval
       # 25ms, 50ms, 100ms, 200ms, 400ms
 ```
 
-### 4. システム全体のタイムアウト計算
+### 4. システム全体の Timeout の計算
 
 ```yaml
 # Frontend → API Gateway → Backend → Database
@@ -727,7 +770,7 @@ spec:
 
 ## トラブルシューティング
 
-### タイムアウトが機能しない
+### Timeout が機能しない
 
 ```bash
 # 1. Check VirtualService
@@ -742,7 +785,7 @@ kubectl exec -it <pod-name> -n <namespace> -c istio-proxy -- \
   curl -v --max-time 5 http://backend-service
 ```
 
-### リトライが多すぎる
+### Retry が多すぎる
 
 ```bash
 # Check retry metrics
@@ -753,7 +796,7 @@ kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
 istio_requests_total{destination_service="backend.default.svc.cluster.local",response_flags="UR"}
 ```
 
-### リトライストームの防止
+### Retry Storm の防止
 
 ```yaml
 # Use with Circuit Breaker
@@ -782,3 +825,4 @@ spec:
 - [Istio Timeout](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute)
 - [Istio Retry](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry)
 - [Envoy Retry Policy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#config-http-filters-router-x-envoy-retry-on)
+- [RFC 9110: Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods)

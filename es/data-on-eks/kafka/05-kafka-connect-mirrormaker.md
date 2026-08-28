@@ -5,27 +5,27 @@
 
 ## Descripción general de Kafka Connect
 
-Kafka Connect es un framework para mover datos entre Kafka y sistemas externos — bases de datos, almacenamiento de objetos, motores de búsqueda y más — sin escribir código de integración personalizado. Describes un pipeline de datos de forma declarativa mediante la configuración del connector, y Connect se encarga del resto.
+Kafka Connect es un framework para mover datos entre Kafka y sistemas externos — bases de datos, almacenamiento de objetos, motores de búsqueda y más — sin escribir código de integración personalizado. Se describe un pipeline de datos de forma declarativa mediante la configuración del conector, y Connect se encarga del resto.
 
-Los connectors vienen en dos variantes, según la dirección en la que fluyen los datos:
+Los conectores se presentan en dos modalidades, según la dirección en que fluyen los datos:
 
-* **Source connectors** extraen datos HACIA Kafka desde un sistema externo. Debezium es el ejemplo canónico: lee el write-ahead log (o binlog) de una base de datos y transmite eventos de cambio a nivel de fila hacia Kafka como un pipeline de CDC (Change Data Capture). JDBC Source Connector usa un enfoque más simple basado en consultas, consultando periódicamente las tablas y escribiendo los resultados en Kafka.
-* **Sink connectors** envían datos FUERA de Kafka hacia un sistema externo. S3 Sink Connector escribe datos de topics en S3 en formatos como JSON o Parquet, mientras que Elasticsearch Sink Connector indexa registros de topics para búsqueda y análisis.
+* Los **conectores Source** extraen datos HACIA Kafka desde un sistema externo. Debezium es el ejemplo canónico: lee el write-ahead log de una base de datos (o binlog) y transmite eventos de cambio a nivel de fila a Kafka como un pipeline de CDC (Change Data Capture). JDBC Source Connector adopta un enfoque más simple basado en consultas, sondeando periódicamente las tablas y escribiendo los resultados en Kafka.
+* Los **conectores Sink** envían datos FUERA de Kafka hacia un sistema externo. S3 Sink Connector escribe datos de topics en S3 en formatos como JSON o Parquet, mientras que Elasticsearch Sink Connector indexa registros de topics para búsqueda y análisis.
 
-Kafka Connect admite dos modos de runtime:
+Kafka Connect admite dos modos de ejecución:
 
-* **Distributed mode**: múltiples procesos worker (Pods) forman un grupo y actúan como un único cluster de Connect. Un worker actúa como coordinador del grupo, distribuyendo connectors y sus tasks entre el grupo; si un worker muere, sus tasks se rebalancean automáticamente hacia los workers sobrevivientes. El ciclo de vida del connector — crear, eliminar, reconfigurar — se controla mediante una REST API (puerto 8083 de forma predeterminada). Este es el único modo usado en Kubernetes.
-* **Standalone mode**: un único proceso con un almacén de offsets basado en archivos, pensado para desarrollo local. No tiene alta disponibilidad ni escalado horizontal, por lo que nunca se usa en Kubernetes.
+* **Modo distribuido**: varios procesos worker (Pods) forman un grupo y actúan como un único clúster de Connect. Un worker actúa como coordinador del grupo, distribuyendo los conectores y sus tareas por el grupo; si un worker falla, sus tareas se reequilibran automáticamente entre los workers supervivientes. El ciclo de vida del conector — crear, eliminar, reconfigurar — se controla mediante una API REST (puerto 8083 de forma predeterminada). Este es el único modo usado en Kubernetes.
+* **Modo standalone**: un único proceso con un almacén de offsets basado en archivos, diseñado para el desarrollo local. No tiene alta disponibilidad ni escalado horizontal, por lo que nunca se usa en Kubernetes.
 
-Los workers distribuidos persisten offsets, configuración de connectors/tasks y estado de tasks en tres topics internos (`offset.storage.topic`, `config.storage.topic`, `status.storage.topic`). Si estos topics se pierden, cada connector del cluster pierde su estado, por lo que los despliegues de producción siempre deben establecer su factor de replicación en al menos 3.
+Los workers distribuidos conservan los offsets, la configuración de conectores/tareas y el estado de las tareas en tres topics internos (`offset.storage.topic`, `config.storage.topic`, `status.storage.topic`). Si estos topics se pierden, todos los conectores del clúster pierden su estado, por lo que los despliegues de producción siempre deben establecer su factor de replicación en al menos 3.
 
 ## Despliegue de Kafka Connect en Strimzi
 
-Strimzi administra el propio cluster distribuido de Connect mediante el CRD `KafkaConnect`, y administra las instancias individuales de connectors que se ejecutan encima de él mediante el CRD `KafkaConnector`. Usar recursos `KafkaConnector` significa que los connectors pueden desplegarse y controlarse por versión mediante GitOps en lugar de llamar manualmente a la REST API. Para permitir que Strimzi reconcilie recursos `KafkaConnector`, el recurso `KafkaConnect` necesita la anotación `strimzi.io/use-connector-resources: "true"`.
+Strimzi administra el clúster distribuido de Connect mediante el CRD `KafkaConnect`, y administra las instancias individuales de conectores que se ejecutan sobre él mediante el CRD `KafkaConnector`. Usar recursos `KafkaConnector` significa que los conectores se pueden desplegar y controlar por versiones mediante GitOps en lugar de llamar manualmente a la API REST. Para permitir que Strimzi reconcilie los recursos `KafkaConnector`, el recurso `KafkaConnect` necesita la anotación `strimzi.io/use-connector-resources: "true"`.
 
-Los plugins de connectors no vienen incluidos con la imagen base de Strimzi Kafka Connect, así que necesitas una imagen personalizada. El patrón recomendado por Strimzi evita escribir un Dockerfile a mano: declaras artefactos de plugins (tgz/zip/jar, o coordenadas Maven) bajo `KafkaConnect.spec.build`, y el Strimzi Operator construye la imagen y la envía a un registry que especifiques — como Amazon ECR.
+Los plugins de conectores no se incluyen en la imagen base de Strimzi Kafka Connect, así que se necesita una imagen personalizada. El patrón recomendado por Strimzi evita escribir un Dockerfile manualmente: se declaran los artefactos de plugins (tgz/zip/jar o coordenadas Maven) en `KafkaConnect.spec.build`, y Strimzi Operator crea la imagen y la envía a un registro que se especifique — como Amazon ECR.
 
-### Especificación de build de KafkaConnect
+### Especificación de compilación de KafkaConnect
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -76,9 +76,9 @@ spec:
       memory: 2Gi
 ```
 
-El Operator reconstruye la imagen y despliega el Deployment automáticamente cada vez que cambia `spec.build` — al agregar un plugin, subir una versión, etc. El Secret referenciado por `pushSecret` necesita credenciales de registry (un Secret de tipo `docker-registry`) para que el push a ECR tenga éxito; puedes conceder ese acceso mediante IRSA si lo deseas.
+El Operator recompila la imagen y realiza el despliegue progresivo del Deployment automáticamente cada vez que cambia `spec.build` — al añadir un plugin, actualizar una versión, etc. El Secret al que hace referencia `pushSecret` necesita credenciales de registro (un Secret de tipo `docker-registry`) para que el envío a ECR tenga éxito; si se desea, se puede conceder ese acceso mediante IRSA.
 
-### KafkaConnector — ejemplo de source Debezium PostgreSQL
+### KafkaConnector — ejemplo de Source de Debezium PostgreSQL
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -103,7 +103,7 @@ spec:
     table.include.list: public.orders,public.order_items
 ```
 
-### KafkaConnector — ejemplo de sink S3
+### KafkaConnector — ejemplo de Sink de S3
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -126,29 +126,29 @@ spec:
     rotate.schedule.interval.ms: 300000
 ```
 
-`kubectl get kafkaconnector -n kafka` muestra el estado de cada connector; una condición `Ready: True` significa que sus tasks se han asignado a workers y están en ejecución.
+`kubectl get kafkaconnector -n kafka` muestra el estado de cada conector; una condición `Ready: True` significa que sus tareas se han asignado a workers y están en ejecución.
 
 ## Arquitectura de MirrorMaker 2
 
-MirrorMaker 2 (MM2) es una herramienta de replicación a nivel de topic, de cluster a cluster, construida sobre el framework Kafka Connect. Hace más que copiar mensajes: conserva el particionamiento del cluster de origen y traduce los offsets de consumer groups, que es lo que hace posible un failover limpio de consumers durante la recuperación ante desastres. Internamente, MM2 está compuesto por tres connectors:
+MirrorMaker 2 (MM2) es una herramienta de replicación de topics, de clúster a clúster, construida sobre el framework Kafka Connect. Hace más que copiar mensajes: conserva el particionamiento del clúster de origen y traduce los offsets de los grupos de consumidores, lo que permite una conmutación por error limpia de consumidores durante la recuperación ante desastres. Internamente, MM2 se compone de tres conectores:
 
-* **MirrorSourceConnector**: realiza la replicación real de mensajes y también sincroniza la configuración de topics y ACLs.
-* **MirrorCheckpointConnector**: traduce periódicamente los offsets de consumer groups del cluster de origen a los offsets equivalentes en el cluster de destino, registrándolos en un topic de checkpoints. Esta traducción de offsets es lo que permite que un consumer que hace failover al cluster de DR sepa "hasta dónde ya había procesado".
-* **MirrorHeartbeatConnector**: envía mensajes heartbeat periódicos que demuestran que el cluster de origen está activo y que el pipeline de replicación está funcionando, lo que se usa para detectar lag de replicación o una desconexión total.
+* **MirrorSourceConnector**: realiza la replicación efectiva de mensajes y también sincroniza la configuración de topics y las ACL.
+* **MirrorCheckpointConnector**: traduce periódicamente los offsets de grupos de consumidores del clúster de origen a los offsets equivalentes en el clúster de destino, registrándolos en un topic de checkpoint. Esta traducción de offsets permite que un consumidor que realiza conmutación por error al clúster de DR sepa «hasta dónde ya había procesado».
+* **MirrorHeartbeatConnector**: envía mensajes periódicos de heartbeat que demuestran que el clúster de origen está activo y que el pipeline de replicación funciona; esto se utiliza para detectar lag de replicación o una desconexión total.
 
-MM2 no reutiliza literalmente el nombre del topic de origen en el cluster de destino. La `DefaultReplicationPolicy` predeterminada nombra los topics remotos como `<source-cluster-alias>.<topic>`. Por ejemplo, replicar el topic `orders` desde un cluster con alias `us-east-1` produce un topic remoto llamado `us-east-1.orders` en el destino. Esta convención de nombres permite a los consumers distinguir los mensajes producidos localmente de los replicados solo por el nombre del topic, y también funciona como el mecanismo que evita bucles de replicación infinitos en configuraciones bidireccionales.
+MM2 no reutiliza literalmente el nombre del topic de origen en el clúster de destino. La `DefaultReplicationPolicy` predeterminada nombra los topics remotos como `<source-cluster-alias>.<topic>`. Por ejemplo, replicar el topic `orders` desde un clúster con el alias `us-east-1` genera un topic remoto llamado `us-east-1.orders` en el destino. Esta convención de nomenclatura permite a los consumidores distinguir los mensajes producidos localmente de los replicados solo por el nombre del topic, y también funciona como el mecanismo que evita bucles de replicación infinitos en configuraciones bidireccionales.
 
 ## Patrones de recuperación ante desastres
 
-### Activo-Pasivo
+### Activo-pasivo
 
-Este es el patrón más común: la replicación se ejecuta en una sola dirección, desde un cluster de la región primaria hacia un cluster de la región de DR. En operación normal, las aplicaciones solo se comunican con el cluster primario, y el cluster de DR permanece inactivo, acumulando datos replicados. Cuando ocurre una falla regional, usas las traducciones de offsets registradas por MirrorCheckpointConnector para mover consumer groups al cluster de DR y reanudar el consumo desde el checkpoint disponible más reciente. Este no es un cambio exactamente-once perfecto — dependiendo de exactamente cuándo se tomó el checkpoint en relación con la falla, puede reprocesarse una pequeña cantidad de mensajes, y como la replicación de MM2 es asíncrona, cualquier mensaje que aún no se haya replicado al cluster de DR en el momento de la falla se pierde (el RPO está limitado por el lag de replicación, no es cero) — pero el beneficio clave es una recuperación rápida con pérdida de datos minimizada a esa ventana de lag.
+Este es el patrón más común: la replicación se ejecuta en un único sentido, desde un clúster de región primaria a un clúster de región de DR. Durante la operación normal, las aplicaciones solo se comunican con el clúster primario y el clúster de DR permanece inactivo, acumulando datos replicados. Cuando se produce un fallo regional, se usan las traducciones de offsets registradas por MirrorCheckpointConnector para mover los grupos de consumidores al clúster de DR y reanudar el consumo desde el checkpoint disponible más reciente. No es una transición perfecta de exactly-once — según el momento exacto en que se tomó el checkpoint con respecto al fallo, se puede reprocesar un pequeño número de mensajes y, debido a que la replicación de MM2 es asíncrona, se pierde cualquier mensaje que todavía no se hubiera replicado al clúster de DR en el momento del fallo (el RPO está limitado por el lag de replicación, no es cero) — pero el beneficio clave es una recuperación rápida con la pérdida de datos reducida al mínimo dentro de esa ventana de lag.
 
-### Activo-Activo
+### Activo-activo
 
-Ambas regiones atienden tráfico, y cada cluster replica bidireccionalmente hacia el otro. Esto introduce un riesgo real: un topic replicado A → B (como `A.orders`) podría replicarse de vuelta B → A, creando un bucle infinito, a menos que se evite explícitamente. Strimzi/MM2 se protege contra esto mediante la política de nombres configurada en `replication.policy.class` (la `DefaultReplicationPolicy` predeterminada, o `IdentityReplicationPolicy` si quieres que los topics remotos conserven sus nombres originales) — los topics que ya tienen un prefijo de cluster remoto (como `A.orders`) se excluyen de replicaciones posteriores. Restringir `topicsPattern` solo a los topics que realmente necesitan replicación entre regiones añade una segunda capa de protección contra bucles de replicación accidentales.
+Ambas regiones atienden tráfico y cada clúster replica bidireccionalmente al otro. Esto introduce un riesgo real: un topic replicado A → B (como `A.orders`) podría replicarse inmediatamente de vuelta de B → A, en un bucle infinito, a menos que se evite explícitamente. Strimzi/MM2 se protege contra esto mediante la política de nomenclatura establecida en `replication.policy.class` (la `DefaultReplicationPolicy` predeterminada o `IdentityReplicationPolicy` si se quiere que los topics remotos mantengan sus nombres originales) — los topics que ya llevan un prefijo de clúster remoto (como `A.orders`) se excluyen de una replicación posterior. Restringir `topicsPattern` únicamente a los topics que realmente necesitan replicación entre regiones añade una segunda capa de protección contra bucles de replicación accidentales.
 
-### Ejemplo de CR KafkaMirrorMaker2
+### Ejemplo de CR de KafkaMirrorMaker2
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -199,20 +199,20 @@ spec:
       groupsPattern: "orders-consumer-.*"
 ```
 
-`connectCluster: dr-region` indica a los Pods worker de MM2 qué cluster (aquí, la región de DR) deben usar para almacenar los propios topics internos de Connect. Activar `sync.group.offsets.enabled: "true"` hace que MirrorCheckpointConnector escriba periódicamente sus offsets traducidos en `__consumer_offsets` del cluster de DR, para que un consumer con failover pueda reanudar el consumo sin confirmar offsets manualmente primero.
+`connectCluster: dr-region` indica a los Pods worker de MM2 qué clúster (en este caso, la región de DR) deben usar para almacenar los propios topics internos de Connect. Activar `sync.group.offsets.enabled: "true"` hace que MirrorCheckpointConnector escriba periódicamente sus offsets traducidos en `__consumer_offsets` del clúster de DR, de modo que un consumidor que haya realizado conmutación por error pueda reanudar el consumo sin confirmar offsets manualmente primero.
 
-## Consideraciones de replicación entre regiones
+## Consideraciones sobre la replicación entre regiones
 
-* **Costo de red y latencia**: la replicación entre regiones (o incluso entre AZs) implica costo de transferencia de datos y latencia de ida y vuelta. Es común ejecutar los workers de MM2 en la región de destino, extrayendo datos del cluster de origen. Ajustar el tamaño de batch (`producer.override.batch.size`) y la compresión (`producer.override.compression.type: zstd`) reduce el volumen que realmente se transfiere, lo que se traduce directamente en un menor costo de transferencia de datos entre regiones.
-* **`sync.topic.acls.enabled`**: controla si las ACLs de topics del cluster de origen también se sincronizan con el destino. Habilitarlo significa que no tienes que mantener dos veces la política de control de acceso, pero si los dos clusters tienen posturas de seguridad diferentes — por ejemplo, si el cluster de DR requiere un acceso más estricto que el primario — puede ser más seguro deshabilitarlo y administrar las ACLs de forma independiente en cada lado.
-* **Monitoreo del lag de replicación**: MM2 expone sus propias métricas de salud de replicación. `replication-latency-ms` informa el tiempo desde que un mensaje se produjo en el origen hasta que se replicó completamente al destino, y las métricas relacionadas con lag del checkpoint connector muestran qué tan actualizada está la traducción de offsets. Recopilar estas métricas en Prometheus y alertar sobre un SLA (por ejemplo, "lag de replicación por debajo de 5 minutos") te permite verificar continuamente que el cluster de DR realmente está en un estado al que podrías hacer failover.
+* **Costo y latencia de red**: la replicación entre regiones (o incluso entre AZ) implica un costo de transferencia de datos y latencia de ida y vuelta. Es habitual ejecutar los workers de MM2 en la región de destino, extrayendo datos del clúster de origen. Ajustar el tamaño de lote (`producer.override.batch.size`) y la compresión (`producer.override.compression.type: zstd`) reduce el volumen realmente transferido, lo que se traduce directamente en un menor costo de transferencia de datos entre regiones.
+* **`sync.topic.acls.enabled`**: controla si las ACL de topics del clúster de origen también se sincronizan con el destino. Activarlo significa que no es necesario mantener la política de control de acceso dos veces, pero si los dos clústeres tienen posturas de seguridad diferentes — por ejemplo, el clúster de DR requiere acceso más estricto que el primario — puede ser más seguro desactivarlo y administrar las ACL de forma independiente en cada lado.
+* **Monitorización del lag de replicación**: MM2 expone sus propias métricas de estado de la replicación. `replication-latency-ms` informa el tiempo transcurrido desde que se produjo un mensaje en el origen hasta que se replicó completamente en el destino, y las métricas relacionadas con el lag del conector de checkpoint muestran qué tan actualizada está la traducción de offsets. Incorporarlas a Prometheus y generar alertas para un SLA (por ejemplo, «lag de replicación inferior a 5 minutos») permite verificar continuamente que el clúster de DR realmente está en un estado al que se podría realizar conmutación por error.
 
 ## Próximos pasos
 
-Con Kafka Connect y MirrorMaker 2 implementados para movimiento de datos y recuperación ante desastres, el siguiente paso es ver cómo esta carga de trabajo se integra con — o se compara con — el servicio completamente administrado Amazon MSK. Eso se cubre en [Parte 6: Integración de MSK](./06-msk-integration.md).
+Con Kafka Connect y MirrorMaker 2 preparados para el movimiento de datos y la recuperación ante desastres, el siguiente paso es analizar cómo esta carga de trabajo se integra con — o se compara con — el servicio Amazon MSK completamente administrado. Esto se aborda en la [Parte 6: Integración con MSK](./06-msk-integration.md).
 
-[Volver a la página principal](./)
+[Volver a la página principal](./README.md)
 
 ## Cuestionario
 
-Para comprobar lo que aprendiste en este capítulo, prueba el [cuestionario del tema](../../quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md).
+Para comprobar lo aprendido en este capítulo, prueba el [Cuestionario de topics](../../quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md).

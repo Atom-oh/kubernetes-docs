@@ -4,7 +4,7 @@
 
 ## 概要
 
-Calico は、さまざまなインフラストラクチャ要件、パフォーマンスニーズ、運用上の制約に対応するため、複数のネットワーキングモードをサポートしています。このセクションでは、各ネットワーキングモードを詳しく解説し、環境に最適なモードを選択して設定できるようにします。
+Calico は、さまざまなインフラストラクチャ要件、パフォーマンスニーズ、運用上の制約に対応するため、複数のネットワーキングモードをサポートしています。このセクションでは各ネットワーキングモードを詳しく解説し、環境に最適なモードの選択と設定を支援します。
 
 ## ネットワーキングモードの概要
 
@@ -68,11 +68,11 @@ IPIP Encapsulated Packet (1500 bytes outer MTU):
 
 ### IPIP モードのオプション
 
-| モード            | 説明                               | ユースケース                                   |
+| モード            | 説明                                      | ユースケース                                 |
 | --------------- | ----------------------------------------- | ------------------------------------------ |
-| **Always**      | すべての Pod 間トラフィックをカプセル化    | クラウド環境、シンプルなセットアップ           |
-| **CrossSubnet** | サブネット間トラフィックのみをカプセル化 | ハイブリッド環境、最適化されたパフォーマンス |
-| **Never**       | IPIP を無効化（Direct ルーティングで使用）   | BGP を使用するオンプレミス                       |
+| **Always**      | すべての Pod 間トラフィックをカプセル化する | クラウド環境、シンプルなセットアップ           |
+| **CrossSubnet** | サブネット間トラフィックのみをカプセル化する | ハイブリッド環境、最適化されたパフォーマンス |
+| **Never**       | IPIP を無効化する（Direct ルーティングと併用） | BGP を使用するオンプレミス                   |
 
 ### IPIP CrossSubnet モード
 
@@ -192,12 +192,12 @@ VXLAN Encapsulated Packet:
 
 ### VXLAN コンポーネント
 
-| コンポーネント             | 説明                                      |
+| コンポーネント         | 説明                                             |
 | --------------------- | ------------------------------------------------ |
-| **VTEP**              | VXLAN Tunnel Endpoint - encap/decap ポイント        |
+| **VTEP**              | VXLAN Tunnel Endpoint - encap/decap ポイント     |
 | **VNI**               | VXLAN Network Identifier（Calico は固定 VNI を使用） |
-| **UDP Port**          | 4789（IANA 割り当て）                             |
-| **Multicast/Unicast** | Calico は既知のピア VTEP と Unicast を使用        |
+| **UDP Port**          | 4789（IANA 割り当て）                            |
+| **Multicast/Unicast** | Calico は既知のピア VTEP とのユニキャストを使用  |
 
 ### VXLAN IPPool 設定
 
@@ -289,17 +289,17 @@ flowchart TD
 
 ## Direct/非カプセル化モード
 
-Direct ルーティングモードは、カプセル化なしでネイティブ IP ルーティングを使用し、可能な限り最高のパフォーマンスを提供します。
+Direct ルーティングモードはカプセル化なしでネイティブ IP ルーティングを使用し、可能な限り最高のパフォーマンスを提供します。
 
 ### Direct モードの要件
 
-| 要件           | 説明                                    |
+| 要件                  | 説明                                           |
 | --------------------- | ---------------------------------------------- |
-| **L2 隣接性**      | Node は同じ L2 ネットワーク上にある必要があります。OR       |
-| **BGP ルーティング**       | 外部ルーターは BGP を介して Pod ルートを学習する必要があります |
-| **ルート伝播** | 物理ネットワークが Pod CIDR をルーティングする必要があります          |
+| **L2 隣接性**         | Node が同一の L2 ネットワーク上にあること、または |
+| **BGP ルーティング**  | 外部ルーターが BGP 経由で Pod ルートを学習すること |
+| **ルート伝播**        | 物理ネットワークが Pod CIDR をルーティングすること |
 
-### Direct モードのトポロジー
+### Direct モードトポロジー
 
 ```mermaid
 flowchart TD
@@ -402,17 +402,17 @@ ip route
 
 ### IPIP vs VXLAN vs Direct
 
-| 機能               | IPIP                | VXLAN                | Direct       |
+| 機能                  | IPIP                | VXLAN                | Direct       |
 | --------------------- | ------------------- | -------------------- | ------------ |
-| **プロトコル**          | IP Protocol 4       | UDP Port 4789        | Native IP    |
-| **オーバーヘッド**          | 20 bytes            | 50 bytes             | 0 bytes      |
+| **プロトコル**        | IP Protocol 4       | UDP Port 4789        | ネイティブ IP |
+| **オーバーヘッド**    | 20 bytes            | 50 bytes             | 0 bytes      |
 | **MTU**               | 1480                | 1450                 | 1500         |
-| **ファイアウォール互換性** | IP proto 4 が必要な場合あり | UDP pass-through     | Native       |
-| **ハードウェアオフロード**  | Limited             | Better support       | Full support |
-| **L2 要件**    | No                  | No                   | Yes（または BGP） |
-| **Multicast**         | Not needed          | Not needed（unicast） | Not needed   |
-| **パフォーマンス**       | Good                | Good                 | Best         |
-| **複雑さ**        | Low                 | Low                  | Medium       |
+| **ファイアウォール対応** | IP proto 4 が必要な場合あり | UDP パススルー       | ネイティブ   |
+| **ハードウェアオフロード** | 制限あり            | より良いサポート     | 完全サポート |
+| **L2 要件**           | なし                | なし                 | あり（または BGP） |
+| **Multicast**         | 不要                | 不要（ユニキャスト） | 不要         |
+| **パフォーマンス**    | 良い                | 良い                 | 最良         |
+| **複雑さ**            | 低                  | 低                   | 中           |
 
 ### パフォーマンスベンチマーク比較
 
@@ -453,7 +453,7 @@ CPU Usage (% per Gbps):
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### パケットフローの比較
+### パケットフロー比較
 
 ```mermaid
 flowchart TD
@@ -495,15 +495,15 @@ flowchart TD
 
 ## クラウドプロバイダーの互換性
 
-| プロバイダー        | IPIP | VXLAN | Direct           | 推奨               |
+| プロバイダー        | IPIP | VXLAN | Direct           | 推奨                      |
 | --------------- | ---- | ----- | ---------------- | ------------------------- |
-| **AWS EC2**     | Yes  | Yes   | VPC ルーティング使用 | VXLAN または IPIP CrossSubnet |
-| **AWS EKS**     | Yes  | Yes   | Limited          | VXLAN（デフォルト）           |
-| **Azure**       | Yes  | Yes   | UDR 使用         | VXLAN                     |
-| **GCP**         | Yes  | Yes   | VPC ルート使用  | IPIP CrossSubnet          |
-| **オンプレミス** | Yes  | Yes   | Yes（BGP）        | Direct（BGP 使用）         |
-| **Bare Metal**  | Yes  | Yes   | Yes              | Direct（BGP 使用）         |
-| **OpenStack**   | Yes  | Yes   | Yes              | neutron 設定に依存 |
+| **AWS EC2**     | はい | はい  | VPC ルーティング使用 | VXLAN または IPIP CrossSubnet |
+| **AWS EKS**     | はい | はい  | 制限あり          | VXLAN（デフォルト）        |
+| **Azure**       | はい | はい  | UDR 使用          | VXLAN                     |
+| **GCP**         | はい | はい  | VPC ルート使用    | IPIP CrossSubnet          |
+| **オンプレミス** | はい | はい  | はい（BGP）       | Direct（BGP 使用）         |
+| **Bare Metal**  | はい | はい  | はい              | Direct（BGP 使用）         |
+| **OpenStack**   | はい | はい  | はい              | neutron 設定に依存         |
 
 ### AWS 固有の設定
 
@@ -577,7 +577,7 @@ kubectl rollout restart deployment -n <namespace>
 calicoctl delete ippool default-ipv4-ippool
 ```
 
-### Overlay から Direct への移行
+### オーバーレイから Direct への移行
 
 ```yaml
 # Step 1: Ensure BGP is configured
@@ -612,15 +612,15 @@ spec:
 
 ## MTU 最適化ガイド
 
-### モード別の MTU 計算
+### モード別 MTU 計算
 
-| モード             | ベース MTU | オーバーヘッド | 有効 MTU | 設定        |
+| モード             | ベース MTU | オーバーヘッド | 実効 MTU | 設定                 |
 | ---------------- | -------- | -------- | ------------- | -------------------- |
-| Direct           | 1500     | 0        | 1500          | 変更不要     |
+| Direct           | 1500     | 0        | 1500          | 変更不要              |
 | IPIP             | 1500     | 20       | 1480          | `ipipMTU: 1480`      |
 | VXLAN            | 1500     | 50       | 1450          | `vxlanMTU: 1450`     |
 | WireGuard        | 1500     | 60       | 1440          | `wireguardMTU: 1440` |
-| IPIP + WireGuard | 1500     | 80       | 1420          | オーバーヘッドの合計    |
+| IPIP + WireGuard | 1500     | 80       | 1420          | オーバーヘッドの合計  |
 
 ### MTU 設定
 
@@ -639,7 +639,7 @@ spec:
   wireguardMTU: 1440
 ```
 
-### Jumbo Frames の設定
+### ジャンボフレーム設定
 
 ```yaml
 # For networks supporting jumbo frames (MTU 9000)
@@ -667,7 +667,7 @@ ping -M do -s 1422 <destination-pod-ip>   # For VXLAN (1450 MTU)
 tcpdump -i eth0 'icmp[icmptype] == 3 and icmp[icmpcode] == 4'
 ```
 
-## 意思決定フローチャート
+## 判断フローチャート
 
 ```mermaid
 flowchart TD
@@ -708,21 +708,21 @@ flowchart TD
 
 最適な Calico パフォーマンスを得るには、適切なネットワーキングモードの選択が重要です。
 
-1. **IPIP モード**: クラウド環境向けのデフォルトの選択肢で、設定が簡単です
-2. **VXLAN モード**: より優れたファイアウォール互換性を持つ標準的なオーバーレイプロトコルです
-3. **Direct モード**: BGP インフラストラクチャを備えたオンプレミス向けの最大パフォーマンス
+1. **IPIP モード**: クラウド環境向けのデフォルトの選択肢で、設定がシンプル
+2. **VXLAN モード**: ファイアウォールとの互換性に優れた標準オーバーレイプロトコル
+3. **Direct モード**: BGP インフラストラクチャを持つオンプレミス環境で最大のパフォーマンスを実現
 
 主な考慮事項:
 
 * **クラウドデプロイメント**: VXLAN または IPIP CrossSubnet を使用
-* **BGP を使用するオンプレミス**: 最高のパフォーマンスには Direct モードを使用
-* **混在環境**: IPIP または VXLAN CrossSubnet は優れたバランスを提供
-* **パフォーマンスが重要**: 適切な BGP 設定で Direct モードを使用
+* **BGP を使用するオンプレミス**: 最良のパフォーマンスには Direct モードを使用
+* **混在環境**: IPIP または VXLAN CrossSubnet が優れたバランスを提供
+* **パフォーマンスが重要**: 適切な BGP 設定を備えた Direct モード
 
-[前へ: Part 2 - Calico アーキテクチャの詳細解説](02-architecture.md)
+[前へ: Part 2 - Calico アーキテクチャの詳細](02-architecture.md)
 
-[Calico 概要に戻る](./)
+[Calico の概要に戻る](./README.md)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[ネットワーキングモードのクイズ](../../quizzes/networking/calico/03-networking-modes-quiz.md)を試してください。
+この章で学んだ内容をテストするには、[ネットワーキングモードクイズ](../../quizzes/networking/calico/03-networking-modes-quiz.md)に挑戦してください。

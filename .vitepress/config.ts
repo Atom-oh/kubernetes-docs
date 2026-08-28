@@ -1,7 +1,10 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 import { summarySidebar } from './summary'
 import { vitepressBuildScope } from './site-scope.mjs'
+import { extractDescription, localeAlternates, normalizeReadmeHref } from './seo.mjs'
 
 const GA_ID = 'G-GWVLEW5JLL'
 const ADSENSE_CLIENT = 'ca-pub-6267917556914416'
@@ -15,10 +18,13 @@ const DISABLE_MERMAID = process.env.VP_DISABLE_MERMAID === '1'
 
 const config = defineConfig({
   title: 'Cloud Native Operations',
+  description:
+    'Hands-on Kubernetes and Amazon EKS training — core concepts, networking, service mesh, observability, quizzes, and labs.',
   base: '/kubernetes-docs/',
   srcDir: '.',
   srcExclude: vitepressBuildScope.srcExclude,
   rewrites: vitepressBuildScope.rewrites,
+  cleanUrls: true,
   ignoreDeadLinks: false,
   markdown: {
     languageAlias: {
@@ -27,7 +33,37 @@ const config = defineConfig({
       traceql: 'sql',
       rego: 'hcl',
       river: 'hcl'
+    },
+    config(md) {
+      // Content links target README.md (GitBook convention). The README→index
+      // rewrites change the emitted routes, but VitePress does not map link
+      // hrefs through rewrites — normalize them here so rendered links match.
+      md.core.ruler.push('readme_links', (state) => {
+        for (const blockToken of state.tokens) {
+          if (blockToken.type !== 'inline' || !blockToken.children) continue
+          for (const token of blockToken.children) {
+            if (token.type !== 'link_open') continue
+            const href = token.attrGet('href')
+            if (href) token.attrSet('href', normalizeReadmeHref(href))
+          }
+        }
+      })
     }
+  },
+  transformPageData(pageData, { siteConfig }) {
+    if (pageData.frontmatter.description) return
+    const source = fs.readFileSync(
+      path.join(siteConfig.srcDir, pageData.filePath),
+      'utf8'
+    )
+    const description = extractDescription(source)
+    if (description) pageData.description = description
+  },
+  transformHead({ pageData }) {
+    return localeAlternates(pageData.relativePath).map(({ hreflang, href }) => [
+      'link',
+      { rel: 'alternate', hreflang, href }
+    ])
   },
   sitemap: {
     hostname: 'https://www.atomai.click/kubernetes-docs/'
@@ -43,12 +79,16 @@ const config = defineConfig({
       label: '한국어',
       lang: 'ko-KR',
       link: '/ko/',
+      description:
+        '쿠버네티스와 Amazon EKS 실무 학습 자료 — 핵심 개념, 네트워킹, 서비스 메시, 옵저버빌리티, 퀴즈와 실습 랩까지 한 곳에서.',
       themeConfig: { sidebar: summarySidebar('ko') }
     },
     en: {
       label: 'English',
       lang: 'en-US',
       link: '/en/',
+      description:
+        'Hands-on Kubernetes and Amazon EKS training — core concepts, networking, service mesh, observability, quizzes, and labs.',
       themeConfig: { sidebar: summarySidebar('en') }
     }
   },

@@ -1,26 +1,26 @@
-# パート 3: MSA デプロイとカナリア
+# パート 3: MSA Deployment と Canary
 
-> **難易度**: 上級 **所要時間**: 60 分 **最終更新**: February 23, 2026
+> **難易度**: 上級 **推定所要時間**: 60 分 **最終更新**: February 23, 2026
 
 ## 学習目標
 
-* ArgoCD のマルチクラスター管理を使用して MSA アプリケーションをデプロイする
-* AnalysisTemplate を使用してカナリアデプロイ用に Argo Rollouts を設定する
-* すべての Service に OpenTelemetry 自動インストルメンテーションを実装する
-* オブザーバビリティに基づく昇格/ロールバックを伴うカナリアリリースを実行する
+* ArgoCD のマルチクラスター管理を使用して MSA アプリケーションを Deployment する
+* AnalysisTemplate を使用して Canary Deployment 用の Argo Rollouts を設定する
+* すべての Service に OpenTelemetry の自動計装を実装する
+* 可観測性に基づく昇格/ロールバックを伴う Canary リリースを実行する
 
 ## 前提条件
 
-* [ ] [パート 1: インフラストラクチャのセットアップ](01-infrastructure-setup-lab.md) を完了している
-* [ ] [パート 2: オブザーバビリティスタック](02-observability-stack-lab.md) を完了している
+* [ ] [パート 1: Infrastructure Setup](01-infrastructure-setup-lab.md) を完了している
+* [ ] [パート 2: Observability Stack](02-observability-stack-lab.md) を完了している
 * [ ] ArgoCD と Argo Rollouts が稼働している
-* [ ] オブザーバビリティスタックがデータを収集している
+* [ ] Observability Stack がデータを収集している
 
 ***
 
 ## アーキテクチャの概要
 
-![MSA Service マップ](../../.gitbook/assets/msa-service-map.png)
+![MSA Service Map](../../.gitbook/assets/msa-service-map.png)
 
 ### Service 呼び出しフロー
 
@@ -64,15 +64,15 @@ sequenceDiagram
 
 ### アプリケーション構成
 
-| Service              | 言語     | フレームワーク | ポート | 説明                             |
+| Service              | 言語 | Framework   | Port | 説明                             |
 | -------------------- | -------- | ----------- | ---- | -------------------------------- |
-| API Gateway          | Go       | Gin         | 8080 | リクエストルーティング、認証     |
-| Order Service        | Python   | FastAPI     | 8000 | 注文管理                         |
-| Payment Service      | Java     | Spring Boot | 8080 | 決済処理                         |
-| Notification Service | Node.js  | Express     | 3000 | メール/SMS 通知                  |
-| Analytics Batch      | Python   | -           | -    | 日次分析（MWAA によりトリガー）  |
+| API Gateway          | Go   | Gin         | 8080 | リクエストルーティング、認証       |
+| Order Service        | Python | FastAPI     | 8000 | 注文管理                         |
+| Payment Service      | Java | Spring Boot | 8080 | 支払い処理                       |
+| Notification Service | Node.js  | Express     | 3000 | Email/SMS 通知                   |
+| Analytics Batch      | Python | -           | -    | 日次分析（MWAA によりトリガー）   |
 
-### リポジトリ構成
+### リポジトリ構造
 
 ```
 obs-lab-msa/
@@ -176,7 +176,7 @@ async def create_order(order: OrderRequest):
 kubectl config use-context $(kubectl config get-contexts -o name | grep obs-service)
 ```
 
-**ステップ 2.2: MSA ワークロード用の専用 NodePool を作成する**
+**ステップ 2.2: MSA ワークロード専用の NodePool を作成する**
 
 ```bash
 cat <<'EOF' | kubectl apply -f -
@@ -378,7 +378,7 @@ kubectl get hpa -n msa
 
 ***
 
-## 演習 4: ArgoCD Application のデプロイ
+## 演習 4: ArgoCD Application の Deployment
 
 ### 手順
 
@@ -476,7 +476,7 @@ spec:
 EOF
 ```
 
-**ステップ 4.4: サンプル MSA マニフェストを直接デプロイする（ラボ用）**
+**ステップ 4.4: サンプル MSA マニフェストを直接 Deployment する（ラボ用）**
 
 ```bash
 # Switch to Service Cluster
@@ -761,7 +761,7 @@ kubectl get svc -n msa
 
 ***
 
-## 演習 5: OpenTelemetry 自動インストルメンテーション
+## 演習 5: OpenTelemetry 自動計装
 
 ### 手順
 
@@ -829,16 +829,16 @@ spec:
 EOF
 ```
 
-**ステップ 5.3: 自動インストルメンテーションの対応範囲表**
+**ステップ 5.3: 自動計装のカバレッジ表**
 
-| 言語 | インストルメント対象ライブラリ         | Annotation                                               |
+| 言語 | 計装対象ライブラリ                     | Annotation                                               |
 | -------- | ------------------------------------ | -------------------------------------------------------- |
-| Go       | gin、net/http、gRPC                  | `instrumentation.opentelemetry.io/inject-go: "true"`     |
-| Python   | FastAPI、SQLAlchemy、boto3、requests | `instrumentation.opentelemetry.io/inject-python: "true"` |
-| Java     | Spring Boot、JDBC、Kafka、gRPC       | `instrumentation.opentelemetry.io/inject-java: "true"`   |
-| Node.js  | Express、pg、aws-sdk、http           | `instrumentation.opentelemetry.io/inject-nodejs: "true"` |
+| Go       | gin, net/http, gRPC                  | `instrumentation.opentelemetry.io/inject-go: "true"`     |
+| Python   | FastAPI, SQLAlchemy, boto3, requests | `instrumentation.opentelemetry.io/inject-python: "true"` |
+| Java     | Spring Boot, JDBC, Kafka, gRPC       | `instrumentation.opentelemetry.io/inject-java: "true"`   |
+| Node.js  | Express, pg, aws-sdk, http           | `instrumentation.opentelemetry.io/inject-nodejs: "true"` |
 
-**ステップ 5.4: インストルメンテーションを適用するために Deployment を再起動する**
+**ステップ 5.4: 計装を適用するために Deployment を再起動する**
 
 ```bash
 kubectl rollout restart deployment -n msa
@@ -857,7 +857,7 @@ kubectl logs -n opentelemetry -l app=otel-collector --tail=50 | grep "trace"
 
 ***
 
-## 演習 6: Argo Rollouts カナリアデプロイ
+## 演習 6: Argo Rollouts Canary Deployment
 
 ### 手順
 
@@ -1016,7 +1016,7 @@ spec:
 EOF
 ```
 
-### カナリア状態図
+### Canary 状態図
 
 ```mermaid
 stateDiagram-v2
@@ -1037,7 +1037,7 @@ stateDiagram-v2
     Rollback --> [*]: Rolled back to v1
 ```
 
-**ステップ 6.3: カナリアデプロイをトリガーする（イメージを更新）**
+**ステップ 6.3: Canary Deployment をトリガーする（イメージを更新）**
 
 ```bash
 # Update to v2
@@ -1063,11 +1063,11 @@ echo "Dashboard: http://$ROLLOUTS_DASHBOARD:3100/rollout/msa/order-service"
 
 ***
 
-## 演習 7: 意図的な失敗と自動ロールバック
+## 演習 7: 意図的な障害と自動ロールバック
 
 ### 手順
 
-**ステップ 7.1: 失敗するバージョンをデプロイする**
+**ステップ 7.1: 失敗するバージョンを Deployment する**
 
 ```bash
 # Deploy v3 with intentional errors (returns 500 for 30% of requests)
@@ -1076,7 +1076,7 @@ kubectl argo rollouts set image order-service \
   -n msa
 ```
 
-**ステップ 7.2: カナリア分析を監視する**
+**ステップ 7.2: Canary 分析を監視する**
 
 ```bash
 # Watch analysis results
@@ -1087,7 +1087,7 @@ kubectl get analysisruns -n msa -l rollouts-pod-template-hash
 kubectl describe analysisrun -n msa $(kubectl get analysisruns -n msa -o jsonpath='{.items[0].metadata.name}')
 ```
 
-**ステップ 7.3: 自動ロールバックを検証する**
+**ステップ 7.3: 自動ロールバックを確認する**
 
 ```bash
 # After analysis failure, rollout should automatically abort
@@ -1096,7 +1096,7 @@ kubectl argo rollouts status order-service -n msa
 # Expected output: "Degraded - RolloutAborted: Rollout aborted due to analysis failure"
 ```
 
-**ステップ 7.4: Grafana でトラフィック分割を確認する**
+**ステップ 7.4: トラフィック分割を Grafana で確認する**
 
 ```bash
 # Open Grafana and check:
@@ -1121,44 +1121,44 @@ kubectl get pods -n msa -l app=order-service -o jsonpath='{range .items[*]}{.met
 
 ## まとめ
 
-このラボでは、以下を実施しました:
+このラボでは、以下を実施しました。
 
-| タスク                                | ステータス |
+| タスク                                  | ステータス |
 | ------------------------------------- | ---------- |
-| MSA 用 Karpenter NodePool              | 設定済み   |
-| KEDA ScaledObject（SQS + Prometheus） | 作成済み   |
-| ArgoCD ApplicationSet                 | デプロイ済み |
-| MSA Service（4 Service）              | 稼働中     |
-| OTel 自動インストルメンテーション     | 有効       |
-| Argo Rollouts カナリア                | 設定済み   |
-| AnalysisTemplate                      | 作成済み   |
-| 失敗/ロールバックテスト               | 完了       |
+| MSA 用 Karpenter NodePool                | 設定済み   |
+| KEDA ScaledObjects（SQS + Prometheus）  | 作成済み   |
+| ArgoCD ApplicationSet                   | Deployment 済み |
+| MSA Services（4 Service）               | 稼働中     |
+| OTel 自動計装                            | 有効化済み |
+| Argo Rollouts Canary                     | 設定済み   |
+| AnalysisTemplate                         | 作成済み   |
+| 障害/ロールバックテスト                  | 完了       |
 
 ## クリーンアップ
 
-クリーンアップは [パート 6](06-distributed-tracing-lab.md#cleanup) で実施します。
+クリーンアップは[パート 6](06-distributed-tracing-lab.md#cleanup)で実行します。
 
 ## トラブルシューティング
 
 <details>
 
-<summary>OTel インストルメンテーションが注入されない</summary>
+<summary>OTel 計装が注入されない</summary>
 
-* OTel Operator が稼働していることを確認します: `kubectl get pods -n opentelemetry-operator-system`
-* Instrumentation リソースを確認します: `kubectl get instrumentation -n msa`
-* Pod の Annotation が正しいことを確認します
-* Instrumentation の作成後に Pod を再起動します
+* OTel Operator が稼働していることを確認する: `kubectl get pods -n opentelemetry-operator-system`
+* Instrumentation リソースを確認する: `kubectl get instrumentation -n msa`
+* Pod の Annotation が正しいことを確認する
+* Instrumentation を作成した後に Pod を再起動する
 
 </details>
 
 <details>
 
-<summary>カナリア分析が常に失敗する</summary>
+<summary>Canary 分析が常に失敗する</summary>
 
-* AnalysisTemplate 内の Prometheus クエリ構文を確認します
-* メトリクスが収集されていることを確認します: Grafana Explore でクエリをテストします
-* AnalysisRun ログを確認します: `kubectl describe analysisrun -n msa <name>`
-* 必要に応じて成功/失敗条件を調整します
+* AnalysisTemplate 内の Prometheus クエリ構文を確認する
+* メトリクスが収集されていることを確認する: Grafana Explore でクエリをテストする
+* AnalysisRun ログを確認する: `kubectl describe analysisrun -n msa <name>`
+* 必要に応じて成功/失敗条件を調整する
 
 </details>
 
@@ -1166,19 +1166,19 @@ kubectl get pods -n msa -l app=order-service -o jsonpath='{range .items[*]}{.met
 
 <summary>KEDA がスケーリングしない</summary>
 
-* SQS アクセス用の IRSA 権限を確認します
-* KEDA Operator ログを確認します: `kubectl logs -n keda -l app=keda-operator`
-* SQS メトリクスをテストします: `aws sqs get-queue-attributes --queue-url $SQS_QUEUE_URL --attribute-names ApproximateNumberOfMessages`
+* SQS アクセスに必要な IRSA 権限を確認する
+* KEDA Operator ログを確認する: `kubectl logs -n keda -l app=keda-operator`
+* SQS メトリクスをテストする: `aws sqs get-queue-attributes --queue-url $SQS_QUEUE_URL --attribute-names ApproximateNumberOfMessages`
 
 </details>
 
 ## 次のステップ
 
-[パート 4: 負荷テストとオートスケーリング](04-load-testing-scaling-lab.md) に進み、MSA アプリケーションのストレステストを実施します。
+MSA アプリケーションのストレステストを行うには、[パート 4: Load Testing and Autoscaling](04-load-testing-scaling-lab.md)に進んでください。
 
 ## 参考資料
 
-* [ArgoCD ドキュメント](../../gitops/argocd/)
+* [ArgoCD ドキュメント](../../gitops/argocd/README.md)
 * [Argo Rollouts ドキュメント](../../gitops/argocd/05-traffic-management.md)
 * [KEDA ドキュメント](../../autoscaling/01-keda.md)
 * [Karpenter ドキュメント](../../autoscaling/02-karpenter.md)

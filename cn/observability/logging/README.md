@@ -2,23 +2,23 @@
 
 > **最后更新**: February 20, 2026
 
-在 Kubernetes 环境中，有效的日志记录对于系统可观测性、故障排查和安全审计至关重要。本文档介绍日志基础知识、日志收集管道架构，以及 EKS 环境的日志记录策略。
+在 Kubernetes 环境中，有效的日志记录对于系统可观测性、故障排除和安全审计至关重要。本文档介绍日志记录基础、日志收集管道架构，以及 EKS 环境的日志记录策略。
 
 ## 目录
 
-1. [日志基础知识](./#logging-fundamentals)
-2. [日志收集管道架构](./#log-collection-pipeline-architecture)
-3. [日志存储选择标准](./#log-storage-selection-criteria)
-4. [EKS 日志策略](./#eks-logging-strategy)
-5. [解决方案对比](./#solution-comparison)
+1. [日志记录基础](#日志记录基础)
+2. [日志收集管道架构](#日志收集管道架构)
+3. [日志存储选择标准](#日志存储选择标准)
+4. [EKS 日志记录策略](#eks-日志记录策略)
+5. [解决方案比较](#解决方案比较)
 
 ***
 
-## 日志基础知识
+## 日志记录基础
 
 ### 结构化日志
 
-结构化日志以一致的格式输出日志消息，使解析和分析更加容易。与非结构化文本日志不同，结构化日志由字段-值对组成，能够实现更高效的搜索和筛选。
+结构化日志以一致的格式输出日志消息，使解析和分析更加容易。与非结构化文本日志不同，结构化日志由字段值对组成，能够实现更高效的搜索和筛选。
 
 #### 非结构化日志与结构化日志
 
@@ -44,15 +44,15 @@
 
 | 优势                  | 描述                                               |
 | ------------------------ | --------------------------------------------------------- |
-| **搜索效率**    | 可按特定字段快速筛选                         |
+| **搜索效率**    | 按特定字段快速筛选                         |
 | **一致性**          | 所有 Service 使用相同格式                           |
 | **关联分析** | 通过 trace\_id、request\_id 跟踪请求                 |
-| **自动化**           | 无需解析即可立即在分析工具中使用      |
+| **自动化**           | 无需解析即可立即用于分析工具      |
 | **告警配置**  | 易于根据特定字段值创建告警规则 |
 
 ### 日志级别
 
-日志级别表示消息的重要性和严重程度。正确使用日志级别对于有效排查故障和减少噪声至关重要。
+日志级别表示消息的重要性和严重程度。正确使用日志级别对于有效的故障排除和减少噪声至关重要。
 
 | 级别     | 编号 | 用途                                  | 示例                                              |
 | --------- | ------ | ---------------------------------------- | ---------------------------------------------------- |
@@ -111,9 +111,9 @@ LOG_LEVEL: INFO  # or WARN (for high traffic)
 
 | 字段组    | 字段         | 描述                                         |
 | -------------- | ------------- | --------------------------------------------------- |
-| **基础**      | timestamp     | ISO 8601 格式的时间戳                           |
+| **基本**      | timestamp     | ISO 8601 格式的时间戳                           |
 |                | level         | 日志级别                                           |
-|                | message       | 供人阅读的消息                              |
+|                | message       | 人类可读的消息                              |
 | **上下文**    | context.\*    | 与业务逻辑相关的信息                  |
 | **Kubernetes** | kubernetes.\* | Pod、namespace 等 K8s 元数据                    |
 | **追踪**      | trace.\*      | 分布式追踪 ID（OpenTelemetry 集成） |
@@ -122,7 +122,7 @@ LOG_LEVEL: INFO  # or WARN (for high traffic)
 
 ## 日志收集管道架构
 
-### 架构概览
+### 架构概述
 
 ```mermaid
 flowchart TB
@@ -202,15 +202,15 @@ flowchart TB
 
 负责从日志源收集原始日志。
 
-| 方法          | 优势                                   | 缺点                     | 最适用场景                          |
+| 方法          | 优势                                   | 劣势                     | 最适用场景                          |
 | --------------- | -------------------------------------------- | --------------------------------- | --------------------------------- |
-| **DaemonSet**   | 资源高效，集中管理   | 每个节点仅一个                 | 大多数标准工作负载           |
+| **DaemonSet**   | 资源高效，集中式管理   | 每个节点仅一个                 | 大多数标准工作负载           |
 | **Sidecar**     | 按应用隔离，自定义处理 | 资源开销                 | 特殊日志格式、多租户 |
-| **Direct Push** | 实时、灵活传输                 | 需要修改应用 | 高性能要求     |
+| **直接推送** | 实时、灵活的传输                 | 需要修改应用 | 高性能要求     |
 
 #### 2. 处理层
 
-对收集的日志进行规范化并添加元数据。
+对收集到的日志进行标准化并添加元数据。
 
 ```yaml
 # FluentBit processing pipeline example
@@ -239,7 +239,7 @@ flowchart TB
 
 #### 4. 分析层
 
-搜索并可视化存储的日志。
+搜索并可视化已存储的日志。
 
 ***
 
@@ -293,17 +293,17 @@ operational:
 | **Loki**       | 低          | 低        | 高        |
 | **OpenSearch** | 中          | 高       | 中      |
 | **CloudWatch** | 很低     | 很低   | 高        |
-| **ClickHouse** | 高         | 中      | 高        |
+| **ClickHouse** | 高         | 中     | 高        |
 
 ***
 
-## EKS 日志策略
+## EKS 日志记录策略
 
 ### 日志收集模式
 
 #### 1. stdout/stderr 模式（推荐）
 
-通过容器标准输出/错误记录日志是默认的 Kubernetes 模式。
+通过容器标准输出/错误输出进行日志记录是默认的 Kubernetes 模式。
 
 ```yaml
 apiVersion: v1
@@ -321,10 +321,10 @@ spec:
 
 **优势：**
 
-* Kubernetes 原生方法
+* Kubernetes 原生方式
 * 自动日志轮转管理（`/var/log/containers/`）
 * 可使用 `kubectl logs` 命令
-* 无需单独挂载 Volume
+* 无需单独挂载 volume
 
 **日志文件位置：**
 
@@ -338,7 +338,7 @@ spec:
 
 #### 2. Sidecar 模式
 
-在需要基于文件的日志记录或特殊处理时使用。
+需要基于文件的日志记录或特殊处理时使用。
 
 ```yaml
 apiVersion: v1
@@ -372,7 +372,7 @@ spec:
 
 **使用场景：**
 
-* 旧版应用（仅支持文件日志）
+* 旧版应用（仅文件日志记录）
 * 多租户环境中的日志隔离
 * 每个应用需要特殊解析
 * 高安全性要求
@@ -427,7 +427,7 @@ spec:
 
 ### EKS 控制平面日志
 
-EKS 控制平面日志会发送到 CloudWatch Logs。
+EKS 控制平面日志将发送至 CloudWatch Logs。
 
 ```bash
 # Enable control plane logging via AWS CLI
@@ -444,7 +444,7 @@ aws eks update-cluster-config \
 | **controllerManager** | Controller manager 日志 | 可选            |
 | **scheduler**         | Scheduler 日志          | 可选            |
 
-### Container Insights 日志
+### Container Insights 日志记录
 
 ```yaml
 # CloudWatch Agent ConfigMap
@@ -470,7 +470,7 @@ data:
 
 ***
 
-## 解决方案对比
+## 解决方案比较
 
 ### 功能对比表
 
@@ -479,9 +479,9 @@ data:
 | **安装复杂度** | 低        | 中         | 无（托管） | 高           |
 | **查询语言**          | LogQL      | Lucene/DQL     | Insights QL    | SQL            |
 | **全文搜索**        | 有限    | 优秀      | 良好           | 良好           |
-| **架构**                  | 无模式 | 无模式     | 无模式     | 已定义架构 |
+| **模式**                  | 无模式 | 无模式     | 无模式     | 已定义模式 |
 | **压缩**             | 高       | 中         | 不适用            | 很高      |
-| **实时追尾**       | 支持  | 支持      | 有限        | 支持      |
+| **实时尾随**       | 支持  | 支持      | 有限        | 支持      |
 | **告警**                | Grafana    | 内置       | 内置       | Grafana        |
 | **多租户**           | 支持  | 支持      | 支持      | 支持      |
 | **S3 后端**              | 原生     | 仅快照 | 不适用            | 原生         |
@@ -531,7 +531,7 @@ ClickHouse (self-hosted):
   +- Total: ~$183
 ```
 
-> **注意**：实际成本可能因查询模式、保留期限和区域而有显著差异。
+> **注意**：实际成本可能会因查询模式、保留期限和区域而有很大差异。
 
 ### 决策流程图
 
@@ -565,16 +565,16 @@ flowchart TD
 
 ## 后续步骤
 
-有关每个日志存储解决方案的详细信息，请参阅以下文档：
+有关各日志存储解决方案的详细信息，请参阅以下文档：
 
 * [Grafana Loki](01-loki.md) - 经济高效的日志聚合
-* [Amazon OpenSearch Service](02-opensearch.md) - 强大的搜索和分析
+* [Amazon OpenSearch Service](02-opensearch.md) - 强大的搜索与分析
 * [CloudWatch Logs](03-cloudwatch-logs.md) - AWS 原生日志记录
 * [ClickHouse](04-clickhouse.md) - 高性能日志分析
-* [日志收集器对比](05-collectors.md) - FluentBit、Promtail、Alloy、OTEL
+* [日志收集器比较](05-collectors.md) - FluentBit、Promtail、Alloy、OTEL
 
 ***
 
 ## 测验
 
-通过[日志概览测验](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/observability/logging/README-quiz.md)测试你的知识。
+通过 [日志概览测验](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/observability/logging/README-quiz.md) 测试您的知识。

@@ -1,79 +1,79 @@
 # 高级基础设施
 
-> **支持版本**: Terraform >= 1.5, AWS Provider >= 5.40, EKS >= 1.29 **最后更新**: February 19, 2026
+> **支持的版本**: Terraform >= 1.5, AWS Provider >= 5.40, EKS >= 1.29 **最后更新**: February 19, 2026
 
-< [上一篇：Terraform 3 层基础设施](01-infrastructure-setup.md) | [目录](./) | [下一篇：CI Pipelines](03-ci-pipelines.md) >
+< [上一节：Terraform 三层基础设施](01-infrastructure-setup.md) | [目录](./README.md) | [下一节：CI 流水线](03-ci-pipelines.md) >
 
 ***
 
 ## 概述
 
-本指南介绍用于运行生产级 EKS workload 的高级基础设施模式，重点包括高可用性和零停机部署。Blue/Green cluster 架构支持无缝 cluster 升级、灾难恢复，以及跨多个 Availability Zone（可用区）的流量管理。
+本指南介绍用于运行具有高可用性和零停机部署的生产 EKS 工作负载的高级基础设施模式。Blue/Green 集群架构可实现跨多个可用区的无缝集群升级、灾难恢复和流量管理。
 
-**主要主题：**
+**核心主题：**
 
-* Blue/Green 双 cluster 架构
-* 用于流量分发的 NLB 加权 target group
-* 使用 Route53 进行基于 DNS 的流量切换
-* 用于有状态 workload 的 zone-aware 数据放置
-* 使用 CloudWatch 和 Lambda 实现自动 failover
+* Blue/Green 双集群架构
+* 用于流量分配的 NLB 加权目标组
+* 使用 Route53 的基于 DNS 的流量切换
+* 有状态工作负载的区域感知数据放置
+* 使用 CloudWatch 和 Lambda 的自动故障转移
 
 ***
 
 ## 1. Blue/Green 架构概述
 
-### 为什么使用 Blue/Green Cluster？
+### 为什么选择 Blue/Green 集群？
 
-传统的原地 cluster 升级存在显著风险：
+传统的原地集群升级存在显著风险：
 
-* control plane 更新期间 workload 中断
-* Node drain 可能导致容量问题
-* 出现问题时 rollback 复杂
-* 维护窗口较长
+* 控制平面更新期间的工作负载中断
+* 节点排空可能导致容量问题
+* 出现问题时回滚复杂
+* 维护窗口延长
 
-Blue/Green 架构通过维护两个独立 cluster 来消除这些风险：
+Blue/Green 架构通过维护两个独立集群来消除这些风险：
 
-| 方面          | 原地升级           | Blue/Green                     |
-| ----------- | -------------- | ------------------------------ |
-| 停机风险        | 中高             | 接近零                            |
-| Rollback 时间 | 30-60 分钟       | 秒级（DNS/NLB）                    |
-| 测试          | 有限             | 完整生产流量                         |
-| 成本          | 单 cluster      | 2x cluster（过渡期间）               |
+| 方面        | 原地升级 | Blue/Green                     |
+| ------------- | ---------------- | ------------------------------ |
+| 停机风险 | 中高      | 接近零                      |
+| 回滚时间 | 30-60 分钟    | 数秒（DNS/NLB）              |
+| 测试       | 有限          | 完整生产流量        |
+| 成本          | 单集群   | 2 倍集群（过渡期间） |
 
 ### 架构图
 
-![NLB Blue/Green 架构](../.gitbook/assets/nlb_bluegreen_architecture.png)
+![NLB Blue/Green Architecture](../.gitbook/assets/nlb_bluegreen_architecture.png)
 
-### 单 Zone 设计依据
+### 单区域设计原理
 
-每个 cluster 在单个 Availability Zone 中运行：
+每个集群在单个可用区中运行：
 
 **优势：**
 
-1. **数据本地性**：Pod 始终调度到靠近其 storage volume 的位置
-2. **成本优化**：跨 AZ 数据传输成本为零
-3. **故障隔离**：AZ 故障只影响一个 cluster
-4. **简化网络**：无需复杂的 multi-AZ load balancing
+1. **数据本地性**：Pod 始终调度到靠近其存储卷的位置
+2. **成本优化**：零跨 AZ 数据传输成本
+3. **故障隔离**：AZ 故障仅影响一个集群
+4. **简化网络**：无需复杂的多 AZ 负载均衡
 
 **权衡：**
 
-* 单 AZ 风险更高（通过 Blue/Green failover 缓解）
-* 需要针对每个 zone 进行谨慎的容量规划
+* 更高的单 AZ 风险（通过 Blue/Green 故障转移缓解）
+* 每个区域需要谨慎的容量规划
 
-### Zone 分配
+### 区域分配
 
-| Cluster | Availability Zone | 用途                  |
+| 集群 | 可用区 | 用途                  |
 | ------- | ----------------- | ------------------------ |
-| Blue    | ap-northeast-2a   | 主生产环境                  |
-| Green   | ap-northeast-2c   | 次要/升级目标                |
+| Blue    | ap-northeast-2a   | 主要生产环境       |
+| Green   | ap-northeast-2c   | 次要/升级目标 |
 
 ***
 
-## 2. NLB 加权 Target Group
+## 2. NLB 加权目标组
 
 ### Network Load Balancer 配置
 
-共享 NLB 根据 target group 权重在 Blue 和 Green cluster 之间分发流量。
+共享 NLB 根据目标组权重在 Blue 和 Green 集群之间分配流量。
 
 ```hcl
 # nlb/main.tf
@@ -411,9 +411,9 @@ output "current_weights" {
 }
 ```
 
-### 部署的权重调整
+### 部署时调整权重
 
-针对 canary 风格部署逐步调整权重：
+为金丝雀式部署逐步调整权重：
 
 ```hcl
 # terraform.tfvars examples for different deployment stages
@@ -435,7 +435,7 @@ blue_weight  = 0
 green_weight = 100
 ```
 
-应用权重变更：
+应用权重更改：
 
 ```bash
 # Update weights
@@ -453,7 +453,7 @@ aws elbv2 describe-listeners \
 
 ### Route53 加权路由
 
-如需更细粒度的控制和全局路由，可在 NLB 权重之外或替代 NLB 权重使用 Route53 weighted record。
+如需更精细的控制和全局路由，请与 NLB 权重结合使用或改用 Route53 加权记录。
 
 ```hcl
 # dns/main.tf
@@ -702,27 +702,27 @@ variable "green_dns_weight" {
 
 ### TTL 策略
 
-DNS TTL 会影响权重变更时流量切换的速度：
+DNS TTL 会影响权重更改时流量切换的速度：
 
-| TTL 值       | 切换时间            | 使用场景          |
+| TTL 值    | 切换时间     | 使用场景          |
 | ------------ | --------------- | ----------------- |
-| 60 秒         | \~2-3 分钟       | 快速 failover       |
-| 300 秒        | \~10-15 分钟     | 正常运维             |
-| 3600 秒       | \~1-2 小时       | 稳定路由             |
+| 60 秒   | \~2-3 分钟   | 快速故障转移    |
+| 300 秒  | \~10-15 分钟 | 正常运行 |
+| 3600 秒 | \~1-2 小时     | 稳定路由    |
 
-对于 Route53 Alias record，TTL 继承自目标（NLB）。如需显式控制 TTL，请使用带 IP 地址的非 alias record。
+对于 Route53 Alias 记录，TTL 从目标（NLB）继承。如需显式控制 TTL，请使用带有 IP 地址的非 Alias 记录。
 
 ***
 
-## 4. Data Node 放置
+## 4. 数据节点放置
 
-### Zone Affinity 概念
+### 区域亲和性概念
 
-对于有状态 workload，Pod 必须调度到与其 persistent volume 相同的 zone。EKS Auto Mode 会自动处理其中的大部分工作，但理解这些概念有助于故障排查。
+对于有状态工作负载，Pod 必须调度到与其持久卷相同的区域。EKS Auto Mode 会自动处理其中大部分工作，但了解这些概念有助于排查问题。
 
-### NodePool Zone 配置
+### NodePool 区域配置
 
-实际的 NodePool YAML 由 ArgoCD GitOps 管理（参见 [GitOps Pipeline 配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)），但以下是关键概念：
+实际的 NodePool YAML 由 ArgoCD GitOps 管理（参见 [GitOps 流水线配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)），但以下是核心概念：
 
 ```yaml
 # Conceptual NodePool for Blue cluster (zone: ap-northeast-2a)
@@ -763,7 +763,7 @@ spec:
 
 ### TopologySpreadConstraints
 
-确保 workload 在单 zone cluster 内正确分散：
+确保工作负载在单区域集群内正确分布：
 
 ```yaml
 # Example Deployment with topology constraints
@@ -838,9 +838,9 @@ spec:
           image: redis:7-alpine
 ```
 
-### 带 Zone-Specific Storage 的 StatefulSet
+### 采用特定区域存储的 StatefulSet
 
-适用于数据库和其他有状态 workload：
+适用于数据库和其他有状态工作负载：
 
 ```yaml
 # PostgreSQL StatefulSet with zone-locked storage
@@ -887,7 +887,7 @@ spec:
             storage: 100Gi
 ```
 
-### 用于 Zone-Specific Provisioning 的 Storage Class
+### 用于特定区域预配置的 StorageClass
 
 ```yaml
 # StorageClass that provisions in specific zone
@@ -912,11 +912,11 @@ reclaimPolicy: Retain
 
 ***
 
-## 5. Failover 自动化
+## 5. 故障转移自动化
 
-### CloudWatch Alarm
+### CloudWatch 告警
 
-监控 cluster 健康状况并触发自动 failover：
+监控集群运行状况并触发自动故障转移：
 
 ```hcl
 # failover/cloudwatch.tf
@@ -985,9 +985,9 @@ resource "aws_sns_topic_subscription" "email" {
 }
 ```
 
-### Lambda Failover Function
+### Lambda 故障转移函数
 
-当 cluster 变为不健康时自动切换权重：
+当集群变为不健康状态时自动切换权重：
 
 ```hcl
 # failover/lambda.tf
@@ -1089,7 +1089,7 @@ resource "aws_lambda_permission" "cloudwatch" {
 }
 ```
 
-### Lambda Function 代码
+### Lambda 函数代码
 
 ```python
 # failover/lambda/failover.py
@@ -1225,9 +1225,9 @@ def notify(message, severity):
         )
 ```
 
-### EventBridge Rule
+### EventBridge 规则
 
-按计划触发 failover 检查：
+按计划触发故障转移检查：
 
 ```hcl
 # failover/eventbridge.tf
@@ -1257,7 +1257,7 @@ resource "aws_lambda_permission" "eventbridge" {
 
 ### 手动切换流程
 
-用于计划维护或手动 failover：
+用于计划维护或手动故障转移：
 
 ```bash
 #!/bin/bash
@@ -1313,7 +1313,7 @@ echo "Verify with:"
 echo "  aws elbv2 describe-listeners --load-balancer-arn \$(terraform output -raw nlb_arn)"
 ```
 
-### 渐进式 Rollback 脚本
+### 渐进式回滚脚本
 
 ```bash
 #!/bin/bash
@@ -1376,21 +1376,21 @@ echo "All traffic now routed to: $TO_CLUSTER"
 
 ## 总结
 
-采用 NLB 加权路由的 Blue/Green cluster 架构提供：
+采用 NLB 加权路由的 Blue/Green 集群架构提供：
 
-1. **零停机部署**：逐步或即时切换流量
-2. **快速 Rollback**：数秒内切回之前的 cluster
-3. **隔离的故障域**：AZ 故障只影响一个 cluster
-4. **生产环境测试**：将小比例流量路由到新 cluster
-5. **自动恢复**：使用 CloudWatch + Lambda 实现自动 failover
+1. **零停机部署**：渐进或即时切换流量
+2. **快速回滚**：数秒内切回上一个集群
+3. **隔离的故障域**：AZ 故障仅影响一个集群
+4. **生产环境测试**：将小部分流量路由到新集群
+5. **自动恢复**：CloudWatch + Lambda 实现自动故障转移
 
 ### 相关文档
 
-* [Terraform 3 层基础设施](01-infrastructure-setup.md)
-* [CI Pipelines](03-ci-pipelines.md)
-* [GitOps Pipeline 配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [Terraform 三层基础设施](01-infrastructure-setup.md)
+* [CI 流水线](03-ci-pipelines.md)
+* [GitOps 流水线配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
 * [EKS Auto Mode 入门](../eks-auto-mode/01-getting-started.md)
 
 ***
 
-< [上一篇：Terraform 3 层基础设施](01-infrastructure-setup.md) | [目录](./) | [下一篇：CI Pipelines](03-ci-pipelines.md) >
+< [上一节：Terraform 三层基础设施](01-infrastructure-setup.md) | [目录](./README.md) | [下一节：CI 流水线](03-ci-pipelines.md) >

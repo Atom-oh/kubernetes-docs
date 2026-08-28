@@ -1,8 +1,12 @@
 # Istio
 
-> **Last Updated**: August 17, 2026
+> **Last Updated**: August 24, 2026
 
 A practical guide for utilizing Istio Service Mesh on Amazon EKS.
+
+### August 2026 Update: Istio 1.31 Enters RC
+
+On August 19, 2026, 1.31.0-beta.2 was followed the same day by the first release candidate, [1.31.0-rc.0](https://github.com/istio/istio/releases), moving the next minor version, 1.31, into the release-candidate stage. An RC is a pre-release for final validation just before GA — a signal that the official release is close. Keep using GA releases in production.
 
 ### August 2026 Update: Istio 1.31 Enters Beta
 

@@ -1,19 +1,19 @@
 # OpenTelemetry
 
-> **対応バージョン**: OTEL 1.x
-> **最終更新**: July 27, 2026
+> **サポート対象バージョン**: OTEL 1.x
+> **最終更新**: August 24, 2026
 
 ## はじめに
 
-OpenTelemetry（OTel）は、クラウドネイティブソフトウェア向けの可観測性フレームワークです。Traces、Metrics、Logsという3つのシグナルを生成、収集、管理するためのベンダー中立な標準を提供します。CNCFで2番目に活発なプロジェクトとして、業界標準になっています。
+OpenTelemetry（OTel）は、クラウドネイティブソフトウェア向けのオブザーバビリティフレームワークです。Traces、Metrics、Logs という3つのシグナルを生成、収集、管理するためのベンダー中立な標準を提供します。CNCF で2番目に活発なプロジェクトとして、業界標準となっています。
 
-### 2026年7月の更新: CNCF Graduation
+### 2026年7月更新: CNCF Graduation
 
-OpenTelemetryは、KubernetesやPrometheusなどのプロジェクトと同様に、CNCFの最高成熟度レベルである**graduated**ステータスを正式に達成しました。Graduationは、プロジェクトのガバナンス、セキュリティプラクティス、採用状況が本番利用に向けて検証済みであることを示します。コミュニティが示した次のステップは、残るシグナル（プロファイリングなど）の成熟化とコントリビューターの継続的な増加に焦点を当てています。背景とロードマップについては、CNCFブログ記事["OpenTelemetry has graduated… Now what?"](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/)を参照してください。
+OpenTelemetry は、Kubernetes や Prometheus などのプロジェクトに加わり、CNCF の最高成熟度レベルである **graduated** ステータスを正式に達成しました。Graduation は、プロジェクトのガバナンス、セキュリティプラクティス、導入状況が本番利用に向けて評価済みであることを示します。コミュニティが示した次のステップは、残りのシグナル（profiling など）の成熟化と、コントリビューターの継続的な拡大に焦点を当てています。背景とロードマップについては、CNCF ブログ記事「[OpenTelemetry has graduated… Now what?](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/)」を参照してください。
 
-## OpenTelemetryとは？
+## OpenTelemetry とは？
 
-OpenTelemetryは、OpenTracingプロジェクトとOpenCensusプロジェクトの統合から生まれました。
+OpenTelemetry は、OpenTracing プロジェクトと OpenCensus プロジェクトの統合から生まれました。
 
 ```mermaid
 flowchart LR
@@ -53,7 +53,7 @@ flowchart LR
 
 | シグナル | 説明 | ユースケース |
 |--------|-------------|-----------|
-| **Traces** | 分散リクエストトレーシング | レイテンシー分析、依存関係マッピング |
+| **Traces** | 分散リクエストトレーシング | レイテンシー分析、依存関係のマッピング |
 | **Metrics** | 数値測定値 | リソース使用量、SLI/SLO |
 | **Logs** | イベント記録 | デバッグ、監査 |
 
@@ -99,9 +99,9 @@ flowchart LR
 
 ### 自動計装
 
-コードを変更せずに自動で計装を追加します。
+コードを変更せずに計装を自動的に追加します。
 
-#### Javaの自動計装
+#### Java 自動計装
 
 ```bash
 # Download Java Agent
@@ -146,7 +146,7 @@ spec:
             name: otel-java-agent
 ```
 
-#### Pythonの自動計装
+#### Python 自動計装
 
 ```bash
 # Installation
@@ -179,7 +179,7 @@ spec:
               value: "true"
 ```
 
-#### Node.jsの自動計装
+#### Node.js 自動計装
 
 ```javascript
 // tracing.js
@@ -221,7 +221,7 @@ process.on('SIGTERM', () => {
 
 きめ細かな制御が必要な場合は、手動で計装します。
 
-#### Javaの手動計装
+#### Java 手動計装
 
 ```java
 import io.opentelemetry.api.OpenTelemetry;
@@ -348,7 +348,7 @@ flowchart LR
     class OTLP_EXP,TEMPO_EXP,XRAY_EXP,PROM_EXP,LOKI_EXP,DD_EXP exporter
 ```
 
-### Collectorの設定
+### Collector 設定
 
 ```yaml
 # otel-collector-config.yaml
@@ -502,11 +502,11 @@ service:
       exporters: [loki]
 ```
 
-## EKSのDeploymentパターン
+## EKS デプロイパターン
 
-### DaemonSetパターン
+### DaemonSet パターン
 
-各ノード上のすべてのPodからデータを収集するため、各ノードにCollectorをデプロイします。
+各ノード上のすべての Pod からデータを収集するため、各ノードに Collector をデプロイします。
 
 ```yaml
 # otel-collector-daemonset.yaml
@@ -586,9 +586,9 @@ spec:
   type: ClusterIP
 ```
 
-### Sidecarパターン
+### Sidecar パターン
 
-各アプリケーションPod内のsidecarとしてCollectorをデプロイします。
+各アプリケーション Pod に Collector を sidecar としてデプロイします。
 
 ```yaml
 # application-with-sidecar.yaml
@@ -636,9 +636,9 @@ spec:
 
 ## Kubernetes Operator
 
-OpenTelemetry Operatorを使用した自動計装:
+OpenTelemetry Operator を使用した自動計装:
 
-### Operatorのインストール
+### Operator のインストール
 
 ```bash
 # Install cert-manager (required)
@@ -689,7 +689,7 @@ spec:
     image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:latest
 ```
 
-### 自動計装のInjection
+### 自動計装のインジェクション
 
 ```yaml
 # Enable auto-instrumentation on namespace
@@ -724,7 +724,7 @@ spec:
 
 ## マルチバックエンド設定
 
-単一のCollectorから複数のバックエンドへデータを送信します。
+単一の Collector から複数のバックエンドへデータを送信します。
 
 ```yaml
 exporters:
@@ -760,13 +760,17 @@ service:
       exporters: [otlp/tempo, awsxray, datadog, jaeger]
 ```
 
-### 2026年7月の更新: AI Agentトラフィックのネットワーク境界を監視する
+### 2026年7月更新: AI Agent トラフィックのネットワーク境界を監視する
 
-CNCFブログ記事では、[NGINXとOpenTelemetryを使用してAI Agent向けのネットワーク境界を構築する](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/)パターンを説明しています。AI Agentからのアウトバウンドトラフィックはフォワードプロキシ（NGINX）を経由するよう強制され、NGINXネイティブのOpenTelemetryモジュールがリクエストごとにOTel spanを出力します。これらのspanは、上記で扱ったパイプラインと同様にOTel Collectorを通過し、監査ログに永続化されるか、Jaeger、Grafana、またはSIEMに転送されます。これにより、ユーザー操作と、Agentがその代理で行った外部呼び出しを関連付けられます。クラスターでAgentワークロードを実行する場合、これは既存のOTelパイプラインをそのまま再利用できる有用な可観測性パターンです。
+CNCF ブログ記事では、[NGINX と OpenTelemetry を使用して AI Agent 向けのネットワーク境界を構築するパターン](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/)を説明しています。AI Agent からのアウトバウンドトラフィックは forward proxy（NGINX）を経由するよう強制され、NGINX ネイティブ OpenTelemetry モジュールはリクエストごとに OTel span を出力します。これらの span は、上記で扱ったパイプラインと同様に OTel Collector を経由します。監査ログに永続化することも、Jaeger、Grafana、または SIEM へ転送することも可能であり、ユーザー操作と、Agent がユーザーに代わって実行した外部呼び出しを関連付けられます。クラスターで Agent ワークロードを実行している場合、これは既存の OTel パイプラインをそのまま再利用できる有用なオブザーバビリティパターンです。
+
+### 2026年8月更新: 低速な SQL クエリを信頼性 Metrics に変換する
+
+CNCF ブログ記事では、[OpenTelemetry を使用して低速なクエリを実用的な信頼性 Metrics に変換する方法](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/)を解説しています。アプリケーションがすでに出力している OpenTelemetry の database span を、ダッシュボード化およびアラート設定が可能な span 由来 Metrics に変換する、再現可能なワークフローを構築します。単純な低速クエリの検出から始め、次にトラフィック加重の影響度（最適化する価値が最も高いクエリ）と異常検出（現在異常な動作をしているクエリ）を追加します。実践的な[ラボリポジトリ](https://github.com/causely-oss/slow-query-lab)がこの記事に付属しています。
 
 ## ベストプラクティス
 
-### 1. Resource Attributesを標準化する
+### 1. Resource Attributes を標準化する
 
 ```yaml
 # Follow Semantic Conventions
@@ -866,4 +870,4 @@ processors:
 
 ## クイズ
 
-[OpenTelemetryクイズ](../../quizzes/observability/tracing/03-opentelemetry-quiz.md)で知識をテストしてください。
+[OpenTelemetry クイズ](../../quizzes/observability/tracing/03-opentelemetry-quiz.md)で理解度を確認しましょう。
