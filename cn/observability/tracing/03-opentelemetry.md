@@ -1,15 +1,15 @@
 # OpenTelemetry
 
 > **支持的版本**: OTEL 1.x
-> **最后更新**: July 27, 2026
+> **最后更新**: August 24, 2026
 
 ## 简介
 
-OpenTelemetry (OTel) 是用于云原生软件的可观测性框架。它为生成、收集和管理三类信号提供了厂商中立的标准：Traces、Metrics 和 Logs。作为 CNCF 第二活跃的项目，它已成为行业标准。
+OpenTelemetry（OTel）是一个面向云原生软件的可观测性框架。它为生成、收集和管理三类信号提供了供应商中立的标准：Traces、Metrics 和 Logs。作为 CNCF 第二活跃的项目，它已成为行业标准。
 
 ### 2026 年 7 月更新：CNCF 毕业
 
-OpenTelemetry 已正式获得 CNCF **毕业**状态，这是该基金会的最高成熟度级别，成为与 Kubernetes 和 Prometheus 等项目并列的一员。毕业表明该项目的治理、安全实践和采用情况已通过审核，适合生产使用。社区公布的下一步重点是使其余信号（例如 profiling）更加成熟，并维持贡献者数量的增长。有关背景和路线图，请参阅 CNCF 博客文章 ["OpenTelemetry has graduated… Now what?"](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/)。
+OpenTelemetry 已正式获得 CNCF **毕业**状态，这是该基金会最高的成熟度级别，与 Kubernetes 和 Prometheus 等项目并列。毕业表明该项目的治理、安全实践和采用情况已通过生产使用验证。社区公布的后续重点是推进其余信号（例如 profiling）的成熟度，并保持贡献者增长。有关背景和路线图，请参阅 CNCF 博文 ["OpenTelemetry has graduated… Now what?"](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/)。
 
 ## 什么是 OpenTelemetry？
 
@@ -588,7 +588,7 @@ spec:
 
 ### Sidecar 模式
 
-将 Collector 作为 sidecar 部署在每个应用程序 Pod 中：
+将 Collector 作为 sidecar 部署在每个应用 Pod 中：
 
 ```yaml
 # application-with-sidecar.yaml
@@ -760,13 +760,17 @@ service:
       exporters: [otlp/tempo, awsxray, datadog, jaeger]
 ```
 
-### 2026 年 7 月更新：观察 AI Agent 流量的网络边界
+### 2026 年 7 月更新：为 AI Agent 流量观测网络边界
 
-CNCF 博客文章介绍了一种[使用 NGINX 和 OpenTelemetry 为 AI Agent 构建网络边界](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/)的模式。AI Agent 发出的出站流量会被强制通过转发代理（NGINX），而 NGINX 原生 OpenTelemetry 模块会为每个请求生成一个 OTel span。这些 span 会像上述 pipeline 一样流经 OTel Collector——持久化到审计日志或转发至 Jaeger、Grafana 或 SIEM——使您能够将用户交互与 Agent 代表其发出的外部调用关联起来。如果您在集群中运行 Agent 工作负载，这是一种非常实用的可观测性模式，可按原样复用现有的 OTel pipeline。
+一篇 CNCF 博文介绍了一种[使用 NGINX 和 OpenTelemetry 为 AI Agent 构建网络边界](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/)的模式。来自 AI Agent 的出站流量会被强制通过正向代理（NGINX），而 NGINX 原生 OpenTelemetry 模块会为每个请求生成一个 OTel span。这些 span 与上文介绍的管道一样流经 OTel Collector——持久化到审计日志，或转发到 Jaeger、Grafana 或 SIEM——使您能够将用户交互与 Agent 代其发出的外部调用关联起来。如果您在集群中运行 Agent 工作负载，这是一种很有用的可观测性模式，可原样复用现有的 OTel 管道。
+
+### 2026 年 8 月更新：将慢 SQL 查询提炼为可靠性 Metrics
+
+一篇 CNCF 博文讲解了[如何使用 OpenTelemetry 将慢查询转化为可操作的可靠性 Metrics](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/)。它构建了一个可重复的工作流程，将您的应用已生成的 OpenTelemetry 数据库 span 提炼为可在仪表板中展示并设置告警的 span 派生 Metrics——从简单的慢查询检测开始，随后加入按流量加权的影响（哪些查询最值得优化）和异常检测（哪些查询当前表现异常）。该博文附有一个实践用的[实验仓库](https://github.com/causely-oss/slow-query-lab)。
 
 ## 最佳实践
 
-### 1. 统一资源属性
+### 1. 标准化资源属性
 
 ```yaml
 # Follow Semantic Conventions

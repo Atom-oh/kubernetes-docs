@@ -1,15 +1,15 @@
 # OpenTelemetry
 
 > **Versiones compatibles**: OTEL 1.x
-> **Última actualización**: July 27, 2026
+> **Última actualización**: August 24, 2026
 
 ## Introducción
 
-OpenTelemetry (OTel) es un marco de observabilidad para software nativo de la nube. Proporciona estándares neutrales respecto al proveedor para generar, recopilar y gestionar tres señales: Traces, Metrics y Logs. Como el segundo proyecto más activo de CNCF, se ha convertido en el estándar de la industria.
+OpenTelemetry (OTel) es un marco de observabilidad para software nativo de la nube. Proporciona estándares neutrales respecto a proveedores para generar, recopilar y gestionar tres señales: Traces, Metrics y Logs. Como el segundo proyecto más activo de CNCF, se ha convertido en el estándar de la industria.
 
-### Actualización de julio de 2026: graduación de CNCF
+### Actualización de julio de 2026: Graduación de CNCF
 
-OpenTelemetry ha alcanzado oficialmente el estado de **graduado** de CNCF, el nivel de madurez más alto de la fundación, uniéndose a proyectos como Kubernetes y Prometheus. La graduación indica que la gobernanza, las prácticas de seguridad y la adopción del proyecto han sido evaluadas para su uso en producción. Los próximos pasos declarados por la comunidad se centran en madurar las señales restantes (como profiling) y mantener el crecimiento de colaboradores. Consulta la publicación del blog de CNCF ["OpenTelemetry se ha graduado… ¿y ahora qué?"](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/) para conocer el contexto y la hoja de ruta.
+OpenTelemetry ha alcanzado oficialmente el estado de **graduado** de CNCF, el nivel de madurez más alto de la fundación, uniéndose a proyectos como Kubernetes y Prometheus. La graduación indica que la gobernanza, las prácticas de seguridad y la adopción del proyecto han sido evaluadas para su uso en producción. Los próximos pasos declarados por la comunidad se centran en madurar las señales restantes (como el perfilado) y mantener el crecimiento de las personas colaboradoras. Consulta la publicación del blog de CNCF ["OpenTelemetry has graduated… Now what?"](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/) para conocer el contexto y la hoja de ruta.
 
 ## ¿Qué es OpenTelemetry?
 
@@ -53,7 +53,7 @@ flowchart LR
 
 | Señal | Descripción | Casos de uso |
 |--------|-------------|-----------|
-| **Traces** | Rastreo distribuido de solicitudes | Análisis de latencia, mapeo de dependencias |
+| **Traces** | Trazado de solicitudes distribuidas | Análisis de latencia, mapeo de dependencias |
 | **Metrics** | Mediciones numéricas | Uso de recursos, SLI/SLO |
 | **Logs** | Registros de eventos | Depuración, auditoría |
 
@@ -299,7 +299,7 @@ public class OrderService {
 }
 ```
 
-## OTEL Collector
+## Collector de OTEL
 
 ### Arquitectura
 
@@ -504,9 +504,9 @@ service:
 
 ## Patrones de Deployment de EKS
 
-### Patrón DaemonSet
+### Patrón de DaemonSet
 
-Implementa el Collector en cada nodo para recopilar datos de todos los Pods de ese nodo:
+Despliega el Collector en cada nodo para recopilar datos de todos los Pods en ese nodo:
 
 ```yaml
 # otel-collector-daemonset.yaml
@@ -586,9 +586,9 @@ spec:
   type: ClusterIP
 ```
 
-### Patrón Sidecar
+### Patrón de Sidecar
 
-Implementa el Collector como un sidecar en cada Pod de aplicación:
+Despliega el Collector como sidecar en cada Pod de la aplicación:
 
 ```yaml
 # application-with-sidecar.yaml
@@ -634,9 +634,9 @@ spec:
             name: otel-sidecar-config
 ```
 
-## Operator de Kubernetes
+## Operador de Kubernetes
 
-Instrumentación automática mediante OpenTelemetry Operator:
+Instrumentación automática mediante el OpenTelemetry Operator:
 
 ### Instalación del Operator
 
@@ -648,7 +648,7 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
 ```
 
-### CR de Instrumentation
+### Instrumentation CR
 
 ```yaml
 # instrumentation.yaml
@@ -760,13 +760,17 @@ service:
       exporters: [otlp/tempo, awsxray, datadog, jaeger]
 ```
 
-### Actualización de julio de 2026: observación de un límite de red para el tráfico de agentes de IA
+### Actualización de julio de 2026: Observación de un límite de red para el tráfico de agentes de IA
 
-Una publicación del blog de CNCF describe un patrón para [crear un límite de red para agentes de IA mediante NGINX y OpenTelemetry](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/). El tráfico saliente de los agentes de IA se fuerza a pasar por un proxy de reenvío (NGINX), y el módulo nativo de OpenTelemetry de NGINX emite un span de OTel por cada solicitud. Esos spans fluyen a través de un OTel Collector igual que los pipelines abordados anteriormente; se conservan en un registro de auditoría o se reenvían a Jaeger, Grafana o un SIEM, lo que permite correlacionar las interacciones de los usuarios con las llamadas externas que un agente realizó en su nombre. Si ejecutas cargas de trabajo de agentes en tu clúster, este es un patrón de observabilidad útil que reutiliza tal cual tu pipeline de OTel existente.
+Una publicación del blog de CNCF describe un patrón para [crear un límite de red para agentes de IA mediante NGINX y OpenTelemetry](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/). El tráfico saliente de los agentes de IA se fuerza a través de un proxy de reenvío (NGINX), y el módulo nativo de OpenTelemetry de NGINX emite un span de OTel para cada solicitud. Esos spans fluyen a través de un Collector de OTel igual que los pipelines tratados anteriormente —se conservan en un registro de auditoría o se reenvían a Jaeger, Grafana o un SIEM—, lo que permite correlacionar las interacciones de los usuarios con las llamadas externas que un agente realizó en su nombre. Si ejecutas cargas de trabajo de agentes en tu clúster, este es un patrón de observabilidad útil que reutiliza tu pipeline de OTel existente sin cambios.
+
+### Actualización de agosto de 2026: Conversión de consultas SQL lentas en métricas de fiabilidad
+
+Una publicación del blog de CNCF explica [cómo convertir consultas lentas en métricas de fiabilidad accionables con OpenTelemetry](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/). Presenta un flujo de trabajo repetible que transforma los spans de base de datos de OpenTelemetry que tu aplicación ya emite en métricas derivadas de spans que puedes visualizar en paneles y sobre las que puedes generar alertas; comienza con una detección sencilla de consultas lentas y después añade el impacto ponderado por tráfico (qué consultas vale más la pena optimizar) y la detección de anomalías (qué consultas se comportan de forma anormal en este momento). Un [repositorio de laboratorio](https://github.com/causely-oss/slow-query-lab) práctico acompaña la publicación.
 
 ## Prácticas recomendadas
 
-### 1. Estandariza los atributos de Resource
+### 1. Estandariza los atributos de recursos
 
 ```yaml
 # Follow Semantic Conventions
@@ -866,4 +870,4 @@ processors:
 
 ## Cuestionario
 
-Pon a prueba tus conocimientos con el [cuestionario de OpenTelemetry](../../quizzes/observability/tracing/03-opentelemetry-quiz.md).
+Pon a prueba tus conocimientos con el [Cuestionario de OpenTelemetry](../../quizzes/observability/tracing/03-opentelemetry-quiz.md).

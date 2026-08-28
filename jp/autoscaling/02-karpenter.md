@@ -1,7 +1,7 @@
 # Karpenter
 
-> **サポート対象バージョン**: Karpenter 1.6 - 1.14, Kubernetes 1.29+ (v1.14 時点)
-> **最終更新**: July 27, 2026
+> **対応バージョン**: Karpenter 1.6 - 1.14、Kubernetes 1.29+（v1.14 時点）
+> **最終更新**: August 24, 2026
 
 ## 目次
 - [概要](#introduction)
@@ -18,13 +18,13 @@
 
 ## 概要
 
-Karpenter は、Kubernetes クラスターの Node プロビジョニングを自動化するオープンソースのクラスターオートスケーラーです。Karpenter は、アプリケーションの可用性を確保しクラスター効率を最適化するため、ワークロード要件に基づいて適切なコンピューティングリソースを動的にプロビジョニングします。
+Karpenter は、Kubernetes クラスターの Node プロビジョニングを自動化するオープンソースのクラスターオートスケーラーです。Karpenter はワークロード要件に基づいて適切なコンピューティングリソースを動的にプロビジョニングし、アプリケーションの可用性を確保するとともにクラスターの効率を最適化します。
 
 ### Karpenter の主な利点
 
-1. **高速スケーリング**: ワークロード要件に基づき数秒で Node をプロビジョニング
+1. **高速スケーリング**: ワークロード要件に基づき、数秒以内に Node をプロビジョニング
 2. **コスト最適化**: ワークロードに最適なインスタンスタイプを選択
-3. **シンプルな設定**: 宣言的 API による簡単な設定
+3. **シンプルな設定**: 宣言的 API による容易な設定
 4. **ワークロード中心の設計**: Pod 要件に基づく Node プロビジョニング
 5. **クラウド統合**: クラウドプロバイダーの機能を活用
 6. **効率的な Bin Packing**: リソース使用率を最適化
@@ -32,17 +32,17 @@ Karpenter は、Kubernetes クラスターの Node プロビジョニングを�
 
 ### 既存のオートスケーラーとの比較
 
-| 機能 | Karpenter | Cluster Autoscaler | Cloud Provider Managed Node Groups |
+| 機能 | Karpenter | Cluster Autoscaler | クラウドプロバイダー管理 Node Groups |
 |---------|-----------|-------------------|---------------------------|
 | スケーリング速度 | 非常に高速（秒） | 中程度（分） | 低速（分） |
-| インスタンスタイプの選択 | 動的 | Node グループベース | Node グループベース |
+| インスタンスタイプの選択 | 動的 | Node group ベース | Node group ベース |
 | Bin Packing の効率 | 高 | 中 | 低 |
 | 設定の複雑さ | 低 | 中 | 低 |
-| クラウド統合 | ネイティブ | 限定的 | ネイティブ |
-| Node グループ管理 | 不要 | 必要 | 必要 |
-| 中断処理 | 統合済み | 限定的 | 限定的 |
+| クラウド統合 | ネイティブ | 制限あり | ネイティブ |
+| Node Group 管理 | 不要 | 必要 | 必要 |
+| 中断処理 | 統合済み | 制限あり | 制限あり |
 
-> **注記**: Karpenter ではなく従来の EKS Managed Node Groups と Cluster Autoscaler を使用する場合、EC2 Auto Scaling Warm Pools（2026 年 4 月から利用可能）により、コールドスタートなしでスケールアウトできるよう、初期化済みインスタンスをスタンバイ状態に保持できます。Stopped 状態（低コスト）または Running 状態（高速な移行）を選択でき、Cluster Autoscaler と自動的に統合されます。ただし、これは Managed Node Group の機能であり、Karpenter が使用するものではありません。
+> **注記**: Karpenter ではなく従来の EKS Managed Node Groups と Cluster Autoscaler を使用し続ける場合、EC2 Auto Scaling Warm Pools（2026 年 4 月以降利用可能）により、コールドスタートなしでスケールアウトできるよう初期化済みインスタンスを待機状態に維持できます。Stopped 状態（低コスト）または Running 状態（より高速な移行）を選択でき、Cluster Autoscaler と自動的に統合されます。ただし、これは Managed Node Group の機能であり、Karpenter が使用するものではありません。
 
 ## アーキテクチャ
 
@@ -129,7 +129,7 @@ sequenceDiagram
     KA->>P: Schedule pod
 ```
 
-### 主なコンポーネント
+### 主要コンポーネント
 
 1. **Karpenter Controller**: スケジュール不能な Pod を検出し、Node プロビジョニングを管理
 2. **Karpenter Webhook**: Karpenter リソースを検証
@@ -140,18 +140,18 @@ sequenceDiagram
 ### 仕組み
 
 1. Karpenter Controller がスケジュール不能な Pod を検出します
-2. Pod 要件（リソース、Node Selector、Toleration など）を分析します
-3. Provisioner および Node Template の設定に基づいて適切な Node タイプを決定します
+2. Pod 要件（リソース、Node selector、toleration など）を分析します
+3. Provisioner と Node template の設定に基づいて適切な Node タイプを決定します
 4. クラウドプロバイダー API を呼び出して Node をプロビジョニングします
-5. Node がクラスターに参加すると Pod をスケジュールします
-6. 不要になった Node は統合された中断処理によって削除します
+5. Node がクラスターに参加した後に Pod をスケジュールします
+6. 不要になった Node は、統合された中断処理によって削除します
 
 ## インストールと設定
 
 ### 前提条件
 
 - Kubernetes クラスター（v1.19 以降）
-- 設定済みの kubectl
+- kubectl が設定済みであること
 - クラウドプロバイダーの認証情報と権限
 - Helm（任意）
 
@@ -268,7 +268,7 @@ spec:
 
 ## NodePool
 
-NodePool は、Karpenter が Node をどのようにプロビジョニングするかを定義する Kubernetes カスタムリソースです。以前の Provisioner に置き換わるものです。
+NodePool は、Karpenter が Node をどのようにプロビジョニングするかを定義する Kubernetes custom resource です。以前の Provisioner を置き換えるものです。
 
 ### 基本的な NodePool 設定
 
@@ -375,13 +375,13 @@ limits:
   nvidia.com/gpu: 10
 ```
 
-### Dynamic Resource Allocation (DRA) のサポート（v1.13）
+### Dynamic Resource Allocation (DRA) サポート（v1.13）
 
-Karpenter v1.13（2026 年 6 月リリース）以降、Karpenter は Kubernetes Dynamic Resource Allocation（DRA）に基づくデバイス割り当ての追跡をサポートします。Karpenter は GPU や特殊なアクセラレーターなどの Claim ベースのリソースを認識し、プロビジョニングの判断に考慮できるようになりました。これにより、`nvidia.com/gpu` のような拡張リソースだけでなく、DRA の `ResourceClaim`/`DeviceClass` オブジェクトを使用する AI/HPC ワークロードについても正確なスケーリングが可能になります。DRA ベースの追跡には Kubernetes 1.29 以降が必要です。
+Karpenter v1.13（2026 年 6 月リリース）以降、Karpenter は Kubernetes Dynamic Resource Allocation（DRA）に基づくデバイス割り当ての追跡をサポートしています。Karpenter は GPU や特殊なアクセラレーターなどの claim ベースのリソースを認識してプロビジョニングの判断に反映できるようになり、`nvidia.com/gpu` のような拡張リソースだけでなく、DRA の `ResourceClaim`/`DeviceClass` オブジェクトを使用する AI/HPC ワークロードに対しても正確なスケーリングを実現します。DRA ベースの追跡には Kubernetes 1.29 以降が必要です。
 
 ### Node 有効期限の設定
 
-Node 有効期限の設定は、Karpenter が Node を削除するタイミングを定義します。
+Node 有効期限の設定では、Karpenter が Node を削除するタイミングを定義します。
 
 ```yaml
 disruption:
@@ -397,26 +397,30 @@ disruption:
 
 ### NodeReadinessController による初期化 Taint の自動無視（v1.13）
 
-Karpenter v1.13 で追加された NodeReadinessController は、不要なスケジューリングブロックを減らすため、準備状態に関連する Taint（Node の初期化中に適用されるものなど）を自動的に無視します。これにより、以前は `startupTaints` を使用した手動処理が必要だった初期化遅延の問題が緩和され、新しい Node が Ready になる間のスケジューリング安定性とプロビジョニング信頼性が向上します。
+Karpenter v1.13 で追加された NodeReadinessController は、不要なスケジューリングのブロックを減らすため、readiness 関連の Taint（Node の初期化中に適用されるものなど）を自動的に無視します。これにより、以前は `startupTaints` による手動処理が必要だった初期化遅延の問題が緩和され、新しい Node が Ready になる間のスケジューリングの安定性とプロビジョニングの信頼性が向上します。
 
 ### 2026 年 7 月の更新: v1.14 リリース
 
-2026 年 7 月 11 日にリリースされた Karpenter v1.14 では、次の機能が追加されました。
+2026 年 7 月 11 日にリリースされた Karpenter v1.14 には、次の内容が含まれます。
 
-- **CapacityBuffers API サポート**: 突発的なスケールアウトの急増を吸収するヘッドルーム容量を宣言的に確保
-- **Preview インスタンスタイプのサポート**: まだ一般提供されていないインスタンスタイプもプロビジョニング用に選択可能
-- **Nitro Enclaves のサポート**: confidential-computing ワークロードに有用な `EnclaveOptions.Enabled` を Launch Template で設定可能
-- バグ修正: セカンダリ ENI のプライマリ IP の考慮、Zonal Shift キャッシュの確実な初期化、AWS SDK クライアントタイムアウトの operator 設定への接続など
+- **CapacityBuffers API のサポート**: 突発的なスケールアウトの急増を吸収するための余剰キャパシティを宣言的に予約
+- **Preview インスタンスタイプのサポート**: まだ一般提供されていないインスタンスタイプをプロビジョニングに選択可能
+- **Nitro Enclaves のサポート**: launch template に `EnclaveOptions.Enabled` を設定可能。機密コンピューティングワークロードに有用
+- バグ修正: secondary ENI の primary IP の考慮、Zonal Shift cache の確実な hydration、AWS SDK client timeout の operator config への接続など
 
-詳細は [v1.14.0 リリースノート](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0)を参照してください。
+詳細は [v1.14.0 release notes](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0) を参照してください。
 
-続いて 2026 年 7 月 17 日には、メンテナンス対象のすべてのマイナーラインで、協調したパッチリリースの一括更新（v1.3.8 から v1.11.3）がリリースされ、それぞれで上流の `sigs.k8s.io/karpenter` バージョンが更新されました。古いラインを使用している場合は、そのラインの最新パッチへの更新を推奨します（[リリース一覧](https://github.com/aws/karpenter-provider-aws/releases)）。
+続いて 2026 年 7 月 17 日には、保守されているすべての minor line を対象に、協調した patch release（v1.3.8 から v1.11.3）がリリースされ、それぞれで upstream の `sigs.k8s.io/karpenter` バージョンが更新されました。古い line を使用している場合は、その line の最新 patch への更新を推奨します（[release list](https://github.com/aws/karpenter-provider-aws/releases)）。
 
-2026 年 7 月 22 日、AWS はさらに Karpenter（および EKS Auto Mode）の NodePool 向けに、Elastic Fabric Adapter（EFA）ネットワークデバイス設定と EC2 placement group のサポートを発表しました。EFA 対応インスタンスのネットワークインターフェイスは、VPC IP アドレスを消費しない EFA 専用または標準 ENI に設定でき、cluster/spread/partition の配置戦略を NodePool 設定で直接指定できます。これは分散トレーニングおよび推論ワークロードに有用です。[発表](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/)を参照してください。
+2026 年 7 月 22 日、AWS はさらに、Karpenter（および EKS Auto Mode）の Node pool 向けに Elastic Fabric Adapter（EFA）network device 設定と EC2 placement group のサポートを発表しました。EFA 対応インスタンスの network interface は、VPC IP address を消費しない EFA-only、または標準 ENI に設定できます。また、cluster/spread/partition の placement strategy を Node pool 設定で直接指定できます。これは分散トレーニングおよび推論ワークロードに有用です。[発表](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/) を参照してください。
 
-## Node クラス
+### 2026 年 8 月の更新: v1.14.1 Patch Release
 
-Node クラスは、Karpenter がプロビジョニングする Node の設定を定義します。AWS では、EC2NodeClass CRD を使用します。
+v1.14 line で最初の patch である [v1.14.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1) は、2026 年 8 月 21 日に公開されました。これは upstream の `sigs.k8s.io/karpenter` バージョンを更新し、v1.14.0 以降に作成された修正を cherry-pick するメンテナンスリリースです。
+
+## Node Classes
+
+Node class は、Karpenter がプロビジョニングする Node の設定を定義します。AWS では、EC2NodeClass CRD を使用します。
 
 ### AWS EC2NodeClass の設定
 
@@ -467,7 +471,7 @@ spec:
 
 ### Subnet と Security Group の選択
 
-Subnet と Security Group は Label Selector を使用して選択できます。
+Subnet と Security Group は label selector を使用して選択できます。
 
 ```yaml
 # Subnet selection
@@ -483,7 +487,7 @@ securityGroupSelector:
 
 ### AMI の設定
 
-Karpenter はさまざまな AMI ファミリーをサポートします。
+Karpenter はさまざまな AMI family をサポートしています。
 
 ```yaml
 # Amazon Linux 2
@@ -527,7 +531,7 @@ blockDeviceMappings:
 
 ### User Data の設定
 
-Node の起動時に実行する User Data スクリプトを定義できます。
+Node 起動時に実行する user data script を定義できます。
 
 ```yaml
 userData: |
@@ -546,9 +550,9 @@ userData: |
   systemctl start amazon-cloudwatch-agent
 ```
 
-### Node 統合プロセス
+### Node Consolidation プロセス
 
-次の図は Karpenter の Node 統合プロセスを示しています。この機能は、クラスター効率の最適化とコスト削減に重要です。
+次の図は、Karpenter の Node consolidation プロセスを示しています。この機能は、クラスター効率の最適化とコスト削減に重要です。
 
 ```mermaid
 flowchart LR
@@ -607,10 +611,10 @@ Karpenter は、ワークロードの可用性を確保するために Node の�
 
 Karpenter は次の中断イベントを処理します。
 
-1. **Spot Instance の中断**: AWS Spot Instance の中断通知を処理
+1. **Spot Instance の中断**: AWS Spot instance の中断通知を処理
 2. **Node の有効期限**: TTL ベースの Node 置換
 3. **スケールダウン**: 不要になった Node を削除
-4. **Node の統合**: より効率的な Node 構成へ統合
+4. **Node Consolidation**: より効率的な Node 構成に統合
 
 ### 中断処理の設定
 
@@ -629,9 +633,9 @@ spec:
     expireAfter: 720h  # 30 days
 ```
 
-### Drain の設定
+### Draining の設定
 
-Karpenter は、Node を削除する前に Pod を安全に Drain します。
+Karpenter は Node を削除する前に、Pod を安全に drain します。
 
 ```yaml
 apiVersion: v1
@@ -655,9 +659,9 @@ data:
       expireAfter: 720h
 ```
 
-### PDB (PodDisruptionBudget) の統合
+### PDB（PodDisruptionBudget）との統合
 
-Karpenter はアプリケーションの可用性を確保するために PDB を遵守します。
+Karpenter は、アプリケーションの可用性を確保するために PDB を尊重します。
 
 ```yaml
 apiVersion: policy/v1
@@ -673,13 +677,13 @@ spec:
 
 ## 統合
 
-Karpenter は、さまざまな Kubernetes およびクラウドサービスと統合します。
+Karpenter は、さまざまな Kubernetes およびクラウドサービスと統合されます。
 
 ### Kubernetes との統合
 
 #### 1. Pod Topology Spread Constraints
 
-Karpenter は Node のプロビジョニング時に Pod Topology Spread Constraints を考慮します。
+Karpenter は、Node をプロビジョニングする際に Pod Topology Spread Constraints を考慮します。
 
 ```yaml
 apiVersion: apps/v1
@@ -701,7 +705,7 @@ spec:
 
 #### 2. Pod Affinity/Anti-Affinity
 
-Karpenter は Pod Affinity および Anti-Affinity ルールを考慮します。
+Karpenter は、Pod Affinity および Anti-Affinity ルールを考慮します。
 
 ```yaml
 apiVersion: apps/v1
@@ -724,9 +728,9 @@ spec:
               topologyKey: "kubernetes.io/hostname"
 ```
 
-#### 3. Taint と Toleration
+#### 3. Taints と Tolerations
 
-Karpenter は Node のプロビジョニング時に Taint と Toleration を考慮します。
+Karpenter は、Node をプロビジョニングする際に Taint と Toleration を考慮します。
 
 ```yaml
 apiVersion: karpenter.sh/v1alpha5
@@ -763,7 +767,7 @@ spec:
 
 #### 1. EC2 Spot Instances
 
-Karpenter はコスト最適化のために EC2 Spot Instances をサポートします。
+Karpenter は、コストを最適化するために EC2 Spot instances をサポートしています。
 
 ```yaml
 apiVersion: karpenter.sh/v1alpha5
@@ -789,9 +793,9 @@ spec:
     karpenter.sh/discovery: "true"
 ```
 
-#### 2. EC2 Instance Profile
+#### 2. EC2 Instance Profiles
 
-Karpenter は、Node に IAM 権限を付与するために EC2 Instance Profile を使用します。
+Karpenter は、Node に IAM 権限を付与するために EC2 instance profile を使用します。
 
 ```yaml
 apiVersion: karpenter.k8s.aws/v1alpha1
@@ -802,9 +806,9 @@ spec:
   instanceProfile: KarpenterNodeInstanceProfile
 ```
 
-#### 3. Launch Template
+#### 3. Launch Templates
 
-Karpenter は EC2 Launch Template をサポートします。
+Karpenter は EC2 launch template をサポートしています。
 
 ```yaml
 apiVersion: karpenter.k8s.aws/v1alpha1
@@ -818,7 +822,7 @@ spec:
 ```
 ## Amazon EKS との統合
 
-Karpenter は Amazon EKS とシームレスに統合し、クラスターオートスケーリングを提供します。
+Karpenter は Amazon EKS とシームレスに統合され、クラスターオートスケーリングを提供します。
 
 ```mermaid
 flowchart TD
@@ -880,9 +884,9 @@ flowchart TD
 
 ### EKS クラスターの準備
 
-#### 1. クラスタータグの設定
+#### 1. クラスター Tag の設定
 
-Karpenter がクラスターリソースを識別できるようにタグを設定します。
+Karpenter がクラスターリソースを識別できるよう、Tag を設定します。
 
 ```bash
 # Set cluster name
@@ -1005,7 +1009,7 @@ helm install karpenter karpenter/karpenter \
   --set aws.defaultInstanceProfile=KarpenterNodeInstanceProfile-${CLUSTER_NAME}
 ```
 
-### EKS Managed Node Groups との使用
+### EKS Managed Node Groups との併用
 
 Karpenter は EKS Managed Node Groups と併用できます。
 
@@ -1046,9 +1050,9 @@ spec:
     karpenter.sh/discovery: "${CLUSTER_NAME}"
 ```
 
-### EKS Fargate との使用
+### EKS Fargate との併用
 
-Karpenter は EKS Fargate とともに使用してハイブリッドクラスターを構成できます。
+Karpenter は EKS Fargate と併用して、ハイブリッドクラスターを構成できます。
 
 ```yaml
 # Create Fargate profile
@@ -1093,13 +1097,13 @@ spec:
 
 ### AZ 障害への対応: Amazon ARC Zonal Shift 統合（2026 年 5 月）
 
-Karpenter は Amazon ARC（Application Recovery Controller）の Zonal Shift をサポートしています。Availability Zone（AZ）で障害が発生すると、Karpenter はその AZ での新しい Node のプロビジョニングを自動的に停止し、代わりに正常な AZ にワークロードをスケジュールします。AWS が AZ の健全性を自動検出してトラフィック移行と復旧を処理する Zonal Autoshift もサポートされています。
+Karpenter は Amazon ARC（Application Recovery Controller）の Zonal Shift をサポートしています。Availability Zone（AZ）で障害が発生すると、Karpenter はその AZ での新しい Node のプロビジョニングを自動的に停止し、代わりに正常な AZ にワークロードをスケジュールします。AWS が AZ の正常性を自動検出し、トラフィックシフトと復旧を処理する Zonal Autoshift もサポートされています。
 
-障害が検出されると、Karpenter は自発的な disruption（統合、drift 処理など）も自動的に停止します。これにより、障害発生中に不要な Node の置換がクラスターをさらに不安定化させることを防ぎます。これは既存の EKS ARC リソースを直接使用するため、カスタムリソースは不要で、`ENABLE_ZONAL_SHIFT` オプションで有効にします。
+障害が検出されると、Karpenter は outage 中の不要な Node 置換によってクラスターがさらに不安定になることを防ぐため、任意の disruption（consolidation、drift handling など）も自動的に停止します。これは既存の EKS ARC リソースを直接使用するもので、custom resource は不要です。また、`ENABLE_ZONAL_SHIFT` option で有効化します。
 
 ### EKS のコスト最適化
 
-Karpenter を使用して EKS クラスターのコストを最適化できます。
+Karpenter を使用して、EKS クラスターのコストを最適化できます。
 
 ```mermaid
 flowchart TD
@@ -1210,7 +1214,7 @@ spec:
   ttlSecondsAfterEmpty: 30
 ```
 
-#### 3. Node 統合の有効化
+#### 3. Node Consolidation の有効化
 
 ```yaml
 apiVersion: karpenter.sh/v1alpha5
@@ -1274,7 +1278,7 @@ flowchart TD
     classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
     classDef category fill:#9C27B0,stroke:#333,stroke-width:1px,color:white;
     classDef performance fill:#4CAF50,stroke:#333,stroke-width:1px,color:white;
-    classDef cost fill:#FF9800,stroke:#333,stroke-width:1px,color:black;
+    classDef cost fill:#FF9800,stroke:#333,stroke-width:1px,color:white;
     classDef availability fill:#2196F3,stroke:#333,stroke-width:1px,color:white;
     classDef security fill:#F44336,stroke:#333,stroke-width:1px,color:white;
     classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
@@ -1289,10 +1293,10 @@ flowchart TD
 
 ### パフォーマンス最適化
 
-1. **適切なインスタンスタイプの選択**: ワークロードに適したインスタンスタイプを選択します
-2. **多様なインスタンスタイプの許可**: 可用性とコスト最適化のために複数のインスタンスタイプを許可します
-3. **適切な TTL の設定**: ワークロードパターンに合う TTL を設定します
-4. **Node 統合の有効化**: リソース使用率を最適化するために Node 統合を有効にします
+1. **適切なインスタンスタイプを選択**: ワークロードに適したインスタンスタイプを選択
+2. **多様なインスタンスタイプを許可**: 可用性とコスト最適化のために、さまざまなインスタンスタイプを許可
+3. **適切な TTL を設定**: ワークロードパターンに一致する TTL を設定
+4. **Node Consolidation を有効化**: リソース使用率を最適化するために Node consolidation を有効化
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1325,10 +1329,10 @@ spec:
 
 ### コスト最適化
 
-1. **Spot Instances の活用**: コスト削減のために Spot Instances を使用します
-2. **適切なインスタンスサイズの選択**: ワークロードに適したインスタンスサイズを選択します
-3. **ゼロスケーリングの活用**: アクティビティがないときは Node 数を 0 に減らします
-4. **Node 有効期限の設定**: 定期的な Node 置換により最新のインスタンスタイプを活用します
+1. **Spot Instances を活用**: コスト削減のために Spot instances を使用
+2. **適切なインスタンスサイズを選択**: ワークロードに適したインスタンスサイズを選択
+3. **ゼロスケーリングを活用**: アクティビティがない場合は Node 数を 0 に削減
+4. **Node の有効期限を設定**: 定期的な Node 置換により最新のインスタンスタイプを活用
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1357,10 +1361,10 @@ spec:
 
 ### 可用性の向上
 
-1. **複数の Availability Zone の使用**: 複数の Availability Zone に Node をデプロイします
-2. **On-demand と Spot Instances の混在**: 可用性とコストのバランスを取ります
-3. **適切な PDB の設定**: アプリケーションの可用性を確保します
-4. **中断処理の最適化**: Node 中断中のワークロード可用性を確保します
+1. **複数の Availability Zone を使用**: 複数の Availability Zone に Node をデプロイ
+2. **On-demand と Spot Instances を混在**: 可用性とコストのバランスを確保
+3. **適切な PDB を設定**: アプリケーションの可用性を確保
+4. **中断処理を最適化**: Node 中断時のワークロード可用性を確保
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1394,16 +1398,16 @@ spec:
 
 ## トラブルシューティング
 
-### よくある問題
+### 一般的な問題
 
 #### 1. Node プロビジョニングの失敗
 
 **症状**: Pod が Pending 状態のままで、Node がプロビジョニングされない
 
 **解決策**:
-- Karpenter ログを確認する
-- IAM 権限を検証する
-- Provisioner 設定を確認する
+- Karpenter のログを確認
+- IAM 権限を検証
+- Provisioner 設定を確認
 
 ```bash
 # Check Karpenter logs
@@ -1418,12 +1422,12 @@ kubectl describe pod <name>
 
 #### 2. Node 削除の問題
 
-**症状**: 想定どおりに Node が削除されない
+**症状**: Node が想定どおりに削除されない
 
 **解決策**:
-- TTL 設定を確認する
-- Node 統合設定を検証する
-- Pod の Drain 状態を確認する
+- TTL 設定を確認
+- Node consolidation 設定を検証
+- Pod draining の状態を確認
 
 ```bash
 # Check node status
@@ -1441,9 +1445,9 @@ kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller | gr
 **症状**: 想定外のインスタンスタイプがプロビジョニングされる
 
 **解決策**:
-- Provisioner の Requirements を確認する
-- Pod のリソースリクエストを検証する
-- Availability Zone の制約を確認する
+- Provisioner requirements を確認
+- Pod resource request を検証
+- Availability Zone の制約を確認
 
 ```bash
 # Check provisioner requirements
@@ -1480,15 +1484,15 @@ kubectl patch configmap -n karpenter karpenter-global-settings --type merge -p '
 
 ## まとめ
 
-Karpenter は、Kubernetes クラスターの Node プロビジョニングを自動化する強力なオートスケーラーです。ワークロード要件に基づいて適切なコンピューティングリソースを動的にプロビジョニングし、アプリケーションの可用性を確保するとともにクラスター効率を最適化します。
+Karpenter は、Kubernetes クラスターの Node プロビジョニングを自動化する強力なオートスケーラーです。ワークロード要件に基づいて適切なコンピューティングリソースを動的にプロビジョニングし、アプリケーションの可用性を確保するとともにクラスターの効率を最適化します。
 
-このドキュメントでは、Karpenter の基本概念、インストール方法、Provisioner と Node Template の設定、中断処理、さまざまな統合、Amazon EKS との統合、ベストプラクティス、トラブルシューティングについて説明しました。
+このドキュメントでは、Karpenter の基本概念、インストール方法、Provisioner と Node template の設定、中断処理、さまざまな統合、Amazon EKS との統合、ベストプラクティス、トラブルシューティングについて説明しました。
 
-Karpenter を使用すると、クラスター管理を簡素化し、リソース使用率を最適化して、コストを削減できます。特に Amazon EKS のようなクラウド管理型 Kubernetes 環境では、Karpenter の利点を最大限に活用できます。
+Karpenter を使用すると、クラスター管理を簡素化し、リソース使用率を最適化して、コストを削減できます。特に Amazon EKS のようなクラウド管理 Kubernetes 環境では、Karpenter の利点を最大限に活用できます。
 
 ### 次のステップ
 
-- Karpenter を使用したコスト最適化戦略を実装する
+- Karpenter を使用してコスト最適化戦略を実装する
 - さまざまなワークロードタイプ向けに Provisioner を設定する
 - ハイブリッドクラスターアーキテクチャを設計する
 - Karpenter を他の Kubernetes ツールと統合する
@@ -1501,10 +1505,10 @@ Karpenter を使用すると、クラスター管理を簡素化し、リソー�
 - [Amazon EKS Workshop - Karpenter](https://www.eksworkshop.com/docs/autoscaling/compute/karpenter/)
 - [AWS Blog - Karpenter](https://aws.amazon.com/blogs/containers/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
 - [Karpenter ベストプラクティス](https://aws.github.io/aws-eks-best-practices/karpenter/)
-- [Karpenter GitHub リリース](https://github.com/aws/karpenter-provider-aws/releases)
+- [Karpenter GitHub Releases](https://github.com/aws/karpenter-provider-aws/releases)
 - [AWS What's New - Karpenter ARC Zonal Shift サポート](https://aws.amazon.com/about-aws/whats-new/2026/05/karpenter-arc-zonal-shift/)
 - [AWS What's New - Amazon EKS Managed Node Group Warm Pool サポート](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-managed-node-groups-ec2-warm-pools/)
 
 ## クイズ
 
-この章で学んだ内容をテストするには、[トピッククイズ](../quizzes/autoscaling/06-karpenter-quiz.md)に挑戦してください。
+この章で学んだ内容を確認するには、[トピッククイズ](../quizzes/autoscaling/06-karpenter-quiz.md) を試してください。
