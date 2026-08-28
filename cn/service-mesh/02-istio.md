@@ -6,28 +6,28 @@
 
 ## 目录
 
-- [简介](#introduction)
-- [主要功能](#key-features)
-- [架构概览](#architecture-overview)
-- [详细文档](#detailed-documentation)
-- [快速开始](#quick-start)
-- [学习资源](#learning-resources)
+- [简介](#简介)
+- [主要功能](#主要功能)
+- [架构概览](#架构概览)
+- [详细文档](#详细文档)
+- [快速开始](#快速开始)
+- [学习资源](#学习资源)
 
 ## 简介
 
-Istio 是一个面向微服务应用程序的开源服务网格平台。服务网格是一层用于处理服务间通信的基础设施层，使您能够在不修改应用程序代码的情况下控制和观测服务间通信。
+Istio 是一个面向微服务应用程序的开源服务网格平台。服务网格是一层处理服务间通信的基础设施，无需修改应用程序代码即可控制和观测服务之间的通信。
 
 ### 什么是服务网格？
 
-服务网格提供以下核心功能：
+服务网格提供以下核心能力：
 
-1. **流量管理**：控制服务之间的流量
-2. **安全性**：对服务间通信进行加密和身份验证
-3. **可观测性**：深入了解服务间通信
+1. **流量管理**：控制服务之间的流量流向
+2. **安全性**：服务间通信的加密和身份验证
+3. **可观测性**：洞察服务间通信
 
 ### Istio 的主要优势
 
-- **平台独立性**：可在各种环境中运行（Kubernetes、VM 等）
+- **平台独立性**：可在多种环境中运行（Kubernetes、VM 等）
 - **透明集成**：无需更改应用程序代码即可应用
 - **自动 mTLS**：自动加密服务间通信
 - **高级流量管理**：路由、负载均衡、故障注入等
@@ -38,10 +38,10 @@ Istio 是一个面向微服务应用程序的开源服务网格平台。服务�
 
 ### 1. 流量管理
 
-Istio 提供强大的流量管理功能：
+Istio 提供强大的流量管理能力：
 
-- **Gateway**：将外部流量路由到网格
-- **VirtualService**：定义服务之间的路由规则
+- **Gateway**：将外部流量路由到 mesh
+- **VirtualService**：定义服务间路由规则
 - **DestinationRule**：配置负载均衡和连接池
 - **流量拆分**：支持 Canary 部署和 A/B 测试
 - **Argo Rollouts 集成**：自动化渐进式交付
@@ -57,7 +57,7 @@ Istio 提供强大的流量管理功能：
 
 ### 3. 可观测性
 
-全面了解服务网格：
+对服务网格的完整可见性：
 
 - **指标**：Prometheus 集成
 - **分布式追踪**：支持 Jaeger/Zipkin
@@ -124,16 +124,16 @@ flowchart TB
 
 istiod 是 Istio 的中央控制组件，提供：
 
-- **服务发现**：维护网格的服务注册表
-- **配置管理**：存储和分发 Istio 配置
-- **证书管理**：为 mTLS 生成和轮换证书
+- **Service Discovery**：维护 mesh 的服务注册表
+- **Configuration Management**：存储和分发 Istio 配置
+- **Certificate Management**：为 mTLS 生成和轮换证书
 
 ### Data Plane（Envoy Proxy）
 
 Envoy 是作为 sidecar 部署在每个 Pod 中的高性能代理：
 
 - **流量路由**：控制服务之间的流量
-- **负载均衡**：在服务实例之间分配流量
+- **负载均衡**：将流量分配到各个服务实例
 - **安全性**：mTLS 加密和身份验证
 - **可观测性**：收集指标、日志和追踪数据
 
@@ -143,22 +143,22 @@ Envoy 是作为 sidecar 部署在每个 Pod 中的高性能代理：
 
 ### 📚 基础文档
 
-| 文档 | 说明 |
+| 文档 | 描述 |
 |----------|-------------|
-| [安装指南](istio/installation.md) | Istio 安装和初始设置 |
-| [核心概念](istio/core-concepts.md) | Istio 的基本概念和术语 |
-| [组件](istio/components.md) | Istio 架构和组件 |
+| [安装指南](istio/01-installation.md) | Istio 安装和初始设置 |
+| [核心概念](istio/02-basic-concepts.md) | Istio 的基本概念和术语 |
+| [组件](istio/03-architecture.md) | Istio 架构和组件 |
 
 ### 🚦 流量管理
 
-| 文档 | 说明 |
+| 文档 | 描述 |
 |----------|-------------|
-| [Gateway 与 VirtualService](istio/traffic-management/01-gateway-virtualservice.md) | Ingress/Egress Gateway 配置 |
+| [Gateway 和 VirtualService](istio/traffic-management/01-gateway-virtualservice.md) | Ingress/Egress Gateway 配置 |
 | [路由](istio/traffic-management/02-routing.md) | VirtualService 路由规则 |
 | [DestinationRule](istio/traffic-management/03-destination-rule.md) | 服务流量策略 |
 | [流量拆分](istio/traffic-management/04-traffic-splitting.md) | Canary 部署和 A/B 测试 |
-| [超时与重试](istio/traffic-management/05-retry-timeout.md) | 超时和重试策略 |
-| [负载均衡](istio/traffic-management/06-load-balancing.md) | 各种负载均衡策略 |
+| [超时和重试](istio/traffic-management/05-retry-timeout.md) | 超时和重试策略 |
+| [负载均衡](istio/traffic-management/06-load-balancing.md) | 多种负载均衡策略 |
 | [Circuit Breaker](istio/traffic-management/07-circuit-breaker.md) | Circuit Breaker 模式实现 |
 | [故障注入](istio/traffic-management/08-fault-injection.md) | 混沌工程 |
 | [流量镜像](istio/traffic-management/09-traffic-mirror.md) | 流量镜像和影子测试 |
@@ -166,46 +166,46 @@ Envoy 是作为 sidecar 部署在每个 Pod 中的高性能代理：
 
 ### 🔐 安全性
 
-| 文档 | 说明 |
+| 文档 | 描述 |
 |----------|-------------|
 | [mTLS](istio/security/01-mtls.md) | 服务间 mTLS 配置 |
-| [Authorization Policy](istio/security/02-authorization-policy.md) | 访问控制策略 |
-| [Request Authentication](istio/security/03-request-authentication.md) | 基于 JWT 的身份验证 |
-| [Peer Authentication](istio/security/04-peer-authentication.md) | 服务间身份验证 |
+| [Authorization Policy](istio/security/03-authorization.md) | 访问控制策略 |
+| [Request Authentication](istio/security/02-authentication.md) | 基于 JWT 的身份验证 |
+| [Peer Authentication](istio/security/02-authentication.md) | 服务间身份验证 |
 
 ### 📊 可观测性
 
-| 文档 | 说明 |
+| 文档 | 描述 |
 |----------|-------------|
 | [指标](istio/observability/01-metrics.md) | Prometheus 指标收集 |
-| [分布式追踪](istio/observability/02-distributed-tracing.md) | Jaeger/Zipkin 集成 |
+| [分布式追踪](istio/observability/02-tracing.md) | Jaeger/Zipkin 集成 |
 | [日志记录](istio/observability/03-logging.md) | 访问日志和结构化日志 |
-| [可视化](istio/observability/04-visualization.md) | Kiali、Grafana 仪表板 |
+| [可视化](istio/observability/04-dashboards.md) | Kiali、Grafana 仪表板 |
 
 ### 💪 弹性
 
-| 文档 | 说明 |
+| 文档 | 描述 |
 |----------|-------------|
 | [Outlier Detection](istio/resilience/01-outlier-detection.md) | 不健康实例检测 |
 | [Rate Limiting](istio/resilience/02-rate-limiting.md) | 本地和全局速率限制 |
-| [区域感知路由](istio/resilience/03-zone-aware-routing.md) | 基于位置感知的路由 |
+| [区域感知路由](istio/resilience/03-zone-aware-routing.md) | 感知本地性的路由 |
 
 ### 🚀 高级主题
 
-| 文档 | 说明 |
+| 文档 | 描述 |
 |----------|-------------|
 | [Ambient Mode](istio/advanced/01-ambient-mode.md) | 无 sidecar 服务网格 |
-| [多集群](istio/advanced/02-multi-cluster.md) | 多集群网格配置 |
+| [多集群](istio/advanced/02-multi-cluster.md) | 多集群 mesh 配置 |
 | [EnvoyFilter](istio/advanced/03-envoy-filter.md) | Envoy 自定义 |
-| [DNS 缓存](istio/advanced/04-dns-cache.md) | 使用 DNS 缓存提高性能 |
-| [gRPC](istio/advanced/05-grpc.md) | gRPC 协议支持 |
-| [WebSocket](istio/advanced/06-websocket.md) | WebSocket 连接支持 |
-| [Sidecar 注入](istio/advanced/07-sidecar-injection.md) | Sidecar 注入机制 |
+| [DNS 缓存](istio/advanced/04-dns-cache.md) | 通过 DNS 缓存提升性能 |
+| [gRPC](istio/advanced/05-grpc.md) | 支持 gRPC 协议 |
+| [WebSocket](istio/advanced/06-websocket.md) | 支持 WebSocket 连接 |
+| [Sidecar Injection](istio/advanced/07-sidecar-injection.md) | sidecar 注入机制 |
 | [Argo Rollouts](istio/advanced/08-argo-rollouts.md) | 渐进式交付集成 |
 
 ### ✅ 最佳实践
 
-| 文档 | 说明 |
+| 文档 | 描述 |
 |----------|-------------|
 | [最佳实践](istio/best-practices.md) | 生产环境检查清单和建议 |
 
@@ -282,10 +282,10 @@ istioctl dashboard jaeger
 - [Istio GitHub 仓库](https://github.com/istio/istio)
 - [Envoy Proxy 文档](https://www.envoyproxy.io/docs/envoy/latest/)
 
-### AWS 相关资源
+### AWS 相关
 
 - [AWS EKS Workshop - Istio](https://www.eksworkshop.com/docs/security/servicemesh/)
-- [AWS App Mesh 与 Istio 的比较](https://aws.amazon.com/blogs/containers/choosing-between-aws-app-mesh-and-istio/)
+- [AWS App Mesh 与 Istio](https://aws.amazon.com/blogs/containers/choosing-between-aws-app-mesh-and-istio/)
 
 ### 社区
 
@@ -293,7 +293,7 @@ istioctl dashboard jaeger
 - [Istio Slack](https://istio.slack.com/)
 - [CNCF Istio 工作组](https://github.com/cncf/tag-app-delivery)
 
-### 补充资源
+### 附加资源
 
 - [服务网格模式（O'Reilly）](https://www.oreilly.com/library/view/service-mesh-patterns/9781492086444/)
 - [Istio 实战（Manning）](https://www.manning.com/books/istio-in-action)
@@ -301,7 +301,7 @@ istioctl dashboard jaeger
 
 ## 测验
 
-为测试您对 Istio 的理解，请尝试 [Istio 测验](../quizzes/service-mesh/02-istio-quiz.md)。
+要测试您对 Istio 的理解，请尝试 [Istio 测验](../quizzes/service-mesh/02-istio-quiz.md)。
 
 测验涵盖以下主题：
 
@@ -313,9 +313,9 @@ istioctl dashboard jaeger
 - 可观测性工具
 - 最新服务网格趋势
 - Rate Limiting
-- 位置路由
+- 本地性路由
 - Amazon EKS 集成
 
 ---
 
-**后续步骤**：请参阅[安装指南](istio/installation.md)安装 Istio，并在[核心概念](istio/core-concepts.md)中学习基本概念。
+**后续步骤**：请参阅[安装指南](istio/01-installation.md)安装 Istio，并在[核心概念](istio/02-basic-concepts.md)中学习基本概念。

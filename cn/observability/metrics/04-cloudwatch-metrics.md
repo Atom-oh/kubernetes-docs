@@ -4,32 +4,32 @@
 
 ## 目录
 
-- [简介](#简介)
-- [Container Insights 概览](#container-insights-概览)
-- [CloudWatch Agent 配置](#cloudwatch-agent-配置)
-- [自定义指标收集](#自定义指标收集)
-- [指标数学与异常检测](#指标数学与异常检测)
-- [创建仪表板](#创建仪表板)
-- [告警配置](#告警配置)
-- [成本优化](#成本优化)
-- [最佳实践](#最佳实践)
-- [故障排除](#故障排除)
+- [简介](#introduction)
+- [Container Insights 概述](#container-insights-overview)
+- [CloudWatch Agent 配置](#cloudwatch-agent-configuration)
+- [自定义指标收集](#custom-metric-collection)
+- [Metric Math 和异常检测](#metric-math-and-anomaly-detection)
+- [Dashboard 创建](#dashboard-creation)
+- [告警配置](#alert-configuration)
+- [成本优化](#cost-optimization)
+- [最佳实践](#best-practices)
+- [故障排除](#troubleshooting)
 
 ## 简介
 
-Amazon CloudWatch 是 AWS 原生的监控和可观测性服务。在 EKS 环境中使用 CloudWatch，可在无需单独监控基础设施的情况下，获得与 AWS 服务集成的指标收集、告警和仪表板功能。
+Amazon CloudWatch 是 AWS 原生的监控和可观测性服务。在 EKS 环境中使用 CloudWatch，无需单独的监控基础设施，即可获得与 AWS 服务集成的指标收集、告警和 Dashboard 功能。
 
 ### 主要功能
 
-| 功能 | 描述 |
+| 功能 | 说明 |
 |---------|-------------|
 | **完全托管** | 无需管理基础设施 |
 | **AWS 原生集成** | 自动集成 EC2、EKS、RDS 等服务 |
-| **Container Insights** | 容器/Pod 级监控 |
+| **Container Insights** | Container/Pod 级监控 |
 | **异常检测** | 基于 ML 的自动异常检测 |
-| **指标数学** | 使用数学表达式计算指标 |
-| **统一仪表板** | 整合日志、指标和追踪 |
-| **全球可用性** | 所有 AWS 区域均受支持 |
+| **Metric Math** | 使用数学表达式计算指标 |
+| **统一 Dashboard** | 集成日志、指标和追踪 |
+| **全球可用性** | 所有 AWS 区域均支持 |
 
 ### CloudWatch 与开源解决方案对比
 
@@ -63,11 +63,11 @@ flowchart LR
 | 可扩展性 | 自动 | 手动配置 |
 | 查询语言 | Metric Math | PromQL/MetricsQL |
 | 多云 | 仅 AWS | 云中立 |
-| 可定制性 | 有限 | 完全灵活 |
+| 自定义能力 | 有限 | 完全灵活 |
 
-## Container Insights 概览
+## Container Insights 概述
 
-Container Insights 是一项 CloudWatch 功能，用于监控 EKS 集群中的容器化工作负载。
+Container Insights 是 CloudWatch 的一项功能，用于监控 EKS 集群中的容器化工作负载。
 
 ### 架构
 
@@ -105,7 +105,7 @@ flowchart TB
 
 ### 收集的指标
 
-**Cluster 级别**:
+**集群级别**:
 - `cluster_node_count` - Node 数量
 - `cluster_failed_node_count` - 失败的 Node 数量
 - `cluster_cpu_utilization` - CPU 利用率
@@ -144,24 +144,24 @@ eksctl utils update-cluster-logging \
 
 ### 基于 OpenTelemetry 的 Container Insights（预览版）
 
-CloudWatch 正在预览基于 OpenTelemetry (OTLP) 的 EKS Container Insights 后继版本，该版本于 2026 年 4 月 2 日发布。它与上述基于经典 CloudWatch Agent 的 Container Insights 并行运行，因此您可以按 Cluster 逐步采用，而不必一次性全部切换。
+CloudWatch 正在预览基于 OpenTelemetry (OTLP) 的 EKS Container Insights 后继版本，于 2026 年 4 月 2 日发布公告。它与上述经典的基于 CloudWatch Agent 的 Container Insights 并行运行，因此您可以按集群逐步采用，而无需一次性全部迁移。
 
 与经典的基于 Agent 的收集方式相比：
 
-- 通过 OTLP 而非 CloudWatch Agent 的固定指标集实现**更广泛的指标收集**
-- **高基数过滤**——每个指标最多可有 150 个标签，适用于经典维度模型无法经济地表达的按 Pod 或 Namespace 的细分
-- **CloudWatch Query Studio 中的 PromQL 支持**——直接使用 PromQL 查询由 OTel 收集的指标，无需部署单独的 Prometheus 或 Amazon Managed Service for Prometheus 工作区
-- **自动加速器检测**——自动检测 NVIDIA GPU、EFA 和 AWS Trainium/Inferentia 设备，这对于 AI/ML 工作负载的可观测性至关重要（有关 GPU 工作负载内容，请参阅 [AI/ML 课程轨道](../../ai-ml/)）
+- 通过 OTLP 进行**更广泛的指标收集**，而不是 CloudWatch Agent 的固定指标集
+- **高基数过滤** — 每个指标最多 150 个标签，适用于经典维度模型无法经济表达的按 Pod 或按 Namespace 细分
+- **CloudWatch Query Studio 中的 PromQL 支持** — 直接使用 PromQL 查询 OTel 收集的指标，无需部署独立的 Prometheus 或 Amazon Managed Service for Prometheus 工作区
+- **自动加速器检测** — 自动检测 NVIDIA GPU、EFA 和 AWS Trainium/Inferentia 设备，这对 AI/ML 工作负载可观测性至关重要（相关 GPU 工作负载内容请参阅 [AI/ML 课程系列](../../ai-ml/01-ai-ml-workloads.md)）
 
 预览区域：美国东部（弗吉尼亚北部）、美国西部（俄勒冈）、亚太地区（悉尼）、亚太地区（新加坡）和欧洲（爱尔兰）。
 
-> 参考：[面向 EKS 的基于 OTel 的 CloudWatch Container Insights（预览版）](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
+> 参考：[适用于 EKS 的基于 OTel 的 CloudWatch Container Insights（预览版）](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
 
-有关它与 `amazon-cloudwatch-observability` EKS add-on 和 Application Signals 的关系，请参阅 [EKS 监控和日志记录](../../eks/06-eks-monitoring-logging.md#cloudwatch-observability-add-on-500)。
+有关其与 `amazon-cloudwatch-observability` EKS 插件和 Application Signals 的关系，请参阅 [EKS 监控和日志记录](../../eks/06-eks-monitoring-logging.md#cloudwatch-observability-add-on-500)。
 
 ### 2026 年 7 月更新：Application Signals Service Events
 
-2026 年 7 月 6 日发布的 Service Events 会自动捕获为 CloudWatch Application Signals 启用的任何应用程序的错误（异常快照）、性能异常（延迟事件快照）和部署事件。使用 ADOT SDK 或 `amazon-cloudwatch-observability` EKS add-on 进行埋点的应用程序，在 Application Signals 激活后无需额外配置即可获得此功能；您还可以选择启用函数调用指标，以获得更深入的性能可见性。适用于所有商业 AWS 区域；支持的语言包括 Java、Python 和 JavaScript。([公告](https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/))
+2026 年 7 月 6 日发布的 Service Events 会自动捕获为任何启用了 CloudWatch Application Signals 的应用程序捕获错误（异常快照）、性能异常（延迟事件快照）和 Deployment 事件。通过 ADOT SDK 或 `amazon-cloudwatch-observability` EKS 插件埋点的应用程序，在 Application Signals 启用后无需额外配置即可获得此功能；您还可以选择开启函数调用指标，以获得更深入的性能可见性。所有商业 AWS Region 均可用；支持的语言包括 Java、Python 和 JavaScript。([公告](https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/))
 
 ## CloudWatch Agent 配置
 
@@ -336,9 +336,9 @@ spec:
       - operator: Exists
 ```
 
-### 增强型 Container Insights
+### Enhanced Container Insights
 
-增强型 Container Insights 提供额外指标和更精细的监控。
+Enhanced Container Insights 提供额外指标和更细粒度的监控。
 
 ```yaml
 # Enable in ConfigMap
@@ -356,10 +356,10 @@ cwagentconfig.json: |
 ```
 
 **额外指标**:
-- `pod_cpu_reserved_capacity` - 预留 CPU 容量
-- `pod_memory_reserved_capacity` - 预留内存容量
-- `node_cpu_reserved_capacity` - Node 预留 CPU
-- `node_memory_reserved_capacity` - Node 预留内存
+- `pod_cpu_reserved_capacity` - 保留的 CPU 容量
+- `pod_memory_reserved_capacity` - 保留的内存容量
+- `node_cpu_reserved_capacity` - Node 保留 CPU
+- `node_memory_reserved_capacity` - Node 保留内存
 - GPU 指标（使用 NVIDIA GPU 时）
 
 ## 自定义指标收集
@@ -579,9 +579,9 @@ func putCustomMetric(ctx context.Context, client *cloudwatch.Client) error {
 }
 ```
 
-## 指标数学与异常检测
+## Metric Math 和异常检测
 
-### 指标数学
+### Metric Math
 
 Metric Math 允许您以数学方式组合多个指标。
 
@@ -659,7 +659,7 @@ SEARCH('{Namespace, Dim1, Dim2} MetricName', 'Average')
 
 ### 异常检测
 
-CloudWatch Anomaly Detection 使用 ML 自动检测异常的指标模式。
+CloudWatch 异常检测使用 ML 自动检测异常指标模式。
 
 ```bash
 # Enable anomaly detection via CLI
@@ -738,9 +738,9 @@ resource "aws_cloudwatch_metric_alarm" "anomaly_detection" {
 }
 ```
 
-## 创建仪表板
+## Dashboard 创建
 
-### 使用 CloudFormation 创建仪表板
+### 使用 CloudFormation 创建 Dashboard
 
 ```yaml
 AWSTemplateFormatVersion: '2010-09-09'
@@ -814,7 +814,7 @@ Resources:
         }
 ```
 
-### 使用 Terraform 创建仪表板
+### 使用 Terraform 创建 Dashboard
 
 ```hcl
 resource "aws_cloudwatch_dashboard" "eks_monitoring" {
@@ -964,7 +964,7 @@ resource "aws_cloudwatch_metric_alarm" "node_not_ready" {
 |------|----------------------|
 | 自定义指标 | $0.30/指标/月（前 10,000 个） |
 | GetMetricData API | $0.01/1,000 次指标请求 |
-| 仪表板 | $3.00/仪表板/月（前 3 个免费） |
+| Dashboard | $3.00/Dashboard/月（前 3 个免费） |
 | 日志摄取 | $0.76/GB |
 | 日志存储 | $0.0314/GB/月 |
 | 告警 | 免费（前 10 个），$0.10/告警/月 |
@@ -1196,4 +1196,4 @@ aws cloudwatch get-metric-statistics \
 
 ## 测验
 
-要测试您对本章的理解，请尝试 [CloudWatch 指标测验](../../quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)。
+要测试您对本章内容的理解，请尝试 [CloudWatch 指标测验](../../quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)。

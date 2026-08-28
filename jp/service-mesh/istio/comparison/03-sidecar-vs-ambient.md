@@ -1,35 +1,35 @@
-# Sidecar vs Ambient Mode 選択ガイド（EKS 1.36 テスト結果）
+# Sidecar と Ambient Mode の選択ガイド（EKS 1.36 テスト結果）
 
-> **サポート対象バージョン**: Istio 1.30 / EKS 1.36
-> **最終更新**: July 7, 2026
+> **対応バージョン**: Istio 1.30 / EKS 1.36
+> **最終更新**: August 21, 2026
 
-本ドキュメントは、EKS 上のミッションクリティカルなワークロード（例: 暗号資産取引所の注文・マッチング経路）で、Istio を **sidecar mode と ambient mode のどちらで採用するか**を判断するための、テスト結果に基づくガイドです。アーキテクチャ自体はすでに [Ambient Mode](../advanced/01-ambient-mode.md) で扱っているため、ここでは繰り返しません。代わりに、4 つの具体的な要件に対するテスト結果と推奨事項を示します。
+このドキュメントは、EKS 上のミッションクリティカルなワークロード（例: 暗号資産取引所の注文・マッチング経路）で Istio を **sidecar mode と ambient mode のどちらで採用するか** を判断するための、テスト結果に基づくガイドです。アーキテクチャ自体は [Ambient Mode](../advanced/01-ambient-mode.md) ですでに扱っているため、本書では繰り返しません。代わりに、4 つの具体的な要件に対するテスト結果と推奨事項を示します。
 
-1. mTLS が必要（クラスタ内部の pod-to-pod 通信）
-2. NetworkPolicy が必要
+1. mTLS が必須（クラスター内部の Pod 間通信）
+2. NetworkPolicy が必須
 3. レイテンシーに敏感なワークロード
-4. 無停止 rollout — ambient waypoint の 503 に関する懸念の検証
+4. ダウンタイムゼロの rollout — ambient waypoint の 503 懸念を検証
 
-> 💡 本ドキュメント内の数値はすべて、このテストサイクル専用に構築され、その後削除された **専用シングルテナント EKS cluster**（`mesh-isolated-test`）から得たものです。専用 cluster が必要だった理由は、§4 の末尾にある[テスト分離に関する注記](#a-note-on-test-isolation)を参照してください。
+> 💡 本書のすべての数値は、このテストサイクル専用に構築され、その後削除された **専用シングルテナント EKS クラスター**（`mesh-isolated-test`）から取得しています。専用クラスターが必要だった理由は、§4 の末尾にある [テスト分離に関する注記](#テスト分離に関する注記) を参照してください。
 
-## 判断の要約
+## 判断の概要
 
-| 要件 | Sidecar | Ambient（L4、waypoint なし） | Ambient（L7、waypoint あり） |
-|---|---|---|---|
-| mTLS | ✅ STRICT をサポート、検証済み | ✅ STRICT をサポート、検証済み | ✅ STRICT をサポート、検証済み |
-| NetworkPolicy | ✅ 既存ルールがそのまま機能、検証済み | ⚠️ HBONE port（15008）の許可が必要、検証済み | ⚠️ HBONE port（15008）の許可が必要、検証済み |
-| レイテンシー（mesh なしのベースラインに対する P50） | +1.29ms、計測値 | +0.04ms（無視できるレベル）、計測値 | +1.86ms、計測値 |
-| 無停止 rollout | 503 が発生（0.5%、計測値） | **実際の 503 はゼロ**、0.3% の TCP reset に置き換わる | 503 が発生、**2.6%、sidecar の約 5 倍**（計測値） |
+| 要件 | Sidecar | Ambient（L4、waypoint なし） | Ambient（L7、waypoint） | Cilium |
+|---|---|---|---|---|
+| mTLS | ✅ STRICT 対応、検証済み | ✅ STRICT 対応、検証済み | ✅ STRICT 対応、検証済み | ⚠️ このサイクルでは未計測 — 単一の STRICT 相当スイッチではなく、アイデンティティ相互認証と個別に有効化する WireGuard/IPsec として文書化されています（[下記](#リトライによって隠される障害と生の障害を分離する)を参照） |
+| NetworkPolicy | ✅ 既存のルールがそのまま機能、検証済み | ⚠️ HBONE ポート（15008）を許可する必要あり、検証済み | ⚠️ HBONE ポート（15008）を許可する必要あり、検証済み | ⚠️ このサイクルでは未計測 — CiliumNetworkPolicy がネイティブな仕組みであり、K8s NetworkPolicy のアドオンではありません |
+| レイテンシー（no-mesh ベースラインに対する P50） | +1.29ms、計測済み | +0.04ms（無視できるレベル）、計測済み | +1.86ms、計測済み | このサイクルでは未計測 |
+| ダウンタイムゼロの rollout | 503 が発生（0.5%、計測済み） | **実際の 503 はゼロ**、0.3% の TCP reset に置換 | 503 が発生 **2.6%、sidecar の約 5 倍**（計測済み） | このサイクルでは未計測 |
 
-> ✅ **結論の一言**: waypoint なし（L4-only）の ambient は、rollout の変動下で最も安定しており、レイテンシーのオーバーヘッドも無視できるレベルでした。waypoint（L7）をアタッチすると、503 率は sidecar を上回り、レイテンシーもおおむね sidecar と同程度になります。根拠は以下の §3–§4 にあります。
+> ✅ **一文での結論**: waypoint なしの ambient（L4 のみ）は、rollout の変動下で最も安定しており、レイテンシーのオーバーヘッドも無視できるレベルでした。waypoint（L7）を付加すると、503 率は sidecar を上回り、レイテンシーは sidecar とほぼ同水準になります。根拠は以下の §3–§4 にあります。Cilium は同等のセキュリティ比較のために含めています（[下記](#リトライによって隠される障害と生の障害を分離する)を参照）。テストクラスターにはデプロイしていないため、その行は文書化された特性のみを示しており、計測の代替にはなりません。
 
 ## 1. mTLS — テスト結果（EKS 1.36.2、Istio 1.30.2）
 
 **テスト環境**
-- 専用シングルテナント cluster `mesh-isolated-test`（専用 VPC、他ワークロードなし）。EKS control plane と worker node はともに v1.36.2、Amazon Linux 2023（arm64、m7g.xlarge）
-- 3 つのテスト namespace（sidecar / ambient-L4 / ambient-L7）に namespace-scoped `PeerAuthentication` STRICT を適用 — mesh 全体には未適用
+- 専用シングルテナントクラスター `mesh-isolated-test`（専用 VPC、他のワークロードなし）、EKS control plane と worker node はともに v1.36.2、Amazon Linux 2023（arm64、m7g.xlarge）
+- Namespace スコープの `PeerAuthentication` STRICT を 3 つのテスト Namespace（sidecar / ambient-L4 / ambient-L7）に適用 — mesh 全体ではない
 
-### チェック 1 — plaintext による pod-IP への直接アクセス（ブロックされる必要あり）
+### チェック 1 — 平文による直接 Pod-IP アクセス（ブロックされる必要がある）
 
 ```
 plaintext-client -> sidecar echo pod:8080
@@ -40,7 +40,7 @@ plaintext-client -> ambient-L7 echo pod:8080
   [E] Read error, err="EOF"
 ```
 
-### チェック 2 — Service 経由の mesh 内アクセス（成功する必要あり）
+### チェック 2 — Service 経由の mesh 内アクセス（成功する必要がある）
 
 ```
 sidecar client -> http://echo:8080/     => HTTP/1.1 200 OK (server: envoy)
@@ -50,27 +50,27 @@ ambient-L7 client -> http://echo:8080/  => HTTP/1.1 200 OK (server: istio-envoy,
 
 ### チェック 3 — SPIFFE 証明書
 
-`istioctl ztunnel-config certificates` / `istioctl proxy-config secret` で検証:
+`istioctl ztunnel-config certificates` / `istioctl proxy-config secret` を使用して検証済み:
 
-| Workload | 証明書発行元 | SPIFFE ID | Root CA |
+| Workload | 証明書発行者 | SPIFFE ID | Root CA |
 |---|---|---|---|
 | ambient-L4 echo | ztunnel | `spiffe://cluster.local/ns/mesh-test-ambient-l4/sa/default` | 共有 |
 | ambient-L7 echo | ztunnel | `spiffe://cluster.local/ns/mesh-test-ambient-l7/sa/default` | 共有 |
 | sidecar echo | istio-proxy | `spiffe://cluster.local/ns/mesh-test-sidecar/sa/default` | 共有 |
 
-> ✅ **判定**: 3 つの mode はすべて plaintext アクセスを即座にブロックし、mesh 内トラフィックのみが 200 を返し、各 workload は同じ root CA から発行された固有の SPIFFE ID を保持します。sidecar と ambient のどちらも、「クラスタ内部の pod-to-pod トラフィックは mTLS でなければならない」という要件を満たします。
+> ✅ **判定**: 3 つの mode はすべて平文アクセスを即座にブロックし、mesh 内トラフィックだけが 200 を返し、各 Workload は同じ Root CA から発行された固有の SPIFFE ID を保持しています。sidecar と ambient はどちらも「クラスター内部の Pod 間トラフィックは mTLS でなければならない」という要件を満たします。
 
-**相違点**: ambient は mTLS を透過的に適用します。`istio-cni` が pod の network namespace 内で traffic redirection を設定し、ztunnel が port 15008 の HBONE（mTLS）tunnel を介して転送するため、アプリケーションコードも sidecar injection も不要です。Sidecar は、アプリケーション pod 内の istio-proxy container を通じて同じことを実現します。両 mode の certificate rotation と migration strategy の詳細は [mTLS](../security/01-mtls.md) を参照してください。
+**違い**: ambient は mTLS を透過的に適用します — `istio-cni` が Pod の network namespace 内でトラフィックリダイレクトをセットアップし、ztunnel がポート 15008 上の HBONE（mTLS）トンネルでトラフィックを運搬します — アプリケーションコードや sidecar injection は不要です。sidecar はアプリケーション Pod 内の istio-proxy container により同じことを実現します。両 mode の証明書ローテーションと移行戦略の詳細は [mTLS](../security/01-mtls.md) を参照してください。
 
 ## 2. NetworkPolicy — テスト結果
 
-Ambient は pod の実際のトラフィックを HBONE tunnel（TCP 15008）経由で ztunnel に転送し、ztunnel がそれを復号して宛先に配信します。つまり、**アプリケーション port（例: 8080）のみを許可する NetworkPolicy は ambient に enrollment された pod への inbound traffic をブロックします**。これは、packet が実際には 15008 に到着するためです。ambient を NetworkPolicy と併用するには、対象 pod に対して **TCP 15008 の inbound allow rule を追加する必要があります**。
+Ambient は Pod の実トラフィックを HBONE トンネル（TCP 15008）経由で ztunnel に転送し、ztunnel が復号して宛先に配信します。つまり、**アプリケーションポート（例: 8080）のみを許可する NetworkPolicy は ambient に参加している Pod へのインバウンドトラフィックをブロックします**。これはパケットが実際には 15008 に到達するためです。ambient を NetworkPolicy と併用するには、対象 Pod に対する **TCP 15008 のインバウンド許可ルールを追加する必要があります**。
 
-**テスト設定**: 専用 `mesh-isolated-test` cluster で VPC CNI NetworkPolicy enforcement（`enableNetworkPolicy=true`、`aws-network-policy-agent v1.3.5-eksbuild.3`、eBPF）を有効にしました。これは以前のラウンドで使った共有 cluster では安全に実施できませんでした。実施すると、他チームに属する既存の休眠状態の NetworkPolicy 13 件が同時に有効化されるためです。専用シングルテナント cluster によって、この blast radius の懸念は完全に取り除かれました。
+**テスト設定**: 専用 `mesh-isolated-test` クラスターで VPC CNI NetworkPolicy enforcement（`enableNetworkPolicy=true`、`aws-network-policy-agent v1.3.5-eksbuild.3`、eBPF）を有効化しました。これは、以前のラウンドで使用した共有クラスターでは安全に実施できませんでした。有効化すると、他チームに属する既存の休眠状態の NetworkPolicy 13 個が同時に有効になるためです。専用シングルテナントクラスターにより、この影響範囲の懸念を完全に排除しました。
 
-> ⚠️ **テスト中に見つかった運用上の注意点**: `enableNetworkPolicy` を有効にする*前*に作成された pod には、遡って enforcement が適用されません。eBPF hook は pod-network-setup（CNI ADD）時にのみアタッチされます。sanity check でこれを直接確認しました。すでに実行中の pod に port 9999 *のみ*を許可する policy を適用しても、port 8080 のトラフィックはブロックされずに通過しました。NetworkPolicy が有効になる前に、addon を有効化した後で `kubectl rollout restart`（pod の再作成）が必要でした。これは、稼働中 cluster で NetworkPolicy を有効にする前に知っておくべき実際の注意点です。
+> ⚠️ **テスト中に判明した運用上の注意点**: `enableNetworkPolicy` を有効にする *前* に作成された Pod には、遡及して enforcement が適用されません — eBPF hook は Pod network setup（CNI ADD）の時点でのみアタッチされます。sanity check によりこれを直接確認しました。すでに実行中の Pod にポート 9999 *のみ* を許可する policy を適用しても、ポート 8080 のトラフィックはブロックされずに通過しました。NetworkPolicy を有効にした後で Pod を再作成する `kubectl rollout restart` が、NetworkPolicy が有効になる前に必要でした。これは本番稼働中のクラスターで NetworkPolicy を有効化する前に知っておくべき、実際の注意点です。
 
-**テスト 1 — ingress を TCP 8080 のみに制限**（新規 pod、enforcement が有効であることを確認済み）
+**テスト 1 — ingress を TCP 8080 のみに制限**（新規 Pod、enforcement が有効であることを確認済み）
 
 | Mode | 結果 |
 |---|---|
@@ -78,20 +78,20 @@ Ambient は pod の実際のトラフィックを HBONE tunnel（TCP 15008）経
 | ambient-L4 | ❌ ブロック（`i/o timeout`） |
 | ambient-L7 | ❌ ブロック（`i/o timeout`） |
 
-**テスト 2 — ingress で TCP 8080 + TCP 15008（HBONE）を許可**
+**テスト 2 — ingress が TCP 8080 + TCP 15008（HBONE）を許可**
 
 | Mode | 結果 |
 |---|---|
 | ambient-L4 | ✅ 200 OK — 復旧 |
 | ambient-L7 | ✅ 200 OK — 復旧 |
 
-> ✅ **判定**: 実トラフィックにより、上記の仮説を確認しました。Ambient の workload pod の network namespace への実際の inbound packet は、アプリケーションの port（8080）ではなく、ztunnel の HBONE port（15008）に到着します。そのため、app-port-only の NetworkPolicy は ambient に enrollment された pod を暗黙的に壊します。Sidecar は影響を受けません。sidecar の traffic capture は、packet がすでにアプリケーション port に到着した後、pod 自身の network namespace 内だけで行われるためです。
+> ✅ **判定**: 実トラフィックにより上記の仮説を確認しました。ambient の Workload Pod の network namespace に到達する実際のインバウンドパケットは、アプリケーションポート（8080）ではなく ztunnel HBONE ポート（15008）に到達します。アプリケーションポートのみの NetworkPolicy は ambient に参加している Pod を暗黙に破壊します。sidecar は、パケットがすでにアプリケーションポートに到達した後に Pod 自身の network namespace 内だけで sidecar によるトラフィックキャプチャが行われるため、影響を受けません。
 
-defense-in-depth を推奨します。network-level（NetworkPolicy）と identity-level（AuthorizationPolicy）の control を併用してください。sidecar mode における mTLS と NetworkPolicy の conflict は、[mTLS and NetworkPolicy Conflict](../security/01-mtls.md#7-mtls-and-networkpolicy-conflict) で扱っています。
+多層防御を推奨します。network level（NetworkPolicy）と identity level（AuthorizationPolicy）の制御を併用してください。sidecar mode における mTLS と NetworkPolicy の競合は [mTLS and NetworkPolicy Conflict](../security/01-mtls.md#7-mtls-and-networkpolicy-conflict) で扱っています。
 
 ## 3. レイテンシー — テスト結果（T5）
 
-**テスト設定**: fortio load、200 qps、60s、16 connections、ケースごとに 12,000 requests、steady state（rollout restart は実行なし）。同じ `mesh-isolated-test` の Graviton（m7g.xlarge）node 上で、no-mesh baseline（unmeshed namespace）と sidecar、ambient-L4、ambient-L7 を比較しました。すべてのケースで Code 200 が 100% 返されました。
+**テスト設定**: fortio load、200 qps、60 秒、16 connections、ケースあたり 12,000 requests、steady state（rollout restart は実行していない）— no-mesh baseline（mesh 未参加の Namespace）対 sidecar 対 ambient-L4 対 ambient-L7。すべて同じ `mesh-isolated-test` Graviton（m7g.xlarge）node 上で実行しました。全ケースで 100% Code 200 を返しました。
 
 | ケース | P50 | P75 | P90 | P99 | P99.9 |
 |---|---|---|---|---|---|
@@ -100,34 +100,34 @@ defense-in-depth を推奨します。network-level（NetworkPolicy）と identi
 | ambient-L4（waypoint なし） | 0.86ms | 1.34ms | 1.74ms | 1.98ms | 2.93ms |
 | ambient-L7（waypoint） | 2.68ms | 3.06ms | 3.63ms | 3.98ms | 7.67ms |
 
-**no-mesh baseline に対する P50 オーバーヘッド**: sidecar +1.29ms · ambient-L4 +0.04ms（無視できるレベル） · ambient-L7 +1.86ms
+**no-mesh ベースラインに対する P50 オーバーヘッド**: sidecar +1.29ms · ambient-L4 +0.04ms（無視できるレベル）· ambient-L7 +1.86ms
 
-> ✅ **判定**: 以前に引用した公開 ambient-mode benchmark（L4-only は sidecar より低く、waypoint は sidecar とほぼ同等かやや高い）と一致しています。これらは現在、引用ではなく first-party の計測値です。暗号資産取引の経路のようなレイテンシーに敏感な workload では、これは下記の §4 と整合します。**waypoint を回避することは、レイテンシーと rollout 安定性の両方に役立ちます**。
+> ✅ **判定**: 以前に引用した公開済み ambient mode benchmark（L4 のみは sidecar より低く、waypoint は sidecar とほぼ同等またはやや上）と整合しています — これらは現在、引用ではなくファーストパーティの計測値です。暗号資産取引経路のようなレイテンシーに敏感な Workload では、これは以下の §4 と一致します。**waypoint を避けることはレイテンシーと rollout の安定性の両方に役立ちます**。
 
-## 4. 無停止 Rollout — 503 テスト結果（主要な発見）
+## 4. ダウンタイムゼロの Rollout — 503 テスト結果（主な発見）
 
 ### 背景
 
-ambient に関する懸念は、**L7 waypoint（Envoy）が destination IP:Port を key とした pool から connection を再利用する**一方で、**pod が terminate したときに ztunnel が waypoint へ通知しない**ことです。terminate された pod の IP が新しい pod に再割り当てされると、waypoint は無効になった connection を再利用し、503 を返す可能性があります。Sidecar でも同様の pod-termination race が発生することがあります（その仕組みは [Connection Errors During Pod Termination](../troubleshooting/common-errors.md#connection-errors-during-pod-termination) を参照）。EKS 1.36 で、両方の failure mode を直接比較して計測しました。
+Ambient での懸念は、**L7 waypoint（Envoy）が宛先 IP:Port をキーにした pool の connection を再利用する一方、** **Pod が終了しても ztunnel は waypoint に通知しない**ことです。終了した Pod の IP が新しい Pod に再割り当てされると、waypoint は無効になった connection を再利用して 503 を返す可能性があります。sidecar も類似した Pod termination race の影響を受ける可能性があります（仕組みは [Connection Errors During Pod Termination](../troubleshooting/common-errors.md#connection-errors-during-pod-termination) を参照）。EKS 1.36 で両方の障害 mode を直接比較して計測しました。
 
 **テスト環境**
-- 専用シングルテナント cluster `mesh-isolated-test`。EKS control plane と worker node はともに v1.36.2、arm64（Graviton m7g.xlarge）、Istio 1.30.2
-- **byte-identical な workload**（6 replicas の echo server Deployment + fortio client）を実行する 3 つの namespace（sidecar / ambient-L4 / ambient-L7）。異なるのは namespace label のみ
-- fortio client は 100 req/s で keepalive connection を維持し、その間に対象 namespace の `echo` Deployment を繰り返し `rollout restart` した
-- mode ごとに 60,000 requests を収集（= 100 qps × 600s）
+- 専用シングルテナントクラスター `mesh-isolated-test`、EKS control plane と worker node はともに v1.36.2、arm64（Graviton m7g.xlarge）、Istio 1.30.2
+- 3 Namespace（sidecar / ambient-L4 / ambient-L7）で **バイト単位で同一の Workload**（6 replicas の echo server Deployment + fortio client）を実行 — 異なるのは Namespace label のみ
+- fortio client は 100 req/s の keepalive connection を維持する一方、対象 Namespace の `echo` Deployment に対して `rollout restart` を繰り返し実行
+- mode ごとに 60,000 requests を収集（= 100 qps × 600 秒）
 
 ### 結果
 
-| Mode | Rollout cycles | Requests | 503 count | 503 rate | その他のエラー（-1、TCP reset/EOF） | 使用 socket 数 |
+| Mode | Rollout cycles | Requests | 503 count | 503 rate | その他のエラー（-1、TCP reset/EOF） | 使用した socket |
 |---|---|---|---|---|---|---|
-| sidecar | 42 | 60,000 | 324 | **0.5%** | 2 (0.0%) | 350 |
-| ambient-L4（waypoint なし） | 64 | 60,000 | **0** | **0%** | 195 (0.3%) | 1,652 |
-| ambient-L7（waypoint） | 65 | 59,913 | 1,528 | **2.6%** | 84 (0.1%) | 2,486 |
+| sidecar | 42 | 60,000 | 324 | **0.5%** | 2（0.0%） | 350 |
+| ambient-L4（waypoint なし） | 64 | 60,000 | **0** | **0%** | 195（0.3%） | 1,652 |
+| ambient-L7（waypoint） | 65 | 59,913 | 1,528 | **2.6%** | 84（0.1%） | 2,486 |
 
-> 完全な keepalive であれば、使用 socket 数は 16 になります。Ambient-L7 では、実行終了時に 60,000 calls 中 87 件が未完了のままであり、平均レイテンシー（50.4ms）も他の 2 mode（約 2～3ms）を大きく上回りました。
+> 完全な keepalive であれば、使用 socket 数は 16 になります。ambient-L7 では実行終了時に 60,000 calls のうち 87 件が未完了であり、平均レイテンシー（50.4ms）は他の 2 mode（約 2–3ms）を大幅に上回りました。
 
 <details>
-<summary>fortio 実行の生出力</summary>
+<summary>fortio 実行出力（生データ）</summary>
 
 ```
 [sidecar]      42 rollouts, Sockets used: 350 (16 would be perfect keepalive)
@@ -150,94 +150,115 @@ ambient に関する懸念は、**L7 waypoint（Envoy）が destination IP:Port 
 
 **判定**
 
-1. **Ambient-L7（waypoint）の 503 rate（2.6%）は、この専用 cluster では sidecar（0.5%）の約 5 倍です**。これは、共有かつ競合した cluster での同日早期計測が示唆した差よりもさらに大きいものでした（下記の分離に関する注記を参照）。このことは、rollout の変動下で「waypoint の connection pool が stale connection を再利用して 503 を発生させる」という当初の懸念を弱めるのではなく、むしろ補強しています。
-2. **Ambient-L4（waypoint なし）は、再び実際の HTTP 503 をゼロにしました。**その代わりに、0.3% の connection-level TCP error（応答なしの「-1」）が見られました。L4 では failure は *503 response* ではなく *dropped connection* として表面化します。したがって、error response を生成する proxy ではなく、client/application が reconnection handling を担うことになります。
-3. Ambient-L7 では大きな平均レイテンシーの spike と、実行中に完了しなかった 87 requests も見られました。これは、他の 2 mode とは異なり、waypoint が rollout の変動と継続負荷の組み合わせに苦戦していることと一致します。
-4. 同じ 600 秒の window 内で完了した rollout cycles（sidecar / ambient-L4 / ambient-L7 で 42 / 64 / 65）は、busy な共有 cluster での以前の計測よりはるかに多くなりました。これは、この専用 cluster では他の tenant が CPU/network を競合しなかったためです。*相対的な*順序（sidecar が最も遅く、ambient-L4 が最も速い）は維持されましたが、絶対的な rollout speed は cluster の競合に大きく依存するため、どの mode にも固有の特性として過度に解釈すべきではありません。
+1. **Ambient-L7（waypoint）の 503 率（2.6%）は、この専用クラスター上で sidecar（0.5%）の約 5 倍です** — 共有され競合状態にあったクラスターでの同日中の以前の計測が示したよりも大きな差です（下記の分離に関する注記を参照）。これにより、rollout の変動下で「waypoint の connection pool が stale connection を再利用して 503 を発生させる」という当初の懸念は弱まるどころか裏付けられました。
+2. **Ambient-L4（waypoint なし）は、再び実際の HTTP 503 をゼロ件にしました。** 代わりに、0.3% の connection level TCP error（応答なしの「-1」）が発生しました。L4 では障害は *503 response* ではなく *dropped connection* として表面化します — error response を生成する proxy ではなく、client/application に再接続処理を委ねます。
+3. Ambient-L7 では大きな平均レイテンシーの急増と、実行中に完了しなかった 87 requests も確認されました。これは rollout の変動と持続的な負荷が組み合わさった際に waypoint が苦戦していることと整合し、他の 2 mode とは異なります。
+4. 同じ 600 秒のウィンドウ内で完了した rollout cycles（sidecar / ambient-L4 / ambient-L7 で 42 / 64 / 65）は、CPU/network を競合する他の tenant がこの専用クラスターに存在しなかったため、混雑した共有クラスターでの以前の計測よりはるかに多くなりました。*相対的な* 順序（sidecar が最も遅く、ambient-L4 が最も速い）は維持されましたが、絶対的な rollout 速度はクラスターの競合に大きく依存するため、いずれの mode にも固有の特性として過度に解釈すべきではありません。
 
 ### フォローアップ: graceful shutdown の強化後
 
-上記の baseline の数値は、**shutdown tuning を一切行わない**状態を反映しています。次の 2 つの変更を加えた後、同じ T1 test（100 qps × 600s、60,000 requests/mode）を再実行しました。
+上記のベースライン数値は **shutdown tuning をまったく行っていない**状態を反映しています。次の 2 つの変更を加えた後、同じ T1 test（100 qps × 600 秒、60,000 requests/mode）を再実行しました。
 
-- **3 つの mode すべて**: `echo` container に `lifecycle.preStop.sleep.seconds: 10`（K8s 1.29+ の native sleep action。exec/shell は不要）と `terminationGracePeriodSeconds: 40` を設定。pod が実際に connection の受け付けを停止する前に、Endpoint removal が cluster 全体に伝播する時間を確保
-- **Sidecar のみ**: `proxy.istio.io/config` pod annotation を介して、`EXIT_ON_ZERO_ACTIVE_CONNECTIONS=true` + `terminationDrainDuration: 30s` を istio-proxy に injection（istio-proxy init container の実際の env に存在することを確認済み）。常に完全な 30s を待つ代わりに、active connection がゼロになるとすぐ終了
+- **3 つの mode すべて**: `echo` container に `lifecycle.preStop.sleep.seconds: 10`（K8s 1.29+ のネイティブな sleep action — exec/shell は不要）と `terminationGracePeriodSeconds: 40` を設定し、Pod が実際に connection を受け付けなくなる前に Endpoint removal がクラスター全体へ伝播する時間を確保
+- **Sidecar のみ**: `proxy.istio.io/config` Pod annotation 経由で `EXIT_ON_ZERO_ACTIVE_CONNECTIONS=true` + `terminationDrainDuration: 30s` を istio-proxy に注入（istio-proxy init container の実際の env に存在することを確認済み）— 常に 30 秒待機するのではなく、active connection がゼロになるとすぐ終了
 
-| Mode | Rollout cycles | Code 200 | Code 503 | Code -1 | 使用 socket 数 | 平均レイテンシー |
+| Mode | Rollout cycles | Code 200 | Code 503 | Code -1 | 使用した socket | 平均レイテンシー |
 |---|---|---|---|---|---|---|
-| sidecar（強化済み） | 42 | 60,000 (100%) | **0** | **0** | 16（完全な keepalive） | 2.630ms |
-| ambient-L4（強化済み） | 38 | 60,000 (100%) | **0** | **0** | 395 | 1.189ms |
-| ambient-L7（強化済み） | 45 | 59,352 (98.9%) | 648 (1.1%) | **0** | 678 | 3.843ms |
+| sidecar（強化後） | 42 | 60,000（100%） | **0** | **0** | 16（完全な keepalive） | 2.630ms |
+| ambient-L4（強化後） | 38 | 60,000（100%） | **0** | **0** | 395 | 1.189ms |
+| ambient-L7（強化後） | 45 | 59,352（98.9%） | 648（1.1%） | **0** | 678 | 3.843ms |
 
-**Baseline → 強化済みの比較**
+**ベースライン → 強化後の比較**
 
-| Mode | Baseline error rate | 強化済み error rate | 変化 |
+| Mode | ベースラインエラー率 | 強化後エラー率 | 変化 |
 |---|---|---|---|
 | sidecar | 0.5% 503 + 0% TCP | 0% 503 + 0% TCP | **503 を完全に排除** |
-| ambient-L4 | 0% 503 + 0.3% TCP | 0% 503 + 0% TCP | **TCP error も完全に排除** |
-| ambient-L7 | 2.6% 503 + 0.1% TCP | 1.1% 503 + 0% TCP | 503 rate を半分以上削減 |
+| ambient-L4 | 0% 503 + 0.3% TCP | 0% 503 + 0% TCP | **TCP エラーも完全に排除** |
+| ambient-L7 | 2.6% 503 + 0.1% TCP | 1.1% 503 + 0% TCP | 503 率を半分以上削減 |
 
-> ✅ **判定**: これにより、これらの 503 は、pod の Endpoint removal が伝播する前に pod が graceful shutdown していないことに起因するという仮説が計測により確認されました。`preStop sleep 10` だけで sidecar と ambient-L4 の error は完全になくなりました。Ambient-L7（waypoint）も大幅に改善しましたが、ゼロにはなりませんでした。これは、waypoint 自身の stale-connection-reuse mechanism（上記の主要な §4 の発見）が、workload 側の graceful-shutdown tuning だけでは完全に解決しないことを意味します。waypoint を経由して routing する場合は、この強化を baseline として適用し、それでも排除できない残存 503 risk を見込んでください。
+> ✅ **判定**: この計測は、これらの 503 が Pod の Endpoint removal が伝播する前に Pod が graceful shutdown されないことに起因するという仮説を確認します — `preStop sleep 10` だけで sidecar と ambient-L4 のエラーは完全に解消されました。Ambient-L7（waypoint）も大幅に改善しましたがゼロには至りませんでした。つまり、waypoint 自体の stale-connection-reuse の仕組み（上記の主な §4 の発見）は、Workload 側の graceful-shutdown tuning だけでは完全には解決されません。waypoint 経由でルーティングする場合は、この強化をベースラインとして適用し、それでも解消できない残存 503 リスクを見込んでください。
 
-### 緩和策としての retry のリスク — テスト結果（T2）
+### 緩和策としてのリトライのリスク — テスト結果（T2）
 
-**テスト設定**: `order`（6 replicas、非 idempotent な `POST /order`。handler 内で 0.1s delay を設け、request ID を `collector` に報告）、`collector`（異なる request ID をカウントし、同じ ID を複数回確認すると flag を立てる）、`order-client`（request ごとに一意な UUID を使い、20 req/s で連続 POST load）から成る harness を使用しました。retry policy（`attempts: 3, perTryTimeout: 2s, retryOn: 503,reset,connect-failure`）は、sidecar（istio-proxy）と ambient-L7（waypoint）の両方に、同一の Istio VirtualService config を介して適用しました。各 mode は、`order` Deployment の同時 `rollout restart` とともに 300s 実行しました。
+**テスト設定**: `order`（6 replicas、non-idempotent `POST /order`。handler 内の 0.1s delay があり、request ID を `collector` に報告）、`collector`（重複しない request ID をカウントし、複数回確認された ID を検出）、`order-client`（request ごとに一意な UUID を付けて 20 req/s で連続 POST 負荷を発生）の harness。リトライ policy（`attempts: 3, perTryTimeout: 2s, retryOn: 503,reset,connect-failure`）を、同じ Istio VirtualService config により sidecar（istio-proxy）と ambient-L7（waypoint）の両方に適用しました。各 mode は `order` Deployment の `rollout restart` と並行して 300 秒間実行しました。
 
-| Mode | Rollout cycles | 送信 requests | Client から見える failures（3 retries すべてを使い切る） | 重複実行 |
+| Mode | Rollout cycles | 送信 Requests | Client から見える障害（3 回のリトライをすべて使い切ったもの） | 重複実行 |
 |---|---|---|---|---|
-| sidecar（VirtualService retry） | 11 | 9,135 | 15 (0.16%) | **0** |
-| ambient-L7（waypoint retry） | 12 | 7,229 | 21 (0.29%) | **0** |
+| sidecar（VirtualService retry） | 11 | 9,135 | 15（0.16%） | **0** |
+| ambient-L7（waypoint retry） | 12 | 7,229 | 21（0.29%） | **0** |
 
-> ✅ **判定**: どちらの mode でも、非 idempotent な実行の重複は観測されませんでした。低い client-visible failure rate は、retry が実際に発火し、一時的な rollout-churn error の大部分を隠していたことを確認しています。しかし、成功した retry によって同じ logical request が 2 度処理されることはありませんでした。
+> ✅ **判定**: いずれの mode でも、non-idempotent な重複実行は観測されませんでした。低い client-visible failure rate は、リトライが実際に発火し、一時的な rollout-churn error の多くを隠していることを確認しています — しかし、成功したリトライのどれも、同じ論理リクエストが 2 回処理される結果にはなりませんでした。
 
-> ⚠️ **これは race が不可能であることを意味しません。**これは、特定の条件（perTryTimeout=2s、20 req/s、6 replicas、default graceful shutdown、`preStop` hook なし）では現れなかったことを意味します。理論的な mechanism、すなわち元の request がすでに app に到達しているものの response が caller に戻る前に retry が再送される状況は、app が処理を開始した*後*かつ response が返る*前*という狭い window で connection が drop する必要があります。300s の連続 rollout churn では、どちらの mode でもその例を捕捉できませんでした。ただし、production の非 idempotent な経路では、server-side idempotency key がない限り、mesh-level retry は default で unsafe と扱うべきです。この test は race が*一般的*であるという確信を下げますが、*安全*であることを立証するものではありません。
+> ⚠️ **これは race が不可能であることを意味しません。** これは、特定の条件（perTryTimeout=2s、20 req/s、6 replicas、デフォルトの graceful shutdown、`preStop` hook なし）では発現しなかったことを意味します。理論上の仕組み — 元の request がすでに app に到達したものの、その response が caller に返る前にリトライが再送される — では、app が処理を開始した *後* かつ response が返る *前* の狭い window で connection が切断される必要があります。300 秒間の連続 rollout churn ではいずれの mode でも例を捕捉できませんでしたが、本番の non-idempotent path は、server-side idempotency key がない限り、mesh-level retry をデフォルトで安全でないものとして扱うべきです。このテストは race が *頻繁* であるという確信を下げますが、*安全* であることを立証するものではありません。
+
+### リトライによって隠される障害と生の障害を分離する
+
+mTLS data-plane の選択と HTTP retry policy は独立した判断です。sidecar Envoy と waypoint Envoy は L7 で HTTP request をリトライできますが、ambient ztunnel は HTTP 503 を解釈したり HTTP request を再実行したりできない [L4 proxy](https://istio.io/latest/docs/ambient/architecture/data-plane/) です。したがって、最終的に client から見える 503 count だけを比較しても、sidecar/waypoint の生の障害数が少なかったのか、リトライで隠しただけなのかは分かりません。
+
+公平な rollout 比較のため、POST/PATCH write route では `attempts: 0` に設定し、以下の指標を個別に記録してください。
+
+- リトライ前の HTTP 503、TCP reset/EOF、connection-refused event
+- Envoy `upstream_rq_retry` および `upstream_rq_retry_success` counter
+- 元の request を含む、実際の upstream delivery count
+- retry 処理後に client から見える最終的な success/failure
+- server が同じ idempotency key または command ID を複数回処理したかどうか
+
+| Data plane | mTLS/encryption の意味 | L7 retry の場所 | 推奨用途 |
+|---|---|---|---|
+| Istio sidecar | Workload SPIFFE-certificate mTLS | Pod ごとの Envoy | 重要な non-idempotent path の保守的なベースライン |
+| Istio ambient L4 | ztunnel 間の HBONE workload mTLS | なし | Istio mTLS と L4 policy だけが必要な場合の最初の候補 |
+| Istio ambient L7 | HBONE + waypoint Envoy | 共有 waypoint | HTTP routing または L7 policy が必要な Service にのみ追加 |
+| Cilium | Identity mutual authentication と WireGuard/IPsec などの transport encryption は個別に選択 | L3/L4 encryption layer にはなし | identity policy と network encryption を必要とする既存 Cilium data plane |
+
+> **運用ルール:** mTLS だけが要件である場合は、まず ambient L4 を検証し、L7 policy または east-west HTTP routing が必要な Service にのみ waypoint を追加してください。write retry を無効にして計測した ambient rollout error が Workload の error budget を超える場合、重要な non-idempotent path では sidecar をベースラインとして維持してください。
 
 ### テスト分離に関する注記
 
 <details>
-<summary>専用 cluster が必要だった理由と、それでも発生した問題（クリックして展開）</summary>
+<summary>専用クラスターが必要だった理由と、依然として発生した問題（クリックして展開）</summary>
 
-同日の早期に行った T1/T3 testing は、共有 cluster（`fsi-demo-cluster`）上の 4 つの専用 namespace で実施しました。その cluster の `benchmark` namespace では、100 種類以上の EC2 instance type にわたる大規模な Kafka benchmark job sweep が同時に実行されていました。ambient-L7 T1 load が完了した直後に、そのラウンドで作成されたすべての resource（4 つの namespace、`istio-system`、およびすべての Istio/Gateway API CRD）が、確認済みの root cause なしに同時に消失しました（一致する ArgoCD Application も Kyverno/Gatekeeper policy も見つかりませんでした）。その結果、T2、T4、T5 は未実施となり、その resource contention 下で収集した T1 の数値の妥当性にも疑問が生じました。
+初回の同日 T1/T3 テストラウンドは、4 つの専用 Namespace にまたがる共有クラスター（`fsi-demo-cluster`）上で実行しました。このクラスターの `benchmark` Namespace では、100 を超える EC2 instance type を対象にした大規模な Kafka benchmark job sweep が同時に実行されていました。ambient-L7 T1 の load 完了直後、このラウンドで作成されたすべての resource（4 つすべての Namespace、`istio-system`、およびすべての Istio/Gateway API CRD）が、原因未確認のまま同時に消失しました（一致する ArgoCD Application、Kyverno/Gatekeeper policy は見つかりませんでした）。そのため T2、T4、T5 は未実行のままとなり、その resource contention 下で収集した T1 の数値の妥当性にも疑念が生じました。
 
-このラウンドでは、この種の干渉を排除するために、まったく新しいシングルテナント cluster（`mesh-isolated-test`、専用 VPC、他 workload なし）を使用し、resource anomaly なしに T1–T5 を end-to-end で完了しました。しかし別の分離の隙間が見つかりました。新しい cluster で最初の T1 を試行している途中で、ローカル workstation の共有 `~/.kube/config` の current-context が、`mesh-isolated-test` から無関係な cluster へ黙って切り替わりました。そのため、その試行は無効になりました（context が切り替わると rollout-restart loop は `namespace not found` で失敗し始めましたが、すでに確立していた in-flight の fortio load connection は影響を受けませんでした）。`mesh-isolated-test` の namespace と resource は、明示的な kubeconfig check によって全体を通じて完全に無傷であることを確認しました。これは cluster 側の deletion ではなく、workstation-level の context の取り違えでした。修正は、`mesh-isolated-test` のみに scope を絞った kubeconfig file を用意してすべての test script から明示的に参照し、context が再び drift した場合は abort する guard を追加することです。本ドキュメントの最終数値はすべて、修正後の context-locked rerun から得たものです。
+今回のラウンドでは、この種の干渉を排除するために、まったく新しいシングルテナントクラスター（`mesh-isolated-test`、専用 VPC、他の Workload なし）を使用し、resource anomaly なしに T1–T5 を end to end で完了しました。代わりに *別の* 分離の欠落が判明しました。新クラスターでの最初の T1 試行の途中、ローカル workstation の共有 `~/.kube/config` の current-context が、`mesh-isolated-test` から無関係なクラスターへと黙って切り替わりました。このため、その試行は無効になりました（context が切り替わると rollout-restart loop が `namespace not found` で失敗し始めましたが、すでに確立されていた進行中の fortio load connection は影響を受けませんでした）。`mesh-isolated-test` の Namespace と resource が完全に無傷であることは、明示的な kubeconfig check により全期間を通して確認しました。これは cluster 側の deletion ではなく、workstation level の context 混同です。修正として、`mesh-isolated-test` のみにスコープを絞った kubeconfig file を作成し、すべての test script から明示的に参照させ、context が再びずれた場合は abort する guard を追加しました。本書の最終数値はすべて、修正済みで context を lock した再実行から得ています。
 
 </details>
 
-## 5. 推奨事項: Tiered Approach
+## 5. 推奨事項: 階層化アプローチ
 
-二者択一の「sidecar か ambient か」ではなく、**workload tier ごとに異なる mesh mode を適用すること**を推奨します。これは [Ambient Mode](../advanced/01-ambient-mode.md#use-cases) の use-case guidance に一致しており、今回の testing は証拠によってこれを裏付けています。
+二者択一の「sidecar か ambient か」という選択ではなく、**Workload tier ごとに異なる mesh mode を適用すること**を推奨します。これは [Ambient Mode](../advanced/01-ambient-mode.md#use-cases) のユースケースガイドと一致しており、今回のテストラウンドはその根拠を示しています。
 
 | Tier | 例 | 推奨事項 | 根拠 |
 |---|---|---|---|
-| Core（注文作成/マッチング/決済、非 idempotent） | Trading API | **Ambient L4-only（waypoint なし）または sidecar を維持** | §4: waypoint を経由すると 503 rate は sidecar の約 5 倍。L4-only の 503 はゼロ。L7 feature が本当に必要なら、より成熟した選択肢は sidecar。T2 ではどちらの mode でも retry による重複実行は見つからなかったが、安全性は立証されない。この tier では、mesh mode に関係なく default で retry をオフにする。 |
-| Semi-core（idempotent な read API） | 価格/残高照会 | Ambient（L4、必要に応じて L7） | Idempotent request は安全に retry できるため、waypoint risk の重要度は低い |
-| Periphery（query、notification、batch） | Dashboard、alerting | Ambient を積極的に採用 | resource/operational benefit を最大化。mTLS と rollout behavior はテストで安全性を検証済み |
+| Core（注文作成/マッチング/決済、non-idempotent） | Trading API | **Ambient L4 のみ（waypoint なし）または sidecar を維持** | §4: waypoint 経由でルーティングすると 503 率は sidecar の約 5 倍。L4 のみでは 503 はゼロでした。L7 feature が真に必要であれば、sidecar の方がより成熟した選択肢です。T2 では、いずれの mode の retry でも duplicate-execution instance は見つかりませんでしたが、安全性を確立するものではありません — mesh mode にかかわらず、この tier ではデフォルトで retry を無効にしてください。 |
+| Semi-core（idempotent な read API） | Price/balance query | Ambient（L4、必要に応じて L7） | Idempotent request は retry しても安全なため、waypoint のリスクは小さい |
+| Periphery（query、notification、batch） | Dashboard、alerting | ambient を積極的に採用 | resource/operational benefit を最大化。mTLS と rollout behavior はテストで安全性を検証済み |
 
-**namespace-level の mixed deployment** は、今回の testing で実際に検証されました。sidecar、ambient-L4、ambient-L7 の namespace は同じ cluster 上で同時に実行され、それぞれが独立して STRICT mTLS を強制していました。
+**Namespace level の混在デプロイ**は、このテストラウンドで実際に検証しました — sidecar、ambient-L4、ambient-L7 の Namespace を同じクラスター上で同時に実行し、それぞれが独立して STRICT mTLS を強制しました。
 
-### L4-only の制限 — canary deployment は引き続き実施できるか？
+### L4 のみの制限 — それでも canary deployment は可能か？
 
-Ambient L4-only には waypoint がないため、ztunnel は HTTP request の内部を確認しません。つまり、**HTTP header/path-based routing、retry、circuit breaking、traffic mirroring といった L7 feature は、L4-only Service には適用できません。**これが実際に canary deployment を妨げるかどうかは、traffic がどこから入るかによります。
+Ambient L4 のみには waypoint がないため、ztunnel は HTTP request の内部を確認しません。つまり、**HTTP header/path ベースの routing、retry、circuit breaking、traffic mirroring といった L7 feature は、L4 のみの Service には適用できません。** これが実際に canary deployment を妨げるかは、トラフィックの入口によって異なります。
 
-> ✅ **Ingress canary は影響を受けません。**Istio Ingress Gateway または Gateway API `Gateway` は、backend workload が ambient と sidecar のどちらの mode で実行されるかにかかわらず、常に別個の完全な Envoy proxy（独自の Deployment）です。`VirtualService`/`HTTPRoute` による v1/v2 subset 間の weighted split は gateway で完全に決定され、その後 ztunnel（L4）はすでに選択済みの destination pod への connection を tunnel するだけです。外部公開 API の canary deployment は L4-only backend でも問題なく機能します。
+> ✅ **Ingress canary は影響を受けません。** Istio Ingress Gateway または Gateway API `Gateway` は、backend Workload が ambient または sidecar mode のどちらで実行されているかに関係なく、常に独立した完全な Envoy proxy（独自の Deployment）です。`VirtualService`/`HTTPRoute` による v1/v2 subset 間の weighted split は完全に gateway で決定されます。ztunnel（L4）は、その後にすでに選択された宛先 Pod への connection をトンネルするだけです。外部公開 API の canary deployment は L4 のみの backend でも問題なく機能します。
 
-> ⚠️ **mesh-internal（east-west）の canary には、その特定の Service で L7 が必要です。**Service A が mesh 内で Service B を呼び出し、B-v1 と B-v2 の間で percentage により traffic を split したい場合、L7 でその routing decision を行うものが必要です。ztunnel にはできません。この canary を機能させるには、**B の前に waypoint を deploy する（B を ambient-L7 に切り替える）か、B を sidecar で実行する**必要があります。
+> ⚠️ **Mesh 内（east-west）の canary には、その特定の Service で L7 が必要です。** Service A が mesh 内で Service B を呼び出し、B-v1 と B-v2 の間でトラフィックを割合により分割したい場合、何らかのコンポーネントが L7 で routing decision を行う必要があります — ztunnel にはできません。その canary を機能させるには、**B の前に waypoint をデプロイする（B を ambient-L7 に切り替える）か、B を sidecar で実行する**必要があります。
 
-**要点**: 外部公開 API の canary deployment は L4-only で問題なく機能します。mesh-internal canary を必要とする特定の Service に対してのみ waypoint または sidecar を選択してください。これはまさに、上記の tiered recommendation を実際に適用する方法です。
+**結論**: 外部公開 API の canary deployment は L4 のみで問題なく機能します。mesh 内 canary を必要とする特定の Service に対してのみ waypoint または sidecar を使用してください — これこそが、上記の階層化した推奨事項を実務で適用する意図です。
 
 **採用前のチェックリスト**
 
-- [ ] 注文/マッチング/決済経路では、本当に L7 feature（HTTP routing、retry、traffic split）が必要か？必要でなければ、ambient L4-only が最有力候補
-- [ ] NetworkPolicy は HBONE port（15008）を許可するように更新済みか？（§2、検証済み。稼働中 cluster で初めて `enableNetworkPolicy` を有効にする場合は、enforcement は遡及されないため、既存 pod を再作成すること）
-- [ ] 非 idempotent な API path に retry policy を適用していないか？（§4 — T2 では testing 中に重複実行は見つからなかったが、server-side idempotency key がない非 idempotent path では default で retry を無効にすること）
-- [ ] 自身の workload に対してレイテンシーを再計測したか？（§3、この cluster の Graviton node で検証済み。instance type または workload profile が大きく異なる場合は再計測すること）
+- [ ] 注文/マッチング/決済経路は本当に L7 feature（HTTP routing、retry、traffic split）を必要としますか？必要なければ、ambient L4 のみが第一候補です
+- [ ] NetworkPolicy は HBONE ポート（15008）を許可するよう更新されていますか？（§2、検証済み — さらに、稼働中クラスターで `enableNetworkPolicy` を初めて有効化する場合、enforcement は遡及しないため既存 Pod を再作成してください）
+- [ ] retry policy は non-idempotent API path に適用されていますか？（§4 — T2 ではテスト時に重複実行は見つかりませんでしたが、server-side idempotency key がない non-idempotent path ではデフォルトで retry を無効にしてください）
+- [ ] 自身の Workload でレイテンシーを再計測しましたか？（§3、このクラスターの Graviton node で検証済み — instance type または Workload profile が大きく異なる場合は再計測してください）
 
-## Appendix: これらのテストの再現
+## 付録: これらのテストを再現する
 
-以下は、本ドキュメントのすべての数値を得た実際の config file と手順です。自身の cluster で結果を再現するには、そのまま copy してください。
+以下は、本書のすべての数値を生成した実際の config file と手順です。自身のクラスターで結果を再現するには直接コピーしてください。
 
-### A. Cluster provisioning（eksctl）
+### A. クラスターのプロビジョニング（eksctl）
 
-専用シングルテナント cluster は eksctl で作成しました。NAT gateway なしの完全 public subnet を使用しています（新しい Elastic IP を必要としない、テスト専用の簡略化です。production cluster では NAT を有効にしてください）。
+専用シングルテナントクラスターは eksctl で作成しました。NAT gateway を持たない完全な public subnet を使用しています（新しい Elastic IP を必要としないテスト専用のショートカットです。本番クラスターでは NAT を有効にしてください）。
 
 <details>
 <summary>eksctl-cluster.yaml</summary>
@@ -289,9 +310,9 @@ addons:
 eksctl create cluster -f eksctl-cluster.yaml
 ```
 
-### B. Istio install（Gateway API CRD + ambient profile）
+### B. Istio のインストール（Gateway API CRD + ambient profile）
 
-Ambient mode の waypoint は Gateway API `Gateway` resource であるため、Istio を install する前に Gateway API CRD が存在している必要があります。
+Ambient mode の waypoint は Gateway API の `Gateway` resource であるため、Istio をインストールする前に Gateway API CRD が存在する必要があります。
 
 ```bash
 # 1) Gateway API CRDs (v1.1.0, compatible with Istio 1.30)
@@ -302,7 +323,7 @@ istioctl install -f ambient-overlay.yaml -y
 ```
 
 <details>
-<summary>ambient-overlay.yaml（CNI/ztunnel/istiod を arm64 node に schedule）</summary>
+<summary>ambient-overlay.yaml（CNI/ztunnel/istiod を arm64 node にスケジュール）</summary>
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -343,9 +364,9 @@ spec:
 
 </details>
 
-### C. Namespace および workload manifest
+### C. Namespace および Workload manifest
 
-4 つの namespace — レイテンシー baseline 用の `mesh-test-base`（unmeshed）、`mesh-test-sidecar`、`mesh-test-ambient-l4`、`mesh-test-ambient-l7`。異なるのは label のみで、それ以外は byte-identical です。
+4 つの Namespace — `mesh-test-base`（レイテンシーベースライン用の mesh 未参加）、`mesh-test-sidecar`、`mesh-test-ambient-l4`、`mesh-test-ambient-l7`。異なるのは label のみで、ほかはすべてバイト単位で同一です。
 
 <details>
 <summary>namespaces.yaml</summary>
@@ -381,7 +402,7 @@ metadata:
 </details>
 
 <details>
-<summary>Workload manifest（echo server、6 replicas + fortio client） — 4 つの namespace すべてで同一、異なるのは namespace field のみ</summary>
+<summary>Workload manifest（echo server、6 replicas + fortio client）— 4 つすべての Namespace で同一、変更するのは namespace field のみ</summary>
 
 ```yaml
 apiVersion: apps/v1
@@ -506,7 +527,7 @@ spec:
 
 </details>
 
-ambient-L7 namespace には、追加で waypoint を deploy する必要があります。
+ambient-L7 Namespace には、追加で waypoint をデプロイする必要があります:
 
 ```bash
 istioctl waypoint apply -n mesh-test-ambient-l7 --enroll-namespace --wait
@@ -514,7 +535,7 @@ istioctl waypoint apply -n mesh-test-ambient-l7 --enroll-namespace --wait
 
 ### E. NetworkPolicy（§2）
 
-addon config を通じて、VPC CNI の eBPF-based NetworkPolicy enforcement を有効にします。§2 で述べたとおり、これは**この時点より後に作成または再作成された pod にのみ適用されます**。
+addon config を通じて、VPC CNI の eBPF ベースの NetworkPolicy enforcement を有効にします。§2 で扱ったとおり、これは **この時点以降に作成または再作成された Pod にのみ適用されます**。
 
 ```bash
 aws eks update-addon --cluster-name mesh-isolated-test --addon-name vpc-cni --region ap-northeast-2 \
@@ -571,9 +592,9 @@ spec:
 
 </details>
 
-### F. 無停止 rollout test の実行（T1、§4）
+### F. ダウンタイムゼロ rollout test の実行（T1、§4）
 
-fortio load generator（foreground。test duration の間 block）と `rollout restart` loop（background）を同時に実行し、load の終了後に loop を停止します。
+fortio load generator（foreground、テスト期間中ブロック）と `rollout restart` loop（background）を並行して実行し、load 完了後に loop を停止します。
 
 ```bash
 NS=mesh-test-sidecar   # repeat for ambient-l4, ambient-l7
@@ -597,9 +618,9 @@ kubectl exec -n "$NS" "$CLIENT" -c fortio-client -- \
 kill "$ROLLOUT_PID" 2>/dev/null
 ```
 
-> 💡 `-allow-initial-errors` がない場合、fortio は warmup request が rollout 中に 503 を受け取ると実行全体を abort します。rollout churn と重なる load test では、この flag が必要です。
+> 💡 `-allow-initial-errors` がない場合、fortio の warmup request が rollout 中に到達して 503 を受け取ると、fortio は実行全体を abort します。この flag は rollout churn と重なる load test では必須です。
 
-**Graceful-shutdown hardening patch**（§4 の「強化後」rerun で使用。既存 Deployment に対して `kubectl patch --type strategic` で適用）:
+**Graceful-shutdown 強化 patch**（§4 の「強化後」再実行に使用。既存の Deployment に対して `kubectl patch --type strategic` で適用）:
 
 ```yaml
 # common to all 3 modes — ambient-l4/l7 get only this patch
@@ -652,16 +673,16 @@ kubectl patch deployment/echo -n mesh-test-ambient-l7 --type strategic --patch-f
 
 ### G. レイテンシー test の実行（T5、§3）
 
-同じ fortio command を、rollout loop なしの steady state で実行します。
+同じ fortio command を使用し、rollout loop のない steady state で実行します。
 
 ```bash
 kubectl exec -n "$NS" "$CLIENT" -c fortio-client -- \
   fortio load -qps 200 -t 60s -c 16 -allow-initial-errors http://echo:8080/
 ```
 
-### H. Retry / 重複実行 test harness（T2、§4）
+### H. Retry / duplicate-execution test harness（T2、§4）
 
-3-pod harness — `order`（非 idempotent な POST を処理）、`collector`（重複 request ID を検出）、`order-client`（連続 load）— を sidecar と ambient-L7 の namespace に同一に deploy します。
+3-Pod harness — `order`（non-idempotent POST を処理）、`collector`（重複 request ID を検出）、`order-client`（連続負荷）— を sidecar と ambient-L7 Namespace に同一にデプロイします。
 
 <details>
 <summary>ConfigMap — order_server.py / collector.py / client.py</summary>
@@ -888,7 +909,7 @@ spec:
 
 </details>
 
-retry policy を `order` Service に適用します（sidecar の istio-proxy と ambient-L7 のすでに deploy 済み waypoint は、どちらもこの VirtualService を取得します）。
+Retry policy を `order` Service に適用します（sidecar の istio-proxy と ambient-L7 で既にデプロイされた waypoint は、どちらもこの VirtualService を取得します）。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -911,7 +932,7 @@ spec:
       retryOn: 503,reset,connect-failure
 ```
 
-実行手順は（F）の rollout loop と同様ですが、対象を `order` Deployment とし、計測前に `collector` の counter を reset し、終了後に duplicate count を query します。
+実行手順は（F）の rollout loop と同様ですが、対象を `order` Deployment にし、計測前に `collector` の counter をリセットして、後で duplicate count を問い合わせます。
 
 ```bash
 kubectl rollout restart deployment/collector -n "$NS"   # reset the counter
@@ -925,8 +946,10 @@ kubectl exec -n "$NS" "$CLIENT" -c order-client -- python3 -c \
 
 ## 参考資料
 
-- [Ambient Mode](../advanced/01-ambient-mode.md) — ztunnel/waypoint architecture、sidecar との resource comparison
-- [mTLS](../security/01-mtls.md) — STRICT/PERMISSIVE mode、certificate management、NetworkPolicy conflict
+- [Ambient Mode](../advanced/01-ambient-mode.md) — ztunnel/waypoint アーキテクチャ、sidecar との resource 比較
+- [mTLS](../security/01-mtls.md) — STRICT/PERMISSIVE mode、証明書管理、NetworkPolicy の競合
+- [Istio VirtualService Retry](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry) — `attempts: 0` と retry 条件
+- [Envoy Retry Statistics](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter) — retry behavior と observability
 - [Troubleshooting: Connection Errors During Pod Termination](../troubleshooting/common-errors.md#connection-errors-during-pod-termination)
 - [Sidecar Injection](../advanced/07-sidecar-injection.md)
 - [Service Mesh Solution Comparison](01-service-mesh-comparison.md)

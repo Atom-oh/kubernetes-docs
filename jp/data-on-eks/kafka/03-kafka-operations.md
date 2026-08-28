@@ -1,29 +1,29 @@
-# Part 3: Kafka Operations
+# パート 3: Kafka 運用
 
-> **Supported Versions**: Strimzi 0.45+, Kafka 3.9\
+> **サポート対象バージョン**: Strimzi 0.45+, Kafka 3.9\
 > **最終更新**: July 9, 2026
 
-Kafka cluster が Strimzi Operator でデプロイされると、運用作業は storage capacity planning、broker scaling、partition reassignment、zero-downtime upgrade に移ります。このドキュメントでは、EKS 上で Strimzi-managed Kafka cluster を運用する際に直面する主要な運用タスクを扱います。
+Strimzi Operator で Kafka クラスターをデプロイすると、運用作業はストレージ容量計画、broker のスケーリング、partition の再割り当て、およびダウンタイムなしのアップグレードへと移ります。このドキュメントでは、EKS で Strimzi が管理する Kafka クラスターを実行する際に行う主要な運用タスクを取り上げます。
 
-## Storage Design
+## ストレージ設計
 
-### Choosing an EBS Volume Type: gp3 vs io2
+### EBS ボリュームタイプの選択: gp3 と io2
 
-Kafka log segment は主に sequential に書き込み・読み取りされますが、consumer lag が増大すると、古い segment に対する random read が発生することがあります。その access pattern を念頭に置いて EBS volume type を選択してください。
+Kafka のログセグメントは主にシーケンシャルに書き込み・読み取りされますが、consumer lag の増加により古いセグメントに対するランダム読み取りが発生する場合があります。このアクセスパターンを考慮して EBS ボリュームタイプを選択してください。
 
-| Aspect | gp3 | io2 |
+| 項目 | gp3 | io2 |
 |--------|-----|-----|
-| **Billing** | Capacity-based; IOPS/throughput provisioned separately | IOPS-based (higher per-unit cost) |
-| **Throughput** | 125MB/s baseline, up to 1,000MB/s with independent provisioning | Scales with volume size and IOPS |
-| **Max IOPS** | 16,000 | 256,000 |
-| **Best fit** | Most Kafka workloads — throughput-bound patterns | Spiky consumer lag, latency-sensitive workloads with heavy small random I/O |
-| **Durability (annual failure rate)** | 99.8–99.9% | 99.999% |
+| **課金** | 容量ベース。IOPS/スループットは個別にプロビジョニング | IOPS ベース（単価がより高い） |
+| **スループット** | 125MB/s がベースライン。個別プロビジョニングにより最大 1,000MB/s | ボリュームサイズと IOPS に応じて拡張 |
+| **最大 IOPS** | 16,000 | 256,000 |
+| **最適な用途** | 多くの Kafka ワークロード — スループットがボトルネックとなるパターン | 急増する consumer lag、大量の小さなランダム I/O を伴うレイテンシー重視のワークロード |
+| **耐久性（年間障害率）** | 99.8–99.9% | 99.999% |
 
-一般的な event-streaming workload では、まず **gp3** から始め、必要に応じて throughput/IOPS を個別に provision します。これはより cost-effective な default です。random I/O が支配的な場合（多数の consumer group が scattered offset から同時に読み取る場合）や、厳格な p99 latency SLA がある場合にのみ **io2** に移行してください。
+一般的なイベントストリーミングのワークロードでは、まず **gp3** を使用し、必要に応じてスループット/IOPS を個別にプロビジョニングしてください。これはより費用対効果の高いデフォルトです。ランダム I/O が支配的な場合（多数の consumer group が分散した offset から同時に読み取る場合）、または厳格な p99 レイテンシー SLA がある場合にのみ **io2** へ移行してください。
 
-### Multi-Volume Storage with JBOD
+### JBOD を使用したマルチボリュームストレージ
 
-Strimzi は JBOD (Just a Bunch Of Disks) configuration をサポートしており、各 broker は 1 つの大きな volume ではなく、複数の独立した volume を使用します。この方法で storage を分割すると、volume 間で throughput を parallelize でき、残りに影響を与えずに個別の volume を追加または置換できます。
+Strimzi は、各 broker が 1 つの大きなボリュームではなく複数の独立したボリュームを使用する JBOD（Just a Bunch Of Disks）構成をサポートしています。このようにストレージを分割することで、ボリューム間でスループットを並列化でき、他のボリュームに手を加えることなく個々のボリュームを追加または交換できます。
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -58,31 +58,31 @@ spec:
       cpu: "4"
 ```
 
-各 `volumes` entry の `id` は broker 内の log directory を識別し、partition は round-robin 方式で volume 間に分散されます。`deleteClaim: false` は、broker が scale down または recreate されたときに PVC が削除されないよう保護します。
+各 `volumes` エントリの `id` は broker 内のログディレクトリを識別し、partition はラウンドロビン方式でボリューム間に分散されます。`deleteClaim: false` は、broker のスケールダウンまたは再作成時に PVC が削除されないよう保護します。
 
-> **Note**: Strimzi では、broker pod の起動時に Operator が `kafka-storage.sh format` 相当を自動的に実行するため、volume を format するためにその script を自分で実行する必要はありません。
+> **注記**: Strimzi では、broker pod の起動時に Operator が `kafka-storage.sh format` と同等の処理を自動的に実行するため、ボリュームをフォーマットするためにこのスクリプトを自分で実行する必要はありません。
 
-### Storage Sizing Guidance
+### ストレージサイジングのガイダンス
 
-disk size は次の式で見積もります。
+次の式を使用してディスク容量を決定します。
 
 ```
 Required disk capacity = retention period × peak throughput (bytes/sec) × replication factor × (1 + headroom ratio)
 ```
 
-たとえば、peak throughput が 50MB/s、retention period が 7 日（`604,800 seconds`）、replication factor が 3、headroom が 30% の場合:
+たとえば、ピークスループットが 50MB/s、保持期間が 7 日（`604,800 seconds`）、replication factor が 3、headroom が 30% の場合:
 
 ```
 50MB/s × 604,800s × 3 × 1.3 ≈ 118TB (cluster total)
 ```
 
-3 つの broker に分散すると、broker あたりおよそ 39TB になります。headroom は重要です。Kafka broker は disk utilization が high-water mark を超えると急激に劣化し（log cleaner と segment-rolling の挙動に影響します）、`log.retention.bytes`/`log.retention.hours` による削除が追いつかない場合、disk full によって broker が完全に offline になる可能性があります。常に少なくとも 20–30% の free space を確保してください。
+これを 3 台の broker に分散すると、broker あたりおよそ 39TB になります。ディスク使用率が high-water mark を超えると Kafka broker の性能は急激に低下するため（log cleaner および segment rolling の動作に影響します）、headroom は重要です。また、`log.retention.bytes`/`log.retention.hours` による削除が遅れると、ディスクがフルになり broker が完全にオフラインになる可能性があります。常に少なくとも 20～30% の空き容量を確保してください。
 
-## Broker and Controller Scaling
+## Broker と Controller のスケーリング
 
-### Scaling Out Brokers
+### Broker のスケールアウト
 
-`KafkaNodePool` の `replicas` を増やすと、Strimzi は新しい broker pod を作成し、それらを cluster に自動的に参加させます。
+`KafkaNodePool` の `replicas` を増やすと、Strimzi は新しい broker pod を作成し、自動的にクラスターへ参加させます。
 
 ```bash
 kubectl patch kafkanodepool broker -n kafka --type=merge \
@@ -92,9 +92,9 @@ kubectl patch kafkanodepool broker -n kafka --type=merge \
 kubectl get pods -n kafka -l strimzi.io/pool-name=broker
 ```
 
-新しい broker は、既存 partition の leader または follower として自動的に選出されるわけではありません。既存 topic partition を実際に新しい broker に分散するには、別途 partition reassignment step が必要です。
+新しい broker は、既存の partition の leader または follower に自動的に選出されることはありません。実際に既存の topic partition を新しい broker に分散するには、別途 partition の再割り当て手順が必要です。
 
-### Partition Reassignment (`kafka-reassign-partitions.sh`)
+### Partition の再割り当て（`kafka-reassign-partitions.sh`）
 
 ```bash
 # 1) Write the topics-to-move JSON file inside the broker pod
@@ -132,21 +132,21 @@ kubectl exec -it my-cluster-broker-0 -n kafka -- \
   --verify
 ```
 
-### Why Scaling Down Is Dangerous
+### スケールダウンが危険な理由
 
-**Strimzi は scale down 時に broker から partition を自動的に drain しません。** `KafkaNodePool` の `replicas` を減らす前に、削除される broker 上に存在するすべての partition（leader と follower replica の両方）を、残りの broker に再割り当てする必要があります。この step を省略すると、その broker にのみ存在していた replica は単に消失します。最良の場合でも under-replicated partition が残り、最悪の場合は data loss につながります。
+**Strimzi は、スケールダウン時に broker から partition を自動的にドレインしません。** `KafkaNodePool` の `replicas` を減らす前に、削除する broker 上に存在するすべての partition（leader と follower replica の両方）を、残りの broker に再割り当てする必要があります。この手順を省略すると、その broker にのみ存在した replica は単に消失します。最善の場合でも under-replicated partition が残り、最悪の場合はデータ損失が発生します。
 
-安全な scale-down sequence は次のとおりです。
+安全なスケールダウン手順は次のとおりです。
 
-1. 削除する broker を除外した broker list に対して `kafka-reassign-partitions.sh --generate` を実行します。
-2. `--execute` で plan を適用し、`--verify` で完了を確認します（under-replicated partition が zero であることを確認します）。
-3. reassignment が完全に完了した後でのみ、`KafkaNodePool.spec.replicas` を減らして broker pod を削除します。
+1. 削除する broker を除外した broker リストに対して、`kafka-reassign-partitions.sh --generate` を実行します。
+2. `--execute` でプランを適用し、`--verify` で完了を確認します（under-replicated partition がゼロであることを確認します）。
+3. 再割り当てが完全に完了してから、`KafkaNodePool.spec.replicas` を減らして broker pod を削除します。
 
-## Automated Rebalancing with Cruise Control
+## Cruise Control による自動リバランシング
 
-Cruise Control は broker-level load metrics（disk usage、CPU、network throughput）を継続的に収集し、それを使って partition reassignment plan を自動的に生成・実行します。broker を追加または削除するたびに `kafka-reassign-partitions.sh` を手動で実行する代わりに、goal-based automation に rebalancing を委任できます。
+Cruise Control は、ディスク使用量、CPU、ネットワークスループットなどの broker レベルの負荷メトリクスを継続的に収集し、それらを使用して partition 再割り当てプランを自動的に生成・実行します。broker を追加または削除するたびに `kafka-reassign-partitions.sh` を手動で実行する代わりに、goal ベースの自動化にリバランシングを委任できます。
 
-### Enabling Cruise Control
+### Cruise Control の有効化
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -168,7 +168,7 @@ spec:
         com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkOutboundCapacityGoal
 ```
 
-### Triggering a Rebalance with `KafkaRebalance`
+### `KafkaRebalance` によるリバランスのトリガー
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -194,27 +194,27 @@ kubectl annotate kafkarebalance my-rebalance -n kafka \
 kubectl get kafkarebalance my-rebalance -n kafka -w
 ```
 
-### Rebalance Modes
+### リバランスモード
 
-| Mode | Use case |
+| モード | ユースケース |
 |------|----------|
-| `full` (default) | Generates a full rebalance plan across every broker in the cluster, based on the configured goals |
-| `add-brokers` | Focuses on moving partitions onto newly added brokers to fill their load — faster and narrower in scope than a full rebalance |
-| `remove-brokers` | Focuses on moving partitions off brokers you're about to remove — use this as the safe drain step before scaling down |
+| `full`（デフォルト） | 設定された goal に基づき、クラスター内のすべての broker を対象とする完全なリバランスプランを生成します |
+| `add-brokers` | 新たに追加された broker に partition を移動して負荷を満たすことに重点を置きます。完全なリバランスより高速で対象範囲が狭くなります |
+| `remove-brokers` | 削除予定の broker から partition を移動することに重点を置きます。スケールダウン前の安全なドレイン手順として使用してください |
 
-scale-out または scale-in の直後に、rebalance scope を `add-brokers` または `remove-brokers` に限定すると、移動する必要のない無関係な partition を `full` mode が移動することによる network overhead と time cost を避けられます。
+スケールアウトまたはスケールインの直後は、リバランスを `add-brokers` または `remove-brokers` に限定することで、移動する必要のない無関係な partition を `full` モードが移動することによるネットワークオーバーヘッドと時間コストを回避できます。
 
-## Rolling Upgrades
+## ローリングアップグレード
 
-### Automatic Rolling Restarts on Spec Changes
+### Spec 変更時の自動ローリング再起動
 
-`Kafka` または `KafkaNodePool` CR の spec（resource requests/limits、config values、volumes など）を変更すると、Strimzi Operator は変更を検出し、broker pod を **1 つずつ** restart します。Operator は各 restart を調整し、すべての partition が引き続き `min.insync.replicas` を満たしている間のみ処理を進めます。これにより、restart によって partition の available replica count が required threshold を下回ることがないよう保証されます。
+リソース requests/limits、config 値、ボリュームなど、`Kafka` または `KafkaNodePool` CR の spec を変更すると、Strimzi Operator はその変更を検出し、broker pod を**一度に 1 つずつ**再起動します。Operator は、すべての partition が `min.insync.replicas` を満たしている場合にのみ再起動を続行するよう各再起動を調整し、再起動によって partition の利用可能な replica 数が必要なしきい値を下回らないようにします。
 
-### Kafka Version Upgrades — The Two-Phase Pattern
+### Kafka バージョンアップグレード — 2 フェーズパターン
 
-KRaft mode には `inter.broker.protocol.version`/`log.message.format.version` はありません（これらは ZooKeeper-era settings です）。代わりに、`Kafka` CR の `spec.kafka.version`（software version）と `spec.kafka.metadataVersion`（KRaft metadata log format version）を同時に bump しては**いけません**。これには依然として **2 つの separate phase** が必要です。`metadataVersion` は controller quorum が metadata を永続化するために使用する format を制御するため、rollout 途中で old node と new node が混在している間は古い format のままにしておく必要があります。
+KRaft モードには `inter.broker.protocol.version`/`log.message.format.version` はありません（これらは ZooKeeper 時代の設定です）。代わりに、`Kafka` CR の `spec.kafka.version`（ソフトウェアバージョン）と `spec.kafka.metadataVersion`（KRaft metadata log format バージョン）を同時に上げてはなりません。この場合も**2 つの別々のフェーズ**が必要です。`metadataVersion` は controller quorum が metadata を永続化するために使用する形式を制御するため、ロールアウト途中で古い node と新しい node が混在している間は古い形式のままにする必要があります。
 
-**Phase 1 — Upgrade the software version only**
+**フェーズ 1 — ソフトウェアバージョンのみをアップグレードする**
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -228,43 +228,43 @@ spec:
     metadataVersion: 3.8-IV0
 ```
 
-これを適用すると、broker/controller binary が 3.9.0 へ rolling replacement されますが、metadata format は 3.8-IV0 のまま維持されます。これにより、両方が稼働している期間中、controller quorum 内で old node と new node の互換性が保たれます。
+これを適用すると、broker/controller バイナリが 3.9.0 にローリング置換される一方で、metadata format は 3.8-IV0 のままになります。これにより、両方が稼働する期間中、controller quorum の古い node と新しい node の互換性が維持されます。
 
-**Phase 2 — Bump metadataVersion after every node is replaced**
+**フェーズ 2 — すべての node が置換された後に metadataVersion を上げる**
 
 ```yaml
     version: 3.9.0
     metadataVersion: 3.9-IV0
 ```
 
-すべての broker/controller が 3.9.0 で稼働していることを確認した後でのみ、`metadataVersion` を bump してください。この変更により、新しい metadata format を採用するための別の reconciliation が trigger されます。順序を逆にして software version と `metadataVersion` を同時に bump すると、古い binary を実行している node は新しい metadata format を理解できず、controller quorum communication error が発生します。
+すべての broker/controller が 3.9.0 を実行していることを確認してから、`metadataVersion` を上げてください。この変更により、新しい metadata format を採用するための別の reconciliation がトリガーされます。順序を逆にして、ソフトウェアバージョンと `metadataVersion` を同時に上げると、古いバイナリをまだ実行している node は新しい metadata format を理解できず、controller quorum の通信エラーが発生します。
 
-### Strimzi Operator Version Upgrades
+### Strimzi Operator バージョンのアップグレード
 
-**Kafka version を bump する前に、Strimzi Operator 自体を upgrade してください。** 各 Strimzi release は特定範囲の Kafka version をサポートしており、実行中の Operator が認識しない Kafka version に CR を変更すると validation に失敗します。一般的な順序は、Operator を upgrade → reconciliation が完了するまで待機 → Kafka software version を upgrade（Phase 1）→ `metadataVersion` を upgrade（Phase 2）です。
+**Kafka バージョンを上げる前に、Strimzi Operator 自体をアップグレードしてください。** 各 Strimzi リリースは特定の範囲の Kafka バージョンをサポートしており、稼働中の Operator が認識しない Kafka バージョンに CR を変更すると、validation に失敗します。通常の順序は、Operator をアップグレード → reconciliation の完了を待つ → Kafka ソフトウェアバージョンをアップグレード（フェーズ 1）→ `metadataVersion` をアップグレード（フェーズ 2）です。
 
-## Failure Handling Basics
+## 障害対応の基本
 
-### PodDisruptionBudget and Broker Pod Eviction
+### PodDisruptionBudget と Broker Pod の退避
 
-Strimzi は各 `KafkaNodePool` に対して `PodDisruptionBudget` (PDB) を自動的に作成します。default では、一度に voluntary eviction（node drain、Cluster Autoscaler node replacement など）を受けられる broker pod は 1 つだけです。これにより、複数の broker が同時に停止して quorum や availability が損なわれることを防ぎます。
+Strimzi は、すべての `KafkaNodePool` に対して `PodDisruptionBudget`（PDB）を自動的に作成します。デフォルトでは、一度に voluntary eviction の対象になれる broker pod は 1 つだけです。これには node drain、Cluster Autoscaler による node の置換などが含まれ、複数の broker が同時に停止して quorum または可用性が損なわれることを防ぎます。
 
 ```bash
 kubectl get pdb -n kafka -l strimzi.io/cluster=my-cluster
 ```
 
-### `acks=all` Producers During Rolling Restarts
+### ローリング再起動中の `acks=all` Producer
 
-`acks=all` の場合、broker rolling restart 中であっても producer は data loss から保護されます。restart される broker が partition の leader だった場合、restart が進む直前に controller は in-sync replica (ISR) set から新しい leader を選出します。producer は leader change を検出し、metadata を refresh し、新しい leader に対して retry します。一時的な latency spike が発生することはありますが、`min.insync.replicas` が満たされている限り、committed data は失われません。`acks=1` 以下を使用している producer は、restart 時点で follower にまだ replicated されていなかった message を失うリスクがあります。
+`acks=all` を使用すると、broker のローリング再起動中でも producer はデータ損失から保護されます。再起動する broker が partition の leader だった場合、再起動の直前に controller が in-sync replica（ISR）セットから新しい leader を選出します。producer は leader の変更を検出し、metadata を更新して新しい leader に対して再試行します。一時的なレイテンシーのスパイクが発生する可能性はありますが、`min.insync.replicas` が満たされている限り、commit 済みのデータが失われることはありません。`acks=1` 以下を使用する producer は、再起動時にまだ follower へ複製されていないメッセージを失うリスクがあります。
 
-consumer 側では、rolling restart によって consumer group rebalance と throughput の一時的な低下が発生することがありますが、offset が通常どおり committed されていれば、restart 完了後に consumer は中断した場所から処理を再開します。
+consumer 側では、ローリング再起動により consumer group のリバランスと一時的なスループット低下が発生する可能性がありますが、offset が通常どおり commit されていれば、再起動の完了後に consumer は中断した位置から再開します。
 
 ---
 
-[メインページに戻る](./)
+[メインページに戻る](./README.md)
 
-## Quiz
+## クイズ
 
-この章で学んだ内容を確認するには、[トピッククイズ](../../quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md) を試してください。
+この章で学んだ内容を確認するには、[Topic クイズ](../../quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)に挑戦してください。
 
-次は: Part 4 で Schema Registry を扱います。Kafka topic の message schema と compatibility strategy の管理について説明します。
+次は、パート 4 で Kafka topic のメッセージ schema と互換性戦略を管理する Schema Registry を取り上げます。

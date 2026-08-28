@@ -4,30 +4,30 @@
 
 ## Tabla de contenido
 
-- [Introducción](#introduction)
-- [Descripción general de Container Insights](#container-insights-overview)
-- [Configuración de CloudWatch Agent](#cloudwatch-agent-configuration)
-- [Recopilación de métricas personalizadas](#custom-metric-collection)
-- [Metric Math y detección de anomalías](#metric-math-and-anomaly-detection)
-- [Creación de dashboards](#dashboard-creation)
-- [Configuración de alertas](#alert-configuration)
-- [Optimización de costos](#cost-optimization)
-- [Prácticas recomendadas](#best-practices)
-- [Resolución de problemas](#troubleshooting)
+- [Introducción](#introducción)
+- [Descripción general de Container Insights](#descripción-general-de-container-insights)
+- [Configuración de CloudWatch Agent](#configuración-de-cloudwatch-agent)
+- [Recopilación de métricas personalizadas](#recopilación-de-métricas-personalizadas)
+- [Metric Math y detección de anomalías](#metric-math-y-detección-de-anomalías)
+- [Creación de dashboards](#creación-de-dashboards)
+- [Configuración de alertas](#configuración-de-alertas)
+- [Optimización de costos](#optimización-de-costos)
+- [Prácticas recomendadas](#prácticas-recomendadas)
+- [Solución de problemas](#solución-de-problemas)
 
 ## Introducción
 
-Amazon CloudWatch es el servicio nativo de monitoreo y observabilidad de AWS. El uso de CloudWatch en entornos EKS habilita capacidades de recopilación de métricas, alertas y dashboards integradas con los servicios de AWS, sin necesidad de infraestructura de monitoreo independiente.
+Amazon CloudWatch es el servicio nativo de monitoreo y observabilidad de AWS. El uso de CloudWatch en entornos EKS habilita la recopilación de métricas, alertas y dashboards integrados con los servicios de AWS sin requerir una infraestructura de monitoreo independiente.
 
 ### Características principales
 
 | Característica | Descripción |
 |---------|-------------|
-| **Totalmente administrado** | No se requiere administración de infraestructura |
-| **Integración nativa de AWS** | Integración automática con EC2, EKS, RDS, etc. |
+| **Totalmente administrado** | No se requiere administrar la infraestructura |
+| **Integración nativa con AWS** | Integración automática con EC2, EKS, RDS, etc. |
 | **Container Insights** | Monitoreo a nivel de contenedor/Pod |
 | **Detección de anomalías** | Detección automática de anomalías basada en ML |
-| **Metric Math** | Calcula métricas con expresiones matemáticas |
+| **Metric Math** | Cálculo de métricas con expresiones matemáticas |
 | **Dashboard unificado** | Logs, métricas y trazas integrados |
 | **Disponibilidad global** | Compatible con todas las regiones de AWS |
 
@@ -106,15 +106,15 @@ flowchart TB
 ### Métricas recopiladas
 
 **Nivel de clúster**:
-- `cluster_node_count` - Cantidad de nodos
-- `cluster_failed_node_count` - Cantidad de nodos con error
+- `cluster_node_count` - Cantidad de Nodes
+- `cluster_failed_node_count` - Cantidad de Nodes con errores
 - `cluster_cpu_utilization` - Utilización de CPU
 - `cluster_memory_utilization` - Utilización de memoria
 
-**Nivel de nodo**:
-- `node_cpu_utilization` - Utilización de CPU del nodo
-- `node_memory_utilization` - Utilización de memoria del nodo
-- `node_network_total_bytes` - Total de bytes de red
+**Nivel de Node**:
+- `node_cpu_utilization` - Utilización de CPU del Node
+- `node_memory_utilization` - Utilización de memoria del Node
+- `node_network_total_bytes` - Bytes totales de red
 - `node_filesystem_utilization` - Utilización del sistema de archivos
 
 **Nivel de Pod/contenedor**:
@@ -144,24 +144,24 @@ eksctl utils update-cluster-logging \
 
 ### Container Insights basado en OpenTelemetry (vista previa)
 
-CloudWatch está ofreciendo en vista previa un sucesor de Container Insights para EKS basado en OpenTelemetry (OTLP), anunciado el 2 de abril de 2026. Se ejecuta junto con el Container Insights clásico basado en CloudWatch Agent descrito anteriormente, por lo que puede adoptarlo de forma gradual por clúster en lugar de realizar la transición de todos a la vez.
+CloudWatch está presentando en vista previa un sucesor de Container Insights para EKS basado en OpenTelemetry (OTLP), anunciado el 2 de abril de 2026. Se ejecuta junto con el Container Insights clásico basado en CloudWatch Agent descrito anteriormente, por lo que puede adoptarlo de forma incremental por clúster en lugar de migrar todo de una vez.
 
 En comparación con la recopilación clásica basada en agentes:
 
 - **Recopilación de métricas más amplia** mediante OTLP en lugar del conjunto fijo de métricas de CloudWatch Agent
-- **Filtrado de alta cardinalidad** — hasta 150 etiquetas por métrica, útil para desgloses por Pod o por namespace que el modelo clásico de dimensiones no puede expresar de forma económica
-- **Compatibilidad con PromQL en CloudWatch Query Studio** — consulte directamente con PromQL las métricas recopiladas por OTel, sin implementar un espacio de trabajo independiente de Prometheus o Amazon Managed Service for Prometheus
-- **Detección automática de aceleradores** — las GPU NVIDIA, EFA y los dispositivos AWS Trainium/Inferentia se detectan automáticamente, lo cual es importante para la observabilidad de cargas de trabajo de AI/ML (consulte la [ruta de lecciones de AI/ML](../../ai-ml/) para contenido relacionado sobre cargas de trabajo de GPU)
+- **Filtrado de alta cardinalidad** — hasta 150 etiquetas por métrica, útil para desgloses por Pod o por namespace que el modelo clásico de dimensiones no puede expresar económicamente
+- **Compatibilidad con PromQL en CloudWatch Query Studio** — consulte directamente con PromQL las métricas recopiladas por OTel, sin implementar un espacio de trabajo de Prometheus o Amazon Managed Service for Prometheus independiente
+- **Detección automática de aceleradores** — las GPU NVIDIA, EFA y los dispositivos AWS Trainium/Inferentia se detectan automáticamente, lo cual es importante para la observabilidad de cargas de trabajo de AI/ML (consulte la [ruta de lecciones de AI/ML](../../ai-ml/01-ai-ml-workloads.md) para contenido relacionado sobre cargas de trabajo de GPU)
 
 Regiones de vista previa: US East (N. Virginia), US West (Oregon), Asia Pacific (Sydney), Asia Pacific (Singapore) y Europe (Ireland).
 
-> Referencia: [Container Insights para EKS basado en CloudWatch OTel (vista previa)](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
+> Referencia: [CloudWatch OTel-based Container Insights for EKS (Preview)](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
 
-Para conocer la relación con el complemento EKS `amazon-cloudwatch-observability` y Application Signals, consulte [Monitoreo y logging de EKS](../../eks/06-eks-monitoring-logging.md#cloudwatch-observability-add-on-500).
+Para conocer cómo se relaciona esto con el complemento EKS `amazon-cloudwatch-observability` y Application Signals, consulte [Monitoreo y logging de EKS](../../eks/06-eks-monitoring-logging.md#cloudwatch-observability-add-on-500).
 
 ### Actualización de julio de 2026: eventos de servicio de Application Signals
 
-Service Events, anunciado el 6 de julio de 2026, captura automáticamente errores (instantáneas de excepciones), anomalías de rendimiento (instantáneas de eventos de latencia) y eventos de Deployment para cualquier aplicación con CloudWatch Application Signals habilitado. Las aplicaciones instrumentadas con los SDK de ADOT o el complemento EKS `amazon-cloudwatch-observability` obtienen esta funcionalidad sin configuración adicional una vez que Application Signals está activo, y opcionalmente puede activar métricas de llamadas de funciones para obtener una visibilidad más profunda del rendimiento. Disponible en todas las regiones comerciales de AWS; los lenguajes compatibles son Java, Python y JavaScript. ([Anuncio](https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/))
+Service Events, anunciado el 6 de julio de 2026, captura automáticamente errores (instantáneas de excepciones), anomalías de rendimiento (instantáneas de eventos de latencia) y eventos de despliegue para cualquier aplicación con CloudWatch Application Signals habilitado. Las aplicaciones instrumentadas con los SDK de ADOT o el complemento EKS `amazon-cloudwatch-observability` obtienen esta funcionalidad sin configuración adicional una vez que Application Signals está activo, y puede habilitar opcionalmente las métricas de llamadas a funciones para obtener mayor visibilidad del rendimiento. Disponible en todas las regiones comerciales de AWS; los lenguajes compatibles son Java, Python y JavaScript. ([Anuncio](https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/))
 
 ## Configuración de CloudWatch Agent
 
@@ -211,7 +211,7 @@ eksctl create iamserviceaccount \
   --approve
 ```
 
-### Implementación de DaemonSet
+### Despliegue de DaemonSet
 
 ```yaml
 apiVersion: v1
@@ -358,8 +358,8 @@ cwagentconfig.json: |
 **Métricas adicionales**:
 - `pod_cpu_reserved_capacity` - Capacidad de CPU reservada
 - `pod_memory_reserved_capacity` - Capacidad de memoria reservada
-- `node_cpu_reserved_capacity` - CPU reservada del nodo
-- `node_memory_reserved_capacity` - Memoria reservada del nodo
+- `node_cpu_reserved_capacity` - CPU reservada del Node
+- `node_memory_reserved_capacity` - Memoria reservada del Node
 - Métricas de GPU (al utilizar GPU NVIDIA)
 
 ## Recopilación de métricas personalizadas
@@ -659,7 +659,7 @@ SEARCH('{Namespace, Dim1, Dim2} MetricName', 'Average')
 
 ### Detección de anomalías
 
-CloudWatch Anomaly Detection detecta automáticamente patrones de métricas anómalos mediante ML.
+CloudWatch Anomaly Detection detecta automáticamente patrones anormales de métricas mediante ML.
 
 ```bash
 # Enable anomaly detection via CLI
@@ -964,7 +964,7 @@ resource "aws_cloudwatch_metric_alarm" "node_not_ready" {
 |------|----------------------|
 | Métricas personalizadas | $0.30/métrica/mes (primeras 10,000) |
 | API GetMetricData | $0.01/1,000 solicitudes de métricas |
-| Dashboard | $3.00/dashboard/mes (los primeros 3 gratuitos) |
+| Dashboard | $3.00/dashboard/mes (los primeros 3 gratis) |
 | Ingesta de logs | $0.76/GB |
 | Almacenamiento de logs | $0.0314/GB/mes |
 | Alarmas | Gratis (las primeras 10), $0.10/alarma/mes |
@@ -1036,7 +1036,7 @@ for lg in $(aws logs describe-log-groups --query 'logGroups[?retentionInDays==`n
 done
 ```
 
-### 3. Usar la clase de logs de acceso poco frecuente
+### 3. Usar la clase de logs de acceso infrecuente
 
 ```bash
 # Apply Infrequent Access class to new log group (50% cost savings)
@@ -1116,7 +1116,7 @@ Info (P3):
   - SNS -> Email/Logs
 ```
 
-## Resolución de problemas
+## Solución de problemas
 
 ### Problemas comunes
 
@@ -1138,7 +1138,7 @@ aws cloudwatch list-metrics \
   --dimensions Name=ClusterName,Value=my-cluster
 ```
 
-#### 2. Costos elevados
+#### 2. Costos altos
 
 ```bash
 # Check metric count

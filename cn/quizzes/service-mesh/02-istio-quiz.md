@@ -4,75 +4,75 @@
 > **EKS 版本**: 1.34 (Kubernetes 1.28+)
 > **最后更新**: February 19, 2026
 
-本测验用于测试你对 Istio 服务网格的理解。
+本测验测试你对 Istio service mesh 的理解。
 
-## 问题 1：服务网格基本概念
+## 问题 1：Service Mesh 基本概念
 
 <details>
-<summary>什么是服务网格，它的主要功能有哪些？</summary>
+<summary>什么是 service mesh，它的主要功能是什么？</summary>
 
 **答案：**
-服务网格是一种处理服务间通信的基础设施层，使你无需修改应用程序代码即可控制和观测服务之间的通信。
+service mesh 是一个处理服务间通信的基础设施层，使你能够在不修改应用程序代码的情况下控制和观测服务之间的通信。
 
 **主要功能：**
 1. **流量管理**：控制服务之间的流量
-   - 路由、负载均衡、Canary 部署
+   - 路由、负载均衡、金丝雀部署
    - 超时、重试、Circuit Breaker
    - 流量镜像和影子测试
 
-2. **安全性**：服务间通信的加密和身份验证
+2. **安全性**：为服务间通信提供加密和身份验证
    - 自动 mTLS（双向 TLS）
    - Authorization Policy（访问控制）
    - Request Authentication（JWT）
 
-3. **可观测性**：服务间通信的可见性
+3. **可观测性**：了解服务间通信的可见性
    - 指标收集（Prometheus）
    - 分布式追踪（Jaeger/Zipkin）
    - 日志和可视化（Kiali、Grafana）
 
 **Istio 特性：**
-- 可透明地部署在现有的分布式应用程序之上
-- 使用 Sidecar Proxy 模式（Envoy）
-- 支持 Ambient Mode（无 Sidecar 架构）
+- 透明地叠加到现有的分布式应用程序上
+- 使用 sidecar proxy 模式（Envoy）
+- 支持 Ambient Mode（无 sidecar 架构）
 - 通过声明式配置进行策略管理
 </details>
 
 ## 问题 2：Istio 架构
 
 <details>
-<summary>Istio 1.28.0 中的主要组件和角色是什么？</summary>
+<summary>Istio 1.28.0 中的主要组件及其作用是什么？</summary>
 
 **答案：**
 **Control Plane：**
-- **Istiod**：单一二进制文件中的统一 Control Plane
-  - **Service Discovery**：维护网格 Service 注册表
+- **Istiod**：单个二进制文件中的统一 Control Plane
+  - **Service Discovery**：维护 mesh 服务注册表
   - **Configuration Management**：存储并分发 Istio 配置
   - **Certificate Management**：为 mTLS 生成和轮换证书
 
 **Data Plane：**
-- **Envoy Proxy**：以 Sidecar 形式部署，处理所有网络通信
+- **Envoy Proxy**：作为 sidecar 部署，调解所有网络通信
   - 流量路由和负载均衡
   - mTLS 加密和身份验证
   - 指标、日志和追踪收集
 
 **Ambient Mode（可选）：**
-- **ztunnel**：Node 级别 Proxy（L4）
-- **waypoint proxy**：可选的 L7 Proxy
+- **ztunnel**：Node 级别的 proxy（L4）
+- **waypoint proxy**：可选的 L7 proxy
 
 **关键特性：**
-- 单一二进制文件中的统一 Control Plane（Istiod）
+- 单个二进制文件中的统一 Control Plane（Istiod）
 - 可扩展且高可用的架构
 - 基于 Kubernetes 原生 CRD 的配置
-- 使用 Ambient Mode 可减少 85% 以上的资源消耗
+- 使用 Ambient Mode 可减少 85% 以上资源
 </details>
 
-## 问题 3：流量管理与 Argo Rollouts 集成
+## 问题 3：流量管理和 Argo Rollouts 集成
 
 <details>
-<summary>如何使用 Istio 和 Argo Rollouts 实现自动化 Canary 部署？</summary>
+<summary>如何使用 Istio 和 Argo Rollouts 实现自动化金丝雀部署？</summary>
 
 **答案：**
-Argo Rollouts 与 Istio 集成，以提供基于指标的自动 Canary 部署。
+Argo Rollouts 与 Istio 集成，以提供基于指标的自动金丝雀部署。
 
 **1. Rollout 资源定义：**
 ```yaml
@@ -148,8 +148,8 @@ spec:
 **mTLS 优势：**
 - 自动加密服务间通信
 - 通过双向身份验证增强安全性
-- 无需更改应用程序代码即可应用
-- 自动签发和续期证书
+- 无需修改应用程序代码即可应用
+- 自动签发和续订证书
 
 **1. PeerAuthentication - mTLS 策略：**
 ```yaml
@@ -219,10 +219,10 @@ spec:
 
 **答案：**
 **Gateway 作用：**
-- 外部流量进入集群内部 Service 的入口点
+- 外部流量进入集群内部服务的入口点
 - Ingress/Egress 流量控制
 - TLS 终止和证书管理
-- Load Balancer 集成
+- Load balancer 集成
 
 **配置示例：**
 ```yaml
@@ -294,7 +294,7 @@ kubectl create -n istio-system secret tls bookinfo-secret \
 ## 问题 6：可观测性工具
 
 <details>
-<summary>Istio 1.28.0 提供哪些可观测性工具，它们的作用是什么？</summary>
+<summary>Istio 1.28.0 提供哪些可观测性工具，它们各自的作用是什么？</summary>
 
 **答案：**
 **1. Prometheus - 指标收集：**
@@ -328,16 +328,16 @@ spec:
         sampling: 100.0  # 100% sampling
 ```
 
-**3. Kiali - 服务网格可视化：**
+**3. Kiali - Service Mesh 可视化：**
 - 实时拓扑可视化
 - 流量流向分析
 - 配置验证
 - 性能指标展示
 
 **4. Grafana - 仪表板：**
-- Istio Service Dashboard
-- Istio Workload Dashboard
-- Istio Performance Dashboard
+- Istio Service 仪表板
+- Istio Workload 仪表板
+- Istio 性能仪表板
 - 自定义仪表板创建
 
 **访问方式：**
@@ -356,22 +356,22 @@ istioctl dashboard jaeger
 
 **答案：**
 **Ambient Mode 概念：**
-- 无 Sidecar 的服务网格架构
-- ztunnel（Node 级 L4 Proxy）+ waypoint（可选 L7 Proxy）
-- 减少 85% 以上的资源消耗
+- 无 sidecar 的 service mesh 架构
+- ztunnel（Node 级别的 L4 proxy）+ waypoint（可选的 L7 proxy）
+- 减少 85% 以上资源
 
-**架构比较：**
+**架构对比：**
 
 | 功能 | Sidecar Mode | Ambient Mode |
 |---------|-------------|--------------|
-| 部署方式 | 每个 Pod 注入 Envoy | 每个 Node 1 个 ztunnel |
-| 资源使用量 | 高（每个 Pod 50-100MB） | 低（每个 Node 50MB） |
+| 部署 | 每个 Pod 注入 Envoy | 每个 Node 1 个 ztunnel |
+| 资源使用 | 高（每个 Pod 50-100MB） | 低（每个 Node 50MB） |
 | 部署复杂度 | 高（需要重新部署） | 低（对应用程序透明） |
 | L4 功能 | 支持 | 通过 ztunnel 支持 |
 | L7 功能 | 完整支持 | 需要 waypoint |
 | 性能 | 略慢 | 快（仅 L4） |
 
-**Ambient Mode 激活：**
+**Ambient Mode 启用：**
 ```bash
 # Install Ambient Mode
 istioctl install --set profile=ambient -y
@@ -384,10 +384,10 @@ kubectl label namespace default istio.io/dataplane-mode=ambient
 - 资源受限的环境
 - 大规模集群（1000+ Pod）
 - 仅需要 L4 功能时
-- 逐步采用 Istio
+- 渐进式采用 Istio
 </details>
 
-## 问题 8：弹性模式
+## 问题 8：韧性模式
 
 <details>
 <summary>Istio 中的 Outlier Detection、Circuit Breaker 和 Rate Limiting 有何区别？</summary>
@@ -467,11 +467,11 @@ trafficPolicy:
 ## 问题 9：本地性负载均衡（Zone Aware Routing）
 
 <details>
-<summary>Istio 的本地性负载均衡功能是什么，如何与 AWS EKS 配合使用？</summary>
+<summary>Istio 的本地性负载均衡功能是什么，以及如何将其与 AWS EKS 配合使用？</summary>
 
 **答案：**
 **本地性负载均衡概念：**
-- 优先路由到同一 Availability Zone（AZ）中的 Service
+- 优先路由到同一 Availability Zone（AZ）中的服务
 - 降低网络延迟
 - 节省跨 AZ 数据传输成本（约 85%）
 
@@ -500,18 +500,18 @@ spec:
           to: us-west-2
 ```
 
-**AWS EKS 使用方式：**
+**AWS EKS 使用：**
 1. **节省成本：**
    - 跨 AZ 流量：$0.01/GB
    - 同一 AZ 流量：免费
-   - 通过 80% 同 AZ 路由显著节省成本
+   - 使用 80% 同 AZ 路由可显著节省成本
 
-2. **性能提升：**
+2. **性能改进：**
    - AZ 内延迟：约 1ms
    - 跨 AZ 延迟：约 2-3ms
 
 3. **自动故障转移：**
-   - AZ 故障时自动故障转移到其他 AZ
+   - AZ 发生故障时自动故障转移到其他 AZ
    - 与 Outlier Detection 结合使用
 
 **Pod 拓扑配置：**
@@ -620,24 +620,24 @@ data:
 ```
 
 **6. 最佳实践：**
-- 使用生产配置文件
+- 使用 production profile
 - Control Plane HA（副本数 >= 3）
 - mTLS STRICT 模式
 - PodDisruptionBudget 配置
 - 启用本地性负载均衡
 - Prometheus + Grafana 监控
-- 定期版本升级（Canary 方法）
+- 定期版本升级（金丝雀方式）
 
 **7. 成本优化：**
-- 考虑 Ambient Mode（减少 85% 的资源消耗）
+- 考虑使用 Ambient Mode（减少 85% 资源）
 - 本地性负载均衡（节省跨 AZ 成本）
 - 限制 Sidecar Scope（减少 30-50% 内存）
 </details>
 
-## 加分问题：渐进式交付
+## 加分题：渐进式交付
 
 <details>
-<summary>如何使用 Istio + Argo Rollouts 实现全自动的渐进式交付？</summary>
+<summary>如何使用 Istio + Argo Rollouts 实现完全自动化的渐进式交付？</summary>
 
 **答案：**
 渐进式交付是一种根据指标自动推进或回滚部署的方法。
@@ -712,14 +712,14 @@ spec:
 **主要优势：**
 - 完全自动化（无需人工干预）
 - 立即回滚（检测到故障后数秒内）
-- 安全部署（基于指标的验证）
+- 安全部署（基于指标验证）
 - 流程一致（标准化）
 </details>
 
 ---
 
 **评分：**
-- 答对 10-11 题：优秀（Istio 专家级）
+- 答对 10-11 题：优秀（Istio 专家级别）
 - 答对 8-9 题：良好（具备生产环境运维能力）
 - 答对 6-7 题：一般（建议进一步学习）
 - 答对 4-5 题：不足（需要复习基本概念）
@@ -729,4 +729,4 @@ spec:
 - [Istio 官方文档](https://istio.io/latest/docs/)
 - [Argo Rollouts 文档](https://argo-rollouts.readthedocs.io/)
 - [EKS Workshop - Istio](https://www.eksworkshop.com/docs/security/servicemesh/)
-- [本指南中的详细文档](../../service-mesh/istio/)
+- [本指南中的详细文档](../../service-mesh/istio/README.md)

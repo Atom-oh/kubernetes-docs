@@ -5,16 +5,16 @@
 ## 学习目标
 
 * 使用 ArgoCD 多集群管理部署 MSA 应用程序
-* 使用 AnalysisTemplate 配置 Argo Rollouts 进行金丝雀部署
+* 使用 AnalysisTemplate 配置 Argo Rollouts 以进行金丝雀发布
 * 为所有服务实施 OpenTelemetry 自动插桩
 * 通过可观测性驱动的晋级/回滚执行金丝雀发布
 
 ## 前置条件
 
 * [ ] 已完成[第 1 部分：基础设施设置](01-infrastructure-setup-lab.md)
-* [ ] 已完成[第 2 部分：可观测性堆栈](02-observability-stack-lab.md)
+* [ ] 已完成[第 2 部分：可观测性栈](02-observability-stack-lab.md)
 * [ ] ArgoCD 和 Argo Rollouts 正在运行
-* [ ] 可观测性堆栈正在收集数据
+* [ ] 可观测性栈正在收集数据
 
 ***
 
@@ -64,7 +64,7 @@ sequenceDiagram
 
 ### 应用程序结构
 
-| 服务                 | 语言     | 框架        | 端口 | 描述                           |
+| 服务                 | 语言     | 框架        | 端口 | 描述                             |
 | -------------------- | -------- | ----------- | ---- | -------------------------------- |
 | API Gateway          | Go       | Gin         | 8080 | 请求路由、身份验证               |
 | Order Service        | Python   | FastAPI     | 8000 | 订单管理                         |
@@ -829,16 +829,16 @@ spec:
 EOF
 ```
 
-**步骤 5.3：自动插桩覆盖表**
+**步骤 5.3：自动插桩覆盖范围表**
 
-| 语言     | 已插桩的库                           | 注解                                                     |
+| 语言    | 已插桩的库                           | 注解                                                     |
 | -------- | ------------------------------------ | -------------------------------------------------------- |
 | Go       | gin, net/http, gRPC                  | `instrumentation.opentelemetry.io/inject-go: "true"`     |
 | Python   | FastAPI, SQLAlchemy, boto3, requests | `instrumentation.opentelemetry.io/inject-python: "true"` |
 | Java     | Spring Boot, JDBC, Kafka, gRPC       | `instrumentation.opentelemetry.io/inject-java: "true"`   |
 | Node.js  | Express, pg, aws-sdk, http           | `instrumentation.opentelemetry.io/inject-nodejs: "true"` |
 
-**步骤 5.4：重启 Deployments 以应用插桩**
+**步骤 5.4：重启 Deployment 以应用插桩**
 
 ```bash
 kubectl rollout restart deployment -n msa
@@ -857,7 +857,7 @@ kubectl logs -n opentelemetry -l app=otel-collector --tail=50 | grep "trace"
 
 ***
 
-## 练习 6：Argo Rollouts 金丝雀部署
+## 练习 6：Argo Rollouts 金丝雀发布
 
 ### 步骤
 
@@ -1037,7 +1037,7 @@ stateDiagram-v2
     Rollback --> [*]: Rolled back to v1
 ```
 
-**步骤 6.3：触发金丝雀部署（更新镜像）**
+**步骤 6.3：触发金丝雀发布（更新镜像）**
 
 ```bash
 # Update to v2
@@ -1063,11 +1063,11 @@ echo "Dashboard: http://$ROLLOUTS_DASHBOARD:3100/rollout/msa/order-service"
 
 ***
 
-## 练习 7：故意失败与自动回滚
+## 练习 7：故意制造故障与自动回滚
 
 ### 步骤
 
-**步骤 7.1：部署失败版本**
+**步骤 7.1：部署一个故障版本**
 
 ```bash
 # Deploy v3 with intentional errors (returns 500 for 30% of requests)
@@ -1121,18 +1121,18 @@ kubectl get pods -n msa -l app=order-service -o jsonpath='{range .items[*]}{.met
 
 ## 总结
 
-在本实验中，你已经：
+在本实验中，你已完成：
 
 | 任务                                  | 状态     |
-| ------------------------------------- | ---------- |
-| 用于 MSA 的 Karpenter NodePool        | 已配置     |
-| KEDA ScaledObjects（SQS + Prometheus） | 已创建    |
-| ArgoCD ApplicationSet                 | 已部署     |
-| MSA 服务（4 个服务）                  | 正在运行   |
-| OTel 自动插桩                         | 已启用     |
-| Argo Rollouts 金丝雀                  | 已配置     |
-| AnalysisTemplate                      | 已创建     |
-| 失败/回滚测试                         | 已完成     |
+| ------------------------------------- | -------- |
+| 用于 MSA 的 Karpenter NodePool        | 已配置   |
+| KEDA ScaledObject（SQS + Prometheus） | 已创建   |
+| ArgoCD ApplicationSet                 | 已部署   |
+| MSA 服务（4 个服务）                  | 正在运行 |
+| OTel 自动插桩                          | 已启用   |
+| Argo Rollouts 金丝雀发布              | 已配置   |
+| AnalysisTemplate                      | 已创建   |
+| 故障/回滚测试                         | 已完成   |
 
 ## 清理
 
@@ -1153,12 +1153,12 @@ kubectl get pods -n msa -l app=order-service -o jsonpath='{range .items[*]}{.met
 
 <details>
 
-<summary>金丝雀分析始终失败</summary>
+<summary>金丝雀分析总是失败</summary>
 
 * 检查 AnalysisTemplate 中的 Prometheus 查询语法
-* 验证指标正在收集：在 Grafana Explore 中测试查询
+* 验证是否正在收集指标：在 Grafana Explore 中测试查询
 * 检查 AnalysisRun 日志：`kubectl describe analysisrun -n msa <name>`
-* 如有需要，调整成功/失败条件
+* 根据需要调整成功/失败条件
 
 </details>
 
@@ -1166,7 +1166,7 @@ kubectl get pods -n msa -l app=order-service -o jsonpath='{range .items[*]}{.met
 
 <summary>KEDA 未扩缩容</summary>
 
-* 验证用于 SQS 访问的 IRSA 权限
+* 验证用于访问 SQS 的 IRSA 权限
 * 检查 KEDA Operator 日志：`kubectl logs -n keda -l app=keda-operator`
 * 测试 SQS 指标：`aws sqs get-queue-attributes --queue-url $SQS_QUEUE_URL --attribute-names ApproximateNumberOfMessages`
 
@@ -1174,11 +1174,11 @@ kubectl get pods -n msa -l app=order-service -o jsonpath='{range .items[*]}{.met
 
 ## 后续步骤
 
-继续学习[第 4 部分：负载测试与自动扩缩容](04-load-testing-scaling-lab.md)，以对 MSA 应用程序进行压力测试。
+继续学习[第 4 部分：负载测试与自动扩缩容](04-load-testing-scaling-lab.md)，对 MSA 应用程序进行压力测试。
 
 ## 参考资料
 
-* [ArgoCD 文档](../../gitops/argocd/)
+* [ArgoCD 文档](../../gitops/argocd/README.md)
 * [Argo Rollouts 文档](../../gitops/argocd/05-traffic-management.md)
 * [KEDA 文档](../../autoscaling/01-keda.md)
 * [Karpenter 文档](../../autoscaling/02-karpenter.md)

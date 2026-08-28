@@ -4,32 +4,32 @@
 
 ## 目次
 
-- [はじめに](#introduction)
+- [概要](#introduction)
 - [Container Insights の概要](#container-insights-overview)
 - [CloudWatch Agent の設定](#cloudwatch-agent-configuration)
 - [カスタムメトリクスの収集](#custom-metric-collection)
-- [Metric Math と Anomaly Detection](#metric-math-and-anomaly-detection)
+- [Metric Math と異常検出](#metric-math-and-anomaly-detection)
 - [ダッシュボードの作成](#dashboard-creation)
 - [アラート設定](#alert-configuration)
 - [コスト最適化](#cost-optimization)
 - [ベストプラクティス](#best-practices)
 - [トラブルシューティング](#troubleshooting)
 
-## はじめに
+## 概要
 
-Amazon CloudWatch は AWS のネイティブなモニタリングおよびオブザーバビリティサービスです。EKS 環境で CloudWatch を使用すると、別途モニタリングインフラストラクチャを用意せずに、AWS サービスと統合されたメトリクス収集、アラート、ダッシュボード機能を利用できます。
+Amazon CloudWatch は、AWS のネイティブな監視およびオブザーバビリティサービスです。EKS 環境で CloudWatch を使用すると、別途監視インフラストラクチャを用意することなく、AWS サービスと統合されたメトリクス収集、アラート、ダッシュボード機能を利用できます。
 
 ### 主な機能
 
 | 機能 | 説明 |
 |---------|-------------|
-| **フルマネージド** | インフラストラクチャ管理が不要 |
+| **フルマネージド** | インフラストラクチャ管理は不要 |
 | **AWS ネイティブ統合** | EC2、EKS、RDS などと自動統合 |
-| **Container Insights** | コンテナ/Pod レベルのモニタリング |
-| **Anomaly Detection** | ML ベースの自動異常検出 |
-| **Metric Math** | 数式を使用したメトリクス計算 |
+| **Container Insights** | Container/Pod レベルの監視 |
+| **異常検出** | ML ベースの自動異常検出 |
+| **Metric Math** | 数式を使用してメトリクスを計算 |
 | **統合ダッシュボード** | ログ、メトリクス、トレースを統合 |
-| **グローバル提供** | すべての AWS リージョンでサポート |
+| **グローバルな可用性** | すべての AWS リージョンでサポート |
 
 ### CloudWatch とオープンソースソリューションの比較
 
@@ -63,11 +63,11 @@ flowchart LR
 | スケーラビリティ | 自動 | 手動設定 |
 | クエリ言語 | Metric Math | PromQL/MetricsQL |
 | マルチクラウド | AWS のみ | クラウドニュートラル |
-| カスタマイズ | 制限あり | 完全に柔軟 |
+| カスタマイズ性 | 制限あり | 完全に柔軟 |
 
 ## Container Insights の概要
 
-Container Insights は、EKS クラスター内のコンテナ化されたワークロードをモニタリングするための CloudWatch 機能です。
+Container Insights は、EKS クラスター内のコンテナ化されたワークロードを監視するための CloudWatch 機能です。
 
 ### アーキテクチャ
 
@@ -107,23 +107,23 @@ flowchart TB
 
 **クラスター レベル**:
 - `cluster_node_count` - Node 数
-- `cluster_failed_node_count` - 障害 Node 数
+- `cluster_failed_node_count` - 失敗した Node 数
 - `cluster_cpu_utilization` - CPU 使用率
 - `cluster_memory_utilization` - メモリ使用率
 
 **Node レベル**:
 - `node_cpu_utilization` - Node CPU 使用率
 - `node_memory_utilization` - Node メモリ使用率
-- `node_network_total_bytes` - ネットワーク合計バイト数
+- `node_network_total_bytes` - ネットワーク総バイト数
 - `node_filesystem_utilization` - ファイルシステム使用率
 
-**Pod/コンテナ レベル**:
+**Pod/Container レベル**:
 - `pod_cpu_utilization` - Pod CPU 使用率
 - `pod_memory_utilization` - Pod メモリ使用率
 - `pod_network_rx_bytes` - 受信ネットワークバイト数
 - `pod_network_tx_bytes` - 送信ネットワークバイト数
-- `container_cpu_utilization` - コンテナ CPU 使用率
-- `container_memory_utilization` - コンテナ メモリ使用率
+- `container_cpu_utilization` - Container CPU 使用率
+- `container_memory_utilization` - Container メモリ使用率
 
 ### Container Insights を有効化する
 
@@ -144,24 +144,24 @@ eksctl utils update-cluster-logging \
 
 ### OpenTelemetry ベースの Container Insights（プレビュー）
 
-CloudWatch は、2026 年 4 月 2 日に発表された、EKS 向け Container Insights の OpenTelemetry（OTLP）ベースの後継機能をプレビュー提供しています。これは、上述の従来の CloudWatch Agent ベースの Container Insights と並行して実行されるため、一度にすべてを切り替えるのではなく、クラスターごとに段階的に導入できます。
+CloudWatch は、2026 年 4 月 2 日に発表された、EKS 向け Container Insights の OpenTelemetry（OTLP）ベースの後継機能をプレビュー提供しています。この機能は、上記で説明した従来の CloudWatch Agent ベースの Container Insights と並行して動作するため、すべてを一度に移行するのではなく、クラスターごとに段階的に導入できます。
 
 従来の Agent ベースの収集と比較すると、次の特徴があります。
 
-- **より広範なメトリクス収集**: CloudWatch Agent の固定メトリクスセットではなく OTLP を使用
-- **高カーディナリティフィルタリング** — メトリクスごとに最大 150 個のラベルを使用でき、従来のディメンションモデルでは低コストで表現しにくい Pod 単位または Namespace 単位の内訳に有用
-- **CloudWatch Query Studio での PromQL サポート** — 別途 Prometheus または Amazon Managed Service for Prometheus ワークスペースを構築せずに、OTel で収集したメトリクスを PromQL で直接クエリ可能
-- **自動アクセラレータ検出** — NVIDIA GPU、EFA、AWS Trainium/Inferentia デバイスを自動検出します。これは AI/ML ワークロードのオブザーバビリティにおいて重要です（関連する GPU ワークロードのコンテンツについては [AI/ML 講義トラック](../../ai-ml/) を参照）。
+- **より幅広いメトリクス収集**: CloudWatch Agent の固定メトリクスセットではなく、OTLP を介して収集
+- **高カーディナリティのフィルタリング** — メトリクスあたり最大 150 個のラベルを使用でき、従来のディメンションモデルでは低コストで表現できない Pod ごとまたは Namespace ごとの内訳に役立ちます
+- **CloudWatch Query Studio での PromQL サポート** — 別途 Prometheus または Amazon Managed Service for Prometheus ワークスペースを構築せずに、OTel で収集したメトリクスを PromQL で直接クエリできます
+- **アクセラレーターの自動検出** — NVIDIA GPU、EFA、AWS Trainium/Inferentia デバイスが自動検出されます。これは AI/ML ワークロードのオブザーバビリティにとって重要です（関連する GPU ワークロードの内容については、[AI/ML 講義トラック](../../ai-ml/01-ai-ml-workloads.md)を参照してください）
 
 プレビュー対象リージョン: US East（N. Virginia）、US West（Oregon）、Asia Pacific（Sydney）、Asia Pacific（Singapore）、Europe（Ireland）。
 
-> 参考: [CloudWatch OTel ベースの EKS 向け Container Insights（プレビュー）](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
+> 参照: [EKS 向け CloudWatch OTel ベース Container Insights（プレビュー）](https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/)
 
-これと `amazon-cloudwatch-observability` EKS アドオンおよび Application Signals との関係については、[EKS のモニタリングとロギング](../../eks/06-eks-monitoring-logging.md#cloudwatch-observability-add-on-500) を参照してください。
+これと `amazon-cloudwatch-observability` EKS アドオンおよび Application Signals との関係については、[EKS のモニタリングとログ記録](../../eks/06-eks-monitoring-logging.md#cloudwatch-observability-add-on-500)を参照してください。
 
-### 2026 年 7 月更新: Application Signals Service Events
+### 2026 年 7 月の更新: Application Signals Service Events
 
-2026 年 7 月 6 日に発表された Service Events は、CloudWatch Application Signals が有効なすべてのアプリケーションについて、エラー（例外スナップショット）、パフォーマンス異常（レイテンシイベントスナップショット）、デプロイイベントを自動的にキャプチャします。ADOT SDK または `amazon-cloudwatch-observability` EKS アドオンで計装されたアプリケーションでは、Application Signals を有効にすると追加設定なしで利用でき、必要に応じて関数呼び出しメトリクスを有効化してパフォーマンスの可視性を深めることもできます。すべての商用 AWS リージョンで利用可能で、サポートされる言語は Java、Python、JavaScript です。([発表](https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/))
+2026 年 7 月 6 日に発表された Service Events は、CloudWatch Application Signals が有効になっているすべてのアプリケーションについて、エラー（例外スナップショット）、パフォーマンス異常（レイテンシイベントスナップショット）、デプロイイベントを自動的にキャプチャします。ADOT SDK または `amazon-cloudwatch-observability` EKS アドオンで計装されたアプリケーションでは、Application Signals を有効化すると追加設定なしで利用でき、必要に応じてより詳細なパフォーマンス可視性のために関数呼び出しメトリクスをオンにできます。すべての商用 AWS Region で利用でき、サポートされる言語は Java、Python、JavaScript です。([発表](https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/))
 
 ## CloudWatch Agent の設定
 
@@ -336,9 +336,9 @@ spec:
       - operator: Exists
 ```
 
-### Enhanced Container Insights
+### 拡張 Container Insights
 
-Enhanced Container Insights は、追加のメトリクスとより詳細なモニタリングを提供します。
+拡張 Container Insights は、追加のメトリクスとより詳細な監視を提供します。
 
 ```yaml
 # Enable in ConfigMap
@@ -579,7 +579,7 @@ func putCustomMetric(ctx context.Context, client *cloudwatch.Client) error {
 }
 ```
 
-## Metric Math と Anomaly Detection
+## Metric Math と異常検出
 
 ### Metric Math
 
@@ -657,9 +657,9 @@ SEARCH('{Namespace, Dim1, Dim2} MetricName', 'Average')
 }
 ```
 
-### Anomaly Detection
+### 異常検出
 
-CloudWatch Anomaly Detection は、ML を使用して異常なメトリクスパターンを自動検出します。
+CloudWatch 異常検出は、ML を使用して異常なメトリクスパターンを自動的に検出します。
 
 ```bash
 # Enable anomaly detection via CLI
@@ -698,7 +698,7 @@ aws cloudwatch put-metric-alarm \
   --alarm-actions arn:aws:sns:ap-northeast-2:123456789012:my-alerts
 ```
 
-### Terraform による Anomaly Detection
+### Terraform を使用した異常検出
 
 ```hcl
 resource "aws_cloudwatch_metric_alarm" "anomaly_detection" {
@@ -869,7 +869,7 @@ resource "aws_cloudwatch_dashboard" "eks_monitoring" {
 
 ## アラート設定
 
-### 基本アラートルール
+### 基本的なアラートルール
 
 ```yaml
 # CloudFormation
@@ -963,11 +963,11 @@ resource "aws_cloudwatch_metric_alarm" "node_not_ready" {
 | 項目 | コスト（ap-northeast-2） |
 |------|----------------------|
 | カスタムメトリクス | $0.30/メトリクス/月（最初の 10,000 件） |
-| GetMetricData API | $0.01/1,000 メトリクスリクエスト |
-| ダッシュボード | $3.00/ダッシュボード/月（最初の 3 件は無料） |
+| GetMetricData API | $0.01/1,000 メトリクス リクエスト |
+| ダッシュボード | $3.00/ダッシュボード/月（最初の 3 つは無料） |
 | ログ取り込み | $0.76/GB |
 | ログストレージ | $0.0314/GB/月 |
-| アラーム | 無料（最初の 10 件）、$0.10/アラーム/月 |
+| アラーム | 無料（最初の 10 個）、$0.10/アラーム/月 |
 
 ### コスト最適化戦略
 
@@ -1191,9 +1191,9 @@ aws cloudwatch get-metric-statistics \
 
 - [Amazon CloudWatch 公式ドキュメント](https://docs.aws.amazon.com/cloudwatch/)
 - [Container Insights セットアップガイド](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-quickstart.html)
-- [CloudWatch Agent 設定](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
-- [CloudWatch 料金](https://aws.amazon.com/cloudwatch/pricing/)
+- [CloudWatch Agent の設定](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
+- [CloudWatch の料金](https://aws.amazon.com/cloudwatch/pricing/)
 
 ## クイズ
 
-この章の理解度を確認するには、[CloudWatch メトリクスクイズ](../../quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md) に取り組んでください。
+この章の理解度を確認するには、[CloudWatch メトリクスクイズ](../../quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md)に挑戦してください。
