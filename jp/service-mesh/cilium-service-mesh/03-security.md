@@ -5,74 +5,47 @@
 
 ## 概要
 
-Cilium セキュリティには、3 つの明確なレイヤーがあります。
+Cilium のセキュリティには、明確に分かれた 3 つのレイヤーがあります。
 
-1. **Identity ベースの認可:** Cilium Identity と eBPF policy が、通信を許可する workload を決定します。
-2. **相互認証:** SPIFFE/SPIRE を使用する Cilium 相互認証は、アプリケーションデータ接続とは別の **out-of-band** ハンドシェイクによってピア Identity を検証します。
-3. **データ暗号化:** 確立された実装では、payload を暗号化するために WireGuard/IPsec を別途有効化する必要があります。サポートされる環境では、ネイティブ ztunnel mTLS プレビューが workload トラフィックを TLS で暗号化します。
+1. **Identity ベースの認可:** Cilium Identity と eBPF policy が、通信を許可される workload を決定します。
+2. **相互認証:** SPIFFE/SPIRE を使用する Cilium 相互認証は、application data connection とは分離された **帯域外（out-of-band）** ハンドシェイクを通じて peer identity を検証します。
+3. **データ暗号化:** 確立済みの実装では、payload を暗号化するために WireGuard/IPsec を別途有効にする必要があります。サポートされている場合、native ztunnel mTLS preview は TLS により workload traffic を暗号化します。
 
-これらの機能は組み合わせることができますが、Istio `PeerAuthentication` `STRICT` workload mTLS と自動的に同等になるわけではありません。Identity 認可、ピア認証、転送中の暗号化を、それぞれ別個の要件として評価してください。
+これらの機能は組み合わせることができますが、Istio `PeerAuthentication` `STRICT` workload mTLS と自動的に同等になるわけではありません。Identity authorization、peer authentication、および転送中の encryption を個別の要件として評価してください。
 
 ## セキュリティアーキテクチャ
 
-```mermaid
-flowchart LR
-    Workload[Workload traffic]
-    Identity[Cilium Identity]
-    Policy[eBPF L3/L4 and L7 policy]
-    SPIRE[SPIFFE/SPIRE]
-    Auth[Out-of-band mutual authentication]
-    Encrypt{Payload encryption choice}
-    WG[WireGuard or IPsec]
-    Native[Native ztunnel mTLS preview]
+![Workload traffic は Cilium Identity と eBPF policy によって認可され、SPIFFE/SPIRE ベースの帯域外相互認証と WireGuard/IPsec または native ztunnel mTLS の payload encryption は別個のレイヤーとして機能します。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-0.png)
 
-    Workload --> Identity --> Policy
-    Identity --> SPIRE --> Auth --> Policy
-    Policy --> Encrypt
-    Encrypt --> WG
-    Encrypt --> Native
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-0.html)
 
 ## 相互認証とデータ暗号化
 
-### 確立された Cilium 相互認証
+### 確立済みの Cilium 相互認証
 
-Cilium 相互認証は、接続が許可される前に両方の endpoint Identity を検証しますが、確立された認証ハンドシェイクはアプリケーションデータパスとは分離されています。`authentication.mode: required` だけで既存のデータ接続の payload が TLS 暗号化されるとは考えないでください。データの機密性が必要な場合は、[WireGuard or IPsec](https://docs.cilium.io/en/stable/security/network/encryption/) を設定してください。
+Cilium 相互認証は、接続が許可される前に両方の endpoint identity を検証しますが、確立済みの authentication handshake は application data path とは分離されています。`authentication.mode: required` のみで、既存の data connection の payload が TLS 暗号化されると想定しないでください。データの機密性が必要な場合は、[WireGuard または IPsec](https://docs.cilium.io/en/stable/security/network/encryption/) を設定してください。
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A
-    participant CiliumA as Cilium Agent A
-    participant SPIRE as SPIRE Agent
-    participant CiliumB as Cilium Agent B
-    participant PodB as Pod B
+![Pod A の接続要求は、policy により許可された data connection に至る前に、Cilium agent、SPIRE SVID authentication、および帯域外 auth handshake を通過します。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-1.png)
 
-    PodA->>CiliumA: Connection request
-    CiliumA->>SPIRE: Request SVID-based authentication
-    SPIRE-->>CiliumA: Identity proof
-    CiliumA->>CiliumB: Out-of-band authentication handshake
-    CiliumB-->>CiliumA: Authentication result
-    CiliumA->>PodB: Data connection after policy allows it
-    Note over PodA,PodB: Select WireGuard/IPsec or native mTLS separately for payload encryption
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-1.html)
 
-### ztunnel によるネイティブ mTLS（2026 年アップデート）
+### ztunnel 経由の Native mTLS（2026 年更新）
 
-2026 年 3 月に発表された Cilium ネイティブ mTLS 設計は、ztunnel モデルを使用して、workload mTLS パス上で相互認証と実際の payload 暗号化を組み合わせます。これは、確立された out-of-band 相互認証と WireGuard/IPsec とは異なるデータプレーンです。このスタックは、連携する 3 つのコンポーネントで構成されます。
+2026 年 3 月に発表された Cilium native mTLS design は、ztunnel model を使用して、workload-mTLS path 上で相互認証と実際の payload encryption を組み合わせます。これは、確立済みの帯域外相互認証と WireGuard/IPsec とは異なる data plane です。この stack は、連携する次の 3 つの component で構成されます。
 
-- **SPIRE** — workload Identity と X.509 証明書を発行します（以下の SPIRE ベース設定と同じ役割）
-- **Cilium** — outbound Pod トラフィックを port 15001 の ztunnel に透過的にリダイレクトする iptables ルールをインストールします
-- **ztunnel** — 実際の mTLS ハンドシェイクを実行し、Pod 間トラフィックを暗号化するノードごとの proxy（Pod ごとの sidecar ではない）
+- **SPIRE** — workload identity と X.509 certificate を発行します（以下の SPIRE ベース設定と同じ役割）
+- **Cilium** — outbound Pod traffic を port 15001 の ztunnel に透過的に redirect する iptables rule をインストールします
+- **ztunnel** — 実際の mTLS handshake を実行し、Pod-to-Pod traffic を暗号化する、node ごとの proxy（Pod ごとの sidecar ではない）
 
-これにより、TLS ハンドシェイクが専用のノードごとのプロセスで実行されながら、「Pod ごとの sidecar 不要、アプリケーション変更不要」という特性が維持されます。導入前に、現在のプレビュー状況とプラットフォームサポートを確認してください。運用面で成熟している Istio `STRICT` mTLS パスの自動的な代替とみなしてはいけません。
+これにより、TLS handshake は専用の node ごとの process で実行される一方で、「Pod ごとの sidecar なし、application の変更なし」という特性が維持されます。導入前に現在の preview status と platform support を確認してください。運用面で成熟した Istio `STRICT` mTLS path の自動的な代替と見なしてはいけません。
 
-完全なアーキテクチャの解説については、[Cilium blog post on native mTLS](https://cilium.io/blog/2026/03/23/native-mtls-cilium/) を参照してください。
+完全な architecture の解説については、[native mTLS に関する Cilium のブログ記事](https://cilium.io/blog/2026/03/23/native-mtls-cilium/)を参照してください。
 
-### mTLS に Cilium と Istio のどちらを選ぶか
+### mTLS に Cilium と Istio のどちらを選択するか
 
-- 要件が、すでに Cilium を実行しているデータプレーンで効率的な L3/L4 Identity policy とネットワーク暗号化を実現することであり、運用する追加の sidecar やサービスごとの proxy が不要で、CiliumNetworkPolicy/CiliumClusterwideNetworkPolicy が必要なアクセスルールをすでに表現できる場合は、**Cilium を選択**してください。
-- 要件が `PeerAuthentication` `STRICT` セマンティクスを備えた成熟した workload-certificate mTLS、または Istio ネイティブの L7 policy/routing（[sidecar vs. ambient comparison](../istio/comparison/03-sidecar-vs-ambient.md) で説明している kind `AuthorizationPolicy`、retry、traffic-shifting ルール）である場合は、**Istio を選択**してください。Cilium の確立された相互認証は out-of-band であり、その policy surface は提供しません。
-- 暗号化レイヤーだけで判断しないでください。Cilium の WireGuard/IPsec とネイティブ ztunnel mTLS プレビューはいずれも payload を暗号化しますが、どちらも単独では、Istio `PeerAuthentication` `STRICT` が 1 つのスイッチで組み合わせる workload Identity 発行、policy 強制、payload 暗号化を再現しません。
+- 要件が、すでに Cilium を実行している data plane における効率的な L3/L4 Identity policy と network encryption である場合は、**Cilium を選択**してください。追加の sidecar や service ごとの proxy を運用する必要がなく、CiliumNetworkPolicy/CiliumClusterwideNetworkPolicy で必要な access rule をすでに表現できます。
+- 要件が `PeerAuthentication` `STRICT` semantics を持つ成熟した workload-certificate mTLS、または Istio native の L7 policy/routing（[sidecar と ambient の比較](../istio/comparison/03-sidecar-vs-ambient.md)で扱う `AuthorizationPolicy`、retry、traffic-shifting rule のようなもの）である場合は、**Istio を選択**してください。Cilium の確立済み相互認証は帯域外であり、その policy surface を備えていません。
+- encryption layer だけで判断しないでください。Cilium の WireGuard/IPsec と native ztunnel mTLS preview はどちらも payload を暗号化しますが、どちらも単独では、workload identity issuance、policy enforcement、payload encryption を 1 つの switch で組み合わせる Istio `PeerAuthentication` `STRICT` を再現しません。
 
 ### SPIRE ベースの相互認証設定
 
@@ -119,7 +92,7 @@ authentication:
               disableContainerSelectors: false
 ```
 
-### 相互認証 policy の強制
+### 相互認証 policy の適用
 
 ```yaml
 # Require mutual authentication cluster-wide
@@ -347,7 +320,7 @@ spec:
 
 ## 相互認証
 
-> このセクションでは、`authentication.mode` policy の例を設定します。相互認証でカバーされる範囲とカバーされない範囲（out-of-band ハンドシェイク、payload 暗号化とは別）については、上記の[相互認証とデータ暗号化](#mutual-authentication-and-data-encryption)を参照してください。
+> このセクションでは `authentication.mode` policy の例を設定します。相互認証でカバーされることとカバーされないこと（payload encryption から分離された帯域外 handshake）については、上記の[相互認証とデータ暗号化](#mutual-authentication-and-data-encryption)を参照してください。
 
 ### 認証モード
 
@@ -434,11 +407,11 @@ spec:
 
 ## 暗号化
 
-> このセクションでは、上記の[相互認証とデータ暗号化](#mutual-authentication-and-data-encryption)で概念的に導入した payload 暗号化メカニズム（WireGuard/IPsec）を設定します。暗号化は相互認証とは別の選択であり、その副産物ではありません。
+> このセクションでは、上記の[相互認証とデータ暗号化](#mutual-authentication-and-data-encryption)で概念的に導入した payload-encryption mechanism（WireGuard/IPsec）を設定します。暗号化は相互認証とは別の選択であり、その副産物ではありません。
 
 ### WireGuard 透過的暗号化
 
-WireGuard は、すべての Pod 間トラフィックを Linux kernel レベルで暗号化します。
+WireGuard は、Linux kernel level ですべての Pod-to-Pod traffic を暗号化します。
 
 ```yaml
 # values.yaml - Enable WireGuard
@@ -473,26 +446,9 @@ Errors: 0
 
 #### WireGuard アーキテクチャ
 
-```mermaid
-graph TB
-    subgraph "Node A"
-        PodA[Pod A]
-        CiliumA[Cilium Agent]
-        WGA[WireGuard Interface<br/>cilium_wg0]
-    end
+![Node A と Node B 上の cilium_wg0 WireGuard interface は、ChaCha20-Poly1305 で暗号化された tunnel を介して Pod-to-Pod traffic を運びます。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-2.png)
 
-    subgraph "Node B"
-        PodB[Pod B]
-        CiliumB[Cilium Agent]
-        WGB[WireGuard Interface<br/>cilium_wg0]
-    end
-
-    PodA --> CiliumA
-    CiliumA --> WGA
-    WGA <-->|"Encrypted Tunnel<br/>(ChaCha20Poly1305)"| WGB
-    WGB --> CiliumB
-    CiliumB --> PodB
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-2.html)
 
 ### IPsec 暗号化
 
@@ -525,28 +481,18 @@ encryption:
 | 設定の複雑さ | 低い | 中程度 |
 | Kernel サポート | 5.6+（組み込み） | 全バージョン |
 | 暗号化アルゴリズム | ChaCha20Poly1305 | AES-GCM など |
-| キー管理 | 自動 | 手動/自動 |
+| Key 管理 | 自動 | 手動/自動 |
 | 標準 | 非標準 | IETF 標準 |
 
 ## Identity ベースのセキュリティ
 
 ### Cilium Identity
 
-Cilium は IP ではなく Identity に基づいてセキュリティ policy を適用します。
+Cilium は IP ではなく Identity に基づいて security policy を適用します。
 
-```mermaid
-graph LR
-    subgraph "Identity Assignment"
-        Pod[Pod] --> Labels[Labels]
-        Labels --> Hash[Hash Function]
-        Hash --> Identity[Numeric Identity<br/>e.g., 12345]
-    end
+![Pod の label set は数値 Identity に hash 化され、それを使用して eBPF policy map を検索し、allow/deny decision を生成します。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-3.png)
 
-    subgraph "Policy Evaluation"
-        Identity --> PolicyMap[Policy Map]
-        PolicyMap --> Decision[Allow/Deny]
-    end
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-3.html)
 
 ### Identity コンポーネント
 
@@ -609,20 +555,9 @@ spec:
 
 ### IP と Identity の比較
 
-```mermaid
-graph TB
-    subgraph "IP-based Security (Traditional)"
-        IPPolicy[IP-based Policy]
-        IP1[10.0.1.5 -> 10.0.2.10: Allow]
-        IP2[Problem: Policy update needed<br/>when Pod IP changes]
-    end
+![IP ベースの security では Pod IP が変更されるたびに policy update が必要ですが、Identity ベースの security は IP churn の影響を受けません。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-4.png)
 
-    subgraph "Identity-based Security (Cilium)"
-        IDPolicy[Identity-based Policy]
-        ID1[frontend -> backend: Allow]
-        ID2[Benefit: Unaffected by<br/>IP changes]
-    end
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-4.html)
 
 ## 外部 PKI 統合
 
@@ -694,7 +629,7 @@ data:
 
 ## Zero Trust ネットワーキング
 
-### デフォルト拒否 policy
+### Default Deny policy
 
 ```yaml
 # Cluster-wide default deny
@@ -868,7 +803,7 @@ spec:
 
 ## セキュリティ監査とモニタリング
 
-### Policy 監査モード
+### Policy Audit Mode
 
 ```yaml
 # Test policy in audit mode
@@ -930,16 +865,16 @@ hubble:
 
 ## 次のステップ
 
-- [Observability](./04-observability.md): Hubble によるセキュリティモニタリング
-- [Ingress & Gateway](./05-ingress-gateway.md): 外部トラフィックのセキュリティ
-- [Best Practices](./06-best-practices.md): 本番環境のセキュリティ設定
+- [Observability](./04-observability.md): Hubble を使用したセキュリティモニタリング
+- [Ingress & Gateway](./05-ingress-gateway.md): 外部 traffic のセキュリティ
+- [ベストプラクティス](./06-best-practices.md): 本番環境のセキュリティ設定
 
 ## 参考資料
 
-- [Cilium Network Policy Documentation](https://docs.cilium.io/en/stable/security/policy/)
-- [Cilium Mutual Authentication](https://docs.cilium.io/en/stable/network/servicemesh/mutual-authentication/)
-- [Cilium Encryption Documentation](https://docs.cilium.io/en/stable/security/network/encryption/)
+- [Cilium Network Policy ドキュメント](https://docs.cilium.io/en/stable/security/policy/)
+- [Cilium 相互認証](https://docs.cilium.io/en/stable/network/servicemesh/mutual-authentication/)
+- [Cilium 暗号化ドキュメント](https://docs.cilium.io/en/stable/security/network/encryption/)
 - [Cilium Native mTLS](https://cilium.io/blog/2026/03/23/native-mtls-cilium/)
 - [Istio PeerAuthentication](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
-- [SPIFFE/SPIRE Documentation](https://spiffe.io/docs/latest/)
+- [SPIFFE/SPIRE ドキュメント](https://spiffe.io/docs/latest/)
 - [Zero Trust Architecture - NIST](https://www.nist.gov/publications/zero-trust-architecture)

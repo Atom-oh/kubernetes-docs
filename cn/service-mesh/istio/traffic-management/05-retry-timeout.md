@@ -1,6 +1,6 @@
 # 重试与超时
 
-重试与超时是提升微服务韧性的核心机制。借助 Istio，您无需更改应用程序代码即可配置这些策略。
+重试和超时是提升微服务韧性的核心机制。使用 Istio，您无需修改应用程序代码即可配置这些策略。
 
 ## 目录
 
@@ -8,7 +8,7 @@
 2. [超时配置](#timeout-configuration)
 3. [重试配置](#retry-configuration)
 4. [组合使用重试与超时](#combining-retry-and-timeout)
-5. [实用示例](#practical-examples)
+5. [实践示例](#practical-examples)
 6. [重要警告](#important-warnings)
 7. [最佳实践](#best-practices)
 8. [故障排除](#troubleshooting)
@@ -17,40 +17,9 @@
 
 ### 为什么需要超时和重试？
 
-```mermaid
-flowchart LR
-    Client[Client]
+![未配置超时/重试时，客户端会一直等待无响应的服务并浪费资源；使用 Istio 超时/重试后，它会在 1 秒后停止，重试另一个实例并成功。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-05-retry-timeout-0.png)
 
-    subgraph Without["Without Timeout/Retry"]
-        Service1[Service<br/>No Response]
-        Result1[Infinite Wait<br/>Resource Waste]
-    end
-
-    subgraph With["With Timeout/Retry"]
-        Service2[Service<br/>No Response]
-        Timeout[Timeout<br/>Stop after 1s]
-        Retry[Retry<br/>Other Instance]
-        Success[Success]
-    end
-
-    Client -.->|No config| Service1
-    Service1 --> Result1
-
-    Client -->|Istio config| Service2
-    Service2 --> Timeout
-    Timeout --> Retry
-    Retry --> Success
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef bad fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef good fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class Service1,Result1 bad;
-    class Service2,Timeout,Retry,Success good;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-05-retry-timeout-0.html)
 
 ## 超时配置
 
@@ -112,7 +81,7 @@ spec:
 
 ## 重试配置
 
-> **重要：**省略 `retries` 并不一定意味着已关闭重试。Istio 的集群范围默认值为 `attempts: 2`，并设置了 `retryOn: connect-failure,refused-stream,unavailable,cancelled`。`attempts` 计数的是**原始请求之后的额外重试**，因此总共可能会投递三次。请在路由上设置 `attempts: 0`，以明确禁用 Proxy 重试。
+> **重要：** 省略 `retries` 并不一定意味着禁用了重试。Istio 的集群范围默认值为 `attempts: 2`，且 `retryOn: connect-failure,refused-stream,unavailable,cancelled`。`attempts` 统计的是**原始请求后的额外重试次数**，因此这可能导致总计三次发送。请在路由上设置 `attempts: 0`，以显式禁用 Proxy 重试。
 
 ### 基本重试
 
@@ -148,7 +117,10 @@ spec:
 
 ### 高级重试配置
 
-`payment-service` 接受非幂等写入（提交扣款），因此若将单一重试策略应用于每种方法，mesh 便可能会在 `reset` 或 `5xx` 时重放 POST——这正是本页面警告的模糊重放风险。应改为按方法拆分路由：可大幅重试只读状态检查，并为写入路径完全禁用 mesh 重试。
+`payment-service` 接受非幂等写入（提交扣款），因此若对每种方法应用同一重试策略，mesh 就可能在出现 `reset`
+或 `5xx` 时重放 POST——这正是本页警告的模糊重放风险。请改为按方法拆分
+路由：对只读状态检查积极重试，对写入路径则完全禁用
+mesh 重试。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -204,7 +176,7 @@ spec:
       perTryTimeout: 3s  # Timeout for each delivery, including the original
 ```
 
-**计算：**理论上的投递时间上限为 `(1 + attempts) × perTryTimeout = 4 × 3s = 12s`，但会先应用路由级 `timeout: 10s`。退避以及剩余的路由超时时间可能会减少实际尝试的重试次数。
+**计算**：理论上的发送时间上限为 `(1 + attempts) × perTryTimeout = 4 × 3s = 12s`，但路由级 `timeout: 10s` 会优先生效。退避和剩余路由超时可能会减少实际尝试的重试次数。
 
 ### 按 HTTP 方法拆分重试策略
 
@@ -244,11 +216,11 @@ spec:
       retryOn: connect-failure,refused-stream
 ```
 
-默认情况下，请为 POST/PATCH 以及领域定义为写入的任何操作禁用 mesh 重试。不要仅根据 HTTP 方法就推断 PUT 或 DELETE 是安全的：只有在应用程序的实际契约允许重复执行时，才对其进行重试。
+默认对 POST/PATCH 以及领域定义为写入的任何操作禁用 mesh 重试。不要仅凭 HTTP 方法就推断 PUT 或 DELETE 是安全的：仅当应用程序的实际契约使重复执行安全时，才对它们进行重试。
 
-## 实用示例
+## 实践示例
 
-### 示例 1：微服务链路
+### 示例 1：微服务链
 
 ```yaml
 # Frontend → Backend → Database
@@ -340,7 +312,9 @@ spec:
 
 ### 示例 3：与 Circuit Breaker 结合使用
 
-`payment` 处理非幂等写入，因此本示例与前面的 `payment-service` 示例一样按方法拆分路由：读取操作可以大幅重试，写入操作禁用 mesh 重试，而下方的 Circuit Breaker 同时应用于两者。
+`payment` 处理非幂等写入，因此此示例与前面的 `payment-service` 示例一样，按
+方法拆分路由：读取会积极重试，写入会禁用 mesh 重试，以下 Circuit Breaker
+则适用于两者。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -398,41 +372,23 @@ spec:
 
 ### 非幂等请求的重试风险
 
-**核心原则：**对 POST/PATCH 以及领域定义的非幂等写入执行自动 Istio Proxy 重试，可能会导致**数据一致性问题**。仅当应用程序的真实契约保证幂等性时，才将 PUT/DELETE 视为例外。
+**核心原则**：对 POST/PATCH 和领域定义的非幂等写入进行自动 Istio Proxy 重试，可能导致**数据一致性问题**。只有在应用程序的真实契约保证幂等性时，才应将 PUT/DELETE 视为例外。
 
 #### 问题场景
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant Proxy as Istio Proxy
-    participant Service
-    participant DB as Database
+![POST 订单实际上已成功，但丢失的响应使 Istio proxy 自动重试，导致创建重复订单，而所有人都看到 200 OK。](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-05-retry-timeout-1.png)
 
-    Client->>Proxy: POST /orders (Create Order)
-    Proxy->>Service: POST /orders
-    Service->>DB: INSERT order (Success)
-    DB-->>Service: 200 OK
-    Service--xProxy: Network Timeout (Response Lost)
-    Note over Proxy: Retry Attempt (Auto)
-    Proxy->>Service: POST /orders (Same Request)
-    Service->>DB: INSERT order (Duplicate!)
-    DB-->>Service: 200 OK
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-    Note over DB: Duplicate Order Created!
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-05-retry-timeout-1.html)
 
 #### 为什么这很危险？
 
-1. **重复创建：**POST 请求实际已成功，但因网络问题丢失响应，Proxy 重试并创建了**重复记录**。
-2. **错误的状态变更：**如**支付、库存扣减**等业务关键操作可能会执行多次。
-3. **无法验证：**Istio Proxy 无法确认请求是否成功。
+1. **重复创建**：POST 请求实际上已成功，但由于网络问题响应丢失，Proxy 重试会创建**重复记录**。
+2. **错误的状态变更**：**支付、库存扣减**等业务关键操作可能会被执行多次。
+3. **无法验证**：Istio Proxy 无法确认请求是否成功。
 
 #### 安全的重试策略
 
-**建议：禁用 mesh 重试并在应用程序级别实施去重**
+**建议：禁用 mesh 重试并实施应用程序级去重**
 
 ```yaml
 # Istio: explicitly do not retry a non-idempotent write
@@ -455,7 +411,7 @@ spec:
       attempts: 0  # No delivery after the original request
 ```
 
-`reset`、`503` 和超时并不能证明服务器拒绝了请求。服务器可能会提交数据库事务，然后仅丢失响应，因此 Proxy 无法确定重放是否安全。出现模糊结果后，应用程序应查询操作状态，而不是盲目重新发送请求。
+`reset`、`503` 和超时并不能证明服务器拒绝了请求。服务器可以提交数据库事务，然后仅丢失响应，因此 Proxy 无法确定重放是否安全。出现模糊结果后，应用程序应查询操作状态，而不是盲目地重新发送请求。
 
 ```python
 # Application: Use Idempotency Key
@@ -510,12 +466,12 @@ def create_order():
     return jsonify(order), 201
 ```
 
-针对生产写入 API，请组合使用以下防护措施：
+请为生产环境写入 API 组合使用以下保障措施：
 
-- 由同一事务中的数据库唯一约束支持的 `Idempotency-Key`
-- 用于更新的 `ETag`/`If-Match` 或版本字段 compare-and-swap
-- 在超时/reset 后查询 transaction-ID 或 command-ID 状态
-- 用于支付或事件发布等不可逆下游影响的事务性 outbox
+- 使用由同一事务中数据库唯一约束支持的 `Idempotency-Key`
+- 对更新使用 `ETag`/`If-Match` 或版本字段的 compare-and-swap
+- 在超时/reset 后进行 transaction-ID 或 command-ID 状态查询
+- 对支付或事件发布等不可逆下游影响使用 transactional outbox
 
 #### HTTP 方法重试安全性
 
@@ -526,10 +482,10 @@ def create_order():
 | **OPTIONS** | 是 | 安全 | `attempts: 3, retryOn: 5xx,reset` |
 | **PUT** | 取决于契约 | 谨慎 | 真实的幂等性契约 + 条件更新 |
 | **DELETE** | 取决于契约 | 谨慎 | 真实的幂等性契约 + 结果查询 |
-| **POST** | 通常否 | 危险 | `attempts: 0`、Idempotency Key |
-| **PATCH** | 通常否 | 危险 | `attempts: 0`、版本/ETag |
+| **POST** | 通常不是 | 危险 | `attempts: 0`，Idempotency Key |
+| **PATCH** | 通常不是 | 危险 | `attempts: 0`，版本/ETag |
 
-#### 安全的重试情形
+#### 安全重试的情况
 
 ```yaml
 # Read-only requests - safe
@@ -580,7 +536,7 @@ spec:
 
 #### 与 Circuit Breaker 配合使用时的注意事项
 
-Circuit Breaker 对于**故障隔离**很有效，但它**无法防止**非幂等请求的重复执行。
+Circuit Breaker 对于**故障隔离**很有效，但它**无法阻止**非幂等请求的重复执行。
 
 ```yaml
 # Bad example: POST + Circuit Breaker + Retry
@@ -643,12 +599,12 @@ spec:
       baseEjectionTime: 30s
 ```
 
-#### 实践指南
+#### 实用指南
 
-1. **GET/HEAD/OPTIONS：**可以使用 Istio Proxy Retry
-2. **POST/PATCH：**禁用 Istio Retry，使用应用程序级 Retry + Idempotency Key
-3. **PUT/DELETE：**仅在保证幂等性时使用 Istio Retry
-4. **关键操作（支付/库存/积分）：**必须具有应用程序级验证 + Idempotency Key
+1. **GET/HEAD/OPTIONS**：可以使用 Istio Proxy Retry
+2. **POST/PATCH**：禁用 Istio Retry，使用应用程序级 Retry + Idempotency Key
+3. **PUT/DELETE**：仅在保证幂等性时使用 Istio Retry
+4. **关键操作（支付/库存/积分）**：必须具备应用程序级验证 + Idempotency Key
 
 ## 最佳实践
 
@@ -731,7 +687,7 @@ spec:
 
 ### 3. 指数退避
 
-Istio 默认以 25ms 的间隔进行重试，以下展示如何配置自定义退避。这仅适用于读取路径——如本页前文所示，`payment` 仍为写入操作禁用 mesh 重试：
+Istio 的默认重试间隔为 25ms，但以下展示了如何配置自定义退避。这仅适用于读取路径——如本页前文所示，`payment` 仍会为写入禁用 mesh 重试：
 
 ```yaml
 apiVersion: networking.istio.io/v1

@@ -1,60 +1,29 @@
-# Reintentos y tiempos de espera
+# Reintento y Tiempo de espera
 
-Retry y Timeout son mecanismos fundamentales para mejorar la resiliencia de los microservicios. Con Istio, puede configurar estas políticas sin cambiar el código de la aplicación.
+El reintento y el tiempo de espera son mecanismos fundamentales para mejorar la resiliencia de los microservicios. Con Istio, puede configurar estas políticas sin cambiar el código de la aplicación.
 
 ## Tabla de contenido
 
-1. [Descripción general](#overview)
-2. [Configuración de Timeout](#timeout-configuration)
-3. [Configuración de Retry](#retry-configuration)
-4. [Combinación de Retry y Timeout](#combining-retry-and-timeout)
-5. [Ejemplos prácticos](#practical-examples)
-6. [Advertencias importantes](#important-warnings)
-7. [Mejores prácticas](#best-practices)
-8. [Solución de problemas](#troubleshooting)
+1. [Descripción general](#descripción-general)
+2. [Configuración de tiempo de espera](#configuración-de-tiempo-de-espera)
+3. [Configuración de reintentos](#configuración-de-reintentos)
+4. [Combinación de reintentos y tiempo de espera](#combinación-de-reintentos-y-tiempo-de-espera)
+5. [Ejemplos prácticos](#ejemplos-prácticos)
+6. [Advertencias importantes](#advertencias-importantes)
+7. [Prácticas recomendadas](#prácticas-recomendadas)
+8. [Solución de problemas](#solución-de-problemas)
 
 ## Descripción general
 
-### ¿Por qué Timeout y Retry?
+### ¿Por qué tiempo de espera y reintento?
 
-```mermaid
-flowchart LR
-    Client[Client]
+![Sin tiempo de espera/reintento, el cliente espera indefinidamente a un Service que no responde y desperdicia recursos; con el tiempo de espera/reintento de Istio, se detiene después de 1 s, reintenta en otra instancia y tiene éxito.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-05-retry-timeout-0.png)
 
-    subgraph Without["Without Timeout/Retry"]
-        Service1[Service<br/>No Response]
-        Result1[Infinite Wait<br/>Resource Waste]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-05-retry-timeout-0.html)
 
-    subgraph With["With Timeout/Retry"]
-        Service2[Service<br/>No Response]
-        Timeout[Timeout<br/>Stop after 1s]
-        Retry[Retry<br/>Other Instance]
-        Success[Success]
-    end
+## Configuración de tiempo de espera
 
-    Client -.->|No config| Service1
-    Service1 --> Result1
-
-    Client -->|Istio config| Service2
-    Service2 --> Timeout
-    Timeout --> Retry
-    Retry --> Success
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef bad fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef good fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class Service1,Result1 bad;
-    class Service2,Timeout,Retry,Success good;
-```
-
-## Configuración de Timeout
-
-### Timeout básico
+### Tiempo de espera básico
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -71,7 +40,7 @@ spec:
     timeout: 10s  # Timeout after 10 seconds
 ```
 
-### Timeout específico por ruta
+### Tiempo de espera específico por ruta
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -110,11 +79,11 @@ spec:
     timeout: 30s
 ```
 
-## Configuración de Retry
+## Configuración de reintentos
 
-> **Importante:** Omitir `retries` no significa necesariamente que Retry esté desactivado. El valor predeterminado de Istio en todo el clúster es `attempts: 2` con `retryOn: connect-failure,refused-stream,unavailable,cancelled`. `attempts` cuenta los **reintentos adicionales después de la solicitud original**, por lo que esto puede dar lugar a tres entregas en total. Establezca `attempts: 0` en la ruta para desactivar explícitamente los reintentos del Proxy.
+> **Importante:** Omitir `retries` no significa necesariamente que el reintento esté desactivado. El valor predeterminado de Istio para todo el clúster es `attempts: 2` con `retryOn: connect-failure,refused-stream,unavailable,cancelled`. `attempts` cuenta los **reintentos adicionales después de la solicitud original**, por lo que esto puede dar como resultado tres entregas en total. Configure `attempts: 0` en la ruta para desactivar explícitamente los reintentos del Proxy.
 
-### Retry básico
+### Reintento básico
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -134,21 +103,25 @@ spec:
       retryOn: 5xx,reset,connect-failure,refused-stream  # Retry conditions
 ```
 
-### Condiciones de Retry
+### Condiciones de reintento
 
 | Condición | Descripción |
 |-----------|-------------|
 | `5xx` | Errores HTTP 5xx |
 | `gateway-error` | Errores 502, 503, 504 |
 | `reset` | Restablecimiento de conexión |
-| `connect-failure` | Error de conexión |
+| `connect-failure` | Fallo de conexión |
 | `refused-stream` | HTTP/2 REFUSED_STREAM |
 | `retriable-4xx` | 409 Conflict |
 | `retriable-status-codes` | Códigos de estado personalizados |
 
-### Configuración avanzada de Retry
+### Configuración avanzada de reintentos
 
-`payment-service` acepta escrituras no idempotentes (envío de cargos), por lo que una única política de Retry aplicada a todos los métodos permitiría que la malla repitiera un POST ante `reset` o `5xx`: exactamente el riesgo de repetición ambigua sobre el que advierte esta página. En su lugar, divida la ruta por método: reintente generosamente las comprobaciones de estado de solo lectura y desactive por completo Retry de la malla para la ruta de escritura.
+`payment-service` acepta escrituras no idempotentes (envío de cargos), por lo que una única
+política de reintento aplicada a todos los métodos permitiría que la malla repitiera un POST tras `reset`
+o `5xx`, precisamente el riesgo de repetición ambigua sobre el que advierte esta página. Divida la
+ruta por método en su lugar: reintente generosamente las comprobaciones de estado de solo lectura y desactive
+por completo el reintento de la malla para la ruta de escritura.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -182,7 +155,7 @@ spec:
       attempts: 0
 ```
 
-## Combinación de Retry y Timeout
+## Combinación de reintentos y tiempo de espera
 
 ### Tiempos de espera en capas
 
@@ -204,9 +177,9 @@ spec:
       perTryTimeout: 3s  # Timeout for each delivery, including the original
 ```
 
-**Cálculo**: el límite teórico de tiempo de entrega es `(1 + attempts) × perTryTimeout = 4 × 3s = 12s`, pero primero se aplica el `timeout: 10s` de nivel de ruta. El backoff y el tiempo de espera restante de la ruta pueden reducir el número de reintentos que realmente se intentan.
+**Cálculo**: el límite teórico de tiempo de entrega es `(1 + attempts) × perTryTimeout = 4 × 3s = 12s`, pero primero se aplica el `timeout: 10s` de nivel de ruta. El retroceso y el tiempo de espera restante de la ruta pueden reducir la cantidad de reintentos que realmente se realizan.
 
-### Dividir la política de Retry por método HTTP
+### Dividir la política de reintento por método HTTP
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -244,7 +217,7 @@ spec:
       retryOn: connect-failure,refused-stream
 ```
 
-Desactive los reintentos de la malla de forma predeterminada para POST/PATCH y cualquier operación que el dominio defina como escritura. No deduzca que PUT o DELETE son seguros únicamente por el método HTTP: reinténtelos solo cuando el contrato real de la aplicación haga segura la ejecución repetida.
+Desactive de forma predeterminada los reintentos de la malla para POST/PATCH y cualquier operación que el dominio defina como escritura. No deduzca que PUT o DELETE son seguros simplemente por el método HTTP: reinténtelos solo cuando el contrato real de la aplicación haga segura la ejecución repetida.
 
 ## Ejemplos prácticos
 
@@ -303,7 +276,7 @@ spec:
       retryOn: connect-failure,refused-stream
 ```
 
-### Ejemplo 2: Llamada a una API externa
+### Ejemplo 2: Llamada a API externa
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -340,7 +313,10 @@ spec:
 
 ### Ejemplo 3: Combinado con Circuit Breaker
 
-`payment` procesa escrituras no idempotentes, por lo que este ejemplo divide las rutas por método de la misma manera que el ejemplo anterior de `payment-service`: las lecturas realizan Retry generosamente, las escrituras desactivan Retry de la malla y el Circuit Breaker siguiente se aplica a ambas.
+`payment` procesa escrituras no idempotentes, por lo que este ejemplo divide las rutas por
+método de la misma forma que el ejemplo anterior de `payment-service`: las lecturas se reintentan
+generosamente, las escrituras desactivan el reintento de la malla y el Circuit Breaker de abajo se aplica
+a ambos.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -396,43 +372,25 @@ spec:
 
 ## Advertencias importantes
 
-### Riesgos de Retry para solicitudes no idempotentes
+### Riesgos de reintento para solicitudes no idempotentes
 
-**Principio fundamental**: los reintentos automáticos del Istio Proxy para POST/PATCH y escrituras no idempotentes definidas por el dominio pueden causar **problemas de consistencia de datos**. Considere PUT/DELETE como excepciones únicamente cuando el contrato real de la aplicación garantice la idempotencia.
+**Principio fundamental**: Los reintentos automáticos de Istio Proxy para POST/PATCH y escrituras no idempotentes definidas por el dominio pueden causar **problemas de consistencia de datos**. Considere PUT/DELETE como excepciones únicamente cuando el contrato real de la aplicación garantice la idempotencia.
 
-#### Escenario problemático
+#### Escenario del problema
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant Proxy as Istio Proxy
-    participant Service
-    participant DB as Database
+![Una orden POST realmente tiene éxito, pero la respuesta perdida hace que el proxy de Istio reintente automáticamente y cree una orden duplicada mientras todos ven 200 OK.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-05-retry-timeout-1.png)
 
-    Client->>Proxy: POST /orders (Create Order)
-    Proxy->>Service: POST /orders
-    Service->>DB: INSERT order (Success)
-    DB-->>Service: 200 OK
-    Service--xProxy: Network Timeout (Response Lost)
-    Note over Proxy: Retry Attempt (Auto)
-    Proxy->>Service: POST /orders (Same Request)
-    Service->>DB: INSERT order (Duplicate!)
-    DB-->>Service: 200 OK
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-    Note over DB: Duplicate Order Created!
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-05-retry-timeout-1.html)
 
 #### ¿Por qué es peligroso?
 
-1. **Creación duplicada**: la solicitud POST realmente se completó correctamente, pero la respuesta se perdió por problemas de red; el Proxy vuelve a intentar crear **registros duplicados**.
-2. **Cambios de estado incorrectos**: las operaciones críticas para el negocio, como los **pagos y deducciones de inventario**, pueden ejecutarse varias veces.
-3. **No verificable**: Istio Proxy no tiene forma de confirmar si la solicitud se completó correctamente.
+1. **Creación duplicada**: La solicitud POST tuvo éxito, pero la respuesta se perdió por problemas de red; Proxy reintenta y crea **registros duplicados**.
+2. **Cambios de estado incorrectos**: Operaciones críticas para el negocio como **pagos, deducciones de inventario** pueden ejecutarse varias veces.
+3. **No verificable**: Istio Proxy no tiene forma de confirmar si la solicitud tuvo éxito.
 
-#### Estrategia de Retry segura
+#### Estrategia de reintento segura
 
-**Recomendado: desactive Retry de la malla y aplique la deduplicación a nivel de aplicación**
+**Recomendado: desactivar el reintento de la malla y aplicar deduplicación en el nivel de la aplicación**
 
 ```yaml
 # Istio: explicitly do not retry a non-idempotent write
@@ -455,7 +413,7 @@ spec:
       attempts: 0  # No delivery after the original request
 ```
 
-`reset`, `503` y Timeout no demuestran que el servidor rechazó la solicitud. El servidor puede confirmar la transacción de la base de datos y después perder solo la respuesta, por lo que un Proxy no puede determinar si es seguro repetirla. Tras un resultado ambiguo, la aplicación debe consultar el estado de la operación en lugar de reenviarla a ciegas.
+`reset`, `503` y el tiempo de espera no prueban que el servidor haya rechazado la solicitud. El servidor puede confirmar la transacción de la base de datos y después perder solo la respuesta, por lo que un proxy no puede determinar si es seguro repetirla. Después de un resultado ambiguo, la aplicación debe consultar el estado de la operación en lugar de reenviarla a ciegas.
 
 ```python
 # Application: Use Idempotency Key
@@ -512,14 +470,14 @@ def create_order():
 
 Combine estas salvaguardas para las API de escritura de producción:
 
-- una `Idempotency-Key` respaldada por una restricción única de base de datos en la misma transacción
-- `ETag`/`If-Match` o una comparación e intercambio de campo de versión para actualizaciones
-- consulta de estado mediante ID de transacción o ID de comando después de un Timeout/reset
-- un transactional outbox para efectos posteriores irreversibles, como pagos o publicación de eventos
+- un `Idempotency-Key` respaldado por una restricción de unicidad de base de datos en la misma transacción
+- `ETag`/`If-Match` o una comparación e intercambio de campo de versión para las actualizaciones
+- consulta de estado mediante ID de transacción o ID de comando después de un tiempo de espera/restablecimiento
+- una transactional outbox para efectos descendentes irreversibles como pagos o publicación de eventos
 
-#### Seguridad de Retry por método HTTP
+#### Seguridad de reintento de métodos HTTP
 
-| Método | Idempotente | Seguridad de Retry de Istio | Configuración recomendada |
+| Método | Idempotente | Seguridad del reintento de Istio | Configuración recomendada |
 |--------|------------|-------------------|---------------------|
 | **GET** | Sí | Seguro | `attempts: 3, retryOn: 5xx,reset` |
 | **HEAD** | Sí | Seguro | `attempts: 3, retryOn: 5xx,reset` |
@@ -529,7 +487,7 @@ Combine estas salvaguardas para las API de escritura de producción:
 | **POST** | Normalmente no | Peligroso | `attempts: 0`, Idempotency Key |
 | **PATCH** | Normalmente no | Peligroso | `attempts: 0`, versión/ETag |
 
-#### Casos seguros de Retry
+#### Casos de reintento seguros
 
 ```yaml
 # Read-only requests - safe
@@ -580,7 +538,7 @@ spec:
 
 #### Precaución al usar con Circuit Breaker
 
-Circuit Breaker es efectivo para el **aislamiento de fallos**, pero **no puede impedir la ejecución duplicada** de solicitudes no idempotentes.
+Circuit Breaker es eficaz para el **aislamiento de fallos**, pero **no puede evitar la ejecución duplicada** de solicitudes no idempotentes.
 
 ```yaml
 # Bad example: POST + Circuit Breaker + Retry
@@ -643,16 +601,16 @@ spec:
       baseEjectionTime: 30s
 ```
 
-#### Pautas prácticas
+#### Directrices prácticas
 
-1. **GET/HEAD/OPTIONS**: pueden usar Istio Proxy Retry
-2. **POST/PATCH**: desactive Istio Retry y use Retry a nivel de aplicación + Idempotency Key
-3. **PUT/DELETE**: use Istio Retry solo cuando la idempotencia esté garantizada
-4. **Operaciones críticas (pagos/inventario/puntos)**: deben tener validación a nivel de aplicación + Idempotency Key
+1. **GET/HEAD/OPTIONS**: Pueden usar Istio Proxy Retry
+2. **POST/PATCH**: Desactive Istio Retry; use Application-level Retry + Idempotency Key
+3. **PUT/DELETE**: Use Istio Retry solo cuando se garantice la idempotencia
+4. **Operaciones críticas (pago/inventario/puntos)**: Deben tener validación en el nivel de la aplicación + Idempotency Key
 
-## Mejores prácticas
+## Prácticas recomendadas
 
-### 1. Guía de configuración de Timeout
+### 1. Guía de configuración de tiempo de espera
 
 ```yaml
 # Good example: Appropriate timeout per layer
@@ -694,7 +652,7 @@ spec:
     timeout: 300s  # 5 minutes is too long
 ```
 
-### 2. Estrategia de Retry
+### 2. Estrategia de reintento
 
 ```yaml
 # Good example: Consider idempotency
@@ -729,9 +687,9 @@ spec:
       attempts: 0
 ```
 
-### 3. Backoff exponencial
+### 3. Retroceso exponencial
 
-Istio realiza Retry con un intervalo predeterminado de 25 ms, pero aquí se muestra cómo configurar un backoff personalizado. Esto se aplica solo a la ruta de lectura: `payment` sigue desactivando Retry de la malla para las escrituras, como se mostró anteriormente en esta página:
+Istio reintenta con un intervalo predeterminado de 25 ms, pero aquí se muestra cómo configurar un retroceso personalizado. Esto se aplica únicamente a la ruta de lectura; `payment` aún desactiva el reintento de la malla para las escrituras, como se mostró antes en esta página:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -756,7 +714,7 @@ spec:
       # 25ms, 50ms, 100ms, 200ms, 400ms
 ```
 
-### 4. Cálculo del Timeout total del sistema
+### 4. Cálculo del tiempo de espera total del sistema
 
 ```yaml
 # Frontend → API Gateway → Backend → Database
@@ -770,7 +728,7 @@ spec:
 
 ## Solución de problemas
 
-### Timeout no funciona
+### El tiempo de espera no funciona
 
 ```bash
 # 1. Check VirtualService
@@ -796,7 +754,7 @@ kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
 istio_requests_total{destination_service="backend.default.svc.cluster.local",response_flags="UR"}
 ```
 
-### Prevención de tormentas de Retry
+### Prevención de tormentas de reintentos
 
 ```yaml
 # Use with Circuit Breaker
@@ -822,7 +780,7 @@ spec:
 
 ## Referencias
 
-- [Istio Timeout](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute)
-- [Istio Retry](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry)
-- [Envoy Retry Policy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#config-http-filters-router-x-envoy-retry-on)
-- [RFC 9110: Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods)
+- [Tiempo de espera de Istio](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute)
+- [Reintento de Istio](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry)
+- [Política de reintento de Envoy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#config-http-filters-router-x-envoy-retry-on)
+- [RFC 9110: Métodos idempotentes](https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods)

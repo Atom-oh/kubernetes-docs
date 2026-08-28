@@ -8,71 +8,44 @@
 La seguridad de Cilium tiene tres capas diferenciadas:
 
 1. **Autorización basada en identidad:** Cilium Identity y la política eBPF deciden qué workloads pueden comunicarse.
-2. **Autenticación mutua:** la autenticación mutua de Cilium con SPIFFE/SPIRE verifica la identidad del par mediante un handshake **fuera de banda** independiente de la conexión de datos de la aplicación.
-3. **Cifrado de datos:** con la implementación establecida, WireGuard/IPsec debe habilitarse por separado para cifrar las cargas útiles. Cuando se admite, la vista previa de mTLS nativo de ztunnel cifra el tráfico de workloads con TLS.
+2. **Autenticación mutua:** la autenticación mutua de Cilium con SPIFFE/SPIRE verifica la identidad de los pares mediante un handshake **fuera de banda** independiente de la conexión de datos de la aplicación.
+3. **Cifrado de datos:** con la implementación establecida, WireGuard/IPsec debe habilitarse por separado para cifrar las cargas útiles. Cuando es compatible, la vista previa de mTLS nativo de ztunnel cifra el tráfico de workloads con TLS.
 
-Estas capacidades se pueden combinar, pero no son automáticamente equivalentes al mTLS de workloads `STRICT` de Istio `PeerAuthentication`. Evalúe la autorización por identidad, la autenticación de pares y el cifrado en tránsito como requisitos independientes.
+Estas capacidades se pueden combinar, pero no son automáticamente equivalentes al mTLS de workloads `STRICT` de Istio `PeerAuthentication`. Evalúe la autorización de identidad, la autenticación de pares y el cifrado en tránsito como requisitos independientes.
 
 ## Arquitectura de seguridad
 
-```mermaid
-flowchart LR
-    Workload[Workload traffic]
-    Identity[Cilium Identity]
-    Policy[eBPF L3/L4 and L7 policy]
-    SPIRE[SPIFFE/SPIRE]
-    Auth[Out-of-band mutual authentication]
-    Encrypt{Payload encryption choice}
-    WG[WireGuard or IPsec]
-    Native[Native ztunnel mTLS preview]
+![El tráfico de workloads está autorizado por Cilium Identity y la política eBPF, mientras que la autenticación mutua fuera de banda basada en SPIFFE/SPIRE y el cifrado de cargas útiles con WireGuard/IPsec o mTLS nativo de ztunnel funcionan como capas independientes.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-0.png)
 
-    Workload --> Identity --> Policy
-    Identity --> SPIRE --> Auth --> Policy
-    Policy --> Encrypt
-    Encrypt --> WG
-    Encrypt --> Native
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-0.html)
 
 ## Autenticación mutua y cifrado de datos
 
 ### Autenticación mutua establecida de Cilium
 
-La autenticación mutua de Cilium verifica ambas identidades de endpoint antes de permitir una conexión, pero el handshake de autenticación establecido es independiente de la ruta de datos de la aplicación. No asuma que `authentication.mode: required` por sí solo cifra mediante TLS la carga útil de la conexión de datos existente. Configure [WireGuard o IPsec](https://docs.cilium.io/en/stable/security/network/encryption/) cuando se requiera confidencialidad de los datos.
+La autenticación mutua de Cilium verifica ambas identidades de endpoint antes de permitir una conexión, pero el handshake de autenticación establecido es independiente de la ruta de datos de la aplicación. No suponga que `authentication.mode: required` por sí solo cifra mediante TLS la carga útil de la conexión de datos existente. Configure [WireGuard o IPsec](https://docs.cilium.io/en/stable/security/network/encryption/) cuando se requiera confidencialidad de datos.
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A
-    participant CiliumA as Cilium Agent A
-    participant SPIRE as SPIRE Agent
-    participant CiliumB as Cilium Agent B
-    participant PodB as Pod B
+![La solicitud de conexión del Pod A pasa por el agente de Cilium, la autenticación SVID de SPIRE y el handshake de autenticación fuera de banda antes de la conexión de datos permitida por la política.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-1.png)
 
-    PodA->>CiliumA: Connection request
-    CiliumA->>SPIRE: Request SVID-based authentication
-    SPIRE-->>CiliumA: Identity proof
-    CiliumA->>CiliumB: Out-of-band authentication handshake
-    CiliumB-->>CiliumA: Authentication result
-    CiliumA->>PodB: Data connection after policy allows it
-    Note over PodA,PodB: Select WireGuard/IPsec or native mTLS separately for payload encryption
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-1.html)
 
 ### mTLS nativo mediante ztunnel (actualización de 2026)
 
-El diseño de mTLS nativo de Cilium anunciado en marzo de 2026 usa un modelo ztunnel para combinar la autenticación mutua con el cifrado real de la carga útil en una ruta mTLS de workloads. Es un plano de datos diferente de la autenticación mutua establecida fuera de banda junto con WireGuard/IPsec. La pila tiene tres componentes que colaboran:
+El diseño de mTLS nativo de Cilium anunciado en marzo de 2026 utiliza un modelo de ztunnel para combinar la autenticación mutua con el cifrado real de cargas útiles en una ruta de mTLS de workloads. Es un plano de datos diferente de la autenticación mutua fuera de banda establecida más WireGuard/IPsec. La pila tiene tres componentes que cooperan:
 
 - **SPIRE** — emite identidad de workload y certificados X.509 (la misma función que en la configuración basada en SPIRE a continuación)
-- **Cilium** — instala reglas iptables que redirigen de forma transparente el tráfico saliente de Pod a ztunnel en el puerto 15001
+- **Cilium** — instala reglas de iptables que redirigen de forma transparente el tráfico saliente de Pod a ztunnel en el puerto 15001
 - **ztunnel** — un proxy por nodo (no un sidecar por Pod) que realiza el handshake mTLS real y cifra el tráfico de Pod a Pod
 
-Esto mantiene la propiedad de «sin sidecar por Pod ni cambios en la aplicación», mientras que el handshake TLS se ejecuta en un proceso dedicado por nodo. Compruebe el estado actual de la vista previa y la compatibilidad de la plataforma antes de adoptarlo; no lo considere un reemplazo automático de la ruta mTLS `STRICT` de Istio madura desde el punto de vista operativo.
+Esto conserva la propiedad de «sin sidecar por Pod ni cambios en la aplicación», mientras que el handshake TLS se ejecuta en un proceso dedicado por nodo. Compruebe el estado actual de la vista previa y la compatibilidad de plataforma antes de adoptarlo; no lo considere un reemplazo automático de la ruta mTLS `STRICT` de Istio operacionalmente madura.
 
-Consulte la [publicación del blog de Cilium sobre mTLS nativo](https://cilium.io/blog/2026/03/23/native-mtls-cilium/) para obtener la descripción completa de la arquitectura.
+Consulte la [publicación del blog de Cilium sobre mTLS nativo](https://cilium.io/blog/2026/03/23/native-mtls-cilium/) para ver la descripción completa de la arquitectura.
 
 ### Cuándo elegir Cilium frente a Istio para mTLS
 
-- **Elija Cilium** cuando el requisito sea una política de identidad L3/L4 eficiente y cifrado de red en un plano de datos que ya ejecuta Cilium — sin sidecar adicional ni proxy por Service que operar, y CiliumNetworkPolicy/CiliumClusterwideNetworkPolicy ya expresen las reglas de acceso que necesita.
-- **Elija Istio** cuando el requisito sea mTLS maduro con certificados de workload y semántica `STRICT` de `PeerAuthentication`, o política/enrutamiento L7 nativo de Istio (las reglas de tipo `AuthorizationPolicy`, reintento y desplazamiento de tráfico incluidas en la [comparación entre sidecar y ambient](../istio/comparison/03-sidecar-vs-ambient.md)) — la autenticación mutua establecida de Cilium es fuera de banda y no ofrece esa superficie de políticas.
-- No decida basándose solo en la capa de cifrado: WireGuard/IPsec de Cilium y su vista previa de mTLS nativo de ztunnel cifran cargas útiles, pero ninguno por sí solo reproduce la combinación de `PeerAuthentication` `STRICT` de Istio de emisión de identidad de workload, aplicación de políticas y cifrado de carga útil con un solo interruptor.
+- **Elija Cilium** cuando el requisito sea una política de identidad L3/L4 eficiente y cifrado de red en un plano de datos que ya ejecuta Cilium — sin sidecar adicional ni proxy por Service que operar, y CiliumNetworkPolicy/CiliumClusterwideNetworkPolicy ya expresan las reglas de acceso que necesita.
+- **Elija Istio** cuando el requisito sea mTLS maduro de certificados de workloads con semántica `STRICT` de `PeerAuthentication`, o política/enrutamiento L7 nativo de Istio (las reglas de tipo `AuthorizationPolicy`, reintentos y desplazamiento de tráfico cubiertas en la [comparación de sidecar frente a ambient](../istio/comparison/03-sidecar-vs-ambient.md)) — la autenticación mutua establecida de Cilium es fuera de banda y no ofrece esa superficie de políticas.
+- No decida basándose únicamente en la capa de cifrado: WireGuard/IPsec de Cilium y su vista previa de mTLS nativo de ztunnel cifran cargas útiles, pero ninguno de ellos reproduce por sí solo la combinación de `PeerAuthentication` `STRICT` de Istio de emisión de identidad de workload, aplicación de políticas y cifrado de cargas útiles en un solo interruptor.
 
 ### Configuración de autenticación mutua basada en SPIRE
 
@@ -347,7 +320,7 @@ spec:
 
 ## Autenticación mutua
 
-> Esta sección configura los ejemplos de política de `authentication.mode`. Para saber qué cubre y qué no cubre la autenticación mutua (handshake fuera de banda, independiente del cifrado de carga útil), consulte [Autenticación mutua y cifrado de datos](#mutual-authentication-and-data-encryption) arriba.
+> Esta sección configura los ejemplos de políticas `authentication.mode`. Para saber qué cubre y qué no cubre la autenticación mutua (handshake fuera de banda, independiente del cifrado de cargas útiles), consulte [Autenticación mutua y cifrado de datos](#mutual-authentication-and-data-encryption) arriba.
 
 ### Modos de autenticación
 
@@ -371,7 +344,7 @@ authentication:
 - mode: test-always-fail
 ```
 
-### Ejemplos de política de autenticación mutua
+### Ejemplos de políticas de autenticación mutua
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -408,7 +381,7 @@ spec:
         protocol: TCP
 ```
 
-### Autenticación basada en SPIFFE ID
+### Autenticación basada en ID de SPIFFE
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -434,7 +407,7 @@ spec:
 
 ## Cifrado
 
-> Esta sección configura los mecanismos de cifrado de carga útil (WireGuard/IPsec) introducidos conceptualmente en [Autenticación mutua y cifrado de datos](#mutual-authentication-and-data-encryption) arriba — el cifrado es una elección independiente de la autenticación mutua, no un subproducto de ella.
+> Esta sección configura los mecanismos de cifrado de cargas útiles (WireGuard/IPsec) introducidos conceptualmente en [Autenticación mutua y cifrado de datos](#mutual-authentication-and-data-encryption) arriba — el cifrado es una elección independiente de la autenticación mutua, no un subproducto de ella.
 
 ### Cifrado transparente con WireGuard
 
@@ -473,26 +446,9 @@ Errors: 0
 
 #### Arquitectura de WireGuard
 
-```mermaid
-graph TB
-    subgraph "Node A"
-        PodA[Pod A]
-        CiliumA[Cilium Agent]
-        WGA[WireGuard Interface<br/>cilium_wg0]
-    end
+![Las interfaces WireGuard cilium_wg0 en el Node A y el Node B transportan tráfico de Pod a Pod a través de un túnel cifrado con ChaCha20-Poly1305.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-2.png)
 
-    subgraph "Node B"
-        PodB[Pod B]
-        CiliumB[Cilium Agent]
-        WGB[WireGuard Interface<br/>cilium_wg0]
-    end
-
-    PodA --> CiliumA
-    CiliumA --> WGA
-    WGA <-->|"Encrypted Tunnel<br/>(ChaCha20Poly1305)"| WGB
-    WGB --> CiliumB
-    CiliumB --> PodB
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-2.html)
 
 ### Cifrado IPsec
 
@@ -523,7 +479,7 @@ encryption:
 |---------|-----------|-------|
 | Rendimiento | Muy alto | Alto |
 | Complejidad de configuración | Baja | Media |
-| Compatibilidad con kernel | 5.6+ (integrada) | Todas las versiones |
+| Compatibilidad del kernel | 5.6+ (integrada) | Todas las versiones |
 | Algoritmo de cifrado | ChaCha20Poly1305 | AES-GCM, etc. |
 | Gestión de claves | Automática | Manual/automática |
 | Estándar | No estándar | Estándar IETF |
@@ -532,21 +488,11 @@ encryption:
 
 ### Cilium Identity
 
-Cilium aplica políticas de seguridad basadas en la identidad en lugar de la IP:
+Cilium aplica políticas de seguridad basadas en identidad en lugar de IP:
 
-```mermaid
-graph LR
-    subgraph "Identity Assignment"
-        Pod[Pod] --> Labels[Labels]
-        Labels --> Hash[Hash Function]
-        Hash --> Identity[Numeric Identity<br/>e.g., 12345]
-    end
+![El conjunto de labels de un Pod se calcula con hash para obtener una identidad numérica, que se utiliza para consultar el mapa de políticas eBPF y producir una decisión de permitir/denegar.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-3.png)
 
-    subgraph "Policy Evaluation"
-        Identity --> PolicyMap[Policy Map]
-        PolicyMap --> Decision[Allow/Deny]
-    end
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-3.html)
 
 ### Componentes de identidad
 
@@ -607,24 +553,13 @@ spec:
       - port: "9090"
 ```
 
-### Comparación entre IP e identidad
+### Comparación de IP frente a identidad
 
-```mermaid
-graph TB
-    subgraph "IP-based Security (Traditional)"
-        IPPolicy[IP-based Policy]
-        IP1[10.0.1.5 -> 10.0.2.10: Allow]
-        IP2[Problem: Policy update needed<br/>when Pod IP changes]
-    end
+![La seguridad basada en IP requiere una actualización de la política cada vez que cambia una IP de Pod, mientras que la seguridad basada en identidad no se ve afectada por la rotación de IP.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-4.png)
 
-    subgraph "Identity-based Security (Cilium)"
-        IDPolicy[Identity-based Policy]
-        ID1[frontend -> backend: Allow]
-        ID2[Benefit: Unaffected by<br/>IP changes]
-    end
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-4.html)
 
-## Integración con PKI externa
+## Integración de PKI externa
 
 ### Integración con cert-manager
 
@@ -866,7 +801,7 @@ spec:
     - world
 ```
 
-## Auditoría y monitorización de seguridad
+## Auditoría y monitoreo de seguridad
 
 ### Modo de auditoría de políticas
 
@@ -894,7 +829,7 @@ spec:
       - port: "8080"
 ```
 
-### Monitorización de infracciones de políticas
+### Monitoreo de violaciones de políticas
 
 ```bash
 # Observe policy violations with Hubble
@@ -930,13 +865,13 @@ hubble:
 
 ## Próximos pasos
 
-- [Observabilidad](./04-observability.md): Monitorización de seguridad con Hubble
-- [Ingress & Gateway](./05-ingress-gateway.md): Seguridad del tráfico externo
-- [Prácticas recomendadas](./06-best-practices.md): Configuración de seguridad para producción
+- [Observabilidad](./04-observability.md): Monitoreo de seguridad con Hubble
+- [Ingress y Gateway](./05-ingress-gateway.md): Seguridad del tráfico externo
+- [Mejores prácticas](./06-best-practices.md): Configuración de seguridad de producción
 
 ## Referencias
 
-- [Documentación de Cilium Network Policy](https://docs.cilium.io/en/stable/security/policy/)
+- [Documentación de políticas de red de Cilium](https://docs.cilium.io/en/stable/security/policy/)
 - [Autenticación mutua de Cilium](https://docs.cilium.io/en/stable/network/servicemesh/mutual-authentication/)
 - [Documentación de cifrado de Cilium](https://docs.cilium.io/en/stable/security/network/encryption/)
 - [mTLS nativo de Cilium](https://cilium.io/blog/2026/03/23/native-mtls-cilium/)
