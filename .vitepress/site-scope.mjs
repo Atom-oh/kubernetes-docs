@@ -5,6 +5,7 @@ const baseSrcExclude = [
   'slide/**',
   'CLAUDE.md',
   '**/SUMMARY.md',
+  'docs/**', // internal plans/specs — never publish
   'cn/**',
   'jp/**',
   'es/**'
@@ -24,9 +25,10 @@ export function createVitepressBuildScope(locale) {
     locales,
     srcExclude: [...baseSrcExclude, ...excludedPublishedLocales],
     rewrites: Object.fromEntries(
-      locales.map((buildLocale) => [
-        `${buildLocale}/README.md`,
-        `${buildLocale}/index.md`
+      locales.flatMap((buildLocale) => [
+        [`${buildLocale}/README.md`, `${buildLocale}/index.md`],
+        // GitBook's section-index convention → clean directory URLs on VitePress
+        [`${buildLocale}/:dir(.*)/README.md`, `${buildLocale}/:dir/index.md`]
       ])
     )
   }
