@@ -18,16 +18,19 @@ test('VitePress excludes GitBook-only sources and translated mirrors', () => {
     'slide/**',
     'CLAUDE.md',
     '**/SUMMARY.md',
+    'docs/**',
     'cn/**',
     'jp/**',
     'es/**'
   ])
 })
 
-test('VitePress rewrites only the supported locale entry pages', () => {
+test('VitePress rewrites every README to an index page URL', () => {
   assert.deepEqual(vitepressRewrites, {
     'ko/README.md': 'ko/index.md',
-    'en/README.md': 'en/index.md'
+    'ko/:dir(.*)/README.md': 'ko/:dir/index.md',
+    'en/README.md': 'en/index.md',
+    'en/:dir(.*)/README.md': 'en/:dir/index.md'
   })
 })
 
@@ -39,13 +42,15 @@ test('a locale build excludes the other published locale', () => {
       'slide/**',
       'CLAUDE.md',
       '**/SUMMARY.md',
+      'docs/**',
       'cn/**',
       'jp/**',
       'es/**',
       'en/**'
     ],
     rewrites: {
-      'ko/README.md': 'ko/index.md'
+      'ko/README.md': 'ko/index.md',
+      'ko/:dir(.*)/README.md': 'ko/:dir/index.md'
     }
   })
 })
