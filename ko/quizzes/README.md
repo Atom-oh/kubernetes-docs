@@ -20,6 +20,7 @@
 - [컨테이너 기술 퀴즈](./basics/03-container-technology-quiz.md)
 - [Kubernetes 소개 퀴즈](./basics/04-kubernetes-introduction-quiz.md)
 - [eBPF 기초와 실무 활용 퀴즈](./basics/05-ebpf-fundamentals-quiz.md)
+- [네트워크 기초 퀴즈](./basics/06-network-fundamentals-quiz.md)
 
 ### Kubernetes 핵심 개념
 - [클러스터 아키텍처 퀴즈](./core/01-cluster-architecture-quiz.md)

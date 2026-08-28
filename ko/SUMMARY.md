@@ -15,6 +15,7 @@
 * [컨테이너 기술](basics/03-container-technology.md)
 * [Kubernetes 소개](basics/04-kubernetes-introduction.md)
 * [eBPF 기초와 실무 활용](basics/05-ebpf-fundamentals.md)
+* [네트워크 기초 — 프로토콜 25개](basics/06-network-fundamentals.md)
 
 ## Kubernetes 핵심 개념
 
@@ -375,6 +376,7 @@
   * [컨테이너 기술 퀴즈](quizzes/basics/03-container-technology-quiz.md)
   * [Kubernetes 소개 퀴즈](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [eBPF 기초와 실무 활용 퀴즈](quizzes/basics/05-ebpf-fundamentals-quiz.md)
+  * [네트워크 기초 퀴즈](quizzes/basics/06-network-fundamentals-quiz.md)
 * Kubernetes 핵심 개념
   * [클러스터 아키텍처 퀴즈](quizzes/core/01-cluster-architecture-quiz.md)
   * [파드와 워크로드 퀴즈](quizzes/core/02-pods-and-workloads-quiz.md)

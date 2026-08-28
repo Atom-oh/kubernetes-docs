@@ -2,6 +2,8 @@
 
 > **지원 버전**: Calico v3.29+ / Kubernetes 1.28+ **마지막 업데이트**: 2026년 2월 23일
 
+> 📎 BGP 자체가 생소하다면 [네트워크 기초](../../basics/06-network-fundamentals.md)의 BGP 절을 먼저 읽어보세요.
+
 ## 개요
 
 BGP(Border Gateway Protocol)는 Calico의 핵심 차별화 요소입니다. Cilium과 같은 다른 CNI가 주로 eBPF와 오버레이 네트워크에 집중하는 반면, Calico는 BGP를 통한 네이티브 라우팅을 완벽하게 지원합니다. 이를 통해 온프레미스 데이터센터, 하이브리드 클라우드, 물리적 네트워크 인프라와의 깊은 통합이 가능합니다.
