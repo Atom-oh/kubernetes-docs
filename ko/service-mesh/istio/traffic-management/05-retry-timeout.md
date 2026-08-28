@@ -17,40 +17,9 @@ Retry와 Timeout은 마이크로서비스의 복원력을 높이는 핵심 메�
 
 ### Timeout과 Retry의 필요성
 
-```mermaid
-flowchart LR
-    Client[클라이언트]
-    
-    subgraph Without["Timeout/Retry 없음"]
-        Service1[서비스<br/>응답 없음]
-        Result1[무한 대기<br/>리소스 낭비]
-    end
-    
-    subgraph With["Timeout/Retry 있음"]
-        Service2[서비스<br/>응답 없음]
-        Timeout[Timeout<br/>1초 후 중단]
-        Retry[Retry<br/>다른 인스턴스]
-        Success[성공]
-    end
-    
-    Client -.->|설정 없음| Service1
-    Service1 --> Result1
-    
-    Client -->|Istio 설정| Service2
-    Service2 --> Timeout
-    Timeout --> Retry
-    Retry --> Success
-    
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef bad fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef good fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class Client client;
-    class Service1,Result1 bad;
-    class Service2,Timeout,Retry,Success good;
-```
+![Timeout/Retry가 없으면 응답 없는 서비스에 무한 대기하며 리소스를 낭비하지만, Istio Timeout/Retry를 설정하면 1초 후 중단하고 다른 인스턴스로 재시도해 성공하는 비교 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-05-retry-timeout-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-05-retry-timeout-0.html)
 
 ## Timeout 설정
 
@@ -112,6 +81,8 @@ spec:
 
 ## Retry 설정
 
+> **중요**: `retries`를 생략했다고 retry가 꺼지는 것은 아닙니다. Istio의 클러스터 기본 정책은 `attempts: 2`, `retryOn: connect-failure,refused-stream,unavailable,cancelled`입니다. 여기서 `attempts`는 최초 요청 이후의 **추가 재시도 횟수**이므로 최대 전달 횟수는 3회입니다. 프록시 retry를 확실히 끄려면 해당 route에 `attempts: 0`을 명시합니다.
+
 ### 기본 Retry
 
 ```yaml
@@ -146,6 +117,12 @@ spec:
 
 ### 고급 Retry 설정
 
+`payment-service`는 결제 요청처럼 비멱등 write를 처리하므로, 모든 메서드에 동일한
+retry 정책을 적용하면 `reset`이나 `5xx`가 발생했을 때 mesh가 POST를 재전송해버릴 수
+있습니다 — 이 문서 전체가 경고하는 "모호한 재전송" 위험 그대로입니다. 메서드별로
+라우트를 분리해, 읽기 전용 상태 조회는 넉넉히 재시도하고 write 경로는 mesh retry를
+완전히 끕니다.
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -155,14 +132,27 @@ spec:
   hosts:
   - payment-service
   http:
-  - route:
+  - name: reads-retryable
+    match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment-service
     retries:
-      attempts: 5
-      perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: connect-failure,refused-stream
       retryRemoteLocalities: true  # 다른 지역으로도 재시도
+  - name: writes-no-mesh-retry
+    match:
+    - method:
+        regex: "^(POST|PUT|PATCH|DELETE)$"
+    route:
+    - destination:
+        host: payment-service
+    retries:
+      attempts: 0
 ```
 
 ## Retry와 Timeout 조합
@@ -184,48 +174,50 @@ spec:
     timeout: 10s  # 전체 timeout
     retries:
       attempts: 3
-      perTryTimeout: 3s  # 각 재시도 timeout
+      perTryTimeout: 3s  # 최초 요청을 포함한 각 전달의 timeout
 ```
 
-**계산**: 최대 대기 시간 = min(전체 timeout, attempts × perTryTimeout) = min(10s, 3 × 3s) = 9s
+**계산**: 이론상 전달 시간 상한은 `(1 + attempts) × perTryTimeout = 4 × 3s = 12s`이지만, route의 전체 `timeout: 10s`가 먼저 적용됩니다. 실제 재시도 횟수는 backoff와 남은 전체 timeout에 따라 줄어들 수 있습니다.
 
-### 멱등성 보장이 필요한 경우
+### HTTP 메서드별 Retry 분리
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: idempotent-retry
+  name: order-service
 spec:
   hosts:
   - order-service
   http:
-  # GET 요청 - 안전하게 재시도 가능
-  - match:
+  # POST/PATCH: 처리 결과가 모호해도 mesh가 재전송하지 않음
+  - name: writes-no-mesh-retry
+    match:
     - method:
-        exact: GET
-    route:
-    - destination:
-        host: order-service
-    timeout: 5s
-    retries:
-      attempts: 3
-      perTryTimeout: 1s
-      retryOn: 5xx,reset
-  
-  # POST 요청 - 재시도 제한적
-  - match:
-    - method:
-        exact: POST
+        regex: "^(POST|PATCH)$"
     route:
     - destination:
         host: order-service
     timeout: 10s
     retries:
-      attempts: 1  # 멱등성 보장 안 되면 재시도 최소화
-      perTryTimeout: 5s
-      retryOn: connect-failure,reset  # 네트워크 문제만 재시도
+      attempts: 0
+
+  # GET/HEAD: 연결 성립 전 실패와 HTTP/2 REFUSED_STREAM만 제한적으로 재시도
+  - name: reads-limited-retry
+    match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
+    - destination:
+        host: order-service
+    timeout: 5s
+    retries:
+      attempts: 2
+      perTryTimeout: 2s
+      retryOn: connect-failure,refused-stream
 ```
+
+POST/PATCH와 도메인에서 쓰기로 정의한 작업은 기본적으로 mesh retry를 끕니다. PUT/DELETE도 HTTP 명세상 멱등일 수 있다는 이유만으로 자동 재시도하지 말고, 애플리케이션의 실제 계약이 같은 요청의 반복 실행을 안전하게 처리할 때만 허용합니다.
 
 ## 실전 예제
 
@@ -321,6 +313,10 @@ spec:
 
 ### 예제 3: Circuit Breaker와 함께 사용
 
+`payment`는 비멱등 write를 처리하므로, 앞서 나온 `payment-service` 예제와 동일하게
+메서드별로 라우트를 분리합니다 — 읽기는 넉넉히 재시도하고 write는 mesh retry를
+끕니다. 아래 circuit breaker는 양쪽 모두에 적용됩니다.
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -330,14 +326,28 @@ spec:
   hosts:
   - payment
   http:
-  - route:
+  - name: reads-retryable
+    match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment
     timeout: 10s
     retries:
       attempts: 3
       perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
+      retryOn: connect-failure,refused-stream
+  - name: writes-no-mesh-retry
+    match:
+    - method:
+        regex: "^(POST|PUT|PATCH|DELETE)$"
+    route:
+    - destination:
+        host: payment
+    timeout: 10s
+    retries:
+      attempts: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -363,31 +373,13 @@ spec:
 
 ### ⚠️ 비멱등성 요청(Non-Idempotent Requests)에 대한 Retry 위험
 
-**핵심 원칙**: POST, PUT, DELETE 등 **상태를 변경하는 요청**은 Istio Proxy에서 자동 retry를 사용하면 **데이터 정합성 문제**가 발생할 수 있습니다.
+**핵심 원칙**: POST/PATCH와 도메인에서 비멱등으로 정의한 쓰기 요청은 Istio Proxy에서 자동 retry를 사용하면 **데이터 정합성 문제**가 발생할 수 있습니다. PUT/DELETE도 애플리케이션 계약이 실제 멱등성을 보장할 때만 예외로 취급합니다.
 
 #### 문제 상황
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client
-    participant Proxy as Istio Proxy
-    participant Service
-    participant DB as Database
+![POST 주문 생성이 실제로는 성공했지만 응답 손실로 Istio Proxy가 자동 retry를 수행해 중복 주문이 생성되고, 클라이언트는 200 OK만 보게 되는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-05-retry-timeout-1.png)
 
-    Client->>Proxy: POST /orders (주문 생성)
-    Proxy->>Service: POST /orders
-    Service->>DB: INSERT order (성공)
-    DB-->>Service: 200 OK
-    Service--xProxy: Network Timeout (응답 손실)
-    Note over Proxy: Retry 시도 (자동)
-    Proxy->>Service: POST /orders (동일 요청)
-    Service->>DB: INSERT order (중복!)
-    DB-->>Service: 200 OK
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-    Note over DB: ❌ 중복 주문 생성!
-```
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-05-retry-timeout-1.html)
 
 #### 왜 위험한가?
 
@@ -397,10 +389,10 @@ sequenceDiagram
 
 #### 안전한 Retry 전략
 
-**✅ 권장: 애플리케이션 레벨 Retry**
+**권장: mesh retry 비활성화 + 애플리케이션 수준의 중복 방지**
 
 ```yaml
-# Istio: 네트워크 문제만 재시도
+# Istio: 비멱등 쓰기는 명시적으로 재시도하지 않음
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
@@ -417,10 +409,10 @@ spec:
         host: order-service
     timeout: 10s
     retries:
-      attempts: 1  # Retry 비활성화
-      perTryTimeout: 5s
-      retryOn: connect-failure,refused-stream  # 연결 실패만
+      attempts: 0  # 최초 요청 이후 추가 전달 없음
 ```
+
+`reset`, `503`, timeout은 서버가 요청을 처리하지 않았다는 증거가 아닙니다. 서버가 DB commit을 끝낸 뒤 응답만 유실될 수 있으므로 프록시는 동일 요청의 replay가 안전한지 판단할 수 없습니다. 결과가 모호하면 무조건 재전송하기보다 애플리케이션이 요청 상태를 조회해야 합니다.
 
 ```python
 # 애플리케이션: Idempotency Key 사용
@@ -475,6 +467,13 @@ def create_order():
     return jsonify(order), 201
 ```
 
+프로덕션 쓰기 API에는 다음 보호장치를 조합합니다.
+
+- `Idempotency-Key`와 데이터베이스 unique constraint를 같은 트랜잭션에서 적용
+- update에는 `ETag`/`If-Match` 또는 version 필드 기반 compare-and-swap 적용
+- timeout/reset 후 transaction ID나 command ID로 처리 상태 조회
+- 결제, 이벤트 발행 같은 되돌리기 어려운 후속 효과에는 transactional outbox 적용
+
 #### HTTP 메소드별 Retry 안전성
 
 | 메소드 | 멱등성 | Istio Retry 안전성 | 권장 설정 |
@@ -482,10 +481,10 @@ def create_order():
 | **GET** | ✅ 멱등 | ✅ 안전 | `attempts: 3, retryOn: 5xx,reset` |
 | **HEAD** | ✅ 멱등 | ✅ 안전 | `attempts: 3, retryOn: 5xx,reset` |
 | **OPTIONS** | ✅ 멱등 | ✅ 안전 | `attempts: 3, retryOn: 5xx,reset` |
-| **PUT** | ⚠️ 조건부 멱등 | ⚠️ 주의 | Idempotency Key 필요 |
-| **DELETE** | ⚠️ 조건부 멱등 | ⚠️ 주의 | Idempotency Key 필요 |
-| **POST** | ❌ 비멱등 | ❌ 위험 | `attempts: 1, 애플리케이션 retry` |
-| **PATCH** | ❌ 비멱등 | ❌ 위험 | `attempts: 1, 애플리케이션 retry` |
+| **PUT** | ⚠️ 계약에 따라 다름 | ⚠️ 주의 | 실제 멱등 계약 + 조건부 갱신 필요 |
+| **DELETE** | ⚠️ 계약에 따라 다름 | ⚠️ 주의 | 실제 멱등 계약 + 결과 조회 필요 |
+| **POST** | ❌ 일반적으로 비멱등 | ❌ 위험 | `attempts: 0`, Idempotency Key |
+| **PATCH** | ❌ 일반적으로 비멱등 | ❌ 위험 | `attempts: 0`, version/ETag |
 
 #### 안전하게 Retry 가능한 경우
 
@@ -676,22 +675,22 @@ spec:
       perTryTimeout: 2s
       retryOn: 5xx,reset,connect-failure
   
-  # POST - 신중하게 재시도
+  # POST/PATCH - mesh retry 명시적 비활성화
   - match:
     - method:
-        exact: POST
+        regex: "^(POST|PATCH)$"
     route:
     - destination:
         host: api-service
     retries:
-      attempts: 1
-      perTryTimeout: 5s
-      retryOn: connect-failure  # 네트워크 문제만
+      attempts: 0
 ```
 
 ### 3. 지수 백오프 (Exponential Backoff)
 
-Istio는 기본적으로 25ms 간격으로 재시도하지만, 커스텀 백오프가 필요한 경우:
+Istio는 기본적으로 25ms 간격으로 재시도하지만, 커스텀 백오프가 필요하면 다음처럼
+설정합니다. 이건 읽기 경로에만 적용되며, `payment`의 write는 이 문서 앞부분과
+동일하게 여전히 mesh retry를 끕니다:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -702,13 +701,16 @@ spec:
   hosts:
   - payment
   http:
-  - route:
+  - match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment
     retries:
       attempts: 5
       perTryTimeout: 2s
-      retryOn: 5xx,reset
+      retryOn: connect-failure,refused-stream
       # Istio는 자동으로 재시도 간격 증가
       # 25ms, 50ms, 100ms, 200ms, 400ms
 ```
@@ -782,3 +784,4 @@ spec:
 - [Istio Timeout](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute)
 - [Istio Retry](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry)
 - [Envoy Retry Policy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#config-http-filters-router-x-envoy-retry-on)
+- [RFC 9110: Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods)

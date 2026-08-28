@@ -1,11 +1,11 @@
 # Istio Comparison 퀴즈
 
 > **지원 버전**: Istio 1.30 / EKS 1.36
-> **마지막 업데이트**: 2026년 7월 7일
+> **마지막 업데이트**: 2026년 8월 21일
 
 이 퀴즈는 Sidecar Mode와 Ambient Mode 선택 기준, 특히 EKS 1.36 실측 결과에 대한 이해도를 테스트합니다.
 
-## 객관식 문제 (1-4번)
+## 객관식 문제 (1-6번)
 
 ### 문제 1: Ambient waypoint 503의 근본 원인
 
@@ -108,15 +108,67 @@ D. retry는 ambient 모드에서 지원되지 않기 때문
 
 ---
 
+### 문제 5: Sidecar와 Ambient rollout의 공정한 비교
+
+Sidecar의 클라이언트 노출 503이 Ambient보다 적게 측정됐다. 이 결과가 데이터 플레인 자체의 안정성 차이인지 확인하는 가장 적절한 실험은?
+
+A. 두 모드 모두 GET 요청만 보내고 최종 200 응답 수만 비교한다
+B. Sidecar에는 기본 retry를 유지하고 Ambient에는 retry를 끈다
+C. 쓰기 route의 retry를 `attempts: 0`으로 통일하고 raw HTTP/TCP 실패, retry 횟수, 최종 결과를 각각 기록한다
+D. 평균 CPU 사용량이 낮은 모드를 더 안정적이라고 판단한다
+
+<details>
+<summary>정답 및 해설</summary>
+
+**정답: C**
+
+**해설:**
+
+Sidecar Envoy와 waypoint Envoy는 L7 retry로 원시 실패(raw failure)를 클라이언트에서 숨길 수 있지만 ztunnel은 L4 프록시라 HTTP 503을 해석하거나 HTTP 요청을 replay하지 않는다. 따라서 write retry를 동일하게 끄고 HTTP 503, TCP reset/EOF, `upstream_rq_retry`, 실제 upstream 전달 수, 최종 클라이언트 결과를 분리해야 한다. 그렇지 않으면 "장애가 적었다"와 "retry가 장애를 가렸다"를 구분할 수 없다.
+
+**참고 자료:**
+- [Sidecar vs Ambient Mode 선택 가이드: 원시 실패 측정](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
+- [Retry 및 Timeout](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
+
+</details>
+
+---
+
+### 문제 6: Cilium 인증과 암호화
+
+Cilium mutual authentication을 `required`로 설정한 기존 데이터 플레인에 대한 올바른 설명은?
+
+A. 모든 애플리케이션 payload가 자동으로 workload TLS로 암호화된다
+B. endpoint identity 인증과 payload 암호화는 별도이며, 기밀성에는 WireGuard/IPsec 또는 지원되는 native ztunnel mTLS가 필요하다
+C. Istio `PeerAuthentication STRICT`와 구현·성숙도·운영 의미가 완전히 동일하다
+D. 상호 인증을 켜면 CiliumNetworkPolicy가 필요 없다
+
+<details>
+<summary>정답 및 해설</summary>
+
+**정답: B**
+
+**해설:**
+
+기존 Cilium mutual authentication은 애플리케이션 데이터 경로 밖의 out-of-band handshake로 peer identity를 확인한다. 이 인증 정책만으로 payload 암호화가 자동 제공되는 것은 아니므로 WireGuard/IPsec을 별도로 선택하거나, 지원 플랫폼에서 native ztunnel mTLS preview를 검증해야 한다. Istio `STRICT` workload mTLS와 같은 것으로 간주하지 말고 identity 인가, 상대 인증, 전송 암호화를 각각 확인한다.
+
+**참고 자료:**
+- [Cilium Service Mesh 보안](../../../service-mesh/cilium-service-mesh/03-security.md)
+
+</details>
+
+---
+
 ## 점수 계산
 
-- 4문제 중 맞은 개수를 확인하세요.
-- 4/4: Sidecar vs Ambient 선택 기준을 실측 근거로 설명할 수 있는 수준입니다.
-- 2-3/4: 핵심 개념은 이해했지만 NetworkPolicy·retry 리스크 부분을 다시 확인하세요.
-- 0-1/4: [Sidecar vs Ambient Mode 선택 가이드](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)를 처음부터 다시 읽어보세요.
+- 6문제 중 맞은 개수를 확인하세요.
+- 6/6: Sidecar, Ambient, Cilium 선택과 retry 리스크를 실측 근거로 설명할 수 있는 수준입니다.
+- 4-5/6: 핵심 개념은 이해했지만 raw failure 측정 또는 인증·암호화 구분을 다시 확인하세요.
+- 0-3/6: [Sidecar vs Ambient Mode 선택 가이드](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)를 처음부터 다시 읽어보세요.
 
 ## 학습 자료
 
 - [Sidecar vs Ambient Mode 선택 가이드](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 - [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 - [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+- [Cilium Service Mesh 보안](../../../service-mesh/cilium-service-mesh/03-security.md)

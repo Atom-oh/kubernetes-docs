@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "WireGuard 암호화 아키텍처",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "poda",
+      "type": "frontend",
+      "label": "Pod A",
+      "sublabel": "워크로드",
+      "pos": [
+        110,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "agenta",
+      "type": "backend",
+      "label": "Cilium Agent",
+      "sublabel": "데이터패스 제어",
+      "pos": [
+        110,
+        230
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "wga",
+      "type": "security",
+      "label": "WireGuard Interface",
+      "sublabel": "cilium_wg0",
+      "pos": [
+        110,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "podb",
+      "type": "frontend",
+      "label": "Pod B",
+      "sublabel": "워크로드",
+      "pos": [
+        600,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "agentb",
+      "type": "backend",
+      "label": "Cilium Agent",
+      "sublabel": "데이터패스 제어",
+      "pos": [
+        600,
+        230
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "wgb",
+      "type": "security",
+      "label": "WireGuard Interface",
+      "sublabel": "cilium_wg0",
+      "pos": [
+        600,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Node A",
+      "wraps": [
+        "poda",
+        "agenta",
+        "wga"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node B",
+      "wraps": [
+        "podb",
+        "agentb",
+        "wgb"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "poda-agenta",
+      "from": "poda",
+      "to": "agenta",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "agenta-wga",
+      "from": "agenta",
+      "to": "wga",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tunnel",
+      "from": "wga",
+      "to": "wgb",
+      "label": "암호화 터널 · ChaCha20-Poly1305",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "wgb-agentb",
+      "from": "wgb",
+      "to": "agentb",
+      "label": "복호화",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "agentb-podb",
+      "from": "agentb",
+      "to": "podb",
+      "label": "전달",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ]
+}

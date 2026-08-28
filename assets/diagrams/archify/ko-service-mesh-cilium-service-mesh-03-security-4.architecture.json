@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "IP 기반 vs Identity 기반 보안",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "ippolicy",
+      "type": "external",
+      "label": "IP 기반 정책",
+      "sublabel": "전통적 방화벽 모델",
+      "pos": [
+        110,
+        100
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "iprule",
+      "type": "backend",
+      "label": "10.0.1.5 → 10.0.2.10",
+      "sublabel": "Allow",
+      "pos": [
+        110,
+        230
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "ipnote",
+      "type": "external",
+      "label": "정책 업데이트 필요",
+      "sublabel": "Pod IP가 바뀔 때마다",
+      "pos": [
+        110,
+        360
+      ],
+      "size": [
+        190,
+        60
+      ],
+      "tag": "문제"
+    },
+    {
+      "id": "idpolicy",
+      "type": "security",
+      "label": "Identity 기반 정책",
+      "sublabel": "Cilium 모델",
+      "pos": [
+        620,
+        100
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "idrule",
+      "type": "backend",
+      "label": "frontend → backend",
+      "sublabel": "Allow",
+      "pos": [
+        620,
+        230
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "idnote",
+      "type": "security",
+      "label": "IP 변경에 영향 없음",
+      "sublabel": "identity는 레이블을 따름",
+      "pos": [
+        620,
+        360
+      ],
+      "size": [
+        190,
+        60
+      ],
+      "tag": "이점"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "IP 기반 보안 (전통)",
+      "wraps": [
+        "ippolicy",
+        "iprule",
+        "ipnote"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Identity 기반 보안 (Cilium)",
+      "wraps": [
+        "idpolicy",
+        "idrule",
+        "idnote"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ip-eval",
+      "from": "ippolicy",
+      "to": "iprule",
+      "label": "IP로 매칭",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        205,
+        174
+      ]
+    },
+    {
+      "id": "ip-churn",
+      "from": "iprule",
+      "to": "ipnote",
+      "label": "IP 변경 시",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        205,
+        304
+      ]
+    },
+    {
+      "id": "id-eval",
+      "from": "idpolicy",
+      "to": "idrule",
+      "label": "identity로 매칭",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        715,
+        174
+      ]
+    },
+    {
+      "id": "id-stable",
+      "from": "idrule",
+      "to": "idnote",
+      "label": "identity 유지",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        715,
+        304
+      ]
+    }
+  ]
+}

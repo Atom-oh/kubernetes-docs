@@ -366,7 +366,7 @@ spec:
       perTryTimeout: 2s
 ```
 
-A. Retry up to 3 times within 10 seconds total, each attempt limited to 2 seconds B. Retry up to 3 times within 2 seconds total, each attempt limited to 10 seconds C. Unlimited retries within 10 seconds total, each attempt limited to 2 seconds D. Fail after 10 seconds without retries
+A. Retry up to 3 times after the original request, with each delivery limited to 2 seconds and the whole request limited to 10 seconds B. Retry up to 3 times within 2 seconds total, each attempt limited to 10 seconds C. Unlimited retries within 10 seconds total, each attempt limited to 2 seconds D. Fail after 10 seconds without retries
 
 <details>
 
@@ -374,7 +374,7 @@ A. Retry up to 3 times within 10 seconds total, each attempt limited to 2 second
 
 **Answer: A**
 
-This configuration retries **up to 3 times** within **10 seconds total**, with **each attempt limited to 2 seconds**.
+This configuration permits **up to 3 additional retries after the original request**, limits each delivery to **2 seconds**, and limits the whole request to **10 seconds**. It can therefore deliver the request upstream up to four times.
 
 **Explanation:**
 
@@ -383,8 +383,8 @@ This configuration retries **up to 3 times** within **10 seconds total**, with *
 ```yaml
 timeout: 10s           # Maximum time for entire request
 retries:
-  attempts: 3          # Maximum retry count
-  perTryTimeout: 2s    # Time limit for each attempt
+  attempts: 3          # Up to 3 retries after the original request
+  perTryTimeout: 2s    # Time limit for each delivery
 ```
 
 **Execution Scenarios:**
@@ -399,18 +399,12 @@ Scenario 2: Success after 2 attempts
 +- 2nd attempt: 1.8s elapsed -> Success
 +- Total time: 3.8s
 
-Scenario 3: All 3 attempts fail
+Scenario 3: Original request plus all 3 retries fail
 +- 1st attempt: 2s timeout -> Failure
 +- 2nd attempt: 2s timeout -> Failure
 +- 3rd attempt: 2s timeout -> Failure
-+- Total time: 6s (fails before 10s)
-
-Scenario 4: Overall timeout
-+- 1st attempt: 2s timeout -> Failure
-+- 2nd attempt: 2s timeout -> Failure
-+- 3rd attempt: 2s timeout -> Failure
-+- 4th attempt: hasn't passed 2s but reached overall 10s
-+- Total time: 10s (overall timeout)
++- 4th attempt: 2s timeout -> Failure
++- Total time: about 8s
 ```
 
 **Retry Condition Settings:**
@@ -425,23 +419,34 @@ retries:
 **Best Practices:**
 
 ```yaml
-# Typical settings
-timeout: 30s
-retries:
-  attempts: 3
-  perTryTimeout: 10s
-  retryOn: 5xx,gateway-error,reset,connect-failure
+# Read requests: limited retry
+- match:
+  - method:
+      regex: "^(GET|HEAD)$"
+  retries:
+    attempts: 2
+    perTryTimeout: 2s
+    retryOn: connect-failure,refused-stream
+
+# Write requests: disable mesh retry
+- match:
+  - method:
+      regex: "^(POST|PATCH)$"
+  retries:
+    attempts: 0
 ```
 
 **Cautions:**
 
-* `timeout` >= `attempts x perTryTimeout` to allow all retries
+* To budget for every retry, `timeout` should be roughly greater than `(1 + attempts) x perTryTimeout`, with backoff included
 * Too many retries can cause cascading failure
-* Retry recommended only for idempotent operations
+* `attempts: 0` disables retry; `attempts: 1` permits one replay after the original request
+* Disable mesh retry by default for POST/PATCH because the server can commit and lose only the response
+* Workload mTLS or network encryption does not make request replay safe
 
 **Reference:**
 
-* [Timeout and Retry](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/06-timeout-retry.md)
+* [Timeout and Retry](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
 
 </details>
 
@@ -969,23 +974,9 @@ Traffic mirroring is a technique that duplicates production traffic and sends it
 
 **1. How It Works**
 
-```mermaid
-flowchart LR
-    User[User] --> Envoy[Envoy Proxy]
-    Envoy -->|Primary Request| V1[Version 1<br/>Production]
-    Envoy -.->|Mirror Request<br/>Response Ignored| V2[Version 2<br/>Test]
+![A user request is duplicated by the Envoy proxy: the primary request goes to production Version 1 while the mirror request goes to test Version 2, whose response is discarded.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-traffic-management-0.png)
 
-    V1 -->|Response| User
-    V2 -.->|Response Discarded| Envoy
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef version fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class User user;
-    class Envoy envoy;
-    class V1,V2 version;
-```
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-traffic-management-0.html)
 
 **Key Characteristics:**
 
@@ -2007,7 +1998,7 @@ spec:
 
 ## Learning Resources
 
-* [Traffic Management Documentation](../../../service-mesh/istio/traffic-management/)
+* [Traffic Management Documentation](../../../service-mesh/istio/traffic-management/README.md)
 * [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
 * [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
 * [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)

@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Cilium 상호 인증 handshake",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      620
+    ]
+  },
+  "participants": [
+    {
+      "id": "poda",
+      "type": "external",
+      "label": "Pod A",
+      "sublabel": "클라이언트 워크로드"
+    },
+    {
+      "id": "ciliuma",
+      "type": "backend",
+      "label": "Cilium A",
+      "sublabel": "Pod A의 노드"
+    },
+    {
+      "id": "spire",
+      "type": "security",
+      "label": "SPIRE Agent",
+      "sublabel": "SVID 발급"
+    },
+    {
+      "id": "ciliumb",
+      "type": "backend",
+      "label": "Cilium B",
+      "sublabel": "Pod B의 노드"
+    },
+    {
+      "id": "podb",
+      "type": "external",
+      "label": "Pod B",
+      "sublabel": "서버 워크로드"
+    }
+  ],
+  "messages": [
+    {
+      "id": "conn-request",
+      "from": "poda",
+      "to": "ciliuma",
+      "y": 180,
+      "label": "연결 요청"
+    },
+    {
+      "id": "svid-request",
+      "from": "ciliuma",
+      "to": "spire",
+      "y": 230,
+      "label": "SVID 기반 인증 요청",
+      "variant": "security"
+    },
+    {
+      "id": "identity-proof",
+      "from": "spire",
+      "to": "ciliuma",
+      "y": 280,
+      "label": "identity 증명",
+      "variant": "return"
+    },
+    {
+      "id": "oob-handshake",
+      "from": "ciliuma",
+      "to": "ciliumb",
+      "y": 335,
+      "label": "out-of-band 인증 handshake",
+      "variant": "security"
+    },
+    {
+      "id": "auth-result",
+      "from": "ciliumb",
+      "to": "ciliuma",
+      "y": 385,
+      "label": "인증 결과",
+      "variant": "return"
+    },
+    {
+      "id": "data-conn",
+      "from": "ciliuma",
+      "to": "podb",
+      "y": 445,
+      "label": "정책 허용 후 데이터 연결",
+      "variant": "emphasis",
+      "note": "Payload 암호화는 WireGuard/IPsec 또는 native mTLS를 별도로 선택"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ciliuma",
+      "from": 175,
+      "to": 455,
+      "type": "backend"
+    },
+    {
+      "participant": "spire",
+      "from": 225,
+      "to": 288,
+      "type": "security"
+    },
+    {
+      "participant": "ciliumb",
+      "from": 330,
+      "to": 392,
+      "type": "backend"
+    }
+  ]
+}

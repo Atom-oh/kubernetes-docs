@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Cilium Mutual Authentication Handshake",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      620
+    ]
+  },
+  "participants": [
+    {
+      "id": "poda",
+      "type": "external",
+      "label": "Pod A",
+      "sublabel": "client workload"
+    },
+    {
+      "id": "ciliuma",
+      "type": "backend",
+      "label": "Cilium A",
+      "sublabel": "node of Pod A"
+    },
+    {
+      "id": "spire",
+      "type": "security",
+      "label": "SPIRE Agent",
+      "sublabel": "SVID authority"
+    },
+    {
+      "id": "ciliumb",
+      "type": "backend",
+      "label": "Cilium B",
+      "sublabel": "node of Pod B"
+    },
+    {
+      "id": "podb",
+      "type": "external",
+      "label": "Pod B",
+      "sublabel": "server workload"
+    }
+  ],
+  "messages": [
+    {
+      "id": "conn-request",
+      "from": "poda",
+      "to": "ciliuma",
+      "y": 180,
+      "label": "connection request"
+    },
+    {
+      "id": "svid-request",
+      "from": "ciliuma",
+      "to": "spire",
+      "y": 230,
+      "label": "request SVID-based auth",
+      "variant": "security"
+    },
+    {
+      "id": "identity-proof",
+      "from": "spire",
+      "to": "ciliuma",
+      "y": 280,
+      "label": "identity proof",
+      "variant": "return"
+    },
+    {
+      "id": "oob-handshake",
+      "from": "ciliuma",
+      "to": "ciliumb",
+      "y": 335,
+      "label": "out-of-band auth handshake",
+      "variant": "security"
+    },
+    {
+      "id": "auth-result",
+      "from": "ciliumb",
+      "to": "ciliuma",
+      "y": 385,
+      "label": "authentication result",
+      "variant": "return"
+    },
+    {
+      "id": "data-conn",
+      "from": "ciliuma",
+      "to": "podb",
+      "y": 445,
+      "label": "data connection after policy allows",
+      "variant": "emphasis",
+      "note": "Payload encryption is a separate choice: WireGuard/IPsec or native mTLS"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ciliuma",
+      "from": 175,
+      "to": 455,
+      "type": "backend"
+    },
+    {
+      "participant": "spire",
+      "from": 225,
+      "to": 288,
+      "type": "security"
+    },
+    {
+      "participant": "ciliumb",
+      "from": 330,
+      "to": 392,
+      "type": "backend"
+    }
+  ]
+}

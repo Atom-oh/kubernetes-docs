@@ -1,7 +1,7 @@
 # Sidecar vs Ambient Mode Selection Guide (EKS 1.36 Test Results)
 
 > **Supported Versions**: Istio 1.30 / EKS 1.36
-> **Last Updated**: July 7, 2026
+> **Last Updated**: August 21, 2026
 
 This document is a test-result-driven guide for deciding whether to adopt Istio in **sidecar mode or ambient mode** for mission-critical workloads on EKS (e.g., the order/matching path of a crypto exchange). The architecture itself is already covered in [Ambient Mode](../advanced/01-ambient-mode.md), so this document does not repeat it — instead it presents test results and a recommendation against 4 concrete requirements.
 
@@ -14,14 +14,14 @@ This document is a test-result-driven guide for deciding whether to adopt Istio 
 
 ## Decision Summary
 
-| Requirement | Sidecar | Ambient (L4, no waypoint) | Ambient (L7, waypoint) |
-|---|---|---|---|
-| mTLS | ✅ STRICT supported, verified | ✅ STRICT supported, verified | ✅ STRICT supported, verified |
-| NetworkPolicy | ✅ Existing rules work as-is, verified | ⚠️ Must allow HBONE port (15008), verified | ⚠️ Must allow HBONE port (15008), verified |
-| Latency (P50 over no-mesh baseline) | +1.29ms, measured | +0.04ms (negligible), measured | +1.86ms, measured |
-| Zero-downtime rollout | 503s occur (0.5%, measured) | **Zero actual 503s**, replaced by 0.3% TCP resets | 503s occur **2.6%, ~5x sidecar** (measured) |
+| Requirement | Sidecar | Ambient (L4, no waypoint) | Ambient (L7, waypoint) | Cilium |
+|---|---|---|---|---|
+| mTLS | ✅ STRICT supported, verified | ✅ STRICT supported, verified | ✅ STRICT supported, verified | ⚠️ Not measured in this cycle — documented as identity mutual authentication plus separately-enabled WireGuard/IPsec, not a single STRICT-equivalent switch (see [below](#separate-raw-failures-from-failures-hidden-by-retry)) |
+| NetworkPolicy | ✅ Existing rules work as-is, verified | ⚠️ Must allow HBONE port (15008), verified | ⚠️ Must allow HBONE port (15008), verified | ⚠️ Not measured in this cycle — CiliumNetworkPolicy is the native mechanism, not a K8s NetworkPolicy add-on |
+| Latency (P50 over no-mesh baseline) | +1.29ms, measured | +0.04ms (negligible), measured | +1.86ms, measured | Not measured in this cycle |
+| Zero-downtime rollout | 503s occur (0.5%, measured) | **Zero actual 503s**, replaced by 0.3% TCP resets | 503s occur **2.6%, ~5x sidecar** (measured) | Not measured in this cycle |
 
-> ✅ **One-line conclusion**: ambient without a waypoint (L4-only) was the most stable under rollout churn and had negligible latency overhead. Attaching a waypoint (L7) pushes the 503 rate above sidecar's and latency to roughly the same level as sidecar. The evidence is in §3–§4 below.
+> ✅ **One-line conclusion**: ambient without a waypoint (L4-only) was the most stable under rollout churn and had negligible latency overhead. Attaching a waypoint (L7) pushes the 503 rate above sidecar's and latency to roughly the same level as sidecar. The evidence is in §3–§4 below. Cilium is included for a like-for-like security comparison (see [below](#separate-raw-failures-from-failures-hidden-by-retry)); it was not deployed on the test cluster, so its row states documented properties only — never a substitute for a measurement.
 
 ## 1. mTLS — Test Results (EKS 1.36.2, Istio 1.30.2)
 
@@ -190,6 +190,27 @@ The baseline numbers above reflect **no shutdown tuning at all**. We reran the s
 > ✅ **Verdict**: no duplicate non-idempotent executions were observed for either mode. The low client-visible failure rates confirm retries were actively firing and mostly masking transient rollout-churn errors — yet none of the successful retries resulted in the same logical request being processed twice.
 
 > ⚠️ **This does not mean the race is impossible.** It means it didn't manifest under these specific conditions (perTryTimeout=2s, 20 req/s, 6 replicas, default graceful shutdown, no `preStop` hook). The theoretical mechanism — a retry re-sent after the original request already reached the app but before its response made it back to the caller — requires the connection to drop in a narrow window *after* the app started processing but *before* the response returned. 300s of continuous rollout churn didn't catch an instance of it for either mode, but a production non-idempotent path should still treat mesh-level retry as unsafe by default absent server-side idempotency keys: this test lowers confidence that the race is *common*, it does not establish that it is *safe*.
+
+### Separate raw failures from failures hidden by retry
+
+mTLS data-plane selection and HTTP retry policy are independent decisions. Sidecar Envoy and waypoint Envoy can retry HTTP requests at L7, while ambient ztunnel is an [L4 proxy](https://istio.io/latest/docs/ambient/architecture/data-plane/) that cannot interpret an HTTP 503 or replay an HTTP request. Comparing only final client-visible 503 counts therefore cannot show whether sidecar/waypoint had fewer raw failures or merely hid them through retries.
+
+For a fair rollout comparison, set `attempts: 0` on POST/PATCH write routes and record these dimensions separately:
+
+- HTTP 503, TCP reset/EOF, and connection-refused events before retry
+- Envoy `upstream_rq_retry` and `upstream_rq_retry_success` counters
+- actual upstream delivery count, including the original request
+- final client-visible success/failure after retry processing
+- whether the server processed the same idempotency key or command ID more than once
+
+| Data plane | mTLS/encryption meaning | L7 retry location | Recommended use |
+|---|---|---|---|
+| Istio sidecar | Workload SPIFFE-certificate mTLS | Per-pod Envoy | Conservative baseline for critical non-idempotent paths |
+| Istio ambient L4 | HBONE workload mTLS between ztunnels | None | First candidate when only Istio mTLS and L4 policy are required |
+| Istio ambient L7 | HBONE plus waypoint Envoy | Shared waypoint | Add only to services requiring HTTP routing or L7 policy |
+| Cilium | Identity mutual authentication and transport encryption such as WireGuard/IPsec are selected separately | None in the L3/L4 encryption layer | Existing Cilium data planes needing identity policy and network encryption |
+
+> **Operational rule:** if mTLS is the only requirement, validate ambient L4 first and add waypoints only to services needing L7 policy or east-west HTTP routing. Keep sidecar as the baseline for critical non-idempotent paths when ambient rollout errors, measured with write retries disabled, exceed the workload error budget.
 
 ### A note on test isolation
 
@@ -927,6 +948,8 @@ kubectl exec -n "$NS" "$CLIENT" -c order-client -- python3 -c \
 
 - [Ambient Mode](../advanced/01-ambient-mode.md) — ztunnel/waypoint architecture, resource comparison vs. sidecar
 - [mTLS](../security/01-mtls.md) — STRICT/PERMISSIVE modes, certificate management, NetworkPolicy conflicts
+- [Istio VirtualService Retry](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry) — `attempts: 0` and retry conditions
+- [Envoy Retry Statistics](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter) — retry behavior and observability
 - [Troubleshooting: Connection Errors During Pod Termination](../troubleshooting/common-errors.md#connection-errors-during-pod-termination)
 - [Sidecar Injection](../advanced/07-sidecar-injection.md)
 - [Service Mesh Solution Comparison](01-service-mesh-comparison.md)

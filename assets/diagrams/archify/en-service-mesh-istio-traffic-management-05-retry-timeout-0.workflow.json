@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Why Timeout and Retry Matter",
+    "quality_profile": "showcase",
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "client",
+      "label": "Client"
+    },
+    {
+      "id": "without",
+      "label": "Without Timeout/Retry",
+      "variant": "exception"
+    },
+    {
+      "id": "with",
+      "label": "With Istio Timeout/Retry"
+    }
+  ],
+  "mainPath": [
+    "client",
+    "svc2",
+    "timeout",
+    "retry",
+    "success"
+  ],
+  "nodes": [
+    {
+      "id": "client",
+      "lane": "client",
+      "col": 0,
+      "type": "external",
+      "label": "Client",
+      "sublabel": "sends request"
+    },
+    {
+      "id": "svc1",
+      "lane": "without",
+      "col": 2,
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "no response"
+    },
+    {
+      "id": "result1",
+      "lane": "without",
+      "col": 3,
+      "type": "external",
+      "label": "Infinite Wait",
+      "sublabel": "wasted resources"
+    },
+    {
+      "id": "svc2",
+      "lane": "with",
+      "col": 2,
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "no response"
+    },
+    {
+      "id": "timeout",
+      "lane": "with",
+      "col": 3,
+      "type": "security",
+      "label": "Timeout",
+      "sublabel": "stop after 1s"
+    },
+    {
+      "id": "retry",
+      "lane": "with",
+      "col": 5,
+      "type": "backend",
+      "label": "Retry",
+      "sublabel": "other instance"
+    },
+    {
+      "id": "success",
+      "lane": "client",
+      "col": 5,
+      "type": "frontend",
+      "label": "Success",
+      "sublabel": "response OK"
+    }
+  ],
+  "edges": [
+    {
+      "id": "no-config",
+      "from": "client",
+      "to": "svc1",
+      "label": "no config",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "id": "hang",
+      "from": "svc1",
+      "to": "result1",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "id": "istio-config",
+      "from": "client",
+      "to": "svc2",
+      "label": "Istio config",
+      "variant": "emphasis",
+      "labelSegment": 1
+    },
+    {
+      "id": "svc2-timeout",
+      "from": "svc2",
+      "to": "timeout"
+    },
+    {
+      "id": "timeout-retry",
+      "from": "timeout",
+      "to": "retry"
+    },
+    {
+      "id": "retry-success",
+      "from": "retry",
+      "to": "success",
+      "variant": "emphasis"
+    }
+  ]
+}

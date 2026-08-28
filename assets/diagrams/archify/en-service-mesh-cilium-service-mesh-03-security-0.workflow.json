@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Cilium Security Architecture",
+    "quality_profile": "showcase",
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "flow",
+      "label": "Identity & Policy"
+    },
+    {
+      "id": "auth",
+      "label": "Out-of-band Mutual Authentication"
+    },
+    {
+      "id": "enc",
+      "label": "Payload Encryption (opt-in)"
+    }
+  ],
+  "mainPath": [
+    "workload",
+    "identity",
+    "policy",
+    "wg"
+  ],
+  "nodes": [
+    {
+      "id": "workload",
+      "lane": "flow",
+      "col": 0,
+      "type": "external",
+      "label": "Workload",
+      "sublabel": "pod traffic"
+    },
+    {
+      "id": "identity",
+      "lane": "flow",
+      "col": 1,
+      "type": "backend",
+      "label": "Identity",
+      "sublabel": "Cilium label ID"
+    },
+    {
+      "id": "policy",
+      "lane": "flow",
+      "col": 3,
+      "type": "security",
+      "label": "eBPF Policy",
+      "sublabel": "L3/L4 + L7"
+    },
+    {
+      "id": "spire",
+      "lane": "auth",
+      "col": 2,
+      "type": "security",
+      "label": "SPIFFE/SPIRE",
+      "sublabel": "SVID issuance"
+    },
+    {
+      "id": "auth",
+      "lane": "auth",
+      "col": 3,
+      "type": "security",
+      "label": "Mutual Auth",
+      "sublabel": "out-of-band"
+    },
+    {
+      "id": "wg",
+      "lane": "enc",
+      "col": 4,
+      "type": "security",
+      "label": "WireGuard",
+      "sublabel": "or IPsec · opt-in"
+    },
+    {
+      "id": "native",
+      "lane": "enc",
+      "col": 5,
+      "type": "security",
+      "label": "ztunnel mTLS",
+      "sublabel": "native · preview"
+    }
+  ],
+  "edges": [
+    {
+      "id": "workload-identity",
+      "from": "workload",
+      "to": "identity"
+    },
+    {
+      "id": "identity-policy",
+      "from": "identity",
+      "to": "policy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "identity-spire",
+      "from": "identity",
+      "to": "spire",
+      "label": "identity proof",
+      "variant": "dashed",
+      "role": "branch",
+      "labelAt": [
+        237,
+        283
+      ]
+    },
+    {
+      "id": "spire-auth",
+      "from": "spire",
+      "to": "auth"
+    },
+    {
+      "id": "auth-policy",
+      "from": "auth",
+      "to": "policy",
+      "label": "auth result",
+      "variant": "security",
+      "role": "return"
+    },
+    {
+      "id": "policy-wg",
+      "from": "policy",
+      "to": "wg",
+      "label": "encryption choice",
+      "variant": "default",
+      "role": "branch",
+      "labelAt": [
+        500,
+        283
+      ]
+    },
+    {
+      "id": "policy-native",
+      "from": "policy",
+      "to": "native",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ]
+}
